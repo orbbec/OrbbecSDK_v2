@@ -126,21 +126,21 @@ bool checkIRAvailability(std::shared_ptr<const DepthFrame> first_depth, std::sha
     return use_ir;
 }
 
-HdrMerge::HdrMerge(const std::string &name) : FilterBase(name) {}
-HdrMerge::~HdrMerge() noexcept {}
+HDRMerge::HDRMerge(const std::string &name) : FilterBase(name) {}
+HDRMerge::~HDRMerge() noexcept {}
 
-void HdrMerge::updateConfig(std::vector<std::string> &params) {
+void HDRMerge::updateConfig(std::vector<std::string> &params) {
     if(params.size() != 0) {
-        throw unsupported_operation_exception("HdrMerge update config error: unsupported operation.");
+        throw unsupported_operation_exception("HDRMerge update config error: unsupported operation.");
     }
 }
 
-const std::string &HdrMerge::getConfigSchema() const {
+const std::string &HDRMerge::getConfigSchema() const {
     static const std::string schema = "";
     return schema;
 }
 
-std::shared_ptr<Frame> HdrMerge::processFunc(std::shared_ptr<const Frame> frame) {
+std::shared_ptr<Frame> HDRMerge::processFunc(std::shared_ptr<const Frame> frame) {
     if(!frame) {
         return nullptr;
     }
@@ -161,7 +161,7 @@ std::shared_ptr<Frame> HdrMerge::processFunc(std::shared_ptr<const Frame> frame)
 
     auto depthSeqSize = depthFrame->getMetadataValue(OB_FRAME_METADATA_TYPE_HDR_SEQUENCE_SIZE);
     if(depthSeqSize != 2) {
-        LOG_WARN_INTVL("HdrMerge unsupported to process this frame with sequence size: {}", depthSeqSize);
+        LOG_WARN_INTVL("HDRMerge unsupported to process this frame with sequence size: {}", depthSeqSize);
         std::shared_ptr<Frame> outFrame = FrameFactory::createFrameFromOtherFrame(frame, true);
         return outFrame;
     }
@@ -206,7 +206,7 @@ std::shared_ptr<Frame> HdrMerge::processFunc(std::shared_ptr<const Frame> frame)
     return outFrame;
 }
 
-void HdrMerge::discardDepthMergedFrameIfNeeded(std::shared_ptr<const Frame> frame) {
+void HDRMerge::discardDepthMergedFrameIfNeeded(std::shared_ptr<const Frame> frame) {
     if(depth_merged_frame_) {
         std::shared_ptr<const DepthFrame> newFrame = nullptr;
         if(frame->is<FrameSet>()) {
@@ -230,7 +230,7 @@ void HdrMerge::discardDepthMergedFrameIfNeeded(std::shared_ptr<const Frame> fram
     }
 }
 
-std::shared_ptr<Frame> HdrMerge::merge(std::shared_ptr<const Frame> first_fs, std::shared_ptr<const Frame> second_fs) {
+std::shared_ptr<Frame> HDRMerge::merge(std::shared_ptr<const Frame> first_fs, std::shared_ptr<const Frame> second_fs) {
     std::shared_ptr<const DepthFrame> first_depth  = nullptr;
     std::shared_ptr<const DepthFrame> second_depth = nullptr;
     std::shared_ptr<const IRFrame>    first_ir     = nullptr;

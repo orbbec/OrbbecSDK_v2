@@ -285,14 +285,14 @@ const std::map<OBFrameType, std::string> Frame_Str_Map = { { OB_FRAME_UNKNOWN, "
                                                            { OB_FRAME_SET, "SET" },
                                                            { OB_FRAME_POINTS, "Points" },
                                                            { OB_FRAME_GYRO, "Gyro" },
-                                                           { OB_FRAME_IR_LEFT, "LeftIR" },
-                                                           { OB_FRAME_IR_RIGHT, "RightIR" },
+                                                           { OB_FRAME_IR_LEFT, "Left IR" },
+                                                           { OB_FRAME_IR_RIGHT, "Right IR" },
                                                            { OB_FRAME_RAW_PHASE, "RawPhase" } };
 
 const std::map<OBStreamType, std::string> Stream_Str_Map = {
-    { OB_STREAM_UNKNOWN, "Unknown" },  { OB_STREAM_VIDEO, "Video" },       { OB_STREAM_IR, "IR" },     { OB_STREAM_COLOR, "color" },
-    { OB_STREAM_DEPTH, "depth" },      { OB_STREAM_ACCEL, "Acceler" },     { OB_STREAM_GYRO, "Gyro" }, { OB_STREAM_IR_LEFT, "LeftIR" },
-    { OB_STREAM_IR_RIGHT, "RightIR" }, { OB_STREAM_RAW_PHASE, "RawPhase" }
+    { OB_STREAM_UNKNOWN, "Unknown" },   { OB_STREAM_VIDEO, "Video" },       { OB_STREAM_IR, "IR" },     { OB_STREAM_COLOR, "Color" },
+    { OB_STREAM_DEPTH, "Depth" },       { OB_STREAM_ACCEL, "Accel" },       { OB_STREAM_GYRO, "Gyro" }, { OB_STREAM_IR_LEFT, "Left IR" },
+    { OB_STREAM_IR_RIGHT, "Right IR" }, { OB_STREAM_RAW_PHASE, "RawPhase" }
 };
 
 const std::map<OBIMUSampleRate, std::string> ImuRate_Str_Map = { { OB_SAMPLE_RATE_UNKNOWN, "UNKNOWN" },   { OB_SAMPLE_RATE_1_5625_HZ, "1_5625_HZ" },

@@ -4,10 +4,10 @@
 
 namespace libobsensor {
 
-class HdrMerge : public FilterBase {
+class HDRMerge : public FilterBase {
 public:
-    HdrMerge(const std::string &name);
-    virtual ~HdrMerge() noexcept;
+    HDRMerge(const std::string &name);
+    virtual ~HDRMerge() noexcept;
 
     void               updateConfig(std::vector<std::string> &params) override;
     const std::string &getConfigSchema() const override;
@@ -21,7 +21,6 @@ private:
 protected:
     std::map<uint64_t, std::shared_ptr<const Frame>> frames_;
     std::shared_ptr<Frame>                depth_merged_frame_;
-
 };
 
 }  // namespace libobsensor

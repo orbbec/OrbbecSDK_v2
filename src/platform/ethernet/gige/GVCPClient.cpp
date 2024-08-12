@@ -73,7 +73,7 @@ std::vector<GVCPDeviceInfo> GVCPClient::queryNetDeviceList() {
     LOG_TRACE("queryNetDevice completed ({}):", devInfoList_.size());
     for(auto &&info: devInfoList_) {
         // LOG_INFO("\t-mac:{}, ip:{}, sn:{}, pid:0x{:04x}", info.mac, info.ip, info.sn, info.pid);
-        LOG_INTVL(LOG_INTVL_OBJECT_TAG + "queryNetDevice", DEF_MIN_LOG_INTVL, spdlog::level::info, "\t- mac:{}, ip:{}, sn:{}, pid:0x{:04x}", info.mac, info.ip,
+        LOG_INTVL(LOG_INTVL_OBJECT_TAG + "queryNetDevice", DEF_MIN_LOG_INTVL, spdlog::level::debug, "\t- mac:{}, ip:{}, sn:{}, pid:0x{:04x}", info.mac, info.ip,
                   info.sn, info.pid);
     }
     return devInfoList_;

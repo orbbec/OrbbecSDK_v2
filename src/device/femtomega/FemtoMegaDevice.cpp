@@ -39,20 +39,18 @@ FemtoMegaDevice::FemtoMegaDevice(const std::shared_ptr<const IDeviceEnumInfo> &i
 FemtoMegaDevice::~FemtoMegaDevice() noexcept {}
 
 void FemtoMegaDevice::init() {
-
-#if defined(BUILD_NET_PAL)
-    initNetModeSensorList();
-    initNetModeProperties();
-#else
-    initSensorList();
-    initProperties();
-#endif
-
-    fetchDeviceInfo();
-
-#if defined(BUILD_NET_PAL)
-    fetchNetModeAllProfileList();
-#endif
+    std::string connectType = enumInfo_->getConnectionType();
+    if(connectType == "Ethernet") {
+        initNetModeSensorList();
+        initNetModeProperties();
+        fetchDeviceInfo();
+        fetchNetModeAllProfileList();
+    }
+    else {
+        initSensorList();
+        initProperties();
+        fetchDeviceInfo();
+    }
 
     // auto GlobalTimestampFilter = std::make_shared<GlobalTimestampFilter>(this);
     // registerComponent(OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER, GlobalTimestampFilter);
@@ -737,7 +735,7 @@ void FemtoMegaDevice::initNetModeSensorStreamProfileList(std::shared_ptr<ISensor
     auto sensorType    = sensor->getSensorType();
     OBStreamType streamType = utils::mapSensorTypeToStreamType(sensorType);
     StreamProfileList ProfileList;
-    for (const auto& profile : allProfileList_) {
+    for (const auto& profile : allNetProfileList_) {
         if(streamType == profile->getType()){
             ProfileList.push_back(profile);
         }
@@ -790,11 +788,11 @@ void FemtoMegaDevice::fetchNetModeAllProfileList() {
         std::vector<OBInternalStreamProfile> outputProfiles;
         uint16_t                             dataSize = static_cast<uint16_t>(data.size());
         outputProfiles                                = parseBuffer<OBInternalStreamProfile>(data.data(), dataSize);
-        allProfileList_.clear();
+        allNetProfileList_.clear();
         for(auto item: outputProfiles) {
             OBStreamType streamType = utils::mapSensorTypeToStreamType((OBSensorType)item.sensorType);
             OBFormat     format     = utils::uvcFourccToOBFormat(item.profile.video.formatFourcc);
-            allProfileList_.push_back(StreamProfileFactory::createVideoStreamProfile(streamType, format, item.profile.video.width, item.profile.video.height,
+            allNetProfileList_.push_back(StreamProfileFactory::createVideoStreamProfile(streamType, format, item.profile.video.width, item.profile.video.height,
                                                                                      item.profile.video.fps));
         }
     }

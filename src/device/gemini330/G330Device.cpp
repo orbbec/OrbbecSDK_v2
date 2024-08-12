@@ -647,21 +647,6 @@ std::vector<std::shared_ptr<IFilter>> G330Device::createRecommendedPostProcessin
             depthFilterList.push_back(decimationFilter);
         }
 
-        if(filterFactory->isFilterCreatorExists("HdrMerge")) {
-            auto hdrMergeFilter = filterFactory->createFilter("HdrMerge");
-            depthFilterList.push_back(hdrMergeFilter);
-        }
-
-        if(filterFactory->isFilterCreatorExists("SequenceIdFilter")) {
-            auto sequenceIdFilter = filterFactory->createFilter("SequenceIdFilter");
-            depthFilterList.push_back(sequenceIdFilter);
-        }
-
-        if(filterFactory->isFilterCreatorExists("PixelValueCutOff")) {
-            auto pixelValueCutOffFilter = filterFactory->createFilter("PixelValueCutOff");
-            depthFilterList.push_back(pixelValueCutOffFilter);
-        }
-
         if(filterFactory->isFilterCreatorExists("NoiseRemovalFilter")) {
             auto noiseFilter = filterFactory->createFilter("NoiseRemovalFilter");
             // max_size, min_diff, width, height
@@ -694,6 +679,11 @@ std::vector<std::shared_ptr<IFilter>> G330Device::createRecommendedPostProcessin
         if(filterFactory->isFilterCreatorExists("DisparityTransform")) {
             auto dtFilter = filterFactory->createFilter("DisparityTransform");
             depthFilterList.push_back(dtFilter);
+        }
+
+        if(filterFactory->isFilterCreatorExists("ThresholdFilter")) {
+            auto ThresholdFilter = filterFactory->createFilter("ThresholdFilter");
+            depthFilterList.push_back(ThresholdFilter);
         }
 
         for(size_t i = 0; i < depthFilterList.size(); i++) {

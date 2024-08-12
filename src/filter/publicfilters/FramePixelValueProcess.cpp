@@ -42,7 +42,7 @@ template <typename T> void imagePixelValueOffset(T *src, T *dst, uint32_t width,
     }
 }
 
-template <typename T> void imagePixelValueCutOff(T *src, T *dst, uint32_t width, uint32_t height, uint32_t min, uint32_t max) {
+template <typename T> void imagePixelValueThreshold(T *src, T *dst, uint32_t width, uint32_t height, uint32_t min, uint32_t max) {
     T *dstPixel = dst;
     T *srcPixel = src;
     if(min >= max) {
@@ -112,12 +112,12 @@ std::shared_ptr<Frame> PixelValueScaler::processFunc(std::shared_ptr<const Frame
     return outFrame;
 }
 
-Threshold::Threshold(const std::string &name) : FilterBase(name) {}
-Threshold::~Threshold() noexcept {}
+ThresholdFilter::ThresholdFilter(const std::string &name) : FilterBase(name) {}
+ThresholdFilter::~ThresholdFilter() noexcept {}
 
-void Threshold::updateConfig(std::vector<std::string> &params) {
+void ThresholdFilter::updateConfig(std::vector<std::string> &params) {
     if(params.size() != 2) {
-        throw invalid_value_exception("Threshold config error: params size not match");
+        throw invalid_value_exception("ThresholdFilter config error: params size not match");
     }
     try {
         std::lock_guard<std::mutex> cutOffLock(mtx_);
@@ -132,18 +132,18 @@ void Threshold::updateConfig(std::vector<std::string> &params) {
         }
     }
     catch(const std::exception &e) {
-        throw invalid_value_exception("Threshold config error: " + std::string(e.what()));
+        throw invalid_value_exception("ThresholdFilter config error: " + std::string(e.what()));
     }
 }
 
-const std::string &Threshold::getConfigSchema() const {
+const std::string &ThresholdFilter::getConfigSchema() const {
     // csv format: name，type， min，max，step，default，description
     static const std::string schema = "min, int, 0, 16000, 1, 0, min depth range\n"
                                       "max, int, 0, 16000, 1, 16000, max depth range";
     return schema;
 }
 
-std::shared_ptr<Frame> Threshold::processFunc(std::shared_ptr<const Frame> frame) {
+std::shared_ptr<Frame> ThresholdFilter::processFunc(std::shared_ptr<const Frame> frame) {
     if(!frame) {
         return nullptr;
     }
@@ -159,15 +159,15 @@ std::shared_ptr<Frame> Threshold::processFunc(std::shared_ptr<const Frame> frame
     if(max_ != 65535) {
         switch(frame->getFormat()) {
         case OB_FORMAT_Y16:
-            imagePixelValueCutOff((uint16_t *)frame->getData(), (uint16_t *)outFrame->getData(), videoFrame->getWidth(), videoFrame->getHeight(),
-                                  (uint32_t)(min_ / scale), (uint32_t)(max_ / scale));
+            imagePixelValueThreshold((uint16_t *)frame->getData(), (uint16_t *)outFrame->getData(), videoFrame->getWidth(), videoFrame->getHeight(),
+                                     (uint32_t)(min_ / scale), (uint32_t)(max_ / scale));
             break;
         case OB_FORMAT_Y8:
-            imagePixelValueCutOff((uint8_t *)frame->getData(), (uint8_t *)outFrame->getData(), videoFrame->getWidth(), videoFrame->getHeight(),
-                                  (uint32_t)(min_ / scale), (uint32_t)(max_ / scale));
+            imagePixelValueThreshold((uint8_t *)frame->getData(), (uint8_t *)outFrame->getData(), videoFrame->getWidth(), videoFrame->getHeight(),
+                                     (uint32_t)(min_ / scale), (uint32_t)(max_ / scale));
             break;
         default:
-            LOG_ERROR_INTVL("Threshold: unsupported format: {}", frame->getFormat());
+            LOG_ERROR_INTVL("ThresholdFilter: unsupported format: {}", frame->getFormat());
             break;
         }
     }

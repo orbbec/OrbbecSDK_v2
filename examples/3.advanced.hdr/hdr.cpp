@@ -23,9 +23,9 @@ int main(void) try {
     auto depthProfile  = depthProfiles->getProfile(OB_PROFILE_DEFAULT);
     config->enableStream(depthProfile);
 
-    // Create HdrMerge post processor to merge depth frames betweens different hdr sequence ids.
-    // The HdrMerge also supports processing of infrared frames.
-    auto hdrMerge = ob::FilterFactory::createFilter("HdrMerge");
+    // Create HDRMerge post processor to merge depth frames betweens different hdr sequence ids.
+    // The HDRMerge also supports processing of infrared frames.
+    auto hdrMerge = ob::FilterFactory::createFilter("HDRMerge");
 
     // configure and enable Hdr stream
     OBHdrConfig obHdrConfig;
@@ -80,7 +80,7 @@ int main(void) try {
         win.pushFramesToView(depthFrame, groupId);
 
         if(mergeRequired) {
-            // Using HdrMerge post processor to merge depth frames
+            // Using HDRMerge post processor to merge depth frames
             auto mergedDepthFrame = hdrMerge->process(depthFrame);
             if(mergedDepthFrame == nullptr) {
                 continue;

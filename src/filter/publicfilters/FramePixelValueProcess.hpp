@@ -20,10 +20,10 @@ protected:
     float scale_ = 1.0f;
 };
 
-class Threshold : public FilterBase {
+class ThresholdFilter : public FilterBase {
 public:
-    Threshold(const std::string &name);
-    virtual ~Threshold() noexcept;
+    ThresholdFilter(const std::string &name);
+    virtual ~ThresholdFilter() noexcept;
 
     void               updateConfig(std::vector<std::string> &params) override;
     const std::string &getConfigSchema() const override;
