@@ -1,6 +1,7 @@
 #include "EthernetPal.hpp"
 #include "exception/ObException.hpp"
 #include "utils/Utils.hpp"
+#include "RTPStreamPort.hpp"
 
 namespace libobsensor {
 
@@ -8,6 +9,7 @@ const uint16_t DEFAULT_CMD_PORT                     = 8090;
 const uint16_t PID_FEMTO_MEGA                       = 0x0669;
 const uint16_t PID_FEMTO_MEGA_I                     = 0x06C0;
 const uint16_t PID_GEMINI2XL                        = 0x0671;
+const uint16_t PID_GEMINI335LE                      = 0x080E;
 const uint16_t DEVICE_WATCHER_POLLING_INTERVAL_MSEC = 5000;
 
 NetDeviceWatcher::~NetDeviceWatcher() noexcept {
@@ -111,6 +113,9 @@ std::shared_ptr<ISourcePort> EthernetPal::getSourcePort(std::shared_ptr<const So
     case SOURCE_PORT_NET_RTSP:
         port = std::make_shared<RTSPStreamPort>(std::dynamic_pointer_cast<const RTSPStreamPortInfo>(portInfo));
         break;
+    case SOURCE_PORT_NET_RTP:
+        port = std::make_shared<RTPStreamPort>(std::dynamic_pointer_cast<const RTPStreamPortInfo>(portInfo));
+        break;
     default:
         throw invalid_value_exception("Invalid port type!");
     }
@@ -145,10 +150,26 @@ SourcePortInfoList EthernetPal::querySourcePortInfos() {
 
         sourcePortInfoList_.push_back(std::make_shared<NetSourcePortInfo>(SOURCE_PORT_NET_VENDOR, info.ip, DEFAULT_CMD_PORT, info.mac, info.sn, info.pid));
         if(info.pid == PID_FEMTO_MEGA) {
-            sourcePortInfoList_.push_back(std::make_shared<RTSPStreamPortInfo>(info.ip, static_cast<uint16_t>(8888), DEFAULT_CMD_PORT, OB_STREAM_COLOR, info.mac, info.sn, info.pid));
-            sourcePortInfoList_.push_back(std::make_shared<RTSPStreamPortInfo>(info.ip, static_cast<uint16_t>(8554), DEFAULT_CMD_PORT, OB_STREAM_DEPTH, info.mac, info.sn, info.pid));
-            sourcePortInfoList_.push_back(std::make_shared<RTSPStreamPortInfo>(info.ip, static_cast<uint16_t>(8554), DEFAULT_CMD_PORT, OB_STREAM_IR, info.mac, info.sn, info.pid));
-            sourcePortInfoList_.push_back(std::make_shared<NetDataStreamPortInfo>(info.ip, static_cast<uint16_t>(8900), DEFAULT_CMD_PORT, info.mac, info.sn, info.pid));
+            sourcePortInfoList_.push_back(
+                std::make_shared<RTSPStreamPortInfo>(info.ip, static_cast<uint16_t>(8888), DEFAULT_CMD_PORT, OB_STREAM_COLOR, info.mac, info.sn, info.pid));
+            sourcePortInfoList_.push_back(
+                std::make_shared<RTSPStreamPortInfo>(info.ip, static_cast<uint16_t>(8554), DEFAULT_CMD_PORT, OB_STREAM_DEPTH, info.mac, info.sn, info.pid));
+            sourcePortInfoList_.push_back(
+                std::make_shared<RTSPStreamPortInfo>(info.ip, static_cast<uint16_t>(8554), DEFAULT_CMD_PORT, OB_STREAM_IR, info.mac, info.sn, info.pid));
+            sourcePortInfoList_.push_back(
+                std::make_shared<NetDataStreamPortInfo>(info.ip, static_cast<uint16_t>(8900), DEFAULT_CMD_PORT, info.mac, info.sn, info.pid));
+        }
+        else if(info.pid == PID_GEMINI335LE) {
+            sourcePortInfoList_.push_back(
+                std::make_shared<RTPStreamPortInfo>(info.ip, static_cast<uint16_t>(20000), DEFAULT_CMD_PORT, OB_STREAM_COLOR, info.mac, info.sn, info.pid));
+            sourcePortInfoList_.push_back(
+                std::make_shared<RTPStreamPortInfo>(info.ip, static_cast<uint16_t>(20002), DEFAULT_CMD_PORT, OB_STREAM_DEPTH, info.mac, info.sn, info.pid));
+            sourcePortInfoList_.push_back(
+                std::make_shared<RTPStreamPortInfo>(info.ip, static_cast<uint16_t>(20004), DEFAULT_CMD_PORT, OB_STREAM_IR_LEFT, info.mac, info.sn, info.pid));
+            sourcePortInfoList_.push_back(
+                std::make_shared<RTPStreamPortInfo>(info.ip, static_cast<uint16_t>(20006), DEFAULT_CMD_PORT, OB_STREAM_IR_RIGHT, info.mac, info.sn, info.pid));
+            sourcePortInfoList_.push_back(
+                std::make_shared<NetDataStreamPortInfo>(info.ip, static_cast<uint16_t>(20010), DEFAULT_CMD_PORT, info.mac, info.sn, info.pid));
         }
         
     }

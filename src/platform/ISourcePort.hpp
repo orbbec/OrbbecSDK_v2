@@ -16,12 +16,13 @@ enum SourcePortType {
     SOURCE_PORT_NET_VENDOR = 0x10,
     SOURCE_PORT_NET_VENDOR_STREAM,
     SOURCE_PORT_NET_RTSP,
+    SOURCE_PORT_NET_RTP,
     SOURCE_PORT_IPC_VENDOR,  // Inter-process communication port
     SOURCE_PORT_UNKNOWN = 0xff,
 };
 
 #define IS_USB_PORT(type) ((type) >= SOURCE_PORT_USB_VENDOR && (type) <= SOURCE_PORT_USB_HID)
-#define IS_NET_PORT(type) ((type) >= SOURCE_PORT_NET_VENDOR && (type) <= SOURCE_PORT_NET_RTSP)
+#define IS_NET_PORT(type) ((type) >= SOURCE_PORT_NET_VENDOR && (type) <= SOURCE_PORT_NET_RTP)
 
 struct SourcePortInfo {
     SourcePortInfo(SourcePortType portType) : portType(portType) {}

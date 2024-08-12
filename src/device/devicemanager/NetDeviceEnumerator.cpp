@@ -1,5 +1,6 @@
 #include "NetDeviceEnumerator.hpp"
 #include "femtomega/FemtoMegaDeviceInfo.hpp"
+#include "gemini330/G330DeviceInfo.hpp"
 
 #include "utils/Utils.hpp"
 
@@ -62,6 +63,9 @@ DeviceEnumInfoList NetDeviceEnumerator::deviceInfoMatch(const SourcePortInfoList
     DeviceEnumInfoList deviceInfoList;
     auto               megaDevices = FemtoMegaDeviceInfo::pickDevices(infoList);
     deviceInfoList.insert(deviceInfoList.end(), megaDevices.begin(), megaDevices.end());
+
+    auto               dev330Devices = G330DeviceInfo::pickDevices(infoList);
+    deviceInfoList.insert(deviceInfoList.end(), dev330Devices.begin(), dev330Devices.end());
 
     return deviceInfoList;
 }
