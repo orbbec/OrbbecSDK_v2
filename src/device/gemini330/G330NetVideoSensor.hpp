@@ -1,5 +1,6 @@
 #pragma once
 #include "sensor/video/VideoSensor.hpp"
+#include "component/property/InternalProperty.hpp"
 
 namespace libobsensor {
 
@@ -13,10 +14,12 @@ public:
     void stop();
 
 private:
+    void initStreamPropertyId();
     void initStreamProfileList();
 
 private:
-    /* data */
+    OBInternalPropertyID streamSwitchPropertyId_;
+    OBInternalPropertyID profilesSwitchPropertyId_;
 
 };
 

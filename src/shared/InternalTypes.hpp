@@ -178,4 +178,12 @@ typedef struct {
     } profile;
 } OBInternalStreamProfile;
 
+typedef struct {
+    uint16_t sensorType;  // enum value of OBSensorType
+    uint32_t width;
+    uint32_t height;
+    uint32_t fps;
+    uint32_t formatFourcc;  // 如： {'Y', 'U', 'Y', 'V'} // fourcc是UVC里的一个通用概念
+} OBInternalVideoStreamProfile;
+
 #pragma pack(pop)
