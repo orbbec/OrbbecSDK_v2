@@ -27,10 +27,11 @@ struct RTPStreamPortInfo : public NetSourcePortInfo {
 };
 
 class RTPStreamPort : public IVideoStreamPort {
+
 public:
     RTPStreamPort(std::shared_ptr<const RTPStreamPortInfo> portInfo);
     virtual ~RTPStreamPort() noexcept;
-
+    
     virtual StreamProfileList                     getStreamProfileList() override;
     virtual void                                  startStream(std::shared_ptr<const StreamProfile> profile, MutableFrameCallback callback) override;
     virtual void                                  stopStream(std::shared_ptr<const StreamProfile> profile) override;
