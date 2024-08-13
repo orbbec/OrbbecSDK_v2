@@ -1144,8 +1144,8 @@ void G330NetDevice::initModeProperties() {
             propertyServer->registerProperty(OB_PROP_COLOR_BACKLIGHT_COMPENSATION_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_COLOR_AUTO_EXPOSURE_PRIORITY_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_RAW_DATA_STREAM_PROFILE_LIST, "", "r", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_START_COLOR_STREAM_BOOL, "", "r", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_STRUCT_COLOR_STREAM_PROFILE, "", "r", vendorPropertyAccessor);
+            propertyServer->registerProperty(OB_PROP_START_COLOR_STREAM_BOOL, "", "w", vendorPropertyAccessor);
+            propertyServer->registerProperty(OB_STRUCT_COLOR_STREAM_PROFILE, "", "w", vendorPropertyAccessor);
 
         }
         else if(sensor == OB_SENSOR_DEPTH) {
@@ -1189,12 +1189,12 @@ void G330NetDevice::initModeProperties() {
             propertyServer->registerProperty(OB_STRUCT_COLOR_AE_ROI, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_STRUCT_DEPTH_AE_ROI, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_RAW_DATA_IMU_CALIB_PARAM, "", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_START_DEPTH_STREAM_BOOL, "", "r", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_STRUCT_DEPTH_STREAM_PROFILE, "", "r", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_START_IR_STREAM_BOOL, "", "r", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_STRUCT_IR_STREAM_PROFILE, "", "r", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_START_IR_RIGHT_STREAM_BOOL, "", "r", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_STRUCT_IR_RIGHT_STREAM_PROFILE, "", "r", vendorPropertyAccessor);
+            propertyServer->registerProperty(OB_PROP_START_DEPTH_STREAM_BOOL, "", "w", vendorPropertyAccessor);
+            propertyServer->registerProperty(OB_STRUCT_DEPTH_STREAM_PROFILE, "", "w", vendorPropertyAccessor);
+            propertyServer->registerProperty(OB_PROP_START_IR_STREAM_BOOL, "", "w", vendorPropertyAccessor);
+            propertyServer->registerProperty(OB_STRUCT_IR_STREAM_PROFILE, "", "w", vendorPropertyAccessor);
+            propertyServer->registerProperty(OB_PROP_START_IR_RIGHT_STREAM_BOOL, "", "w", vendorPropertyAccessor);
+            propertyServer->registerProperty(OB_STRUCT_IR_RIGHT_STREAM_PROFILE, "", "w", vendorPropertyAccessor);
 
             // todo: add these properties to the frame processor
             // propertyServer->registerProperty(OB_PROP_SDK_DEPTH_FRAME_UNPACK_BOOL, "rw", "rw", vendorPropertyAccessor);
