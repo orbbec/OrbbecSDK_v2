@@ -10,6 +10,14 @@ DisparityBasedSensor::DisparityBasedSensor(IDevice *owner, OBSensorType sensorTy
     convertProfileAsDisparityBasedProfile();
 }
 
+void DisparityBasedSensor::start(std::shared_ptr<const StreamProfile> sp, FrameCallback callback) {
+    VideoSensor::start(sp, callback);
+}
+
+void DisparityBasedSensor::stop() {
+    VideoSensor::stop();
+}
+
 void DisparityBasedSensor::updateFormatFilterConfig(const std::vector<FormatFilterConfig> &configs) {
     VideoSensor::updateFormatFilterConfig(configs);
     convertProfileAsDisparityBasedProfile();
