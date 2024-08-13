@@ -17,22 +17,44 @@ const std::map<int, std::string> G300DeviceNameMap = {
 };
 
 G330DeviceInfo::G330DeviceInfo(const SourcePortInfoList groupedInfoList) {
-    auto portInfo = std::dynamic_pointer_cast<const USBSourcePortInfo>(groupedInfoList.front());
+    auto firstPortInfo = groupedInfoList.front();
+    if(IS_USB_PORT(firstPortInfo->portType)) {
+        auto portInfo = std::dynamic_pointer_cast<const USBSourcePortInfo>(groupedInfoList.front());
+        auto iter = G300DeviceNameMap.find(portInfo->pid);
+        if(iter != G300DeviceNameMap.end()) {
+            name_ = iter->second;
+        }
+        else {
+            name_ = "Gemini 300 series device";
+        }
 
-    auto iter = G300DeviceNameMap.find(portInfo->pid);
-    if(iter != G300DeviceNameMap.end()) {
-        name_ = iter->second;
+        pid_                = portInfo->pid;
+        vid_                = portInfo->vid;
+        uid_                = portInfo->uid;
+        deviceSn_           = portInfo->serial;
+        connectionType_     = portInfo->connSpec;
+        sourcePortInfoList_ = groupedInfoList;
+    }
+    else if(IS_NET_PORT(firstPortInfo->portType)) {
+        auto portInfo = std::dynamic_pointer_cast<const NetSourcePortInfo>(groupedInfoList.front());
+        auto iter     = G300DeviceNameMap.find(portInfo->pid);
+        if(iter != G300DeviceNameMap.end()) {
+            name_ = iter->second;
+        }
+        else {
+            name_ = "Gemini 300 series device";
+        }
+
+        pid_                = portInfo->pid;
+        vid_                = 0x2BC5;
+        uid_                = portInfo->mac;
+        deviceSn_           = portInfo->serialNumber;
+        connectionType_     = "Ethernet";
+        sourcePortInfoList_ = groupedInfoList;
     }
     else {
-        name_ = "Gemini 300 series device";
+        throw invalid_value_exception("Invalid port type");
     }
-
-    pid_                = portInfo->pid;
-    vid_                = portInfo->vid;
-    uid_                = portInfo->uid;
-    deviceSn_           = portInfo->serial;
-    connectionType_     = portInfo->connSpec;
-    sourcePortInfoList_ = groupedInfoList;
 }
 
 G330DeviceInfo::~G330DeviceInfo() noexcept {}

@@ -35,6 +35,8 @@
 #include "G330DepthWorkModeManager.hpp"
 #include "G330SensorStreamStrategy.hpp"
 #include "G330PropertyAccessors.hpp"
+#include "G330NetDisparitySensor.hpp"
+#include "G330NetVideoSensor.hpp"
 
 #include <algorithm>
 
@@ -711,6 +713,7 @@ std::vector<std::shared_ptr<IFilter>> G330Device::createRecommendedPostProcessin
 
 
 G330NetDevice::G330NetDevice(const std::shared_ptr<const IDeviceEnumInfo> &info) : DeviceBase(info) {
+    LOG_INFO("Create {} net device.", info->getName());
     init();
 }
 
@@ -823,7 +826,7 @@ void G330NetDevice::initModeSensorList() {
             [this, depthPortInfo]() {
                 auto platform = Platform::getInstance();
                 auto port     = platform->getSourcePort(depthPortInfo);
-                auto sensor   = std::make_shared<DisparityBasedSensor>(this, OB_SENSOR_DEPTH, port);
+                auto sensor   = std::make_shared<G330NetDisparitySensor>(this, OB_SENSOR_DEPTH, port);
 
                 sensor->updateFormatFilterConfig({ { FormatFilterPolicy::REMOVE, OB_FORMAT_Y8, OB_FORMAT_ANY, nullptr },
                                                    { FormatFilterPolicy::REMOVE, OB_FORMAT_NV12, OB_FORMAT_ANY, nullptr },
@@ -883,7 +886,7 @@ void G330NetDevice::initModeSensorList() {
             [this, irLeftPortInfo]() {
                 auto platform = Platform::getInstance();
                 auto port     = platform->getSourcePort(irLeftPortInfo);
-                auto sensor   = std::make_shared<VideoSensor>(this, OB_SENSOR_IR_LEFT, port);
+                auto sensor   = std::make_shared<G330NetVideoSensor>(this, OB_SENSOR_IR_LEFT, port);
 
                 std::vector<FormatFilterConfig> formatFilterConfigs = {
                     { FormatFilterPolicy::REMOVE, OB_FORMAT_Z16, OB_FORMAT_ANY, nullptr },  //
@@ -934,7 +937,7 @@ void G330NetDevice::initModeSensorList() {
             [this, irRightPortInfo]() {
                 auto platform = Platform::getInstance();
                 auto port     = platform->getSourcePort(irRightPortInfo);
-                auto sensor   = std::make_shared<VideoSensor>(this, OB_SENSOR_IR_RIGHT, port);
+                auto sensor   = std::make_shared<G330NetVideoSensor>(this, OB_SENSOR_IR_RIGHT, port);
 
                 std::vector<FormatFilterConfig> formatFilterConfigs = {
                     { FormatFilterPolicy::REMOVE, OB_FORMAT_Z16, OB_FORMAT_ANY, nullptr },   //
@@ -1001,7 +1004,7 @@ void G330NetDevice::initModeSensorList() {
             [this, colorPortInfo]() {
                 auto platform = Platform::getInstance();
                 auto port     = platform->getSourcePort(colorPortInfo);
-                auto sensor   = std::make_shared<VideoSensor>(this, OB_SENSOR_COLOR, port);
+                auto sensor   = std::make_shared<G330NetVideoSensor>(this, OB_SENSOR_COLOR, port);
 
                 std::vector<FormatFilterConfig> formatFilterConfigs = {
                     { FormatFilterPolicy::REMOVE, OB_FORMAT_NV12, OB_FORMAT_ANY, nullptr },
@@ -1140,25 +1143,18 @@ void G330NetDevice::initModeProperties() {
             propertyServer->registerProperty(OB_PROP_COLOR_POWER_LINE_FREQUENCY_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_COLOR_BACKLIGHT_COMPENSATION_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_COLOR_AUTO_EXPOSURE_PRIORITY_INT, "rw", "rw", vendorPropertyAccessor);
+            propertyServer->registerProperty(OB_RAW_DATA_STREAM_PROFILE_LIST, "", "r", vendorPropertyAccessor);
+
         }
         else if(sensor == OB_SENSOR_DEPTH) {
-            auto uvcPropertyAccessor = std::make_shared<LazyExtensionPropertyAccessor>([this, &sourcePortInfo]() {
+            auto vendorPropertyAccessor = std::make_shared<LazyExtensionPropertyAccessor>([this, &sourcePortInfo]() {
                 auto platform = Platform::getInstance();
                 auto port     = platform->getSourcePort(sourcePortInfo);
                 auto accessor = std::make_shared<VendorPropertyAccessor>(this, port);
                 return accessor;
             });
-            propertyServer->registerProperty(OB_PROP_DEPTH_GAIN_INT, "rw", "rw", uvcPropertyAccessor);
 
-            auto vendorPropertyAccessor = std::make_shared<LazyExtensionPropertyAccessor>([this, &sourcePortInfo]() {
-                auto platform = Platform::getInstance();
-                auto port     = platform->getSourcePort(sourcePortInfo);
-                // auto uvcDevicePort = std::dynamic_pointer_cast<UvcDevicePort>(port);
-                // uvcDevicePort->updateXuUnit(OB_G330_XU_UNIT);  // update xu unit to g330 xu unit
-                auto vendorPropertyAccessor = std::make_shared<VendorPropertyAccessor>(this, port);
-                return vendorPropertyAccessor;
-            });
-
+            propertyServer->registerProperty(OB_PROP_DEPTH_GAIN_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_DEPTH_EXPOSURE_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_COLOR_EXPOSURE_INT, "rw", "rw", vendorPropertyAccessor);  // using vendor property accessor
@@ -1219,6 +1215,7 @@ void G330NetDevice::initModeProperties() {
             propertyServer->registerProperty(OB_PROP_DEVICE_RESET_BOOL, "", "w", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_RAW_DATA_DEPTH_ALG_MODE_LIST, "", "r", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_STRUCT_CURRENT_DEPTH_ALG_MODE, "", "rw", vendorPropertyAccessor);
+            propertyServer->registerProperty(OB_RAW_DATA_STREAM_PROFILE_LIST, "", "r", vendorPropertyAccessor);
         }
         else if(sensor == OB_SENSOR_ACCEL) {
             auto imuCorrectorFilter = getSensorFrameFilter("IMUCorrector", sensor);

@@ -2,6 +2,7 @@
 #include "exception/ObException.hpp"
 #include "utils/Utils.hpp"
 #include "RTPStreamPort.hpp"
+#include "logger/Logger.hpp"
 
 namespace libobsensor {
 
@@ -160,6 +161,7 @@ SourcePortInfoList EthernetPal::querySourcePortInfos() {
                 std::make_shared<NetDataStreamPortInfo>(info.ip, static_cast<uint16_t>(8900), DEFAULT_CMD_PORT, info.mac, info.sn, info.pid));
         }
         else if(info.pid == PID_GEMINI335LE) {
+            LOG_INFO("Create 335L rtp stream portInfo.");
             sourcePortInfoList_.push_back(
                 std::make_shared<RTPStreamPortInfo>(info.ip, static_cast<uint16_t>(20000), DEFAULT_CMD_PORT, OB_STREAM_COLOR, info.mac, info.sn, info.pid));
             sourcePortInfoList_.push_back(

@@ -20,4 +20,8 @@ target_sources(
             ${CMAKE_CURRENT_LIST_DIR}/G330DeviceSyncConfigurator.hpp
             ${CMAKE_CURRENT_LIST_DIR}/G330PropertyAccessors.hpp
             ${CMAKE_CURRENT_LIST_DIR}/G330PropertyAccessors.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/G330NetDisparitySensor.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/G330NetDisparitySensor.hpp
+            ${CMAKE_CURRENT_LIST_DIR}/G330NetVideoSensor.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/G330NetVideoSensor.hpp
 )
