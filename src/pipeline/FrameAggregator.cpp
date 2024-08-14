@@ -267,6 +267,7 @@ void FrameAggregator::setCallback(FrameCallback callback) {
 }
 
 void FrameAggregator::clearAllFrameQueue() {
+    std::unique_lock<std::recursive_mutex> lk(srcFrameQueueMutex_);
     for(auto &item: srcFrameQueueMap_) {
         auto &queue = item.second.queue;
         while(!queue.empty()) {

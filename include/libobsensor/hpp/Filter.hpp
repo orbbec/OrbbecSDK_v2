@@ -215,6 +215,15 @@ private:
         auto filter = static_cast<Filter *>(userData);
         filter->callback_(std::make_shared<Frame>(frame));
     }
+
+    /**
+     * In order to be compatible with the closed source version of orbbecsdk's interface.
+     * We recommend using the latest interface names for a better experience.
+     */
+public:
+    virtual const char *type(){
+        return getName().c_str();
+    }
 };
 
 /**

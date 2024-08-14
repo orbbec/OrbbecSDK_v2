@@ -139,6 +139,7 @@ private:
 
     float              depth_unit_mm_;          // depth scale
     bool               add_target_distortion_;  // distort align frame with target coefficent
+    bool               need_to_undistort_depth_;    // undistort depth is necessary
     bool               gap_fill_copy_;          // filling cracks with copy
     OBCameraIntrinsic  depth_intric_{};
     OBCameraIntrinsic  rgb_intric_{};

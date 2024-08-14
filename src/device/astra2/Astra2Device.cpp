@@ -19,6 +19,7 @@
 #include "sensor/imu/AccelSensor.hpp"
 #include "sensor/imu/GyroSensor.hpp"
 #include "timestamp/GlobalTimestampFitter.hpp"
+#include "timestamp/DeviceClockSynchronizer.hpp"
 #include "property/VendorPropertyAccessor.hpp"
 #include "property/UvcPropertyAccessor.hpp"
 #include "property/PropertyServer.hpp"
@@ -52,6 +53,7 @@ void Astra2Device::init() {
     initProperties();
 
     fetchDeviceInfo();
+    fetchExtensionInfo();
 
     videoFrameTimestampCalculatorCreator_ = [this]() { return std::make_shared<Astra2VideoFrameTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_); };
 
@@ -69,27 +71,11 @@ void Astra2Device::init() {
 
     static const std::vector<OBMultiDeviceSyncMode> supportedSyncModes     = { OB_MULTI_DEVICE_SYNC_MODE_FREE_RUN, OB_MULTI_DEVICE_SYNC_MODE_STANDALONE,
                                                                                OB_MULTI_DEVICE_SYNC_MODE_PRIMARY, OB_MULTI_DEVICE_SYNC_MODE_SECONDARY_SYNCED };
-    auto deviceSyncConfigurator = std::make_shared<Astra2DeviceSyncConfigurator>(this, supportedSyncModes);
+    auto                                            deviceSyncConfigurator = std::make_shared<Astra2DeviceSyncConfigurator>(this, supportedSyncModes);
     registerComponent(OB_DEV_COMPONENT_DEVICE_SYNC_CONFIGURATOR, deviceSyncConfigurator);
-}
 
-void Astra2Device::fetchDeviceInfo() {
-    auto propServer                   = getPropertyServer();
-    auto version                      = propServer->getStructureDataT<OBVersionInfo>(OB_STRUCT_VERSION);
-    deviceInfo_                       = std::make_shared<DeviceInfo>();
-    deviceInfo_->name_                = version.deviceName;
-    deviceInfo_->fwVersion_           = version.firmwareVersion;
-    deviceInfo_->deviceSn_            = version.serialNumber;
-    deviceInfo_->asicName_            = version.depthChip;
-    deviceInfo_->hwVersion_           = version.hardwareVersion;
-    deviceInfo_->type_                = static_cast<uint16_t>(version.deviceType);
-    deviceInfo_->supportedSdkVersion_ = version.sdkVersion;
-    deviceInfo_->pid_                 = enumInfo_->getPid();
-    deviceInfo_->vid_                 = enumInfo_->getVid();
-    deviceInfo_->uid_                 = enumInfo_->getUid();
-    deviceInfo_->connectionType_      = enumInfo_->getConnectionType();
-
-    // todo: fetch and parse extension info
+    auto deviceClockSynchronizer = std::make_shared<DeviceClockSynchronizer>(this, deviceTimeFreq_, 1000);
+    registerComponent(OB_DEV_COMPONENT_DEVICE_CLOCK_SYNCHRONIZER, deviceClockSynchronizer);
 }
 
 void Astra2Device::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
@@ -336,6 +322,9 @@ void Astra2Device::initSensorList() {
                 auto imuStreamerSharedPtr = imuStreamer.get();
                 auto sensor               = std::make_shared<AccelSensor>(this, port, imuStreamerSharedPtr);
 
+                auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
+                sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
+
                 initSensorStreamProfile(sensor);
 
                 return sensor;
@@ -351,6 +340,9 @@ void Astra2Device::initSensorList() {
                 auto imuStreamer          = getComponentT<ImuStreamer>(OB_DEV_COMPONENT_IMU_STREAMER);
                 auto imuStreamerSharedPtr = imuStreamer.get();
                 auto sensor               = std::make_shared<GyroSensor>(this, port, imuStreamerSharedPtr);
+
+                auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
+                sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
 
                 initSensorStreamProfile(sensor);
 

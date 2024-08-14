@@ -16,8 +16,8 @@ GlobalTimestampCalculator::GlobalTimestampCalculator(IDevice *owner, uint64_t de
 }
 
 void GlobalTimestampCalculator::calculate(std::shared_ptr<Frame> frame) {
-    uint64_t srcTimestamp    = frame->getTimeStampUsec();
-    auto     linearFuncParam = globalTimestampFitter_->getLinearFuncParam();
+    auto srcTimestamp    = static_cast<uint32_t>(frame->getTimeStampUsec());  // get timestamp from frame and keep low 32 bits
+    auto linearFuncParam = globalTimestampFitter_->getLinearFuncParam();
 
     // Convert to a timestamp with the same frequency as the device clock frequency
     double   transformedTsp              = static_cast<double>(srcTimestamp) * deviceTimeFreq_ / 1000000.0;
@@ -50,8 +50,32 @@ void GlobalTimestampCalculator::calculate(std::shared_ptr<Frame> frame) {
 
 void GlobalTimestampCalculator::clear() {}
 
+FrameTimestampCalculatorDirectly::FrameTimestampCalculatorDirectly(IDevice *device, uint64_t clockFreq) : DeviceComponentBase(device), clockFreq_(clockFreq) {}
+
+void FrameTimestampCalculatorDirectly::calculate(std::shared_ptr<Frame> frame) {
+    auto srcTimestamp    = frame->getTimeStampUsec();
+    auto outputTimestamp = static_cast<double>(srcTimestamp) * clockFreq_ / 1000000;
+    frame->setTimeStampUsec(static_cast<uint64_t>(outputTimestamp));
+}
+
 FrameTimestampCalculatorBaseDeviceTime::FrameTimestampCalculatorBaseDeviceTime(IDevice *device, uint64_t deviceTimeFreq, uint64_t frameTimeFreq)
-    : DeviceComponentBase(device), deviceTimeFreq_(deviceTimeFreq), frameTimeFreq_(frameTimeFreq) {}
+    : DeviceComponentBase(device), deviceTimeFreq_(deviceTimeFreq), frameTimeFreq_(frameTimeFreq) {
+    auto                  propServer = device->getPropertyServer();
+    std::vector<uint32_t> supportedProps;
+    if(propServer->isPropertySupported(OB_PROP_TIMER_RESET_SIGNAL_BOOL, PROP_OP_WRITE, PROP_ACCESS_INTERNAL)) {
+        supportedProps.push_back(OB_PROP_TIMER_RESET_SIGNAL_BOOL);
+    }
+    if(propServer->isPropertySupported(OB_STRUCT_DEVICE_TIME, PROP_OP_WRITE, PROP_ACCESS_INTERNAL)) {
+        supportedProps.push_back(OB_STRUCT_DEVICE_TIME);
+    }
+    if(!supportedProps.empty()) {
+        propServer->registerAccessCallback(supportedProps, [&](uint32_t, const uint8_t *, size_t, PropertyOperationType operationType) {
+            if(operationType == PROP_OP_WRITE) {
+                clear();
+            }
+        });
+    }
+}
 
 void FrameTimestampCalculatorBaseDeviceTime::calculate(std::shared_ptr<Frame> frame) {
     auto srcTimestamp = frame->getTimeStampUsec();
@@ -74,10 +98,10 @@ uint64_t FrameTimestampCalculatorBaseDeviceTime::calculate(uint64_t srcTimestamp
     bool tspDecrease = (srcTimestamp < prevSrcTsp_);
 
     // Determine whether the data frame timestamp difference is similar to the system timestamp difference
-    uint64_t curHostTsp    = utils::getNowTimesMs();
-    int64_t  srcTspDiffMs  = static_cast<int64_t>((static_cast<double>(srcTimestamp) - prevSrcTsp_) / frameTimeFreq_ * 1000);  // Convert unit to milliseconds
-    int64_t  hostTspDiffMs = curHostTsp - prevHostTsp_;
-    uint64_t prevSrcTspMs  = static_cast<uint64_t>(static_cast<double>(prevSrcTsp_) / frameTimeFreq_ * 1000);
+    uint64_t curHostTsp      = utils::getNowTimesMs();
+    int64_t  srcTspDiffMs    = static_cast<int64_t>((static_cast<double>(srcTimestamp) - prevSrcTsp_) / frameTimeFreq_ * 1000);  // Convert unit to milliseconds
+    int64_t  hostTspDiffMs   = curHostTsp - prevHostTsp_;
+    uint64_t prevSrcTspMs    = static_cast<uint64_t>(static_cast<double>(prevSrcTsp_) / frameTimeFreq_ * 1000);
     bool     tspDiffAbnormal = ((static_cast<double>(hostTspDiffMs) - srcTspDiffMs) >= prevSrcTspMs / 2);
 
     if(baseDevTime_ == 0 || ((tspDecrease || tspDiffAbnormal) && (srcTimestamp != 0 || prevSrcTsp_ != 0)) || prevSrcTspMs <= 50) {
@@ -89,7 +113,7 @@ uint64_t FrameTimestampCalculatorBaseDeviceTime::calculate(uint64_t srcTimestamp
             auto owner          = getOwner();
             auto propertyServer = owner->getPropertyServer();
             auto devTime        = propertyServer->getStructureDataT<OBDeviceTime>(OB_STRUCT_DEVICE_TIME);
-            baseDevTime_        = devTime.time;
+            baseDevTime_        = static_cast<uint64_t>((static_cast<double>(devTime.time) + devTime.rtt / 2) / deviceTimeFreq_ * frameTimeFreq_);
         }
 
         if((baseDevTime_ & ~BASE_DEV_TIME_MASK) <= srcTimestamp && baseDevTime_ > TSP_OVERFLOW_32BIT) {

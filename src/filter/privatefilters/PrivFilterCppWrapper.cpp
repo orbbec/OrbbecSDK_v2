@@ -1,5 +1,6 @@
 #include "PrivFilterCppWrapper.hpp"
 #include "logger/Logger.hpp"
+#include "exception/ObException.hpp"
 
 namespace libobsensor {
 PrivFilterCppWrapper::PrivFilterCppWrapper(const std::string &filterName, std::shared_ptr<ob_priv_filter_context> filterCtx)
@@ -61,9 +62,8 @@ std::shared_ptr<Frame> PrivFilterCppWrapper::processFunc(std::shared_ptr<const F
     delete c_frame;
 
     if(error) {
-        LOG_WARN("Private filter {} process failed: {}", name_, error->message);
-        delete error;
-        return nullptr;
+        // LOG_WARN("Private filter {} process failed: {}", name_, error->message);
+        throw unrecoverable_exception(std::string(error->message),error->exception_type);
     }
     return resultFrame;
 }

@@ -229,7 +229,7 @@ void TOFDeviceCommandAlgParamManager::fetchParamFromDevice() {
             memcpy(&param.depthDistortion, &cameraParam.depthDistortion, sizeof(param.depthDistortion));
             param.depthDistortion.model = OB_DISTORTION_BROWN_CONRADY_K6;
             memcpy(&param.rgbDistortion, &cameraParam.rgbDistortion, sizeof(param.rgbDistortion));
-            param.rgbDistortion.model = OB_DISTORTION_BROWN_CONRADY;
+            param.rgbDistortion.model = OB_DISTORTION_BROWN_CONRADY_K6;
             param.transform           = cameraParam.transform;
             param.isMirrored          = false;
             calibrationCameraParamList_.emplace_back(param);

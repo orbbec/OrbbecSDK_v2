@@ -38,6 +38,8 @@ std::vector<std::string> split(const std::string &s, const std::string &separato
         res.push_back(str);
         p = strtok(NULL, d);
     }
+    delete[] strs;
+    delete[] d;
     return res;
 }
 

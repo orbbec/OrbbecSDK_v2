@@ -8,52 +8,51 @@
 #include "sensor/imu/AccelSensor.hpp"
 #include "sensor/imu/GyroSensor.hpp"
 #include "usb/uvc/UvcDevicePort.hpp"
-#include "FilterFactory.hpp"
-#include "component/metadata/FrameMetadataParserContainer.hpp"
-#include "component/timestamp/GlobalTimestampFitter.hpp"
-#include "component/property/VendorPropertyAccessor.hpp"
-#include "component/property/UvcPropertyAccessor.hpp"
-#include "component/property/PropertyServer.hpp"
-#include "component/property/CommonPropertyAccessors.hpp"
-#include "component/property/FilterPropertyAccessors.hpp"
-#include "component/monitor/DeviceMonitor.hpp"
 
+#include "metadata/FrameMetadataParserContainer.hpp"
+#include "timestamp/GlobalTimestampFitter.hpp"
+#include "timestamp/FrameTimestampCalculator.hpp"
+#include "timestamp/DeviceClockSynchronizer.hpp"
+#include "property/VendorPropertyAccessor.hpp"
+#include "property/UvcPropertyAccessor.hpp"
+#include "property/PropertyServer.hpp"
+#include "property/CommonPropertyAccessors.hpp"
+#include "property/FilterPropertyAccessors.hpp"
+#include "monitor/DeviceMonitor.hpp"
+#include "param/AlgParamManager.hpp"
+
+#include "FilterFactory.hpp"
 #include "publicfilters/FormatConverterProcess.hpp"
 #include "publicfilters/IMUCorrector.hpp"
 
-#include "gemini330/G330DeviceSyncConfigurator.hpp"
-#include "timestamp/GlobalTimestampFitter.hpp"
-#include "param/AlgParamManager.hpp"
 #include "utils/BufferParser.hpp"
 #include "utils/PublicTypeHelper.hpp"
 
+// todo: move net mode code to a independent file and class.
 #if defined(BUILD_NET_PAL)
 #include "ethernet/RTSPStreamPort.hpp"
 #endif
 
 namespace libobsensor {
-FemtoMegaDevice::FemtoMegaDevice(const std::shared_ptr<const IDeviceEnumInfo> &info) : DeviceBase(info) {
+FemtoMegaUsbDevice::FemtoMegaUsbDevice(const std::shared_ptr<const IDeviceEnumInfo> &info) : DeviceBase(info) {
     init();
 }
 
-FemtoMegaDevice::~FemtoMegaDevice() noexcept {}
+FemtoMegaUsbDevice::~FemtoMegaUsbDevice() noexcept {}
 
-void FemtoMegaDevice::init() {
-    std::string connectType = enumInfo_->getConnectionType();
-    if(connectType == "Ethernet") {
-        initNetModeSensorList();
-        initNetModeProperties();
-        fetchDeviceInfo();
-        fetchNetModeAllProfileList();
-    }
-    else {
-        initSensorList();
-        initProperties();
-        fetchDeviceInfo();
+void FemtoMegaUsbDevice::init() {
+    initSensorList();
+    initProperties();
+
+    fetchDeviceInfo();
+    fetchExtensionInfo();
+    if(getFirmwareVersionInt() >= 10209) {
+        deviceTimeFreq_ = 1000000;
+        frameTimeFreq_  = 1000000;
     }
 
-    // auto GlobalTimestampFilter = std::make_shared<GlobalTimestampFilter>(this);
-    // registerComponent(OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER, GlobalTimestampFilter);
+    auto globalTimestampFilter = std::make_shared<GlobalTimestampFitter>(this);
+    registerComponent(OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER, globalTimestampFilter);
 
     auto algParamManager = std::make_shared<TOFDeviceCommandAlgParamManager>(this);
     registerComponent(OB_DEV_COMPONENT_ALG_PARAM_MANAGER, algParamManager);
@@ -63,31 +62,12 @@ void FemtoMegaDevice::init() {
     //                                                                            };
     // auto                                            deviceSyncConfigurator = std::make_shared<G330DeviceSyncConfigurator>(this, supportedSyncModes);
     // registerComponent(OB_DEV_COMPONENT_DEVICE_SYNC_CONFIGURATOR, deviceSyncConfigurator);
+
+    auto deviceClockSynchronizer = std::make_shared<DeviceClockSynchronizer>(this);
+    registerComponent(OB_DEV_COMPONENT_DEVICE_CLOCK_SYNCHRONIZER, deviceClockSynchronizer);
 }
 
-void FemtoMegaDevice::fetchDeviceInfo() {
-    auto propServer = getPropertyServer();
-
-    auto version                      = propServer->getStructureDataT<OBVersionInfo>(OB_STRUCT_VERSION);
-    deviceInfo_                       = std::make_shared<DeviceInfo>();
-    deviceInfo_->name_                = version.deviceName;
-    deviceInfo_->fwVersion_           = version.firmwareVersion;
-    deviceInfo_->deviceSn_            = version.serialNumber;
-    deviceInfo_->asicName_            = version.depthChip;
-    deviceInfo_->hwVersion_           = version.hardwareVersion;
-    deviceInfo_->type_                = static_cast<uint16_t>(version.deviceType);
-    deviceInfo_->supportedSdkVersion_ = version.sdkVersion;
-    deviceInfo_->pid_                 = enumInfo_->getPid();
-    deviceInfo_->vid_                 = enumInfo_->getVid();
-    deviceInfo_->uid_                 = enumInfo_->getUid();
-    deviceInfo_->connectionType_      = enumInfo_->getConnectionType();
-
-    if(deviceInfo_->name_.find("Orbbec") == std::string::npos) {
-        deviceInfo_->name_ = "" + deviceInfo_->name_;
-    }
-}
-
-void FemtoMegaDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
+void FemtoMegaUsbDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
     auto sensorType    = sensor->getSensorType();
     auto streamProfile = StreamProfileFactory::getDefaultStreamProfileFromEnvConfig(deviceInfo_->name_, sensorType);
     if(streamProfile) {
@@ -117,7 +97,7 @@ void FemtoMegaDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
     // });
 }
 
-void FemtoMegaDevice::initSensorList() {
+void FemtoMegaUsbDevice::initSensorList() {
     registerComponent(OB_DEV_COMPONENT_FRAME_PROCESSOR_FACTORY, [this]() {
         std::shared_ptr<FrameProcessorFactory> factory;
         TRY_EXECUTE({ factory = std::make_shared<FrameProcessorFactory>(this); })
@@ -139,12 +119,12 @@ void FemtoMegaDevice::initSensorList() {
                 auto port     = platform->getSourcePort(depthPortInfo);
 
                 auto sensor = std::make_shared<VideoSensor>(this, OB_SENSOR_DEPTH, port);
-                sensor->setFrameTimestampCalculator(videoFrameTimestampCalculator_);
 
-                // auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR, false);
-                // if(frameProcessor) {
-                //     sensor->setFrameProcessor(frameProcessor.get());
-                // }
+                auto videoFrameTimestampCalculator = std::make_shared<FrameTimestampCalculatorOverUvcSCR>(this, frameTimeFreq_);
+                sensor->setFrameTimestampCalculator(videoFrameTimestampCalculator);
+
+                auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
+                sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
 
                 initSensorStreamProfile(sensor);
                 return sensor;
@@ -183,7 +163,12 @@ void FemtoMegaDevice::initSensorList() {
                 auto port     = platform->getSourcePort(irPortInfo);
 
                 auto sensor = std::make_shared<VideoSensor>(this, OB_SENSOR_IR, port);
-                sensor->setFrameTimestampCalculator(videoFrameTimestampCalculator_);
+
+                auto videoFrameTimestampCalculator = std::make_shared<FrameTimestampCalculatorOverUvcSCR>(this, frameTimeFreq_);
+                sensor->setFrameTimestampCalculator(videoFrameTimestampCalculator);
+
+                auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
+                sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
 
                 initSensorStreamProfile(sensor);
                 return sensor;
@@ -211,26 +196,23 @@ void FemtoMegaDevice::initSensorList() {
             [this, colorPortInfo]() {
                 auto platform = Platform::getInstance();
                 auto port     = platform->getSourcePort(colorPortInfo);
-                auto sensor = std::make_shared<VideoSensor>(this, OB_SENSOR_COLOR, port);
+                auto sensor   = std::make_shared<VideoSensor>(this, OB_SENSOR_COLOR, port);
 
-                std::vector<FormatFilterConfig> formatFilterConfigs = {
-                    // { FormatFilterPolicy::REMOVE, OB_FORMAT_NV12, OB_FORMAT_ANY, nullptr },
-                    //  { FormatFilterPolicy::REPLACE, OB_FORMAT_BYR2, OB_FORMAT_RW16, nullptr },
-                };
+                std::vector<FormatFilterConfig> formatFilterConfigs = {};
 
                 auto formatConverter = getSensorFrameFilter("FormatConverter", OB_SENSOR_COLOR, false);
                 if(formatConverter) {
                     formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_YUYV, OB_FORMAT_RGB, formatConverter });
-                    //  formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_YUYV, OB_FORMAT_RGBA, formatConverter });
-                    //  formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_YUYV, OB_FORMAT_BGR, formatConverter });
                     formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_YUYV, OB_FORMAT_BGRA, formatConverter });
-                    // formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_YUYV, OB_FORMAT_Y16, formatConverter });
-                    //  formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_YUYV, OB_FORMAT_Y8, formatConverter });
                 }
 
                 sensor->updateFormatFilterConfig(formatFilterConfigs);
-                sensor->setFrameMetadataParserContainer(colorMdParserContainer_);
-                sensor->setFrameTimestampCalculator(videoFrameTimestampCalculator_);
+
+                auto videoFrameTimestampCalculator = std::make_shared<FrameTimestampCalculatorOverUvcSCR>(this, frameTimeFreq_);
+                sensor->setFrameTimestampCalculator(videoFrameTimestampCalculator);
+
+                auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
+                sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
 
                 auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR, false);
                 if(frameProcessor) {
@@ -251,9 +233,8 @@ void FemtoMegaDevice::initSensorList() {
         });
     }
 
-    auto imuPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(), [](const std::shared_ptr<const SourcePortInfo> &portInfo) {
-        return portInfo->portType == SOURCE_PORT_USB_HID; 
-    });
+    auto imuPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(),
+                                        [](const std::shared_ptr<const SourcePortInfo> &portInfo) { return portInfo->portType == SOURCE_PORT_USB_HID; });
 
     if(imuPortInfoIter != sourcePortInfoList.end()) {
         auto imuPortInfo = *imuPortInfoIter;
@@ -279,6 +260,9 @@ void FemtoMegaDevice::initSensorList() {
                 auto imuStreamerSharedPtr = imuStreamer.get();
                 auto sensor               = std::make_shared<AccelSensor>(this, port, imuStreamerSharedPtr);
 
+                auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
+                sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
+
                 initSensorStreamProfile(sensor);
 
                 return sensor;
@@ -295,6 +279,9 @@ void FemtoMegaDevice::initSensorList() {
                 auto imuStreamerSharedPtr = imuStreamer.get();
                 auto sensor               = std::make_shared<GyroSensor>(this, port, imuStreamerSharedPtr);
 
+                auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
+                sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
+
                 initSensorStreamProfile(sensor);
 
                 return sensor;
@@ -304,7 +291,7 @@ void FemtoMegaDevice::initSensorList() {
     }
 }
 
-void FemtoMegaDevice::initProperties() {
+void FemtoMegaUsbDevice::initProperties() {
     auto propertyServer = std::make_shared<PropertyServer>(this);
 
     auto sensors = getSensorTypeList();
@@ -339,11 +326,12 @@ void FemtoMegaDevice::initProperties() {
             });
 
             propertyServer->registerProperty(OB_PROP_DEPTH_ALIGN_HARDWARE_BOOL, "rw", "rw", vendorPropertyAccessor);
+            propertyServer->registerProperty(OB_PROP_DEPTH_ALIGN_HARDWARE_MODE_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_TIMESTAMP_OFFSET_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_FAN_WORK_MODE_INT, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_DEPTH_SOFT_FILTER_BOOL, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_DEPTH_MAX_DIFF_INT, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_DEPTH_MAX_SPECKLE_SIZE_INT, "rw", "rw", vendorPropertyAccessor);
+            // propertyServer->registerProperty(OB_PROP_DEPTH_SOFT_FILTER_BOOL, "rw", "rw", vendorPropertyAccessor);
+            // propertyServer->registerProperty(OB_PROP_DEPTH_MAX_DIFF_INT, "rw", "rw", vendorPropertyAccessor);
+            // propertyServer->registerProperty(OB_PROP_DEPTH_MAX_SPECKLE_SIZE_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_EXTERNAL_SIGNAL_RESET_BOOL, "", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_HEARTBEAT_BOOL, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_DEVICE_COMMUNICATION_TYPE_INT, "rw", "rw", vendorPropertyAccessor);
@@ -407,7 +395,43 @@ void FemtoMegaDevice::initProperties() {
     registerComponent(OB_DEV_COMPONENT_PROPERTY_SERVER, propertyServer, true);
 }
 
-void FemtoMegaDevice::initNetModeSensorList() {
+FemtoMegaNetDevice::FemtoMegaNetDevice(const std::shared_ptr<const IDeviceEnumInfo> &info) : DeviceBase(info) {
+    init();
+}
+
+FemtoMegaNetDevice::~FemtoMegaNetDevice() noexcept {}
+
+void FemtoMegaNetDevice::init() {
+    initSensorList();
+    initProperties();
+
+    fetchDeviceInfo();
+    fetchExtensionInfo();
+    fetchAllProfileList();
+
+    if(getFirmwareVersionInt() >= 10209) {
+        deviceTimeFreq_     = 1000000;
+        depthFrameTimeFreq_ = 1000000;
+    }
+
+    auto globalTimestampFilter = std::make_shared<GlobalTimestampFitter>(this);
+    registerComponent(OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER, globalTimestampFilter);
+
+    auto algParamManager = std::make_shared<TOFDeviceCommandAlgParamManager>(this);
+    registerComponent(OB_DEV_COMPONENT_ALG_PARAM_MANAGER, algParamManager);
+
+    // static const std::vector<OBMultiDeviceSyncMode> supportedSyncModes     = { OB_MULTI_DEVICE_SYNC_MODE_FREE_RUN, OB_MULTI_DEVICE_SYNC_MODE_STANDALONE,
+    //                                                                            OB_MULTI_DEVICE_SYNC_MODE_PRIMARY,
+    //                                                                            OB_MULTI_DEVICE_SYNC_MODE_SECONDARY_SYNCED
+    //                                                                            };
+    // auto                                            deviceSyncConfigurator = std::make_shared<G330DeviceSyncConfigurator>(this, supportedSyncModes);
+    // registerComponent(OB_DEV_COMPONENT_DEVICE_SYNC_CONFIGURATOR, deviceSyncConfigurator);
+
+    auto deviceClockSynchronizer = std::make_shared<DeviceClockSynchronizer>(this);
+    registerComponent(OB_DEV_COMPONENT_DEVICE_CLOCK_SYNCHRONIZER, deviceClockSynchronizer);
+}
+
+void FemtoMegaNetDevice::initSensorList() {
     registerComponent(OB_DEV_COMPONENT_FRAME_PROCESSOR_FACTORY, [this]() {
         std::shared_ptr<FrameProcessorFactory> factory;
         TRY_EXECUTE({ factory = std::make_shared<FrameProcessorFactory>(this); })
@@ -417,9 +441,8 @@ void FemtoMegaDevice::initNetModeSensorList() {
     auto        platform           = Platform::getInstance();
     const auto &sourcePortInfoList = enumInfo_->getSourcePortInfoList();
 
-    auto vendorPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(), [](const std::shared_ptr<const SourcePortInfo> &portInfo) {
-        return portInfo->portType == SOURCE_PORT_NET_VENDOR;
-    });
+    auto vendorPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(),
+                                           [](const std::shared_ptr<const SourcePortInfo> &portInfo) { return portInfo->portType == SOURCE_PORT_NET_VENDOR; });
 
     std::shared_ptr<const SourcePortInfo> vendorPortInfo;
     if(vendorPortInfoIter != sourcePortInfoList.end()) {
@@ -428,7 +451,7 @@ void FemtoMegaDevice::initNetModeSensorList() {
         registerSensorPortInfo(OB_SENSOR_IR, vendorPortInfo);
         registerSensorPortInfo(OB_SENSOR_COLOR, vendorPortInfo);
     }
-    
+
     auto depthPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(), [](const std::shared_ptr<const SourcePortInfo> &portInfo) {
         return portInfo->portType == SOURCE_PORT_NET_RTSP && std::dynamic_pointer_cast<const RTSPStreamPortInfo>(portInfo)->streamType == OB_STREAM_DEPTH;
     });
@@ -440,11 +463,16 @@ void FemtoMegaDevice::initNetModeSensorList() {
             [this, depthPortInfo]() {
                 auto platform = Platform::getInstance();
                 auto port     = platform->getSourcePort(depthPortInfo);
-                
+
                 auto sensor = std::make_shared<VideoSensor>(this, OB_SENSOR_DEPTH, port);
+
+                auto videoFrameTimestampCalculator_ = std::make_shared<FrameTimestampCalculatorDirectly>(this, depthFrameTimeFreq_);
                 sensor->setFrameTimestampCalculator(videoFrameTimestampCalculator_);
 
-                initNetModeSensorStreamProfileList(sensor);
+                auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, depthFrameTimeFreq_);
+                sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
+
+                initSensorStreamProfile(sensor);
                 return sensor;
             },
             true);
@@ -479,9 +507,14 @@ void FemtoMegaDevice::initNetModeSensorList() {
                 auto port     = platform->getSourcePort(irPortInfo);
 
                 auto sensor = std::make_shared<VideoSensor>(this, OB_SENSOR_IR, port);
+
+                auto videoFrameTimestampCalculator_ = std::make_shared<FrameTimestampCalculatorDirectly>(this, depthFrameTimeFreq_);
                 sensor->setFrameTimestampCalculator(videoFrameTimestampCalculator_);
 
-                initNetModeSensorStreamProfileList(sensor);
+                auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, depthFrameTimeFreq_);
+                sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
+
+                initSensorStreamProfile(sensor);
                 return sensor;
             },
             true);
@@ -505,7 +538,7 @@ void FemtoMegaDevice::initNetModeSensorList() {
             [this, colorPortInfo]() {
                 auto platform = Platform::getInstance();
                 auto port     = platform->getSourcePort(colorPortInfo);
-                auto sensor = std::make_shared<VideoSensor>(this, OB_SENSOR_COLOR, port);
+                auto sensor   = std::make_shared<VideoSensor>(this, OB_SENSOR_COLOR, port);
 
                 std::vector<FormatFilterConfig> formatFilterConfigs = {
                     // { FormatFilterPolicy::REMOVE, OB_FORMAT_NV12, OB_FORMAT_ANY, nullptr },
@@ -523,15 +556,18 @@ void FemtoMegaDevice::initNetModeSensorList() {
                 }
 
                 sensor->updateFormatFilterConfig(formatFilterConfigs);
-                sensor->setFrameMetadataParserContainer(colorMdParserContainer_);
+                auto videoFrameTimestampCalculator_ = std::make_shared<FrameTimestampCalculatorBaseDeviceTime>(this, deviceTimeFreq_, colorFrameTimeFreq_);
                 sensor->setFrameTimestampCalculator(videoFrameTimestampCalculator_);
+
+                auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, colorFrameTimeFreq_);
+                sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
 
                 auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR, false);
                 if(frameProcessor) {
                     sensor->setFrameProcessor(frameProcessor.get());
                 }
 
-                initNetModeSensorStreamProfileList(sensor);
+                initSensorStreamProfile(sensor);
 
                 return sensor;
             },
@@ -572,6 +608,9 @@ void FemtoMegaDevice::initNetModeSensorList() {
                 auto imuStreamerSharedPtr = imuStreamer.get();
                 auto sensor               = std::make_shared<AccelSensor>(this, port, imuStreamerSharedPtr);
 
+                auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, depthFrameTimeFreq_);
+                sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
+
                 initSensorStreamProfile(sensor);
                 return sensor;
             },
@@ -587,6 +626,9 @@ void FemtoMegaDevice::initNetModeSensorList() {
                 auto imuStreamerSharedPtr = imuStreamer.get();
                 auto sensor               = std::make_shared<GyroSensor>(this, port, imuStreamerSharedPtr);
 
+                auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, depthFrameTimeFreq_);
+                sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
+
                 initSensorStreamProfile(sensor);
 
                 return sensor;
@@ -596,14 +638,14 @@ void FemtoMegaDevice::initNetModeSensorList() {
     }
 }
 
-void FemtoMegaDevice::initNetModeProperties() {
+void FemtoMegaNetDevice::initProperties() {
     auto propertyServer = std::make_shared<PropertyServer>(this);
-    auto sensors = getSensorTypeList();
+    auto sensors        = getSensorTypeList();
     for(auto &sensor: sensors) {
         auto  platform       = Platform::getInstance();
         auto &sourcePortInfo = getSensorPortInfo(sensor);
         if(sensor == OB_SENSOR_COLOR) {
-            //TODO::LazyExtensionPropertyAccessor？
+            // TODO::LazyExtensionPropertyAccessor？
             auto vendorPropertyAccessor = std::make_shared<LazyPropertyAccessor>([this, &sourcePortInfo]() {
                 auto platform = Platform::getInstance();
                 auto port     = platform->getSourcePort(sourcePortInfo);
@@ -631,20 +673,21 @@ void FemtoMegaDevice::initNetModeProperties() {
             });
 
             propertyServer->registerProperty(OB_PROP_DEPTH_ALIGN_HARDWARE_BOOL, "rw", "rw", vendorPropertyAccessor);
+            propertyServer->registerProperty(OB_PROP_DEPTH_ALIGN_HARDWARE_MODE_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_TIMESTAMP_OFFSET_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_FAN_WORK_MODE_INT, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_DEPTH_SOFT_FILTER_BOOL, "rw", "rw", vendorPropertyAccessor); //
-            propertyServer->registerProperty(OB_PROP_DEPTH_MAX_DIFF_INT, "rw", "rw", vendorPropertyAccessor); //
-            propertyServer->registerProperty(OB_PROP_DEPTH_MAX_SPECKLE_SIZE_INT, "rw", "rw", vendorPropertyAccessor);//
+            // propertyServer->registerProperty(OB_PROP_DEPTH_SOFT_FILTER_BOOL, "rw", "rw", vendorPropertyAccessor);      //
+            // propertyServer->registerProperty(OB_PROP_DEPTH_MAX_DIFF_INT, "rw", "rw", vendorPropertyAccessor);          //
+            // propertyServer->registerProperty(OB_PROP_DEPTH_MAX_SPECKLE_SIZE_INT, "rw", "rw", vendorPropertyAccessor);  //
             propertyServer->registerProperty(OB_PROP_EXTERNAL_SIGNAL_RESET_BOOL, "", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_HEARTBEAT_BOOL, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_DEVICE_COMMUNICATION_TYPE_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_SWITCH_IR_MODE_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_FAN_WORK_LEVEL_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_FAN_WORK_SPEED_INT, "rw", "rw", vendorPropertyAccessor);
-            //TODO: ADD?
-            //propertyServer->registerProperty(OB_PROP_USB_POWER_STATE_INT, "r", "r", vendorPropertyAccessor);
-            //propertyServer->registerProperty(OB_PROP_DC_POWER_STATE_INT, "r", "r", vendorPropertyAccessor);
+            // TODO: ADD?
+            // propertyServer->registerProperty(OB_PROP_USB_POWER_STATE_INT, "r", "r", vendorPropertyAccessor);
+            // propertyServer->registerProperty(OB_PROP_DC_POWER_STATE_INT, "r", "r", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_STRUCT_VERSION, "", "r", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_STRUCT_DEVICE_TEMPERATURE, "r", "r", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_STRUCT_DEVICE_SERIAL_NUMBER, "r", "rw", vendorPropertyAccessor);
@@ -653,12 +696,12 @@ void FemtoMegaDevice::initNetModeProperties() {
             //  propertyServer->registerProperty(OB_STRUCT_LED_CONTROL, "", "w", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_RAW_DATA_CAMERA_CALIB_JSON_FILE, "r", "r", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_STRUCT_DEVICE_TIME, "rw", "rw", vendorPropertyAccessor);
-            //propertyServer->registerProperty(OB_RAW_DATA_MCU_UPGRADE_FILE, "rw", "rw", vendorPropertyPort);
-            //propertyServer->registerProperty(OB_RAW_DATA_HARDWARE_ALIGN_PARAM, "rw", "rw", vendorPropertyPort);
+            // propertyServer->registerProperty(OB_RAW_DATA_MCU_UPGRADE_FILE, "rw", "rw", vendorPropertyPort);
+            // propertyServer->registerProperty(OB_RAW_DATA_HARDWARE_ALIGN_PARAM, "rw", "rw", vendorPropertyPort);
             propertyServer->registerProperty(OB_PROP_INDICATOR_LIGHT_BOOL, "rw", "rw", vendorPropertyAccessor);
-            //TODO::firmVer >= 10201
+            // TODO::firmVer >= 10201
             propertyServer->registerProperty(OB_PROP_BOOT_INTO_RECOVERY_MODE_BOOL, "w", "w", vendorPropertyAccessor);
-            //TODO:;firmVer >= 10202
+            // TODO:;firmVer >= 10202
             propertyServer->registerProperty(OB_PROP_TIMER_RESET_ENABLE_BOOL, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_TIMER_RESET_SIGNAL_BOOL, "w", "w", vendorPropertyAccessor);
 
@@ -666,16 +709,16 @@ void FemtoMegaDevice::initNetModeProperties() {
             propertyServer->registerProperty(OB_STRUCT_DEVICE_TIME, "rw", "rw", vendorPropertyAccessor);
             // propertyServer->registerProperty(OB_STRUCT_LED_CONTROL, "", "w", vendorPropertyPort);
 
-            //propertyServer->registerProperty(OB_RAW_DATA_ALIGN_CALIB_PARAM, "", "r", vendorPropertyAccessor);
+            // propertyServer->registerProperty(OB_RAW_DATA_ALIGN_CALIB_PARAM, "", "r", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_DEPTH_EXPOSURE_INT, "r", "r", vendorPropertyAccessor);
-            //propertyServer->registerProperty(OB_RAW_DATA_D2C_ALIGN_SUPPORT_PROFILE_LIST, "", "rw", vendorPropertyAccessor);
-            // propertyServer->registerProperty(OB_PROP_FAN_MAX_SPEED_TEST_MODE_BOOL, "rw", "rw", vendorPropertyAccessor);
+            // propertyServer->registerProperty(OB_RAW_DATA_D2C_ALIGN_SUPPORT_PROFILE_LIST, "", "rw", vendorPropertyAccessor);
+            //  propertyServer->registerProperty(OB_PROP_FAN_MAX_SPEED_TEST_MODE_BOOL, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_GYRO_ODR_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_ACCEL_ODR_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_GYRO_FULL_SCALE_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_ACCEL_FULL_SCALE_INT, "rw", "rw", vendorPropertyAccessor);
 
-            //TODO:: Support？
+            // TODO:: Support？
             propertyServer->registerProperty(OB_STRUCT_GET_ACCEL_PRESETS_ODR_LIST, "", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_STRUCT_GET_ACCEL_PRESETS_FULL_SCALE_LIST, "", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_STRUCT_GET_GYRO_PRESETS_ODR_LIST, "", "rw", vendorPropertyAccessor);
@@ -694,9 +737,9 @@ void FemtoMegaDevice::initNetModeProperties() {
             // utils::getFirmwareVersionInt(fwVersion, firmVer);
             // if(firmVer >= 10107) {
             //     //propertyServer->registerProperty(OB_RAW_DATA_DEVICE_UPGRADE, "", "rw", vendorPropertyAccessor);
-            //     //propertyServer->registerProperty(OB_STRUCT_DEVICE_UPGRADE_STATUS, "", "rw", vendorPropertyAccessor);                                    
+            //     //propertyServer->registerProperty(OB_STRUCT_DEVICE_UPGRADE_STATUS, "", "rw", vendorPropertyAccessor);
             // }
-            // if(firmVer >= 10201) {                                   
+            // if(firmVer >= 10201) {
             //     propertyServer->registerProperty(OB_PROP_RESTORE_FACTORY_SETTINGS_BOOL, "w", "w", vendorPropertyAccessor);
             //     propertyServer->registerProperty(OB_PROP_DEVICE_IN_RECOVERY_MODE_BOOL, "r", "r", vendorPropertyAccessor);
             //     propertyServer->registerProperty(OB_PROP_DEVICE_DEVELOPMENT_MODE_INT, "rw", "rw", vendorPropertyAccessor);
@@ -731,16 +774,16 @@ void FemtoMegaDevice::initNetModeProperties() {
     registerComponent(OB_DEV_COMPONENT_PROPERTY_SERVER, propertyServer, true);
 }
 
-void FemtoMegaDevice::initNetModeSensorStreamProfileList(std::shared_ptr<ISensor> sensor) {
-    auto sensorType    = sensor->getSensorType();
-    OBStreamType streamType = utils::mapSensorTypeToStreamType(sensorType);
+void FemtoMegaNetDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
+    auto              sensorType = sensor->getSensorType();
+    OBStreamType      streamType = utils::mapSensorTypeToStreamType(sensorType);
     StreamProfileList ProfileList;
-    for (const auto& profile : allNetProfileList_) {
-        if(streamType == profile->getType()){
+    for(const auto &profile: allNetProfileList_) {
+        if(streamType == profile->getType()) {
             ProfileList.push_back(profile);
         }
     }
-    
+
     sensor->updateStreamProfileList(ProfileList);
 
     auto streamProfile = StreamProfileFactory::getDefaultStreamProfileFromEnvConfig(deviceInfo_->name_, sensorType);
@@ -761,11 +804,9 @@ void FemtoMegaDevice::initNetModeSensorStreamProfileList(std::shared_ptr<ISensor
     }
 }
 
-void FemtoMegaDevice::fetchNetModeAllProfileList() {
+void FemtoMegaNetDevice::fetchAllProfileList() {
     auto propServer = getPropertyServer();
-    BEGIN_TRY_EXECUTE({
-        propServer->setPropertyValueT(OB_PROP_DEVICE_COMMUNICATION_TYPE_INT, OB_COMM_NET);
-    })
+    BEGIN_TRY_EXECUTE({ propServer->setPropertyValueT(OB_PROP_DEVICE_COMMUNICATION_TYPE_INT, OB_COMM_NET); })
     CATCH_EXCEPTION_AND_EXECUTE({ LOG_ERROR("Set device ethernet mode failed!"); })
 
     std::vector<uint8_t> data;
@@ -793,19 +834,11 @@ void FemtoMegaDevice::fetchNetModeAllProfileList() {
             OBStreamType streamType = utils::mapSensorTypeToStreamType((OBSensorType)item.sensorType);
             OBFormat     format     = utils::uvcFourccToOBFormat(item.profile.video.formatFourcc);
             allNetProfileList_.push_back(StreamProfileFactory::createVideoStreamProfile(streamType, format, item.profile.video.width, item.profile.video.height,
-                                                                                     item.profile.video.fps));
+                                                                                        item.profile.video.fps));
         }
     }
     else {
         LOG_WARN("Get stream profile list failed!");
     }
-}
-
-std::vector<std::shared_ptr<IFilter>> FemtoMegaDevice::createRecommendedPostProcessingFilters(OBSensorType type) {
-    std::vector<std::shared_ptr<IFilter>> filters;
-    if(type == OB_SENSOR_COLOR) {
-        return {};
-    }
-    return filters;
 }
 }  // namespace libobsensor

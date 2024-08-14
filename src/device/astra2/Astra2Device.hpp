@@ -21,8 +21,6 @@ private:
     void initProperties();
     void initSensorStreamProfile(std::shared_ptr<ISensor> sensor);
 
-    void fetchDeviceInfo() override;
-
 private:
     const uint64_t                                              frameTimeFreq_  = 1000000;
     uint64_t                                                    deviceTimeFreq_ = 1000000;

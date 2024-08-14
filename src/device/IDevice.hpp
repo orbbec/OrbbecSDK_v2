@@ -46,12 +46,14 @@ public:
     virtual DeviceComponentPtr<IPropertyServer>  getPropertyServer()                                                   = 0;
 
     // device sensors (specify components) management
-    virtual bool                                  isSensorExists(OBSensorType type) const                   = 0;
-    virtual bool                                  isSensorCreated(OBSensorType type) const                  = 0;  // for lazy creation
-    virtual DeviceComponentPtr<ISensor>           getSensor(OBSensorType type)                              = 0;
-    virtual std::vector<OBSensorType>             getSensorTypeList() const                                 = 0;
-    virtual bool                                  hasAnySensorStreamActivated()                             = 0;
-    virtual std::vector<std::shared_ptr<IFilter>> createRecommendedPostProcessingFilters(OBSensorType type) = 0;
+    virtual bool                        isSensorExists(OBSensorType type) const  = 0;
+    virtual bool                        isSensorCreated(OBSensorType type) const = 0;  // for lazy creation
+    virtual DeviceComponentPtr<ISensor> getSensor(OBSensorType type)             = 0;
+    virtual std::vector<OBSensorType>   getSensorTypeList() const                = 0;
+    virtual bool                        hasAnySensorStreamActivated()            = 0;
+
+    // todo: Add a filter manager as a component and move this function to it
+    virtual std::vector<std::shared_ptr<IFilter>> createRecommendedPostProcessingFilters(OBSensorType type)                                     = 0;
     virtual std::shared_ptr<IFilter>              getSensorFrameFilter(const std::string &name, OBSensorType type, bool throwIfNotFound = true) = 0;
 
     // device firmware update

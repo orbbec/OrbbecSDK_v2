@@ -9,7 +9,7 @@ namespace libobsensor {
 
 static inline void addDistortion(const OBCameraDistortion &distort_param, const float pt_ud[2], float pt_d[2]) {
     float k1 = distort_param.k1, k2 = distort_param.k2, k3 = distort_param.k3;
-    float k4 = distort_param.k4, k5 = distort_param.k5, k6 = distort_param.k5;
+    float k4 = distort_param.k4, k5 = distort_param.k5, k6 = distort_param.k6;
     float p1 = distort_param.p1, p2 = distort_param.p2;
 
     const float r2 = pt_ud[0] * pt_ud[0] + pt_ud[1] * pt_ud[1];
@@ -99,6 +99,9 @@ void AlignImpl::initialize(OBCameraIntrinsic depth_intrin, OBCameraDistortion de
     memcpy(&rgb_disto_, &rgb_disto, sizeof(OBCameraDistortion));
     memcpy(&transform_, &extrin, sizeof(OBExtrinsic));
     add_target_distortion_ = add_target_distortion;
+    // since undistorted depth (whether d2c or c2d) is necessory ...
+    need_to_undistort_depth_ = ((depth_disto.k1 != 0) || (depth_disto.k2 != 0) || (depth_disto.k3 != 0) || (depth_disto.k4 != 0) || (depth_disto.k5 != 0)
+                                || (depth_disto.k6 != 0) || (depth_disto.p1 != 0) || (depth_disto.p2 != 0));
     depth_unit_mm_         = depth_unit_mm;
     gap_fill_copy_         = gap_fill_copy;
     // Translation is related to depth unit.
@@ -204,17 +207,18 @@ void AlignImpl::prepareDepthResolution() {
                 for(int u = 0; u < depth_intric_.width; ++u) {
                     float x = (u + mutliplier * 0.5f - depth_intric_.cx) / depth_intric_.fx;
 
-                    if(add_target_distortion_) {
+                    float x_ud = x, y_ud = y;
+                    if(need_to_undistort_depth_) {
                         float pt_d[2] = { x, y };
                         float pt_ud[2];
                         removeDistortion(depth_disto_, pt_d, pt_ud);
-                        x = pt_ud[0];
-                        y = pt_ud[1];
+                        x_ud = pt_ud[0];
+                        y_ud = pt_ud[1];
                     }
 
-                    *dst1 = transform_.rot[0] * x + transform_.rot[1] * y + transform_.rot[2];
-                    *dst2 = transform_.rot[3] * x + transform_.rot[4] * y + transform_.rot[5];
-                    *dst3 = transform_.rot[6] * x + transform_.rot[7] * y + transform_.rot[8];
+                    *dst1 = transform_.rot[0] * x_ud + transform_.rot[1] * y_ud + transform_.rot[2];
+                    *dst2 = transform_.rot[3] * x_ud + transform_.rot[4] * y_ud + transform_.rot[5];
+                    *dst3 = transform_.rot[6] * x_ud + transform_.rot[7] * y_ud + transform_.rot[8];
                     dst1 += channel;
                     dst2 += channel;
                     dst3 += channel;

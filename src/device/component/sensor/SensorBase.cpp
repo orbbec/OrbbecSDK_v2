@@ -244,14 +244,14 @@ void SensorBase::setGlobalTimestampCalculator(std::shared_ptr<IFrameTimestampCal
 
 void SensorBase::outputFrame(std::shared_ptr<Frame> frame) {
     if(frameMetadataParserContainer_) {
-        frame->registerMetadataParsers(frameMetadataParserContainer_);
+        TRY_EXECUTE(frame->registerMetadataParsers(frameMetadataParserContainer_));
     }
 
     if(frameTimestampCalculator_) {
-        frameTimestampCalculator_->calculate(frame);
+         TRY_EXECUTE(frameTimestampCalculator_->calculate(frame));
     }
     if(globalTimestampCalculator_) {
-        globalTimestampCalculator_->calculate(frame);
+         TRY_EXECUTE(globalTimestampCalculator_->calculate(frame));
     }
 
     frameCallback_(frame);

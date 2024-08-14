@@ -38,7 +38,13 @@ FemtoMegaDeviceInfo::FemtoMegaDeviceInfo(const SourcePortInfoList groupedInfoLis
 FemtoMegaDeviceInfo::~FemtoMegaDeviceInfo() noexcept {}
 
 std::shared_ptr<IDevice> FemtoMegaDeviceInfo::createDevice() const {
-    auto device = std::make_shared<FemtoMegaDevice>(shared_from_this());
+    std::shared_ptr<IDevice> device;
+    if(connectionType_ == "Ethernet") {
+        device = std::make_shared<FemtoMegaNetDevice>(shared_from_this());
+    }
+    else {
+        device = std::make_shared<FemtoMegaUsbDevice>(shared_from_this());
+    }
     return device;
 }
 

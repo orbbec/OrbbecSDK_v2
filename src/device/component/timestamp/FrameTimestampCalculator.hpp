@@ -20,6 +20,19 @@ private:
     std::shared_ptr<GlobalTimestampFitter> globalTimestampFitter_;
 };
 
+class FrameTimestampCalculatorDirectly : public IFrameTimestampCalculator, public DeviceComponentBase {
+public:
+    FrameTimestampCalculatorDirectly(IDevice *device, uint64_t clockFreq);
+
+    virtual ~FrameTimestampCalculatorDirectly() = default;
+
+    void calculate(std::shared_ptr<Frame> frame) override;
+    void clear() override {}
+
+private:
+    uint64_t clockFreq_;
+};
+
 class FrameTimestampCalculatorBaseDeviceTime : public IFrameTimestampCalculator, public DeviceComponentBase {
 public:
     FrameTimestampCalculatorBaseDeviceTime(IDevice *device, uint64_t deviceTimeFreq, uint64_t frameTimeFreq);

@@ -63,7 +63,7 @@ public:
 enum PropertyAccessType {
     PROP_ACCESS_USER     = 1,  // User access(by sdk user api)
     PROP_ACCESS_INTERNAL = 2,  // Internal access (by sdk or other internal modules)
-    PROP_ACCESS_ANY      = 3,  // Any access (user or internal)
+    // PROP_ACCESS_ANY      = 3,  // Any access (user or internal)
 };
 
 enum PropertyOperationType {

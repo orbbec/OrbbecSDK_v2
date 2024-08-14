@@ -46,16 +46,21 @@ public:
     DeviceComponentPtr<ISensor>                  getSensor(OBSensorType type) override;
     std::vector<OBSensorType>                    getSensorTypeList() const override;
     bool                                         hasAnySensorStreamActivated() override;
-    std::shared_ptr<IFilter>                     getSensorFrameFilter(const std::string &name, OBSensorType type, bool throwIfNotFound = true) override;
+
+    std::vector<std::shared_ptr<IFilter>> createRecommendedPostProcessingFilters(OBSensorType type) override;
+    std::shared_ptr<IFilter>              getSensorFrameFilter(const std::string &name, OBSensorType type, bool throwIfNotFound = true) override;
 
     DeviceComponentPtr<IPropertyServer> getPropertyServer() override;
 
-    void updateFirmware(const std::vector<uint8_t> &firmware, DeviceFwUpdateCallback updateCallback, bool async) override;
+    void                                      updateFirmware(const std::vector<uint8_t> &firmware, DeviceFwUpdateCallback updateCallback, bool async) override;
+    static std::map<std::string, std::string> parseExtensionInfo(std::string extensionInfo);
 
 protected:
     // implement on subclass, and must be called to initialize the device info on construction
-    virtual void        fetchDeviceInfo() = 0;
+    virtual void        fetchDeviceInfo();
+    virtual void        fetchExtensionInfo();
     DeviceComponentLock tryLockResource();
+    int                 getFirmwareVersionInt();
 
 protected:
     const std::shared_ptr<const IDeviceEnumInfo> enumInfo_;

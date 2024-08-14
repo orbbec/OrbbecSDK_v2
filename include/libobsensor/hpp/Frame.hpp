@@ -181,8 +181,9 @@ public:
      * @brief The global timestamp is the time point when the frame was was captured by the device, and has been converted to the host clock domain. The
      * conversion process base on the device timestamp and can eliminate the timer drift of the device
      *
-     * @attention Only some devices support getting the global timestamp. If the device does not support it, this function will return 0. Check the device
-     * support status by @ref Device::isGlobalTimestampSupported() function.
+     * @attention The global timestamp disable by default. If global timestamp is not enabled, the function will return 0. To enable the global timestamp,
+     * please call @ref Device::enableGlobalTimestamp() function.
+     * @attention Only some devices support getting the global timestamp. Check the device support status by @ref Device::isGlobalTimestampSupported() function.
      *
      * @return uint64_t The global timestamp of the frame in microseconds.
      */
@@ -397,7 +398,7 @@ public:
      *
      * @param impl The pointer to the internal frame object.
      */
-    explicit VideoFrame(const ob_frame *impl) : Frame(impl){};
+    explicit VideoFrame(const ob_frame *impl) : Frame(impl) {};
 
     ~VideoFrame() noexcept override = default;
 
@@ -489,7 +490,7 @@ public:
      *
      * @param impl The pointer to the internal frame object.
      */
-    explicit ColorFrame(const ob_frame *impl) : VideoFrame(impl){};
+    explicit ColorFrame(const ob_frame *impl) : VideoFrame(impl) {};
 
     ~ColorFrame() noexcept override = default;
 };
@@ -510,7 +511,7 @@ public:
      *
      * @param impl The pointer to the internal frame object.
      */
-    explicit DepthFrame(const ob_frame *impl) : VideoFrame(impl){};
+    explicit DepthFrame(const ob_frame *impl) : VideoFrame(impl) {};
 
     ~DepthFrame() noexcept override = default;
 
@@ -547,7 +548,7 @@ public:
      *
      * @param impl The pointer to the internal frame object.
      */
-    explicit IRFrame(const ob_frame *impl) : VideoFrame(impl){};
+    explicit IRFrame(const ob_frame *impl) : VideoFrame(impl) {};
 
     ~IRFrame() noexcept override = default;
 };
@@ -573,7 +574,7 @@ public:
      *
      * @param impl The pointer to the internal frame object.
      */
-    explicit PointsFrame(const ob_frame *impl) : Frame(impl){};
+    explicit PointsFrame(const ob_frame *impl) : Frame(impl) {};
 
     ~PointsFrame() noexcept override = default;
 
@@ -592,11 +593,11 @@ public:
         return scale;
     }
 
-    /**
-     * In order to be compatible with the closed source version of orbbecsdk's interface.
-     * We recommend using the latest interface names for a better experience.
-    */
-    #define getPositionValueScale getCoordinateValueScale
+/**
+ * In order to be compatible with the closed source version of orbbecsdk's interface.
+ * We recommend using the latest interface names for a better experience.
+ */
+#define getPositionValueScale getCoordinateValueScale
 };
 
 /**
@@ -606,7 +607,7 @@ public:
 class AccelFrame : public Frame {
 
 public:
-    explicit AccelFrame(const ob_frame *impl) : Frame(impl){};
+    explicit AccelFrame(const ob_frame *impl) : Frame(impl) {};
 
     ~AccelFrame() noexcept override = default;
 
@@ -651,7 +652,7 @@ public:
 class GyroFrame : public Frame {
 
 public:
-    explicit GyroFrame(const ob_frame *impl) : Frame(impl){};
+    explicit GyroFrame(const ob_frame *impl) : Frame(impl) {};
 
     ~GyroFrame() noexcept override = default;
 
@@ -697,7 +698,7 @@ public:
 class FrameSet : public Frame {
 
 public:
-    explicit FrameSet(const ob_frame *impl) : Frame(impl){};
+    explicit FrameSet(const ob_frame *impl) : Frame(impl) {};
 
     ~FrameSet() noexcept override = default;
 

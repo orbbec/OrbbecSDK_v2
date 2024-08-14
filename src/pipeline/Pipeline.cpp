@@ -10,7 +10,7 @@
 #include "logger/LoggerHelper.hpp"
 #include "utils/Utils.hpp"
 #include "IAlgParamManager.hpp"
-#include "component/frameprocessor/FrameProcessor.hpp"
+#include "frameprocessor/FrameProcessor.hpp"
 
 #include <cmath>
 #include <algorithm>

@@ -102,8 +102,6 @@ void Astra2AlgParamManager::registerBasicExtrinsics() {
     auto depthBasicStreamProfile   = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_DEPTH, OB_FORMAT_ANY, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY);
     auto colorBasicStreamProfile   = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_COLOR, OB_FORMAT_ANY, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY);
     auto irBasicStreamProfile      = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_IR, OB_FORMAT_ANY, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY);
-    auto leftIrBasicStreamProfile  = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_IR_LEFT, OB_FORMAT_ANY, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY);
-    auto rightIrBasicStreamProfile = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_IR_RIGHT, OB_FORMAT_ANY, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY);
     auto accelBasicStreamProfile   = StreamProfileFactory::createAccelStreamProfile(OB_ACCEL_FS_2g, OB_SAMPLE_RATE_1_5625_HZ);
     auto gyroBasicStreamProfile    = StreamProfileFactory::createGyroStreamProfile(OB_GYRO_FS_16dps, OB_SAMPLE_RATE_1_5625_HZ);
 
@@ -128,13 +126,6 @@ void Astra2AlgParamManager::registerBasicExtrinsics() {
     }
 
     extrinsicMgr->registerSameExtrinsics(irBasicStreamProfile, depthBasicStreamProfile);
-    extrinsicMgr->registerSameExtrinsics(leftIrBasicStreamProfile, depthBasicStreamProfile);
-
-    if(!depthCalibParamList_.empty()) {
-        auto left_to_right     = IdentityExtrinsic;
-        left_to_right.trans[0] = depthCalibParamList_.front().baseline * depthCalibParamList_.front().unit;
-        extrinsicMgr->registerExtrinsics(leftIrBasicStreamProfile, rightIrBasicStreamProfile, left_to_right);
-    }
 
     double imuExtr[16] = { 0 };
     memcpy(imuExtr, imuCalibParam_.singleIMUParams[0].imu_to_cam_extrinsics, sizeof(imuExtr));
@@ -159,8 +150,6 @@ void Astra2AlgParamManager::registerBasicExtrinsics() {
     basicStreamProfileList_.emplace_back(depthBasicStreamProfile);
     basicStreamProfileList_.emplace_back(colorBasicStreamProfile);
     basicStreamProfileList_.emplace_back(irBasicStreamProfile);
-    basicStreamProfileList_.emplace_back(leftIrBasicStreamProfile);
-    basicStreamProfileList_.emplace_back(rightIrBasicStreamProfile);
     basicStreamProfileList_.emplace_back(accelBasicStreamProfile);
     basicStreamProfileList_.emplace_back(gyroBasicStreamProfile);
 }

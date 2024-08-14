@@ -11,10 +11,10 @@ void CameraParamProcessor::distortionParamMirror(OBCameraDistortion *distort) {
 
 void CameraParamProcessor::d2cTransformParamsMirror(OBD2CTransform *transform) {
     // 旋转矩阵中r1、r2、r3和r6求反
-    (transform->rot)[1] *= -1.0;
-    (transform->rot)[2] *= -1.0;
-    (transform->rot)[3] *= -1.0;
-    (transform->rot)[6] *= -1.0;
+    transform->rot[1] *= -1.0;
+    transform->rot[2] *= -1.0;
+    transform->rot[3] *= -1.0;
+    transform->rot[6] *= -1.0;
     // 平移向量中tx求反
     (transform->trans)[0] *= -1.0;
 }
@@ -28,10 +28,10 @@ void CameraParamProcessor::distortionParamFlip(OBCameraDistortion *distort) {
 }
 
 void CameraParamProcessor::d2cTransformParamsFlip(OBD2CTransform *transform) {
-    (transform->rot)[1] *= -1.0;
-    (transform->rot)[3] *= -1.0;
-    (transform->rot)[5] *= -1.0;
-    (transform->rot)[7] *= -1.0;
+    transform->rot[1] *= -1.0;
+    transform->rot[3] *= -1.0;
+    transform->rot[5] *= -1.0;
+    transform->rot[7] *= -1.0;
     (transform->trans)[1] *= -1.0;
 }
 
@@ -75,13 +75,18 @@ void CameraParamProcessor::distortionParamRotate90(OBCameraDistortion *distort) 
 }
 
 void CameraParamProcessor::d2cTransformParamsRotate90(OBD2CTransform *transform) {
-    (transform->rot)[1] *= 1.0;
-    (transform->rot)[3] *= 1.0;
-    (transform->rot)[5] *= 1.0;
-    (transform->rot)[7] *= 1.0;
-    float tmp             = (transform->trans)[0];
-    (transform->trans)[0] = (float)-1.0 * (transform->trans)[1];
-    (transform->trans)[1] = tmp;
+    OBD2CTransform src;
+    memcpy(&src, transform, sizeof(OBD2CTransform));
+    transform->rot[0]   = src.rot[4];
+    transform->rot[1]   = -1.0f * src.rot[3];
+    transform->rot[2]   = -1.0f * src.rot[5];
+    transform->rot[3]   = -1.0f * src.rot[1];
+    transform->rot[4]   = src.rot[0];
+    transform->rot[5]   = src.rot[2];
+    transform->rot[6]   = -1.0f * src.rot[7];
+    transform->rot[7]   = src.rot[6];
+    transform->trans[0] = -1.0f * src.trans[1];
+    transform->trans[1] = src.trans[0];
 }
 
 void CameraParamProcessor::cameraIntrinsicParamsRotate180(OBCameraIntrinsic *intrinsic) {
@@ -95,10 +100,10 @@ void CameraParamProcessor::distortionParamRotate180(OBCameraDistortion *distort)
 }
 
 void CameraParamProcessor::d2cTransformParamsRotate180(OBD2CTransform *transform) {
-    (transform->rot)[2] *= -1.0;
-    (transform->rot)[5] *= -1.0;
-    (transform->rot)[6] *= -1.0;
-    (transform->rot)[7] *= -1.0;
+    transform->rot[2] *= -1.0;
+    transform->rot[5] *= -1.0;
+    transform->rot[6] *= -1.0;
+    transform->rot[7] *= -1.0;
     (transform->trans)[0] *= -1.0;
     (transform->trans)[1] *= -1.0;
 }
@@ -124,14 +129,18 @@ void CameraParamProcessor::distortionParamRotate270(OBCameraDistortion *distort)
 }
 
 void CameraParamProcessor::d2cTransformParamsRotate270(OBD2CTransform *transform) {
-    float tmp;
-    (transform->rot)[2] *= 1.0;
-    (transform->rot)[5] *= 1.0;
-    (transform->rot)[6] *= 1.0;
-    (transform->rot)[7] *= 1.0;
-    tmp                   = (transform->trans)[0];
-    (transform->trans)[0] = (transform->trans)[1];
-    (transform->trans)[1] = (float)-1.0 * tmp;
+    OBD2CTransform src;
+    memcpy(&src, transform, sizeof(OBD2CTransform));
+    transform->rot[0] = src.rot[4];
+    transform->rot[1] = -1.0f * src.rot[3];
+    transform->rot[2] = src.rot[5];
+    transform->rot[3] = -1.0f * src.rot[1];
+    transform->rot[4] = src.rot[0];
+    transform->rot[5] = -1.0f * src.rot[2];
+    transform->rot[6] *= src.rot[7];
+    transform->rot[7] *= -1.0f * src.rot[6];
+    transform->trans[0] = src.trans[1];
+    transform->trans[1] = -1.0f * src.trans[0];
 }
 
 void CameraParamProcessor::rotateCameraParam(OBCameraParam *cameraParam, int rotateAngle) {

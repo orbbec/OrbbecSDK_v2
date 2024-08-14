@@ -7,6 +7,7 @@
 #include "IProperty.hpp"
 #include "IDevice.hpp"
 #include "IDeviceMonitor.hpp"
+#include "component/timestamp/GlobalTimestampFitter.hpp"
 
 #ifdef __cplusplus
 extern "C" {
@@ -168,7 +169,7 @@ HANDLE_EXCEPTIONS_AND_RETURN(0, device, property_id)
 ob_int_property_range ob_device_get_int_property_range(ob_device *device, ob_property_id property_id, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(device);
     auto propServer = device->device->getPropertyServer();
-    auto range    = propServer->getPropertyRangeT<int32_t>(property_id, libobsensor::PROP_ACCESS_USER);
+    auto range      = propServer->getPropertyRangeT<int32_t>(property_id, libobsensor::PROP_ACCESS_USER);
     return { range.cur, range.max, range.min, range.step, range.def };
 }
 HANDLE_EXCEPTIONS_AND_RETURN(ob_int_property_range(), device, property_id)
@@ -190,7 +191,7 @@ HANDLE_EXCEPTIONS_AND_RETURN(0.0f, device, property_id)
 ob_float_property_range ob_device_get_float_property_range(ob_device *device, ob_property_id property_id, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(device);
     auto propServer = device->device->getPropertyServer();
-    auto range    = propServer->getPropertyRangeT<float>(property_id, libobsensor::PROP_ACCESS_USER);
+    auto range      = propServer->getPropertyRangeT<float>(property_id, libobsensor::PROP_ACCESS_USER);
     return { range.cur, range.max, range.min, range.step, range.def };
 }
 HANDLE_EXCEPTIONS_AND_RETURN(ob_float_property_range(), device, property_id)
@@ -212,7 +213,7 @@ HANDLE_EXCEPTIONS_AND_RETURN(false, device, property_id)
 ob_bool_property_range ob_device_get_bool_property_range(ob_device *device, ob_property_id property_id, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(device);
     auto propServer = device->device->getPropertyServer();
-    auto range    = propServer->getPropertyRangeT<bool>(property_id, libobsensor::PROP_ACCESS_USER);
+    auto range      = propServer->getPropertyRangeT<bool>(property_id, libobsensor::PROP_ACCESS_USER);
     return { range.cur, range.max, range.min, range.step, range.def };
 }
 HANDLE_EXCEPTIONS_AND_RETURN(ob_bool_property_range(), device, property_id)
@@ -227,7 +228,7 @@ HANDLE_EXCEPTIONS_NO_RETURN(device, property_id, data, data_size)
 
 void ob_device_get_structured_data(ob_device *device, ob_property_id property_id, uint8_t *data, uint32_t *data_size, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(device);
-    auto  propServer     = device->device->getPropertyServer();
+    auto  propServer   = device->device->getPropertyServer();
     auto &firmwareData = propServer->getStructureData(property_id, libobsensor::PROP_ACCESS_USER);
 
     memcpy(data, firmwareData.data(), firmwareData.size());
@@ -244,7 +245,7 @@ HANDLE_EXCEPTIONS_AND_RETURN(0, device)
 
 ob_property_item ob_device_get_supported_property_item(const ob_device *device, uint32_t index, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(device);
-    auto propServer   = device->device->getPropertyServer();
+    auto propServer = device->device->getPropertyServer();
     auto properties = propServer->getAvailableProperties(libobsensor::PROP_ACCESS_USER);
     VALIDATE_UNSIGNED_INDEX(index, properties.size());
     return properties.at(index);
@@ -271,6 +272,13 @@ bool ob_device_is_global_timestamp_supported(const ob_device *device, ob_error *
     return device->device->isComponentExists(libobsensor::OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER);
 }
 HANDLE_EXCEPTIONS_AND_RETURN(false, device)
+
+void ob_device_enable_global_timestamp(ob_device *device, bool enable, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(device);
+    auto globalTimestampFilter = device->device->getComponentT<libobsensor::GlobalTimestampFitter>(libobsensor::OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER);
+    globalTimestampFilter->enable(enable);
+}
+HANDLE_EXCEPTIONS_NO_RETURN(device, enable)
 
 void ob_device_update_firmware(ob_device *device, const char *path, ob_device_fw_update_callback callback, bool async, void *user_data,
                                ob_error **error) BEGIN_API_CALL {
@@ -444,17 +452,14 @@ ob_device_type ob_device_info_get_device_type(const ob_device_info *info, ob_err
 }
 HANDLE_EXCEPTIONS_AND_RETURN(OB_DEVICE_TYPE_UNKNOWN, info)
 
-const char *ob_device_info_get_extension_info(const ob_device_info *info, const char *info_key, ob_error **error) BEGIN_API_CALL {
-    VALIDATE_NOT_NULL(info);
+const char *ob_device_get_extension_info(const ob_device *device, const char *info_key, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(device);
     VALIDATE_NOT_NULL(info_key);
-    // auto iter = info->info->extensionInfo_.find(info_key);
-    // if(iter != info->info->extensionInfo_.end()) {
-    //     return iter->second.c_str();
-    // }
-    // return nullptr;
-    throw libobsensor::not_implemented_exception("ob_device_info_get_extension_info not implemented");
+
+    return device->device->getExtensionInfo(info_key).c_str();
+    // throw libobsensor::not_implemented_exception("ob_device_info_get_extension_info not implemented");
 }
-HANDLE_EXCEPTIONS_AND_RETURN(nullptr, info, info_key)
+HANDLE_EXCEPTIONS_AND_RETURN(nullptr, device, info_key)
 
 #ifdef __cplusplus
 }

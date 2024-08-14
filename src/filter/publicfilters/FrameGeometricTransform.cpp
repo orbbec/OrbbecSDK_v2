@@ -357,13 +357,13 @@ std::shared_ptr<Frame> FrameMirror::processFunc(std::shared_ptr<const Frame> fra
 
 OBCameraIntrinsic FrameMirror::mirrorOBCameraIntrinsic(const OBCameraIntrinsic &src) {
     auto intrinsic = src;
-    libobsensor::CameraParamProcessor::cameraIntrinsicParamsMirror(&intrinsic);
+    CameraParamProcessor::cameraIntrinsicParamsMirror(&intrinsic);
     return intrinsic;
 }
 
 OBCameraDistortion FrameMirror::mirrorOBCameraDistortion(const OBCameraDistortion &src) {
     auto distortion = src;
-    libobsensor::CameraParamProcessor::distortionParamMirror(&distortion);
+    CameraParamProcessor::distortionParamMirror(&distortion);
     return distortion;
 }
 
@@ -449,13 +449,13 @@ std::shared_ptr<Frame> FrameFlip::processFunc(std::shared_ptr<const Frame> frame
 
 OBCameraIntrinsic FrameFlip::flipOBCameraIntrinsic(const OBCameraIntrinsic &src) {
     auto intrinsic = src;
-    libobsensor::CameraParamProcessor::cameraIntrinsicParamsFlip(&intrinsic);
+    CameraParamProcessor::cameraIntrinsicParamsFlip(&intrinsic);
     return intrinsic;
 }
 
 OBCameraDistortion FrameFlip::flipOBCameraDistortion(const OBCameraDistortion &src) {
     auto distortion = src;
-    libobsensor::CameraParamProcessor::distortionParamFlip(&distortion);
+    CameraParamProcessor::distortionParamFlip(&distortion);
     return distortion;
 }
 
@@ -569,13 +569,13 @@ std::shared_ptr<Frame> FrameRotate::processFunc(std::shared_ptr<const Frame> fra
 OBCameraIntrinsic FrameRotate::rotateOBCameraIntrinsic(const OBCameraIntrinsic &src, uint32_t rotateDegree) {
     auto intrinsic = src;
     if(rotateDegree == 90) {
-        libobsensor::CameraParamProcessor::cameraIntrinsicParamsRotate90(&intrinsic);
+        CameraParamProcessor::cameraIntrinsicParamsRotate90(&intrinsic);
     }
     else if(rotateDegree == 180) {
-        libobsensor::CameraParamProcessor::cameraIntrinsicParamsRotate180(&intrinsic);
+        CameraParamProcessor::cameraIntrinsicParamsRotate180(&intrinsic);
     }
     else if(rotateDegree == 270) {
-        libobsensor::CameraParamProcessor::cameraIntrinsicParamsRotate270(&intrinsic);
+        CameraParamProcessor::cameraIntrinsicParamsRotate270(&intrinsic);
     }
 
     return intrinsic;
@@ -585,13 +585,13 @@ OBCameraDistortion FrameRotate::rotateOBCameraDistortion(const OBCameraDistortio
     auto distortion = src;
 
     if(rotateDegree == 90) {
-        libobsensor::CameraParamProcessor::distortionParamRotate90(&distortion);
+        CameraParamProcessor::distortionParamRotate90(&distortion);
     }
     else if(rotateDegree == 180) {
-        libobsensor::CameraParamProcessor::distortionParamRotate180(&distortion);
+        CameraParamProcessor::distortionParamRotate180(&distortion);
     }
     else if(rotateDegree == 270) {
-        libobsensor::CameraParamProcessor::distortionParamRotate270(&distortion);
+        CameraParamProcessor::distortionParamRotate270(&distortion);
     }
 
     return distortion;

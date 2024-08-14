@@ -26,8 +26,6 @@ private:
     void initFrameMetadataParserContainer();
     void initSensorStreamProfile(std::shared_ptr<ISensor> sensor);
 
-    void fetchDeviceInfo() override;
-
 private:
     std::shared_ptr<IFrameMetadataParserContainer> colorMdParserContainer_;
     std::shared_ptr<IFrameMetadataParserContainer> depthMdParserContainer_;

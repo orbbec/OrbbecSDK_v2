@@ -17,19 +17,12 @@ public:
     void                         setSyncConfig(const OBMultiDeviceSyncConfig &deviceSyncConfig) override;
     uint16_t                     getSupportedSyncModeBitmap() override;
     void                         triggerCapture() override;
-    void                         setTimestampResetConfig(const OBDeviceTimestampResetConfig &timestampResetConfig) override;
-    OBDeviceTimestampResetConfig getTimestampResetConfig() override;
-    void                         timestampReset() override;
-    void                         timerSyncWithHost() override;
 
 private:
     const std::vector<OBMultiDeviceSyncMode> supportedSyncModes_;
 
     std::atomic<bool>       isSyncConfigInit_;
     OBMultiDeviceSyncConfig currentMultiDevSyncConfig_;
-
-    std::atomic<bool>            isTimestampResetConfigInit_;
-    OBDeviceTimestampResetConfig currentTimestampResetConfig_;
 };
 
 }  // namespace libobsensor

@@ -46,6 +46,7 @@ protected:
 
     std::shared_ptr<FormatConverter> formatConverter_;
 
+    uint32_t               tablesDataSize_;
     std::shared_ptr<float> tablesData_;
     OBXYTables             xyTables_;
 };

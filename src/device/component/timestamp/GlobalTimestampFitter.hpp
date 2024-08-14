@@ -26,10 +26,14 @@ public:
     void            pause();
     void            resume();
 
+    void enable(bool en);
+    bool isEnabled() const;
+
 private:
     void fittingLoop();
 
 private:
+    bool enable_;
     std::thread             sampleThread_;
     std::mutex              sampleMutex_;
     std::condition_variable sampleCondVar_;

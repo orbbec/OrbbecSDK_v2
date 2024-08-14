@@ -4,6 +4,8 @@
 #include "exception/ObException.hpp"
 #include "utils/Utils.hpp"
 #include "property/InternalProperty.hpp"
+#include <json/json.h>
+#include "InternalTypes.hpp"
 
 namespace libobsensor {
 
@@ -17,12 +19,61 @@ const std::map<OBSensorType, DeviceComponentId> SensorTypeToComponentIdMap = {
     { OB_SENSOR_ACCEL, OB_DEV_COMPONENT_ACCEL_SENSOR },
 };
 
-DeviceBase::DeviceBase(const std::shared_ptr<const IDeviceEnumInfo> &info) : enumInfo_(info), ctx_(Context::getInstance()), isDeactivated_(false) {
+DeviceBase::DeviceBase(const std::shared_ptr<const IDeviceEnumInfo> &info) : enumInfo_(info), ctx_(Context::getInstance()), isDeactivated_(false) {}
+
+void DeviceBase::fetchDeviceInfo() {
+    auto propServer                   = getPropertyServer();
+    auto version                      = propServer->getStructureDataT<OBVersionInfo>(OB_STRUCT_VERSION);
+    deviceInfo_                       = std::make_shared<DeviceInfo>();
+    deviceInfo_->name_                = version.deviceName;
+    deviceInfo_->fwVersion_           = version.firmwareVersion;
+    deviceInfo_->deviceSn_            = version.serialNumber;
+    deviceInfo_->asicName_            = version.depthChip;
+    deviceInfo_->hwVersion_           = version.hardwareVersion;
+    deviceInfo_->type_                = static_cast<uint16_t>(version.deviceType);
+    deviceInfo_->supportedSdkVersion_ = version.sdkVersion;
+    deviceInfo_->pid_                 = enumInfo_->getPid();
+    deviceInfo_->vid_                 = enumInfo_->getVid();
+    deviceInfo_->uid_                 = enumInfo_->getUid();
+    deviceInfo_->connectionType_      = enumInfo_->getConnectionType();
+
+    // mark the device as a multi-sensor device with same clock at default
     extensionInfo_["AllSensorsUsingSameClock"] = "true";
 }
 
 std::shared_ptr<const DeviceInfo> DeviceBase::getInfo() const {
     return deviceInfo_;
+}
+
+void DeviceBase::fetchExtensionInfo() {
+    auto propServer = getPropertyServer();
+    if(propServer->isPropertySupported(OB_RAW_DATA_DEVICE_EXTENSION_INFORMATION, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
+        uint8_t *data     = nullptr;
+        uint32_t dataSize = 0;
+        propServer->getRawData(
+            OB_RAW_DATA_DEVICE_EXTENSION_INFORMATION,
+            [&](OBDataTranState state, OBDataChunk *dataChunk) {
+                if(state == DATA_TRAN_STAT_TRANSFERRING) {
+                    if(data == nullptr) {
+                        dataSize = dataChunk->fullDataSize;
+                        data     = new uint8_t[dataSize];
+                    }
+                    memcpy(data + dataChunk->offset, dataChunk->data, dataChunk->size);
+                }
+            },
+            PROP_ACCESS_INTERNAL);
+        if(data) {
+            std::string jsonStr((char *)data);
+            extensionInfo_ = DeviceBase::parseExtensionInfo(jsonStr);
+            delete[] data;
+            data = nullptr;
+        }
+        else {
+            LOG_ERROR("Get ExtensionInfo Data is Null!");
+        }
+    }
+
+    extensionInfo_["AllSensorsUsingSameClock"] = "true";
 }
 
 const std::string &DeviceBase::getExtensionInfo(const std::string &infoKey) const {
@@ -243,6 +294,11 @@ bool DeviceBase::hasAnySensorStreamActivated() {
     return false;
 }
 
+std::vector<std::shared_ptr<IFilter>> DeviceBase::createRecommendedPostProcessingFilters(OBSensorType type) {
+    utils::unusedVar(type);
+    return {};
+}
+
 std::shared_ptr<IFilter> DeviceBase::getSensorFrameFilter(const std::string &name, OBSensorType type, bool throwIfNotFound) {
     auto filterIter =
         std::find_if(sensorFrameFilters_.begin(), sensorFrameFilters_.end(), [name, type](const std::pair<OBSensorType, std::shared_ptr<IFilter>> &pair) {
@@ -272,12 +328,84 @@ std::shared_ptr<IFilter> DeviceBase::getSensorFrameFilter(const std::string &nam
     return nullptr;
 }
 
+int DeviceBase::getFirmwareVersionInt() {
+    int  dotCount     = 0;
+    char buf[16]      = { 0 };
+    int  bufIndex     = 0;
+    int  calFwVersion = 0;
+    for(int i = 0; i < deviceInfo_->fwVersion_.size(); i++) {
+        const char c = deviceInfo_->fwVersion_[i];
+        if(isdigit(c) && bufIndex < sizeof(buf)) {
+            buf[bufIndex] = c;
+            bufIndex++;
+        }
+        if('.' == c) {
+            buf[sizeof(buf) - 1] = '\0';
+            if(strlen(buf) > 0) {
+                int value = atoi(buf);
+                // The version number has only two digits
+                if(value >= 100) {
+                    LOG_ERROR("bad fwVersion: {}", deviceInfo_->fwVersion_);
+                    return false;
+                }
+
+                if(dotCount == 0) {  // Major version number
+                    calFwVersion += 10000 * value;
+                }
+                else if(dotCount == 1) {  // minor version number
+                    calFwVersion += 100 * value;
+                }
+                else {
+                    LOG_ERROR("bad fwVersion: {}", deviceInfo_->fwVersion_);
+                    return false;
+                }
+
+                dotCount++;
+                bufIndex = 0;
+                memset(buf, 0, sizeof(buf));
+            }
+        }
+    }
+
+    // Test version number
+    buf[sizeof(buf) - 1] = '\0';
+    if(strlen(buf) > 0 && strlen(buf) <= 2 && dotCount == 2) {
+        int value = atoi(buf);
+        calFwVersion += value;
+    }
+
+    // If the version number cannot be determined, then fix logic is given priority
+    if(calFwVersion == 0 || dotCount < 2) {
+        LOG_ERROR("bad fwVersion: {}, parse digital version failed", deviceInfo_->fwVersion_);
+        return 0;
+    }
+    return calFwVersion;
+}
+
 void DeviceBase::updateFirmware(const std::vector<uint8_t> &firmware, DeviceFwUpdateCallback updateCallback, bool async) {
     // todo: implement update firmware logic
     utils::unusedVar(firmware);
     utils::unusedVar(updateCallback);
     utils::unusedVar(async);
     throw invalid_value_exception("Do not support update firmware yet!");
+}
+
+std::map<std::string, std::string> DeviceBase::parseExtensionInfo(std::string extensionInfo) {
+    Json::Value                        root;
+    Json::Reader                       reader;
+    std::map<std::string, std::string> dataMap;
+    bool                               parseResult = reader.parse(extensionInfo, root);
+    if(!parseResult) {
+        LOG_ERROR("parse extensioninfo failed");
+    }
+    else {
+        Json::Value extensionInfos = root["ExtensionInfo"];
+        for(auto const &key: extensionInfos.getMemberNames()) {
+            dataMap[key] = extensionInfos[key].asString();
+            LOG_INFO("key: {},value:{}", key, extensionInfos[key].asString());
+        }
+    }
+    return dataMap;
 }
 
 }  // namespace libobsensor

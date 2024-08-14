@@ -31,11 +31,8 @@ std::shared_ptr<Frame> FilterBase::process(std::shared_ptr<const Frame> frame) {
 
     checkAndUpdateConfig();
     std::unique_lock<std::mutex> lock(processMutex_);
-    std::shared_ptr<Frame>       rstFrame;
 
-    BEGIN_TRY_EXECUTE({ rstFrame = processFunc(frame); })
-    CATCH_EXCEPTION_AND_EXECUTE({ rstFrame = FrameFactory::createFrameFromOtherFrame(frame, true); })
-    return rstFrame;
+    return processFunc(frame);
 }
 
 void FilterBase::pushFrame(std::shared_ptr<const Frame> frame) {

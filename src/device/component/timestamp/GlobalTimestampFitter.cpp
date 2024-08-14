@@ -7,7 +7,8 @@
 #include "environment/EnvConfig.hpp"
 
 namespace libobsensor {
-GlobalTimestampFitter::GlobalTimestampFitter(IDevice *owner) : DeviceComponentBase(owner), sampleLoopExit_(false), linearFuncParam_({ 0, 0, 0, 0 }) {
+GlobalTimestampFitter::GlobalTimestampFitter(IDevice *owner)
+    : DeviceComponentBase(owner), enable_(false), sampleLoopExit_(false), linearFuncParam_({ 0, 0, 0, 0 }) {
     auto envConfig = EnvConfig::getInstance();
     int  value     = 0;
     if(envConfig->getIntValue("Misc.GlobalTimestampFitterQueueSize", value) && value >= 4) {
@@ -18,10 +19,26 @@ GlobalTimestampFitter::GlobalTimestampFitter(IDevice *owner) : DeviceComponentBa
         refreshIntervalMsec_ = value;
     }
 
-    sampleThread_ = std::thread(&GlobalTimestampFitter::fittingLoop, this);
+    bool en = false;
+    if(envConfig->getBooleanValue("Misc.GlobalTimestampFitterEnable", en)){
+        enable(en);
+    }
 
-    std::unique_lock<std::mutex> lock(linearFuncParamMutex_);
-    linearFuncParamCondVar_.wait_for(lock, std::chrono::milliseconds(1000));
+    auto                  propServer = owner->getPropertyServer();
+    std::vector<uint32_t> supportedProps;
+    if(propServer->isPropertySupported(OB_PROP_TIMER_RESET_SIGNAL_BOOL, PROP_OP_WRITE, PROP_ACCESS_INTERNAL)) {
+        supportedProps.push_back(OB_PROP_TIMER_RESET_SIGNAL_BOOL);
+    }
+    if(propServer->isPropertySupported(OB_STRUCT_DEVICE_TIME, PROP_OP_WRITE, PROP_ACCESS_INTERNAL)) {
+        supportedProps.push_back(OB_STRUCT_DEVICE_TIME);
+    }
+    if(!supportedProps.empty()) {
+        propServer->registerAccessCallback(supportedProps, [&](uint32_t, const uint8_t *, size_t, PropertyOperationType operationType) {
+            if(operationType == PROP_OP_WRITE) {
+                reFitting();
+            }
+        });
+    }
 
     LOG_DEBUG("GlobalTimestampFitter created: maxQueueSize_={}, refreshIntervalMsec_={}", maxQueueSize_, refreshIntervalMsec_);
 }
@@ -54,19 +71,43 @@ void GlobalTimestampFitter::pause() {
 }
 
 void GlobalTimestampFitter::resume() {
-    sampleLoopExit_ = false;
-    sampleThread_   = std::thread(&GlobalTimestampFitter::fittingLoop, this);
+    if(enable_) {
+        sampleLoopExit_ = false;
+        sampleThread_   = std::thread(&GlobalTimestampFitter::fittingLoop, this);
+    }
+}
+
+void GlobalTimestampFitter::enable(bool en) {
+    if(en == enable_) {
+        return;
+    }
+    enable_ = en;
+    if(enable_) {
+        sampleThread_ = std::thread(&GlobalTimestampFitter::fittingLoop, this);
+        std::unique_lock<std::mutex> lock(linearFuncParamMutex_);
+        linearFuncParamCondVar_.wait_for(lock, std::chrono::milliseconds(1000));
+    }
+    else {
+        sampleLoopExit_ = true;
+        sampleCondVar_.notify_one();
+        if(sampleThread_.joinable()) {
+            sampleThread_.join();
+        }
+        std::unique_lock<std::mutex> lock(sampleMutex_);
+        samplingQueue_.clear();
+    }
+    LOG_DEBUG("GlobalTimestampFitter@{} enable state changed: {}", reinterpret_cast<uint64_t>(this), enable_);
+}
+
+bool GlobalTimestampFitter::isEnabled() const {
+    return enable_;
 }
 
 void GlobalTimestampFitter::fittingLoop() {
-    std::unique_lock<std::mutex> lock(sampleMutex_);
-    const int                    MAX_RETRY_COUNT = 5;
+    const int MAX_RETRY_COUNT = 5;
 
     int retryCount = 0;
     do {
-        if(samplingQueue_.size() > maxQueueSize_) {
-            samplingQueue_.pop_front();
-        }
 
         uint64_t     sysTspUsec = 0;
         OBDeviceTime devTime;
@@ -94,17 +135,23 @@ void GlobalTimestampFitter::fittingLoop() {
 
         // Successfully obtain timestamp, the number of retries is reset to zero
         retryCount = 0;
+        {
+            std::unique_lock<std::mutex> lock(sampleMutex_);
+            if(samplingQueue_.size() > maxQueueSize_) {
+                samplingQueue_.pop_front();
+            }
 
-        // Clearing and refitting when the timestamp is out of order
-        if(!samplingQueue_.empty() && (devTime.time < samplingQueue_.back().deviceTimestamp)) {
-            samplingQueue_.clear();
-        }
+            // Clearing and refitting when the timestamp is out of order
+            if(!samplingQueue_.empty() && (devTime.time < samplingQueue_.back().deviceTimestamp)) {
+                samplingQueue_.clear();
+            }
 
-        samplingQueue_.push_back({ sysTspUsec, devTime.time });
+            samplingQueue_.push_back({ sysTspUsec, devTime.time });
 
-        if(samplingQueue_.size() < 4) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
-            continue;
+            if(samplingQueue_.size() < 4) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(50));
+                continue;
+            }
         }
 
         // Use the first set of data as offset to prevent overflow during calculation
@@ -141,11 +188,14 @@ void GlobalTimestampFitter::fittingLoop() {
             linearFuncParamCondVar_.notify_all();
         }
 
-        auto interval = refreshIntervalMsec_;
-        if(samplingQueue_.size() >= 15) {
-            interval *= 10;
+        {
+            std::unique_lock<std::mutex> lock(sampleMutex_);
+            auto                         interval = refreshIntervalMsec_;
+            if(samplingQueue_.size() >= 15) {
+                interval *= 10;
+            }
+            sampleCondVar_.wait_for(lock, std::chrono::milliseconds(interval));
         }
-        sampleCondVar_.wait_for(lock, std::chrono::milliseconds(interval));
 
     } while(!sampleLoopExit_ && retryCount <= MAX_RETRY_COUNT);
 

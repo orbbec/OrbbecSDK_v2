@@ -192,6 +192,15 @@ OB_EXPORT bool ob_device_is_property_supported(const ob_device *device, ob_prope
 OB_EXPORT bool ob_device_is_global_timestamp_supported(const ob_device *device, ob_error **error);
 
 /**
+ * @brief Enable or disable global timestamp.
+ *
+ * @param device The device object.
+ * @param enable Whether to enable global timestamp.
+ * @param error Pointer to an error object that will be set if an error occurs.
+ */
+OB_EXPORT void ob_device_enable_global_timestamp(ob_device *device, bool enable, ob_error **error);
+
+/**
  * @brief Update the device firmware.
  *
  * @param[in] device The device object.
@@ -380,12 +389,12 @@ OB_EXPORT const char *ob_device_info_get_hardware_version(const ob_device_info *
  * @brief Get the device extension information.
  * @brief Extension information is a set of key-value pair of string, user cat get the information by the key.
  *
- * @param[in] info Device Information
+ * @param[in] device The device object.
  * @param[in] info_key The key of the device extension information.
  * @param[out] error Pointer to an error object that will be set if an error occurs.
  * @return const char* The device extension information
  */
-OB_EXPORT const char *ob_device_info_get_extension_info(const ob_device_info *info, const char *info_key, ob_error **error);
+OB_EXPORT const char *ob_device_get_extension_info(const ob_device *device, const char *info_key, ob_error **error);
 
 /**
  * @brief Get the minimum SDK version number supported by the device
@@ -544,11 +553,10 @@ OB_EXPORT ob_device *ob_device_list_get_device_by_serial_number(const ob_device_
  */
 OB_EXPORT ob_device *ob_device_list_get_device_by_uid(const ob_device_list *list, const char *uid, ob_error **error);
 
-
 /**
  * In order to be compatible with the closed source version of orbbecsdk's interface.
  * We recommend using the latest interface names for a better experience.
-*/
+ */
 #define ob_device_list_device_count ob_device_list_get_count
 #define ob_device_list_get_extension_info ob_device_info_get_extension_info
 #define ob_device_upgrade ob_device_update_firmware

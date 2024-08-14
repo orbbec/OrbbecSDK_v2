@@ -45,7 +45,7 @@ public:
     typedef std::function<void(OBDeviceState state, const char *message)> DeviceStateChangedCallback;
 
 protected:
-    ob_device *                impl_ = nullptr;
+    ob_device                 *impl_ = nullptr;
     DeviceStateChangedCallback deviceStateChangeCallback_;
     DeviceFwUpdateCallback     fwUpdateCallback_;
 
@@ -70,7 +70,7 @@ public:
         return *this;
     }
 
-    Device(const Device &) = delete;
+    Device(const Device &)            = delete;
     Device &operator=(const Device &) = delete;
 
     virtual ~Device() noexcept {
@@ -93,6 +93,18 @@ public:
         auto      info  = ob_device_get_device_info(impl_, &error);
         Error::handle(&error);
         return std::make_shared<DeviceInfo>(info);
+    }
+
+    /**
+     * @brief Get information about extensions obtained from SDK supported by the device
+     *
+     * @return const char* Returns extended information about the device
+     */
+    const char *getExtensionInfo(const char *info_key) const {
+        ob_error   *error = nullptr;
+        const char *info  = ob_device_get_extension_info(impl_, info_key, &error);
+        Error::handle(&error);
+        return info;
     }
 
     /**
@@ -312,6 +324,17 @@ public:
     }
 
     /**
+     * @brief Enable or disable the global timestamp
+     *
+     * @param enable Whether to enable the global timestamp
+     */
+    void enableGlobalTimestamp(bool enable) {
+        ob_error *error = nullptr;
+        ob_device_enable_global_timestamp(impl_, enable, &error);
+        Error::handle(&error);
+    }
+
+    /**
      * @brief Update the device firmware
      *
      * @param filePath Firmware path
@@ -375,7 +398,7 @@ public:
      * @brief According the current preset name to return current depth mode name
      * @return const char* return the current depth mode name.
      */
-    const char *getCurrentDepthModeName(){
+    const char *getCurrentDepthModeName() {
         ob_error *error = nullptr;
         auto      name  = ob_device_get_current_depth_work_mode_name(impl_, &error);
         Error::handle(&error);
@@ -570,7 +593,7 @@ public:
      * @return const char* return the current preset name, it should be one of the preset names returned by @ref getAvailablePresetList.
      */
     const char *getCurrentPresetName() const {
-        ob_error *  error = nullptr;
+        ob_error   *error = nullptr;
         const char *name  = ob_device_get_current_preset_name(impl_, &error);
         Error::handle(&error);
         return name;
@@ -629,7 +652,7 @@ public:
      * @param data The custom preset data.
      * @param size The size of the custom preset data.
      */
-    void loadPresetFromJsonData(const char *presetName, const uint8_t *data, uint32_t size){
+    void loadPresetFromJsonData(const char *presetName, const uint8_t *data, uint32_t size) {
         ob_error *error = nullptr;
         ob_device_load_preset_from_json_data(impl_, presetName, data, size, &error);
     }
@@ -645,7 +668,7 @@ public:
      * @param[out] data return the preset json data.
      * @param[out] dataSize return the size of the preset json data.
      */
-    void exportSettingsAsPresetJsonData(const char *presetName, const uint8_t **data, uint32_t *dataSize){
+    void exportSettingsAsPresetJsonData(const char *presetName, const uint8_t **data, uint32_t *dataSize) {
         ob_error *error = nullptr;
         ob_device_export_current_settings_as_preset_json_data(impl_, presetName, data, dataSize, &error);
     }
@@ -705,7 +728,7 @@ public:
      * @return const char * return the device name
      */
     const char *getName() const {
-        ob_error *  error = nullptr;
+        ob_error   *error = nullptr;
         const char *name  = ob_device_info_get_name(impl_, &error);
         Error::handle(&error);
         return name;
@@ -741,7 +764,7 @@ public:
      * @return const char * return the uid of the device
      */
     const char *getUid() const {
-        ob_error *  error = nullptr;
+        ob_error   *error = nullptr;
         const char *uid   = ob_device_info_get_uid(impl_, &error);
         Error::handle(&error);
         return uid;
@@ -753,7 +776,7 @@ public:
      * @return const char * return the serial number of the device
      */
     const char *getSerialNumber() const {
-        ob_error *  error = nullptr;
+        ob_error   *error = nullptr;
         const char *sn    = ob_device_info_get_serial_number(impl_, &error);
         Error::handle(&error);
         return sn;
@@ -765,7 +788,7 @@ public:
      * @return const char* return the version number of the firmware
      */
     const char *getFirmwareVersion() const {
-        ob_error *  error   = nullptr;
+        ob_error   *error   = nullptr;
         const char *version = ob_device_info_get_firmware_version(impl_, &error);
         Error::handle(&error);
         return version;
@@ -778,7 +801,7 @@ public:
      * "Ethernet"
      */
     const char *getConnectionType() const {
-        ob_error *  error = nullptr;
+        ob_error   *error = nullptr;
         const char *type  = ob_device_info_get_connection_type(impl_, &error);
         Error::handle(&error);
         return type;
@@ -792,7 +815,7 @@ public:
      * @return const char* the IP address of the device, such as "192.168.1.10"
      */
     const char *getIpAddress() const {
-        ob_error *  error = nullptr;
+        ob_error   *error = nullptr;
         const char *ip    = ob_device_info_get_ip_address(impl_, &error);
         Error::handle(&error);
         return ip;
@@ -804,7 +827,7 @@ public:
      * @return const char* the version number of the hardware
      */
     const char *getHardwareVersion() const {
-        ob_error *  error   = nullptr;
+        ob_error   *error   = nullptr;
         const char *version = ob_device_info_get_hardware_version(impl_, &error);
         Error::handle(&error);
         return version;
@@ -816,22 +839,10 @@ public:
      * @return const char* the minimum SDK version number supported by the device
      */
     const char *getSupportedMinSdkVersion() const {
-        ob_error *  error   = nullptr;
+        ob_error   *error   = nullptr;
         const char *version = ob_device_info_get_supported_min_sdk_version(impl_, &error);
         Error::handle(&error);
         return version;
-    }
-
-    /**
-     * @brief Get information about extensions obtained from SDK supported by the device
-     *
-     * @return const char* Returns extended information about the device
-     */
-    const char *getExtensionInfo(const char *info_key) const {
-        ob_error *  error = nullptr;
-        const char *info  = ob_device_info_get_extension_info(impl_, info_key, &error);
-        Error::handle(&error);
-        return info;
     }
 
     /**
@@ -840,7 +851,7 @@ public:
      * @return const char* the chip type name
      */
     const char *getAsicName() const {
-        ob_error *  error = nullptr;
+        ob_error   *error = nullptr;
         const char *name  = ob_device_info_get_asicName(impl_, &error);
         Error::handle(&error);
         return name;
@@ -852,7 +863,7 @@ public:
      * @return OBDeviceType the device type
      */
     OBDeviceType getDeviceType() const {
-        ob_error *   error = nullptr;
+        ob_error    *error = nullptr;
         OBDeviceType type  = ob_device_info_get_device_type(impl_, &error);
         Error::handle(&error);
         return type;
@@ -900,10 +911,6 @@ public:
 
     OB_DEPRECATED const char *supportedMinSdkVersion() const {
         return getSupportedMinSdkVersion();
-    }
-
-    OB_DEPRECATED const char *extensionInfo(const char *info_key) const {
-        return getExtensionInfo(info_key);
     }
 
     OB_DEPRECATED const char *asicName() const {
@@ -1086,7 +1093,6 @@ public:
         return std::make_shared<Device>(device);
     }
 
-
     /**
      * In order to be compatible with the closed source version of orbbecsdk's interface.
      * We recommend using the latest interface names for a better experience.
@@ -1215,7 +1221,7 @@ public:
      * @return const char* the name of the device preset
      */
     const char *getName(uint32_t index) {
-        ob_error *  error = nullptr;
+        ob_error   *error = nullptr;
         const char *name  = ob_device_preset_list_get_name(impl_, index, &error);
         Error::handle(&error);
         return name;

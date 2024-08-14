@@ -20,6 +20,7 @@
 #include "metadata/FrameMetadataParserContainer.hpp"
 #include "timestamp/GlobalTimestampFitter.hpp"
 #include "timestamp/FrameTimestampCalculator.hpp"
+#include "timestamp/DeviceClockSynchronizer.hpp"
 #include "property/VendorPropertyAccessor.hpp"
 #include "property/UvcPropertyAccessor.hpp"
 #include "property/PropertyServer.hpp"
@@ -56,6 +57,7 @@ void G330Device::init() {
     initProperties();
     initFrameMetadataParserContainer();
     fetchDeviceInfo();
+    fetchExtensionInfo();
 
     videoFrameTimestampCalculatorCreator_ = [this]() {
         auto metadataType = OB_FRAME_METADATA_TYPE_TIMESTAMP;
@@ -87,24 +89,9 @@ void G330Device::init() {
     };
     auto deviceSyncConfigurator = std::make_shared<G330DeviceSyncConfigurator>(this, supportedSyncModes);
     registerComponent(OB_DEV_COMPONENT_DEVICE_SYNC_CONFIGURATOR, deviceSyncConfigurator);
-}
 
-void G330Device::fetchDeviceInfo() {
-    auto propServer                   = getPropertyServer();
-    auto version                      = propServer->getStructureDataT<OBVersionInfo>(OB_STRUCT_VERSION);
-    deviceInfo_                       = std::make_shared<DeviceInfo>();
-    deviceInfo_->name_                = version.deviceName;
-    deviceInfo_->fwVersion_           = version.firmwareVersion;
-    deviceInfo_->deviceSn_            = version.serialNumber;
-    deviceInfo_->asicName_            = version.depthChip;
-    deviceInfo_->hwVersion_           = version.hardwareVersion;
-    deviceInfo_->type_                = static_cast<uint16_t>(version.deviceType);
-    deviceInfo_->supportedSdkVersion_ = version.sdkVersion;
-    deviceInfo_->pid_                 = enumInfo_->getPid();
-    deviceInfo_->vid_                 = enumInfo_->getVid();
-    deviceInfo_->uid_                 = enumInfo_->getUid();
-    deviceInfo_->connectionType_      = enumInfo_->getConnectionType();
-    // todo: fetch and parse extension info
+    auto deviceClockSynchronizer = std::make_shared<DeviceClockSynchronizer>(this);
+    registerComponent(OB_DEV_COMPONENT_DEVICE_CLOCK_SYNCHRONIZER, deviceClockSynchronizer);
 }
 
 void G330Device::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
@@ -147,7 +134,7 @@ void G330Device::initSensorList() {
             [this, depthPortInfo]() {
                 auto platform = Platform::getInstance();
                 auto port     = platform->getSourcePort(depthPortInfo);
-                auto sensor = std::make_shared<DisparityBasedSensor>(this, OB_SENSOR_DEPTH, port);
+                auto sensor   = std::make_shared<DisparityBasedSensor>(this, OB_SENSOR_DEPTH, port);
 
                 sensor->updateFormatFilterConfig({ { FormatFilterPolicy::REMOVE, OB_FORMAT_Y8, OB_FORMAT_ANY, nullptr },
                                                    { FormatFilterPolicy::REMOVE, OB_FORMAT_NV12, OB_FORMAT_ANY, nullptr },
@@ -203,7 +190,7 @@ void G330Device::initSensorList() {
             [this, depthPortInfo]() {
                 auto platform = Platform::getInstance();
                 auto port     = platform->getSourcePort(depthPortInfo);
-                auto sensor = std::make_shared<VideoSensor>(this, OB_SENSOR_IR_LEFT, port);
+                auto sensor   = std::make_shared<VideoSensor>(this, OB_SENSOR_IR_LEFT, port);
 
                 std::vector<FormatFilterConfig> formatFilterConfigs = {
                     { FormatFilterPolicy::REMOVE, OB_FORMAT_Z16, OB_FORMAT_ANY, nullptr },  //
@@ -249,7 +236,7 @@ void G330Device::initSensorList() {
             [this, depthPortInfo]() {
                 auto platform = Platform::getInstance();
                 auto port     = platform->getSourcePort(depthPortInfo);
-                auto sensor = std::make_shared<VideoSensor>(this, OB_SENSOR_IR_RIGHT, port);
+                auto sensor   = std::make_shared<VideoSensor>(this, OB_SENSOR_IR_RIGHT, port);
 
                 std::vector<FormatFilterConfig> formatFilterConfigs = {
                     { FormatFilterPolicy::REMOVE, OB_FORMAT_Z16, OB_FORMAT_ANY, nullptr },   //
@@ -324,7 +311,7 @@ void G330Device::initSensorList() {
             [this, colorPortInfo]() {
                 auto platform = Platform::getInstance();
                 auto port     = platform->getSourcePort(colorPortInfo);
-                auto sensor = std::make_shared<VideoSensor>(this, OB_SENSOR_COLOR, port);
+                auto sensor   = std::make_shared<VideoSensor>(this, OB_SENSOR_COLOR, port);
 
                 std::vector<FormatFilterConfig> formatFilterConfigs = {
                     { FormatFilterPolicy::REMOVE, OB_FORMAT_NV12, OB_FORMAT_ANY, nullptr },
@@ -494,7 +481,7 @@ void G330Device::initProperties() {
             propertyServer->registerProperty(OB_PROP_DEPTH_ALIGN_HARDWARE_BOOL, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_LASER_POWER_LEVEL_CONTROL_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_LDP_MEASURE_DISTANCE_INT, "r", "r", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_TIMER_RESET_SIGNAL_BOOL, "", "rw", vendorPropertyAccessor);
+            propertyServer->registerProperty(OB_PROP_TIMER_RESET_SIGNAL_BOOL, "w", "w", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_TIMER_RESET_TRIGGER_OUT_ENABLE_BOOL, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_TIMER_RESET_DELAY_US_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_SYNC_SIGNAL_TRIGGER_OUT_BOOL, "rw", "rw", vendorPropertyAccessor);
@@ -646,6 +633,16 @@ std::vector<std::shared_ptr<IFilter>> G330Device::createRecommendedPostProcessin
         if(filterFactory->isFilterCreatorExists("DecimationFilter")) {
             auto decimationFilter = filterFactory->createFilter("DecimationFilter");
             depthFilterList.push_back(decimationFilter);
+        }
+
+        if(filterFactory->isFilterCreatorExists("HDRMerge")) {
+            auto hdrMergeFilter = filterFactory->createFilter("HDRMerge");
+            depthFilterList.push_back(hdrMergeFilter);
+        }
+
+        if(filterFactory->isFilterCreatorExists("SequenceIdFilter")) {
+            auto sequenceIdFilter = filterFactory->createFilter("SequenceIdFilter");
+            depthFilterList.push_back(sequenceIdFilter);
         }
 
         if(filterFactory->isFilterCreatorExists("NoiseRemovalFilter")) {

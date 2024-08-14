@@ -11,14 +11,17 @@
 #include "usb/uvc/UvcDevicePort.hpp"
 #include "FilterFactory.hpp"
 
-#include "component/metadata/FrameMetadataParserContainer.hpp"
-#include "component/timestamp/GlobalTimestampFitter.hpp"
-#include "component/property/VendorPropertyAccessor.hpp"
-#include "component/property/UvcPropertyAccessor.hpp"
-#include "component/property/PropertyServer.hpp"
-#include "component/property/CommonPropertyAccessors.hpp"
-#include "component/property/FilterPropertyAccessors.hpp"
-#include "component/monitor/DeviceMonitor.hpp"
+#include "metadata/FrameMetadataParserContainer.hpp"
+#include "timestamp/GlobalTimestampFitter.hpp"
+#include "timestamp/FrameTimestampCalculator.hpp"
+#include "timestamp/DeviceClockSynchronizer.hpp"
+#include "property/VendorPropertyAccessor.hpp"
+#include "property/UvcPropertyAccessor.hpp"
+#include "property/PropertyServer.hpp"
+#include "property/CommonPropertyAccessors.hpp"
+#include "property/FilterPropertyAccessors.hpp"
+#include "monitor/DeviceMonitor.hpp"
+#include "param/AlgParamManager.hpp"
 #include "rawphase/RawPhaseStreamer.hpp"
 #include "rawphase/RawPhaseConvertSensor.hpp"
 #include "rawphase/depthengine/DepthEngineLoader.hpp"
@@ -26,8 +29,6 @@
 #include "publicfilters/FormatConverterProcess.hpp"
 #include "publicfilters/IMUCorrector.hpp"
 
-#include "param/AlgParamManager.hpp"
-#include "timestamp/GlobalTimestampFitter.hpp"
 namespace libobsensor {
 FemtoBoltDevice::FemtoBoltDevice(const std::shared_ptr<const IDeviceEnumInfo> &info) : DeviceBase(info) {
     init();
@@ -40,6 +41,12 @@ void FemtoBoltDevice::init() {
     initProperties();
 
     fetchDeviceInfo();
+    fetchExtensionInfo();
+
+    if(getFirmwareVersionInt() >= 10101) {
+        deviceTimeFreq_ = 1000000;
+        frameTimeFreq_  = 1000000;
+    }
 
     auto globalTimestampFilter = std::make_shared<GlobalTimestampFitter>(this);
     registerComponent(OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER, globalTimestampFilter);
@@ -52,24 +59,9 @@ void FemtoBoltDevice::init() {
     //                                                                            };
     // auto                                            deviceSyncConfigurator = std::make_shared<G330DeviceSyncConfigurator>(this, supportedSyncModes);
     // registerComponent(OB_DEV_COMPONENT_DEVICE_SYNC_CONFIGURATOR, deviceSyncConfigurator);
-}
 
-void FemtoBoltDevice::fetchDeviceInfo() {
-    auto propServer = getPropertyServer();
-
-    auto version                      = propServer->getStructureDataT<OBVersionInfo>(OB_STRUCT_VERSION);
-    deviceInfo_                       = std::make_shared<DeviceInfo>();
-    deviceInfo_->name_                = version.deviceName;
-    deviceInfo_->fwVersion_           = version.firmwareVersion;
-    deviceInfo_->deviceSn_            = version.serialNumber;
-    deviceInfo_->asicName_            = version.depthChip;
-    deviceInfo_->hwVersion_           = version.hardwareVersion;
-    deviceInfo_->type_                = static_cast<uint16_t>(version.deviceType);
-    deviceInfo_->supportedSdkVersion_ = version.sdkVersion;
-    deviceInfo_->pid_                 = enumInfo_->getPid();
-    deviceInfo_->vid_                 = enumInfo_->getVid();
-    deviceInfo_->uid_                 = enumInfo_->getUid();
-    deviceInfo_->connectionType_      = enumInfo_->getConnectionType();
+    auto deviceClockSynchronizer = std::make_shared<DeviceClockSynchronizer>(this, deviceTimeFreq_, deviceTimeFreq_);
+    registerComponent(OB_DEV_COMPONENT_DEVICE_CLOCK_SYNCHRONIZER, deviceClockSynchronizer);
 }
 
 void FemtoBoltDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
@@ -148,7 +140,12 @@ void FemtoBoltDevice::initSensorList() {
                 auto rawPhaseStreamer          = getComponentT<RawPhaseStreamer>(OB_DEV_COMPONENT_RAW_PHASE_STREAMER);
                 auto rawphaseStreamerSharedPtr = rawPhaseStreamer.get();
                 auto sensor                    = std::make_shared<RawPhaseConvertSensor>(this, port, OB_SENSOR_DEPTH, rawphaseStreamerSharedPtr);
-                sensor->setFrameTimestampCalculator(videoFrameTimestampCalculator_);
+
+                auto videoFrameTimestampCalculator = std::make_shared<FrameTimestampCalculatorOverUvcSCR>(this, frameTimeFreq_);
+                sensor->setFrameTimestampCalculator(videoFrameTimestampCalculator);
+
+                auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
+                sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
 
                 // auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR, false);
                 // if(frameProcessor) {
@@ -176,12 +173,16 @@ void FemtoBoltDevice::initSensorList() {
         registerComponent(
             OB_DEV_COMPONENT_IR_SENSOR,
             [this, depthPortInfo]() {
-                auto platform                  = Platform::getInstance();
-                auto port                      = platform->getSourcePort(depthPortInfo);
-                auto rawPhaseStreamer          = getComponentT<RawPhaseStreamer>(OB_DEV_COMPONENT_RAW_PHASE_STREAMER);
-                auto sensor                    = std::make_shared<RawPhaseConvertSensor>(this, port, OB_SENSOR_IR, rawPhaseStreamer.get());
+                auto platform         = Platform::getInstance();
+                auto port             = platform->getSourcePort(depthPortInfo);
+                auto rawPhaseStreamer = getComponentT<RawPhaseStreamer>(OB_DEV_COMPONENT_RAW_PHASE_STREAMER);
+                auto sensor           = std::make_shared<RawPhaseConvertSensor>(this, port, OB_SENSOR_IR, rawPhaseStreamer.get());
 
-                sensor->setFrameTimestampCalculator(videoFrameTimestampCalculator_);
+                auto videoFrameTimestampCalculator = std::make_shared<FrameTimestampCalculatorOverUvcSCR>(this, frameTimeFreq_);
+                sensor->setFrameTimestampCalculator(videoFrameTimestampCalculator);
+
+                auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
+                sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
 
                 // auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR, false);
                 // if(frameProcessor) {
@@ -221,7 +222,7 @@ void FemtoBoltDevice::initSensorList() {
             [this, colorPortInfo]() {
                 auto platform = Platform::getInstance();
                 auto port     = platform->getSourcePort(colorPortInfo);
-                auto sensor = std::make_shared<VideoSensor>(this, OB_SENSOR_COLOR, port);
+                auto sensor   = std::make_shared<VideoSensor>(this, OB_SENSOR_COLOR, port);
 
                 std::vector<FormatFilterConfig> formatFilterConfigs = {
                     // { FormatFilterPolicy::REMOVE, OB_FORMAT_NV12, OB_FORMAT_ANY, nullptr },
@@ -237,10 +238,13 @@ void FemtoBoltDevice::initSensorList() {
                     // formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_YUYV, OB_FORMAT_Y16, formatConverter });
                     // formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_YUYV, OB_FORMAT_Y8, formatConverter });
                 }
-
                 sensor->updateFormatFilterConfig(formatFilterConfigs);
-                sensor->setFrameMetadataParserContainer(colorMdParserContainer_);
-                sensor->setFrameTimestampCalculator(videoFrameTimestampCalculator_);
+
+                auto videoFrameTimestampCalculator = std::make_shared<FrameTimestampCalculatorOverUvcSCR>(this, frameTimeFreq_);
+                sensor->setFrameTimestampCalculator(videoFrameTimestampCalculator);
+
+                auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
+                sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
 
                 auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR, false);
                 if(frameProcessor) {
@@ -288,6 +292,9 @@ void FemtoBoltDevice::initSensorList() {
                 auto imuStreamerSharedPtr = imuStreamer.get();
                 auto sensor               = std::make_shared<AccelSensor>(this, port, imuStreamerSharedPtr);
 
+                auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
+                sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
+
                 initSensorStreamProfile(sensor);
 
                 return sensor;
@@ -303,6 +310,9 @@ void FemtoBoltDevice::initSensorList() {
                 auto imuStreamer          = getComponentT<ImuStreamer>(OB_DEV_COMPONENT_IMU_STREAMER);
                 auto imuStreamerSharedPtr = imuStreamer.get();
                 auto sensor               = std::make_shared<GyroSensor>(this, port, imuStreamerSharedPtr);
+
+                auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
+                sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
 
                 initSensorStreamProfile(sensor);
 
@@ -405,13 +415,5 @@ void FemtoBoltDevice::initProperties() {
     propertyServer->registerProperty(OB_PROP_HEARTBEAT_BOOL, "rw", "rw", heartbeatPropertyAccessor);
 
     registerComponent(OB_DEV_COMPONENT_PROPERTY_SERVER, propertyServer, true);
-}
-
-std::vector<std::shared_ptr<IFilter>> FemtoBoltDevice::createRecommendedPostProcessingFilters(OBSensorType type) {
-    std::vector<std::shared_ptr<IFilter>> filters;
-    if(type == OB_SENSOR_COLOR) {
-        return {};
-    }
-    return filters;
 }
 }  // namespace libobsensor

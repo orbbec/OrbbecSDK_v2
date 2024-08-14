@@ -41,9 +41,10 @@ typedef enum {
     OB_RAW_DATA_ALIGN_CALIB_PARAM                   = 4027,
     OB_RAW_DATA_DEPTH_ALG_MODE_LIST                 = 4034, /**< Depth algorithm mode list*/
     OB_RAW_DATA_EFFECTIVE_VIDEO_STREAM_PROFILE_LIST = 4035, /**< Current effective video stream profile list*/
-    OB_RAW_DATA_STREAM_PROFILE_LIST                 = 4033, /**< Stream configuration list retrieval (temporarily applied to network stream configuration retrieval in Femto Mega).*/
-    OB_RAW_DATA_IMU_CALIB_PARAM                     = 4036, /**< IMU calibration parameters*/
-    OB_RAW_DATA_DEVICE_EXTENSION_INFORMATION        = 4041, /**< Device extension information*/
+    OB_RAW_DATA_STREAM_PROFILE_LIST =
+        4033, /**< Stream configuration list retrieval (temporarily applied to network stream configuration retrieval in Femto Mega).*/
+    OB_RAW_DATA_IMU_CALIB_PARAM              = 4036, /**< IMU calibration parameters*/
+    OB_RAW_DATA_DEVICE_EXTENSION_INFORMATION = 4041, /**< Device extension information*/
 
 } OBInternalPropertyID;
 

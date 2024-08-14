@@ -7,31 +7,40 @@
 #include <memory>
 
 namespace libobsensor {
-class FemtoMegaDevice : public DeviceBase {
+class FemtoMegaUsbDevice : public DeviceBase {
 public:
-    FemtoMegaDevice(const std::shared_ptr<const IDeviceEnumInfo> &info);
-    virtual ~FemtoMegaDevice() noexcept;
-
-    std::vector<std::shared_ptr<IFilter>> createRecommendedPostProcessingFilters(OBSensorType type) override;
+    FemtoMegaUsbDevice(const std::shared_ptr<const IDeviceEnumInfo> &info);
+    virtual ~FemtoMegaUsbDevice() noexcept;
 
 private:
     void init() override;
     void initSensorList();
     void initProperties();
     void initSensorStreamProfile(std::shared_ptr<ISensor> sensor);
-    void fetchDeviceInfo() override;
-
-    // Net mode
-    void initNetModeSensorList();
-    void initNetModeProperties();
-    void initNetModeSensorStreamProfileList(std::shared_ptr<ISensor> sensor);
-    void fetchNetModeAllProfileList();
 
 private:
-    std::shared_ptr<IFrameMetadataParserContainer> colorMdParserContainer_;
-    std::shared_ptr<IFrameMetadataParserContainer> depthMdParserContainer_;
-    std::shared_ptr<IFrameTimestampCalculator>     videoFrameTimestampCalculator_;
+    uint64_t deviceTimeFreq_ = 1000;
+    uint64_t frameTimeFreq_  = 1000;
+};
+
+class FemtoMegaNetDevice : public DeviceBase {
+public:
+    FemtoMegaNetDevice(const std::shared_ptr<const IDeviceEnumInfo> &info);
+    virtual ~FemtoMegaNetDevice() noexcept;
+
+private:
+    void init() override;
+    void initSensorList();
+    void initProperties();
+    void initSensorStreamProfile(std::shared_ptr<ISensor> sensor);
+    void fetchAllProfileList();
+
+private:
+    uint64_t deviceTimeFreq_     = 1000;
+    uint64_t depthFrameTimeFreq_ = 1000;
+    uint64_t colorFrameTimeFreq_ = 90000;
 
     StreamProfileList allNetProfileList_;
 };
+
 }  // namespace libobsensor

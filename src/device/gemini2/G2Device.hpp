@@ -22,8 +22,6 @@ private:
     void initSensorStreamProfile(std::shared_ptr<ISensor> sensor);
     void fixSensorList();  // fix sensor list according to the depth work mode
 
-    void fetchDeviceInfo() override;
-
 private:
     const uint64_t                                              frameTimeFreq_  = 1000000;
     uint64_t                                                    deviceTimeFreq_ = 1000000;
