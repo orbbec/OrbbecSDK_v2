@@ -1,10 +1,12 @@
 #pragma once
 #include "ISourcePort.hpp"
 #include "ethernet/VendorNetDataPort.hpp"
+#include "ethernet/rtp/ObRTPClient.hpp"
 
 #include <string>
 #include <memory>
 #include <thread>
+#include <iostream>
 
 namespace libobsensor {
 
@@ -39,19 +41,13 @@ public:
     virtual std::shared_ptr<const SourcePortInfo> getSourcePortInfo() const override;
 
 private:
-    void stopStream();
-    void createClient(std::shared_ptr<const StreamProfile> profile, MutableFrameCallback callback);
-    void closeClient();
+    void startClientTask(std::shared_ptr<const StreamProfile> profile, MutableFrameCallback callback);
+    void closeClientTask();
 
 private:
     std::shared_ptr<const RTPStreamPortInfo> portInfo_;
-    std::thread                              eventLoopThread_;
-    char                                     destroy_;
     bool                                     streamStarted_;
-
-    // ObRTPClient                        *currentRtspClient_;
-
-    std::shared_ptr<const StreamProfile> currentStreamProfile_;
-    StreamProfileList                    streamProfileList_;
+    std::shared_ptr<ObRTPClient>             rtpClient_;
+    StreamProfileList                        streamProfileList_;
 };
 }
