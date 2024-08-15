@@ -3,7 +3,7 @@
 #include "utils/Utils.hpp"
 #include "exception/ObException.hpp"
 
-#define UDP_BUFFER_SIZE 65536
+#define UDP_BUFFER_SIZE 4096
 
 namespace libobsensor {
 
@@ -84,7 +84,7 @@ void ObRTPUDPClient::startReceive() {
     sockaddr_in serverAddr;
     int         serverAddrSize = sizeof(serverAddr);
     uint8_t     recvBuffer[UDP_BUFFER_SIZE];
-    int         recvBufferLen = 0;
+    int         recvBufferLen = UDP_BUFFER_SIZE;
 
     while(startReceive_) {
         int recvLen = recvfrom(recvSocket_, (char *)recvBuffer, recvBufferLen, 0, (sockaddr *)&serverAddr, &serverAddrSize);
