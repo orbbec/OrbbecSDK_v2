@@ -215,11 +215,11 @@ void PropertyServer::setStructureData(uint32_t propertyId, const std::vector<uin
     if(propId != propertyId) {
         LOG_DEBUG("Property {} alias to {}", propId, propertyId);
     }
-    auto extensionPort = std::dynamic_pointer_cast<IExtensionPropertyAccessor>(accessor);
-    if(extensionPort == nullptr) {
+    auto structAccessor = std::dynamic_pointer_cast<IStructureDataAccessor>(accessor);
+    if(structAccessor == nullptr) {
         throw invalid_value_exception(utils::string::to_string() << "Property" << propId << " does not support structure data setting");
     }
-    extensionPort->setStructureData(propId, data);
+    structAccessor->setStructureData(propId, data);
 
     for(auto &callback: it->second.accessCallbacks) {
         callback(propertyId, data.data(), data.size(), PROP_OP_WRITE);
@@ -240,11 +240,11 @@ const std::vector<uint8_t> &PropertyServer::getStructureData(uint32_t propertyId
         LOG_DEBUG("Property {} alias to {}", propId, propertyId);
     }
 
-    auto extensionPort = std::dynamic_pointer_cast<IExtensionPropertyAccessor>(accessor);
-    if(extensionPort == nullptr) {
+    auto structAccessor = std::dynamic_pointer_cast<IStructureDataAccessor>(accessor);
+    if(structAccessor == nullptr) {
         throw invalid_value_exception(utils::string::to_string() << "Property " << propId << " does not support structure data getting");
     }
-    const auto &data = extensionPort->getStructureData(propId);
+    const auto &data = structAccessor->getStructureData(propId);
     for(auto &callback: it->second.accessCallbacks) {
         callback(propertyId, data.data(), data.size(), PROP_OP_READ);
     }
@@ -264,12 +264,12 @@ void PropertyServer::getRawData(uint32_t propertyId, GetDataCallback callback, P
     if(propId != propertyId) {
         LOG_DEBUG("Property {} alias to {}", propId, propertyId);
     }
-    auto extensionPort = std::dynamic_pointer_cast<IExtensionPropertyAccessor>(accessor);
-    if(extensionPort == nullptr) {
+    auto rawDataAccessor = std::dynamic_pointer_cast<IRawDataAccessor>(accessor);
+    if(rawDataAccessor == nullptr) {
         throw invalid_value_exception(utils::string::to_string() << "Property" << propId << " does not support raw data getting");
     }
 
-    extensionPort->getRawData(propId, callback);  // todo: add async support
+    rawDataAccessor->getRawData(propId, callback);  // todo: add async support
     for(auto &accessCallback: it->second.accessCallbacks) {
         accessCallback(propertyId, nullptr, 0, PROP_OP_READ);
     }
@@ -288,12 +288,12 @@ uint16_t PropertyServer::getCmdVersionProtoV1_1(uint32_t propertyId, PropertyAcc
     if(propId != propertyId) {
         LOG_DEBUG("Property {} alias to {}", propId, propertyId);
     }
-    auto extensionPort = std::dynamic_pointer_cast<IExtensionPropertyAccessorV1_1>(accessor);
-    if(extensionPort == nullptr) {
+    auto structAccessor = std::dynamic_pointer_cast<IStructureDataAccessorV1_1>(accessor);
+    if(structAccessor == nullptr) {
         throw invalid_value_exception(utils::string::to_string() << "Property" << propId << " does not support cmd version getting");
     }
 
-    auto ver = extensionPort->getCmdVersionProtoV1_1(propId);
+    auto ver = structAccessor->getCmdVersionProtoV1_1(propId);
     LOG_DEBUG("Property {} get cmd version successfully, version {}", propId, ver);
     return ver;
 }
@@ -310,11 +310,11 @@ const std::vector<uint8_t> &PropertyServer::getStructureDataProtoV1_1(uint32_t p
     if(propId != propertyId) {
         LOG_DEBUG("Property {} alias to {}", propId, propertyId);
     }
-    auto extensionPort = std::dynamic_pointer_cast<IExtensionPropertyAccessorV1_1>(accessor);
-    if(extensionPort == nullptr) {
+    auto structAccessor = std::dynamic_pointer_cast<IStructureDataAccessorV1_1>(accessor);
+    if(structAccessor == nullptr) {
         throw invalid_value_exception(utils::string::to_string() << "Property" << propId << " does not support structure data getting over proto v1.1");
     }
-    const auto &data = extensionPort->getStructureDataProtoV1_1(propId, cmdVersion);
+    const auto &data = structAccessor->getStructureDataProtoV1_1(propId, cmdVersion);
     for(auto callback: it->second.accessCallbacks) {
         callback(propertyId, data.data(), data.size(), PROP_OP_READ);
     }
@@ -334,11 +334,11 @@ void PropertyServer::setStructureDataProtoV1_1(uint32_t propertyId, const std::v
     if(propId != propertyId) {
         LOG_DEBUG("Property {} alias to {}", propId, propertyId);
     }
-    auto extensionPort = std::dynamic_pointer_cast<IExtensionPropertyAccessorV1_1>(accessor);
-    if(extensionPort == nullptr) {
+    auto structAccessor = std::dynamic_pointer_cast<IStructureDataAccessorV1_1>(accessor);
+    if(structAccessor == nullptr) {
         throw invalid_value_exception(utils::string::to_string() << "Property" << propId << " does not support structure data setting over proto v1.1");
     }
-    extensionPort->setStructureDataProtoV1_1(propId, data, cmdVersion);
+    structAccessor->setStructureDataProtoV1_1(propId, data, cmdVersion);
     for(auto callback: it->second.accessCallbacks) {
         callback(propertyId, data.data(), data.size(), PROP_OP_WRITE);
     }
@@ -357,11 +357,11 @@ const std::vector<uint8_t> &PropertyServer::getStructureDataListProtoV1_1(uint32
     if(propId != propertyId) {
         LOG_DEBUG("Property {} alias to {}", propId, propertyId);
     }
-    auto extensionPort = std::dynamic_pointer_cast<IExtensionPropertyAccessorV1_1>(accessor);
-    if(extensionPort == nullptr) {
+    auto structAccessor = std::dynamic_pointer_cast<IStructureDataAccessorV1_1>(accessor);
+    if(structAccessor == nullptr) {
         throw invalid_value_exception(utils::string::to_string() << "Property" << propId << " does not support structure data list getting over proto v1.1");
     }
-    const auto &data = extensionPort->getStructureDataListProtoV1_1(propId, cmdVersion);
+    const auto &data = structAccessor->getStructureDataListProtoV1_1(propId, cmdVersion);
     for(auto callback: it->second.accessCallbacks) {
         callback(propertyId, data.data(), data.size(), PROP_OP_READ);
     }

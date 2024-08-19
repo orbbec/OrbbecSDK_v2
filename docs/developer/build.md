@@ -1,6 +1,6 @@
-## Windows Build
+# Windows Build
 
-### Requirements
+## Requirements
 
 - Visual Studio 2017 (recommended) or later, with the MSVC and ATL components installed
 - CMake 3.5 (recommended) or later

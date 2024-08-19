@@ -1,6 +1,7 @@
 ﻿
 #include "PrivFilterLoader.hpp"
 #include "PrivFilterCppWrapper.hpp"
+#include "FilterDecorator.hpp"
 #include "exception/ObException.hpp"
 #include "logger/Logger.hpp"
 #include "utils/Utils.hpp"
@@ -57,7 +58,9 @@ std::shared_ptr<IFilter> PrivFilterCreator::create() {
             ctx = nullptr;
         }
     });
-    return std::make_shared<PrivFilterCppWrapper>(filterName, privFilterCtxShared);
+
+    auto baseFilter = std::make_shared<PrivFilterCppWrapper>(filterName, privFilterCtxShared);
+    return std::make_shared<FilterDecorator>(filterName, baseFilter);
 }
 
 std::shared_ptr<IFilter> PrivFilterCreator::create(const std::string &activationKey) {
@@ -105,7 +108,8 @@ std::shared_ptr<IFilter> PrivFilterCreator::create(const std::string &activation
             ctx = nullptr;
         }
     });
-    return std::make_shared<PrivFilterCppWrapper>(filterName, privFilterCtxShared);
+    auto baseFilter          = std::make_shared<PrivFilterCppWrapper>(filterName, privFilterCtxShared);
+    return std::make_shared<FilterDecorator>(filterName, baseFilter);
 }
 
 const std::string &PrivFilterCreator::getVendorSpecificCode() const {
@@ -123,8 +127,8 @@ std::map<std::string, std::shared_ptr<IFilterCreator>> getCreators() {
     std::map<std::string, std::shared_ptr<IFilterCreator>> filterCreators;
 
     auto load = [&filterCreators](const std::string &dir, const std::string &packageName) {
-        auto pkgCtx_         = std::make_shared<PrivFilterPackageContext>();
-        pkgCtx_->dir         = dir;
+        auto pkgCtx_          = std::make_shared<PrivFilterPackageContext>();
+        pkgCtx_->dir          = dir;
         pkgCtx_->package_name = packageName;
         auto fileName         = utils::removeExtensionOfFileName(packageName);
         fileName              = utils::string::replaceFirst(fileName, "lib", "");

@@ -12,7 +12,7 @@ const std::map<OBStreamType, OBFrameType> streamTypeToFrameType = { { OB_STREAM_
                                                                     { OB_STREAM_IR_LEFT, OB_FRAME_IR_LEFT },
                                                                     { OB_STREAM_IR_RIGHT, OB_FRAME_IR_RIGHT } };
 
-Align::Align(const std::string &name) : FilterBase(name), align_to_stream_(OB_STREAM_COLOR) {
+Align::Align() : align_to_stream_(OB_STREAM_COLOR) {
     pImpl = new AlignImpl();
     memset(&from_intrin_, 0, sizeof(OBCameraIntrinsic));
     memset(&from_disto_, 0, sizeof(OBCameraDistortion));
@@ -59,11 +59,10 @@ const std::string &Align::getConfigSchema() const {
 }
 
 void Align::reset() {
-    FilterBase::reset();
     pImpl->reset();
 }
 
-std::shared_ptr<Frame> Align::processFunc(std::shared_ptr<const Frame> frame) {
+std::shared_ptr<Frame> Align::process(std::shared_ptr<const Frame> frame) {
     std::lock_guard<std::recursive_mutex> lock(alignMutex_);
     if(!frame->is<FrameSet>()) {
         LOG_WARN("Invalid frame!");

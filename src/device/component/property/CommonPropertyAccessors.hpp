@@ -54,10 +54,10 @@ protected:
     std::mutex                                          mutex_;
 };
 
-class LazyExtensionPropertyAccessor : public LazyPropertyAccessor, public IExtensionPropertyAccessor, public IExtensionPropertyAccessorV1_1 {
+class LazySuperPropertyAccessor : public LazyPropertyAccessor, public IStructureDataAccessor, public IStructureDataAccessorV1_1, public IRawDataAccessor {
 public:
-    LazyExtensionPropertyAccessor(std::function<std::shared_ptr<IPropertyAccessor>()> accessorCreator);
-    virtual ~LazyExtensionPropertyAccessor() noexcept = default;
+    LazySuperPropertyAccessor(std::function<std::shared_ptr<IPropertyAccessor>()> accessorCreator);
+    virtual ~LazySuperPropertyAccessor() noexcept = default;
 
     void                        setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) override;
     const std::vector<uint8_t> &getStructureData(uint32_t propertyId) override;
@@ -67,6 +67,20 @@ public:
     const std::vector<uint8_t> &getStructureDataProtoV1_1(uint32_t propertyId, uint16_t cmdVersion) override;
     void                        setStructureDataProtoV1_1(uint32_t propertyId, const std::vector<uint8_t> &data, uint16_t cmdVersion) override;
     const std::vector<uint8_t> &getStructureDataListProtoV1_1(uint32_t propertyId, uint16_t cmdVersion) override;
+};
+
+class StructureDataOverV1_1Accessor : public IStructureDataAccessor {
+public:
+    StructureDataOverV1_1Accessor(std::shared_ptr<IStructureDataAccessorV1_1> structureDataV1_1Accessor, uint16_t cmdVersion);
+
+    virtual ~StructureDataOverV1_1Accessor() noexcept = default;
+
+    void                        setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) override;
+    const std::vector<uint8_t> &getStructureData(uint32_t propertyId) override;
+
+private:
+    std::shared_ptr<IStructureDataAccessorV1_1> structureDataV1_1Accessor_;
+    uint16_t                                    cmdVersion_;
 };
 
 class HeartbeatPropertyAccessor : public IBasicPropertyAccessor {
@@ -83,7 +97,7 @@ private:
     IDevice *owner_;
 };
 
-class BaselinePropertyAccessor : public IExtensionPropertyAccessor {
+class BaselinePropertyAccessor : public IStructureDataAccessor {
 public:
     BaselinePropertyAccessor(IDevice *owner);
 
@@ -91,7 +105,6 @@ public:
 
     void                        setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) override;
     const std::vector<uint8_t> &getStructureData(uint32_t propertyId) override;
-    void                        getRawData(uint32_t propertyId, GetDataCallback callback) override;
 
 private:
     IDevice             *owner_;

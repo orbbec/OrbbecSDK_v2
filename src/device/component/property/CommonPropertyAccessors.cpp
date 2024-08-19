@@ -69,70 +69,81 @@ void LazyPropertyAccessor::getPropertyRange(uint32_t propertyId, OBPropertyRange
     basicAccessor->getPropertyRange(propertyId, range);
 }
 
-LazyExtensionPropertyAccessor::LazyExtensionPropertyAccessor(std::function<std::shared_ptr<IPropertyAccessor>()> accessorCreator)
+LazySuperPropertyAccessor::LazySuperPropertyAccessor(std::function<std::shared_ptr<IPropertyAccessor>()> accessorCreator)
     : LazyPropertyAccessor(accessorCreator) {}
 
-void LazyExtensionPropertyAccessor::setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) {
+void LazySuperPropertyAccessor::setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) {
     std::lock_guard<std::mutex> lock(mutex_);
     if(!accessor_) {
         accessor_ = accessorCreator_();
     }
-    auto extensionAccessor = std::dynamic_pointer_cast<IExtensionPropertyAccessor>(accessor_);
-    extensionAccessor->setStructureData(propertyId, data);
+    auto superAccessor = std::dynamic_pointer_cast<IStructureDataAccessor>(accessor_);
+    superAccessor->setStructureData(propertyId, data);
 }
 
-const std::vector<uint8_t> &LazyExtensionPropertyAccessor::getStructureData(uint32_t propertyId) {
+const std::vector<uint8_t> &LazySuperPropertyAccessor::getStructureData(uint32_t propertyId) {
     std::lock_guard<std::mutex> lock(mutex_);
     if(!accessor_) {
         accessor_ = accessorCreator_();
     }
-    auto extensionAccessor = std::dynamic_pointer_cast<IExtensionPropertyAccessor>(accessor_);
-    return extensionAccessor->getStructureData(propertyId);
+    auto superAccessor = std::dynamic_pointer_cast<IStructureDataAccessor>(accessor_);
+    return superAccessor->getStructureData(propertyId);
 }
 
-void LazyExtensionPropertyAccessor::getRawData(uint32_t propertyId, GetDataCallback callback) {
+void LazySuperPropertyAccessor::getRawData(uint32_t propertyId, GetDataCallback callback) {
     std::lock_guard<std::mutex> lock(mutex_);
     if(!accessor_) {
         accessor_ = accessorCreator_();
     }
-    auto extensionAccessor = std::dynamic_pointer_cast<IExtensionPropertyAccessor>(accessor_);
-    extensionAccessor->getRawData(propertyId, callback);
+    auto superAccessor = std::dynamic_pointer_cast<IRawDataAccessor>(accessor_);
+    superAccessor->getRawData(propertyId, callback);
 }
 
-uint16_t LazyExtensionPropertyAccessor::getCmdVersionProtoV1_1(uint32_t propertyId) {
+uint16_t LazySuperPropertyAccessor::getCmdVersionProtoV1_1(uint32_t propertyId) {
     std::lock_guard<std::mutex> lock(mutex_);
     if(!accessor_) {
         accessor_ = accessorCreator_();
     }
-    auto extensionAccessor = std::dynamic_pointer_cast<IExtensionPropertyAccessorV1_1>(accessor_);
-    return extensionAccessor->getCmdVersionProtoV1_1(propertyId);
+    auto superAccessor = std::dynamic_pointer_cast<IStructureDataAccessorV1_1>(accessor_);
+    return superAccessor->getCmdVersionProtoV1_1(propertyId);
 }
 
-const std::vector<uint8_t> &LazyExtensionPropertyAccessor::getStructureDataProtoV1_1(uint32_t propertyId, uint16_t cmdVersion) {
+const std::vector<uint8_t> &LazySuperPropertyAccessor::getStructureDataProtoV1_1(uint32_t propertyId, uint16_t cmdVersion) {
     std::lock_guard<std::mutex> lock(mutex_);
     if(!accessor_) {
         accessor_ = accessorCreator_();
     }
-    auto extensionAccessor = std::dynamic_pointer_cast<IExtensionPropertyAccessorV1_1>(accessor_);
-    return extensionAccessor->getStructureDataProtoV1_1(propertyId, cmdVersion);
+    auto superAccessor = std::dynamic_pointer_cast<IStructureDataAccessorV1_1>(accessor_);
+    return superAccessor->getStructureDataProtoV1_1(propertyId, cmdVersion);
 }
 
-void LazyExtensionPropertyAccessor::setStructureDataProtoV1_1(uint32_t propertyId, const std::vector<uint8_t> &data, uint16_t cmdVersion) {
+void LazySuperPropertyAccessor::setStructureDataProtoV1_1(uint32_t propertyId, const std::vector<uint8_t> &data, uint16_t cmdVersion) {
     std::lock_guard<std::mutex> lock(mutex_);
     if(!accessor_) {
         accessor_ = accessorCreator_();
     }
-    auto extensionAccessor = std::dynamic_pointer_cast<IExtensionPropertyAccessorV1_1>(accessor_);
-    extensionAccessor->setStructureDataProtoV1_1(propertyId, data, cmdVersion);
+    auto superAccessor = std::dynamic_pointer_cast<IStructureDataAccessorV1_1>(accessor_);
+    superAccessor->setStructureDataProtoV1_1(propertyId, data, cmdVersion);
 }
 
-const std::vector<uint8_t> &LazyExtensionPropertyAccessor::getStructureDataListProtoV1_1(uint32_t propertyId, uint16_t cmdVersion) {
+const std::vector<uint8_t> &LazySuperPropertyAccessor::getStructureDataListProtoV1_1(uint32_t propertyId, uint16_t cmdVersion) {
     std::lock_guard<std::mutex> lock(mutex_);
     if(!accessor_) {
         accessor_ = accessorCreator_();
     }
-    auto extensionAccessor = std::dynamic_pointer_cast<IExtensionPropertyAccessorV1_1>(accessor_);
-    return extensionAccessor->getStructureDataListProtoV1_1(propertyId, cmdVersion);
+    auto superAccessor = std::dynamic_pointer_cast<IStructureDataAccessorV1_1>(accessor_);
+    return superAccessor->getStructureDataListProtoV1_1(propertyId, cmdVersion);
+}
+
+StructureDataOverV1_1Accessor::StructureDataOverV1_1Accessor(std::shared_ptr<IStructureDataAccessorV1_1> accessor, uint16_t cmdVersion)
+    : structureDataV1_1Accessor_(accessor), cmdVersion_(cmdVersion) {}
+
+void StructureDataOverV1_1Accessor::setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) {
+    structureDataV1_1Accessor_->setStructureDataProtoV1_1(propertyId, data, cmdVersion_);
+}
+
+const std::vector<uint8_t> &StructureDataOverV1_1Accessor::getStructureData(uint32_t propertyId) {
+    return structureDataV1_1Accessor_->getStructureDataProtoV1_1(propertyId, cmdVersion_);
 }
 
 HeartbeatPropertyAccessor::HeartbeatPropertyAccessor(IDevice *owner) : owner_(owner) {}
@@ -183,11 +194,4 @@ const std::vector<uint8_t> &BaselinePropertyAccessor::getStructureData(uint32_t 
     param->zpd           = static_cast<float>(disparityParam.zpd);
     return baselineData_;
 }
-
-void BaselinePropertyAccessor::getRawData(uint32_t propertyId, GetDataCallback callback) {
-    utils::unusedVar(propertyId);
-    utils::unusedVar(callback);
-    throw unsupported_operation_exception("Baseline params readonly!");
-}
-
 }  // namespace libobsensor

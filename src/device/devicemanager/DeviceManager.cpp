@@ -289,7 +289,7 @@ void DeviceManager::enableNetDeviceEnumeration(bool enable) {
 #if defined(BUILD_NET_PAL)
     LOG_INFO("Enable net device enumeration: {0}", enable);
     auto iter = std::find_if(deviceEnumerators_.begin(), deviceEnumerators_.end(), [](const std::shared_ptr<IDeviceEnumerator> &enumerator) {  //
-        return typeid(*enumerator) == typeid(NetDeviceEnumerator);
+        return std::dynamic_pointer_cast<NetDeviceEnumerator>(enumerator) != nullptr;
     });
     if(enable && iter == deviceEnumerators_.end()) {
         auto netDeviceEnumerator =
@@ -310,7 +310,7 @@ bool DeviceManager::isNetDeviceEnumerationEnable() {
 #if defined(BUILD_NET_PAL)
 
     auto iter = std::find_if(deviceEnumerators_.begin(), deviceEnumerators_.end(), [](const std::shared_ptr<IDeviceEnumerator> &enumerator) {  //
-        return typeid(*enumerator) == typeid(NetDeviceEnumerator);
+        return std::dynamic_pointer_cast<NetDeviceEnumerator>(enumerator) != nullptr;
     });
     return iter != deviceEnumerators_.end();
 #endif

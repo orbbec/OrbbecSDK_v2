@@ -198,9 +198,8 @@ typedef uint16_t (*MDFUNC)(uint16_t arr[]);
 // 0     1       2        3        4         5        6        7       8       9
 static MDFUNC _mdfunc[] = { 0, median1, median2, median3, median4, median5, median6, median7, median8, median9 };
 
-DecimationFilter::DecimationFilter(const std::string &name)
-    : FilterBase(name),
-      decimation_factor_(2),
+DecimationFilter::DecimationFilter()
+    : decimation_factor_(2),
       control_val_(2),
       patch_size_(2),
       kernel_size_(patch_size_ * patch_size_),
@@ -221,7 +220,6 @@ void DecimationFilter::updateConfig(std::vector<std::string> &params) {
         uint8_t value = static_cast<uint8_t>(std::stoul(params[0]));
         if(value >= 1 && value <= 8) {
             if(value != control_val_) {
-                std::lock_guard<std::recursive_mutex> lk(scaleChangedMutex_);
                 control_val_       = value;
                 patch_size_        = control_val_;
                 decimation_factor_ = control_val_;
@@ -241,7 +239,14 @@ const std::string &DecimationFilter::getConfigSchema() const {
     return schema;
 }
 
-std::shared_ptr<Frame> DecimationFilter::processFunc(std::shared_ptr<const Frame> frame) {
+void DecimationFilter::reset() {
+    options_changed_ = true;
+    registered_profiles_.clear();
+    source_stream_profile_.reset();
+    target_stream_profile_.reset();
+}
+
+std::shared_ptr<Frame> DecimationFilter::process(std::shared_ptr<const Frame> frame) {
     if(!frame) {
         return nullptr;
     }
@@ -258,7 +263,6 @@ std::shared_ptr<Frame> DecimationFilter::processFunc(std::shared_ptr<const Frame
         return outFrame;
     }
 
-    std::lock_guard<std::recursive_mutex> lk(scaleChangedMutex_);
     updateOutputProfile(frame);
 
     OBFormat frameFormat = frame->getFormat();
@@ -506,13 +510,6 @@ void DecimationFilter::decimateOthers(OBFormat format, void *frame_data_in, void
             for(int i = rw_2; i < pw_2; ++i) {
                 *q++ = 0;
                 *q++ = 0;
-                *q++ = 0;
-                *q++ = 0;
-            }
-        }
-
-        for(int j = real_height_; j < padded_height_; ++j) {
-            for(int i = 0; i < padded_width_; ++i) {
                 *q++ = 0;
                 *q++ = 0;
             }

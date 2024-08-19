@@ -14,8 +14,6 @@ target_sources(
         ${CMAKE_CURRENT_LIST_DIR}/G2PropertyAccessors.cpp
         ${CMAKE_CURRENT_LIST_DIR}/G2DepthWorkModeManager.hpp
         ${CMAKE_CURRENT_LIST_DIR}/G2DepthWorkModeManager.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/G2DeviceSyncConfigurator.hpp
-        ${CMAKE_CURRENT_LIST_DIR}/G2DeviceSyncConfigurator.cpp
         ${CMAKE_CURRENT_LIST_DIR}/G2FrameTimestampCalculator.hpp
         ${CMAKE_CURRENT_LIST_DIR}/G2FrameTimestampCalculator.cpp
         ${CMAKE_CURRENT_LIST_DIR}/G2AlgParamManager.hpp

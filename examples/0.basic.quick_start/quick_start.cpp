@@ -1,5 +1,6 @@
 #include <libobsensor/ObSensor.hpp>
 
+#include "utils.hpp"
 #include "utils_opencv.hpp"
 
 int main(void) try {
@@ -28,5 +29,7 @@ int main(void) try {
 }
 catch(ob::Error &e) {
     std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\ntype:" << e.getExceptionType() << std::endl;
+    std::cout << "\nPress any key to exit.";
+    ob_smpl::waitForKeyPressed();
     exit(EXIT_FAILURE);
 }

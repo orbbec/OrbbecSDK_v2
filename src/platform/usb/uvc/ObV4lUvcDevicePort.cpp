@@ -535,12 +535,12 @@ void ObV4lUvcDevicePort::startStream(std::shared_ptr<const StreamProfile> profil
         return false;
     });
     if(!devHandle) {
-        throw libobsensor::linux_pal_exception("No v4l device found for profile: width=" + std::to_string(videoProfile->getWidth())
-                                               + ", height=" + std::to_string(videoProfile->getHeight()) + ", fps=" + std::to_string(videoProfile->getFps())
-                                               + ", format=" + std::to_string(videoProfile->getFormat()));
+        throw libobsensor::pal_exception("No v4l device found for profile: width=" + std::to_string(videoProfile->getWidth())
+                                         + ", height=" + std::to_string(videoProfile->getHeight()) + ", fps=" + std::to_string(videoProfile->getFps())
+                                         + ", format=" + std::to_string(videoProfile->getFormat()));
     }
     if(devHandle->isCapturing) {
-        throw libobsensor::linux_pal_exception("V4l device is already capturing");
+        throw libobsensor::pal_exception("V4l device is already capturing");
     }
 
     if(devHandle->metadataFd >= 0) {

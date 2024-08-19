@@ -23,10 +23,9 @@ private:
     const std::string address_;
     const uint16_t    port_;
     SOCKET            socketFd_;
-    uint32_t          COMM_TIMEOUT_MS      = 5000;
-    uint32_t          CONNECT_TIMEOUT_MS   = 2000;
-    const int         MAX_RECV_PACKET_SIZE = 1024;
     bool              flushed_;
+    uint32_t          CONNECT_TIMEOUT_MS   = 2000;
+    uint32_t          COMM_TIMEOUT_MS      = 5000;
 };
 
 }  // namespace libobsensor

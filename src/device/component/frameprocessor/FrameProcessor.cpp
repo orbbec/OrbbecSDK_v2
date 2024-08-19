@@ -77,7 +77,7 @@ std::shared_ptr<FrameProcessor> FrameProcessorFactory::createFrameProcessor(OBSe
 }
 
 FrameProcessor::FrameProcessor(IDevice *owner, std::shared_ptr<FrameProcessorContext> context, OBSensorType sensorType)
-    : FilterBase("FrameProcessor"), DeviceComponentBase(owner), context_(context), sensorType_(sensorType) {
+    : FilterExtension("FrameProcessor"), DeviceComponentBase(owner), context_(context), sensorType_(sensorType) {
     if(context_->context && context_->create_processor) {
         ob_error *error   = nullptr;
         privateProcessor_ = context_->create_processor(context_->context, sensorType, &error);
@@ -110,10 +110,13 @@ FrameProcessor::~FrameProcessor() noexcept {
     }
 }
 
-std::shared_ptr<Frame> FrameProcessor::processFunc(std::shared_ptr<const Frame> frame) {
+std::shared_ptr<Frame> FrameProcessor::process(std::shared_ptr<const Frame> frame) {
     if(!context_->process_frame || !privateProcessor_) {
         return FrameFactory::createFrameFromOtherFrame(frame, true);
     }
+
+    checkAndUpdateConfig();
+
     ob_frame              *c_frame = new ob_frame();
     ob_error              *error   = nullptr;
     std::shared_ptr<Frame> resultFrame;

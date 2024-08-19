@@ -1,6 +1,6 @@
 #pragma once
 #include "IDevice.hpp"
-#include "FilterBase.hpp"
+#include "FilterDecorator.hpp"
 #include "PrivFrameProcessorTypes.h"
 #include "DeviceComponentBase.hpp"
 #include "InternalTypes.hpp"
@@ -39,7 +39,7 @@ private:
     std::map<OBSensorType, std::shared_ptr<FrameProcessor>> frameProcessors_;
 };
 
-class FrameProcessor : public FilterBase, public IBasicPropertyAccessor, public DeviceComponentBase {
+class FrameProcessor : public FilterExtension, public IBasicPropertyAccessor, public DeviceComponentBase {
 public:
     FrameProcessor(IDevice *owner, std::shared_ptr<FrameProcessorContext> context, OBSensorType sensorType);
 
@@ -59,8 +59,7 @@ public:
 
     void getPropertyRange(uint32_t propertyId, OBPropertyRange *range) override;
 
-protected:
-    std::shared_ptr<Frame> processFunc(std::shared_ptr<const Frame> frame) override;
+    std::shared_ptr<Frame> process(std::shared_ptr<const Frame> frame) override;
 
 protected:
     std::shared_ptr<FrameProcessorContext> context_;

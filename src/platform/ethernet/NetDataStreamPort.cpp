@@ -6,9 +6,9 @@
 
 namespace libobsensor {
 
-NetDataStreamPort::NetDataStreamPort(std::shared_ptr<const NetDataStreamPortInfo> portInfo) : isStreaming_(false), portInfo_(portInfo) {}
+NetDataStreamPort::NetDataStreamPort(std::shared_ptr<const NetDataStreamPortInfo> portInfo) : portInfo_(portInfo), isStreaming_(false) {}
 
-NetDataStreamPort::~NetDataStreamPort() {
+NetDataStreamPort::~NetDataStreamPort() noexcept{
     isStreaming_ = false;
     if(readDataThread_.joinable()) {
         readDataThread_.join();

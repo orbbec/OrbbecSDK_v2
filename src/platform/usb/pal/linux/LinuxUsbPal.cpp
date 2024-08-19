@@ -15,7 +15,7 @@
 #endif
 
 #if defined(BUILD_NET_PAL)
-#include "ethernet/Ethernet.hpp"
+#include "ethernet/EthernetPal.hpp"
 #endif
 
 #include <cctype>  // std::tolower

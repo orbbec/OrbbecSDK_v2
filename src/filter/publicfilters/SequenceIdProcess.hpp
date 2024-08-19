@@ -1,20 +1,21 @@
 #pragma once
-#include "FilterBase.hpp"
+#include "IFilter.hpp"
 #include <mutex>
 #include <map>
 
 namespace libobsensor {
 
-class SequenceIdFilter : public FilterBase {
+class SequenceIdFilter : public IFilterBase {
 public:
-    SequenceIdFilter(const std::string &name);
+    SequenceIdFilter();
     virtual ~SequenceIdFilter() noexcept;
 
     void               updateConfig(std::vector<std::string> &params) override;
     const std::string &getConfigSchema() const override;
+    void               reset() override;
 
 private:
-    std::shared_ptr<Frame> processFunc(std::shared_ptr<const Frame> frame) override;
+    std::shared_ptr<Frame> process(std::shared_ptr<const Frame> frame) override;
 
 protected:
     std::recursive_mutex valueUpdateMutex_;

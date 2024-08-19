@@ -1,10 +1,10 @@
-﻿#include <stdio.h>
-#include <stdlib.h>
-
-#include <libobsensor/ObSensor.h>
+﻿#include <libobsensor/ObSensor.h>
 
 #include "utils_c.h"
 #include "utils_types.h"
+
+#include <stdio.h>
+#include <stdlib.h>
 
 // helper function to check for errors and exit if there is one
 void check_ob_error(ob_error **err) {

@@ -48,6 +48,15 @@ OB_EXPORT void ob_sensor_start(ob_sensor *sensor, const ob_stream_profile *profi
 OB_EXPORT void ob_sensor_stop(ob_sensor *sensor, ob_error **error);
 
 /**
+ * @brief Switch resolutions.
+ *
+ * @param[in] sensor The sensor object.
+ * @param[in] profile The stream configuration information.
+ * @param[out] error Logs error messages.
+ */
+OB_EXPORT void ob_sensor_switch_profile(ob_sensor *sensor, ob_stream_profile *profile, ob_error **error);
+
+/**
  * @brief Delete a sensor object.
  *
  * @param[in] sensor The sensor object to delete.

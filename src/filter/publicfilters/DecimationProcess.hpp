@@ -1,20 +1,23 @@
 #pragma once
-#include "FilterBase.hpp"
+#include "IFilter.hpp"
+#include "stream/StreamProfile.hpp"
 #include <mutex>
 #include <map>
+#include <tuple>
 
 namespace libobsensor {
 
-class DecimationFilter : public FilterBase {
+class DecimationFilter : public IFilterBase {
 public:
-    DecimationFilter(const std::string &name);
+    DecimationFilter();
     virtual ~DecimationFilter() noexcept;
 
     void               updateConfig(std::vector<std::string> &params) override;
     const std::string &getConfigSchema() const override;
+    void               reset() override;
 
 private:
-    std::shared_ptr<Frame> processFunc(std::shared_ptr<const Frame> frame) override;
+    std::shared_ptr<Frame> process(std::shared_ptr<const Frame> frame) override;
 
     bool isFrameFormatTypeSupported(OBFormat type);
     void updateOutputProfile(const std::shared_ptr<const Frame> frame);
@@ -22,7 +25,6 @@ private:
     void decimateOthers(OBFormat format, void *frame_data_in, void *frame_data_out, size_t width_in, size_t scale);
 
 protected:
-    std::recursive_mutex                                                                           scaleChangedMutex_;
     std::map<std::tuple<const VideoStreamProfile *, uint8_t>, std::shared_ptr<VideoStreamProfile>> registered_profiles_;
     std::shared_ptr<const VideoStreamProfile>                                                      source_stream_profile_;
     std::shared_ptr<VideoStreamProfile>                                                            target_stream_profile_;

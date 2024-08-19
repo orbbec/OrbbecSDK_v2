@@ -213,7 +213,10 @@ struct YEATS_MIPI_HDR {
 };
 
 // static_assert(sizeof(YEATS_MIPI_HDR) == YEATS_MIPI_HDR_SIZE_V2, "Check type definition of YEATS_MIPI_HDR");
-
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
+#endif
 struct YEATS_APP_FRAME_HDR {
     union {
 
@@ -412,5 +415,7 @@ struct FRAME_FOOTER {
     float    SoCTemp;    // Same as SoCTemp in YEATS_APP_FRAME_HDR.
     float    ModuleTemp;
 };
-
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
 #endif  // end of #ifndef _YEATSFRAMEHDR_H_

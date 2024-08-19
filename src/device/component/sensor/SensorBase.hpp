@@ -29,7 +29,7 @@ public:
     void          unregisterStreamStateChangedCallback(uint32_t token) override;
 
     StreamProfileList                    getStreamProfileList() const override;
-    void                                 setStreamProfileFilter(std::shared_ptr<IStreamProfileFilter> filter);
+    void                                 setStreamProfileFilter(std::shared_ptr<IStreamProfileFilter> filter) override;
     void                                 updateStreamProfileList(const StreamProfileList &profileList) override;
     void                                 updateDefaultStreamProfile(const std::shared_ptr<const StreamProfile> &profile) override;
     std::shared_ptr<const StreamProfile> getActivatedStreamProfile() const override;

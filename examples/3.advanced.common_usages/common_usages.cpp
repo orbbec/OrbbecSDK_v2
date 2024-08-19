@@ -6,8 +6,22 @@
 #include <mutex>
 #include <string>
 
+const std::map<std::string, int> gemini_330_list = { { "gemini335", 0x0800 },  { "gemini335L", 0x0804 }, { "gemini336", 0x0803 },
+                                                     { "gemini336L", 0x0807 }, { "gemini330", 0x0801 },  { "gemini330L", 0x0805 } };
+
+bool isGemini330Series(int pid) {
+    bool find = false;
+    for(auto it = gemini_330_list.begin(); it != gemini_330_list.end(); ++it) {
+        if(it->second == pid) {
+            find = true;
+            break;
+        }
+    }
+    return find;
+}
+
 std::shared_ptr<ob_smpl::CVWindow> win;
-std::shared_ptr<ob::Context> ctx;
+std::shared_ptr<ob::Context>       ctx;
 
 std::shared_ptr<ob::Device>   device;
 std::shared_ptr<ob::Pipeline> pipeline;
@@ -72,15 +86,14 @@ int main(void) try {
     printUsage();
 
     inputWatchThread = std::thread(inputWatcher);
+    // TODO: this method needs to be adjusted
+    inputWatchThread.detach();
 
     while(win->run()) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
     // inputWatchThread.join();
-
-    // TODO: this method needs to be adjusted
-    inputWatchThread.detach();
 
     if(pipeline) {
         pipeline->stop();
@@ -90,6 +103,8 @@ int main(void) try {
 
 catch(ob::Error &e) {
     std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\ntype:" << e.getExceptionType() << std::endl;
+    std::cout << "\nPress any key to exit.";
+    ob_smpl::waitForKeyPressed();
     exit(EXIT_FAILURE);
 }
 
@@ -365,10 +380,16 @@ void switchLaser() {
     std::unique_lock<std::recursive_mutex> lk(deviceMutex);
     if(device) {
         try {
-            if(device->isPropertySupported(OB_PROP_LASER_BOOL, OB_PERMISSION_READ)) {
-                bool value = device->getBoolProperty(OB_PROP_LASER_BOOL);
-                if(device->isPropertySupported(OB_PROP_LASER_BOOL, OB_PERMISSION_WRITE)) {
-                    device->setBoolProperty(OB_PROP_LASER_BOOL, !value);
+            auto         pid        = device->getDeviceInfo()->getPid();
+            OBPropertyID propertyId = OB_PROP_LASER_BOOL;
+            if(isGemini330Series(pid)) {
+                propertyId = OB_PROP_LASER_CONTROL_INT;
+            }
+
+            if(device->isPropertySupported(propertyId, OB_PERMISSION_READ)) {
+                bool value = device->getBoolProperty(propertyId);
+                if(device->isPropertySupported(propertyId, OB_PERMISSION_WRITE)) {
+                    device->setBoolProperty(propertyId, !value);
                     if(!value) {
                         std::cout << "laser turn on!" << std::endl;
                     }

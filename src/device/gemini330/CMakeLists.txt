@@ -16,8 +16,6 @@ target_sources(
             ${CMAKE_CURRENT_LIST_DIR}/G330DepthWorkModeManager.hpp
             ${CMAKE_CURRENT_LIST_DIR}/G330SensorStreamStrategy.cpp
             ${CMAKE_CURRENT_LIST_DIR}/G330SensorStreamStrategy.hpp
-            ${CMAKE_CURRENT_LIST_DIR}/G330DeviceSyncConfigurator.cpp
-            ${CMAKE_CURRENT_LIST_DIR}/G330DeviceSyncConfigurator.hpp
             ${CMAKE_CURRENT_LIST_DIR}/G330PropertyAccessors.hpp
             ${CMAKE_CURRENT_LIST_DIR}/G330PropertyAccessors.cpp
             ${CMAKE_CURRENT_LIST_DIR}/G330NetDisparitySensor.cpp

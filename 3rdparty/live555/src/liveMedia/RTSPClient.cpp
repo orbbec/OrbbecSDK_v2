@@ -1701,7 +1701,7 @@ void RTSPClient::connectionHandler1() {
         SOCKLEN_T len = sizeof err;
         // Note: Normally "fOutputSocketNum" == "fInputSocketNum" here, except when we're connecting
         // to the second (i.e., "POST") connection when doing RTSP-over-HTTP:
-        if(getsockopt(fOutputSocketNum, SOL_SOCKET, SO_ERROR, (char *)&err, &len) < 0 || err != 0) {
+        if(getsockopt(fOutputSocketNum, SOL_SOCKET, SO_ERROR, (char *)&err, reinterpret_cast<socklen_t *>(&len)) < 0 || err != 0) {
             envir().setResultErrMsg("Connection to server failed: ", err);
             if(fVerbosityLevel >= 1)
                 envir() << "..." << envir().getResultMsg() << "\n";

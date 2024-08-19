@@ -6,5 +6,6 @@ target_sources(
              ${CMAKE_CURRENT_LIST_DIR}/FemtoMegaDevice.cpp
              ${CMAKE_CURRENT_LIST_DIR}/FemtoMegaDeviceInfo.hpp
              ${CMAKE_CURRENT_LIST_DIR}/FemtoMegaDeviceInfo.cpp
-
+             ${CMAKE_CURRENT_LIST_DIR}/FemtoMegaTempPropertyAccessor.hpp
+             ${CMAKE_CURRENT_LIST_DIR}/FemtoMegaTempPropertyAccessor.cpp
         )

@@ -15,7 +15,7 @@ const std::map<uint16_t, std::string> pidToNameMap = {
     { static_cast<uint16_t>(0x0671), "Gemini2 XL" },
 };
 
-NetDeviceEnumerator::NetDeviceEnumerator(DeviceChangedCallback callback) : deviceChangedCallback_(callback), platform_(Platform::getInstance()) {
+NetDeviceEnumerator::NetDeviceEnumerator(DeviceChangedCallback callback) : platform_(Platform::getInstance()), deviceChangedCallback_(callback) {
     deviceInfoList_ = queryDeviceList();
     if(!deviceInfoList_.empty()) {
         LOG_DEBUG("Current net device list: ({})", deviceInfoList_.size());
@@ -33,7 +33,7 @@ NetDeviceEnumerator::NetDeviceEnumerator(DeviceChangedCallback callback) : devic
     deviceWatcher_->start([this](OBDeviceChangedType changedType, std::string url) { onPlatformDeviceChanged(changedType, url); });
 }
 
-NetDeviceEnumerator::~NetDeviceEnumerator() {
+NetDeviceEnumerator::~NetDeviceEnumerator() noexcept {
     deviceWatcher_->stop();
 }
 

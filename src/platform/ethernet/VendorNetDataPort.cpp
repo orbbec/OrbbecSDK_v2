@@ -10,7 +10,7 @@ VendorNetDataPort::VendorNetDataPort(std::shared_ptr<const NetSourcePortInfo> po
     tcpClient_           = std::make_shared<VendorTCPClient>(noConstPortInfo->address, noConstPortInfo->port);
 }
 
-VendorNetDataPort::~VendorNetDataPort() {}
+VendorNetDataPort::~VendorNetDataPort() noexcept {}
 
 uint32_t VendorNetDataPort::sendAndReceive(const uint8_t *sendData, uint32_t sendLen, uint8_t *recvData, uint32_t exceptedRecvLen) {
     utils::unusedVar(exceptedRecvLen);

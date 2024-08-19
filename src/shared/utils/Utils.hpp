@@ -74,8 +74,5 @@ template <typename T> std::vector<std::vector<T>> groupVector(const std::vector<
 }
 
 bool checkJpgImageData(const uint8_t *data, size_t dataLen);
-
-bool getFirmwareVersionInt(std::string fwVersionStr,int &fwVersion);
-
 }  // namespace utils
 }  // namespace libobsensor

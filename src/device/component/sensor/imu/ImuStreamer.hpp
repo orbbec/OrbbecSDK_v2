@@ -33,7 +33,8 @@ typedef struct {
 
 class ImuStreamer : public IDeviceComponent {
 public:
-    ImuStreamer(IDevice *owner, const std::shared_ptr<IDataStreamPort> &backend, const std::shared_ptr<IFilter> &corrector);
+    ImuStreamer(IDevice *owner, const std::shared_ptr<IDataStreamPort> &backend, const std::shared_ptr<IFilter> &filter);
+    ImuStreamer(IDevice *owner, const std::shared_ptr<IDataStreamPort> &backend, std::vector<std::shared_ptr<IFilter>> filters);
     virtual ~ImuStreamer() noexcept;
 
     void start(std::shared_ptr<const StreamProfile> sp, MutableFrameCallback callback);
@@ -48,7 +49,7 @@ private:
 private:
     IDevice                         *owner_;
     std::shared_ptr<IDataStreamPort> backend_;
-    std::shared_ptr<IFilter>         corrector_;
+    std::vector<std::shared_ptr<IFilter>> filters_;
 
     std::mutex                                                          cbMtx_;
     std::map<std::shared_ptr<const StreamProfile>, MutableFrameCallback> callbacks_;

@@ -87,9 +87,10 @@ const OBIMUCalibrateParams &AlgParamManagerBase::getIMUCalibrationParam() const 
 void AlgParamManagerBase::bindExtrinsic(std::vector<std::shared_ptr<const StreamProfile>> streamProfileList) {
     auto extrinsicMgr = StreamExtrinsicsManager::getInstance();
     for(auto &sp: streamProfileList) {
-        auto basicSpIter = std::find_if(basicStreamProfileList_.begin(), basicStreamProfileList_.end(), [&](const auto &basicSp) {  //
-            return basicSp->getType() == sp->getType();
-        });
+        auto basicSpIter =
+            std::find_if(basicStreamProfileList_.begin(), basicStreamProfileList_.end(), [&](const std::shared_ptr<const StreamProfile> &basicSp) {  //
+                return basicSp->getType() == sp->getType();
+            });
         if(basicSpIter == basicStreamProfileList_.end()) {
             throw libobsensor::unsupported_operation_exception("Can not find basic stream profile to bind extrinsic!");
         }

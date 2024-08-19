@@ -24,9 +24,10 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 #include <time.h>
 extern "C" int initializeWinsockIfNecessary();
 #else
-#include <stdarg.h>
-#include <time.h>
+#include <cstdarg>
+#include <ctime>
 #include <sys/time.h>
+#include <sys/socket.h>
 #if !defined(_WIN32)
 #include <netinet/tcp.h>
 #ifdef __ANDROID_NDK__
@@ -39,7 +40,7 @@ extern "C" int initializeWinsockIfNecessary();
 #endif
 #if defined(__WIN32__) || defined(_WIN32) || defined(_QNX4)
 #else
-#include <signal.h>
+#include <csignal>
 #define USE_SIGNALS 1
 #endif
 #ifndef NO_GETIFADDRS
@@ -57,7 +58,7 @@ extern "C" {
 #endif
 
 #endif
-#include <stdio.h>
+#include <cstdio>
 
 // By default, use INADDR_ANY for the sending and receiving interfaces (IPv4 only):
 ipv4AddressBits SendingInterfaceAddr   = INADDR_ANY;
@@ -394,7 +395,8 @@ int setupStreamSocket(UsageEnvironment &env, Port port, int domain, Boolean make
 
 int readSocket(UsageEnvironment &env, int socket, unsigned char *buffer, unsigned bufferSize, struct sockaddr_storage &fromAddress) {
     SOCKLEN_T addressSize = sizeof fromAddress;
-    int       bytesRead   = recvfrom(socket, (char *)buffer, bufferSize, 0, (struct sockaddr *)&fromAddress, &addressSize);
+    int       bytesRead   = recvfrom(socket, (char *)buffer, bufferSize, 0, (struct sockaddr *)&fromAddress,
+                                     reinterpret_cast<socklen_t *>(&addressSize));
     if(bytesRead < 0) {
         //##### HACK to work around bugs in Linux and Windows:
         int err = env.getErrno();
@@ -474,7 +476,7 @@ void ignoreSigPipeOnSocket(int socketNum) {
 static unsigned getBufferSize(UsageEnvironment &env, int bufOptName, int socket) {
     unsigned  curSize;
     SOCKLEN_T sizeSize = sizeof curSize;
-    if(getsockopt(socket, SOL_SOCKET, bufOptName, (char *)&curSize, &sizeSize) < 0) {
+    if(getsockopt(socket, SOL_SOCKET, bufOptName, (char *)&curSize, reinterpret_cast<socklen_t *>(&sizeSize)) < 0) {
         socketErr(env, "getBufferSize() error: ");
         return 0;
     }
@@ -713,7 +715,7 @@ static Boolean getSourcePort0(int socket, portNumBits &resultPortNum /*host orde
     setPortNum(testAddr, 0);
 
     SOCKLEN_T len = sizeof testAddr;
-    if(getsockname(socket, (struct sockaddr *)&testAddr, &len) < 0)
+    if(getsockname(socket, (struct sockaddr *)&testAddr, reinterpret_cast<socklen_t *>(&len)) < 0)
         return False;
 
     resultPortNum = ntohs(portNum(testAddr));

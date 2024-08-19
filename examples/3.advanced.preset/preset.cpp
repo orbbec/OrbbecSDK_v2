@@ -41,12 +41,13 @@ int main() try {
     pipe.stop();
 
     printf("\nProgram ended successfully. Press any key to exit.");
-    getchar();
-    getchar();
+    ob_smpl::getInputOption();
 
     return 0;
 }
 catch(ob::Error &e) {
     std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\ntype:" << e.getExceptionType() << std::endl;
+    std::cout << "\nPress any key to exit.";
+    ob_smpl::waitForKeyPressed();
     exit(EXIT_FAILURE);
 }

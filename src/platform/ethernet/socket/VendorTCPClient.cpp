@@ -23,7 +23,7 @@ VendorTCPClient::VendorTCPClient(std::string address, uint16_t port, uint32_t co
     socketConnect();
 }
 
-VendorTCPClient::~VendorTCPClient() {
+VendorTCPClient::~VendorTCPClient() noexcept{
     socketClose();
 #if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
     WSACleanup();

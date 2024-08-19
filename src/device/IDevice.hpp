@@ -87,6 +87,10 @@ struct ob_device_info_t {
     std::shared_ptr<const libobsensor::DeviceInfo> info;
 };
 
+struct ob_camera_param_list_t{
+    std::vector<OBCameraParam>  paramList;
+};
+
 #ifdef __cplusplus
 }
 #endif

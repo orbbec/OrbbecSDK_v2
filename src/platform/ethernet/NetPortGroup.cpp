@@ -1,4 +1,3 @@
-#pragma once
 #include "NetPortGroup.hpp"
 
 namespace libobsensor {

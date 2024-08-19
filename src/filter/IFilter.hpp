@@ -12,30 +12,42 @@ namespace libobsensor {
 
 typedef std::function<void(std::shared_ptr<Frame>)> FilterCallback;
 
-class IFilter {
+class IFilterBase {
 public:
-    virtual ~IFilter() noexcept = default;
-
-    virtual const std::string &getName() const = 0;
+    virtual ~IFilterBase() noexcept = default;
 
     // Config
-    virtual void                                         updateConfig(std::vector<std::string> &params)        = 0;
-    virtual const std::string                           &getConfigSchema() const                               = 0;
-    virtual const std::vector<OBFilterConfigSchemaItem> &getConfigSchemaVec()                                  = 0;
-    virtual void                                         setConfigValue(const std::string &name, double value) = 0;
-    virtual void                                         setConfigValueSync(const std::string &name, double value) = 0;
-    virtual double                                       getConfigValue(const std::string &name)               = 0;
+    virtual void               updateConfig(std::vector<std::string> &params) = 0;
+    virtual const std::string &getConfigSchema() const                        = 0;
 
-    virtual void reset()           = 0;  // Stop thread, clean memory, reset status
-    virtual void enable(bool en)   = 0;
-    virtual bool isEnabled() const = 0;
+    virtual void reset() = 0;  // Stop thread, clean memory, reset status
 
     // Synchronize
     virtual std::shared_ptr<Frame> process(std::shared_ptr<const Frame> frame) = 0;
+};
+
+class IFilterExtension {
+public:
+    virtual const std::string &getName() const = 0;
+
+    virtual void enable(bool en)   = 0;
+    virtual bool isEnabled() const = 0;
+
+    virtual const std::vector<OBFilterConfigSchemaItem> &getConfigSchemaVec()                                      = 0;
+    virtual void                                         setConfigValue(const std::string &name, double value)     = 0;
+    virtual void                                         setConfigValueSync(const std::string &name, double value) = 0;
+    virtual double                                       getConfigValue(const std::string &name)                   = 0;
 
     // Asynchronous
     virtual void pushFrame(std::shared_ptr<const Frame> frame) = 0;
     virtual void setCallback(FilterCallback cb)                = 0;
+
+    virtual void resizeFrameQueue(size_t size) = 0;
+};
+
+class IFilter : public IFilterBase, public IFilterExtension {
+public:
+    virtual ~IFilter() noexcept = default;
 };
 
 class IFilterCreator {

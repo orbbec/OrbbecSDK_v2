@@ -10,8 +10,6 @@ target_sources(
         ${CMAKE_CURRENT_LIST_DIR}/Astra2Device.cpp
         ${CMAKE_CURRENT_LIST_DIR}/Astra2PropertyAccessors.hpp
         ${CMAKE_CURRENT_LIST_DIR}/Astra2PropertyAccessors.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/Astra2DeviceSyncConfigurator.hpp
-        ${CMAKE_CURRENT_LIST_DIR}/Astra2DeviceSyncConfigurator.cpp
         ${CMAKE_CURRENT_LIST_DIR}/Astra2FrameTimestampCalculator.hpp
         ${CMAKE_CURRENT_LIST_DIR}/Astra2FrameTimestampCalculator.cpp
         ${CMAKE_CURRENT_LIST_DIR}/Astra2AlgParamManager.hpp

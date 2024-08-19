@@ -39,7 +39,7 @@ The Orbbec Viewer to connect Orbbec RGB-D cameras and experience the features ca
 
 ### 3.1 Quick Start
 
-For a comprehensive guide on installing the SDK, setting up your development environment, and developing applications, please consult the [Tutorial](docs/tutorial/README.md) section for detailed information.
+For a comprehensive guide on installing the SDK, setting up your development environment, and developing applications, please consult the [Tutorial](docs/tutorial/Installation_and_Development_Guide.md) section for detailed information.
 
 For practical examples on utilizing the SDK, refer to the [Examples](examples/README.md) section for more insights.
 
@@ -51,10 +51,10 @@ API Reference: [Orbbec_SDK_API_Reference.html](https://orbbec.github.io/OrbbecSD
 OrbbecSDK C++ API user guide：[Orbbec_SDK_C++_API_user_guide-v1.0.pdf](https://orbbec.github.io/OrbbecSDK/doc/tutorial/English/OrbbecSDK_C++_API_user_guide-v1.0.pdf)
 
 ### 3.3 Building from Source
-For building the SDK from source, please refer to the [build guide](docs/build/README.md) for more information.
+For building the SDK from source, please refer to the [build guide](docs/build/Building_Open_Orbbec_SDK.md) for more information.
 
 ### 3.4 Developer Guide
-For the developers who want to contribute to the SDK, please refer to the [developer guide](docs/developer/README.md) for more information.
+For the developers who want to contribute to the SDK, please refer to the [developer guide](docs/developer/Contributing_to_Open_Orbbec_SDK.md) for more information.
 
 ### 3.5 FAQ
 Most frequently asked questions can be found in the [FAQ](docs/FAQ.md) file.
@@ -86,6 +86,8 @@ while(win.run()) {
 // Stop the Pipeline, no frame data will be generated
 pipe.stop();
 ```
+
+![QuickStart Example](docs/resource/QuickStart.png)
 
 ### 4.2 Using Orbbec Viewer to experience the features
 ![Orbbec Viewer](docs/resource/OrbbecViewer.png)

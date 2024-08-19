@@ -1,5 +1,6 @@
 #include "RawPhaseConvertSensor.hpp"
-#include "IDevice.hpp"
+
+#include "frame/Frame.hpp"
 #include "stream/StreamProfileFactory.hpp"
 
 namespace libobsensor {
@@ -11,6 +12,7 @@ RawPhaseConvertSensor::RawPhaseConvertSensor(IDevice *owner, const std::shared_p
     profileVector_.push_back({ { 1024, 1024 }, { 8192, 130 } });
     profileVector_.push_back({ { 512, 512 }, { 8192, 290 } });
     updateStreamProfileList();
+    (void)isPassiveIR_;
     LOG_DEBUG("RawPhaseConvertSensor is created!");
 }
 
@@ -21,6 +23,10 @@ RawPhaseConvertSensor::~RawPhaseConvertSensor() noexcept {
     LOG_DEBUG("RawPhaseConvertSensor is destroyed!");
 }
 
+void   RawPhaseConvertSensor::updateStreamProfileList(const StreamProfileList &profileList){
+    (void)profileList;
+
+}
 void RawPhaseConvertSensor::updateStreamProfileList() {
     auto oldSp = streamProfileList_;
     streamProfileList_.clear();

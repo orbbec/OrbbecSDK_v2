@@ -52,59 +52,5 @@ bool checkJpgImageData(const uint8_t *data, size_t dataLen) {
     return validImage;
 }
 
-bool getFirmwareVersionInt(std::string fwVersionStr, int &fwVersion) {
-    int  dotCount     = 0;
-    char buf[16]      = { 0 };
-    int  bufIndex     = 0;
-    int  calFwVersion = 0;
-    for(int i = 0; i < fwVersionStr.size(); i++) {
-        const char c = fwVersionStr[i];
-        if(isdigit(c) && bufIndex < sizeof(buf)) {
-            buf[bufIndex] = c;
-            bufIndex++;
-        }
-        if('.' == c) {
-            buf[sizeof(buf) - 1] = '\0';
-            if(strlen(buf) > 0) {
-                int value = atoi(buf);
-                // 版本号只有两位
-                if(value >= 100) {
-                    LOG_ERROR("bad fwVersion: {}", fwVersionStr);
-                    return false;
-                }
-
-                if(dotCount == 0) {  // 主版本号
-                    calFwVersion += 10000 * value;
-                }
-                else if(dotCount == 1) {  // 次版本号
-                    calFwVersion += 100 * value;
-                }
-                else {
-                    LOG_ERROR("bad fwVersion: {}", fwVersionStr);
-                    return false;
-                }
-
-                dotCount++;
-                bufIndex = 0;
-                memset(buf, 0, sizeof(buf));
-            }
-        }
-    }
-
-    buf[sizeof(buf) - 1] = '\0';
-    if(strlen(buf) > 0 && strlen(buf) <= 2 && dotCount == 2) {
-        int value = atoi(buf);
-        calFwVersion += value;
-    }
-
-    if(calFwVersion == 0 || dotCount < 2) {
-        LOG_ERROR("bad fwVersion: {}, parse digital version failed", fwVersionStr);
-        return false;
-    }
-
-    fwVersion = calFwVersion;
-    return true;
-}
-
 }  // namespace utils
 }  // namespace libobsensor

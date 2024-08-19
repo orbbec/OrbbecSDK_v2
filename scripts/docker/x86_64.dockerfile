@@ -1,6 +1,9 @@
 FROM ubuntu:18.04
 
-RUN sed -i 's|http://security.ubuntu.com/ubuntu|http://mirrors.aliyun.com/ubuntu|g' /etc/apt/sources.list
+# Change all Ubuntu repository sources to Aliyun mirrors
+RUN sed -i 's|http://archive.ubuntu.com/ubuntu|http://mirrors.aliyun.com/ubuntu|g' /etc/apt/sources.list && \
+    sed -i 's|http://security.ubuntu.com/ubuntu|http://mirrors.aliyun.com/ubuntu|g' /etc/apt/sources.list
+
 ARG NVIDIA_VISIBLE_DEVICES=all
 ARG NVIDIA_DRIVER_CAPABILITIES=compute,utility
 ENV TERM=xterm

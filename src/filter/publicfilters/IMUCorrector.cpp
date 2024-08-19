@@ -2,6 +2,7 @@
 #include "exception/ObException.hpp"
 #include "logger/LoggerInterval.hpp"
 #include "frame/FrameFactory.hpp"
+#include "stream/StreamProfile.hpp"
 #include "InternalTypes.hpp"
 
 namespace libobsensor {
@@ -97,7 +98,7 @@ float IMUCorrector::calculateRegisterTemperature(int16_t tempValue) {
     return ret;
 }
 
-IMUCorrector::IMUCorrector(const std::string &name) : FilterBase(name) {}
+IMUCorrector::IMUCorrector() {}
 
 void IMUCorrector::updateConfig(std::vector<std::string> &params) {
     if(params.size() != 0) {
@@ -110,7 +111,7 @@ const std::string &IMUCorrector::getConfigSchema() const {
     return schema;
 }
 
-std::shared_ptr<Frame> IMUCorrector::processFunc(std::shared_ptr<const Frame> frame) {
+std::shared_ptr<Frame> IMUCorrector::process(std::shared_ptr<const Frame> frame) {
     if(frame == nullptr) {
         return nullptr;
     }

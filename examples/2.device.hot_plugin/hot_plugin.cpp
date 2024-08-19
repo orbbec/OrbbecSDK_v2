@@ -1,7 +1,9 @@
 #include <libobsensor/ObSensor.hpp>
-#include <iostream>
-#include <iomanip>
+
 #include "utils.hpp"
+
+#include <iomanip>
+#include <iostream>
 
 void printDeviceList(const std::string &prompt, std::shared_ptr<ob::DeviceList> deviceList) {
     auto count = deviceList->getCount();
@@ -69,5 +71,7 @@ int main(void) try {
 }
 catch(ob::Error &e) {
     std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\ntype:" << e.getExceptionType() << std::endl;
+    std::cout << "\nPress any key to exit.";
+    ob_smpl::waitForKeyPressed();
     exit(EXIT_FAILURE);
 }

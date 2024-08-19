@@ -8,12 +8,28 @@
 #include "publicfilters/IMUCorrector.hpp"
 
 namespace libobsensor {
-ImuStreamer::ImuStreamer(IDevice *owner, const std::shared_ptr<IDataStreamPort> &backend, const std::shared_ptr<IFilter> &corrector)
-    : owner_(owner), backend_(backend), corrector_(corrector), running_(false), frameIndex_(0) {
 
-    if(corrector_) {
-        corrector_->setCallback([this](std::shared_ptr<Frame> frame) { outputFrame(frame); });
+const size_t IMU_FILTER_FRAME_QUEUE_SIZE = 100;
+
+ImuStreamer::ImuStreamer(IDevice *owner, const std::shared_ptr<IDataStreamPort> &backend, const std::shared_ptr<IFilter> &filter)
+    : ImuStreamer(owner, backend, std::vector<std::shared_ptr<IFilter>>({ filter })) {}
+
+ImuStreamer::ImuStreamer(IDevice *owner, const std::shared_ptr<IDataStreamPort> &backend, std::vector<std::shared_ptr<IFilter>> filters)
+    : owner_(owner), backend_(backend), filters_(std::move(filters)), running_(false) {
+    auto iter = filters_.begin();
+    while(iter != filters_.end()) {
+        (*iter)->resizeFrameQueue(IMU_FILTER_FRAME_QUEUE_SIZE);
+        auto nextIter = iter + 1;
+        if(nextIter == filters_.end()) {
+            (*iter)->setCallback([this](std::shared_ptr<Frame> frame) { outputFrame(frame); });
+        }
+        else {
+            (*iter)->setCallback([nextIter](std::shared_ptr<Frame> frame) { (*nextIter)->pushFrame(frame); });
+        }
+
+        iter++;
     }
+
     LOG_DEBUG("ImuStreamer created");
 }
 
@@ -25,8 +41,8 @@ ImuStreamer::~ImuStreamer() noexcept {
 
     if(running_) {
         backend_->stopStream();
-        if(corrector_) {
-            corrector_->reset();
+        for(auto &filter: filters_) {
+            filter->reset();
         }
         running_ = false;
     }
@@ -60,8 +76,8 @@ void ImuStreamer::stop(std::shared_ptr<const StreamProfile> sp) {
     }
 
     backend_->stopStream();
-    if(corrector_) {
-        corrector_->reset();
+    for(auto &filter: filters_) {
+        filter->reset();
     }
     running_ = false;
 }
@@ -111,9 +127,9 @@ void ImuStreamer::parseIMUData(std::shared_ptr<Frame> frame) {
         auto             frameIndex = frameIndex_++;
 
         if(accelStreamProfile) {
-            auto              accelFrame     = FrameFactory::createFrameFromStreamProfile(accelStreamProfile);
-            auto              accelFrameData = (AccelFrame::Data *)accelFrame->getData();
-            auto              fs             = static_cast<uint8_t>(accelStreamProfile->getFullScaleRange());
+            auto accelFrame     = FrameFactory::createFrameFromStreamProfile(accelStreamProfile);
+            auto accelFrameData = (AccelFrame::Data *)accelFrame->getData();
+            auto fs             = static_cast<uint8_t>(accelStreamProfile->getFullScaleRange());
 
             accelFrameData->value.x = IMUCorrector::calculateAccelGravity(static_cast<int16_t>(imuData->accelX), fs);
             accelFrameData->value.y = IMUCorrector::calculateAccelGravity(static_cast<int16_t>(imuData->accelY), fs);
@@ -127,22 +143,21 @@ void ImuStreamer::parseIMUData(std::shared_ptr<Frame> frame) {
         }
 
         if(gyroStreamProfile) {
-            auto             gyroFrame     = FrameFactory::createFrameFromStreamProfile(gyroStreamProfile);
-            auto             gyroFrameData = (GyroFrame::Data *)gyroFrame->getData();
-            auto             fs            = static_cast<uint8_t>(gyroStreamProfile->getFullScaleRange());
-            gyroFrameData->value.x         = IMUCorrector::calculateGyroDPS(static_cast<int16_t>(imuData->gyroX), fs);
-            gyroFrameData->value.y         = IMUCorrector::calculateGyroDPS(static_cast<int16_t>(imuData->gyroY), fs);
-            gyroFrameData->value.z         = IMUCorrector::calculateGyroDPS(static_cast<int16_t>(imuData->gyroZ), fs);
-            gyroFrameData->temp            = IMUCorrector::calculateRegisterTemperature(imuData->temperature);
+            auto gyroFrame         = FrameFactory::createFrameFromStreamProfile(gyroStreamProfile);
+            auto gyroFrameData     = (GyroFrame::Data *)gyroFrame->getData();
+            auto fs                = static_cast<uint8_t>(gyroStreamProfile->getFullScaleRange());
+            gyroFrameData->value.x = IMUCorrector::calculateGyroDPS(static_cast<int16_t>(imuData->gyroX), fs);
+            gyroFrameData->value.y = IMUCorrector::calculateGyroDPS(static_cast<int16_t>(imuData->gyroY), fs);
+            gyroFrameData->value.z = IMUCorrector::calculateGyroDPS(static_cast<int16_t>(imuData->gyroZ), fs);
+            gyroFrameData->temp    = IMUCorrector::calculateRegisterTemperature(imuData->temperature);
 
             gyroFrame->setNumber(frameIndex);
             gyroFrame->setTimeStampUsec(timestamp);
             gyroFrame->setSystemTimeStampUsec(sysTspUs);
             frameSet->pushFrame(gyroFrame);
         }
-
-        if(corrector_ && corrector_->isEnabled()) {
-            corrector_->pushFrame(frameSet);
+        if(!filters_.empty()) {
+            filters_.front()->pushFrame(frameSet);
         }
         else {
             outputFrame(frameSet);
@@ -159,7 +174,7 @@ void ImuStreamer::outputFrame(std::shared_ptr<Frame> frame) {
     for(auto &callback: callbacks_) {
         std::shared_ptr<Frame> callbackFrame = frame;
         if(frame->is<FrameSet>()) {
-            auto frameSet = frame->as<FrameSet>();
+            auto frameSet  = frame->as<FrameSet>();
             auto frameType = utils::mapStreamTypeToFrameType(callback.first->getType());
             callbackFrame  = frameSet->getFrameMutable(frameType);
             if(!callbackFrame) {

@@ -1,87 +1,104 @@
-# C++ Sample Hdr Merge
+# C++ Sample: 3.advanced.hdr
 
+## Overview
 
-Supported devices: Gemini 330 series cameras, such as Gemini G335
+In this sample, user can get the HDR merge image. Also Allows the user to control the on-off of the HDR synthesis and whether the original image is displayed through the keyboard.
 
-Function description: Demonstrate using HDR operation, display HDR processed images, and exit the program with ESC_KEY key
+### Knowledge
 
-This example is based on the C++High Level API for demonstration
+Pipeline is a pipeline for processing data streams, providing multi-channel stream configuration, switching, frame aggregation, and frame synchronization functions
 
-## 1. Configure HDR
-```cpp
-    // configure and enable Hdr stream
-    OBHdrConfig obHdrConfig;
+Frameset is a combination of different types of Frames
+
+### Attentions
+
+> This Sample only supports Gemini330 series devices.
+
+## Code overview
+
+### 1. Creates instance
+
+```c++
+// Create a pipeline with default device
+ob::Pipeline pipe;
+
+// Get the device from the pipeline
+auto device = pipe.getDevice();
+```
+
+### 2. Check if the device supports HDR merge
+
+```c++
+if(!device->isPropertySupported(OB_STRUCT_DEPTH_HDR_CONFIG, OB_PERMISSION_READ_WRITE)) {
+    std::cerr << "Current default device does not support HDR merge" << std::endl;
+    std::cout << "Press any key to exit...";
+    ob_smpl::waitForKeyPressed();
+    return -1;
+}
+```
+
+### 3. Get depth stream profile
+
+Get all stream profiles of the depth camera, including stream resolution, frame rate, and frame format
+
+```c++
+auto depthProfiles = pipe.getStreamProfileList(OB_SENSOR_DEPTH);
+auto depthProfile  = depthProfiles->getProfile(OB_PROFILE_DEFAULT);
+config->enableStream(depthProfile);
+```
+
+### 4. Create HDRMerge
+
+Create HDRMerge post processor to merge depth frames betweens different hdr sequence ids.
+The HDRMerge also supports processing of infrared frames.
+
+```c++
+auto hdrMerge = ob::FilterFactory::createFilter("HDRMerge");
+```
+
+### 5. Configure and enable Hdr stream
+
+```c++
+OBHdrConfig obHdrConfig;
     obHdrConfig.enable     = true;  // enable HDR merge
     obHdrConfig.exposure_1 = 7500;
     obHdrConfig.gain_1     = 24;
     obHdrConfig.exposure_2 = 100;
     obHdrConfig.gain_2     = 16;
-    device->setStructuredData(OB_STRUCT_DEPTH_HDR_CONFIG, &obHdrConfig, sizeof(OBHdrConfig));
+    device->setStructuredData(OB_STRUCT_DEPTH_HDR_CONFIG, reinterpret_cast<uint8_t *>(&obHdrConfig), sizeof(OBHdrConfig));
 ```
 
-## 2. Create a pipeline and configure the stream
-```cpp
-    // Create a pipeline with default device
-    ob::Pipeline pipe;
-    
-    // Configure which streams to enable or disable for the Pipeline by creating a Config
-    std::shared_ptr<ob::Config> config = std::make_shared<ob::Config>();
-    
-    std::shared_ptr<ob::VideoStreamProfile> irProfile = nullptr;
-    try {
-        // Get all stream profiles of the ir camera, including stream resolution, frame rate, and frame format
-        auto irProfiles = pipe.getStreamProfileList(OB_SENSOR_IR_LEFT);
-        if(irProfiles) {
-            irProfile = std::const_pointer_cast<ob::StreamProfile>(irProfiles->getProfile(OB_PROFILE_DEFAULT))->as<ob::VideoStreamProfile>();
-        }
-        config->enableStream(irProfile);
-    }
-    catch(...) {
-        std::cerr << "Current device is not support ir sensor!" << std::endl;
-        exit(EXIT_FAILURE);
-    }
-    
-    // Get all stream profiles of the depth camera, including stream resolution, frame rate, and frame format
-    auto                                    depthProfiles = pipe.getStreamProfileList(OB_SENSOR_DEPTH);
-    std::shared_ptr<ob::VideoStreamProfile> depthProfile  = nullptr;
-    if(depthProfiles) {
-        depthProfile = std::const_pointer_cast<ob::StreamProfile>(depthProfiles->getProfile(OB_PROFILE_DEFAULT))->as<ob::VideoStreamProfile>();
-    }
-    config->enableStream(depthProfile);
-```
-## 3. Start Pipeline through Configuration
-```cpp
-    pipe.start(config);
+### 6. Start the pipeline with config
+
+```c++
+pipe.start(config);
+
+//when mergeRequired is true, the merged frame will be displayed, otherwise the original frame will be displayed.
+bool mergeRequired       = true;
+//alternateShowOrigin use to toggle alternate show origin frame.
+bool alternateShowOrigin = true;
 ```
 
-## 4.Get HDR processed images
-```cpp
-    auto leftIRFrame = frameSet->getFrame(OB_FRAME_IR_LEFT);
-    if(leftIRFrame) {
-        framesForRender.push_back(leftIRFrame);
-    }
-    
-    auto depthFrame = frameSet->depthFrame();
-    if(depthFrame != nullptr) {
-        auto newFrame = hdrMerge.process(frameSet);
-        auto newFrameSet = newFrame->as<ob::FrameSet>();
-        if(newFrameSet) {
-            depthFrame = newFrameSet->depthFrame();
-            if(depthFrame) {
-                framesForRender.push_back(depthFrame);
-            }
-        }
-    }
+### 7. Stop the pipeline
+
+```c++
+// Stop the Pipeline, no frame data will be generated
+pipe.stop();
+
+// close hdr merge
+obHdrConfig.enable = false;
+device->setStructuredData(OB_STRUCT_DEPTH_HDR_CONFIG, reinterpret_cast<uint8_t *>(&obHdrConfig), sizeof(OBHdrConfig));
 ```
-## 5.Stop pipeline
 
-    pipe.stop();
+## Run Sample
 
-## 6.Turn off HDR processing
-```cpp
-    obHdrConfig.enable = false;
-    device->setStructuredData(OB_STRUCT_DEPTH_HDR_CONFIG, &obHdrConfig, sizeof(OBHdrConfig));
-```
-## 7.expected Output
+### Key introduction
 
-![image](Image/HdrMerge.png)
+Press the 'Esc' key in the window to exit the program.
+Press the '?' key in the window to show key map.
+Press the 'M' key in the window to Toggle HDR merge.
+Press the 'N' key in the window to Toggle alternate show origin frame.
+
+### Result
+
+![hdr](/docs/resource/hdr.gif)

@@ -938,7 +938,7 @@ typedef struct {
  * @brief Hole fillig mode
  */
 typedef enum {
-    OB_HOLE_FILL_LEFT    = 0,
+    OB_HOLE_FILL_TOP     = 0,
     OB_HOLE_FILL_NEAREST = 1,  // "max" means farest for depth, and nearest for disparity; FILL_NEAREST
     OB_HOLE_FILL_FAREST  = 2,  // FILL_FAREST
 } OBHoleFillingMode,

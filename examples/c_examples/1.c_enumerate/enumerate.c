@@ -1,7 +1,9 @@
+#include <libobsensor/ObSensor.h>
+
+#include "utils_c.h"
+
 #include <stdio.h>
 #include <stdlib.h>
-
-#include <libobsensor/ObSensor.h>
 
 // helper function to check for errors and exit if there is one
 void check_ob_error(ob_error **err) {
@@ -19,7 +21,7 @@ int select_index(const char *prompt, int min_value, int max_value) {  // todo: t
     printf("\n%s (Input a number between %d and %d or \'q\' to exit program): ", prompt, min_value, max_value);
     while(true) {
         char input;
-        int ret = scanf("%c", &input);
+        int  ret = scanf("%c", &input);
         (void)ret;
         getchar();
 
@@ -83,23 +85,23 @@ void enumerate_stream_info(ob_sensor *sensor) {
         }
         else if(sensor_type == OB_SENSOR_ACCEL) {
             // Print acc stream profile information.
-            // ob_format stream_format = ob_stream_profile_get_format(stream_profile, &error);
-            // check_ob_error(&error);
+            ob_format stream_format = ob_stream_profile_get_format(stream_profile, &error);
+            check_ob_error(&error);
 
-            // ob_accel_sample_rate acc_fps = ob_accel_stream_profile_get_sample_rate(stream_profile, &error);
-            // check_ob_error(&error);
+            ob_accel_sample_rate acc_fps = ob_accel_stream_profile_get_sample_rate(stream_profile, &error);
+            check_ob_error(&error);
 
-            // printf("  %d - type: %s, fps: %s\n", index, stream_types[stream_format], rate_types[acc_fps]);
+            printf("  %d - type: %s, fps: %s\n", index, ob_format_to_string(stream_format), ob_imu_rate_type_to_string(acc_fps));
         }
         else if(sensor_type == OB_SENSOR_GYRO) {
             // Print gyro stream profile information.
-            // ob_format stream_format = ob_stream_profile_get_format(stream_profile, &error);
-            // check_ob_error(&error);
+            ob_format stream_format = ob_stream_profile_get_format(stream_profile, &error);
+            check_ob_error(&error);
 
-            // ob_gyro_sample_rate gyro_fps = ob_gyro_stream_profile_get_sample_rate(stream_profile, &error);
-            // check_ob_error(&error);
+            ob_gyro_sample_rate gyro_fps = ob_gyro_stream_profile_get_sample_rate(stream_profile, &error);
+            check_ob_error(&error);
 
-            // printf("  %d - type: %s, fps: %s\n", index, stream_types[stream_format], rate_types[gyro_fps]);
+            printf("  %d - type: %s, fps: %s\n", index, ob_format_to_string(stream_format), ob_imu_rate_type_to_string(gyro_fps));
         }
 
         // destroy stream profile
@@ -124,40 +126,44 @@ void enumerate_sensor_info(ob_device *device) {
     uint32_t sensor_count = ob_sensor_list_get_count(sensor_list, &error);
     check_ob_error(&error);
 
-    // Print sensor information.
-    printf("Available sensors: \n");
-    for(uint32_t index = 0; index < sensor_count; index++) {
-        // Get device sensor.
-        ob_sensor *sensor = ob_sensor_list_get_sensor(sensor_list, index, &error);
-        check_ob_error(&error);
-
-        // Get sensor type.
-        ob_sensor_type sensor_type = ob_sensor_get_type(sensor, &error);
-        check_ob_error(&error);
-        const char *sensor_name = ob_sensor_type_to_string(sensor_type);
-
+    while(true){
         // Print sensor information.
-        printf("  %d - sensor name: %s\n", index, sensor_name);
+        printf("Available sensors: \n");
+        for(uint32_t index = 0; index < sensor_count; index++) {
+            // Get device sensor.
+            ob_sensor *sensor = ob_sensor_list_get_sensor(sensor_list, index, &error);
+            check_ob_error(&error);
 
-        // destroy sensor
-        ob_delete_sensor(sensor, &error);
-        check_ob_error(&error);
+            // Get sensor type.
+            ob_sensor_type sensor_type = ob_sensor_get_type(sensor, &error);
+            check_ob_error(&error);
+            const char *sensor_name = ob_sensor_type_to_string(sensor_type);
+
+            // Print sensor information.
+            printf("  %d - sensor name: %s\n", index, sensor_name);
+
+            // destroy sensor
+            ob_delete_sensor(sensor, &error);
+            check_ob_error(&error);
+        }
+
+        int index = select_index("Select a sensor to enumerate its stream profiles", 0, sensor_count - 1);
+        if(index >= 0) {
+            // Get the selected sensor.
+            ob_sensor *sensor = ob_sensor_list_get_sensor(sensor_list, index, &error);
+            check_ob_error(&error);
+
+            // Enumerate stream information of selected sensor.
+            enumerate_stream_info(sensor);
+
+            // destroy sensor
+            ob_delete_sensor(sensor, &error);
+            check_ob_error(&error);
+        }else{
+            break;
+        }
+
     }
-
-    int index = select_index("Select a sensor to enumerate its stream profiles", 0, sensor_count - 1);
-    if(index >= 0) {
-        // Get the selected sensor.
-        ob_sensor *sensor = ob_sensor_list_get_sensor(sensor_list, index, &error);
-        check_ob_error(&error);
-
-        // Enumerate stream information of selected sensor.
-        enumerate_stream_info(sensor);
-
-        // destroy sensor
-        ob_delete_sensor(sensor, &error);
-        check_ob_error(&error);
-    }
-
     // destroy sensor list
     ob_delete_sensor_list(sensor_list, &error);
     check_ob_error(&error);
@@ -223,36 +229,43 @@ int main(void) {
         ob_delete_context(ctx, &error);
         check_ob_error(&error);
 
+        printf("\nPress any key to exit.");
+        ob_smpl_wait_for_key_press(0);
+
         return -1;
     }
 
-    printf("Connected devices: \n");
-    for(uint32_t index = 0; index < dev_count; index++) {
-        // Get device from device list.
-        ob_device *dev = ob_device_list_get_device(dev_list, index, &error);
-        check_ob_error(&error);
+    while(true) {
+        printf("Connected devices: \n");
+        for(uint32_t index = 0; index < dev_count; index++) {
+            // Get device from device list.
+            ob_device *dev = ob_device_list_get_device(dev_list, index, &error);
+            check_ob_error(&error);
 
-        // print device information
-        print_device_info(dev, index);
+            // print device information
+            print_device_info(dev, index);
 
-        // destroy device
-        ob_delete_device(dev, &error);
-        check_ob_error(&error);
-    }
+            // destroy device
+            ob_delete_device(dev, &error);
+            check_ob_error(&error);
+        }
 
-    // Select a device.
-    int device_index = select_index("Select a device to enumerate its sensors", 0, dev_count - 1);
-    if(device_index >= 0) {
-        // get device from device list
-        ob_device *device = ob_device_list_get_device(dev_list, device_index, &error);
-        check_ob_error(&error);
+        // Select a device.
+        int device_index = select_index("Select a device to enumerate its sensors", 0, dev_count - 1);
+        if(device_index >= 0) {
+            // get device from device list
+            ob_device *device = ob_device_list_get_device(dev_list, device_index, &error);
+            check_ob_error(&error);
 
-        // enumerate sensors of device
-        enumerate_sensor_info(device);
+            // enumerate sensors of device
+            enumerate_sensor_info(device);
 
-        // destroy device
-        ob_delete_device(device, &error);
-        check_ob_error(&error);
+            // destroy device
+            ob_delete_device(device, &error);
+            check_ob_error(&error);
+        }else{
+            break;
+        }
     }
 
     // destroy sensor list
@@ -264,7 +277,7 @@ int main(void) {
     check_ob_error(&error);
 
     printf("\nProgram ended successfully. Press any key to exit.");
-    getchar();
+    ob_smpl_wait_for_key_press(0);
 
     return 0;
 }

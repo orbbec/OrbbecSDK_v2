@@ -1,6 +1,8 @@
+#include <libobsensor/ObSensor.h>
+
+#include "utils.hpp"
 #include "utils_opencv.hpp"
 
-#include <libobsensor/ObSensor.h>
 #include <thread>
 
 bool quit_program = false;  // Flag to signal the program to quit
@@ -39,7 +41,7 @@ void filterControl(const std::vector<std::shared_ptr<ob::Filter>> &filterList) {
 
         std::string input;
         std::getline(std::cin, input);
-        if(input == "q") {
+        if(input == "q" || input == "Q") {
             quit_program = true;
             break;
         }
@@ -183,5 +185,7 @@ int main() try {
 }
 catch(ob::Error &e) {
     std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\ntype:" << e.getExceptionType() << std::endl;
+    std::cout << "\nPress any key to exit.";
+    ob_smpl::waitForKeyPressed();
     exit(EXIT_FAILURE);
 }

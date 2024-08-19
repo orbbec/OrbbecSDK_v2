@@ -81,7 +81,7 @@ char *RTSPServer::rtspURLPrefix(int clientSocket, Boolean useIPv6) const {
     else {
         SOCKLEN_T namelen = sizeof ourAddress;
 
-        getsockname(clientSocket, (struct sockaddr *)&ourAddress, &namelen);
+        getsockname(clientSocket, (struct sockaddr *)&ourAddress, reinterpret_cast<socklen_t *>(&namelen));
     }
 
     char urlBuffer[100];  // more than big enough for "rtsp://<ip-address>:<port>/"
@@ -1575,7 +1575,8 @@ void RTSPServer::RTSPClientSession ::handleCmd_SETUP_afterLookup2(ServerMediaSes
         // (in case we're a multi-homed server):
         struct sockaddr_storage sourceAddr;
         SOCKLEN_T               namelen = sizeof sourceAddr;
-        getsockname(fOurClientConnection->fClientInputSocket, (struct sockaddr *)&sourceAddr, &namelen);
+        getsockname(fOurClientConnection->fClientInputSocket, (struct sockaddr *)&sourceAddr,
+                    reinterpret_cast<socklen_t *>(&namelen));
 
         subsession->getStreamParameters(fOurSessionId, fOurClientConnection->fClientAddr, clientRTPPort, clientRTCPPort, fStreamStates[trackNum].tcpSocketNum,
                                         rtpChannelId, rtcpChannelId, &fOurClientConnection->fTLS, destinationAddress, destinationTTL, fIsMulticast,

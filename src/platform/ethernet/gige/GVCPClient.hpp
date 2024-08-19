@@ -95,6 +95,7 @@ struct GVCPDeviceInfo {
     virtual bool operator==(const GVCPDeviceInfo &other) const {
         return other.mac == mac && other.sn == sn && other.ip == ip;
     }
+    virtual ~GVCPDeviceInfo() {}
 };
 
 #define MAX_SOCKETS 32

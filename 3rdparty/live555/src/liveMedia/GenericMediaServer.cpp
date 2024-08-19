@@ -235,7 +235,8 @@ void GenericMediaServer::incomingConnectionHandlerIPv6() {
 void GenericMediaServer::incomingConnectionHandlerOnSocket(int serverSocket) {
     struct sockaddr_storage clientAddr;
     SOCKLEN_T               clientAddrLen = sizeof clientAddr;
-    int                     clientSocket  = accept(serverSocket, (struct sockaddr *)&clientAddr, &clientAddrLen);
+    int                     clientSocket  = accept(serverSocket, (struct sockaddr *)&clientAddr,
+                                                   reinterpret_cast<socklen_t *>(&clientAddrLen));
     if(clientSocket < 0) {
         int err = envir().getErrno();
         if(err != EWOULDBLOCK) {

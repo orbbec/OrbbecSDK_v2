@@ -39,9 +39,9 @@ public:
 
 private:
     std::shared_ptr<const NetDataStreamPortInfo> portInfo_;
+    bool                                         isStreaming_;
 
     std::shared_ptr<VendorTCPClient> tcpClient_;
-    bool                             isStreaming_;
     std::thread                      readDataThread_;
 
     MutableFrameCallback callback_;

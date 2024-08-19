@@ -14,6 +14,7 @@ public:
 
     void start(std::shared_ptr<const StreamProfile> sp, FrameCallback callback) override;
     void stop() override;
+    void      updateStreamProfileList(const StreamProfileList &profileList) override;
 
 
 private:

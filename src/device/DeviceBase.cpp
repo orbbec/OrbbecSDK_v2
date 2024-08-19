@@ -331,9 +331,9 @@ std::shared_ptr<IFilter> DeviceBase::getSensorFrameFilter(const std::string &nam
 int DeviceBase::getFirmwareVersionInt() {
     int  dotCount     = 0;
     char buf[16]      = { 0 };
-    int  bufIndex     = 0;
+    size_t bufIndex     = 0;
     int  calFwVersion = 0;
-    for(int i = 0; i < deviceInfo_->fwVersion_.size(); i++) {
+    for(size_t i = 0; i < deviceInfo_->fwVersion_.size(); i++) {
         const char c = deviceInfo_->fwVersion_[i];
         if(isdigit(c) && bufIndex < sizeof(buf)) {
             buf[bufIndex] = c;

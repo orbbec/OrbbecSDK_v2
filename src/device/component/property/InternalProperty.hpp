@@ -5,12 +5,15 @@ namespace libobsensor {
 
 typedef enum {
     OB_PROP_DEVICE_RESET_BOOL               = 29,  /**< Reset/reboot the device*/
+    OB_PROP_STOP_DEPTH_STREAM_BOOL          = 38,  /**<Disable the deep stream (MX6600 chip also acts as the right IR stream), used for devices that cannot disable the stream via the standard UVC protocol. */
+    OB_PROP_STOP_IR_STREAM_BOOL             = 39,  /**<Disable the IR stream (MX6600 chip also serves as the left IR stream) for devices that cannot disable the stream via the standard UVC protocol */
     OB_PROP_TOF_EXPOSURE_TIME_INT           = 47,  /**<TOF exposure time // only sdk-firmware internal use */
     OB_PROP_TOF_GAIN_INT                    = 48,  /**<TOF gain value // only sdk-firmware internal use */
     OB_PROP_REBOOT_DEVICE_BOOL              = 57,  /**< Reboot the device*/
-    OB_PROP_FAN_WORK_LEVEL_INT              = 110, /**< 风扇档位 */
+    OB_PROP_STOP_COLOR_STREAM_BOOL          = 77,  /**< Disable the Color stream for devices that cannot disable the stream via the standard UVC protocol*/
+    OB_PROP_FAN_WORK_LEVEL_INT              = 110, /**< Fan speed settings */
     OB_PROP_DEPTH_MIRROR_MODULE_STATUS_BOOL = 108, /**< Depth mirror module status*/
-    OB_PROP_FAN_WORK_SPEED_INT              = 120, /**< 风扇转速 */
+    OB_PROP_FAN_WORK_SPEED_INT              = 120, /**< Fan speed */
     OB_PROP_START_COLOR_STREAM_BOOL         = 125, /**< Start or stop color stream */
     OB_PROP_START_DEPTH_STREAM_BOOL         = 126, /**< Start or stop depth stream */
     OB_PROP_START_IR_STREAM_BOOL            = 127, /**< Start or stop left ir stream */

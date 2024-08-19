@@ -6,7 +6,7 @@
 
 namespace libobsensor {
 
-SequenceIdFilter::SequenceIdFilter(const std::string &name) : FilterBase(name) {}
+SequenceIdFilter::SequenceIdFilter() {}
 SequenceIdFilter::~SequenceIdFilter() noexcept {}
 
 void SequenceIdFilter::updateConfig(std::vector<std::string> &params) {
@@ -34,7 +34,12 @@ const std::string &SequenceIdFilter::getConfigSchema() const {
     return schema;
 }
 
-std::shared_ptr<Frame> SequenceIdFilter::processFunc(std::shared_ptr<const Frame> frame) {
+void SequenceIdFilter::reset() {
+    std::lock_guard<std::recursive_mutex> lk(valueUpdateMutex_);
+    recentFrames_.clear();
+}
+
+std::shared_ptr<Frame> SequenceIdFilter::process(std::shared_ptr<const Frame> frame) {
     if(!frame) {
         return nullptr;
     }

@@ -532,7 +532,7 @@ int ObLibuvcDevicePort::obPropToUvcCS(OBPropertyID propertyId, int &unit) const 
         unit = uvc_get_input_terminals(uvcDevHandle_)->bTerminalID;
         return UVC_CT_FOCUS_ABSOLUTE_CONTROL;
     default:
-        throw linux_pal_exception(utils::string::to_string() << "invalid propertyId : " << propertyId);
+        throw pal_exception(utils::string::to_string() << "invalid propertyId : " << propertyId);
     }
 }
 

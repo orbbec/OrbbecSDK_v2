@@ -89,6 +89,8 @@ uint32_t calcVideoFrameMaxDataSize(OBFormat format, uint32_t width, uint32_t hei
     uint32_t maxFrameDataSize = height * width * 3;
     switch(format) {
     case OB_FORMAT_MJPG:
+        maxFrameDataSize = height * width * 2;
+        break;
     case OB_FORMAT_H264:
     case OB_FORMAT_H265:
     case OB_FORMAT_HEVC:
@@ -601,5 +603,69 @@ std::ostream &operator<<(std::ostream &os, const OBCameraParam &params) {
        << params.transform.rot[8] << "],trans:" << params.transform.trans[0] << "," << params.transform.trans[1] << "," << params.transform.trans[2] << "}\n"
        << "isMirror:" << params.isMirrored << "\n"
        << "}";
+    return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const OBCalibrationParam &type) {    
+     os << "{\n"
+        << "intrinsics:[ { cx:" << type.intrinsics[0].cx << ", cy" << type.intrinsics[0].cy << ", fx" << type.intrinsics[0].fx << ", fy" << type.intrinsics[0].fy << ", width" << type.intrinsics[0].width << ", height" << type.intrinsics[0].height << "},\n"
+        << " { cx:" << type.intrinsics[1].cx << ", cy" << type.intrinsics[1].cy << ", fx" << type.intrinsics[1].fx << ", fy" << type.intrinsics[1].fy << ", width" << type.intrinsics[1].width << ", height" << type.intrinsics[1].height << "},\n"
+        << " { cx:" << type.intrinsics[2].cx << ", cy" << type.intrinsics[2].cy << ", fx" << type.intrinsics[2].fx << ", fy" << type.intrinsics[2].fy << ", width" << type.intrinsics[2].width << ", height" << type.intrinsics[2].height << "},\n"
+        << " { cx:" << type.intrinsics[3].cx << ", cy" << type.intrinsics[3].cy << ", fx" << type.intrinsics[3].fx << ", fy" << type.intrinsics[3].fy << ", width" << type.intrinsics[3].width << ", height" << type.intrinsics[3].height << "},\n"
+        << " { cx:" << type.intrinsics[4].cx << ", cy" << type.intrinsics[4].cx << ", fx" << type.intrinsics[4].fx << ", fy" << type.intrinsics[4].fy << ", width" << type.intrinsics[4].width << ", height" << type.intrinsics[4].height << "},\n"
+        << " { cx:" << type.intrinsics[5].cx << ", cy" << type.intrinsics[5].cy << ", fx" << type.intrinsics[5].fx << ", fy" << type.intrinsics[5].fy << ", width" << type.intrinsics[5].width << ", height" << type.intrinsics[5].height << "},\n"
+        << " { cx:" << type.intrinsics[6].cx << ", cy" << type.intrinsics[6].cy << ", fx" << type.intrinsics[6].fx << ", fy" << type.intrinsics[6].fy << ", width" << type.intrinsics[6].width << ", height" << type.intrinsics[6].height << "},\n"
+        << " { cx:" << type.intrinsics[7].cx << ", cy" << type.intrinsics[7].cy << ", fx" << type.intrinsics[7].fx << ", fy" << type.intrinsics[7].fy << ", width" << type.intrinsics[7].width << ", height" << type.intrinsics[7].height << "},\n"
+        << " { cx:" << type.intrinsics[8].cx << ", cy" << type.intrinsics[8].cy << ", fx" << type.intrinsics[8].fx << ", fy" << type.intrinsics[8].fy << ", width" << type.intrinsics[8].width << ", height" << type.intrinsics[8].height << "},\n"
+        << "]\n"
+        << "distortion:[ { model:" << type.distortion[0].model << ", k1:" << type.distortion[0].k1 << ", k2:" << type.distortion[0].k2 << ", k3:" << type.distortion[0].k3 << ", k4:" << type.distortion[0].k4 << ", k5:" << type.distortion[0].k5 << ", k6:" << type.distortion[0].k6 << ", p1:" << type.distortion[0].p1 << ", p2:" << type.distortion[0].p2 << "},\n"
+        << " { model:" << type.distortion[1].model << ", k1:" << type.distortion[1].k1 << ", k2:" << type.distortion[1].k2 << ", k3:" << type.distortion[1].k3 << ", k4:" << type.distortion[1].k4 << ", k5:" << type.distortion[1].k5 << ", k6:" << type.distortion[1].k6 << ", p1:" << type.distortion[1].p1 << ", p2:" << type.distortion[1].p2 << "},\n"
+        << " { model:" << type.distortion[2].model << ", k1:" << type.distortion[2].k1 << ", k2:" << type.distortion[2].k2 << ", k3:" << type.distortion[2].k3 << ", k4:" << type.distortion[2].k4 << ", k5:" << type.distortion[2].k5 << ", k6:" << type.distortion[2].k6 << ", p1:" << type.distortion[2].p1 << ", p2:" << type.distortion[2].p2 << "},\n"
+        << " { model:" << type.distortion[3].model << ", k1:" << type.distortion[3].k1 << ", k2:" << type.distortion[3].k2 << ", k3:" << type.distortion[3].k3 << ", k4:" << type.distortion[3].k4 << ", k5:" << type.distortion[3].k5 << ", k6:" << type.distortion[3].k6 << ", p1:" << type.distortion[3].p1 << ", p2:" << type.distortion[3].p2 << "},\n"
+        << " { model:" << type.distortion[4].model << ", k1:" << type.distortion[4].k1 << ", k2:" << type.distortion[4].k2 << ", k3:" << type.distortion[4].k3 << ", k4:" << type.distortion[4].k4 << ", k5:" << type.distortion[4].k5 << ", k6:" << type.distortion[4].k6 << ", p1:" << type.distortion[4].p1 << ", p2:" << type.distortion[4].p2 << "},\n"
+        << " { model:" << type.distortion[5].model << ", k1:" << type.distortion[5].k1 << ", k2:" << type.distortion[5].k2 << ", k3:" << type.distortion[5].k3 << ", k4:" << type.distortion[5].k4 << ", k5:" << type.distortion[5].k5 << ", k6:" << type.distortion[5].k6 << ", p1:" << type.distortion[5].p1 << ", p2:" << type.distortion[5].p2<<  "},\n"
+        << " { model:" << type.distortion[6].model << ", k1:" << type.distortion[6].k1 << ", k2:" << type.distortion[6].k2 << ", k3:" << type.distortion[6].k3 << ", k4:" << type.distortion[6].k4 << ", k5:" << type.distortion[6].k5 << ", k6:" << type.distortion[6].k6 << ", p1:" << type.distortion[6].p1 << ", p2:" << type.distortion[6].p2 << "},\n"
+        << " { model:" << type.distortion[7].model << ", k1:" << type.distortion[7].k1 << ", k2:" << type.distortion[7].k2 << ", k3:" << type.distortion[7].k3 << ", k4:" << type.distortion[7].k4 << ", k5:" << type.distortion[7].k5 << ", k6:" << type.distortion[7].k6 << ", p1:" << type.distortion[7].p1 << ", p2:" << type.distortion[7].p2 << "},\n"
+        << " { model:" << type.distortion[8].model << ", k1:" << type.distortion[8].k1 << ", k2:" << type.distortion[8].k2 << ", k3:" << type.distortion[8].k3 << ", k4:" << type.distortion[8].k4 << ", k5:" << type.distortion[8].k5 << ", k6:" << type.distortion[8].k6 << ", p1:" << type.distortion[8].p1 << ", p2:" << type.distortion[8].p2 << "},\n"    
+        << "]\n"
+        << "extrinsics:[ ]\n"
+        << "}\n";
+
+    return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const OBPoint3f &type) {    
+    os << "{\n"
+       << "x:" << type.x << ", y:" << type.y << ", z:" << type.z << "\n"
+       << "}\n";
+    return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const OBExtrinsic &type) {    
+    os << "{\n"
+       << "rot:[ " << type.rot[0] << ", " << type.rot[1] << ", " << type.rot[2] << ", " << type.rot[3] << ", " << type.rot[4] << ", " << type.rot[5] << ", " << type.rot[6] << ", " << type.rot[7] << ", " << type.rot[8] << "]\n"
+       << "trans:[ " << type.trans[0] << ", " << type.trans[1] << ", " << type.trans[2] << "]\n"
+       << "}\n";
+    return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const OBPoint2f &type) {    
+    os << "{\n"
+       << "x:" << type.x << ", y:" << type.y << "\n"
+       << "}\n";
+    return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const OBCameraIntrinsic &type) {    
+    os << "{\n"
+       << "cx:" << type.cx << ", cy:" << type.cy << ", fx:" << type.fx << ", fy:" << type.fy << ", width:" << type.width << ", height:" << type.height << "\n"
+       << "}\n";
+    return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const OBCameraDistortion &type) {    
+    os << "{\n"
+       << "model:" << type.model << ", k1:" << type.k1 << ", k2:" << type.k2 << ", k3:" << type.k3 << ", k4:" << type.k4 << ", k5:" << type.k5 << ", k6:" << type.k6 << ", p1:" << type.p1 << ", p2:" << type.p2 << "\n"
+       << "}\n";
     return os;
 }

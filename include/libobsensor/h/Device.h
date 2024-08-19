@@ -554,6 +554,48 @@ OB_EXPORT ob_device *ob_device_list_get_device_by_serial_number(const ob_device_
 OB_EXPORT ob_device *ob_device_list_get_device_by_uid(const ob_device_list *list, const char *uid, ob_error **error);
 
 /**
+ * @brief Get the original parameter list of camera calibration saved on the device.
+ *
+ * @attention The parameters in the list do not correspond to the current open-stream configuration.You need to select the parameters according to the actual
+ * situation, and may need to do scaling, mirroring and other processing. Non-professional users are recommended to use the ob_pipeline_get_camera_param()
+ * interface.
+ *
+ * @param[in] device The device object.
+ * @param[out] error Log error messages.
+ *
+ * @return ob_camera_param_list The camera parameter list.
+ */
+OB_EXPORT ob_camera_param_list *ob_device_get_calibration_camera_param_list(ob_device *device, ob_error **error);
+
+/**
+ * @brief Get the number of camera parameter lists
+ *
+ * @param[in] param_list Camera parameter list
+ * @param[out] error Log error messages
+ * @return uint32_t The number of lists
+ */
+OB_EXPORT uint32_t ob_camera_param_list_get_count(ob_camera_param_list *param_list, ob_error **error);
+
+/**
+ * @brief Get camera parameters from the camera parameter list
+ *
+ * @param[in] param_list Camera parameter list
+ * @param[in] index Parameter index
+ * @param[out] error Log error messages
+ * @return ob_camera_param The camera parameters. Since it returns the structure object directly, there is no need to provide a delete interface.
+ */
+OB_EXPORT ob_camera_param ob_camera_param_list_get_param(ob_camera_param_list *param_list, uint32_t index, ob_error **error);
+
+/**
+ * @brief Delete the camera parameter list
+ *
+ * @param[in] param_list Camera parameter list
+ * @param[out] error Log error messages
+ */
+OB_EXPORT void ob_delete_camera_param_list(ob_camera_param_list *param_list, ob_error **error);
+
+
+/**
  * In order to be compatible with the closed source version of orbbecsdk's interface.
  * We recommend using the latest interface names for a better experience.
  */
@@ -576,6 +618,7 @@ OB_EXPORT ob_device *ob_device_list_get_device_by_uid(const ob_device_list *list
 #define ob_device_info_asicName ob_device_info_get_asicName
 #define ob_device_info_device_type ob_device_info_get_device_type
 #define ob_device_list_get_device_count ob_device_list_get_count
+#define ob_camera_param_list_count ob_camera_param_list_get_count
 
 #ifdef __cplusplus
 }

@@ -1,21 +1,20 @@
 #pragma once
-#include "FilterBase.hpp"
+#include "IFilter.hpp"
 #include <mutex>
 
 namespace libobsensor {
 
-class IMUFrameReversion : public FilterBase {
+class IMUFrameReversion : public IFilterBase {
 public:
-    IMUFrameReversion(const std::string &name);
+    IMUFrameReversion();
     virtual ~IMUFrameReversion() noexcept;
 
     void               updateConfig(std::vector<std::string> &params) override;
     const std::string &getConfigSchema() const override;
+    void               reset() override {}
 
 private:
-    std::shared_ptr<Frame> processFunc(std::shared_ptr<const Frame> frame) override;
-
-protected:
+    std::shared_ptr<Frame> process(std::shared_ptr<const Frame> frame) override;
 };
 
 }  // namespace libobsensor

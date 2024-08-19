@@ -1,5 +1,6 @@
 #pragma once
-#include "FilterBase.hpp"
+#include "IFilter.hpp"
+#include "stream/StreamProfile.hpp"
 #include "AlignImpl.hpp"
 
 namespace libobsensor {
@@ -7,9 +8,9 @@ namespace libobsensor {
 /**
  * @brief Aligh depth to color or vice verse
  */
-class Align : public FilterBase {
+class Align : public IFilterBase {
 public:
-    explicit Align(const std::string &name);
+    explicit Align();
     virtual ~Align() noexcept;
 
     OBStreamType getAlignToStreamType() {
@@ -22,7 +23,7 @@ public:
     void reset() override;
 
 private:
-    std::shared_ptr<Frame> processFunc(std::shared_ptr<const Frame> frame) override;
+    std::shared_ptr<Frame> process(std::shared_ptr<const Frame> frame) override;
 
 protected:
     OBFrameType getAlignFrameType();

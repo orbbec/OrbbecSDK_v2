@@ -18,6 +18,10 @@ public:
         return capacity_;
     }
 
+    void resize(size_t capacity) {
+        capacity_ = capacity;
+    }
+
     size_t size() const {
         return queue_.size();
     }
@@ -129,7 +133,7 @@ private:
     std::mutex                     mutex_;
     std::condition_variable        condition_;
     std::queue<std::shared_ptr<T>> queue_;
-    const size_t                   capacity_;
+    size_t                         capacity_;
 
     std::thread                             dequeueThread_;
     std::atomic<bool>                       stoped_;

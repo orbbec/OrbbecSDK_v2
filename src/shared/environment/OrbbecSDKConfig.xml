@@ -287,7 +287,7 @@
                 <!-- The height of the default resolution, int type -->
                 <Height>576</Height>
                 <!-- Default frame rate, int type -->
-                <FPS>15</FPS>
+                <FPS>30</FPS>
                 <!-- Default frame format -->
                 <Format>Y16</Format>
                 <!-- Whether to retry after open stream failure, 0 means no retry, >=1 retry and how
@@ -311,7 +311,7 @@
                 <!-- The height of the default resolution, int type -->
                 <Height>1080</Height>
                 <!-- Default frame rate, int type -->
-                <FPS>15</FPS>
+                <FPS>30</FPS>
                 <!-- Default frame format -->
                 <Format>MJPG</Format>
                 <!-- Whether to retry after open stream failure, 0 means no retry, >=1 retry and how
@@ -335,7 +335,7 @@
                 <!-- The height of the default resolution, int type -->
                 <Height>576</Height>
                 <!-- Default frame rate, int type -->
-                <FPS>15</FPS>
+                <FPS>30</FPS>
                 <!-- Default frame format -->
                 <Format>Y16</Format>
                 <!-- Whether to retry after open stream failure, 0 means no retry, >=1 retry and how

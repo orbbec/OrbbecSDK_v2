@@ -1,16 +1,14 @@
 #include "IMUFrameReversion.hpp"
 #include "frame/Frame.hpp"
-#include "exception/ObException.hpp"
-#include "logger/LoggerInterval.hpp"
 #include "frame/FrameFactory.hpp"
+#include "logger/LoggerInterval.hpp"
+#include "exception/ObException.hpp"
 #include "libobsensor/h/ObTypes.h"
 
 namespace libobsensor {
 
-IMUFrameReversion::IMUFrameReversion(const std::string &name) : FilterBase(name) {
-    srcFrameQueue_ = std::make_shared<FrameQueue<const Frame>>(100);
-    LOG_DEBUG("IMUFrameReversion {} created with frame queue capacity {}", name_, srcFrameQueue_->capacity());
-}
+IMUFrameReversion::IMUFrameReversion() {}
+
 IMUFrameReversion::~IMUFrameReversion() noexcept {}
 
 void IMUFrameReversion::updateConfig(std::vector<std::string> &params) {
@@ -24,7 +22,7 @@ const std::string &IMUFrameReversion::getConfigSchema() const {
     return schema;
 }
 
-std::shared_ptr<Frame> IMUFrameReversion::processFunc(std::shared_ptr<const Frame> frame) {
+std::shared_ptr<Frame> IMUFrameReversion::process(std::shared_ptr<const Frame> frame) {
     if(!frame) {
         return nullptr;
     }

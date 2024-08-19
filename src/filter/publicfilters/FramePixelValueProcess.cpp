@@ -65,7 +65,7 @@ template <typename T> void imagePixelValueThreshold(T *src, T *dst, uint32_t wid
     }
 }
 
-PixelValueScaler::PixelValueScaler(const std::string &name) : FilterBase(name) {}
+PixelValueScaler::PixelValueScaler() {}
 PixelValueScaler::~PixelValueScaler() noexcept {}
 
 void PixelValueScaler::updateConfig(std::vector<std::string> &params) {
@@ -87,7 +87,7 @@ const std::string &PixelValueScaler::getConfigSchema() const {
     return schema;
 }
 
-std::shared_ptr<Frame> PixelValueScaler::processFunc(std::shared_ptr<const Frame> frame) {
+std::shared_ptr<Frame> PixelValueScaler::process(std::shared_ptr<const Frame> frame) {
     if(frame->getType() != OB_FRAME_DEPTH) {
         LOG_WARN_INTVL("PixelValueScaler unsupported to process this frame type: {}", frame->getType());
         return FrameFactory::createFrameFromOtherFrame(frame);
@@ -112,7 +112,7 @@ std::shared_ptr<Frame> PixelValueScaler::processFunc(std::shared_ptr<const Frame
     return outFrame;
 }
 
-ThresholdFilter::ThresholdFilter(const std::string &name) : FilterBase(name) {}
+ThresholdFilter::ThresholdFilter() {}
 ThresholdFilter::~ThresholdFilter() noexcept {}
 
 void ThresholdFilter::updateConfig(std::vector<std::string> &params) {
@@ -143,7 +143,7 @@ const std::string &ThresholdFilter::getConfigSchema() const {
     return schema;
 }
 
-std::shared_ptr<Frame> ThresholdFilter::processFunc(std::shared_ptr<const Frame> frame) {
+std::shared_ptr<Frame> ThresholdFilter::process(std::shared_ptr<const Frame> frame) {
     if(!frame) {
         return nullptr;
     }
@@ -175,7 +175,7 @@ std::shared_ptr<Frame> ThresholdFilter::processFunc(std::shared_ptr<const Frame>
     return outFrame;
 }
 
-PixelValueOffset::PixelValueOffset(const std::string &name) : FilterBase(name) {}
+PixelValueOffset::PixelValueOffset() {}
 PixelValueOffset::~PixelValueOffset() noexcept {}
 
 void PixelValueOffset::updateConfig(std::vector<std::string> &params) {
@@ -197,7 +197,7 @@ const std::string &PixelValueOffset::getConfigSchema() const {
     return schema;
 }
 
-std::shared_ptr<Frame> PixelValueOffset::processFunc(std::shared_ptr<const Frame> frame) {
+std::shared_ptr<Frame> PixelValueOffset::process(std::shared_ptr<const Frame> frame) {
     if(!frame) {
         return nullptr;
     }

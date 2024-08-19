@@ -46,6 +46,16 @@ void ob_sensor_stop(ob_sensor *sensor, ob_error **error) BEGIN_API_CALL {
 }
 HANDLE_EXCEPTIONS_NO_RETURN(sensor)
 
+void ob_sensor_switch_profile(ob_sensor *sensor, ob_stream_profile *profile, ob_error **error) BEGIN_API_CALL {
+    auto innerSensor = sensor->device->getSensor(sensor->type);
+    if(innerSensor->isStreamActivated()) {
+        throw libobsensor::invalid_value_exception("sensor stream is not started!");
+    }
+    innerSensor->stop();
+    innerSensor->start(profile->profile, innerSensor->getFrameCallback());
+}
+HANDLE_EXCEPTIONS_NO_RETURN(sensor)
+
 ob_filter_list *ob_sensor_get_recommended_filter_list(const ob_sensor *sensor, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(sensor);
     auto filterList  = sensor->device->createRecommendedPostProcessingFilters(sensor->type);

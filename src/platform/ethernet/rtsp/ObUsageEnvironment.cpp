@@ -45,7 +45,7 @@ UsageEnvironment &ObUsageEnvironment::operator<<(char const *str) {
     }
     newLog_ = true;
     newLogCv_.notify_all();
-    return *this;
+    return dynamic_cast<UsageEnvironment &>(*this);
 }
 
 UsageEnvironment &ObUsageEnvironment::operator<<(int i) {
@@ -53,7 +53,7 @@ UsageEnvironment &ObUsageEnvironment::operator<<(int i) {
     logMsg_ += std::to_string(i);
     newLog_ = true;
     newLogCv_.notify_all();
-    return *this;
+    return dynamic_cast<UsageEnvironment &>(*this);
 }
 
 UsageEnvironment &ObUsageEnvironment::operator<<(unsigned u) {
@@ -61,7 +61,7 @@ UsageEnvironment &ObUsageEnvironment::operator<<(unsigned u) {
     logMsg_ += std::to_string(u);
     newLog_ = true;
     newLogCv_.notify_all();
-    return *this;
+    return dynamic_cast<UsageEnvironment &>(*this);
 }
 
 UsageEnvironment &ObUsageEnvironment::operator<<(double d) {
@@ -69,7 +69,7 @@ UsageEnvironment &ObUsageEnvironment::operator<<(double d) {
     logMsg_ += std::to_string(d);
     newLog_ = true;
     newLogCv_.notify_all();
-    return *this;
+    return dynamic_cast<UsageEnvironment &>(*this);
 }
 
 UsageEnvironment &ObUsageEnvironment::operator<<(void *p) {
@@ -77,7 +77,7 @@ UsageEnvironment &ObUsageEnvironment::operator<<(void *p) {
     logMsg_ += std::to_string((uint64_t)p);
     newLog_ = true;
     newLogCv_.notify_all();
-    return *this;
+    return dynamic_cast<UsageEnvironment &>(*this);
 }
 
 

@@ -3,13 +3,14 @@
 #include "logger/LoggerInterval.hpp"
 #include "frame/FrameFactory.hpp"
 #include "frame/FrameMemoryPool.hpp"
+#include "stream/StreamProfile.hpp"
 #include "libobsensor/h/ObTypes.h"
 #include <libyuv.h>
 #include <turbojpeg.h>
 
 namespace libobsensor {
 
-FormatConverter::FormatConverter(const std::string &name) : FilterBase(name) {}
+FormatConverter::FormatConverter() {}
 FormatConverter::~FormatConverter() noexcept {}
 
 void FormatConverter::updateConfig(std::vector<std::string> &params) {
@@ -29,6 +30,11 @@ const std::string &FormatConverter::getConfigSchema() const {
     // csv format: name，type， min，max，step，default，description
     static const std::string schema = "convertType, int, 0, 17, 1, 0, frame data converter type";
     return schema;
+}
+
+void FormatConverter::reset() {
+    currentStreamProfile_.reset();
+    tarStreamProfile_.reset();
 }
 
 void FormatConverter::setConversion(OBFormat srcFormat, OBFormat dstFormat) {
@@ -77,7 +83,7 @@ void FormatConverter::setConversion(OBFormat srcFormat, OBFormat dstFormat) {
     }
 }
 
-std::shared_ptr<Frame> FormatConverter::processFunc(std::shared_ptr<const Frame> frame) {
+std::shared_ptr<Frame> FormatConverter::process(std::shared_ptr<const Frame> frame) {
     if(!frame) {
         return nullptr;
     }

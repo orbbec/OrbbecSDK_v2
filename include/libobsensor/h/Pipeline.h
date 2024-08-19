@@ -88,6 +88,15 @@ OB_EXPORT void ob_pipeline_stop(ob_pipeline *pipeline, ob_error **error);
 OB_EXPORT ob_config *ob_pipeline_get_config(const ob_pipeline *pipeline, ob_error **error);
 
 /**
+ * @brief Switch the corresponding configuration
+ *
+ * @param[in] pipeline The pipeline object
+ * @param[in] config The pipeline configuration
+ * @param[out] error Log error messages
+ */
+OB_EXPORT void ob_pipeline_switch_config(ob_pipeline *pipeline, ob_config *config, ob_error **error);
+
+/**
  * @brief Wait for a set of frames to be returned synchronously
  *
  * @param[in] pipeline The pipeline object
@@ -170,6 +179,14 @@ OB_EXPORT void ob_delete_config(ob_config *config, ob_error **error);
  * @param[out] error Pointer to an error object that will be set if an error occurs.
  */
 OB_EXPORT void ob_config_enable_stream(ob_config *config, ob_stream_type stream_type, ob_error **error);
+
+/**
+ * @brief Enable all streams in the pipeline configuration
+ *
+ * @param[in] config The pipeline configuration
+ * @param[out] error Log error messages
+ */
+void ob_config_enable_all_stream(ob_config *config, ob_error **error);
 
 /**
  * @brief Enable a stream according to the stream profile
@@ -271,6 +288,40 @@ OB_EXPORT void ob_config_set_depth_scale_after_align_require(ob_config *config, 
  * @param[out] error Pointer to an error object that will be set if an error occurs.
  */
 OB_EXPORT void ob_config_set_frame_aggregate_output_mode(ob_config *config, ob_frame_aggregate_output_mode mode, ob_error **error);
+
+
+/**
+ * @brief Get current camera parameters
+ * @attention If D2C is enabled, it will return the camera parameters after D2C, if not, it will return to the default parameters
+ *
+ * @param[in] pipeline pipeline object
+ * @param[out] error Log error messages
+ * @return ob_camera_param The camera internal parameters
+ */
+ob_camera_param ob_pipeline_get_camera_param(ob_pipeline *pipeline, ob_error **error);
+
+/**
+ * @brief Get the current camera parameters
+ *
+ * @param[in] pipeline pipeline object
+ * @param[in] colorWidth color width
+ * @param[in] colorHeight color height
+ * @param[in] depthWidth depth width
+ * @param[in] depthHeight depth height
+ * @param[out] error Log error messages
+ * @return ob_camera_param returns camera internal parameters
+ */
+OB_EXPORT ob_camera_param ob_pipeline_get_camera_param_with_profile(ob_pipeline *pipeline, uint32_t colorWidth, uint32_t colorHeight, uint32_t depthWidth, uint32_t depthHeight, ob_error **error);
+
+/**
+ * @brief Get device calibration parameters with the specified configuration
+ *
+ * @param[in] pipeline pipeline object
+ * @param[in] config The pipeline configuration
+ * @param[out] error Log error messages
+ * @return ob_calibration_param The calibration parameters
+ */
+ob_calibration_param ob_pipeline_get_calibration_param(ob_pipeline *pipeline, ob_config *config, ob_error **error);
 
 /**
  * In order to be compatible with the closed source version of orbbecsdk's interface.

@@ -56,8 +56,15 @@ ObRTPSink *ObRTPSink::createNew(std::shared_ptr<const StreamProfile> streamProfi
     return new ObRTPSink(streamProfile, env, subsession, callback, streamId);
 }
 
-ObRTPSink::ObRTPSink(std::shared_ptr<const StreamProfile> streamProfile, UsageEnvironment &env, MediaSubsession &subsession, MutableFrameCallback callback, char const *streamId)
-    : streamProfile_(streamProfile), MediaSink(env), subsession_(subsession), frameCallback_(callback), frameCount_(0), destroy_(false), currentBuffer_(nullptr) {
+ObRTPSink::ObRTPSink(std::shared_ptr<const StreamProfile> streamProfile, UsageEnvironment &env, MediaSubsession &subsession, MutableFrameCallback callback,
+                     char const *streamId)
+    : MediaSink(env),
+      subsession_(subsession),
+      frameCallback_(callback),
+      streamProfile_(streamProfile),
+      frameCount_(0),
+      destroy_(false),
+      currentBuffer_(nullptr) {
     streamId_ = strDup(streamId);
     envir() << "ObRTPSink created! streamId = " << streamId_ << "\n";
 
@@ -118,7 +125,7 @@ ObRTPSink::ObRTPSink(std::shared_ptr<const StreamProfile> streamProfile, UsageEn
     outputFrameThread_ = std::thread(&ObRTPSink::outputFrameFunc, this);
 }
 
-ObRTPSink::~ObRTPSink() {
+ObRTPSink::~ObRTPSink() noexcept{
     envir() << "ObRTPSink destructor! streamId = " << streamId_ << "\n";
     frameCallback_ = nullptr;
     destroy_       = true;
@@ -404,7 +411,7 @@ void ObRTPSink::outputFrameFunc() {
         if(format != streamProfile_->getFormat()) {
             // LOG_ERROR_INTVA
         }
-        
+
         auto frame = FrameFactory::createFrameFromStreamProfile(streamProfile_);
 
         uint32_t frameOffset = 0;
@@ -413,10 +420,12 @@ void ObRTPSink::outputFrameFunc() {
             output->setDynamicHeaderSize(sizeof(OBNetworkFrameHeader));
             auto header = output->getDynamicHeader<OBNetworkFrameHeader>();
             frame->setTimeStampUsec(header->timestamp);
+            frame->setSystemTimeStampUsec(utils::getNowTimesUs());
             frame->setNumber(header->frameCounter);
         }
         else {
             frame->setTimeStampUsec(output->getTimestamp());
+            frame->setSystemTimeStampUsec(utils::getNowTimesUs());
             frame->setNumber(output->getSequenceNumber());
         }
         frame->updateData(output->getRecvdDataBuffer() + frameOffset, output->getRecvdDataSize() - frameOffset);

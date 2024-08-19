@@ -11,6 +11,8 @@
 #include "libobsensor/h/Advanced.h"
 #include "libobsensor/hpp/Filter.hpp"
 #include "libobsensor/hpp/Sensor.hpp"
+
+
 #include "Error.hpp"
 #include <memory>
 #include <string>
@@ -452,6 +454,19 @@ public:
     }
 
     /**
+     * @brief Device restart delay mode
+     * @attention The device will be disconnected and reconnected. After the device is disconnected, the access to the Device object interface may be abnormal.
+     *   Please delete the object directly and obtain it again after the device is reconnected.
+     * Support devices: Gemini2 L
+     *
+     * @param[in] delayMs Time unit：ms。delayMs == 0：No delay；delayMs > 0, Delay millisecond connect to host device after reboot
+     */
+    void reboot(uint32_t delayMs) const {
+        setIntProperty(OB_PROP_DEVICE_REBOOT_DELAY_INT, delayMs);
+        reboot();
+    }
+
+    /**
      * @brief Enable or disable the device heartbeat.
      * @brief After enable the device heartbeat, the sdk will start a thread to send heartbeat signal to the device error every 3 seconds.
      *
@@ -684,6 +699,18 @@ public:
         ob_error *error = nullptr;
         ob_device_export_current_settings_as_preset_json_file(impl_, filePath, &error);
         Error::handle(&error);
+    }
+
+    /**
+     * @brief Get the current device status.
+     *
+     * @return OBDeviceState The device state information.
+     */
+    OBDeviceState getDeviceState() {
+        OBDeviceState state    = {};
+        ob_error *error = nullptr;
+        state = ob_device_get_device_state(impl_, &error);
+        return state;
     }
 
 private:
@@ -1244,6 +1271,56 @@ public:
      * We recommend using the latest interface names for a better experience.
      */
     OB_DEPRECATED uint32_t count() {
+        return getCount();
+    }
+};
+
+/**
+ * @brief Class representing a list of camera parameters
+ */
+class CameraParamList {
+private:
+    ob_camera_param_list_t *impl_ = nullptr;
+
+public:
+    explicit CameraParamList(ob_camera_param_list_t *impl) : impl_(impl) {}
+    ~CameraParamList() noexcept {
+        ob_error *error = nullptr;
+        ob_delete_camera_param_list(impl_, &error);
+        Error::handle(&error, false);
+    }
+
+    /**
+     * @brief Get the number of device presets in the list
+     *
+     * @return uint32_t the number of device presets in the list
+     */
+    uint32_t getCount() {
+        ob_error *error = nullptr;
+        auto      count = ob_camera_param_list_get_count(impl_, &error);
+        Error::handle(&error);
+        return count;
+    }
+
+    /**
+     * @brief Get the camera parameters for the specified index
+     *
+     * @param index the index of the parameter group
+     * @return OBCameraParam the corresponding group parameters
+     */
+    OBCameraParam getCameraParam(uint32_t index){
+        ob_error *error = nullptr;
+        auto      param = ob_camera_param_list_get_param(impl_,index, &error);
+        Error::handle(&error);
+        return param;
+    }
+
+
+    /**
+     * In order to be compatible with the closed source version of orbbecsdk's interface.
+     * We recommend using the latest interface names for a better experience.
+    */
+    uint32_t count() {
         return getCount();
     }
 };

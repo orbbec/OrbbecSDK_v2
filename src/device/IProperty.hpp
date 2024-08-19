@@ -42,22 +42,27 @@ public:
     virtual void getPropertyRange(uint32_t propertyId, OBPropertyRange *range) = 0;
 };
 
-class IExtensionPropertyAccessor : virtual public IPropertyAccessor {
+class IStructureDataAccessor : virtual public IPropertyAccessor {
 public:
-    virtual ~IExtensionPropertyAccessor() noexcept                                                              = default;
+    virtual ~IStructureDataAccessor() noexcept                                                                  = default;
     virtual void                        setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) = 0;
     virtual const std::vector<uint8_t> &getStructureData(uint32_t propertyId)                                   = 0;
-    virtual void                        getRawData(uint32_t propertyId, GetDataCallback callback)               = 0;
 };
 
-class IExtensionPropertyAccessorV1_1 : virtual public IPropertyAccessor {
+class IStructureDataAccessorV1_1 : virtual public IPropertyAccessor {
 public:
-    virtual ~IExtensionPropertyAccessorV1_1() noexcept = default;
+    virtual ~IStructureDataAccessorV1_1() noexcept = default;
 
     virtual uint16_t                    getCmdVersionProtoV1_1(uint32_t propertyId)                                                           = 0;
     virtual const std::vector<uint8_t> &getStructureDataProtoV1_1(uint32_t propertyId, uint16_t cmdVersion)                                   = 0;
     virtual void                        setStructureDataProtoV1_1(uint32_t propertyId, const std::vector<uint8_t> &data, uint16_t cmdVersion) = 0;
     virtual const std::vector<uint8_t> &getStructureDataListProtoV1_1(uint32_t propertyId, uint16_t cmdVersion)                               = 0;
+};
+
+class IRawDataAccessor : virtual public IPropertyAccessor {
+public:
+    virtual ~IRawDataAccessor() noexcept                                   = default;
+    virtual void getRawData(uint32_t propertyId, GetDataCallback callback) = 0;
 };
 
 enum PropertyAccessType {

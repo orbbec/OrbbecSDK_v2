@@ -123,6 +123,17 @@ public:
         Error::handle(&error);
     }
 
+    /**
+     * @brief Dynamically switch resolutions.
+     *
+     * @param streamProfile The resolution to switch to.
+     */
+    void switchProfile(std::shared_ptr<StreamProfile> streamProfile) {
+        ob_error *error = nullptr;
+        ob_sensor_switch_profile(impl_, const_cast<ob_stream_profile_t *>(streamProfile->getImpl()), &error);
+        Error::handle(&error);
+    }
+
 private:
     static void frameCallback(ob_frame *frame, void *userData) {
         auto sensor = static_cast<Sensor *>(userData);

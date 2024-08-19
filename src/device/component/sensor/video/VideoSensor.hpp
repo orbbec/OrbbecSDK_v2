@@ -39,6 +39,7 @@ public:
     void setFrameProcessor(std::shared_ptr<FrameProcessor> frameProcessor);
 
 protected:
+    void trySendStopStreamVendorCmd();
     void onBackendFrameCallback(std::shared_ptr<Frame> frame);
     void outputFrame(std::shared_ptr<Frame> frame) override;
 

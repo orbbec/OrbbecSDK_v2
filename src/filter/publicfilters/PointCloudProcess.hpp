@@ -1,11 +1,11 @@
 #pragma once
-#include "FilterBase.hpp"
+#include "IFilter.hpp"
 #include "FormatConverterProcess.hpp"
 #include <mutex>
 
 namespace libobsensor {
 
-class PointCloudFilter : public FilterBase {
+class PointCloudFilter : public IFilterBase {
     enum class OBPointCloudDistortionType {
         // The depth camera already includes the distortion from the color camera.
         // When converting to a point cloud, distortion correction is needed.
@@ -22,7 +22,7 @@ class PointCloudFilter : public FilterBase {
     };
 
 public:
-    PointCloudFilter(const std::string &name);
+    PointCloudFilter();
     virtual ~PointCloudFilter() noexcept;
 
     void reset() override;
@@ -34,7 +34,7 @@ private:
     std::shared_ptr<Frame> createDepthPointCloud(std::shared_ptr<const Frame> frame);
     std::shared_ptr<Frame> createRGBDPointCloud(std::shared_ptr<const Frame> frame);
 
-    std::shared_ptr<Frame> processFunc(std::shared_ptr<const Frame> frame) override;
+    std::shared_ptr<Frame> process(std::shared_ptr<const Frame> frame) override;
 
     PointCloudFilter::OBPointCloudDistortionType getDistortionType(OBCameraDistortion colorDistortion, OBCameraDistortion depthDistortion);
 

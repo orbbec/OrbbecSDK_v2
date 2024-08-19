@@ -257,7 +257,7 @@ void yuyvImageRotate(uint8_t *src, uint8_t *dst, uint32_t width, uint32_t height
     libyuv::I420ToYUY2(src_y, src_stride_y, src_u, src_stride_u, src_v, src_stride_v, dst_yuy2, dst_stride_yuy2, dst_width, dst_height);
 }
 
-FrameMirror::FrameMirror(const std::string &name) : FilterBase(name) {}
+FrameMirror::FrameMirror() {}
 FrameMirror::~FrameMirror() noexcept {}
 
 void FrameMirror::updateConfig(std::vector<std::string> &params) {
@@ -271,7 +271,12 @@ const std::string &FrameMirror::getConfigSchema() const {
     return schema;
 }
 
-std::shared_ptr<Frame> FrameMirror::processFunc(std::shared_ptr<const Frame> frame) {
+void FrameMirror::reset() {
+    srcStreamProfile_.reset();
+    rstStreamProfile_.reset();
+}
+
+std::shared_ptr<Frame> FrameMirror::process(std::shared_ptr<const Frame> frame) {
     if(!frame) {
         return nullptr;
     }
@@ -367,7 +372,7 @@ OBCameraDistortion FrameMirror::mirrorOBCameraDistortion(const OBCameraDistortio
     return distortion;
 }
 
-FrameFlip::FrameFlip(const std::string &name) : FilterBase(name) {}
+FrameFlip::FrameFlip() {}
 FrameFlip::~FrameFlip() noexcept {}
 
 void FrameFlip::updateConfig(std::vector<std::string> &params) {
@@ -381,7 +386,12 @@ const std::string &FrameFlip::getConfigSchema() const {
     return schema;
 }
 
-std::shared_ptr<Frame> FrameFlip::processFunc(std::shared_ptr<const Frame> frame) {
+void FrameFlip::reset() {
+    srcStreamProfile_.reset();
+    rstStreamProfile_.reset();
+}
+
+std::shared_ptr<Frame> FrameFlip::process(std::shared_ptr<const Frame> frame) {
     if(!frame) {
         return nullptr;
     }
@@ -459,7 +469,7 @@ OBCameraDistortion FrameFlip::flipOBCameraDistortion(const OBCameraDistortion &s
     return distortion;
 }
 
-FrameRotate::FrameRotate(const std::string &name) : FilterBase(name) {}
+FrameRotate::FrameRotate() {}
 FrameRotate::~FrameRotate() noexcept {}
 
 void FrameRotate::updateConfig(std::vector<std::string> &params) {
@@ -485,7 +495,13 @@ const std::string &FrameRotate::getConfigSchema() const {
     return schema;
 }
 
-std::shared_ptr<Frame> FrameRotate::processFunc(std::shared_ptr<const Frame> frame) {
+void FrameRotate::reset() {
+    rotateDegreeUpdated_ = true;
+    srcStreamProfile_.reset();
+    rstStreamProfile_.reset();
+}
+
+std::shared_ptr<Frame> FrameRotate::process(std::shared_ptr<const Frame> frame) {
     if(!frame) {
         return nullptr;
     }

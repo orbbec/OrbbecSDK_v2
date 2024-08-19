@@ -1,22 +1,22 @@
 #pragma once
-#include "FilterBase.hpp"
+#include "IFilter.hpp"
 #include <mutex>
 
 namespace libobsensor {
 
-class FormatConverter : public FilterBase {
+class FormatConverter : public IFilterBase {
 public:
-    FormatConverter(const std::string &name);
+    FormatConverter();
     virtual ~FormatConverter() noexcept;
 
-    void               updateConfig(std::vector<std::string> &params) override;
-    const std::string &getConfigSchema() const override;
+    void                   updateConfig(std::vector<std::string> &params) override;
+    const std::string     &getConfigSchema() const override;
+    void                   reset() override;
+    std::shared_ptr<Frame> process(std::shared_ptr<const Frame> frame) override;
 
     void setConversion(OBFormat srcFormat, OBFormat dstFormat);
 
 private:
-    std::shared_ptr<Frame> processFunc(std::shared_ptr<const Frame> frame) override;
-
     void yuyvToRgb(uint8_t *src, uint8_t *target, uint32_t width, uint32_t height);
     void yuyvToRgba(uint8_t *src, uint8_t *target, uint32_t width, uint32_t height);
     void yuyvToBgr(uint8_t *src, uint8_t *target, uint32_t width, uint32_t height);

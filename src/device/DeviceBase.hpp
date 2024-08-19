@@ -28,8 +28,8 @@ public:
     void reboot() override;
     void deactivate() override;
 
-    std::shared_ptr<const DeviceInfo> getInfo() const;
-    const std::string                &getExtensionInfo(const std::string &infoKey) const;
+    std::shared_ptr<const DeviceInfo> getInfo() const override;
+    const std::string                &getExtensionInfo(const std::string &infoKey) const override;
 
     void registerComponent(DeviceComponentId compId, std::function<std::shared_ptr<IDeviceComponent>()> creator, bool lockRequired = false);
     void registerComponent(DeviceComponentId compId, std::shared_ptr<IDeviceComponent> component, bool lockRequired = false);

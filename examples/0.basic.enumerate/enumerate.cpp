@@ -93,8 +93,14 @@ void enumerateSensors(std::shared_ptr<ob::Device> device) {
 
         // Select a sensor.
         int sensorSelected = ob_smpl::getInputOption();
-        if(sensorSelected == -1) {
-            break;
+        if(sensorSelected >= static_cast<int>(sensorList->getCount()) || sensorSelected < 0) {
+            if (sensorSelected == -1) {
+                break;
+            }
+            else {
+                std::cout << "\nInvalid input, please reselect the sensor!\n";
+                continue;
+            }
         }
 
         // Get sensor from sensorList.
@@ -113,6 +119,8 @@ int main(void) try {
         auto deviceList = context.queryDeviceList();
         if(deviceList->getCount() < 1) {
             std::cout << "No device found! Please connect a supported device and retry this program." << std::endl;
+            std::cout << "\nPress any key to exit.";
+            ob_smpl::waitForKeyPressed();
             return -1;
         }
 
@@ -133,8 +141,14 @@ int main(void) try {
 
         // select a device.
         int deviceSelected = ob_smpl::getInputOption();
-        if(deviceSelected == -1) {
-            break;
+        if(deviceSelected >= static_cast<int>(deviceList->getCount()) || deviceSelected < 0) {
+            if (deviceSelected == -1) {
+                break;
+            }
+            else {
+                std::cout << "\nInvalid input, please reselect the device!\n";
+                continue;
+            }
         }
 
         //  Get the device.
@@ -146,5 +160,7 @@ int main(void) try {
 }
 catch(ob::Error &e) {
     std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\ntype:" << e.getExceptionType() << std::endl;
+    std::cout << "\nPress any key to exit.";
+    ob_smpl::waitForKeyPressed();
     exit(EXIT_FAILURE);
 }

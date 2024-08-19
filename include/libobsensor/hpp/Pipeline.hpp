@@ -155,6 +155,16 @@ public:
     }
 
     /**
+     * @deprecated Use enableStream(std::shared_ptr<StreamProfile> streamProfile) instead
+     * @brief Enable all streams to be used in the pipeline
+     */
+    void enableAllStream() {
+        ob_error *error = nullptr;
+        ob_config_enable_all_stream(impl_, &error);
+        Error::handle(&error);
+    }
+
+    /**
      * @brief Disable a stream to be used in the pipeline
      *
      * @param streamType The stream configuration to be disabled
@@ -394,6 +404,27 @@ public:
         auto      list  = ob_get_d2c_depth_profile_list(impl_, colorProfile->getImpl(), alignMode, &error);
         Error::handle(&error);
         return std::make_shared<StreamProfileList>(list);
+    }
+
+    OBCameraParam getCameraParam(){
+        ob_error *error = nullptr;
+        OBCameraParam cameraParam = ob_pipeline_get_camera_param(impl_,&error);
+        Error::handle(&error);
+        return cameraParam;
+    }
+
+    OBCameraParam getCameraParamWithProfile(uint32_t colorWidth, uint32_t colorHeight, uint32_t depthWidth, uint32_t depthHeight){
+        ob_error *error = nullptr;
+        OBCameraParam cameraParam = ob_pipeline_get_camera_param_with_profile(impl_, colorWidth, colorHeight, depthWidth, depthHeight, &error);
+        Error::handle(&error);
+        return cameraParam;
+    }
+
+    OBCalibrationParam getCalibrationParam(std::shared_ptr<Config> config){
+        ob_error *error = nullptr;
+        OBCalibrationParam calibrationParam = ob_pipeline_get_calibration_param(impl_, config->getImpl(), &error);
+        Error::handle(&error);
+        return calibrationParam;
     }
 
     /**
