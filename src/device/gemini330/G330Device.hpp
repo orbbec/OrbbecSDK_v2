@@ -46,8 +46,8 @@ public:
 
 private:
     void init() override;
-    void initModeSensorList();
-    void initModeProperties();
+    void initSensorList();
+    void initProperties();
     void initFrameMetadataParserContainer();
     void initSensorStreamProfile(std::shared_ptr<ISensor> sensor);
 
