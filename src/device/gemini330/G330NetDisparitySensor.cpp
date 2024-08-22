@@ -25,7 +25,7 @@ void G330NetDisparitySensor::start(std::shared_ptr<const StreamProfile> sp, Fram
 
     auto propServer = owner_->getPropertyServer();
     BEGIN_TRY_EXECUTE({
-        propServer->setStructureDataT<>(OB_STRUCT_DEPTH_STREAM_PROFILE, &currentVSP);
+        propServer->setStructureDataT<OBInternalVideoStreamProfile>(OB_STRUCT_DEPTH_STREAM_PROFILE, vsp);
         propServer->setPropertyValueT<bool>(OB_PROP_START_DEPTH_STREAM_BOOL, true);
         DisparityBasedSensor::start(sp, callback);
     })
@@ -38,8 +38,8 @@ void G330NetDisparitySensor::start(std::shared_ptr<const StreamProfile> sp, Fram
 void G330NetDisparitySensor::stop() {
     auto propServer = owner_->getPropertyServer();
     BEGIN_TRY_EXECUTE({
-        propServer->setPropertyValueT<bool>(OB_PROP_START_DEPTH_STREAM_BOOL, false);
         DisparityBasedSensor::stop();
+        propServer->setPropertyValueT<bool>(OB_PROP_START_DEPTH_STREAM_BOOL, false);
     })
     CATCH_EXCEPTION_AND_EXECUTE({ LOG_ERROR("Start {} stream failed!", utils::obSensorToStr(sensorType_)); })
 }

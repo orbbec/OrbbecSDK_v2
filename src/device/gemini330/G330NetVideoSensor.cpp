@@ -29,7 +29,7 @@ void G330NetVideoSensor::start(std::shared_ptr<const StreamProfile> sp, FrameCal
 
     auto propServer = owner_->getPropertyServer();
     BEGIN_TRY_EXECUTE({
-        propServer->setStructureDataT<>(profilesSwitchPropertyId_, &vsp);
+        propServer->setStructureDataT<OBInternalVideoStreamProfile>(profilesSwitchPropertyId_, vsp);
         propServer->setPropertyValueT<bool>(streamSwitchPropertyId_, true);
         VideoSensor::start(sp, callback);
     })
@@ -42,8 +42,8 @@ void G330NetVideoSensor::start(std::shared_ptr<const StreamProfile> sp, FrameCal
 void G330NetVideoSensor::stop() {
     auto propServer = owner_->getPropertyServer();
     BEGIN_TRY_EXECUTE({
-        propServer->setPropertyValueT<bool>(streamSwitchPropertyId_, false);
         VideoSensor::stop();
+        propServer->setPropertyValueT<bool>(streamSwitchPropertyId_, false);
     })
     CATCH_EXCEPTION_AND_EXECUTE({ LOG_ERROR("Stop {} stream failed!", utils::obSensorToStr(sensorType_)); })
 }
