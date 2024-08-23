@@ -63,7 +63,8 @@ void VendorPropertyAccessor::setStructureData(uint32_t propertyId, const std::ve
 
     uint16_t respDataSize = 0;
     auto     port         = std::dynamic_pointer_cast<IVendorDataPort>(backend_);
-    auto     res          = protocol::execute(port, sendData_.data(), sizeof(*req), recvData_.data(), &respDataSize);
+    uint16_t dataSize     = sizeof(*req) + static_cast<uint16_t>(data.size()) - 1;
+    auto     res          = protocol::execute(port, sendData_.data(), dataSize, recvData_.data(), &respDataSize);
     protocol::checkStatus(res);
 }
 
