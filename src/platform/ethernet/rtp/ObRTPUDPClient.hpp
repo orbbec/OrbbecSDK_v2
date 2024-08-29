@@ -3,9 +3,13 @@
 #include "IStreamProfile.hpp"
 #include "IFrame.hpp"
 #include "ethernet/socket/SocketTypes.hpp"
+#include "ObRTPPacketProcessor.hpp"
+#include "ObRTPPacketQueue.hpp"
 
 #include <string>
 #include <thread>
+#include <mutex>
+#include <condition_variable>
 
 namespace libobsensor {
 
@@ -30,10 +34,18 @@ private:
     uint32_t    COMM_TIMEOUT_MS = 5000;
 
     std::shared_ptr<const StreamProfile> currentProfile_;
-    MutableFrameCallback                 currentCallback_;
+    MutableFrameCallback                 frameCallback_;
 
     std::thread receiverThread_;
     std::thread callbackThread_;
+
+    ObRTPPacketQueue    rtpQueue_;
+    ObRTPPacketProcessor rtpProcessor_;
+
+    std::mutex              rtpPacketMutex_;
+    std::condition_variable packetAvailableCv_;
+
+    //std::vector<OBRTPPacket> framePackets_;
 };
 
 }  // namespace libobsensor

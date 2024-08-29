@@ -808,17 +808,17 @@ void G330NetDevice::initSensorList() {
     auto        vendorPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(),
                                            [](const std::shared_ptr<const SourcePortInfo> &portInfo) { return portInfo->portType == SOURCE_PORT_NET_VENDOR; });
 
-    std::shared_ptr<const SourcePortInfo> vendorPortInfo;
+    //std::shared_ptr<const SourcePortInfo> vendorPortInfo;
     if(vendorPortInfoIter != sourcePortInfoList.end()) {
-        vendorPortInfo = *vendorPortInfoIter;
-        registerSensorPortInfo(OB_SENSOR_DEPTH, vendorPortInfo);
+        vendorPortInfo_ = *vendorPortInfoIter;
+        /*registerSensorPortInfo(OB_SENSOR_DEPTH, vendorPortInfo);
         registerSensorPortInfo(OB_SENSOR_IR_LEFT, vendorPortInfo);
         registerSensorPortInfo(OB_SENSOR_IR_RIGHT, vendorPortInfo);
-        registerSensorPortInfo(OB_SENSOR_COLOR, vendorPortInfo);
+        registerSensorPortInfo(OB_SENSOR_COLOR, vendorPortInfo);*/
     }
 
     auto depthPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(), [](const std::shared_ptr<const SourcePortInfo> &portInfo) {
-        return portInfo->portType == SOURCE_PORT_NET_RTSP && std::dynamic_pointer_cast<const RTPStreamPortInfo>(portInfo)->streamType == OB_STREAM_DEPTH;
+        return portInfo->portType == SOURCE_PORT_NET_RTP && std::dynamic_pointer_cast<const RTPStreamPortInfo>(portInfo)->streamType == OB_STREAM_DEPTH;
     });
     if(depthPortInfoIter != sourcePortInfoList.end()) {
         auto depthPortInfo = *depthPortInfoIter;
@@ -870,6 +870,8 @@ void G330NetDevice::initSensorList() {
             },
             true);
 
+        registerSensorPortInfo(OB_SENSOR_DEPTH, depthPortInfo);
+
         registerComponent(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR, [this]() {
             auto factory        = getComponentT<FrameProcessorFactory>(OB_DEV_COMPONENT_FRAME_PROCESSOR_FACTORY);
             auto frameProcessor = factory->createFrameProcessor(OB_SENSOR_DEPTH);
@@ -878,7 +880,7 @@ void G330NetDevice::initSensorList() {
     }
 
     auto irLeftPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(), [](const std::shared_ptr<const SourcePortInfo> &portInfo) {
-        return portInfo->portType == SOURCE_PORT_NET_RTSP && std::dynamic_pointer_cast<const RTPStreamPortInfo>(portInfo)->streamType == OB_STREAM_IR_LEFT;
+        return portInfo->portType == SOURCE_PORT_NET_RTP && std::dynamic_pointer_cast<const RTPStreamPortInfo>(portInfo)->streamType == OB_STREAM_IR_LEFT;
     });
     if(irLeftPortInfoIter != sourcePortInfoList.end()) {
         auto irLeftPortInfo = *irLeftPortInfoIter;
@@ -921,6 +923,8 @@ void G330NetDevice::initSensorList() {
             },
             true);
 
+        registerSensorPortInfo(OB_SENSOR_IR_LEFT, irLeftPortInfo);
+
         registerComponent(OB_DEV_COMPONENT_LEFT_IR_FRAME_PROCESSOR, [this]() {
             auto factory        = getComponentT<FrameProcessorFactory>(OB_DEV_COMPONENT_FRAME_PROCESSOR_FACTORY);
             auto frameProcessor = factory->createFrameProcessor(OB_SENSOR_IR_LEFT);
@@ -929,7 +933,7 @@ void G330NetDevice::initSensorList() {
     }
 
     auto irRightPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(), [](const std::shared_ptr<const SourcePortInfo> &portInfo) {
-        return portInfo->portType == SOURCE_PORT_NET_RTSP && std::dynamic_pointer_cast<const RTPStreamPortInfo>(portInfo)->streamType == OB_STREAM_IR_RIGHT;
+        return portInfo->portType == SOURCE_PORT_NET_RTP && std::dynamic_pointer_cast<const RTPStreamPortInfo>(portInfo)->streamType == OB_STREAM_IR_RIGHT;
     });
     if(irRightPortInfoIter != sourcePortInfoList.end()) {
         auto irRightPortInfo = *irRightPortInfoIter;
@@ -974,12 +978,15 @@ void G330NetDevice::initSensorList() {
             },
             true);
 
+        registerSensorPortInfo(OB_SENSOR_IR_LEFT, irRightPortInfo);
+
         registerComponent(OB_DEV_COMPONENT_RIGHT_IR_FRAME_PROCESSOR, [this]() {
             auto factory        = getComponentT<FrameProcessorFactory>(OB_DEV_COMPONENT_FRAME_PROCESSOR_FACTORY);
             auto frameProcessor = factory->createFrameProcessor(OB_SENSOR_IR_RIGHT);
             return frameProcessor;
         });
 
+        std::shared_ptr<const SourcePortInfo> vendorPortInfo = vendorPortInfo_;
         registerComponent(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR, [this, vendorPortInfo]() {
             auto platform = Platform::getInstance();
             auto port     = platform->getSourcePort(vendorPortInfo);
@@ -996,7 +1003,7 @@ void G330NetDevice::initSensorList() {
     }
 
     auto colorPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(), [](const std::shared_ptr<const SourcePortInfo> &portInfo) {
-        return portInfo->portType == SOURCE_PORT_NET_RTSP && std::dynamic_pointer_cast<const RTPStreamPortInfo>(portInfo)->streamType == OB_STREAM_COLOR;
+        return portInfo->portType == SOURCE_PORT_NET_RTP && std::dynamic_pointer_cast<const RTPStreamPortInfo>(portInfo)->streamType == OB_STREAM_COLOR;
     });
     if(colorPortInfoIter != sourcePortInfoList.end()) {
         auto colorPortInfo = *colorPortInfoIter;
@@ -1041,6 +1048,7 @@ void G330NetDevice::initSensorList() {
                 return sensor;
             },
             true);
+
         registerSensorPortInfo(OB_SENSOR_COLOR, colorPortInfo);
 
         registerComponent(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR, [this]() {
@@ -1118,9 +1126,10 @@ void G330NetDevice::initProperties() {
     auto sensors = getSensorTypeList();
     for(auto &sensor: sensors) {
         auto  platform       = Platform::getInstance();
-        auto &sourcePortInfo = getSensorPortInfo(sensor);
+        //auto &sourcePortInfo = getSensorPortInfo(sensor);
+        auto &sourcePortInfo = vendorPortInfo_;
         if(sensor == OB_SENSOR_COLOR) {
-            auto vendorPropertyAccessor = std::make_shared<LazySuperPropertyAccessor>([this, &sourcePortInfo]() {
+            auto vendorPropertyAccessor = std::make_shared<LazyPropertyAccessor>([this, &sourcePortInfo]() {
                 auto platform = Platform::getInstance();
                 auto port     = platform->getSourcePort(sourcePortInfo);
                 auto accessor = std::make_shared<VendorPropertyAccessor>(this, port);
@@ -1157,7 +1166,7 @@ void G330NetDevice::initProperties() {
             propertyServer->registerProperty(OB_PROP_DEPTH_GAIN_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_DEPTH_EXPOSURE_INT, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_COLOR_EXPOSURE_INT, "rw", "rw", vendorPropertyAccessor);  // using vendor property accessor
+            //propertyServer->registerProperty(OB_PROP_COLOR_EXPOSURE_INT, "rw", "rw", vendorPropertyAccessor);  // using vendor property accessor
             propertyServer->registerProperty(OB_PROP_LDP_BOOL, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_LASER_CONTROL_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_LASER_ALWAYS_ON_BOOL, "rw", "rw", vendorPropertyAccessor);

@@ -382,7 +382,7 @@ FinishGetStructureDataListReq *initFinishGetStructureDataList(uint8_t *dataBuf, 
 GetPropertyReq *initGetRawData(uint8_t *dataBuf, uint32_t propertyId, uint32_t cmd) {
     auto *req                   = reinterpret_cast<GetPropertyReq *>(dataBuf);
     req->header.magic           = HP_REQUEST_MAGIC;
-    req->header.sizeInHalfWords = 0;
+    req->header.sizeInHalfWords = 2;
     switch(cmd) {
     case 0:
         req->header.opcode = OPCODE_INIT_READ_RAW_DATA;
@@ -400,13 +400,13 @@ GetPropertyReq *initGetRawData(uint8_t *dataBuf, uint32_t propertyId, uint32_t c
 ReadRawData *initReadRawData(uint8_t *dataBuf, uint32_t propertyId, uint32_t offset, uint32_t size) {
     auto *req                   = reinterpret_cast<ReadRawData *>(dataBuf);
     req->header.magic           = HP_REQUEST_MAGIC;
-    req->header.sizeInHalfWords = 0;
+    req->header.sizeInHalfWords = 6;
     req->header.opcode          = OPCODE_READ_RAW_DATA;
     req->header.requestId       = generateRequestId();
-    req->propertyId             = propertyId;
 
-    req->offset = offset;
-    req->size   = size;
+    req->propertyId = propertyId;
+    req->offset     = offset;
+    req->size       = size;
     return req;
 }
 
