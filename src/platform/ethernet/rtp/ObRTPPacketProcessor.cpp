@@ -27,7 +27,9 @@ ObRTPPacketProcessor::ObRTPPacketProcessor()
     memset(rtpBuffer_, 0, maxCacheSize_);
 }
 
-ObRTPPacketProcessor::~ObRTPPacketProcessor() noexcept {}
+ObRTPPacketProcessor::~ObRTPPacketProcessor() noexcept {
+    release();
+}
 
 
 void ObRTPPacketProcessor::OnStartOfFrame() {
@@ -41,7 +43,7 @@ bool ObRTPPacketProcessor::founStartPacket() {
     return foundStartPacket_;
 }
 
-bool ObRTPPacketProcessor::process(RTPHeader *header, uint8_t *recvData, uint32_t length) {
+bool ObRTPPacketProcessor::process(RTPHeader *header, uint8_t *recvData, uint32_t length, uint32_t type) {
     if(sequenceNumberList_.size() == maxPacketCount_) {
         LOG_WARN("RTP data buffer overflow!");
         return false;
@@ -49,7 +51,7 @@ bool ObRTPPacketProcessor::process(RTPHeader *header, uint8_t *recvData, uint32_
 
     uint8_t  marker         = header->marker;
     uint16_t sequenceNumber = ntohs(header->sequenceNumber);
-    LOG_DEBUG("marker-{}, sequenceNumber-{},length-{}", marker, sequenceNumber, length);
+    LOG_DEBUG("marker-{}, sequenceNumber-{},length-{}, type-{}", marker, sequenceNumber, length, type);
     if(sequenceNumber == START_RTP_TAG) {
         OnStartOfFrame();
     }
@@ -67,8 +69,10 @@ bool ObRTPPacketProcessor::process(RTPHeader *header, uint8_t *recvData, uint32_
 
     uint32_t offset  = sequenceNumber * maxPacketSize_;
     uint32_t dataLen = length - RTP_FIX_SIZE;
-    memcpy(rtpBuffer_ + offset, recvData + RTP_FIX_SIZE, dataLen);
-    dataSize_ += dataLen;
+    if(rtpBuffer_ != nullptr) {
+        memcpy(rtpBuffer_ + offset, recvData + RTP_FIX_SIZE, dataLen);
+        dataSize_ += dataLen;
+    }
 
     if(marker == END_RTP_TAG) {
         OnEndOfFrame(sequenceNumber);

@@ -32,9 +32,17 @@ ObRTPUDPClient::~ObRTPUDPClient() noexcept {}
 void ObRTPUDPClient::socketConnect() {
     // 1.Create udpsocket
     recvSocket_ = INVALID_SOCKET;
+
+#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
     recvSocket_ = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if(recvSocket_ == INVALID_SOCKET) {
+#else
+    recvSocket_ = socket(AF_INET, SOCK_DGRAM, 0);
+#endif
+
+    if(recvSocket_ < 0) {
+#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
         WSACleanup();
+#endif
         throw libobsensor::invalid_value_exception(utils::string::to_string() << "Failed to create udpSocket! err_code=" << GET_LAST_ERROR());
     }
 
@@ -47,14 +55,8 @@ void ObRTPUDPClient::socketConnect() {
     commTimeout.tv_usec = COMM_TIMEOUT_MS % 1000 * 1000;
 #endif
     int nRecvBuf = 512 * 1024;
-    if(setsockopt(recvSocket_, SOL_SOCKET, SO_RCVBUF, (const char *)&nRecvBuf, sizeof(int)) == SOCKET_ERROR) {
-        LOG_WARN("Set udp socket data receive buffer failed!");
-    }
-
-    if(setsockopt(recvSocket_, SOL_SOCKET, SO_RCVTIMEO, (char *)&commTimeout, sizeof(commTimeout)) == SOCKET_ERROR) {
-        LOG_WARN("Set udp data receive timeout failed!");
-    }
-    
+    setsockopt(recvSocket_, SOL_SOCKET, SO_RCVBUF, (const char *)&nRecvBuf, sizeof(int));
+    setsockopt(recvSocket_, SOL_SOCKET, SO_RCVTIMEO, (char *)&commTimeout, sizeof(commTimeout));
 
     // blocking mode
     /*unsigned long mode = 0;  
@@ -70,9 +72,13 @@ void ObRTPUDPClient::socketConnect() {
     serverAddr.sin_port        = htons(serverPort_);
 
     // 4.Bind the socket to a local address and port.
-    if(bind(recvSocket_, (sockaddr *)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR) {
+    if(bind(recvSocket_, (sockaddr *)&serverAddr, sizeof(serverAddr)) < 0) {
+#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
         closesocket(recvSocket_);
         WSACleanup();
+#else
+        close(recvSocket_);
+#endif
         throw libobsensor::invalid_value_exception(utils::string::to_string() << "Failed to bind server address! err_code=" << GET_LAST_ERROR());
     }
 }
@@ -97,13 +103,13 @@ void ObRTPUDPClient::startReceive() {
     int                  tryRecCount = 3;
     while(startReceive_) {
         int recvLen = recvfrom(recvSocket_, (char *)buffer.data(), (int)buffer.size(), 0, (sockaddr *)&serverAddr, &serverAddrSize);
-        if(recvLen == SOCKET_ERROR) {
-            int error = WSAGetLastError();
+        if(recvLen < 0) {
+            int error = GET_LAST_ERROR();
+#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
             if(error == WSAETIMEDOUT) {
                 LOG_ERROR("Receive timed out.");
-                continue;
-            }
-
+            };
+#endif
             if(tryRecCount == 0) {
                 LOG_ERROR("Receive failed with error.");
                 break;
@@ -130,7 +136,7 @@ void ObRTPUDPClient::frameProcess() {
     while(startReceive_) {
         if(rtpQueue_.pop(data)) {
             RTPHeader *header = (RTPHeader *)data.data();
-            rtpProcessor_.process(header, data.data(), (uint32_t)data.size());
+            rtpProcessor_.process(header, data.data(), (uint32_t)data.size(), currentProfile_->getType());
             if(rtpProcessor_.processComplete()) {
                 uint32_t dataSize = rtpProcessor_.getDataSize();
                 LOG_DEBUG("Callback new frame dataSize: {}, number: {}", dataSize, rtpProcessor_.getNumber());
@@ -164,11 +170,15 @@ void ObRTPUDPClient::close() {
     if(callbackThread_.joinable()) {
         callbackThread_.join();
     }
-    closesocket(recvSocket_);
 
+    if(recvSocket_ > 0) {
 #if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
-    WSACleanup();
+        closesocket(recvSocket_);
+        WSACleanup();
+#else
+        close(recvSocket_);
 #endif
+    }
 }
 
 }  // namespace libobsensor

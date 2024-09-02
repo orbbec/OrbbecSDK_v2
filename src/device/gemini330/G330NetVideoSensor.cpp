@@ -23,12 +23,12 @@ void G330NetVideoSensor::start(std::shared_ptr<const StreamProfile> sp, FrameCal
     OBInternalVideoStreamProfile vsp = { 0 };
     vsp.sensorType                   = (uint16_t)utils::mapStreamTypeToSensorType(sp->getType());
     vsp.formatFourcc                 = utils::obFormatToUvcFourcc(sp->getFormat());
-    //vsp.width                        = currentVSP->getWidth();
-    //vsp.height                       = currentVSP->getHeight();
-    //vsp.fps                          = currentVSP->getFps();
-    vsp.width  = 848;
+    vsp.width                        = currentVSP->getWidth();
+    vsp.height                       = currentVSP->getHeight();
+    vsp.fps                          = currentVSP->getFps();
+    /*vsp.width  = 848;
     vsp.height = 480;
-    vsp.fps    = 10;
+    vsp.fps    = 10;*/
 
     auto propServer = owner_->getPropertyServer();
     BEGIN_TRY_EXECUTE({

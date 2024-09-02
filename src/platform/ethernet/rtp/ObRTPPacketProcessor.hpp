@@ -36,7 +36,7 @@ public:
 
     ~ObRTPPacketProcessor() noexcept;
 
-    bool process(RTPHeader *header, uint8_t *recvData, uint32_t length);
+    bool process(RTPHeader *header, uint8_t *recvData, uint32_t length, uint32_t type);
 
 
     void startCountDown();
