@@ -31,7 +31,6 @@ ObRTPPacketProcessor::~ObRTPPacketProcessor() noexcept {
     release();
 }
 
-
 void ObRTPPacketProcessor::OnStartOfFrame() {
     foundStartPacket_ = true;
     dataSize_         = 0;
@@ -86,7 +85,6 @@ void ObRTPPacketProcessor::OnEndOfFrame(uint16_t sequenceNumber) {
     // it indicates that all RTP packets for the frame have been successfully received. Otherwise,
     // it means that some RTP packets for the frame are still missing, and you will need to wait
     // for 10ms to receive additional data before proceeding.
-    //sequenceNumberList_
     if(sequenceNumberList_.size() == (uint32_t)(sequenceNumber + 1)) {
         std::unique_lock<std::mutex> lk(revStatusMutex_);
         revDataComplete_ = true;

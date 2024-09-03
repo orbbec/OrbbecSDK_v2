@@ -13,7 +13,6 @@ void ObRTPClient::start(std::string address, uint16_t port, std::shared_ptr<cons
     }
     udpClient_ = std::make_shared<ObRTPUDPClient>(address, port);
     udpClient_->start(profile, callback);
-
 }
 
 void ObRTPClient::close() {

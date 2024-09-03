@@ -171,7 +171,7 @@ SourcePortInfoList EthernetPal::querySourcePortInfos() {
             sourcePortInfoList_.push_back(
                 std::make_shared<RTPStreamPortInfo>(info.ip, static_cast<uint16_t>(20006), DEFAULT_CMD_PORT, OB_STREAM_IR_RIGHT, info.mac, info.sn, info.pid));
             sourcePortInfoList_.push_back(
-                std::make_shared<NetDataStreamPortInfo>(info.ip, static_cast<uint16_t>(20010), DEFAULT_CMD_PORT, info.mac, info.sn, info.pid));
+                std::make_shared<RTPStreamPortInfo>(info.ip, static_cast<uint16_t>(20010), DEFAULT_CMD_PORT, OB_STREAM_ACCEL, info.mac, info.sn, info.pid));
         }
     }
 

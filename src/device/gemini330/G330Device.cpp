@@ -1059,7 +1059,7 @@ void G330NetDevice::initSensorList() {
     }
 
     auto imuPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(), [](const std::shared_ptr<const SourcePortInfo> &portInfo) {
-        return portInfo->portType == SOURCE_PORT_NET_VENDOR_STREAM;  //
+        return portInfo->portType == SOURCE_PORT_NET_RTP && std::dynamic_pointer_cast<const RTPStreamPortInfo>(portInfo)->streamType == OB_STREAM_ACCEL;
     });
 
     if(imuPortInfoIter != sourcePortInfoList.end()) {
@@ -1129,7 +1129,7 @@ void G330NetDevice::initProperties() {
         //auto &sourcePortInfo = getSensorPortInfo(sensor);
         auto &sourcePortInfo = vendorPortInfo_;
         if(sensor == OB_SENSOR_COLOR) {
-            auto vendorPropertyAccessor = std::make_shared<LazyPropertyAccessor>([this, &sourcePortInfo]() {
+            auto vendorPropertyAccessor = std::make_shared<LazySuperPropertyAccessor>([this, &sourcePortInfo]() {
                 auto platform = Platform::getInstance();
                 auto port     = platform->getSourcePort(sourcePortInfo);
                 auto accessor = std::make_shared<VendorPropertyAccessor>(this, port);

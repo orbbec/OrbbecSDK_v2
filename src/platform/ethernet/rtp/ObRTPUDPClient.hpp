@@ -44,8 +44,6 @@ private:
 
     std::mutex              rtpPacketMutex_;
     std::condition_variable packetAvailableCv_;
-
-    //std::vector<OBRTPPacket> framePackets_;
 };
 
 }  // namespace libobsensor

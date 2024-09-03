@@ -72,7 +72,7 @@ private:
     void countDown(int milliseconds);
 
 private:
-    const uint32_t MAX_RTP_FRAME_SIZE = 2 * 1280 * 1280;
+    const uint32_t MAX_RTP_FRAME_SIZE = 4 * 1920 * 1080;
     const uint32_t MAX_RTP_FIX_SIZE   = 1472;
     const uint32_t RTP_FIX_SIZE       = 12;
 

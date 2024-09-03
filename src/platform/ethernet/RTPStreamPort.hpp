@@ -28,7 +28,7 @@ struct RTPStreamPortInfo : public NetSourcePortInfo {
     OBStreamType streamType;
 };
 
-class RTPStreamPort : public IVideoStreamPort {
+class RTPStreamPort : public IVideoStreamPort, public IDataStreamPort {
 
 public:
     RTPStreamPort(std::shared_ptr<const RTPStreamPortInfo> portInfo);
@@ -38,6 +38,10 @@ public:
     virtual void                                  startStream(std::shared_ptr<const StreamProfile> profile, MutableFrameCallback callback) override;
     virtual void                                  stopStream(std::shared_ptr<const StreamProfile> profile) override;
     virtual void                                  stopAllStream() override;
+
+    virtual void startStream(MutableFrameCallback callback) override;
+    virtual void stopStream() override;
+
     virtual std::shared_ptr<const SourcePortInfo> getSourcePortInfo() const override;
 
 private:

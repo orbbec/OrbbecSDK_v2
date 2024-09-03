@@ -54,6 +54,25 @@ void RTPStreamPort::closeClientTask() {
     LOG_DEBUG("Stream stop!");
 }
 
+void RTPStreamPort::startStream(MutableFrameCallback callback) {
+    if(!streamStarted_) {
+        BEGIN_TRY_EXECUTE({ startClientTask(nullptr, callback); })
+        CATCH_EXCEPTION_AND_EXECUTE({
+            closeClientTask();
+            throw;
+        })
+        streamStarted_ = true;
+        LOG_DEBUG("IMU Stream started!");
+    }
+    else {
+        LOG_WARN("IMU stream already started!");
+    }
+}
+
+void RTPStreamPort::stopStream() {
+    stopAllStream();
+}
+
 std::shared_ptr<const SourcePortInfo> RTPStreamPort::getSourcePortInfo() const {
     return portInfo_;
 }

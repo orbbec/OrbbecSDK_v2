@@ -135,26 +135,34 @@ void ObRTPUDPClient::frameProcess() {
     std::vector<uint8_t> data;
     while(startReceive_) {
         if(rtpQueue_.pop(data)) {
-            RTPHeader *header = (RTPHeader *)data.data();
-            rtpProcessor_.process(header, data.data(), (uint32_t)data.size(), currentProfile_->getType());
-            if(rtpProcessor_.processComplete()) {
-                uint32_t dataSize = rtpProcessor_.getDataSize();
-                LOG_DEBUG("Callback new frame dataSize: {}, number: {}", dataSize, rtpProcessor_.getNumber());
+            if(serverPort_ != 20010) {
+                RTPHeader *header = (RTPHeader *)data.data();
+                rtpProcessor_.process(header, data.data(), (uint32_t)data.size(), currentProfile_->getType());
+                if(rtpProcessor_.processComplete()) {
+                    uint32_t dataSize = rtpProcessor_.getDataSize();
+                    LOG_DEBUG("Callback new frame dataSize: {}, number: {}", dataSize, rtpProcessor_.getNumber());
 
-                auto frame = FrameFactory::createFrameFromStreamProfile(currentProfile_);
-                frame->setSystemTimeStampUsec(utils::getNowTimesUs());
-                // frame->setTimeStampUsec(header->timestamp);
-                frame->setNumber(rtpProcessor_.getNumber());
-                frame->updateData(rtpProcessor_.getData(), dataSize);
+                    auto frame = FrameFactory::createFrameFromStreamProfile(currentProfile_);
+                    frame->setSystemTimeStampUsec(utils::getNowTimesUs());
+                    // frame->setTimeStampUsec(header->timestamp);
+                    frame->setNumber(rtpProcessor_.getNumber());
+                    frame->updateData(rtpProcessor_.getData(), dataSize);
 
-                frameCallback_(frame);
-                rtpProcessor_.reset();
-            }
-            else {
-                if(rtpProcessor_.processTimeOut()) {
-                    LOG_DEBUG("Callback new frame process timeout...");
+                    frameCallback_(frame);
                     rtpProcessor_.reset();
                 }
+                else {
+                    if(rtpProcessor_.processTimeOut()) {
+                        LOG_DEBUG("Callback new frame process timeout...");
+                        rtpProcessor_.reset();
+                    }
+                }
+            } else {
+                //imu
+                auto frame = FrameFactory::createFrame(OB_FRAME_UNKNOWN, OB_FORMAT_UNKNOWN, OB_UDP_BUFFER_SIZE);
+                frame->updateData(data.data() + 12, data.size()-12);
+                frame->setSystemTimeStampUsec(utils::getNowTimesUs());
+                frameCallback_(frame);
             }
         }
     }
