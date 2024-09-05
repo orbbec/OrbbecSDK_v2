@@ -1,11 +1,8 @@
 #include "NetDeviceEnumerator.hpp"
 #include "femtomega/FemtoMegaDeviceInfo.hpp"
-<<<<<<< HEAD
 #include "gemini330/G330DeviceInfo.hpp"
-=======
 #include "ethernet/RTSPStreamPort.hpp"
 #include "ethernet/NetDataStreamPort.hpp"
->>>>>>> develop
 
 #include "utils/Utils.hpp"
 

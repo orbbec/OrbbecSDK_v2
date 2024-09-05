@@ -125,7 +125,7 @@ uint32_t ob_video_stream_profile_get_width(const ob_stream_profile *profile, ob_
 }
 HANDLE_EXCEPTIONS_AND_RETURN(0, profile)
 
-OB_EXPORT void ob_video_stream_profile_set_width(ob_stream_profile *profile, uint32_t width, ob_error **error) BEGIN_API_CALL {
+void ob_video_stream_profile_set_width(ob_stream_profile *profile, uint32_t width, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(profile);
     VALIDATE_GE(width, 1);
     if(!profile->profile->is<libobsensor::VideoStreamProfile>()) {

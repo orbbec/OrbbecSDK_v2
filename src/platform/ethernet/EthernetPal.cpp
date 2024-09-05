@@ -159,7 +159,6 @@ SourcePortInfoList EthernetPal::querySourcePortInfos() {
                 std::make_shared<RTSPStreamPortInfo>(info.ip, static_cast<uint16_t>(8554), DEFAULT_CMD_PORT, OB_STREAM_IR, info.mac, info.sn, info.pid));
             sourcePortInfoList_.push_back(
                 std::make_shared<NetDataStreamPortInfo>(info.ip, static_cast<uint16_t>(8900), DEFAULT_CMD_PORT, info.mac, info.sn, info.pid));
-<<<<<<< HEAD
         }
         else if(info.pid == PID_GEMINI335LE) {
             LOG_INFO("Create 335L rtp stream portInfo.");
@@ -173,8 +172,6 @@ SourcePortInfoList EthernetPal::querySourcePortInfos() {
                 std::make_shared<RTPStreamPortInfo>(info.ip, static_cast<uint16_t>(20006), DEFAULT_CMD_PORT, OB_STREAM_IR_RIGHT, info.mac, info.sn, info.pid));
             sourcePortInfoList_.push_back(
                 std::make_shared<RTPStreamPortInfo>(info.ip, static_cast<uint16_t>(20010), DEFAULT_CMD_PORT, OB_STREAM_ACCEL, info.mac, info.sn, info.pid));
-=======
->>>>>>> develop
         }
     }
 
