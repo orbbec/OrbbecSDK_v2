@@ -88,6 +88,7 @@ void ObRTPUDPClient::start(std::shared_ptr<const StreamProfile> profile, Mutable
         LOG_WARN("The UDP data receive thread has been started!");
         return;
     }
+
     currentProfile_  = profile;
     frameCallback_   = callback;
     startReceive_    = true;

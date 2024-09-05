@@ -26,9 +26,6 @@ void G330NetVideoSensor::start(std::shared_ptr<const StreamProfile> sp, FrameCal
     vsp.width                        = currentVSP->getWidth();
     vsp.height                       = currentVSP->getHeight();
     vsp.fps                          = currentVSP->getFps();
-    /*vsp.width  = 848;
-    vsp.height = 480;
-    vsp.fps    = 10;*/
 
     auto propServer = owner_->getPropertyServer();
     BEGIN_TRY_EXECUTE({

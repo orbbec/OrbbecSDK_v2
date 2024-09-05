@@ -36,6 +36,7 @@ void RTPStreamPort::stopStream(std::shared_ptr<const StreamProfile> profile) {
 
 void RTPStreamPort::stopAllStream() {
     closeClientTask();
+    streamStarted_ = false;
 }
 
 void RTPStreamPort::startClientTask(std::shared_ptr<const StreamProfile> profile, MutableFrameCallback callback) {

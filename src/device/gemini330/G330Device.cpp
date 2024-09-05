@@ -1305,7 +1305,7 @@ void G330NetDevice::initSensorList() {
             },
             true);
 
-        registerSensorPortInfo(OB_SENSOR_IR_LEFT, irRightPortInfo);
+        registerSensorPortInfo(OB_SENSOR_IR_RIGHT, irRightPortInfo);
 
         registerComponent(OB_DEV_COMPONENT_RIGHT_IR_FRAME_PROCESSOR, [this]() {
             auto factory        = getComponentT<FrameProcessorFactory>(OB_DEV_COMPONENT_FRAME_PROCESSOR_FACTORY);

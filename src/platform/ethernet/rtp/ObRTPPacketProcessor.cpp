@@ -50,7 +50,8 @@ bool ObRTPPacketProcessor::process(RTPHeader *header, uint8_t *recvData, uint32_
 
     uint8_t  marker         = header->marker;
     uint16_t sequenceNumber = ntohs(header->sequenceNumber);
-    LOG_DEBUG("marker-{}, sequenceNumber-{},length-{}, type-{}", marker, sequenceNumber, length, type);
+    rtpType_                = type;
+    //LOG_DEBUG("marker-{}, sequenceNumber-{},length-{}, type-{}", marker, sequenceNumber, length, type);
     if(sequenceNumber == START_RTP_TAG) {
         OnStartOfFrame();
     }
