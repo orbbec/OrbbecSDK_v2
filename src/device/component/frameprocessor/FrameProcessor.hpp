@@ -53,7 +53,7 @@ public:
         return sensorType_;
     }
 
-    void setPropertyValue(uint32_t propertyId, OBPropertyValue value) override;
+    void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
 
     void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
 

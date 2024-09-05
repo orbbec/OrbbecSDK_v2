@@ -1,21 +1,9 @@
 cmake_minimum_required(VERSION 3.5)
 
-if(OB_BUILD_WIN32)
-    file (GLOB _cpp_files "${CMAKE_CURRENT_LIST_DIR}/*.cpp")
-    file (GLOB _head_files "${CMAKE_CURRENT_LIST_DIR}/*.hpp")
-else()
-	file (GLOB _cpp_files
-	    "${CMAKE_CURRENT_LIST_DIR}/HidDevicePort.cpp"
-	)
-	file (GLOB _head_files
-	    "${CMAKE_CURRENT_LIST_DIR}/HidDevicePort.hpp"
-	)
+target_sources(${OB_TARGET_PAL} PRIVATE "${CMAKE_CURRENT_LIST_DIR}/HidDevicePort.cpp")
+target_sources(${OB_TARGET_PAL} PRIVATE "${CMAKE_CURRENT_LIST_DIR}/HidDevicePort.hpp")
+
+if(OB_BUILD_GMSL_PAL AND OB_BUILD_LINUX)
+    target_sources(${OB_TARGET_PAL} PRIVATE "${CMAKE_CURRENT_LIST_DIR}/HidDevicePortGmsl.hpp")
+    target_sources(${OB_TARGET_PAL} PRIVATE "${CMAKE_CURRENT_LIST_DIR}/HidDevicePortGmsl.cpp")
 endif()
-
-foreach(_file IN ITEMS ${_cpp_files})
-        target_sources(${OB_TARGET_PAL} PRIVATE "${_file}")
-endforeach()
-
-foreach(_file IN ITEMS ${_head_files})
-        target_sources(${OB_TARGET_PAL} PRIVATE "${_file}")
-endforeach()

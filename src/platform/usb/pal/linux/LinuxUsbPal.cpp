@@ -6,17 +6,13 @@
 #include "logger/Logger.hpp"
 #include "exception/ObException.hpp"
 
-#if defined(BUILD_USB_PAL)
 #include "usb/hid/HidDevicePort.hpp"
+#include "usb/hid/HidDevicePortGmsl.hpp"
 #include "usb/vendor/VendorUsbDevicePort.hpp"
 #include "usb/uvc/ObLibuvcDevicePort.hpp"
 #include "usb/uvc/ObV4lUvcDevicePort.hpp"
+#include "usb/uvc/ObV4lGmslDevicePort.hpp"
 #include "usb/enumerator/UsbEnumeratorLibusb.hpp"
-#endif
-
-#if defined(BUILD_NET_PAL)
-#include "ethernet/EthernetPal.hpp"
-#endif
 
 #include <cctype>  // std::tolower
 #include <chrono>
@@ -33,7 +29,6 @@ template <class T> static bool isMatchDeviceByPid(uint16_t pid, T &pids) {
     return std::any_of(pids.begin(), pids.end(), [pid](uint16_t pid_) { return pid_ == pid; });
 }
 
-#if defined(BUILD_USB_PAL)
 int deviceArrivalCallback(libusb_context *ctx, libusb_device *device, libusb_hotplug_event event, void *user_data);
 int deviceRemovedCallback(libusb_context *ctx, libusb_device *device, libusb_hotplug_event event, void *user_data);
 class LibusbDeviceWatcher : public IDeviceWatcher {
@@ -108,7 +103,6 @@ int deviceRemovedCallback(libusb_context *ctx, libusb_device *device, libusb_hot
     watcher->callback_(OB_DEVICE_REMOVED, parseDevicePath(device));
     return 0;
 }
-#endif
 
 std::shared_ptr<IPal> createUsbPal() {
     return std::make_shared<LinuxUsbPal>();
@@ -151,7 +145,6 @@ std::shared_ptr<ISourcePort> LinuxUsbPal::getSourcePort(std::shared_ptr<const So
 #endif
 
     switch(portInfo->portType) {
-#if defined(BUILD_USB_PAL)
     case SOURCE_PORT_USB_VENDOR: {
         auto usbDev = usbEnumerator_->openUsbDevice(std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->url);
         if(usbDev == nullptr) {
@@ -166,6 +159,10 @@ std::shared_ptr<ISourcePort> LinuxUsbPal::getSourcePort(std::shared_ptr<const So
         if(isMatchDeviceByPid(usbPortInfo->pid, FemtoMegaDevPids)) {  // if the device is femto mega, force to use v4l2
             backend = UVC_BACKEND_TYPE_V4L2;
         }
+        if(usbPortInfo->connSpec == "GMSL2") {
+            LOG_DEBUG("check GMSL2 device! force to use v4l2 backend!");
+            backend = UVC_BACKEND_TYPE_V4L2;
+        }
         if(backend == UVC_BACKEND_TYPE_AUTO) {
             backend = UVC_BACKEND_TYPE_LIBUVC;
             if(ObV4lUvcDevicePort::isContainedMetadataDevice(usbPortInfo)) {
@@ -173,8 +170,14 @@ std::shared_ptr<ISourcePort> LinuxUsbPal::getSourcePort(std::shared_ptr<const So
             }
         }
         if(backend == UVC_BACKEND_TYPE_V4L2) {
-            port = std::make_shared<ObV4lUvcDevicePort>(usbPortInfo);
-            LOG_DEBUG("UVC device have been create with V4L2 backend! dev: {}, inf: {}", usbPortInfo->url, usbPortInfo->infUrl);
+            if(ObV4lGmslDevicePort::isGmslDeviceForPlatformNvidia(usbPortInfo)) {
+                port = std::make_shared<ObV4lGmslDevicePort>(usbPortInfo);
+                // LOG_DEBUG("V4L2 GMSL device have been create with V4L2 backend! url:{}, hubId:{}", usbPortInfo->url, usbPortInfo->hubId);
+            }
+            else {
+                port = std::make_shared<ObV4lUvcDevicePort>(usbPortInfo);
+                // LOG_DEBUG("V4L2 UVC device have been create with V4L2 backend! url:{}, hubId:{}", usbPortInfo->url, usbPortInfo->hubId);
+            }
         }
         else {
             auto usbDev = usbEnumerator_->openUsbDevice(std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->url);
@@ -188,26 +191,19 @@ std::shared_ptr<ISourcePort> LinuxUsbPal::getSourcePort(std::shared_ptr<const So
     }
     case SOURCE_PORT_USB_HID: {
         auto usbPortInfo = std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo);
-        auto usbDev      = usbEnumerator_->openUsbDevice(std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->url);
-        if(usbDev == nullptr) {
-            throw libobsensor::camera_disconnected_exception("usbEnumerator openUsbDevice failed!");
+        if(ObV4lGmslDevicePort::isGmslDeviceForPlatformNvidia(usbPortInfo)) {
+            // LOG_DEBUG("HID GMSL device have been create with V4L2 backend! url:{}, hubId:{}", usbPortInfo->url, usbPortInfo->hubId);
+            port = std::make_shared<HidDevicePortGmsl>(usbPortInfo);
         }
-        port = std::make_shared<HidDevicePort>(usbDev, std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo));
+        else {
+            auto usbDev = usbEnumerator_->openUsbDevice(std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->url);
+            if(usbDev == nullptr) {
+                throw libobsensor::camera_disconnected_exception("usbEnumerator openUsbDevice failed!");
+            }
+            port = std::make_shared<HidDevicePort>(usbDev, std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo));
+        }
         break;
     }
-#endif
-
-#if defined(BUILD_NET_PAL)
-    case SOURCE_PORT_NET_VENDOR:
-        port = std::make_shared<VendorNetDataPort>(std::dynamic_pointer_cast<const NetSourcePortInfo>(portInfo));
-        break;
-    case SOURCE_PORT_NET_RTSP:
-        port = std::make_shared<RTSPStreamPort>(std::dynamic_pointer_cast<const RTSPStreamPortInfo>(portInfo));
-        break;
-    case SOURCE_PORT_NET_VENDOR_STREAM:
-        port = std::make_shared<NetDataStreamPort>(std::dynamic_pointer_cast<const NetDataStreamPortInfo>(portInfo));
-        break;
-#endif
 
     default:
         throw libobsensor::invalid_value_exception("unsupported source port type!");
@@ -219,7 +215,6 @@ std::shared_ptr<ISourcePort> LinuxUsbPal::getSourcePort(std::shared_ptr<const So
     return port;
 }
 
-#if defined(BUILD_USB_PAL)
 std::shared_ptr<IDeviceWatcher> LinuxUsbPal::createDeviceWatcher() const {
     LOG_INFO("Create PollingDeviceWatcher!");
 
@@ -249,10 +244,29 @@ SourcePortInfoList LinuxUsbPal::querySourcePortInfos() {
 
         portInfoList.push_back(portInfo);
     }
+
+#if defined(BUILD_GMSL_PAL)
+    const auto &usbInfoList1 = ObV4lGmslDevicePort::queryDevicesInfo();
+    if(usbInfoList1.size() > 0) {
+        for(const auto &info: usbInfoList1) {
+            auto portInfo      = std::make_shared<USBSourcePortInfo>(cvtUsbClassToPortType(info.cls));
+            portInfo->url      = info.url;
+            portInfo->uid      = info.uid;
+            portInfo->vid      = info.vid;
+            portInfo->pid      = info.pid;
+            portInfo->serial   = info.serial;
+            portInfo->connSpec = usbSpecToString(static_cast<UsbSpec>(info.conn_spec));
+            portInfo->infUrl   = info.infUrl;
+            portInfo->infIndex = info.infIndex;
+            portInfo->infName  = info.infName;
+            portInfo->hubId    = info.hubId;
+            portInfoList.push_back(portInfo);
+        }
+    }
+#endif
     return portInfoList;
 }
 
-#if defined(BUILD_USB_PAL)
 void LinuxUsbPal::loadXmlConfig() {
     // FIXME
     // auto ctx       = Context::getInstance();
@@ -289,8 +303,5 @@ void LinuxUsbPal::loadXmlConfig() {
     //        LOG_DEBUG("Uvc backend have been set to {}({})", mode, uvcBackendType_);
     //    }
 }
-#endif
-
-#endif
 
 }  // namespace libobsensor

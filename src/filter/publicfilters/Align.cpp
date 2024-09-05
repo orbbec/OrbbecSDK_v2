@@ -214,12 +214,10 @@ std::shared_ptr<VideoStreamProfile> Align::createAlignedProfile(std::shared_ptr<
         aligned_profile->setWidth(to_profile->getWidth());
         aligned_profile->setHeight(to_profile->getHeight());
         aligned_profile->bindIntrinsic(to_profile->getIntrinsic());
-        /// TODO(timon): extrinsic of aligned should be ones and zeros
+        aligned_profile->bindDistortion(to_profile->getDistortion());
         aligned_profile->bindSameExtrinsicTo(to_profile);
         target_stream_profile_ = aligned_profile;
         align_streams_         = { original_profile.get(), to_profile.get() };
-        /// TODO(timon): what for?
-        // resetCache();
     }
 
     return target_stream_profile_;

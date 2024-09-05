@@ -1,6 +1,6 @@
 # Depth with C
 
-This is a depth guide to get depth stream and depth image by using the Open Orbbec SDK C API.
+This is a depth guide to get depth stream and depth image by using the Orbbec SDK C API.
 
 ## Overview
 
@@ -102,9 +102,9 @@ ob_pipeline_stop(pipeline, &error);
 
 ## Run Sample
 
-If you are on Windows, you can switch to the directory `/OpenOrbbecSDK/build/win_XX/bin` to find the `ob_depth_c.exe`.
+If you are on Windows, you can switch to the directory `OrbbecSDK-dev/build/win_XX/bin` to find the `ob_depth_c.exe`.
 
-If you are on linux, you can switch to the directory `/OpenOrbbecSDK/build/linux_XX/bin` to find the `ob_depth_c.exe`.
+If you are on linux, you can switch to the directory `OrbbecSDK-dev/build/linux_XX/bin` to find the `ob_depth_c`.
 
 ### Key introduction
 
@@ -112,4 +112,4 @@ Press 'ESC' key to stop the pipeline and exit the program.
 
 ### Result
 
-![Quick_Start_C](/docs/resource/quick_start_c.png)
+![Quick_Start_C](/docs/resource/quick_start_c.jpg)

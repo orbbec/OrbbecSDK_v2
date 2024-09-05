@@ -27,13 +27,17 @@ public:
 
     std::shared_ptr<ISourcePort> getSourcePort(std::shared_ptr<const SourcePortInfo> portInfo);
 
-    std::shared_ptr<IDeviceWatcher> createUsbDeviceWatcher() const;
     SourcePortInfoList              queryUsbSourcePortInfos();
     std::shared_ptr<ISourcePort>    getUsbSourcePort(std::shared_ptr<const SourcePortInfo> portInfo);
+    std::shared_ptr<IDeviceWatcher> createUsbDeviceWatcher() const;
 
     SourcePortInfoList              queryNetSourcePort();
-    std::shared_ptr<IDeviceWatcher> createNetDeviceWatcher();
     std::shared_ptr<ISourcePort>    getNetSourcePort(std::shared_ptr<const SourcePortInfo> portInfo);
+    std::shared_ptr<IDeviceWatcher> createNetDeviceWatcher();
+
+    SourcePortInfoList              queryGmslSourcePort();
+    std::shared_ptr<ISourcePort>    getGmslSourcePort(std::shared_ptr<const SourcePortInfo> portInfo);
+    std::shared_ptr<IDeviceWatcher> createGmslDeviceWatcher();
 
 private:
     std::map<std::string, std::shared_ptr<IPal>> palMap_;

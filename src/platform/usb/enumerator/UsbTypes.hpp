@@ -50,6 +50,7 @@ typedef enum {
     usb3_type     = 0x0300,
     usb3_1_type   = 0x0310,
     usb3_2_type   = 0x0320,
+    gmsl2_type    = 0x2000,
 } UsbSpec;
 
 std::string usbSpecToString(UsbSpec spec);

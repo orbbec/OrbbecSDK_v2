@@ -54,7 +54,7 @@ G330PresetManager::G330PresetManager(IDevice *owner) : DeviceComponentBase(owner
                 currentPreset_ = "Custom";
             }
         });
-     storeCurrentParamsAsCustomPreset("Custom");
+    storeCurrentParamsAsCustomPreset("Custom");
 }
 
 void G330PresetManager::loadPreset(const std::string &presetName) {
@@ -73,7 +73,7 @@ void G330PresetManager::loadPreset(const std::string &presetName) {
         loadCustomPreset(iter->first, iter->second);
     }
     else {
-        auto owner               = getOwner();
+        auto owner                = getOwner();
         auto depthWorkModeManager = owner->getComponentT<G330DepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
 
         depthWorkModeManager->switchDepthWorkMode(presetName.c_str());
@@ -224,10 +224,14 @@ void G330PresetManager::loadCustomPreset(const std::string &presetName, const G3
     setPropertyValue(owner, OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL, (bool)preset.depthAutoExposure);
     setPropertyValue(owner, OB_PROP_IR_BRIGHTNESS_INT, preset.depthBrightness);
     setPropertyValue(owner, OB_PROP_COLOR_AUTO_EXPOSURE_BOOL, (bool)preset.colorAutoExposure);
-    setPropertyValue(owner, OB_PROP_COLOR_EXPOSURE_INT, preset.colorExposureTime);
-    setPropertyValue(owner, OB_PROP_COLOR_GAIN_INT, preset.colorGain);
+    if(!preset.colorAutoExposure) {
+        setPropertyValue(owner, OB_PROP_COLOR_EXPOSURE_INT, preset.colorExposureTime);
+        setPropertyValue(owner, OB_PROP_COLOR_GAIN_INT, preset.colorGain);
+    }
     setPropertyValue(owner, OB_PROP_COLOR_AUTO_WHITE_BALANCE_BOOL, (bool)preset.colorAutoWhiteBalance);
-    setPropertyValue(owner, OB_PROP_COLOR_WHITE_BALANCE_INT, preset.colorWhiteBalance);
+    if(!preset.colorAutoWhiteBalance) {
+        setPropertyValue(owner, OB_PROP_COLOR_WHITE_BALANCE_INT, preset.colorWhiteBalance);
+    }
     setPropertyValue(owner, OB_PROP_COLOR_CONTRAST_INT, preset.colorContrast);
     setPropertyValue(owner, OB_PROP_COLOR_SATURATION_INT, preset.colorSaturation);
     setPropertyValue(owner, OB_PROP_COLOR_SHARPNESS_INT, preset.colorSharpness);

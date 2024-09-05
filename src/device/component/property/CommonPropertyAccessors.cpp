@@ -9,7 +9,7 @@ namespace libobsensor {
 
 DeviceComponentPropertyAccessor::DeviceComponentPropertyAccessor(IDevice *device, DeviceComponentId compId) : device_(device), compId_(compId) {}
 
-void DeviceComponentPropertyAccessor::setPropertyValue(uint32_t propertyId, OBPropertyValue value) {
+void DeviceComponentPropertyAccessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
     auto propertyAccessor = device_->getComponentT<IBasicPropertyAccessor>(compId_);
     propertyAccessor->setPropertyValue(propertyId, value);
 }
@@ -28,7 +28,7 @@ FunctionPropertyAccessor::FunctionPropertyAccessor(std::function<OBPropertyValue
                                                    std::function<OBPropertyRange(uint32_t)> rangeGetter)
     : getter_(getter), setter_(setter), rangeGetter_(rangeGetter) {}
 
-void FunctionPropertyAccessor::setPropertyValue(uint32_t propertyId, OBPropertyValue value) {
+void FunctionPropertyAccessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
     setter_(propertyId, value);
 }
 
@@ -42,7 +42,7 @@ void FunctionPropertyAccessor::getPropertyRange(uint32_t propertyId, OBPropertyR
 
 LazyPropertyAccessor::LazyPropertyAccessor(std::function<std::shared_ptr<IPropertyAccessor>()> accessorCreator) : accessorCreator_(accessorCreator) {}
 
-void LazyPropertyAccessor::setPropertyValue(uint32_t propertyId, OBPropertyValue value) {
+void LazyPropertyAccessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
     std::lock_guard<std::mutex> lock(mutex_);
     if(!accessor_) {
         accessor_ = accessorCreator_();
@@ -148,7 +148,7 @@ const std::vector<uint8_t> &StructureDataOverV1_1Accessor::getStructureData(uint
 
 HeartbeatPropertyAccessor::HeartbeatPropertyAccessor(IDevice *owner) : owner_(owner) {}
 
-void HeartbeatPropertyAccessor::setPropertyValue(uint32_t propertyId, OBPropertyValue value) {
+void HeartbeatPropertyAccessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
     utils::unusedVar(propertyId);
     auto deviceMonitor = owner_->getComponentT<IDeviceMonitor>(OB_DEV_COMPONENT_DEVICE_MONITOR);
     if(value.intValue == 1) {

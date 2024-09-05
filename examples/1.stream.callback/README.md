@@ -49,7 +49,7 @@ Sensor can be used to obtain different components of the camera and the stream o
             }
     ```
 
-3. In this callback function, you can add what you want to do with the data.
+3. In this callback function, you can add what you want to do with the data.Avoid performing complex computational operations within callback functions; prolonged operations can lead to data frame drops. It is recommended to use a queue for processing.
 
     ```c++
         // Start the pipeline with callback.
@@ -83,9 +83,9 @@ Sensor can be used to obtain different components of the camera and the stream o
 
 ## Run Sample
 
-If you are on Windows, you can switch to the directory `/OpenOrbbecSDK/build/win_XX/bin` to find the `ob_callback.exe`.
+If you are on Windows, you can switch to the directory `OrbbecSDK-dev/build/win_XX/bin` to find the `ob_callback.exe`.
 
-If you are on linux, you can switch to the directory `/OpenOrbbecSDK/build/linux_XX/bin` to find the `ob_callback.exe`.
+If you are on linux, you can switch to the directory `OrbbecSDK-dev/build/linux_XX/bin` to find the `ob_callback`.
 
 ### Key introduction
 
@@ -93,4 +93,4 @@ Press the Esc key in the window to exit the program.
 
 ### Result
 
-![result](/docs/resource/callback.png)
+![result](/docs/resource/callback.jpg)

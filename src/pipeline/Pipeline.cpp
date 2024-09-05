@@ -54,12 +54,12 @@ void Pipeline::applyConfig(std::shared_ptr<const Config> cfg) {
     config_ = checkAndSetConfig(cfg);
     checkHardwareD2CConfig();
 }
-    
+
 void Pipeline::switchConfig(std::shared_ptr<const Config> cfg) {
     if(!cfg) {
         throw libobsensor::invalid_value_exception("Null pointer config!");
     }
-    
+
     if(config_ && *cfg == *config_) {
         LOG_INFO("Noting will be execute due to pipeline config have no been changed!");
         return;
@@ -345,15 +345,15 @@ void Pipeline::resetAlignMode() {
 StreamProfileList Pipeline::getD2CDepthProfileList(std::shared_ptr<const StreamProfile> colorProfile, OBAlignMode alignMode) {
     StreamProfileList d2cDepthProfileList;
     d2cDepthProfileList.clear();
-    if(!device_){
+    if(!device_) {
         return d2cDepthProfileList;
     }
 
-    auto algParamManager = device_->getComponentT<IAlgParamManager>(OB_DEV_COMPONENT_ALG_PARAM_MANAGER, false);
+    auto algParamManager         = device_->getComponentT<IAlgParamManager>(OB_DEV_COMPONENT_ALG_PARAM_MANAGER, false);
     auto d2cProfileList          = algParamManager->getD2CProfileList();
-    auto              colorVideoStreamProfile  = colorProfile->as<VideoStreamProfile>();
-    auto              depthSensor     = device_->getSensor(OB_SENSOR_DEPTH);
-    auto              depthProfiles = depthSensor->getStreamProfileList();
+    auto colorVideoStreamProfile = colorProfile->as<VideoStreamProfile>();
+    auto depthSensor             = device_->getSensor(OB_SENSOR_DEPTH);
+    auto depthProfiles           = depthSensor->getStreamProfileList();
     if(alignMode == ALIGN_DISABLE) {
         return depthProfiles;
     }
@@ -362,11 +362,10 @@ StreamProfileList Pipeline::getD2CDepthProfileList(std::shared_ptr<const StreamP
         if(colorVideoStreamProfile->getWidth() == sp.colorWidth && colorVideoStreamProfile->getHeight() == sp.colorHeight) {
             for(auto profile: depthProfiles) {
                 auto depthProfile = profile->as<VideoStreamProfile>();
-                auto width = depthProfile->getWidth();
-                auto height = depthProfile->getHeight();
+                auto width        = depthProfile->getWidth();
+                auto height       = depthProfile->getHeight();
                 if(sp.depthWidth == width && sp.depthHeight == height
-                   && ((alignMode == ALIGN_D2C_HW_MODE && (sp.alignType & ALIGN_D2C_HW)) || (alignMode == ALIGN_D2C_SW_MODE && (sp.alignType &
-                   ALIGN_D2C_SW))))
+                   && ((alignMode == ALIGN_D2C_HW_MODE && (sp.alignType & ALIGN_D2C_HW)) || (alignMode == ALIGN_D2C_SW_MODE && (sp.alignType & ALIGN_D2C_SW))))
 
                 {
                     d2cDepthProfileList.push_back(depthProfile);
@@ -378,33 +377,33 @@ StreamProfileList Pipeline::getD2CDepthProfileList(std::shared_ptr<const StreamP
     return d2cDepthProfileList;
 }
 
-OBCameraParam Pipeline::getCameraParam(){
+OBCameraParam Pipeline::getCameraParam() {
     OBCameraParam curCameraParam = {};
-    if(!device_ || !config_){
+    if(!device_ || !config_) {
         return curCameraParam;
     }
 
-    auto colorStreamProfile = getCurrentVideoStreamProfile(config_,OB_STREAM_COLOR);
-    auto depthStreamProfile = getCurrentVideoStreamProfile(config_,OB_STREAM_DEPTH);
+    auto colorStreamProfile = config_->getEnabledStreamProfile(OB_STREAM_COLOR);
+    auto depthStreamProfile = config_->getEnabledStreamProfile(OB_STREAM_DEPTH);
     if(!colorStreamProfile || !depthStreamProfile) {
         return curCameraParam;
     }
 
-    curCameraParam.rgbIntrinsic = colorStreamProfile->getIntrinsic();
-    curCameraParam.rgbDistortion = colorStreamProfile->getDistortion();
-    curCameraParam.depthIntrinsic = depthStreamProfile->getIntrinsic();
-    curCameraParam.depthDistortion = depthStreamProfile->getDistortion();
-    curCameraParam.transform = depthStreamProfile->getExtrinsicTo(colorStreamProfile);
+    curCameraParam.rgbIntrinsic    = colorStreamProfile->as<VideoStreamProfile>()->getIntrinsic();
+    curCameraParam.rgbDistortion   = colorStreamProfile->as<VideoStreamProfile>()->getDistortion();
+    curCameraParam.depthIntrinsic  = depthStreamProfile->as<VideoStreamProfile>()->getIntrinsic();
+    curCameraParam.depthDistortion = depthStreamProfile->as<VideoStreamProfile>()->getDistortion();
+    curCameraParam.transform       = depthStreamProfile->getExtrinsicTo(colorStreamProfile);
 
     return curCameraParam;
 }
 
 OBCameraParam Pipeline::getCameraParam(uint32_t colorWidth, uint32_t colorHeight, uint32_t depthWidth, uint32_t depthHeight) {
     OBCameraParam curCameraParam = {};
-    if(!device_){
+    if(!device_) {
         return curCameraParam;
     }
-    auto colorSensor     = device_->getSensor(OB_SENSOR_COLOR);
+    auto colorSensor = device_->getSensor(OB_SENSOR_COLOR);
     if(!colorSensor) {
         throw invalid_value_exception(utils::string::to_string() << "No matched color sensor found");
     }
@@ -413,36 +412,37 @@ OBCameraParam Pipeline::getCameraParam(uint32_t colorWidth, uint32_t colorHeight
         throw invalid_value_exception(utils::string::to_string() << "No matched depth sensor found");
     }
 
-    auto colorSensorSpList = colorSensor->getStreamProfileList();
+    auto colorSensorSpList       = colorSensor->getStreamProfileList();
     auto matchedColorProfileList = matchVideoStreamProfile(colorSensorSpList, colorWidth, colorHeight, OB_FPS_ANY, OB_FORMAT_ANY);
     if(matchedColorProfileList.empty()) {
-        throw invalid_value_exception(utils::string::to_string() << "No matched color profile found" );
+        throw invalid_value_exception(utils::string::to_string() << "No matched color profile found");
     }
     auto colorStreamProfile = matchedColorProfileList.front();
 
-    auto depthSensorSpList = depthSensor->getStreamProfileList();
+    auto depthSensorSpList       = depthSensor->getStreamProfileList();
     auto matchedDepthProfileList = matchVideoStreamProfile(depthSensorSpList, depthWidth, depthHeight, OB_FPS_ANY, OB_FORMAT_ANY);
     if(matchedDepthProfileList.empty()) {
-        throw invalid_value_exception(utils::string::to_string() << "No matched depth profile found" );
+        throw invalid_value_exception(utils::string::to_string() << "No matched depth profile found");
     }
     auto depthStreamProfile = matchedDepthProfileList.front();
 
-    curCameraParam.rgbIntrinsic = colorStreamProfile->getIntrinsic();
-    curCameraParam.rgbDistortion = colorStreamProfile->getDistortion();
-    curCameraParam.depthIntrinsic = depthStreamProfile->getIntrinsic();
+    curCameraParam.rgbIntrinsic    = colorStreamProfile->getIntrinsic();
+    curCameraParam.rgbDistortion   = colorStreamProfile->getDistortion();
+    curCameraParam.depthIntrinsic  = depthStreamProfile->getIntrinsic();
     curCameraParam.depthDistortion = depthStreamProfile->getDistortion();
-    curCameraParam.transform = depthStreamProfile->getExtrinsicTo(colorStreamProfile);
+    curCameraParam.transform       = depthStreamProfile->getExtrinsicTo(colorStreamProfile);
 
     return curCameraParam;
 }
 
-OBCalibrationParam Pipeline::getCalibrationParam(std::shared_ptr<Config> cfg){
+OBCalibrationParam Pipeline::getCalibrationParam(std::shared_ptr<Config> cfg) {
     OBCalibrationParam calibrationParam = {};
     if(!device_ || !cfg) {
         return calibrationParam;
     }
 
-    auto constConfig = std::const_pointer_cast<Config>(cfg);
+    // convert stream profile on config to real stream profile on sensors
+    auto config = checkAndSetConfig(cfg);
 
     memset(calibrationParam.intrinsics, 0, sizeof(OBCameraIntrinsic) * OB_SENSOR_TYPE_COUNT);
     memset(calibrationParam.distortion, 0, sizeof(OBCameraDistortion) * OB_SENSOR_TYPE_COUNT);
@@ -454,71 +454,67 @@ OBCalibrationParam Pipeline::getCalibrationParam(std::shared_ptr<Config> cfg){
         }
     }
 
-    auto accelSensor = device_->getSensor(OB_SENSOR_ACCEL);
-    auto gyroSensor = device_->getSensor(OB_SENSOR_GYRO);
-    if(!accelSensor || !gyroSensor){
-        return calibrationParam;
-    }
-
-    auto accelSensorSpList = accelSensor->getStreamProfileList();
-    auto gyroSensorSpList = gyroSensor->getStreamProfileList();
-    if(accelSensorSpList.empty() || gyroSensorSpList.empty()){
-        return calibrationParam;
-    }
-    auto accelStreamProfile = accelSensorSpList.front();
-    auto gyroStreamProfile = gyroSensorSpList.front();
-
-    //Intrinsic
+    // Intrinsic (cameras only)
     for(int i = 0; i < OB_SENSOR_TYPE_COUNT; i++) {
         auto sensorType = static_cast<OBSensorType>(i);
+        if(!device_->isSensorExists(sensorType)) {
+            continue;
+        }
         auto streamType = utils::mapSensorTypeToStreamType(sensorType);
-        if(streamType == OB_STREAM_ACCEL || streamType == OB_STREAM_GYRO){
+        if(streamType == OB_STREAM_ACCEL || streamType == OB_STREAM_GYRO) {
             continue;
         }
 
-        auto streamProfile = getCurrentVideoStreamProfile(constConfig, streamType);
-        if(!streamProfile){
-            continue;
+        auto streamProfile = config->getEnabledStreamProfile(streamType);
+        if(!streamProfile) {
+            auto sensor = device_->getSensor(sensorType);
+            auto spList = sensor->getStreamProfileList();
+            if(spList.empty()) {
+                continue;
+            }
+            streamProfile = spList.front();
         }
-        auto intrinsic = streamProfile->getIntrinsic();
-        auto distortion = streamProfile->getDistortion();
+        auto intrinsic  = streamProfile->as<VideoStreamProfile>()->getIntrinsic();
+        auto distortion = streamProfile->as<VideoStreamProfile>()->getDistortion();
         memcpy(&calibrationParam.intrinsics[sensorType], &intrinsic, sizeof(OBCameraIntrinsic));
         memcpy(&calibrationParam.distortion[sensorType], &distortion, sizeof(OBCameraDistortion));
     }
 
-    //Extrinsic
+    // Extrinsic
     for(int source = 0; source < OB_SENSOR_TYPE_COUNT; source++) {
         for(int target = 0; target < OB_SENSOR_TYPE_COUNT; target++) {
-            if(source == target){
+            if(source == target) {
                 continue;
             }
 
             auto sourceSensorType = static_cast<OBSensorType>(source);
             auto targetSensorType = static_cast<OBSensorType>(target);
+            if(!device_->isSensorExists(sourceSensorType) || !device_->isSensorExists(targetSensorType)) {
+                continue;
+            }
 
-            auto sourceStreamType = utils::mapSensorTypeToStreamType(sourceSensorType);
-            auto targetStreamType = utils::mapSensorTypeToStreamType(targetSensorType);
+            auto                                 sourceStreamType = utils::mapSensorTypeToStreamType(sourceSensorType);
+            auto                                 targetStreamType = utils::mapSensorTypeToStreamType(targetSensorType);
             std::shared_ptr<const StreamProfile> sourceStreamProfile;
             std::shared_ptr<const StreamProfile> targetStreamProfile;
 
-            if(sourceStreamType == OB_STREAM_ACCEL){
-                sourceStreamProfile = accelStreamProfile;
-            } else if(sourceStreamType == OB_STREAM_GYRO){
-                sourceStreamProfile = gyroStreamProfile;
-            }else{
-                sourceStreamProfile = getCurrentVideoStreamProfile(constConfig, sourceStreamType);
+            sourceStreamProfile = config->getEnabledStreamProfile(sourceStreamType);
+            if(!sourceStreamProfile) {
+                auto sensor = device_->getSensor(sourceSensorType);
+                auto spList = sensor->getStreamProfileList();
+                if(spList.empty()) {
+                    continue;
+                }
+                sourceStreamProfile = spList.front();
             }
-
-            if(targetStreamType == OB_STREAM_ACCEL){
-                targetStreamProfile = accelStreamProfile;
-            } else if(targetStreamType == OB_STREAM_GYRO){
-                targetStreamProfile = gyroStreamProfile;
-            }else{
-                targetStreamProfile = getCurrentVideoStreamProfile(constConfig, targetStreamType);
-            }
-            
-            if(!sourceStreamProfile || !targetStreamProfile){
-                continue;
+            targetStreamProfile = config->getEnabledStreamProfile(targetStreamType);
+            if(!targetStreamProfile) {
+                auto sensor = device_->getSensor(targetSensorType);
+                auto spList = sensor->getStreamProfileList();
+                if(spList.empty()) {
+                    continue;
+                }
+                targetStreamProfile = spList.front();
             }
 
             auto sourceToTargetExtrinsic = sourceStreamProfile->getExtrinsicTo(targetStreamProfile);
@@ -545,19 +541,6 @@ void Pipeline::disableFrameSync() {
     frameAggregator_->enableFrameSync(FrameSyncModeDisable);
 }
 
-std::shared_ptr<const VideoStreamProfile> Pipeline::getCurrentVideoStreamProfile(std::shared_ptr<const Config> config,OBStreamType type) {
-    if(!config) {
-        return nullptr;
-    }
-
-    for(const auto &sp: config->getEnabledStreamProfileList()) {
-        if(sp->getType() == type) {  // todo: different type
-            return sp->as<const VideoStreamProfile>();
-        }
-    }
-    return nullptr;
-}
-
 void Pipeline::checkHardwareD2CConfig() {
     auto frameProcessor      = device_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR, false);
     auto depthFrameProcessor = std::dynamic_pointer_cast<DepthFrameProcessor>(frameProcessor.get());
@@ -569,19 +552,23 @@ void Pipeline::checkHardwareD2CConfig() {
         enableHardwareD2C(false);
         return;
     }
+
     auto algParamManager = device_->getComponentT<IAlgParamManager>(OB_DEV_COMPONENT_ALG_PARAM_MANAGER, false);
-    auto colorProfile    = getCurrentVideoStreamProfile(config_,OB_STREAM_COLOR);
-    auto depthProfile    = getCurrentVideoStreamProfile(config_,OB_STREAM_DEPTH);
+    auto colorProfile    = config_->getEnabledStreamProfile(OB_STREAM_COLOR);
+    auto depthProfile    = config_->getEnabledStreamProfile(OB_STREAM_DEPTH);
     if(algParamManager && colorProfile && depthProfile) {
+        auto colorVideoStreamProfile = colorProfile->as<VideoStreamProfile>();
+        auto depthVideoStreamProfile = depthProfile->as<VideoStreamProfile>();
         auto calibrationCameraParams = algParamManager->getCalibrationCameraParamList();
         auto d2cProfileList          = algParamManager->getD2CProfileList();
-        depthFrameProcessor->setHardwareD2CProcessParams(colorProfile->getWidth(), colorProfile->getHeight(), depthProfile->getWidth(),
-                                                         depthProfile->getHeight(), calibrationCameraParams, d2cProfileList);
+        depthFrameProcessor->setHardwareD2CProcessParams(colorVideoStreamProfile->getWidth(), colorVideoStreamProfile->getHeight(),
+                                                         depthVideoStreamProfile->getWidth(), depthVideoStreamProfile->getHeight(), calibrationCameraParams,
+                                                         d2cProfileList);
         enableHardwareD2C(true);
     }
 }
 
-void Pipeline::enableHardwareD2C(bool enable){
+void Pipeline::enableHardwareD2C(bool enable) {
     auto frameProcessor      = device_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR, false);
     auto depthFrameProcessor = std::dynamic_pointer_cast<DepthFrameProcessor>(frameProcessor.get());
     if(!depthFrameProcessor) {

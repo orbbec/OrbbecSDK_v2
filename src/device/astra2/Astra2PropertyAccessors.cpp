@@ -8,7 +8,7 @@ namespace libobsensor {
 Astra2Disp2DepthPropertyAccessor::Astra2Disp2DepthPropertyAccessor(IDevice *owner)
     : owner_(owner), hwDisparityToDepthEnabled_(true), swDisparityToDepthEnabled_(false) {}
 
-void Astra2Disp2DepthPropertyAccessor::setPropertyValue(uint32_t propertyId, OBPropertyValue value) {
+void Astra2Disp2DepthPropertyAccessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
     switch(propertyId) {
     case OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL: {
         auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR);
@@ -128,6 +128,33 @@ void Astra2Disp2DepthPropertyAccessor::markOutputDisparityFrame(bool enable) {
     if(sensor) {
         sensor->markOutputDisparityFrame(enable);
     }
+}
+
+Astra2TempPropertyAccessor::Astra2TempPropertyAccessor(IDevice *owner) : owner_(owner) {}
+
+void Astra2TempPropertyAccessor::setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) {
+    utils::unusedVar(propertyId);
+    utils::unusedVar(data);
+    throw unsupported_operation_exception("Temperature params readonly!");
+}
+
+const std::vector<uint8_t> &Astra2TempPropertyAccessor::getStructureData(uint32_t propertyId) {
+    utils::unusedVar(propertyId);
+    tempData_.resize(sizeof(OBDeviceTemperature));
+
+    auto                       commandPort = owner_->getComponentT<IStructureDataAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+    const std::vector<uint8_t> tempData    = commandPort->getStructureData(OB_STRUCT_DEVICE_TEMPERATURE);
+    OBDeviceTemperature        tempParam;
+    memcpy(&tempParam, tempData.data(), sizeof(OBDeviceTemperature));
+
+    tempParam.irLeftTemp     = 0;
+    tempParam.irRightTemp    = 0;
+    tempParam.chipBottomTemp = 0;
+    tempParam.chipTopTemp    = 0;
+
+    memcpy(tempData_.data(), &tempParam, sizeof(OBDeviceTemperature));
+
+    return tempData_;
 }
 
 }  // namespace libobsensor

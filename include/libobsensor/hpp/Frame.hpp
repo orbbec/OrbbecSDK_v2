@@ -331,55 +331,54 @@ public:
         return std::make_shared<const T>(impl_);
     }
 
-    /**
-     * In order to be compatible with the closed source version of orbbecsdk's interface.
-     * We recommend using the latest interface names for a better experience.
-     */
-    OB_DEPRECATED OBFrameType type() const {
+public:
+    // The following interfaces are deprecated and are retained here for compatibility purposes.
+    OBFrameType type() const {
         return getType();
     }
 
-    OB_DEPRECATED virtual OBFormat format() const {
+    virtual OBFormat format() const {
         return getFormat();
     }
 
-    OB_DEPRECATED virtual uint64_t index() const {
+    virtual uint64_t index() const {
         return getIndex();
     }
 
-    OB_DEPRECATED virtual uint8_t *data() const {
-        return getData();
+    virtual void *data() const {
+        auto data = getData();
+        return reinterpret_cast<void *>(data);
     }
 
-    OB_DEPRECATED virtual uint32_t dataSize() const {
+    virtual uint32_t dataSize() const {
         return getDataSize();
     }
 
-    OB_DEPRECATED uint64_t timeStamp() const {
+    uint64_t timeStamp() const {
         return getTimeStampUs() / 1000;
     }
 
-    OB_DEPRECATED uint64_t timeStampUs() const {
+    uint64_t timeStampUs() const {
         return getTimeStampUs();
     }
 
-    OB_DEPRECATED uint64_t systemTimeStamp() const {
+    uint64_t systemTimeStamp() const {
         return getSystemTimeStampUs() / 1000;
     }
 
-    OB_DEPRECATED uint64_t systemTimeStampUs() const {
+    uint64_t systemTimeStampUs() const {
         return getSystemTimeStampUs();
     }
 
-    OB_DEPRECATED uint64_t globalTimeStampUs() const {
+    uint64_t globalTimeStampUs() const {
         return getGlobalTimeStampUs();
     }
 
-    OB_DEPRECATED uint8_t *metadata() const {
+    uint8_t *metadata() const {
         return getMetadata();
     }
 
-    OB_DEPRECATED uint32_t metadataSize() const {
+    uint32_t metadataSize() const {
         return getMetadataSize();
     }
 };
@@ -458,19 +457,17 @@ public:
         return bitSize;
     }
 
-    /**
-     * In order to be compatible with the closed source version of orbbecsdk's interface.
-     * We recommend using the latest interface names for a better experience.
-     */
-    OB_DEPRECATED uint32_t width() const {
+public:
+    // The following interfaces are deprecated and are retained here for compatibility purposes.
+    uint32_t width() const {
         return getWidth();
     }
 
-    OB_DEPRECATED uint32_t height() const {
+    uint32_t height() const {
         return getHeight();
     }
 
-    OB_DEPRECATED uint8_t pixelAvailableBitSize() const {
+    uint8_t pixelAvailableBitSize() const {
         return getPixelAvailableBitSize();
     }
 };
@@ -593,10 +590,8 @@ public:
         return scale;
     }
 
-/**
- * In order to be compatible with the closed source version of orbbecsdk's interface.
- * We recommend using the latest interface names for a better experience.
- */
+public:
+    // The following interfaces are deprecated and are retained here for compatibility purposes.
 #define getPositionValueScale getCoordinateValueScale
 };
 
@@ -637,11 +632,13 @@ public:
         return temp;
     }
 
-    OB_DEPRECATED OBAccelValue value() {
+public:
+    // The following interfaces are deprecated and are retained here for compatibility purposes.
+    OBAccelValue value() {
         return getValue();
     }
 
-    OB_DEPRECATED float temperature() {
+    float temperature() {
         return getTemperature();
     }
 };
@@ -682,11 +679,13 @@ public:
         return temperature;
     }
 
-    OB_DEPRECATED OBGyroValue value() {
+public:
+    // The following interfaces are deprecated and are retained here for compatibility purposes.
+    OBGyroValue value() {
         return getValue();
     }
 
-    OB_DEPRECATED float temperature() {
+    float temperature() {
         return getTemperature();
     }
 };
@@ -765,39 +764,51 @@ public:
         Error::handle(&error);
     }
 
-    /**
-     * In order to be compatible with the closed source version of orbbecsdk's interface.
-     * We recommend using the latest interface names for a better experience.
-     */
-    OB_DEPRECATED uint32_t frameCount() const {
+public:
+    // The following interfaces are deprecated and are retained here for compatibility purposes.
+    uint32_t frameCount() const {
         return getCount();
     }
 
-    OB_DEPRECATED std::shared_ptr<DepthFrame> depthFrame() const {
-        auto frame      = getFrame(OB_FRAME_DEPTH);
+    std::shared_ptr<DepthFrame> depthFrame() const {
+        auto frame = getFrame(OB_FRAME_DEPTH);
+        if(frame == nullptr) {
+            return nullptr;
+        }
         auto depthFrame = frame->as<ob::DepthFrame>();
         return depthFrame;
     }
 
-    OB_DEPRECATED std::shared_ptr<ColorFrame> colorFrame() const {
-        auto frame      = getFrame(OB_FRAME_COLOR);
+    std::shared_ptr<ColorFrame> colorFrame() const {
+        auto frame = getFrame(OB_FRAME_COLOR);
+        if(frame == nullptr) {
+            return nullptr;
+        }
         auto colorFrame = frame->as<ob::ColorFrame>();
         return colorFrame;
     }
 
-    OB_DEPRECATED std::shared_ptr<IRFrame> irFrame() const {
-        auto frame   = getFrame(OB_FRAME_IR);
+    std::shared_ptr<IRFrame> irFrame() const {
+        auto frame = getFrame(OB_FRAME_IR);
+        if(frame == nullptr) {
+            return nullptr;
+        }
         auto irFrame = frame->as<ob::IRFrame>();
         return irFrame;
     }
 
-    OB_DEPRECATED std::shared_ptr<PointsFrame> pointsFrame() const {
-        auto frame       = getFrame(OB_FRAME_POINTS);
+public:
+    // The following interfaces are deprecated and are retained here for compatibility purposes.
+    std::shared_ptr<PointsFrame> pointsFrame() const {
+        auto frame = getFrame(OB_FRAME_POINTS);
+        if(frame == nullptr) {
+            return nullptr;
+        }
         auto pointsFrame = frame->as<ob::PointsFrame>();
         return pointsFrame;
     }
 
-    OB_DEPRECATED std::shared_ptr<Frame> getFrame(int index) const {
+    std::shared_ptr<Frame> getFrame(int index) const {
         return getFrameByIndex(index);
     }
 };
@@ -945,6 +956,40 @@ private:
         auto *ctx = static_cast<BufferDestroyContext *>(context);
         ctx->callback(buffer);
         delete ctx;
+    }
+};
+
+/**
+ * @brief FrameHepler class, which provides some static functions to set timestamp for frame objects
+ * FrameHepler inherited from the FrameFactory and the timestamp interface implement here both for compatibility purposes.
+ */
+class FrameHelper : public FrameFactory {
+public:
+    /**
+     * @brief Set the device timestamp of the frame.
+     *
+     * @param frame The frame object.
+     * @param deviceTimestampUs The device timestamp to set in microseconds.
+     */
+    static void setFrameDeviceTimestampUs(std::shared_ptr<Frame> frame, uint64_t deviceTimestampUs) {
+        ob_error *error = nullptr;
+        auto      impl  = const_cast<ob_frame *>(frame->getImpl());
+        ob_frame_set_timestamp_us(impl, deviceTimestampUs, &error);
+        Error::handle(&error);
+    }
+
+public:
+    // The following interfaces are deprecated and are retained here for compatibility purposes.
+    static void setFrameSystemTimestamp(std::shared_ptr<Frame> frame, uint64_t systemTimestamp) {
+        // In order to compile, some high-version compilers will warn that the function parameters are not used.
+        (void)frame;
+        (void)systemTimestamp;
+    }
+
+    static void setFrameDeviceTimestamp(std::shared_ptr<Frame> frame, uint64_t deviceTimestamp) {
+        // In order to compile, some high-version compilers will warn that the function parameters are not used.
+        (void)frame;
+        (void)deviceTimestamp;
     }
 };
 

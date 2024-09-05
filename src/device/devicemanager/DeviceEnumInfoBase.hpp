@@ -1,5 +1,5 @@
 #pragma once
-#include "IDeviceEnumerator.hpp"
+#include "IDeviceManager.hpp"
 #include "context/Context.hpp"
 
 #include <string>
@@ -19,7 +19,9 @@ public:
           name_(name),
           deviceSn_(deviceSn),
           sourcePortInfoList_(sourcePortInfoList),
-          context_(Context::getInstance()) {}
+          context_(Context::getInstance()) {
+        fullName_ = "Orbbec " + name_;
+    }
 
     DeviceEnumInfoBase() : pid_(0), vid_(0), context_(Context::getInstance()) {}
 
@@ -45,12 +47,20 @@ public:
         return name_;
     }
 
+    const std::string &getFullName() const override {
+        return fullName_;
+    }
+
     const std::string &getDeviceSn() const override {
         return deviceSn_;
     }
 
     const SourcePortInfoList &getSourcePortInfoList() const override {
         return sourcePortInfoList_;
+    }
+
+    std::shared_ptr<IDeviceManager> getDeviceManager() const override {
+        return context_->getDeviceManager();
     }
 
     bool operator==(const IDeviceEnumInfo &other) const override {
@@ -75,6 +85,7 @@ protected:
 
     // device info
     std::string name_;
+    std::string fullName_;
     std::string deviceSn_;
 
     // source port info list

@@ -1,21 +1,67 @@
 #include "RawPhaseStreamer.hpp"
+#include "IDevice.hpp"
 #include "frame/Frame.hpp"
 #include "frame/FrameFactory.hpp"
 #include "stream/StreamProfile.hpp"
 #include "logger/LoggerInterval.hpp"
 #include "stream/StreamProfileFactory.hpp"
-
+#include "property/InternalProperty.hpp"
 namespace libobsensor {
-RawPhaseStreamer::RawPhaseStreamer(IDevice *owner, const std::shared_ptr<IVideoStreamPort> &backend, std::shared_ptr<DepthEngineLoadFactory> &depthEngineLoader)
-    : owner_(owner), backend_(backend), depthEngineLoader_(depthEngineLoader) {
-    if(depthEngineLoader_ == nullptr) {
-        throw invalid_value_exception("depthEngineLoader_ is nullptr");
-    }
 
-    profileVector_.push_back({ { 320, 288 }, { 7680, 434 } });
-    profileVector_.push_back({ { 640, 576 }, { 7680, 434 } });
-    profileVector_.push_back({ { 1024, 1024 }, { 8192, 130 } });
-    profileVector_.push_back({ { 512, 512 }, { 8192, 290 } });
+// Chip defintions
+// Since we don't actually have direct access to the chip here, we will need to hardcode a few parameters
+const float    CHIP_ADC_UNITS_PER_DEG_C   = 5.45f;  // This is a hardcoded paramter
+const uint32_t CHIP_EFUSE_REG_TEMP_CAL_TJ = 20739;  // Read from EFUSE address 0x0B. LSB: Temp Cal Version, MSB: Forced Tj
+const uint32_t CHIP_EFUSE_REG_TJ_ADC_VAL  = 1927;   // Read from EFUSE address 0x0C. Temp Sensor ADC value at Tj
+
+#pragma pack(push, 1)
+struct InputInfo {
+    uint16_t systemId;
+    uint16_t nRows;
+    uint16_t nCols;
+    uint16_t nStreams;
+    uint16_t nBitsPerSample;
+    uint16_t mode;
+};
+
+typedef struct obcTransferHeader {
+    uint64_t frameCounter;
+    uint16_t extendtionLen;
+} ObcTransferHeader;
+
+typedef struct obcMetadataHeader {
+    uint64_t timestamp;  // us
+    uint16_t width;
+    uint16_t height;
+    uint32_t size;
+} ObcMetadataHeader;
+
+/****aligned 2 bytes****/
+typedef struct obcFrameHeader {
+    ObcTransferHeader transferHeader;
+    ObcMetadataHeader metadataHeader;
+} ObcFrameHeader;
+#pragma pack(pop)
+
+RawPhaseStreamer::RawPhaseStreamer(IDevice *owner, const std::shared_ptr<IVideoStreamPort> &backend)
+    : owner_(owner), backend_(backend), running_(false), depthEngineLoader_(std::make_shared<DepthEngineLoadFactory>()) {
+    auto global = depthEngineLoader_->getGlobalContext();
+    if(global == nullptr || global->loaded == false) {
+        throw io_exception("Failed to load depth engine");
+    }
+    backendProfileMap_.insert({ { 320, 288 }, { 7680, 434 } });
+    backendProfileMap_.insert({ { 640, 576 }, { 7680, 434 } });
+    backendProfileMap_.insert({ { 1024, 1024 }, { 8192, 130 } });
+    backendProfileMap_.insert({ { 512, 512 }, { 8192, 290 } });
+
+    backendStreamProfileList_ = backend_->getStreamProfileList();
+    updateStreamProfileList();
+
+    // try to stop stream to avoid that the device is in streaming state due to some reason such as a previous crash
+    auto propServer = owner->getPropertyServer();
+    if(propServer->isPropertySupported(OB_PROP_STOP_DEPTH_STREAM_BOOL, PROP_OP_WRITE, PROP_ACCESS_INTERNAL)) {
+        propServer->setPropertyValueT<bool>(OB_PROP_STOP_DEPTH_STREAM_BOOL, true);
+    }
     initNvramData();
     LOG_DEBUG("RawPhaseStreamer created");
 }
@@ -25,79 +71,97 @@ RawPhaseStreamer::~RawPhaseStreamer() noexcept {
         std::lock_guard<std::mutex> lock(cbMtx_);
         callbacks_.clear();
     }
+    TRY_EXECUTE(stopDepthEngineThread());
+    TRY_EXECUTE(stopAllStream());
 
     if(running_) {
-        if(realSp != nullptr) {
-            auto vsPort = std::dynamic_pointer_cast<IVideoStreamPort>(backend_);
-            TRY_EXECUTE(vsPort->stopStream(realSp));
-        }
-        running_ = false;
+        TRY_EXECUTE(backend_->stopAllStream());
     }
+    running_ = false;
+}
 
-    terminateDepthEngineThread();
+IDevice *RawPhaseStreamer::getOwner() const {
+    return owner_;
+}
 
-    if(nvramData_) {
-        delete[] nvramData_;
-        nvramData_ = nullptr;
+std::shared_ptr<const SourcePortInfo> RawPhaseStreamer::getSourcePortInfo() const {
+    return backend_->getSourcePortInfo();
+}
+
+void RawPhaseStreamer::updateStreamProfileList() {
+    streamProfileList_.clear();
+    for(auto &profile: backendStreamProfileList_) {
+        auto sp     = profile->as<VideoStreamProfile>();
+        auto format = sp->getFormat();
+        auto width  = sp->getWidth();
+        auto height = sp->getHeight();
+        auto fps    = sp->getFps();
+        for(auto &item: backendProfileMap_) {
+            if(item.second.first != width || item.second.second != height) {
+                continue;
+            }
+
+            if(!passiveIRModeEnabled_ && item.first.first == 1024 && item.first.second == 1024 && (fps == 30 || fps == 25)) {
+                continue;
+            }
+
+            auto newSp = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_VIDEO, format, item.first.first, item.first.second, fps);
+            streamProfileList_.push_back(newSp);
+        }
     }
 }
 
-void RawPhaseStreamer::start(std::shared_ptr<const StreamProfile> sp, FrameCallback callback) {
+StreamProfileList RawPhaseStreamer::getStreamProfileList() {
+    return streamProfileList_;
+}
+
+void RawPhaseStreamer::startStream(std::shared_ptr<const StreamProfile> sp, MutableFrameCallback callback) {
+    std::unique_lock<std::mutex> streamLock(streamMutex_);
+
     {
         std::lock_guard<std::mutex> lock(cbMtx_);
-        callbacks_[sp] = callback;
-        if(running_) {
-            return;
-        }
-    }
-
-    std::unique_lock<std::recursive_mutex> streamLock(streamMutex_);
-    auto                                   profile    = std::dynamic_pointer_cast<const VideoStreamProfile>(sp);
-    auto                                   resolution = std::make_pair(profile->getWidth(), profile->getHeight());
-    auto                                   iter =
-        std::find_if(profileVector_.begin(), profileVector_.end(),
-                     [resolution](const std::pair<std::pair<uint32_t, uint32_t>, std::pair<uint32_t, uint32_t>> &pair) { return pair.first == resolution; });
-
-    if(realSp != nullptr) {
-        auto profile_ = std::dynamic_pointer_cast<const VideoStreamProfile>(realSp);
-        if(profile_->getWidth() != profile->getWidth() || profile_->getHeight() != profile->getHeight() || profile_->getFps() != profile->getFps()
-           || profile_->getFormat() != profile->getFormat()) {
-            {
-                std::unique_lock<std::mutex> lock(frameQueueMutex_);
-                callbacks_.clear();
+        for(auto &cb: callbacks_) {
+            auto cbVsp = cb.first->as<VideoStreamProfile>();
+            auto spVsp = sp->as<VideoStreamProfile>();
+            if(cbVsp->getWidth() != spVsp->getWidth() || cbVsp->getHeight() != spVsp->getHeight() || cbVsp->getFps() != spVsp->getFps()) {
+                throw invalid_value_exception("Start stream failed, the stream profile is different from the previous stream profile");
             }
-            auto vsPort = std::dynamic_pointer_cast<IVideoStreamPort>(backend_);
-            vsPort->stopStream(realSp);
-            running_ = false;
         }
+        callbacks_[sp] = callback;
     }
 
-    // #if !defined(OS_ARM32) && !defined(OS_MACOS) && !defined(__ANDROID__)
-    auto mode = getDepthEngineMode(profile);
-    if(curDepthEngineMode_ != mode) {
-        terminateDepthEngineThread();
+    if(running_) {
+        return;
     }
-    // #endif
 
-    realSp = nullptr;
-    // std::shared_ptr<const StreamProfile> realSp = nullptr;
-    if(iter != profileVector_.end()) {
-        auto pair = iter->second;
-        realSp    = StreamProfileFactory::createVideoStreamProfile(profile->getType(), profile->getFormat(), pair.first, pair.second, profile->getFps());
-    }
-    auto vsPort = std::dynamic_pointer_cast<IVideoStreamPort>(backend_);
-    vsPort->startStream(realSp, [this](std::shared_ptr<Frame> frame) {
-        std::unique_lock<std::mutex> lock(frameQueueMutex_);
-        videoFrameObjectVec_.push(frame);
-        frameQueueCV_.notify_one();
-    });
-    callbacks_[sp] = callback;
     startDepthEngineThread(sp);
 
+    auto profile    = std::dynamic_pointer_cast<const VideoStreamProfile>(sp);
+    auto resolution = std::make_pair(profile->getWidth(), profile->getHeight());
+    auto iter =
+        std::find_if(backendProfileMap_.begin(), backendProfileMap_.end(),
+                     [resolution](const std::pair<std::pair<uint32_t, uint32_t>, std::pair<uint32_t, uint32_t>> &pair) { return pair.first == resolution; });
+
+    if(iter == backendProfileMap_.end()) {
+        throw invalid_value_exception("Start stream failed, stream profile not found");
+    }
+    auto &pair   = iter->second;
+    auto  realSp = StreamProfileFactory::createVideoStreamProfile(profile->getType(), profile->getFormat(), pair.first, pair.second, profile->getFps());
+    backend_->startStream(realSp, [this](std::shared_ptr<Frame> frame) {
+        std::unique_lock<std::mutex> lock(frameQueueMutex_);
+        frameQueue_.push(frame);
+        frameQueueCV_.notify_one();
+    });
     running_ = true;
 }
 
-void RawPhaseStreamer::stop(std::shared_ptr<const StreamProfile> sp) {
+void RawPhaseStreamer::stopStream(std::shared_ptr<const StreamProfile> sp) {
+    if(!running_) {
+        return;
+    }
+
+    std::unique_lock<std::mutex> streamLock(streamMutex_);
+
     {
         std::lock_guard<std::mutex> lock(cbMtx_);
         auto                        iter = callbacks_.find(sp);
@@ -110,17 +174,31 @@ void RawPhaseStreamer::stop(std::shared_ptr<const StreamProfile> sp) {
             return;
         }
     }
-    auto vsPort = std::dynamic_pointer_cast<IVideoStreamPort>(backend_);
-    vsPort->stopStream(sp);
+
+    backend_->stopAllStream();
     running_ = false;
 }
 
-void RawPhaseStreamer::parseRawPhaseFrame(std::shared_ptr<Frame> frame) {
-    // #if !defined(OS_ARM32) && !defined(OS_MACOS) && !defined(__ANDROID__)
-    if(depthEngineContext_ == nullptr) {
+void RawPhaseStreamer::stopAllStream() {
+    std::unique_lock<std::mutex> streamLock(streamMutex_);
+    if(!running_) {
         return;
     }
 
+    {
+        std::lock_guard<std::mutex> lock(cbMtx_);
+        callbacks_.clear();
+    }
+
+    backend_->stopAllStream();
+    running_ = false;
+}
+
+bool RawPhaseStreamer::isRunning() const {
+    return running_;
+}
+
+void RawPhaseStreamer::parseAndOutputFrame(std::shared_ptr<Frame> frame) {
     InputInfo inputInfo   = { 0 };
     size_t    captureSize = 0, rawFrameSize = 0; /** headerSize = 0*/
 
@@ -167,13 +245,7 @@ void RawPhaseStreamer::parseRawPhaseFrame(std::shared_ptr<Frame> frame) {
     uint8_t *srcData = (uint8_t *)data + rawFrameSize - (inputInfo.nRows * 2);
     memcpy(dstData, srcData, mipiHeadSize);
 
-    auto global = depthEngineLoader_->getGlobalContext();
-
-    if(!global->loaded) {
-        LOG_ERROR("Failed to load depth engine plugin,init depth engine failed.");
-        return;
-    }
-
+    auto   global      = depthEngineLoader_->getGlobalContext();
     size_t outputBytes = global->plugin.depth_engine_get_output_frame_size(depthEngineContext_);
 
     std::unique_ptr<uint8_t> outputBuffer(new uint8_t[outputBytes]);
@@ -190,35 +262,23 @@ void RawPhaseStreamer::parseRawPhaseFrame(std::shared_ptr<Frame> frame) {
         float    sensorTempOffset = CHIP_EFUSE_REG_TJ_ADC_VAL - Tj * CHIP_ADC_UNITS_PER_DEG_C;
 
         {
-            std::lock_guard<std::mutex> lk(temperatureMutex_);
-            float                       ldmTemp = currentTemperature_.ldmTemp;
-            if(ldmTemp == -1.0f) {
-                int32_t resvValue      = ((int32_t)mipiHdr.resv[0]) | ((int32_t)mipiHdr.resv[1] << 16);
-                int16_t integerPart    = static_cast<uint16_t>(resvValue / 1000);
-                int16_t fractionalPart = static_cast<uint16_t>(resvValue % 1000);
 
-                float tmpValue               = static_cast<float>(integerPart) + static_cast<float>(fractionalPart) / 1000.0f;
-                inputFrameInfo.laser_temp[0] = tmpValue;
-                // LOG_INFO("get temp from ebd:{}", tmpValue);
-                // LOG_INFO("origin data:{:x},{:x},{:x},{:x}", mipiHdr.resv[0], mipiHdr.resv[1], mipiHdr.resv[2], mipiHdr.resv[3]);
-            }
-            else {
-                // inputFrameInfo.laser_temp[0] = ldmTemp;  // This should be read directly from the laser
+            int32_t resvValue      = ((int32_t)mipiHdr.resv[0]) | ((int32_t)mipiHdr.resv[1] << 16);
+            int16_t integerPart    = static_cast<uint16_t>(resvValue / 1000);
+            int16_t fractionalPart = static_cast<uint16_t>(resvValue % 1000);
 
-                int32_t resvValue      = ((int32_t)mipiHdr.resv[0]) | ((int32_t)mipiHdr.resv[1] << 16);
-                int16_t integerPart    = static_cast<uint16_t>(resvValue / 1000);
-                int16_t fractionalPart = static_cast<uint16_t>(resvValue % 1000);
-
-                float tmpValue               = static_cast<float>(integerPart) + static_cast<float>(fractionalPart) / 1000.0f;
-                inputFrameInfo.laser_temp[0] = tmpValue;
-            }
+            float tmpValue               = static_cast<float>(integerPart) + static_cast<float>(fractionalPart) / 1000.0f;
+            inputFrameInfo.laser_temp[0] = tmpValue;
+            // LOG_INFO("get temp from ebd:{}", tmpValue);
+            // LOG_INFO("origin data:{:x},{:x},{:x},{:x}", mipiHdr.resv[0], mipiHdr.resv[1], mipiHdr.resv[2], mipiHdr.resv[3]);
         }
+
         inputFrameInfo.laser_temp[1]               = 0;  // This can just be populated with 0
         inputFrameInfo.sensor_temp                 = (((float)mipiHdr.tempSensorADC.bits.adcVal) - sensorTempOffset) / CHIP_ADC_UNITS_PER_DEG_C;
         inputFrameInfo.center_of_exposure_in_ticks = 0;  // This isn't used within the depth engine
 
         k4a_depth_engine_output_type_t outputType = k4a_depth_engine_output_type_t::K4A_DEPTH_ENGINE_OUTPUT_TYPE_Z_DEPTH;
-        if(isPassiveIR_) {
+        if(passiveIRModeEnabled_) {
             outputType = k4a_depth_engine_output_type_t::K4A_DEPTH_ENGINE_OUTPUT_TYPE_PCM;
         }
 
@@ -240,20 +300,19 @@ void RawPhaseStreamer::parseRawPhaseFrame(std::shared_ptr<Frame> frame) {
             abFrame = zFrame;
         }
 
-        std::shared_ptr<const libobsensor::VideoStreamProfile> depthStreamProfile;
-        std::shared_ptr<const libobsensor::VideoStreamProfile> irStreamProfile;
+        std::lock_guard<std::mutex> lock(cbMtx_);
         for(const auto &iter: callbacks_) {
             if(iter.first->getType() == OB_STREAM_DEPTH && outputType != k4a_depth_engine_output_type_t::K4A_DEPTH_ENGINE_OUTPUT_TYPE_PCM) {
-                depthStreamProfile = iter.first->as<libobsensor::VideoStreamProfile>();
-                auto depthFrame    = FrameFactory::createFrameFromStreamProfile(depthStreamProfile);
+                auto depthStreamProfile = iter.first->as<libobsensor::VideoStreamProfile>();
+                auto depthFrame         = FrameFactory::createFrameFromStreamProfile(depthStreamProfile);
                 depthFrame->updateData((const uint8_t *)zFrame, nPixels * 2);
                 depthFrame->setDataSize(nPixels * 2);
                 depthFrame->copyInfoFromOther(frame);
                 iter.second(depthFrame);
             }
             else if(iter.first->getType() == OB_STREAM_IR) {
-                irStreamProfile = iter.first->as<libobsensor::VideoStreamProfile>();
-                auto irFrame    = FrameFactory::createFrameFromStreamProfile(irStreamProfile);
+                auto irStreamProfile = iter.first->as<libobsensor::VideoStreamProfile>();
+                auto irFrame         = FrameFactory::createFrameFromStreamProfile(irStreamProfile);
                 irFrame->updateData((const uint8_t *)abFrame, nPixels * 2);
                 irFrame->setDataSize(nPixels * 2);
                 irFrame->copyInfoFromOther(frame);
@@ -261,17 +320,14 @@ void RawPhaseStreamer::parseRawPhaseFrame(std::shared_ptr<Frame> frame) {
             }
         }
     }
-
-    // #endif
 }
 
-// #if !defined(OS_ARM32) && !defined(OS_MACOS) && !defined(__ANDROID__)
 k4a_depth_engine_mode_t RawPhaseStreamer::getDepthEngineMode(std::shared_ptr<const StreamProfile> profile) {
     auto                    videoProfile = std::dynamic_pointer_cast<const VideoStreamProfile>(profile);
     k4a_depth_engine_mode_t mode         = K4A_DEPTH_ENGINE_MODE_UNKNOWN;
     if((videoProfile->getWidth() == 1024 && videoProfile->getHeight() == 1024) || ((videoProfile->getWidth() == 8192) && videoProfile->getHeight() == 130)
        || (videoProfile->getWidth() == 4096 && videoProfile->getHeight() == 1154)) {
-        if(isPassiveIR_) {
+        if(passiveIRModeEnabled_) {
             mode = K4A_DEPTH_ENGINE_MODE_PCM;
         }
         else {
@@ -290,64 +346,57 @@ k4a_depth_engine_mode_t RawPhaseStreamer::getDepthEngineMode(std::shared_ptr<con
 
     return mode;
 }
-// #endif
 
-void RawPhaseStreamer::terminateDepthEngineThread() {
-    threadExit_ = true;
-    if(depthEngineThread_.joinable()) {
-        {
-            std::unique_lock<std::mutex> lock(frameQueueMutex_);
-            frameQueueCV_.notify_one();
-        }
-        depthEngineThread_.join();
+void RawPhaseStreamer::stopDepthEngineThread() {
+    if(!depthEngineThread_.joinable()) {
+        return;
     }
+    depthEngineThreadExit_ = true;
+    {
+        std::unique_lock<std::mutex> lock(frameQueueMutex_);
+        frameQueueCV_.notify_one();
+    }
+    depthEngineThread_.join();
 }
 
 void RawPhaseStreamer::startDepthEngineThread(std::shared_ptr<const StreamProfile> profile) {
-    terminateDepthEngineThread();
-    threadExit_        = false;
-    depthEngineThread_ = std::thread(&RawPhaseStreamer::depthEngineThreadFunc, this, profile);
-    std::mutex                   mtx;
-    std::unique_lock<std::mutex> lk(mtx);
-    deInitCv_.wait(lk);
-}
-
-void RawPhaseStreamer::depthEngineThreadFunc(std::shared_ptr<const StreamProfile> profile) {
-    uint8_t retry  = 10;
-    bool    status = false;
-    while(retry-- > 0 && !status) {
-        status = initDepthEngine(profile);
-        utils::sleepMs(300);
-    }
-    deInitCv_.notify_all();
-
-    std::shared_ptr<Frame> videoFrame;
-    while(!threadExit_) {
-        {
-            std::unique_lock<std::mutex> lock(frameQueueMutex_);
-            frameQueueCV_.wait(lock, [&]() { return !videoFrameObjectVec_.empty() || threadExit_; });
-            if(threadExit_) {
-                break;
-            }
-
-            videoFrame = videoFrameObjectVec_.front();
-            videoFrameObjectVec_.pop();
+    if(depthEngineThread_.joinable()) {
+        auto lastVsp = lastStreamProfile_->as<VideoStreamProfile>();
+        auto vsp     = profile->as<VideoStreamProfile>();
+        if(lastVsp->getWidth() == vsp->getWidth() && lastVsp->getHeight() == vsp->getHeight()) {
+            return;
         }
-        parseRawPhaseFrame(videoFrame);
+        stopDepthEngineThread();
     }
 
-    // // deinit
-    deinitDepthEngine();
+    lastStreamProfile_     = profile;
+    depthEngineThreadExit_ = false;
+    depthEngineThread_     = std::thread([profile, this] {
+        // depth engine must be initialize, using and deinitialize in the same thread
+        // todo: catch exceptions
+        initDepthEngine(profile);  // init depth engine
+        std::shared_ptr<Frame> frame;
+        while(!depthEngineThreadExit_) {
+            {
+                std::unique_lock<std::mutex> lock(frameQueueMutex_);
+                frameQueueCV_.wait(lock, [&]() { return !frameQueue_.empty() || depthEngineThreadExit_; });
+                if(depthEngineThreadExit_) {
+                    break;
+                }
+
+                frame = frameQueue_.front();
+                frameQueue_.pop();
+            }
+            parseAndOutputFrame(frame);
+        }
+        deinitDepthEngine();
+    });
 }
 
-bool RawPhaseStreamer::initDepthEngine(std::shared_ptr<const StreamProfile> profile) {
-    // #if !defined(OS_ARM32) && !defined(OS_MACOS) && !defined(__ANDROID__)
-    std::unique_lock<std::recursive_mutex> lk(streamMutex_, std::defer_lock);
-    if(!nvramData_ || nvramSize_ == 0) {
-        LOG_ERROR("Depth engine create and initialize failed! Nvram data is invalid.");
-        return false;
-    }
-    LOG_INFO("Depth engine got nvram data size:{}", nvramSize_);
+void RawPhaseStreamer::initDepthEngine(std::shared_ptr<const StreamProfile> profile) {
+    LOG_DEBUG("Depth engine create and initialize...");
+
+    waitNvramDataReady();
 
     k4a_depth_engine_input_type_t deInputType = k4a_depth_engine_input_type_t::K4A_DEPTH_ENGINE_INPUT_TYPE_UNKNOWN;
     k4a_depth_engine_mode_t       mode        = K4A_DEPTH_ENGINE_MODE_UNKNOWN;
@@ -358,150 +407,91 @@ bool RawPhaseStreamer::initDepthEngine(std::shared_ptr<const StreamProfile> prof
     deInputType = (mode == K4A_DEPTH_ENGINE_MODE_MEGA_PIXEL) ? k4a_depth_engine_input_type_t::K4A_DEPTH_ENGINE_INPUT_TYPE_8BIT_COMPRESSED_RAW
                                                              : k4a_depth_engine_input_type_t::K4A_DEPTH_ENGINE_INPUT_TYPE_16BIT_RAW;
 
-    if(!depthEngineContext_) {
-        curDepthEngineMode_ = mode;
+    curDepthEngineMode_                    = mode;
+    auto                           global  = depthEngineLoader_->getGlobalContext();
+    k4a_depth_engine_result_code_t retCode = global->plugin.depth_engine_create_and_initialize(&depthEngineContext_, nvramData_.size(), nvramData_.data(), mode,
+                                                                                               deInputType, nullptr, nullptr, nullptr);
 
-        auto global = depthEngineLoader_->getGlobalContext();
-
-        if(!global->loaded) {
-            LOG_ERROR("Failed to load depth engine plugin,init depth engine failed.");
-            return false;
-        }
-        LOG_INFO("use dynlib load depthengine lib......");
-        k4a_depth_engine_result_code_t retCode =
-            global->plugin.depth_engine_create_and_initialize(&depthEngineContext_, nvramSize_, nvramData_, mode, deInputType, nullptr, nullptr, nullptr);
-
-        if(K4A_DEPTH_ENGINE_RESULT_SUCCEEDED != retCode) {
-            LOG_ERROR("Depth engine create and initialize failed,retCode:{}", retCode);
-            return false;
-        }
-        else {
-            LOG_INFO("Depth engine init succeed!");
-        }
+    if(K4A_DEPTH_ENGINE_RESULT_SUCCEEDED != retCode) {
+        throw io_exception(utils::string::to_string() << "Depth engine create and initialize failed,retCode" << retCode);
     }
-    else {
-        LOG_INFO("Depth engine already inited!");
-    }
-    // #endif
-    return true;
+
+    LOG_DEBUG("Depth engine init succeed!");
 }
 
 void RawPhaseStreamer::deinitDepthEngine() {
-    // #if !defined(OS_ARM32) && !defined(OS_MACOS) && !defined(__ANDROID__)
-    if(depthEngineContext_ == nullptr)
-        return;
-
     auto global = depthEngineLoader_->getGlobalContext();
-    if(!global->loaded) {
-        LOG_ERROR("Failed to load depth engine plugin,init depth engine failed.");
-        return;
-    }
     global->plugin.depth_engine_destroy(&depthEngineContext_);
     depthEngineContext_ = nullptr;
-    // #endif
-}
-
-IDevice *RawPhaseStreamer::getOwner() const {
-    return owner_;
 }
 
 void RawPhaseStreamer::initNvramData() {
-    // #if !defined(OS_ARM32) && !defined(OS_MACOS) && !defined(__ANDROID__)
-
     auto global = depthEngineLoader_->getGlobalContext();
-
     if(!global->loaded) {
-        LOG_ERROR("Failed to load depth engine plugin");
+        throw io_exception("Failed to load depth engine plugin");
     }
-    else {
-        LOG_INFO("Succeed to load depth engine plugin");
-    }
+    LOG_INFO("Succeed to load depth engine plugin");
 
-    auto vsPort = std::dynamic_pointer_cast<IVideoStreamPort>(backend_);
-    if(!vsPort) {
-        throw invalid_value_exception("Backend is not a valid IVideoStreamPort");
-    }
-    auto profileList = vsPort->getStreamProfileList();
-
-    for(auto &sp: profileList) {
-        auto profile = std::dynamic_pointer_cast<const VideoStreamProfile>(sp);
+    std::shared_ptr<const StreamProfile> firmwareDataProfile;
+    for(auto &sp: backendStreamProfileList_) {
+        auto profile = sp->as<VideoStreamProfile>();
         if(profile->getWidth() == 1024 && profile->getHeight() == 512 && profile->getFps() == 5) {
             firmwareDataProfile = sp;
             break;
         }
     }
-    if(firmwareDataProfile) {
-        vsPort->startStream(firmwareDataProfile, [&](std::shared_ptr<const Frame> frame) { onNvramDataCallback(frame); });
+    if(!firmwareDataProfile) {
+        throw io_exception("Can not find firmware data profile.");
     }
-    else {
-        LOG_ERROR("Can not find firmware data profile.");
-    }
-    // #endif
-}
 
-void RawPhaseStreamer::onNvramDataCallback(std::shared_ptr<const Frame> frame) {
-    std::unique_lock<std::recursive_mutex> lk(streamMutex_, std::defer_lock);
-    if(lk.try_lock()) {
-        ObcFrameHeader *frameHeader = (ObcFrameHeader *)frame->getData();
-        nvramSize_                  = frameHeader->metadataHeader.size;
-        if(!nvramData_) {
-            nvramData_ = new uint8_t[nvramSize_];
-        }
-        memcpy(nvramData_, (uint8_t *)frame->getData() + sizeof(ObcFrameHeader), nvramSize_);
-    }
-}
+    {
+        std::unique_lock<std::mutex> streamLock(streamMutex_);
 
-void RawPhaseStreamer::setNvramDataStreamStopFunc(std::function<void()> stopFunc) {
-    // #if !defined(OS_ARM32) && !defined(OS_MACOS) && !defined(__ANDROID__)
-    stopNvramDataFunc_ = stopFunc;
-    while(true) {
-        {
-            if(nvramData_ != nullptr && nvramSize_ != 0) {
-                LOG_INFO("got nvram data succeed.");
-                stopGetNvramDataStream();
-                break;
+        backend_->startStream(firmwareDataProfile, [&](std::shared_ptr<const Frame> frame) {
+            ObcFrameHeader *frameHeader = (ObcFrameHeader *)frame->getData();
+            nvramData_.resize(frameHeader->metadataHeader.size);
+            {
+                std::unique_lock<std::mutex> lk(nvramMutex_);
+                memcpy(nvramData_.data(), (uint8_t *)frame->getData() + sizeof(ObcFrameHeader), frameHeader->metadataHeader.size);
             }
-            else {
-                LOG_INFO("got nvram data failed.retrying...");
-            }
-        }
-        utils::sleepMs(300);
+            nvramCV_.notify_all();
+        });
     }
-    // #endif
+
+    auto wait_thread = std::thread([this]() {
+        std::unique_lock<std::mutex> streamLock(streamMutex_);
+        waitNvramDataReady();
+        backend_->stopAllStream();
+    });
+    wait_thread.detach();
 }
 
-void RawPhaseStreamer::stopGetNvramDataStream() {
-    std::unique_lock<std::recursive_mutex> streamLock(streamMutex_);
-    if(nvramData_ != nullptr && nvramSize_ != 0 && firmwareDataProfile != nullptr) {
-        auto vsPort = std::dynamic_pointer_cast<IVideoStreamPort>(backend_);
-        vsPort->stopStream(firmwareDataProfile);
-        if(stopNvramDataFunc_) {
-            stopNvramDataFunc_();
-        }
+void RawPhaseStreamer::waitNvramDataReady() {
+    std::unique_lock<std::mutex> lk(nvramMutex_);
+    auto                         state = nvramCV_.wait_for(lk, std::chrono::seconds(10), [this] { return !nvramData_.empty(); });
+    if(!state) {
+        throw io_exception("Failed to get NVRAM data, timeout!");
     }
+    LOG_DEBUG("NVRAM data is ready!");
 }
 
-void RawPhaseStreamer::setIsPassiveIR(bool isPassiveIR) {
-    isPassiveIR_ = isPassiveIR;
+void RawPhaseStreamer::enablePassiveIRMode(bool enable) {
+    passiveIRModeEnabled_ = enable;
 
-    for(auto it = profileVector_.begin(); it != profileVector_.end();) {
-        if(it->first.first == 1024 && it->first.second == 1024) {
-            it = profileVector_.erase(it);
+    for(auto &item: backendProfileMap_) {
+        if(item.first.first != 1024 || item.first.second != 1024) {
+            continue;
+        }
+        if(passiveIRModeEnabled_) {
+            item.second = { 8192, 130 };
         }
         else {
-            ++it;
+            item.second = { 4096, 1154 };
         }
+        break;
     }
 
-    if(isPassiveIR) {
-        profileVector_.push_back({ { 1024, 1024 }, { 8192, 130 } });
-    }
-    else {
-        profileVector_.push_back({ { 1024, 1024 }, { 4096, 1154 } });
-    }
-    //  streamProfileList_.clear();
-
-    // streamProfileList_ = getStreamProfileList();
+    updateStreamProfileList();
 }
 
 }  // namespace libobsensor

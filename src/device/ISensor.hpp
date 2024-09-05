@@ -13,9 +13,17 @@ typedef enum {
     STREAM_STATE_STARTING,   // starting (change to this state at the beginning of start function)
     STREAM_STATE_STREAMING,  // streaming (change to this state when recived first frame from backend)
     STREAM_STATE_STOPPING,   // stopping (change to this state at the beginning of stop function)
-    STREAM_STATE_STOPPED,     // stoped (change to this state after stop function called, it is also the initial state)
+    STREAM_STATE_STOPPED,    // stoped (change to this state after stop function called, it is also the initial state)
     STREAM_STATE_ERROR,      // error (change to this state when error occurred)
 } OBStreamState;
+
+#define STREAM_STATE_STR(state)                               \
+    (state == STREAM_STATE_STARTING    ? "STARTING"           \
+     : state == STREAM_STATE_STREAMING ? "STREAMING"          \
+     : state == STREAM_STATE_STOPPING  ? "STOPPING"           \
+     : state == STREAM_STATE_STOPPED   ? "STOPPED"            \
+     : state == STREAM_STATE_ERROR     ? "STREAM_STATE_ERROR" \
+                                       : "UNKNOWN")
 
 typedef std::function<void(OBStreamState, const std::shared_ptr<const StreamProfile> &)> StreamStateChangedCallback;
 

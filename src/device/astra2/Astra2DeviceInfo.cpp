@@ -7,7 +7,7 @@
 
 namespace libobsensor {
 
-const std::map<int, std::string> Astra2DeviceNameMap = { { 0x0670, "Astra2" } };
+const std::map<int, std::string> Astra2DeviceNameMap = { { 0x0660, "Astra2" } };
 
 Astra2DeviceInfo::Astra2DeviceInfo(const SourcePortInfoList groupedInfoList) {
     auto portInfo = std::dynamic_pointer_cast<const USBSourcePortInfo>(groupedInfoList.front());
@@ -19,6 +19,8 @@ Astra2DeviceInfo::Astra2DeviceInfo(const SourcePortInfoList groupedInfoList) {
     else {
         name_ = "Astra2 series device";
     }
+
+    fullName_ = "Orbbec " + name_;
 
     pid_                = portInfo->pid;
     vid_                = portInfo->vid;

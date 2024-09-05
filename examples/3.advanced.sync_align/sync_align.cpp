@@ -6,12 +6,13 @@
 #include <mutex>
 #include <thread>
 
-bool    sync       = false;
-float   alpha      = 0.5;
-uint8_t align_mode = 0;
+std::string modeStatu = "";  // show the current align mode
+bool        sync      = false;
+float       alpha     = 0.5;
+uint8_t     alignMode = 0;  // 0:SwD2C  1:C2D   2:HwD2C  3:Turn off D2C or C2D
 
 // key press event processing
-void handleKeyPress(ob_smpl::CVWindow &win, std::shared_ptr<ob::Pipeline> pipe, int key) {
+void handleKeyPress(ob_smpl::CVWindow &win, std::shared_ptr<ob::Pipeline> pipe, int key, std::shared_ptr<ob::Config> conf) {
     ////Get the key value
     if(key == 'F' || key == 'f') {
         // Press the F key to switch synchronization
@@ -29,8 +30,36 @@ void handleKeyPress(ob_smpl::CVWindow &win, std::shared_ptr<ob::Pipeline> pipe, 
     }
     else if(key == 't' || key == 'T') {
         // Press the T key to switch align mode
-        align_mode = (align_mode + 1) % 2;
-        win.addLog("Align Mode: " + std::string(align_mode == 0 ? "Depth to Color" : "Color to Depth"));
+        alignMode = (alignMode + 1) % 4;
+        try {
+            if(alignMode == 0) {
+                modeStatu = "Software Depth to Color";
+                win.addLog("Align Mode:" + modeStatu);
+            }
+            else if(alignMode == 1) {
+                modeStatu = "Software Color to Depth";
+                win.addLog("Align Mode:" + modeStatu);
+            }
+            else if(alignMode == 2) {
+                modeStatu = "Hardware Depth to Color";
+                // alignMode  = 0;
+                pipe->stop();
+                conf->setAlignMode(ALIGN_D2C_HW_MODE);
+                pipe->start(conf);
+                win.addLog("Align Mode:" + modeStatu);
+            }
+            else if(alignMode == 3) {
+                modeStatu = "Turn off D2C or C2D";
+                pipe->stop();
+                conf->setAlignMode(ALIGN_DISABLE);
+                pipe->start(conf);
+                win.addLog(modeStatu);
+            }
+        }
+        catch(const std::exception &e) {
+            std::cout << "Error: " << e.what() << std::endl;
+            win.addLog(modeStatu + "turn on failed");
+        }
     }
 }
 
@@ -56,7 +85,7 @@ int main(void) try {
     // set key prompt
     win.setKeyPrompt("'T': Switch Align Mode, 'F': Toggle Synchronization, '+/-': Adjust Transparency");
     // set the callback function for the window to handle key press events
-    win.setKeyPressedCallback([&win, pipe](int key) { handleKeyPress(win, pipe, key); });
+    win.setKeyPressedCallback([&win, pipe, config](int key) { handleKeyPress(win, pipe, key, config); });
 
     // Create a filter to align depth frame to color frame
     auto depth2colorAlign = std::make_shared<ob::Align>(OB_STREAM_COLOR);
@@ -75,15 +104,21 @@ int main(void) try {
             continue;
         }
 
-        // Get filter according to the align mode
-        std::shared_ptr<ob::Filter> alignFilter = depth2colorAlign;
-        if(align_mode % 2 == 1) {
-            alignFilter = color2depthAlign;
-        }
+        // if choose to turn on D2C or C2D
+        if(alignMode != 3) {
+            // Get filter according to the align mode
+            std::shared_ptr<ob::Filter> alignFilter = depth2colorAlign;
+            if(alignMode == 1) {
+                alignFilter = color2depthAlign;
+            }
 
-        // push the frameset to the Align Filter to align the frames.
-        // The frameset will be processed in an internal thread, and the resulting frames will be asynchronously output via the callback function.
-        alignFilter->pushFrame(frameSet);
+            // push the frameset to the Align Filter to align the frames.
+            // The frameset will be processed in an internal thread, and the resulting frames will be asynchronously output via the callback function.
+            alignFilter->pushFrame(frameSet);
+        }
+        else {  // choose to turn off D2C or C2D
+            win.pushFramesToView(frameSet);
+        }
     }
 
     // Stop the Pipeline, no frame data will be generated

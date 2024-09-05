@@ -16,17 +16,7 @@ Frameset is a combination of different types of Frames
 
 ## Code overview
 
-### 1. Creates instance
-
-```c++
-// Create a pipeline with default device
-ob::Pipeline pipe;
-
-// Get the device from the pipeline
-auto device = pipe.getDevice();
-```
-
-### 2. Check if the device supports HDR merge
+### 1. Check if the device supports HDR merge
 
 ```c++
 if(!device->isPropertySupported(OB_STRUCT_DEPTH_HDR_CONFIG, OB_PERMISSION_READ_WRITE)) {
@@ -37,7 +27,7 @@ if(!device->isPropertySupported(OB_STRUCT_DEPTH_HDR_CONFIG, OB_PERMISSION_READ_W
 }
 ```
 
-### 3. Get depth stream profile
+### 2. Get depth stream profile
 
 Get all stream profiles of the depth camera, including stream resolution, frame rate, and frame format
 
@@ -47,7 +37,7 @@ auto depthProfile  = depthProfiles->getProfile(OB_PROFILE_DEFAULT);
 config->enableStream(depthProfile);
 ```
 
-### 4. Create HDRMerge
+### 3. Create HDRMerge
 
 Create HDRMerge post processor to merge depth frames betweens different hdr sequence ids.
 The HDRMerge also supports processing of infrared frames.
@@ -59,7 +49,7 @@ auto hdrMerge = ob::FilterFactory::createFilter("HDRMerge");
 ### 5. Configure and enable Hdr stream
 
 ```c++
-OBHdrConfig obHdrConfig;
+    OBHdrConfig obHdrConfig;
     obHdrConfig.enable     = true;  // enable HDR merge
     obHdrConfig.exposure_1 = 7500;
     obHdrConfig.gain_1     = 24;
@@ -68,18 +58,7 @@ OBHdrConfig obHdrConfig;
     device->setStructuredData(OB_STRUCT_DEPTH_HDR_CONFIG, reinterpret_cast<uint8_t *>(&obHdrConfig), sizeof(OBHdrConfig));
 ```
 
-### 6. Start the pipeline with config
-
-```c++
-pipe.start(config);
-
-//when mergeRequired is true, the merged frame will be displayed, otherwise the original frame will be displayed.
-bool mergeRequired       = true;
-//alternateShowOrigin use to toggle alternate show origin frame.
-bool alternateShowOrigin = true;
-```
-
-### 7. Stop the pipeline
+### 7. Stop the pipeline and close hdr merge
 
 ```c++
 // Stop the Pipeline, no frame data will be generated
@@ -101,4 +80,4 @@ Press the 'N' key in the window to Toggle alternate show origin frame.
 
 ### Result
 
-![hdr](/docs/resource/hdr.gif)
+![hdr](/docs/resource/hdr.jpg)

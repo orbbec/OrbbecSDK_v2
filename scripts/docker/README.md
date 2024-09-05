@@ -1,4 +1,4 @@
-# OpenOrbbecSDK Docker Environment Setup
+# OrbbecSDK Docker Environment Setup
 
 ## Installing Docker
 
@@ -124,7 +124,7 @@ export ADE_DOCKER_RUN_ARGS="--cap-add=SYS_PTRACE \
 "
 
 export ADE_IMAGES=" \
- openorbbecsdk-env:x86_64_20240711 \
+ orbbecsdk-env:x86_64_20240711 \
 "
 ```
 

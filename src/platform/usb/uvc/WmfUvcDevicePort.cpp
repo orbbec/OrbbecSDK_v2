@@ -795,6 +795,13 @@ StreamProfileList WmfUvcDevicePort::getStreamProfileList() {
             utils::unusedVar(media_type);
             utils::unusedVar(quit);
             profileList_.push_back(mfp.profile);
+            if(mfp.profile->getFormat() == OB_FORMAT_NV12) {
+                std::shared_ptr<StreamProfile> sp         = mfp.profile;
+                auto bgrProfile = sp->clone(OB_FORMAT_BGR)->as<VideoStreamProfile>();
+                profileList_.push_back(bgrProfile);
+                auto bgraProfile = sp->clone(OB_FORMAT_BGRA)->as<VideoStreamProfile>();
+                profileList_.push_back(bgraProfile);
+            }
         });
         if(recoveryD3) {
             setPowerStateD3();
@@ -841,14 +848,14 @@ void WmfUvcDevicePort::foreachProfile(std::function<void(const MFProfile &profil
 
             auto format = utils::uvcFourccToOBFormat(device_fourcc);
             if(format != OB_FORMAT_UNKNOWN) {
-                auto sp = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_VIDEO, format, width, height, currFps);
+                std::shared_ptr<StreamProfile> sp = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_VIDEO, format, width, height, currFps);
                 sp->setIndex(static_cast<uint8_t>(index));
 
                 MFProfile mfp;
                 mfp.index    = index;
                 mfp.min_rate = frameRateMin;
                 mfp.max_rate = frameRateMax;
-                mfp.profile  = sp;
+                mfp.profile  = sp->as<VideoStreamProfile>();
 
                 action(mfp, pMediaType, quit);
             }

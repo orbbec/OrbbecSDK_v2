@@ -19,11 +19,22 @@ VideoSensor::VideoSensor(IDevice *owner, OBSensorType sensorType, const std::sha
         throw invalid_value_exception("Backend is not a valid IVideoStreamPort");
     }
 
+    try {
+        // try to stop stream to avoid that the device is in streaming state due to some reason such as a previous crash
+        trySendStopStreamVendorCmd();
+    }
+    catch(const std::exception &e) {
+        LOG_WARN("Failed to stop stream: {}", e.what());
+    }
+
     auto lazySelf   = std::make_shared<LazySensor>(owner, sensorType_);
     auto streamType = utils::mapSensorTypeToStreamType(sensorType_);
 
     auto backendSpList = vsPort->getStreamProfileList();
     for(auto &backendSp: backendSpList) {
+        if(backendSp->getType() != OB_STREAM_VIDEO && backendSp->getType() != streamType) {
+            continue;
+        }
         auto sp = backendSp->clone();
         sp->bindOwner(lazySelf);
         sp->setType(streamType);
@@ -73,7 +84,7 @@ VideoSensor::~VideoSensor() noexcept {
 
 #define MIN_VIDEO_FRAME_DATA_SIZE 1024
 void VideoSensor::start(std::shared_ptr<const StreamProfile> sp, FrameCallback callback) {
-
+    LOG_INFO("Try to start stream: {}", sp);
     // validate stream profile
     {
         auto owner    = getOwner();
@@ -106,6 +117,7 @@ void VideoSensor::start(std::shared_ptr<const StreamProfile> sp, FrameCallback c
     }
 
     auto vsPort = std::dynamic_pointer_cast<IVideoStreamPort>(backend_);
+    LOG_INFO("Start backend stream: {}", currentBackendStreamProfile_);
     vsPort->startStream(currentBackendStreamProfile_, [this](std::shared_ptr<Frame> frame) { onBackendFrameCallback(frame); });
 }
 
@@ -208,7 +220,7 @@ void VideoSensor::trySendStopStreamVendorCmd() {
         case OB_SENSOR_COLOR:
             propertyId = OB_PROP_STOP_COLOR_STREAM_BOOL;
             break;
-        case OB_SENSOR_IR_RIGHT:  // follow lumiaozi -- Gemini2 has IR_RIGHT and Depth use same data channel
+        case OB_SENSOR_IR_RIGHT:
         case OB_SENSOR_DEPTH:
             propertyId = OB_PROP_STOP_DEPTH_STREAM_BOOL;
             break;
@@ -216,9 +228,9 @@ void VideoSensor::trySendStopStreamVendorCmd() {
             return;
         }
     }
-
-    BEGIN_TRY_EXECUTE(propServer->setPropertyValueT<bool>(propertyId, true);)
-    CATCH_EXCEPTION_AND_LOG(ERROR, "Set property value to stop stream error! @{}", sensorType_);
+    if(propServer->isPropertySupported(propertyId, PROP_OP_WRITE, PROP_ACCESS_INTERNAL)) {
+        propServer->setPropertyValueT<bool>(propertyId, true);
+    }
 }
 
 void VideoSensor::updateFormatFilterConfig(const std::vector<FormatFilterConfig> &configs) {

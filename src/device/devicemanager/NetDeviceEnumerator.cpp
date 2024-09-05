@@ -1,6 +1,11 @@
 #include "NetDeviceEnumerator.hpp"
 #include "femtomega/FemtoMegaDeviceInfo.hpp"
+<<<<<<< HEAD
 #include "gemini330/G330DeviceInfo.hpp"
+=======
+#include "ethernet/RTSPStreamPort.hpp"
+#include "ethernet/NetDataStreamPort.hpp"
+>>>>>>> develop
 
 #include "utils/Utils.hpp"
 
@@ -131,44 +136,27 @@ void NetDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType
 }
 
 std::shared_ptr<IDevice> NetDeviceEnumerator::createDevice(std::string address, uint16_t port) {
-    // auto vendorPort = platform_->queryNetVendorPort(address, port);
-    // if(!vendorPort) {
-    //     throw invalid_value_exception(utils ::string::to_string() << "Could not find device, address=" << address << ", port=" << port);
-    // }
-    // std::shared_ptr<IDevice> device;
-    // SourcePortInfoList       portInfoList   = { vendorPort };
-    // auto                     deviceInfoList = deviceInfoMatch(portInfoList);
-    // auto                     deviceInfo     = deviceInfoList.front();
+    // todo: refactor this code, try get pid from device and create source port info at XxxDeviceInfo class
+    SourcePortInfoList list;
+    auto               info =
+        std::make_shared<NetSourcePortInfo>(SOURCE_PORT_NET_VENDOR, address, static_cast<uint16_t>(8090), address + ":" + std::to_string(port), "Unknown",
+                                            static_cast<uint16_t>(0x0669));  // 0x0669 for mega pid
+    list.push_back(info);
+    list.emplace_back(std::make_shared<RTSPStreamPortInfo>(info->address, static_cast<uint16_t>(8888), info->port, OB_STREAM_COLOR, info->mac,
+                                                           info->serialNumber, info->pid));
+    list.emplace_back(std::make_shared<RTSPStreamPortInfo>(info->address, static_cast<uint16_t>(8554), info->port, OB_STREAM_DEPTH, info->mac,
+                                                           info->serialNumber, info->pid));
+    list.emplace_back(
+        std::make_shared<RTSPStreamPortInfo>(info->address, static_cast<uint16_t>(8554), info->port, OB_STREAM_IR, info->mac, info->serialNumber, info->pid));
+    list.emplace_back(
+        std::make_shared<NetDataStreamPortInfo>(info->address, static_cast<uint16_t>(8900), info->port, info->mac, info->serialNumber, info->pid));
 
-    // auto rstDeviceInfo = associatedSourcePortCompletion(obPal, deviceInfo);
+    auto deviceEnumInfoList = deviceInfoMatch(list);
+    if(deviceEnumInfoList.empty()) {
+        throw std::runtime_error("No device found");
+    }
 
-    // if(isMatchDeviceByPid(rstDeviceInfo->pid_, FemtoMegaDevPids)) {
-    //     device = std::make_shared<FemtoMegaNetDevice>(obPal, rstDeviceInfo);
-    //     LOG_DEBUG("Create Net Device success! address={0}, port={1}, pid=0x{2:4x}", address, port, rstDeviceInfo->pid_);
-    // }
-    // else if(isMatchDeviceByPid(rstDeviceInfo->pid_, gGemini2XLPids)) {
-    //     device = std::make_shared<Gemini2XLDevice>(obPal, rstDeviceInfo);
-    //     LOG_DEBUG("Create Net Device success! address={0}, port={1}, pid=0x{2:4x}", address, port, rstDeviceInfo->pid_);
-    // }
-    // else {
-    //     LOG_ERROR("Create Net Device failed, unsupported device! address={0}, port={1}, pid=0x{2:04x}", address, port, rstDeviceInfo->pid_);
-    // }
-    // return device;
-    utils::unusedVar(address);
-    utils::unusedVar(port);
-    return nullptr;
-}
-
-std::shared_ptr<IDeviceEnumInfo> NetDeviceEnumerator::associatedSourcePortCompletion(std::shared_ptr<IDeviceEnumInfo> info) {
-    // auto rstDeviceInfo = std::make_shared<IDeviceEnumInfo>(info);
-    // if(rstDeviceInfo->sourcePortInfoList_.size() == 1) {
-    //     auto associatedPortList = platform_->queryAssociatedNetSourcePort(rstDeviceInfo->sourcePortInfoList_.front());
-    //     rstDeviceInfo->sourcePortInfoList_.insert(rstDeviceInfo->sourcePortInfoList_.end(), associatedPortList.begin(), associatedPortList.end());
-    // }
-    // return rstDeviceInfo;
-
-    utils::unusedVar(info);
-    return nullptr;
+    return deviceEnumInfoList.front()->createDevice();
 }
 
 }  // namespace libobsensor

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Use the SDK interface to demonstrate the synchronization and alignment of sensor data streams, display the aligned image, and exit the program using the ESC_KEY key.
+Use the SDK interface to demonstrate the synchronization and alignment of sensor data streams,display the aligned image,and exit the program using the ESC_KEY key.
 
 ### Knowledge
 
@@ -12,33 +12,13 @@ Frameset is a combination of different types of Frames
 
 win is used to display the frame data.
 
+C2D（Color to Depth）is the transformation from the color image coordinate system to the depth image coordinate system.To map the pixel positions in the color image to the corresponding positions in the depth image. This is commonly used to align color and depth images so that both types of information can be used in the same coordinate system.
+
+D2C（Depth to Color）is the transformation from the depth image coordinate system to the color image coordinate system.To map the pixel positions in the depth image to the corresponding positions in the color image. This transformation allows depth data to be applied to the color image, facilitating the annotation or analysis of depth information within the color image.
+
 ## Code overview
 
-1. Creates an ob::Config object
-
-    ```cpp
-        // Configure which streams to enable or disable for the Pipeline by creating a Config
-    auto config = std::make_shared<ob::Config>();
-
-    // enable depth and color streams with specified format
-    config->enableVideoStream(OB_STREAM_DEPTH, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY, OB_FORMAT_Y16);
-    config->enableVideoStream(OB_STREAM_COLOR, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY, OB_FORMAT_RGB);
-
-    // set the frame aggregate output mode to ensure all types of frames are included in the output frameset
-    config->setFrameAggregateOutputMode(OB_FRAME_AGGREGATE_OUTPUT_ALL_TYPE_FRAME_REQUIRE);
-    ```
-
-2. Create a pipeline with the configuration
-
-    ```cpp
-    // Create a pipeline with default device to manage stream
-    auto pipe = std::make_shared<ob::Pipeline>();
-
-    // Start the pipeline with config
-    pipe->start(config);
-    ```
-
-3. Set alignment mode
+1. Set alignment mode
 
     ```cpp
     // Create a filter to align depth frame to color frame
@@ -48,20 +28,14 @@ win is used to display the frame data.
     auto color2depthAlign = std::make_shared<ob::Align>(OB_STREAM_DEPTH);
     ```
 
-4. Set the callback function for the Align Filter to display the aligned frames in the window
+2. Set the callback function for the Align Filter to display the aligned frames in the window
 
     ```cpp
     depth2colorAlign->setCallBack([&win](std::shared_ptr<ob::Frame> frame) { win.pushFramesToView(frame); });
     color2depthAlign->setCallBack([&win](std::shared_ptr<ob::Frame> frame) { win.pushFramesToView(frame); });
    ```
 
-5. Get frame data
-
-    ```cpp
-        auto frameSet = pipe->waitForFrameset(100);
-    ```
-
-6. Perform alignment processing
+3. Perform alignment processing
 
     ```cpp
      // Get filter according to the align mode
@@ -75,12 +49,6 @@ win is used to display the frame data.
         alignFilter->pushFrame(frameSet);
     ```
 
-7. Stop pipeline
-
-    ```cpp
-        pipe.stop();
-    ```
-
 ## Run Sample
 
 Press the Esc key in the window to exit the program.
@@ -90,4 +58,9 @@ Press the Esc key in the window to exit the program.
 
 ### Result
 
-![image](/docs/resource/SyncAlign.png)
+Sync
+![image](/docs/resource/sync.jpg)
+D2C  
+![image](/docs/resource/d2c.jpg)
+C2D  
+![image](/docs/resource/c2d.jpg)

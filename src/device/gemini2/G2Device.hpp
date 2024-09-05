@@ -1,6 +1,6 @@
 #pragma once
 #include "DeviceBase.hpp"
-#include "IDeviceEnumerator.hpp"
+#include "IDeviceManager.hpp"
 #include "frameprocessor/FrameProcessor.hpp"
 
 #include <map>

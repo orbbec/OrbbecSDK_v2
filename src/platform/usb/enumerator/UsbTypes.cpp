@@ -7,9 +7,11 @@ const std::map<UsbSpec, std::string> usb_spec_names = {
     { usb2_1_type, "USB2.1" }, { usb3_type, "USB3.0" }, { usb3_1_type, "USB3.1" }, { usb3_2_type, "USB3.2" }
 };
 std::string usbSpecToString(UsbSpec spec) {
+    if(spec == gmsl2_type) {
+        return "GMSL2";
+    }
     std::string name = "USB";
-
-    auto it = usb_spec_names.find(spec);
+    auto        it   = usb_spec_names.find(spec);
     if(it != usb_spec_names.end()) {
         name = it->second;
     }

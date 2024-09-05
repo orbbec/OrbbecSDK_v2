@@ -16,18 +16,9 @@ Frameset is a combination of different types of Frames.
 
 ## code overview
 
-1. Instantiate the pipeline and configure the output video stream in addition to imu data, such as depth, color, etc.
+1. Configure the output video stream in addition to imu data, such as depth, color, etc.
 
     ```cpp
-        // Create a pipeline with default device.
-        ob::Pipeline pipe;
-
-        // Configure which streams to enable or disable for the Pipeline by creating a Config.
-        std::shared_ptr<ob::Config> config = std::make_shared<ob::Config>();
-
-        // Enumerate and config all sensors.
-        auto device = pipe.getDevice();
-
         // Get sensor list from device.
         auto sensorList = device->getSensorList();
 
@@ -80,4 +71,4 @@ Press the Esc key in the window to exit the program.
 
 ### Result
 
-![image](/docs/resource/multistream.png)
+![image](/docs/resource/multistream.jpg)

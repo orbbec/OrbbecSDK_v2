@@ -5,7 +5,7 @@ project(ob_infrared)
 add_executable(ob_infrared infrared.cpp)
 
 set_property(TARGET ob_infrared PROPERTY CXX_STANDARD 11)
-target_link_libraries(ob_infrared ob::openobsdk ob::examples::utils)
+target_link_libraries(ob_infrared ob::OrbbecSDK ob::examples::utils)
 
 set_target_properties (ob_infrared PROPERTIES FOLDER "examples")
 

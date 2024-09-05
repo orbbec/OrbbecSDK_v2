@@ -12,7 +12,7 @@ public:
     DeviceComponentPropertyAccessor(IDevice *device, DeviceComponentId compId);
     virtual ~DeviceComponentPropertyAccessor() noexcept = default;
 
-    void setPropertyValue(uint32_t propertyId, OBPropertyValue value) override;
+    void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
     void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
     void getPropertyRange(uint32_t propertyId, OBPropertyRange *range) override;
 
@@ -28,7 +28,7 @@ public:
 
     virtual ~FunctionPropertyAccessor() noexcept = default;
 
-    void setPropertyValue(uint32_t propertyId, OBPropertyValue value) override;
+    void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
     void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
     void getPropertyRange(uint32_t propertyId, OBPropertyRange *range) override;
 
@@ -44,7 +44,7 @@ public:
 
     virtual ~LazyPropertyAccessor() noexcept = default;
 
-    void setPropertyValue(uint32_t propertyId, OBPropertyValue value) override;
+    void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
     void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
     void getPropertyRange(uint32_t propertyId, OBPropertyRange *range) override;
 
@@ -89,7 +89,7 @@ public:
 
     virtual ~HeartbeatPropertyAccessor() noexcept = default;
 
-    void setPropertyValue(uint32_t propertyId, OBPropertyValue value) override;
+    void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
     void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
     void getPropertyRange(uint32_t propertyId, OBPropertyRange *range) override;
 

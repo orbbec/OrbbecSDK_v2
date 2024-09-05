@@ -8,7 +8,7 @@ namespace libobsensor {
 G330Disp2DepthPropertyAccessor::G330Disp2DepthPropertyAccessor(IDevice *owner)
     : owner_(owner), hwDisparityToDepthEnabled_(true), swDisparityToDepthEnabled_(false) {}
 
-void G330Disp2DepthPropertyAccessor::setPropertyValue(uint32_t propertyId, OBPropertyValue value) {
+void G330Disp2DepthPropertyAccessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
     switch(propertyId) {
     case OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL: {
         auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR);
@@ -32,7 +32,7 @@ void G330Disp2DepthPropertyAccessor::setPropertyValue(uint32_t propertyId, OBPro
 
         auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR);
         processor->setPropertyValue(propertyId, value);
-        
+
         // update depth unit
         auto sensor          = owner_->getComponentT<ISensor>(OB_DEV_COMPONENT_DEPTH_SENSOR).get();
         auto disparitySensor = std::dynamic_pointer_cast<DisparityBasedSensor>(sensor);

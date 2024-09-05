@@ -86,14 +86,11 @@ int main(void) try {
     printUsage();
 
     inputWatchThread = std::thread(inputWatcher);
-    // TODO: this method needs to be adjusted
     inputWatchThread.detach();
 
     while(win->run()) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
-
-    // inputWatchThread.join();
 
     if(pipeline) {
         pipeline->stop();
@@ -128,22 +125,6 @@ void handleDeviceConnected(std::shared_ptr<ob::DeviceList> devices) {
         pipeline = std::make_shared<ob::Pipeline>(device);
         std::cout << "Open device success, SN: " << devices->getSerialNumber(0) << std::endl;
 
-        // // try to switch depth work mode
-        // switchDepthWorkMode();
-
-        // // try turn off hardware disparity to depth converter (switch to software d2d)
-        // turnOffHwD2d();
-
-        // // set depth unit
-        // setDepthUnit();
-
-        // // set depth value range
-        // setDepthValueRange();
-
-        // // set depth soft filter
-        // setDepthSoftFilter();
-
-        // start stream
         startStream();
     }
 }
@@ -260,15 +241,6 @@ void setDepthSoftFilter() {
         if(device->isPropertySupported(OB_PROP_DEPTH_SOFT_FILTER_BOOL, OB_PERMISSION_WRITE)) {
             device->setBoolProperty(OB_PROP_DEPTH_SOFT_FILTER_BOOL, true);
             std::cout << "turn on depth soft filter" << std::endl;
-
-            // int max_diff    = device->getIntProperty(OB_PROP_DEPTH_MAX_DIFF_INT);
-            // int max_speckle = device->getIntProperty(OB_PROP_DEPTH_MAX_SPECKLE_SIZE_INT);
-
-            // max_diff can be modified, the software filtering max_diff parameters are set before the stream is start, which needs to be set carefully
-            // device->setIntProperty(OB_PROP_DEPTH_MAX_DIFF_INT, max_diff);
-
-            // max_speckle can be modified, the software filtering max_speckle parameters are set before the stream is start, which needs to be set carefully
-            // device->setIntProperty(OB_PROP_DEPTH_MAX_SPECKLE_SIZE_INT, max_speckle);
         }
     }
     catch(ob::Error &e) {
@@ -329,6 +301,10 @@ std::shared_ptr<ob::FrameSet> fileterAlign(std::shared_ptr<ob::FrameSet> framese
 }
 void handleFrameset(std::shared_ptr<ob::FrameSet> frameset) {
     auto alignFrameSet = fileterAlign(frameset);
+    //If no depthframe is present, it is discarded
+    if(frameset->getCount() < 3) {
+        return;
+    }
     win->pushFramesToView(alignFrameSet);
 }
 

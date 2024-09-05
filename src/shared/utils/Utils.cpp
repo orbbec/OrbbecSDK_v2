@@ -30,6 +30,14 @@ void sleepMs(uint64_t msec) {
 #endif
 }
 
+void sleepUs(uint64_t usec) {
+#ifdef WIN32
+    Sleep((DWORD)(usec / 1000));
+#else
+    usleep((useconds_t)usec);
+#endif
+}
+
 bool checkJpgImageData(const uint8_t *data, size_t dataLen) {
     bool validImage = dataLen >= 2 && data[0] == 0xFF && data[1] == 0xD8;
     if(validImage) {

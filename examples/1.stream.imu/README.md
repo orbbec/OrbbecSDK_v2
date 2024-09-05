@@ -13,11 +13,9 @@ Frameset is a combination of different types of Frames.imu data stream can be ob
 
 ## code overview
 
-1. Instantiate pipeline, configure output imu related information and open stream
+1. Configure output imu related information and open stream.You must configure this before calling pipe.start().
 
     ```cpp
-        // Create a pipeline with default device.
-        ob::Pipeline pipe;
 
         // Configure which streams to enable or disable for the Pipeline by creating a Config.
         std::shared_ptr<ob::Config> config = std::make_shared<ob::Config>();
@@ -31,8 +29,6 @@ Frameset is a combination of different types of Frames.imu data stream can be ob
         // Only FrameSet that contains all types of data frames will be output.
         config->setFrameAggregateOutputMode(OB_FRAME_AGGREGATE_OUTPUT_ALL_TYPE_FRAME_REQUIRE);
 
-        // Start the pipeline with config.
-        pipe.start(config);
     ```
 
 2. Instantiate pipeline, configure output imu related information and open stream
@@ -67,4 +63,4 @@ Press the Esc key in the window to exit the program.
 
 ### Result
 
-![image](/docs/resource/imu.png)
+![image](/docs/resource/imu.jpg)

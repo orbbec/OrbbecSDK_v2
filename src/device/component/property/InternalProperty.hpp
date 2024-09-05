@@ -4,6 +4,7 @@
 namespace libobsensor {
 
 typedef enum {
+    OB_PROP_FEMTO_MEGA_HARDWARE_D2C_BOOL    = 13,  /**< FemtoMega hardware d2c switch*/
     OB_PROP_DEVICE_RESET_BOOL               = 29,  /**< Reset/reboot the device*/
     OB_PROP_STOP_DEPTH_STREAM_BOOL          = 38,  /**<Disable the deep stream (MX6600 chip also acts as the right IR stream), used for devices that cannot disable the stream via the standard UVC protocol. */
     OB_PROP_STOP_IR_STREAM_BOOL             = 39,  /**<Disable the IR stream (MX6600 chip also serves as the left IR stream) for devices that cannot disable the stream via the standard UVC protocol */

@@ -42,6 +42,7 @@ uint32_t convertToUvcCompatibleID(uint32_t propertyId) {
     case OB_PROP_IR_BRIGHTNESS_INT:
     case OB_PROP_COLOR_AE_MAX_EXPOSURE_INT:  // todo：not supported yet
     case OB_PROP_IR_AE_MAX_EXPOSURE_INT:
+    case OB_PROP_COLOR_HDR_BOOL:
         return propertyId;
 
     default:
@@ -56,34 +57,35 @@ UvcPropertyAccessor::UvcPropertyAccessor(const std::shared_ptr<ISourcePort> &bac
     }
 }
 
-void UvcPropertyAccessor::setPropertyValue(uint32_t propertyId, OBPropertyValue value) {
+void UvcPropertyAccessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
     auto    uvcDevicePort = std::dynamic_pointer_cast<UvcDevicePort>(backend_);
     int32_t val;
+    OBPropertyValue fixValue;
 
     switch(propertyId) {
     case OB_PROP_COLOR_MIRROR_BOOL: {
         uvcDevicePort->getPu(OB_PROP_COLOR_ROLL_INT, val);
         // OB_PROP_COLOR_ROLL_INT：0->none 1->mirror 2->flip 3->mirror with flip
-        value.intValue = (val & 0xFFFFFFFE) | (value.intValue & 0x01);
-        if(val != value.intValue) {
-            uvcDevicePort->setPu(OB_PROP_COLOR_ROLL_INT, value.intValue);
+        fixValue.intValue = (val & 0xFFFFFFFE) | (value.intValue & 0x01);
+        if(val != fixValue.intValue) {
+            uvcDevicePort->setPu(OB_PROP_COLOR_ROLL_INT, fixValue.intValue);
         }
         break;
     }
     case OB_PROP_COLOR_FLIP_BOOL: {
         uvcDevicePort->getPu(OB_PROP_COLOR_ROLL_INT, val);
         // OB_PROP_COLOR_ROLL_INT：0->none 1->mirror 2->flip 3->mirror with flip
-        value.intValue = (val & 0xFFFFFFFD) | ((value.intValue & 0x01) << 1);
-        if(val != value.intValue) {
-            uvcDevicePort->setPu(OB_PROP_COLOR_ROLL_INT, value.intValue);
+        fixValue.intValue = (val & 0xFFFFFFFD) | ((value.intValue & 0x01) << 1);
+        if(val != fixValue.intValue) {
+            uvcDevicePort->setPu(OB_PROP_COLOR_ROLL_INT, fixValue.intValue);
         }
         break;
     }
     case OB_PROP_COLOR_FOCUS_INT: {
         // OB_PROP_COLOR_FOCUS_INT default:1, custom may be set 0 for astra+
-        value.intValue = value.intValue & 0x01;
-        if((0 == value.intValue) || (1 == value.intValue)) {
-            LOG_DEBUG("-OB_PROP_COLOR_FOCUS_INT setPu value:{}", value.intValue);
+        fixValue.intValue = value.intValue & 0x01;
+        if((0 == fixValue.intValue) || (1 == fixValue.intValue)) {
+            LOG_DEBUG("-OB_PROP_COLOR_FOCUS_INT setPu value:{}", fixValue.intValue);
             propertyId = convertToUvcCompatibleID(propertyId);
             uvcDevicePort->setPu(propertyId, value.intValue);
         }

@@ -2,7 +2,7 @@
 // Copyright(c) 2020 Orbbec  Corporation. All Rights Reserved.
 
 #pragma once
-#include "IDeviceEnumerator.hpp"
+#include "IDeviceManager.hpp"
 
 #include <string>
 #include <vector>
@@ -13,7 +13,7 @@
 
 namespace libobsensor {
 
-class DeviceManager {
+class DeviceManager : public IDeviceManager {
 private:
     DeviceManager();
 
@@ -24,17 +24,16 @@ public:
     static std::shared_ptr<DeviceManager> getInstance();
     ~DeviceManager() noexcept;
 
-    static std::shared_ptr<IDevice> createNetDevice(std::string address, uint16_t port);
-    std::shared_ptr<IDevice>        createDevice(const std::shared_ptr<const IDeviceEnumInfo> &info);
+    std::shared_ptr<IDevice> createDevice(const std::shared_ptr<const IDeviceEnumInfo> &info) override;
+    std::shared_ptr<IDevice> createNetDevice(std::string address, uint16_t port) override;
 
-    DeviceEnumInfoList getDeviceInfoList() const;
+    DeviceEnumInfoList getDeviceInfoList() const override;
+    void               setDeviceChangedCallback(DeviceChangedCallback callback) override;
 
-    void setDeviceChangedCallback(DeviceChangedCallback callback);
+    void enableNetDeviceEnumeration(bool enable) override;
+    bool isNetDeviceEnumerationEnable() const override;
 
-    void enableDeviceClockSync(uint64_t repeatInterval);
-
-    void enableNetDeviceEnumeration(bool enable);
-    bool isNetDeviceEnumerationEnable();
+    void enableDeviceClockSync(uint64_t repeatInterval) override;
 
 private:
     void multiDeviceSyncFunc(uint8_t retry = 0, std::vector<std::string> uids = {});

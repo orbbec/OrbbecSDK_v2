@@ -37,50 +37,26 @@ void FormatConverter::reset() {
     tarStreamProfile_.reset();
 }
 
+const std::map<OBConvertFormat, std::pair<OBFormat, OBFormat>> FORMAT_CONVERT_MAP = {
+    { FORMAT_YUYV_TO_RGB, { OB_FORMAT_YUYV, OB_FORMAT_RGB } },    { FORMAT_I420_TO_RGB, { OB_FORMAT_I420, OB_FORMAT_RGB } },
+    { FORMAT_NV21_TO_RGB, { OB_FORMAT_NV21, OB_FORMAT_RGB } },    { FORMAT_NV12_TO_RGB, { OB_FORMAT_NV12, OB_FORMAT_RGB } },
+    { FORMAT_MJPG_TO_I420, { OB_FORMAT_MJPEG, OB_FORMAT_I420 } }, { FORMAT_RGB_TO_BGR, { OB_FORMAT_RGB, OB_FORMAT_BGR } },
+    { FORMAT_MJPG_TO_NV21, { OB_FORMAT_MJPEG, OB_FORMAT_NV21 } }, { FORMAT_MJPG_TO_RGB, { OB_FORMAT_MJPEG, OB_FORMAT_RGB } },
+    { FORMAT_MJPG_TO_BGR, { OB_FORMAT_MJPEG, OB_FORMAT_BGR } },   { FORMAT_MJPG_TO_BGRA, { OB_FORMAT_MJPEG, OB_FORMAT_BGRA } },
+    { FORMAT_UYVY_TO_RGB, { OB_FORMAT_UYVY, OB_FORMAT_RGB } },    { FORMAT_BGR_TO_RGB, { OB_FORMAT_BGR, OB_FORMAT_RGB } },
+    { FORMAT_MJPG_TO_NV12, { OB_FORMAT_MJPEG, OB_FORMAT_NV12 } }, { FORMAT_YUYV_TO_BGR, { OB_FORMAT_YUYV, OB_FORMAT_BGR } },
+    { FORMAT_YUYV_TO_RGBA, { OB_FORMAT_YUYV, OB_FORMAT_RGBA } },  { FORMAT_YUYV_TO_BGRA, { OB_FORMAT_YUYV, OB_FORMAT_BGRA } },
+    { FORMAT_YUYV_TO_Y16, { OB_FORMAT_YUYV, OB_FORMAT_Y16 } },    { FORMAT_YUYV_TO_Y8, { OB_FORMAT_YUYV, OB_FORMAT_Y8 } },
+};
+
 void FormatConverter::setConversion(OBFormat srcFormat, OBFormat dstFormat) {
-    if(srcFormat == OB_FORMAT_YUYV) {
-        switch(dstFormat) {
-        case OB_FORMAT_RGB:
-            convertType_ = FORMAT_YUYV_TO_RGB;
-            break;
-        case OB_FORMAT_RGBA:
-            convertType_ = FORMAT_YUYV_TO_RGBA;
-            break;
-        case OB_FORMAT_BGR:
-            convertType_ = FORMAT_YUYV_TO_BGR;
-            break;
-        case OB_FORMAT_BGRA:
-            convertType_ = FORMAT_YUYV_TO_BGRA;
-            break;
-        case OB_FORMAT_Y16:
-            convertType_ = FORMAT_YUYV_TO_Y16;
-            break;
-        case OB_FORMAT_Y8:
-            convertType_ = FORMAT_YUYV_TO_Y8;
-            break;
-        default:
-            convertType_ = FORMAT_YUYV_TO_RGB;
-            break;
+    for(auto &item: FORMAT_CONVERT_MAP) {
+        if(item.second.first == srcFormat && item.second.second == dstFormat) {
+            convertType_ = item.first;
+            return;
         }
     }
-    else if(srcFormat == OB_FORMAT_MJPEG) {
-        switch(dstFormat) {
-        case OB_FORMAT_RGB:
-            convertType_ = FORMAT_MJPG_TO_RGB;
-            break;
-        // case OB_FORMAT_RGBA:
-        //     convertType_ = FORMAT_MJPG_TO_RGBA;
-        //     break;
-        case OB_FORMAT_BGR:
-            convertType_ = FORMAT_MJPG_TO_BGR;
-            break;
-        case OB_FORMAT_BGRA:
-            convertType_ = FORMAT_MJPG_TO_BGRA;
-            break;
-        default:
-            break;
-        }
-    }
+    throw invalid_value_exception("FormatConverter config error: invalid format conversion");
 }
 
 std::shared_ptr<Frame> FormatConverter::process(std::shared_ptr<const Frame> frame) {
@@ -202,6 +178,7 @@ std::shared_ptr<Frame> FormatConverter::process(std::shared_ptr<const Frame> fra
         break;
     default:
         LOG_WARN_INTVL("Unsupported data format conversion.");
+        return FrameFactory::createFrameFromOtherFrame(frame, true);
         break;
     }
     tarFrame->setStreamProfile(tarStreamProfile_);

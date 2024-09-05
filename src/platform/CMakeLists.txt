@@ -17,7 +17,10 @@ if(OB_BUILD_USB_PAL)
         add_subdirectory(${OB_3RDPARTY_DIR}/libuvc libuvc)
         target_link_libraries(${OB_TARGET_PAL} PUBLIC libuvc::libuvc)
     endif()
+elseif(OB_BUILD_GMSL_PAL)
+    add_subdirectory(usb)
 endif()
+
 
 if(OB_BUILD_NET_PAL)
     add_subdirectory(ethernet)

@@ -28,7 +28,7 @@ $SCRIPT_DIR = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
 $PROJECT_ROOT = "$SCRIPT_DIR/../../"
 Set-Location $PROJECT_ROOT
 
-Write-Output  "Building openorbbecsdk for ${fullPlatform}"
+Write-Output  "Building OrbbecSDK for ${fullPlatform}"
 
 # Variables for version from CMakeLists.txt project
 $verPattern = 'project\(.*?VERSION\s+([0-9]+(?:\.[0-9]+)+)\s'
@@ -37,7 +37,7 @@ $match = [regex]::Match($content, $verPattern)
 $version = $match.Groups[1].Value
 $timestamp = Get-Date -Format "yyyyMMddHHmm"
 $git_hash = $(git rev-parse --short HEAD)
-$package_name = "openorbbecsdk_v${version}_${timestamp}_${git_hash}_${fullPlatform}"
+$package_name = "OrbbecSDK_v${version}_${timestamp}_${git_hash}_${fullPlatform}"
 
 # check visual studio 2017 or 2019 or 2022 is installed
 $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
@@ -46,9 +46,19 @@ if ($vsversion.Length -eq 0) {
     Write-Output  "Visual Studio 2017 or 2019 or 2022 is not installed"
     exit 1
 }
-$vsversion = $vsversion.Trim()
+$vsversion = ($vsversion | Select-object -First 1).ToString().Trim()
 $vsversion = $vsversion.Substring(0, 2)
-$cmake_generator = "Visual Studio $vsversion"
+$year = ""
+switch($vsversion){
+  15 {$year = "2017"}
+  16 {$year = "2019"}
+  17 {$year = "2022"}
+  default {
+      Write-Output "Unknown Visual Studio version: $vsversion"
+      exit 1
+ }
+}
+$cmake_generator = "Visual Studio ${vsversion} ${year}"
 Write-Output  "Using $cmake_generator as cmake generator"
 
 # create build directory
@@ -64,7 +74,54 @@ mkdir $install_dir
 mkdir $install_dir/bin
 
 # copy opencv dll to install bin directory (here we use opencv 3.4.0 vc15 build)
-$opencv_path = "c:\Users\hzcyf\Projects\opencv\build\x64\vc15\bin\opencv_world340.dll"
+$opencvPath = [System.Environment]::GetEnvironmentVariable("OpenCV_DIR")
+if (-not $opencvPath) {
+    Write-Output "OpenCV path not found in environment variables."
+}
+
+$opencvPath = "$opencvPath\x64"
+# get all available opencv vc version
+$availableVersions = Get-ChildItem -Directory $opencvPath  | Sort-Object Name -Descending
+
+# initialize
+$selectedVersion = $null
+$exactMatch = $false
+
+# matching vc&vs version
+foreach ($version in $availableVersions) {
+    $versionNumber = [int]($version.Name -replace "vc", "")
+
+    # Find the correct version and stop searching
+    if ($versionNumber -eq $vsversion) {
+        $selectedVersion = $version.Name
+        $exactMatch = $true
+        break
+    } elseif ($versionNumber -lt $vsversion) {
+        # If the correct version is not found, select the next available smaller version
+        $selectedVersion = $version.Name
+        break
+    } elseif (-not $selectedVersion) {
+        # If the correct version is not found, select the next larger version available
+        $selectedVersion = $version.Name
+    }
+}
+
+# Check whether the correct version is found
+if (-not $selectedVersion) {
+    Write-Output "No compatible OpenCV version found for Visual Studio $cmake_generator"
+    exit 1
+} else {
+    Write-Output "Using OpenCV version: $selectedVersion"
+
+    # No correct version found. Issue a warning
+    if (-not $exactMatch) {
+        Write-Warning "Warning: Selected OpenCV version ($selectedVersion) may not be fully compatible with Visual Studio toolset $cmake_generator. Proceed with caution."
+    }
+}
+
+$opencvPath = "$opencvPath/${selectedVersion}"
+$opencvDll = Get-ChildItem -Path $opencvPath -Filter "opencv_world*.dll" -Recurse
+$opencv_path = $opencvDll.FullName
 if (-not (Test-Path $opencv_path)) {
     Write-Output  "OpenCV dll not found at $opencv_path, please change the opecv dll path in build_win_msvc.ps1"
     exit 1
@@ -83,7 +140,7 @@ Add-Type -assembly "system.io.compression.filesystem"
 Write-Output  "Package zip file created at ${zip_file_path}"
 
 
-Write-Output  "openorbbecsdk for ${fullPlatform} build and install completed"
+Write-Output  "OrbbecSDK for ${fullPlatform} build and install completed"
 
 # return to current_dir
 Set-Location  $current_dir

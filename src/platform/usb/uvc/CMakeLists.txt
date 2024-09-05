@@ -1,4 +1,3 @@
-
 cmake_minimum_required(VERSION 3.5)
 
 if(OB_BUILD_WIN32)
@@ -15,5 +14,10 @@ else()
     if(OB_BUILD_LINUX)
         target_sources(${OB_TARGET_PAL} PRIVATE "${CMAKE_CURRENT_LIST_DIR}/ObV4lUvcDevicePort.hpp")
         target_sources(${OB_TARGET_PAL} PRIVATE "${CMAKE_CURRENT_LIST_DIR}/ObV4lUvcDevicePort.cpp")
+        if(OB_BUILD_GMSL_PAL)
+            target_sources(${OB_TARGET_PAL} PRIVATE "${CMAKE_CURRENT_LIST_DIR}/ObV4lGmslDevicePort.hpp")
+            target_sources(${OB_TARGET_PAL} PRIVATE "${CMAKE_CURRENT_LIST_DIR}/ObV4lGmslDevicePort.cpp")
+            target_sources(${OB_TARGET_PAL} PRIVATE "${CMAKE_CURRENT_LIST_DIR}/ObV4lGmslHostProtocolTypes.hpp")
+        endif()
     endif()
 endif()

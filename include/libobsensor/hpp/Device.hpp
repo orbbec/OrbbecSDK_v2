@@ -12,7 +12,6 @@
 #include "libobsensor/hpp/Filter.hpp"
 #include "libobsensor/hpp/Sensor.hpp"
 
-
 #include "Error.hpp"
 #include <memory>
 #include <string>
@@ -26,6 +25,7 @@ class DeviceInfo;
 class SensorList;
 class DevicePresetList;
 class OBDepthWorkModeList;
+class CameraParamList;
 
 class Device {
 public:
@@ -707,9 +707,9 @@ public:
      * @return OBDeviceState The device state information.
      */
     OBDeviceState getDeviceState() {
-        OBDeviceState state    = {};
-        ob_error *error = nullptr;
-        state = ob_device_get_device_state(impl_, &error);
+        OBDeviceState state = {};
+        ob_error     *error = nullptr;
+        state               = ob_device_get_device_state(impl_, &error);
         return state;
     }
 
@@ -721,16 +721,26 @@ private:
         }
     }
 
-    /**
-     * In order to be compatible with the closed source version of orbbecsdk's interface.
-     * We recommend using the latest interface names for a better experience.
-     */
 public:
+    // The following interfaces are deprecated and are retained here for compatibility purposes.
     void deviceUpgrade(const char *filePath, DeviceFwUpdateCallback callback, bool async = true) {
         updateFirmware(filePath, callback, async);
     }
+
     void deviceUpgradeFromData(const uint8_t *firmwareData, uint32_t firmwareDataSize, DeviceFwUpdateCallback callback, bool async = true) {
         updateFirmwareFromData(firmwareData, firmwareDataSize, callback, async);
+    }
+
+    std::shared_ptr<CameraParamList> getCalibrationCameraParamList() {
+        ob_error *error = nullptr;
+        auto      impl  = ob_device_get_calibration_camera_param_list(impl_, &error);
+        Error::handle(&error);
+        return std::make_shared<CameraParamList>(impl);
+    }
+
+    void loadDepthFilterConfig(const char *filePath) {
+        // In order to compile, some high-version compilers will warn that the function parameters are not used.
+        (void)filePath;
     }
 };
 
@@ -896,55 +906,53 @@ public:
         return type;
     }
 
-    /**
-     * In order to be compatible with the closed source version of orbbecsdk's interface.
-     * We recommend using the latest interface names for a better experience.
-     */
-    OB_DEPRECATED const char *name() const {
+public:
+    // The following interfaces are deprecated and are retained here for compatibility purposes.
+    const char *name() const {
         return getName();
     }
 
-    OB_DEPRECATED int pid() const {
+    int pid() const {
         return getPid();
     }
 
-    OB_DEPRECATED int vid() const {
+    int vid() const {
         return getVid();
     }
 
-    OB_DEPRECATED const char *uid() const {
+    const char *uid() const {
         return getUid();
     }
 
-    OB_DEPRECATED const char *serialNumber() const {
+    const char *serialNumber() const {
         return getSerialNumber();
     }
 
-    OB_DEPRECATED const char *firmwareVersion() const {
+    const char *firmwareVersion() const {
         return getFirmwareVersion();
     }
 
-    OB_DEPRECATED const char *connectionType() const {
+    const char *connectionType() const {
         return getConnectionType();
     }
 
-    OB_DEPRECATED const char *ipAddress() const {
+    const char *ipAddress() const {
         return getIpAddress();
     }
 
-    OB_DEPRECATED const char *hardwareVersion() const {
+    const char *hardwareVersion() const {
         return getHardwareVersion();
     }
 
-    OB_DEPRECATED const char *supportedMinSdkVersion() const {
+    const char *supportedMinSdkVersion() const {
         return getSupportedMinSdkVersion();
     }
 
-    OB_DEPRECATED const char *asicName() const {
+    const char *asicName() const {
         return getAsicName();
     }
 
-    OB_DEPRECATED OBDeviceType deviceType() const {
+    OBDeviceType deviceType() const {
         return getDeviceType();
     }
 };
@@ -1120,39 +1128,37 @@ public:
         return std::make_shared<Device>(device);
     }
 
-    /**
-     * In order to be compatible with the closed source version of orbbecsdk's interface.
-     * We recommend using the latest interface names for a better experience.
-     */
-    OB_DEPRECATED uint32_t deviceCount() const {
+public:
+    // The following interfaces are deprecated and are retained here for compatibility purposes.
+    uint32_t deviceCount() const {
         return getCount();
     }
 
-    OB_DEPRECATED int pid(uint32_t index) const {
+    int pid(uint32_t index) const {
         return getPid(index);
     }
 
-    OB_DEPRECATED int vid(uint32_t index) const {
+    int vid(uint32_t index) const {
         return getVid(index);
     }
 
-    OB_DEPRECATED const char *uid(uint32_t index) const {
+    const char *uid(uint32_t index) const {
         return getUid(index);
     }
 
-    OB_DEPRECATED const char *serialNumber(uint32_t index) const {
+    const char *serialNumber(uint32_t index) const {
         return getSerialNumber(index);
     }
 
-    OB_DEPRECATED const char *name(uint32_t index) const {
+    const char *name(uint32_t index) const {
         return getName(index);
     }
 
-    OB_DEPRECATED const char *connectionType(uint32_t index) const {
+    const char *connectionType(uint32_t index) const {
         return getConnectionType(index);
     }
 
-    OB_DEPRECATED const char *ipAddress(uint32_t index) const {
+    const char *ipAddress(uint32_t index) const {
         return getIpAddress(index);
     }
 };
@@ -1204,18 +1210,16 @@ public:
         return getOBDepthWorkMode(index);
     }
 
-    /**
-     * In order to be compatible with the closed source version of orbbecsdk's interface.
-     * We recommend using the latest interface names for a better experience.
-     */
-    OB_DEPRECATED uint32_t count() {
+public:
+    // The following interfaces are deprecated and are retained here for compatibility purposes.
+    uint32_t count() {
         return getCount();
     }
 };
 
 /**
  * @brief Class representing a list of device presets
- * @breif A device preset is a set of parameters or configurations that can be applied to the device to achieve a specific effect or function.
+ * @brief A device preset is a set of parameters or configurations that can be applied to the device to achieve a specific effect or function.
  */
 class DevicePresetList {
 private:
@@ -1255,7 +1259,7 @@ public:
     }
 
     /**
-     * @breif check if the preset list contains the special name preset.
+     * @brief check if the preset list contains the special name preset.
      * @param name The name of the preset
      * @return bool Returns true if the special name is found in the preset list, otherwise returns false.
      */
@@ -1266,11 +1270,9 @@ public:
         return result;
     }
 
-    /**
-     * In order to be compatible with the closed source version of orbbecsdk's interface.
-     * We recommend using the latest interface names for a better experience.
-     */
-    OB_DEPRECATED uint32_t count() {
+public:
+    // The following interfaces are deprecated and are retained here for compatibility purposes.
+    uint32_t count() {
         return getCount();
     }
 };
@@ -1308,18 +1310,15 @@ public:
      * @param index the index of the parameter group
      * @return OBCameraParam the corresponding group parameters
      */
-    OBCameraParam getCameraParam(uint32_t index){
+    OBCameraParam getCameraParam(uint32_t index) {
         ob_error *error = nullptr;
-        auto      param = ob_camera_param_list_get_param(impl_,index, &error);
+        auto      param = ob_camera_param_list_get_param(impl_, index, &error);
         Error::handle(&error);
         return param;
     }
 
-
-    /**
-     * In order to be compatible with the closed source version of orbbecsdk's interface.
-     * We recommend using the latest interface names for a better experience.
-    */
+public:
+    // The following interfaces are deprecated and are retained here for compatibility purposes.
     uint32_t count() {
         return getCount();
     }

@@ -19,10 +19,10 @@ enum class FormatFilterPolicy {
 };
 
 struct FormatFilterConfig {
-    FormatFilterPolicy                policy;
-    OBFormat                          srcFormat;
-    OBFormat                          dstFormat;
-    std::shared_ptr<IFilter>          converter;
+    FormatFilterPolicy       policy;
+    OBFormat                 srcFormat;
+    OBFormat                 dstFormat;
+    std::shared_ptr<IFilter> converter;
 };
 
 class VideoSensor : public SensorBase {
@@ -36,18 +36,17 @@ public:
 
     virtual void updateFormatFilterConfig(const std::vector<FormatFilterConfig> &configs);
     void         updateStreamProfileList(const StreamProfileList &profileList) override;
-    void setFrameProcessor(std::shared_ptr<FrameProcessor> frameProcessor);
+    void         setFrameProcessor(std::shared_ptr<FrameProcessor> frameProcessor);
 
 protected:
-    void trySendStopStreamVendorCmd();
-    void onBackendFrameCallback(std::shared_ptr<Frame> frame);
-    void outputFrame(std::shared_ptr<Frame> frame) override;
+    virtual void trySendStopStreamVendorCmd();
+    void         onBackendFrameCallback(std::shared_ptr<Frame> frame);
+    void         outputFrame(std::shared_ptr<Frame> frame) override;
 
 protected:
     typedef std::pair<std::shared_ptr<const StreamProfile>, const FormatFilterConfig *> StreamProfileBackendMapValue;
     std::map<std::shared_ptr<const StreamProfile>, StreamProfileBackendMapValue>        streamProfileBackendMap_;
 
-private:
     std::vector<FormatFilterConfig>      formatFilterConfigs_;
     const FormatFilterConfig            *currentFormatFilterConfig_;
     std::shared_ptr<const StreamProfile> currentBackendStreamProfile_;

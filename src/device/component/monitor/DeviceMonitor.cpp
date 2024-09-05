@@ -4,7 +4,13 @@
 namespace libobsensor {
 
 DeviceMonitor::DeviceMonitor(IDevice *owner, std::shared_ptr<ISourcePort> dataPort)
-    : DeviceComponentBase(owner), cbIdCounter_(0), heartbeatEnabled_(false), heartbeatPaused_(false), recvData_(1024), sendData_(1024) {
+    : DeviceComponentBase(owner),
+      cbIdCounter_(0),
+      heartbeatEnabled_(false),
+      heartbeatPaused_(false),
+      heartbeatAndFetchStateThreadStarted_(false),
+      recvData_(1024),
+      sendData_(1024) {
     vendorDataPort_ = std::dynamic_pointer_cast<IVendorDataPort>(dataPort);
     if(!vendorDataPort_) {
         throw std::runtime_error("DeviceMonitor: data port must be a vendor data port!");

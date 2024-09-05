@@ -1,6 +1,6 @@
 #pragma once
 
-#include "IDeviceEnumerator.hpp"
+#include "IDeviceManager.hpp"
 #include "IDeviceWatcher.hpp"
 #include "Platform.hpp"
 
@@ -15,8 +15,7 @@ public:
     static std::shared_ptr<IDevice> createDevice(std::string address, uint16_t port);
 
 private:
-    static DeviceEnumInfoList               deviceInfoMatch(const SourcePortInfoList infoList);
-    static std::shared_ptr<IDeviceEnumInfo> associatedSourcePortCompletion(std::shared_ptr<IDeviceEnumInfo> info);
+    static DeviceEnumInfoList deviceInfoMatch(const SourcePortInfoList infoList);
 
     void               onPlatformDeviceChanged(OBDeviceChangedType changeType, std::string devUid);
     DeviceEnumInfoList queryDeviceList();

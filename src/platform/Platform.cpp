@@ -88,4 +88,28 @@ std::shared_ptr<ISourcePort> Platform::getNetSourcePort(std::shared_ptr<const So
     return pal->second->getSourcePort(portInfo);
 }
 
+SourcePortInfoList Platform::queryGmslSourcePort() {
+    auto pal = palMap_.find("gmsl");
+    if(pal == palMap_.end()) {
+        throw pal_exception("Gmsl pal is not exist, please check the build config that you have enabled BUILD_GMSL_PAL");
+    }
+    return pal->second->querySourcePortInfos();
+}
+
+std::shared_ptr<ISourcePort> Platform::getGmslSourcePort(std::shared_ptr<const SourcePortInfo> portInfo) {
+    auto pal = palMap_.find("gmsl");
+    if(pal == palMap_.end()) {
+        throw pal_exception("Gmsl pal is not exist, please check the build config that you have enabled BUILD_GMSL_PAL");
+    }
+    return pal->second->getSourcePort(portInfo);
+}
+
+std::shared_ptr<IDeviceWatcher> Platform::createGmslDeviceWatcher() {
+    auto pal = palMap_.find("gmsl");
+    if(pal == palMap_.end()) {
+        throw pal_exception("Gmsl pal is not exist, please check the build config that you have enabled BUILD_GMSL_PAL");
+    }
+    return pal->second->createDeviceWatcher();
+}
+
 }  // namespace libobsensor

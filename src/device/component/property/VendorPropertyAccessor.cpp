@@ -4,15 +4,30 @@
 
 namespace libobsensor {
 
+const uint32_t DEFAULT_CMD_MAX_DATA_SIZE = 768;
+
 VendorPropertyAccessor::VendorPropertyAccessor(IDevice *owner, const std::shared_ptr<ISourcePort> &backend)
-    : owner_(owner), backend_(backend), recvData_(1024), sendData_(1024) {
+    : owner_(owner),
+      backend_(backend),
+      recvData_(1024),
+      sendData_(1024),
+      rawdataTransferPacketSize_(DEFAULT_CMD_MAX_DATA_SIZE),
+      structListDataTransferPacketSize_(DEFAULT_CMD_MAX_DATA_SIZE) {
     auto port = std::dynamic_pointer_cast<IVendorDataPort>(backend_);
     if(!port) {
         throw invalid_value_exception("VendorPropertyAccessor backend must be IVendorDataPort");
     }
 }
 
-void VendorPropertyAccessor::setPropertyValue(uint32_t propertyId, OBPropertyValue value) {
+void VendorPropertyAccessor::setRawdataTransferPacketSize(uint32_t size) {
+    rawdataTransferPacketSize_ = size;
+}
+
+void VendorPropertyAccessor::setStructListDataTransferPacketSize(uint32_t size) {
+    structListDataTransferPacketSize_ = size;
+}
+
+void VendorPropertyAccessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
     std::lock_guard<std::mutex> lock(mutex_);
     clearBuffers();
     auto req = protocol::initSetPropertyReq(sendData_.data(), propertyId, value.intValue);
@@ -92,7 +107,6 @@ const std::vector<uint8_t> &VendorPropertyAccessor::getStructureData(uint32_t pr
 }
 
 void VendorPropertyAccessor::getRawData(uint32_t propertyId, GetDataCallback callback) {
-    constexpr uint32_t          transPacketSize = 3 * DATA_PAGE_SIZE;
     std::lock_guard<std::mutex> lock(mutex_);
     clearBuffers();
     OBDataTranState tranState = DATA_TRAN_STAT_TRANSFERRING;
@@ -102,18 +116,18 @@ void VendorPropertyAccessor::getRawData(uint32_t propertyId, GetDataCallback cal
     // init
     {
         clearBuffers();
-        auto     req          = protocol::initGetRawData(sendData_.data(), propertyId, 0);
+        auto     req          = protocol::initGetRawDataLength(sendData_.data(), propertyId, 0);
         uint16_t respDataSize = 64;
         auto     port         = std::dynamic_pointer_cast<IVendorDataPort>(backend_);
         auto     res          = protocol::execute(port, sendData_.data(), sizeof(*req), recvData_.data(), &respDataSize);
         protocol::checkStatus(res);
-        auto resp = protocol::parseGetRawDataResp(recvData_.data(), respDataSize);
+        auto resp = protocol::parseGetRawDataLengthResp(recvData_.data(), respDataSize);
         dataSize  = resp->dataSize;
     }
 
     // get raw data in packet size
-    for(uint32_t packetOffset = 0; packetOffset < dataSize; packetOffset += transPacketSize) {
-        uint32_t packetLen = std::min(transPacketSize, dataSize - packetOffset);
+    for(uint32_t packetOffset = 0; packetOffset < dataSize; packetOffset += rawdataTransferPacketSize_) {
+        uint32_t packetLen = std::min(rawdataTransferPacketSize_, dataSize - packetOffset);
         clearBuffers();
         auto     req          = protocol::initReadRawData(sendData_.data(), propertyId, packetOffset, packetLen);
         uint16_t respDataSize = 1024;
@@ -133,7 +147,7 @@ void VendorPropertyAccessor::getRawData(uint32_t propertyId, GetDataCallback cal
     // finish
     {
         clearBuffers();
-        auto     req          = protocol::initGetRawData(sendData_.data(), propertyId, 1);
+        auto     req          = protocol::initGetRawDataLength(sendData_.data(), propertyId, 1);
         uint16_t respDataSize = 64;
         auto     port         = std::dynamic_pointer_cast<IVendorDataPort>(backend_);
         auto     res          = protocol::execute(port, sendData_.data(), sizeof(*req), recvData_.data(), &respDataSize);
@@ -200,8 +214,6 @@ void VendorPropertyAccessor::setStructureDataProtoV1_1(uint32_t propertyId, cons
 }
 
 const std::vector<uint8_t> &VendorPropertyAccessor::getStructureDataListProtoV1_1(uint32_t propertyId, uint16_t cmdVersion) {
-    constexpr uint32_t transPacketSize = 3 * DATA_PAGE_SIZE;
-
     std::lock_guard<std::mutex> lock(mutex_);
     uint32_t                    dataSize = 0;
     clearBuffers();
@@ -221,9 +233,9 @@ const std::vector<uint8_t> &VendorPropertyAccessor::getStructureDataListProtoV1_
     dataSize = resp->dataSize;
     outputData_.resize(dataSize);
     {
-        for(uint32_t packetOffset = 0; packetOffset < dataSize; packetOffset += transPacketSize) {
+        for(uint32_t packetOffset = 0; packetOffset < dataSize; packetOffset += structListDataTransferPacketSize_) {
             clearBuffers();  // reset request and response buffer cache
-            uint32_t packetSize = std::min(transPacketSize, dataSize - packetOffset);
+            uint32_t packetSize = std::min(structListDataTransferPacketSize_, dataSize - packetOffset);
 
             auto req1    = protocol::initGetStructureDataList(sendData_.data(), propertyId, packetOffset, packetSize);
             respDataSize = 1024;

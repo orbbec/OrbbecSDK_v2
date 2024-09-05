@@ -2,7 +2,6 @@
 
 #include <dylib.hpp>
 #include <memory>
-#include <DeviceComponentBase.hpp>
 
 #ifdef __cplusplus
 extern "C" {
@@ -19,9 +18,9 @@ typedef struct {
     volatile bool          loaded;
 } deloader_global_context_t;
 
-class DepthEngineLoadFactory : public DeviceComponentBase {
+class DepthEngineLoadFactory {
 public:
-    DepthEngineLoadFactory(IDevice *owner);
+    DepthEngineLoadFactory();
     ~DepthEngineLoadFactory() noexcept = default;
 
     std::shared_ptr<deloader_global_context_t> getGlobalContext() {

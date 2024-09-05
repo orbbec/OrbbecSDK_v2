@@ -12,31 +12,18 @@ Device is the device object, which can be used to obtain the device information,
 
 ## code overview
 
-1. Set the window size and log level, and instantiate a Context class to manage the device
+1. Register device callback
 
     ```cpp
-        // create window for render
-        win = std::make_shared<ob_smpl::CVWindow>("CommonUsages", 1280, 720, ob_smpl::ARRANGE_GRID);
-
-        // Set log severity. disable log, please set OB_LOG_SEVERITY_OFF.
-        ob::Context::setLoggerSeverity(OB_LOG_SEVERITY_ERROR);
-
         // Create ob:Context.
         ctx = std::make_shared<ob::Context>();
-
-        // Register device callback
-    ```
-
-2. Register device callback
-
-    ```cpp
         ctx.setDeviceChangedCallback( []( std::shared_ptr< ob::DeviceList > removedList, std::shared_ptr< ob::DeviceList > addedList ) {
                 DeviceDisconnectCallback( removedList );
                 DeviceConnectCallback( addedList );
             } );
     ```
 
-3. Get the device list and print out the information, then use pipeline to start the video stream.
+2. Get the device list and print out the information, then use pipeline to start the video stream.
 
     ```cpp
         // Query the list of connected devices.
@@ -46,7 +33,7 @@ Device is the device object, which can be used to obtain the device information,
         handleDeviceConnected(devices);
     ```
 
-4. Block thread waiting for device connection
+3. Block thread waiting for device connection
 
     ```cpp
         while(!device) {
@@ -54,7 +41,7 @@ Device is the device object, which can be used to obtain the device information,
         }
     ```
 
-5. Execute corresponding settings according to the commands entered by the user. The following is an introduction to some setting functions
+4. Execute corresponding settings according to the commands entered by the user. The following is an introduction to some setting functions
 
     ```cpp
         //Get the basic parameters of the camera, including connection type, device model, etc.
@@ -85,6 +72,6 @@ Press the button according to the interface prompts
 
 ### Result
 
-![image](/docs/resource/common1.png)
+![image](/docs/resource/common1.jpg)
 
-![image](/docs/resource/common2.png)
+![image](/docs/resource/common2.jpg)

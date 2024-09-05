@@ -13,9 +13,7 @@
 #include <vector>
 #include <map>
 
-#if defined(BUILD_USB_PAL)
 #include "usb/enumerator/IUsbEnumerator.hpp"
-#endif
 namespace libobsensor {
 
 class LinuxUsbPal : public IPal {
@@ -25,7 +23,6 @@ public:
 
     std::shared_ptr<ISourcePort> getSourcePort(std::shared_ptr<const SourcePortInfo> portInfo) override;
 
-#if defined(BUILD_USB_PAL)
 public:
     std::shared_ptr<IDeviceWatcher> createDeviceWatcher() const override;
     SourcePortInfoList              querySourcePortInfos() override;
@@ -42,7 +39,6 @@ private:
     } UvcBackendType;
 
     UvcBackendType uvcBackendType_ = UVC_BACKEND_TYPE_LIBUVC;
-#endif
 
 private:
     std::mutex                                                                  sourcePortMapMutex_;

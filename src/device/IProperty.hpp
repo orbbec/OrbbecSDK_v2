@@ -37,7 +37,7 @@ public:
 class IBasicPropertyAccessor : virtual public IPropertyAccessor {
 public:
     virtual ~IBasicPropertyAccessor() noexcept                                 = default;
-    virtual void setPropertyValue(uint32_t propertyId, OBPropertyValue value)  = 0;
+    virtual void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) = 0;
     virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) = 0;
     virtual void getPropertyRange(uint32_t propertyId, OBPropertyRange *range) = 0;
 };

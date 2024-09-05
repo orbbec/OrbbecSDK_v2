@@ -20,6 +20,8 @@ G2DeviceInfo::G2DeviceInfo(const SourcePortInfoList groupedInfoList) {
         name_ = "Gemini2 series device";
     }
 
+    fullName_ = "Orbbec " + name_;
+
     pid_                = portInfo->pid;
     vid_                = portInfo->vid;
     uid_                = portInfo->uid;

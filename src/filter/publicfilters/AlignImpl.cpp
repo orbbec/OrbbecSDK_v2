@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iostream>
 #include <chrono>
+#include <complex>
 
 namespace libobsensor {
 
@@ -102,8 +103,8 @@ void AlignImpl::initialize(OBCameraIntrinsic depth_intrin, OBCameraDistortion de
     // since undistorted depth (whether d2c or c2d) is necessory ...
     need_to_undistort_depth_ = ((depth_disto.k1 != 0) || (depth_disto.k2 != 0) || (depth_disto.k3 != 0) || (depth_disto.k4 != 0) || (depth_disto.k5 != 0)
                                 || (depth_disto.k6 != 0) || (depth_disto.p1 != 0) || (depth_disto.p2 != 0));
-    depth_unit_mm_         = depth_unit_mm;
-    gap_fill_copy_         = gap_fill_copy;
+    depth_unit_mm_           = depth_unit_mm;
+    gap_fill_copy_           = gap_fill_copy;
     // Translation is related to depth unit.
     for(int i = 0; i < 3; ++i) {
         scaled_trans_[i] = transform_.trans[i] / depth_unit_mm_;
@@ -134,46 +135,61 @@ void AlignImpl::reset() {
     initialized_ = false;
 }
 
-float estimateInflectionPoint(ob_camera_intrinsic intric, ob_camera_distortion disto) {
+float polynomial(float x, float a, float b, float c, float d) {
+    return (a * x * x * x + b * x * x + c * x + d);
+}
+
+float binarySearch(float left, float right, float a, float b, float c, float d, float tolerance = 1e-4) {
+    while((right - left) > tolerance) {
+        float mid   = (left + right) / 2.f;
+        float f_mid = polynomial(mid, a, b, c, d);
+        if(fabs(f_mid) < tolerance)
+            return mid;
+        else if(f_mid * polynomial(left, a, b, c, d) < 0)
+            right = mid;
+        else
+            left = mid;
+    }
+    return (left + right) / 2.f;
+}
+
+float estimateInflectionPoint(ob_camera_intrinsic depth_intr, ob_camera_intrinsic rgb_intr, ob_camera_distortion disto) {
     float result = 0.f;
     if(OB_DISTORTION_BROWN_CONRADY_K6 == disto.model) {
-        float w  = intric.width;
-        float h  = intric.height;
-        float fx = intric.fx;
-        float fy = intric.fy;
-        float cx = intric.cx;
-        float cy = intric.cy;
-        float k1 = disto.k1, k2 = disto.k2, k3 = disto.k3;
-        float k4 = disto.k4, k5 = disto.k5, k6 = disto.k6;
+        // with k6 distortion model, the denominator (involving k4~k6) should should not be zero
+        // the following solves the polynominal function with binary search
+        // then a inflection point should be labeled there
+        float r2_min = 0.f, r2_max = 0.f;
+        {
+			float r2[2];
+			ob_camera_intrinsic intrs[] = { depth_intr, rgb_intr };
+			for(int i = 0; i < 2; i++) {
+				ob_camera_intrinsic intr = intrs[i];
+				float u = (intr.cx > (intr.width - intr.cx)) ? intr.cx : (intr.width - intr.cx),
+					  v = (intr.cy > (intr.height - intr.cy)) ? intr.cy : (intr.height - intr.cy);
+				float x = u / intr.fx, y = v / intr.fy;
+				r2[i] = x * x + y * y;
+			}
+			if(r2[0] > r2[1]) {
+				r2_max = r2[0], r2_min = r2[1];
+			}
+			else {
+				r2_max = r2[1], r2_min = r2[0];
+			}
+        }
 
-        float pt_ud_max[2] /*, pt_d_max[2]*/;
-        pt_ud_max[0] = (w / 2 + std::abs(w / 2 - cx)) / fx;
-        pt_ud_max[1] = (h / 2 + std::abs(h / 2 - cy)) / fy;
-        float r2     = powf(pt_ud_max[0], 2) + powf(pt_ud_max[1], 2);
-
-        float half_r2 = 0.5f * r2;
-        float f2      = half_r2;
-        float f4 = f2 * f2, f6 = f4 * f2;
-        float half_r2_distort  = (1 + k1 * f2 + k2 * f4 + k3 * f6) / (1 + k4 * f2 + k5 * f4 + k6 * f6);
-        bool  polarity_half_r2 = true;
-        if(half_r2_distort < 1)
-            polarity_half_r2 = false;
-
-        float kr_diff_cur = 0;
-        float delta       = 0.001f * r2;
-        while(f2 < r2) {
-            f4                = f2 * f2;
-            f6                = f4 * f2;
-            kr_diff_cur       = (1 + k1 * f2 + k2 * f4 + k3 * f6) / (1 + k4 * f2 + k5 * f4 + k6 * f6);
-            bool polarity_cur = kr_diff_cur > 1 ? true : false;
-            if(polarity_cur != polarity_half_r2) {
-                result = f2 - 10 * delta;
+		float c = disto.k4, b = disto.k5, a = disto.k6, d = 1.f;
+        float prevX = r2_min;
+        float prevF = polynomial(prevX, a, b, c, d);
+        for(float r2 = prevX + 0.1f; r2 <= r2_max; r2 += 0.1f) {
+            float f = polynomial(r2, a, b, c, d);
+            if(prevF * f <= 0) {
+                result = binarySearch(prevX, r2, a, b, c, d);
                 break;
             }
-            f2 += delta;
+            prevX = r2;
+            prevF = f;
         }
-        if(f2 >= r2)
-            result = r2;
     }
     return result;
 }
@@ -183,7 +199,7 @@ void AlignImpl::prepareDepthResolution() {
 
     // There may be outliers due to possible inflection points of the calibrated K6 distortion curve;
     if(add_target_distortion_) {
-        r2_max_loc_     = estimateInflectionPoint(rgb_intric_, rgb_disto_);
+        r2_max_loc_     = estimateInflectionPoint(depth_intric_, rgb_intric_, rgb_disto_);
         r2_max_loc_sse_ = _mm_set_ps1(r2_max_loc_);
     }
 
@@ -418,9 +434,9 @@ void AlignImpl::D2CWithoutSSE(const uint16_t *depth_buffer, uint16_t *out_depth,
                               int *map) {
 
     int       channel     = (gap_fill_copy_ ? 1 : 2);
-    float    *ptr_coeff_x = (float *)coeff_mat_x;
-    float    *ptr_coeff_y = (float *)coeff_mat_y;
-    float    *ptr_coeff_z = (float *)coeff_mat_z;
+    float *   ptr_coeff_x = (float *)coeff_mat_x;
+    float *   ptr_coeff_y = (float *)coeff_mat_y;
+    float *   ptr_coeff_z = (float *)coeff_mat_z;
     uint16_t *ptr_depth   = (uint16_t *)depth_buffer;
 
     for(int v = 0; v < depth_intric_.height; v += 1) {
@@ -498,11 +514,11 @@ void AlignImpl::D2CWithSSE(const uint16_t *depth_buffer, uint16_t *out_depth, co
                 // int coeff_idx = half_idx + fold * 2 * channel;
                 int    coeff_idx  = half_idx;
                 float  coeff_x[4] = { coeff_mat_x[coeff_idx + fold], coeff_mat_x[coeff_idx + 1 * channel + fold], coeff_mat_x[coeff_idx + 2 * channel + fold],
-                                      coeff_mat_x[coeff_idx + 3 * channel + fold] };
+                                     coeff_mat_x[coeff_idx + 3 * channel + fold] };
                 float  coeff_y[4] = { coeff_mat_y[coeff_idx + fold], coeff_mat_y[coeff_idx + 1 * channel + fold], coeff_mat_y[coeff_idx + 2 * channel + fold],
-                                      coeff_mat_y[coeff_idx + 3 * channel + fold] };
+                                     coeff_mat_y[coeff_idx + 3 * channel + fold] };
                 float  coeff_z[4] = { coeff_mat_z[coeff_idx + fold], coeff_mat_z[coeff_idx + 1 * channel + fold], coeff_mat_z[coeff_idx + 2 * channel + fold],
-                                      coeff_mat_z[coeff_idx + 3 * channel + fold] };
+                                     coeff_mat_z[coeff_idx + 3 * channel + fold] };
                 __m128 coeff_sse1 = _mm_loadu_ps(coeff_x);
                 __m128 coeff_sse2 = _mm_loadu_ps(coeff_y);
                 __m128 coeff_sse3 = _mm_loadu_ps(coeff_z);
@@ -608,7 +624,7 @@ int AlignImpl::C2D(const uint16_t *depth_buffer, int depth_width, int depth_heig
 
     // rgb x-y coordinates for each depth pixel
     unsigned long long size     = static_cast<unsigned long long>(depth_width) * depth_height * 2;
-    int               *depth_xy = new int[size];
+    int *              depth_xy = new int[size];
     memset(depth_xy, -1, size * sizeof(int));
 
     int ret = -1;

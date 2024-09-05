@@ -12,6 +12,7 @@ FemtoMegaDeviceInfo::FemtoMegaDeviceInfo(const SourcePortInfoList groupedInfoLis
         auto portInfo = std::dynamic_pointer_cast<const USBSourcePortInfo>(groupedInfoList.front());
 
         name_               = "Femto Mega";
+        fullName_           = "Orbbec " + name_;
         pid_                = portInfo->pid;
         vid_                = portInfo->vid;
         uid_                = portInfo->uid;
@@ -23,6 +24,7 @@ FemtoMegaDeviceInfo::FemtoMegaDeviceInfo(const SourcePortInfoList groupedInfoLis
         auto portInfo = std::dynamic_pointer_cast<const NetSourcePortInfo>(groupedInfoList.front());
 
         name_               = "Femto Mega";
+        fullName_           = "Orbbec " + name_;
         pid_                = portInfo->pid;
         vid_                = 0x2BC5;
         uid_                = portInfo->mac;

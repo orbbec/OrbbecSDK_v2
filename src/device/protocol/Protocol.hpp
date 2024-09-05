@@ -11,8 +11,6 @@ namespace protocol {
 #define HP_REQUEST_MAGIC 0x4d47   // MG
 #define HP_RESPONSE_MAGIC 0x4252  // BR
 
-#define DATA_PAGE_SIZE 256
-
 #define HP_REQ_HEADER_SIZE sizeof(ReqHeader)
 #define HP_RESP_HEADER_SIZE sizeof(RespHeader)
 
@@ -223,12 +221,17 @@ typedef struct {
     uint32_t  propertyId;
     uint32_t  offset;
     uint32_t  size;
-} ReadRawData;
+} ReadRawDataReq;
+
+typedef struct {
+    RespHeader header;
+    uint8_t    data[1];
+} ReadRawDataResp;
 
 typedef struct {
     RespHeader header;
     uint32_t   dataSize;
-} GetRawDataResp;
+} GetRawDataLengthResp;
 
 typedef struct {
     ReqHeader header;
@@ -254,8 +257,8 @@ SetStructureDataReqV1_1 *initSetStructureDataReqV1_1(uint8_t *dataBuf, uint32_t 
 StartGetStructureDataListReq  *initStartGetStructureDataList(uint8_t *dataBuf, uint32_t propertyId);
 GetStructureDataListReq       *initGetStructureDataList(uint8_t *dataBuf, uint32_t propertyId, uint32_t offset, uint32_t dataSize);
 FinishGetStructureDataListReq *initFinishGetStructureDataList(uint8_t *dataBuf, uint32_t propertyId);
-GetPropertyReq                *initGetRawData(uint8_t *dataBuf, uint32_t propertyId, uint32_t cmd);
-ReadRawData                   *initReadRawData(uint8_t *dataBuf, uint32_t propertyId, uint32_t offset, uint32_t size);
+GetPropertyReq                *initGetRawDataLength(uint8_t *dataBuf, uint32_t propertyId, uint32_t cmd);
+ReadRawDataReq                *initReadRawData(uint8_t *dataBuf, uint32_t propertyId, uint32_t offset, uint32_t size);
 
 HeartbeatAndStateReq *initHeartbeatAndStateReq(uint8_t *dataBuf);
 
@@ -268,7 +271,8 @@ SetStructureDataRespV1_1      *parseSetStructureDataRespV1_1(uint8_t *dataBuf, u
 int16_t                        getStructureDataSizeV1_1(const GetStructureDataRespV1_1 *resp);
 SetStructureDataResp          *parseSetStructureDataResp(uint8_t *dataBuf, uint16_t dataSize);
 GetCmdVerDataResp             *parseGetCmdVerDataResp(uint8_t *dataBuf, uint16_t dataSize);
-GetRawDataResp                *parseGetRawDataResp(uint8_t *dataBuf, uint16_t dataSize);
+GetRawDataLengthResp          *parseGetRawDataLengthResp(uint8_t *dataBuf, uint16_t dataSize);
+ReadRawDataResp               *parseReadRawDataResp(uint8_t *dataBuf, uint16_t dataSize);
 StartGetStructureDataListResp *parseStartStructureDataListResp(uint8_t *dataBuf, uint16_t dataSize);
 HeartbeatAndStateResp         *parseHeartbeatAndStateResp(uint8_t *dataBuf, uint16_t dataSize);
 

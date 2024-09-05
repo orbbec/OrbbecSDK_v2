@@ -399,6 +399,8 @@ public:
         Error::handle(&error);
     }
 
+public:
+    // The following interfaces are deprecated and are retained here for compatibility purposes.
     std::shared_ptr<StreamProfileList> getD2CDepthProfileList(std::shared_ptr<StreamProfile> colorProfile, OBAlignMode alignMode){
         ob_error *error = nullptr;
         auto      list  = ob_get_d2c_depth_profile_list(impl_, colorProfile->getImpl(), alignMode, &error);
@@ -427,11 +429,7 @@ public:
         return calibrationParam;
     }
 
-    /**
-     * In order to be compatible with the closed source version of orbbecsdk's interface.
-     * We recommend using the latest interface names for a better experience.
-    */
-    OB_DEPRECATED std::shared_ptr<FrameSet> waitForFrames(uint32_t timeoutMs = 1000) const {
+    std::shared_ptr<FrameSet> waitForFrames(uint32_t timeoutMs = 1000) const {
         return waitForFrameset(timeoutMs);
     }
 };

@@ -50,6 +50,15 @@ StreamProfileList Config::getEnabledStreamProfileList() const {
     return enabledStreamProfileList_;
 }
 
+std::shared_ptr<const StreamProfile> Config::getEnabledStreamProfile(OBStreamType type) const {
+    for(auto prf: enabledStreamProfileList_) {
+        if(prf->getType() == type) {
+            return prf;
+        }
+    }
+    return nullptr;
+}
+
 void Config::setAlignMode(OBAlignMode mode) {
     alignMode_ = mode;
 }

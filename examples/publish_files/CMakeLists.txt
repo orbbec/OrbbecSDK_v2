@@ -17,7 +17,7 @@ if(MSVC)
 endif()
 
 
-set(openobsdk_DIR ${CMAKE_CURRENT_LIST_DIR}/../lib)
-find_package(openobsdk REQUIRED)
+set(OrbbecSDK_DIR ${CMAKE_CURRENT_LIST_DIR}/../lib)
+find_package(OrbbecSDK REQUIRED)
 
 add_subdirectory(src)

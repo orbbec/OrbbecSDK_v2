@@ -1,5 +1,6 @@
 #include "Context.hpp"
 #include "utils/Utils.hpp"
+#include "devicemanager/DeviceManager.hpp"
 
 #include <mutex>
 
@@ -31,7 +32,7 @@ Context::Context(const std::string &configFilePath) {
 
 Context::~Context() noexcept {}
 
-std::shared_ptr<DeviceManager> Context::getDeviceManager() {
+std::shared_ptr<IDeviceManager> Context::getDeviceManager() {
     if(deviceManager_ == nullptr) {
         deviceManager_ = DeviceManager::getInstance();
     }

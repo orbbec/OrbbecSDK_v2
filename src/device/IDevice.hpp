@@ -14,6 +14,7 @@ struct DeviceInfo {
     int         vid_ = 0;
     std::string uid_;  // Unique identifier of the port the device is connected to (platform specific)
     std::string name_;
+    std::string fullName_;
 
     std::string connectionType_;  // Device connection type
     uint16_t    type_ = 0;        // 0: Monocular disparity based; 1: Binocular disparity based; 2: tof
@@ -22,6 +23,10 @@ struct DeviceInfo {
     std::string supportedSdkVersion_;
     std::string asicName_;
     std::string deviceSn_;
+};
+
+struct NetDeviceInfo : public DeviceInfo {
+    std::string ipAddress_;
 };
 
 typedef std::function<void(OBFwUpdateState state, const char *message, uint8_t percent)> DeviceFwUpdateCallback;
@@ -86,7 +91,6 @@ struct ob_device_t {
 struct ob_device_info_t {
     std::shared_ptr<const libobsensor::DeviceInfo> info;
 };
-
 struct ob_camera_param_list_t{
     std::vector<OBCameraParam>  paramList;
 };

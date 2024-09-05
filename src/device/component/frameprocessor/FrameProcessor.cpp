@@ -153,7 +153,7 @@ void FrameProcessor::updateConfig(std::vector<std::string> &params) {
     }
 }
 
-void FrameProcessor::setPropertyValue(uint32_t propertyId, OBPropertyValue value) {
+void FrameProcessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
     switch(propertyId) {
     case OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL: {
         setConfigValue("DisparityTransform#255", static_cast<double>(value.intValue));

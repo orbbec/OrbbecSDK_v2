@@ -127,7 +127,7 @@ int main(void) try {
             // align depth frame to color frame
             auto alignedFrameset = align->process(frameset);
 
-            // set to create RGB point cloud format (will be effective only if color frame and depth frame are contained in the frameset)
+            // set to create RGBD point cloud format (will be effective only if color frame and depth frame are contained in the frameset)
             pointCloud->setCreatePointFormat(OB_FORMAT_RGB_POINT);
 
             // process the frameset to generate point cloud frame

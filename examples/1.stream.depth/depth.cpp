@@ -13,7 +13,7 @@ int main(void) try {
     // By creating config to configure which streams to enable or disable for the pipeline, here the depth stream will be enabled.
     std::shared_ptr<ob::Config> config = std::make_shared<ob::Config>();
 
-    // Enable depth stream.
+    //This is the default depth streamprofile that is enabled. If you want to modify it, you can do so in the configuration file.
     config->enableVideoStream(OB_STREAM_DEPTH);
 
     // Start the pipeline with config.

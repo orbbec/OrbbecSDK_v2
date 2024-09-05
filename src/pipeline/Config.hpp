@@ -20,8 +20,9 @@ public:
     void disableStream(OBStreamType type);
     void disableAllStream();
 
-    bool              isStreamEnabled(OBStreamType type) const;
-    StreamProfileList getEnabledStreamProfileList() const;
+    bool                                 isStreamEnabled(OBStreamType type) const;
+    StreamProfileList                    getEnabledStreamProfileList() const;
+    std::shared_ptr<const StreamProfile> getEnabledStreamProfile(OBStreamType type) const;
 
     void        setAlignMode(OBAlignMode mode);
     OBAlignMode getAlignMode() const;

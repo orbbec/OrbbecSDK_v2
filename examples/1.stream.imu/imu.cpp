@@ -8,6 +8,7 @@
 
 void printImuValue(OBFloat3D obFloat3d, uint64_t index, uint64_t timeStampUs, float temperature, OBFrameType type, const std::string &unitStr) {
     std::cout << "frame index: " <<index << std::endl;
+    auto typeStr = ob::TypeHelper::convertOBFrameTypeToString(type);
     std::cout << type << " Frame: \n\r{\n\r"
               << "  tsp = " << timeStampUs << "\n\r"
               << "  temperature = " << temperature << "\n\r"

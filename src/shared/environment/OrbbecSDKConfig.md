@@ -5,6 +5,7 @@ The Orbbec SDK configuration file is an XML file that defines the global configu
 Upon initialization, the SDK Context will load a configuration file and apply as global configurations. If you have your own configuration file, you can specify it by entering the file path when calling the Context constructor. If you don't provide a path (or input an empty string), the SDK will look for a file named `OrbbecSDKConfig.xml` in the working directory. If neither the specified file nor the default file is found, the SDK will revert to using the built-in default configuration file.
 
 ## Log Configuration
+
 Log configuration mainly sets the Log level, the Log level output to the console, the Log level output to a file, configures the path for saving Log files, sets the size of each Log file, and sets the number of Log files.
 
 ```cpp

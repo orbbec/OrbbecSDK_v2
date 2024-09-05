@@ -29,8 +29,13 @@ OBMultiDeviceSyncConfig DeviceSyncConfigurator::getSyncConfig() {
     auto configInternal = propertyServer->getStructureDataProtoV1_1_T<OBMultiDeviceSyncConfigInternal, 1>(OB_STRUCT_MULTI_DEVICE_SYNC_CONFIG);
 
     currentMultiDevSyncConfig_.syncMode = (OBMultiDeviceSyncMode)configInternal.syncMode;
-    if(currentMultiDevSyncConfig_.syncMode == OB_MULTI_DEVICE_SYNC_MODE_SECONDARY) {
-        currentMultiDevSyncConfig_.syncMode = OB_MULTI_DEVICE_SYNC_MODE_SECONDARY_SYNCED;
+    if(currentMultiDevSyncConfig_.syncMode == 0) {
+        currentMultiDevSyncConfig_.syncMode = OB_MULTI_DEVICE_SYNC_MODE_FREE_RUN;
+    }
+    else if(currentMultiDevSyncConfig_.syncMode == OB_MULTI_DEVICE_SYNC_MODE_SECONDARY_SYNCED
+            && std::find(supportedSyncModes_.begin(), supportedSyncModes_.end(), OB_MULTI_DEVICE_SYNC_MODE_SECONDARY_SYNCED) == supportedSyncModes_.end()
+            && std::find(supportedSyncModes_.begin(), supportedSyncModes_.end(), OB_MULTI_DEVICE_SYNC_MODE_SECONDARY) == supportedSyncModes_.end()) {
+        currentMultiDevSyncConfig_.syncMode = OB_MULTI_DEVICE_SYNC_MODE_SECONDARY;
     }
     currentMultiDevSyncConfig_.depthDelayUs         = configInternal.depthDelayUs;
     currentMultiDevSyncConfig_.colorDelayUs         = configInternal.colorDelayUs;
@@ -54,7 +59,9 @@ void DeviceSyncConfigurator::setSyncConfig(const OBMultiDeviceSyncConfig &device
     if(deviceSyncConfig.syncMode == 0) {
         internalConfig.syncMode = OB_MULTI_DEVICE_SYNC_MODE_FREE_RUN;
     }
-    else if(deviceSyncConfig.syncMode == OB_MULTI_DEVICE_SYNC_MODE_SECONDARY_SYNCED) {
+    else if(deviceSyncConfig.syncMode == OB_MULTI_DEVICE_SYNC_MODE_SECONDARY_SYNCED
+            && std::find(supportedSyncModes_.begin(), supportedSyncModes_.end(), OB_MULTI_DEVICE_SYNC_MODE_SECONDARY_SYNCED) == supportedSyncModes_.end()
+            && std::find(supportedSyncModes_.begin(), supportedSyncModes_.end(), OB_MULTI_DEVICE_SYNC_MODE_SECONDARY) == supportedSyncModes_.end()) {
         internalConfig.syncMode = OB_MULTI_DEVICE_SYNC_MODE_SECONDARY;
     }
     internalConfig.depthDelayUs         = deviceSyncConfig.depthDelayUs;
@@ -170,10 +177,10 @@ void DeviceSyncConfiguratorOldProtocol::setSyncConfig(const OBMultiDeviceSyncCon
     auto owner          = getOwner();
     auto propertyServer = owner->getPropertyServer();
     propertyServer->setStructureDataT<OBDeviceSyncConfig>(OB_STRUCT_MULTI_DEVICE_SYNC_CONFIG, v1SyncConfig);
-    if(propertyServer->isPropertySupported(OB_PROP_SYNC_SIGNAL_TRIGGER_OUT_BOOL, PROP_OP_WRITE, PROP_ACCESS_INTERNAL)){
+    if(propertyServer->isPropertySupported(OB_PROP_SYNC_SIGNAL_TRIGGER_OUT_BOOL, PROP_OP_WRITE, PROP_ACCESS_INTERNAL)) {
         propertyServer->setPropertyValueT<bool>(OB_PROP_SYNC_SIGNAL_TRIGGER_OUT_BOOL, v2SyncConfig.triggerOutEnable);
     }
-    if(propertyServer->isPropertySupported(OB_PROP_CAPTURE_IMAGE_FRAME_NUMBER_INT, PROP_OP_WRITE, PROP_ACCESS_INTERNAL)){
+    if(propertyServer->isPropertySupported(OB_PROP_CAPTURE_IMAGE_FRAME_NUMBER_INT, PROP_OP_WRITE, PROP_ACCESS_INTERNAL)) {
         propertyServer->setPropertyValueT<int>(OB_PROP_CAPTURE_IMAGE_FRAME_NUMBER_INT, v2SyncConfig.framesPerTrigger);
     }
 

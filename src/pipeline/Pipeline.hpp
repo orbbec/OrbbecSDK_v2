@@ -47,8 +47,6 @@ private:
     void configAlignMode();
     void resetAlignMode();
 
-    std::shared_ptr<const VideoStreamProfile> getCurrentVideoStreamProfile(std::shared_ptr<const Config> config,OBStreamType type);
-
     void                    applyConfig(std::shared_ptr<const Config> cfg);
     std::shared_ptr<Config> checkAndSetConfig(std::shared_ptr<const Config> cfg);
 

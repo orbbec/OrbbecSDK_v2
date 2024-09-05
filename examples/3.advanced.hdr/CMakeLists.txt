@@ -6,7 +6,7 @@ project(ob_hdr)
 add_executable(ob_hdr hdr.cpp)
 
 set_property(TARGET ob_hdr PROPERTY CXX_STANDARD 11)
-target_link_libraries(ob_hdr ob::openobsdk ob::examples::utils)
+target_link_libraries(ob_hdr ob::OrbbecSDK ob::examples::utils)
 set_target_properties(ob_hdr PROPERTIES FOLDER "examples")
 
 install(TARGETS ob_hdr RUNTIME DESTINATION bin)

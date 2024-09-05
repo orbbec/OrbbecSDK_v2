@@ -7,7 +7,7 @@ add_executable(${PROJECT_NAME} depth.cpp)
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 11)
 
-target_link_libraries(${PROJECT_NAME} ob::openobsdk ob::examples::utils)
+target_link_libraries(${PROJECT_NAME} ob::OrbbecSDK ob::examples::utils)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "examples")
 

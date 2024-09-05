@@ -14,13 +14,7 @@ Sensor can be used to obtain different components of the camera and the stream o
 
 ## code overview
 
-1. it is necessary to create a Context for obtaining a list of device information and creating a device
-
-    ```cpp
-        ob::Context ctx;
-    ```
-
-2. Register device callback and execute relevant functions during device unplugging and unplugging
+1. Register device callback and execute relevant functions during device unplugging and unplugging
 
     ```cpp
         ctx.setDeviceChangedCallback( []( std::shared_ptr< ob::DeviceList > removedList, std::shared_ptr< ob::DeviceList > addedList ) {
@@ -29,7 +23,7 @@ Sensor can be used to obtain different components of the camera and the stream o
             } );
     ```
 
-3. Trigger the callback function to print relevant information
+2. Trigger the callback function to print relevant information
 
     ```cpp
         void printDeviceList(const std::string &prompt, std::shared_ptr<ob::DeviceList> deviceList) {
@@ -51,7 +45,7 @@ Sensor can be used to obtain different components of the camera and the stream o
         }
     ```
 
-4. Restart your device
+3. Restart your device
 
 ```cpp
     void rebootDevices(std::shared_ptr<ob::DeviceList> deviceList) {
@@ -73,4 +67,4 @@ Press the Esc key in the window to exit the program
 
 ### Result
 
-![image](/docs/resource/hotplugin.png)
+![image](/docs/resource/hotplugin.jpg)

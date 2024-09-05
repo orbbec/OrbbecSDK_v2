@@ -80,7 +80,7 @@ int parse_bolt_data(char *filename, OBCameraIntrinsic &depth_intr, OBCameraIntri
     color_disto.k6  = static_cast<float>(std::atof(inidata["ColorDistortion"]["k6"].c_str()));
     color_disto.p1  = static_cast<float>(std::atof(inidata["ColorDistortion"]["p1"].c_str()));
     color_disto.p2  = static_cast<float>(std::atof(inidata["ColorDistortion"]["p2"].c_str()));
-    color_disto.model   = OBCameraDistortionModel::OB_DISTORTION_BROWN_CONRADY;
+    color_disto.model   = OBCameraDistortionModel::OB_DISTORTION_BROWN_CONRADY_K6;
     color_intr.fx   = static_cast<float>(std::atof(inidata["ColorIntrinsic"]["fx"].c_str()));
     color_intr.fy   = static_cast<float>(std::atof(inidata["ColorIntrinsic"]["fy"].c_str()));
     color_intr.cx   = static_cast<float>(std::atof(inidata["ColorIntrinsic"]["cx"].c_str()));

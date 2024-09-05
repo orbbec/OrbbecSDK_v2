@@ -14,14 +14,7 @@ win is used to display the frame data.
 
 ## Code overview
 
-1. Create a pipeline with default device
-
-    ```cpp
-        // Create a pipeline with default device.
-        ob::Pipeline pipe;
-    ```
-
-2. Get the device and sensor, and get the list of recommended filters for the sensor
+1. Get the device and sensor, and get the list of recommended filters for the sensor
 
     ```cpp
         auto device     = pipe.getDevice();
@@ -29,52 +22,7 @@ win is used to display the frame data.
         auto filterList = sensor->getRecommendedFilters();
     ```
 
-3. Create a config with depth stream enabled and start the pipeline with config
-
-    ```cpp
-        // Create a config with depth stream enabled
-        std::shared_ptr<ob::Config> config = std::make_shared<ob::Config>();
-        config->enableStream(OB_STREAM_DEPTH);
-
-        // Start the pipeline with config
-        pipe.start(config);
-    ```
-
-4. Get the depth frame
-
-    ```cpp
-        auto frameSet = pipe.waitForFrameset(1000);
-        if(frameSet == nullptr) {
-            continue;
-        }
-
-        // Get the depth frame from the frameset
-        auto depthFrame = frameSet->getFrame(OB_FRAME_DEPTH);
-        if(!depthFrame) {
-            continue;
-        }
-    ```
-
-5. Apply the recommended filters to the depth frame
-
-    ```cpp
-        auto processedFrame = depthFrame;
-        // Apply the recommended filters to the depth frame
-        for(auto &filter: filterList) {
-            if(filter->isEnabled()) {  // Only apply enabled filters
-                processedFrame = filter->process(processedFrame);
-            }
-        }
-    ```
-
-6. Display the frame and processed frame
-
-    ```cpp
-        win.pushFramesToView(depthFrame, 0);
-        win.pushFramesToView(processedFrame, 1);
-    ```
-
-7. The filter operation.
+2. The filter operation.
 
     - Get the type of filter
 
@@ -112,11 +60,17 @@ win is used to display the frame data.
     filter->setConfigValue(tokens[1], value);
     ```
 
-8. Stop pipeline
+3. Apply the recommended filters to the depth frame
 
     ```cpp
-        pipe.stop();
-    ```
+        auto processedFrame = depthFrame;
+        // Apply the recommended filters to the depth frame
+        for(auto &filter: filterList) {
+            if(filter->isEnabled()) {  // Only apply enabled filters
+                processedFrame = filter->process(processedFrame);
+            }
+        }
+    ````
 
 ## Run Sample
 
@@ -124,4 +78,4 @@ Press the button according to the interface prompts
 
 ### Result
 
-![image](/docs/resource/post_processing.png)
+![image](/docs/resource/post_processing.jpg)

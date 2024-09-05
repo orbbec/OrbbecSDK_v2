@@ -63,62 +63,7 @@ Sensor can be used to obtain different components of the camera and the stream o
         std::sort(propertyList.begin(), propertyList.end(), [](const OBPropertyItem &a, const OBPropertyItem &b) { return a.id < b.id; });
     ```
 
-3. Print interactive information in the terminal. You can use get and set to set and obtain camera related parameters.
-
-    ```cpp
-        std::string choice;
-        std::getline(std::cin, choice);
-
-        if(choice != "?") {
-            std::istringstream       ss(choice);
-            std::string              tmp;
-            std::vector<std::string> controlVec;
-            while(ss >> tmp) {
-                controlVec.push_back(tmp);
-            }
-
-            if(controlVec.size() <= 0)
-                continue;
-
-            // exit the program
-            if(controlVec.at(0) == "exit") {
-                isSelectProperty = false;
-                isSelectDevice   = false;
-                break;
-            }
-
-            // Check if it matches the input format
-            if(controlVec.size() <= 1 || (controlVec.at(1) != "get" && controlVec.at(1) != "set") || controlVec.size() > 3
-                || (controlVec.at(1) == "set" && controlVec.size() < 3)) {
-                std::cout << "Property control usage: [property index] [set] [property value] or [property index] [get]" << std::endl;
-                continue;
-            }
-            size_t size     = propertyList.size();
-            size_t selectId = std::atoi(controlVec.at(0).c_str());
-            if(selectId >= size) {
-                std::cout << "Your selection is out of range, please reselect: " << std::endl;
-                continue;
-            }
-
-            bool isGetValue   = controlVec.at(1) == "get" ? true : false;
-            auto propertyItem = propertyList.at(selectId);
-
-            if(isGetValue) {
-                // get property value
-                getPropertyValue(device, propertyItem);
-            }
-            else {
-                // set property value
-                setPropertyValue(device, propertyItem, controlVec.at(2));
-            }
-        }
-        else {
-            printfPropertyList(device, propertyList);
-            std::cout << "Please select property.(Property control usage: [property number] [set/get] [property value])" << std::endl;
-        }
-    ```
-
-4. Use the get command to obtain camera-related property values
+3. Use the get command to obtain camera-related property values
 
     ```cpp
        // get property value
@@ -166,7 +111,7 @@ Sensor can be used to obtain different components of the camera and the stream o
         }
     ```
 
-5. Use the set command to set camera-related property values
+4. Use the set command to set camera-related property values
 
     ```cpp
         // set properties
@@ -226,6 +171,6 @@ Press the Esc key in the window to exit the program.
 
 ### Result
 
-![image](/docs/resource/control1.png)
+![image](/docs/resource/control1.jpg)
 
-![image](/docs/resource/control2.png)
+![image](/docs/resource/control2.jpg)

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "IDevice.hpp"
-#include "IDeviceEnumerator.hpp"
+#include "IDeviceManager.hpp"
 
 #include <memory>
 #include <map>
@@ -65,6 +65,7 @@ protected:
 protected:
     const std::shared_ptr<const IDeviceEnumInfo> enumInfo_;
     std::shared_ptr<DeviceInfo>                  deviceInfo_;
+    std::shared_ptr<NetDeviceInfo>               netDeviceInfo_;
     std::map<std::string, std::string>           extensionInfo_;
 
 private:

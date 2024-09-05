@@ -17,32 +17,32 @@ if(MSVC)
 endif()
 
 # only support shared library for now
-add_library(openobsdk SHARED "" ${ORBBEC_VERSIONINFO_RC})
+add_library(OrbbecSDK SHARED "" ${ORBBEC_VERSIONINFO_RC})
 include(GenerateExportHeader)
-generate_export_header(openobsdk BASE_NAME OB EXPORT_FILE_NAME ${OB_PUBLIC_HEADERS_DIR}/libobsensor/h/Export.h)
+generate_export_header(OrbbecSDK BASE_NAME OB EXPORT_FILE_NAME ${OB_PUBLIC_HEADERS_DIR}/libobsensor/h/Export.h)
 
 file(GLOB_RECURSE SOURCE_FILES ${CMAKE_CURRENT_LIST_DIR}/impl/*.cpp ${CMAKE_CURRENT_LIST_DIR}/context/*.cpp)
 file(GLOB_RECURSE HEADER_FILES ${CMAKE_CURRENT_LIST_DIR}/impl/*.hpp ${CMAKE_CURRENT_LIST_DIR}/context/*.hpp)
 
-target_sources(openobsdk PRIVATE ${SOURCE_FILES} ${HEADER_FILES})
-target_link_libraries(openobsdk PRIVATE ob::shared ob::core ob::filter ob::platform ob::device ob::pipeline)
-target_include_directories(openobsdk PRIVATE ${CMAKE_CURRENT_LIST_DIR})
+target_sources(OrbbecSDK PRIVATE ${SOURCE_FILES} ${HEADER_FILES})
+target_link_libraries(OrbbecSDK PRIVATE ob::shared ob::core ob::filter ob::platform ob::device ob::pipeline)
+target_include_directories(OrbbecSDK PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 target_include_directories(
-    openobsdk PUBLIC "$<BUILD_INTERFACE:${OB_PUBLIC_HEADERS_DIR}>" "$<INSTALL_INTERFACE:include>"
+    OrbbecSDK PUBLIC "$<BUILD_INTERFACE:${OB_PUBLIC_HEADERS_DIR}>" "$<INSTALL_INTERFACE:include>"
 )
 
 if(UNIX)
     find_package(Threads REQUIRED)
-    target_link_libraries(openobsdk PRIVATE Threads::Threads)
+    target_link_libraries(OrbbecSDK PRIVATE Threads::Threads)
 endif()
 
-add_library(ob::openobsdk ALIAS openobsdk)
-ob_source_group(ob::openobsdk)
+add_library(ob::OrbbecSDK ALIAS OrbbecSDK)
+ob_source_group(ob::OrbbecSDK)
 
 if(OB_IS_MAIN_PROJECT)
     install(
-        TARGETS openobsdk
-        EXPORT openobsdkConfig
+        TARGETS OrbbecSDK
+        EXPORT OrbbecSDKConfig
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib
@@ -56,5 +56,5 @@ if(OB_IS_MAIN_PROJECT)
         PATTERN "*.hpp"
     )
 
-    install(EXPORT openobsdkConfig NAMESPACE ob:: DESTINATION lib)
+    install(EXPORT OrbbecSDKConfig NAMESPACE ob:: DESTINATION lib)
 endif()

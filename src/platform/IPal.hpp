@@ -24,5 +24,4 @@ std::shared_ptr<IPal> createUsbPal();
 #if defined(BUILD_NET_PAL)
 std::shared_ptr<IPal> createNetPal();
 #endif
-
 }  // namespace libobsensor

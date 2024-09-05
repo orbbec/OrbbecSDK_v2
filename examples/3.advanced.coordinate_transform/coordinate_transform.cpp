@@ -4,10 +4,11 @@
 
 void printUsage();
 std::string inputWatcher() ;
-void transformation2dto2d(std::shared_ptr<ob::Frame> &colorFrame, std::shared_ptr<ob::Frame> &depthFrame);
-void transformation2dto3d(std::shared_ptr<ob::Frame> &colorFrame, std::shared_ptr<ob::Frame> &depthFrame);
-void transformation3dto2d(std::shared_ptr<ob::Frame> &colorFrame, std::shared_ptr<ob::Frame> &depthFrame);
-void transformation3dto3d(std::shared_ptr<ob::Frame> &colorFrame, std::shared_ptr<ob::Frame> &depthFrame);
+void transformation2dto2d(std::shared_ptr<ob::Frame> colorFrame, std::shared_ptr<ob::Frame> depthFrame);
+void transformation2dto3d(std::shared_ptr<ob::Frame> colorFrame, std::shared_ptr<ob::Frame> depthFrame);
+void transformation3dto2d(std::shared_ptr<ob::Frame> colorFrame, std::shared_ptr<ob::Frame> depthFrame);
+void transformation3dto3d(std::shared_ptr<ob::Frame> colorFrame, std::shared_ptr<ob::Frame> depthFrame);
+
 int main(void) try {
     // Configure which streams to enable or disable for the Pipeline by creating a Config
     auto config = std::make_shared<ob::Config>();
@@ -22,13 +23,14 @@ int main(void) try {
     // Create a pipeline with default device to manage stream
     auto pipe = std::make_shared<ob::Pipeline>();
 
-    std::string testType = "1";
-    printUsage();
-    testType = inputWatcher();
+    std::string testType = "1";   
 
     // Start the pipeline with config
     pipe->start(config);
     while(1) {
+        printUsage();
+        testType = inputWatcher();
+
         // Wait for a frameset from the pipeline
         auto frameSet = pipe->waitForFrameset(100);  
         if(frameSet == nullptr) {
@@ -52,7 +54,6 @@ int main(void) try {
         } else {
             std::cout << "Invalid command" << std::endl;
         }  
-        break; 
      }
      
     pipe->stop();
@@ -101,13 +102,8 @@ void printRuslt(std::string msg, OBPoint3f sourcePixel, OBPoint3f targetPixel) {
     std::cout << msg << ":" << "(" << sourcePixel.x << ", " << sourcePixel.y << ", " << sourcePixel.z << ") -> (" << targetPixel.x << ", " << targetPixel.y << ", " << targetPixel.z << ")" << std::endl;
 }
 
-/**
- * @brief Function to test the transformation from one 2D coordinate system to another
- *
- * @param colorFrame Shared pointer to the color frame
- * @param depthFrame Shared pointer to the depth frame
- */
-void transformation2dto2d(std::shared_ptr<ob::Frame> &colorFrame, std::shared_ptr<ob::Frame> &depthFrame) {
+// test the transformation from one 2D coordinate system to another
+void transformation2dto2d(std::shared_ptr<ob::Frame> colorFrame, std::shared_ptr<ob::Frame> depthFrame) {
     // Get the width and height of the color and depth frames
     auto colorFrameWidth = colorFrame->as<ob::VideoFrame>()->getWidth();
     auto depthFrameWidth = depthFrame->as<ob::VideoFrame>()->getWidth();    
@@ -160,13 +156,8 @@ void transformation2dto2d(std::shared_ptr<ob::Frame> &colorFrame, std::shared_pt
     }
 }
 
-/**
- * @brief Function to test the transformation from 2D to 3D coordinates
- *
- * @param colorFrame Shared pointer to the color frame
- * @param depthFrame Shared pointer to the depth frame
- */
-void transformation2dto3d(std::shared_ptr<ob::Frame> &colorFrame, std::shared_ptr<ob::Frame> &depthFrame) {
+// test the transformation from 2D to 3D coordinates
+void transformation2dto3d(std::shared_ptr<ob::Frame> colorFrame, std::shared_ptr<ob::Frame> depthFrame) {
      // Get the width and height of the color and depth frames
     auto depthFrameWidth = depthFrame->as<ob::VideoFrame>()->getWidth();    
     auto depthFrameHeight = depthFrame->as<ob::VideoFrame>()->getHeight();
@@ -207,13 +198,8 @@ void transformation2dto3d(std::shared_ptr<ob::Frame> &colorFrame, std::shared_pt
     }
 }
 
-/**
- * @brief Function to test the transformation from 3D coordinates to 3D coordinates
- *
- * @param colorFrame Shared pointer to the color frame
- * @param depthFrame Shared pointer to the depth frame
- */
-void transformation3dto3d(std::shared_ptr<ob::Frame> &colorFrame, std::shared_ptr<ob::Frame> &depthFrame) {
+// test the transformation from 3D coordinates to 3D coordinates
+void transformation3dto3d(std::shared_ptr<ob::Frame> colorFrame, std::shared_ptr<ob::Frame> depthFrame) {
      // Get the width and height of the color and depth frames
     auto depthFrameWidth = depthFrame->as<ob::VideoFrame>()->getWidth();   
     auto depthFrameHeight = depthFrame->as<ob::VideoFrame>()->getHeight();
@@ -262,13 +248,8 @@ void transformation3dto3d(std::shared_ptr<ob::Frame> &colorFrame, std::shared_pt
     }
 }
 
-/**
- * @brief Function to test the transformation from 3D coordinates back to 2D coordinates
- *
- * @param colorFrame Shared pointer to the color frame
- * @param depthFrame Shared pointer to the depth frame
- */
-void transformation3dto2d(std::shared_ptr<ob::Frame> &colorFrame, std::shared_ptr<ob::Frame> &depthFrame) {
+// test the transformation from 3D coordinates back to 2D coordinates
+void transformation3dto2d(std::shared_ptr<ob::Frame> colorFrame, std::shared_ptr<ob::Frame> depthFrame) {
      // Get the width and height of the color and depth frames
     auto depthFrameWidth = depthFrame->as<ob::VideoFrame>()->getWidth();   
     auto depthFrameHeight = depthFrame->as<ob::VideoFrame>()->getHeight();

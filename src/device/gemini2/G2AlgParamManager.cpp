@@ -97,6 +97,7 @@ void G2AlgParamManager::fetchParamFromDevice() {
         LOG_DEBUG("Get imu calibration params success!");
     }
 }
+
 void G2AlgParamManager::registerBasicExtrinsics() {
     auto extrinsicMgr              = StreamExtrinsicsManager::getInstance();
     auto depthBasicStreamProfile   = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_DEPTH, OB_FORMAT_ANY, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY);
@@ -131,7 +132,7 @@ void G2AlgParamManager::registerBasicExtrinsics() {
     extrinsicMgr->registerSameExtrinsics(leftIrBasicStreamProfile, depthBasicStreamProfile);
 
     if(!depthCalibParamList_.empty()) {
-        auto left_to_right     = IdentityExtrinsic;
+        auto left_to_right     = IdentityExtrinsics;
         left_to_right.trans[0] = -1.0f * depthCalibParamList_.front().baseline * depthCalibParamList_.front().unit;
         extrinsicMgr->registerExtrinsics(leftIrBasicStreamProfile, rightIrBasicStreamProfile, left_to_right);
     }

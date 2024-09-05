@@ -8,7 +8,7 @@
 std::map<int, std::shared_ptr<const ob::Frame>> framesets;
 std::mutex                                      framesetMutex;
 
-void StartStream(std::map<int, std::shared_ptr<ob::Pipeline>> &pipes) {
+void startStream(std::map<int, std::shared_ptr<ob::Pipeline>> &pipes) {
 
     for(auto &item: pipes) {
         int   deviceIndex = item.first;
@@ -27,7 +27,7 @@ void StartStream(std::map<int, std::shared_ptr<ob::Pipeline>> &pipes) {
     }
 }
 
-void StopStream(std::map<int, std::shared_ptr<ob::Pipeline>> &pipes) {
+void stopStream(std::map<int, std::shared_ptr<ob::Pipeline>> &pipes) {
     for(auto &item: pipes) {
         auto &pipe = item.second;
         // stop the pipeline
@@ -62,7 +62,7 @@ int main() try {
     }
 
     // Start the depth and color streams for all devices
-    StartStream(pipes);
+    startStream(pipes);
 
     // Create a window for rendering and set the resolution of the window
     ob_smpl::CVWindow win("MultiDevice", 1280, 720, ob_smpl::ARRANGE_GRID);
@@ -81,7 +81,7 @@ int main() try {
     }
 
     // Stop all streams and clear the framesets
-    StopStream(pipes);
+    stopStream(pipes);
 
     return 0;
 }

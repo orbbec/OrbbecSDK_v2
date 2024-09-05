@@ -60,7 +60,7 @@ Device is the device object, which can be used to obtain the device information,
 5. Output device sensors and wait for keyboard input
 
      ```cpp
-    // Enumerate sensors.
+        // Enumerate sensors.
         void enumerateSensors(std::shared_ptr<ob::Device> device) {
             while(true) {
                 std::cout << "Sensor list: " << std::endl;

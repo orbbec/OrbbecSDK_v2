@@ -186,7 +186,7 @@ void G330AlgParamManager::registerBasicExtrinsics() {
     extrinsicMgr->registerSameExtrinsics(leftIrBasicStreamProfile, depthBasicStreamProfile);
 
     if(!depthCalibParamList_.empty()) {
-        auto left_to_right     = IdentityExtrinsic;
+        auto left_to_right     = IdentityExtrinsics;
         left_to_right.trans[0] = -1.0f * depthCalibParamList_.front().baseline * depthCalibParamList_.front().unit;
         extrinsicMgr->registerExtrinsics(leftIrBasicStreamProfile, rightIrBasicStreamProfile, left_to_right);
     }

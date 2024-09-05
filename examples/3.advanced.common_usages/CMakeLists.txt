@@ -4,7 +4,7 @@ project(ob_common_usages)
 add_executable(${PROJECT_NAME} common_usages.cpp)
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 11)
-target_link_libraries(${PROJECT_NAME} ob::openobsdk ob::examples::utils)
+target_link_libraries(${PROJECT_NAME} ob::OrbbecSDK ob::examples::utils)
 
 set_target_properties (${PROJECT_NAME} PROPERTIES FOLDER "examples")
 install(TARGETS ob_common_usages RUNTIME DESTINATION bin)

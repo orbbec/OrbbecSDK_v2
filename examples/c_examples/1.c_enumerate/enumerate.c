@@ -201,11 +201,11 @@ int main(void) {
     // Used to return SDK interface error information.
     ob_error *error = NULL;
 
-    // Get OpenOrbbecSDK version.
+    // Get OrbbecSDK version.
     int major_version = ob_get_major_version();
     int minor_version = ob_get_minor_version();
     int patch_version = ob_get_patch_version();
-    printf("Open Orbbec SDK version: %d.%d.%d\n", major_version, minor_version, patch_version);
+    printf("Orbbec SDK version: %d.%d.%d\n", major_version, minor_version, patch_version);
 
     // Create context.
     ob_context *ctx = ob_create_context(&error);

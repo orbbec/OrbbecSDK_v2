@@ -4,7 +4,7 @@
 namespace libobsensor {
 FilterStatePropertyAccessor::FilterStatePropertyAccessor(std::shared_ptr<IFilter> filter) : filter_(filter) {}
 
-void FilterStatePropertyAccessor::setPropertyValue(uint32_t propertyId, OBPropertyValue value) {
+void FilterStatePropertyAccessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
     utils::unusedVar(propertyId);
     bool enable = static_cast<bool>(value.intValue);
     filter_->enable(enable);

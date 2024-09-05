@@ -7,7 +7,7 @@
 #include <vector>
 
 namespace libobsensor {
-constexpr OBExtrinsic IdentityExtrinsic = { { 1, 0, 0, 0, 1, 0, 0, 0, 1 }, { 0, 0, 0 } };
+constexpr OBExtrinsic IdentityExtrinsics = { { 1, 0, 0, 0, 1, 0, 0, 0, 1 }, { 0, 0, 0 } };
 class StreamExtrinsicsManager {
 private:
     StreamExtrinsicsManager();
@@ -23,7 +23,7 @@ public:
     void registerExtrinsics(const std::shared_ptr<const StreamProfile> &from, const std::shared_ptr<const StreamProfile> &to, const OBExtrinsic &extrinsics);
     void registerSameExtrinsics(const std::shared_ptr<const StreamProfile> &from, const std::shared_ptr<const StreamProfile> &to);
 
-    // bool        hasExtrinsics(std::shared_ptr<const StreamProfile> from, std::shared_ptr<const StreamProfile> to) const;
+    bool        hasExtrinsics(std::shared_ptr<const StreamProfile> from, std::shared_ptr<const StreamProfile> to);
     OBExtrinsic getExtrinsics(std::shared_ptr<const StreamProfile> from, std::shared_ptr<const StreamProfile> to);
 
 private:
@@ -37,9 +37,7 @@ private:
     uint64_t getStreamProfileId(std::shared_ptr<const StreamProfile> profile) const;
 
 private:
-    uint64_t nextId_;
-
-    std::mutex                                                          mutex_;
+    std::recursive_mutex                                                mutex_;
     std::map<uint64_t, std::vector<std::weak_ptr<const StreamProfile>>> streamProfileMap_;  // vertices
     std::map<uint64_t, std::vector<std::pair<uint64_t, OBExtrinsic>>>   extrinsicsGraph_;   // graph adjacency list
 };

@@ -18,4 +18,6 @@ target_sources(
         ${CMAKE_CURRENT_LIST_DIR}/Astra2DepthWorkModeManager.cpp
         ${CMAKE_CURRENT_LIST_DIR}/Astra2StreamProfileFilter.hpp
         ${CMAKE_CURRENT_LIST_DIR}/Astra2StreamProfileFilter.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/Astra2DeviceSyncConfigurator.hpp
+        ${CMAKE_CURRENT_LIST_DIR}/Astra2DeviceSyncConfigurator.cpp
 )

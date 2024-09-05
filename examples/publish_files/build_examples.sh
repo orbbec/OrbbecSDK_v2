@@ -51,7 +51,7 @@ cp bin/* $project_dir/bin
 cd $project_dir
 rm -rf build
 
-echo "OpenOrbbecSDK examples built successfully!"
+echo "OrbbecSDK examples built successfully!"
 echo "The executable files located in: $project_dir/bin"
 
 cd $current_dir

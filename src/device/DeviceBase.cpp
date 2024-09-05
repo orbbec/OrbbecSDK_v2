@@ -37,6 +37,12 @@ void DeviceBase::fetchDeviceInfo() {
     deviceInfo_->uid_                 = enumInfo_->getUid();
     deviceInfo_->connectionType_      = enumInfo_->getConnectionType();
 
+    // remove the prefix "Orbbec " from the device name if contained
+    if(deviceInfo_->name_.find("Orbbec ") == 0) {
+        deviceInfo_->name_ = deviceInfo_->name_.substr(7);
+    }
+    deviceInfo_->fullName_ = "Orbbec " + deviceInfo_->name_;
+
     // mark the device as a multi-sensor device with same clock at default
     extensionInfo_["AllSensorsUsingSameClock"] = "true";
 }
@@ -329,10 +335,10 @@ std::shared_ptr<IFilter> DeviceBase::getSensorFrameFilter(const std::string &nam
 }
 
 int DeviceBase::getFirmwareVersionInt() {
-    int  dotCount     = 0;
-    char buf[16]      = { 0 };
+    int    dotCount     = 0;
+    char   buf[16]      = { 0 };
     size_t bufIndex     = 0;
-    int  calFwVersion = 0;
+    int    calFwVersion = 0;
     for(size_t i = 0; i < deviceInfo_->fwVersion_.size(); i++) {
         const char c = deviceInfo_->fwVersion_[i];
         if(isdigit(c) && bufIndex < sizeof(buf)) {

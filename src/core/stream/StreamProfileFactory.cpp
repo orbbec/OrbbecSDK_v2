@@ -33,21 +33,13 @@ std::shared_ptr<StreamProfile> createStreamProfile(OBStreamType streamType, OBFo
     }
 }
 
-std::shared_ptr<VideoStreamProfile> createVideoStreamProfile(OBStreamType type, OBFormat format, uint32_t width, uint32_t height, uint32_t fps,
-                                                             OBDeviceType deviceType) {
-    return createVideoStreamProfile(std::shared_ptr<LazySensor>(), type, format, width, height, fps, deviceType);
+std::shared_ptr<VideoStreamProfile> createVideoStreamProfile(OBStreamType type, OBFormat format, uint32_t width, uint32_t height, uint32_t fps) {
+    return createVideoStreamProfile(std::shared_ptr<LazySensor>(), type, format, width, height, fps);
 }
 
 std::shared_ptr<VideoStreamProfile> createVideoStreamProfile(std::shared_ptr<LazySensor> owner, OBStreamType type, OBFormat format, uint32_t width,
-                                                             uint32_t height, uint32_t fps, OBDeviceType deviceType) {
-    std::shared_ptr<VideoStreamProfile> vsp;
-    if(type == OB_STREAM_DEPTH && (deviceType == OB_STRUCTURED_LIGHT_MONOCULAR_CAMERA || deviceType == OB_STRUCTURED_LIGHT_BINOCULAR_CAMERA)) {
-        vsp = std::make_shared<DisparityBasedStreamProfile>(owner, type, format, width, height, fps);
-    }
-    else {
-        vsp = std::make_shared<VideoStreamProfile>(owner, type, format, width, height, fps);
-    }
-    return vsp;
+                                                             uint32_t height, uint32_t fps) {
+    return std::make_shared<VideoStreamProfile>(owner, type, format, width, height, fps);
 }
 
 std::shared_ptr<DisparityBasedStreamProfile> createDisparityBasedStreamProfile(std::shared_ptr<const VideoStreamProfile> videoProfile) {

@@ -12,8 +12,7 @@ FrameSet is a combination of different types of Frames.
 
 ## code overview
 
-1. StartStream
-DeviceIndex is used to identify different devices, and map is used to store the color and depth stream of different devices.
+1. StartStream DeviceIndex is used to identify different devices, and map is used to store the color and depth stream of different devices.
 
     ```cpp
     void StartStream(std::map<int, std::shared_ptr<ob::Pipeline>> &pipes) {
@@ -36,8 +35,7 @@ DeviceIndex is used to identify different devices, and map is used to store the 
     }
     ```
 
-2. StopStream
-Obtain pipelines corresponding to different devices and stop the pipelines.
+2. StopStream Obtain pipelines corresponding to different devices and stop the pipelines.
 
     ```cpp
     void StopStream(std::map<int, std::shared_ptr<ob::Pipeline>> &pipes) {
@@ -82,20 +80,6 @@ Obtain pipelines corresponding to different devices and stop the pipelines.
     }
     ```
 
-5. Start pipeline
-
-    ```cpp
-    // Start the depth and color streams for all devices
-    StartStream(pipes);
-    ```
-
-6. Stop pipeline
-
-    ```cpp
-    // Stop all streams and clear the framesets
-    StopStream(pipes);
-    ```
-
 ## Run Sample
 
 ### Key introduction
@@ -105,4 +89,4 @@ Press the '?' key in the window to show key map.
 
 ### Result
 
-![multi_devices](/docs/resource/multi_devices.png)
+![multi_devices](/docs/resource/multi_devices.jpg)

@@ -1,6 +1,6 @@
 # Third-party Libraries
 
-This folder contains third-party libraries used by the OpenOrbbecSDK.
+This folder contains third-party libraries used by the OrbbecSDK.
 
 The libraries included in this folder are:
 

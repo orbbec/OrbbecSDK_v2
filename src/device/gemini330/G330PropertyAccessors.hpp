@@ -8,7 +8,7 @@ public:
     explicit G330Disp2DepthPropertyAccessor(IDevice *owner);
     virtual ~G330Disp2DepthPropertyAccessor() noexcept = default;
 
-    virtual void setPropertyValue(uint32_t propertyId, OBPropertyValue value) override;
+    virtual void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
     virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
     virtual void getPropertyRange(uint32_t propertyId, OBPropertyRange *range) override;
 

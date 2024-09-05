@@ -10,12 +10,9 @@ Pipeline is a pipeline for processing data streams, providing multi-channel stre
 
 ## code overview
 
-1. Instantiate the pipeline, configure IR sensor related information and open the IR stream
+1. Configure IR sensor related information and enable the IR stream.You must configure this before calling pipe.start().
 
     ```cpp
-        // Create a pipeline with default device.
-        ob::Pipeline pipe;
-
         // Get the device from pipeline.
         std::shared_ptr<ob::Device> device = pipe.getDevice();
 
@@ -35,8 +32,6 @@ Pipeline is a pipeline for processing data streams, providing multi-channel stre
                 config->enableVideoStream(sensorType, OB_WIDTH_ANY, OB_HEIGHT_ANY, 30, OB_FORMAT_ANY);
             }
         }
-
-        pipe.start(config);
     ```
 
 2. Open the window and output the IR stream
@@ -61,4 +56,4 @@ Press the Esc key in the window to exit the program.
 
 ### Result
 
-![image](/docs/resource/infrared.png)
+![image](/docs/resource/infrared.jpg)

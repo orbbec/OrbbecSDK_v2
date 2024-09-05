@@ -153,6 +153,17 @@ OB_EXPORT void ob_device_set_structured_data(ob_device *device, ob_property_id p
 OB_EXPORT void ob_device_get_structured_data(ob_device *device, ob_property_id property_id, uint8_t *data, uint32_t *data_size, ob_error **error);
 
 /**
+ * @brief Get raw data of a device property.
+ *
+ * @param[in] device The device object.
+ * @param[in] property_id The ID of the property.
+ * @param[out] cb The get data callback.
+ * @param[out] user_data User-defined data that will be returned in the callback.
+ * @param[out] error Pointer to an error object that will be set if an error occurs.
+ */
+OB_EXPORT void ob_device_get_raw_data(ob_device *device, ob_property_id property_id, ob_get_data_callback cb, void *user_data, ob_error **error);
+
+/**
  * @brief Get the number of properties supported by the device.
  *
  * @param[in] device The device object.
@@ -594,11 +605,7 @@ OB_EXPORT ob_camera_param ob_camera_param_list_get_param(ob_camera_param_list *p
  */
 OB_EXPORT void ob_delete_camera_param_list(ob_camera_param_list *param_list, ob_error **error);
 
-
-/**
- * In order to be compatible with the closed source version of orbbecsdk's interface.
- * We recommend using the latest interface names for a better experience.
- */
+// The following interfaces are deprecated and are retained here for compatibility purposes.
 #define ob_device_list_device_count ob_device_list_get_count
 #define ob_device_list_get_extension_info ob_device_info_get_extension_info
 #define ob_device_upgrade ob_device_update_firmware

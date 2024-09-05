@@ -77,40 +77,36 @@ DeviceManager::~DeviceManager() noexcept {
 std::shared_ptr<IDevice> DeviceManager::createNetDevice(std::string address, uint16_t port) {
 #if defined(BUILD_NET_PAL)
     LOG_DEBUG("DeviceManager createNetDevice...");
-    // std::string uid = address + ":" + std::to_string(port);
-    // {
-    //     std::unique_lock<std::mutex> lock(createdDevicesMutex_);
-    //     auto                         iter = createdDevices_.begin();
-    //     for(; iter != createdDevices_.end(); ++iter) {
-    //         if(iter->first == uid) {
-    //             auto dev = iter->second.lock();
-    //             if(dev) {
-    //                 throw invalid_value_exception("Attempting to create a device that has already been created!! address=" + address
-    //                                               + ", port=" + std::to_string(port));
-    //             }
-    //             else {
-    //                 createdDevices_.erase(iter);
-    //                 break;
-    //             }
-    //         }
-    //     }
-    // }
+    std::string uid = address + ":" + std::to_string(port);
+    {
+        std::unique_lock<std::mutex> lock(createdDevicesMutex_);
+        auto                         iter = createdDevices_.begin();
+        for(; iter != createdDevices_.end(); ++iter) {
+            if(iter->first == uid) {
+                auto dev = iter->second.lock();
+                if(dev) {
+                    throw invalid_value_exception("Attempting to create a device that has already been created!! address=" + address
+                                                  + ", port=" + std::to_string(port));
+                }
+                else {
+                    createdDevices_.erase(iter);
+                    break;
+                }
+            }
+        }
+    }
 
-    // auto device = NetDeviceEnumerator::createDevice(address, port);
-    // if(device == nullptr) {
-    //     throw libobsensor::invalid_value_exception("Failed to create Net Device, address=" + address + ", port=" + std::to_string(port));
-    //     return nullptr;
-    // }
+    auto device = NetDeviceEnumerator::createDevice(address, port);
+    if(device == nullptr) {
+        throw libobsensor::invalid_value_exception("Failed to create Net Device, address=" + address + ", port=" + std::to_string(port));
+    }
 
-    // {
-    //     std::unique_lock<std::mutex> lock(createdDevicesMutex_);
-    //     createdDevices_.insert({ uid, device });
-    // }
-    // LOG_INFO("create Net Device success! address={0}, port={1}", address, port);
-    // return device;
-    utils::unusedVar(address);
-    utils::unusedVar(port);
-    throw libobsensor::unsupported_operation_exception("Unsupported operation, please use createDevice() instead.");
+    {
+        std::unique_lock<std::mutex> lock(createdDevicesMutex_);
+        createdDevices_.insert({ uid, device });
+    }
+    LOG_INFO("create Net Device success! address={0}, port={1}", address, port);
+    return device;
 #else
     utils::unusedVar(address);
     utils::unusedVar(port);
@@ -306,7 +302,7 @@ void DeviceManager::enableNetDeviceEnumeration(bool enable) {
 #endif
 }
 
-bool DeviceManager::isNetDeviceEnumerationEnable() {
+bool DeviceManager::isNetDeviceEnumerationEnable() const {
 #if defined(BUILD_NET_PAL)
 
     auto iter = std::find_if(deviceEnumerators_.begin(), deviceEnumerators_.end(), [](const std::shared_ptr<IDeviceEnumerator> &enumerator) {  //

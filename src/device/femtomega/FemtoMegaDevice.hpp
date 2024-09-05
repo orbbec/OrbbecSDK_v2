@@ -1,6 +1,6 @@
 #pragma once
 #include "DeviceBase.hpp"
-#include "IDeviceEnumerator.hpp"
+#include "IDeviceManager.hpp"
 #include "frameprocessor/FrameProcessor.hpp"
 
 #include <map>
@@ -34,6 +34,8 @@ private:
     void initProperties();
     void initSensorStreamProfile(std::shared_ptr<ISensor> sensor);
     void fetchAllProfileList();
+
+    void fetchDeviceInfo() override;
 
 private:
     uint64_t deviceTimeFreq_     = 1000;

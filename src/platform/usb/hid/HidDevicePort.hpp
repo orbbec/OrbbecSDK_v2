@@ -11,7 +11,6 @@ namespace libobsensor {
 class HidDevicePort : public IDataStreamPort {
 public:
     HidDevicePort(const std::shared_ptr<IUsbDevice> &usbDevice, std::shared_ptr<const USBSourcePortInfo> portInfo);
-
     ~HidDevicePort() noexcept override;
 
     void startStream(MutableFrameCallback callback) override;

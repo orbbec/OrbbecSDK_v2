@@ -8,6 +8,7 @@ FemtoBoltDeviceInfo::FemtoBoltDeviceInfo(const SourcePortInfoList groupedInfoLis
     auto portInfo = std::dynamic_pointer_cast<const USBSourcePortInfo>(groupedInfoList.front());
 
     name_               = "FemtoBolt";
+    fullName_           = "Orbbec " + name_;
     pid_                = portInfo->pid;
     vid_                = portInfo->vid;
     uid_                = portInfo->uid;
