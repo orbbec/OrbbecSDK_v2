@@ -122,9 +122,8 @@ void ObRTPUDPClient::startReceive() {
         tryRecCount = 3;
 
         if(recvLen > 0) {
-            buffer.resize(recvLen);
-            rtpQueue_.push(buffer);
-            buffer.resize(OB_UDP_BUFFER_SIZE);
+            std::vector<uint8_t> data(buffer.begin(), buffer.begin() + recvLen);
+            rtpQueue_.push(data);
         }
     }
 
@@ -136,8 +135,8 @@ void ObRTPUDPClient::frameProcess() {
     std::vector<uint8_t> data;
     while(startReceive_) {
         if(rtpQueue_.pop(data)) {
+            RTPHeader *header = (RTPHeader *)data.data();
             if(serverPort_ != 20010) {
-                RTPHeader *header = (RTPHeader *)data.data();
                 rtpProcessor_.process(header, data.data(), (uint32_t)data.size(), currentProfile_->getType());
                 if(rtpProcessor_.processComplete()) {
                     uint32_t dataSize = rtpProcessor_.getDataSize();
@@ -145,7 +144,7 @@ void ObRTPUDPClient::frameProcess() {
 
                     auto frame = FrameFactory::createFrameFromStreamProfile(currentProfile_);
                     frame->setSystemTimeStampUsec(utils::getNowTimesUs());
-                    // frame->setTimeStampUsec(header->timestamp);
+                    frame->setTimeStampUsec(rtpProcessor_.getTimestamp());
                     frame->setNumber(rtpProcessor_.getNumber());
                     frame->updateData(rtpProcessor_.getData(), dataSize);
 
@@ -162,6 +161,7 @@ void ObRTPUDPClient::frameProcess() {
                 //imu
                 auto frame = FrameFactory::createFrame(OB_FRAME_UNKNOWN, OB_FORMAT_UNKNOWN, OB_UDP_BUFFER_SIZE);
                 frame->updateData(data.data() + 12, data.size()-12);
+                frame->setTimeStampUsec(header->timestamp);
                 frame->setSystemTimeStampUsec(utils::getNowTimesUs());
                 frameCallback_(frame);
             }

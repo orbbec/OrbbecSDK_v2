@@ -7,11 +7,13 @@ ObRTPPacketQueue::ObRTPPacketQueue() : destroy_(false) {}
 ObRTPPacketQueue::~ObRTPPacketQueue() noexcept {}
 
 void ObRTPPacketQueue::push(const std::vector<uint8_t> &data) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    if(destroy_) {
-        return;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if(destroy_) {
+            return;
+        }
+        queue_.push(data);
     }
-    queue_.push(data);
     cond_var_.notify_one();
 }
 
@@ -27,9 +29,11 @@ bool ObRTPPacketQueue::pop(std::vector<uint8_t> &data) {
 }
 
 void ObRTPPacketQueue::destroy() {
-    std::lock_guard<std::mutex> lock(mutex_);
-    destroy_ = true;
-    cond_var_.notify_all();  // 通知所有等待线程
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        destroy_ = true;
+    }  
+    cond_var_.notify_all();
 }
 
 }  // namespace libobsensor

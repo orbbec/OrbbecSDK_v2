@@ -90,6 +90,8 @@ private:
     uint32_t dataSize_;
     uint8_t *rtpBuffer_;
 
+    uint32_t rtpType_;
+
     std::mutex revStatusMutex_;
 
     std::unordered_set<uint16_t> sequenceNumberList_;
