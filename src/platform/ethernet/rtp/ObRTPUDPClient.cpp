@@ -54,7 +54,7 @@ void ObRTPUDPClient::socketConnect() {
     commTimeout.tv_sec  = COMM_TIMEOUT_MS / 1000;
     commTimeout.tv_usec = COMM_TIMEOUT_MS % 1000 * 1000;
 #endif
-    int nRecvBuf = 512 * 1024;
+    int nRecvBuf = 512 * 1024 * 1024;
     setsockopt(recvSocket_, SOL_SOCKET, SO_RCVBUF, (const char *)&nRecvBuf, sizeof(int));
     setsockopt(recvSocket_, SOL_SOCKET, SO_RCVTIMEO, (char *)&commTimeout, sizeof(commTimeout));
 

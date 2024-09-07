@@ -1,5 +1,4 @@
 #include "ObRTPClient.hpp"
-#include "ObRTPUDPClient.hpp"
 
 namespace libobsensor {
 
@@ -11,7 +10,8 @@ void ObRTPClient::start(std::string address, uint16_t port, std::shared_ptr<cons
     if(udpClient_) {
         udpClient_.reset();
     }
-    udpClient_ = std::make_shared<ObRTPUDPClient>(address, port);
+    //udpClient_ = std::make_shared<ObRTPUDPClient>(address, port);
+    udpClient_ = std::make_shared<ObRTPNpCapReceiver>(address, port);
     udpClient_->start(profile, callback);
 }
 
