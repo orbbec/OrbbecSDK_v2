@@ -12,13 +12,7 @@ namespace libobsensor {
 
 
 ObRTPPacketProcessor::ObRTPPacketProcessor()
-    : foundStartPacket_(false),
-      revDataComplete_(false),
-      revDataOutTime_(false),
-      rtpBuffer_(nullptr),
-      dataSize_(0),
-      frameNumber_(-1),
-      countDownStart_(false) {
+    : foundStartPacket_(false), revDataComplete_(false), revDataError_(false), rtpBuffer_(nullptr), dataSize_(0), frameNumber_(-1), countDownStart_(false) {
 
     maxPacketSize_  = MAX_RTP_FIX_SIZE - RTP_FIX_SIZE;
     maxPacketCount_ = MAX_RTP_FRAME_SIZE / maxPacketSize_ + 1;
@@ -89,13 +83,12 @@ void ObRTPPacketProcessor::OnEndOfFrame(uint16_t sequenceNumber) {
     if(sequenceNumberList_.size() == (uint32_t)(sequenceNumber + 1)) {
         std::unique_lock<std::mutex> lk(revStatusMutex_);
         revDataComplete_ = true;
+        revDataError_    = false;
         frameNumber_++;
     }
     else {
-        // Start the countdown timer
-        // startCountDown();
         revDataComplete_ = false;
-        revDataOutTime_  = true;
+        revDataError_    = true;
         LOG_WARN("Received rtp packet count does not match sequenceNumber!");
     }
 }
@@ -115,17 +108,17 @@ void ObRTPPacketProcessor::countDown(int milliseconds) {
     { 
         std::unique_lock<std::mutex> lk(revStatusMutex_);
         if(!revDataComplete_) {
-            revDataOutTime_ = true;
+            revDataError_ = true;
         }
     }
     LOG_DEBUG("Exit the rtp packet countdown timer...");
 }
 
-bool ObRTPPacketProcessor::processTimeOut() {
+bool ObRTPPacketProcessor::processError() {
     bool timeOutStatus = false;
     {
         std::unique_lock<std::mutex> lk(revStatusMutex_);
-        timeOutStatus = revDataOutTime_;
+        timeOutStatus = revDataError_;
     }
     return timeOutStatus;
 }
@@ -142,9 +135,9 @@ bool ObRTPPacketProcessor::processComplete() {
 
 void ObRTPPacketProcessor::reset() {
     foundStartPacket_ = false;
-    countDownStart_ = false;
+    countDownStart_   = false;
     revDataComplete_  = false;
-    revDataOutTime_   = false;
+    revDataError_     = false;
 }
 
 void ObRTPPacketProcessor::release() {

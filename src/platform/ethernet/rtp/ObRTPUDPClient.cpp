@@ -148,8 +148,8 @@ void ObRTPUDPClient::frameProcess() {
                     rtpProcessor_.reset();
                 }
                 else {
-                    if(rtpProcessor_.processTimeOut()) {
-                        LOG_DEBUG("rtp frame {} process timeout...", currentProfile_->getType());
+                    if(rtpProcessor_.processError()) {
+                        LOG_DEBUG("{} rtp frame process error...", currentProfile_->getType());
                         rtpProcessor_.reset();
                     }
                 }

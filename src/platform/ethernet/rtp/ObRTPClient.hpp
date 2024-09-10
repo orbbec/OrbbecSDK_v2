@@ -16,8 +16,8 @@ public:
     void close();
 
 private:
-    //std::shared_ptr<ObRTPUDPClient> udpClient_;
-    std::shared_ptr<ObRTPNpCapReceiver> udpClient_;
+    std::shared_ptr<ObRTPUDPClient> udpClient_;
+    //std::shared_ptr<ObRTPNpCapReceiver> udpClient_;
 
 };
 

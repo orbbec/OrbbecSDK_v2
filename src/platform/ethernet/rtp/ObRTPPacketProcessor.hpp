@@ -57,7 +57,7 @@ public:
         return timestamp_;
     }
 
-    bool processTimeOut();
+    bool processError();
 
     bool processComplete();
 
@@ -78,7 +78,7 @@ private:
 
     bool foundStartPacket_;
     bool revDataComplete_;
-    bool revDataOutTime_;
+    bool revDataError_;
     bool countDownStart_;
 
     int32_t  frameNumber_;

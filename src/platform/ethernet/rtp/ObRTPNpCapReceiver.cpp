@@ -85,6 +85,7 @@ void ObRTPNpCapReceiver::startReceive() {
     LOG_DEBUG("start udp data receive thread...");
     struct pcap_pkthdr *header;
     const u_char *      packet;
+    //int                 packetCount = 0;
     while(startReceive_) {
         int res = pcap_next_ex(handle_, &header, &packet);
         if(res > 0) {
@@ -96,6 +97,21 @@ void ObRTPNpCapReceiver::startReceive() {
                 std::vector<uint8_t> data(payload, payload + recvLen);
                 rtpQueue_.push(data);
             }
+
+            /*RTPHeader *  rtpheader      = (RTPHeader *)payload;
+            uint8_t      marker         = rtpheader->marker;
+            uint16_t     sequenceNumber = ntohs(rtpheader->sequenceNumber);
+            if(sequenceNumber == 0x0) {
+                packetCount = 0;
+            }
+
+            if(marker == 0x0) {
+                packetCount++;
+            }
+            else if(marker == 0x1) {
+                packetCount++;
+                printf("rtpType_-%d, packetCount- %d \n", currentProfile_->getType(), packetCount);
+            }*/
         }
         /*else {
             LOG_WARN("Receive udp data error: {}", pcap_geterr(handle_));
@@ -115,7 +131,7 @@ void ObRTPNpCapReceiver::frameProcess() {
                 rtpProcessor_.process(header, data.data(), (uint32_t)data.size(), currentProfile_->getType());
                 if(rtpProcessor_.processComplete()) {
                     uint32_t dataSize = rtpProcessor_.getDataSize();
-                    LOG_DEBUG("Callback new frame dataSize: {}, number: {}", dataSize, rtpProcessor_.getNumber());
+                    //LOG_DEBUG("Callback new frame dataSize: {}, number: {}", dataSize, rtpProcessor_.getNumber());
 
                     auto frame = FrameFactory::createFrameFromStreamProfile(currentProfile_);
                     frame->setSystemTimeStampUsec(utils::getNowTimesUs());
@@ -127,8 +143,8 @@ void ObRTPNpCapReceiver::frameProcess() {
                     rtpProcessor_.reset();
                 }
                 else {
-                    if(rtpProcessor_.processTimeOut()) {
-                        LOG_DEBUG("Callback new frame process timeout...");
+                    if(rtpProcessor_.processError()) {
+                        LOG_DEBUG("rtp frame {} process error...", currentProfile_->getType());
                         rtpProcessor_.reset();
                     }
                 }
