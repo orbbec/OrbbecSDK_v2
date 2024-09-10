@@ -31,7 +31,7 @@ private:
     uint16_t    serverPort_;
     bool        startReceive_;
     SOCKET      recvSocket_;
-    uint32_t    COMM_TIMEOUT_MS = 5000;
+    uint32_t    COMM_TIMEOUT_MS = 100;
 
     std::shared_ptr<const StreamProfile> currentProfile_;
     MutableFrameCallback                 frameCallback_;

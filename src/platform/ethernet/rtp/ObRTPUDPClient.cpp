@@ -2,6 +2,7 @@
 #include "logger/Logger.hpp"
 #include "utils/Utils.hpp"
 #include "exception/ObException.hpp"
+#include "logger/LoggerInterval.hpp"
 #include "utils/Utils.hpp"
 #include "frame/FrameFactory.hpp"
 #include "stream/StreamProfile.hpp"
@@ -101,25 +102,20 @@ void ObRTPUDPClient::startReceive() {
     sockaddr_in          serverAddr;
     int                  serverAddrSize = sizeof(serverAddr);
     std::vector<uint8_t> buffer(OB_UDP_BUFFER_SIZE);
-    int                  tryRecCount = 3;
     while(startReceive_) {
         int recvLen = recvfrom(recvSocket_, (char *)buffer.data(), (int)buffer.size(), 0, (sockaddr *)&serverAddr, &serverAddrSize);
         if(recvLen < 0) {
             int error = GET_LAST_ERROR();
 #if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
             if(error == WSAETIMEDOUT) {
-                LOG_ERROR("Receive timed out.");
-            };
-#endif
-            if(tryRecCount == 0) {
-                LOG_ERROR("Receive failed with error.");
-                break;
+                LOG_ERROR_INTVL("Receive rtp packet timed out!");
             }
-
-            tryRecCount--;
+            else {
+                LOG_ERROR_INTVL("Receive rtp packet error!");
+            }
+#endif
             continue;
         }
-        tryRecCount = 3;
 
         if(recvLen > 0) {
             std::vector<uint8_t> data(buffer.begin(), buffer.begin() + recvLen);
@@ -140,7 +136,7 @@ void ObRTPUDPClient::frameProcess() {
                 rtpProcessor_.process(header, data.data(), (uint32_t)data.size(), currentProfile_->getType());
                 if(rtpProcessor_.processComplete()) {
                     uint32_t dataSize = rtpProcessor_.getDataSize();
-                    LOG_DEBUG("Callback new frame dataSize: {}, number: {}", dataSize, rtpProcessor_.getNumber());
+                    //LOG_DEBUG("Callback new frame dataSize: {}, number: {}", dataSize, rtpProcessor_.getNumber());
 
                     auto frame = FrameFactory::createFrameFromStreamProfile(currentProfile_);
                     frame->setSystemTimeStampUsec(utils::getNowTimesUs());
@@ -153,7 +149,7 @@ void ObRTPUDPClient::frameProcess() {
                 }
                 else {
                     if(rtpProcessor_.processTimeOut()) {
-                        LOG_DEBUG("Callback new frame process timeout...");
+                        LOG_DEBUG("rtp frame {} process timeout...", currentProfile_->getType());
                         rtpProcessor_.reset();
                     }
                 }
@@ -172,14 +168,15 @@ void ObRTPUDPClient::frameProcess() {
 }
 
 void ObRTPUDPClient::close() {
+    LOG_DEBUG("close start...");
     startReceive_ = false;
     if(receiverThread_.joinable()) {
         receiverThread_.join();
     }
+    rtpQueue_.destroy();
     if(callbackThread_.joinable()) {
         callbackThread_.join();
     }
-
     if(recvSocket_ > 0) {
 #if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
         closesocket(recvSocket_);
@@ -188,6 +185,7 @@ void ObRTPUDPClient::close() {
         close(recvSocket_);
 #endif
     }
+    LOG_DEBUG("close end...");
 }
 
 }  // namespace libobsensor

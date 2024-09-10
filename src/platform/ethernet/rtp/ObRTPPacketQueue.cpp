@@ -4,7 +4,9 @@ namespace libobsensor {
 
 ObRTPPacketQueue::ObRTPPacketQueue() : destroy_(false) {}
 
-ObRTPPacketQueue::~ObRTPPacketQueue() noexcept {}
+ObRTPPacketQueue::~ObRTPPacketQueue() noexcept {
+    destroy();
+}
 
 void ObRTPPacketQueue::push(const std::vector<uint8_t> &data) {
     {
