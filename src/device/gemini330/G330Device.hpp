@@ -51,9 +51,12 @@ private:
     void initSensorList();
     void initProperties();
     void initFrameMetadataParserContainer();
+    void initSensorStreamProfileList(std::shared_ptr<ISensor> sensor);
     void initSensorStreamProfile(std::shared_ptr<ISensor> sensor);
 
     void fetchDeviceInfo() override;
+    void fetchAllProfileList();
+
 private:
     std::shared_ptr<IFrameMetadataParserContainer> colorMdParserContainer_;
     std::shared_ptr<IFrameMetadataParserContainer> depthMdParserContainer_;
@@ -62,6 +65,8 @@ private:
     const uint64_t                                              deviceTimeFreq_ = 1000;     // in ms
     const uint64_t                                              frameTimeFreq_  = 1000000;  // in us
     std::function<std::shared_ptr<IFrameTimestampCalculator>()> videoFrameTimestampCalculatorCreator_;
+
+    StreamProfileList allNetProfileList_;
 };
 
 }  // namespace libobsensor

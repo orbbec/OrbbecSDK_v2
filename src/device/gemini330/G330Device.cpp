@@ -38,6 +38,7 @@
 #include "G330PropertyAccessors.hpp"
 #include "G330NetDisparitySensor.hpp"
 #include "G330NetVideoSensor.hpp"
+#include "utils/BufferParser.hpp"
 
 #include <algorithm>
 
@@ -1049,6 +1050,7 @@ void G330NetDevice::init() {
     initFrameMetadataParserContainer();
     fetchDeviceInfo();
     fetchExtensionInfo();
+    fetchAllProfileList();
 
     videoFrameTimestampCalculatorCreator_ = [this]() {
         auto metadataType = OB_FRAME_METADATA_TYPE_TIMESTAMP;
@@ -1103,23 +1105,38 @@ void G330NetDevice::fetchDeviceInfo() {
     // todo: fetch and parse extension info
 }
 
-void G330NetDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
-    auto streamProfile = StreamProfileFactory::getDefaultStreamProfileFromEnvConfig(deviceInfo_->name_, sensor->getSensorType());
-    if(streamProfile) {
-        sensor->updateDefaultStreamProfile(streamProfile);
-    }
+void libobsensor::G330NetDevice::fetchAllProfileList() {
+    auto propServer = getPropertyServer();
+    std::vector<uint8_t> data;
+    BEGIN_TRY_EXECUTE({
+        propServer->getRawData(
+            OB_RAW_DATA_STREAM_PROFILE_LIST,
+            [&](OBDataTranState state, OBDataChunk *dataChunk) {
+                if(state == DATA_TRAN_STAT_TRANSFERRING) {
+                    data.insert(data.end(), dataChunk->data, dataChunk->data + dataChunk->size);
+                }
+            },
+            PROP_ACCESS_INTERNAL);
+    })
+    CATCH_EXCEPTION_AND_EXECUTE({
+        LOG_ERROR("Get profile list params failed!");
+        data.clear();
+    })
 
-    // bind params: extrinsics, intrinsics, etc.
-    auto profiles = sensor->getStreamProfileList();
-    {
-        auto algParamManager = getComponentT<G330AlgParamManager>(OB_DEV_COMPONENT_ALG_PARAM_MANAGER);
-        algParamManager->bindStreamProfileParams(profiles);
+    if(!data.empty()) {
+        std::vector<OBInternalStreamProfile> outputProfiles;
+        uint16_t                             dataSize = static_cast<uint16_t>(data.size());
+        outputProfiles                                = parseBuffer<OBInternalStreamProfile>(data.data(), dataSize);
+        allNetProfileList_.clear();
+        for(auto item: outputProfiles) {
+            OBStreamType streamType = utils::mapSensorTypeToStreamType((OBSensorType)item.sensorType);
+            OBFormat     format     = utils::uvcFourccToOBFormat(item.profile.video.formatFourcc);
+            allNetProfileList_.push_back(StreamProfileFactory::createVideoStreamProfile(streamType, format, item.profile.video.width, item.profile.video.height,
+                                                                                        item.profile.video.fps));
+        }
     }
-
-    auto sensorType = sensor->getSensorType();
-    LOG_INFO("Sensor {} created! Found {} stream profiles.", sensorType, profiles.size());
-    for(auto &profile: profiles) {
-        LOG_INFO(" - {}", profile);
+    else {
+        LOG_WARN("Get stream profile list failed!");
     }
 }
 
@@ -1135,13 +1152,8 @@ void G330NetDevice::initSensorList() {
     auto        vendorPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(),
                                            [](const std::shared_ptr<const SourcePortInfo> &portInfo) { return portInfo->portType == SOURCE_PORT_NET_VENDOR; });
 
-    //std::shared_ptr<const SourcePortInfo> vendorPortInfo;
     if(vendorPortInfoIter != sourcePortInfoList.end()) {
         vendorPortInfo_ = *vendorPortInfoIter;
-        /*registerSensorPortInfo(OB_SENSOR_DEPTH, vendorPortInfo);
-        registerSensorPortInfo(OB_SENSOR_IR_LEFT, vendorPortInfo);
-        registerSensorPortInfo(OB_SENSOR_IR_RIGHT, vendorPortInfo);
-        registerSensorPortInfo(OB_SENSOR_COLOR, vendorPortInfo);*/
     }
 
     auto depthPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(), [](const std::shared_ptr<const SourcePortInfo> &portInfo) {
@@ -1156,6 +1168,7 @@ void G330NetDevice::initSensorList() {
                 auto port     = platform->getSourcePort(depthPortInfo);
                 auto sensor   = std::make_shared<G330NetDisparitySensor>(this, OB_SENSOR_DEPTH, port);
 
+                initSensorStreamProfileList(sensor);
                 sensor->updateFormatFilterConfig({ { FormatFilterPolicy::REMOVE, OB_FORMAT_Y8, OB_FORMAT_ANY, nullptr },
                                                    { FormatFilterPolicy::REMOVE, OB_FORMAT_NV12, OB_FORMAT_ANY, nullptr },
                                                    { FormatFilterPolicy::REMOVE, OB_FORMAT_BA81, OB_FORMAT_ANY, nullptr },
@@ -1230,6 +1243,7 @@ void G330NetDevice::initSensorList() {
                     formatFilterConfigs.push_back({ FormatFilterPolicy::REPLACE, OB_FORMAT_NV12, OB_FORMAT_Y16, formatConverter });
                 }
 
+                initSensorStreamProfileList(sensor);
                 sensor->updateFormatFilterConfig(formatFilterConfigs);
                 sensor->setFrameMetadataParserContainer(depthMdParserContainer_);
 
@@ -1283,6 +1297,7 @@ void G330NetDevice::initSensorList() {
                     formatFilterConfigs.push_back({ FormatFilterPolicy::REPLACE, OB_FORMAT_YV12, OB_FORMAT_Y16, formatConverter });
                 }
 
+                initSensorStreamProfileList(sensor);
                 sensor->updateFormatFilterConfig(formatFilterConfigs);
                 sensor->setFrameMetadataParserContainer(depthMdParserContainer_);
 
@@ -1354,6 +1369,7 @@ void G330NetDevice::initSensorList() {
                     formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_YUYV, OB_FORMAT_Y8, formatConverter });
                 }
 
+                initSensorStreamProfileList(sensor);
                 sensor->updateFormatFilterConfig(formatFilterConfigs);
                 sensor->setFrameMetadataParserContainer(colorMdParserContainer_);
 
@@ -1732,6 +1748,41 @@ std::vector<std::shared_ptr<IFilter>> G330NetDevice::createRecommendedPostProces
     }
 
     return {};
+}
+
+void libobsensor::G330NetDevice::initSensorStreamProfileList(std::shared_ptr<ISensor> sensor) {
+    auto sensorType = sensor->getSensorType();
+    OBStreamType      streamType = utils::mapSensorTypeToStreamType(sensorType);
+    StreamProfileList ProfileList;
+    for(const auto &profile: allNetProfileList_) {
+        if(streamType == profile->getType()) {
+            ProfileList.push_back(profile);
+        }
+    }
+
+    if(ProfileList.size() != 0) {
+        sensor->updateStreamProfileList(ProfileList);
+    }
+}
+
+void G330NetDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
+    auto streamProfile = StreamProfileFactory::getDefaultStreamProfileFromEnvConfig(deviceInfo_->name_, sensor->getSensorType());
+    if(streamProfile) {
+        sensor->updateDefaultStreamProfile(streamProfile);
+    }
+
+    // bind params: extrinsics, intrinsics, etc.
+    auto profiles = sensor->getStreamProfileList();
+    {
+        auto algParamManager = getComponentT<G330AlgParamManager>(OB_DEV_COMPONENT_ALG_PARAM_MANAGER);
+        algParamManager->bindStreamProfileParams(profiles);
+    }
+
+    auto sensorType = sensor->getSensorType();
+    LOG_INFO("Sensor {} created! Found {} stream profiles.", sensorType, profiles.size());
+    for(auto &profile: profiles) {
+        LOG_INFO(" - {}", profile);
+    }
 }
 
 }  // namespace libobsensor

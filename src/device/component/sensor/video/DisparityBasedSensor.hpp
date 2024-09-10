@@ -15,6 +15,8 @@ public:
 
     void updateFormatFilterConfig(const std::vector<FormatFilterConfig> &configs) override;
 
+    void updateStreamProfileList(const StreamProfileList &profileList) override;
+
     void markOutputDisparityFrame(bool enable);
 
     void setDepthUnit(float unit);

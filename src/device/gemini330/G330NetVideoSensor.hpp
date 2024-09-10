@@ -15,7 +15,6 @@ public:
 
 private:
     void initStreamPropertyId();
-    void initStreamProfileList();
 
 private:
     OBInternalPropertyID streamSwitchPropertyId_;

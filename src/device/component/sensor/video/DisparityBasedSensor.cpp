@@ -23,6 +23,11 @@ void DisparityBasedSensor::updateFormatFilterConfig(const std::vector<FormatFilt
     convertProfileAsDisparityBasedProfile();
 }
 
+void DisparityBasedSensor::updateStreamProfileList(const StreamProfileList &profileList) {
+    VideoSensor::updateStreamProfileList(profileList);
+    convertProfileAsDisparityBasedProfile();
+}
+
 void DisparityBasedSensor::convertProfileAsDisparityBasedProfile() {
     auto oldSpList = streamProfileList_;
     streamProfileList_.clear();
