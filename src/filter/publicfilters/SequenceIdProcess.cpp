@@ -30,7 +30,7 @@ void SequenceIdFilter::updateConfig(std::vector<std::string> &params) {
 
 const std::string &SequenceIdFilter::getConfigSchema() const {
     // csv format: name，type， min，max，step，default，description
-    static const std::string schema = "sequenceid, integer, -1, 1, 1, -1, frame data sequence id value";
+    static const std::string schema = "sequenceid, integer, -1, 1, 1, 0, frame data sequence id value";
     return schema;
 }
 

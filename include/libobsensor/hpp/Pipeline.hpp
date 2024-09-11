@@ -382,6 +382,23 @@ public:
     }
 
     /**
+     * @brief Get the stream profile list of supported depth-to-color alignments
+     *
+     * @param colorProfile The color stream profile, witch is the target stream profile for the depth-to-color alignment.
+     * @param alignMode The alignment mode.
+     *
+     * @attention Currently, only ALIGN_D2C_HW_MODE supported. For other align modes, please using the AlignFilter interface.
+     *
+     * @return std::shared_ptr<StreamProfileList> The stream profile list of supported depth-to-color alignments.
+     */
+    std::shared_ptr<StreamProfileList> getD2CDepthProfileList(std::shared_ptr<StreamProfile> colorProfile, OBAlignMode alignMode) {
+        ob_error *error = nullptr;
+        auto      list  = ob_get_d2c_depth_profile_list(impl_, colorProfile->getImpl(), alignMode, &error);
+        Error::handle(&error);
+        return std::make_shared<StreamProfileList>(list);
+    }
+
+    /**
      * @brief Turn on frame synchronization
      */
     void enableFrameSync() const {
@@ -401,29 +418,23 @@ public:
 
 public:
     // The following interfaces are deprecated and are retained here for compatibility purposes.
-    std::shared_ptr<StreamProfileList> getD2CDepthProfileList(std::shared_ptr<StreamProfile> colorProfile, OBAlignMode alignMode){
-        ob_error *error = nullptr;
-        auto      list  = ob_get_d2c_depth_profile_list(impl_, colorProfile->getImpl(), alignMode, &error);
-        Error::handle(&error);
-        return std::make_shared<StreamProfileList>(list);
-    }
 
-    OBCameraParam getCameraParam(){
-        ob_error *error = nullptr;
-        OBCameraParam cameraParam = ob_pipeline_get_camera_param(impl_,&error);
+    OBCameraParam getCameraParam() {
+        ob_error     *error       = nullptr;
+        OBCameraParam cameraParam = ob_pipeline_get_camera_param(impl_, &error);
         Error::handle(&error);
         return cameraParam;
     }
 
-    OBCameraParam getCameraParamWithProfile(uint32_t colorWidth, uint32_t colorHeight, uint32_t depthWidth, uint32_t depthHeight){
-        ob_error *error = nullptr;
+    OBCameraParam getCameraParamWithProfile(uint32_t colorWidth, uint32_t colorHeight, uint32_t depthWidth, uint32_t depthHeight) {
+        ob_error     *error       = nullptr;
         OBCameraParam cameraParam = ob_pipeline_get_camera_param_with_profile(impl_, colorWidth, colorHeight, depthWidth, depthHeight, &error);
         Error::handle(&error);
         return cameraParam;
     }
 
-    OBCalibrationParam getCalibrationParam(std::shared_ptr<Config> config){
-        ob_error *error = nullptr;
+    OBCalibrationParam getCalibrationParam(std::shared_ptr<Config> config) {
+        ob_error          *error            = nullptr;
         OBCalibrationParam calibrationParam = ob_pipeline_get_calibration_param(impl_, config->getImpl(), &error);
         Error::handle(&error);
         return calibrationParam;

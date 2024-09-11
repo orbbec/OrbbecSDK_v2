@@ -5,6 +5,7 @@
 
 #include "logger/Logger.hpp"
 #include "exception/ObException.hpp"
+#include "environment/EnvConfig.hpp"
 
 #include "usb/hid/HidDevicePort.hpp"
 #include "usb/hid/HidDevicePortGmsl.hpp"
@@ -146,11 +147,13 @@ std::shared_ptr<ISourcePort> LinuxUsbPal::getSourcePort(std::shared_ptr<const So
 
     switch(portInfo->portType) {
     case SOURCE_PORT_USB_VENDOR: {
-        auto usbDev = usbEnumerator_->openUsbDevice(std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->url);
+        auto url    = std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->url;
+        auto usbDev = usbEnumerator_->openUsbDevice(url);
         if(usbDev == nullptr) {
             throw libobsensor::camera_disconnected_exception("usbEnumerator openUsbDevice failed!");
         }
         port = std::make_shared<VendorUsbDevicePort>(usbDev, std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo));
+        LOG_DEBUG("Vendor device have been create! url: {}", url);
         break;
     }
     case SOURCE_PORT_USB_UVC: {
@@ -172,11 +175,11 @@ std::shared_ptr<ISourcePort> LinuxUsbPal::getSourcePort(std::shared_ptr<const So
         if(backend == UVC_BACKEND_TYPE_V4L2) {
             if(ObV4lGmslDevicePort::isGmslDeviceForPlatformNvidia(usbPortInfo)) {
                 port = std::make_shared<ObV4lGmslDevicePort>(usbPortInfo);
-                // LOG_DEBUG("V4L2 GMSL device have been create with V4L2 backend! url:{}, hubId:{}", usbPortInfo->url, usbPortInfo->hubId);
+                LOG_DEBUG("GMSL device have been create with V4L2 backend! dev: {}, inf: {}", usbPortInfo->url, usbPortInfo->infUrl);
             }
             else {
                 port = std::make_shared<ObV4lUvcDevicePort>(usbPortInfo);
-                // LOG_DEBUG("V4L2 UVC device have been create with V4L2 backend! url:{}, hubId:{}", usbPortInfo->url, usbPortInfo->hubId);
+                LOG_DEBUG("UVC device have been create with V4L2 backend! dev: {}, inf: {}", usbPortInfo->url, usbPortInfo->infUrl);
             }
         }
         else {
@@ -192,8 +195,8 @@ std::shared_ptr<ISourcePort> LinuxUsbPal::getSourcePort(std::shared_ptr<const So
     case SOURCE_PORT_USB_HID: {
         auto usbPortInfo = std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo);
         if(ObV4lGmslDevicePort::isGmslDeviceForPlatformNvidia(usbPortInfo)) {
-            // LOG_DEBUG("HID GMSL device have been create with V4L2 backend! url:{}, hubId:{}", usbPortInfo->url, usbPortInfo->hubId);
             port = std::make_shared<HidDevicePortGmsl>(usbPortInfo);
+            LOG_DEBUG("GMSL device have been create with HID backend! dev: {}, inf: {}", usbPortInfo->url, usbPortInfo->infUrl);
         }
         else {
             auto usbDev = usbEnumerator_->openUsbDevice(std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->url);
@@ -201,6 +204,7 @@ std::shared_ptr<ISourcePort> LinuxUsbPal::getSourcePort(std::shared_ptr<const So
                 throw libobsensor::camera_disconnected_exception("usbEnumerator openUsbDevice failed!");
             }
             port = std::make_shared<HidDevicePort>(usbDev, std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo));
+            LOG_DEBUG("HID device have been create with HID backend! dev: {}, inf: {}", usbPortInfo->url, usbPortInfo->infUrl);
         }
         break;
     }
@@ -268,40 +272,24 @@ SourcePortInfoList LinuxUsbPal::querySourcePortInfos() {
 }
 
 void LinuxUsbPal::loadXmlConfig() {
-    // FIXME
-    // auto ctx       = Context::getInstance();
-    //    auto xmlConfig = ctx->getXmlConfig();
-    //    if(!xmlConfig->isLoadConfigFileSuccessful()) {
-    //        return;
-    //    }
-    //
-    //    if(xmlConfig->isNodeContained("Device.LinuxUVCBackend")) {
-    //        std::string backend = "";
-    //        if(xmlConfig->getStringValue("Device.LinuxUVCBackend", backend)) {
-    //            if(backend == "V4L2") {
-    //                uvcBackendType_ = UVC_BACKEND_TYPE_V4L2;
-    //            }
-    //            else if(backend == "LibUVC") {
-    //                uvcBackendType_ = UVC_BACKEND_TYPE_LIBUVC;
-    //            }
-    //            else {
-    //                uvcBackendType_ = UVC_BACKEND_TYPE_AUTO;
-    //            }
-    //        }
-    //        LOG_DEBUG("Uvc backend have been set to {}({})", backend, uvcBackendType_);
-    //    }
-    //    else if(xmlConfig->isNodeContained("Enumeration.Mode")) {  // deprecated, for compatibility
-    //        std::string mode = "";
-    //        if(xmlConfig->getStringValue("Enumeration.Mode", mode)) {
-    //            if(mode == "V4L2") {
-    //                uvcBackendType_ = UVC_BACKEND_TYPE_V4L2;
-    //            }
-    //            else {
-    //                uvcBackendType_ = UVC_BACKEND_TYPE_LIBUVC;
-    //            }
-    //        }
-    //        LOG_DEBUG("Uvc backend have been set to {}({})", mode, uvcBackendType_);
-    //    }
+    auto        envConfig = EnvConfig::getInstance();
+    std::string backend   = "";
+
+    if(envConfig->getStringValue("Device.LinuxUVCBackend", backend)) {
+        if(backend == "V4L2") {
+            uvcBackendType_ = UVC_BACKEND_TYPE_V4L2;
+        }
+        else if(backend == "LibUVC") {
+            uvcBackendType_ = UVC_BACKEND_TYPE_LIBUVC;
+        }
+        else {
+            uvcBackendType_ = UVC_BACKEND_TYPE_AUTO;
+        }
+    }
+    else {
+        uvcBackendType_ = UVC_BACKEND_TYPE_AUTO;
+    }
+    LOG_DEBUG("Uvc backend have been set to {}", uvcBackendType_);
 }
 
 }  // namespace libobsensor

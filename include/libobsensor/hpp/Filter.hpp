@@ -29,9 +29,9 @@ namespace ob {
 typedef std::function<void(std::shared_ptr<Frame>)> FilterCallback;
 
 /**
-* @brief Get the type of a PropertyRange member
-*/
-template <typename T> struct RangeTraits{
+ * @brief Get the type of a PropertyRange member
+ */
+template <typename T> struct RangeTraits {
     using valueType = void;
 };
 
@@ -52,14 +52,13 @@ template <> struct RangeTraits<OBFloatPropertyRange> {
 };
 
 /**
-* @brief Get T Property Range
-*/
-template <typename T> 
-T getPropertyRange(const OBFilterConfigSchemaItem &item, const double cur) {
-	// If T type is illegal, T will be void
+ * @brief Get T Property Range
+ */
+template <typename T> T getPropertyRange(const OBFilterConfigSchemaItem &item, const double cur) {
+    // If T type is illegal, T will be void
     using valueType = typename RangeTraits<T>::valueType;
     T range{};
-	// Compilate error will be reported here if T is void
+    // Compilate error will be reported here if T is void
     range.cur  = static_cast<valueType>(cur);
     range.def  = static_cast<valueType>(item.def);
     range.max  = static_cast<valueType>(item.max);
@@ -391,7 +390,7 @@ public:
 
     // The following interfaces are deprecated and are retained here for compatibility purposes.
     void setFrameAlignState(bool state) {
-        (void)state; // to complie
+        (void)state;  // to complie
     }
     // The following interfaces are deprecated and are retained here for compatibility purposes.
     void setCameraParam(OBCameraParam param) {
@@ -565,8 +564,8 @@ public:
     OBUint8PropertyRange getScaleRange() {
         OBUint8PropertyRange scaleRange{};
         if(configSchemaVec_.size() != 0) {
-            const auto& item       = configSchemaVec_[0];
-            scaleRange			   = getPropertyRange<OBUint8PropertyRange>(item, getConfigValue("decimate"));
+            const auto &item = configSchemaVec_[0];
+            scaleRange       = getPropertyRange<OBUint8PropertyRange>(item, getConfigValue("decimate"));
         }
         return scaleRange;
     }
@@ -592,16 +591,16 @@ public:
      *
      * @return OBIntPropertyRange The range of the threshold filter min.
      */
-    OBIntPropertyRange getMinRange() { 
-		OBIntPropertyRange range{};
-		const auto &schemaVec = getConfigSchemaVec();
+    OBIntPropertyRange getMinRange() {
+        OBIntPropertyRange range{};
+        const auto        &schemaVec = getConfigSchemaVec();
         for(const auto &item: schemaVec) {
             if(strcmp(item.name, "min") == 0) {
-                range     = getPropertyRange<OBIntPropertyRange>(item, getConfigValue("min"));
+                range = getPropertyRange<OBIntPropertyRange>(item, getConfigValue("min"));
                 break;
             }
         }
-		return range;
+        return range;
     }
 
     /**
@@ -625,8 +624,8 @@ public:
      * @brief Set the threshold filter max and min range.
      */
     bool setValueRange(uint16_t min, uint16_t max) {
-		if (min >= max) {
-			return false;
+        if(min >= max) {
+            return false;
         }
         setConfigValue("min", min);
         setConfigValue("max", max);
@@ -648,23 +647,23 @@ public:
         init(impl);
     }
 
-	virtual ~SpatialAdvancedFilter() noexcept = default;
+    virtual ~SpatialAdvancedFilter() noexcept = default;
 
     /**
      * @brief Get the spatial advanced filter alpha range.
      *
      * @return OBFloatPropertyRange the alpha value of property range.
      */
-	OBFloatPropertyRange getAlphaRange() {
+    OBFloatPropertyRange getAlphaRange() {
         OBFloatPropertyRange range{};
         const auto          &schemaVec = getConfigSchemaVec();
-		for (const auto& item : schemaVec) {
-			if (strcmp(item.name, "alpha") == 0) {
+        for(const auto &item: schemaVec) {
+            if(strcmp(item.name, "alpha") == 0) {
                 range = getPropertyRange<OBFloatPropertyRange>(item, getConfigValue("alpha"));
                 break;
-			}
-		}
-		return range;
+            }
+        }
+        return range;
     }
 
     /**
@@ -674,7 +673,7 @@ public:
      */
     OBUint16PropertyRange getDispDiffRange() {
         OBUint16PropertyRange range{};
-        const auto          &schemaVec = getConfigSchemaVec();
+        const auto           &schemaVec = getConfigSchemaVec();
         for(const auto &item: schemaVec) {
             if(strcmp(item.name, "disp_diff") == 0) {
                 range = getPropertyRange<OBUint16PropertyRange>(item, getConfigValue("disp_diff"));
@@ -706,9 +705,9 @@ public:
      *
      * @return OBFloatPropertyRange the magnitude value of property range.
      */
-    OBIntPropertyRange getMagnitudeRange() { 
-		OBIntPropertyRange range{};
-        const auto           &schemaVec = getConfigSchemaVec();
+    OBIntPropertyRange getMagnitudeRange() {
+        OBIntPropertyRange range{};
+        const auto        &schemaVec = getConfigSchemaVec();
         for(const auto &item: schemaVec) {
             if(strcmp(item.name, "magnitude") == 0) {
                 range = getPropertyRange<OBIntPropertyRange>(item, getConfigValue("magnitude"));
@@ -725,7 +724,7 @@ public:
      */
     OBSpatialAdvancedFilterParams getFilterParams() {
         OBSpatialAdvancedFilterParams params{};
-        params.alpha	 = static_cast<float>(getConfigValue("alpha"));
+        params.alpha     = static_cast<float>(getConfigValue("alpha"));
         params.disp_diff = static_cast<uint16_t>(getConfigValue("disp_diff"));
         params.magnitude = static_cast<uint8_t>(getConfigValue("magnitude"));
         params.radius    = static_cast<uint16_t>(getConfigValue("radius"));
@@ -755,26 +754,28 @@ public:
         auto      impl  = ob_create_private_filter("HoleFillingFilter", activationKey.c_str(), &error);
         Error::handle(&error);
         init(impl);
-	}
+    }
 
-	/**
+    ~HoleFillingFilter() noexcept = default;
+
+    /**
      * @brief Set the HoleFillingFilter mode.
      *
      * @param[in] filter A holefilling_filter object.
      * @param mode OBHoleFillingMode, OB_HOLE_FILL_TOP,OB_HOLE_FILL_NEAREST or OB_HOLE_FILL_FAREST.
      */
-	void setFilterMode(OBHoleFillingMode mode) {
+    void setFilterMode(OBHoleFillingMode mode) {
         setConfigValue("hole_filling_mode", static_cast<double>(mode));
-	}
+    }
 
-	/**
+    /**
      * @brief Get the HoleFillingFilter mode.
      *
      * @return OBHoleFillingMode
      */
-	OBHoleFillingMode getFilterMode() {
-        return static_cast<OBHoleFillingMode>(getConfigValue("hole_filling_mode"));
-	}
+    OBHoleFillingMode getFilterMode() {
+        return static_cast<OBHoleFillingMode>(static_cast<int>(getConfigValue("hole_filling_mode")));
+    }
 };
 
 /**
@@ -787,7 +788,9 @@ public:
         auto      impl  = ob_create_private_filter("NoiseRemovalFilter", activationKey.c_str(), &error);
         Error::handle(&error);
         init(impl);
-	}
+    }
+
+     ~NoiseRemovalFilter() noexcept = default;
 
     /**
      * @brief Set the noise removal filter params.
@@ -797,21 +800,21 @@ public:
     void setFilterParams(OBNoiseRemovalFilterParams filterParams) {
         setConfigValue("max_size", static_cast<double>(filterParams.max_size));
         setConfigValue("min_diff", static_cast<double>(filterParams.disp_diff));
-		//todo:set noise remove type
-	}
+        // todo:set noise remove type
+    }
 
     /**
      * @brief Get the noise removal filter params.
      *
      * @return OBNoiseRemovalFilterParams.
      */
-	OBNoiseRemovalFilterParams getFilterParams() { 
-		OBNoiseRemovalFilterParams param{};
+    OBNoiseRemovalFilterParams getFilterParams() {
+        OBNoiseRemovalFilterParams param{};
         param.max_size  = static_cast<uint16_t>(getConfigValue("max_size"));
-        param.disp_diff = static_cast<uint16_t>(getConfigValue("min_diff")); 
-		//todo: type is not set
-		return param;
-	}
+        param.disp_diff = static_cast<uint16_t>(getConfigValue("min_diff"));
+        // todo: type is not set
+        return param;
+    }
 
     /**
      * @brief Get the noise removal filter disp diff range.
@@ -820,20 +823,20 @@ public:
     OBUint16PropertyRange getDispDiffRange() {
         OBUint16PropertyRange range{};
         const auto           &schemaVec = getConfigSchemaVec();
-		for (const auto& item : schemaVec) {
-			if (strcmp(item.name, "min_diff") == 0) {
+        for(const auto &item: schemaVec) {
+            if(strcmp(item.name, "min_diff") == 0) {
                 range = getPropertyRange<OBUint16PropertyRange>(item, getConfigValue("min_diff"));
                 break;
-			}
-		}
+            }
+        }
         return range;
-	}
+    }
 
     /**
      * @brief Get the noise removal filter max size range.
      * @return OBUint16PropertyRange The max size of property range.
      */
-	OBUint16PropertyRange getMaxSizeRange() {
+    OBUint16PropertyRange getMaxSizeRange() {
         OBUint16PropertyRange range{};
         const auto           &schemaVec = getConfigSchemaVec();
         for(const auto &item: schemaVec) {
@@ -843,7 +846,7 @@ public:
             }
         }
         return range;
-	}
+    }
 };
 
 /**
@@ -858,6 +861,8 @@ public:
         init(impl);
     }
 
+    ~TemporalFilter() noexcept = default;
+
     /**
      * @brief Get the TemporalFilter diffscale range.
      *
@@ -865,7 +870,7 @@ public:
      */
     OBFloatPropertyRange getDiffScaleRange() {
         OBFloatPropertyRange range{};
-        const auto           &schemaVec = getConfigSchemaVec();
+        const auto          &schemaVec = getConfigSchemaVec();
         for(const auto &item: schemaVec) {
             if(strcmp(item.name, "diff_scale") == 0) {
                 range = getPropertyRange<OBFloatPropertyRange>(item, getConfigValue("diff_scale"));

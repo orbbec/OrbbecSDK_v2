@@ -12,6 +12,10 @@ Device is a class that can be used to get device information, parameters, and a 
 
 Sensor can be used to obtain different components of the camera and the stream of the component, for example, RGB, IR, Depth stream can be obtained through the RGB, IR, Depth sensor.
 
+### Attention
+
+*The GMSL devices (such as Gemini335Lg) do not support hot plugging.*
+
 ## code overview
 
 1. Register device callback and execute relevant functions during device unplugging and unplugging

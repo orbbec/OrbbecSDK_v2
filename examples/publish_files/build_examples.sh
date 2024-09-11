@@ -19,14 +19,49 @@ fi
 if [ $apt_workable -eq 1 ]
 then
     #install compiler and tools
-    echo "Installing compiler and tools..."
-    sudo apt-get install -y build-essential cmake git
+    if ! g++ --version &> /dev/null || ! make --version &> /dev/null
+    then
+        echo "C++ Compiler and tools could not be found. It is required to build the examples."
+        echo "Do you want to install it via install build-essential? (y/n)"
+        read answer
+        if [ "$answer" == "y" ]
+        then
+            sudo apt-get install -y build-essential
+        fi
+    else
+        echo "C++ Compiler and tools is already installed."
+    fi
 
-    #install dependencies
-    echo "Installing dependencies..."
-    sudo apt-get install -y libopencv-dev
+    # install cmake
+    if ! cmake --version &> /dev/null
+    then
+        echo "Cmake could not be found. It is required to build the examples."
+        echo "Do you want to install cmake? (y/n)"
+        read answer
+        if [ "$answer" == "y" ]
+        then
+            sudo apt-get install -y cmake
+        fi
+    else
+        echo "cmake is already installed."
+    fi
+
+    # install libopencv-dev
+    if ! dpkg -l | grep libopencv-dev &> /dev/null
+    then
+        echo "libopencv-dev could not be found. Without libopencv-dev, part of the examples may not be built successfully."
+        echo "Do you want to install libopencv-dev? (y/n)"
+        read answer
+        if [ "$answer" == "y" ]
+        then
+            sudo apt-get install -y libopencv
+            sudo apt-get install -y libopencv-dev
+        fi
+    else
+        echo "libopencv-dev is already installed."
+    fi
 else
-    echo "Cannot install dependencies and build tools. Build examples may be failed."
+    echo "apt-get is not workable, network connection may be down or the system may not have internet access. Build examples may not be successful."
 fi
 
 # restore current directory

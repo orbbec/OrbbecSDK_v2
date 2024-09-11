@@ -313,7 +313,7 @@ GetStructureDataReqV1_1 *initGetStructureDataReqV1_1(uint8_t *dataBuf, uint32_t 
 SetStructureDataReqV1_1 *initSetStructureDataReqV1_1(uint8_t *dataBuf, uint32_t propertyId, uint16_t cmdVer, const uint8_t *data, uint16_t dataSize) {
     auto *req                   = reinterpret_cast<SetStructureDataReqV1_1 *>(dataBuf);
     req->header.magic           = HP_REQUEST_MAGIC;
-    req->header.sizeInHalfWords = 2 + (dataSize + 1) / 2;
+    req->header.sizeInHalfWords = 3 + (dataSize + 1) / 2;
     req->header.opcode          = OPCODE_SET_STRUCTURE_DATA_V1_1;
     req->header.requestId       = generateRequestId();
     req->cmdVer                 = cmdVer;

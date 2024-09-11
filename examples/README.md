@@ -17,6 +17,7 @@ There are several examples codes for users learn how to use Orbbec cameras. Here
 | device | [control](2.device.control) | [readme](2.device.control/README.md)    | The SDK can be used to modify camera-related parameters, including laser switch, laser level intensity, white balance switch, etc. |
 | device | [hot_plugin](2.device.hot_plugin) | [readme](2.device.hot_plugin/README.md)    | Use SDK to handle the settings of device unplug callback and process the acquired code stream after unplugging. |
 | advanced | [sync_align](3.advanced.sync_align) | [readme](3.advanced.sync_align/README.md)    | Use the SDK interface to demonstrate the synchronization and alignment of sensor data streams, display the aligned image. |
+| advanced | [hw_d2c_align](3.advanced.hw_d2c_align) | [readme](3.advanced.hw_d2c_align/README.md)    | Use the SDK interface to demonstrate the application of hardware depth-to-color alignment. |
 | advanced | [post_processing](3.advanced.post_processing) | [readme](3.advanced.post_processing/README.md)    | Use the SDK interface to  demonstrate post-processing operations, display post-processed images. |
 | advanced | [point_cloud](3.advanced.point_cloud) | [readme](3.advanced.point_cloud/README.md)    | Connect the device to open the stream, generate a depth point cloud or RGBD point cloud and save it as a ply format file. |
 | advanced | [preset](3.advanced.preset) | [readme](3.advanced.preset/README.md)    | Use the SDK interface to set and get the preset value. |

@@ -365,7 +365,7 @@ bool FormatConverter::mjpgToRgb(uint8_t *src, uint32_t src_len, uint8_t *target,
                      0,  // pitch
                      height, TJPF_RGB, TJFLAG_FASTDCT | TJFLAG_FASTUPSAMPLE)
        != 0) {
-        LOG_WARN_INTVL("Failed to decompress color frame");
+        LOG_WARN_INTVL("Failed to decode mjpeg frame to rgb! {}", tjGetErrorStr2(tjHandle));
         tjDestroy(tjHandle);
         return false;
     }
@@ -380,7 +380,7 @@ bool FormatConverter::mjpgToBgr(uint8_t *src, uint32_t src_len, uint8_t *target,
                      0,  // pitch
                      height, TJPF_BGR, TJFLAG_FASTDCT | TJFLAG_FASTUPSAMPLE)
        != 0) {
-        LOG_WARN_INTVL("Failed to decompress color frame");
+        LOG_WARN_INTVL("Failed to decode mjpeg frame to bgr! {}", tjGetErrorStr2(tjHandle));
         tjDestroy(tjHandle);
         return false;
     }

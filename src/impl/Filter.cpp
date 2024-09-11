@@ -127,6 +127,9 @@ ob_frame *ob_filter_process(ob_filter *filter, const ob_frame *frame, ob_error *
     VALIDATE_NOT_NULL(filter);
     VALIDATE_NOT_NULL(frame);
     auto result      = filter->filter->process(frame->frame);
+    if (result == nullptr) {
+        return nullptr;
+    }
     auto frameImpl   = new ob_frame();
     frameImpl->frame = result;
     return frameImpl;

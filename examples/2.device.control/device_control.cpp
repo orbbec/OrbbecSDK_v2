@@ -55,7 +55,7 @@ int main(void) try {
         std::vector<OBPropertyItem> propertyList = getPropertyList(device);
         std::sort(propertyList.begin(), propertyList.end(), [](const OBPropertyItem &a, const OBPropertyItem &b) { return a.id < b.id; });
 
-        bool                        isSelectProperty = true;
+        bool isSelectProperty = true;
         while(isSelectProperty) {
             std::string choice;
             std::getline(std::cin, choice);
@@ -223,8 +223,8 @@ void setPropertyValue(std::shared_ptr<ob::Device> device, OBPropertyItem propert
             try {
                 device->setBoolProperty(propertyItem.id, bool_value);
             }
-            catch(...) {
-                std::cout << "set bool property fail." << std::endl;
+            catch(ob::Error &e) {
+                std::cout << "set bool property fail: " << e.what() << std::endl;
             }
             std::cout << "property name:" << propertyItem.name << ",set bool value:" << bool_value << std::endl;
             break;
@@ -233,18 +233,18 @@ void setPropertyValue(std::shared_ptr<ob::Device> device, OBPropertyItem propert
             try {
                 device->setIntProperty(propertyItem.id, int_value);
             }
-            catch(...) {
-                std::cout << "set int property fail." << std::endl;
+            catch(ob::Error &e) {
+                std::cout << "set int property fail: " << e.what() << std::endl;
             }
             std::cout << "property name:" << propertyItem.name << ",set int value:" << int_value << std::endl;
             break;
         case OB_FLOAT_PROPERTY:
-            float_value = static_cast<float>(std::atof(strValue.c_str())) ;
+            float_value = static_cast<float>(std::atof(strValue.c_str()));
             try {
                 device->setFloatProperty(propertyItem.id, float_value);
             }
-            catch(...) {
-                std::cout << "set float property fail." << std::endl;
+            catch(ob::Error &e) {
+                std::cout << "set floar property fail: " << e.what() << std::endl;
             }
             std::cout << "property name:" << propertyItem.name << ",set float value:" << float_value << std::endl;
             break;
@@ -269,8 +269,8 @@ void getPropertyValue(std::shared_ptr<ob::Device> device, OBPropertyItem propert
             try {
                 bool_ret = device->getBoolProperty(propertyItem.id);
             }
-            catch(...) {
-                std::cout << "get bool property failed." << std::endl;
+            catch(ob::Error &e) {
+                std::cout << "get bool property failed: " << e.what() << std::endl;
             }
             std::cout << "property name:" << propertyItem.name << ",get bool value:" << bool_ret << std::endl;
             break;
@@ -278,8 +278,8 @@ void getPropertyValue(std::shared_ptr<ob::Device> device, OBPropertyItem propert
             try {
                 int_ret = device->getIntProperty(propertyItem.id);
             }
-            catch(...) {
-                std::cout << "get int property failed." << std::endl;
+            catch(ob::Error &e) {
+                std::cout << "get int property failed: " << e.what() << std::endl;
             }
             std::cout << "property name:" << propertyItem.name << ",get int value:" << int_ret << std::endl;
             break;
@@ -287,8 +287,8 @@ void getPropertyValue(std::shared_ptr<ob::Device> device, OBPropertyItem propert
             try {
                 float_ret = device->getFloatProperty(propertyItem.id);
             }
-            catch(...) {
-                std::cout << "get float property failed." << std::endl;
+            catch(ob::Error &e) {
+                std::cout << "get float property failed: " << e.what() << std::endl;
             }
             std::cout << "property name:" << propertyItem.name << ",get float value:" << float_ret << std::endl;
             break;

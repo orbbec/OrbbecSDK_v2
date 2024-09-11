@@ -14,12 +14,12 @@ win is used to display the frame data.
 
 ## Code overview
 
-1. Get the device and sensor, and get the list of recommended filters for the sensor
+1. Get the device and sensor, and create the list of recommended filters for the sensor
 
     ```cpp
         auto device     = pipe.getDevice();
         auto sensor     = device->getSensor(OB_SENSOR_DEPTH);
-        auto filterList = sensor->getRecommendedFilters();
+        auto filterList = sensor->createRecommendedFilters();
     ```
 
 2. The filter operation.

@@ -133,24 +133,25 @@ SourcePortInfoList EthernetPal::querySourcePortInfos() {
 
     // Only re-query port information for newly online devices
     for(auto &&info: added) {
-        // todo: fixme
-        // if(info.pid == 0) {
-        //     TRY_EXECUTE({
-        //         auto            netVendorPortInfo = std::make_shared<NetSourcePortInfo>(SOURCE_PORT_NET_VENDOR, info.ip, DEFAULT_CMD_PORT);
-        //         auto            netVendorPort     = std::make_shared<VendorNetDataPort>(netVendorPortInfo);
-        //         auto            Protocol          = std::make_shared<Protocol>(netVendorPort);
-        //         auto            command           = std::make_shared<VendorCommand>(Protocol);
-        //         OBPropertyValue pidValue{};
-        //         BEGIN_TRY_EXECUTE({
-        //             command->getPropertyValue(OB_PROP_PID_INT, &pidValue);
-        //             info.pid = pidValue.intValue;
-        //         })
-        //         CATCH_EXCEPTION_AND_EXECUTE({ info.pid = PID_FEMTO_MEGA; })
-        //     })
-        // }
-
+        if(info.pid == 0) {
+            // todo: fixme
+            //     TRY_EXECUTE({
+            //         auto            netVendorPortInfo = std::make_shared<NetSourcePortInfo>(SOURCE_PORT_NET_VENDOR, info.ip, DEFAULT_CMD_PORT);
+            //         auto            netVendorPort     = std::make_shared<VendorNetDataPort>(netVendorPortInfo);
+            //         auto            Protocol          = std::make_shared<Protocol>(netVendorPort);
+            //         auto            command           = std::make_shared<VendorCommand>(Protocol);
+            //         OBPropertyValue pidValue{};
+            //         BEGIN_TRY_EXECUTE({
+            //             command->getPropertyValue(OB_PROP_PID_INT, &pidValue);
+            //             info.pid = pidValue.intValue;
+            //         })
+            //         CATCH_EXCEPTION_AND_EXECUTE({ info.pid = PID_FEMTO_MEGA; })
+            //     })
+            // }
+            info.pid = PID_FEMTO_MEGA;
+        }
         sourcePortInfoList_.push_back(std::make_shared<NetSourcePortInfo>(SOURCE_PORT_NET_VENDOR, info.ip, DEFAULT_CMD_PORT, info.mac, info.sn, info.pid));
-        if(info.pid == PID_FEMTO_MEGA) {
+        if(info.pid == PID_FEMTO_MEGA || info.pid == PID_FEMTO_MEGA_I) {
             sourcePortInfoList_.push_back(
                 std::make_shared<RTSPStreamPortInfo>(info.ip, static_cast<uint16_t>(8888), DEFAULT_CMD_PORT, OB_STREAM_COLOR, info.mac, info.sn, info.pid));
             sourcePortInfoList_.push_back(

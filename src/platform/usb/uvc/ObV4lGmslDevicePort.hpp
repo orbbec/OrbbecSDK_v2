@@ -120,17 +120,10 @@ public:
     void stopAllStream() override;
 
     uint32_t sendAndReceive(const uint8_t *sendData, uint32_t sendLen, uint8_t *recvData, uint32_t exceptedRecvLen) override;
-    bool     sendData(const uint8_t *data, uint32_t dataLen);
-    bool     recvData(uint8_t *data, uint32_t *dataLen);
 
     bool            getPu(uint32_t propertyId, int32_t &value) override;
     bool            setPu(uint32_t propertyId, int32_t value) override;
     UvcControlRange getPuRange(uint32_t propertyId) override;
-
-    // add for mipi
-    bool            getPuExt(uint32_t propertyId, int32_t &value);
-    bool            setPuExt(uint32_t propertyId, int32_t value);
-    UvcControlRange getPuRangeExt(uint32_t propertyId);
 
     virtual std::shared_ptr<const SourcePortInfo>          getSourcePortInfo() const override;
     static std::vector<std::shared_ptr<V4lDeviceInfoGmsl>> queryRelatedDevices(std::shared_ptr<const USBSourcePortInfo> portInfo);
@@ -139,39 +132,24 @@ public:
 
     static const std::vector<UsbInterfaceInfo> queryDevicesInfo();
 
-    static void setPuDevIndex(int index);
-    static int  getPuDevIndex();
-
 protected:
     int resetGmslDriver();
-    int setSyncGpio(uint8_t gpio, int value);
 
 private:
-    static void     captureLoop(std::shared_ptr<V4lDeviceHandleGmsl> deviceHandle);
-    bool            getXu(uint32_t ctrl, uint8_t *data, uint32_t *len);
-    bool            setXu(uint32_t ctrl, const uint8_t *data, uint32_t len);
-    UvcControlRange getXuRange(uint32_t control, int len) const;
-
-    // add for mipi
-    bool            getXuExt(uint32_t ctrl, uint8_t *data, uint32_t *len);
-    bool            setXuExt(uint32_t ctrl, const uint8_t *data, uint32_t len);
-    UvcControlRange getXuRangeExt(uint32_t control, int len) const;
-
-    bool pendForCtrlStatusEvent() const;
-    void subscribeToCtrlEvent(uint32_t ctrl_id) const;
-    void unsubscribeFromCtrlEvent(uint32_t ctrl_id) const;
+    static void captureLoop(std::shared_ptr<V4lDeviceHandleGmsl> deviceHandle);
 
     bool setPuRaw(uint32_t propertyId, int32_t value);
 
-    // gmsl device enumer
-    int foreach_uvc_device(std::vector<std::string> video_paths);
+    bool sendData(const uint8_t *data, uint32_t dataLen);
+    bool recvData(uint8_t *data, uint32_t *dataLen);
+    bool getXuExt(uint32_t ctrl, uint8_t *data, uint32_t *len);
+    bool setXuExt(uint32_t ctrl, const uint8_t *data, uint32_t len);
 
     static void handleSpecialResolution(std::shared_ptr<V4lDeviceHandleGmsl> devHandle, const uint8_t *srcData, uint32_t srcSize,
                                         std::shared_ptr<VideoFrame> videoFrame);
 
 private:
-    std::shared_ptr<const USBSourcePortInfo>          portInfo_     = nullptr;
-    bool                                              useMemoryMap_ = false;
+    std::shared_ptr<const USBSourcePortInfo>          portInfo_ = nullptr;
     std::vector<std::shared_ptr<V4lDeviceHandleGmsl>> deviceHandles_;
 };
 

@@ -33,7 +33,7 @@ int main(void) try {
     // configure and enable Hdr stream
     OBHdrConfig obHdrConfig;
     obHdrConfig.enable     = true;  // enable HDR merge
-    obHdrConfig.exposure_1 = 7500; 
+    obHdrConfig.exposure_1 = 7500;
     obHdrConfig.gain_1     = 24;
     obHdrConfig.exposure_2 = 100;
     obHdrConfig.gain_2     = 16;
@@ -83,13 +83,18 @@ int main(void) try {
         win.pushFramesToView(depthFrame, groupId);
 
         if(mergeRequired) {
-            // Using HDRMerge post processor to merge depth frames
-            auto mergedDepthFrame = hdrMerge->process(depthFrame);
-            if(mergedDepthFrame == nullptr) {
-                continue;
+            try {
+                // Using HDRMerge post processor to merge depth frames
+                auto mergedDepthFrame = hdrMerge->process(depthFrame);
+                if(mergedDepthFrame == nullptr) {
+                    continue;
+                }
+                // add merged depth frame to render queue
+                win.pushFramesToView(mergedDepthFrame, 10);  // set the group id to 10 to avoid same group id with original depth frame
             }
-            // add merged depth frame to render queue
-            win.pushFramesToView(mergedDepthFrame, 10);  // set the group id to 10 to avoid same group id with original depth frame
+            catch(ob::Error &e) {
+                std::cerr << "HDRMerge error: " << e.what() << std::endl;
+            }
         }
     }
 

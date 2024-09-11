@@ -269,12 +269,11 @@ std::shared_ptr<Frame> PointCloudFilter::process(std::shared_ptr<const Frame> fr
     }
 
     std::shared_ptr<Frame> pointsFrame = nullptr;
-    auto                   newFrame    = FrameFactory::createFrameFromOtherFrame(frame);
     if(pointFormat_ == OB_FORMAT_POINT) {
-        pointsFrame = createDepthPointCloud(newFrame);
+        pointsFrame = createDepthPointCloud(frame);
     }
     else {
-        pointsFrame = createRGBDPointCloud(newFrame);
+        pointsFrame = createRGBDPointCloud(frame);
     }
     return pointsFrame;
 }

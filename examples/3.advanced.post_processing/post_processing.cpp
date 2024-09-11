@@ -130,7 +130,7 @@ int main() try {
     // Get the device and sensor, and get the list of recommended filters for the sensor
     auto device     = pipe.getDevice();
     auto sensor     = device->getSensor(OB_SENSOR_DEPTH);
-    auto filterList = sensor->getRecommendedFilters();
+    auto filterList = sensor->createRecommendedFilters();
 
     // Print the recommended filters
     printFiltersInfo(filterList);

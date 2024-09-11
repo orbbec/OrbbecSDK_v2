@@ -56,7 +56,7 @@ void ob_sensor_switch_profile(ob_sensor *sensor, ob_stream_profile *profile, ob_
 }
 HANDLE_EXCEPTIONS_NO_RETURN(sensor)
 
-ob_filter_list *ob_sensor_get_recommended_filter_list(const ob_sensor *sensor, ob_error **error) BEGIN_API_CALL {
+ob_filter_list *ob_sensor_create_recommended_filter_list(const ob_sensor *sensor, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(sensor);
     auto filterList  = sensor->device->createRecommendedPostProcessingFilters(sensor->type);
     auto impl        = new ob_filter_list();

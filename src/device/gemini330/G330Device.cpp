@@ -102,10 +102,97 @@ void G330Device::init() {
     registerComponent(OB_DEV_COMPONENT_DEVICE_CLOCK_SYNCHRONIZER, deviceClockSynchronizer);
 }
 
+std::shared_ptr<const StreamProfile> G330Device::loadDefaultStreamProfile(OBSensorType sensorType) {
+    std::shared_ptr<StreamProfile> defaultStreamProfile = nullptr;
+    LOG_DEBUG("loadDefaultStreamProfile: deviceConnectionType:={}", deviceInfo_->connectionType_);
+
+    OBStreamType defStreamType = OB_STREAM_UNKNOWN;
+    int          defFps        = 10;
+    int          defWidth      = 848;
+    int          defHeight     = 480;
+    OBFormat     defFormat     = OB_FORMAT_Y16;
+
+    // USB2.0 default resolution config
+    if(deviceInfo_->connectionType_ == "USB2.1") {
+        LOG_DEBUG("loadDefaultStreamProfile set USB2.1 device default stream profile.");
+        switch(sensorType) {
+        case OB_SENSOR_DEPTH:
+            defStreamType = OB_STREAM_DEPTH;
+            break;
+        case OB_SENSOR_IR_LEFT:
+            defFormat     = OB_FORMAT_Y8;
+            defStreamType = OB_STREAM_IR_LEFT;
+            break;
+        case OB_SENSOR_IR_RIGHT:
+            defFormat     = OB_FORMAT_Y8;
+            defStreamType = OB_STREAM_IR_RIGHT;
+            break;
+        case OB_SENSOR_IR:
+            defFormat     = OB_FORMAT_Y8;
+            defStreamType = OB_STREAM_IR;
+            break;
+        case OB_SENSOR_COLOR: {
+            defFormat     = OB_FORMAT_MJPG;
+            defStreamType = OB_STREAM_COLOR;
+            defWidth      = 1280;
+            defHeight     = 720;
+
+        } break;
+        default:
+            break;
+        }
+    }
+
+    // GMSL2 default resolution config
+    if(deviceInfo_->connectionType_ == "GMSL2") {
+        LOG_DEBUG("loadDefaultStreamProfile set GMSL2 device default stream profile.");
+        defFps = 30;
+        switch(sensorType) {
+        case OB_SENSOR_DEPTH:
+            defStreamType = OB_STREAM_DEPTH;
+            break;
+        case OB_SENSOR_IR_LEFT:
+            defFormat     = OB_FORMAT_Y8;
+            defStreamType = OB_STREAM_IR_LEFT;
+            break;
+        case OB_SENSOR_IR_RIGHT:
+            defFormat     = OB_FORMAT_Y8;
+            defStreamType = OB_STREAM_IR_RIGHT;
+            break;
+        case OB_SENSOR_IR:
+            defFormat     = OB_FORMAT_Y8;
+            defStreamType = OB_STREAM_IR;
+            break;
+        case OB_SENSOR_COLOR: {
+            defFormat     = OB_FORMAT_YUYV;
+            defStreamType = OB_STREAM_COLOR;
+            defWidth      = 1280;
+            defHeight     = 720;
+
+        } break;
+        default:
+            break;
+        }
+    }
+
+    if(defStreamType != OB_STREAM_UNKNOWN) {
+        defaultStreamProfile = StreamProfileFactory::createVideoStreamProfile(defStreamType, defFormat, defWidth, defHeight, defFps);
+        LOG_DEBUG("default profile StreamType:{}, Format:{}, Width:{}, Height:{}, Fps:{}", defStreamType, defFormat, defWidth, defHeight, defFps);
+    }
+
+    return defaultStreamProfile;
+}
+
 void G330Device::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
     auto streamProfile = StreamProfileFactory::getDefaultStreamProfileFromEnvConfig(deviceInfo_->name_, sensor->getSensorType());
     if(streamProfile) {
-        sensor->updateDefaultStreamProfile(streamProfile);
+        auto defaultStreamProfile = loadDefaultStreamProfile(sensor->getSensorType());
+        if(defaultStreamProfile != nullptr) {
+            sensor->updateDefaultStreamProfile(defaultStreamProfile);
+        }
+        else {
+            sensor->updateDefaultStreamProfile(streamProfile);
+        }
     }
 
     // bind params: extrinsics, intrinsics, etc.
@@ -422,7 +509,12 @@ void G330Device::initSensorList() {
     }
 }
 
-void G330Device::initSensorListGMSL() {
+static const uint8_t GMSL_INTERFACE_DEPTH    = 0;
+static const uint8_t GMSL_INTERFACE_IR       = 2;
+static const uint8_t GMSL_INTERFACE_IR_LEFT  = 2;
+static const uint8_t GMSL_INTERFACE_IR_RIGHT = 3;
+static const uint8_t GMSL_INTERFACE_COLOR    = 4;
+void                 G330Device::initSensorListGMSL() {
     registerComponent(OB_DEV_COMPONENT_FRAME_PROCESSOR_FACTORY, [this]() {
         std::shared_ptr<FrameProcessorFactory> factory;
         TRY_EXECUTE({ factory = std::make_shared<FrameProcessorFactory>(this); })
@@ -432,9 +524,8 @@ void G330Device::initSensorListGMSL() {
     auto        platform           = Platform::getInstance();
     const auto &sourcePortInfoList = enumInfo_->getSourcePortInfoList();
     auto depthPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(), [](const std::shared_ptr<const SourcePortInfo> &portInfo) {
-        return portInfo->portType == SOURCE_PORT_USB_UVC && std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->infIndex == INTERFACE_DEPTH;
+        return portInfo->portType == SOURCE_PORT_USB_UVC && std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->infIndex == GMSL_INTERFACE_DEPTH;
     });
-
     if(depthPortInfoIter != sourcePortInfoList.end()) {
         auto depthPortInfo = *depthPortInfoIter;
         registerComponent(
@@ -497,11 +588,39 @@ void G330Device::initSensorListGMSL() {
             return frameProcessor;
         });
 
+        // the main property accessor is using the depth port(uvc xu)
+        registerComponent(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR, [this, depthPortInfo]() {
+            auto platform      = Platform::getInstance();
+            auto port          = platform->getSourcePort(depthPortInfo);
+            auto uvcDevicePort = std::dynamic_pointer_cast<UvcDevicePort>(port);
+            uvcDevicePort->updateXuUnit(OB_G330_XU_UNIT);  // update xu unit to g330 xu unit
+            auto accessor = std::make_shared<VendorPropertyAccessor>(this, port);
+            accessor->setRawdataTransferPacketSize(GMSL_MAX_CMD_DATA_SIZE);
+            accessor->setStructListDataTransferPacketSize(GMSL_MAX_CMD_DATA_SIZE);
+            return accessor;
+        });
+
+        // The device monitor is using the depth port(uvc xu)
+        registerComponent(OB_DEV_COMPONENT_DEVICE_MONITOR, [this, depthPortInfo]() {
+            auto platform      = Platform::getInstance();
+            auto port          = platform->getSourcePort(depthPortInfo);
+            auto uvcDevicePort = std::dynamic_pointer_cast<UvcDevicePort>(port);
+            uvcDevicePort->updateXuUnit(OB_G330_XU_UNIT);  // update xu unit to g330 xu unit
+            auto devMonitor = std::make_shared<DeviceMonitor>(this, port);
+            return devMonitor;
+        });
+    }
+
+    auto leftIrPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(), [](const std::shared_ptr<const SourcePortInfo> &portInfo) {
+        return portInfo->portType == SOURCE_PORT_USB_UVC && std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->infIndex == GMSL_INTERFACE_IR_LEFT;
+    });
+    if(leftIrPortInfoIter != sourcePortInfoList.end()) {
+        auto leftIrPortInfo = *leftIrPortInfoIter;
         registerComponent(
             OB_DEV_COMPONENT_LEFT_IR_SENSOR,
-            [this, depthPortInfo]() {
+            [this, leftIrPortInfo]() {
                 auto platform = Platform::getInstance();
-                auto port     = platform->getSourcePort(depthPortInfo);
+                auto port     = platform->getSourcePort(leftIrPortInfo);
                 auto sensor   = std::make_shared<VideoSensor>(this, OB_SENSOR_IR_LEFT, port);
 
                 std::vector<FormatFilterConfig> formatFilterConfigs = {
@@ -540,19 +659,25 @@ void G330Device::initSensorListGMSL() {
                 return sensor;
             },
             true);
-        registerSensorPortInfo(OB_SENSOR_IR_LEFT, depthPortInfo);
+        registerSensorPortInfo(OB_SENSOR_IR_LEFT, leftIrPortInfo);
 
         registerComponent(OB_DEV_COMPONENT_LEFT_IR_FRAME_PROCESSOR, [this]() {
             auto factory        = getComponentT<FrameProcessorFactory>(OB_DEV_COMPONENT_FRAME_PROCESSOR_FACTORY);
             auto frameProcessor = factory->createFrameProcessor(OB_SENSOR_IR_LEFT);
             return frameProcessor;
         });
+    }
 
+    auto rightIrPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(), [](const std::shared_ptr<const SourcePortInfo> &portInfo) {
+        return portInfo->portType == SOURCE_PORT_USB_UVC && std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->infIndex == GMSL_INTERFACE_IR_RIGHT;
+    });
+    if(rightIrPortInfoIter != sourcePortInfoList.end()) {
+        auto rightIrPortInfo = *rightIrPortInfoIter;
         registerComponent(
             OB_DEV_COMPONENT_RIGHT_IR_SENSOR,
-            [this, depthPortInfo]() {
+            [this, rightIrPortInfo]() {
                 auto platform = Platform::getInstance();
-                auto port     = platform->getSourcePort(depthPortInfo);
+                auto port     = platform->getSourcePort(rightIrPortInfo);
                 auto sensor   = std::make_shared<VideoSensor>(this, OB_SENSOR_IR_RIGHT, port);
 
                 std::vector<FormatFilterConfig> formatFilterConfigs = {
@@ -590,34 +715,12 @@ void G330Device::initSensorListGMSL() {
                 return sensor;
             },
             true);
-        registerSensorPortInfo(OB_SENSOR_IR_RIGHT, depthPortInfo);
+        registerSensorPortInfo(OB_SENSOR_IR_RIGHT, rightIrPortInfo);
 
         registerComponent(OB_DEV_COMPONENT_RIGHT_IR_FRAME_PROCESSOR, [this]() {
             auto factory        = getComponentT<FrameProcessorFactory>(OB_DEV_COMPONENT_FRAME_PROCESSOR_FACTORY);
             auto frameProcessor = factory->createFrameProcessor(OB_SENSOR_IR_RIGHT);
             return frameProcessor;
-        });
-
-        // the main property accessor is using the depth port(uvc xu)
-        registerComponent(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR, [this, depthPortInfo]() {
-            auto platform      = Platform::getInstance();
-            auto port          = platform->getSourcePort(depthPortInfo);
-            auto uvcDevicePort = std::dynamic_pointer_cast<UvcDevicePort>(port);
-            uvcDevicePort->updateXuUnit(OB_G330_XU_UNIT);  // update xu unit to g330 xu unit
-            auto accessor = std::make_shared<VendorPropertyAccessor>(this, port);
-            accessor->setRawdataTransferPacketSize(GMSL_MAX_CMD_DATA_SIZE);
-            accessor->setStructListDataTransferPacketSize(GMSL_MAX_CMD_DATA_SIZE);
-            return accessor;
-        });
-
-        // The device monitor is using the depth port(uvc xu)
-        registerComponent(OB_DEV_COMPONENT_DEVICE_MONITOR, [this, depthPortInfo]() {
-            auto platform      = Platform::getInstance();
-            auto port          = platform->getSourcePort(depthPortInfo);
-            auto uvcDevicePort = std::dynamic_pointer_cast<UvcDevicePort>(port);
-            uvcDevicePort->updateXuUnit(OB_G330_XU_UNIT);  // update xu unit to g330 xu unit
-            auto devMonitor = std::make_shared<DeviceMonitor>(this, port);
-            return devMonitor;
         });
     }
 
@@ -761,7 +864,6 @@ void G330Device::initProperties() {
             });
 
             propertyServer->registerProperty(OB_PROP_COLOR_AUTO_EXPOSURE_BOOL, "rw", "rw", uvcPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_COLOR_EXPOSURE_INT, "rw", "rw", uvcPropertyAccessor);  // replace by vendor property accessor
             propertyServer->registerProperty(OB_PROP_COLOR_GAIN_INT, "rw", "rw", uvcPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_COLOR_SATURATION_INT, "rw", "rw", uvcPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_COLOR_AUTO_WHITE_BALANCE_BOOL, "rw", "rw", uvcPropertyAccessor);
@@ -840,7 +942,6 @@ void G330Device::initProperties() {
             propertyServer->registerProperty(OB_STRUCT_GET_GYRO_PRESETS_ODR_LIST, "", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_STRUCT_GET_GYRO_PRESETS_FULL_SCALE_LIST, "", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_IR_BRIGHTNESS_INT, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_DEVICE_USB2_REPEAT_IDENTIFY_BOOL, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_RAW_DATA_DEVICE_EXTENSION_INFORMATION, "", "r", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_IR_AE_MAX_EXPOSURE_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_COLOR_AE_MAX_EXPOSURE_INT, "rw", "rw", vendorPropertyAccessor);
@@ -854,6 +955,9 @@ void G330Device::initProperties() {
             propertyServer->registerProperty(OB_PROP_STOP_DEPTH_STREAM_BOOL, "rw", "rw", vendorPropertyAccessor);
             if(isGmslDevice_) {
                 propertyServer->registerProperty(OB_PROP_DEVICE_REPOWER_BOOL, "w", "w", vendorPropertyAccessor);
+            }
+            else {
+                propertyServer->registerProperty(OB_PROP_DEVICE_USB2_REPEAT_IDENTIFY_BOOL, "rw", "rw", vendorPropertyAccessor);
             }
         }
         else if(sensor == OB_SENSOR_ACCEL) {
