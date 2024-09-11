@@ -44,7 +44,7 @@ void RTPStreamPort::startClientTask(std::shared_ptr<const StreamProfile> profile
         rtpClient_.reset();
     }
     rtpClient_ = std::make_shared<ObRTPClient>();
-    rtpClient_->start(portInfo_->address, portInfo_->port, profile, callback);
+    rtpClient_->start(portInfo_->localAddress, portInfo_->address, portInfo_->port, profile, callback);
 }
 
 void RTPStreamPort::closeClientTask() {

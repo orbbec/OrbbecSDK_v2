@@ -15,7 +15,7 @@ namespace libobsensor {
 
 class ObRTPNpCapReceiver {
 public:
-    ObRTPNpCapReceiver(std::string address, uint16_t port);
+    ObRTPNpCapReceiver(std::string localAddress, std::string address, uint16_t port);
     ~ObRTPNpCapReceiver() noexcept;
 
     void start(std::shared_ptr<const StreamProfile> profile, MutableFrameCallback callback);
@@ -23,10 +23,12 @@ public:
 
 private:
     void findAlldevs();
+    void parseIPAddress(const u_char *ip_header, std::string &src_ip, std::string &dst_ip);
     void startReceive();
     void frameProcess();
     
 private:
+    std::string localIp_;
     std::string serverIp_;
     uint16_t    serverPort_;
     bool        startReceive_;

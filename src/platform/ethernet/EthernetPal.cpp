@@ -162,16 +162,16 @@ SourcePortInfoList EthernetPal::querySourcePortInfos() {
         }
         else if(info.pid == PID_GEMINI335LE) {
             LOG_INFO("Create 335L rtp stream portInfo.");
-            sourcePortInfoList_.push_back(
-                std::make_shared<RTPStreamPortInfo>(info.ip, static_cast<uint16_t>(20000), DEFAULT_CMD_PORT, OB_STREAM_COLOR, info.mac, info.sn, info.pid));
-            sourcePortInfoList_.push_back(
-                std::make_shared<RTPStreamPortInfo>(info.ip, static_cast<uint16_t>(20002), DEFAULT_CMD_PORT, OB_STREAM_DEPTH, info.mac, info.sn, info.pid));
-            sourcePortInfoList_.push_back(
-                std::make_shared<RTPStreamPortInfo>(info.ip, static_cast<uint16_t>(20004), DEFAULT_CMD_PORT, OB_STREAM_IR_LEFT, info.mac, info.sn, info.pid));
-            sourcePortInfoList_.push_back(
-                std::make_shared<RTPStreamPortInfo>(info.ip, static_cast<uint16_t>(20006), DEFAULT_CMD_PORT, OB_STREAM_IR_RIGHT, info.mac, info.sn, info.pid));
-            sourcePortInfoList_.push_back(
-                std::make_shared<RTPStreamPortInfo>(info.ip, static_cast<uint16_t>(20010), DEFAULT_CMD_PORT, OB_STREAM_ACCEL, info.mac, info.sn, info.pid));
+            sourcePortInfoList_.push_back(std::make_shared<RTPStreamPortInfo>(info.lcalIp, info.ip, static_cast<uint16_t>(20000), DEFAULT_CMD_PORT,
+                                                                              OB_STREAM_COLOR, info.mac, info.sn, info.pid));
+            sourcePortInfoList_.push_back(std::make_shared<RTPStreamPortInfo>(info.lcalIp, info.ip, static_cast<uint16_t>(20002), DEFAULT_CMD_PORT,
+                                                                              OB_STREAM_DEPTH, info.mac, info.sn, info.pid));
+            sourcePortInfoList_.push_back(std::make_shared<RTPStreamPortInfo>(info.lcalIp, info.ip, static_cast<uint16_t>(20004), DEFAULT_CMD_PORT,
+                                                                              OB_STREAM_IR_LEFT, info.mac, info.sn, info.pid));
+            sourcePortInfoList_.push_back(std::make_shared<RTPStreamPortInfo>(info.lcalIp, info.ip, static_cast<uint16_t>(20006), DEFAULT_CMD_PORT,
+                                                                              OB_STREAM_IR_RIGHT, info.mac, info.sn, info.pid));
+            sourcePortInfoList_.push_back(std::make_shared<RTPStreamPortInfo>(info.lcalIp, info.ip, static_cast<uint16_t>(20010), DEFAULT_CMD_PORT,
+                                                                              OB_STREAM_ACCEL, info.mac, info.sn, info.pid));
         }
     }
 

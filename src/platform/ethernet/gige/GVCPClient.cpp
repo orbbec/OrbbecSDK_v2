@@ -358,7 +358,15 @@ void GVCPClient::sendGVCPDiscovery(SOCKET sock) {
                     if(strcmp(ackPayload.szFacName, "Orbbec") != 0)
                         continue;
 
+                    SOCKADDR_IN addrLocal;
+                    socklen_t   addrLen = sizeof(addrLocal);
+                    std::string sockIp;
+                    if(getsockname(sock, (struct sockaddr *)&addrLocal, &addrLen) == 0) {
+                        sockIp = inet_ntoa(addrLocal.sin_addr);
+                    }
+
                     GVCPDeviceInfo info;
+                    info.lcalIp  = sockIp;
                     info.mac     = macStr;
                     info.ip      = curIPStr;
                     info.mask    = subMaskStr;

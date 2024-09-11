@@ -12,12 +12,12 @@ public:
     ObRTPClient();
     ~ObRTPClient() noexcept;
 
-    void start(std::string address, uint16_t port, std::shared_ptr<const StreamProfile> profile, MutableFrameCallback callback);
+    void start(std::string localAddress, std::string address, uint16_t port, std::shared_ptr<const StreamProfile> profile, MutableFrameCallback callback);
     void close();
 
 private:
-    std::shared_ptr<ObRTPUDPClient> udpClient_;
-    //std::shared_ptr<ObRTPNpCapReceiver> udpClient_;
+    //std::shared_ptr<ObRTPUDPClient> udpClient_;
+    std::shared_ptr<ObRTPNpCapReceiver> udpClient_;
 
 };
 

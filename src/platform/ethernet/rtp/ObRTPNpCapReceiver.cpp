@@ -1,5 +1,6 @@
 #include "ObRTPNpCapReceiver.hpp"
 #include "logger/Logger.hpp"
+#include "logger/LoggerInterval.hpp"
 #include "utils/Utils.hpp"
 #include "exception/ObException.hpp"
 #include "utils/Utils.hpp"
@@ -10,8 +11,8 @@
 
 namespace libobsensor {
 
-ObRTPNpCapReceiver::ObRTPNpCapReceiver(std::string address, uint16_t port)
-    : serverIp_(address), serverPort_(port), startReceive_(false), alldevs_(nullptr), dev_(nullptr), handle_(nullptr) {
+ObRTPNpCapReceiver::ObRTPNpCapReceiver(std::string localAddress, std::string address, uint16_t port)
+    : localIp_(localAddress), serverIp_(address), serverPort_(port), startReceive_(false), alldevs_(nullptr), dev_(nullptr), handle_(nullptr) {
     findAlldevs();
 }
 
@@ -29,14 +30,56 @@ void ObRTPNpCapReceiver::findAlldevs() {
     }
 
     LOG_DEBUG("Available devices:");
+    bool foundDevice = false;
     for(dev_ = alldevs_; dev_; dev_ = dev_->next) {
         LOG_DEBUG("Device Name: {}", (dev_->name ? dev_->name : "No name"));
+
+        if(dev_->addresses) {
+            // Check and log the device address
+            if(dev_->addresses->addr) {
+                char     ip[INET6_ADDRSTRLEN];
+                uint16_t port = 0;
+
+                sockaddr *sa = dev_->addresses->addr;
+                if(sa->sa_family == AF_INET) {
+                    sockaddr_in *sa_in = (sockaddr_in *)sa;
+                    inet_ntop(AF_INET, &(sa_in->sin_addr), ip, sizeof(ip));
+                    port = ntohs(sa_in->sin_port);
+                    std::string sockIp(ip);
+                    if(sockIp == localIp_) {
+                        foundDevice = true;
+                        LOG_DEBUG("Found device Address: {}:{}", sockIp, port);
+                        break;
+                    }
+                }
+                else if(sa->sa_family == AF_INET6) {
+                    sockaddr_in6 *sa_in6 = (sockaddr_in6 *)sa;
+                    inet_ntop(AF_INET6, &(sa_in6->sin6_addr), ip, sizeof(ip));
+                    port = ntohs(sa_in6->sin6_port);
+                    std::string sockIp(ip);
+                    if(sockIp == localIp_) {
+                        foundDevice = true;
+                        LOG_DEBUG("Found device Address: {}:{}", sockIp, port);
+                        break;
+                    }
+                }
+                else {
+                    LOG_DEBUG("Unknown address family.");
+                }
+            }
+            else {
+                LOG_DEBUG("No address available");
+            }
+        }
+        else {
+            LOG_DEBUG("No address information available.");
+        }
     }
 
-    int i = 0;
-    for(dev_ = alldevs_, i = 0; i < 9; dev_ = dev_->next, i++);
+    if(!foundDevice) {
+        throw libobsensor::invalid_value_exception(utils::string::to_string() << "Error opening net device, not found!");
+    }
 
-    //handle_ = pcap_open_live(alldevs_->name, 65536, 1, 1000, errbuf);
     handle_ = pcap_open_live(dev_->name, 65536, 1, 100, errbuf);
     if(handle_ == nullptr) {
         pcap_freealldevs(alldevs_);
@@ -52,7 +95,9 @@ void ObRTPNpCapReceiver::findAlldevs() {
 
     struct bpf_program fp;
     std::string        strPort      = std::to_string(serverPort_);
-    std::string        stringFilter = "udp port " + strPort;
+    //std::string        stringFilter = "udp port " + strPort;
+    //const char *       filter_exp   = "udp and src host 192.168.1.100 and src port 12345";
+    std::string stringFilter = "udp and src host " + serverIp_ + " and src port " + strPort;
     if(pcap_compile(handle_, &fp, stringFilter.c_str(), 0, PCAP_NETMASK_UNKNOWN) == -1) {
         pcap_freealldevs(alldevs_);
         throw libobsensor::invalid_value_exception(utils::string::to_string() << "Error compiling filter:" << pcap_geterr(handle_));
@@ -97,28 +142,22 @@ void ObRTPNpCapReceiver::startReceive() {
                 std::vector<uint8_t> data(payload, payload + recvLen);
                 rtpQueue_.push(data);
             }
-
-            /*RTPHeader *  rtpheader      = (RTPHeader *)payload;
-            uint8_t      marker         = rtpheader->marker;
-            uint16_t     sequenceNumber = ntohs(rtpheader->sequenceNumber);
-            if(sequenceNumber == 0x0) {
-                packetCount = 0;
-            }
-
-            if(marker == 0x0) {
-                packetCount++;
-            }
-            else if(marker == 0x1) {
-                packetCount++;
-                printf("rtpType_-%d, packetCount- %d \n", currentProfile_->getType(), packetCount);
-            }*/
         }
-        /*else {
-            LOG_WARN("Receive udp data error: {}", pcap_geterr(handle_));
-        }*/
+        else {
+            LOG_ERROR_INTVL("Receive rtp packet error {}", pcap_geterr(handle_));
+        }
     }
 
     LOG_DEBUG("Exit udp data receive thread...");
+}
+
+void ObRTPNpCapReceiver::parseIPAddress(const u_char *ip_header, std::string &src_ip, std::string &dst_ip) {
+    auto ip_src = reinterpret_cast<const uint8_t *>(ip_header + 12);  // 源 IP 地址
+    auto ip_dst = reinterpret_cast<const uint8_t *>(ip_header + 16);  // 目的 IP 地址
+
+    src_ip = std::to_string(ip_src[0]) + "." + std::to_string(ip_src[1]) + "." + std::to_string(ip_src[2]) + "." + std::to_string(ip_src[3]);
+
+    dst_ip = std::to_string(ip_dst[0]) + "." + std::to_string(ip_dst[1]) + "." + std::to_string(ip_dst[2]) + "." + std::to_string(ip_dst[3]);
 }
 
 void ObRTPNpCapReceiver::frameProcess() {
@@ -167,6 +206,7 @@ void ObRTPNpCapReceiver::close() {
     if(receiverThread_.joinable()) {
         receiverThread_.join();
     }
+    rtpQueue_.destroy();
     if(callbackThread_.joinable()) {
         callbackThread_.join();
     }

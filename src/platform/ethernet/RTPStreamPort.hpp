@@ -11,19 +11,23 @@
 namespace libobsensor {
 
 struct RTPStreamPortInfo : public NetSourcePortInfo {
-    RTPStreamPortInfo(std::string address, uint16_t port, uint16_t vendorPort, OBStreamType streamType, std::string mac = "unknown",
+    RTPStreamPortInfo(std::string localAddress, std::string address, uint16_t port, uint16_t vendorPort, OBStreamType streamType, std::string mac = "unknown",
                       std::string serialNumber = "unknown", uint32_t pid = 0)
-        : NetSourcePortInfo(SOURCE_PORT_NET_RTP, address, port, mac, serialNumber, pid), vendorPort(vendorPort), streamType(streamType) {}
+        : NetSourcePortInfo(SOURCE_PORT_NET_RTP, address, port, mac, serialNumber, pid),
+          localAddress(localAddress),
+          vendorPort(vendorPort),
+          streamType(streamType) {}
 
     virtual bool equal(std::shared_ptr<const SourcePortInfo> cmpInfo) const override {
         if(cmpInfo->portType != portType) {
             return false;
         }
         auto netCmpInfo = std::dynamic_pointer_cast<const RTPStreamPortInfo>(cmpInfo);
-        return (address == netCmpInfo->address) && (port == netCmpInfo->port) && (vendorPort == netCmpInfo->vendorPort)
+        return (localAddress == netCmpInfo->localAddress) && (address == netCmpInfo->address) && (port == netCmpInfo->port) && (vendorPort == netCmpInfo->vendorPort)
                && (streamType == netCmpInfo->streamType);
     };
 
+    std::string  localAddress;
     uint16_t     vendorPort;
     OBStreamType streamType;
 };
