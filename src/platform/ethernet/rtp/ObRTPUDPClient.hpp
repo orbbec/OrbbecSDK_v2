@@ -23,7 +23,7 @@ public:
 
 private:
     void socketConnect();
-    void startReceive();
+    void frameReceive();
     void frameProcess();
     
 private:

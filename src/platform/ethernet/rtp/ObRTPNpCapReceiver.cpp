@@ -7,7 +7,7 @@
 #include "frame/FrameFactory.hpp"
 #include "stream/StreamProfile.hpp"
 
-#define OB_UDP_BUFFER_SIZE 1500
+#define OB_UDP_BUFFER_SIZE 1600
 
 namespace libobsensor {
 
@@ -20,6 +20,11 @@ ObRTPNpCapReceiver::~ObRTPNpCapReceiver() noexcept {
 }
 
 void ObRTPNpCapReceiver::findAlldevs() {
+    //IMU Port 20010
+    if(serverPort_ == 20010) {
+        COMM_TIMEOUT_MS = 50;
+    }
+
     char    errbuf[PCAP_ERRBUF_SIZE];
     if(pcap_findalldevs(&alldevs_, errbuf) == -1) {
         throw libobsensor::invalid_value_exception(utils::string::to_string() << "Failed to finding net devices, err_msg=" << errbuf);
@@ -32,6 +37,10 @@ void ObRTPNpCapReceiver::findAlldevs() {
     LOG_DEBUG("Available devices:");
     bool foundDevice = false;
     for(dev_ = alldevs_; dev_; dev_ = dev_->next) {
+        if((dev_->flags & PCAP_IF_WIRELESS) || (dev_->flags & PCAP_IF_CONNECTION_STATUS_DISCONNECTED)) {
+            continue;  // Skip wifi
+        }
+
         LOG_DEBUG("Device Name: {}", (dev_->name ? dev_->name : "No name"));
 
         if(dev_->addresses) {
@@ -46,6 +55,7 @@ void ObRTPNpCapReceiver::findAlldevs() {
                     inet_ntop(AF_INET, &(sa_in->sin_addr), ip, sizeof(ip));
                     port = ntohs(sa_in->sin_port);
                     std::string sockIp(ip);
+                    LOG_DEBUG("device Address: {}:{}", sockIp, port);
                     if(sockIp == localIp_) {
                         foundDevice = true;
                         LOG_DEBUG("Found device Address: {}:{}", sockIp, port);
@@ -57,6 +67,7 @@ void ObRTPNpCapReceiver::findAlldevs() {
                     inet_ntop(AF_INET6, &(sa_in6->sin6_addr), ip, sizeof(ip));
                     port = ntohs(sa_in6->sin6_port);
                     std::string sockIp(ip);
+                    LOG_DEBUG("device Address: {}:{}", sockIp, port);
                     if(sockIp == localIp_) {
                         foundDevice = true;
                         LOG_DEBUG("Found device Address: {}:{}", sockIp, port);
@@ -76,39 +87,87 @@ void ObRTPNpCapReceiver::findAlldevs() {
         }
     }
 
-    if(!foundDevice) {
+    if(foundDevice) {
+        handle_ = pcap_open_live(dev_->name, OB_UDP_BUFFER_SIZE, 1, COMM_TIMEOUT_MS, errbuf);
+        if(handle_ == nullptr) {
+            pcap_freealldevs(alldevs_);
+            throw libobsensor::invalid_value_exception(utils::string::to_string() << "Error opening net device:" << errbuf);
+        }
+
+        if(pcap_datalink(handle_) != DLT_EN10MB) {
+            /* Free the device list */
+            pcap_close(handle_);
+            pcap_freealldevs(alldevs_);
+            throw libobsensor::invalid_value_exception(utils::string::to_string() << "Error data link:" << pcap_geterr(handle_));
+        }
+
+        struct bpf_program fp;
+        std::string        strPort = std::to_string(serverPort_);
+        // std::string        stringFilter = "udp port " + strPort;
+        // const char *       filter_exp   = "udp and src host 192.168.1.100 and src port 12345";
+        std::string stringFilter = "udp and src host " + serverIp_ + " and src port " + strPort;
+        if(pcap_compile(handle_, &fp, stringFilter.c_str(), 0, PCAP_NETMASK_UNKNOWN) == -1) {
+            pcap_close(handle_);
+            pcap_freealldevs(alldevs_);
+            throw libobsensor::invalid_value_exception(utils::string::to_string() << "Error compiling filter:" << pcap_geterr(handle_));
+        }
+
+        if(pcap_setfilter(handle_, &fp) < 0) {
+            /* Free the device list */
+            pcap_freecode(&fp);
+            pcap_close(handle_);
+            pcap_freealldevs(alldevs_);
+            throw libobsensor::invalid_value_exception(utils::string::to_string() << "Error setting the filter:" << pcap_geterr(handle_));
+        }
+        pcap_freecode(&fp);
+    }
+    else {
+        LOG_DEBUG("Available devices:");
+        for(dev_ = alldevs_; dev_; dev_ = dev_->next) {
+            if((dev_->flags & PCAP_IF_WIRELESS) || (dev_->flags & PCAP_IF_CONNECTION_STATUS_DISCONNECTED)) {
+                continue;  // Skip wifi
+            }
+
+            LOG_DEBUG("Device Name: {}", (dev_->name ? dev_->name : "No name"));
+
+            pcap_t *handle = pcap_open_live(dev_->name, OB_UDP_BUFFER_SIZE, 1, COMM_TIMEOUT_MS, errbuf);
+            if(handle == nullptr) {
+                LOG_WARN("Error opening net device: {}", errbuf);
+                continue;
+            }
+
+            if(pcap_datalink(handle) != DLT_EN10MB) {
+                LOG_WARN("Error data link: {}", errbuf);
+                pcap_close(handle);
+                continue;
+            }
+
+            struct bpf_program fp;
+            std::string        strPort      = std::to_string(serverPort_);
+            std::string        stringFilter = "udp and src host " + serverIp_ + " and src port " + strPort;
+            if(pcap_compile(handle, &fp, stringFilter.c_str(), 0, PCAP_NETMASK_UNKNOWN) == 0) {
+                LOG_DEBUG("Found net device");
+            }
+            else {
+                LOG_WARN("Error pcap compile!");
+                pcap_close(handle);
+                continue;
+            }
+
+            if(pcap_setfilter(handle, &fp) < 0) {
+                LOG_WARN("Error setting the filter: {}", pcap_geterr(handle));
+                pcap_freecode(&fp);
+                pcap_close(handle);
+                continue;
+            }
+            pcap_freecode(&fp);
+            handles_.push_back(handle);
+        }
+    }
+
+    if(!foundDevice && handles_.size() == 0) {
         throw libobsensor::invalid_value_exception(utils::string::to_string() << "Error opening net device, not found!");
     }
-
-    handle_ = pcap_open_live(dev_->name, 65536, 1, 100, errbuf);
-    if(handle_ == nullptr) {
-        pcap_freealldevs(alldevs_);
-        throw libobsensor::invalid_value_exception(utils::string::to_string() << "Error opening net device:" << errbuf);
-    }
-
-    if(pcap_datalink(handle_) != DLT_EN10MB) {
-        /* Free the device list */
-        pcap_freealldevs(alldevs_);
-        throw libobsensor::invalid_value_exception(utils::string::to_string() << "Error data link:" << pcap_geterr(handle_));
-    }
-
-
-    struct bpf_program fp;
-    std::string        strPort      = std::to_string(serverPort_);
-    //std::string        stringFilter = "udp port " + strPort;
-    //const char *       filter_exp   = "udp and src host 192.168.1.100 and src port 12345";
-    std::string stringFilter = "udp and src host " + serverIp_ + " and src port " + strPort;
-    if(pcap_compile(handle_, &fp, stringFilter.c_str(), 0, PCAP_NETMASK_UNKNOWN) == -1) {
-        pcap_freealldevs(alldevs_);
-        throw libobsensor::invalid_value_exception(utils::string::to_string() << "Error compiling filter:" << pcap_geterr(handle_));
-    }
-
-    if(pcap_setfilter(handle_, &fp) < 0) {
-        /* Free the device list */
-        pcap_freealldevs(alldevs_);
-        throw libobsensor::invalid_value_exception(utils::string::to_string() << "Error setting the filter:" << pcap_geterr(handle_));
-    }
-    pcap_freecode(&fp);
 
     LOG_DEBUG("Net device opened successfully");
 }
@@ -122,15 +181,23 @@ void ObRTPNpCapReceiver::start(std::shared_ptr<const StreamProfile> profile, Mut
     currentProfile_  = profile;
     frameCallback_   = callback;
     startReceive_    = true;
-    receiverThread_  = std::thread(&ObRTPNpCapReceiver::startReceive, this);
-    callbackThread_  = std::thread(&ObRTPNpCapReceiver::frameProcess, this);
+    if(handle_) {
+        receiverThread_ = std::thread(&ObRTPNpCapReceiver::frameReceive, this);
+        callbackThread_ = std::thread(&ObRTPNpCapReceiver::frameProcess, this);
+    }
+    else {
+        foundPcapHandle_ = false;
+        for(int i = 0; i < handles_.size(); ++i) {
+            handleThreads_.emplace_back(&ObRTPNpCapReceiver::frameReceive2, this, handles_[i]);
+        }
+        callbackThread_ = std::thread(&ObRTPNpCapReceiver::frameProcess, this);
+    }
 }
 
-void ObRTPNpCapReceiver::startReceive() {
+void ObRTPNpCapReceiver::frameReceive() {
     LOG_DEBUG("start udp data receive thread...");
     struct pcap_pkthdr *header;
     const u_char *      packet;
-    //int                 packetCount = 0;
     while(startReceive_) {
         int res = pcap_next_ex(handle_, &header, &packet);
         if(res > 0) {
@@ -148,6 +215,39 @@ void ObRTPNpCapReceiver::startReceive() {
         }
     }
 
+    LOG_DEBUG("Exit udp data receive thread...");
+}
+
+
+void ObRTPNpCapReceiver::frameReceive2(pcap_t *handle) {
+    LOG_DEBUG("start udp data receive thread...");
+    struct pcap_pkthdr *header;
+    const u_char *      packet;
+    int timeOutCount = 20;
+    while(startReceive_) {
+        int res = pcap_next_ex(handle, &header, &packet);
+        if(res > 0) {
+            foundPcapHandle_ = true;
+            timeOutCount = 1000000;
+            // Ethernet + IP header lengths
+            const u_char *payload = packet + 42;
+            // Adjust based on header lengths
+            int recvLen = header->len - 42;
+            if(recvLen > 0) {
+                std::vector<uint8_t> data(payload, payload + recvLen);
+                rtpQueue_.push(data);
+            }
+        }
+        else {
+            timeOutCount --;
+            if(timeOutCount == 0 && foundPcapHandle_) {
+                break;
+            }
+            LOG_ERROR_INTVL("Receive rtp packet error!");
+        }
+    }
+
+    pcap_close(handle);
     LOG_DEBUG("Exit udp data receive thread...");
 }
 
@@ -206,6 +306,11 @@ void ObRTPNpCapReceiver::close() {
     if(receiverThread_.joinable()) {
         receiverThread_.join();
     }
+
+    for(auto &thread: handleThreads_) {
+        thread.join();
+    }
+
     rtpQueue_.destroy();
     if(callbackThread_.joinable()) {
         callbackThread_.join();

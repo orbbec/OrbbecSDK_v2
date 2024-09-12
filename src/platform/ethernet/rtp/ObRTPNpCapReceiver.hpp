@@ -13,6 +13,11 @@
 
 namespace libobsensor {
 
+//struct obPcapDevice {
+//    pcap_t *handle;
+//    bool receiveData;
+//};
+
 class ObRTPNpCapReceiver {
 public:
     ObRTPNpCapReceiver(std::string localAddress, std::string address, uint16_t port);
@@ -24,15 +29,17 @@ public:
 private:
     void findAlldevs();
     void parseIPAddress(const u_char *ip_header, std::string &src_ip, std::string &dst_ip);
-    void startReceive();
+    void frameReceive();
     void frameProcess();
+
+    void frameReceive2(pcap_t *handle);
     
 private:
     std::string localIp_;
     std::string serverIp_;
     uint16_t    serverPort_;
     bool        startReceive_;
-    uint32_t    COMM_TIMEOUT_MS = 5000;
+    uint32_t    COMM_TIMEOUT_MS = 100;
 
     pcap_if_t *alldevs_;
     pcap_if_t *dev_;
@@ -43,6 +50,10 @@ private:
 
     std::thread receiverThread_;
     std::thread callbackThread_;
+
+    std::vector<pcap_t *>    handles_;
+    std::vector<std::thread> handleThreads_;
+    bool                     foundPcapHandle_;
 
     ObRTPPacketQueue    rtpQueue_;
     ObRTPPacketProcessor rtpProcessor_;

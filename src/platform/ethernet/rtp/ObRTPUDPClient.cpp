@@ -93,11 +93,11 @@ void ObRTPUDPClient::start(std::shared_ptr<const StreamProfile> profile, Mutable
     currentProfile_  = profile;
     frameCallback_   = callback;
     startReceive_    = true;
-    receiverThread_  = std::thread(&ObRTPUDPClient::startReceive, this);
+    receiverThread_  = std::thread(&ObRTPUDPClient::frameReceive, this);
     callbackThread_  = std::thread(&ObRTPUDPClient::frameProcess, this);
 }
 
-void ObRTPUDPClient::startReceive() {
+void ObRTPUDPClient::frameReceive() {
     LOG_DEBUG("start udp data receive thread...");
     sockaddr_in          serverAddr;
     int                  serverAddrSize = sizeof(serverAddr);
