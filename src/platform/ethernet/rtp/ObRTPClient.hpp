@@ -20,8 +20,12 @@ public:
     void close();
 
 private:
+    
+#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+    std::shared_ptr<ObRTPNpCapReceiver> udpClient_;
+#else
     std::shared_ptr<ObRTPUDPClient> udpClient_;
-    //std::shared_ptr<ObRTPNpCapReceiver> udpClient_;
+#endif
 
 };
 
