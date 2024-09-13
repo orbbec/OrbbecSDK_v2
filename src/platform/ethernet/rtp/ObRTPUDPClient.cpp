@@ -11,7 +11,7 @@
 
 namespace libobsensor {
 
-ObRTPUDPClient::ObRTPUDPClient(std::string address, uint16_t port) : serverIp_(address), serverPort_(port), startReceive_(false) {
+ObRTPUDPClient::ObRTPUDPClient(std::string address, uint16_t port) : serverIp_(address), serverPort_(port), startReceive_(false), recvSocket_(INVALID_SOCKET) {
 
 #if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
     WSADATA wsaData;
@@ -28,12 +28,12 @@ ObRTPUDPClient::ObRTPUDPClient(std::string address, uint16_t port) : serverIp_(a
     socketConnect();
 }
 
-ObRTPUDPClient::~ObRTPUDPClient() noexcept {}
+ObRTPUDPClient::~ObRTPUDPClient() noexcept {
+    close();
+}
 
 void ObRTPUDPClient::socketConnect() {
     // 1.Create udpsocket
-    recvSocket_ = INVALID_SOCKET;
-
 #if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
     recvSocket_ = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 #else
@@ -74,11 +74,9 @@ void ObRTPUDPClient::socketConnect() {
 
     // 4.Bind the socket to a local address and port.
     if(bind(recvSocket_, (sockaddr *)&serverAddr, sizeof(serverAddr)) < 0) {
+        socketClose();
 #if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
-        closesocket(recvSocket_);
         WSACleanup();
-#else
-        close(recvSocket_);
 #endif
         throw libobsensor::invalid_value_exception(utils::string::to_string() << "Failed to bind server address! err_code=" << GET_LAST_ERROR());
     }
@@ -97,10 +95,21 @@ void ObRTPUDPClient::start(std::shared_ptr<const StreamProfile> profile, Mutable
     callbackThread_  = std::thread(&ObRTPUDPClient::frameProcess, this);
 }
 
+void ObRTPUDPClient::socketClose() {
+    if(recvSocket_ > 0) {
+        auto rst = ::closesocket(recvSocket_);
+        if(rst < 0) {
+            LOG_ERROR("close udp socket failed! socket={0}, err_code={1}", recvSocket_, GET_LAST_ERROR());
+        }
+    }
+    LOG_DEBUG("udp socket closed! socket={}", recvSocket_);
+    recvSocket_ = INVALID_SOCKET;
+}
+
 void ObRTPUDPClient::frameReceive() {
     LOG_DEBUG("start udp data receive thread...");
     sockaddr_in          serverAddr;
-    int                  serverAddrSize = sizeof(serverAddr);
+    socklen_t            serverAddrSize = sizeof(serverAddr);
     std::vector<uint8_t> buffer(OB_UDP_BUFFER_SIZE);
     while(startReceive_) {
         int recvLen = recvfrom(recvSocket_, (char *)buffer.data(), (int)buffer.size(), 0, (sockaddr *)&serverAddr, &serverAddrSize);
@@ -185,13 +194,12 @@ void ObRTPUDPClient::close() {
         callbackThread_.join();
     }
     if(recvSocket_ > 0) {
+        socketClose();
 #if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
-        closesocket(recvSocket_);
         WSACleanup();
-#else
-        close(recvSocket_);
 #endif
     }
+    
     LOG_DEBUG("close end...");
 }
 

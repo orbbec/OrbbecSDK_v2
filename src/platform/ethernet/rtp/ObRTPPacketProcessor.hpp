@@ -3,6 +3,7 @@
 #include <iostream>
 #include <mutex>
 #include <unordered_set>
+#include <vector>
 
 
 namespace libobsensor {

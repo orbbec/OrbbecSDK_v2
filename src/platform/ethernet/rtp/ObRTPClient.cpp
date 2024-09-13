@@ -1,4 +1,5 @@
 #include "ObRTPClient.hpp"
+#include "logger/Logger.hpp"
 
 namespace libobsensor {
 
@@ -11,8 +12,14 @@ void ObRTPClient::start(std::string localAddress, std::string address, uint16_t 
     if(udpClient_) {
         udpClient_.reset();
     }
-    //udpClient_ = std::make_shared<ObRTPUDPClient>(address, port);
-    udpClient_ = std::make_shared<ObRTPNpCapReceiver>(localAddress, address, port);
+
+    if (!localAddress.empty()) {
+        LOG_INFO("Local ip address: {}", localAddress);
+    }
+    
+
+    udpClient_ = std::make_shared<ObRTPUDPClient>(address, port);
+    //udpClient_ = std::make_shared<ObRTPNpCapReceiver>(localAddress, address, port);
     udpClient_->start(profile, callback);
 }
 

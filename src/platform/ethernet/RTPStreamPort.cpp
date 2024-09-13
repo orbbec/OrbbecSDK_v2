@@ -31,6 +31,7 @@ void RTPStreamPort::startStream(std::shared_ptr<const StreamProfile> profile, Mu
 }
 
 void RTPStreamPort::stopStream(std::shared_ptr<const StreamProfile> profile) {
+    LOG_DEBUG("{} Stream stoped!", utils::obStreamToStr(profile->getType()));
     stopAllStream();
 }
 
