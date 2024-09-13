@@ -1194,7 +1194,11 @@ void G330NetDevice::init() {
 void G330NetDevice::fetchDeviceInfo() {
     auto propServer                   = getPropertyServer();
     auto version                      = propServer->getStructureDataT<OBVersionInfo>(OB_STRUCT_VERSION);
-    deviceInfo_                       = std::make_shared<DeviceInfo>();
+    auto deviceInfo                   = std::make_shared<NetDeviceInfo>();
+    auto portInfo                     = enumInfo_->getSourcePortInfoList().front();
+    auto netPortInfo                  = std::dynamic_pointer_cast<const NetSourcePortInfo>(portInfo);
+    deviceInfo->ipAddress_            = netPortInfo->address;
+    deviceInfo_                       = deviceInfo;
     deviceInfo_->name_                = version.deviceName;
     deviceInfo_->fwVersion_           = version.firmwareVersion;
     deviceInfo_->deviceSn_            = version.serialNumber;
