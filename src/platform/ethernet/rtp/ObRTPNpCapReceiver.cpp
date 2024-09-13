@@ -1,3 +1,5 @@
+#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+
 #include "ObRTPNpCapReceiver.hpp"
 #include "logger/Logger.hpp"
 #include "logger/LoggerInterval.hpp"
@@ -211,7 +213,7 @@ void ObRTPNpCapReceiver::frameReceive() {
             }
         }
         else {
-            LOG_ERROR_INTVL("Receive rtp packet error {}", pcap_geterr(handle_));
+            LOG_ERROR_INTVL("Receive rtp packet error!");
         }
     }
 
@@ -326,3 +328,5 @@ void ObRTPNpCapReceiver::close() {
 }
 
 }  // namespace libobsensor
+
+#endif

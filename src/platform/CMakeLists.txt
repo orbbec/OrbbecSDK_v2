@@ -27,9 +27,10 @@ if(OB_BUILD_NET_PAL)
     add_subdirectory(${OB_3RDPARTY_DIR}/live555 live555)
     target_link_libraries(${OB_TARGET_PAL} PUBLIC live555::live555)
 
-    add_subdirectory(${OB_3RDPARTY_DIR}/npcaplib npcaplib)
-    target_link_libraries(${OB_TARGET_PAL} PUBLIC npcaplib::npcaplib)
-
+    if(OB_BUILD_WIN32)
+        add_subdirectory(${OB_3RDPARTY_DIR}/npcaplib npcaplib)
+        target_link_libraries(${OB_TARGET_PAL} PUBLIC npcaplib::npcaplib)
+    endif()
 endif()
 
 add_library(ob::platform ALIAS ${OB_TARGET_PAL})

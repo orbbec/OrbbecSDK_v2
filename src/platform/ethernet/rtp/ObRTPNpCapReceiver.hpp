@@ -1,5 +1,7 @@
 #pragma once
 
+#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+
 #include "IStreamProfile.hpp"
 #include "IFrame.hpp"
 #include "ObRTPPacketProcessor.hpp"
@@ -12,11 +14,6 @@
 #include <condition_variable>
 
 namespace libobsensor {
-
-//struct obPcapDevice {
-//    pcap_t *handle;
-//    bool receiveData;
-//};
 
 class ObRTPNpCapReceiver {
 public:
@@ -63,3 +60,5 @@ private:
 };
 
 }  // namespace libobsensor
+
+#endif

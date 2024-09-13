@@ -113,6 +113,13 @@ void ObRTPUDPClient::frameReceive() {
             else {
                 LOG_ERROR_INTVL("Receive rtp packet error!");
             }
+#else
+            if(error == EAGAIN || error == EWOULDBLOCK) {
+                LOG_ERROR_INTVL("Receive rtp packet timed out!");
+            }
+            else {
+                LOG_ERROR_INTVL("Receive rtp packet error!");
+            }
 #endif
             continue;
         }
