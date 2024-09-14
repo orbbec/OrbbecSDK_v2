@@ -50,7 +50,7 @@ public:
         return dataSize_;
     }
 
-    int32_t getNumber() {
+    uint64_t getNumber() {
         return frameNumber_;
     }
 
@@ -82,7 +82,7 @@ private:
     bool revDataError_;
     bool countDownStart_;
 
-    int32_t  frameNumber_;
+    uint64_t frameNumber_;
     uint32_t maxPacketCount_;
     uint32_t maxCacheSize_;
     uint32_t maxPacketSize_;
