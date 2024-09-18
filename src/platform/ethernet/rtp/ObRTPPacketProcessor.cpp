@@ -12,7 +12,7 @@ namespace libobsensor {
 
 
 ObRTPPacketProcessor::ObRTPPacketProcessor()
-    : foundStartPacket_(false), revDataComplete_(false), revDataError_(false), countDownStart_(false), frameNumber_(-1), dataSize_(0) ,rtpBuffer_(nullptr) {
+    : foundStartPacket_(false), revDataComplete_(false), revDataError_(false), countDownStart_(false), frameNumber_(0), dataSize_(0) ,rtpBuffer_(nullptr) {
 
     maxPacketSize_  = MAX_RTP_FIX_SIZE - RTP_FIX_SIZE;
     maxPacketCount_ = MAX_RTP_FRAME_SIZE / maxPacketSize_ + 1;
@@ -84,7 +84,7 @@ void ObRTPPacketProcessor::OnEndOfFrame(uint16_t sequenceNumber) {
         std::unique_lock<std::mutex> lk(revStatusMutex_);
         revDataComplete_ = true;
         revDataError_    = false;
-        frameNumber_++;
+        ++frameNumber_;
     }
     else {
         revDataComplete_ = false;

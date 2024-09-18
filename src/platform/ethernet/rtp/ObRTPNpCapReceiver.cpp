@@ -213,7 +213,13 @@ void ObRTPNpCapReceiver::frameReceive() {
             }
         }
         else {
-            LOG_ERROR_INTVL("Receive rtp packet error!");
+            if(res == 0) {
+                LOG_ERROR_INTVL("Receive rtp packet timeout!");
+            }
+            else {
+                LOG_ERROR_INTVL("Receive rtp packet error: {}", res);
+            }
+            
         }
     }
 
@@ -271,13 +277,15 @@ void ObRTPNpCapReceiver::frameProcess() {
             if(serverPort_ != 20010) {
                 rtpProcessor_.process(header, data.data(), (uint32_t)data.size(), currentProfile_->getType());
                 if(rtpProcessor_.processComplete()) {
-                    uint32_t dataSize = rtpProcessor_.getDataSize();
+                    uint32_t dataSize     = rtpProcessor_.getDataSize();
+                    uint32_t metaDataSize = rtpProcessor_.getMetaDataSize();
                     //LOG_DEBUG("Callback new frame dataSize: {}, number: {}", dataSize, rtpProcessor_.getNumber());
 
                     auto frame = FrameFactory::createFrameFromStreamProfile(currentProfile_);
                     frame->setSystemTimeStampUsec(utils::getNowTimesUs());
                     frame->setTimeStampUsec(rtpProcessor_.getTimestamp());
                     frame->setNumber(rtpProcessor_.getNumber());
+                    frame->updateMetadata(rtpProcessor_.getMetaData(), metaDataSize);
                     frame->updateData(rtpProcessor_.getData(), dataSize);
 
                     frameCallback_(frame);

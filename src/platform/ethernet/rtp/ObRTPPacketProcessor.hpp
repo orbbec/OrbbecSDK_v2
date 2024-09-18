@@ -43,11 +43,19 @@ public:
     void startCountDown();
 
     uint8_t *getData() {
-        return rtpBuffer_;
+        return rtpBuffer_ + RTP_FIX_METADATA_SIZE;
     }
 
     uint32_t getDataSize() {
-        return dataSize_;
+        return dataSize_ - RTP_FIX_METADATA_SIZE;
+    }
+
+    uint8_t *getMetaData() {
+        return rtpBuffer_;
+    }
+
+    uint32_t getMetaDataSize() {
+        return RTP_FIX_METADATA_SIZE;
     }
 
     uint64_t getNumber() {
@@ -73,9 +81,10 @@ private:
     void countDown(int milliseconds);
 
 private:
-    const uint32_t MAX_RTP_FRAME_SIZE = 4 * 1920 * 1080;
-    const uint32_t MAX_RTP_FIX_SIZE   = 1472;
-    const uint32_t RTP_FIX_SIZE       = 12;
+    const uint32_t MAX_RTP_FRAME_SIZE    = 4 * 1920 * 1080;
+    const uint32_t MAX_RTP_FIX_SIZE      = 1472;
+    const uint32_t RTP_FIX_SIZE          = 12;
+    const uint32_t RTP_FIX_METADATA_SIZE = 96;
 
     bool foundStartPacket_;
     bool revDataComplete_;
