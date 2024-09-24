@@ -43,7 +43,7 @@ typedef enum {
     OB_STRUCT_IR_STREAM_PROFILE       = 1050, /**< set stream profile to ir or left ir*/
     OB_STRUCT_IR_RIGHT_STREAM_PROFILE = 1065, /**< set stream profile to right ir*/
 
-    OB_RAW_DATA_D2C_ALIGN_SUPPORT_PROFILE_LIST      = 4024, /**< D2C对齐分辨率列表*/
+    OB_RAW_DATA_D2C_ALIGN_SUPPORT_PROFILE_LIST      = 4024, /**< D2C Aligned Resolution List*/
     OB_RAW_DATA_DEPTH_CALIB_PARAM                   = 4026, /**< Depth calibration parameters*/
     OB_RAW_DATA_ALIGN_CALIB_PARAM                   = 4027,
     OB_RAW_DATA_DEPTH_ALG_MODE_LIST                 = 4034, /**< Depth algorithm mode list*/

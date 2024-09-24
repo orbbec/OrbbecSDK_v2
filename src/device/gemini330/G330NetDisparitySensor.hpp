@@ -12,7 +12,7 @@ public:
     void start(std::shared_ptr<const StreamProfile> sp, FrameCallback callback) override;
     void stop() override;
 
-    void updateStreamProfileList(const StreamProfileList &profileList) override;
+    void setStreamProfileList(const StreamProfileList &profileList) override;
 
 };
 }  // namespace libobsensor

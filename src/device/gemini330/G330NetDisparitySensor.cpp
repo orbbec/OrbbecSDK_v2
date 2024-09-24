@@ -43,8 +43,8 @@ void G330NetDisparitySensor::stop() {
     CATCH_EXCEPTION_AND_EXECUTE({ LOG_ERROR("Start {} stream failed!", utils::obSensorToStr(sensorType_)); })
 }
 
-void G330NetDisparitySensor::updateStreamProfileList(const StreamProfileList &profileList) {
-    DisparityBasedSensor::updateStreamProfileList(profileList);
+void G330NetDisparitySensor::setStreamProfileList(const StreamProfileList &profileList) {
+    DisparityBasedSensor::setStreamProfileList(profileList);
 }
 
 }  // namespace libobsensor
