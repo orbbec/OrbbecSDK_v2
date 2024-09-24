@@ -56,9 +56,6 @@ private:
     void fetchAllProfileList();
 
 private:
-    std::shared_ptr<IFrameMetadataParserContainer> colorMdParserContainer_;
-    std::shared_ptr<IFrameMetadataParserContainer> depthMdParserContainer_;
-
     std::shared_ptr<const SourcePortInfo>                       vendorPortInfo_;
     const uint64_t                                              deviceTimeFreq_ = 1000;     // in ms
     const uint64_t                                              frameTimeFreq_  = 1000000;  // in us
