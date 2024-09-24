@@ -29,7 +29,7 @@ then
             sudo apt-get install -y build-essential
         fi
     else
-        echo "C++ Compiler and tools is already installed."
+        echo "C++ Compiler and tools is installed."
     fi
 
     # install cmake
@@ -43,14 +43,14 @@ then
             sudo apt-get install -y cmake
         fi
     else
-        echo "cmake is already installed."
+        echo "cmake is installed."
     fi
 
     # install libopencv-dev
-    if ! dpkg -l | grep libopencv-dev &> /dev/null
+    if ! dpkg -l | grep libopencv-dev &> /dev/null ||  ! dpkg -l | grep libopencv &> /dev/null
     then
-        echo "libopencv-dev could not be found. Without libopencv-dev, part of the examples may not be built successfully."
-        echo "Do you want to install libopencv-dev? (y/n)"
+        echo "libopencv-dev or libopencv could not be found. Without opencv, part of the examples may not be built successfully."
+        echo "Do you want to install libopencv-dev and libopencv? (y/n)"
         read answer
         if [ "$answer" == "y" ]
         then
@@ -58,7 +58,7 @@ then
             sudo apt-get install -y libopencv-dev
         fi
     else
-        echo "libopencv-dev is already installed."
+        echo "libopencv-dev is installed."
     fi
 else
     echo "apt-get is not workable, network connection may be down or the system may not have internet access. Build examples may not be successful."

@@ -3,7 +3,7 @@
 #include "IDevice.hpp"
 
 namespace libobsensor {
-class Astra2Disp2DepthPropertyAccessor : public IBasicPropertyAccessor {
+class Astra2Disp2DepthPropertyAccessor : public IBasicPropertyAccessor, public IStructureDataAccessor {
 public:
     explicit Astra2Disp2DepthPropertyAccessor(IDevice *owner);
     virtual ~Astra2Disp2DepthPropertyAccessor() noexcept = default;
@@ -11,6 +11,9 @@ public:
     virtual void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
     virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
     virtual void getPropertyRange(uint32_t propertyId, OBPropertyRange *range) override;
+
+    void                        setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) override;
+    const std::vector<uint8_t> &getStructureData(uint32_t propertyId) override;
 
 private:
     void markOutputDisparityFrame(bool enable);

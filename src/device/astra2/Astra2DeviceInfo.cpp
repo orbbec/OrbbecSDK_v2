@@ -33,8 +33,7 @@ Astra2DeviceInfo::Astra2DeviceInfo(const SourcePortInfoList groupedInfoList) {
 Astra2DeviceInfo::~Astra2DeviceInfo() noexcept {}
 
 std::shared_ptr<IDevice> Astra2DeviceInfo::createDevice() const {
-    auto device = std::make_shared<Astra2Device>(shared_from_this());
-    return device;
+    return std::make_shared<Astra2Device>(shared_from_this());
 }
 
 std::vector<std::shared_ptr<IDeviceEnumInfo>> Astra2DeviceInfo::createDeviceInfos(const SourcePortInfoList infoList) {

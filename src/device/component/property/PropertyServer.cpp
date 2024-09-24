@@ -381,4 +381,16 @@ const std::vector<OBPropertyItem> &PropertyServer::getAvailableProperties(Proper
     return emptyVec;
 }
 
+OBPropertyItem PropertyServer::getPropertyItem(uint32_t propertyId, PropertyAccessType accessType) {
+    OBPropertyItem retItem       = {};
+    auto           propertiesVec = getAvailableProperties(accessType);
+    for(const auto &item: propertiesVec) {
+        if(static_cast<uint32_t>(item.id) == propertyId) {
+            retItem = item;
+            break;
+        }
+    }
+    return retItem;
+}
+
 }  // namespace libobsensor

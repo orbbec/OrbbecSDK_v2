@@ -37,7 +37,7 @@ void FilterExtension::pushFrame(std::shared_ptr<const Frame> frame) {
                 rstFrame = FrameFactory::createFrameFromOtherFrame(frameToProcess, true);
             }
             std::unique_lock<std::mutex> lock(callbackMutex_);
-            if(callback_) {
+            if(callback_ && rstFrame) {
                 callback_(rstFrame);
             }
         });
@@ -174,9 +174,11 @@ void FilterExtension::setConfigValue(const std::string &configName, double value
     }
 
     std::unique_lock<std::mutex> lock(configMutex_);
-    configChanged_         = true;
-    configMap_[configName] = value;  // store the value in the map, will be applied in the next process() call
-    LOG_DEBUG("Filter {}: config item {} value set to {}", name_, configName, value);
+    if(configMap_[configName] != value) {
+        configChanged_         = true;
+        configMap_[configName] = value;  // store the value in the map, will be applied in the next process() call
+        LOG_DEBUG("Filter {}: config item {} value set to {}", name_, configName, value);
+    }
 }
 
 void FilterExtension::setConfigValueSync(const std::string &name, double value) {
@@ -201,6 +203,22 @@ double FilterExtension::getConfigValue(const std::string &configName) {
         throw invalid_value_exception(utils::string::to_string() << "Filter@" << name_ << ": config item " << configName << " doesn't exist");
     }
     return it->second;
+}
+
+OBFilterConfigSchemaItem FilterExtension::getConfigSchemaItem(const std::string &name) {
+    auto                     schemaVec  = getConfigSchemaVec();
+    OBFilterConfigSchemaItem resultItem = {};
+    if(schemaVec.empty()) {
+        return resultItem;
+    }
+
+    for(auto item: schemaVec) {
+        if(item.name == name) {
+            resultItem = item;
+        }
+    }
+
+    return resultItem;
 }
 
 std::string filterConfigValueToString(double value, OBFilterConfigValueType valueType) {

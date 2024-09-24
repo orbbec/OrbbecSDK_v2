@@ -55,7 +55,7 @@ RawPhaseStreamer::RawPhaseStreamer(IDevice *owner, const std::shared_ptr<IVideoS
     backendProfileMap_.insert({ { 512, 512 }, { 8192, 290 } });
 
     backendStreamProfileList_ = backend_->getStreamProfileList();
-    updateStreamProfileList();
+    setStreamProfileList();
 
     // try to stop stream to avoid that the device is in streaming state due to some reason such as a previous crash
     auto propServer = owner->getPropertyServer();
@@ -88,7 +88,7 @@ std::shared_ptr<const SourcePortInfo> RawPhaseStreamer::getSourcePortInfo() cons
     return backend_->getSourcePortInfo();
 }
 
-void RawPhaseStreamer::updateStreamProfileList() {
+void RawPhaseStreamer::setStreamProfileList() {
     streamProfileList_.clear();
     for(auto &profile: backendStreamProfileList_) {
         auto sp     = profile->as<VideoStreamProfile>();
@@ -491,7 +491,7 @@ void RawPhaseStreamer::enablePassiveIRMode(bool enable) {
         break;
     }
 
-    updateStreamProfileList();
+    setStreamProfileList();
 }
 
 }  // namespace libobsensor

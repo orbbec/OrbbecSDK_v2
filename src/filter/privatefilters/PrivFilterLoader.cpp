@@ -5,6 +5,8 @@
 #include "exception/ObException.hpp"
 #include "logger/Logger.hpp"
 #include "utils/Utils.hpp"
+#include "environment/EnvConfig.hpp"
+
 namespace libobsensor {
 
 PrivFilterCreator::PrivFilterCreator(std::shared_ptr<PrivFilterPackageContext> pkgCtx, size_t index) : pkgCtx_(pkgCtx), index_(index) {
@@ -118,11 +120,9 @@ const std::string &PrivFilterCreator::getVendorSpecificCode() const {
 
 namespace PrivFilterCreatorLoader {
 
-#define DEFAULT_PRIVATE_FILTERS_ROOT_DIR "./extensions/filters/"
-
 std::map<std::string, std::shared_ptr<IFilterCreator>> getCreators() {
     // todo: get filters root dir from config file
-    std::string filtersRootDir = DEFAULT_PRIVATE_FILTERS_ROOT_DIR;
+    std::string filtersRootDir = EnvConfig::getExtensionsDirectory() + "/filters/";
 
     std::map<std::string, std::shared_ptr<IFilterCreator>> filterCreators;
 

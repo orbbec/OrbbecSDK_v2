@@ -37,6 +37,7 @@ public:
     virtual void                                         setConfigValue(const std::string &name, double value)     = 0;
     virtual void                                         setConfigValueSync(const std::string &name, double value) = 0;
     virtual double                                       getConfigValue(const std::string &name)                   = 0;
+    virtual OBFilterConfigSchemaItem                     getConfigSchemaItem(const std::string &name)              = 0;
 
     // Asynchronous
     virtual void pushFrame(std::shared_ptr<const Frame> frame) = 0;

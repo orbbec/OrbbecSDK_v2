@@ -7,18 +7,12 @@
     <Log>
         <!-- Log output level, int type, optional values: 0-DEBUG, 1-INFO, 2-WARN, 3-ERROR, 4-FATAL,
         5-OFF -->
-        <!-- Log level configuration execution priority: 0. Application code configuration > 1.
-        Detailed configuration of configuration file (file & console configuration) > 2. Global
-        configuration of configuration file > 3. SDK code default configuration (file: 0, terminal:
-        1) -->
-        <!-- Global log output level -->
-        <LogLevel>0</LogLevel>
         <!-- File log output level -->
-        <FileLogLevel>0</FileLogLevel>
+        <FileLogLevel>5</FileLogLevel>
         <!-- Console log output level -->
         <ConsoleLogLevel>3</ConsoleLogLevel>
         <!-- Default log output file path, string type. If this item is not configured, the default
-        path will be used: Win/Linux: "./Log"; Android: "/sdcard//Log" -->
+        path will be used: Win/Linux: "./Log"; Android: "/sdcard/orbbec/Log" -->
         <!-- <OutputDir>./log</OutputDir> -->
         <!-- Default log output file size, int type, unit: MB -->
         <MaxFileSize>100</MaxFileSize>
@@ -86,13 +80,15 @@
 
     <!-- Default configuration of data streams for different types of devices -->
     <Device>
+        <!-- Whether to enumerate network devices, bool type, true-enable, false-disable (default) -->
         <EnumerateNetDevice>false</EnumerateNetDevice>
-
 
         <!-- UVC Backend select on Linux; optional values: Auto, V4L2, LibUVC; Auto is the default
         value -->
         <LinuxUVCBackend>LibUVC</LinuxUVCBackend>
 
+        <!-- Frame metadata parsing path; optinal values: PayloadHeader, ExtensionHeader-->
+        <FrameMetadataParsingPath>ExtensionHeader</FrameMetadataParsingPath>
 
         <!-- The device corresponding to Astra adv is astra+ -->
         <AstraAdv>

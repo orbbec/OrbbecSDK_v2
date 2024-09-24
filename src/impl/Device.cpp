@@ -460,6 +460,9 @@ HANDLE_EXCEPTIONS_AND_RETURN(nullptr, info)
 const char *ob_device_info_get_ip_address(const ob_device_info *info, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(info);
     auto netDeviceInfo = std::static_pointer_cast<const libobsensor::NetDeviceInfo>(info->info);
+    if(!netDeviceInfo) {
+        throw libobsensor::invalid_value_exception("Not a network device");
+    }
     return netDeviceInfo->ipAddress_.c_str();
 }
 HANDLE_EXCEPTIONS_AND_RETURN(nullptr, info)
@@ -482,12 +485,18 @@ ob_device_type ob_device_info_get_device_type(const ob_device_info *info, ob_err
 }
 HANDLE_EXCEPTIONS_AND_RETURN(OB_DEVICE_TYPE_UNKNOWN, info)
 
+bool ob_device_is_extension_info_exist(const ob_device *device, const char *info_key, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(device);
+    VALIDATE_NOT_NULL(info_key);
+    return device->device->isExtensionInfoExists(info_key);
+}
+HANDLE_EXCEPTIONS_AND_RETURN(false, device, info_key)
+
 const char *ob_device_get_extension_info(const ob_device *device, const char *info_key, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(device);
     VALIDATE_NOT_NULL(info_key);
 
     return device->device->getExtensionInfo(info_key).c_str();
-    // throw libobsensor::not_implemented_exception("ob_device_info_get_extension_info not implemented");
 }
 HANDLE_EXCEPTIONS_AND_RETURN(nullptr, device, info_key)
 

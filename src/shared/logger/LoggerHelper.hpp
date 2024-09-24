@@ -1,6 +1,9 @@
 #pragma once
 
 #include "Logger.hpp"
+#include <map>
+#include <mutex>
+#include <string>
 
 struct ObLogRecord {
     uint32_t count;

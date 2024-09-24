@@ -27,47 +27,8 @@ VideoSensor::VideoSensor(IDevice *owner, OBSensorType sensorType, const std::sha
         LOG_WARN("Failed to stop stream: {}", e.what());
     }
 
-    auto lazySelf   = std::make_shared<LazySensor>(owner, sensorType_);
-    auto streamType = utils::mapSensorTypeToStreamType(sensorType_);
-
     auto backendSpList = vsPort->getStreamProfileList();
-    for(auto &backendSp: backendSpList) {
-        if(backendSp->getType() != OB_STREAM_VIDEO && backendSp->getType() != streamType) {
-            continue;
-        }
-        auto sp = backendSp->clone();
-        sp->bindOwner(lazySelf);
-        sp->setType(streamType);
-        backendStreamProfileList_.push_back(sp);
-        LOG_DEBUG("Backend stream profile {}", backendSp);
-    }
-
-    std::sort(backendStreamProfileList_.begin(), backendStreamProfileList_.end(),
-              [](const std::shared_ptr<const StreamProfile> &a, const std::shared_ptr<const StreamProfile> &b) {
-                  auto aVsp = a->as<VideoStreamProfile>();
-                  auto bVsp = b->as<VideoStreamProfile>();
-                  auto aRes = aVsp->getWidth() * aVsp->getHeight();
-                  auto bRes = bVsp->getWidth() * bVsp->getHeight();
-                  if(aRes != bRes) {
-                      return aRes > bRes;
-                  }
-                  else if(aVsp->getHeight() != bVsp->getHeight()) {
-                      return aVsp->getHeight() > bVsp->getHeight();
-                  }
-                  else if(aVsp->getFps() != bVsp->getFps()) {
-                      return aVsp->getFps() > bVsp->getFps();
-                  }
-                  return aVsp->getFormat() > bVsp->getFormat();
-              });
-
-    // The stream profile list is same as the backend stream profile list at default.
-    for(auto &backendSp: backendStreamProfileList_) {
-        auto sp = backendSp->clone();
-        sp->bindOwner(lazySelf);
-        sp->setType(streamType);
-        streamProfileList_.push_back(sp);
-        streamProfileBackendMap_[sp] = { backendSp, nullptr };
-    }
+    setStreamProfileList(backendSpList);
 
     LOG_DEBUG("VideoSensor created @{}", sensorType_);
 }
@@ -169,7 +130,6 @@ void VideoSensor::onBackendFrameCallback(std::shared_ptr<Frame> frame) {
     }
     frame->setStreamProfile(activatedStreamProfile_);
     outputFrame(frame);
-    LOG_FREQ_CALC(INFO, 5000, "{} Streaming... frameRate={freq}fps", sensorType_);
 }
 
 void VideoSensor::outputFrame(std::shared_ptr<Frame> frame) {
@@ -285,7 +245,7 @@ void VideoSensor::updateFormatFilterConfig(const std::vector<FormatFilterConfig>
 #endif
 }
 
-void VideoSensor::updateStreamProfileList(const StreamProfileList &profileList) {
+void VideoSensor::setStreamProfileList(const StreamProfileList &profileList) {
     auto              lazySelf      = std::make_shared<LazySensor>(owner_, sensorType_);
     auto              streamType    = utils::mapSensorTypeToStreamType(sensorType_);
     StreamProfileList backendSpList = profileList;
@@ -322,6 +282,10 @@ void VideoSensor::updateStreamProfileList(const StreamProfileList &profileList) 
         sp->setType(streamType);
         streamProfileList_.push_back(sp);
         streamProfileBackendMap_[sp] = { backendSp, nullptr };
+    }
+
+    if(!formatFilterConfigs_.empty()) {
+        updateFormatFilterConfig(formatFilterConfigs_);
     }
 }
 

@@ -2,6 +2,7 @@
 #include "DeviceBase.hpp"
 #include "IDeviceManager.hpp"
 #include "frameprocessor/FrameProcessor.hpp"
+#include "G330FrameMetadataParserContainer.hpp"
 
 #if defined(BUILD_NET_PAL)
 #include "ethernet/RTPStreamPort.hpp"
@@ -24,16 +25,11 @@ private:
     void initSensorList();
     void initSensorListGMSL();
     void initProperties();
-    void initFrameMetadataParserContainer();
     void initSensorStreamProfile(std::shared_ptr<ISensor> sensor);
 
-private:
     std::shared_ptr<const StreamProfile> loadDefaultStreamProfile(OBSensorType sensorType);
 
 private:
-    std::shared_ptr<IFrameMetadataParserContainer> colorMdParserContainer_;
-    std::shared_ptr<IFrameMetadataParserContainer> depthMdParserContainer_;
-
     const uint64_t                                              deviceTimeFreq_ = 1000;     // in ms
     const uint64_t                                              frameTimeFreq_  = 1000000;  // in us
     std::function<std::shared_ptr<IFrameTimestampCalculator>()> videoFrameTimestampCalculatorCreator_;

@@ -8,6 +8,8 @@ target_sources(
         ${CMAKE_CURRENT_LIST_DIR}/G2DeviceInfo.cpp
         ${CMAKE_CURRENT_LIST_DIR}/G2Device.hpp
         ${CMAKE_CURRENT_LIST_DIR}/G2Device.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/G2XLDevice.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/G2XLDevice.cpp
         ${CMAKE_CURRENT_LIST_DIR}/G2StreamProfileFilter.hpp
         ${CMAKE_CURRENT_LIST_DIR}/G2StreamProfileFilter.cpp
         ${CMAKE_CURRENT_LIST_DIR}/G2PropertyAccessors.hpp

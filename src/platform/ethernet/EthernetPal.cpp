@@ -7,10 +7,6 @@
 namespace libobsensor {
 
 const uint16_t DEFAULT_CMD_PORT                     = 8090;
-const uint16_t PID_FEMTO_MEGA                       = 0x0669;
-const uint16_t PID_FEMTO_MEGA_I                     = 0x06C0;
-const uint16_t PID_GEMINI2XL                        = 0x0671;
-const uint16_t PID_GEMINI335LE                      = 0x080E;
 const uint16_t DEVICE_WATCHER_POLLING_INTERVAL_MSEC = 5000;
 
 NetDeviceWatcher::~NetDeviceWatcher() noexcept {
@@ -30,38 +26,8 @@ void NetDeviceWatcher::start(deviceChangedCallback callback) {
             auto added   = utils::subtract_sets(list, netDevInfoList_);
             auto removed = utils::subtract_sets(netDevInfoList_, list);
             for(auto &&info: removed) {
-                bool disconnected = true;
-                // bool    exception    = false;
-                // uint8_t retry        = 1;
-
-                // todo: recover this part for Gemini2XL
-                // if(info.pid == PID_GEMINI2XL) {
-                //     do {
-                //         BEGIN_TRY_EXECUTE({
-                //             auto netVendorPortInfo = std::make_shared<NetSourcePortInfo>(SOURCE_PORT_NET_VENDOR, info.ip, DEFAULT_CMD_PORT);
-                //             //auto            netVendorPort = std::make_shared<VendorNetDataPort>(netVendorPortInfo, 500, 500);
-                //             auto            netVendorPort = std::make_shared<VendorNetDataPort>(netVendorPortInfo);
-                //             auto            Protocol      = std::make_shared<Protocol>(netVendorPort);
-                //             auto            command       = std::make_shared<VendorCommand>(Protocol);
-                //             OBPropertyValue pidValue{};
-                //             command->getPropertyValue(OB_PROP_PID_INT, &pidValue);
-                //             if(pidValue.intValue != PID_GEMINI2XL) {
-                //                 LOG_WARN("Create socket succeed ip:{} port:{},but pid is invalid {}", info.ip, DEFAULT_CMD_PORT, pidValue.intValue);
-                //             }
-                //             netDevInfoList_.push_back(info);
-                //             disconnected = false;
-                //         })
-                //         CATCH_EXCEPTION_AND_EXECUTE({
-                //             exception = true;
-                //             LOG_WARN("Create socket failed ip:{} port:{},device is disconnect.", info.ip, DEFAULT_CMD_PORT);
-                //         })
-                //     } while(exception && retry--> 0);
-                // }
-                if(disconnected) {
-                    callback_(OB_DEVICE_REMOVED, info.mac);
-                }
+                callback_(OB_DEVICE_REMOVED, info.mac);
             }
-
             for(auto &&info: added) {
                 callback_(OB_DEVICE_ARRIVAL, info.mac);
             }
@@ -133,47 +99,7 @@ SourcePortInfoList EthernetPal::querySourcePortInfos() {
 
     // Only re-query port information for newly online devices
     for(auto &&info: added) {
-        if(info.pid == 0) {
-            // todo: fixme
-            //     TRY_EXECUTE({
-            //         auto            netVendorPortInfo = std::make_shared<NetSourcePortInfo>(SOURCE_PORT_NET_VENDOR, info.ip, DEFAULT_CMD_PORT);
-            //         auto            netVendorPort     = std::make_shared<VendorNetDataPort>(netVendorPortInfo);
-            //         auto            Protocol          = std::make_shared<Protocol>(netVendorPort);
-            //         auto            command           = std::make_shared<VendorCommand>(Protocol);
-            //         OBPropertyValue pidValue{};
-            //         BEGIN_TRY_EXECUTE({
-            //             command->getPropertyValue(OB_PROP_PID_INT, &pidValue);
-            //             info.pid = pidValue.intValue;
-            //         })
-            //         CATCH_EXCEPTION_AND_EXECUTE({ info.pid = PID_FEMTO_MEGA; })
-            //     })
-            // }
-            info.pid = PID_FEMTO_MEGA;
-        }
         sourcePortInfoList_.push_back(std::make_shared<NetSourcePortInfo>(SOURCE_PORT_NET_VENDOR, info.ip, DEFAULT_CMD_PORT, info.mac, info.sn, info.pid));
-        if(info.pid == PID_FEMTO_MEGA || info.pid == PID_FEMTO_MEGA_I) {
-            sourcePortInfoList_.push_back(
-                std::make_shared<RTSPStreamPortInfo>(info.ip, static_cast<uint16_t>(8888), DEFAULT_CMD_PORT, OB_STREAM_COLOR, info.mac, info.sn, info.pid));
-            sourcePortInfoList_.push_back(
-                std::make_shared<RTSPStreamPortInfo>(info.ip, static_cast<uint16_t>(8554), DEFAULT_CMD_PORT, OB_STREAM_DEPTH, info.mac, info.sn, info.pid));
-            sourcePortInfoList_.push_back(
-                std::make_shared<RTSPStreamPortInfo>(info.ip, static_cast<uint16_t>(8554), DEFAULT_CMD_PORT, OB_STREAM_IR, info.mac, info.sn, info.pid));
-            sourcePortInfoList_.push_back(
-                std::make_shared<NetDataStreamPortInfo>(info.ip, static_cast<uint16_t>(8900), DEFAULT_CMD_PORT, info.mac, info.sn, info.pid));
-        }
-        else if(info.pid == PID_GEMINI335LE) {
-            LOG_INFO("Create 335L rtp stream portInfo.");
-            sourcePortInfoList_.push_back(std::make_shared<RTPStreamPortInfo>(info.lcalIp, info.ip, static_cast<uint16_t>(20000), DEFAULT_CMD_PORT,
-                                                                              OB_STREAM_COLOR, info.mac, info.sn, info.pid));
-            sourcePortInfoList_.push_back(std::make_shared<RTPStreamPortInfo>(info.lcalIp, info.ip, static_cast<uint16_t>(20002), DEFAULT_CMD_PORT,
-                                                                              OB_STREAM_DEPTH, info.mac, info.sn, info.pid));
-            sourcePortInfoList_.push_back(std::make_shared<RTPStreamPortInfo>(info.lcalIp, info.ip, static_cast<uint16_t>(20004), DEFAULT_CMD_PORT,
-                                                                              OB_STREAM_IR_LEFT, info.mac, info.sn, info.pid));
-            sourcePortInfoList_.push_back(std::make_shared<RTPStreamPortInfo>(info.lcalIp, info.ip, static_cast<uint16_t>(20006), DEFAULT_CMD_PORT,
-                                                                              OB_STREAM_IR_RIGHT, info.mac, info.sn, info.pid));
-            sourcePortInfoList_.push_back(std::make_shared<RTPStreamPortInfo>(info.lcalIp, info.ip, static_cast<uint16_t>(20010), DEFAULT_CMD_PORT,
-                                                                              OB_STREAM_ACCEL, info.mac, info.sn, info.pid));
-        }
     }
 
     // Delete devices that have been offline from the list
@@ -192,6 +118,10 @@ SourcePortInfoList EthernetPal::querySourcePortInfos() {
     return sourcePortInfoList_;
 }
 
+std::shared_ptr<IDeviceWatcher> EthernetPal::createDeviceWatcher() const {
+    return std::make_shared<NetDeviceWatcher>();
+}
+
 std::shared_ptr<IPal> createNetPal() {
     return std::make_shared<EthernetPal>();
 }
@@ -205,67 +135,4 @@ bool EthernetPal::changeNetDeviceIpConfig(std::string ipAddress, const OBNetIpCo
     return false;
 #endif
 }
-
-SourcePortInfoList EthernetPal::queryAssociatedNetSourcePort(const std::shared_ptr<NetSourcePortInfo> info) {
-    // todo: refactor this code, move it to device business layer
-    SourcePortInfoList list;
-
-    // todo: move this call to device business layer
-    if(info->pid == PID_FEMTO_MEGA || info->pid == PID_FEMTO_MEGA_I) {
-        list.emplace_back(std::make_shared<RTSPStreamPortInfo>(info->address, static_cast<uint16_t>(8888), info->port, OB_STREAM_COLOR, info->mac,
-                                                               info->serialNumber, info->pid));
-        list.emplace_back(std::make_shared<RTSPStreamPortInfo>(info->address, static_cast<uint16_t>(8554), info->port, OB_STREAM_DEPTH, info->mac,
-                                                               info->serialNumber, info->pid));
-        list.emplace_back(std::make_shared<RTSPStreamPortInfo>(info->address, static_cast<uint16_t>(8554), info->port, OB_STREAM_IR, info->mac,
-                                                               info->serialNumber, info->pid));
-        list.emplace_back(
-            std::make_shared<NetDataStreamPortInfo>(info->address, static_cast<uint16_t>(8900), info->port, info->mac, info->serialNumber, info->pid));
-    }
-    else if(info->pid == PID_GEMINI2XL) {
-        list.emplace_back(std::make_shared<RTSPStreamPortInfo>(info->address, static_cast<uint16_t>(8888), info->port, OB_STREAM_COLOR, info->mac,
-                                                               info->serialNumber, info->pid));
-        list.emplace_back(std::make_shared<RTSPStreamPortInfo>(info->address, static_cast<uint16_t>(8554), info->port, OB_STREAM_DEPTH, info->mac,
-                                                               info->serialNumber, info->pid));
-        list.emplace_back(std::make_shared<RTSPStreamPortInfo>(info->address, static_cast<uint16_t>(8555), info->port, OB_STREAM_IR_LEFT, info->mac,
-                                                               info->serialNumber, info->pid));
-        list.emplace_back(std::make_shared<RTSPStreamPortInfo>(info->address, static_cast<uint16_t>(8556), info->port, OB_STREAM_IR_RIGHT, info->mac,
-                                                               info->serialNumber, info->pid));
-        list.emplace_back(
-            std::make_shared<NetDataStreamPortInfo>(info->address, static_cast<uint16_t>(8900), info->port, info->mac, info->serialNumber, info->pid));
-    }
-    // todo: fixme
-    // else {
-    //     auto                                 netVendorPortInfo = std::make_shared<NetSourcePortInfo>(SOURCE_PORT_NET_VENDOR, info->address, info->port);
-    //     auto                                 netVendorPort     = std::make_shared<VendorNetDataPort>(netVendorPortInfo);
-    //     auto                                 Protocol          = std::make_shared<Protocol>(netVendorPort);
-    //     auto                                 command           = std::make_shared<VendorCommand>(Protocol);
-    //     std::vector<OBNetworkStreamPortInfo> networkStreamPortInfos;
-    //     std::vector<uint8_t>                 dataVec;
-    //     TRY_EXECUTE({
-    //         command->getRawData(
-    //             OB_RAW_DATA_NET_PORT_INFO_LIST,
-    //             [&](OBDataTranState state, OBDataChunk *dataChunk) {
-    //                 if(state == DATA_TRAN_STAT_TRANSFERRING) {
-    //                     dataVec.insert(dataVec.end(), dataChunk->data, dataChunk->data + dataChunk->size);
-    //                 }
-    //             },
-    //             false);
-    //         if(!dataVec.empty()) {
-    //             networkStreamPortInfos = processNetworkStreamPortInfoList(dataVec.data(), dataVec.size());
-    //         }
-    //     });
-    //     for(auto streamPortInfo: networkStreamPortInfos) {
-    //         if(streamPortInfo.sourcePortType == SOURCE_PORT_NET_VENDOR_STREAM) {
-    //             list.emplace_back(
-    //                 std::make_shared<NetDataStreamPortInfo>(info->address, streamPortInfo.port, info->port, info->mac, info->serialNumber, info->pid));
-    //         }
-    //         else if(streamPortInfo.sourcePortType == SOURCE_PORT_NET_RTSP) {
-    //             list.emplace_back(std::make_shared<RTSPStreamPortInfo>(info->address, streamPortInfo.port, info->port, streamPortInfo.streamType, info->mac,
-    //                                                                    info->serialNumber, info->pid));
-    //         }
-    //     }
-    // }
-    return list;
-}
-
 }  // namespace libobsensor

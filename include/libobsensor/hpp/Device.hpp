@@ -98,13 +98,27 @@ public:
     }
 
     /**
+     * @brief Check if the extension information is exist
+     *
+     * @param infoKey The key of the extension information
+     * @return bool Whether the extension information exists
+     */
+    bool isExtensionInfoExist(const std::string &infoKey) const {
+        ob_error *error = nullptr;
+        auto      exist = ob_device_is_extension_info_exist(impl_, infoKey.c_str(), &error);
+        Error::handle(&error);
+        return exist;
+    }
+
+    /**
      * @brief Get information about extensions obtained from SDK supported by the device
      *
+     * @param infoKey The key of the extension information
      * @return const char* Returns extended information about the device
      */
-    const char *getExtensionInfo(const char *info_key) const {
+    const char *getExtensionInfo(const std::string &infoKey) const {
         ob_error   *error = nullptr;
-        const char *info  = ob_device_get_extension_info(impl_, info_key, &error);
+        const char *info  = ob_device_get_extension_info(impl_, infoKey.c_str(), &error);
         Error::handle(&error);
         return info;
     }

@@ -5,13 +5,26 @@
 #include "ethernet/NetPortGroup.hpp"
 #include "utils/Utils.hpp"
 #include "exception/ObException.hpp"
+#include "ethernet/RTSPStreamPort.hpp"
+#include "ethernet/NetDataStreamPort.hpp"
 namespace libobsensor {
+const std::map<int, std::string> FemtoMegaDeviceNameMap = {
+    { 0x06c0, "Femto Mega i" },
+    { 0x0669, "Femto Mega" },
+};
+
 FemtoMegaDeviceInfo::FemtoMegaDeviceInfo(const SourcePortInfoList groupedInfoList) {
     auto firstPortInfo = groupedInfoList.front();
     if(IS_USB_PORT(firstPortInfo->portType)) {
         auto portInfo = std::dynamic_pointer_cast<const USBSourcePortInfo>(groupedInfoList.front());
 
-        name_               = "Femto Mega";
+        auto iter = FemtoMegaDeviceNameMap.find(portInfo->pid);
+        if(iter != FemtoMegaDeviceNameMap.end()) {
+            name_ = iter->second;
+        }
+        else {
+            name_ = "Femto Mega series device";
+        }
         fullName_           = "Orbbec " + name_;
         pid_                = portInfo->pid;
         vid_                = portInfo->vid;
@@ -23,7 +36,13 @@ FemtoMegaDeviceInfo::FemtoMegaDeviceInfo(const SourcePortInfoList groupedInfoLis
     else if(IS_NET_PORT(firstPortInfo->portType)) {
         auto portInfo = std::dynamic_pointer_cast<const NetSourcePortInfo>(groupedInfoList.front());
 
-        name_               = "Femto Mega";
+        auto iter = FemtoMegaDeviceNameMap.find(portInfo->pid);
+        if(iter != FemtoMegaDeviceNameMap.end()) {
+            name_ = iter->second;
+        }
+        else {
+            name_ = "Femto Mega series device";
+        }
         fullName_           = "Orbbec " + name_;
         pid_                = portInfo->pid;
         vid_                = 0x2BC5;
@@ -63,18 +82,34 @@ std::vector<std::shared_ptr<IDeviceEnumInfo>> FemtoMegaDeviceInfo::pickDevices(c
         iter++;
     }
 
-    // pick ethernet device
-    remainder = FilterNetPortInfoByPid(infoList, FemtoMegaDevPids);
-    groups    = utils::groupVector<std::shared_ptr<const SourcePortInfo>>(remainder, GroupNetSourcePortByMac);
-    iter      = groups.begin();
+    return femtoMegaDeviceInfos;
+}
+
+std::vector<std::shared_ptr<IDeviceEnumInfo>> FemtoMegaDeviceInfo::pickNetDevices(const SourcePortInfoList infoList) {
+    std::vector<std::shared_ptr<IDeviceEnumInfo>> femtoMegaDeviceInfos;
+    auto                                          remainder = FilterNetPortInfoByPid(infoList, FemtoMegaDevPids);
+    auto                                          groups    = utils::groupVector<std::shared_ptr<const SourcePortInfo>>(remainder, GroupNetSourcePortByMac);
+    auto                                          iter      = groups.begin();
     while(iter != groups.end()) {
         if(iter->size() >= 1) {
-            auto info = std::make_shared<FemtoMegaDeviceInfo>(*iter);
-            femtoMegaDeviceInfos.push_back(info);
+
+            auto portInfo = std::dynamic_pointer_cast<const NetSourcePortInfo>(iter->front());
+            iter->emplace_back(std::make_shared<RTSPStreamPortInfo>(portInfo->address, static_cast<uint16_t>(8888), portInfo->port, OB_STREAM_COLOR,
+                                                                    portInfo->mac, portInfo->serialNumber, portInfo->pid));
+            iter->emplace_back(std::make_shared<RTSPStreamPortInfo>(portInfo->address, static_cast<uint16_t>(8554), portInfo->port, OB_STREAM_DEPTH,
+                                                                    portInfo->mac, portInfo->serialNumber, portInfo->pid));
+            iter->emplace_back(std::make_shared<RTSPStreamPortInfo>(portInfo->address, static_cast<uint16_t>(8554), portInfo->port, OB_STREAM_IR, portInfo->mac,
+                                                                    portInfo->serialNumber, portInfo->pid));
+            iter->emplace_back(std::make_shared<NetDataStreamPortInfo>(portInfo->address, static_cast<uint16_t>(8900), portInfo->port, portInfo->mac,
+                                                                       portInfo->serialNumber, portInfo->pid));  // imu data stream
+
+            auto deviceEnumInfo = std::make_shared<FemtoMegaDeviceInfo>(*iter);
+            femtoMegaDeviceInfos.push_back(deviceEnumInfo);
         }
         iter++;
     }
 
     return femtoMegaDeviceInfos;
 }
+
 }  // namespace libobsensor

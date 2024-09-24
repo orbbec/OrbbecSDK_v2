@@ -42,7 +42,6 @@ public:
     void calculate(std::shared_ptr<Frame> frame) override;
     void clear() override;
 
-protected:
     uint64_t calculate(uint64_t srcTimestamp);
 
 private:

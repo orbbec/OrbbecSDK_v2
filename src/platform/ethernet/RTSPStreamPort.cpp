@@ -31,244 +31,22 @@ RTSPStreamPort::RTSPStreamPort(std::shared_ptr<const RTSPStreamPortInfo> portInf
     live555Env_    = ObUsageEnvironment::createNew(*taskScheduler_);
 }
 
-RTSPStreamPort::~RTSPStreamPort() noexcept{
+RTSPStreamPort::~RTSPStreamPort() noexcept {
 
-    // 1. 关流, 关闭rtsp客户端
+    // 1. Turn off the flow and close the rtsp client
     TRY_EXECUTE(stopAllStream());  // try stop all stream
 
-    // 2. 释放调度器
+    // 2. Release the scheduler
     delete taskScheduler_;
     taskScheduler_ = NULL;
 
-    // 3. live555 env 释放
+    // 3. live555 env release
     live555Env_->reclaim();
     live555Env_ = NULL;
 }
 
 StreamProfileList RTSPStreamPort::getStreamProfileList() {
-    // if(streamProfileList_.empty()) {
-
-
-    //     // std::vector<uint8_t> data;
-    //     // BEGIN_TRY_EXECUTE({
-    //     //     auto owner      = getOwner();
-    //     //     auto propServer = owner->getPropertyServer();
-    //     //     propServer->getRawData(
-    //     //         OB_RAW_DATA_IMU_CALIB_PARAM,
-    //     //         [&](OBDataTranState state, OBDataChunk *dataChunk) {
-    //     //             if(state == DATA_TRAN_STAT_TRANSFERRING) {
-    //     //                 data.insert(data.end(), dataChunk->data, dataChunk->data + dataChunk->size);
-    //     //             }
-    //     //         },
-    //     //         PROP_ACCESS_INTERNAL);
-    //     // })
-    //     // CATCH_EXCEPTION_AND_EXECUTE({
-    //     //     LOG_ERROR("Get imu calibration params failed!");
-    //     //     data.clear();
-    //     // })
-
-    //     // todo: StreamProfileList 从设备获取
-    //     if(portInfo_->streamType == OB_STREAM_DEPTH) {
-    //         // todo-lingyi 增加了注释
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y16, 1024, 1024, 5));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y16, 1024, 1024, 15));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y16, 512, 512, 5));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y16, 512, 512, 15));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y16, 512, 512, 25));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y16, 512, 512, 30));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y16, 640, 576, 5));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y16, 640, 576, 15));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y16, 640, 576, 25));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y16, 640, 576, 30));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y16, 320, 288, 5));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y16, 320, 288, 15));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y16, 320, 288, 25));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y16, 320, 288, 30));
-
-    //         // todo-lingyi 增加网络模式加载基础分辨率列表 Gemini2XL
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y16, 640, 400, 5));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y16, 640, 400, 10));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y16, 640, 400, 15));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y16, 640, 400, 20));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y16, 1280, 800, 5));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y16, 1280, 800, 10));
-
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_RVL, 640, 400, 5));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_RVL, 640, 400, 10));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_RVL, 640, 400, 15));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_RVL, 640, 400, 20));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_RVL, 1280, 800, 5));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_RVL, 1280, 800, 10));
-    //     }
-    //     else if(portInfo_->streamType == OB_STREAM_COLOR) {
-    //         // todo-lingyi 增加网络模式加载基础分辨率列表 Gemini2XL
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 1280, 800, 5));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 1280, 800, 10));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 1280, 800, 15));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 1280, 800, 20));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 1280, 720, 5));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 1280, 720, 10));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 1280, 720, 15));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 1280, 720, 20));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 800, 600, 5));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 800, 600, 10));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 800, 600, 15));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 800, 600, 20));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 640, 400, 5));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 640, 400, 10));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 640, 400, 15));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 640, 400, 20));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 640, 360, 5));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 640, 360, 10));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 640, 360, 15));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 640, 360, 20));
-
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_YUYV, 1280, 800, 10));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_YUYV, 1280, 800, 5));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_YUYV, 640, 360, 5));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_YUYV, 640, 360, 10));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_YUYV, 640, 360, 15));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_YUYV, 640, 360, 20));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_YUYV, 640, 400, 5));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_YUYV, 640, 400, 10));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_YUYV, 640, 400, 15));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_YUYV, 640, 400, 20));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_YUYV, 800, 600, 5));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_YUYV, 800, 600, 10));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_YUYV, 800, 600, 15));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_YUYV, 800, 600, 20));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_YUYV, 1280, 720, 5));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_YUYV, 1280, 720, 10));
-
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 3840, 2160, 5));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 3840, 2160, 15));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 3840, 2160, 25));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 2560, 1440, 5));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 2560, 1440, 15));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 2560, 1440, 25));
-    //         //// streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 2560, 1440, 30));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 1920, 1080, 5));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 1920, 1080, 15));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 1920, 1080, 25));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 1920, 1080, 30));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 1280, 720, 5));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 1280, 720, 15));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 1280, 720, 25));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 1280, 720, 30));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 1280, 960, 5));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 1280, 960, 15));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 1280, 960, 25));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 1280, 960, 30));
-
-    //         // todo-lingyi 增加了注释
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_H264, 3840, 2160, 5));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_H264, 3840, 2160, 15));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_H264, 3840, 2160, 25));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_H264, 2560, 1440, 5));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_H264, 2560, 1440, 15));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_H264, 2560, 1440, 25));
-    //         //// streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_H264, 2560, 1440, 30));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_H264, 1920, 1080, 5));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_H264, 1920, 1080, 15));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_H264, 1920, 1080, 25));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_H264, 1920, 1080, 30));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_H264, 1280, 720, 5));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_H264, 1280, 720, 15));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_H264, 1280, 720, 25));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_H264, 1280, 720, 30));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_H264, 1280, 960, 5));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_H264, 1280, 960, 15));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_H264, 1280, 960, 25));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_H264, 1280, 960, 30));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_H265, 3840, 2160, 5));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_H265, 3840, 2160, 15));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_H265, 3840, 2160, 25));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_H265, 2560, 1440, 5));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_H265, 2560, 1440, 15));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_H265, 2560, 1440, 25));
-    //         //// streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_H265, 2560, 1440, 30));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_H265, 1920, 1080, 5));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_H265, 1920, 1080, 15));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_H265, 1920, 1080, 25));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_H265, 1920, 1080, 30));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_H265, 1280, 720, 5));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_H265, 1280, 720, 15));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_H265, 1280, 720, 25));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_H265, 1280, 720, 30));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_H265, 1280, 960, 5));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_H265, 1280, 960, 15));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_H265, 1280, 960, 25));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_H265, 1280, 960, 30));
-    //     }
-    //     else if(portInfo_->streamType == OB_STREAM_IR) {
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y16, 1024, 1024, 5));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y16, 1024, 1024, 15));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y16, 1024, 1024, 25));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y16, 1024, 1024, 30));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y16, 512, 512, 5));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y16, 512, 512, 15));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y16, 512, 512, 25));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y16, 512, 512, 30));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y16, 640, 576, 5));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y16, 640, 576, 15));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y16, 640, 576, 25));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y16, 640, 576, 30));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y16, 320, 288, 5));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y16, 320, 288, 15));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y16, 320, 288, 25));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y16, 320, 288, 30));
-    //     }
-    //     // todo-lingyi fGemini2XL增加左右IR
-    //     else if(portInfo_->streamType == OB_STREAM_IR_LEFT) {
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y8, 1280, 800, 5));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y8, 1280, 800, 10));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y8, 1280, 800, 15));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y8, 1280, 800, 20));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y8, 640, 400, 5));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y8, 640, 400, 10));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y8, 640, 400, 15));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y8, 640, 400, 20));
-
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 1280, 800, 5));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 1280, 800, 10));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 1280, 800, 15));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 1280, 800, 20));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 640, 400, 5));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 640, 400, 10));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 640, 400, 15));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 640, 400, 20));
-
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y10, 1280, 800, 5));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y10, 1280, 800, 10));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y10, 640, 400, 5));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y10, 640, 400, 10));
-    //     }
-    //     else if(portInfo_->streamType == OB_STREAM_IR_RIGHT) {
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y8, 1280, 800, 5));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y8, 1280, 800, 10));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y8, 1280, 800, 15));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y8, 1280, 800, 20));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y8, 640, 400, 5));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y8, 640, 400, 10));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y8, 640, 400, 15));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y8, 640, 400, 20));
-
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 1280, 800, 5));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 1280, 800, 10));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 1280, 800, 15));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 1280, 800, 20));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 640, 400, 5));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 640, 400, 10));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 640, 400, 15));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_MJPG, 640, 400, 20));
-
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y10, 1280, 800, 5));
-    //         streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y10, 1280, 800, 10));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y10, 640, 400, 5));
-    //         // streamProfileList_.emplace_back(StreamProfileFactory::createVideoStreamProfile(portInfo_->streamType, OB_FORMAT_Y10, 640, 400, 10));
-    //     }
-    // }
-    return streamProfileList_;
+    return {};  // retuen empty list since the stream profile will be fetched via vendor specific command on the device bussiness layer
 }
 
 void RTSPStreamPort::startStream(std::shared_ptr<const StreamProfile> profile, MutableFrameCallback callback) {
@@ -294,7 +72,7 @@ void RTSPStreamPort::stopStream(std::shared_ptr<const StreamProfile> profile) {
 }
 
 void RTSPStreamPort::stopAllStream() {
-    // 当前RTSPStreamPort只支持一路数据流
+    // Currently RTSPStreamPort only supports one data stream
     stopStream();
 }
 
@@ -316,8 +94,8 @@ void RTSPStreamPort::stopStream() {
 }
 
 void RTSPStreamPort::createClient(std::shared_ptr<const StreamProfile> profile, MutableFrameCallback callback) {
-    destroy_         = 0;
-    eventLoopThread_ = std::thread([&]() { live555Env_->taskScheduler().doEventLoop(&destroy_); });
+    destroy_              = 0;
+    eventLoopThread_      = std::thread([&]() { live555Env_->taskScheduler().doEventLoop(&destroy_); });
     currentStreamProfile_ = profile;
     auto vsp              = currentStreamProfile_->as<VideoStreamProfile>();
 
@@ -337,7 +115,7 @@ void RTSPStreamPort::closeClient() {
     std::string url = "";
     if(currentRtspClient_) {
         url = currentRtspClient_->url();
-        // 需要在client关闭前关闭事务线程，否则会偶发crash
+        // The transaction thread needs to be closed before the client is closed, otherwise it will crash occasionally.
         Medium::close(currentRtspClient_);
         currentRtspClient_ = nullptr;
     }

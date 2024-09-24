@@ -32,6 +32,7 @@ public:
 
     bool isPropertySupported(uint32_t propertyId, PropertyOperationType operationType, PropertyAccessType accessType) const override;
     const std::vector<OBPropertyItem> &getAvailableProperties(PropertyAccessType accessType) override;
+    virtual OBPropertyItem             getPropertyItem(uint32_t propertyId, PropertyAccessType accessType) override;
 
     void setPropertyValue(uint32_t propertyId, OBPropertyValue value, PropertyAccessType accessType) override;
     void getPropertyValue(uint32_t propertyId, OBPropertyValue *value, PropertyAccessType accessType) override;

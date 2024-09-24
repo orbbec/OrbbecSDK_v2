@@ -234,31 +234,33 @@ void ObRTPSink::outputFrameFunc() {
                 break;
             }
 
-            auto frame = FrameFactory::createFrameFromStreamProfile(streamProfile_);
+            TRY_EXECUTE({
+                auto frame = FrameFactory::createFrameFromStreamProfile(streamProfile_);
 
-            uint32_t frameOffset = 0;
-            if(isOBVendorCodec(codecName)) {
-                frameOffset = sizeof(OBNetworkFrameHeader);
-                output->setDynamicHeaderSize(sizeof(OBNetworkFrameHeader));
-                auto header = output->getDynamicHeader<OBNetworkFrameHeader>();
-                frame->setTimeStampUsec(header->timestamp);
-                frame->setSystemTimeStampUsec(utils::getNowTimesUs());
-                frame->setNumber(header->frameCounter);
-            }
-            else {
-                frame->setTimeStampUsec(output->getTimestamp());
-                frame->setSystemTimeStampUsec(utils::getNowTimesUs());
-                frame->setNumber(output->getSequenceNumber());
-            }
+                uint32_t frameOffset = 0;
+                if(isOBVendorCodec(codecName)) {
+                    frameOffset = sizeof(OBNetworkFrameHeader);
+                    output->setDynamicHeaderSize(sizeof(OBNetworkFrameHeader));
+                    auto header = output->getDynamicHeader<OBNetworkFrameHeader>();
+                    frame->setTimeStampUsec(header->timestamp);
+                    frame->setSystemTimeStampUsec(utils::getNowTimesUs());
+                    frame->setNumber(header->frameCounter);
+                }
+                else {
+                    frame->setTimeStampUsec(output->getTimestamp());
+                    frame->setSystemTimeStampUsec(utils::getNowTimesUs());
+                    frame->setNumber(output->getSequenceNumber());
+                }
 
-            if(output->getStaticHeaderSize() > 0) {
-                frame->updateData(output->getBuffer(), output->getRecvdDataSize() + output->getStaticHeaderSize());
-            }
-            else {
-                frame->updateData(output->getRecvdDataBuffer() + frameOffset, output->getRecvdDataSize() - frameOffset);
-            }
+                if(output->getStaticHeaderSize() > 0) {
+                    frame->updateData(output->getBuffer(), output->getRecvdDataSize() + output->getStaticHeaderSize());
+                }
+                else {
+                    frame->updateData(output->getRecvdDataBuffer() + frameOffset, output->getRecvdDataSize() - frameOffset);
+                }
 
-            frameCallback_(frame);
+                frameCallback_(frame);
+            });
         } while(0);
 
         {

@@ -30,6 +30,7 @@ public:
 
     std::shared_ptr<const DeviceInfo> getInfo() const override;
     const std::string                &getExtensionInfo(const std::string &infoKey) const override;
+    bool                              isExtensionInfoExists(const std::string &infoKey) const override;
 
     void registerComponent(DeviceComponentId compId, std::function<std::shared_ptr<IDeviceComponent>()> creator, bool lockRequired = false);
     void registerComponent(DeviceComponentId compId, std::shared_ptr<IDeviceComponent> component, bool lockRequired = false);

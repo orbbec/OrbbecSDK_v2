@@ -52,8 +52,8 @@ void AccelSensor::start(std::shared_ptr<const StreamProfile> sp, FrameCallback c
     frameCallback_          = callback;
     updateStreamState(STREAM_STATE_STARTING);
 
-    auto owner        = getOwner();
-    auto propServer   = owner->getPropertyServer();
+    auto owner      = getOwner();
+    auto propServer = owner->getPropertyServer();
 
     auto accelSp = sp->as<AccelStreamProfile>();
     propServer->setPropertyValueT(OB_PROP_ACCEL_ODR_INT, static_cast<int>(accelSp->getSampleRate()));
@@ -68,10 +68,10 @@ void AccelSensor::start(std::shared_ptr<const StreamProfile> sp, FrameCallback c
 
 void AccelSensor::stop() {
     updateStreamState(STREAM_STATE_STOPPING);
-    auto owner        = getOwner();
-    auto propServer   = owner->getPropertyServer();
-    propServer->setPropertyValueT(OB_PROP_ACCEL_SWITCH_BOOL, false);
     streamer_->stop(activatedStreamProfile_);
+    auto owner      = getOwner();
+    auto propServer = owner->getPropertyServer();
+    propServer->setPropertyValueT(OB_PROP_ACCEL_SWITCH_BOOL, false);
     updateStreamState(STREAM_STATE_STOPPED);
 }
 

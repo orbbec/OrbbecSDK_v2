@@ -68,10 +68,10 @@ void GyroSensor::start(std::shared_ptr<const StreamProfile> sp, FrameCallback ca
 
 void GyroSensor::stop() {
     updateStreamState(STREAM_STATE_STOPPING);
+    streamer_->stop(activatedStreamProfile_);
     auto owner        = getOwner();
     auto propServer   = owner->getPropertyServer();
     propServer->setPropertyValueT(OB_PROP_GYRO_SWITCH_BOOL, false);
-    streamer_->stop(activatedStreamProfile_);
     updateStreamState(STREAM_STATE_STOPPED);
 }
 

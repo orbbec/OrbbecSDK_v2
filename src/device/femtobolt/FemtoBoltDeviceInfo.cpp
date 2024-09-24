@@ -20,8 +20,7 @@ FemtoBoltDeviceInfo::FemtoBoltDeviceInfo(const SourcePortInfoList groupedInfoLis
 FemtoBoltDeviceInfo::~FemtoBoltDeviceInfo() noexcept {}
 
 std::shared_ptr<IDevice> FemtoBoltDeviceInfo::createDevice() const {
-    auto device = std::make_shared<FemtoBoltDevice>(shared_from_this());
-    return device;
+    return std::make_shared<FemtoBoltDevice>(shared_from_this());
 }
 
 std::vector<std::shared_ptr<IDeviceEnumInfo>> FemtoBoltDeviceInfo::pickDevices(const SourcePortInfoList infoList) {

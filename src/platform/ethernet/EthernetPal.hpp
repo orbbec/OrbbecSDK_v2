@@ -34,15 +34,11 @@ public:
     EthernetPal() {}
     ~EthernetPal() = default;
 
-    SourcePortInfoList queryAssociatedNetSourcePort(const std::shared_ptr<NetSourcePortInfo> info);
-
-    bool changeNetDeviceIpConfig(std::string ip, const OBNetIpConfig &config);
-
     std::shared_ptr<ISourcePort>    getSourcePort(std::shared_ptr<const SourcePortInfo>) override;
     SourcePortInfoList              querySourcePortInfos() override;
-    std::shared_ptr<IDeviceWatcher> createDeviceWatcher() const override {
-        return std::make_shared<NetDeviceWatcher>();
-    }
+    std::shared_ptr<IDeviceWatcher> createDeviceWatcher() const override;
+
+    static bool changeNetDeviceIpConfig(std::string ip, const OBNetIpConfig &config);
 
 private:
     std::vector<GVCPDeviceInfo> netDeviceInfoList_;

@@ -36,7 +36,6 @@ public:
     void enableDeviceClockSync(uint64_t repeatInterval) override;
 
 private:
-    void multiDeviceSyncFunc(uint8_t retry = 0, std::vector<std::string> uids = {});
     void onDeviceChanged(const DeviceEnumInfoList &removed, const DeviceEnumInfoList &added);
 
 private:

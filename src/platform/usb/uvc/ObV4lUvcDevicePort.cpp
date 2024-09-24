@@ -458,29 +458,31 @@ void ObV4lUvcDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandle> devHandle)
                 }
 
                 if(buf.bytesused) {
-                    auto timestamp = (double)buf.timestamp.tv_sec * 1000.f + (double)buf.timestamp.tv_usec / 1000.f;
-                    (void)timestamp;
+                    TRY_EXECUTE({
+                        auto timestamp = (double)buf.timestamp.tv_sec * 1000.f + (double)buf.timestamp.tv_usec / 1000.f;
+                        (void)timestamp;
 
-                    auto rawframe   = FrameFactory::createFrameFromStreamProfile(devHandle->profile);
-                    auto videoFrame = rawframe->as<VideoFrame>();
-                    videoFrame->updateData(static_cast<const uint8_t *>(devHandle->buffers[buf.index].ptr), buf.bytesused);
-                    if(metadataBufferIndex >= 0 && devHandle->metadataBuffers[metadataBufferIndex].sequence == buf.sequence) {
-                        auto uvc_payload_header     = devHandle->metadataBuffers[metadataBufferIndex].ptr + sizeof(V4L2UvcMetaHeader);
-                        auto uvc_payload_header_len = devHandle->metadataBuffers[metadataBufferIndex].actual_length - sizeof(V4L2UvcMetaHeader);
-                        if(uvc_payload_header_len >= sizeof(StandardUvcFramePayloadHeader)) {
-                            auto payloadHeader = (StandardUvcFramePayloadHeader *)uvc_payload_header;
-                            videoFrame->updateMetadata(static_cast<const uint8_t *>(payloadHeader->scrSourceClock),
-                                                       sizeof(StandardUvcFramePayloadHeader::scrSourceClock));
-                            videoFrame->appendMetadata(static_cast<const uint8_t *>(uvc_payload_header + sizeof(StandardUvcFramePayloadHeader)),
-                                                       uvc_payload_header_len - sizeof(StandardUvcFramePayloadHeader));
-                            videoFrame->setTimeStampUsec(payloadHeader->dwPresentationTime);
+                        auto rawframe   = FrameFactory::createFrameFromStreamProfile(devHandle->profile);
+                        auto videoFrame = rawframe->as<VideoFrame>();
+                        videoFrame->updateData(static_cast<const uint8_t *>(devHandle->buffers[buf.index].ptr), buf.bytesused);
+                        if(metadataBufferIndex >= 0 && devHandle->metadataBuffers[metadataBufferIndex].sequence == buf.sequence) {
+                            auto uvc_payload_header     = devHandle->metadataBuffers[metadataBufferIndex].ptr + sizeof(V4L2UvcMetaHeader);
+                            auto uvc_payload_header_len = devHandle->metadataBuffers[metadataBufferIndex].actual_length - sizeof(V4L2UvcMetaHeader);
+                            if(uvc_payload_header_len >= sizeof(StandardUvcFramePayloadHeader)) {
+                                auto payloadHeader = (StandardUvcFramePayloadHeader *)uvc_payload_header;
+                                videoFrame->updateMetadata(static_cast<const uint8_t *>(payloadHeader->scrSourceClock),
+                                                           sizeof(StandardUvcFramePayloadHeader::scrSourceClock));
+                                videoFrame->appendMetadata(static_cast<const uint8_t *>(uvc_payload_header + sizeof(StandardUvcFramePayloadHeader)),
+                                                           uvc_payload_header_len - sizeof(StandardUvcFramePayloadHeader));
+                                videoFrame->setTimeStampUsec(payloadHeader->dwPresentationTime);
+                            }
                         }
-                    }
 
-                    auto realtime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-                    videoFrame->setSystemTimeStampUsec(realtime);
-                    videoFrame->setNumber(buf.sequence);
-                    devHandle->frameCallback(videoFrame);
+                        auto realtime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+                        videoFrame->setSystemTimeStampUsec(realtime);
+                        videoFrame->setNumber(buf.sequence);
+                        devHandle->frameCallback(videoFrame);
+                    })
                 }
 
                 if(devHandle->isCapturing) {

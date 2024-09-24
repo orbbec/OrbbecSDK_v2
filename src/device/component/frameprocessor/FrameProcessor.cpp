@@ -1,10 +1,12 @@
 #include "FrameProcessor.hpp"
 #include "frame/FrameFactory.hpp"
 #include "utils/Utils.hpp"
+#include "environment/EnvConfig.hpp"
 
 namespace libobsensor {
 FrameProcessorFactory::FrameProcessorFactory(IDevice *owner) : DeviceComponentBase(owner) {
-    dylib_ = std::make_shared<dylib>(moduleLoadPath_.c_str(), "ob_frame_processor");
+    std::string moduleLoadPath = EnvConfig::getExtensionsDirectory() + "/frameprocessor/";
+    dylib_                     = std::make_shared<dylib>(moduleLoadPath.c_str(), "ob_frame_processor");
 
     auto dylib = dylib_;
     context_   = std::shared_ptr<FrameProcessorContext>(new FrameProcessorContext(), [dylib](FrameProcessorContext *context) {
@@ -30,8 +32,8 @@ FrameProcessorFactory::FrameProcessorFactory(IDevice *owner) : DeviceComponentBa
     }
 
     if(context_->create_context && !context_->context) {
-        auto cDevice          = new ob_device;
-        cDevice->device  = owner->shared_from_this();
+        auto cDevice      = new ob_device;
+        cDevice->device   = owner->shared_from_this();
         ob_error *error   = nullptr;
         context_->context = context_->create_context(cDevice, &error);
         if(error) {
@@ -46,8 +48,7 @@ FrameProcessorFactory::FrameProcessorFactory(IDevice *owner) : DeviceComponentBa
     }
 }
 
-FrameProcessorFactory::~FrameProcessorFactory() noexcept {
-}
+FrameProcessorFactory::~FrameProcessorFactory() noexcept {}
 
 std::shared_ptr<FrameProcessor> FrameProcessorFactory::createFrameProcessor(OBSensorType sensorType) {
     if(context_ && (!context_->context || context_->create_processor == nullptr)) {
@@ -166,6 +167,15 @@ void FrameProcessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue
     case OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT: {
         setConfigValue("DisparityTransform#2", static_cast<double>(value.floatValue));
     } break;
+    case OB_PROP_DEPTH_SOFT_FILTER_BOOL: {
+        setConfigValueSync("NoiseRemovalFilter#255", static_cast<double>(value.intValue));
+    } break;
+    case OB_PROP_DEPTH_MAX_SPECKLE_SIZE_INT: {
+        setConfigValueSync("NoiseRemovalFilter#0", static_cast<double>(value.intValue));
+    } break;
+    case OB_PROP_DEPTH_MAX_DIFF_INT: {
+        setConfigValueSync("NoiseRemovalFilter#1", static_cast<double>(value.intValue));
+    } break;
     default:
         throw invalid_value_exception("Invalid property id");
     }
@@ -186,44 +196,74 @@ void FrameProcessor::getPropertyValue(uint32_t propertyId, OBPropertyValue *valu
         auto getValue     = getConfigValue("DisparityTransform#2");
         value->floatValue = static_cast<float>(getValue);
     } break;
+    case OB_PROP_DEPTH_SOFT_FILTER_BOOL: {
+        auto getValue   = getConfigValue("NoiseRemovalFilter#255");
+        value->intValue = static_cast<int32_t>(getValue);
+    } break;
+    case OB_PROP_DEPTH_MAX_SPECKLE_SIZE_INT: {
+        auto getValue   = getConfigValue("NoiseRemovalFilter#0");
+        value->intValue = static_cast<int32_t>(getValue);
+    } break;
+    case OB_PROP_DEPTH_MAX_DIFF_INT: {
+        auto getValue   = getConfigValue("NoiseRemovalFilter#1");
+        value->intValue = static_cast<int32_t>(getValue);
+    } break;
     default:
         throw invalid_value_exception("Invalid property id");
     }
 }
 
 void FrameProcessor::getPropertyRange(uint32_t propertyId, OBPropertyRange *range) {
-    double value = 0.0f;
+    std::string configName = "";
+
     switch(propertyId) {
-    case OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL: {
-        value                = getConfigValue("DisparityTransform#255");
-        range->cur.intValue  = static_cast<int32_t>(value);
-        range->def.intValue  = 1;
-        range->max.intValue  = 1;
-        range->min.intValue  = 0;
-        range->step.intValue = 1;
-    } break;
-    case OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT: {
-        value                  = getConfigValue("DisparityTransform#2");
-        range->cur.floatValue  = static_cast<float>(value);
-        range->def.floatValue  = 1.0f;
-        range->max.floatValue  = 10.0f;
-        range->min.floatValue  = 0.001f;
-        range->step.floatValue = 0.001f;
-    } break;
-    case OB_PROP_DEPTH_PRECISION_LEVEL_INT: {
+    case OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL:
+        configName = "DisparityTransform#255";
+        break;
+    case OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT:
+        configName = "DisparityTransform#2";
+        break;
+    case OB_PROP_DEPTH_SOFT_FILTER_BOOL:
+        configName = "NoiseRemovalFilter#255";
+        break;
+    case OB_PROP_DEPTH_MAX_SPECKLE_SIZE_INT:
+        configName = "NoiseRemovalFilter#0";
+        break;
+    case OB_PROP_DEPTH_MAX_DIFF_INT:
+        configName = "NoiseRemovalFilter#1";
+        break;
+    case OB_PROP_DEPTH_PRECISION_LEVEL_INT:
         OBPropertyValue cur;
         getPropertyValue(OB_PROP_DEPTH_PRECISION_LEVEL_INT, &cur);
+
         range->cur.intValue  = cur.intValue;
         range->def.intValue  = static_cast<int32_t>(OB_PRECISION_1MM);
         range->max.intValue  = static_cast<int32_t>(OB_PRECISION_1MM);
         range->min.intValue  = static_cast<int32_t>(OB_PRECISION_0MM05);
         range->step.intValue = 1;
-    } break;
+        return;
     default:
         throw invalid_value_exception("Invalid property id");
     }
-}
 
+    double                   value = getConfigValue(configName);
+    OBFilterConfigSchemaItem item  = getConfigSchemaItem(configName);
+
+    if(item.type == OB_FILTER_CONFIG_VALUE_TYPE_FLOAT) {
+        range->cur.floatValue  = static_cast<float>(value);
+        range->def.floatValue  = static_cast<float>(item.def);
+        range->max.floatValue  = static_cast<float>(item.max);
+        range->min.floatValue  = static_cast<float>(item.min);
+        range->step.floatValue = static_cast<float>(item.step);
+    }
+    else {
+        range->cur.intValue  = static_cast<int32_t>(value);
+        range->def.intValue  = static_cast<int32_t>(item.def);
+        range->max.intValue  = static_cast<int32_t>(item.max);
+        range->min.intValue  = static_cast<int32_t>(item.min);
+        range->step.intValue = static_cast<int32_t>(item.step);
+    }
+}
 // Depth frame processor
 DepthFrameProcessor::DepthFrameProcessor(IDevice *owner, std::shared_ptr<FrameProcessorContext> context) : FrameProcessor(owner, context, OB_SENSOR_DEPTH) {}
 
@@ -241,7 +281,8 @@ void DepthFrameProcessor::setHardwareD2CProcessParams(uint32_t colorWidth, uint3
         }
     }
 
-    bool valid = currentD2CProfile.colorWidth != 0 && currentD2CProfile.colorHeight != 0 && currentD2CProfile.depthWidth != 0 && currentD2CProfile.depthHeight != 0;
+    bool valid =
+        currentD2CProfile.colorWidth != 0 && currentD2CProfile.colorHeight != 0 && currentD2CProfile.depthWidth != 0 && currentD2CProfile.depthHeight != 0;
     if(!valid || static_cast<size_t>(currentD2CProfile.paramIndex) + 1 > calibrationCameraParams.size()) {
         throw invalid_value_exception("Current stream profile is not support hardware d2c process");
         return;

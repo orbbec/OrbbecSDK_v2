@@ -105,6 +105,7 @@ bool GlobalTimestampFitter::isEnabled() const {
 
 void GlobalTimestampFitter::fittingLoop() {
     const int MAX_RETRY_COUNT = 5;
+    const uint64_t MAX_VALID_RTT = 10000; // 10ms
 
     int retryCount = 0;
     do {
@@ -121,7 +122,7 @@ void GlobalTimestampFitter::fittingLoop() {
             auto sysTsp2Usec = utils::getNowTimesUs();
             sysTspUsec       = (sysTsp2Usec + sysTsp1Usec) / 2;
             devTime.rtt      = sysTsp2Usec - sysTsp1Usec;
-            if(devTime.rtt > 2000) {
+            if(devTime.rtt > MAX_VALID_RTT) {
                 LOG_DEBUG("Get device time rtt is too large! rtt={}", devTime.rtt);
                 throw std::runtime_error("RTT too large");
             }

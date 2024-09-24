@@ -3,6 +3,7 @@
 #include "ImplTypes.hpp"
 #include "logger/Logger.hpp"
 #include "context/Context.hpp"
+#include "environment/EnvConfig.hpp"
 
 #ifdef __cplusplus
 extern "C" {
@@ -70,12 +71,12 @@ void ob_set_device_changed_callback(ob_context *context, ob_device_changed_callb
 }
 HANDLE_EXCEPTIONS_NO_RETURN(context, callback, user_data)
 
-void ob_enable_device_clock_sync(ob_context *context, uint64_t repeatInterval, ob_error **error) BEGIN_API_CALL {
+void ob_enable_device_clock_sync(ob_context *context, uint64_t repeat_interval_msec, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(context);
     auto deviceMgr = context->context->getDeviceManager();
-    deviceMgr->enableDeviceClockSync(repeatInterval);
+    deviceMgr->enableDeviceClockSync(repeat_interval_msec);
 }
-HANDLE_EXCEPTIONS_NO_RETURN(context, repeatInterval)
+HANDLE_EXCEPTIONS_NO_RETURN(context, repeat_interval_msec)
 
 void ob_free_idle_memory(ob_context *context, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(context);
@@ -105,6 +106,11 @@ void ob_set_logger_to_console(ob_log_severity severity, ob_error **error) BEGIN_
     libobsensor::Logger::setConsoleLogSeverity(severity);
 }
 HANDLE_EXCEPTIONS_NO_RETURN(severity)
+
+void ob_set_extensions_directory(const char *directory, ob_error **error) BEGIN_API_CALL {
+    libobsensor::EnvConfig::setExtensionsDirectory(directory);
+}
+HANDLE_EXCEPTIONS_NO_RETURN(directory)
 
 #ifdef __cplusplus
 }

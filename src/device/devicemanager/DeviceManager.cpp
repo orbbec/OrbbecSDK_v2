@@ -1,5 +1,6 @@
 #include "DeviceManager.hpp"
 #include "utils/Utils.hpp"
+#include "IDeviceClockSynchronizer.hpp"
 
 #if defined(BUILD_USB_PAL)
 #include "UsbDeviceEnumerator.hpp"
@@ -116,7 +117,7 @@ std::shared_ptr<IDevice> DeviceManager::createNetDevice(std::string address, uin
 }
 
 std::shared_ptr<IDevice> DeviceManager::createDevice(const std::shared_ptr<const IDeviceEnumInfo> &info) {
-    LOG_DEBUG("DeviceManager  createDevice...");
+    LOG_DEBUG("DeviceManager createDevice...");
 
     // check if the device has been created
     {
@@ -128,6 +129,8 @@ std::shared_ptr<IDevice> DeviceManager::createDevice(const std::shared_ptr<const
                     createdDevices_.erase(iter);
                     break;
                 }
+                LOG_DEBUG("Device has already been created, return existing device! Name: {0}, PID: 0x{1:04x}, SN/ID: {2}", info->getName(), info->getPid(),
+                          info->getDeviceSn());
                 return iter->second.lock();
             }
         }
@@ -166,7 +169,7 @@ void DeviceManager::onDeviceChanged(const DeviceEnumInfoList &removed, const Dev
     LOG_INFO("Device changed! removed: {0}, added: {1}", removed.size(), added.size());
     if(!removed.empty()) {
         for(const auto &info: removed) {
-            auto iter = createdDevices_.find(info->getUid());
+            auto                         iter = createdDevices_.find(info->getUid());
             if(iter != createdDevices_.end()) {
                 auto dev = iter->second.lock();
                 if(dev) {
@@ -185,79 +188,6 @@ void DeviceManager::onDeviceChanged(const DeviceEnumInfoList &removed, const Dev
     }
 }
 
-#define MAX_RTT 50
-void DeviceManager::multiDeviceSyncFunc(uint8_t retry, std::vector<std::string> uids) {
-    std::map<std::string, int32_t> devicesMap;       // 用于记录rtt
-    std::vector<std::string>       abnormalDevices;  // rtt 异常设备
-
-    // todo: impl this
-    utils::unusedVar(retry);
-    utils::unusedVar(uids);
-
-    // int32_t rtt;
-    // for(auto &item: createdDevices_) {
-    //     if(!uids.empty() && std::find(uids.begin(), uids.end(), item.first) == uids.end()) {
-    //         continue;
-    //     }
-    //
-    //     auto dev = item.second.lock();
-    //     if(!dev) {
-    //         continue;
-    //     }
-    // auto resLock         = dev->tryLockResource();
-    // auto propertyManager = dev->getPropertyManager(resLock);
-    // if(!propertyManager->isPropertySupported(OB_STRUCT_DEVICE_TIME, OB_PERMISSION_WRITE)) {
-    //     continue;
-    // }
-    //
-    // BEGIN_TRY_EXECUTE({ rtt = dev->syncDeviceTime(); })
-    // CATCH_EXCEPTION_AND_EXECUTE(rtt = 0)
-
-    // std::stringstream ss;
-    // if(rtt > MAX_RTT) {  // rtt
-    //     ss << "dev-uid@0x" << std::hex << item.first << ", update device time succeeded, but rtt is too large! round-trip-time=" << rtt << "ms\n";
-    //     LOG_ERROR(ss.str());
-    //     abnormalDevices.push_back(item.first);
-    // }
-    // else {
-    //     ss << "dev-uid@0x" << std::hex << item.first << ", update device time succeeded! round-trip-time=" << std::dec << rtt << "ms\n";
-    //     LOG_INFO(ss.str());
-    //     devicesMap.insert({ item.first, rtt });
-    // }
-    // }
-    //
-    // // 找出rtt异常设备
-    // if(devicesMap.size() >= 3) {
-    //     // Standard Deviation
-    //     uint64_t total = 0;
-    //     for(auto item: devicesMap) {
-    //         total += item.second;
-    //     }
-    //     double avg = (double)total / devicesMap.size();
-    //
-    //     double variance = 0;
-    //     for(auto item: devicesMap) {
-    //         variance += pow(item.second - avg, 2);
-    //     }
-    //
-    //     variance /= devicesMap.size();  // 平方差
-    //     double sd = sqrt(variance);     // 标准差
-    //
-    //     for(auto item: devicesMap) {
-    //         if(abs((double)item.second - avg) > 2 * sd) {  // 与平均值距离大于2倍标准差（95.4%概率）
-    //             abnormalDevices.push_back(item.first);
-    //         }
-    //     }
-    // }
-    //
-    // // 重试一次
-    // if(!abnormalDevices.empty() && retry) {
-    //     retry--;
-    //     LOG_DEBUG("Retry for abnormal devices...");
-    //     multiDeviceSyncFunc(retry, abnormalDevices);
-    // }
-}
-
 void DeviceManager::enableDeviceClockSync(uint64_t repeatInterval) {
     LOG_DEBUG("Enable multi-device clock sync, repeatInterval={0}ms", repeatInterval);
 
@@ -274,7 +204,14 @@ void DeviceManager::enableDeviceClockSync(uint64_t repeatInterval) {
         do {
             std::unique_lock<std::mutex> lock(createdDevicesMutex_);
             if(!destroy_) {
-                multiDeviceSyncFunc(1);
+                for(auto &item: createdDevices_) {
+                    auto dev = item.second.lock();
+                    if(!dev || !dev->isComponentExists(OB_DEV_COMPONENT_DEVICE_CLOCK_SYNCHRONIZER)) {
+                        continue;
+                    }
+                    auto synchronizer = dev->getComponentT<IDeviceClockSynchronizer>(OB_DEV_COMPONENT_DEVICE_CLOCK_SYNCHRONIZER);
+                    TRY_EXECUTE(synchronizer->timerSyncWithHost());
+                }
             }
             multiDeviceSyncCv_.wait_for(lock, std::chrono::milliseconds(multiDeviceSyncIntervalMs_));
         } while(multiDeviceSyncIntervalMs_ > 0 && !destroy_);

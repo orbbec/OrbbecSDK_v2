@@ -18,7 +18,7 @@
 #include "property/PropertyServer.hpp"
 #include "property/CommonPropertyAccessors.hpp"
 #include "property/FilterPropertyAccessors.hpp"
-#include "monitor/DeviceMonitor.hpp"
+#include "property/PrivateFilterPropertyAccessors.hpp"
 #include "param/AlgParamManager.hpp"
 #include "syncconfig/DeviceSyncConfigurator.hpp"
 
@@ -31,7 +31,6 @@
 
 #include "FemtoMegaPropertyAccessor.hpp"
 
-// todo: move net mode code to a independent file and class.
 #if defined(BUILD_NET_PAL)
 #include "ethernet/RTSPStreamPort.hpp"
 #endif
@@ -73,6 +72,7 @@ void FemtoMegaUsbDevice::init() {
                                                                                      { OB_SYNC_MODE_SECONDARY, OB_MULTI_DEVICE_SYNC_MODE_SECONDARY } };
     auto deviceSyncConfigurator = std::make_shared<DeviceSyncConfiguratorOldProtocol>(this, supportedSyncModes);
     deviceSyncConfigurator->updateModeAliasMap(syncModeOldToNewMap, syncModeNewToOldMap);
+    deviceSyncConfigurator->enableDepthDelaySupport(true);
     registerComponent(OB_DEV_COMPONENT_DEVICE_SYNC_CONFIGURATOR, deviceSyncConfigurator);
 
     auto deviceClockSynchronizer = std::make_shared<DeviceClockSynchronizer>(this);
@@ -97,16 +97,6 @@ void FemtoMegaUsbDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor
     for(auto &profile: profiles) {
         LOG_INFO(" - {}", profile);
     }
-
-    // sensor->registerStreamStateChangedCallback([this](OBStreamState state, const std::shared_ptr<const StreamProfile> &sp) {
-    //     auto streamStrategy = getComponentT<ISensorStreamStrategy>(OB_DEV_COMPONENT_SENSOR_STREAM_STRATEGY);
-    //     if(state == STREAM_STATE_STARTING) {
-    //         streamStrategy->markStreamStarted(sp);
-    //     }
-    //     else if(state == STREAM_STATE_STOPPED) {
-    //         streamStrategy->markStreamStopped(sp);
-    //     }
-    // });
 }
 
 void FemtoMegaUsbDevice::initSensorList() {
@@ -320,6 +310,11 @@ void FemtoMegaUsbDevice::initProperties() {
     auto femtoMegaTempPropertyAccessor = std::make_shared<FemtoMegaTempPropertyAccessor>(this);
     propertyServer->registerProperty(OB_STRUCT_DEVICE_TEMPERATURE, "r", "r", femtoMegaTempPropertyAccessor);
 
+    auto privatePropertyAccessor = std::make_shared<PrivateFilterPropertyAccessor>(this);
+    propertyServer->registerProperty(OB_PROP_DEPTH_SOFT_FILTER_BOOL, "rw", "rw", privatePropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_DEPTH_MAX_DIFF_INT, "rw", "rw", privatePropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_DEPTH_MAX_SPECKLE_SIZE_INT, "rw", "rw", privatePropertyAccessor);
+
     auto sensors = getSensorTypeList();
     for(auto &sensor: sensors) {
         auto  platform       = Platform::getInstance();
@@ -333,7 +328,6 @@ void FemtoMegaUsbDevice::initProperties() {
             });
 
             propertyServer->registerProperty(OB_PROP_COLOR_AUTO_EXPOSURE_BOOL, "rw", "rw", uvcPropertyAccessor);
-            // propertyServer->registerProperty(OB_PROP_COLOR_EXPOSURE_INT, "rw", "rw", uvcPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_COLOR_GAIN_INT, "rw", "rw", uvcPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_COLOR_SATURATION_INT, "rw", "rw", uvcPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_COLOR_AUTO_WHITE_BALANCE_BOOL, "rw", "rw", uvcPropertyAccessor);
@@ -361,7 +355,7 @@ void FemtoMegaUsbDevice::initProperties() {
             // propertyServer->registerProperty(OB_PROP_DEPTH_MAX_SPECKLE_SIZE_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_EXTERNAL_SIGNAL_RESET_BOOL, "", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_HEARTBEAT_BOOL, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_DEVICE_COMMUNICATION_TYPE_INT, "rw", "rw", vendorPropertyAccessor);
+            propertyServer->registerProperty(OB_PROP_DEVICE_COMMUNICATION_TYPE_INT, "", "w", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_SWITCH_IR_MODE_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_FAN_WORK_LEVEL_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_FAN_WORK_SPEED_INT, "rw", "rw", vendorPropertyAccessor);
@@ -382,11 +376,9 @@ void FemtoMegaUsbDevice::initProperties() {
             propertyServer->registerProperty(OB_PROP_TIMER_RESET_ENABLE_BOOL, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_TIMER_RESET_SIGNAL_BOOL, "w", "w", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_RAW_DATA_IMU_CALIB_PARAM, "", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_STRUCT_DEVICE_TIME, "rw", "rw", vendorPropertyAccessor);
             // propertyServer->registerProperty(OB_STRUCT_LED_CONTROL, "", "w", vendorPropertyPort);
 
             propertyServer->registerProperty(OB_RAW_DATA_ALIGN_CALIB_PARAM, "", "r", vendorPropertyAccessor);
-            // propertyServer->registerProperty(OB_PROP_DEPTH_EXPOSURE_INT, "r", "r", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_RAW_DATA_D2C_ALIGN_SUPPORT_PROFILE_LIST, "", "rw", vendorPropertyAccessor);
             // propertyServer->registerProperty(OB_PROP_FAN_MAX_SPEED_TEST_MODE_BOOL, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_GYRO_ODR_INT, "rw", "rw", vendorPropertyAccessor);
@@ -424,8 +416,12 @@ void FemtoMegaUsbDevice::initProperties() {
 
     propertyServer->aliasProperty(OB_PROP_IR_EXPOSURE_INT, OB_PROP_TOF_EXPOSURE_TIME_INT);
     propertyServer->aliasProperty(OB_PROP_DEPTH_EXPOSURE_INT, OB_PROP_TOF_EXPOSURE_TIME_INT);
+    propertyServer->aliasProperty(OB_PROP_DEPTH_ALIGN_HARDWARE_BOOL, OB_PROP_FEMTO_MEGA_HARDWARE_D2C_BOOL);
 
     registerComponent(OB_DEV_COMPONENT_PROPERTY_SERVER, propertyServer, true);
+
+    BEGIN_TRY_EXECUTE({ propertyServer->setPropertyValueT(OB_PROP_DEVICE_COMMUNICATION_TYPE_INT, OB_COMM_USB); })
+    CATCH_EXCEPTION_AND_EXECUTE({ LOG_ERROR("Set device communication type to usb mode failed!"); })
 }
 
 FemtoMegaNetDevice::FemtoMegaNetDevice(const std::shared_ptr<const IDeviceEnumInfo> &info) : DeviceBase(info) {
@@ -440,7 +436,7 @@ void FemtoMegaNetDevice::init() {
 
     fetchDeviceInfo();
     fetchExtensionInfo();
-    fetchAllProfileList();
+    fetchAllVideoStreamProfileList();
 
     if(getFirmwareVersionInt() >= 10209) {
         deviceTimeFreq_     = 1000000;
@@ -466,6 +462,7 @@ void FemtoMegaNetDevice::init() {
                                                                                      { OB_SYNC_MODE_SECONDARY, OB_MULTI_DEVICE_SYNC_MODE_SECONDARY } };
     auto deviceSyncConfigurator = std::make_shared<DeviceSyncConfiguratorOldProtocol>(this, supportedSyncModes);
     deviceSyncConfigurator->updateModeAliasMap(syncModeOldToNewMap, syncModeNewToOldMap);
+    deviceSyncConfigurator->enableDepthDelaySupport(true);
     registerComponent(OB_DEV_COMPONENT_DEVICE_SYNC_CONFIGURATOR, deviceSyncConfigurator);
 
     auto deviceClockSynchronizer = std::make_shared<DeviceClockSynchronizer>(this, deviceTimeFreq_, deviceTimeFreq_);
@@ -480,7 +477,7 @@ void FemtoMegaNetDevice::fetchDeviceInfo() {
     auto netPortInfo                  = std::dynamic_pointer_cast<const NetSourcePortInfo>(portInfo);
     deviceInfo->ipAddress_            = netPortInfo->address;
     deviceInfo_                       = deviceInfo;
-    deviceInfo_->name_                = version.deviceName;
+    deviceInfo_->name_                = enumInfo_->getName();
     deviceInfo_->fwVersion_           = version.firmwareVersion;
     deviceInfo_->deviceSn_            = version.serialNumber;
     deviceInfo_->asicName_            = version.depthChip;
@@ -511,18 +508,6 @@ void FemtoMegaNetDevice::initSensorList() {
 
     auto        platform           = Platform::getInstance();
     const auto &sourcePortInfoList = enumInfo_->getSourcePortInfoList();
-
-    auto vendorPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(),
-                                           [](const std::shared_ptr<const SourcePortInfo> &portInfo) { return portInfo->portType == SOURCE_PORT_NET_VENDOR; });
-
-    std::shared_ptr<const SourcePortInfo> vendorPortInfo;
-    if(vendorPortInfoIter != sourcePortInfoList.end()) {
-        vendorPortInfo = *vendorPortInfoIter;
-        registerSensorPortInfo(OB_SENSOR_DEPTH, vendorPortInfo);
-        registerSensorPortInfo(OB_SENSOR_IR, vendorPortInfo);
-        registerSensorPortInfo(OB_SENSOR_COLOR, vendorPortInfo);
-    }
-
     auto depthPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(), [](const std::shared_ptr<const SourcePortInfo> &portInfo) {
         return portInfo->portType == SOURCE_PORT_NET_RTSP && std::dynamic_pointer_cast<const RTSPStreamPortInfo>(portInfo)->streamType == OB_STREAM_DEPTH;
     });
@@ -553,19 +538,13 @@ void FemtoMegaNetDevice::initSensorList() {
             },
             true);
 
+        registerSensorPortInfo(OB_SENSOR_DEPTH, depthPortInfo);
+
         registerComponent(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR, [this]() {
             auto factory = getComponentT<FrameProcessorFactory>(OB_DEV_COMPONENT_FRAME_PROCESSOR_FACTORY);
 
             auto frameProcessor = factory->createFrameProcessor(OB_SENSOR_DEPTH);
             return frameProcessor;
-        });
-
-        // the main property accessor is using the depth port(uvc xu)
-        registerComponent(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR, [this, vendorPortInfo]() {
-            auto platform = Platform::getInstance();
-            auto port     = platform->getSourcePort(vendorPortInfo);
-            auto accessor = std::make_shared<VendorPropertyAccessor>(this, port);
-            return accessor;
         });
     }
 
@@ -594,7 +573,7 @@ void FemtoMegaNetDevice::initSensorList() {
                 return sensor;
             },
             true);
-
+        registerSensorPortInfo(OB_SENSOR_IR, irPortInfo);
         registerComponent(OB_DEV_COMPONENT_IR_FRAME_PROCESSOR, [this]() {
             auto factory = getComponentT<FrameProcessorFactory>(OB_DEV_COMPONENT_FRAME_PROCESSOR_FACTORY);
 
@@ -643,7 +622,7 @@ void FemtoMegaNetDevice::initSensorList() {
                 return sensor;
             },
             true);
-
+        registerSensorPortInfo(OB_SENSOR_COLOR, colorPortInfo);
         registerComponent(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR, [this]() {
             auto factory        = getComponentT<FrameProcessorFactory>(OB_DEV_COMPONENT_FRAME_PROCESSOR_FACTORY);
             auto frameProcessor = factory->createFrameProcessor(OB_SENSOR_COLOR);
@@ -709,158 +688,142 @@ void FemtoMegaNetDevice::initSensorList() {
 }
 
 void FemtoMegaNetDevice::initProperties() {
+    const auto &sourcePortInfoList = enumInfo_->getSourcePortInfoList();
+    auto        vendorPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(),
+                                                  [](const std::shared_ptr<const SourcePortInfo> &portInfo) { return portInfo->portType == SOURCE_PORT_NET_VENDOR; });
+
+    if(vendorPortInfoIter == sourcePortInfoList.end()) {
+        return;
+    }
+
     auto propertyServer = std::make_shared<PropertyServer>(this);
 
-    auto femtoMegaTempPropertyAccessor = std::make_shared<FemtoMegaTempPropertyAccessor>(this);
-    propertyServer->registerProperty(OB_STRUCT_DEVICE_TEMPERATURE, "r", "r", femtoMegaTempPropertyAccessor);
+    auto vendorPortInfo         = *vendorPortInfoIter;
+    auto vendorPropertyAccessor = std::make_shared<LazySuperPropertyAccessor>([this, vendorPortInfo]() {
+        auto platform = Platform::getInstance();
+        auto port     = platform->getSourcePort(vendorPortInfo);
+        auto accessor = std::make_shared<VendorPropertyAccessor>(this, port);
+        return accessor;
+    });
 
-    auto sensors = getSensorTypeList();
-    for(auto &sensor: sensors) {
-        auto  platform       = Platform::getInstance();
-        auto &sourcePortInfo = getSensorPortInfo(sensor);
-        if(sensor == OB_SENSOR_COLOR) {
-            auto vendorPropertyAccessor = std::make_shared<LazyPropertyAccessor>([this, &sourcePortInfo]() {
-                auto platform = Platform::getInstance();
-                auto port     = platform->getSourcePort(sourcePortInfo);
-                auto accessor = std::make_shared<VendorPropertyAccessor>(this, port);
-                return accessor;
-            });
+    // the main property accessor
+    registerComponent(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR, [this, vendorPortInfo]() {
+        auto platform = Platform::getInstance();
+        auto port     = platform->getSourcePort(vendorPortInfo);
+        auto accessor = std::make_shared<VendorPropertyAccessor>(this, port);
+        return accessor;
+    });
 
-            propertyServer->registerProperty(OB_PROP_COLOR_AUTO_EXPOSURE_BOOL, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_COLOR_EXPOSURE_INT, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_COLOR_GAIN_INT, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_COLOR_SATURATION_INT, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_COLOR_AUTO_WHITE_BALANCE_BOOL, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_COLOR_WHITE_BALANCE_INT, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_COLOR_BRIGHTNESS_INT, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_COLOR_SHARPNESS_INT, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_COLOR_CONTRAST_INT, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_COLOR_POWER_LINE_FREQUENCY_INT, "rw", "rw", vendorPropertyAccessor);
-        }
-        else if(sensor == OB_SENSOR_DEPTH) {
-            auto vendorPropertyAccessor = std::make_shared<LazySuperPropertyAccessor>([this, &sourcePortInfo]() {
-                auto platform = Platform::getInstance();
-                auto port     = platform->getSourcePort(sourcePortInfo);
-                auto accessor = std::make_shared<VendorPropertyAccessor>(this, port);
-                return accessor;
-            });
+    propertyServer->registerProperty(OB_PROP_COLOR_AUTO_EXPOSURE_BOOL, "rw", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_COLOR_EXPOSURE_INT, "rw", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_COLOR_GAIN_INT, "rw", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_COLOR_SATURATION_INT, "rw", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_COLOR_AUTO_WHITE_BALANCE_BOOL, "rw", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_COLOR_WHITE_BALANCE_INT, "rw", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_COLOR_BRIGHTNESS_INT, "rw", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_COLOR_SHARPNESS_INT, "rw", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_COLOR_CONTRAST_INT, "rw", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_COLOR_POWER_LINE_FREQUENCY_INT, "rw", "rw", vendorPropertyAccessor);
 
-            propertyServer->registerProperty(OB_PROP_DEPTH_ALIGN_HARDWARE_BOOL, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_DEPTH_ALIGN_HARDWARE_MODE_INT, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_TIMESTAMP_OFFSET_INT, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_FAN_WORK_MODE_INT, "rw", "rw", vendorPropertyAccessor);
-            // propertyServer->registerProperty(OB_PROP_DEPTH_SOFT_FILTER_BOOL, "rw", "rw", vendorPropertyAccessor);      //
-            // propertyServer->registerProperty(OB_PROP_DEPTH_MAX_DIFF_INT, "rw", "rw", vendorPropertyAccessor);          //
-            // propertyServer->registerProperty(OB_PROP_DEPTH_MAX_SPECKLE_SIZE_INT, "rw", "rw", vendorPropertyAccessor);  //
-            propertyServer->registerProperty(OB_PROP_EXTERNAL_SIGNAL_RESET_BOOL, "", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_HEARTBEAT_BOOL, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_DEVICE_COMMUNICATION_TYPE_INT, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_SWITCH_IR_MODE_INT, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_FAN_WORK_LEVEL_INT, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_FAN_WORK_SPEED_INT, "rw", "rw", vendorPropertyAccessor);
-            // TODO: ADD?
-            // propertyServer->registerProperty(OB_PROP_USB_POWER_STATE_INT, "r", "r", vendorPropertyAccessor);
-            // propertyServer->registerProperty(OB_PROP_DC_POWER_STATE_INT, "r", "r", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_STRUCT_VERSION, "", "r", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_STRUCT_DEVICE_SERIAL_NUMBER, "r", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_STRUCT_MULTI_DEVICE_SYNC_CONFIG, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_STRUCT_DEVICE_IP_ADDR_CONFIG, "rw", "rw", vendorPropertyAccessor);
-            //  propertyServer->registerProperty(OB_STRUCT_LED_CONTROL, "", "w", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_RAW_DATA_CAMERA_CALIB_JSON_FILE, "r", "r", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_STRUCT_DEVICE_TIME, "rw", "rw", vendorPropertyAccessor);
-            // propertyServer->registerProperty(OB_RAW_DATA_MCU_UPGRADE_FILE, "rw", "rw", vendorPropertyPort);
-            // propertyServer->registerProperty(OB_RAW_DATA_HARDWARE_ALIGN_PARAM, "rw", "rw", vendorPropertyPort);
-            propertyServer->registerProperty(OB_PROP_INDICATOR_LIGHT_BOOL, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_BOOT_INTO_RECOVERY_MODE_BOOL, "w", "w", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_TIMER_RESET_ENABLE_BOOL, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_TIMER_RESET_SIGNAL_BOOL, "w", "w", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_DEPTH_ALIGN_HARDWARE_BOOL, "rw", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_DEPTH_ALIGN_HARDWARE_MODE_INT, "rw", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_TIMESTAMP_OFFSET_INT, "rw", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_FAN_WORK_MODE_INT, "rw", "rw", vendorPropertyAccessor);
+    // propertyServer->registerProperty(OB_PROP_DEPTH_SOFT_FILTER_BOOL, "rw", "rw", vendorPropertyAccessor);      //
+    // propertyServer->registerProperty(OB_PROP_DEPTH_MAX_DIFF_INT, "rw", "rw", vendorPropertyAccessor);          //
+    // propertyServer->registerProperty(OB_PROP_DEPTH_MAX_SPECKLE_SIZE_INT, "rw", "rw", vendorPropertyAccessor);  //
+    propertyServer->registerProperty(OB_PROP_EXTERNAL_SIGNAL_RESET_BOOL, "", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_HEARTBEAT_BOOL, "rw", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_DEVICE_COMMUNICATION_TYPE_INT, "", "w", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_SWITCH_IR_MODE_INT, "rw", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_FAN_WORK_LEVEL_INT, "rw", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_FAN_WORK_SPEED_INT, "rw", "rw", vendorPropertyAccessor);
+    // propertyServer->registerProperty(OB_PROP_USB_POWER_STATE_INT, "r", "r", vendorPropertyAccessor);
+    // propertyServer->registerProperty(OB_PROP_DC_POWER_STATE_INT, "r", "r", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_STRUCT_VERSION, "", "r", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_STRUCT_DEVICE_SERIAL_NUMBER, "r", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_STRUCT_MULTI_DEVICE_SYNC_CONFIG, "rw", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_STRUCT_DEVICE_IP_ADDR_CONFIG, "rw", "rw", vendorPropertyAccessor);
+    //  propertyServer->registerProperty(OB_STRUCT_LED_CONTROL, "", "w", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_RAW_DATA_CAMERA_CALIB_JSON_FILE, "r", "r", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_STRUCT_DEVICE_TIME, "rw", "rw", vendorPropertyAccessor);
+    // propertyServer->registerProperty(OB_RAW_DATA_MCU_UPGRADE_FILE, "rw", "rw", vendorPropertyPort);
+    // propertyServer->registerProperty(OB_RAW_DATA_HARDWARE_ALIGN_PARAM, "rw", "rw", vendorPropertyPort);
+    propertyServer->registerProperty(OB_PROP_INDICATOR_LIGHT_BOOL, "rw", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_BOOT_INTO_RECOVERY_MODE_BOOL, "w", "w", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_TIMER_RESET_ENABLE_BOOL, "rw", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_TIMER_RESET_SIGNAL_BOOL, "w", "w", vendorPropertyAccessor);
 
-            propertyServer->registerProperty(OB_RAW_DATA_IMU_CALIB_PARAM, "", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_STRUCT_DEVICE_TIME, "rw", "rw", vendorPropertyAccessor);
-            // propertyServer->registerProperty(OB_STRUCT_LED_CONTROL, "", "w", vendorPropertyPort);
+    propertyServer->registerProperty(OB_RAW_DATA_IMU_CALIB_PARAM, "", "rw", vendorPropertyAccessor);
+    // propertyServer->registerProperty(OB_STRUCT_LED_CONTROL, "", "w", vendorPropertyPort);
 
-            // propertyServer->registerProperty(OB_RAW_DATA_ALIGN_CALIB_PARAM, "", "r", vendorPropertyAccessor);
-            // propertyServer->registerProperty(OB_PROP_DEPTH_EXPOSURE_INT, "r", "r", vendorPropertyAccessor);
-            // propertyServer->registerProperty(OB_RAW_DATA_D2C_ALIGN_SUPPORT_PROFILE_LIST, "", "rw", vendorPropertyAccessor);
-            //  propertyServer->registerProperty(OB_PROP_FAN_MAX_SPEED_TEST_MODE_BOOL, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_GYRO_ODR_INT, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_ACCEL_ODR_INT, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_GYRO_FULL_SCALE_INT, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_ACCEL_FULL_SCALE_INT, "rw", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_GYRO_ODR_INT, "rw", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_ACCEL_ODR_INT, "rw", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_GYRO_FULL_SCALE_INT, "rw", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_ACCEL_FULL_SCALE_INT, "rw", "rw", vendorPropertyAccessor);
 
-            propertyServer->registerProperty(OB_STRUCT_GET_ACCEL_PRESETS_ODR_LIST, "", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_STRUCT_GET_ACCEL_PRESETS_FULL_SCALE_LIST, "", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_STRUCT_GET_GYRO_PRESETS_ODR_LIST, "", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_STRUCT_GET_GYRO_PRESETS_FULL_SCALE_LIST, "", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_ACCEL_SWITCH_BOOL, "", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_GYRO_SWITCH_BOOL, "", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_STRUCT_GET_ACCEL_PRESETS_ODR_LIST, "", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_STRUCT_GET_ACCEL_PRESETS_FULL_SCALE_LIST, "", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_STRUCT_GET_GYRO_PRESETS_ODR_LIST, "", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_STRUCT_GET_GYRO_PRESETS_FULL_SCALE_LIST, "", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_ACCEL_SWITCH_BOOL, "", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_GYRO_SWITCH_BOOL, "", "rw", vendorPropertyAccessor);
 
-            propertyServer->registerProperty(OB_RAW_DATA_STREAM_PROFILE_LIST, "r", "r", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_RAW_DATA_ALIGN_CALIB_PARAM, "", "r", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_RAW_DATA_D2C_ALIGN_SUPPORT_PROFILE_LIST, "", "r", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_TOF_EXPOSURE_TIME_INT, "r", "r", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_RAW_DATA_STREAM_PROFILE_LIST, "r", "r", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_RAW_DATA_ALIGN_CALIB_PARAM, "", "r", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_RAW_DATA_D2C_ALIGN_SUPPORT_PROFILE_LIST, "", "r", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_TOF_EXPOSURE_TIME_INT, "r", "r", vendorPropertyAccessor);
 
-            propertyServer->registerProperty(OB_PROP_STOP_IR_STREAM_BOOL, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_STOP_COLOR_STREAM_BOOL, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_STOP_DEPTH_STREAM_BOOL, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_REBOOT_DEVICE_BOOL, "w", "w", vendorPropertyAccessor);
-            // auto        propServer = getPropertyServer();
-            // auto        version    = propServer->getStructureDataT<OBVersionInfo>(OB_STRUCT_VERSION);
-            // std::string fwVersion  = version.firmwareVersion;
-            // int firmVer = 0;
-            // utils::getFirmwareVersionInt(fwVersion, firmVer);
-            // if(firmVer >= 10107) {
-            //     //propertyServer->registerProperty(OB_RAW_DATA_DEVICE_UPGRADE, "", "rw", vendorPropertyAccessor);
-            //     //propertyServer->registerProperty(OB_STRUCT_DEVICE_UPGRADE_STATUS, "", "rw", vendorPropertyAccessor);
-            // }
-            // if(firmVer >= 10201) {
-            //     propertyServer->registerProperty(OB_PROP_RESTORE_FACTORY_SETTINGS_BOOL, "w", "w", vendorPropertyAccessor);
-            //     propertyServer->registerProperty(OB_PROP_DEVICE_IN_RECOVERY_MODE_BOOL, "r", "r", vendorPropertyAccessor);
-            //     propertyServer->registerProperty(OB_PROP_DEVICE_DEVELOPMENT_MODE_INT, "rw", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_STOP_IR_STREAM_BOOL, "rw", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_STOP_COLOR_STREAM_BOOL, "rw", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_STOP_DEPTH_STREAM_BOOL, "rw", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_REBOOT_DEVICE_BOOL, "w", "w", vendorPropertyAccessor);
 
-            // }
-            // if(firmVer >= 10202) {
-            //     propertyServer->registerProperty(OB_PROP_TIMER_RESET_ENABLE_BOOL, "rw", "rw", vendorPropertyAccessor);
-            //     propertyServer->registerProperty(OB_PROP_TIMER_RESET_SIGNAL_BOOL, "w", "w", vendorPropertyAccessor);
-            // }
-            // if(firmVer >= 10203) {
-            //     propertyServer->registerProperty(OB_STRUCT_DEVICE_STATIC_IP_CONFIG_RECORD, "rw", "rw", vendorPropertyAccessor);
-            // }
-        }
-        else if(sensor == OB_SENSOR_ACCEL) {
-            auto imuCorrectorFilter = getSensorFrameFilter("IMUCorrector", sensor);
-            if(imuCorrectorFilter) {
-                auto filterStateProperty = std::make_shared<FilterStatePropertyAccessor>(imuCorrectorFilter);
-                propertyServer->registerProperty(OB_PROP_SDK_ACCEL_FRAME_TRANSFORMED_BOOL, "rw", "rw", filterStateProperty);
-            }
-        }
-        else if(sensor == OB_SENSOR_GYRO) {
-            auto imuCorrectorFilter = getSensorFrameFilter("IMUCorrector", sensor);
-            if(imuCorrectorFilter) {
-                auto filterStateProperty = std::make_shared<FilterStatePropertyAccessor>(imuCorrectorFilter);
-                propertyServer->registerProperty(OB_PROP_SDK_GYRO_FRAME_TRANSFORMED_BOOL, "rw", "rw", filterStateProperty);
-            }
-        }
-    }
+    propertyServer->registerProperty(OB_RAW_DATA_DEVICE_UPGRADE, "", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_STRUCT_DEVICE_UPGRADE_STATUS, "", "rw", vendorPropertyAccessor);
+
+    propertyServer->registerProperty(OB_PROP_DEVICE_IN_RECOVERY_MODE_BOOL, "rw", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_DEVICE_DEVELOPMENT_MODE_INT, "rw", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_STRUCT_DEVICE_STATIC_IP_CONFIG_RECORD, "rw", "rw", vendorPropertyAccessor);
 
     propertyServer->aliasProperty(OB_PROP_IR_EXPOSURE_INT, OB_PROP_TOF_EXPOSURE_TIME_INT);
     propertyServer->aliasProperty(OB_PROP_DEPTH_EXPOSURE_INT, OB_PROP_TOF_EXPOSURE_TIME_INT);
 
+    BEGIN_TRY_EXECUTE({
+        auto inRecoveryMode = propertyServer->getPropertyValueT<bool>(OB_PROP_DEVICE_IN_RECOVERY_MODE_BOOL);
+        if(!inRecoveryMode) {
+            propertyServer->registerProperty(OB_PROP_RESTORE_FACTORY_SETTINGS_BOOL, "w", "w", vendorPropertyAccessor);
+        }
+    })
+    CATCH_EXCEPTION_AND_EXECUTE({ LOG_ERROR("Get device in recovery mode failed!"); })
+
+    auto imuCorrectorFilter = getSensorFrameFilter("IMUCorrector", OB_SENSOR_ACCEL);
+    if(imuCorrectorFilter) {
+        auto filterStateProperty = std::make_shared<FilterStatePropertyAccessor>(imuCorrectorFilter);
+        propertyServer->registerProperty(OB_PROP_SDK_ACCEL_FRAME_TRANSFORMED_BOOL, "rw", "rw", filterStateProperty);
+        propertyServer->registerProperty(OB_PROP_SDK_GYRO_FRAME_TRANSFORMED_BOOL, "rw", "rw", filterStateProperty);
+    }
+
+    auto femtoMegaTempPropertyAccessor = std::make_shared<FemtoMegaTempPropertyAccessor>(this);
+    propertyServer->registerProperty(OB_STRUCT_DEVICE_TEMPERATURE, "r", "r", femtoMegaTempPropertyAccessor);
     registerComponent(OB_DEV_COMPONENT_PROPERTY_SERVER, propertyServer, true);
+
+    BEGIN_TRY_EXECUTE({ propertyServer->setPropertyValueT(OB_PROP_DEVICE_COMMUNICATION_TYPE_INT, OB_COMM_NET); })
+    CATCH_EXCEPTION_AND_EXECUTE({ LOG_ERROR("Set device communication type to ethernet mode failed!"); })
 }
 
 void FemtoMegaNetDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
     auto              sensorType = sensor->getSensorType();
     OBStreamType      streamType = utils::mapSensorTypeToStreamType(sensorType);
     StreamProfileList ProfileList;
-    for(const auto &profile: allNetProfileList_) {
+    for(const auto &profile: allVideoStreamProfileList_) {
         if(streamType == profile->getType()) {
             ProfileList.push_back(profile);
         }
     }
 
     if(ProfileList.size() != 0) {
-        sensor->updateStreamProfileList(ProfileList);
+        sensor->setStreamProfileList(ProfileList);
     }
 
     auto streamProfile = StreamProfileFactory::getDefaultStreamProfileFromEnvConfig(deviceInfo_->name_, sensorType);
@@ -868,7 +831,7 @@ void FemtoMegaNetDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor
         sensor->updateDefaultStreamProfile(streamProfile);
     }
 
-    // // bind params: extrinsics, intrinsics, etc.
+    // bind params: extrinsics, intrinsics, etc.
     auto profiles = sensor->getStreamProfileList();
     {
         auto algParamManager = getComponentT<TOFDeviceCommandAlgParamManager>(OB_DEV_COMPONENT_ALG_PARAM_MANAGER);
@@ -881,10 +844,8 @@ void FemtoMegaNetDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor
     }
 }
 
-void FemtoMegaNetDevice::fetchAllProfileList() {
+void FemtoMegaNetDevice::fetchAllVideoStreamProfileList() {
     auto propServer = getPropertyServer();
-    BEGIN_TRY_EXECUTE({ propServer->setPropertyValueT(OB_PROP_DEVICE_COMMUNICATION_TYPE_INT, OB_COMM_NET); })
-    CATCH_EXCEPTION_AND_EXECUTE({ LOG_ERROR("Set device ethernet mode failed!"); })
 
     std::vector<uint8_t> data;
     BEGIN_TRY_EXECUTE({
@@ -906,12 +867,12 @@ void FemtoMegaNetDevice::fetchAllProfileList() {
         std::vector<OBInternalStreamProfile> outputProfiles;
         uint16_t                             dataSize = static_cast<uint16_t>(data.size());
         outputProfiles                                = parseBuffer<OBInternalStreamProfile>(data.data(), dataSize);
-        allNetProfileList_.clear();
+        allVideoStreamProfileList_.clear();
         for(auto item: outputProfiles) {
             OBStreamType streamType = utils::mapSensorTypeToStreamType((OBSensorType)item.sensorType);
             OBFormat     format     = utils::uvcFourccToOBFormat(item.profile.video.formatFourcc);
-            allNetProfileList_.push_back(StreamProfileFactory::createVideoStreamProfile(streamType, format, item.profile.video.width, item.profile.video.height,
-                                                                                        item.profile.video.fps));
+            allVideoStreamProfileList_.push_back(StreamProfileFactory::createVideoStreamProfile(streamType, format, item.profile.video.width,
+                                                                                                item.profile.video.height, item.profile.video.fps));
         }
     }
     else {

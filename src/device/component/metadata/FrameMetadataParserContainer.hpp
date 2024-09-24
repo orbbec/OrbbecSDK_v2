@@ -1,6 +1,7 @@
 #pragma once
 
 #include "IFrame.hpp"
+#include "IFrameMetadataParserContainerManager.hpp"
 #include "exception/ObException.hpp"
 #include "utils/Utils.hpp"
 
@@ -8,10 +9,14 @@
 
 namespace libobsensor {
 
-class FrameMetadataParserContainer : public IFrameMetadataParserContainer {
+class FrameMetadataParserContainer : public IFrameMetadataParserContainerManager {
 public:
-    FrameMetadataParserContainer() {}
+    FrameMetadataParserContainer(IDevice *owner) : owner_(owner) {}
     virtual ~FrameMetadataParserContainer() = default;
+
+    virtual IDevice *getOwner() const override {
+        return owner_;
+    }
 
     virtual void registerParser(OBFrameMetadataType type, std::shared_ptr<IFrameMetadataParser> phaser) {
         parsers[type] = phaser;
@@ -30,6 +35,9 @@ public:
 
 protected:
     std::map<OBFrameMetadataType, std::shared_ptr<IFrameMetadataParser>> parsers;
+
+private:
+    IDevice *owner_ = nullptr;
 };
 
 }  // namespace libobsensor

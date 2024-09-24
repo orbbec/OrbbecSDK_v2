@@ -25,6 +25,7 @@
 #include "property/PropertyServer.hpp"
 #include "property/CommonPropertyAccessors.hpp"
 #include "property/FilterPropertyAccessors.hpp"
+#include "property/PrivateFilterPropertyAccessors.hpp"
 #include "monitor/DeviceMonitor.hpp"
 
 #include "Astra2AlgParamManager.hpp"
@@ -107,16 +108,6 @@ void Astra2Device::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
     for(auto &profile: profiles) {
         LOG_INFO(" - {}", profile);
     }
-
-    // sensor->registerStreamStateChangedCallback([this](OBStreamState state, const std::shared_ptr<const StreamProfile> &sp) {
-    //     auto streamStrategy = getComponentT<ISensorStreamStrategy>(OB_DEV_COMPONENT_SENSOR_STREAM_STRATEGY);
-    //     if(state == STREAM_STATE_STARTING) {
-    //         streamStrategy->markStreamActivated (sp);
-    //     }
-    //     else if(state == STREAM_STATE_STOPPED) {
-    //         streamStrategy->markStreamDeactivated(sp);
-    //     }
-    // });
 }
 
 void Astra2Device::initSensorList() {
@@ -362,6 +353,12 @@ void Astra2Device::initProperties() {
     propertyServer->registerProperty(OB_PROP_DISPARITY_TO_DEPTH_BOOL, "rw", "rw", d2dPropertyAccessor);      // hw
     propertyServer->registerProperty(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL, "rw", "rw", d2dPropertyAccessor);  // sw
     propertyServer->registerProperty(OB_PROP_DEPTH_PRECISION_LEVEL_INT, "rw", "rw", d2dPropertyAccessor);
+    propertyServer->registerProperty(OB_STRUCT_DEPTH_PRECISION_SUPPORT_LIST, "r", "r", d2dPropertyAccessor);
+
+    auto privatePropertyAccessor = std::make_shared<PrivateFilterPropertyAccessor>(this);
+    propertyServer->registerProperty(OB_PROP_DEPTH_SOFT_FILTER_BOOL, "rw", "rw", privatePropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_DEPTH_MAX_DIFF_INT, "rw", "rw", privatePropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_DEPTH_MAX_SPECKLE_SIZE_INT, "rw", "rw", privatePropertyAccessor);
 
     auto tempPropertyAccessor = std::make_shared<Astra2TempPropertyAccessor>(this);
     propertyServer->registerProperty(OB_STRUCT_DEVICE_TEMPERATURE, "r", "r", tempPropertyAccessor);
@@ -379,7 +376,6 @@ void Astra2Device::initProperties() {
             });
 
             propertyServer->registerProperty(OB_PROP_COLOR_AUTO_EXPOSURE_BOOL, "rw", "rw", uvcPropertyAccessor);
-            // propertyServer->registerProperty(OB_PROP_COLOR_EXPOSURE_INT, "rw", "rw", uvcPropertyAccessor);  // replace by vendor property accessor
             propertyServer->registerProperty(OB_PROP_COLOR_GAIN_INT, "rw", "rw", uvcPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_COLOR_SATURATION_INT, "rw", "rw", uvcPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_COLOR_AUTO_WHITE_BALANCE_BOOL, "rw", "rw", uvcPropertyAccessor);
@@ -463,9 +459,6 @@ void Astra2Device::initProperties() {
             propertyServer->registerProperty(OB_PROP_STOP_IR_STREAM_BOOL, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_STOP_COLOR_STREAM_BOOL, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_STOP_DEPTH_STREAM_BOOL, "rw", "rw", vendorPropertyAccessor);
-
-            auto depthPrecisionSupportListAccessor = std::make_shared<StructureDataOverV1_1Accessor>(vendorPropertyAccessor, static_cast<uint16_t>(0));
-            propertyServer->registerProperty(OB_STRUCT_DEPTH_PRECISION_SUPPORT_LIST, "r", "r", depthPrecisionSupportListAccessor);
         }
         else if(sensor == OB_SENSOR_ACCEL) {
             auto imuCorrectorFilter = getSensorFrameFilter("IMUCorrector", sensor);
@@ -499,6 +492,9 @@ void Astra2Device::initProperties() {
 std::vector<std::shared_ptr<IFilter>> Astra2Device::createRecommendedPostProcessingFilters(OBSensorType type) {
     auto filterFactory = FilterFactory::getInstance();
     if(type == OB_SENSOR_DEPTH) {
+        // activate depth frame processor library
+        getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR, false);
+
         std::vector<std::shared_ptr<IFilter>> depthFilterList;
 
         if(filterFactory->isFilterCreatorExists("DecimationFilter")) {
@@ -554,6 +550,9 @@ std::vector<std::shared_ptr<IFilter>> Astra2Device::createRecommendedPostProcess
         return depthFilterList;
     }
     else if(type == OB_SENSOR_COLOR) {
+        // activate color frame processor library
+        getComponentT<FrameProcessor>(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR, false);
+
         std::vector<std::shared_ptr<IFilter>> colorFilterList;
         if(filterFactory->isFilterCreatorExists("DecimationFilter")) {
             auto decimationFilter = filterFactory->createFilter("DecimationFilter");

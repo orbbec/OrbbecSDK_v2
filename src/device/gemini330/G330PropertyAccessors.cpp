@@ -5,18 +5,13 @@
 
 namespace libobsensor {
 
-G330Disp2DepthPropertyAccessor::G330Disp2DepthPropertyAccessor(IDevice *owner)
-    : owner_(owner), hwDisparityToDepthEnabled_(true), swDisparityToDepthEnabled_(false) {}
+G330Disp2DepthPropertyAccessor::G330Disp2DepthPropertyAccessor(IDevice *owner) : owner_(owner), hwDisparityToDepthEnabled_(true) {}
 
 void G330Disp2DepthPropertyAccessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
     switch(propertyId) {
     case OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL: {
         auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR);
         processor->setPropertyValue(propertyId, value);
-
-        // swDisparityToDepthEnabled_ = static_cast<bool>(value.intValue);
-        // update convert output frame as disparity frame
-        // markOutputDisparityFrame(!hwDisparityToDepthEnabled_);
     } break;
     case OB_PROP_DISPARITY_TO_DEPTH_BOOL: {
         auto commandPort = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
@@ -54,7 +49,9 @@ void G330Disp2DepthPropertyAccessor::getPropertyValue(uint32_t propertyId, OBPro
     case OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL: {
         auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR);
         processor->getPropertyValue(propertyId, value);
-        swDisparityToDepthEnabled_ = static_cast<bool>(value->intValue);
+    } break;
+    case OB_PROP_DISPARITY_TO_DEPTH_BOOL: {
+        value->intValue = hwDisparityToDepthEnabled_;
     } break;
     case OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT: {
         auto            commandPort = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
@@ -80,6 +77,13 @@ void G330Disp2DepthPropertyAccessor::getPropertyRange(uint32_t propertyId, OBPro
     case OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL: {
         auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR);
         processor->getPropertyRange(propertyId, range);
+    } break;
+    case OB_PROP_DISPARITY_TO_DEPTH_BOOL: {
+        range->min.intValue  = 0;
+        range->max.intValue  = 1;
+        range->step.intValue = 1;
+        range->def.intValue  = 1;
+        range->cur.intValue  = static_cast<int32_t>(hwDisparityToDepthEnabled_);
     } break;
     case OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT: {
         auto            processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR);

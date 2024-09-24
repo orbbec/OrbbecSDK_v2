@@ -45,38 +45,12 @@ StreamProfileList G2StreamProfileFilter::filter(const StreamProfileList &profile
 
     return filteredProfiles;
 }
-
-static std::vector<OBEffectiveStreamProfile> effectiveStreamProfilesParse(const std::vector<uint8_t> &data) {
-    std::vector<OBEffectiveStreamProfile> output;
-    const uint32_t                        typeSize  = sizeof(OBEffectiveStreamProfile);
-    auto                                  itemCount = data.size() / typeSize;
-    for(uint32_t i = 0; i < itemCount; i++) {
-        auto profile = reinterpret_cast<const OBEffectiveStreamProfile *>(data.data() + i * typeSize);
-        output.push_back(*profile);
-    }
-    return output;
-}
-
 void G2StreamProfileFilter::fetchEffectiveStreamProfiles() {
     auto owner      = getOwner();
     auto propServer = owner->getPropertyServer();
 
-    std::vector<uint8_t> data;
-    BEGIN_TRY_EXECUTE({
-        propServer->getRawData(
-            OB_RAW_DATA_EFFECTIVE_VIDEO_STREAM_PROFILE_LIST,
-            [&](OBDataTranState state, OBDataChunk *dataChunk) {
-                if(state == DATA_TRAN_STAT_TRANSFERRING) {
-                    data.insert(data.end(), dataChunk->data, dataChunk->data + dataChunk->size);
-                }
-            },
-            PROP_ACCESS_INTERNAL);
-    })
-    CATCH_EXCEPTION_AND_EXECUTE({
-        LOG_ERROR("Get imu calibration params failed!");
-        data.clear();
-    })
-    auto profiles            = effectiveStreamProfilesParse(data);
+    std::vector<OBEffectiveStreamProfile> profiles;
+    profiles                 = propServer->getStructureDataListProtoV1_1_T<OBEffectiveStreamProfile, 0>(OB_RAW_DATA_EFFECTIVE_VIDEO_STREAM_PROFILE_LIST);
     effectiveStreamProfiles_ = profiles;
     for(auto &profile: profiles) {
         if(profile.sensorType == OB_SENSOR_COLOR && profile.format == OB_FORMAT_MJPG) {

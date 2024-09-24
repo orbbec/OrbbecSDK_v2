@@ -69,6 +69,12 @@ ob_filter_config_schema_list *ob_filter_get_config_schema_list(const ob_filter *
 }
 HANDLE_EXCEPTIONS_AND_RETURN(nullptr, filter)
 
+void ob_delete_filter_config_schema_list(ob_filter_config_schema_list *config_schema_list, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(config_schema_list);
+    delete config_schema_list;
+}
+HANDLE_EXCEPTIONS_NO_RETURN(config_schema_list)
+
 uint32_t ob_filter_config_schema_list_get_count(const ob_filter_config_schema_list *config_schema_list, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(config_schema_list);
     return static_cast<uint32_t>(config_schema_list->configSchemaList.size());
@@ -78,7 +84,7 @@ HANDLE_EXCEPTIONS_AND_RETURN(0, config_schema_list)
 ob_filter_config_schema_item ob_filter_config_schema_list_get_item(const ob_filter_config_schema_list *config_schema_list, uint32_t index,
                                                                    ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(config_schema_list);
-    VALIDATE_UNSIGNED_INDEX(index,config_schema_list->configSchemaList.size());
+    VALIDATE_UNSIGNED_INDEX(index, config_schema_list->configSchemaList.size());
     auto &configSchema = config_schema_list->configSchemaList.at(index);
     return configSchema;
 }
@@ -126,8 +132,8 @@ HANDLE_EXCEPTIONS_AND_RETURN(false, filter)
 ob_frame *ob_filter_process(ob_filter *filter, const ob_frame *frame, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(filter);
     VALIDATE_NOT_NULL(frame);
-    auto result      = filter->filter->process(frame->frame);
-    if (result == nullptr) {
+    auto result = filter->filter->process(frame->frame);
+    if(result == nullptr) {
         return nullptr;
     }
     auto frameImpl   = new ob_frame();

@@ -41,8 +41,9 @@ public:
     virtual void deactivate() = 0;
 
     // device info
-    virtual std::shared_ptr<const DeviceInfo> getInfo() const                                    = 0;
-    virtual const std::string                &getExtensionInfo(const std::string &infoKey) const = 0;
+    virtual std::shared_ptr<const DeviceInfo> getInfo() const                                         = 0;
+    virtual const std::string                &getExtensionInfo(const std::string &infoKey) const      = 0;
+    virtual bool                              isExtensionInfoExists(const std::string &infoKey) const = 0;
 
     // device components management
     virtual bool                                 isComponentExists(DeviceComponentId compId) const                     = 0;
@@ -91,8 +92,8 @@ struct ob_device_t {
 struct ob_device_info_t {
     std::shared_ptr<const libobsensor::DeviceInfo> info;
 };
-struct ob_camera_param_list_t{
-    std::vector<OBCameraParam>  paramList;
+struct ob_camera_param_list_t {
+    std::vector<OBCameraParam> paramList;
 };
 
 #ifdef __cplusplus

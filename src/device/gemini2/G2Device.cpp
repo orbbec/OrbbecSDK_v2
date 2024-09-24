@@ -25,6 +25,7 @@
 #include "property/PropertyServer.hpp"
 #include "property/CommonPropertyAccessors.hpp"
 #include "property/FilterPropertyAccessors.hpp"
+#include "property/PrivateFilterPropertyAccessors.hpp"
 #include "monitor/DeviceMonitor.hpp"
 #include "syncconfig/DeviceSyncConfigurator.hpp"
 
@@ -42,7 +43,7 @@ constexpr uint8_t INTERFACE_COLOR = 4;
 constexpr uint8_t INTERFACE_IR    = 2;
 constexpr uint8_t INTERFACE_DEPTH = 0;
 
-constexpr uint16_t GEMINI2XL_PID = 0x0673;
+constexpr uint16_t GEMINI2L_PID = 0x0673;
 
 G2Device::G2Device(const std::shared_ptr<const IDeviceEnumInfo> &info) : DeviceBase(info) {
     init();
@@ -59,7 +60,7 @@ void G2Device::init() {
 
     videoFrameTimestampCalculatorCreator_ = [this]() {
         std::shared_ptr<IFrameTimestampCalculator> calculator;
-        if(deviceInfo_->pid_ == GEMINI2XL_PID) {
+        if(deviceInfo_->pid_ == GEMINI2L_PID) {
             deviceTimeFreq_ = 1000;
             calculator      = std::make_shared<G2LVideoFrameTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
         }
@@ -105,7 +106,7 @@ void G2Device::init() {
 
     registerComponent(OB_DEV_COMPONENT_DEVICE_CLOCK_SYNCHRONIZER, [this] {
         std::shared_ptr<DeviceClockSynchronizer> deviceClockSynchronizer;
-        if(deviceInfo_->pid_ == GEMINI2XL_PID) {
+        if(deviceInfo_->pid_ == GEMINI2L_PID) {
             deviceTimeFreq_         = 1000;
             deviceClockSynchronizer = std::make_shared<DeviceClockSynchronizer>(this, deviceTimeFreq_, deviceTimeFreq_);
         }
@@ -148,16 +149,6 @@ void G2Device::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
     for(auto &profile: profiles) {
         LOG_INFO(" - {}", profile);
     }
-
-    // sensor->registerStreamStateChangedCallback([this](OBStreamState state, const std::shared_ptr<const StreamProfile> &sp) {
-    //     auto streamStrategy = getComponentT<ISensorStreamStrategy>(OB_DEV_COMPONENT_SENSOR_STREAM_STRATEGY);
-    //     if(state == STREAM_STATE_STARTING) {
-    //         streamStrategy->markStreamActivated (sp);
-    //     }
-    //     else if(state == STREAM_STATE_STOPPED) {
-    //         streamStrategy->markStreamDeactivated(sp);
-    //     }
-    // });
 }
 
 void G2Device::initSensorList() {
@@ -482,6 +473,12 @@ void G2Device::initProperties() {
     propertyServer->registerProperty(OB_PROP_DISPARITY_TO_DEPTH_BOOL, "rw", "rw", d2dPropertyAccessor);      // hw
     propertyServer->registerProperty(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL, "rw", "rw", d2dPropertyAccessor);  // sw
     propertyServer->registerProperty(OB_PROP_DEPTH_PRECISION_LEVEL_INT, "rw", "rw", d2dPropertyAccessor);
+    propertyServer->registerProperty(OB_STRUCT_DEPTH_PRECISION_SUPPORT_LIST, "r", "r", d2dPropertyAccessor);
+
+    auto privatePropertyAccessor = std::make_shared<PrivateFilterPropertyAccessor>(this);
+    propertyServer->registerProperty(OB_PROP_DEPTH_SOFT_FILTER_BOOL, "rw", "rw", privatePropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_DEPTH_MAX_DIFF_INT, "rw", "rw", privatePropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_DEPTH_MAX_SPECKLE_SIZE_INT, "rw", "rw", privatePropertyAccessor);
 
     auto sensors = getSensorTypeList();
     for(auto &sensor: sensors) {
@@ -496,7 +493,6 @@ void G2Device::initProperties() {
             });
 
             propertyServer->registerProperty(OB_PROP_COLOR_AUTO_EXPOSURE_BOOL, "rw", "rw", uvcPropertyAccessor);
-            // propertyServer->registerProperty(OB_PROP_COLOR_EXPOSURE_INT, "rw", "rw", uvcPropertyAccessor);  // replace by vendor property accessor
             propertyServer->registerProperty(OB_PROP_COLOR_GAIN_INT, "rw", "rw", uvcPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_COLOR_SATURATION_INT, "rw", "rw", uvcPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_COLOR_AUTO_WHITE_BALANCE_BOOL, "rw", "rw", uvcPropertyAccessor);
@@ -505,7 +501,6 @@ void G2Device::initProperties() {
             propertyServer->registerProperty(OB_PROP_COLOR_SHARPNESS_INT, "rw", "rw", uvcPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_COLOR_CONTRAST_INT, "rw", "rw", uvcPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_COLOR_POWER_LINE_FREQUENCY_INT, "rw", "rw", uvcPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_STOP_COLOR_STREAM_BOOL, "", "w", uvcPropertyAccessor);
         }
         else if(sensor == OB_SENSOR_IR) {
             auto uvcPropertyAccessor = std::make_shared<LazyPropertyAccessor>([sourcePortInfo]() {
@@ -516,7 +511,6 @@ void G2Device::initProperties() {
             });
             propertyServer->registerProperty(OB_PROP_IR_GAIN_INT, "rw", "rw", uvcPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_IR_AUTO_EXPOSURE_BOOL, "rw", "rw", uvcPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_STOP_IR_STREAM_BOOL, "", "w", uvcPropertyAccessor);
         }
         else if(sensor == OB_SENSOR_DEPTH) {
             auto uvcPropertyAccessor = std::make_shared<LazyPropertyAccessor>([&sourcePortInfo]() {
@@ -548,7 +542,6 @@ void G2Device::initProperties() {
             propertyServer->registerProperty(OB_PROP_DEPTH_ALIGN_HARDWARE_MODE_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_TIMER_RESET_SIGNAL_BOOL, "w", "w", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_TIMER_RESET_TRIGGER_OUT_ENABLE_BOOL, "rw", "rw", vendorPropertyAccessor);
-            // propertyServer->registerProperty(OB_PROP_SYNC_SIGNAL_TRIGGER_OUT_BOOL, "rw", "rw", vendorPropertyAccessor);
             propertyServer->aliasProperty(OB_PROP_SYNC_SIGNAL_TRIGGER_OUT_BOOL, OB_PROP_TIMER_RESET_TRIGGER_OUT_ENABLE_BOOL);
             propertyServer->registerProperty(OB_PROP_TIMER_RESET_DELAY_US_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_CAPTURE_IMAGE_SIGNAL_BOOL, "rw", "rw", vendorPropertyAccessor);
@@ -588,10 +581,7 @@ void G2Device::initProperties() {
             propertyServer->registerProperty(OB_PROP_DEVICE_RESET_BOOL, "", "w", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_STOP_DEPTH_STREAM_BOOL, "", "w", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_STOP_IR_STREAM_BOOL, "", "w", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_STOP_COLOR_STREAM_BOOL, "rw", "rw", vendorPropertyAccessor);
-
-            auto depthPrecisionSupportListAccessor = std::make_shared<StructureDataOverV1_1Accessor>(vendorPropertyAccessor, static_cast<uint16_t>(0));
-            propertyServer->registerProperty(OB_STRUCT_DEPTH_PRECISION_SUPPORT_LIST, "r", "r", depthPrecisionSupportListAccessor);
+            propertyServer->registerProperty(OB_PROP_STOP_COLOR_STREAM_BOOL, "", "w", vendorPropertyAccessor);
         }
         else if(sensor == OB_SENSOR_ACCEL) {
             auto imuCorrectorFilter = getSensorFrameFilter("IMUCorrector", sensor);
@@ -626,6 +616,9 @@ std::vector<std::shared_ptr<IFilter>> G2Device::createRecommendedPostProcessingF
     if(type != OB_SENSOR_DEPTH) {
         return {};
     }
+    // activate depth frame processor library
+    getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR, false);
+
     auto                                  filterFactory = FilterFactory::getInstance();
     std::vector<std::shared_ptr<IFilter>> depthFilterList;
 

@@ -40,6 +40,8 @@ public:
 
     void updateModeAliasMap(const std::map<OBSyncMode, OBMultiDeviceSyncMode> &oldToNewMap, const std::map<OBMultiDeviceSyncMode, OBSyncMode> &newToOldMap);
 
+    void enableDepthDelaySupport(bool enable);
+
 private:
     const std::vector<OBMultiDeviceSyncMode> supportedSyncModes_;
 
@@ -48,6 +50,8 @@ private:
 
     std::map<OBSyncMode, OBMultiDeviceSyncMode> syncModeOldToNewMap_;
     std::map<OBMultiDeviceSyncMode, OBSyncMode> syncModeNewToOldMap_;
+
+    bool isDepthDelaySupported_;
 };
 
 }  // namespace libobsensor

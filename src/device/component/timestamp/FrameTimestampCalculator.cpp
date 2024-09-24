@@ -125,7 +125,7 @@ uint64_t FrameTimestampCalculatorBaseDeviceTime::calculate(uint64_t srcTimestamp
 
     prevHostTsp_       = curHostTsp;
     prevSrcTsp_        = srcTimestamp;
-    auto outputTsp     = (baseDevTime_ & BASE_DEV_TIME_MASK) + srcTimestamp;
+    auto outputTsp     = (baseDevTime_ & BASE_DEV_TIME_MASK) + (srcTimestamp & (~BASE_DEV_TIME_MASK));
     auto timestampUsec = static_cast<double>(outputTsp) / frameTimeFreq_ * 1000000;
     return static_cast<uint64_t>(timestampUsec);
 }

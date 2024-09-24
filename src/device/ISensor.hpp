@@ -36,9 +36,9 @@ public:
     virtual void start(std::shared_ptr<const StreamProfile> sp, FrameCallback callback) = 0;
     virtual void stop()                                                                 = 0;
 
+    virtual void                                 setStreamProfileList(const StreamProfileList &profileList)                 = 0;
     virtual StreamProfileList                    getStreamProfileList() const                                               = 0;
     virtual void                                 setStreamProfileFilter(std::shared_ptr<IStreamProfileFilter> filter)       = 0;
-    virtual void                                 updateStreamProfileList(const StreamProfileList &profileList)              = 0;
     virtual void                                 updateDefaultStreamProfile(const std::shared_ptr<const StreamProfile> &sp) = 0;
     virtual std::shared_ptr<const StreamProfile> getActivatedStreamProfile() const                                          = 0;
     virtual FrameCallback                        getFrameCallback() const                                                   = 0;

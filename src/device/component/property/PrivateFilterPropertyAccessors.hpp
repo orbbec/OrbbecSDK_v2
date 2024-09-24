@@ -1,20 +1,20 @@
 #pragma once
 
 #include "IProperty.hpp"
-#include "IFilter.hpp"
+#include "IDevice.hpp"
 
 namespace libobsensor {
 
-class FilterStatePropertyAccessor : public IBasicPropertyAccessor {
+class PrivateFilterPropertyAccessor : public IBasicPropertyAccessor {
 public:
-    FilterStatePropertyAccessor(std::shared_ptr<IFilter> filter);
-    virtual ~FilterStatePropertyAccessor() noexcept = default;
+    PrivateFilterPropertyAccessor(IDevice *device);
+    virtual ~PrivateFilterPropertyAccessor() noexcept = default;
 
     void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
     void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
     void getPropertyRange(uint32_t propertyId, OBPropertyRange *range) override;
 
 private:
-    std::shared_ptr<IFilter> filter_;
+    IDevice *device_;
 };
 }  // namespace libobsensor

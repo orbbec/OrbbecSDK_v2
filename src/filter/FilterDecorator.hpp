@@ -26,6 +26,7 @@ public:
     void                                         setConfigValue(const std::string &name, double value) override;
     void                                         setConfigValueSync(const std::string &name, double value) override;
     double                                       getConfigValue(const std::string &name) override;
+    OBFilterConfigSchemaItem                     getConfigSchemaItem(const std::string &name) override;
 
     // Asynchronous, output result to callback function
     void         pushFrame(std::shared_ptr<const Frame> frame) override;

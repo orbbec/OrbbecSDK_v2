@@ -20,6 +20,7 @@
 #include "property/PropertyServer.hpp"
 #include "property/CommonPropertyAccessors.hpp"
 #include "property/FilterPropertyAccessors.hpp"
+#include "property/PrivateFilterPropertyAccessors.hpp"
 #include "monitor/DeviceMonitor.hpp"
 #include "FemtoBoltAlgParamManager.hpp"
 #include "syncconfig/DeviceSyncConfigurator.hpp"
@@ -93,16 +94,6 @@ void FemtoBoltDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
     for(auto &profile: profiles) {
         LOG_INFO(" - {}", profile);
     }
-
-    // sensor->registerStreamStateChangedCallback([this](OBStreamState state, const std::shared_ptr<const StreamProfile> &sp) {
-    //     auto streamStrategy = getComponentT<ISensorStreamStrategy>(OB_DEV_COMPONENT_SENSOR_STREAM_STRATEGY);
-    //     if(state == STREAM_STATE_STARTING) {
-    //         streamStrategy->markStreamActivated (sp);
-    //     }
-    //     else if(state == STREAM_STATE_STOPPED) {
-    //         streamStrategy->markStreamDeactivated(sp);
-    //     }
-    // });
 }
 
 void FemtoBoltDevice::initSensorList() {
@@ -228,10 +219,8 @@ void FemtoBoltDevice::initSensorList() {
                 auto port     = platform->getSourcePort(colorPortInfo);
                 auto sensor   = std::make_shared<VideoSensor>(this, OB_SENSOR_COLOR, port);
 
-                std::vector<FormatFilterConfig> formatFilterConfigs = {
-                    { FormatFilterPolicy::REMOVE, OB_FORMAT_NV12, OB_FORMAT_ANY, nullptr },
-                };
-                auto formatConverter = getSensorFrameFilter("FormatConverter", OB_SENSOR_COLOR, false);
+                std::vector<FormatFilterConfig> formatFilterConfigs = {};
+                auto                            formatConverter     = getSensorFrameFilter("FormatConverter", OB_SENSOR_COLOR, false);
                 if(formatConverter) {
 #ifdef WIN32
                     formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_BGR, OB_FORMAT_RGB, formatConverter });
@@ -239,6 +228,7 @@ void FemtoBoltDevice::initSensorList() {
                     formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_MJPG, OB_FORMAT_RGB, formatConverter });
                     formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_MJPG, OB_FORMAT_BGR, formatConverter });
                     formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_MJPG, OB_FORMAT_BGRA, formatConverter });
+                    formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_MJPG, OB_FORMAT_NV12, formatConverter });
 #endif
                 }
                 sensor->updateFormatFilterConfig(formatFilterConfigs);
@@ -333,6 +323,11 @@ void FemtoBoltDevice::initProperties() {
 
     auto tempPropertyAccessor = std::make_shared<FemtoBoltTempPropertyAccessor>(this);
     propertyServer->registerProperty(OB_STRUCT_DEVICE_TEMPERATURE, "r", "r", tempPropertyAccessor);
+
+    auto privatePropertyAccessor = std::make_shared<PrivateFilterPropertyAccessor>(this);
+    propertyServer->registerProperty(OB_PROP_DEPTH_SOFT_FILTER_BOOL, "rw", "rw", privatePropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_DEPTH_MAX_DIFF_INT, "rw", "rw", privatePropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_DEPTH_MAX_SPECKLE_SIZE_INT, "rw", "rw", privatePropertyAccessor);
 
     auto sensors = getSensorTypeList();
     for(auto &sensor: sensors) {

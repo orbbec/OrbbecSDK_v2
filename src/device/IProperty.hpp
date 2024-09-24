@@ -36,10 +36,10 @@ public:
 };
 class IBasicPropertyAccessor : virtual public IPropertyAccessor {
 public:
-    virtual ~IBasicPropertyAccessor() noexcept                                 = default;
+    virtual ~IBasicPropertyAccessor() noexcept                                       = default;
     virtual void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) = 0;
-    virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) = 0;
-    virtual void getPropertyRange(uint32_t propertyId, OBPropertyRange *range) = 0;
+    virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value)       = 0;
+    virtual void getPropertyRange(uint32_t propertyId, OBPropertyRange *range)       = 0;
 };
 
 class IStructureDataAccessor : virtual public IPropertyAccessor {
@@ -92,6 +92,7 @@ public:
 
     virtual bool isPropertySupported(uint32_t propertyId, PropertyOperationType operationType, PropertyAccessType accessType) const = 0;
     virtual const std::vector<OBPropertyItem> &getAvailableProperties(PropertyAccessType accessType)                                = 0;
+    virtual OBPropertyItem                     getPropertyItem(uint32_t propertyId, PropertyAccessType accessType)                  = 0;
 
     virtual void setPropertyValue(uint32_t propertyId, OBPropertyValue value, PropertyAccessType accessType)  = 0;
     virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value, PropertyAccessType accessType) = 0;

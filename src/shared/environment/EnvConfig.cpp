@@ -99,4 +99,14 @@ bool EnvConfig::getStringValue(const std::string &nodePathName, std::string &t) 
     return false;
 }
 
+std::string EnvConfig::extensionsDir_ = "./extensions";
+
+const std::string &EnvConfig::getExtensionsDirectory() {
+    return extensionsDir_;
+}
+
+void EnvConfig::setExtensionsDirectory(const std::string &dir) {
+    extensionsDir_ = dir;
+}
+
 }  // namespace libobsensor

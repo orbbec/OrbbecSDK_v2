@@ -439,24 +439,25 @@ int32_t ObLibuvcDevicePort::uvcCtrlValueTranslate(uvc_req_code action, OBPropert
 }
 
 void ObLibuvcDevicePort::onFrameCallback(uvc_frame *frame, void *userPtr) {
-    OBUvcStreamHandle *handle     = (OBUvcStreamHandle *)userPtr;
-    auto               rawframe   = FrameFactory::createFrameFromStreamProfile(handle->profile);
-    auto               videoFrame = rawframe->as<VideoFrame>();
-    TRY_EXECUTE(videoFrame->updateData(static_cast<const uint8_t *>(frame->data), frame->data_bytes));
     TRY_EXECUTE({
+        OBUvcStreamHandle *handle     = (OBUvcStreamHandle *)userPtr;
+        auto               rawframe   = FrameFactory::createFrameFromStreamProfile(handle->profile);
+        auto               videoFrame = rawframe->as<VideoFrame>();
+
+        videoFrame->updateData(static_cast<const uint8_t *>(frame->data), frame->data_bytes);
+
         auto payload_header_bytes = frame->payload_header_bytes > 12 ? 12 : frame->payload_header_bytes;
         videoFrame->updateMetadata(static_cast<const uint8_t *>(frame->payload_header), payload_header_bytes);
-    })
-    TRY_EXECUTE({
         auto metadata_bytes = frame->metadata_bytes > 255 ? 255 : frame->metadata_bytes;
         videoFrame->appendMetadata(static_cast<const uint8_t *>(frame->metadata), metadata_bytes);
-    })
-    auto realtime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    videoFrame->setSystemTimeStampUsec(realtime);
-    videoFrame->setTimeStampUsec(frame->pts);
-    videoFrame->setNumber(frame->sequence);
 
-    handle->callback(videoFrame);
+        auto realtime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        videoFrame->setSystemTimeStampUsec(realtime);
+        videoFrame->setTimeStampUsec(frame->pts);
+        videoFrame->setNumber(frame->sequence);
+
+        handle->callback(videoFrame);
+    });
 }
 
 int32_t ObLibuvcDevicePort::getCtrl(uvc_req_code action, uint8_t control, uint8_t unit) const {

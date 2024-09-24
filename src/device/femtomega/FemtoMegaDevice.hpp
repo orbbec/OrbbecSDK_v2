@@ -33,7 +33,7 @@ private:
     void initSensorList();
     void initProperties();
     void initSensorStreamProfile(std::shared_ptr<ISensor> sensor);
-    void fetchAllProfileList();
+    void fetchAllVideoStreamProfileList();
 
     void fetchDeviceInfo() override;
 
@@ -42,7 +42,7 @@ private:
     uint64_t depthFrameTimeFreq_ = 1000;
     uint64_t colorFrameTimeFreq_ = 90000;
 
-    StreamProfileList allNetProfileList_;
+    StreamProfileList allVideoStreamProfileList_;  // fetch from device via vendor-specific protocol for all types of video stream
 };
 
 }  // namespace libobsensor

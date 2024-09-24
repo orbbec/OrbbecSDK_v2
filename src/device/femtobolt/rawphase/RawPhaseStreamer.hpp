@@ -40,7 +40,7 @@ private:
     void                    deinitDepthEngine();
     k4a_depth_engine_mode_t getDepthEngineMode(std::shared_ptr<const StreamProfile> profile);
 
-    void updateStreamProfileList();
+    void setStreamProfileList();
 
 private:
     IDevice                          *owner_;

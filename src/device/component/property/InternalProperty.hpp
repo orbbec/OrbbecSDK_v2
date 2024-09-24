@@ -6,15 +6,19 @@ namespace libobsensor {
 typedef enum {
     OB_PROP_FEMTO_MEGA_HARDWARE_D2C_BOOL    = 13,  /**< FemtoMega hardware d2c switch*/
     OB_PROP_DEVICE_RESET_BOOL               = 29,  /**< Reset/reboot the device*/
-    OB_PROP_STOP_DEPTH_STREAM_BOOL          = 38,  /**<Disable the deep stream (MX6600 chip also acts as the right IR stream), used for devices that cannot disable the stream via the standard UVC protocol. */
-    OB_PROP_STOP_IR_STREAM_BOOL             = 39,  /**<Disable the IR stream (MX6600 chip also serves as the left IR stream) for devices that cannot disable the stream via the standard UVC protocol */
-    OB_PROP_TOF_EXPOSURE_TIME_INT           = 47,  /**<TOF exposure time // only sdk-firmware internal use */
-    OB_PROP_TOF_GAIN_INT                    = 48,  /**<TOF gain value // only sdk-firmware internal use */
+    OB_PROP_STOP_DEPTH_STREAM_BOOL          = 38,  /**<Disable the depth stream*/
+    OB_PROP_STOP_IR_STREAM_BOOL             = 39,  /**<Disable the IR stream*/
+    OB_PROP_TOF_EXPOSURE_TIME_INT           = 47,  /**<TOF exposure time //only sdk-firmware internal use*/
+    OB_PROP_TOF_GAIN_INT                    = 48,  /**<TOF gain value //only sdk-firmware internal use*/
     OB_PROP_REBOOT_DEVICE_BOOL              = 57,  /**< Reboot the device*/
-    OB_PROP_STOP_COLOR_STREAM_BOOL          = 77,  /**< Disable the Color stream for devices that cannot disable the stream via the standard UVC protocol*/
-    OB_PROP_FAN_WORK_LEVEL_INT              = 110, /**< Fan speed settings */
+    OB_PROP_STOP_COLOR_STREAM_BOOL          = 77,  /**< Disable the Color stream*/
+    OB_PROP_DEVICE_COMMUNICATION_TYPE_INT   = 97,  // Device communication type, 0: USB; 1: Ethernet(RTSP)
+    OB_PROP_FAN_WORK_LEVEL_INT              = 110, /**< Fan speed settings*/
+    OB_PROP_DEVICE_PID_INT                  = 111, /**< Device product id*/
     OB_PROP_DEPTH_MIRROR_MODULE_STATUS_BOOL = 108, /**< Depth mirror module status*/
-    OB_PROP_FAN_WORK_SPEED_INT              = 120, /**< Fan speed */
+    OB_PROP_FAN_WORK_SPEED_INT              = 120, /**< Fan speed*/
+
+    OB_STRUCT_DEVICE_UPGRADE_STATUS         = 1006, /**< Firmware upgrade status, read only*/
     OB_PROP_START_COLOR_STREAM_BOOL         = 125, /**< Start or stop color stream */
     OB_PROP_START_DEPTH_STREAM_BOOL         = 126, /**< Start or stop depth stream */
     OB_PROP_START_IR_STREAM_BOOL            = 127, /**< Start or stop left ir stream */
@@ -33,22 +37,21 @@ typedef enum {
     OB_STRUCT_GET_ACCEL_PRESETS_ODR_LIST        = 1032, /**< Get the list of sampling rates supported by the accelerometer*/
     OB_STRUCT_GET_GYRO_PRESETS_FULL_SCALE_LIST  = 1033, /**< Get the range list supported by the gyroscope*/
     OB_STRUCT_GET_ACCEL_PRESETS_FULL_SCALE_LIST = 1034, /**< Get the range list supported by the accelerometer*/
-                                                        //  OB_STRUCT_DEVICE_TIME                       = 1037, /**< Get/update the current device time*/
 
     OB_STRUCT_COLOR_STREAM_PROFILE    = 1048, /**< set stream profile to color*/
     OB_STRUCT_DEPTH_STREAM_PROFILE    = 1049, /**< set stream profile to depth*/
     OB_STRUCT_IR_STREAM_PROFILE       = 1050, /**< set stream profile to ir or left ir*/
     OB_STRUCT_IR_RIGHT_STREAM_PROFILE = 1065, /**< set stream profile to right ir*/
 
-    OB_RAW_DATA_D2C_ALIGN_SUPPORT_PROFILE_LIST      = 4024, /**< D2C对齐分辨率列表 */
+    OB_RAW_DATA_D2C_ALIGN_SUPPORT_PROFILE_LIST      = 4024, /**< D2C对齐分辨率列表*/
     OB_RAW_DATA_DEPTH_CALIB_PARAM                   = 4026, /**< Depth calibration parameters*/
     OB_RAW_DATA_ALIGN_CALIB_PARAM                   = 4027,
     OB_RAW_DATA_DEPTH_ALG_MODE_LIST                 = 4034, /**< Depth algorithm mode list*/
     OB_RAW_DATA_EFFECTIVE_VIDEO_STREAM_PROFILE_LIST = 4035, /**< Current effective video stream profile list*/
-    OB_RAW_DATA_STREAM_PROFILE_LIST =
-        4033, /**< Stream configuration list retrieval (temporarily applied to network stream configuration retrieval in Femto Mega).*/
-    OB_RAW_DATA_IMU_CALIB_PARAM              = 4036, /**< IMU calibration parameters*/
-    OB_RAW_DATA_DEVICE_EXTENSION_INFORMATION = 4041, /**< Device extension information*/
+    OB_RAW_DATA_STREAM_PROFILE_LIST                 = 4033, /**< Stream configuration list*/
+    OB_RAW_DATA_IMU_CALIB_PARAM                     = 4036, /**< IMU calibration parameters*/
+    OB_RAW_DATA_DEVICE_UPGRADE                      = 4039, /**< Device firmware upgrade*/
+    OB_RAW_DATA_DEVICE_EXTENSION_INFORMATION        = 4041, /**< Device extension information*/
 
 } OBInternalPropertyID;
 

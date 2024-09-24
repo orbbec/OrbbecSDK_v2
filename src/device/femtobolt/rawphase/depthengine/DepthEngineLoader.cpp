@@ -1,8 +1,10 @@
 #include "DepthEngineLoader.hpp"
-
+#include "environment/EnvConfig.hpp"
 namespace libobsensor {
 
 DepthEngineLoadFactory::DepthEngineLoadFactory() {
+    std::string depthEngineLoadPath_ = EnvConfig::getExtensionsDirectory() + "/depthengine/";
+
     dylib_ = std::make_shared<dylib>(depthEngineLoadPath_, "depthengine");
 
     context_ = std::make_shared<deloader_global_context_t>();

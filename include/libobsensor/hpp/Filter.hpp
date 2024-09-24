@@ -83,7 +83,7 @@ protected:
      */
     Filter() = default;
 
-    void init(ob_filter *impl) {
+    virtual void init(ob_filter *impl) {
         impl_           = impl;
         ob_error *error = nullptr;
         name_           = ob_filter_get_name(impl_, &error);
@@ -100,6 +100,9 @@ protected:
             Error::handle(&error);
             configSchemaVec_.emplace_back(item);
         }
+
+        ob_delete_filter_config_schema_list(configSchemaList, &error);
+        Error::handle(&error);
     }
 
 public:
@@ -172,6 +175,9 @@ public:
         ob_error *error  = nullptr;
         auto      result = ob_filter_process(impl_, frame->getImpl(), &error);
         Error::handle(&error);
+        if(!result) {
+            return nullptr;
+        }
         return std::make_shared<Frame>(result);
     }
 

@@ -691,44 +691,47 @@ void ObV4lGmslDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandleGmsl> devHa
                 // LOG_DEBUG("captureLoop-buf.index:{}, buf.sequence:{}, buf.length:{}, buf.flags:{} ", buf.index, buf.sequence, buf.length, buf.flags);
                 // if( (buf.bytesused) && (buf.flags&V4L2_BUF_FLAG_DONE) )
                 if((buf.bytesused) && (!(buf.flags & V4L2_BUF_FLAG_ERROR))) {
-                    auto rawframe   = FrameFactory::createFrameFromStreamProfile(devHandle->profile);
-                    auto videoFrame = rawframe->as<VideoFrame>();
-                    if((DetectPlatform() == Platform::Xavier) || (DetectPlatform() == Platform::Orin)) {
-                        handleSpecialResolution(devHandle, devHandle->buffers[buf.index].ptr, buf.bytesused, videoFrame);
-                    }
-                    else {
-                        videoFrame->updateData(devHandle->buffers[buf.index].ptr, buf.bytesused);
-                    }
-
-                    if(metadataBufferIndex >= 0) {  // temp fix orbbecviewer metadata view flash issue. reason:Occasional missing of one frame in metadata data.
-                        auto &metaBuf                = devHandle->metadataBuffers[metadataBufferIndex];
-                        auto  uvc_payload_header     = metaBuf.ptr;
-                        auto  uvc_payload_header_len = metaBuf.actual_length;
-                        videoFrame->updateMetadata(static_cast<const uint8_t *>(uvc_payload_header), 12);
-                        videoFrame->appendMetadata(static_cast<const uint8_t *>(uvc_payload_header), uvc_payload_header_len);
-
-                        if(uvc_payload_header_len >= sizeof(StandardUvcFramePayloadHeader)) {
-                            auto payloadHeader = (StandardUvcFramePayloadHeader *)uvc_payload_header;
-                            videoFrame->setTimeStampUsec(payloadHeader->dwPresentationTime);
-                        }
-
-                        auto realtime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-                        videoFrame->setSystemTimeStampUsec(realtime);
-                        videoFrame->setNumber(buf.sequence);
-
-                        if(devHandle->profile->getType() == OB_STREAM_COLOR) {
-                            if(colorFrameNum >= 3) {
-                                devHandle->frameCallback(videoFrame);
-                            }
-                            else {
-                                colorFrameNum++;
-                                LOG_DEBUG("captureLoop colorFrameNum<3 drop. colorFrameNum:{}", colorFrameNum);
-                            }
+                    TRY_EXECUTE({
+                        auto rawframe   = FrameFactory::createFrameFromStreamProfile(devHandle->profile);
+                        auto videoFrame = rawframe->as<VideoFrame>();
+                        if((DetectPlatform() == Platform::Xavier) || (DetectPlatform() == Platform::Orin)) {
+                            handleSpecialResolution(devHandle, devHandle->buffers[buf.index].ptr, buf.bytesused, videoFrame);
                         }
                         else {
-                            devHandle->frameCallback(videoFrame);
+                            videoFrame->updateData(devHandle->buffers[buf.index].ptr, buf.bytesused);
                         }
-                    }
+
+                        if(metadataBufferIndex >= 0) {
+                            // temp fix orbbecviewer metadata view flash issue. reason:Occasional missing of one frame in metadata data.
+                            auto &metaBuf                = devHandle->metadataBuffers[metadataBufferIndex];
+                            auto  uvc_payload_header     = metaBuf.ptr;
+                            auto  uvc_payload_header_len = metaBuf.actual_length;
+                            videoFrame->updateMetadata(static_cast<const uint8_t *>(uvc_payload_header), 12);
+                            videoFrame->appendMetadata(static_cast<const uint8_t *>(uvc_payload_header), uvc_payload_header_len);
+
+                            if(uvc_payload_header_len >= sizeof(StandardUvcFramePayloadHeader)) {
+                                auto payloadHeader = (StandardUvcFramePayloadHeader *)uvc_payload_header;
+                                videoFrame->setTimeStampUsec(payloadHeader->dwPresentationTime);
+                            }
+
+                            auto realtime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+                            videoFrame->setSystemTimeStampUsec(realtime);
+                            videoFrame->setNumber(buf.sequence);
+
+                            if(devHandle->profile->getType() == OB_STREAM_COLOR) {
+                                if(colorFrameNum >= 3) {
+                                    devHandle->frameCallback(videoFrame);
+                                }
+                                else {
+                                    colorFrameNum++;
+                                    LOG_DEBUG("captureLoop colorFrameNum<3 drop. colorFrameNum:{}", colorFrameNum);
+                                }
+                            }
+                            else {
+                                devHandle->frameCallback(videoFrame);
+                            }
+                        }
+                    });
                 }
 
                 if(devHandle->isCapturing) {
@@ -1006,8 +1009,8 @@ void ObV4lGmslDevicePort::startStream(std::shared_ptr<const StreamProfile> profi
                 }
             }
             else {
-                uint8_t  md_extra         = (V4L2_BUF_TYPE_VIDEO_CAPTURE == buf.type) ? MAX_META_DATA_SIZE : 0;
-                uint32_t _length          = buf.length + md_extra;
+                uint8_t  md_extra            = (V4L2_BUF_TYPE_VIDEO_CAPTURE == buf.type) ? MAX_META_DATA_SIZE : 0;
+                uint32_t _length             = buf.length + md_extra;
                 devHandle->buffers[i].ptr    = static_cast<uint8_t *>(malloc(_length));
                 devHandle->buffers[i].length = _length;
 
