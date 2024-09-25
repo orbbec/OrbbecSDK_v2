@@ -134,8 +134,13 @@ void ObRTPUDPClient::frameReceive() {
         }
 
         if(recvLen > 0) {
-            std::vector<uint8_t> data(buffer.begin(), buffer.begin() + recvLen);
-            rtpQueue_.push(data);
+            char server_ip[INET_ADDRSTRLEN];
+            inet_ntop(AF_INET, &serverAddr.sin_addr, server_ip, sizeof(server_ip));
+            std::string serverIpString(server_ip);
+            if(serverIpString == serverIp_) {
+                std::vector<uint8_t> data(buffer.begin(), buffer.begin() + recvLen);
+                rtpQueue_.push(data);
+            }
         }
     }
 

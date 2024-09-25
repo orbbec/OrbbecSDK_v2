@@ -85,19 +85,6 @@ std::vector<std::shared_ptr<IDeviceEnumInfo>> G330DeviceInfo::pickDevices(const 
         }
         iter++;
     }
-
-    // pick ethernet device
-    // remainder = FilterNetPortInfoByPid(infoList, G330DevPids);
-    // groups    = utils::groupVector<std::shared_ptr<const SourcePortInfo>>(remainder, GroupNetSourcePortByMac);
-    // iter      = groups.begin();
-    // while(iter != groups.end()) {
-    //     if(iter->size() >= 3) {
-    //         auto info = std::make_shared<G330DeviceInfo>(*iter);
-    //         G330DeviceInfos.push_back(info);
-    //     }
-    //     iter++;
-    // }
-
     return G330DeviceInfos;
 }
 
