@@ -231,12 +231,12 @@ void ObRTPNpCapReceiver::frameReceive2(pcap_t *handle) {
     LOG_DEBUG("start udp data receive thread...");
     struct pcap_pkthdr *header;
     const u_char *      packet;
-    int timeOutCount = 20;
+    bool receiveData = false;
     while(startReceive_) {
         int res = pcap_next_ex(handle, &header, &packet);
         if(res > 0) {
             foundPcapHandle_ = true;
-            timeOutCount = 1000000;
+            receiveData = true;
             // Ethernet + IP header lengths
             const u_char *payload = packet + 42;
             // Adjust based on header lengths
@@ -247,8 +247,7 @@ void ObRTPNpCapReceiver::frameReceive2(pcap_t *handle) {
             }
         }
         else {
-            timeOutCount --;
-            if(timeOutCount == 0 && foundPcapHandle_) {
+            if(!receiveData && foundPcapHandle_) {
                 break;
             }
             LOG_ERROR_INTVL("Receive rtp packet error!");
