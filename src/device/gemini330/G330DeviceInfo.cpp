@@ -31,6 +31,8 @@ G330DeviceInfo::G330DeviceInfo(const SourcePortInfoList groupedInfoList) {
             name_ = "Gemini 300 series device";
         }
 
+        fullName_ = "Orbbec " + name_;
+
         pid_                = portInfo->pid;
         vid_                = portInfo->vid;
         uid_                = portInfo->uid;
@@ -47,6 +49,8 @@ G330DeviceInfo::G330DeviceInfo(const SourcePortInfoList groupedInfoList) {
         else {
             name_ = "Gemini 300 series device";
         }
+
+        fullName_ = "Orbbec " + name_;
 
         pid_                = portInfo->pid;
         vid_                = 0x2BC5;

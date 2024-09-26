@@ -1227,9 +1227,10 @@ void G330NetDevice::fetchDeviceInfo() {
     auto netPortInfo                  = std::dynamic_pointer_cast<const NetSourcePortInfo>(portInfo);
     deviceInfo->ipAddress_            = netPortInfo->address;
     deviceInfo_                       = deviceInfo;
-    deviceInfo_->name_                = version.deviceName;
+    deviceInfo_->name_                = enumInfo_->getName();
+    deviceInfo_->fullName_            = "Orbbec " + deviceInfo_->name_;
     deviceInfo_->fwVersion_           = version.firmwareVersion;
-    deviceInfo_->deviceSn_            = version.serialNumber;
+    deviceInfo_->deviceSn_            = enumInfo_->getDeviceSn();
     deviceInfo_->asicName_            = version.depthChip;
     deviceInfo_->hwVersion_           = version.hardwareVersion;
     deviceInfo_->type_                = static_cast<uint16_t>(version.deviceType);
@@ -1238,7 +1239,7 @@ void G330NetDevice::fetchDeviceInfo() {
     deviceInfo_->vid_                 = enumInfo_->getVid();
     deviceInfo_->uid_                 = enumInfo_->getUid();
     deviceInfo_->connectionType_      = enumInfo_->getConnectionType();
-    // todo: fetch and parse extension info
+    
 }
 
 void libobsensor::G330NetDevice::fetchAllProfileList() {
