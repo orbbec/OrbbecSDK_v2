@@ -43,7 +43,7 @@ public:
     void startCountDown();
 
     uint8_t *getData() {
-        return rtpBuffer_ + RTP_FIX_METADATA_SIZE;
+        return rtpBuffer_ + (RTP_FIX_METADATA_OFFSET + RTP_FIX_METADATA_SIZE);
     }
 
     uint32_t getDataSize() {
@@ -55,7 +55,7 @@ public:
     }
 
     uint32_t getMetaDataSize() {
-        return RTP_FIX_METADATA_SIZE;
+        return (RTP_FIX_METADATA_OFFSET + RTP_FIX_METADATA_SIZE);
     }
 
     uint64_t getNumber() {
@@ -78,13 +78,15 @@ private:
     void OnStartOfFrame();
     bool founStartPacket();
     void OnEndOfFrame(uint16_t sequenceNumber);
+    void convertBigEndianToLittleEndian(uint8_t *recvData, uint32_t size);
     void countDown(int milliseconds);
 
 private:
-    const uint32_t MAX_RTP_FRAME_SIZE    = 4 * 1920 * 1080;
-    const uint32_t MAX_RTP_FIX_SIZE      = 1472;
-    const uint32_t RTP_FIX_SIZE          = 12;
-    const uint32_t RTP_FIX_METADATA_SIZE = 96;
+    const uint32_t MAX_RTP_FRAME_SIZE      = 4 * 1920 * 1080;
+    const uint32_t MAX_RTP_FIX_SIZE        = 1472;
+    const uint32_t RTP_FIX_SIZE            = 12;
+    const uint32_t RTP_FIX_METADATA_OFFSET = 12;
+    const uint32_t RTP_FIX_METADATA_SIZE   = 96;
 
     bool foundStartPacket_;
     bool revDataComplete_;

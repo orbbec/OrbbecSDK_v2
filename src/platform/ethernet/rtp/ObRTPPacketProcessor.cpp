@@ -61,7 +61,7 @@ bool ObRTPPacketProcessor::process(RTPHeader *header, uint8_t *recvData, uint32_
     
     sequenceNumberList_.insert(sequenceNumber);
 
-    uint32_t offset  = sequenceNumber * maxPacketSize_;
+    uint32_t offset  = RTP_FIX_METADATA_OFFSET + sequenceNumber * maxPacketSize_;
     uint32_t dataLen = length - RTP_FIX_SIZE;
     if(rtpBuffer_ != nullptr && dataLen > 0) {
         memcpy(rtpBuffer_ + offset, recvData + RTP_FIX_SIZE, dataLen);
@@ -82,6 +82,9 @@ void ObRTPPacketProcessor::OnEndOfFrame(uint16_t sequenceNumber) {
     // for 10ms to receive additional data before proceeding.
     if(sequenceNumberList_.size() == (uint32_t)(sequenceNumber + 1)) {
         std::unique_lock<std::mutex> lk(revStatusMutex_);
+        if(rtpType_ == OB_STREAM_DEPTH) {
+            convertBigEndianToLittleEndian(rtpBuffer_, dataSize_);
+        }
         revDataComplete_ = true;
         revDataError_    = false;
         ++frameNumber_;
@@ -90,6 +93,14 @@ void ObRTPPacketProcessor::OnEndOfFrame(uint16_t sequenceNumber) {
         revDataComplete_ = false;
         revDataError_    = true;
         LOG_WARN("Received rtp packet count does not match sequenceNumber!");
+    }
+}
+
+void ObRTPPacketProcessor::convertBigEndianToLittleEndian(uint8_t *recvData, uint32_t size) {
+    uint16_t *data      = reinterpret_cast<uint16_t *>(recvData + RTP_FIX_METADATA_OFFSET);
+    uint32_t  numPixels = size / 2;
+    for(uint32_t i = 0; i < numPixels; ++i) {
+        data[i] = (data[i] >> 8) | (data[i] << 8);
     }
 }
 
