@@ -39,20 +39,17 @@ public:
 
     bool process(RTPHeader *header, uint8_t *recvData, uint32_t length, uint32_t type);
 
-
     void startCountDown();
 
-    uint8_t *getData() {
+    uint8_t *getFrameData() {
         return rtpBuffer_ + (RTP_FIX_METADATA_OFFSET + RTP_FIX_METADATA_SIZE);
     }
 
-    uint32_t getDataSize() {
+    uint32_t getFrameDataSize() {
         return dataSize_ - RTP_FIX_METADATA_SIZE;
     }
 
-    uint8_t *getMetaData() {
-        return rtpBuffer_;
-    }
+    uint8_t *getMetaData();
 
     uint32_t getMetaDataSize() {
         return (RTP_FIX_METADATA_OFFSET + RTP_FIX_METADATA_SIZE);
@@ -99,7 +96,9 @@ private:
     uint32_t maxPacketSize_;
     uint64_t timestamp_;
 
+    //metadataSize(96) + framedataSize
     uint32_t dataSize_;
+    // metadata(96) + framedata
     uint8_t *rtpBuffer_;
 
     uint32_t rtpType_;

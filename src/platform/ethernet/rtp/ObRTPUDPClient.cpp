@@ -156,7 +156,7 @@ void ObRTPUDPClient::frameProcess() {
             if(serverPort_ != 20010) {
                 rtpProcessor_.process(header, data.data(), (uint32_t)data.size(), currentProfile_->getType());
                 if(rtpProcessor_.processComplete()) {
-                    uint32_t dataSize     = rtpProcessor_.getDataSize();
+                    uint32_t frameDataSize = rtpProcessor_.getFrameDataSize();
                     uint32_t metaDataSize = rtpProcessor_.getMetaDataSize();
                     // LOG_DEBUG("Callback new frame dataSize: {}, number: {}", dataSize, rtpProcessor_.getNumber());
 
@@ -165,7 +165,7 @@ void ObRTPUDPClient::frameProcess() {
                     frame->setTimeStampUsec(rtpProcessor_.getTimestamp());
                     frame->setNumber(rtpProcessor_.getNumber());
                     frame->updateMetadata(rtpProcessor_.getMetaData(), metaDataSize);
-                    frame->updateData(rtpProcessor_.getData(), dataSize);
+                    frame->updateData(rtpProcessor_.getFrameData(), frameDataSize);
 
                     frameCallback_(frame);
                     rtpProcessor_.reset();

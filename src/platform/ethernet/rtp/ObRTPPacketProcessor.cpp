@@ -10,7 +10,6 @@
 
 namespace libobsensor {
 
-
 ObRTPPacketProcessor::ObRTPPacketProcessor()
     : foundStartPacket_(false), revDataComplete_(false), revDataError_(false), countDownStart_(false), frameNumber_(0), dataSize_(0) ,rtpBuffer_(nullptr) {
 
@@ -83,7 +82,7 @@ void ObRTPPacketProcessor::OnEndOfFrame(uint16_t sequenceNumber) {
     if(sequenceNumberList_.size() == (uint32_t)(sequenceNumber + 1)) {
         std::unique_lock<std::mutex> lk(revStatusMutex_);
         if(rtpType_ == OB_STREAM_DEPTH) {
-            convertBigEndianToLittleEndian(rtpBuffer_, dataSize_);
+            convertBigEndianToLittleEndian(getFrameData(), getFrameDataSize());
         }
         revDataComplete_ = true;
         revDataError_    = false;
@@ -97,7 +96,7 @@ void ObRTPPacketProcessor::OnEndOfFrame(uint16_t sequenceNumber) {
 }
 
 void ObRTPPacketProcessor::convertBigEndianToLittleEndian(uint8_t *recvData, uint32_t size) {
-    uint16_t *data      = reinterpret_cast<uint16_t *>(recvData + RTP_FIX_METADATA_OFFSET);
+    uint16_t *data      = reinterpret_cast<uint16_t *>(recvData);
     uint32_t  numPixels = size / 2;
     for(uint32_t i = 0; i < numPixels; ++i) {
         data[i] = (data[i] >> 8) | (data[i] << 8);
@@ -111,6 +110,15 @@ void ObRTPPacketProcessor::startCountDown() {
 
     countDownStart_ = true;
     std::thread timerThread(&ObRTPPacketProcessor::countDown, this, OB_RTP_PACKET_REV_TIMEOUT);
+}
+
+uint8_t *ObRTPPacketProcessor::getMetaData() {
+    uint32_t *data      = reinterpret_cast<uint32_t *>(rtpBuffer_ + RTP_FIX_METADATA_OFFSET);
+    uint32_t  numPixels = RTP_FIX_METADATA_SIZE / 4;
+    for(uint32_t i = 0; i < numPixels; ++i) {
+        data[i] = ((data[i] >> 24) & 0x000000FF) | ((data[i] >> 8) & 0x0000FF00) | ((data[i] << 8) & 0x00FF0000) | ((data[i] << 24) & 0xFF000000);
+    }
+    return rtpBuffer_;
 }
 
 void ObRTPPacketProcessor::countDown(int milliseconds) {

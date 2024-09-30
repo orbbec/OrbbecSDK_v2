@@ -119,6 +119,14 @@ int GVCPClient::openClientSockets() {
     int index = 0;
 
     for(aa = adapter_addresses; aa != NULL; aa = aa->Next) {
+        std::cout << "Interface: " << aa->AdapterName << std::endl;
+        std::cout << "  MAC Address: ";
+        for(int i = 0; i < 6; i++) {
+            printf("%02X", aa->PhysicalAddress[i]);
+            if(i < 5)
+                printf(":");
+        }
+
         for(ua = aa->FirstUnicastAddress; ua != NULL; ua = ua->Next) {
             SOCKADDR_IN addrSrv;
             addrSrv            = *(SOCKADDR_IN *)ua->Address.lpSockaddr;
@@ -128,6 +136,7 @@ int GVCPClient::openClientSockets() {
             if(strncmp(ipStr, "169.254", 7) == 0 || strcmp(ipStr, "127.0.0.1") == 0) {
                 continue;
             }
+            std::cout << "  IP Address: " << ipStr << std::endl;
             socks_[index++] = openClientSocket(addrSrv);
         }
     }
@@ -167,6 +176,18 @@ int GVCPClient::openClientSockets() {
             }
             ipAddressStrSet_.insert(ipStr);
             socks_[index++] = openClientSocket(addrSrv);
+
+            if(ifa->ifa_addr->sa_family == AF_PACKET) {
+                unsigned char *mac = (unsigned char *)ifa->ifa_addr->sa_data;
+                std::cout << "  MAC Address: ";
+                for(int i = 0; i < 6; i++) {
+                    printf("%02x", mac[i]);
+                    if(i < 5) {
+                        printf(":");
+                    }
+                }
+                std::cout << std::endl;
+            }
         }
     }
     sockCount_ = index;
