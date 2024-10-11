@@ -57,6 +57,7 @@ private:
 
 private:
     std::shared_ptr<const SourcePortInfo>                       vendorPortInfo_;
+    std::shared_ptr<const SourcePortInfo>                       ptpPortInfo_;
     const uint64_t                                              deviceTimeFreq_ = 1000;     // in ms
     const uint64_t                                              frameTimeFreq_  = 1000000;  // in us
     std::function<std::shared_ptr<IFrameTimestampCalculator>()> videoFrameTimestampCalculatorCreator_;

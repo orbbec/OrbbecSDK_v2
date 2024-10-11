@@ -17,12 +17,13 @@ enum SourcePortType {
     SOURCE_PORT_NET_VENDOR_STREAM,
     SOURCE_PORT_NET_RTSP,
     SOURCE_PORT_NET_RTP,
+    SOURCE_PORT_NET_PTP,
     SOURCE_PORT_IPC_VENDOR,  // Inter-process communication port
     SOURCE_PORT_UNKNOWN = 0xff,
 };
 
 #define IS_USB_PORT(type) ((type) >= SOURCE_PORT_USB_VENDOR && (type) <= SOURCE_PORT_USB_HID)
-#define IS_NET_PORT(type) ((type) >= SOURCE_PORT_NET_VENDOR && (type) <= SOURCE_PORT_NET_RTP)
+#define IS_NET_PORT(type) ((type) >= SOURCE_PORT_NET_VENDOR && (type) <= SOURCE_PORT_NET_PTP)
 
 struct SourcePortInfo {
     SourcePortInfo(SourcePortType portType) : portType(portType) {}
@@ -33,8 +34,8 @@ struct SourcePortInfo {
 };
 
 struct NetSourcePortInfo : public SourcePortInfo {
-    NetSourcePortInfo(SourcePortType portType, std::string address, uint16_t port, std::string mac, std::string serialNumber, uint32_t pid)
-        : SourcePortInfo(portType), address(address), port(port), mac(mac), serialNumber(serialNumber), pid(pid) {}
+    NetSourcePortInfo(SourcePortType portType, std::string localMac, std::string address, uint16_t port, std::string mac, std::string serialNumber, uint32_t pid)
+        : SourcePortInfo(portType), localMac(localMac), address(address), port(port), mac(mac), serialNumber(serialNumber), pid(pid) {}
 
     ~NetSourcePortInfo() noexcept override = default;
 
@@ -43,10 +44,12 @@ struct NetSourcePortInfo : public SourcePortInfo {
             return false;
         }
         auto netCmpInfo = std::dynamic_pointer_cast<const NetSourcePortInfo>(cmpInfo);
-        return (address == netCmpInfo->address) && (port == netCmpInfo->port) && (mac == netCmpInfo->mac) && (serialNumber == netCmpInfo->serialNumber)
+        return (localMac == netCmpInfo->localMac) && (address == netCmpInfo->address) && (port == netCmpInfo->port) && (mac == netCmpInfo->mac)
+               && (serialNumber == netCmpInfo->serialNumber)
                && (pid == netCmpInfo->pid);
     }
 
+    std::string localMac;
     std::string address;
     uint16_t    port;
     std::string mac;
@@ -134,4 +137,12 @@ public:
     virtual void              stopStream(std::shared_ptr<const StreamProfile> profile)                                 = 0;
     virtual void              stopAllStream()                                                                          = 0;
 };
+
+// for ptp data
+class IPTPDataPort : virtual public ISourcePort {  // Virtual inheritance solves diamond inheritance problem
+public:
+    ~IPTPDataPort() noexcept override = default;
+    virtual bool timerSyncWithHost() = 0;
+};
+
 }  // namespace libobsensor

@@ -39,6 +39,7 @@
 #include "G330PropertyAccessors.hpp"
 #include "G330NetDisparitySensor.hpp"
 #include "G330NetVideoSensor.hpp"
+#include "G330NetDeviceClockSynchronizer.hpp"
 #include "utils/BufferParser.hpp"
 
 #include <algorithm>
@@ -1178,7 +1179,9 @@ void G330NetDevice::init() {
     auto deviceSyncConfigurator = std::make_shared<DeviceSyncConfigurator>(this, supportedSyncModes);
     registerComponent(OB_DEV_COMPONENT_DEVICE_SYNC_CONFIGURATOR, deviceSyncConfigurator);
 
-    auto deviceClockSynchronizer = std::make_shared<DeviceClockSynchronizer>(this);
+    auto platform                = Platform::getInstance();
+    auto port                    = platform->getSourcePort(ptpPortInfo_);
+    auto deviceClockSynchronizer = std::make_shared<G330NetDeviceClockSynchronizer>(this, port);
     registerComponent(OB_DEV_COMPONENT_DEVICE_CLOCK_SYNCHRONIZER, deviceClockSynchronizer);
 
     registerComponent(OB_DEV_COMPONENT_FRAME_PROCESSOR_FACTORY, [this]() {
@@ -1286,9 +1289,15 @@ void G330NetDevice::initSensorList() {
 
     auto        platform           = Platform::getInstance();
     const auto &sourcePortInfoList = enumInfo_->getSourcePortInfoList();
-    auto        vendorPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(),
-                                           [](const std::shared_ptr<const SourcePortInfo> &portInfo) { return portInfo->portType == SOURCE_PORT_NET_VENDOR; });
 
+    auto ptpPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(),
+                                        [](const std::shared_ptr<const SourcePortInfo> &portInfo) { return portInfo->portType == SOURCE_PORT_NET_PTP; });
+    if(ptpPortInfoIter != sourcePortInfoList.end()) {
+        ptpPortInfo_ = *ptpPortInfoIter;
+    }
+
+    auto vendorPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(),
+                                           [](const std::shared_ptr<const SourcePortInfo> &portInfo) { return portInfo->portType == SOURCE_PORT_NET_VENDOR; });
     if(vendorPortInfoIter != sourcePortInfoList.end()) {
         vendorPortInfo_ = *vendorPortInfoIter;
     }

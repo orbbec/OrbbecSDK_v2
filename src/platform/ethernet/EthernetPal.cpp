@@ -2,6 +2,7 @@
 #include "exception/ObException.hpp"
 #include "utils/Utils.hpp"
 #include "RTPStreamPort.hpp"
+#include "PTPDataPort.hpp"
 #include "logger/Logger.hpp"
 
 namespace libobsensor {
@@ -83,6 +84,9 @@ std::shared_ptr<ISourcePort> EthernetPal::getSourcePort(std::shared_ptr<const So
     case SOURCE_PORT_NET_RTP:
         port = std::make_shared<RTPStreamPort>(std::dynamic_pointer_cast<const RTPStreamPortInfo>(portInfo));
         break;
+    case SOURCE_PORT_NET_PTP:
+        port = std::make_shared<PTPDataPort>(std::dynamic_pointer_cast<const PTPSourcePortInfo>(portInfo));
+        break;
     default:
         throw invalid_value_exception("Invalid port type!");
     }
@@ -99,7 +103,8 @@ SourcePortInfoList EthernetPal::querySourcePortInfos() {
 
     // Only re-query port information for newly online devices
     for(auto &&info: added) {
-        sourcePortInfoList_.push_back(std::make_shared<NetSourcePortInfo>(SOURCE_PORT_NET_VENDOR, info.ip, DEFAULT_CMD_PORT, info.mac, info.sn, info.pid));
+        sourcePortInfoList_.push_back(
+            std::make_shared<NetSourcePortInfo>(SOURCE_PORT_NET_VENDOR, info.localMac, info.ip, DEFAULT_CMD_PORT, info.mac, info.sn, info.pid));
     }
 
     // Delete devices that have been offline from the list

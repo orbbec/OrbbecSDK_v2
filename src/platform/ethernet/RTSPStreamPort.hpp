@@ -11,9 +11,9 @@
 
 namespace libobsensor {
 struct RTSPStreamPortInfo : public NetSourcePortInfo {
-    RTSPStreamPortInfo(std::string address, uint16_t port, uint16_t vendorPort, OBStreamType streamType, std::string mac = "unknown",
+    RTSPStreamPortInfo(std::string localMac, std::string address, uint16_t port, uint16_t vendorPort, OBStreamType streamType, std::string mac = "unknown",
                        std::string serialNumber = "unknown", uint32_t pid = 0)
-        : NetSourcePortInfo(SOURCE_PORT_NET_RTSP, address, port, mac, serialNumber, pid), vendorPort(vendorPort), streamType(streamType) {}
+        : NetSourcePortInfo(SOURCE_PORT_NET_RTSP, localMac, address, port, mac, serialNumber, pid), vendorPort(vendorPort), streamType(streamType) {}
 
     virtual bool equal(std::shared_ptr<const SourcePortInfo> cmpInfo) const override {
         if(cmpInfo->portType != portType) {

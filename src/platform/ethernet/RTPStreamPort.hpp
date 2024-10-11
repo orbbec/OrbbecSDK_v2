@@ -11,9 +11,9 @@
 namespace libobsensor {
 
 struct RTPStreamPortInfo : public NetSourcePortInfo {
-    RTPStreamPortInfo(std::string localAddress, std::string address, uint16_t port, uint16_t vendorPort, OBStreamType streamType, std::string mac = "unknown",
-                      std::string serialNumber = "unknown", uint32_t pid = 0)
-        : NetSourcePortInfo(SOURCE_PORT_NET_RTP, address, port, mac, serialNumber, pid),
+    RTPStreamPortInfo(std::string localMac, std::string localAddress, std::string address, uint16_t port, uint16_t vendorPort, OBStreamType streamType,
+                      std::string mac = "unknown", std::string serialNumber = "unknown", uint32_t pid = 0)
+        : NetSourcePortInfo(SOURCE_PORT_NET_RTP, localMac, address, port, mac, serialNumber, pid),
           localAddress(localAddress),
           vendorPort(vendorPort),
           streamType(streamType) {}
