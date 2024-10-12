@@ -20,8 +20,11 @@ bool PTPDataPort::timerSyncWithHost() {
         ptpHost_.reset();
     }
 
+#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
     ptpHost_ = std::make_shared<ObPTPHost>(portInfo_->localMac, "localAddress", portInfo_->address, portInfo_->port, portInfo_->mac);
     ptpHost_->timeSync();
+#endif
+
     return true;
 }
 

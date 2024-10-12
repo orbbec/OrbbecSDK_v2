@@ -1,4 +1,7 @@
 #pragma once
+
+#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+
 #include "ObPTPPacketCreator.hpp"
 #include "pcap/pcap.h"
 #include <string>
@@ -44,3 +47,5 @@ private:
 };
 
 }  // namespace libobsensor
+
+#endif

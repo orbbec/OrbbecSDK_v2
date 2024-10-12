@@ -1,3 +1,5 @@
+#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+
 #include "ObPTPHost.hpp"
 #include "logger/Logger.hpp"
 #include "utils/Utils.hpp"
@@ -359,3 +361,5 @@ void ObPTPHost::destroy() {
 }
 
 }  // namespace libobsensor
+
+#endif
