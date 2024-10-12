@@ -203,19 +203,15 @@ int GVCPClient::openClientSockets() {
             int    curIndex             = index++;
             socketInfos_[curIndex].sock = socket;
 
-            if(ifa->ifa_addr->sa_family == AF_PACKET) {
-                unsigned char *mac = (unsigned char *)ifa->ifa_addr->sa_data;
-                /*std::cout << "  MAC Address: ";
-                for(int i = 0; i < 6; i++) {
-                    printf("%02x", mac[i]);
-                    if(i < 5) {
-                        printf(":");
-                    }
-                }
-                std::cout << std::endl;*/
+            LOG_DEBUG("getnameinfo-name: {}", ifa->ifa_name);
+            struct ifreq ifr;
+            std::memset(&ifr, 0, sizeof(ifr));
+            std::strncpy(ifr.ifr_name, ifa->ifa_name, IFNAMSIZ - 1);
 
-                std::ostringstream macAddressStream; 
-                for(int i = 0; i < 6; i++) {
+            if(ioctl(socket, SIOCGIFHWADDR, &ifr) >= 0) {
+                unsigned char     *mac = reinterpret_cast<unsigned char *>(ifr.ifr_hwaddr.sa_data);
+                std::ostringstream macAddressStream;
+                for(int i = 0; i < 6; ++i) {
                     macAddressStream << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(mac[i]);
                     if(i < 5) {
                         macAddressStream << ":";
@@ -223,6 +219,8 @@ int GVCPClient::openClientSockets() {
                 }
 
                 std::string macAddress = macAddressStream.str();
+                LOG_DEBUG("mac address: {}", macAddress);
+
                 socketInfos_[curIndex].mac = macAddress;
             }
         }
@@ -873,18 +871,24 @@ void GVCPClient::checkAndUpdateSockets() {
                 int  curIndex = index++;
                 socketInfos_[curIndex].sock = sock;
 
+                LOG_DEBUG("getnameinfo-name: {}", ifa->ifa_name);
+                struct ifreq ifr;
+                std::memset(&ifr, 0, sizeof(ifr));
+                std::strncpy(ifr.ifr_name, ifa->ifa_name, IFNAMSIZ - 1);
 
-                if(ifa->ifa_addr->sa_family == AF_PACKET) {
-                    unsigned char *mac = (unsigned char *)ifa->ifa_addr->sa_data;
+                if(ioctl(sock, SIOCGIFHWADDR, &ifr) >= 0) {
+                    unsigned char     *mac = reinterpret_cast<unsigned char *>(ifr.ifr_hwaddr.sa_data);
                     std::ostringstream macAddressStream;
-                    for(int i = 0; i < 6; i++) {
+                    for(int i = 0; i < 6; ++i) {
                         macAddressStream << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(mac[i]);
                         if(i < 5) {
                             macAddressStream << ":";
                         }
                     }
 
-                    std::string macAddress     = macAddressStream.str();
+                    std::string macAddress = macAddressStream.str();
+                    LOG_DEBUG("mac address: {}", macAddress);
+
                     socketInfos_[curIndex].mac = macAddress;
                 }
 

@@ -8,7 +8,7 @@ G330NetDeviceClockSynchronizer::G330NetDeviceClockSynchronizer(IDevice *owner, c
     : DeviceComponentBase(owner), backend_(backend), isClockSync_(false) {}
 
 void G330NetDeviceClockSynchronizer::setTimestampResetConfig(const OBDeviceTimestampResetConfig &timestampResetConfig) {
-    if(&timestampResetConfig) {
+    if(timestampResetConfig.enable) {
     }
     LOG_WARN("Timestamp reset config is not supported for G330 net device!");
 }

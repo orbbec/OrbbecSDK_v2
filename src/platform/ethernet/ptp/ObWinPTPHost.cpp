@@ -14,6 +14,7 @@
 
 namespace libobsensor {
 
+#define OB_PTP_BACK_SIZE 60
 #define OB_UDP_BUFFER_SIZE 1600
 
 ObWinPTPHost::ObWinPTPHost(std::string localMac, std::string localIP, std::string address, uint16_t port, std::string mac)
@@ -238,7 +239,7 @@ void ObWinPTPHost::findDevice() {
     }
 
     if(!foundDevice) {
-        throw libobsensor::invalid_value_exception(utils::string::to_string() << "Error opening net device, not found!");
+        throw libobsensor::invalid_value_exception(utils::string::to_string() << "Error opening ptp net device, not found!");
     }
 
     LOG_DEBUG("PTP net device opened successfully");
@@ -285,12 +286,12 @@ void ObWinPTPHost::receivePTPPacket(pcap_t *handle) {
         }
         int res = pcap_next_ex(handle, &header, &packet);
         if(res > 0) {
-            if(header->len == 60) {
+            if(header->len == OB_PTP_BACK_SIZE) {
                 LOG_DEBUG("Receive PTP packet!");
                 bool       equalMAC = true;
                 Frame1588 *ptpdata  = (Frame1588 *)packet;
                 if(ptpdata->transportSpecificAndMessageType == DELAY_REQ_MSSID) {
-                    LOG_DEBUG("Receive DELAY_REQ_MSSID PTP packet!");
+                    LOG_DEBUG("Receive ptp delay req message packet.");
                     for(int i = 6; i < 12; i++) {
                         if(destMac_[i - 6] != ptpdata->macdata[i]) {
                             equalMAC = false;
@@ -302,10 +303,11 @@ void ObWinPTPHost::receivePTPPacket(pcap_t *handle) {
                 }
 
                 if(equalMAC) {
-                    LOG_DEBUG("Send PTP DELAY_RESP_CONTROL packet.");
+                    LOG_DEBUG("Send ptp delay resp control packet.");
                     Frame1588 delayRespControlFrame;
                     int       len = ptpPacketCreator_.createPTPPacket(DELAY_RESP_CONTROL, &delayRespControlFrame);
                     sendPTPPacket(handle, &delayRespControlFrame, len);
+                    LOG_DEBUG("Send ptp delay resp control finished.");
                     break;
                 }
             }
