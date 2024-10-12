@@ -38,10 +38,7 @@ public:
 
 private:
     std::shared_ptr<const PTPSourcePortInfo> portInfo_;
-
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
     std::shared_ptr<ObPTPHost> ptpHost_;
-#endif
 
 };
 }

@@ -1,6 +1,6 @@
 #if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
 
-#include "ObPTPHost.hpp"
+#include "ObWinPTPHost.hpp"
 #include "logger/Logger.hpp"
 #include "utils/Utils.hpp"
 #include "exception/ObException.hpp"
@@ -16,17 +16,17 @@ namespace libobsensor {
 
 #define OB_UDP_BUFFER_SIZE 1600
 
-ObPTPHost::ObPTPHost(std::string localMac, std::string localIP, std::string address, uint16_t port, std::string mac)
-    : localMac_(localMac), localIp_(localIP), serverIp_(address), serverPort_(port), serverMac_(mac), startSync_(false), alldevs_(nullptr), handle_(nullptr) {
+ObWinPTPHost::ObWinPTPHost(std::string localMac, std::string localIP, std::string address, uint16_t port, std::string mac)
+    : ObPTPHost(localMac, localIP, address, port, mac), startSync_(false), alldevs_(nullptr), handle_(nullptr) {
     convertMacAddress();
     findDevice();
 }
 
-ObPTPHost::~ObPTPHost() noexcept {
+ObWinPTPHost::~ObWinPTPHost() noexcept {
     destroy();
 }
 
-void ObPTPHost::convertMacAddress() {
+void ObWinPTPHost::convertMacAddress() {
     std::istringstream dstMac(serverMac_);
     std::string        item;
     int                i = 0;
@@ -46,7 +46,7 @@ void ObPTPHost::convertMacAddress() {
     ptpPacketCreator_.setMacAddress(destMac_, srcMac_);
 }
 
-void ObPTPHost::findDevice() {
+void ObWinPTPHost::findDevice() {
     handle_  = nullptr;
     alldevs_ = nullptr;
     char errbuf[PCAP_ERRBUF_SIZE];
@@ -58,7 +58,7 @@ void ObPTPHost::findDevice() {
         throw libobsensor::invalid_value_exception(utils::string::to_string() << "No net devices found!");
     }
 
-    LOG_DEBUG("Available devices:");
+    //LOG_DEBUG("Available devices:");
     pcap_if_t *dev_;
     bool foundDevice = false;
     for(dev_ = alldevs_; dev_; dev_ = dev_->next) {
@@ -66,7 +66,7 @@ void ObPTPHost::findDevice() {
             continue;  // Skip wifi
         }
         
-        LOG_DEBUG("Device Name: {}", (dev_->name ? dev_->name : "No name"));
+        //LOG_DEBUG("Device Name: {}", (dev_->name ? dev_->name : "No name"));
 
         if(dev_->addresses) {
             // Check and log the device address
@@ -80,10 +80,10 @@ void ObPTPHost::findDevice() {
                     inet_ntop(AF_INET, &(sa_in->sin_addr), ip, sizeof(ip));
                     port = ntohs(sa_in->sin_port);
                     std::string sockIp(ip);
-                    LOG_DEBUG("device Address: {}:{}", sockIp, port);
+                    LOG_DEBUG("Device address: {}:{}", sockIp, port);
                     if(sockIp == localIp_) {
                         foundDevice = true;
-                        LOG_DEBUG("Found device Address: {}:{}", sockIp, port);
+                        LOG_DEBUG("Found device address: {}:{}", sockIp, port);
                         break;
                     }
                 }
@@ -92,10 +92,10 @@ void ObPTPHost::findDevice() {
                     inet_ntop(AF_INET6, &(sa_in6->sin6_addr), ip, sizeof(ip));
                     port = ntohs(sa_in6->sin6_port);
                     std::string sockIp(ip);
-                    LOG_DEBUG("device Address: {}:{}", sockIp, port);
+                    LOG_DEBUG("Device address: {}:{}", sockIp, port);
                     if(sockIp == localIp_) {
                         foundDevice = true;
-                        LOG_DEBUG("Found device Address: {}:{}", sockIp, port);
+                        LOG_DEBUG("Found device address: {}:{}", sockIp, port);
                         break;
                     }
                 }
@@ -145,13 +145,13 @@ void ObPTPHost::findDevice() {
         pcap_freecode(&fp);
     }
     else {
-        LOG_DEBUG("Available devices:");
+        //LOG_DEBUG("Available devices:");
         for(dev_ = alldevs_; dev_; dev_ = dev_->next) {
             if((dev_->flags & PCAP_IF_WIRELESS) || (dev_->flags & PCAP_IF_CONNECTION_STATUS_DISCONNECTED)) {
                 continue;  // Skip wifi
             }
 
-            LOG_DEBUG("Device Name: {}", (dev_->name ? dev_->name : "No name"));
+            //LOG_DEBUG("Device Name: {}", (dev_->name ? dev_->name : "No name"));
 
             pcap_t *handle = pcap_open_live(dev_->name, OB_UDP_BUFFER_SIZE, 1, COMM_TIMEOUT_MS, errbuf);
             if(handle == nullptr) {
@@ -215,16 +215,17 @@ void ObPTPHost::findDevice() {
                         if(equalMAC) {
                             foundDevice = true;
                             handle_     = handle;
+                            LOG_DEBUG("Find ptp handle.");
                             break;
                         }
                     }
                 }
                 else {
                     if(res == 0) {
-                        LOG_ERROR_INTVL("Receive rtp packet timeout!");
+                        LOG_ERROR_INTVL("Receive ptp packet timeout!");
                     }
                     else {
-                        LOG_ERROR_INTVL("Receive rtp packet error: {}", res);
+                        LOG_ERROR_INTVL("Receive ptp packet error: {}", res);
                     }
                 }
             }
@@ -240,10 +241,10 @@ void ObPTPHost::findDevice() {
         throw libobsensor::invalid_value_exception(utils::string::to_string() << "Error opening net device, not found!");
     }
 
-    LOG_DEBUG("Net device opened successfully");
+    LOG_DEBUG("PTP net device opened successfully");
 }
 
-void ObPTPHost::timeSync() {
+void ObWinPTPHost::timeSync() {
     if(startSync_) {
         LOG_WARN("The PTP data receive has been started!");
         return;
@@ -273,7 +274,7 @@ void ObPTPHost::timeSync() {
     }
 }
 
-void ObPTPHost::receivePTPPacket(pcap_t *handle) {
+void ObWinPTPHost::receivePTPPacket(pcap_t *handle) {
     LOG_DEBUG("start ptp data receive...");
     struct pcap_pkthdr *header;
     const u_char *      packet;
@@ -338,14 +339,14 @@ void ObPTPHost::receivePTPPacket(pcap_t *handle) {
     LOG_DEBUG("Exit ptp data receive...");
 }
 
-void ObPTPHost::sendPTPPacket(pcap_t *handle, void *data, int len) {
+void ObWinPTPHost::sendPTPPacket(pcap_t *handle, void *data, int len) {
     int res = pcap_sendpacket(handle, (u_char *)data, len);
     if(res < 0) {
         LOG_ERROR("Send ptp data packet failed!");
     }
 }
 
-void ObPTPHost::destroy() {
+void ObWinPTPHost::destroy() {
     LOG_DEBUG("close start...");
     startSync_ = false;
     if(handle_ != nullptr) {

@@ -1,7 +1,12 @@
 #include "PTPDataPort.hpp"
+
 #include "logger/Logger.hpp"
 #include "exception/ObException.hpp"
 #include "stream/StreamProfileFactory.hpp"
+
+#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+#include "ptp/ObWinPTPHost.hpp"
+#endif
 
 namespace libobsensor {
 
@@ -18,13 +23,12 @@ std::shared_ptr<const SourcePortInfo> PTPDataPort::getSourcePortInfo() const {
 }
 
 bool PTPDataPort::timerSyncWithHost() {
-
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
     if(ptpHost_) {
         ptpHost_.reset();
     }
 
-    ptpHost_ = std::make_shared<ObPTPHost>(portInfo_->localMac, "localAddress", portInfo_->address, portInfo_->port, portInfo_->mac);
+#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+    ptpHost_ = std::make_shared<ObWinPTPHost>(portInfo_->localMac, "localAddress", portInfo_->address, portInfo_->port, portInfo_->mac);
     ptpHost_->timeSync();
 #endif
 

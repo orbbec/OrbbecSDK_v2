@@ -19,7 +19,7 @@ void ObPTPPacketCreator::setMacAddress(unsigned char *destMac, unsigned char *sr
 }
 
 int ObPTPPacketCreator::createPTPPacket(PTPPacketControlType type, Frame1588 *frame1588) {
-    LOG_DEBUG("send PTP Packet type: {}", type);
+    LOG_DEBUG("Create PTP Packet type: {}", type);
 
     memset(frame1588, 0, sizeof(Frame1588));
 
