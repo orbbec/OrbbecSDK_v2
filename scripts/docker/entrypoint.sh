@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-#
-# Copyright 2017 - 2018 Ternaris
-# SPDX-License-Identifier: Apache 2.0
+
+# Copyright (c) Orbbec Inc. All Rights Reserved.
+# Licensed under the MIT License.
 
 set -e
 
@@ -77,3 +77,4 @@ fi
 
 echo 'ADE startup completed.'
 exec "$@"
+

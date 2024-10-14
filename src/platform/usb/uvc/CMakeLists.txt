@@ -1,3 +1,6 @@
+# Copyright (c) Orbbec Inc. All Rights Reserved.
+# Licensed under the MIT License.
+
 cmake_minimum_required(VERSION 3.5)
 
 if(OB_BUILD_WIN32)
@@ -21,3 +24,4 @@ else()
         endif()
     endif()
 endif()
+

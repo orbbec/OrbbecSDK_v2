@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "Align.hpp"
 #include "exception/ObException.hpp"
 #include "logger/LoggerInterval.hpp"
@@ -224,3 +227,4 @@ std::shared_ptr<VideoStreamProfile> Align::createAlignedProfile(std::shared_ptr<
 }
 
 }  // namespace libobsensor
+

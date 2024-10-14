@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "ImuStreamer.hpp"
 
 #include "frame/Frame.hpp"
@@ -62,6 +65,7 @@ void ImuStreamer::start(std::shared_ptr<const StreamProfile> sp, MutableFrameCal
 }
 
 void ImuStreamer::stop(std::shared_ptr<const StreamProfile> sp) {
+    LOG_DEBUG("ImuStreamer stop....");
     {
         std::lock_guard<std::mutex> lock(cbMtx_);
         auto                        iter = callbacks_.find(sp);
@@ -74,12 +78,15 @@ void ImuStreamer::stop(std::shared_ptr<const StreamProfile> sp) {
             return;
         }
     }
-
+    LOG_DEBUG("ImuStreamer stop backend....");
     backend_->stopStream();
+
+    LOG_DEBUG("ImuStreamer reset filters....");
     for(auto &filter: filters_) {
         filter->reset();
     }
     running_ = false;
+    LOG_DEBUG("ImuStreamer stop finished.");
 }
 
 void ImuStreamer::parseIMUData(std::shared_ptr<Frame> frame) {
@@ -108,12 +115,15 @@ void ImuStreamer::parseIMUData(std::shared_ptr<Frame> frame) {
 
     std::shared_ptr<const AccelStreamProfile> accelStreamProfile;
     std::shared_ptr<const GyroStreamProfile>  gyroStreamProfile;
-    for(const auto &iter: callbacks_) {
-        if(iter.first->is<libobsensor::AccelStreamProfile>()) {
-            accelStreamProfile = iter.first->as<libobsensor::AccelStreamProfile>();
-        }
-        else if(iter.first->is<libobsensor::GyroStreamProfile>()) {
-            gyroStreamProfile = iter.first->as<libobsensor::GyroStreamProfile>();
+    {
+        std::lock_guard<std::mutex> lock(cbMtx_);
+        for(const auto &iter: callbacks_) {
+            if(iter.first->is<libobsensor::AccelStreamProfile>()) {
+                accelStreamProfile = iter.first->as<libobsensor::AccelStreamProfile>();
+            }
+            else if(iter.first->is<libobsensor::GyroStreamProfile>()) {
+                gyroStreamProfile = iter.first->as<libobsensor::GyroStreamProfile>();
+            }
         }
     }
 

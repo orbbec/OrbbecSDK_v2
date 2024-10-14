@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "UsbTypes.hpp"
 #include <libusb.h>
 namespace libobsensor {
@@ -33,3 +36,4 @@ SourcePortType cvtUsbClassToPortType(uint8_t cls) {
 }
 
 }  // namespace libobsensor
+

@@ -1,5 +1,5 @@
-// License: Apache 2.0. See LICENSE file in root directory.
-// Copyright(c) 2015 Intel Corporation. All Rights Reserved.
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
 
 #if(_MSC_FULL_VER < 180031101)
 #error At least Visual Studio 2013 Update 4 is required to compile this backend
@@ -43,12 +43,12 @@ template <typename T> size_t vector_bytes_size(const typename std::vector<T> &ve
 }
 
 std::string wcharToString(const wchar_t *wText) {
-    DWORD dwNum = WideCharToMultiByte(CP_UTF8, NULL, wText, -1, nullptr, 0, nullptr, FALSE);  // WideCharToMultiByte的运用
-    char *psText;  // psText为char*的临时数组，作为赋值给std::string的中间变量
+    DWORD dwNum = WideCharToMultiByte(CP_UTF8, NULL, wText, -1, nullptr, 0, nullptr, FALSE);  // Application of WideCharToMultiByte
+    char *psText;  // psText is a temporary char* array used as an intermediate variable for assignment to std::string
     psText = new char[dwNum];
-    WideCharToMultiByte(CP_UTF8, NULL, wText, -1, psText, dwNum, NULL, FALSE);  // WideCharToMultiByte的再次运用
-    std::string szDst = psText;                                                 // std::string赋值
-    delete[] psText;                                                            // psText的清除
+    WideCharToMultiByte(CP_UTF8, NULL, wText, -1, psText, dwNum, NULL, FALSE);  // Reuse of WideCharToMultiByte
+    std::string szDst = psText;                                                 // std::string assignment
+    delete[] psText;                                                            // Clearing psText
     return szDst;
 }
 
@@ -758,3 +758,4 @@ std::string winapi_error::last_error_string(DWORD lastError) {
 }
 
 }  // namespace libobsensor
+

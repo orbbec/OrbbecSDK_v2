@@ -1,4 +1,7 @@
-﻿#include <libobsensor/ObSensor.hpp>
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
+#include <libobsensor/ObSensor.hpp>
 
 #include "utils.hpp"
 #include "utils_opencv.hpp"
@@ -91,3 +94,4 @@ catch(ob::Error &e) {
     ob_smpl::waitForKeyPressed();
     exit(EXIT_FAILURE);
 }
+

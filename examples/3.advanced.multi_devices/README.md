@@ -89,4 +89,4 @@ Press the '?' key in the window to show key map.
 
 ### Result
 
-![multi_devices](/docs/resource/multi_devices.jpg)
+![multi_devices](../../docs/resource/multi_devices.jpg)

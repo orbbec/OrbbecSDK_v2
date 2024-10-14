@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "Frame.hpp"
 #include "logger/Logger.hpp"
 #include "utils/Utils.hpp"
@@ -444,3 +447,4 @@ void FrameSet::foreachFrame(ForeachBack foreachBack) const {
 }
 
 }  // namespace libobsensor
+

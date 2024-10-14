@@ -36,4 +36,4 @@ Press the button according to the interface prompts
 
 ### Result
 
-![image](/docs/resource/preset.jpg)
+![image](../../docs/resource/preset.jpg)

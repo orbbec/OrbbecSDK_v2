@@ -2,15 +2,21 @@
 
 ## 1. Introduction
 
-This is the open source repo of the Orbbec SDK. The Orbbec SDK is a cross-platform library for interfacing with the Orbbec RGB-D cameras. It provides C/C++ APIs and many other languages or frameworks [wrappers](wrappers/README.md).
+This is the open source library of the Orbbec SDK v2.x. The Orbbec SDK is a cross-platform library for interfacing with the Orbbec RGB-D cameras. It provides C/C++ APIs and many other languages or frameworks [wrappers](wrappers/README.md).
 
 <div align=center>
 <img src="docs/resource/Overview.jpg" width="400" align="center" />
 </div>
 
-The Orbbec SDK is open source since the version 2.0.0, the pre-compiled binaries of current and previous versions still can be found in this repo: [https://github.com/orbbec/OrbbecSDK](https://github.com/orbbec/OrbbecSDK). It's recommended to use the pre-compiled binaries repo if you already have an project relying on the version v1.x.y of the Orbbec SDK.
+To enhance performance and accommodate the diverse needs of our customers, the Orbbec SDK has been open source since version 2.0.0. For projects currently utilizing version 1.x of the Orbbec SDK that are considering an upgrade to Orbbec SDK v2.x, we advise using the pre-compiled binaries available in the [Release](https://github.com/orbbec/OrbbecSDK-dev/releases) page. This ensures a seamless transition and maintains consistency with your existing setup.
 
-Compared to v1.x.x, the v2.x.x version has many optimizations and refactoring. And we also have removed or modified some interfaces that were either rarely used or had flawed designs, these changes will not affect the normal usage of the SDK. The different between v1.x.x and v2.x.x of interfaces can be found in the [api_changes_at_v2.x.x](docs/api/api_changes_at_v2.x.x.md).Features not available in the current version can be found in the [features_not_available_at_v2.x.x](docs/api/features_not_available_at_v2.x.x.md).
+We have made every effort to maintain backward compatibility with our APIs. However, in pursuit of enhanced performance and an improved user experience, we have made necessary updates. Some interfaces have been removed or altered due to infrequent use or design imperfections. These changes are intended to be minimally disruptive and should not interfere with the standard functionality of the SDK.
+
+For a detailed list of features not available in the current version, please refer to our documentation: [features_not_available_at_v2.x.x](docs/api/features_not_available_at_v2.x.x.md).
+
+Additionally, a comprehensive overview of the API changes from Orbbec SDK v1.x to v2.x.x can be found here: [api_changes_at_v2.x.x](docs/api/api_changes_at_v2.x.x.md).
+
+If you prefer to continue with Orbbec SDK v1.x, you can still access the pre-compiled binaries on our [Orbbec SDK](https://github.com/orbbec/OrbbecSDK) repository. Nonetheless, we encourage you to consider transitioning to Orbbec SDK v2.x. This move will allow you to take advantage of  improved and new features and ensure ongoing support. Our dedication to v2.x is part of a broader strategy aimed at delivering robust long-term support, fostering an open-source community, and driving innovation.
 
 ### 1.1 Supported Platforms
 
@@ -26,8 +32,10 @@ Compared to v1.x.x, the v2.x.x version has many optimizations and refactoring. A
 | **Products List** | **Firmware Version**        |
 |-------------------|-----------------------------|
 | Gemini 335        | 1.2.20                      |
-| Gemini 335L       | 1.2.20                     |
-| Gemini 335Lg      | 1.3.46                     |
+| Gemini 335L       | 1.2.20                      |
+| Gemini 336        | 1.2.20                      |
+| Gemini 336L       | 1.2.20                      |
+| Gemini 335Lg      | 1.3.46                      |
 | Femto Bolt        | 1.0.6/1.0.9                 |
 | Femto Mega        | 1.1.7/1.2.7                 |
 | Astra 2           | 2.8.20                      |
@@ -38,23 +46,28 @@ More devices support will be added in the near future. If you can not find your 
 
 ## 2. Documentation
 
+*The Orbbec SDK documentation is available on [GitHub Pages](https://orbbec.github.io/OrbbecSDK-dev/).*
+
 ### 2.1 Quick Start
 
-For a comprehensive guide on installing the SDK, setting up your development environment, and developing applications, please consult the [Tutorial](docs/tutorial/installation_and_development_guide.md) section for detailed information.
+If you do not intend to modify the SDK itself, it is recommended to use a pre-compiled distribution. For a comprehensive guide on installing the SDK, setting up your development environment, and developing applications, please consult the [Tutorial](docs/tutorial/installation_and_development_guide.md) section for detailed information.
 
-For practical examples on utilizing the SDK, refer to the [Examples](examples/README.md) section for more insights.
+To explore practical examples and gain insights on utilizing the SDK, please navigate to [Examples](examples/README.md) section for more information.
 
-To learn how to effectively use the Orbbec Viewer, please refer to the  [Orbbec Viewer User Guide](docs/orbbecviewer.md).
+Orbbec Viewer is an all-in-one graphical user interface (GUI) built on the Orbbec SDK, offering a suite of features including data stream preview, camera configuration, post-processing, and more. To learn how to effectively use the Orbbec Viewer, please refer to the  [Orbbec Viewer User Guide](docs/orbbecviewer.md).
 
 ### 2.2 API Reference
 
-API Reference: [Orbbec_SDK_API_Reference.html](https://orbbec.github.io/OrbbecSDK/doc/api/English/index.html)
+API Reference: [Orbbec_SDK_API_Reference.html](https://orbbec.github.io/docs/OrbbecSDKv2/index.html)
 
+<!--
+Remove the following as it is not updatded to v2.x.x yet.
 OrbbecSDK C++ API user guide：[orbbecsdk_c++_api_user_guide-v1.0.pdf](docs/api/orbbecsdk_c++_api_user_guide-v1.0.pdf)
+-->
 
 ### 2.3 Building from Source
 
-For building the SDK from source, please refer to the [build guide](docs/build/building_orbbec_sdk.md) for more information.
+If you would like to modify the SDK itself, you can build the SDK from source. Please refer to the [build guide](docs/build/building_orbbec_sdk.md) for more information.
 
 ### 2.4 FAQ
 
@@ -96,9 +109,9 @@ pipe.stop();
 
 ## 4. Contributing
 
-Currently, we are not accepting external contributions to expand the functionality of the SDK. But we will be happy to review any pull requests or suggestions you may have.
-Please contact us at [issues](https://github.com/orbbec/OrbbecSDK-dev/issues) channel if you have any questions or concerns.
-For the developers who want to contribute to the SDK, please refer to the [developer guide](docs/developer/contributing_to_orbbec_sdk.md) for more information.
+At present, we are focusing our efforts on the internal development of the SDK and are not accepting external contributions for functionality expansion. However, we value your input and are open to reviewing any pull requests or suggestions you might have.
+
+Should you have any questions or concerns, please feel free to reach out to us through the [issues](https://github.com/orbbec/OrbbecSDK-dev/issues) channel.
 
 ## 5. License
 
@@ -106,7 +119,7 @@ This project is licensed under the MIT License with some other licenses for thir
 
 ## 6. Links
 
-- [Orbbec SDK Open Source Repo](https://github.com/orbbec/OrbbecSDK-dev)
-- [Orbbec SDK Pre-Compiled Repo](https://github.com/orbbec/OrbbecSDK)
-- [Orbbec Main Page](https://www.orbbec.com/)
+- [Orbbec SDK V2.x Open Source Library](https://github.com/orbbec/OrbbecSDK-dev)
+- [Orbbec SDK V1.x Pre-Compiled Library](https://github.com/orbbec/OrbbecSDK)
+- [Orbbec Company Main Page](https://www.orbbec.com/)
 - [Orbbec 3D Club](https://3dclub.orbbec3d.com)

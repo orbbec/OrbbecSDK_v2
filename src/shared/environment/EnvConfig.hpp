@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #pragma once
 #include "xml/XmlReader.hpp"
 #include "libobsensor/h/ObTypes.h"
@@ -34,3 +37,4 @@ private:
 };
 
 }  // namespace libobsensor
+

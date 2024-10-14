@@ -80,4 +80,4 @@ Press the 'N' key in the window to Toggle alternate show origin frame.
 
 ### Result
 
-![hdr](/docs/resource/hdr.jpg)
+![hdr](../../docs/resource/hdr.jpg)

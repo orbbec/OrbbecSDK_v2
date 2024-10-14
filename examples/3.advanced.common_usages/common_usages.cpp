@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include <libobsensor/ObSensor.hpp>
 
 #include "utils.hpp"
@@ -42,7 +45,6 @@ void handleDeviceDisconnected(std::shared_ptr<ob::DeviceList> disconnectList);
 void switchDepthWorkMode();
 void turnOffHwD2d();
 void setDepthUnit();
-void setDepthValueRange();
 void setDepthSoftFilter();
 
 void printUsage();
@@ -204,30 +206,6 @@ void setDepthUnit() {
         }
         else {
             std::cerr << "Depth precision level switch is not supported." << std::endl;
-        }
-    }
-    catch(ob::Error &e) {
-        std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\ntype:" << e.getExceptionType() << std::endl;
-        exit(EXIT_FAILURE);
-    }
-}
-
-void setDepthValueRange() {
-    try {
-        if(device->isPropertySupported(OB_PROP_MIN_DEPTH_INT, OB_PERMISSION_WRITE)) {
-            device->setIntProperty(OB_PROP_MIN_DEPTH_INT, 30);
-            std::cout << "set depth value range-min to 30 mm" << std::endl;
-        }
-        else {
-            std::cerr << "set depth value range-min is not supported." << std::endl;
-        }
-
-        if(device->isPropertySupported(OB_PROP_MAX_DEPTH_INT, OB_PERMISSION_WRITE)) {
-            device->setIntProperty(OB_PROP_MAX_DEPTH_INT, 10000);
-            std::cout << "set depth value range-max to 10000 mm" << std::endl;
-        }
-        else {
-            std::cerr << "set depth value range-max is not supported." << std::endl;
         }
     }
     catch(ob::Error &e) {
@@ -874,3 +852,4 @@ void inputWatcher() {
         }
     }
 }
+

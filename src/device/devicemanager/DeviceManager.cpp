@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "DeviceManager.hpp"
 #include "utils/Utils.hpp"
 #include "IDeviceClockSynchronizer.hpp"
@@ -251,3 +254,4 @@ bool DeviceManager::isNetDeviceEnumerationEnable() const {
 }
 
 }  // namespace libobsensor
+

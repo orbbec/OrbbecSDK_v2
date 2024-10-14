@@ -1,4 +1,7 @@
-﻿#include "AlignImpl.hpp"
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
+#include "AlignImpl.hpp"
 #include "logger/Logger.hpp"
 #include "exception/ObException.hpp"
 #include <fstream>
@@ -640,16 +643,19 @@ int AlignImpl::C2D(const uint16_t *depth_buffer, int depth_width, int depth_heig
             mapPixel<uint16_t>(depth_xy, static_cast<const uint16_t *>(rgb_buffer), color_width, color_height, (uint16_t *)out_rgb, depth_width, depth_height);
             break;
         case OB_FORMAT_RGB:
+        case OB_FORMAT_BGR:
             memset(out_rgb, 0, depth_width * depth_height * sizeof(uint24_t));
             mapPixel<uint24_t>(depth_xy, static_cast<const uint24_t *>(rgb_buffer), color_width, color_height, (uint24_t *)out_rgb, depth_width, depth_height);
             break;
-        case OB_FORMAT_BGR:
         case OB_FORMAT_BGRA:
         case OB_FORMAT_RGBA:
+            memset(out_rgb, 0, depth_width * depth_height * sizeof(uint24_t));
+            mapPixel<uint32_t>(depth_xy, static_cast<const uint32_t *>(rgb_buffer), color_width, color_height, (uint32_t *)out_rgb, depth_width, depth_height);
+            break;
         case OB_FORMAT_MJPG:
         case OB_FORMAT_YUYV:
         default:
-            LOG_ERROR("Not supported yet");
+            LOG_ERROR("Unsupported format for C2D conversion yet!");
             break;
         }
 
@@ -676,3 +682,4 @@ void AlignImpl::mapPixel(const int *map, const T *src_buffer, int src_width, int
 }
 
 }  // namespace libobsensor
+

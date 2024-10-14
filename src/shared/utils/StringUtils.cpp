@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "StringUtils.hpp"
 #include "Utils.hpp"
 #include <algorithm>
@@ -175,3 +178,4 @@ bool cvt2Double(const std::string &string, double &dst) {
 }  // namespace string
 }  // namespace utils
 }  // namespace libobsensor
+

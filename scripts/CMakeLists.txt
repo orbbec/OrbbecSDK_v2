@@ -1,3 +1,6 @@
+# Copyright (c) Orbbec Inc. All Rights Reserved.
+# Licensed under the MIT License.
+
 cmake_minimum_required(VERSION 3.5)
 
 if(OB_IS_MAIN_PROJECT)

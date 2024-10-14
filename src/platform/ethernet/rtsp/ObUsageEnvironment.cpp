@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "ObUsageEnvironment.hpp"
 
 #include "logger/Logger.hpp"
@@ -82,3 +85,4 @@ UsageEnvironment &ObUsageEnvironment::operator<<(void *p) {
 
 
 }  // namespace libobsensor
+

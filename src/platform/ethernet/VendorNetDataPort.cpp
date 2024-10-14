@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "VendorNetDataPort.hpp"
 
 #include "utils/Utils.hpp"
@@ -28,3 +31,4 @@ std::shared_ptr<const SourcePortInfo> VendorNetDataPort::getSourcePortInfo() con
 }
 
 }  // namespace libobsensor
+

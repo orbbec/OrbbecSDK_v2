@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #pragma once
 
 #include "Logger.hpp"
@@ -11,9 +14,9 @@
 #include <mutex>
 #include <ctime>
 
-#define LOG_RECORD_MAP_SIZE_LIMIT 500  // 最大日志记录数
-#define MAX_LOG_INTERVAL 60 * 1000     // 最大日志输出间隔 60000ms
-#define DEF_MIN_LOG_INTVL 3000         // 默认最小日志输出间隔 3000ms
+#define LOG_RECORD_MAP_SIZE_LIMIT 500  // Maximum number of log entries
+#define MAX_LOG_INTERVAL 60 * 1000     // Maximum log output interval: 60000ms
+#define DEF_MIN_LOG_INTVL 3000         // Default minimum log output interval: 3000ms
 #define LOG_INTVL_OBJECT_TAG std::string(__FILE__) + std::to_string(__LINE__) + std::to_string((uint64_t)this)
 
 struct ObLogIntvlRecord {
@@ -59,14 +62,14 @@ void log_intvl_invoke(std::shared_ptr<ObLogIntvlRecord> record, uint64_t minIntv
         spdlog::default_logger_raw()->log(src_loc, level, fmt, std::forward<Args>(args)...);
 
         uint64_t avgInterval = duration / record->count;
-        if(avgInterval < record->interval) {  // 降低log输出频率
+        if(avgInterval < record->interval) {  // Reduce log output frequency
             record->interval *= 2;
             if(record->interval > MAX_LOG_INTERVAL) {
                 record->interval = MAX_LOG_INTERVAL;
             }
         }
         else {
-            avgInterval = minIntvlMsec;  // 恢复log输出频率
+            avgInterval = minIntvlMsec;  // Restore log output frequency
         }
 
         record->lastInvokeTime = nowTime;
@@ -74,8 +77,8 @@ void log_intvl_invoke(std::shared_ptr<ObLogIntvlRecord> record, uint64_t minIntv
     }
 }
 
-// 按时间间隔控制日志输出（log at intervals），当在interval时间内连续调用log_intvl时，只输出一条日志
-// 连续频繁调用log_intvl时，日志输出频率会降低（间隔加长），直到达到最大时间间隔MAX_INTERVAL
+// Control log output at intervals; when log_intvl is called repeatedly within the interval time, only one log entry is output
+// When log_intvl is called frequently in succession, the log output frequency will decrease (intervals will lengthen) until the maximum interval, MAX_INTERVAL, is reached
 template <typename... Args>
 void log_intvl(std::shared_ptr<ObLogIntvlRecord> record, uint64_t minIntvlMsec, spdlog::source_loc src_loc, spdlog::level::level_enum level, std::string fmt,
                Args &&...args) {
@@ -92,14 +95,14 @@ void log_intvl(std::shared_ptr<ObLogIntvlRecord> record, uint64_t minIntvlMsec, 
         if(duration > record->interval || zeroLastInvokeTime) {
             if(!zeroLastInvokeTime) {
                 uint64_t avgInterval = duration / record->count;
-                if(avgInterval < record->interval) {  // 降低log输出频率
+                if(avgInterval < record->interval) {  // Reduce the log output frequency
                     record->interval *= 2;
                     if(record->interval > MAX_LOG_INTERVAL) {
                         record->interval = MAX_LOG_INTERVAL;
                     }
                 }
                 else {
-                    record->interval = minIntvlMsec;  // 恢复log输出频率
+                    record->interval = minIntvlMsec;  // Restore the log output frequency
                 }
 
                 if(record->count > 1) {
@@ -111,7 +114,7 @@ void log_intvl(std::shared_ptr<ObLogIntvlRecord> record, uint64_t minIntvlMsec, 
             record->count          = 0;
             record->lastInvokeTime = nowTime;
             lock.unlock();
-            if(record->invokeThread.joinable())  // 通知线程退出(线程退出后会自动释放资源
+            if(record->invokeThread.joinable())  // Notify the thread to exit (resources will be automatically released after the thread exits)
             {
                 record->cv.notify_all();
                 record->invokeThread.join();
@@ -128,7 +131,7 @@ void log_intvl(std::shared_ptr<ObLogIntvlRecord> record, uint64_t minIntvlMsec, 
     }
 }
 
-// 控制日志输出时间间隔, 单位毫秒，0表示不控制
+// Control the log output interval in milliseconds; 0 means no control
 #define LOG_INTVL(tag, minIntvlMsec, level, ...)                                                                                                            \
     do {                                                                                                                                                    \
         std::unique_lock<std::mutex> logIntvlRecordMapLock(logIntvlRecordMapMtx);                                                                           \
@@ -167,9 +170,9 @@ void log_intvl(std::shared_ptr<ObLogIntvlRecord> record, uint64_t minIntvlMsec, 
         LOG_INTVL(tag, minIntvlMsec, level, __VA_ARGS__);                              \
     } while(0)
 
-// LOG_XXX_INTVL 宏只能在类的成员函数中使用，因为它使用this指针作为tag（日志的时间间隔控制是绑定在具体对象上）
-// LOG_XXX_INTVL_THREAD 宏使用当前线程id作为tag，可以在类的成员函数和普通函数中使用（日志的时间间隔控制绑定在具体线程上）
-// 推荐优先使用 LOG_XXX_INTVL 宏，因为存在同一个对象的相同地方的日志输出是在不同线程调用的（如VideoSensor的原始帧数据回调）
+// The LOG_XXX_INTVL macro can only be used within class member functions because it uses the `this` pointer as a tag (log output interval control is bound to a specific object)
+// The LOG_XXX_INTVL_THREAD macro uses the current thread ID as a tag and can be used in class member functions and regular functions (log output interval control is bound to a specific thread)
+// It is recommended to prioritize the use of the LOG_XXX_INTVL macro, since log outputs from the same place where the same object exists are called in different threads (e.g., VideoSensor's raw frame data callback)
 #if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
 #define LOG_TRACE_INTVL(...) LOG_INTVL(LOG_INTVL_OBJECT_TAG, DEF_MIN_LOG_INTVL, spdlog::level::trace, __VA_ARGS__)
 #define LOG_TRACE_INTVL_THREAD(...) LOG_INTVL_ON_THREAD(DEF_MIN_LOG_INTVL, spdlog::level::trace, __VA_ARGS__)

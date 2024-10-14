@@ -1,5 +1,5 @@
-// License: Apache 2.0. See LICENSE file in root directory.
-// Copyright(c) 2020 Orbbec Corporation. All Rights Reserved.
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
 
 #pragma once
 
@@ -47,7 +47,7 @@ int deviceRemovedCallback(libusb_context *ctx, libusb_device *device, libusb_hot
 class LibusbDeviceWatcher : public IDeviceWatcher {
 public:
     LibusbDeviceWatcher() {
-        // libusb_init(); // 创建MacUsbPal会初始化
+        // libusb_init(); // Creating MacUsbPal will initialize
     }
     ~LibusbDeviceWatcher() noexcept {
         TRY_EXECUTE(stop());
@@ -85,3 +85,4 @@ private:
 #endif
 
 }  // namespace libobsensor
+

@@ -1,3 +1,6 @@
+# Copyright (c) Orbbec Inc. All Rights Reserved.
+# Licensed under the MIT License.
+
 cmake_minimum_required(VERSION 3.5)
 
 
@@ -40,3 +43,4 @@ endforeach()
 # endif (LIBUSB_1_LIBRARIES AND LIBUSB_1_INCLUDE_DIRS)
 
 # include_directories(${LIBUSB_1_INCLUDE_DIRS})
+

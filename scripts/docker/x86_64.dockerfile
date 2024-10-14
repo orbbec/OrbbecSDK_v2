@@ -1,3 +1,6 @@
+# Copyright (c)  Orbbec Inc. All Rights Reserved. 
+# Licensed under the MIT License.
+
 FROM ubuntu:18.04
 
 RUN sed -i 's|http://archive.ubuntu.com/ubuntu|http://mirrors.aliyun.com/ubuntu|g' /etc/apt/sources.list

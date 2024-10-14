@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "Astra2DepthWorkModeManager.hpp"
 #include "property/InternalProperty.hpp"
 #include "logger/Logger.hpp"
@@ -9,7 +12,14 @@ Astra2DepthWorkModeManager::Astra2DepthWorkModeManager(IDevice *owner) : DeviceC
     auto propServer = owner->getPropertyServer();
 
     depthWorkModeList_ = propServer->getStructureDataListProtoV1_1_T<OBDepthWorkMode_Internal, 0>(OB_RAW_DATA_DEPTH_ALG_MODE_LIST);
-    currentWorkMode_   = propServer->getStructureDataProtoV1_1_T<OBDepthWorkMode_Internal, 0>(OB_STRUCT_CURRENT_DEPTH_ALG_MODE);
+    // remove factory Calibration mode
+    depthWorkModeList_.erase(std::remove_if(depthWorkModeList_.begin(), depthWorkModeList_.end(),
+                                            [](const OBDepthWorkMode_Internal &mode) {  //
+                                                return strncmp(mode.name, "Factory Calibration", sizeof(mode.name)) == 0;
+                                            }),
+                             depthWorkModeList_.end());
+
+    currentWorkMode_ = propServer->getStructureDataProtoV1_1_T<OBDepthWorkMode_Internal, 0>(OB_STRUCT_CURRENT_DEPTH_ALG_MODE);
 }
 
 std::vector<OBDepthWorkMode_Internal> Astra2DepthWorkModeManager::getDepthWorkModeList() const {

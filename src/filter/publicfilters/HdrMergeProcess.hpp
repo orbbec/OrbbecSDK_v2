@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #pragma once
 #include "IFilter.hpp"
 #include <map>
@@ -25,3 +28,4 @@ protected:
 };
 
 }  // namespace libobsensor
+

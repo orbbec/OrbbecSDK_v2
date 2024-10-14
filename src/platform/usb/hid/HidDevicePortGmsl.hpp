@@ -1,5 +1,5 @@
-// License: Apache 2.0. See LICENSE file in root directory.
-// Copyright(c) 2020 Orbbec Corporation. All Rights Reserved.
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
 
 #pragma once
 #include "ISourcePort.hpp"
@@ -43,9 +43,10 @@ private:
 
     std::thread pollThread_;
 
-    int imuRetryReadNum;
-    int imuReadFps;
-    int imuPollInterval;
+    std::atomic_int imuRetryReadNum;
+    std::atomic_int imuReadFps;
+    std::atomic_int imuPollInterval;
 };
 
 }  // namespace libobsensor
+

@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "publicFilterLoader.hpp"
 #include "FramePixelValueProcess.hpp"
 #include "HdrMergeProcess.hpp"

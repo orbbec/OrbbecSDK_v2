@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #pragma once
 #include "libobsensor/h/Device.h"
 #include "libobsensor/h/Error.h"

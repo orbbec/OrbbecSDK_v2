@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "libobsensor/h/Context.h"
 
 #include "ImplTypes.hpp"

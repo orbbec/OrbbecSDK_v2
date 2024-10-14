@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "G2PropertyAccessors.hpp"
 #include "frameprocessor/FrameProcessor.hpp"
 #include "sensor/video/DisparityBasedSensor.hpp"
@@ -5,7 +8,8 @@
 
 namespace libobsensor {
 
-G2Disp2DepthPropertyAccessor::G2Disp2DepthPropertyAccessor(IDevice *owner) : owner_(owner), hwDisparityToDepthEnabled_(true) {}
+G2Disp2DepthPropertyAccessor::G2Disp2DepthPropertyAccessor(IDevice *owner)
+    : owner_(owner), hwDisparityToDepthEnabled_(true), currentDepthUnitLevel_(OB_PRECISION_1MM) {}
 
 void G2Disp2DepthPropertyAccessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
     switch(propertyId) {
@@ -14,6 +18,11 @@ void G2Disp2DepthPropertyAccessor::setPropertyValue(uint32_t propertyId, const O
         processor->setPropertyValue(propertyId, value);
     } break;
     case OB_PROP_DISPARITY_TO_DEPTH_BOOL: {
+        if(value.intValue == 1 && std::find(hwD2DSupportList_.cbegin(), hwD2DSupportList_.cend(), currentDepthUnitLevel_) == hwD2DSupportList_.end()) {
+            OBPropertyValue precisionLevel;
+            precisionLevel.intValue = hwD2DSupportList_.front();
+            setPropertyValue(OB_PROP_DEPTH_PRECISION_LEVEL_INT, precisionLevel);
+        }
         auto propertyAccessor = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
         propertyAccessor->setPropertyValue(propertyId, value);
         hwDisparityToDepthEnabled_ = static_cast<bool>(value.intValue);
@@ -37,6 +46,8 @@ void G2Disp2DepthPropertyAccessor::setPropertyValue(uint32_t propertyId, const O
             auto depthUnit = utils::depthPrecisionLevelToUnit(static_cast<OBDepthPrecisionLevel>(value.intValue));
             sensor->setDepthUnit(depthUnit);
         }
+
+        currentDepthUnitLevel_ = value.intValue;
 
     } break;
 
@@ -125,15 +136,14 @@ void G2Disp2DepthPropertyAccessor::setStructureData(uint32_t propertyId, const s
 const std::vector<uint8_t> &G2Disp2DepthPropertyAccessor::getStructureData(uint32_t propertyId) {
     if(propertyId == OB_STRUCT_DEPTH_PRECISION_SUPPORT_LIST) {
         if(hwDisparityToDepthEnabled_) {
-            static std::vector<uint16_t> hwD2DSupportList = { OB_PRECISION_0MM8, OB_PRECISION_0MM4, OB_PRECISION_0MM2 };
-            static std::vector<uint8_t>  hwD2DSupportListBytes(reinterpret_cast<uint8_t *>(hwD2DSupportList.data()),
-                                                               reinterpret_cast<uint8_t *>(hwD2DSupportList.data()) + hwD2DSupportList.size() * 2);
+
+            static std::vector<uint8_t> hwD2DSupportListBytes(reinterpret_cast<const uint8_t *>(hwD2DSupportList_.data()),
+                                                              reinterpret_cast<const uint8_t *>(hwD2DSupportList_.data()) + hwD2DSupportList_.size() * 2);
             return hwD2DSupportListBytes;
         }
         else {
-            static std::vector<uint16_t> swD2DSupportList = { OB_PRECISION_1MM, OB_PRECISION_0MM8, OB_PRECISION_0MM4, OB_PRECISION_0MM2, OB_PRECISION_0MM1 };
-            static std::vector<uint8_t>  swD2DSupportListBytes(reinterpret_cast<uint8_t *>(swD2DSupportList.data()),
-                                                               reinterpret_cast<uint8_t *>(swD2DSupportList.data()) + swD2DSupportList.size() * 2);
+            static std::vector<uint8_t> swD2DSupportListBytes(reinterpret_cast<const uint8_t *>(swD2DSupportList_.data()),
+                                                              reinterpret_cast<const uint8_t *>(swD2DSupportList_.data()) + swD2DSupportList_.size() * 2);
             return swD2DSupportListBytes;
         }
     }

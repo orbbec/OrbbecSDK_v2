@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include <libobsensor/ObSensor.hpp>
 
 #include "utils.hpp"
@@ -109,20 +112,22 @@ int main(void) try {
     std::cout << "Press D or d to create Depth PointCloud and save to ply file! " << std::endl;
     std::cout << "Press ESC to exit! " << std::endl;
 
-    // int count = 0;
     while(true) {
-        auto frameset = pipeline->waitForFrameset(1000);
-        if(!frameset) {
-            continue;
-        }
-
         auto key = ob_smpl::waitForKeyPressed();
         if(key == 27) {
             break;
         }
 
         if(key == 'r' || key == 'R') {
-            std::cout << "Save RGBD? PointCloud ply file, this will take some time..." << std::endl;
+            std::cout << "Save RGBD PointCloud to ply file, this will take some time..." << std::endl;
+
+            std::shared_ptr<ob::FrameSet> frameset = nullptr;
+            while(true) {
+                frameset = pipeline->waitForFrameset(1000);
+                if (frameset) {
+                    break;
+                }
+            }
 
             // align depth frame to color frame
             auto alignedFrameset = align->process(frameset);
@@ -140,6 +145,14 @@ int main(void) try {
         }
         else if(key == 'd' || key == 'D') {
             std::cout << "Save Depth PointCloud to ply file, this will take some time..." << std::endl;
+
+            std::shared_ptr<ob::FrameSet> frameset = nullptr;
+            while(true) {
+                frameset = pipeline->waitForFrameset(1000);
+                if (frameset) {
+                    break;
+                }
+            }
 
             // set to create depth point cloud format
             auto alignedFrameset = align->process(frameset);
@@ -167,3 +180,4 @@ catch(ob::Error &e) {
     ob_smpl::waitForKeyPressed();
     exit(EXIT_FAILURE);
 }
+

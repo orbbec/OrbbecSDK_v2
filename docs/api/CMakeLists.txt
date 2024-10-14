@@ -1,3 +1,6 @@
+# Copyright (c) Orbbec Inc. All Rights Reserved.
+# Licensed under the MIT License.
+
 #[[ minimum required cmake version: 3.1.15 support vs2019
     This file is for building html.
     Requirements for win10:
@@ -41,3 +44,4 @@ if(Doxygen_FOUND)
 	#INSTALL(DIRECTORY ${CMAKE_BINARY_DIR}/api DESTINATION "${CMAKE_BINARY_DIR}/Doc")
 	INSTALL(DIRECTORY ${CMAKE_BINARY_DIR}/doc DESTINATION shared)
 endif()
+

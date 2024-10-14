@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #pragma once
 
 #include <stdint.h>
@@ -161,29 +164,20 @@ typedef struct {
 typedef struct {
     uint16_t sensorType;  // enum value of OBSensorType
     union Profile {
-        struct Video {  // Color、IR、Depth使用该结构体
+        struct Video {  // This structure is used for Color, IR, and Depth
             uint32_t width;
             uint32_t height;
             uint32_t fps;
-            uint32_t formatFourcc;  // 如： {'Y', 'U', 'Y', 'V'} // fourcc是UVC里的一个通用概念
+            uint32_t formatFourcc;  // Example: {'Y', 'U', 'Y', 'V'} // fourcc is a common concept in UVC
         } video;
-        struct Accel {                // Accel使用该结构体
+        struct Accel {                // This structure is used for Accel
             uint16_t fullScaleRange;  // enum value of OBAccelFullScaleRange
             uint16_t sampleRate;      // enum value of OBAccelSampleRate
         } accel;
-        struct Gyro {                 // Gyro 使用该结构体
+        struct Gyro {                 // This structure is used for Gyro
             uint16_t fullScaleRange;  // enum value of OBGyroFullScaleRange
             uint16_t sampleRate;      // enum value of OBGyroSampleRate
         } gyro;
     } profile;
 } OBInternalStreamProfile;
-
-typedef struct {
-    uint16_t sensorType;  // enum value of OBSensorType
-    uint32_t width;
-    uint32_t height;
-    uint32_t fps;
-    uint32_t formatFourcc;  // 如： {'Y', 'U', 'Y', 'V'} // fourcc是UVC里的一个通用概念
-} OBInternalVideoStreamProfile;
-
 #pragma pack(pop)

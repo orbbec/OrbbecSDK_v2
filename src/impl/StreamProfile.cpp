@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "libobsensor/h/StreamProfile.h"
 
 #include "ImplTypes.hpp"

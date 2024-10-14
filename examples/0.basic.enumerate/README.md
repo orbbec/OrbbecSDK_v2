@@ -16,7 +16,7 @@ Device is the device object, which can be used to obtain the device information,
 
     ```cpp
         // Create a context.
-        ob::Context context;    
+        ob::Context context;
     ```
 
 2. Check if there is a camera connected
@@ -124,4 +124,4 @@ Press the Esc key in the window to exit the program.
 
 ### Result
 
-![image](/docs/resource/enumerate.jpg)
+![image](../../docs/resource/enumerate.jpg)

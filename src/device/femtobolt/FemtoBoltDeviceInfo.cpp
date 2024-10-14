@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "FemtoBoltDeviceInfo.hpp"
 #include "FemtoBoltDevice.hpp"
 #include "DevicePids.hpp"

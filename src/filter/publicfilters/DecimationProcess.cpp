@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "DecimationProcess.hpp"
 #include "exception/ObException.hpp"
 #include "logger/LoggerInterval.hpp"
@@ -716,3 +719,4 @@ void DecimationFilter::decimateOthers(OBFormat format, void *frame_data_in, void
 }
 
 }  // namespace libobsensor
+

@@ -1,5 +1,6 @@
-// License: Apache 2.0. See LICENSE file in root directory.
-// Copyright(c) 2020 Orbbec Corporation. All Rights Reserved.
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "AndroidUsbDeviceManager.hpp"
 
 #include <memory>
@@ -85,7 +86,7 @@ void AndroidUsbDeviceManager::onDeviceChanged(OBDeviceChangedType changedType, c
     }
 
     if(callback_) {
-        callback_(changedType, usbDevInfo.uid);  // todo: 改为url回调
+        callback_(changedType, usbDevInfo.uid);  // TODO: Change to a URL callback
     }
 }
 
@@ -98,7 +99,7 @@ void AndroidUsbDeviceManager::start(deviceChangedCallback callback) {
     std::lock_guard<std::recursive_mutex> lk(mutex_);
     callback_ = callback;
     // for(const auto &deviceInfo: deviceInfoList_) {
-    //     callback_(OB_DEVICE_ARRIVAL, deviceInfo.uid); // todo: 改为url回调
+    //     callback_(OB_DEVICE_ARRIVAL, deviceInfo.uid); // TODO: Change to a URL callback
     // }
 }
 
@@ -109,7 +110,7 @@ void AndroidUsbDeviceManager::stop() {
 
 std::shared_ptr<UsbDevice> AndroidUsbDeviceManager::openUsbDevice(const std::string &devUrl) {
     std::lock_guard<std::recursive_mutex> lk(mutex_);
-    // todo: 增加设备列表校验
+    // TODO: Add device list validation
     auto deviceHandleIter = deviceHandleMap_.find(devUrl);
     if(deviceHandleIter != deviceHandleMap_.end()) {
         AndroidUsbDeviceHandle *handle = &deviceHandleIter->second;
@@ -142,7 +143,7 @@ std::shared_ptr<UsbDevice> AndroidUsbDeviceManager::openUsbDevice(const std::str
         }
         int uid = 0;
         Stringutils::string::cvt2Int(devUrl, uid);
-        jint fileDsc = env->CallIntMethod(jObjDeviceWatcher_, midOpenUsbDevice, uid);  // todo: 改为URL
+        jint fileDsc = env->CallIntMethod(jObjDeviceWatcher_, midOpenUsbDevice, uid);  // TODO: Change to URL
         if(needDetach) {
             gJVM_->DetachCurrentThread();
         }
@@ -192,7 +193,7 @@ void AndroidUsbDeviceManager::closeUsbDevice(const std::string &devUrl) {
             libusb_close(deviceHandleIter->second.deviceHandle);
             int uid = 0;
             Stringutils::string::cvt2Int(devUrl, uid);
-            env->CallVoidMethod(jObjDeviceWatcher_, midCloseUsbDevice, uid);  // todo: 改为Url
+            env->CallVoidMethod(jObjDeviceWatcher_, midCloseUsbDevice, uid);  // TODO: Change to URL
             if(needDetach) {
                 gJVM_->DetachCurrentThread();
             }
@@ -235,7 +236,7 @@ void AndroidUsbDeviceManager::addUsbDevice(JNIEnv *env, jobject usbDevInfo) {
     jfieldID                      jfSerialNum  = env->GetFieldID(jcUsbDevInfo, "mSerialNum", "Ljava/lang/String;");
     jfieldID                      jfCls        = env->GetFieldID(jcUsbDevInfo, "mCls", "I");
     usbDeviceInfo.uid                          = libobsensor::StringUtils::convert2String((int)env->GetIntField(usbDevInfo, jfUid));
-    usbDeviceInfo.url                          = usbDeviceInfo.uid;  // todo: 使用真正的url
+    usbDeviceInfo.url                          = usbDeviceInfo.uid;  // TODO: Use the actual URL
     usbDeviceInfo.vid                          = env->GetIntField(usbDevInfo, jfVid);
     usbDeviceInfo.pid                          = env->GetIntField(usbDevInfo, jfPid);
     usbDeviceInfo.infIndex                     = env->GetIntField(usbDevInfo, jfMiId);
@@ -262,7 +263,7 @@ void AndroidUsbDeviceManager::removeUsbDevice(JNIEnv *env, jobject usbDevInfo) {
     jfieldID                      jfSerialNum  = env->GetFieldID(jcUsbDevInfo, "mSerialNum", "Ljava/lang/String;");
     jfieldID                      jfCls        = env->GetFieldID(jcUsbDevInfo, "mCls", "I");
     usbDeviceInfo.uid                          = libobsensor::StringUtils::convert2String((int)env->GetIntField(usbDevInfo, jfUid));
-    usbDeviceInfo.url                          = usbDeviceInfo.uid;  // todo: 使用真正的url
+    usbDeviceInfo.url                          = usbDeviceInfo.uid;  // TODO: Use the real URL
     usbDeviceInfo.vid                          = env->GetIntField(usbDevInfo, jfVid);
     usbDeviceInfo.pid                          = env->GetIntField(usbDevInfo, jfPid);
     usbDeviceInfo.infIndex                     = env->GetIntField(usbDevInfo, jfMiId);
@@ -350,7 +351,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_orbbec_internal_DeviceWatcher_nRemove
     }
 }
 
-// For API2.0 TODO ljf++ 后续API2.0再继续适配
+// For API 2.0 TODO ljf++ Further adaptation will be done when API 2.0 is available
 // extern "C" JNIEXPORT void JNICALL Java_com_orbbec_obsensor2_DeviceWatcher_nAddUsbDevice(JNIEnv *env, jclass type, jobject usbDevInfo) {
 //    if (!libobsensor::Context::isInstanceExist()) {
 //        throw_error(env, "nAddUsbDevice", "libobsensor::Context is not instance yet.");
@@ -376,3 +377,4 @@ extern "C" JNIEXPORT void JNICALL Java_com_orbbec_internal_DeviceWatcher_nRemove
 //        throw_error(env, "nRemoveUsbDevice", e.get_message());
 //    }
 //}
+

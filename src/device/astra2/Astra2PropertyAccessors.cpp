@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "Astra2PropertyAccessors.hpp"
 #include "frameprocessor/FrameProcessor.hpp"
 #include "sensor/video/DisparityBasedSensor.hpp"
@@ -14,11 +17,14 @@ void Astra2Disp2DepthPropertyAccessor::setPropertyValue(uint32_t propertyId, con
         processor->setPropertyValue(propertyId, value);
     } break;
     case OB_PROP_DISPARITY_TO_DEPTH_BOOL: {
+        if(value.intValue == 1 && std::find(hwD2DSupportList_.cbegin(), hwD2DSupportList_.cend(), currentDepthUnitLevel_) == hwD2DSupportList_.end()) {
+            OBPropertyValue precisionLevel;
+            precisionLevel.intValue = hwD2DSupportList_.front();
+            setPropertyValue(OB_PROP_DEPTH_PRECISION_LEVEL_INT, precisionLevel);
+        }
         auto propertyAccessor = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
         propertyAccessor->setPropertyValue(propertyId, value);
         hwDisparityToDepthEnabled_ = static_cast<bool>(value.intValue);
-
-        // update convert output frame as disparity frame
         markOutputDisparityFrame(!hwDisparityToDepthEnabled_);
     } break;
     case OB_PROP_DEPTH_PRECISION_LEVEL_INT: {
@@ -40,8 +46,9 @@ void Astra2Disp2DepthPropertyAccessor::setPropertyValue(uint32_t propertyId, con
             sensor->setDepthUnit(depthUnit);
         }
 
-    } break;
+        currentDepthUnitLevel_ = value.intValue;
 
+    } break;
     default: {
         auto commandPort = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
         commandPort->setPropertyValue(propertyId, value);

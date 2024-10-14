@@ -1,3 +1,5 @@
+# Copyright (c) Orbbec Inc. All Rights Reserved.
+# Licensed under the MIT License.
 
 cmake_minimum_required(VERSION 3.5)
 project(ob_infrared)
@@ -10,3 +12,4 @@ target_link_libraries(ob_infrared ob::OrbbecSDK ob::examples::utils)
 set_target_properties (ob_infrared PROPERTIES FOLDER "examples")
 
 install(TARGETS ob_infrared RUNTIME DESTINATION bin)
+

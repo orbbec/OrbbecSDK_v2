@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "G2DeviceInfo.hpp"
 #include "G2Device.hpp"
 #include "G2XLDevice.hpp"
@@ -118,3 +121,4 @@ std::vector<std::shared_ptr<IDeviceEnumInfo>> G2DeviceInfo::pickNetDevices(const
 }
 
 }  // namespace libobsensor
+

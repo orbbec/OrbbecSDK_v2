@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 //
 // Created by zyb on 2020/9/16.
 //
@@ -53,3 +56,4 @@ private:
     XMLElement *rootXMLElement_;
 };
 }  // namespace libobsensor
+

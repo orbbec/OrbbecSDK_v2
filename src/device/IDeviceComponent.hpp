@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #pragma once
 #include <mutex>
 #include <memory>
@@ -98,6 +101,8 @@ typedef enum {
     OB_DEV_COMPONENT_DEVICE_MONITOR,
 
     OB_DEV_COMPONENT_RAW_PHASE_STREAMER,
+
+    OB_DEV_COMPONENT_FIRMWARE_UPDATER,
 
     OB_DEV_COMPONENT_COUNT
 } DeviceComponentId;

@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #pragma once
 
 #include "frame/Frame.hpp"
@@ -21,3 +24,4 @@ public:
     static std::shared_ptr<FrameSet> createFrameSet();
 };
 }  // namespace libobsensor
+

@@ -56,4 +56,4 @@ Press the Esc key in the window to exit the program.
 
 ### Result
 
-![image](/docs/resource/infrared.jpg)
+![image](../../docs/resource/infrared.jpg)

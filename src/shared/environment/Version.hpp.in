@@ -1,5 +1,5 @@
-/* License: Apache 2.0. See LICENSE file in root directory.
-   Copyright(c) 2020  Orbbec Corporation. All Rights Reserved. */
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
 
 #pragma once
 
@@ -8,12 +8,12 @@ extern "C" {
 #endif
 
 // clang-format off
-#define OB_API_MAJOR_VERSION ${PROJECT_VERSION_MAJOR}
-#define OB_API_MINOR_VERSION ${PROJECT_VERSION_MINOR}
-#define OB_API_PATCH_VERSION ${PROJECT_VERSION_PATCH}
+#define OB_LIB_MAJOR_VERSION ${PROJECT_VERSION_MAJOR}
+#define OB_LIB_MINOR_VERSION ${PROJECT_VERSION_MINOR}
+#define OB_LIB_PATCH_VERSION ${PROJECT_VERSION_PATCH}
 
-#ifndef OB_API_STAGE_VERSION
-#define OB_API_STAGE_VERSION "open-source-beta"
+#ifndef OB_LIB_STAGE_VERSION
+#define OB_LIB_STAGE_VERSION "open-source-beta"
 #endif
 
 #ifndef STRINGIFY
@@ -23,8 +23,8 @@ extern "C" {
 #define VAR_ARG_STRING(arg) STRINGIFY(arg)
 #endif
 
-#define OB_API_VERSION (((OB_API_MAJOR_VERSION)*10000) + ((OB_API_MINOR_VERSION)*100) + (OB_API_PATCH_VERSION))
-#define OB_API_VERSION_STR (VAR_ARG_STRING(OB_API_MAJOR_VERSION.OB_API_MINOR_VERSION.OB_API_PATCH_VERSION))
+#define OB_LIB_VERSION (((OB_LIB_MAJOR_VERSION)*10000) + ((OB_LIB_MINOR_VERSION)*100) + (OB_LIB_PATCH_VERSION))
+#define OB_LIB_VERSION_STR (VAR_ARG_STRING(OB_LIB_MAJOR_VERSION.OB_LIB_MINOR_VERSION.OB_LIB_PATCH_VERSION))
 // clang-format on
 #ifdef __cplusplus
 }

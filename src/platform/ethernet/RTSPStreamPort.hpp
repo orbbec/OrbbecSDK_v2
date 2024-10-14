@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #pragma once
 #include "ISourcePort.hpp"
 #include "ethernet/rtsp/ObRTSPClient.hpp"
@@ -57,3 +60,4 @@ private:
     StreamProfileList                    streamProfileList_;
 };
 }  // namespace libobsensor
+

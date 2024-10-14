@@ -1,3 +1,6 @@
+# Copyright (c) Orbbec Inc. All Rights Reserved.
+# Licensed under the MIT License.
+
 message(STATUS "Setting Windows configurations")
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
@@ -26,5 +29,6 @@ if(MSVC)
     add_definitions(-D_UNICODE -DUNICODE -D_CRT_SECURE_NO_WARNINGS)
 endif()
 set(OB_BUILD_WIN32 ON)
+
 
 

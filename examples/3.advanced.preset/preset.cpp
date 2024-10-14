@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include <libobsensor/ObSensor.hpp>
 
 #include "utils.hpp"
@@ -15,7 +18,7 @@ int main() try {
 
         // Get preset list from device.
         std::shared_ptr<ob::DevicePresetList> presetLists = device->getAvailablePresetList();
-        if (!presetLists && presetLists->getCount() == 0) {
+        if (presetLists && presetLists->getCount() == 0) {
             std::cout << "The current device does not support preset mode" << std::endl;
             std::cout << "\nPress any key to exit.";
             ob_smpl::waitForKeyPressed();
@@ -58,3 +61,4 @@ catch(ob::Error &e) {
     ob_smpl::waitForKeyPressed();
     exit(EXIT_FAILURE);
 }
+

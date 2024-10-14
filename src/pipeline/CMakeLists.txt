@@ -1,3 +1,6 @@
+# Copyright (c) Orbbec Inc. All Rights Reserved.
+# Licensed under the MIT License.
+
 cmake_minimum_required(VERSION 3.5)
 
 # add the pipeline library with version number
@@ -15,3 +18,4 @@ target_include_directories(pipeline PUBLIC  ${OB_PUBLIC_HEADERS_DIR} ${CMAKE_CUR
 add_library(ob::pipeline ALIAS pipeline)
 ob_source_group(ob::pipeline)
 set_target_properties(pipeline PROPERTIES FOLDER "modules")
+

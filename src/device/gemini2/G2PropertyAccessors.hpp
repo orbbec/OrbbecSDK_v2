@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #pragma once
 #include "IProperty.hpp"
 #include "IDevice.hpp"
@@ -22,6 +25,9 @@ private:
     IDevice *owner_;
 
     bool hwDisparityToDepthEnabled_;
+    int32_t                     currentDepthUnitLevel_;
+    const std::vector<uint16_t> hwD2DSupportList_ = { OB_PRECISION_0MM8, OB_PRECISION_0MM4, OB_PRECISION_0MM2 };
+    const std::vector<uint16_t> swD2DSupportList_ = { OB_PRECISION_1MM, OB_PRECISION_0MM8, OB_PRECISION_0MM4, OB_PRECISION_0MM2, OB_PRECISION_0MM1 };
 };
 
 }  // namespace libobsensor

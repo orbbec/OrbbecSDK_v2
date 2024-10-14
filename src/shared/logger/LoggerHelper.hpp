@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #pragma once
 
 #include "Logger.hpp"
@@ -21,7 +24,7 @@ struct ObLogRecord {
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
-// 统计调用频率，然后输出日志
+// Count the call frequency and then output the log
 #define LOG_FREQ_CALC(level, duration, msg, ...)                                                                                           \
     do {                                                                                                                                   \
         static std::map<std::string, std::shared_ptr<ObLogRecord>> logIntvlRecordMap_;                                                     \
@@ -46,3 +49,4 @@ struct ObLogRecord {
             iter->second->lastTime = now;                                                                                                  \
         }                                                                                                                                  \
     } while(0)
+

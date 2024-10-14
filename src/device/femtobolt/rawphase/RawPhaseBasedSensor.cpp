@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "RawPhaseBasedSensor.hpp"
 #include "RawPhaseStreamer.hpp"
 #include "property/InternalProperty.hpp"

@@ -1,5 +1,6 @@
-// License: Apache 2.0. See LICENSE file in root directory.
-// Copyright(c) 2020 Orbbec  Corporation. All Rights Reserved.
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #ifndef __ANDROID__
 
 #include "UsbEnumeratorLibusb.hpp"
@@ -184,7 +185,7 @@ std::vector<UsbInterfaceInfo> queryInterfaces(libusb_device *device, libusb_devi
         libusb_config_descriptor *config = nullptr;
         auto                      ret    = libusb_get_config_descriptor(device, c, &config);
         if(LIBUSB_SUCCESS != ret) {
-            LOG_WARN("failed to read USB config descriptor: error={}", ret);
+            LOG_WARN("Failed to read USB config descriptor: error={}", ret);
             continue;
         }
 
@@ -224,7 +225,7 @@ std::vector<UsbInterfaceInfo> queryInterfaces(libusb_device *device, libusb_devi
                     info.infUrl = interface_path;
                     info.uid    = getDeviceUidByWin(interface_path);
                 }
-                else if(config->bNumInterfaces == 1) {  // 非复合设备
+                else if(config->bNumInterfaces == 1) {  // Non-composite equipment
                     auto dev_path = libusb_get_windows_path(device);
                     info.infUrl   = dev_path;
                     if(dev_path != nullptr) {
@@ -379,8 +380,16 @@ const std::vector<UsbInterfaceInfo> &UsbEnumeratorLibusb::queryUsbInterfaces() {
             continue;
         }
 
-        auto serial = getStringDesc(handle, desc.iSerialNumber);
-        auto infs   = queryInterfaces(device, desc);
+        std::string serial;
+        try {
+            serial = getStringDesc(handle, desc.iSerialNumber);
+        }
+        catch(const std::exception &e) {
+            LOG_ERROR("Failed to query USB device serial number: {}", e.what());
+            serial = "";
+        }
+
+        auto infs = queryInterfaces(device, desc);
         for(auto &inf: infs) {
 #ifdef WIN32
             if(serial.empty()) {

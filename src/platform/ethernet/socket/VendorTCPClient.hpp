@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #pragma once
 #include "SocketTypes.hpp"
 #include <string>
@@ -29,3 +32,4 @@ private:
 };
 
 }  // namespace libobsensor
+

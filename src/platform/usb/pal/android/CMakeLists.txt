@@ -1,5 +1,6 @@
-# License: Apache 2.0. See LICENSE file in root directory.
-# Copyright(c) 2020 Orbbec Corporation. All Rights Reserved.
+# Copyright (c) Orbbec Inc. All Rights Reserved.
+# Licensed under the MIT License.
+
 cmake_minimum_required(VERSION 3.5)
 
 file(GLOB _src_files
@@ -18,4 +19,5 @@ endif()
 foreach(_file IN ITEMS ${_src_files})
     target_sources(${OB_TARGET_PAL} PRIVATE "${_file}")
 endforeach()
+
 

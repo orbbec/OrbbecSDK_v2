@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #pragma once
 
 #include <sstream>
@@ -89,3 +92,4 @@ bool        cvt2Boolean(const std::string &string, bool &dst);
 }  // namespace string
 }  // namespace utils
 }  // namespace libobsensor
+

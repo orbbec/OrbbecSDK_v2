@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #pragma once
 #include "IFilter.hpp"
 #include "stream/StreamProfile.hpp"
@@ -71,3 +74,4 @@ protected:
     std::shared_ptr<VideoStreamProfile>  rstStreamProfile_;
 };
 }  // namespace libobsensor
+

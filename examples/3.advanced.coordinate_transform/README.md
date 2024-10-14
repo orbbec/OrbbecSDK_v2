@@ -82,17 +82,17 @@ Frameset is a combination of different types of Frames
                 transformation3dto2d(colorFrame, depthFrame);
             } else {
                 std::cout << "Invalid command" << std::endl;
-            }  
+            }
     ```
 
 ## Run Sample
 
-Press the Esc key to exit the program.  
-Press the 1 key - transformation 2d to 2d  
-Press the 2 key - transformation 2d to 3d  
-Press the 3 key - transformation 3d to 3d  
+Press the Esc key to exit the program.
+Press the 1 key - transformation 2d to 2d
+Press the 2 key - transformation 2d to 3d
+Press the 3 key - transformation 3d to 3d
 Press the 4 key - transformation 3d to 2d
 
 ### Result
 
-![image](/docs/resource/coordinate_transform.jpg)
+![image](../../docs/resource/coordinate_transform.jpg)

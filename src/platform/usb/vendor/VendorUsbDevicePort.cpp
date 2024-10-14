@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "VendorUsbDevicePort.hpp"
 
 #include "logger/Logger.hpp"
@@ -17,20 +20,32 @@ VendorUsbDevicePort::VendorUsbDevicePort(const std::shared_ptr<IUsbDevice> &usbD
 VendorUsbDevicePort::~VendorUsbDevicePort() noexcept = default;
 
 uint32_t VendorUsbDevicePort::sendAndReceive(const uint8_t *sendData, uint32_t sendLen, uint8_t *recvData, uint32_t exceptedRecvLen) {
-    utils::unusedVar(sendData);
-    utils::unusedVar(sendLen);
-    utils::unusedVar(recvData);
-    utils::unusedVar(exceptedRecvLen);
     std::unique_lock<std::mutex> lock(mutex_);
-    return 0;
-    // auto                         sendBuf = const_cast<uint8_t *>(sendData);
-
-    // todo: implement vendor specific control transfer and handle exceptions
-
-    // auto transferred = libusb_control_transfer(usbDev_->devHandle.get(), 0x40, 0, 0, 0, sendBuf, sendLen, 5000);
-    // transferred      = libusb_control_transfer(usbDev_->devHandle.get(), 0xc0, 0, 0, 0, recvData, exceptedRecvLen, 5000);
-
-    // return transferred;
+    auto                         libusbDevice = std::dynamic_pointer_cast<UsbDeviceLibusb>(usbDev_);
+    auto                         transferred  = libusb_control_transfer(libusbDevice->getLibusbDeviceHandle(),  //
+                                                                        0x40, 0, 0, 0,                          //
+                                                                        const_cast<uint8_t *>(sendData),        //
+                                                                        static_cast<uint16_t>(sendLen),         //
+                                                                        5000);
+    if(transferred != static_cast<int>(sendLen)) {
+        if(transferred >= 0) {
+            LOG_ERROR("Failed to send data to device. Sent: {}, Transferred: {}", sendLen, transferred);
+        }
+        else {
+            LOG_ERROR("Failed to send data to device. Error: {}", libusb_strerror(transferred));
+        }
+        return 0;
+    }
+    transferred = libusb_control_transfer(libusbDevice->getLibusbDeviceHandle(),   //
+                                          0xc0, 0, 0, 0,                           //
+                                          recvData,                                //
+                                          static_cast<uint16_t>(exceptedRecvLen),  //
+                                          5000);
+    if(transferred < 0) {
+        LOG_ERROR("Failed to receive data from device. Error: {}", libusb_strerror(transferred));
+        return 0;
+    }
+    return transferred;
 }
 
 bool VendorUsbDevicePort::readFromBulkEndPoint(std::vector<uint8_t> &data) {

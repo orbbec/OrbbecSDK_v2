@@ -1,3 +1,6 @@
+# Copyright (c) Orbbec Inc. All Rights Reserved.
+# Licensed under the MIT License.
+
 message(STATUS "Setting Android configurations")
 message(STATUS "Prepare ObSensor SDK for Android OS (${ANDROID_NDK_ABI_NAME})")
 
@@ -15,3 +18,4 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fPIE -pie")
 set(OB_BUILD_ANDROID ON)
 set(OB_CURRENT_OS "android")
 add_definitions(-DBUILD_ANDROID)
+

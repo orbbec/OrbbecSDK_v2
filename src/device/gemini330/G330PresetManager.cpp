@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "G330PresetManager.hpp"
 #include "property/InternalProperty.hpp"
 #include "InternalTypes.hpp"

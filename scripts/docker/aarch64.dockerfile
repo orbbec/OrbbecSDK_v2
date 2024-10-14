@@ -1,3 +1,6 @@
+# Copyright (c)  Orbbec Inc. All Rights Reserved. 
+# Licensed under the MIT License.
+
 FROM nvcr.io/nvidia/l4t-base:r32.7.1
 
 # Replace default repositories with Aliyun mirrors

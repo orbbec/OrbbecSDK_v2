@@ -1,12 +1,15 @@
 # Features not available in the current version
 
-## Record playback
+## Mirror/Flip/Rotate frames inside SDK or device
 
-The record playback feature will soon be redesigned in a future version
+In order to reduce coupling and improve performance, OrbbecSDK v2.x will no longer support outputting data frames after mirror/flip/rotate processing, but users can freely handle mirror/flip/rotate in their application by explicitly calling the frame processing filters.
+
+## Recording and playback function
+
+The recording and playback function is temporarily unavaiable and will soon be redesigned and released in a future version of OrbbecSDK v2.x. 
 
 ## Firmware upgrade and OrbbecViewer OTA function
 
-It will be added in the upcoming version. Current users need to use the old version of the SDK and tools to upgrade the firmware.
+The firmware upgrade function is temporarily unavaiable and will soon be redesigned and released in a future version of OrbbecSDK v2.x. Current users need to use OrbbecSDK v1.x and tools based on OrbbecSDK v1.x to upgrade the firmware.
 
-## Mirror/Flip/Rotate frames inside SDK or device
-The SDK will no longer support outputting data frames after mirror/flip/rotate processing, but users can freely handle this in their application code by calling the frame processing filter.
+

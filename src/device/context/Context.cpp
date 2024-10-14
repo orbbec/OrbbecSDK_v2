@@ -1,6 +1,10 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "Context.hpp"
 #include "utils/Utils.hpp"
 #include "devicemanager/DeviceManager.hpp"
+#include "environment/Version.hpp"
 
 #include <mutex>
 
@@ -27,7 +31,12 @@ Context::Context(const std::string &configFilePath) {
     streamExtrinsicsManager_ = StreamExtrinsicsManager::getInstance();
     filterFactory_           = FilterFactory::getInstance();
 
-    utils::unusedVar(configFilePath);  // todo: use to load config file
+    if(configFilePath.empty()) {
+        LOG_DEBUG("Context created! Library version: v{}", OB_LIB_VERSION_STR);
+    }
+    else {
+        LOG_DEBUG("Context created! Library version: v{}, config file path: {}", OB_LIB_VERSION_STR, configFilePath);
+    }
 }
 
 Context::~Context() noexcept {}
@@ -48,3 +57,4 @@ std::shared_ptr<FrameMemoryPool> Context::getFrameMemoryPool() const {
 }
 
 }  // namespace libobsensor
+

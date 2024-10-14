@@ -51,9 +51,9 @@ Device is the device object, which can be used to obtain the device information,
         //Laser switch function
         void switchLaser()
         //Laser safety protection and ranging function switch
-        void switchLDP() 
+        void switchLDP()
         //Get the laser safety protection and ranging function status
-        void getLDPStatus() 
+        void getLDPStatus()
         //Color auto-exposure switch
         void switchColorAE()
         //Color exposure value adjustment
@@ -61,7 +61,7 @@ Device is the device object, which can be used to obtain the device information,
         //Color gain value adjustment
         void setColorGainValue(bool increase)
         //Depth auto-exposure switch
-        void setDepthExposureValue(bool increase) 
+        void setDepthExposureValue(bool increase)
         //Depth exposure value adjustment
         void setDepthGainValue(bool increase)
     ‵‵‵
@@ -72,6 +72,6 @@ Press the button according to the interface prompts
 
 ### Result
 
-![image](/docs/resource/common1.jpg)
+![image](../../docs/resource/common1.jpg)
 
-![image](/docs/resource/common2.jpg)
+![image](../../docs/resource/common2.jpg)

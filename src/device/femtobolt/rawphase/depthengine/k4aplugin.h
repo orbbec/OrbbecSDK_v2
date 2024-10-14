@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 /** \file k4aplugin.h
  * Copyright (c) Microsoft Corporation. All rights reserved.
  * Licensed under the MIT License.
@@ -526,3 +529,4 @@ typedef bool(__cdecl *k4a_register_plugin_fn)(k4a_plugin_t *plugin);
 #endif
 
 #endif /* K4A_PLUGIN_H */
+

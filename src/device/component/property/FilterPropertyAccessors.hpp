@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #pragma once
 
 #include "IProperty.hpp"
@@ -18,3 +21,4 @@ private:
     std::shared_ptr<IFilter> filter_;
 };
 }  // namespace libobsensor
+

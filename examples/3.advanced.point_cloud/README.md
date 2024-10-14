@@ -46,11 +46,11 @@ Pipeline is a pipeline for processing data streams, providing multi-channel stre
 
 ## Run Sample
 
-Press R or r to create RGBD PointCloud and save to ply file!  
+Press R or r to create RGBD PointCloud and save to ply file!
 Press D or d to create Depth PointCloud and save to ply file!
 
 Press ESC to exit!
 
 ### Result
 
-![image](/docs/resource/point_cloud.jpg)
+![image](../../docs/resource/point_cloud.jpg)

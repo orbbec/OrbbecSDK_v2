@@ -39,10 +39,10 @@ You can build Orbbec SDK by using the following commands:
 - Linux: Use a terminal emulator to execute the build commands
 
 ```shell
-cd OrbbecSDK-dev 
-mkdir build 
+cd OrbbecSDK-dev
+mkdir build
 cd build
-cmake .. 
+cmake ..
 cmake --build . --config Release
 ```
 
@@ -54,7 +54,7 @@ cd OrbbecSDK-dev/scripts/build
 # `./build_linux_docker.sh  aarch64` for arm64
 ```
 
-> More information about how to use Docker, please refer to [README.md](/scripts/docker/README.md).
+> More information about how to use Docker, please refer to [README.md](../../scripts/docker/README.md).
 
 ## Run the Sample
 
@@ -68,11 +68,11 @@ After you build the Orbbec SDK, you can find the executable file in the director
 
 For windows,you need to register the metadata associated with frames (this includes things like timestamps and other information about the video frame).
 
-- Metadata registration follow this:[/scripts/env_setup/obsensor_metadata_win10.md](/scripts/env_setup/obsensor_metadata_win10.md)
+- Metadata registration follow this:[/scripts/env_setup/obsensor_metadata_win10.md](../..//scripts/env_setup/obsensor_metadata_win10.md)
 
 #### Linux
 
- Please install it using the following commands:[/scripts/env_setup/install_udev_rules.sh](/scripts/env_setup/install_udev_rules.sh)
+ Please install it using the following commands:[/scripts/env_setup/install_udev_rules.sh](../../scripts/env_setup/install_udev_rules.sh)
 
 ```shell
 cd OrbbecSDK-dev/scripts/env_setup
@@ -94,4 +94,4 @@ cd bin
 .\ob_XXX  #  .\ob_XXX.exe for windows
 ```
 
-> More information about the samples of Orbbec SDK, please refer to [samples](/examples/README.md).
+> More information about the examples of Orbbec SDK, please refer to [examples](../../examples/README.md).

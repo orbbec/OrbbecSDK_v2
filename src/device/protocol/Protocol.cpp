@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "Protocol.hpp"
 #include "logger/Logger.hpp"
 #include "exception/ObException.hpp"
@@ -66,7 +69,7 @@ HpStatus validateResp(uint8_t *dataBuf, uint16_t dataSize, uint16_t expectedOpco
 
     if(header->magic != HP_RESPONSE_MAGIC) {
         std::ostringstream ssMsg;
-        ssMsg << "device response with bad magic " << std::hex << ", magic=0x" << header->magic << ", expectOpCode=0x" << HP_RESPONSE_MAGIC;
+        ssMsg << "Device response with bad magic " << std::hex << ", magic=0x" << header->magic << ", expectOpCode=0x" << HP_RESPONSE_MAGIC;
         retStatus.statusCode    = HP_STATUS_DEVICE_RESPONSE_BAD_MAGIC;
         retStatus.respErrorCode = HP_RESP_ERROR_UNKNOWN;
         retStatus.msg           = ssMsg.str();
@@ -75,7 +78,7 @@ HpStatus validateResp(uint8_t *dataBuf, uint16_t dataSize, uint16_t expectedOpco
 
     if(header->requestId != requestId) {
         std::ostringstream ssMsg;
-        ssMsg << "device response with inconsistent response requestId, cmdId=" << header->requestId << ", requestId=" << requestId;
+        ssMsg << "Device response with inconsistent response requestId, cmdId=" << header->requestId << ", requestId=" << requestId;
         retStatus.statusCode    = HP_STATUS_DEVICE_RESPONSE_WRONG_ID;
         retStatus.respErrorCode = HP_RESP_ERROR_UNKNOWN;
         retStatus.msg           = ssMsg.str();
@@ -84,7 +87,7 @@ HpStatus validateResp(uint8_t *dataBuf, uint16_t dataSize, uint16_t expectedOpco
 
     if(header->opcode != expectedOpcode) {
         std::ostringstream ssMsg;
-        ssMsg << "device response with inconsistent opcode, opcode=" << header->opcode << ", expectedOpcode=" << expectedOpcode;
+        ssMsg << "Device response with inconsistent opcode, opcode=" << header->opcode << ", expectedOpcode=" << expectedOpcode;
         retStatus.statusCode    = HP_STATUS_DEVICE_RESPONSE_WRONG_OPCODE;
         retStatus.respErrorCode = HP_RESP_ERROR_UNKNOWN;
         retStatus.msg           = ssMsg.str();
@@ -95,7 +98,7 @@ HpStatus validateResp(uint8_t *dataBuf, uint16_t dataSize, uint16_t expectedOpco
     if(respDataSize + HP_RESP_HEADER_SIZE > dataSize) {
         retStatus.statusCode    = HP_STATUS_DEVICE_RESPONSE_WRONG_DATA_SIZE;
         retStatus.respErrorCode = HP_RESP_ERROR_UNKNOWN;
-        retStatus.msg           = "device response with wrong data size";
+        retStatus.msg           = "Device response with wrong data size";
         return retStatus;
     }
 
@@ -108,7 +111,7 @@ HpStatus validateResp(uint8_t *dataBuf, uint16_t dataSize, uint16_t expectedOpco
     else if(header->errorCode == HP_RESP_ERROR_UNKNOWN) {
         retStatus.statusCode    = HP_STATUS_DEVICE_RESPONSE_ERROR_UNKNOWN;
         retStatus.respErrorCode = (HpRespErrorCode)header->errorCode;
-        retStatus.msg           = "device response with unknown error";
+        retStatus.msg           = "Device response with unknown error";
         return retStatus;
     }
 
@@ -153,7 +156,7 @@ HpStatus execute(const std::shared_ptr<IVendorDataPort> &dataPort, uint8_t *reqD
         else {
             hpStatus.statusCode    = rc;
             hpStatus.respErrorCode = HP_RESP_ERROR_UNKNOWN;
-            hpStatus.msg           = "send control transfer failed!";
+            hpStatus.msg           = "Send control transfer failed!";
             break;
         }
 
@@ -224,7 +227,7 @@ HeartbeatAndStateReq *initHeartbeatAndStateReq(uint8_t *dataBuf) {
 HeartbeatAndStateResp *parseHeartbeatAndStateResp(uint8_t *dataBuf, uint16_t dataSize) {
     auto *resp = reinterpret_cast<HeartbeatAndStateResp *>(dataBuf);
     if(dataSize < sizeof(HeartbeatAndStateResp) - 1) {  // may dose'nt have any msg, subtract 1 byte to avoid overflow
-        throw io_exception("device response with wrong data size");
+        throw io_exception("Device response with wrong data size");
     }
     return resp;
 }
@@ -232,7 +235,7 @@ HeartbeatAndStateResp *parseHeartbeatAndStateResp(uint8_t *dataBuf, uint16_t dat
 GetPropertyResp *parseGetPropertyResp(uint8_t *dataBuf, uint16_t dataSize) {
     auto *resp = reinterpret_cast<GetPropertyResp *>(dataBuf);
     if(dataSize < sizeof(GetPropertyResp)) {
-        throw io_exception("device response with wrong data size");
+        throw io_exception("Device response with wrong data size");
     }
     return resp;
 }
@@ -240,7 +243,7 @@ GetPropertyResp *parseGetPropertyResp(uint8_t *dataBuf, uint16_t dataSize) {
 SetPropertyResp *parseSetPropertyResp(uint8_t *dataBuf, uint16_t dataSize) {
     auto *resp = reinterpret_cast<SetPropertyResp *>(dataBuf);
     if(dataSize < sizeof(SetPropertyResp)) {
-        throw io_exception("device response with wrong data size");
+        throw io_exception("Device response with wrong data size");
     }
     return resp;
 }
@@ -248,7 +251,7 @@ SetPropertyResp *parseSetPropertyResp(uint8_t *dataBuf, uint16_t dataSize) {
 GetStructureDataResp *parseGetStructureDataResp(uint8_t *dataBuf, uint16_t dataSize) {
     auto *resp = reinterpret_cast<GetStructureDataResp *>(dataBuf);
     if(dataSize < sizeof(GetStructureDataResp)) {
-        throw io_exception("device response with wrong data size");
+        throw io_exception("Device response with wrong data size");
     }
     return resp;
 }
@@ -260,7 +263,7 @@ int16_t getStructureDataSize(const GetStructureDataResp *resp) {
 SetStructureDataResp *parseSetStructureDataResp(uint8_t *dataBuf, uint16_t dataSize) {
     auto *resp = reinterpret_cast<SetStructureDataResp *>(dataBuf);
     if(dataSize < sizeof(SetStructureDataResp)) {
-        throw io_exception("device response with wrong data size");
+        throw io_exception("Device response with wrong data size");
     }
     return resp;
 }
@@ -278,7 +281,7 @@ GetPropertyReq *initGetCmdVersionReq(uint8_t *dataBuf, uint32_t propertyId) {
 GetCmdVerDataResp *parseGetCmdVerDataResp(uint8_t *dataBuf, uint16_t dataSize) {
     auto *resp = reinterpret_cast<GetCmdVerDataResp *>(dataBuf);
     if(dataSize < sizeof(GetCmdVerDataResp)) {
-        throw io_exception("device response with wrong data size");
+        throw io_exception("Device response with wrong data size");
     }
     return resp;
 }
@@ -286,7 +289,7 @@ GetCmdVerDataResp *parseGetCmdVerDataResp(uint8_t *dataBuf, uint16_t dataSize) {
 GetRawDataLengthResp *parseGetRawDataLengthResp(uint8_t *dataBuf, uint16_t dataSize) {
     auto *resp = reinterpret_cast<GetRawDataLengthResp *>(dataBuf);
     if(dataSize < sizeof(GetRawDataLengthResp)) {
-        throw io_exception("device response with wrong data size");
+        throw io_exception("Device response with wrong data size");
     }
     return resp;
 }
@@ -294,7 +297,7 @@ GetRawDataLengthResp *parseGetRawDataLengthResp(uint8_t *dataBuf, uint16_t dataS
 ReadRawDataResp *parseReadRawDataResp(uint8_t *dataBuf, uint16_t dataSize) {
     auto *resp = reinterpret_cast<ReadRawDataResp *>(dataBuf);
     if(dataSize < sizeof(ReadRawDataResp)) {
-        throw io_exception("device response with wrong data size");
+        throw io_exception("Device response with wrong data size");
     }
     return resp;
 }
@@ -325,7 +328,7 @@ SetStructureDataReqV1_1 *initSetStructureDataReqV1_1(uint8_t *dataBuf, uint32_t 
 GetStructureDataRespV1_1 *parseGetStructureDataRespV1_1(uint8_t *dataBuf, uint16_t dataSize) {
     auto *resp = reinterpret_cast<GetStructureDataRespV1_1 *>(dataBuf);
     if(dataSize < sizeof(GetStructureDataRespV1_1)) {
-        throw io_exception("device response with wrong data size");
+        throw io_exception("Device response with wrong data size");
     }
     return resp;
 }
@@ -333,7 +336,7 @@ GetStructureDataRespV1_1 *parseGetStructureDataRespV1_1(uint8_t *dataBuf, uint16
 SetStructureDataRespV1_1 *parseSetStructureDataRespV1_1(uint8_t *dataBuf, uint16_t dataSize) {
     auto *resp = reinterpret_cast<SetStructureDataRespV1_1 *>(dataBuf);
     if(dataSize < sizeof(SetStructureDataRespV1_1)) {
-        throw io_exception("device response with wrong data size");
+        throw io_exception("Device response with wrong data size");
     }
     return resp;
 }
@@ -341,7 +344,7 @@ SetStructureDataRespV1_1 *parseSetStructureDataRespV1_1(uint8_t *dataBuf, uint16
 StartGetStructureDataListResp *parseStartStructureDataListResp(uint8_t *dataBuf, uint16_t dataSize) {
     auto *resp = reinterpret_cast<StartGetStructureDataListResp *>(dataBuf);
     if(dataSize < sizeof(StartGetStructureDataListResp)) {
-        throw io_exception("device response with wrong data size");
+        throw io_exception("Device response with wrong data size");
     }
 
     return resp;
@@ -351,7 +354,7 @@ int16_t getStructureDataSizeV1_1(const GetStructureDataRespV1_1 *resp) {
     return resp->header.sizeInHalfWords * 2 - sizeof(RespHeader::errorCode) - 2;
 }
 
-StartGetStructureDataListReq *initStartGetStructureDataList(uint8_t *dataBuf, uint32_t propertyId) {
+StartGetStructureDataListReq *initStartGetStructureDataListReq(uint8_t *dataBuf, uint32_t propertyId) {
     auto *req                   = reinterpret_cast<StartGetStructureDataListReq *>(dataBuf);
     req->header.magic           = HP_REQUEST_MAGIC;
     req->header.sizeInHalfWords = 2;
@@ -362,7 +365,7 @@ StartGetStructureDataListReq *initStartGetStructureDataList(uint8_t *dataBuf, ui
     return req;
 }
 
-GetStructureDataListReq *initGetStructureDataList(uint8_t *dataBuf, uint32_t propertyId, uint32_t offset, uint32_t dataSize) {
+GetStructureDataListReq *initGetStructureDataListReq(uint8_t *dataBuf, uint32_t propertyId, uint32_t offset, uint32_t dataSize) {
     auto *req                   = reinterpret_cast<GetStructureDataListReq *>(dataBuf);
     req->header.magic           = HP_REQUEST_MAGIC;
     req->header.sizeInHalfWords = 6;
@@ -376,7 +379,7 @@ GetStructureDataListReq *initGetStructureDataList(uint8_t *dataBuf, uint32_t pro
     return req;
 }
 
-FinishGetStructureDataListReq *initFinishGetStructureDataList(uint8_t *dataBuf, uint32_t propertyId) {
+FinishGetStructureDataListReq *initFinishGetStructureDataListReq(uint8_t *dataBuf, uint32_t propertyId) {
     auto *req                   = reinterpret_cast<FinishGetStructureDataListReq *>(dataBuf);
     req->header.magic           = HP_REQUEST_MAGIC;
     req->header.sizeInHalfWords = 2;
@@ -387,7 +390,7 @@ FinishGetStructureDataListReq *initFinishGetStructureDataList(uint8_t *dataBuf, 
     return req;
 }
 
-GetPropertyReq *initGetRawDataLength(uint8_t *dataBuf, uint32_t propertyId, uint32_t cmd) {
+GetPropertyReq *initGetRawDataLengthReq(uint8_t *dataBuf, uint32_t propertyId, uint32_t cmd) {
     auto *req                   = reinterpret_cast<GetPropertyReq *>(dataBuf);
     req->header.magic           = HP_REQUEST_MAGIC;
     req->header.sizeInHalfWords = 2;
@@ -405,7 +408,7 @@ GetPropertyReq *initGetRawDataLength(uint8_t *dataBuf, uint32_t propertyId, uint
     return req;
 }
 
-ReadRawDataReq *initReadRawData(uint8_t *dataBuf, uint32_t propertyId, uint32_t offset, uint32_t size) {
+ReadRawDataReq *initReadRawDataReq(uint8_t *dataBuf, uint32_t propertyId, uint32_t offset, uint32_t size) {
     auto *req                   = reinterpret_cast<ReadRawDataReq *>(dataBuf);
     req->header.magic           = HP_REQUEST_MAGIC;
     req->header.sizeInHalfWords = 6;
@@ -420,3 +423,4 @@ ReadRawDataReq *initReadRawData(uint8_t *dataBuf, uint32_t propertyId, uint32_t 
 
 }  // namespace protocol
 }  // namespace libobsensor
+

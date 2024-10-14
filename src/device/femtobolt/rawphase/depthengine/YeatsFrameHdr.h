@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 //
 // YeatsFrameHdr.h
 //
@@ -419,3 +422,4 @@ struct FRAME_FOOTER {
 #pragma GCC diagnostic pop
 #endif
 #endif  // end of #ifndef _YEATSFRAMEHDR_H_
+

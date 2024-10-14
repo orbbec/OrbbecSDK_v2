@@ -1,5 +1,6 @@
-// License: Apache 2.0. See LICENSE file in root directory.
-// Copyright(c) 2020 Orbbec Corporation. All Rights Reserved.
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #pragma once
 
 #include <memory>
@@ -28,7 +29,7 @@ public:
     void     deallocate(uint8_t *ptr, size_t size);
 
 private:
-    uint64_t   maxSize_;
+    uint64_t   maxSizeInByte_;
     uint64_t   usedSize_;
     std::mutex mutex_;
 
@@ -127,3 +128,4 @@ private:
 };
 
 }  // namespace libobsensor
+

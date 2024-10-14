@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "FrameTimestampCalculator.hpp"
 #include "frame/Frame.hpp"
 #include "usb/uvc/UvcTypes.hpp"
@@ -12,7 +15,7 @@ namespace libobsensor {
 
 GlobalTimestampCalculator::GlobalTimestampCalculator(IDevice *owner, uint64_t deviceTimeFreq, uint64_t frameTimeFreq)
     : DeviceComponentBase(owner), deviceTimeFreq_(deviceTimeFreq), frameTimeFreq_(frameTimeFreq) {
-    (void )frameTimeFreq_;
+    (void)frameTimeFreq_;
     globalTimestampFitter_ = owner->getComponentT<GlobalTimestampFitter>(OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER).get();
 }
 
@@ -164,3 +167,4 @@ void FrameTimestampCalculatorOverUvcSCR::calculate(std::shared_ptr<Frame> frame)
 void FrameTimestampCalculatorOverUvcSCR::clear() {}
 
 }  // namespace libobsensor
+

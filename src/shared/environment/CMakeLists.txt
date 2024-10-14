@@ -1,3 +1,6 @@
+# Copyright (c) Orbbec Inc. All Rights Reserved.
+# Licensed under the MIT License.
+
 include(${OB_3RDPARTY_DIR}/cmrc/src/cmake_resource.cmake)
 
 cmrc_add_resource_library(

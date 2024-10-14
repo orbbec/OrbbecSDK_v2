@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #pragma once
 
 #include "frame/Frame.hpp"
@@ -40,7 +43,7 @@ public:
             return false;
         }
         queue_.push(frame);
-        condition_.notify_one();
+        condition_.notify_all();
         return true;
     }
 
@@ -100,16 +103,22 @@ public:
     }
 
     void flush() {  // stop until all frames are called back
-        flushing_ = true;
-        condition_.notify_one();
+        {
+            std::unique_lock<std::mutex> lock(mutex_);
+            flushing_ = true;
+            condition_.notify_all();
+        }
         if(dequeueThread_.joinable()) {
             dequeueThread_.join();
         }
     }
 
     void stop() {  // stop immediately
-        stopping_ = true;
-        condition_.notify_one();
+        {
+            std::unique_lock<std::mutex> lock(mutex_);
+            stopping_ = true;
+            condition_.notify_all();
+        }
         if(dequeueThread_.joinable()) {
             dequeueThread_.join();
         }

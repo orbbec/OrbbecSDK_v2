@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #pragma once
 #include "IStreamProfile.hpp"
 #include "libobsensor/h/ObTypes.h"
@@ -164,3 +167,4 @@ std::vector<std::shared_ptr<const GyroStreamProfile>> matchGyroStreamProfile(con
                                                                              OBGyroSampleRate sampleRate);
 
 }  // namespace libobsensor
+

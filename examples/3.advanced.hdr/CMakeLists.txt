@@ -1,4 +1,5 @@
-
+# Copyright (c) Orbbec Inc. All Rights Reserved.
+# Licensed under the MIT License.
 
 cmake_minimum_required(VERSION 3.5)
 project(ob_hdr)
@@ -10,3 +11,4 @@ target_link_libraries(ob_hdr ob::OrbbecSDK ob::examples::utils)
 set_target_properties(ob_hdr PROPERTIES FOLDER "examples")
 
 install(TARGETS ob_hdr RUNTIME DESTINATION bin)
+

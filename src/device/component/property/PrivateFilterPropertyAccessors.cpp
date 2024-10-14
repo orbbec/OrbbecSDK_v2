@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "PrivateFilterPropertyAccessors.hpp"
 #include "frameprocessor/FrameProcessor.hpp"
 

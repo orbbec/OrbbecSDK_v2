@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "Astra2Device.hpp"
 
 #include "DevicePids.hpp"
@@ -27,6 +30,7 @@
 #include "property/FilterPropertyAccessors.hpp"
 #include "property/PrivateFilterPropertyAccessors.hpp"
 #include "monitor/DeviceMonitor.hpp"
+#include "firmwareupdater/FirmwareUpdater.hpp"
 
 #include "Astra2AlgParamManager.hpp"
 #include "Astra2StreamProfileFilter.hpp"
@@ -77,6 +81,12 @@ void Astra2Device::init() {
 
     auto deviceClockSynchronizer = std::make_shared<DeviceClockSynchronizer>(this, deviceTimeFreq_, 1000);
     registerComponent(OB_DEV_COMPONENT_DEVICE_CLOCK_SYNCHRONIZER, deviceClockSynchronizer);
+
+    registerComponent(OB_DEV_COMPONENT_FIRMWARE_UPDATER, [this]() {
+        std::shared_ptr<FirmwareUpdater> firmwareUpdater;
+        TRY_EXECUTE({ firmwareUpdater = std::make_shared<FirmwareUpdater>(this); })
+        return firmwareUpdater;
+    });
 }
 
 void Astra2Device::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
@@ -414,8 +424,6 @@ void Astra2Device::initProperties() {
             propertyServer->registerProperty(OB_PROP_COLOR_EXPOSURE_INT, "rw", "rw", vendorPropertyAccessor);  // using vendor property accessor
             propertyServer->registerProperty(OB_PROP_LDP_BOOL, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_LASER_BOOL, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_MIN_DEPTH_INT, "rw", "rw", vendorPropertyAccessor);  // todo: map to d2d
-            propertyServer->registerProperty(OB_PROP_MAX_DEPTH_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_DEPTH_HOLEFILTER_BOOL, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_LDP_STATUS_BOOL, "r", "r", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_DEPTH_ALIGN_HARDWARE_BOOL, "rw", "rw", vendorPropertyAccessor);
@@ -502,14 +510,6 @@ std::vector<std::shared_ptr<IFilter>> Astra2Device::createRecommendedPostProcess
             depthFilterList.push_back(decimationFilter);
         }
 
-        if(filterFactory->isFilterCreatorExists("NoiseRemovalFilter")) {
-            auto noiseFilter = filterFactory->createFilter("NoiseRemovalFilter");
-            // max_size, min_diff, width, height
-            std::vector<std::string> params = { "80", "256", "848", "480" };
-            noiseFilter->updateConfig(params);
-            depthFilterList.push_back(noiseFilter);
-        }
-
         if(filterFactory->isFilterCreatorExists("SpatialAdvancedFilter")) {
             auto spatFilter = filterFactory->createFilter("SpatialAdvancedFilter");
             // magnitude, alpha, disp_diff, radius
@@ -566,3 +566,4 @@ std::vector<std::shared_ptr<IFilter>> Astra2Device::createRecommendedPostProcess
 }
 
 }  // namespace libobsensor
+

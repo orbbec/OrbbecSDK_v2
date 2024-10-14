@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #pragma once
 #include <string>
 #include <functional>
@@ -20,3 +23,4 @@ std::string makeRealPath(const std::string &path);
 
 }  // namespace utils
 }  // namespace libobsensor
+

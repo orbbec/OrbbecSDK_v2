@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #pragma once
 #include <stdint.h>
 #include <algorithm>
@@ -8,7 +11,7 @@
 #include "exception/ObException.hpp"
 #include "logger/LoggerInterval.hpp"
 #include "utils/Utils.hpp"
-#include "timestamp/FrameTimestampCalculator.hpp"
+#include "G330FrameTimestampCalculator.hpp"
 #include "sensor/video/VideoSensor.hpp"
 #include "stream/StreamProfile.hpp"
 
@@ -131,7 +134,7 @@ class G330PayloadHeadMetadataTimestampParser : public G330ScrMetadataParserBase 
 public:
     G330PayloadHeadMetadataTimestampParser(IDevice *device, uint64_t deviceTimeFreq, uint64_t frameTimeFreq)
         : device_(device), deviceTimeFreq_(deviceTimeFreq), frameTimeFreq_(frameTimeFreq) {
-        timestampCalculator_ = std::make_shared<FrameTimestampCalculatorBaseDeviceTime>(device, deviceTimeFreq_, frameTimeFreq_);
+        timestampCalculator_ = std::make_shared<G330FrameTimestampCalculatorBaseDeviceTime>(device, deviceTimeFreq_, frameTimeFreq_);
     }
     virtual ~G330PayloadHeadMetadataTimestampParser() = default;
 
@@ -140,8 +143,10 @@ public:
             LOG_WARN_INTVL("Current metadata does not contain timestamp!");
             return -1;
         }
-        auto standardUvcMetadata = *(reinterpret_cast<const StandardUvcFramePayloadHeader *>(metadata));
-        auto calculatedTimestamp = timestampCalculator_->calculate(static_cast<uint64_t>(standardUvcMetadata.dwPresentationTime));
+        auto     standardUvcMetadata = *(reinterpret_cast<const StandardUvcFramePayloadHeader *>(metadata));
+        uint64_t transformedTimestamp =
+            ((standardUvcMetadata.dwPresentationTime >> 24) & 0xFF) * 1000000 + ((standardUvcMetadata.dwPresentationTime & 0xFFFFFF) << 8) / 1000;
+        auto calculatedTimestamp = timestampCalculator_->calculate(transformedTimestamp);
 
         return calculatedTimestamp;
     }
@@ -153,7 +158,7 @@ private:
 
     uint64_t frameTimeFreq_;
 
-    std::shared_ptr<FrameTimestampCalculatorBaseDeviceTime> timestampCalculator_;
+    std::shared_ptr<G330FrameTimestampCalculatorBaseDeviceTime> timestampCalculator_;
 };
 
 class G330PayloadHeadMetadataColorSensorTimestampParser : public G330PayloadHeadMetadataTimestampParser {
@@ -171,7 +176,7 @@ public:
         auto calculatedTimestamp = G330PayloadHeadMetadataTimestampParser::getValue(metadata, dataSize);
         // get frame offset,unit 100us
         auto    standardUvcMetadata = *(reinterpret_cast<const StandardUvcFramePayloadHeader *>(metadata));
-        int16_t frameOffset         = (((standardUvcMetadata.scrSourceClock[1] & 0xF8) >> 3) | (standardUvcMetadata.scrSourceClock[2] << 8)) * 100;
+        int16_t frameOffset         = (((standardUvcMetadata.scrSourceClock[1] & 0xF8) >> 3) | ((standardUvcMetadata.scrSourceClock[2] & 0x7F) << 8)) * 100;
         calculatedTimestamp += frameOffset;
 
         return calculatedTimestamp;
@@ -186,7 +191,7 @@ public:
             return -1;
         }
         auto     standardUvcMetadata = *(reinterpret_cast<const StandardUvcFramePayloadHeader *>(metadata));
-        uint32_t exposure            = (standardUvcMetadata.scrSourceClock[0] | ((standardUvcMetadata.scrSourceClock[1] & 0x07) << 8)) * 100;  // unit 100us
+        uint32_t exposure            = (standardUvcMetadata.scrSourceClock[0] | ((standardUvcMetadata.scrSourceClock[1] & 0x07) << 8));
 
         return static_cast<int64_t>(exposure);
     }
@@ -200,7 +205,7 @@ public:
             LOG_WARN_INTVL("Current metadata does not contain color actual frame rate!");
             return -1;
         }
-        auto exposure = G330ColorScrMetadataExposureParser::getValue(metadata, dataSize);
+        auto exposure = G330ColorScrMetadataExposureParser::getValue(metadata, dataSize) * 100;  // color exposure unit 100us
         auto fps      = static_cast<uint32_t>(1000000.f / exposure);
 
         auto colorSensor              = device_->getComponentT<VideoSensor>(OB_DEV_COMPONENT_COLOR_SENSOR);
@@ -279,16 +284,31 @@ public:
         auto exposure = G330DepthScrMetadataExposureParser::getValue(metadata, dataSize);
         auto fps      = static_cast<uint32_t>(1000000.f / exposure);
 
-        auto                  depthSensor = device_->getComponentT<VideoSensor>(OB_DEV_COMPONENT_DEPTH_SENSOR);
-        std::vector<uint32_t> currentStreamProfileFpsVector;
-        auto                  depthStreamProfileList   = depthSensor->getStreamProfileList();
-        auto                  depthActiveStreamProfile = depthSensor->getActivatedStreamProfile();
-        if(!depthActiveStreamProfile) {
+        static std::vector<DeviceComponentId> sensorComponentIds = { OB_DEV_COMPONENT_DEPTH_SENSOR, OB_DEV_COMPONENT_LEFT_IR_SENSOR,
+                                                                     OB_DEV_COMPONENT_RIGHT_IR_SENSOR };
+
+        StreamProfileList streamProfileList;
+        uint32_t          activatedStreamProfileFps = 0;
+        for(const auto &id: sensorComponentIds) {
+            auto sensor                   = device_->getComponentT<VideoSensor>(id);
+            auto currentStreamProfileList = sensor->getStreamProfileList();
+            auto activeStreamProfile      = sensor->getActivatedStreamProfile();
+            if(!activeStreamProfile) {
+                continue;
+            }
+            else {
+                streamProfileList         = currentStreamProfileList;
+                activatedStreamProfileFps = activeStreamProfile->as<VideoStreamProfile>()->getFps();
+                break;
+            }
+        }
+
+        if(activatedStreamProfileFps == 0) {
             return -1;
         }
-        auto depthCurrentStreamProfileFps = depthActiveStreamProfile->as<VideoStreamProfile>()->getFps();
 
-        for(const auto &profile: depthStreamProfileList) {
+        std::vector<uint32_t> currentStreamProfileFpsVector;
+        for(const auto &profile: streamProfileList) {
             auto videoStreamProfile = profile->as<VideoStreamProfile>();
             if(!videoStreamProfile) {
                 continue;
@@ -315,7 +335,7 @@ public:
             }
         }
 
-        return static_cast<int64_t>((std::min)(fps, depthCurrentStreamProfileFps));
+        return static_cast<int64_t>((std::min)(fps, activatedStreamProfileFps));
     }
 
 private:
@@ -363,7 +383,7 @@ public:
             return -1;
         }
         auto    standardUvcMetadata = *(reinterpret_cast<const StandardUvcFramePayloadHeader *>(metadata));
-        uint8_t hdrSequenceId       = (standardUvcMetadata.scrSourceClock[2] & 0xC0) >> 6;
+        uint8_t hdrSequenceId       = (standardUvcMetadata.scrSourceClock[2] & 0x40) >> 6;
         return static_cast<int64_t>(hdrSequenceId);
     }
 };
@@ -385,7 +405,7 @@ class G330MetadataParserBase : public IFrameMetadataParser {
 public:
     G330MetadataParserBase(IDevice *device, OBFrameMetadataType type, FrameMetadataModifier modifier,
                            const std::multimap<OBPropertyID, std::vector<OBFrameMetadataType>> metadataTypeIdMap)
-        : device_(device), metadataType_(type), data_(0), modifier_(modifier) {
+        : device_(device), metadataType_(type), data_(0), modifier_(modifier), initPropertyValue_(true) {
         for(const auto &item: metadataTypeIdMap) {
             const std::vector<OBFrameMetadataType> &types = item.second;
             if(std::find(types.begin(), types.end(), type) != types.end()) {
@@ -421,7 +441,7 @@ public:
         }
 
         // first time get value,should sync property value
-        if(data_ == 0) {
+        if(initPropertyValue_) {
             PropertyAccessType accessType     = PROP_ACCESS_USER;
             auto               propertyServer = device_->getPropertyServer();
             auto               propertyItem   = propertyServer->getPropertyItem(propertyId_, accessType);
@@ -441,6 +461,7 @@ public:
                 }
                 data_ = parsePropertyValue(static_cast<uint32_t>(propertyId_), (const uint8_t *)valueData);
             }
+            initPropertyValue_ = false;
         }
 
         if(modifier_) {
@@ -511,6 +532,8 @@ private:
     int64_t data_;
 
     FrameMetadataModifier modifier_;
+
+    std::atomic<bool> initPropertyValue_;
 };
 
 class G330ColorMetadataParser : public G330MetadataParserBase {

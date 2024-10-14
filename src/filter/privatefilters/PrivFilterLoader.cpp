@@ -1,4 +1,6 @@
-﻿
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "PrivFilterLoader.hpp"
 #include "PrivFilterCppWrapper.hpp"
 #include "FilterDecorator.hpp"
@@ -182,3 +184,4 @@ std::map<std::string, std::shared_ptr<IFilterCreator>> getCreators() {
 
 }  // namespace PrivFilterCreatorLoader
 }  // namespace libobsensor
+

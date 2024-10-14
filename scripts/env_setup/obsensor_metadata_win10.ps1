@@ -1,3 +1,6 @@
+# Copyright (c) Orbbec Inc. All Rights Reserved.
+# Licensed under the MIT License.
+
 # Usage:
 #Launch Windows PowerShell, and navigate to the script directory
 #PS> .\obsensor_metadata_win10.ps1                    - Add metadata reg. keys for the connected Orbbec devices
@@ -124,3 +127,4 @@ foreach ($subtree in $SearchTrees)
 
 "`nTask Completed"
 sleep 1
+

@@ -1,3 +1,5 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
 
 #include "PropertyHelper.hpp"
 #include "InternalProperty.hpp"

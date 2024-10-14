@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "CameraParamProcess.hpp"
 
 namespace libobsensor {
@@ -10,12 +13,12 @@ void CameraParamProcessor::distortionParamMirror(OBCameraDistortion *distort) {
 }
 
 void CameraParamProcessor::d2cTransformParamsMirror(OBD2CTransform *transform) {
-    // 旋转矩阵中r1、r2、r3和r6求反
+    // In the rotation matrix, invert r1, r2, r3, and r6
     transform->rot[1] *= -1.0;
     transform->rot[2] *= -1.0;
     transform->rot[3] *= -1.0;
     transform->rot[6] *= -1.0;
-    // 平移向量中tx求反
+    // Invert tx in the translation vector
     (transform->trans)[0] *= -1.0;
 }
 
@@ -144,7 +147,7 @@ void CameraParamProcessor::d2cTransformParamsRotate270(OBD2CTransform *transform
 }
 
 void CameraParamProcessor::rotateCameraParam(OBCameraParam *cameraParam, int rotateAngle) {
-    // TODO:数值需要改为枚举
+    // TODO: Change the values to enumerations
     switch(rotateAngle) {
     case 90: {
         CameraParamProcessor::cameraIntrinsicParamsRotate90(&cameraParam->rgbIntrinsic);

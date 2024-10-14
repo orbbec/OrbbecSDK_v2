@@ -1,7 +1,12 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "DeviceMonitor.hpp"
 #include "protocol/Protocol.hpp"
 
 namespace libobsensor {
+
+const uint16_t MAX_RECV_DATA_SIZE = 1024;
 
 DeviceMonitor::DeviceMonitor(IDevice *owner, std::shared_ptr<ISourcePort> dataPort)
     : DeviceComponentBase(owner),
@@ -9,8 +14,8 @@ DeviceMonitor::DeviceMonitor(IDevice *owner, std::shared_ptr<ISourcePort> dataPo
       heartbeatEnabled_(false),
       heartbeatPaused_(false),
       heartbeatAndFetchStateThreadStarted_(false),
-      recvData_(1024),
-      sendData_(1024) {
+      hbRecvData_(MAX_RECV_DATA_SIZE),
+      hbSendData_(MAX_RECV_DATA_SIZE) {
     vendorDataPort_ = std::dynamic_pointer_cast<IVendorDataPort>(dataPort);
     if(!vendorDataPort_) {
         throw std::runtime_error("DeviceMonitor: data port must be a vendor data port!");
@@ -60,16 +65,16 @@ void DeviceMonitor::stop() {
 void DeviceMonitor::heartbeatAndFetchState() {
     bool emitNextHeartBeatImmediately = false;
     do {
-        auto     req          = protocol::initHeartbeatAndStateReq(sendData_.data());
+        auto     req          = protocol::initHeartbeatAndStateReq(hbSendData_.data());
         uint16_t respDataSize = 1024;  // excepted size
-        auto     res          = protocol::execute(vendorDataPort_, sendData_.data(), sizeof(req), recvData_.data(), &respDataSize);
+        auto     res          = protocol::execute(vendorDataPort_, hbSendData_.data(), sizeof(req), hbRecvData_.data(), &respDataSize);
         if(!protocol::checkStatus(res, false)) {
             utils::sleepMs(50);
             continue;
         }
 
         protocol::HeartbeatAndStateResp *resp;
-        BEGIN_TRY_EXECUTE({ resp = protocol::parseHeartbeatAndStateResp(recvData_.data(), respDataSize); })
+        BEGIN_TRY_EXECUTE({ resp = protocol::parseHeartbeatAndStateResp(hbRecvData_.data(), respDataSize); })
         CATCH_EXCEPTION_AND_EXECUTE({ continue; })
 
         // Heartbeat state value
@@ -211,12 +216,10 @@ void DeviceMonitor::resumeHeartbeat() {
     LOG_DEBUG("Heartbeat resumed!");
 }
 
-const std::vector<uint8_t> &DeviceMonitor::sendAndReceiveData(const std::vector<uint8_t> &data, uint32_t exceptedRecvLen) {
+void DeviceMonitor::sendAndReceiveData(const uint8_t *sendData, uint32_t sendDataSize, uint8_t *receiveData, uint32_t *receiveDataSize) {
     std::lock_guard<std::mutex> lock(commMutex_);
-    recvData_.resize(exceptedRecvLen);
-    auto recvLen = vendorDataPort_->sendAndReceive(data.data(), static_cast<uint32_t>(data.size()), recvData_.data(), exceptedRecvLen);
-    recvData_.resize(recvLen);
-    return recvData_;
+    auto                        recvLen = vendorDataPort_->sendAndReceive(sendData, sendDataSize, receiveData, *receiveDataSize);
+    *receiveDataSize                    = recvLen;
 }
 
 }  // namespace libobsensor

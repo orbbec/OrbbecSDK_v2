@@ -1,5 +1,5 @@
-// License: Apache 2.0. See LICENSE file in root directory.
-// Copyright(c) 2020 Orbbec Corporation. All Rights Reserved.
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
 
 #include "HidDevicePort.hpp"
 
@@ -37,6 +37,21 @@ HidDevicePort::~HidDevicePort() noexcept {
         frameQueue_.stop();
         stopStream();
     }
+
+    auto libusbDevice    = std::dynamic_pointer_cast<UsbDeviceLibusb>(usbDevice_);
+    auto libusbDevHandle = libusbDevice->getLibusbDeviceHandle();
+
+    auto res = libusb_release_interface(libusbDevHandle, portInfo_->infIndex);
+    if(res != LIBUSB_SUCCESS) {
+        LOG_WARN("release interface failed, error: {}", libusb_strerror(res));
+    }
+    if(libusb_kernel_driver_active(libusbDevHandle, portInfo_->infIndex) == 1) {
+        res = libusb_attach_kernel_driver(libusbDevHandle, portInfo_->infIndex);
+        if(res != LIBUSB_SUCCESS) {
+            LOG_WARN("attach kernel driver failed, error: {}", libusb_strerror(res));
+        }
+    }
+    LOG_DEBUG("HidDevicePort::~HidDevicePort done");
 }
 
 void HidDevicePort::startStream(MutableFrameCallback callback) {
@@ -70,27 +85,11 @@ void HidDevicePort::stopStream() {
     if(!isStreaming_) {
         throw wrong_api_call_sequence_exception("HidDevicePort::stopStream() called while not streaming");
     }
-    isStreaming_         = false;
-    auto libusbDevice    = std::dynamic_pointer_cast<UsbDeviceLibusb>(usbDevice_);
-    auto libusbDevHandle = libusbDevice->getLibusbDeviceHandle();
-    auto res             = libusb_interrupt_transfer(libusbDevHandle, endpointAddress_, nullptr, 0, nullptr, 1000/*original param:0*/);
-    if(res != LIBUSB_SUCCESS) {
-        LOG_WARN("interrupt transfer failed, error: {}", libusb_strerror(res));
-    }
+    isStreaming_ = false;
 
     streamThread_.join();
     frameQueue_.flush();
 
-    res = libusb_release_interface(libusbDevHandle, portInfo_->infIndex);
-    if(res != LIBUSB_SUCCESS) {
-        LOG_WARN("release interface failed, error: {}", libusb_strerror(res));
-    }
-    if(libusb_kernel_driver_active(libusbDevHandle, portInfo_->infIndex) == 1) {
-        res = libusb_attach_kernel_driver(libusbDevHandle, portInfo_->infIndex);
-        if(res != LIBUSB_SUCCESS) {
-            LOG_WARN("attach kernel driver failed, error: {}", libusb_strerror(res));
-        }
-    }
     LOG_DEBUG("HidDevicePort::stopStream done");
 }
 
@@ -99,3 +98,4 @@ std::shared_ptr<const SourcePortInfo> HidDevicePort::getSourcePortInfo() const {
 }
 
 }  // namespace libobsensor
+

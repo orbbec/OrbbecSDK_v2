@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "NetDataStreamPort.hpp"
 #include "logger/Logger.hpp"
 #include "exception/ObException.hpp"
@@ -82,3 +85,4 @@ void NetDataStreamPort::readData() {
 }
 
 }  // namespace libobsensor
+

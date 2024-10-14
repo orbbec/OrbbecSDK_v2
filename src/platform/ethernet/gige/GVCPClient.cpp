@@ -1,3 +1,5 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
 
 #if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
 #define _WINSOCK_DEPRECATED_NO_WARNINGS disable
@@ -624,7 +626,7 @@ void GVCPClient::sendGVCPForceIP(SOCKET sock, std::string mac, const OBNetIpConf
     sscanf(mac.c_str(), "%hhx:%hhx:%hhx:%hhx:%hhx:%hhx", &payload.Mac[2], &payload.Mac[3], &payload.Mac[4], &payload.Mac[5], &payload.Mac[6], &payload.Mac[7]);
     // memcpy(&payload.Mac[2], &discoverAck.payload.Mac[2], 6);
 
-    // 要修改的IP
+    // The IP to be modified
     // char m_szLocalIp[32];
     // strcpy(m_szLocalIp, config.address);
     // char m_szLocalMask[32];
@@ -903,3 +905,4 @@ void GVCPClient::checkAndUpdateSockets() {
 }
 
 }  // namespace libobsensor
+

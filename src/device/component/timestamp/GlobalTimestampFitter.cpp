@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "GlobalTimestampFitter.hpp"
 #include "utils/Utils.hpp"
 #include "logger/Logger.hpp"
@@ -105,7 +108,7 @@ bool GlobalTimestampFitter::isEnabled() const {
 
 void GlobalTimestampFitter::fittingLoop() {
     const int MAX_RETRY_COUNT = 5;
-    const uint64_t MAX_VALID_RTT = 10000; // 10ms
+    const uint64_t MAX_VALID_RTT   = 20000;  // 10ms
 
     int retryCount = 0;
     do {

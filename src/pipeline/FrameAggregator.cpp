@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 // #pragma once
 #include "FrameAggregator.hpp"
 #include "frame/FrameFactory.hpp"
@@ -61,7 +64,7 @@ void FrameAggregator::updateConfig(std::shared_ptr<const Config> config, const b
 
         float maxSyncQueueSize = fps * MAX_FRAME_DELAY + 1;
         maxSyncQueueSize += ((maxSyncQueueSize - (int)maxSyncQueueSize) > 0 ? 1 : 0);
-        auto halfTspGap = static_cast<uint32_t>(500.0f / fps + 0.5);  // +0.5以完成四舍五入
+        auto halfTspGap = static_cast<uint32_t>(500.0f / fps + 0.5);  // +0.5 to complete rounding
         srcFrameQueueMap_.insert(
             { STREAM_FRAME_TYPE_MAP.find(profile->getType())->second, { std::queue<std::shared_ptr<const Frame>>(), (uint32_t)maxSyncQueueSize, halfTspGap } });
     }
@@ -99,7 +102,7 @@ void FrameAggregator::pushFrame(std::shared_ptr<const Frame> frame) {
 }
 
 void sortFrameMap(std::map<OBFrameType, SourceFrameQueue> &frameMap, std::vector<FrameQueuePair> &frameVec, FrameSyncMode frameSyncMode) {
-    // srcFrameQueueMap_排序，队头时间戳小的队列的pair放前面
+    // Sort srcFrameQueueMap_ so that the pair with the queue having the smallest timestamp at the front is placed first.
     auto iter = frameMap.begin();
     while(iter != frameMap.end()) {
         if(!iter->second.queue.empty()) {
@@ -121,13 +124,13 @@ void FrameAggregator::tryAggregator() {
         withColorFrame_ = false;
         auto frameSet   = FrameFactory::createFrameSet();
         if(!frameSet) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));  // 等100ms后再次尝试是否能申请成功
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));  // Wait for 100ms and then try again to see if the request can succeed.
             continue;
         }
         if(srcFrameQueueMap_.size() > 1 && frameSyncMode_) {
-            if(matchingRateFirst_ && srcFrameQueueMap_.size() != 2) {  // 匹配率优先
+            if(matchingRateFirst_ && srcFrameQueueMap_.size() != 2) {  // Match rate priority
                 std::vector<FrameQueuePair> frameVector;
-                sortFrameMap(srcFrameQueueMap_, frameVector, frameSyncMode_);  // srcFrameQueueMap_排序
+                sortFrameMap(srcFrameQueueMap_, frameVector, frameSyncMode_);  // Sort srcFrameQueueMap_
                 auto refIter       = frameVector.begin();
                 auto refTsp        = getFrameTimestampMsec((*refIter)->second.queue.front(), frameSyncMode_);
                 auto refHalfTspGap = (*refIter)->second.halfTspGap;
@@ -140,7 +143,7 @@ void FrameAggregator::tryAggregator() {
                     if(tarTsp - refTsp > tspHalfGap) {
                         break;
                     }
-                    refTsp        = tarTsp;  // 出队后，将本次参考时间戳保存下来，作为下一次循环的参考
+                    refTsp        = tarTsp;  // After dequeuing, save the current reference timestamp to use as a reference for the next loop.
                     refHalfTspGap = tarHalfTspGap;
                     frameSet->pushFrame(std::move(tarFrame));
                     frameCnt_++;
@@ -156,10 +159,10 @@ void FrameAggregator::tryAggregator() {
                     }
                 }
             }
-            else {  // 匹配精度优先
+            else {  // Match precision priority
                 uint64_t    newMiniTimeStamp_          = 0;
                 OBFrameType newMiniTimeStampFrameType_ = miniTimeStampFrameType_;
-                // 同步匹配
+                // Synchronous matching
                 auto refIter       = srcFrameQueueMap_.find(miniTimeStampFrameType_);
                 auto refTsp        = getFrameTimestampMsec(refIter->second.queue.front(), frameSyncMode_);
                 auto refHalfTspGap = refIter->second.halfTspGap;
@@ -198,7 +201,7 @@ void FrameAggregator::tryAggregator() {
             }
         }
         else {
-            // 非同步匹配
+            // Asynchronous matching
             for(auto &item: srcFrameQueueMap_) {
                 if(!withEmptyQueue_ || item.second.queue.size() >= MAX_NORMAL_MODE_QUEUE_SIZE - 1) {
                     auto &srcFrame = item.second.queue.front();

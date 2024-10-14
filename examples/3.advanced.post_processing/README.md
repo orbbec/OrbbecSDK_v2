@@ -78,4 +78,4 @@ Press the button according to the interface prompts
 
 ### Result
 
-![image](/docs/resource/post_processing.jpg)
+![image](../../docs/resource/post_processing.jpg)

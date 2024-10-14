@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "RTSPStreamPort.hpp"
 #include "logger/Logger.hpp"
 #include "utils/Utils.hpp"
@@ -127,3 +130,4 @@ std::shared_ptr<const SourcePortInfo> RTSPStreamPort::getSourcePortInfo() const 
 }
 
 }  // namespace libobsensor
+

@@ -80,4 +80,4 @@ If you are on linux, you can switch to the directory `OrbbecSDK-dev/build/linux_
 
 ### Result
 
-![Enumerate_C](/docs/resource/enumerate.jpg)
+![Enumerate_C](../../../docs/resource/enumerate.jpg)

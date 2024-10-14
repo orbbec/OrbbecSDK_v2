@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Copyright (c) Orbbec Inc. All Rights Reserved.
+# Licensed under the MIT License.
+
 CURRNET_DIR=$(pwd)
 
 SCRIPT_DIR=$(dirname "$0")
@@ -71,3 +74,4 @@ docker run --rm -u $USER_ID:$GROUP_ID \
     -c "cd /workspace/$FOLDER_NAME && bash ./scripts/build/build_linux.sh"
 
 echo "Done building openorbbecsdk for linux $ARCH via docker"
+

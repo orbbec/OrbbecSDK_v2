@@ -4,37 +4,37 @@
 
 There are several examples codes for users learn how to use Orbbec cameras. Here is a brief introduction to each sample code:
 
-| Level | Sample                                     | doc | Description                                                                      |
-| ----- | ------------------------------------------ | --- | -------------------------------------------------------------------------------- |
-| basic | [quick_start](0.basic.quick_start) | [readme](0.basic.quick_start/README.md) | Quick show how to use the SDK to get frames from the Orbbec RGB-D camera device. |
-| basic | [enumerate](0.basic.enumerate) | [readme](0.basic.enumerate/README.md) | Use the SDK interface to obtain camera-related information, including model, various sensors, and sensor-related configurations.|
-| stream | [depth](1.stream.depth)  | [readme](1.stream.depth/README.md)    | Use the SDK interface to obtain the depth stream of the camera and display it in the window. |
-| stream | [color](1.stream.color) | [readme](1.stream.color/README.md)    | Use the SDK interface to obtain the camera's color stream and display it in the window. |
-| stream | [infrared](1.stream.infrared)  | [readme](1.stream.infrared/README.md)    | Use the SDK interface to obtain the camera IR stream and display it in the window. |
-| stream | [imu](1.stream.imu)  | [readme](1.stream.imu/README.md)    | Use the SDK interface to obtain the camera's internal imu data and output it|
-| stream | [multi_streams](1.stream.multi_streams) | [readme](1.stream.multi_streams/README.md)    | Use SDK to obtain multiple camera data streams and output them. |
-| stream | [callback](1.stream.callback) | [readme](1.stream.callback/README.md)    | In this sample, users can obtain depth, RGB, and IR images. This sample also supports performing user-defined operations such as data acquisition, data processing, and data modification within the callback function.|
-| device | [control](2.device.control) | [readme](2.device.control/README.md)    | The SDK can be used to modify camera-related parameters, including laser switch, laser level intensity, white balance switch, etc. |
-| device | [hot_plugin](2.device.hot_plugin) | [readme](2.device.hot_plugin/README.md)    | Use SDK to handle the settings of device unplug callback and process the acquired code stream after unplugging. |
-| advanced | [sync_align](3.advanced.sync_align) | [readme](3.advanced.sync_align/README.md)    | Use the SDK interface to demonstrate the synchronization and alignment of sensor data streams, display the aligned image. |
-| advanced | [hw_d2c_align](3.advanced.hw_d2c_align) | [readme](3.advanced.hw_d2c_align/README.md)    | Use the SDK interface to demonstrate the application of hardware depth-to-color alignment. |
-| advanced | [post_processing](3.advanced.post_processing) | [readme](3.advanced.post_processing/README.md)    | Use the SDK interface to  demonstrate post-processing operations, display post-processed images. |
-| advanced | [point_cloud](3.advanced.point_cloud) | [readme](3.advanced.point_cloud/README.md)    | Connect the device to open the stream, generate a depth point cloud or RGBD point cloud and save it as a ply format file. |
-| advanced | [preset](3.advanced.preset) | [readme](3.advanced.preset/README.md)    | Use the SDK interface to set and get the preset value. |
-| advanced | [coordinate_transform](3.advanced.coordinate_transform) | [readme](3.advanced.coordinate_transform/README.md)    | Use the SDK interface to  transform different coordinate systems. |
-| advanced | [hdr](3.advanced.hdr) | [readme](3.advanced.hdr/README.md)    | In this sample, user can get the HDR merge image. Also supports user to toggle HDR merge and toggle alternate show origin frame. |
-| advanced | [multi_devices](3.advanced.multi_devices) | [readme](3.advanced.multi_devices/README.md)    | In this sample, users can connect multiple camera devices and get color and depth images of different cameras. |
-| advanced | [common_usages](3.advanced.common_usages) | [readme](3.advanced.common_usages/README.md)    | Use SDK to handle the settings of device unplug callback and process the acquired code stream after unplugging. |
+| Level    | Sample                                                  | Description                                                                                                                                                                                                             |
+| -------- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| basic    | [quick_start](0.basic.quick_start)                      | Quick show how to use the SDK to get frames from the Orbbec RGB-D camera device.                                                                                                                                        |
+| basic    | [enumerate](0.basic.enumerate)                          | Use the SDK interface to obtain camera-related information, including model, various sensors, and sensor-related configurations.                                                                                        |
+| stream   | [depth](1.stream.depth)                                 | Use the SDK interface to obtain the depth stream of the camera and display it in the window.                                                                                                                            |
+| stream   | [color](1.stream.color)                                 | Use the SDK interface to obtain the camera's color stream and display it in the window.                                                                                                                                 |
+| stream   | [infrared](1.stream.infrared)                           | Use the SDK interface to obtain the camera IR stream and display it in the window.                                                                                                                                      |
+| stream   | [imu](1.stream.imu)                                     | Use the SDK interface to obtain the camera's internal imu data and output it                                                                                                                                            |
+| stream   | [multi_streams](1.stream.multi_streams)                 | Use SDK to obtain multiple camera data streams and output them.                                                                                                                                                         |
+| stream   | [callback](1.stream.callback)                           | In this sample, users can obtain depth, RGB, and IR images. This sample also supports performing user-defined operations such as data acquisition, data processing, and data modification within the callback function. |
+| device   | [control](2.device.control)                             | The SDK can be used to modify camera-related parameters, including laser switch, laser level intensity, white balance switch, etc.                                                                                      |
+| device   | [hot_plugin](2.device.hot_plugin)                       | Use SDK to handle the settings of device unplug callback and process the acquired code stream after unplugging.                                                                                                         |
+| advanced | [sync_align](3.advanced.sync_align)                     | Use the SDK interface to demonstrate the synchronization and alignment of sensor data streams, display the aligned image.                                                                                               |
+| advanced | [hw_d2c_align](3.advanced.hw_d2c_align)                 | Use the SDK interface to demonstrate the application of hardware depth-to-color alignment.                                                                                                                              |
+| advanced | [post_processing](3.advanced.post_processing)           | Use the SDK interface to  demonstrate post-processing operations, display post-processed images.                                                                                                                        |
+| advanced | [point_cloud](3.advanced.point_cloud)                   | Connect the device to open the stream, generate a depth point cloud or RGBD point cloud and save it as a ply format file.                                                                                               |
+| advanced | [preset](3.advanced.preset)                             | Use the SDK interface to set and get the preset value.                                                                                                                                                                  |
+| advanced | [coordinate_transform](3.advanced.coordinate_transform) | Use the SDK interface to  transform different coordinate systems.                                                                                                                                                       |
+| advanced | [hdr](3.advanced.hdr)                                   | In this sample, user can get the HDR merge image. Also supports user to toggle HDR merge and toggle alternate show origin frame.                                                                                        |
+| advanced | [multi_devices](3.advanced.multi_devices)               | In this sample, users can connect multiple camera devices and get color and depth images of different cameras.                                                                                                          |
+| advanced | [common_usages](3.advanced.common_usages)               | Use SDK to handle the settings of device unplug callback and process the acquired code stream after unplugging.                                                                                                         |
 
 ### C language examples
 
 The listed examples at previous section are written in C++ language. Here is a brief introduction to c language examples:
 
-| Level | Sample                                     | doc | Description                                                                      |
-| ----- | ------------------------------------------ | --- | -------------------------------------------------------------------------------- |
-| basic | [c_quick_start](c_examples/0.c_quick_start) |  [readme](c_examples/0.c_quick_start/README.md) | This is a quick start guide to start device streams using the Orbbec SDK C API. |
-| stream | [c_enumerate](c_examples/1.c_enumerate) |  [readme](c_examples/1.c_enumerate/README.md) | This is a enumerate guide to get device streams profile information using the Orbbec SDK C API. |
-| stream | [c_depth](c_examples/2.c_depth) |  [readme](c_examples/2.c_depth/README.md) | This is a depth guide to get depth stream and depth image by using the Orbbec SDK C API. |
+| Level  | Sample                                      | Description                                                                                     |
+| ------ | ------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| basic  | [c_quick_start](c_examples/0.c_quick_start) | This is a quick start guide to start device streams using the Orbbec SDK C API.                 |
+| stream | [c_enumerate](c_examples/1.c_enumerate)     | This is a enumerate guide to get device streams profile information using the Orbbec SDK C API. |
+| stream | [c_depth](c_examples/2.c_depth)             | This is a depth guide to get depth stream and depth image by using the Orbbec SDK C API.        |
 
 ## Append
 

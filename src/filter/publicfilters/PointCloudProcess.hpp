@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #pragma once
 #include "IFilter.hpp"
 #include "FormatConverterProcess.hpp"
@@ -52,3 +55,4 @@ protected:
 };
 
 }  // namespace libobsensor
+

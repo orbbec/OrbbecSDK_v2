@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# Copyright (c) Orbbec Inc. All Rights Reserved.
+# Licensed under the MIT License.
+
 CURRNET_DIR=$(pwd)
 
 SCRIPT_DIR=$(dirname "$0")
@@ -49,3 +52,4 @@ echo "Done building and compressing OrbbecSDK for $PLATFORM"
 echo "Done building OrbbecSDK for $PLATFORM"
 
 cd $CURRNET_DIR
+

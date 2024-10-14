@@ -171,6 +171,6 @@ Press the Esc key in the window to exit the program.
 
 ### Result
 
-![image](/docs/resource/control1.jpg)
+![image](../../docs/resource/control1.jpg)
 
-![image](/docs/resource/control2.jpg)
+![image](../../docs/resource/control2.jpg)

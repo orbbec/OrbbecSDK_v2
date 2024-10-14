@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "FilterDecorator.hpp"
 #include "frame/FrameFactory.hpp"
 #include "exception/ObException.hpp"
@@ -95,11 +98,11 @@ double parseFilterConfigValue(const std::string &valueStr, OBFilterConfigValueTy
         return static_cast<double>(value);
     }
     else if(valueType == OB_FILTER_CONFIG_VALUE_TYPE_FLOAT) {
-        float value;
-        if(!utils::string::cvt2Float(valueStr, value)) {
+        double value;
+        if(!utils::string::cvt2Double(valueStr, value)) {
             LOG_WARN("Invalid filter config value for float type: {}", valueStr);
         }
-        return static_cast<double>(value);
+        return value;
     }
     else if(valueType == OB_FILTER_CONFIG_VALUE_TYPE_BOOLEAN) {
         bool value;
@@ -226,7 +229,11 @@ std::string filterConfigValueToString(double value, OBFilterConfigValueType valu
         return std::to_string(static_cast<int>(value));
     }
     else if(valueType == OB_FILTER_CONFIG_VALUE_TYPE_FLOAT) {
-        return std::to_string(value);
+        // double to string with precision as large as possible
+        std::stringstream ss;
+        ss.precision(std::numeric_limits<double>::max_digits10);
+        ss << value;
+        return ss.str();
     }
     else if(valueType == OB_FILTER_CONFIG_VALUE_TYPE_BOOLEAN) {
         return value ? "1" : "0";

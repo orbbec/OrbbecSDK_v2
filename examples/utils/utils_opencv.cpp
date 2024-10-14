@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "utils_opencv.hpp"
 #include "utils.hpp"
 #include "utils_types.h"
@@ -13,7 +16,15 @@ namespace ob_smpl {
 
 const std::string defaultKeyMapPrompt = "'Esc': Exit Window, '?': Show Key Map";
 CVWindow::CVWindow(std::string name, uint32_t width, uint32_t height, ArrangeMode arrangeMode)
-    : name_(std::move(name)), arrangeMode_(arrangeMode), width_(width), height_(height), closed_(false), showInfo_(true), alpha_(0.6f), showPrompt_(false) {
+    : name_(std::move(name)),
+      arrangeMode_(arrangeMode),
+      width_(width),
+      height_(height),
+      closed_(false),
+      showInfo_(true),
+      showSyncTimeInfo_(false),
+      alpha_(0.6f),
+      showPrompt_(false) {
 
 #if defined(TO_DISABLE_OPENCV_LOG)
     cv::utils::logging::setLogLevel(cv::utils::logging::LogLevel::LOG_LEVEL_SILENT);
@@ -183,6 +194,10 @@ void CVWindow::setShowInfo(bool show) {
     showInfo_ = show;
 }
 
+// set show frame synctime info
+void CVWindow::setShowSyncTimeInfo(bool show) {
+    showSyncTimeInfo_ = show;
+}
 // set alpha for OVERLAY render mode
 void CVWindow::setAlpha(float alpha) {
     alpha_ = alpha;
@@ -240,7 +255,7 @@ void CVWindow::arrangeFrames() {
         }
         else if(arrangeMode_ == ARRANGE_ONE_ROW) {
             for(auto &item: matGroups_) {
-                auto   &mat       = item.second.second;
+                auto &  mat       = item.second.second;
                 cv::Mat resizeMat = resizeMatKeepAspectRatio(mat, static_cast<int>(width_ / matGroups_.size()), height_);
                 if(renderMat.dims > 0 && renderMat.cols > 0 && renderMat.rows > 0) {
                     cv::hconcat(renderMat, resizeMat, renderMat);
@@ -252,7 +267,7 @@ void CVWindow::arrangeFrames() {
         }
         else if(arrangeMode_ == ARRANGE_ONE_COLUMN) {
             for(auto &item: matGroups_) {
-                auto   &mat       = item.second.second;
+                auto &  mat       = item.second.second;
                 cv::Mat resizeMat = resizeMatKeepAspectRatio(mat, width_, static_cast<int>(height_ / matGroups_.size()));
                 if(renderMat.dims > 0 && renderMat.cols > 0 && renderMat.rows > 0) {
                     cv::vconcat(renderMat, resizeMat, renderMat);
@@ -382,6 +397,9 @@ cv::Mat CVWindow::visualize(std::shared_ptr<const ob::Frame> frame) {
         default:
             break;
         }
+        if(showSyncTimeInfo_ && !rstMat.empty()) {
+            drawInfo(rstMat, videoFrame);
+        }
     }
     else if(frame->getType() == OB_FRAME_DEPTH) {
         auto videoFrame = frame->as<const ob::VideoFrame>();
@@ -403,6 +421,9 @@ cv::Mat CVWindow::visualize(std::shared_ptr<const ob::Frame> frame) {
             // apply colormap
             cv::applyColorMap(cvtMat, rstMat, cv::COLORMAP_JET);
         }
+        if(showSyncTimeInfo_ && !rstMat.empty()) {
+            drawInfo(rstMat, videoFrame);
+        }
     }
     else if(frame->getType() == OB_FRAME_IR || frame->getType() == OB_FRAME_IR_LEFT || frame->getType() == OB_FRAME_IR_RIGHT) {
         auto videoFrame = frame->as<const ob::VideoFrame>();
@@ -420,6 +441,9 @@ cv::Mat CVWindow::visualize(std::shared_ptr<const ob::Frame> frame) {
             cv::Mat rawMat(1, videoFrame->getDataSize(), CV_8UC1, videoFrame->getData());
             rstMat = cv::imdecode(rawMat, 1);
             cv::cvtColor(rstMat, rstMat, cv::COLOR_GRAY2RGB);
+        }
+        if(showSyncTimeInfo_ && !rstMat.empty()) {
+            drawInfo(rstMat, videoFrame);
         }
     }
     else if(frame->getType() == OB_FRAME_ACCEL) {
@@ -480,6 +504,9 @@ void CVWindow::drawInfo(cv::Mat &imageMat, std::shared_ptr<const ob::VideoFrame>
     }
     else if(frame->getType() == OB_FRAME_COLOR && frame->getFormat() == OB_FORMAT_MJPG) {
         putTextWithBackground("Color-MJPG", cv::Point(8, 16));
+    }
+    else if(frame->getType() == OB_FRAME_COLOR && ((frame->getFormat() == OB_FORMAT_YUYV) || (frame->getFormat() == OB_FORMAT_YUY2))) {
+        putTextWithBackground("Color-YUYV", cv::Point(8, 16));
     }
     else if(frame->getType() == OB_FRAME_DEPTH) {
         putTextWithBackground("Depth", cv::Point(8, 16));

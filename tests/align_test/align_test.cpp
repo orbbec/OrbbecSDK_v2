@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "AlignImpl.hpp"
 
 #include <iostream>
@@ -366,3 +369,4 @@ int main(int argc, char *argv[]) {
     impl = nullptr;
     return 0;
 }
+

@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #pragma once
 #include "libobsensor/h/ObTypes.h"
 #include "ethernet/socket/SocketTypes.hpp"
@@ -10,10 +13,10 @@
 namespace libobsensor {
 
 
-#define GVCP_VERSION 0x42  // GVCP协议版本号
+#define GVCP_VERSION 0x42  // GVCP protocol version number
 #define GVCP_DISCOVERY_FLAGS 0x11
 #define GVCP_FORCEIP_FLAGS 0x01
-#define GVCP_PORT 3956  // GVCP协议端口号
+#define GVCP_PORT 3956  // GVCP protocol port number
 #define GVCP_REQUEST_ID 0x0001
 #define GEV_STATUS_SUCCESS 0x0000
 
@@ -45,7 +48,7 @@ struct gvcp_ack_header {
     uint16_t wReqID;
 };
 
-// 注意：大端模式
+// Note: Big-endian mode
 struct gvcp_ack_payload {
     uint32_t dwSpecVer;
     uint32_t dwDevMode;

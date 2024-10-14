@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "FrameProcessor.hpp"
 #include "frame/FrameFactory.hpp"
 #include "utils/Utils.hpp"

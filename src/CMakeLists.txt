@@ -1,3 +1,6 @@
+# Copyright (c) Orbbec Inc. All Rights Reserved.
+# Licensed under the MIT License.
+
 cmake_minimum_required(VERSION 3.5)
 
 set(OB_INTERFACE_DIR "${CMAKE_CURRENT_LIST_DIR}/interface")
@@ -58,3 +61,4 @@ if(OB_IS_MAIN_PROJECT)
 
     install(EXPORT OrbbecSDKConfig NAMESPACE ob:: DESTINATION lib)
 endif()
+

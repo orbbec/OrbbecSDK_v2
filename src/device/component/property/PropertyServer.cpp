@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "PropertyServer.hpp"
 #include "exception/ObException.hpp"
 #include "logger/Logger.hpp"

@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include <fcntl.h>
 #include <unistd.h>
 #include <limits.h>
@@ -579,7 +582,7 @@ void writeBufferToFile(const char *buf, std::size_t size, const std::string &fil
 
     if(!file.is_open()) {
         // If the file fails to open, throw an exception or handle the error
-        throw std::runtime_error("无法打开文件: " + filename);
+        throw std::runtime_error("Unable to open the file: " + filename);
     }
 
     // Write the data in buf to the file
@@ -716,7 +719,14 @@ void ObV4lGmslDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandleGmsl> devHa
 
                             auto realtime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
                             videoFrame->setSystemTimeStampUsec(realtime);
-                            videoFrame->setNumber(buf.sequence);
+                            // videoFrame->setNumber(buf.sequence);
+                            // for debug use. it is not necessary
+                            // auto metaFrameCount=*(uint32_t *)(uvc_payload_header);
+                            // LOG_DEBUG("read metaFrameCount:{}", metaFrameCount);
+
+                            // fix frame index zero issue.
+                            videoFrame->setNumber(devHandle->loopFrameIndex);
+                            // LOG_DEBUG("set loopFrameIndex:{}", devHandle->loopFrameIndex);
 
                             if(devHandle->profile->getType() == OB_STREAM_COLOR) {
                                 if(colorFrameNum >= 3) {
@@ -730,6 +740,7 @@ void ObV4lGmslDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandleGmsl> devHa
                             else {
                                 devHandle->frameCallback(videoFrame);
                             }
+                            devHandle->loopFrameIndex++;
                         }
                     });
                 }
@@ -1174,13 +1185,13 @@ std::shared_ptr<const SourcePortInfo> ObV4lGmslDevicePort::getSourcePortInfo() c
     return portInfo_;
 }
 
-#define BASE_WAIT_RESPONSE_TIME_US 300
+#define BASE_WAIT_RESPONSE_TIME_MS 1
 uint32_t ObV4lGmslDevicePort::sendAndReceive(const uint8_t *send, uint32_t sendLen, uint8_t *recv, uint32_t exceptedRecvLen) {
     std::unique_lock<std::mutex> lk(mMultiThreadI2CMutex);
     if(!sendData(send, sendLen)) {
         return -1;
     }
-    utils::sleepUs(BASE_WAIT_RESPONSE_TIME_US);
+    utils::sleepMs(BASE_WAIT_RESPONSE_TIME_MS);
     if(!recvData(recv, &exceptedRecvLen)) {
         return -1;
     }
@@ -1534,9 +1545,7 @@ bool ObV4lGmslDevicePort::getXuExt(uint32_t ctrl, uint8_t *data, uint32_t *len) 
     control.p_u8 = dataRecvBuf.data();
     v4l2_ext_controls ext{ control.id & 0xffff0000, 1, 0, 0, 0, &control };
 
-    // the ioctl fails once when performing send and receive right after it
-    // it succeeds on the second time
-    const int MAX_TRIES       = 200;
+    const int MAX_TRIES       = 30;
     const int TRY_INTERVAL_MS = 10;
     int       tries           = 0;
     while(++tries < MAX_TRIES) {
@@ -1571,7 +1580,7 @@ bool ObV4lGmslDevicePort::getXuExt(uint32_t ctrl, uint8_t *data, uint32_t *len) 
                 // std::to_string(pRecvDataBuf->header.len),
                 //           std::to_string(pRecvDataBuf->header.code), tries);
 
-                utils::sleepMs(TRY_INTERVAL_MS);
+                utils::sleepMs(TRY_INTERVAL_MS * (tries > 10 ? 10 : tries));
 
                 continue;
             }
@@ -1597,7 +1606,7 @@ bool ObV4lGmslDevicePort::getXuExt(uint32_t ctrl, uint8_t *data, uint32_t *len) 
                 std::memcpy(usbProtocolMsg.buf.data.resp.data, pRecvDataBuf->body.data, readRespDataSize);
             }
             else {
-                LOG_DEBUG("get read I2C dataSize=0 or dataSize error! readRespDataSize:{}", readRespDataSize);
+                LOG_TRACE("get read I2C dataSize=0 or dataSize error! readRespDataSize:{}", readRespDataSize);
             }
             // memcpy(usbProtocolMsg.buf.data.resp.data, pRecvDataBuf->body.data, readRespDataSize);
             // std::memcpy(usbProtocolMsg.buf.data.resp.data, pRecvDataBuf->body.data, readRespDataSize);

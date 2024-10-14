@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "HdrMergeProcess.hpp"
 #include "exception/ObException.hpp"
 #include "logger/LoggerInterval.hpp"
@@ -316,3 +319,4 @@ std::shared_ptr<Frame> HDRMerge::merge(std::shared_ptr<const Frame> first_fs, st
 }
 
 }  // namespace libobsensor
+

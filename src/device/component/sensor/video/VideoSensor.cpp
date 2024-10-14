@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "VideoSensor.hpp"
 #include "exception/ObException.hpp"
 #include "logger/LoggerInterval.hpp"
@@ -74,7 +77,7 @@ void VideoSensor::start(std::shared_ptr<const StreamProfile> sp, FrameCallback c
         if(formatConverter) {
             formatConverter->setConversion(currentFormatFilterConfig_->srcFormat, currentFormatFilterConfig_->dstFormat);
         }
-        currentFormatFilterConfig_->converter->setCallback(callback);
+        currentFormatFilterConfig_->converter->setCallback([this](std::shared_ptr<Frame> frame) { outputFrame(frame); });
     }
 
     auto vsPort = std::dynamic_pointer_cast<IVideoStreamPort>(backend_);
@@ -122,17 +125,15 @@ void VideoSensor::onBackendFrameCallback(std::shared_ptr<Frame> frame) {
     updateStreamState(STREAM_STATE_STREAMING);
 
     if(currentFormatFilterConfig_ && currentFormatFilterConfig_->converter) {
-        frame = currentFormatFilterConfig_->converter->process(frame);
-        if(!frame) {
-            LOG_WARN_INTVL("This frame will be dropped because format converter process failure! @{}", sensorType_);
-            return;
-        }
+        currentFormatFilterConfig_->converter->pushFrame(frame);
     }
-    frame->setStreamProfile(activatedStreamProfile_);
-    outputFrame(frame);
+    else {
+        outputFrame(frame);
+    }
 }
 
 void VideoSensor::outputFrame(std::shared_ptr<Frame> frame) {
+    frame->setStreamProfile(activatedStreamProfile_);
     if(frameProcessor_) {
         frame = frameProcessor_->process(frame);
         if(!frame) {

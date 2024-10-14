@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #pragma once
 #include "IFrame.hpp"
 #include "IStreamProfile.hpp"
@@ -159,3 +162,4 @@ private:
 };
 
 }  // namespace libobsensor
+

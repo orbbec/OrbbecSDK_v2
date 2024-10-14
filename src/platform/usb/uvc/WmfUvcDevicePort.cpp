@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #if(_MSC_FULL_VER < 180031101)
 #error At least Visual Studio 2013 Update 4 is required to compile this backend
 #endif
@@ -457,12 +460,12 @@ uint32_t WmfUvcDevicePort::sendAndReceive(const uint8_t *sendData, uint32_t send
 
 // std::string wcharToString(wchar_t *wchar) {
 //     wchar_t *wText = wchar;
-//     DWORD    dwNum = WideCharToMultiByte(CP_OEMCP, NULL, wText, -1, NULL, 0, NULL, FALSE);  // WideCharToMultiByte的运用
-//     char *   psText;  // psText为char*的临时数组，作为赋值给std::string的中间变量
+//     DWORD    dwNum = WideCharToMultiByte(CP_OEMCP, NULL, wText, -1, NULL, 0, NULL, FALSE);  // Usage of WideCharToMultiByte
+//     char *   psText;  // psText is a temporary char* array used as an intermediate variable for assignment to std::string
 //     psText = new char[dwNum];
-//     WideCharToMultiByte(CP_OEMCP, NULL, wText, -1, psText, dwNum, NULL, FALSE);  // WideCharToMultiByte的再次运用
-//     std::string szDst = psText;                                                  // std::string赋值
-//     delete[] psText;                                                             // psText的清除
+//     WideCharToMultiByte(CP_OEMCP, NULL, wText, -1, psText, dwNum, NULL, FALSE);  // Reuse of WideCharToMultiByte
+//     std::string szDst = psText;                                                  // std::string assignment
+//     delete[] psText;                                                             // Clearing psText
 //     return szDst;
 // }
 
@@ -533,8 +536,8 @@ bool WmfUvcDevicePort::setXu(uint8_t ctrl, const uint8_t *data, uint32_t len) {
     ULONG bytes_received = 0;
     addTimeoutBarrier("setXu");
 
-    // 库内部会先GET_LEN命令获取协议数据长度，并按照GET_LEN返回值发送对应长度数据。
-    // 所以当len<GET_LEN(): 会返回错误， len>GET_LEN(): 会只发送前边GET_LEN()个字节的数据
+    // The library will first use the GET_LEN command to obtain the protocol data length and then send the data of the corresponding length based on the GET_LEN return value.
+    // Therefore, when len < GET_LEN(), an error will be returned; when len > GET_LEN(), only the first GET_LEN() bytes of data will be sent.
     auto hr = xuKsControl_->KsProperty(reinterpret_cast<PKSPROPERTY>(&node), sizeof(KSP_NODE), (void *)data, len, &bytes_received);
 
     removeTimeoutBarrier();
@@ -557,8 +560,8 @@ bool WmfUvcDevicePort::getXu(uint8_t ctrl, uint8_t *data, uint32_t *len) {
     ULONG bytes_received = 0;
     addTimeoutBarrier("getXu");
 
-    // 库内部会先GET_LEN命令获取协议数据长度，设备可以返回的数据长度需要小于等于GET_LEN(),
-    // 如果 XU_MAX_DATA_LENGTH<GET_LEN(): 会返回错误
+    // The library will first use the GET_LEN command to get the protocol data length, and the data length that the device can return must be less than or equal to GET_LEN().
+    // If XU_MAX_DATA_LENGTH < GET_LEN(), an error will be returned.
     auto hr = xuKsControl_->KsProperty(reinterpret_cast<PKSPROPERTY>(&node), sizeof(node), data, XU_MAX_DATA_LENGTH, &bytes_received);
     *len    = bytes_received;
 
@@ -913,7 +916,7 @@ void WmfUvcDevicePort::playProfile(std::shared_ptr<const VideoStreamProfile> pro
             CHECK_HR(streamReader_->SetStreamSelection(mfp.index, TRUE));
             {
                 std::lock_guard<std::mutex> lock(streamsMutex_);
-                auto                       &stream = streams_[mfp.index];  // std::map特性，如果不存在会自动创建
+                auto                       &stream = streams_[mfp.index];  // Characteristic of std::map: if the key does not exist, it will be automatically created
                 if(streams_[mfp.index].streaming) {
                     throw std::runtime_error("Camera already streaming via this stream index!");
                 }
@@ -982,7 +985,7 @@ void WmfUvcDevicePort::startStream(std::shared_ptr<const StreamProfile> profile,
 
 void WmfUvcDevicePort::stopStream(std::shared_ptr<const StreamProfile> profile) {
     std::lock_guard<std::recursive_mutex> lock(deviceMutex_);
-    bool                                  isStarted = false;  // 会重新根据是否还有流在出流状态赋值
+    bool                                  isStarted = false;  // Will reassign values based on whether there are still streams in the output state
     for(auto &item: streams_) {
         auto &stream = item.second;
         if(stream.profile == profile && stream.streaming) {
@@ -998,7 +1001,7 @@ void WmfUvcDevicePort::stopStream(std::shared_ptr<const StreamProfile> profile) 
             }
         }
         if(stream.streaming) {
-            isStarted = true;  // 还有其他流在开着
+            isStarted = true;  // There are other streams still open
         }
     }
     checkConnection();
@@ -1028,10 +1031,10 @@ void WmfUvcDevicePort::stopAllStream() {
 
 // ReSharper disable once CppMemberFunctionMayBeConst
 void WmfUvcDevicePort::flush(int index) {
-    std::lock_guard<std::recursive_mutex> lock(deviceMutex_);  // flush 是同步的
+    std::lock_guard<std::recursive_mutex> lock(deviceMutex_);  // flush is synchronous
     if(isConnected(portInfo_)) {
         if(streamReader_ != nullptr) {
-            CHECK_HR(streamReader_->Flush(index));  // flush同时会关闭掉流
+            CHECK_HR(streamReader_->Flush(index));  // flush will also close the stream
         }
     }
 }
@@ -1079,7 +1082,7 @@ STDMETHODIMP WmfUvcDevicePort::OnReadSample(HRESULT hrStatus, DWORD streamIndex,
                 return S_OK;
             }
         }
-        LOG_HR(streamReader_->ReadSample(streamIndex, 0, nullptr, nullptr, nullptr, nullptr));  // 触发下一帧数据获取
+        LOG_HR(streamReader_->ReadSample(streamIndex, 0, nullptr, nullptr, nullptr, nullptr));  // Trigger the acquisition of the next frame of data
 
         if(sample) {
             CComPtr<IMFMediaBuffer> buffer = nullptr;
@@ -1144,3 +1147,4 @@ STDMETHODIMP WmfUvcDevicePort::OnFlush(DWORD streamIndex) {
 }
 
 }  // namespace libobsensor
+

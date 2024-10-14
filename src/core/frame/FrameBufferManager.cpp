@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "FrameBufferManager.hpp"
 #include "FrameMemoryPool.hpp"
 
@@ -9,7 +12,7 @@ namespace libobsensor {
 
 #define DEFAULT_MAX_FRAME_MEMORY_SIZE ((uint64_t)2 * 1024 * 1024 * 1024)  // 2GB
 
-FrameMemoryAllocator::FrameMemoryAllocator() : maxSize_(DEFAULT_MAX_FRAME_MEMORY_SIZE), usedSize_(0), logger_(Logger::getInstance()) {
+FrameMemoryAllocator::FrameMemoryAllocator() : maxSizeInByte_(DEFAULT_MAX_FRAME_MEMORY_SIZE), usedSize_(0), logger_(Logger::getInstance()) {
     auto envConfig = EnvConfig::getInstance();
 
     if(envConfig->isNodeContained("Memory.MaxFrameBufferSize")) {
@@ -19,9 +22,9 @@ FrameMemoryAllocator::FrameMemoryAllocator() : maxSize_(DEFAULT_MAX_FRAME_MEMORY
             LOG_WARN("The frame buffer size you set is too small, will set to 100MB instead");
             frameBufferSize = 100;
         }
-        maxSize_ = frameBufferSize * 1024 * 1024;
+        maxSizeInByte_ = static_cast<uint64_t>(frameBufferSize) * 1024 * 1024;  // MB to Byte
     }
-    LOG_DEBUG("FrameMemoryAllocator created! The max frame memory size has been set to {:.3f}MB", byteToMB(maxSize_));
+    LOG_DEBUG("FrameMemoryAllocator created! The max frame memory size has been set to {:.3f}MB", byteToMB(maxSizeInByte_));
 }
 
 FrameMemoryAllocator::~FrameMemoryAllocator() noexcept {
@@ -44,23 +47,23 @@ std::shared_ptr<FrameMemoryAllocator> FrameMemoryAllocator::getInstance() {
 
 void FrameMemoryAllocator::setMaxFrameMemorySize(uint64_t sizeInMb) {
     std::unique_lock<std::mutex> lock(mutex_);
-    maxSize_ = sizeInMb * 1024 * 1024;
-    if(maxSize_ < usedSize_) {
-        LOG_WARN("The max frame memory size you set is {:.3f}MB,  less than the current used size, will set to {:.3f}MB instead", byteToMB(maxSize_),
+    maxSizeInByte_ = sizeInMb * 1024 * 1024;
+    if(maxSizeInByte_ < usedSize_) {
+        LOG_WARN("The max frame memory size you set is {:.3f}MB,  less than the current used size, will set to {:.3f}MB instead", byteToMB(maxSizeInByte_),
                  byteToMB(usedSize_));
     }
     if(sizeInMb < 100) {  // 100 MB
         LOG_WARN("The size you is less than 100MB, size={:.3f}MB, will set to 100MB instead", (double)sizeInMb);
-        maxSize_ = 100 * 1024 * 1024;
+        maxSizeInByte_ = 100 * 1024 * 1024;
     }
-    LOG_DEBUG("FrameMemoryAllocator max frame memory size has been set to {:.3f}MB", byteToMB(maxSize_));
+    LOG_DEBUG("FrameMemoryAllocator max frame memory size has been set to {:.3f}MB", byteToMB(maxSizeInByte_));
 }
 
 uint8_t *FrameMemoryAllocator::allocate(size_t size) {
     std::unique_lock<std::mutex> lock(mutex_);
-    if(usedSize_ + size > maxSize_) {
+    if(usedSize_ + size > maxSizeInByte_) {
         LOG_WARN("FrameMemoryAllocator out of memory! require={0:.3f}MB, total usage: allocated={1:.3f}MB, max limit={2:.3f}MB", byteToMB(size),
-                 byteToMB(usedSize_), byteToMB(maxSize_));
+                 byteToMB(usedSize_), byteToMB(maxSizeInByte_));
         return nullptr;
     }
 
@@ -72,7 +75,7 @@ uint8_t *FrameMemoryAllocator::allocate(size_t size) {
     memset(ptr, 0, size);
     usedSize_ += size;
     LOG_DEBUG("New frame buffer allocated={0:.3f}MB, total usage: allocated={1:.3f}MB, max limit={2:.3f}MB", byteToMB(size), byteToMB(usedSize_),
-              byteToMB(maxSize_));
+              byteToMB(maxSizeInByte_));
     return (uint8_t *)ptr;
 }
 
@@ -81,7 +84,7 @@ void FrameMemoryAllocator::deallocate(uint8_t *ptr, size_t size) {
     usedSize_ -= size;
     free(ptr);
     LOG_DEBUG("Frame buffer released={0:.3f}MB, total usage: allocated={1:.3f}MB, max limit={2:.3f}MB", byteToMB(size), byteToMB(usedSize_),
-              byteToMB(maxSize_));
+              byteToMB(maxSizeInByte_));
 }
 
 FrameBufferManagerBase::FrameBufferManagerBase(size_t frameDataBufferSize, size_t frameObjSize)

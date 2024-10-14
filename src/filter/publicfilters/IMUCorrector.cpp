@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "IMUCorrector.hpp"
 #include "exception/ObException.hpp"
 #include "logger/LoggerInterval.hpp"
@@ -192,3 +195,4 @@ OBGyroValue IMUCorrector::correctGyro(const OBGyroValue &gyroValue, OBGyroIntrin
 }
 
 }  // namespace libobsensor
+

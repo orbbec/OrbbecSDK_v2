@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "FilterFactory.hpp"
 #include "publicfilters/publicFilterLoader.hpp"
 #include "privatefilters/PrivFilterLoader.hpp"

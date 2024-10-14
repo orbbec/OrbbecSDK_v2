@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include <iostream>
 #include <fstream>
 #include <regex>
@@ -198,4 +201,5 @@ catch (const std::string& e)
     std::cerr << e << std::endl;
     exit(-1);
 }
+
 

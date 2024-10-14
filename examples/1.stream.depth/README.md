@@ -48,4 +48,4 @@ Press the Esc key in the window to exit the program.
 
 ### Result
 
-![image](/docs/resource/depth.jpg)
+![image](../../docs/resource/depth.jpg)

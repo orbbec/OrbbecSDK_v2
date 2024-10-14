@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "FormatConverterProcess.hpp"
 #include "exception/ObException.hpp"
 #include "logger/LoggerInterval.hpp"
@@ -10,7 +13,7 @@
 
 namespace libobsensor {
 
-FormatConverter::FormatConverter() {}
+FormatConverter::FormatConverter() : convertType_(FORMAT_YUYV_TO_RGB) {}
 FormatConverter::~FormatConverter() noexcept {}
 
 void FormatConverter::updateConfig(std::vector<std::string> &params) {
@@ -53,6 +56,8 @@ void FormatConverter::setConversion(OBFormat srcFormat, OBFormat dstFormat) {
     for(auto &item: FORMAT_CONVERT_MAP) {
         if(item.second.first == srcFormat && item.second.second == dstFormat) {
             convertType_ = item.first;
+            currentStreamProfile_.reset();
+            tarStreamProfile_.reset();
             return;
         }
     }
@@ -64,124 +69,98 @@ std::shared_ptr<Frame> FormatConverter::process(std::shared_ptr<const Frame> fra
         return nullptr;
     }
 
-    auto     videoFrame = frame->as<VideoFrame>();
-    int      w          = videoFrame->getWidth();
-    int      h          = videoFrame->getHeight();
-    uint32_t dataSize   = w * h * 3;
-    switch(convertType_) {
-    case FORMAT_MJPG_TO_I420:
-    case FORMAT_MJPG_TO_NV21:
-    case FORMAT_MJPG_TO_NV12:
-        dataSize = w * h * 3 / 2;
-        break;
-    case FORMAT_MJPG_TO_BGRA:
-    case FORMAT_YUYV_TO_RGBA:
-    case FORMAT_YUYV_TO_BGRA:
-        dataSize = w * h * 4;
-        break;
-    case FORMAT_YUYV_TO_Y16:
-        dataSize = w * h * 2;
-        break;
-    case FORMAT_YUYV_TO_Y8:
-        dataSize = w * h;
-        break;
-    default:
-        break;
+    auto videoFrame = frame->as<VideoFrame>();
+    int  w          = videoFrame->getWidth();
+    int  h          = videoFrame->getHeight();
+
+    auto streamprofile = frame->getStreamProfile();
+    if(!currentStreamProfile_ || currentStreamProfile_.get() != streamprofile.get()) {
+        currentStreamProfile_ = streamprofile;
+        tarStreamProfile_     = streamprofile->clone();
+        if(FORMAT_CONVERT_MAP.find(convertType_) == FORMAT_CONVERT_MAP.end()) {
+            auto srcFormat = streamprofile->getFormat();
+            auto dstFormat = OB_FORMAT_RGB;
+            for(auto &item: FORMAT_CONVERT_MAP) {
+                if(item.second.first == srcFormat) {
+                    dstFormat = item.second.second;
+                    tarStreamProfile_->setFormat(dstFormat);
+                    break;
+                }
+            }
+        }
+        else {
+            tarStreamProfile_->setFormat(FORMAT_CONVERT_MAP.at(convertType_).second);
+        }
     }
 
-    auto tarFrame = FrameFactory::createFrame(frame->getType(), frame->getFormat(), dataSize);
+    auto tarFrame = FrameFactory::createFrameFromStreamProfile(tarStreamProfile_);
     if(tarFrame == nullptr) {
         LOG_ERROR_INTVL("Create frame by frame factory failed!");
         return nullptr;
-    }
-
-    auto videoStreamProfile = frame->getStreamProfile();
-    if(!currentStreamProfile_ || currentStreamProfile_.get() != videoStreamProfile.get()) {
-        currentStreamProfile_ = videoStreamProfile;
-        tarStreamProfile_     = videoStreamProfile->clone();
     }
 
     tarFrame->copyInfoFromOther(frame);
     switch(convertType_) {
     case FORMAT_YUYV_TO_RGB:
         yuyvToRgb((uint8_t *)frame->getData(), (uint8_t *)tarFrame->getData(), w, h);
-        tarStreamProfile_->setFormat(OB_FORMAT_RGB);
         break;
     case FORMAT_YUYV_TO_RGBA:
         yuyvToRgba((uint8_t *)frame->getData(), (uint8_t *)tarFrame->getData(), w, h);
-        tarStreamProfile_->setFormat(OB_FORMAT_RGBA);
         break;
     case FORMAT_YUYV_TO_BGR:
         yuyvToBgr((uint8_t *)frame->getData(), (uint8_t *)tarFrame->getData(), w, h);
-        tarStreamProfile_->setFormat(OB_FORMAT_RGB);
         break;
     case FORMAT_YUYV_TO_BGRA:
         yuyvToBgra((uint8_t *)frame->getData(), (uint8_t *)tarFrame->getData(), w, h);
-        tarStreamProfile_->setFormat(OB_FORMAT_BGRA);
         break;
     case FORMAT_YUYV_TO_Y16:
         yuyvToy16((uint8_t *)frame->getData(), (uint8_t *)tarFrame->getData(), w, h);
-        tarStreamProfile_->setFormat(OB_FORMAT_Y16);
         break;
     case FORMAT_YUYV_TO_Y8:
         yuyvToy8((uint8_t *)frame->getData(), (uint8_t *)tarFrame->getData(), w, h);
-        tarStreamProfile_->setFormat(OB_FORMAT_Y8);
         break;
     case FORMAT_UYVY_TO_RGB:
         uyvyToRgb((uint8_t *)frame->getData(), (uint8_t *)tarFrame->getData(), w, h);
-        tarStreamProfile_->setFormat(OB_FORMAT_RGB);
         break;
     case FORMAT_I420_TO_RGB:
         i420ToRgb((uint8_t *)frame->getData(), (uint8_t *)tarFrame->getData(), w, h);
-        tarStreamProfile_->setFormat(OB_FORMAT_RGB);
         break;
     case FORMAT_NV21_TO_RGB:
         nv21ToRgb((uint8_t *)frame->getData(), (uint8_t *)tarFrame->getData(), w, h);
-        tarStreamProfile_->setFormat(OB_FORMAT_RGB);
         break;
     case FORMAT_NV12_TO_RGB:
         nv12ToRgb((uint8_t *)frame->getData(), (uint8_t *)tarFrame->getData(), w, h);
-        tarStreamProfile_->setFormat(OB_FORMAT_RGB);
         break;
     case FORMAT_MJPG_TO_I420:
         mjpgToI420((uint8_t *)frame->getData(), (uint32_t)frame->getDataSize(), (uint8_t *)tarFrame->getData(), w, h);
-        tarStreamProfile_->setFormat(OB_FORMAT_I420);
         break;
     case FORMAT_RGB_TO_BGR:
         exchangeRAndB((uint8_t *)frame->getData(), (uint8_t *)tarFrame->getData(), w, h);
-        tarStreamProfile_->setFormat(OB_FORMAT_BGR);
         break;
     case FORMAT_BGR_TO_RGB:
         exchangeRAndB((uint8_t *)frame->getData(), (uint8_t *)tarFrame->getData(), w, h);
-        tarStreamProfile_->setFormat(OB_FORMAT_RGB);
         break;
     case FORMAT_MJPG_TO_NV21:
         mjpgToNv21((uint8_t *)frame->getData(), (uint32_t)frame->getDataSize(), (uint8_t *)tarFrame->getData(), w, h);
-        tarStreamProfile_->setFormat(OB_FORMAT_NV21);
         break;
     case FORMAT_MJPG_TO_RGB:
         if(!mjpgToRgb((uint8_t *)frame->getData(), (uint32_t)frame->getDataSize(), (uint8_t *)tarFrame->getData(), w, h))
             return nullptr;
-        tarStreamProfile_->setFormat(OB_FORMAT_RGB);
         break;
     case FORMAT_MJPG_TO_BGR:
         mjpgToBgr((uint8_t *)frame->getData(), (uint32_t)frame->getDataSize(), (uint8_t *)tarFrame->getData(), w, h);
-        tarStreamProfile_->setFormat(OB_FORMAT_BGR);
         break;
     case FORMAT_MJPG_TO_BGRA:
         mjpegToBgra((uint8_t *)frame->getData(), (uint32_t)frame->getDataSize(), (uint8_t *)tarFrame->getData(), w, h);
-        tarStreamProfile_->setFormat(OB_FORMAT_BGRA);
         break;
     case FORMAT_MJPG_TO_NV12:
         mjpgToNv12((uint8_t *)frame->getData(), (uint32_t)frame->getDataSize(), (uint8_t *)tarFrame->getData(), w, h);
-        tarStreamProfile_->setFormat(OB_FORMAT_NV12);
         break;
     default:
         LOG_WARN_INTVL("Unsupported data format conversion.");
         return FrameFactory::createFrameFromOtherFrame(frame, true);
         break;
     }
-    tarFrame->setStreamProfile(tarStreamProfile_);
     return tarFrame;
 }
 
@@ -415,3 +394,4 @@ void FormatConverter::mjpegToBgra(uint8_t *src, uint32_t src_len, uint8_t *targe
 }
 
 }  // namespace libobsensor
+

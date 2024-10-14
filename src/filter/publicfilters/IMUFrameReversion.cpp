@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "IMUFrameReversion.hpp"
 #include "frame/Frame.hpp"
 #include "frame/FrameFactory.hpp"
@@ -53,3 +56,4 @@ std::shared_ptr<Frame> IMUFrameReversion::process(std::shared_ptr<const Frame> f
 }
 
 }  // namespace libobsensor
+

@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #pragma once
 // #include "core/frame/process/FrameProcessingBlock.hpp"
 #include "libobsensor/h/ObTypes.h"

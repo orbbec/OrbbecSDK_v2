@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "PublicTypeHelper.hpp"
 #include "exception/ObException.hpp"
 
@@ -669,3 +672,4 @@ std::ostream &operator<<(std::ostream &os, const OBCameraDistortion &type) {
        << "}\n";
     return os;
 }
+

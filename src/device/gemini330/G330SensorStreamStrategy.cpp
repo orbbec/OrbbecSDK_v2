@@ -1,3 +1,5 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
 
 #include "G330SensorStreamStrategy.hpp"
 #include "G330DepthWorkModeManager.hpp"

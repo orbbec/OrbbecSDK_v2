@@ -1,3 +1,6 @@
+# Copyright (c) Orbbec Inc. All Rights Reserved.
+# Licensed under the MIT License.
+
 cmake_minimum_required(VERSION 3.5)
 
 set(OB_TARGET_DEVICE device)
@@ -23,6 +26,7 @@ add_subdirectory(gemini2) # Gemini 2 series
 add_subdirectory(astra2) # Astra 2 series
 add_subdirectory(femtobolt) # FemtoBolt
 add_subdirectory(femtomega) # FemtoMega
+add_subdirectory(bootloader) # Bootloader device
 
 # dependecies:
 add_subdirectory(${OB_3RDPARTY_DIR}/jsoncpp jsoncpp)
@@ -31,3 +35,4 @@ target_link_libraries(${OB_TARGET_DEVICE} PUBLIC jsoncpp::jsoncpp)
 add_library(ob::device ALIAS ${OB_TARGET_DEVICE})
 ob_source_group(ob::device)
 set_target_properties(${OB_TARGET_DEVICE} PROPERTIES FOLDER "modules")
+

@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include <fcntl.h>
 #include <unistd.h>
 #include <limits>
@@ -470,10 +473,7 @@ void ObV4lUvcDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandle> devHandle)
                             auto uvc_payload_header_len = devHandle->metadataBuffers[metadataBufferIndex].actual_length - sizeof(V4L2UvcMetaHeader);
                             if(uvc_payload_header_len >= sizeof(StandardUvcFramePayloadHeader)) {
                                 auto payloadHeader = (StandardUvcFramePayloadHeader *)uvc_payload_header;
-                                videoFrame->updateMetadata(static_cast<const uint8_t *>(payloadHeader->scrSourceClock),
-                                                           sizeof(StandardUvcFramePayloadHeader::scrSourceClock));
-                                videoFrame->appendMetadata(static_cast<const uint8_t *>(uvc_payload_header + sizeof(StandardUvcFramePayloadHeader)),
-                                                           uvc_payload_header_len - sizeof(StandardUvcFramePayloadHeader));
+                                videoFrame->appendMetadata(static_cast<const uint8_t *>(uvc_payload_header), uvc_payload_header_len);
                                 videoFrame->setTimeStampUsec(payloadHeader->dwPresentationTime);
                             }
                         }
@@ -983,3 +983,4 @@ bool ObV4lUvcDevicePort::pendForCtrlStatusEvent() const {
 }
 
 }  // namespace libobsensor
+

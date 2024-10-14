@@ -1,3 +1,6 @@
+# Copyright (c) Orbbec Inc. All Rights Reserved.
+# Licensed under the MIT License.
+
 cmake_minimum_required(VERSION 3.5)
 
 set(OB_TARGET_PAL platform)
@@ -37,3 +40,4 @@ add_library(ob::platform ALIAS ${OB_TARGET_PAL})
 ob_source_group(ob::platform)
 
 set_target_properties(${OB_TARGET_PAL} PROPERTIES FOLDER "modules")
+

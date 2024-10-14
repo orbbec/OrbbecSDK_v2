@@ -1,3 +1,6 @@
+# Copyright (c) Orbbec Inc. All Rights Reserved.
+# Licensed under the MIT License.
+
 cmake_minimum_required(VERSION 3.5)
 
 # add the shared library with version number
@@ -21,3 +24,4 @@ target_link_libraries(shared PUBLIC ob::env_config_rc)
 add_library(ob::shared ALIAS shared)
 ob_source_group(ob::shared)
 set_target_properties(shared PROPERTIES FOLDER "modules")
+

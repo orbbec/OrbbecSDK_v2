@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "AlgParseHelper.hpp"
 namespace libobsensor {
 std::vector<OBCameraParam_Internal_V0> AlgParseHelper::alignCalibParamParse(uint8_t *data, uint32_t size) {

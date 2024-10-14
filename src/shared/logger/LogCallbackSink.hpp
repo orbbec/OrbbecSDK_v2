@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 // Purpose: Defines a custom sink for spdlog that allows for a callback to be called when a log is received.
 #pragma once
 
@@ -53,3 +56,4 @@ inline std::shared_ptr<logger> callback_logger_st(const std::string &logger_name
 }
 
 }  // namespace spdlog
+

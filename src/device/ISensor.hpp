@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #pragma once
 #include "libobsensor/h/ObTypes.h"
 #include "IStreamProfile.hpp"
@@ -74,3 +77,4 @@ struct ob_sensor_list_t {
 #ifdef __cplusplus
 }
 #endif
+

@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "ObRTSPClient.hpp"
 #include "exception/ObException.hpp"
 
@@ -39,9 +42,9 @@ ObRTSPClient::ObRTSPClient(std::shared_ptr<const StreamProfile> profile, UsageEn
 ObRTSPClient::~ObRTSPClient() noexcept {
     TRY_EXECUTE(stopStream());
 
-    // 以下操作请确保taskScheduler eventLoop线程已关闭
+    // Ensure that the taskScheduler eventLoop thread is closed before performing the following operations
 
-    clearSinks();  // 关流可能会异常，需要再次清空下sinks
+    clearSinks();  // Closing the stream might cause an exception; sinks need to be cleared again
     if(mediaSession_ != nullptr) {
         // We also need to delete "session", and unschedule "streamTimerTask_" (if set)
         if(streamTimerTask_ != NULL) {
@@ -62,7 +65,7 @@ void ObRTSPClient::startStream() {
     std::unique_lock<std::recursive_mutex> lk(commandMutex_);
     commandState_ = CMD_WAITING_RESP;
 
-    DESCRIBE();  // 会在各响应函数依次完成SETUP、PLAY
+    DESCRIBE();  // The SETUP and PLAY steps will be completed sequentially in each response function
 
     WAIT_CMD_RESPONES(RTSP_RESPONSE_TIMEOUT_MS);
     if(commandState_ != CMD_DONE) {
@@ -259,7 +262,7 @@ void ObRTSPClient::cmdResponseHandlerPLAY(RTSPClient *rtspClient, int resultCode
                 env << " (for up to " << obRtspClient->duration_ << " seconds)";
             }
             env << "...\n";
-            // 开流成功
+            // Stream opened successfully
             obRtspClient->commandState_ = CMD_DONE;
             obRtspClient->commandCv_.notify_all();
         }
@@ -287,14 +290,14 @@ void ObRTSPClient::cmdResponseHandlerTEARDOWN(RTSPClient *rtspClient, int result
 }
 
 void ObRTSPClient::clearSinks() {
-    // 将绑定在各subsession的sink清除
+    // Clear the sinks bound to each subsession
     if(mediaSession_ != nullptr) {
         MediaSubsessionIterator subsessionIter(*mediaSession_);
         MediaSubsession        *subsession;
 
         while((subsession = subsessionIter.next()) != NULL) {
             if(subsession->sink != NULL) {
-                Medium::close(subsession->sink);  // 停止event调度, sink会析构,并在析构时stopPlaying
+                Medium::close(subsession->sink);  // Stop event scheduling; the sink will be destructed, and stopPlaying will be called during its destruction
                 subsession->sink = NULL;
 
                 if(subsession->rtcpInstance() != NULL) {
@@ -359,3 +362,4 @@ void ObRTSPClient::streamStopEventHandler(void *clientData) {
 }
 
 }  // namespace libobsensor
+

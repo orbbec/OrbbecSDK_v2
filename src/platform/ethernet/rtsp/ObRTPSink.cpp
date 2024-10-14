@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "ObRTPSink.hpp"
 
 #include "H264VideoRTPSource.hh"
@@ -271,3 +274,4 @@ void ObRTPSink::outputFrameFunc() {
 }
 
 }  // namespace libobsensor
+

@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "SequenceIdProcess.hpp"
 #include "exception/ObException.hpp"
 #include "logger/LoggerInterval.hpp"
@@ -71,3 +74,4 @@ std::shared_ptr<Frame> SequenceIdFilter::process(std::shared_ptr<const Frame> fr
 }
 
 }  // namespace libobsensor
+

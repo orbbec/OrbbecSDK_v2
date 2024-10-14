@@ -1,3 +1,6 @@
+# Copyright (c) Orbbec Inc. All Rights Reserved.
+# Licensed under the MIT License.
+
 cmake_minimum_required(VERSION 3.5)
 
 # add the filter library with the version as the project
@@ -30,3 +33,4 @@ set_target_properties(filter PROPERTIES FOLDER "modules")
 if(OB_INSTALL_FILTER_DEV_HEADERS)
     install(FILES ${CMAKE_CURRENT_LIST_DIR}/privatefilters/PrivFilterTypes.h DESTINATION include/libobsensor/h/)
 endif()
+

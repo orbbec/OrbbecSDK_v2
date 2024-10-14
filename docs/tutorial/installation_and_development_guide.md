@@ -15,7 +15,7 @@ This is a comprehensive guide on installing the SDK, setting up the development 
 
 For windows, you need to register the metadata associated with frames (this includes things like timestamps and other information about the video frame).
 
-- Metadata registration follow this:[/scripts/env_setup/obsensor_metadata_win10.md](/scripts/env_setup/obsensor_metadata_win10.md)
+- Metadata registration follow this:[/scripts/env_setup/obsensor_metadata_win10.md](../../scripts/env_setup/obsensor_metadata_win10.md)
 
 #### 1.2.2 Linux
 
@@ -52,7 +52,7 @@ cd bin
 ./ob_color  #  ./ob_color for linux
 ```
 
-> More information about the samples of Orbbec SDK, please refer to [samples](/examples/README.md).
+> More information about the examples of Orbbec SDK, please refer to [examples](../../examples/README.md).
 
 ## 2. Develop a New Application with the SDK
 

@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "DeviceSyncConfigurator.hpp"
 #include "exception/ObException.hpp"
 #include "InternalTypes.hpp"

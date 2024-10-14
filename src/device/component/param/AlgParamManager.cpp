@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "AlgParamManager.hpp"
 #include "AlgParseHelper.hpp"
 #include "property/InternalProperty.hpp"
@@ -273,7 +276,7 @@ void TOFDeviceCommandAlgParamManager::fetchParamFromDevice() {
             PROP_ACCESS_INTERNAL);
     })
     CATCH_EXCEPTION_AND_EXECUTE({
-        LOG_ERROR("Get align calibration params failed!");
+        LOG_ERROR("Get depth to color profile list failed!");
         data.clear();
     })
 
@@ -305,7 +308,7 @@ void TOFDeviceCommandAlgParamManager::fetchParamFromDevice() {
             PROP_ACCESS_INTERNAL);
     })
     CATCH_EXCEPTION_AND_EXECUTE({
-        LOG_ERROR("Get align calibration params failed!");
+        LOG_DEBUG("Get IMU calibration params failed!");  // set log level to debug as it is not an error
         data.clear();
     })
 
@@ -316,7 +319,7 @@ void TOFDeviceCommandAlgParamManager::fetchParamFromDevice() {
         LOG_DEBUG("Get imu calibration params success!");
     }
     else {
-        LOG_WARN("Get imu calibration param failed!load default param.");
+        LOG_DEBUG("Get imu calibration param failed! load default param.");
         imuCalibParam_ = IMUCorrector::getDefaultImuCalibParam();
     }
 }

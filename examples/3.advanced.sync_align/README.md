@@ -59,8 +59,8 @@ Press the Esc key in the window to exit the program.
 ### Result
 
 Sync
-![image](/docs/resource/sync.jpg)
-D2C  
-![image](/docs/resource/d2c.jpg)
-C2D  
-![image](/docs/resource/c2d.jpg)
+![image](../../docs/resource/sync.jpg)
+D2C
+![image](../../docs/resource/d2c.jpg)
+C2D
+![image](../../docs/resource/c2d.jpg)

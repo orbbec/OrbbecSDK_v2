@@ -1,3 +1,5 @@
+# Copyright (c) Orbbec Inc. All Rights Reserved.
+# Licensed under the MIT License.
 
 # Get current directory for return here later
 $current_dir = Get-Location

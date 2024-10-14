@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #pragma once
 #include <array>
 #include <string>
@@ -113,3 +116,4 @@ private:
 };
 
 }  // namespace libobsensor
+

@@ -1,3 +1,6 @@
+# Copyright (c) Orbbec Inc. All Rights Reserved.
+# Licensed under the MIT License.
+
 message(STATUS "Setting Apple configurations")
 
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -Wl,-pedantic -g
@@ -48,3 +51,4 @@ execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpmachine
 
 set(OB_BUILD_MACOS ON)
 set(CMAKE_INSTALL_NAME_DIR "@loader_path")
+

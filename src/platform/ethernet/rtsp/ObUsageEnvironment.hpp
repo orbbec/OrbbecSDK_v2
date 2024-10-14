@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #pragma once
 #include "BasicUsageEnvironment.hh"
 #include "liveMedia.hh"
@@ -10,7 +13,7 @@
 namespace libobsensor {
 
 /**
- * @brief ObUsageEnvironment 覆盖BasicUsageEnvironment的log输出
+ * @brief ObUsageEnvironment Override the log output of BasicUsageEnvironment
  *
  */
 class ObUsageEnvironment : public BasicUsageEnvironment {
@@ -43,3 +46,4 @@ private:
 };
 
 }  // namespace libobsensor
+

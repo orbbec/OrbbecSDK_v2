@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "utils_c.h"
 #include <stdbool.h>
 
@@ -63,12 +66,12 @@ int kbhit(void) {
 #include <sys/time.h>
 uint64_t ob_smpl_get_current_timestamp_ms() {
     struct timeval te;
-    gettimeofday(&te, NULL);                                          // 获取当前时间
-    long long milliseconds = te.tv_sec * 1000LL + te.tv_usec / 1000;  // 计算毫秒
+    gettimeofday(&te, NULL);                                          // Get the current time
+    long long milliseconds = te.tv_sec * 1000LL + te.tv_usec / 1000;  // Calculate milliseconds
     return milliseconds;
 }
 
-char ob_smpl_wait_for_key_press(uint32_t timeout_ms) {  // 获取当前时间
+char ob_smpl_wait_for_key_press(uint32_t timeout_ms) {  // Get the current time
     struct timeval te;
     gettimeofday(&te, NULL);
     long long start_time = te.tv_sec * 1000LL + te.tv_usec / 1000;
@@ -132,3 +135,4 @@ char ob_smpl_wait_for_key_press(uint32_t timeout_ms) {
 #ifdef __cplusplus
 }
 #endif
+

@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "StreamExtrinsicsManager.hpp"
 #include "logger/Logger.hpp"
 #include "exception/ObException.hpp"

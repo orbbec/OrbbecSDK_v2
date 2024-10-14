@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "FrameGeometricTransform.hpp"
 #include "exception/ObException.hpp"
 #include "logger/LoggerInterval.hpp"
@@ -82,7 +85,7 @@ template <typename T> void imageFlip(const T *src, T *dst, uint32_t width, uint3
 }
 
 void flipRGBImage(int pixelSize, const uint8_t *src, uint8_t *dst, uint32_t width, uint32_t height) {
-    // const uint32_t pixelSize = 3;  // RGB888格式每个像素占用3个字节
+    // const uint32_t pixelSize = 3;  // RGB888 format occupies 3 bytes per pixel
     const uint32_t rowSize = width * pixelSize;
 
     for(uint32_t h = 0; h < height; h++) {
@@ -94,7 +97,7 @@ void flipRGBImage(int pixelSize, const uint8_t *src, uint8_t *dst, uint32_t widt
 
 // #define imageRotate180 imageFlip
 
-// 顺时针旋转90度
+// Rotate 90 degrees clockwise
 template <typename T> void imageRotate90(const T *src, T *dst, uint32_t width, uint32_t height) {
     const T *srcPixel;
     T       *dstPixel = dst;
@@ -212,7 +215,7 @@ void yuyvImageRotate(uint8_t *src, uint8_t *dst, uint32_t width, uint32_t height
         return;
     }
 
-    // 1. yuyv 转 I420，由于yuyv是packed格式，只有plane格式才可以旋转； 转plane会有数据丢失
+    // 1. yuyv to I420, since yuyv is a packed format, only plane format can be rotated; there will be data loss when rotating to plane.
     uint32_t dst_width    = width;
     uint32_t dst_height   = height;
     uint8_t *dst_y        = dst;
@@ -628,3 +631,4 @@ OBExtrinsic FrameRotate::rotateOBExtrinsic(uint32_t rotateDegree) {
 }
 
 }  // namespace libobsensor
+

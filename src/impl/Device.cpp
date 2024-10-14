@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "libobsensor/h/Device.h"
 
 #include "ImplTypes.hpp"
@@ -387,10 +390,7 @@ void ob_device_send_and_receive_data(ob_device *device, const uint8_t *send_data
     VALIDATE_NOT_NULL(receive_data_size);
 
     auto devMonitor = device->device->getComponentT<libobsensor::IDeviceMonitor>(libobsensor::OB_DEV_COMPONENT_DEVICE_MONITOR);
-    auto dataVec    = std::vector<uint8_t>(send_data, send_data + send_data_size);
-    auto result     = devMonitor->sendAndReceiveData(dataVec, *receive_data_size);
-    std::copy(result.begin(), result.end(), receive_data);
-    *receive_data_size = static_cast<uint32_t>(result.size());
+    devMonitor->sendAndReceiveData(send_data, send_data_size, receive_data, receive_data_size);
 }
 HANDLE_EXCEPTIONS_NO_RETURN(device, send_data, send_data_size, receive_data, receive_data_size)
 
@@ -495,10 +495,13 @@ HANDLE_EXCEPTIONS_AND_RETURN(false, device, info_key)
 const char *ob_device_get_extension_info(const ob_device *device, const char *info_key, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(device);
     VALIDATE_NOT_NULL(info_key);
-
-    return device->device->getExtensionInfo(info_key).c_str();
+    const auto &extensionInfo = device->device->getExtensionInfo(info_key);
+    if(extensionInfo.empty()) {
+        return nullptr;
+    }
+    return extensionInfo.c_str();
 }
-HANDLE_EXCEPTIONS_AND_RETURN(nullptr, device, info_key)
+HANDLE_EXCEPTIONS_AND_RETURN("", device, info_key)
 
 ob_camera_param_list *ob_device_get_calibration_camera_param_list(ob_device *device, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(device);

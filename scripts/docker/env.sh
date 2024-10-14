@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-#
-# Copyright 2017 - 2018 Ternaris
-# SPDX-License-Identifier: Apache 2.0
+
+# Copyright (c) Orbbec Inc. All Rights Reserved.
+# Licensed under the MIT License.
 
 # Load environment variables from all .env.sh files in /opt
 for x in /opt/*; do

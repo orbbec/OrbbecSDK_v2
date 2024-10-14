@@ -1,3 +1,5 @@
+# Copyright (c) Orbbec Inc. All Rights Reserved.
+# Licensed under the MIT License.
 
 cmake_minimum_required(VERSION 3.5)
 
@@ -11,3 +13,4 @@ endforeach()
 foreach(_file IN ITEMS ${_head_files})
     target_sources(${OB_TARGET_PAL} PRIVATE "${_file}")
 endforeach()
+

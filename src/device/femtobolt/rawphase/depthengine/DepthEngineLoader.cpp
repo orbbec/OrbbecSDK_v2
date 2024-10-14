@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "DepthEngineLoader.hpp"
 #include "environment/EnvConfig.hpp"
 namespace libobsensor {

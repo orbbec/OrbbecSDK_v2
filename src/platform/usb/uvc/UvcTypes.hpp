@@ -1,5 +1,5 @@
-// License: Apache 2.0. See LICENSE file in root directory.
-// Copyright(c) 2020 Orbbec Corporation. All Rights Reserved.
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
 
 #pragma once
 
@@ -66,9 +66,10 @@ struct ObExtensionUnit {
 };
 const ObExtensionUnit OB_COMMON_XU_UNIT = { 4, { 0xA55751A1, 0xF3C5, 0x4A5E, { 0x8D, 0x5A, 0x68, 0x54, 0xB8, 0xFA, 0x27, 0x16 } } };
 const ObExtensionUnit OB_G330_XU_UNIT    = { 3, { 0xC9606CCB, 0x594C, 0x4D25, { 0xaf, 0x47, 0xcc, 0xc4, 0x96, 0x43, 0x59, 0x95 } } };
-// RGB - 松翰(jarvis)
+// RGB - Sonix (Jarvis)
 // const ObExtensionUnit OB_COMMON_VENDOR_XU = { 3, { 0x28F03370, 0x6311, 0x4A2E, { 0xBA, 0x2C, 0x68, 0x90, 0xEB, 0x33, 0x40, 0x16 } } };
 
 enum PowerState { kD0, kD3 };
 
 }  // namespace libobsensor
+

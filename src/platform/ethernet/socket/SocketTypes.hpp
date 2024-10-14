@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
 #include <winsock2.h>
 #include <WS2tcpip.h>
@@ -33,3 +36,4 @@ namespace libobsensor {
 
 
 }  // namespace libobsensor
+

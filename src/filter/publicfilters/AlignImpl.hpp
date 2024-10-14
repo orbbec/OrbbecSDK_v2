@@ -1,4 +1,7 @@
-﻿#ifndef D2C_DEPTH_TO_COLOR_IMPL_H
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
+#ifndef D2C_DEPTH_TO_COLOR_IMPL_H
 #define D2C_DEPTH_TO_COLOR_IMPL_H
 
 #include <string>
@@ -177,3 +180,4 @@ private:
 
 #endif  // D2C_DEPTH_TO_COLOR_IMPL_H
 }  // namespace
+

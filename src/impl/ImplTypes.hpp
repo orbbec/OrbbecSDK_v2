@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #pragma once
 #include "libobsensor/h/ObTypes.h"
 
@@ -51,3 +54,4 @@ void translate_exception(const char *name, std::string args, ob_error **result);
         translate_exception(__FUNCTION__, "", error); \
         return R;                                     \
     }
+

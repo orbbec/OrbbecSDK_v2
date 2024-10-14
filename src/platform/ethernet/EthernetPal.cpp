@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "EthernetPal.hpp"
 #include "exception/ObException.hpp"
 #include "utils/Utils.hpp"
@@ -141,3 +144,4 @@ bool EthernetPal::changeNetDeviceIpConfig(std::string ipAddress, const OBNetIpCo
 #endif
 }
 }  // namespace libobsensor
+

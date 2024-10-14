@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "NetDeviceEnumerator.hpp"
 #include "femtomega/FemtoMegaDeviceInfo.hpp"
 #include "gemini330/G330DeviceInfo.hpp"
@@ -83,6 +86,7 @@ DeviceEnumInfoList NetDeviceEnumerator::deviceInfoMatch(const SourcePortInfoList
     DeviceEnumInfoList deviceInfoList;
     auto               megaDevices = FemtoMegaDeviceInfo::pickNetDevices(infoList);
     deviceInfoList.insert(deviceInfoList.end(), megaDevices.begin(), megaDevices.end());
+
 
     auto dev330Devices = G330DeviceInfo::pickNetDevices(infoList);
     deviceInfoList.insert(deviceInfoList.end(), dev330Devices.begin(), dev330Devices.end());
@@ -172,3 +176,4 @@ std::shared_ptr<IDevice> NetDeviceEnumerator::createDevice(std::string address, 
 }
 
 }  // namespace libobsensor
+

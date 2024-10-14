@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #pragma once
 
 #include "IPal.hpp"
@@ -49,3 +52,4 @@ private:
 };
 
 }  // namespace libobsensor
+

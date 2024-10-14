@@ -1,8 +1,9 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #pragma once
 #include "DeviceBase.hpp"
 #include "IDeviceManager.hpp"
-#include "frameprocessor/FrameProcessor.hpp"
-#include "G330FrameMetadataParserContainer.hpp"
 
 #if defined(BUILD_NET_PAL)
 #include "ethernet/RTPStreamPort.hpp"
@@ -66,3 +67,4 @@ private:
 };
 
 }  // namespace libobsensor
+

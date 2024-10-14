@@ -1,3 +1,6 @@
+# Copyright (c) Orbbec Inc. All Rights Reserved.
+# Licensed under the MIT License.
+
 # target options
 option(OB_BUILD_EXAMPLES "Build SDK examples" ON)
 option(OB_BUILD_TESTS "Build tests" OFF)
@@ -32,3 +35,4 @@ if(OB_BUILD_GMSL_PAL)
     endif()
     add_definitions(-DBUILD_GMSL_PAL)
 endif()
+

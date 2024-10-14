@@ -1,3 +1,6 @@
+# Copyright (c) Orbbec Inc. All Rights Reserved.
+# Licensed under the MIT License.
+
 cmake_minimum_required(VERSION 3.5)
 
 # add the core library with version number
@@ -15,3 +18,4 @@ target_include_directories(core PUBLIC  ${OB_PUBLIC_HEADERS_DIR} ${CMAKE_CURRENT
 add_library(ob::core ALIAS core)
 ob_source_group(ob::core)
 set_target_properties(core PROPERTIES FOLDER "modules")
+

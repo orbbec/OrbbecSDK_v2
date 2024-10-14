@@ -1,5 +1,6 @@
-// License: Apache 2.0. See LICENSE file in root directory.
-// Copyright(c) 2020 Orbbec  Corporation. All Rights Reserved.
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #pragma once
 #include "devicemanager/DeviceEnumInfoBase.hpp"
 
@@ -17,7 +18,8 @@ public:
 
     std::shared_ptr<IDevice> createDevice() const override;
 
-    static std::vector<std::shared_ptr<IDeviceEnumInfo>> createDeviceInfos(const SourcePortInfoList infoList);
+    static std::vector<std::shared_ptr<IDeviceEnumInfo>> pickDevices(const SourcePortInfoList infoList);
 };
 
 }  // namespace libobsensor
+

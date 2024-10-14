@@ -1,3 +1,6 @@
+# Copyright (c) Orbbec Inc. All Rights Reserved.
+# Licensed under the MIT License.
+
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 # set default build type to Release if not specified

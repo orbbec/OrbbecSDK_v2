@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #include "CoordinateUtil.hpp"
 #include "logger/Logger.hpp"
 #include "logger/LoggerInterval.hpp"

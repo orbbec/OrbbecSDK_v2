@@ -1,3 +1,6 @@
+# Copyright (c) Orbbec Inc. All Rights Reserved.
+# Licensed under the MIT License.
+
 macro(ob_print_summary)
     message(STATUS "")
     message(STATUS "=================================================================================================")
@@ -94,3 +97,4 @@ macro(ob_source_group target)
         source_group("${_file_path_msvc}" FILES "${_relative_file}")
     endforeach()
 endmacro()
+

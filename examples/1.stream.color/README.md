@@ -44,4 +44,4 @@ Press the Esc key in the window to exit the program.
 
 ### Result
 
-![result](/docs/resource/color.jpg)
+![result](../../docs/resource/color.jpg)

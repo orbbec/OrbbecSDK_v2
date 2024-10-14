@@ -1,5 +1,5 @@
-﻿// License: Apache 2.0. See LICENSE file in root directory.
-// Copyright(c) 2020 Orbbec  Corporation. All Rights Reserved.
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
 
 /**
  * @file Property.h
@@ -745,6 +745,7 @@ typedef enum {
 #define OB_PROP_LASER_ENERGY_LEVEL_INT OB_PROP_LASER_POWER_LEVEL_CONTROL_INT
 #define OB_PROP_LASER_HW_ENERGY_LEVEL_INT OB_PROP_LASER_POWER_ACTUAL_LEVEL_INT
 #define OB_PROP_DEVICE_USB3_REPEAT_IDENTIFY_BOOL OB_PROP_DEVICE_USB2_REPEAT_IDENTIFY_BOOL
+#define OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL OB_PROP_DEPTH_SOFT_FILTER_BOOL
 
 /**
  * @brief The data type used to describe all property settings
@@ -770,3 +771,4 @@ typedef struct OBPropertyItem {
 #ifdef __cplusplus
 }
 #endif
+

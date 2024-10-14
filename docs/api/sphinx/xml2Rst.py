@@ -1,12 +1,12 @@
 #!/usr/bin/python
 # -*- coding: UTF-8 -*-
 
-# 本脚本用于,当C API头文件有更新，将C语言API xml自动生成./reference/c_ref.rst，并且把版本号更新到./index.rst
-# C++ rst文件是手动编写的，如有C++头文件有更新，请修改./reference/cxx_ref.rst
-# 首先工程build Doxygen,会在build路径生成xml
-# 在当前目录执行 python.exe xml2Rst.py xml绝对路径，当前目录生成index.rst，reference目录生成c_ref.rst
-# 如python.exe xml2Rst.py D:\obcode\SensorSDK_202111ref\build\Win_X64\release\xmlCN\
-# 如果build目录有html文件，先删除，再执行bulid Doc
+# This script is used to automatically generate the C API XML file as ./reference/c_ref.rst when the C API header files are updated, and update the version number in ./index.rst.
+# The C++ RST file is manually written. If the C++ header files are updated, please modify ./reference/cxx_ref.rst.
+# First, build the project with Doxygen, which will generate XML files in the build path.
+# Execute python.exe xml2Rst.py in the current directory with the XML absolute path to generate index.rst in the current directory and c_ref.rst in the reference directory.
+# Example: python.exe xml2Rst.py D:\obcode\SensorSDK_202111ref\build\Win_X64\release\xmlCN\
+# If there are HTML files in the build directory, delete them first and then execute the build Doc command.
 
 import os
 import sys
@@ -21,15 +21,15 @@ enumList = []
 defineList = []
 structList = []
 
-# C 头文件
+# C header files
 fileNameList = ["Context.h","Device.h","Error.h","Filter.h","Frame.h","ObTypes.h","Pipeline.h","Property.h",
     "RecordPlayback.h","Sensor.h","StreamProfile.h","Version.h"]
 
-# 接口已弃用
+# Interface deprecated
 excludeFunctions =["ob_frame_width","ob_frame_height","ob_delete_frame_set",
     "ob_stream_profile_fps","ob_stream_profile_width","ob_stream_profile_height"]
 
-# 获取index.xml节点信息
+# Get information about the index.xml node
 def getInfoFromXml(dirName):
     fileName= dirName + "\index.xml"
     domTree = xml.dom.minidom.parse(fileName)
@@ -58,7 +58,7 @@ def getInfoFromXml(dirName):
             name = keyWord.getElementsByTagName('name')[0].childNodes[0].data
             structList.append(name)
 
-# Doxyfile.xml节点信息
+# Doxyfile.xml node information
 def getVersionFromXml(dirName):
     fileName= dirName + "\Doxyfile.xml"
     domTree = xml.dom.minidom.parse(fileName)
@@ -70,7 +70,7 @@ def getVersionFromXml(dirName):
             version = keyWord.getElementsByTagName('value')[0].childNodes[0].data
             
             
-# 根据xml的信息生成rst文件
+# Generate rst file from xml information
 def writeToRst():
     indexRst = open("./index.rst", "w")
     indexRst.write("OrbbecSdk v%s\n================\n\n" %version)
@@ -108,12 +108,12 @@ def writeToRst():
 try:
     xmlDir = sys.argv[1]
 except:
-    print("请传递xml的路径，如python.exe xml2Rst.py 路径")
+    print("Please pass the path to the xml, e.g. python.exe xml2Rst.py path")
 else:
     getInfoFromXml(xmlDir)
     getVersionFromXml(xmlDir)
     writeToRst()
-    print("生成./index.rst和./reference/c_ref.rst文件")
+    print("Generate . /index.rst and . /reference/c_ref.rst files")
 
 
 
