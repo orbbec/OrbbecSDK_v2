@@ -17,6 +17,8 @@ VendorNetDataPort::~VendorNetDataPort() noexcept {}
 
 uint32_t VendorNetDataPort::sendAndReceive(const uint8_t *sendData, uint32_t sendLen, uint8_t *recvData, uint32_t exceptedRecvLen) {
     utils::unusedVar(exceptedRecvLen);
+
+    std::lock_guard<std::mutex> lock(tcpMtx_); 
     tcpClient_->write(sendData, sendLen);
     int recvd = tcpClient_->read(recvData, OB_VENDOR_CMD_RECV_LEN);
     if(recvd < 0) {
