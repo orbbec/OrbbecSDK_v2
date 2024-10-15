@@ -5,6 +5,7 @@
 #include "femtomega/FemtoMegaDeviceInfo.hpp"
 #include "gemini330/G330DeviceInfo.hpp"
 #include "gemini2/G2DeviceInfo.hpp"
+#include "bootloader/BootDeviceInfo.hpp"
 #include "ethernet/RTSPStreamPort.hpp"
 #include "ethernet/NetDataStreamPort.hpp"
 #include "property/VendorPropertyAccessor.hpp"
@@ -84,9 +85,11 @@ DeviceEnumInfoList NetDeviceEnumerator::getDeviceInfoList() {
 
 DeviceEnumInfoList NetDeviceEnumerator::deviceInfoMatch(const SourcePortInfoList infoList) {
     DeviceEnumInfoList deviceInfoList;
+    auto               bootDevices = BootDeviceInfo::pickNetDevices(infoList);
+    deviceInfoList.insert(deviceInfoList.end(), bootDevices.begin(), bootDevices.end());
+
     auto               megaDevices = FemtoMegaDeviceInfo::pickNetDevices(infoList);
     deviceInfoList.insert(deviceInfoList.end(), megaDevices.begin(), megaDevices.end());
-
 
     auto dev330Devices = G330DeviceInfo::pickNetDevices(infoList);
     deviceInfoList.insert(deviceInfoList.end(), dev330Devices.begin(), dev330Devices.end());

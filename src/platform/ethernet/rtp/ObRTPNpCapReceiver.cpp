@@ -250,7 +250,7 @@ void ObRTPNpCapReceiver::frameReceive2(pcap_t *handle) {
             if(!receiveData && foundPcapHandle_) {
                 break;
             }
-            LOG_ERROR_INTVL("Receive rtp packet error!");
+            LOG_ERROR_INTVL("Receive rtp packet error: {}!", res);
         }
     }
 
