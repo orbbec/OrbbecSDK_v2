@@ -5,8 +5,14 @@
 #include "ObPTPHost.hpp"
 #include "ethernet/socket/SocketTypes.hpp"
 #include <string>
+#include <linux/if_packet.h>
 
 namespace libobsensor {
+
+struct ob_sock_fprog {	/* Required for SO_ATTACH_FILTER. */
+	unsigned short		len;	/* Number of filter blocks */
+	struct sock_filter *filter;
+};
 
 class ObLinuxPTPHost : public ObPTPHost {
 public:
@@ -34,6 +40,8 @@ private:
     unsigned char srcMac_[6];  // Source MAC address
 
     int t1[2];
+
+    struct sockaddr_ll socketAddress_;
 
 };
 

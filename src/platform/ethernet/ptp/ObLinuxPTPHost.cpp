@@ -8,6 +8,8 @@
 #include "utils/Utils.hpp"
 #include <linux/if_packet.h>
 #include <linux/if_ether.h>
+#include <linux/filter.h>
+#include <netinet/ether.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <ifaddrs.h>
@@ -19,6 +21,25 @@
 #include <sstream>
 #include <string>
 #include <cstring>
+#include <unistd.h>
+
+struct CustomBPF {
+    struct sock_filter bpf_code[4];
+
+    CustomBPF() {
+        bpf_code[0] = BPF_STMT(BPF_LD + BPF_B + BPF_ABS, 34);
+        bpf_code[1] = BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, 319, 0, 1);
+        bpf_code[2] = BPF_STMT(BPF_RET + BPF_K, 0);
+        bpf_code[3] = BPF_STMT(BPF_RET + BPF_K, 65535);
+    }
+
+    struct sock_fprog getBPFProgram() {
+        struct sock_fprog prog;
+        prog.len = sizeof(bpf_code) / sizeof(bpf_code[0]);
+        prog.filter = bpf_code;
+        return prog;
+    }
+};
 
 namespace libobsensor {
 
@@ -63,6 +84,27 @@ void ObLinuxPTPHost::createSokcet() {
         throw libobsensor::invalid_value_exception(utils::string::to_string() << "PTP socket create failed!");
     }
 
+    timeval timeout;
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 50000;
+    if (setsockopt(ptpSocket_, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
+        close(ptpSocket_);
+        throw libobsensor::invalid_value_exception(utils::string::to_string() << "PTP socket setting socket options failed!");
+    }
+
+    int bufferSize = 1 * 1024 * 1024;
+    if (setsockopt(ptpSocket_, SOL_SOCKET, SO_RCVBUF, &bufferSize, sizeof(bufferSize)) < 0) {
+        close(ptpSocket_);
+        throw libobsensor::invalid_value_exception(utils::string::to_string() << "PTP socket setting receive bufferSize options failed!");
+    }
+
+    // CustomBPF customBPF;
+    // struct sock_fprog bpf = customBPF.getBPFProgram();
+    // if (setsockopt(ptpSocket_, SOL_SOCKET, SO_ATTACH_FILTER, &bpf, sizeof(bpf)) < 0) {
+    //     close(ptpSocket_);
+    //     throw libobsensor::invalid_value_exception(utils::string::to_string() << "PTP socket setting BPF filter failed!");
+    // }
+    
     struct ifaddrs *ifaddr, *ifa;
     int             family;
     if(getifaddrs(&ifaddr) == -1) {
@@ -107,6 +149,15 @@ void ObLinuxPTPHost::createSokcet() {
         throw libobsensor::invalid_value_exception(utils::string::to_string() << "Error opening ptp net device, not found!");
     }
 
+    memset(&socketAddress_, 0, sizeof(socketAddress_));
+    socketAddress_.sll_family   = AF_PACKET;
+    socketAddress_.sll_protocol = htons(PTP_ETHERTYPE);
+    socketAddress_.sll_ifindex  = ifIndex_;
+    if (bind(ptpSocket_, (sockaddr *)&socketAddress_, sizeof(socketAddress_)) < 0) {
+        close(ptpSocket_);
+        throw libobsensor::invalid_value_exception(utils::string::to_string() << "Bind ptp socket failed!");
+    }
+
     LOG_DEBUG("PTP net socket create successfully.");
 }
 
@@ -144,12 +195,12 @@ void ObLinuxPTPHost::timeSync() {
 }
 
 void ObLinuxPTPHost::sendPTPPacket(void *data, int len) {
-    struct sockaddr_ll socketAddress;
-    memset(&socketAddress, 0, sizeof(socketAddress));
-    socketAddress.sll_family   = AF_PACKET;
-    socketAddress.sll_protocol = htons(PTP_ETHERTYPE);
-    socketAddress.sll_ifindex  = ifIndex_;
-    int status                 = sendto(ptpSocket_, data, len, 0, (sockaddr *)&socketAddress, sizeof(socketAddress));
+    // struct sockaddr_ll socketAddress;
+    // memset(&socketAddress, 0, sizeof(socketAddress));
+    // socketAddress.sll_family   = AF_PACKET;
+    // socketAddress.sll_protocol = htons(PTP_ETHERTYPE);
+    // socketAddress.sll_ifindex  = ifIndex_;
+    int status                 = sendto(ptpSocket_, data, len, 0, (sockaddr *)&socketAddress_, sizeof(socketAddress_));
     if(status < 0) {
         LOG_ERROR("PTP time synchronization send data failed,error:{}", strerror(errno));
     }
@@ -159,19 +210,18 @@ void ObLinuxPTPHost::receivePTPPacket() {
     LOG_DEBUG("start ptp data receive...");
     int                maxRevCount = 20;
     unsigned char      buffer[OB_PTP_BUFFER_SIZE];
-    struct sockaddr_ll socketAddress;
-    memset(&socketAddress, 0, sizeof(socketAddress));
-    socketAddress.sll_family   = AF_PACKET;
-    socketAddress.sll_protocol = htons(PTP_ETHERTYPE);
-    socketAddress.sll_ifindex  = ifIndex_;
-    socklen_t addrLen          = sizeof(socketAddress);
-
+    // struct sockaddr_ll socketAddress;
+    // memset(&socketAddress, 0, sizeof(socketAddress));
+    // socketAddress.sll_family   = AF_PACKET;
+    // socketAddress.sll_protocol = htons(PTP_ETHERTYPE);
+    // socketAddress.sll_ifindex  = ifIndex_;
+    socklen_t addrLen          = sizeof(socketAddress_);
     while(startSync_) {
         if(maxRevCount == 0) {
             break;
         }
 
-        int recvLen = recvfrom(ptpSocket_, buffer, sizeof(buffer), 0, (sockaddr *)&socketAddress, &addrLen);
+        int recvLen = recvfrom(ptpSocket_, buffer, sizeof(buffer), 0, (sockaddr *)&socketAddress_, &addrLen);
         if(recvLen > 0) {
             if(recvLen == OB_PTP_BACK_SIZE) {
                 LOG_DEBUG("Receive PTP packet!");
