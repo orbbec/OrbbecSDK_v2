@@ -139,6 +139,8 @@ void ObLinuxPTPHost::timeSync() {
 
     // Receive delay request
     receivePTPPacket();
+
+    startSync_ = false;
 }
 
 void ObLinuxPTPHost::sendPTPPacket(void *data, int len) {

@@ -15,9 +15,10 @@ namespace libobsensor {
 PTPDataPort::PTPDataPort(std::shared_ptr<const PTPSourcePortInfo> portInfo) : portInfo_(portInfo) {}
 
 PTPDataPort::~PTPDataPort() {
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
-    TRY_EXECUTE(if(ptpHost_) { ptpHost_->destroy(); });
-#endif
+    TRY_EXECUTE(if(ptpHost_) {
+        ptpHost_->destroy();
+        ptpHost_.reset();
+    });
 }
 
 std::shared_ptr<const SourcePortInfo> PTPDataPort::getSourcePortInfo() const {
@@ -25,17 +26,18 @@ std::shared_ptr<const SourcePortInfo> PTPDataPort::getSourcePortInfo() const {
 }
 
 bool PTPDataPort::timerSyncWithHost() {
-    if(ptpHost_) {
-        ptpHost_.reset();
+    if(!ptpHost_) {
+#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+        ptpHost_ = std::make_shared<ObWinPTPHost>(portInfo_->localMac, "localAddress", portInfo_->address, portInfo_->port, portInfo_->mac);
+#else
+        ptpHost_ = std::make_shared<ObLinuxPTPHost>(portInfo_->localMac, "localAddress", portInfo_->address, portInfo_->port, portInfo_->mac);
+#endif
     }
 
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
-    ptpHost_ = std::make_shared<ObWinPTPHost>(portInfo_->localMac, "localAddress", portInfo_->address, portInfo_->port, portInfo_->mac);
-#else
-    ptpHost_ = std::make_shared<ObLinuxPTPHost>(portInfo_->localMac, "localAddress", portInfo_->address, portInfo_->port, portInfo_->mac);
-#endif
-    ptpHost_->timeSync();
-
+    if(ptpHost_) {
+        ptpHost_->timeSync();
+    }
+    
     return true;
 }
 

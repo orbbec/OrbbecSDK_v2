@@ -18,7 +18,7 @@ namespace libobsensor {
 #define OB_UDP_BUFFER_SIZE 1600
 
 ObWinPTPHost::ObWinPTPHost(std::string localMac, std::string localIP, std::string address, uint16_t port, std::string mac)
-    : ObPTPHost(localMac, localIP, address, port, mac), startSync_(false), alldevs_(nullptr), handle_(nullptr) {
+    : ObPTPHost(localMac, localIP, address, port, mac), startSync_(false), name_(nullptr), alldevs_(nullptr), handle_(nullptr) {
     convertMacAddress();
     findDevice();
 }
@@ -114,7 +114,7 @@ void ObWinPTPHost::findDevice() {
     }
 
     if(foundDevice) {
-        handle_ = pcap_open_live(dev_->name, OB_UDP_BUFFER_SIZE, 1, COMM_TIMEOUT_MS, errbuf);
+        handle_ = pcap_open_live(dev_->name, OB_UDP_BUFFER_SIZE, 1, COMM_ACK_TIMEOUT_MS, errbuf);
         if(handle_ == nullptr) {
             pcap_freealldevs(alldevs_);
             throw libobsensor::invalid_value_exception(utils::string::to_string() << "Error opening net device:" << errbuf);
@@ -153,14 +153,11 @@ void ObWinPTPHost::findDevice() {
             }
 
             //LOG_DEBUG("Device Name: {}", (dev_->name ? dev_->name : "No name"));
-
-            pcap_t *handle = pcap_open_live(dev_->name, OB_UDP_BUFFER_SIZE, 1, COMM_TIMEOUT_MS, errbuf);
+            pcap_t *handle = pcap_open_live(dev_->name, OB_UDP_BUFFER_SIZE, 1, COMM_ACK_TIMEOUT_MS, errbuf);
             if(handle == nullptr) {
                 LOG_WARN("Error opening net device: {}", errbuf);
                 continue;
             }
-
-            //pcap_set_timeout(handle, 50);
 
             if(pcap_datalink(handle) != DLT_EN10MB) {
                 LOG_WARN("Error data link: {}", errbuf);
@@ -169,9 +166,10 @@ void ObWinPTPHost::findDevice() {
             }
 
             struct bpf_program fp;
-            std::string stringFilter = "ether src " + serverMac_;
+            //char               filter_exp[] = "ether proto 0x88F7";
+            std::string stringFilter = "ether proto 0x88F7 and ether src " + serverMac_;
             if(pcap_compile(handle, &fp, stringFilter.c_str(), 0, PCAP_NETMASK_UNKNOWN) == 0) {
-                LOG_DEBUG("Found net device");
+                LOG_DEBUG_INTVL("pcap compile ok!");
             }
             else {
                 LOG_WARN("Error pcap compile!");
@@ -191,7 +189,7 @@ void ObWinPTPHost::findDevice() {
             Frame1588 ackControlFrame;
             int       len = 0;
             len           = ptpPacketCreator_.createPTPPacket(PTP_ACK_CONTROL, &ackControlFrame);
-            int ackCount  = 3;
+            int ackCount  = 10;
             while(ackCount != 0) {
                 ackCount--;
                 sendPTPPacket(handle, &ackControlFrame, len);
@@ -199,7 +197,7 @@ void ObWinPTPHost::findDevice() {
                 const u_char *      packet;
                 int                 res = pcap_next_ex(handle, &header, &packet);
                 if(res > 0) {
-                    if(header->len == 60) {
+                    if(header->len == OB_PTP_BACK_SIZE) {
                         bool equalMAC = true;
                         Frame1588 *ptpdata = (Frame1588 *)packet;
                         if(ptpdata->transportSpecificAndMessageType == PTPACK_MSSID) {
@@ -216,6 +214,7 @@ void ObWinPTPHost::findDevice() {
                         if(equalMAC) {
                             foundDevice = true;
                             handle_     = handle;
+                            name_       = dev_->name;
                             LOG_DEBUG("Find ptp handle.");
                             break;
                         }
@@ -242,6 +241,8 @@ void ObWinPTPHost::findDevice() {
         throw libobsensor::invalid_value_exception(utils::string::to_string() << "Error opening ptp net device, not found!");
     }
 
+    pcap_close(handle_);
+    handle_ = nullptr;
     LOG_DEBUG("PTP net device opened successfully");
 }
 
@@ -251,6 +252,40 @@ void ObWinPTPHost::timeSync() {
         return;
     }
 
+    if(!handle_) {
+        char errbuf[PCAP_ERRBUF_SIZE];
+        handle_ = pcap_open_live(name_, OB_UDP_BUFFER_SIZE, 1, COMM_RECEVIE_TIMEOUT_MS, errbuf);
+        if(handle_ == nullptr) {
+            throw libobsensor::invalid_value_exception(utils::string::to_string() << "Error opening net device:" << errbuf);
+        }
+
+        if(pcap_datalink(handle_) != DLT_EN10MB) {
+            LOG_WARN("Error data link: {}", errbuf);
+            pcap_close(handle_);
+            throw libobsensor::invalid_value_exception(utils::string::to_string() << "Error data link:" << pcap_geterr(handle_));
+        }
+
+        struct bpf_program fp;
+        // char filter_exp[] = "ether proto 0x88F7";
+        std::string stringFilter = "ether proto 0x88F7 and ether src " + serverMac_;
+        if(pcap_compile(handle_, &fp, stringFilter.c_str(), 0, PCAP_NETMASK_UNKNOWN) == 0) {
+            LOG_DEBUG_INTVL("pcap compile ok!");
+        }
+        else {
+            LOG_WARN("Error pcap compile!");
+            pcap_close(handle_);
+            throw libobsensor::invalid_value_exception(utils::string::to_string() << "Error compiling filter:" << pcap_geterr(handle_));
+        }
+
+        if(pcap_setfilter(handle_, &fp) < 0) {
+            LOG_WARN("Error setting the filter: {}", pcap_geterr(handle_));
+            pcap_freecode(&fp);
+            pcap_close(handle_);
+            throw libobsensor::invalid_value_exception(utils::string::to_string() << "Error setting the filter:" << pcap_geterr(handle_));
+        }
+        pcap_freecode(&fp);
+    }
+    
     if(handle_) {
         startSync_ = true;
         
@@ -269,6 +304,8 @@ void ObWinPTPHost::timeSync() {
         sendPTPPacket(handle_, &followUpControlControlFrame, len);
 
         receivePTPPacket(handle_);
+
+        startSync_ = false;
     }
     else {
         LOG_ERROR("PTP time synchronization failure, net handle is null!");
@@ -310,6 +347,9 @@ void ObWinPTPHost::receivePTPPacket(pcap_t *handle) {
                     LOG_DEBUG("Send ptp delay resp control finished.");
                     break;
                 }
+            }
+            else {
+                LOG_DEBUG("Receive ptp delay req data timeout!");
             }
 
             // struct tm  ltime;

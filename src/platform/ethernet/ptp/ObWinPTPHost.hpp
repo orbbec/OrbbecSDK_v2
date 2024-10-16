@@ -29,13 +29,15 @@ private:
     
 private:
     bool     startSync_;
-    uint32_t COMM_TIMEOUT_MS = 50;
+    uint32_t COMM_ACK_TIMEOUT_MS = 50;
+    uint32_t COMM_RECEVIE_TIMEOUT_MS = 100;
 
     unsigned char destMac_[6]; // Destination MAC address
     unsigned char srcMac_[6];  // Source MAC address
 
     int t1[2];
 
+    char *     name_;
     pcap_if_t *alldevs_;
     pcap_t *   handle_;
 };

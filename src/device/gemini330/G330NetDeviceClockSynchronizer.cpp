@@ -1,11 +1,14 @@
 #include "G330NetDeviceClockSynchronizer.hpp"
 #include "ethernet/PTPDataPort.hpp"
+#include "exception/ObException.hpp"
 #include "InternalTypes.hpp"
 
 namespace libobsensor {
 
 G330NetDeviceClockSynchronizer::G330NetDeviceClockSynchronizer(IDevice *owner, const std::shared_ptr<ISourcePort> &backend)
-    : DeviceComponentBase(owner), backend_(backend), isClockSync_(false) {}
+    : DeviceComponentBase(owner), backend_(backend), isClockSync_(false) {
+    ptpPort_ = std::dynamic_pointer_cast<PTPDataPort>(backend_);
+}
 
 void G330NetDeviceClockSynchronizer::setTimestampResetConfig(const OBDeviceTimestampResetConfig &timestampResetConfig) {
     if(timestampResetConfig.enable) {
@@ -28,10 +31,16 @@ void G330NetDeviceClockSynchronizer::timerSyncWithHost() {
     if(isClockSync_) {
         return;
     }
-    isClockSync_ = true;
-    auto ptpPort = std::dynamic_pointer_cast<PTPDataPort>(backend_);
-    ptpPort->timerSyncWithHost();
-    isClockSync_ = false;
+    BEGIN_TRY_EXECUTE({
+        isClockSync_ = true;
+        ptpPort_->timerSyncWithHost();
+        isClockSync_ = false;
+    })
+    CATCH_EXCEPTION_AND_EXECUTE({
+        LOG_ERROR("Get profile list params failed!");
+        isClockSync_ = false;
+    })
+    
 }
 
 }  // namespace libobsensor
