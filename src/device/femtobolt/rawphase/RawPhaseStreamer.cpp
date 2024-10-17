@@ -251,7 +251,7 @@ void RawPhaseStreamer::parseAndOutputFrame(std::shared_ptr<Frame> frame) {
     auto   global      = depthEngineLoader_->getGlobalContext();
     size_t outputBytes = global->plugin.depth_engine_get_output_frame_size(depthEngineContext_);
 
-    std::unique_ptr<uint8_t> outputBuffer(new uint8_t[outputBytes]);
+    std::vector<uint8_t> outputBuffer(outputBytes, 0);
 
     // For every frame, read the RAW data and process it.
     k4a_depth_engine_input_frame_info_t  inputFrameInfo  = { 0 };
@@ -286,7 +286,7 @@ void RawPhaseStreamer::parseAndOutputFrame(std::shared_ptr<Frame> frame) {
         }
 
         auto retCode = global->plugin.depth_engine_process_frame(depthEngineContext_, (uint8_t *)data + mipiHeadSize, rawFrameSize, outputType,
-                                                                 outputBuffer.get(), outputBytes, &outputFrameInfo, &inputFrameInfo);
+                                                                 outputBuffer.data(), outputBytes, &outputFrameInfo, &inputFrameInfo);
 
         if(K4A_DEPTH_ENGINE_RESULT_SUCCEEDED != retCode) {
             LOG_ERROR("Process frame failed! Error code:{}", retCode);
@@ -295,7 +295,7 @@ void RawPhaseStreamer::parseAndOutputFrame(std::shared_ptr<Frame> frame) {
 
         // Now we have the output data. They are uint16_t type and AB frame immediately follows Z frame.
         size_t    nPixels     = static_cast<size_t>(outputFrameInfo.output_height) * static_cast<size_t>(outputFrameInfo.output_width);
-        uint16_t *outputFrame = reinterpret_cast<uint16_t *>(outputBuffer.get());
+        uint16_t *outputFrame = reinterpret_cast<uint16_t *>(outputBuffer.data());
         uint16_t *zFrame      = outputFrame;
         uint16_t *abFrame     = outputFrame + nPixels;
 

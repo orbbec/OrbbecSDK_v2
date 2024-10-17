@@ -364,11 +364,11 @@ public:
             return -1;
         }
         auto    standardUvcMetadata = *(reinterpret_cast<const StandardUvcFramePayloadHeader *>(metadata));
-        uint8_t laserPowerLevel     = (standardUvcMetadata.scrSourceClock[2] & 0x38) >> 3;
+        int64_t laserPowerLevel     = (standardUvcMetadata.scrSourceClock[2] & 0x38) >> 3;
         if(modifier_) {
-            laserPowerLevel = static_cast<uint8_t>(modifier_(static_cast<int64_t>(laserPowerLevel)));
+            laserPowerLevel = modifier_(laserPowerLevel);
         }
-        return static_cast<int64_t>(laserPowerLevel);
+        return laserPowerLevel;
     }
 
 private:

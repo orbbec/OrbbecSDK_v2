@@ -129,6 +129,10 @@ void CVWindow::close() {
     srcFrameGroups_.clear();
 }
 
+void CVWindow::destroyWindow() {
+    cv::destroyWindow(name_);
+}
+
 void CVWindow::reset() {
     // close thread and clear cache
     close();
@@ -213,12 +217,12 @@ void CVWindow::setAlpha(float alpha) {
 void CVWindow::processFrames() {
     std::map<int, std::vector<std::shared_ptr<const ob::Frame>>> frameGroups;
     while(!closed_) {
+        if(closed_) {
+            break;
+        }
         {
             std::unique_lock<std::mutex> lk(srcFrameGroupsMtx_);
             srcFrameGroupsCv_.wait(lk);
-            if(closed_) {
-                break;
-            }
             frameGroups = srcFrameGroups_;
         }
 
@@ -381,10 +385,11 @@ cv::Mat CVWindow::visualize(std::shared_ptr<const ob::Frame> frame) {
         } break;
         case OB_FORMAT_RGBA: {
             cv::Mat rawMat(videoFrame->getHeight(), videoFrame->getWidth(), CV_8UC4, videoFrame->getData());
-            cv::cvtColor(rawMat, rstMat, cv::COLOR_RGBA2BGRA);
+            cv::cvtColor(rawMat, rstMat, cv::COLOR_RGBA2BGR);
         } break;
         case OB_FORMAT_BGRA: {
-            rstMat = cv::Mat(videoFrame->getHeight(), videoFrame->getWidth(), CV_8UC4, videoFrame->getData());
+            cv::Mat rawMat(videoFrame->getHeight(), videoFrame->getWidth(), CV_8UC4, videoFrame->getData());
+            cv::cvtColor(rawMat, rstMat, cv::COLOR_BGRA2BGR);
         } break;
         case OB_FORMAT_UYVY: {
             cv::Mat rawMat(videoFrame->getHeight(), videoFrame->getWidth(), CV_8UC2, videoFrame->getData());

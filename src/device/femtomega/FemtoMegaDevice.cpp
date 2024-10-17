@@ -33,6 +33,7 @@
 #include "utils/PublicTypeHelper.hpp"
 
 #include "FemtoMegaPropertyAccessor.hpp"
+#include "FemtoMegaFrameTimestampCalculator.hpp"
 
 #if defined(BUILD_NET_PAL)
 #include "ethernet/RTSPStreamPort.hpp"
@@ -59,7 +60,7 @@ void FemtoMegaUsbDevice::init() {
     auto globalTimestampFilter = std::make_shared<GlobalTimestampFitter>(this);
     registerComponent(OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER, globalTimestampFilter);
 
-    auto algParamManager = std::make_shared<TOFDeviceCommandAlgParamManager>(this);
+    auto algParamManager = std::make_shared<TOFDeviceCommonAlgParamManager>(this);
     registerComponent(OB_DEV_COMPONENT_ALG_PARAM_MANAGER, algParamManager);
 
     static const std::vector<OBMultiDeviceSyncMode>          supportedSyncModes  = { OB_MULTI_DEVICE_SYNC_MODE_FREE_RUN, OB_MULTI_DEVICE_SYNC_MODE_STANDALONE,
@@ -92,7 +93,7 @@ void FemtoMegaUsbDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor
     // // bind params: extrinsics, intrinsics, etc.
     auto profiles = sensor->getStreamProfileList();
     {
-        auto algParamManager = getComponentT<TOFDeviceCommandAlgParamManager>(OB_DEV_COMPONENT_ALG_PARAM_MANAGER);
+        auto algParamManager = getComponentT<TOFDeviceCommonAlgParamManager>(OB_DEV_COMPONENT_ALG_PARAM_MANAGER);
         algParamManager->bindStreamProfileParams(profiles);
     }
 
@@ -441,7 +442,7 @@ void FemtoMegaNetDevice::init() {
     auto globalTimestampFilter = std::make_shared<GlobalTimestampFitter>(this);
     registerComponent(OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER, globalTimestampFilter);
 
-    auto algParamManager = std::make_shared<TOFDeviceCommandAlgParamManager>(this);
+    auto algParamManager = std::make_shared<TOFDeviceCommonAlgParamManager>(this);
     registerComponent(OB_DEV_COMPONENT_ALG_PARAM_MANAGER, algParamManager);
 
     static const std::vector<OBMultiDeviceSyncMode>          supportedSyncModes  = { OB_MULTI_DEVICE_SYNC_MODE_FREE_RUN, OB_MULTI_DEVICE_SYNC_MODE_STANDALONE,
@@ -599,10 +600,17 @@ void FemtoMegaNetDevice::initSensorList() {
                     formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_MJPG, OB_FORMAT_BGR, formatConverter });
                     formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_MJPG, OB_FORMAT_BGRA, formatConverter });
                 }
-
                 sensor->updateFormatFilterConfig(formatFilterConfigs);
-                auto videoFrameTimestampCalculator_ = std::make_shared<FrameTimestampCalculatorBaseDeviceTime>(this, deviceTimeFreq_, colorFrameTimeFreq_);
-                sensor->setFrameTimestampCalculator(videoFrameTimestampCalculator_);
+
+                if(getFirmwareVersionInt() >= 10300) {
+                    auto videoFrameTimestampCalculator_ =
+                        std::make_shared<FemtoMegaColorFrameTimestampCalculatorV10300>(this, deviceTimeFreq_, colorFrameTimeFreq_);
+                    sensor->setFrameTimestampCalculator(videoFrameTimestampCalculator_);
+                }
+                else {
+                    auto videoFrameTimestampCalculator_ = std::make_shared<FrameTimestampCalculatorBaseDeviceTime>(this, deviceTimeFreq_, colorFrameTimeFreq_);
+                    sensor->setFrameTimestampCalculator(videoFrameTimestampCalculator_);
+                }
 
                 auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, colorFrameTimeFreq_);
                 sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
@@ -826,7 +834,7 @@ void FemtoMegaNetDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor
     // bind params: extrinsics, intrinsics, etc.
     auto profiles = sensor->getStreamProfileList();
     {
-        auto algParamManager = getComponentT<TOFDeviceCommandAlgParamManager>(OB_DEV_COMPONENT_ALG_PARAM_MANAGER);
+        auto algParamManager = getComponentT<TOFDeviceCommonAlgParamManager>(OB_DEV_COMPONENT_ALG_PARAM_MANAGER);
         algParamManager->bindStreamProfileParams(profiles);
     }
 
@@ -872,4 +880,3 @@ void FemtoMegaNetDevice::fetchAllVideoStreamProfileList() {
     }
 }
 }  // namespace libobsensor
-

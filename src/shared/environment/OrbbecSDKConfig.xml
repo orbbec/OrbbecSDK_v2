@@ -349,6 +349,81 @@
                 <MaxFrameIntervalMs>5000</MaxFrameIntervalMs>
             </IR>
         </FemtoMega>
+
+        <FemtoMegai>
+            <Depth>
+                <!-- The width of the default resolution, int type -->
+                <Width>640</Width>
+                <!-- The height of the default resolution, int type -->
+                <Height>576</Height>
+                <!-- Default frame rate, int type -->
+                <FPS>30</FPS>
+                <!-- Default frame format -->
+                <Format>Y16</Format>
+                <!-- Whether to retry after open stream failure, 0 means no retry, >=1 retry and how
+                many times to retry -->
+                <StreamFailedRetry>0</StreamFailedRetry>
+                <!-- The maximum open-flow delay, unit: ms; if the first frame of data is not
+                received after the open-flow exceeds this time, the open-flow will be considered as
+                a failure -->
+                <MaxStartStreamDelayMs>5000</MaxStartStreamDelayMs>
+                <!-- Stream interruption restart, 0 does not restart, >=1 consecutive restart
+                attempts -->
+                <StreamInterruptedRestart>0</StreamInterruptedRestart>
+                <!-- The maximum frame interval time, unit: ms; if no new data frame is received
+                beyond the maximum interval time, the stream is considered to be interrupted -->
+                <MaxFrameIntervalMs>5000</MaxFrameIntervalMs>
+            </Depth>
+
+            <Color>
+                <!-- The width of the default resolution, int type -->
+                <Width>1920</Width>
+                <!-- The height of the default resolution, int type -->
+                <Height>1080</Height>
+                <!-- Default frame rate, int type -->
+                <FPS>30</FPS>
+                <!-- Default frame format -->
+                <Format>MJPG</Format>
+                <!-- Whether to retry after open stream failure, 0 means no retry, >=1 retry and how
+                many times to retry -->
+                <StreamFailedRetry>0</StreamFailedRetry>
+                <!-- The maximum open-flow delay, unit: ms; if the first frame of data is not
+                received after the open-flow exceeds this time, the open-flow will be considered as
+                a failure -->
+                <MaxStartStreamDelayMs>5000</MaxStartStreamDelayMs>
+                <!-- Stream interruption restart, 0 does not restart, >=1 consecutive restart
+                attempts -->
+                <StreamInterruptedRestart>0</StreamInterruptedRestart>
+                <!-- The maximum frame interval time, unit: ms; if no new data frame is received
+                beyond the maximum interval time, the stream is considered to be interrupted -->
+                <MaxFrameIntervalMs>5000</MaxFrameIntervalMs>
+            </Color>
+
+            <IR>
+                <!-- The width of the default resolution, int type -->
+                <Width>640</Width>
+                <!-- The height of the default resolution, int type -->
+                <Height>576</Height>
+                <!-- Default frame rate, int type -->
+                <FPS>30</FPS>
+                <!-- Default frame format -->
+                <Format>Y16</Format>
+                <!-- Whether to retry after open stream failure, 0 means no retry, >=1 retry and how
+                many times to retry -->
+                <StreamFailedRetry>0</StreamFailedRetry>
+                <!-- The maximum open-flow delay, unit: ms; if the first frame of data is not
+                received after the open-flow exceeds this time, the open-flow will be considered as
+                a failure -->
+                <MaxStartStreamDelayMs>5000</MaxStartStreamDelayMs>
+                <!-- Stream interruption restart, 0 does not restart, >=1 consecutive restart
+                attempts -->
+                <StreamInterruptedRestart>0</StreamInterruptedRestart>
+                <!-- The maximum frame interval time, unit: ms; if no new data frame is received
+                beyond the maximum interval time, the stream is considered to be interrupted -->
+                <MaxFrameIntervalMs>5000</MaxFrameIntervalMs>
+            </IR>
+        </FemtoMegai>
+
         <FemtoBolt>
             <Depth>
                 <!-- The width of the default resolution, int type -->

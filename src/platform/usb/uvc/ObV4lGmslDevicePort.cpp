@@ -1138,6 +1138,7 @@ void ObV4lGmslDevicePort::stopStream(std::shared_ptr<const StreamProfile> profil
         v4l2_buf_type                type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         std::unique_lock<std::mutex> lk(mMultiThreadI2CMutex);
         if(xioctlGmsl(devHandle->fd, VIDIOC_STREAMOFF, &type) < 0) {
+            clearUp(devHandle);
             throw io_exception("Failed to stream off!" + devHandle->info->name + ", " + strerror(errno));
         }
         lk.unlock();
@@ -1175,7 +1176,15 @@ void ObV4lGmslDevicePort::stopAllStream() {
     LOG_DEBUG("-Entry stopAllStream-");
     for(auto &devHandle: deviceHandles_) {
         if(devHandle->isCapturing) {
-            stopStream(devHandle->profile);
+            BEGIN_TRY_EXECUTE({ stopStream(devHandle->profile); })
+            CATCH_EXCEPTION_AND_EXECUTE({
+                LOG_WARN("Failed to stop stream for {}", devHandle->info->name);
+                devHandle->isCapturing = false;
+                if(devHandle->captureThread && devHandle->captureThread->joinable()) {
+                    devHandle->captureThread->join();
+                }
+                devHandle->captureThread.reset();
+            })
         }
     }
     LOG_DEBUG("-Leave stopAllStream-");

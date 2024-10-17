@@ -5,7 +5,7 @@
 
 namespace libobsensor {
 
-FemtoBoltAlgParamManager::FemtoBoltAlgParamManager(IDevice *owner) : TOFDeviceCommandAlgParamManager(owner) {
+FemtoBoltAlgParamManager::FemtoBoltAlgParamManager(IDevice *owner) : TOFDeviceCommonAlgParamManager(owner) {
     fixD2CProfile();
 }
 

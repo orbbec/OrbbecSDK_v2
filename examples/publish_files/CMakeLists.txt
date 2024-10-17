@@ -23,5 +23,11 @@ endif()
 set(OrbbecSDK_DIR ${CMAKE_CURRENT_LIST_DIR}/../lib)
 find_package(OrbbecSDK REQUIRED)
 
+if(UNIX)
+    set(CMAKE_INSTALL_RPATH ${OrbbecSDK_DIR})
+    set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+    set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+endif()
+
 add_subdirectory(src)
 

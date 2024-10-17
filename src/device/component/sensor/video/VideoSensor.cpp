@@ -82,7 +82,24 @@ void VideoSensor::start(std::shared_ptr<const StreamProfile> sp, FrameCallback c
 
     auto vsPort = std::dynamic_pointer_cast<IVideoStreamPort>(backend_);
     LOG_INFO("Start backend stream: {}", currentBackendStreamProfile_);
-    vsPort->startStream(currentBackendStreamProfile_, [this](std::shared_ptr<Frame> frame) { onBackendFrameCallback(frame); });
+    BEGIN_TRY_EXECUTE({
+        vsPort->startStream(currentBackendStreamProfile_, [this](std::shared_ptr<Frame> frame) {  //
+            onBackendFrameCallback(frame);
+        });
+    })
+    CATCH_EXCEPTION_AND_EXECUTE({
+        {
+            auto owner    = getOwner();
+            auto strategy = owner->getComponentT<ISensorStreamStrategy>(OB_DEV_COMPONENT_SENSOR_STREAM_STRATEGY, false);
+            if(strategy) {
+                strategy->markStreamDeactivated(activatedStreamProfile_);
+            }
+        }
+        activatedStreamProfile_.reset();
+        frameCallback_ = nullptr;
+        updateStreamState(STREAM_STATE_START_FAILED);
+        throw;
+    })
 }
 
 void VideoSensor::onBackendFrameCallback(std::shared_ptr<Frame> frame) {
@@ -135,13 +152,11 @@ void VideoSensor::onBackendFrameCallback(std::shared_ptr<Frame> frame) {
 void VideoSensor::outputFrame(std::shared_ptr<Frame> frame) {
     frame->setStreamProfile(activatedStreamProfile_);
     if(frameProcessor_) {
-        frame = frameProcessor_->process(frame);
-        if(!frame) {
-            LOG_WARN_INTVL("This frame will be dropped because frame processor process failure! @{}", sensorType_);
-            return;
-        }
+        frameProcessor_->pushFrame(frame);
     }
-    SensorBase::outputFrame(frame);
+    else {
+        SensorBase::outputFrame(frame);
+    }
 }
 
 void VideoSensor::stop() {
@@ -164,6 +179,15 @@ void VideoSensor::stop() {
     trySendStopStreamVendorCmd();
 
     updateStreamState(STREAM_STATE_STOPPED);
+
+    if(currentFormatFilterConfig_ && currentFormatFilterConfig_->converter) {
+        currentFormatFilterConfig_->converter->reset();
+    }
+
+    if(frameProcessor_) {
+        frameProcessor_->reset();
+    }
+
     activatedStreamProfile_.reset();
     frameCallback_ = nullptr;
 }
@@ -295,6 +319,7 @@ void VideoSensor::setFrameProcessor(std::shared_ptr<FrameProcessor> frameProcess
         throw wrong_api_call_sequence_exception("Can not update frame processor while streaming");
     }
     frameProcessor_ = frameProcessor;
+    frameProcessor_->setCallback([this](std::shared_ptr<Frame> frame) { SensorBase::outputFrame(frame); });
 }
 
 }  // namespace libobsensor

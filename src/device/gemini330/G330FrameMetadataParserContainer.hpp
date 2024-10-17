@@ -132,6 +132,8 @@ public:
         registerParser(OB_FRAME_METADATA_TYPE_LASER_POWER_LEVEL, std::make_shared<G330DepthScrMetadataLaserPowerLevelParser>());
         registerParser(OB_FRAME_METADATA_TYPE_LASER_STATUS, std::make_shared<G330DepthScrMetadataLaserStatusParser>());
         registerParser(OB_FRAME_METADATA_TYPE_HDR_SEQUENCE_INDEX, std::make_shared<G330DepthScrMetadataHDRSequenceIDParser>());
+        registerParser(OB_FRAME_METADATA_TYPE_FRAME_NUMBER,
+                       std::make_shared<G330DepthScrMetadataHDRSequenceIDParser>());  // todo: remove this line after fix hdr merge issue
         registerParser(OB_FRAME_METADATA_TYPE_HDR_SEQUENCE_NAME, std::make_shared<G330DepthMetadataParser>(device, OB_FRAME_METADATA_TYPE_HDR_SEQUENCE_NAME));
         registerParser(OB_FRAME_METADATA_TYPE_HDR_SEQUENCE_SIZE,
                        std::make_shared<G330DepthMetadataParser>(device, OB_FRAME_METADATA_TYPE_HDR_SEQUENCE_SIZE,

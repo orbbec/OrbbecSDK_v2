@@ -57,10 +57,10 @@ protected:
     OBDisparityParam disparityParam_;
 };
 
-class TOFDeviceCommandAlgParamManager : public AlgParamManagerBase {
+class TOFDeviceCommonAlgParamManager : public AlgParamManagerBase {
 public:
-    TOFDeviceCommandAlgParamManager(IDevice *owner);
-    virtual ~TOFDeviceCommandAlgParamManager() noexcept = default;
+    TOFDeviceCommonAlgParamManager(IDevice *owner);
+    virtual ~TOFDeviceCommonAlgParamManager() noexcept = default;
 
 private:
     void fetchParamFromDevice() override;

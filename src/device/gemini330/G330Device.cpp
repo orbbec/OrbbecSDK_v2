@@ -122,8 +122,14 @@ void G330Device::init() {
 
     registerComponent(OB_DEV_COMPONENT_COLOR_FRAME_METADATA_CONTAINER, [this]() {
         std::shared_ptr<FrameMetadataParserContainer> container;
-        auto                                          envConfig                = EnvConfig::getInstance();
-        std::string                                   frameMetadataParsingPath = "";
+        if(isGmslDevice_) {
+            // For GMSL2 device, color frame metadata is always parsed by G330ColorFrameMetadataParserContainer
+            container = std::make_shared<G330ColorFrameMetadataParserContainer>(this);
+            return container;
+        }
+
+        auto        envConfig                = EnvConfig::getInstance();
+        std::string frameMetadataParsingPath = "";
         envConfig->getStringValue("Device.FrameMetadataParsingPath", frameMetadataParsingPath);
         if(frameMetadataParsingPath == "ExtensionHeader") {
             container = std::make_shared<G330ColorFrameMetadataParserContainer>(this);
@@ -137,8 +143,14 @@ void G330Device::init() {
 
     registerComponent(OB_DEV_COMPONENT_DEPTH_FRAME_METADATA_CONTAINER, [this]() {
         std::shared_ptr<FrameMetadataParserContainer> container;
-        auto                                          envConfig                = EnvConfig::getInstance();
-        std::string                                   frameMetadataParsingPath = "";
+        if(isGmslDevice_) {
+            // For GMSL2 device, depth frame metadata is always parsed by G330DepthFrameMetadataParserContainer
+            container = std::make_shared<G330DepthFrameMetadataParserContainer>(this);
+            return container;
+        }
+
+        auto        envConfig                = EnvConfig::getInstance();
+        std::string frameMetadataParsingPath = "";
         envConfig->getStringValue("Device.FrameMetadataParsingPath", frameMetadataParsingPath);
         if(frameMetadataParsingPath == "ExtensionHeader") {
             container = std::make_shared<G330DepthFrameMetadataParserContainer>(this);

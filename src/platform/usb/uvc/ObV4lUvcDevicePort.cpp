@@ -692,7 +692,8 @@ void ObV4lUvcDevicePort::stopStream(std::shared_ptr<const StreamProfile> profile
         char    buff[1] = { 0 };
         ssize_t ret     = write(devHandle->stopPipeFd[1], buff, 1);
         if(ret < 0) {
-            throw libobsensor::io_exception("failed to write stop pipe " + std::string(strerror(errno)));
+            clearUp(devHandle);
+            throw libobsensor::io_exception("Failed to write stop pipe " + std::string(strerror(errno)));
         }
 
         // wait for the capture loop to stop
@@ -703,6 +704,7 @@ void ObV4lUvcDevicePort::stopStream(std::shared_ptr<const StreamProfile> profile
 
         v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         if(xioctl(devHandle->fd, VIDIOC_STREAMOFF, &type) < 0) {
+            clearUp(devHandle);
             throw libobsensor::io_exception("Failed to stream off!" + devHandle->info->name + ", " + strerror(errno));
         }
 
@@ -734,11 +736,20 @@ void ObV4lUvcDevicePort::stopStream(std::shared_ptr<const StreamProfile> profile
 void ObV4lUvcDevicePort::stopAllStream() {
     for(auto &devHandle: deviceHandles_) {
         if(devHandle->isCapturing) {
-            stopStream(devHandle->profile);
+            BEGIN_TRY_EXECUTE({ stopStream(devHandle->profile); })
+            CATCH_EXCEPTION_AND_EXECUTE({
+                LOG_WARN("Failed to stop stream for {}", devHandle->info->name);
+                devHandle->isCapturing = false;
+                if(devHandle->captureThread && devHandle->captureThread->joinable()) {
+                    devHandle->captureThread->join();
+                }
+                devHandle->captureThread.reset();
+            })
         }
     }
 }
 uint32_t ObV4lUvcDevicePort::sendAndReceive(const uint8_t *sendData, uint32_t sendLen, uint8_t *recvData, uint32_t exceptedRecvLen) {
+    std::lock_guard<std::recursive_mutex> lock(ctrlMutex_);
     uint8_t ctrl = OB_VENDOR_XU_CTRL_ID_64;
 
     auto alignDataLen = sendLen;
@@ -777,6 +788,7 @@ uint32_t ObV4lUvcDevicePort::sendAndReceive(const uint8_t *sendData, uint32_t se
 }
 
 bool ObV4lUvcDevicePort::getPu(uint32_t propertyId, int32_t &value) {
+    std::lock_guard<std::recursive_mutex> lock(ctrlMutex_);
     auto                fd      = deviceHandles_.front()->fd;
     auto                cid     = CIDFromOBPropertyID(static_cast<OBPropertyID>(propertyId));
     struct v4l2_control control = { cid, 0 };
@@ -794,6 +806,7 @@ bool ObV4lUvcDevicePort::getPu(uint32_t propertyId, int32_t &value) {
 }
 
 bool ObV4lUvcDevicePort::setPu(uint32_t propertyId, int32_t value) {
+    std::lock_guard<std::recursive_mutex> lock(ctrlMutex_);
     auto                fd      = deviceHandles_.front()->fd;
     auto                cid     = CIDFromOBPropertyID(static_cast<OBPropertyID>(propertyId));
     struct v4l2_control control = { cid, value };
@@ -825,7 +838,8 @@ bool ObV4lUvcDevicePort::setPu(uint32_t propertyId, int32_t value) {
     return true;
 }
 
-UvcControlRange ObV4lUvcDevicePort::getXuRange(uint8_t control, int len) const {
+UvcControlRange ObV4lUvcDevicePort::getXuRange(uint8_t control, int len) {
+    std::lock_guard<std::recursive_mutex> lock(ctrlMutex_);
     auto                        fd = deviceHandles_.front()->fd;
     UvcControlRange             range;
     struct uvc_xu_control_query xquery {};
@@ -895,6 +909,7 @@ UvcControlRange ObV4lUvcDevicePort::getXuRange(uint8_t control, int len) const {
 }
 
 UvcControlRange ObV4lUvcDevicePort::getPuRange(uint32_t propertyId) {
+    std::lock_guard<std::recursive_mutex> lock(ctrlMutex_);
     auto fd = deviceHandles_.front()->fd;
     if(propertyId == OB_PROP_COLOR_AUTO_EXPOSURE_PRIORITY_INT || propertyId == OB_PROP_COLOR_AUTO_EXPOSURE_BOOL
        || propertyId == OB_PROP_COLOR_AUTO_WHITE_BALANCE_BOOL) {
@@ -920,6 +935,7 @@ std::shared_ptr<const SourcePortInfo> ObV4lUvcDevicePort::getSourcePortInfo() co
 }
 
 bool ObV4lUvcDevicePort::getXu(uint8_t ctrl, uint8_t *data, uint32_t *len) {
+    std::lock_guard<std::recursive_mutex> lock(ctrlMutex_);
     VALIDATE_NOT_NULL(data);
     VALIDATE_NOT_NULL(len);
     auto fd = deviceHandles_.front()->fd;
@@ -934,6 +950,7 @@ bool ObV4lUvcDevicePort::getXu(uint8_t ctrl, uint8_t *data, uint32_t *len) {
 }
 
 bool ObV4lUvcDevicePort::setXu(uint8_t ctrl, const uint8_t *data, uint32_t len) {
+    std::lock_guard<std::recursive_mutex> lock(ctrlMutex_);
     VALIDATE_NOT_NULL(data);
     auto                        fd    = deviceHandles_.front()->fd;
     struct uvc_xu_control_query query = { static_cast<uint8_t>(xuUnit_.unit), ctrl, UVC_SET_CUR, static_cast<uint16_t>(len), const_cast<uint8_t *>(data) };

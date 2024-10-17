@@ -20,6 +20,7 @@ option(OB_INSTALL_EXAMPLES_SOURCE "Install SDK examples source files" ON)
 option(OB_INSTALL_FILTER_DEV_HEADERS "Install HEADER files for filter development" OFF)
 
 option(OB_ENABLE_SANITIZER "Enable sanitizer options" OFF)
+option(OB_ENABLE_CLANG_TIDY "Enable clang-tidy" OFF)
 
 if(OB_BUILD_USB_PAL)
     add_definitions(-DBUILD_USB_PAL)

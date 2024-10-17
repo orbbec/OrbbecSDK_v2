@@ -9,7 +9,7 @@
 #include <mutex>
 #include <thread>
 
-bool enable_align_mode = 0;
+bool enable_align_mode = 1;
 
 // key press event processing
 void handleKeyPress(ob_smpl::CVWindow &win, std::shared_ptr<ob::Pipeline> pipe, int key, std::shared_ptr<ob::Config> config) {
@@ -33,28 +33,60 @@ void handleKeyPress(ob_smpl::CVWindow &win, std::shared_ptr<ob::Pipeline> pipe, 
     }
 }
 
-std::shared_ptr<ob::Config> createHwD2CAlignConfig(std::shared_ptr<ob::Pipeline> pipe) {
-    auto coloStreamProfiles = pipe->getStreamProfileList(OB_SENSOR_COLOR);
-    auto count              = coloStreamProfiles->getCount();
+// check if the given stream profiles support hardware depth-to-color alignment
+bool checkIfSupportHWD2CAlign(std::shared_ptr<ob::Pipeline> pipe, std::shared_ptr<ob::StreamProfile> colorStreamProfile,
+                              std::shared_ptr<ob::StreamProfile> depthStreamProfile) {
+    auto hwD2CSupportedDepthStreamProfiles = pipe->getD2CDepthProfileList(colorStreamProfile, ALIGN_D2C_HW_MODE);
+    if(hwD2CSupportedDepthStreamProfiles->count() == 0) {
+        return false;
+    }
+
+    // Iterate through the supported depth stream profiles and check if there is a match with the given depth stream profile
+    auto depthVsp = depthStreamProfile->as<ob::VideoStreamProfile>();
+    auto count    = hwD2CSupportedDepthStreamProfiles->getCount();
     for(uint32_t i = 0; i < count; i++) {
-        auto colorProfile                      = coloStreamProfiles->getProfile(i);
-        // RGB is used here for easy rendering
-        if (colorProfile->getFormat() != OB_FORMAT_RGB) {
-            continue;
+        auto sp  = hwD2CSupportedDepthStreamProfiles->getProfile(i);
+        auto vsp = sp->as<ob::VideoStreamProfile>();
+        if(vsp->getWidth() == depthVsp->getWidth() && vsp->getHeight() == depthVsp->getHeight() && vsp->getFormat() == depthVsp->getFormat()
+           && vsp->getFps() == depthVsp->getFps()) {
+            // Found a matching depth stream profile, it is means the given stream profiles support hardware depth-to-color alignment
+            return true;
         }
+    }
+    return false;
+}
 
-        auto hwD2CSupportedDepthStreamProfiles = pipe->getD2CDepthProfileList(colorProfile, ALIGN_D2C_HW_MODE);
-        if(hwD2CSupportedDepthStreamProfiles->count() == 0) {
-            continue;
+// create a config for hardware depth-to-color alignment
+std::shared_ptr<ob::Config> createHwD2CAlignConfig(std::shared_ptr<ob::Pipeline> pipe) {
+    auto coloStreamProfiles  = pipe->getStreamProfileList(OB_SENSOR_COLOR);
+    auto depthStreamProfiles = pipe->getStreamProfileList(OB_SENSOR_DEPTH);
+
+    // Iterate through all color and depth stream profiles to find a match for hardware depth-to-color alignment
+    auto colorSpCount = coloStreamProfiles->getCount();
+    auto depthSpCount = depthStreamProfiles->getCount();
+    for(uint32_t i = 0; i < colorSpCount; i++) {
+        auto colorProfile = coloStreamProfiles->getProfile(i);
+        auto colorVsp     = colorProfile->as<ob::VideoStreamProfile>();
+        for(uint32_t j = 0; j < depthSpCount; j++) {
+            auto depthProfile = depthStreamProfiles->getProfile(j);
+            auto depthVsp     = depthProfile->as<ob::VideoStreamProfile>();
+
+            // make sure the color and depth stream have the same fps, due to some models may not support different fps
+            if(colorVsp->getFps() != depthVsp->getFps()) {
+                continue;
+            }
+
+            // Check if the given stream profiles support hardware depth-to-color alignment
+            if(checkIfSupportHWD2CAlign(pipe, colorProfile, depthProfile)) {
+                // If support, create a config for hardware depth-to-color alignment
+                auto hwD2CAlignConfig = std::make_shared<ob::Config>();
+                hwD2CAlignConfig->enableStream(colorProfile);                                                     // enable color stream
+                hwD2CAlignConfig->enableStream(depthProfile);                                                     // enable depth stream
+                hwD2CAlignConfig->setAlignMode(ALIGN_D2C_HW_MODE);                                                // enable hardware depth-to-color alignment
+                hwD2CAlignConfig->setFrameAggregateOutputMode(OB_FRAME_AGGREGATE_OUTPUT_ALL_TYPE_FRAME_REQUIRE);  // output frameset with all types of frames
+                return hwD2CAlignConfig;
+            }
         }
-
-        auto hwD2CAlignConfig = std::make_shared<ob::Config>();
-        auto depthProfile     = hwD2CSupportedDepthStreamProfiles->getProfile(0);
-        hwD2CAlignConfig->enableStream(colorProfile);                                                     // enable color stream
-        hwD2CAlignConfig->enableStream(depthProfile);                                                     // enable depth stream
-        hwD2CAlignConfig->setAlignMode(ALIGN_D2C_HW_MODE);                                                // enable hardware depth-to-color alignment
-        hwD2CAlignConfig->setFrameAggregateOutputMode(OB_FRAME_AGGREGATE_OUTPUT_ALL_TYPE_FRAME_REQUIRE);  // output frameset with all types of frames
-        return hwD2CAlignConfig;
     }
     return nullptr;
 }
@@ -103,4 +135,3 @@ catch(ob::Error &e) {
     ob_smpl::waitForKeyPressed();
     exit(EXIT_FAILURE);
 }
-

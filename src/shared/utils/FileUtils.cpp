@@ -15,7 +15,7 @@
 #include <Windows.h>
 #include <locale>
 #include <codecvt>
-#elif defined(__linux__)
+#else
 #include <sys/stat.h>
 #include <unistd.h>
 #include <dirent.h>

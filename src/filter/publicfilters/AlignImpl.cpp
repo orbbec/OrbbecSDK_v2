@@ -94,7 +94,10 @@ AlignImpl::~AlignImpl() {
 
 void AlignImpl::initialize(OBCameraIntrinsic depth_intrin, OBCameraDistortion depth_disto, OBCameraIntrinsic rgb_intrin, OBCameraDistortion rgb_disto,
                            OBExtrinsic extrin, float depth_unit_mm, bool add_target_distortion, bool gap_fill_copy) {
-    if(initialized_) {
+    if(initialized_ && memcmp(&depth_intrin, &depth_intric_, sizeof(OBCameraIntrinsic)) == 0
+       && memcmp(&depth_disto, &depth_disto_, sizeof(OBCameraDistortion)) == 0 && memcmp(&rgb_intrin, &rgb_intric_, sizeof(OBCameraIntrinsic)) == 0
+       && memcmp(&rgb_disto, &rgb_disto_, sizeof(OBCameraDistortion)) == 0 && memcmp(&extrin, &transform_, sizeof(OBExtrinsic)) == 0
+       && depth_unit_mm == depth_unit_mm_ && add_target_distortion == add_target_distortion_ && gap_fill_copy == gap_fill_copy_) {
         return;
     }
     memcpy(&depth_intric_, &depth_intrin, sizeof(OBCameraIntrinsic));
@@ -164,24 +167,24 @@ float estimateInflectionPoint(ob_camera_intrinsic depth_intr, ob_camera_intrinsi
         // then a inflection point should be labeled there
         float r2_min = 0.f, r2_max = 0.f;
         {
-			float r2[2];
-			ob_camera_intrinsic intrs[] = { depth_intr, rgb_intr };
-			for(int i = 0; i < 2; i++) {
-				ob_camera_intrinsic intr = intrs[i];
-				float u = (intr.cx > (intr.width - intr.cx)) ? intr.cx : (intr.width - intr.cx),
-					  v = (intr.cy > (intr.height - intr.cy)) ? intr.cy : (intr.height - intr.cy);
-				float x = u / intr.fx, y = v / intr.fy;
-				r2[i] = x * x + y * y;
-			}
-			if(r2[0] > r2[1]) {
-				r2_max = r2[0], r2_min = r2[1];
-			}
-			else {
-				r2_max = r2[1], r2_min = r2[0];
-			}
+            float               r2[2];
+            ob_camera_intrinsic intrs[] = { depth_intr, rgb_intr };
+            for(int i = 0; i < 2; i++) {
+                ob_camera_intrinsic intr = intrs[i];
+                float               u    = (intr.cx > (intr.width - intr.cx)) ? intr.cx : (intr.width - intr.cx),
+                      v                  = (intr.cy > (intr.height - intr.cy)) ? intr.cy : (intr.height - intr.cy);
+                float x = u / intr.fx, y = v / intr.fy;
+                r2[i] = x * x + y * y;
+            }
+            if(r2[0] > r2[1]) {
+                r2_max = r2[0], r2_min = r2[1];
+            }
+            else {
+                r2_max = r2[1], r2_min = r2[0];
+            }
         }
 
-		float c = disto.k4, b = disto.k5, a = disto.k6, d = 1.f;
+        float c = disto.k4, b = disto.k5, a = disto.k6, d = 1.f;
         float prevX = r2_min;
         float prevF = polynomial(prevX, a, b, c, d);
         for(float r2 = prevX + 0.1f; r2 <= r2_max; r2 += 0.1f) {
@@ -437,9 +440,9 @@ void AlignImpl::D2CWithoutSSE(const uint16_t *depth_buffer, uint16_t *out_depth,
                               int *map) {
 
     int       channel     = (gap_fill_copy_ ? 1 : 2);
-    float *   ptr_coeff_x = (float *)coeff_mat_x;
-    float *   ptr_coeff_y = (float *)coeff_mat_y;
-    float *   ptr_coeff_z = (float *)coeff_mat_z;
+    float    *ptr_coeff_x = (float *)coeff_mat_x;
+    float    *ptr_coeff_y = (float *)coeff_mat_y;
+    float    *ptr_coeff_z = (float *)coeff_mat_z;
     uint16_t *ptr_depth   = (uint16_t *)depth_buffer;
 
     for(int v = 0; v < depth_intric_.height; v += 1) {
@@ -517,11 +520,11 @@ void AlignImpl::D2CWithSSE(const uint16_t *depth_buffer, uint16_t *out_depth, co
                 // int coeff_idx = half_idx + fold * 2 * channel;
                 int    coeff_idx  = half_idx;
                 float  coeff_x[4] = { coeff_mat_x[coeff_idx + fold], coeff_mat_x[coeff_idx + 1 * channel + fold], coeff_mat_x[coeff_idx + 2 * channel + fold],
-                                     coeff_mat_x[coeff_idx + 3 * channel + fold] };
+                                      coeff_mat_x[coeff_idx + 3 * channel + fold] };
                 float  coeff_y[4] = { coeff_mat_y[coeff_idx + fold], coeff_mat_y[coeff_idx + 1 * channel + fold], coeff_mat_y[coeff_idx + 2 * channel + fold],
-                                     coeff_mat_y[coeff_idx + 3 * channel + fold] };
+                                      coeff_mat_y[coeff_idx + 3 * channel + fold] };
                 float  coeff_z[4] = { coeff_mat_z[coeff_idx + fold], coeff_mat_z[coeff_idx + 1 * channel + fold], coeff_mat_z[coeff_idx + 2 * channel + fold],
-                                     coeff_mat_z[coeff_idx + 3 * channel + fold] };
+                                      coeff_mat_z[coeff_idx + 3 * channel + fold] };
                 __m128 coeff_sse1 = _mm_loadu_ps(coeff_x);
                 __m128 coeff_sse2 = _mm_loadu_ps(coeff_y);
                 __m128 coeff_sse3 = _mm_loadu_ps(coeff_z);
@@ -627,7 +630,7 @@ int AlignImpl::C2D(const uint16_t *depth_buffer, int depth_width, int depth_heig
 
     // rgb x-y coordinates for each depth pixel
     unsigned long long size     = static_cast<unsigned long long>(depth_width) * depth_height * 2;
-    int *              depth_xy = new int[size];
+    int               *depth_xy = new int[size];
     memset(depth_xy, -1, size * sizeof(int));
 
     int ret = -1;
@@ -682,4 +685,3 @@ void AlignImpl::mapPixel(const int *map, const T *src_buffer, int src_width, int
 }
 
 }  // namespace libobsensor
-

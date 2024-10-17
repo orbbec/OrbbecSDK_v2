@@ -55,25 +55,33 @@ void GyroSensor::start(std::shared_ptr<const StreamProfile> sp, FrameCallback ca
     frameCallback_          = callback;
     updateStreamState(STREAM_STATE_STARTING);
 
-    auto owner        = getOwner();
-    auto propServer   = owner->getPropertyServer();
+    auto owner      = getOwner();
+    auto propServer = owner->getPropertyServer();
 
     auto gyroSp = sp->as<GyroStreamProfile>();
     propServer->setPropertyValueT(OB_PROP_GYRO_ODR_INT, static_cast<int>(gyroSp->getSampleRate()));
     propServer->setPropertyValueT(OB_PROP_GYRO_FULL_SCALE_INT, static_cast<int>(gyroSp->getFullScaleRange()));
     propServer->setPropertyValueT(OB_PROP_GYRO_SWITCH_BOOL, true);
 
-    streamer_->start(sp, [this](std::shared_ptr<Frame> frame) {
-        updateStreamState(STREAM_STATE_STREAMING);
-        outputFrame(frame);
-    });
+    BEGIN_TRY_EXECUTE({
+        streamer_->start(sp, [this](std::shared_ptr<Frame> frame) {
+            updateStreamState(STREAM_STATE_STREAMING);
+            outputFrame(frame);
+        });
+    })
+    CATCH_EXCEPTION_AND_EXECUTE({
+        activatedStreamProfile_.reset();
+        frameCallback_ = nullptr;
+        updateStreamState(STREAM_STATE_START_FAILED);
+        throw;
+    })
 }
 
 void GyroSensor::stop() {
     updateStreamState(STREAM_STATE_STOPPING);
     streamer_->stop(activatedStreamProfile_);
-    auto owner        = getOwner();
-    auto propServer   = owner->getPropertyServer();
+    auto owner      = getOwner();
+    auto propServer = owner->getPropertyServer();
     propServer->setPropertyValueT(OB_PROP_GYRO_SWITCH_BOOL, false);
     updateStreamState(STREAM_STATE_STOPPED);
 }

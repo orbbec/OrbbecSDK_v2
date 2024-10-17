@@ -177,16 +177,16 @@ void HidDevicePortGmsl::pollData() {
     imuOrigFrameMsg->reserved             = 0;
 
     uint8_t imuFrameMaxSize = sizeof(OBImuOriginData) * (IMU_FRAME_MAX_NUM) + sizeof(i2c_msg_header_t) + sizeof(uint16_t);
-
-    std::vector<uint8_t> datebuf(imuFrameMaxSize, 0);
-    int                  size = getImuData(datebuf.data());
+    auto                 bufferSize      = std::max(sizeof(i2c_msg_t), static_cast<size_t>(imuFrameMaxSize));
+    std::vector<uint8_t> databuf(bufferSize, 0);
+    int                  size = getImuData(databuf.data());
 
     if(size < 0) {
         LOG_ERROR("read getImuData failed! ret:{} \n", size);
         return;
     }
 
-    auto *mOriginI2CMsg = reinterpret_cast<i2c_msg_t *>(&datebuf[0]);
+    auto *mOriginI2CMsg = reinterpret_cast<i2c_msg_t *>(&databuf[0]);
     int   mOnceReadLen  = mOriginI2CMsg->header.len;
     // LOG_DEBUG("-read imu data header.len: {}", mOnceReadLen );
 
@@ -198,7 +198,7 @@ void HidDevicePortGmsl::pollData() {
             imuOrigFrameMsg->imuHeader.groupCount = groupCount;
             int imuOriginHeaderOffset             = sizeof(i2c_msg_header_t) + 2 /*res*/;
 
-            auto *tmp = reinterpret_cast<imu_origin_data_t *>(&datebuf[imuOriginHeaderOffset]);
+            auto *tmp = reinterpret_cast<imu_origin_data_t *>(&databuf[imuOriginHeaderOffset]);
 
 #if 0  // for test debug
             LOG_DEBUG("-> group_id: {}  ", tmp->group_id);

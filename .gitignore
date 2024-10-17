@@ -2,6 +2,7 @@
 *.apk
 *.ap_
 *.aab
+*.attach_pid*
 
 # Files for the ART/Dalvik VM
 *.dex
@@ -36,6 +37,8 @@ build_linux_aarch64/
 build_linux_arm/
 build_android_aarch64/
 build_android_arm/
+build_macos_arm64/
+build_macos_x64
 cmake_build
 install/
 version.txt
@@ -896,4 +899,3 @@ FodyWeavers.xsd
 # Additional files built by Visual Studio
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudio,visualstudiocode,c++,python,jetbrains+all,ros,ros2
-

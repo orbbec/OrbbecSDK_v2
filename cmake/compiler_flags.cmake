@@ -5,7 +5,7 @@ if (NOT ("${CMAKE_C_COMPILER_ID}" STREQUAL "${CMAKE_CXX_COMPILER_ID}"))
     message(FATAL_ERROR "C compiler (${CMAKE_C_COMPILER_ID}) does not match C++ compiler (${CMAKE_CXX_COMPILER_ID})")
 endif()
 
-if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
+if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang")
     set(CLANG_ALL_WARNINGS "-Weverything")
     list(APPEND CLANG_ALL_WARNINGS "-Wno-missing-field-initializers") # Allow c structs without all fields initialized
     list(APPEND CLANG_ALL_WARNINGS "-Wno-reserved-id-macro") # Needed for azure-c-shared-utility which defines new macros that start with "_"
@@ -34,7 +34,9 @@ if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
         list(APPEND CLANG_ALL_WARNINGS "-Wno-extra-semi-stmt") # Allow semi-colons to be used after #define's
         list(APPEND CLANG_ALL_WARNINGS "-Wno-atomic-implicit-seq-cst") # Allow use of __sync_add_and_fetch() atomic
     endif()
-    set(CLANG_WARNINGS_AS_ERRORS "-Werror")
+    if(NOT "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang")
+        set(CLANG_WARNINGS_AS_ERRORS "-Werror")
+    endif()
     add_compile_options(${CLANG_ALL_WARNINGS})
     add_compile_options(${CLANG_WARNINGS_AS_ERRORS})
 elseif ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")

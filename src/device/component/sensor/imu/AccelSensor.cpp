@@ -63,10 +63,18 @@ void AccelSensor::start(std::shared_ptr<const StreamProfile> sp, FrameCallback c
     propServer->setPropertyValueT(OB_PROP_ACCEL_FULL_SCALE_INT, static_cast<int>(accelSp->getFullScaleRange()));
     propServer->setPropertyValueT(OB_PROP_ACCEL_SWITCH_BOOL, true);
 
-    streamer_->start(sp, [this](std::shared_ptr<Frame> frame) {
-        updateStreamState(STREAM_STATE_STREAMING);
-        outputFrame(frame);
-    });
+    BEGIN_TRY_EXECUTE({
+        streamer_->start(sp, [this](std::shared_ptr<Frame> frame) {
+            updateStreamState(STREAM_STATE_STREAMING);
+            outputFrame(frame);
+        });
+    })
+    CATCH_EXCEPTION_AND_EXECUTE({
+        activatedStreamProfile_.reset();
+        frameCallback_ = nullptr;
+        updateStreamState(STREAM_STATE_START_FAILED);
+        throw;
+    })
 }
 
 void AccelSensor::stop() {

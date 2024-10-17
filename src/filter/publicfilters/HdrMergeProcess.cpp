@@ -206,7 +206,7 @@ std::shared_ptr<Frame> HDRMerge::process(std::shared_ptr<const Frame> frame) {
             frames_.clear();
 
             // two adjancent frames
-            if(1 == frame_1_framenumber - frame_0_framenumber) {
+            if(1 == frame_1_framenumber - frame_0_framenumber || (frame_1_framenumber == 0 && frame_0_framenumber == 1)) {
                 std::shared_ptr<Frame> new_frame = merge(frame_0, frame_1);
                 if(new_frame) {
                     depth_merged_frame_ = new_frame;

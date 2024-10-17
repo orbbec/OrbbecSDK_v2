@@ -11,5 +11,7 @@ target_sources(
              ${CMAKE_CURRENT_LIST_DIR}/FemtoMegaDeviceInfo.cpp
              ${CMAKE_CURRENT_LIST_DIR}/FemtoMegaPropertyAccessor.hpp
              ${CMAKE_CURRENT_LIST_DIR}/FemtoMegaPropertyAccessor.cpp
+             ${CMAKE_CURRENT_LIST_DIR}/FemtoMegaFrameTimestampCalculator.hpp
+             ${CMAKE_CURRENT_LIST_DIR}/FemtoMegaFrameTimestampCalculator.cpp
         )
 

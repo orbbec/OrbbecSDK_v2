@@ -128,13 +128,15 @@ std::shared_ptr<IDevice> DeviceManager::createDevice(const std::shared_ptr<const
         auto                         iter = createdDevices_.begin();
         for(; iter != createdDevices_.end(); ++iter) {
             if(iter->first == info->getUid()) {
-                if(iter->second.expired()) {
+                auto dev = iter->second.lock();
+                if(!dev) {
                     createdDevices_.erase(iter);
                     break;
                 }
-                LOG_DEBUG("Device has already been created, return existing device! Name: {0}, PID: 0x{1:04x}, SN/ID: {2}", info->getName(), info->getPid(),
-                          info->getDeviceSn());
-                return iter->second.lock();
+                auto devInfo = dev->getInfo();
+                LOG_DEBUG("Device has already been created, return existing device! Name: {0}, PID: 0x{1:04x}, SN/ID: {2}, FW: {3}", devInfo->name_,
+                          devInfo->pid_, devInfo->deviceSn_, devInfo->fwVersion_);
+                return dev;
             }
         }
     }
@@ -147,8 +149,9 @@ std::shared_ptr<IDevice> DeviceManager::createDevice(const std::shared_ptr<const
         std::unique_lock<std::mutex> lock(createdDevicesMutex_);
         createdDevices_.insert({ info->getUid(), device });
     }
-
-    LOG_INFO("Device created successfully! Name: {0}, PID: 0x{1:04x}, SN/ID: {2}", info->getName(), info->getPid(), info->getDeviceSn());
+    auto devInfo = device->getInfo();
+    LOG_INFO("Device created successfully! Name: {0}, PID: 0x{1:04x}, SN/ID: {2} FW: {3}", devInfo->name_, devInfo->pid_, devInfo->deviceSn_,
+             devInfo->fwVersion_);
     return device;
 }
 

@@ -39,6 +39,8 @@ on the nvidia arm64 xavier/orin platform ,this example demo sync multi gmsl devi
 
 static bool quitStreamPreview = false;
 
+const std::string GMSL2_DEVICE_TAG= "GMSL2";
+
 const std::map<std::string, uint16_t> gemini_330_list = {
     { "gemini335", 0x0800 }, { "gemini335L", 0x0804 }, { "gemini336", 0x0803 }, { "gemini336L", 0x0807 }, { "gemini335Lg", 0x080B }
 };
@@ -250,11 +252,16 @@ int configMultiDeviceSync() {
         auto devList  = context.queryDeviceList();
         int  devCount = devList->deviceCount();
         for(int i = 0; i < devCount; i++) {
-
             std::shared_ptr<ob::Device> device = devList->getDevice(i);
             auto pid = device->getDeviceInfo()->getPid();
             if(!IsGemini330Series(pid)){
                 std::cout << "Device pid: " << pid << " is not Gemini 330 series, skip" << std::endl;
+                continue;
+            }
+            auto ConnectionType = device->getDeviceInfo()->getConnectionType();
+            std::cout << "Device ConnectionType: " << ConnectionType << std::endl;
+            if( ConnectionType != GMSL2_DEVICE_TAG) {
+                std::cout << "Device ConnectionType: " << ConnectionType << " is not GMSL2 devices, skip" << std::endl;
                 continue;
             }
 
@@ -311,11 +318,17 @@ void startDeviceStreams(const std::vector<std::shared_ptr<ob::Device>> &devices,
 }
 
 // key press event processing
-void handleKeyPress(int key) {
+void handleKeyPress(ob_smpl::CVWindow &win, int key) {
     //Get the key value
     if(key == KEY_ESC) {
-        quitStreamPreview = true;
-        std::cout << "press ESC quitStreamPreview" << std::endl;
+        if(!quitStreamPreview){
+            quitStreamPreview = true;
+            win.setShowInfo(false);
+            win.setShowSyncTimeInfo(false);
+            std::cout << "press ESC quitStreamPreview" << std::endl;
+            win.close();
+            //win.destroyWindow();
+        }
     }
     else if(key == 'S' || key == 's') {
         std::cout << "syncDevicesTime..." << std::endl;
@@ -384,7 +397,7 @@ int testMultiDeviceSync() {
         // set key prompt
         win.setKeyPrompt("'S': syncDevicesTime, 'T': software triiger");
         // set the callback function for the window to handle key press events
-        win.setKeyPressedCallback([&](int key){ handleKeyPress(key); });
+        win.setKeyPressedCallback([&](int key){ handleKeyPress(win, key); });
 
         win.setShowInfo(true);
         win.setShowSyncTimeInfo(true);
@@ -424,10 +437,9 @@ int testMultiDeviceSync() {
     }
     catch(ob::Error &e) {
         std::cerr << "function:" << e.getName() << "\nargs:" << e.getArgs() << "\nmessage:" << e.getMessage() << "\ntype:" << e.getExceptionType() << std::endl;
-        return -1;
-    }
-    catch(std::exception &e) {
-        std::cerr << "Standard Exception: " << e.what() << std::endl;
+        std::cout << "\nPress any key to exit.";
+        ob_smpl::waitForKeyPressed();
+        exit(EXIT_FAILURE);
         return -1;
     }
 }

@@ -5,7 +5,7 @@
 
 namespace libobsensor {
 
-class FemtoBoltAlgParamManager : public TOFDeviceCommandAlgParamManager {
+class FemtoBoltAlgParamManager : public TOFDeviceCommonAlgParamManager {
 public:
     FemtoBoltAlgParamManager(IDevice *owner);
     ~FemtoBoltAlgParamManager() = default;

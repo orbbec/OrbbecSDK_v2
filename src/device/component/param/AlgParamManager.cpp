@@ -217,12 +217,12 @@ void DisparityAlgParamManagerBase::bindDisparityParam(std::vector<std::shared_pt
     }
 }
 
-TOFDeviceCommandAlgParamManager::TOFDeviceCommandAlgParamManager(IDevice *owner) : AlgParamManagerBase(owner) {
+TOFDeviceCommonAlgParamManager::TOFDeviceCommonAlgParamManager(IDevice *owner) : AlgParamManagerBase(owner) {
     fetchParamFromDevice();
     registerBasicExtrinsics();
 }
 
-void TOFDeviceCommandAlgParamManager::fetchParamFromDevice() {
+void TOFDeviceCommonAlgParamManager::fetchParamFromDevice() {
     std::vector<uint8_t> data;
     BEGIN_TRY_EXECUTE({
         auto owner      = getOwner();
@@ -324,13 +324,15 @@ void TOFDeviceCommandAlgParamManager::fetchParamFromDevice() {
     }
 }
 
-void TOFDeviceCommandAlgParamManager::registerBasicExtrinsics() {
+void TOFDeviceCommonAlgParamManager::registerBasicExtrinsics() {
     auto extrinsicMgr            = StreamExtrinsicsManager::getInstance();
     auto depthBasicStreamProfile = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_DEPTH, OB_FORMAT_ANY, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY);
     auto colorBasicStreamProfile = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_COLOR, OB_FORMAT_ANY, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY);
     auto irBasicStreamProfile    = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_IR, OB_FORMAT_ANY, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY);
     auto accelBasicStreamProfile = StreamProfileFactory::createAccelStreamProfile(OB_ACCEL_FS_2g, OB_SAMPLE_RATE_1_5625_HZ);
     auto gyroBasicStreamProfile  = StreamProfileFactory::createGyroStreamProfile(OB_GYRO_FS_16dps, OB_SAMPLE_RATE_1_5625_HZ);
+
+    extrinsicMgr->registerSameExtrinsics(depthBasicStreamProfile, irBasicStreamProfile);
 
     if(!calibrationCameraParamList_.empty()) {
         const auto &d2cExtrinsic = calibrationCameraParamList_.front().transform;

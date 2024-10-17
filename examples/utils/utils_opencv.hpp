@@ -65,6 +65,9 @@ public:
     // set the log message
     void addLog(const std::string &log);
 
+    // destroyWindow
+    void destroyWindow();
+
 private:
     // frames processing thread function
     void processFrames();

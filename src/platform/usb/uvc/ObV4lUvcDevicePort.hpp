@@ -5,6 +5,7 @@
 #include <array>
 #include <string>
 #include <thread>
+#include <mutex>
 #include <sys/mman.h>
 
 #include "UvcDevicePort.hpp"
@@ -105,7 +106,7 @@ private:
     static void     captureLoop(std::shared_ptr<V4lDeviceHandle> deviceHandle);
     bool            getXu(uint8_t ctrl, uint8_t *data, uint32_t *len);
     bool            setXu(uint8_t ctrl, const uint8_t *data, uint32_t len);
-    UvcControlRange getXuRange(uint8_t control, int len) const;
+    UvcControlRange getXuRange(uint8_t control, int len);
     bool            pendForCtrlStatusEvent() const;
     void            subscribeToCtrlEvent(uint32_t ctrl_id) const;
     void            unsubscribeFromCtrlEvent(uint32_t ctrl_id) const;
@@ -113,6 +114,7 @@ private:
 private:
     std::shared_ptr<const USBSourcePortInfo>      portInfo_ = nullptr;
     std::vector<std::shared_ptr<V4lDeviceHandle>> deviceHandles_;
+    std::recursive_mutex                          ctrlMutex_;
 };
 
 }  // namespace libobsensor
