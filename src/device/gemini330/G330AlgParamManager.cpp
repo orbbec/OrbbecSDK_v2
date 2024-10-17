@@ -229,18 +229,32 @@ typedef struct {
 } Resolution;
 
 void G330AlgParamManager::fixD2CParmaList() {
-    std::vector<Resolution> appendColorResolutions = { { 1920, 1080 }, { 1280, 800 }, { 1280, 720 }, { 960, 540 }, { 848, 480 }, { 640, 480 },
-                                                       { 640, 400 },   { 640, 360 },  { 424, 270 },  { 424, 240 }, { 320, 240 }, { 320, 180 } };
-
-    const std::vector<Resolution> depthResolutions = { { 1280, 800 }, { 1280, 720 }, { 848, 480 }, { 640, 480 }, { 640, 400 },
-                                                       { 640, 360 },  { 480, 270 },  { 424, 240 }, { 848, 100 } };
+    std::vector<Resolution> appendColorResolutions;
+    std::vector<Resolution> depthResolutions;
 
     auto owner      = getOwner();
     auto deviceInfo = owner->getInfo();
-    auto iter       = std::find(G330LDevPids.begin(), G330LDevPids.end(), deviceInfo->pid_);
+    if(deviceInfo->pid_ == 0x080E) {
+        std::vector<Resolution> leColorResolutions = { { 1280, 800 }, { 1280, 720 }, { 848, 530 }, { 640, 480 }, { 640, 400 }, { 640, 360 }, { 320, 200 } };
+        std::vector<Resolution> ledepthResolutions = { { 1280, 800 }, { 848, 530 }, { 640, 480 }, { 640, 400 }, { 320, 200 } };
 
-    if(iter != G330LDevPids.end()) {
-        appendColorResolutions.push_back({ 480, 270 });
+        appendColorResolutions.assign(leColorResolutions.begin(), leColorResolutions.end());
+        depthResolutions.assign(ledepthResolutions.begin(), ledepthResolutions.end());
+    }
+    else {
+        std::vector<Resolution> otherDeviceColorResolutions = { { 1920, 1080 }, { 1280, 800 }, { 1280, 720 }, { 960, 540 }, { 848, 480 }, { 640, 480 },
+                                                           { 640, 400 },   { 640, 360 },  { 424, 270 },  { 424, 240 }, { 320, 240 }, { 320, 180 } };
+
+        std::vector<Resolution> otherDevicedepthResolutions = { { 1280, 800 }, { 1280, 720 }, { 848, 480 }, { 640, 480 }, { 640, 400 },
+                                                           { 640, 360 },  { 480, 270 },  { 424, 240 }, { 848, 100 } };
+
+        auto iter = std::find(G330LDevPids.begin(), G330LDevPids.end(), deviceInfo->pid_);
+        if(iter != G330LDevPids.end()) {
+            otherDeviceColorResolutions.push_back({ 480, 270 });
+        }
+
+        appendColorResolutions.assign(otherDeviceColorResolutions.begin(), otherDeviceColorResolutions.end());
+        depthResolutions.assign(otherDevicedepthResolutions.begin(), otherDevicedepthResolutions.end());
     }
 
     if(originD2cProfileList_.empty()) {
