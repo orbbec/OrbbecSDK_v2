@@ -152,6 +152,10 @@ void ObWinPTPHost::findDevice() {
                 continue;  // Skip wifi
             }
 
+            if(!dev_->addresses) {
+                continue;
+            }
+
             //LOG_DEBUG("Device Name: {}", (dev_->name ? dev_->name : "No name"));
             pcap_t *handle = pcap_open_live(dev_->name, OB_UDP_BUFFER_SIZE, 1, COMM_ACK_TIMEOUT_MS, errbuf);
             if(handle == nullptr) {
