@@ -193,7 +193,7 @@ void ObRTPNpCapReceiver::start(std::shared_ptr<const StreamProfile> profile, Mut
     }
     else {
         foundPcapHandle_ = false;
-        for(int i = 0; i < handles_.size(); ++i) {
+        for(int i = 0; i < (int)handles_.size(); ++i) {
             handleThreads_.emplace_back(&ObRTPNpCapReceiver::frameReceive2, this, handles_[i]);
         }
         callbackThread_ = std::thread(&ObRTPNpCapReceiver::frameProcess, this);
