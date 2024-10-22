@@ -109,7 +109,7 @@ void AlgParamManagerBase::bindIntrinsic(std::vector<std::shared_ptr<const Stream
         auto owner      = getOwner();
         auto propServer = owner->getPropertyServer();
         if(propServer->isPropertySupported(OB_PROP_DEPTH_MIRROR_MODULE_STATUS_BOOL, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
-            mirrored = propServer->getPropertyValueT<bool>(OB_PROP_DEPTH_MIRROR_MODULE_STATUS_BOOL);
+            //mirrored = propServer->getPropertyValueT<bool>(OB_PROP_DEPTH_MIRROR_MODULE_STATUS_BOOL);
         }
     }
 
@@ -129,7 +129,8 @@ void AlgParamManagerBase::bindIntrinsic(std::vector<std::shared_ptr<const Stream
             auto               vsp = sp->as<VideoStreamProfile>();
 
             if(!findBestMatchedD2CProfile(d2cProfileList_, vsp, d2cProfile)) {
-                throw libobsensor::unsupported_operation_exception("Can not find matched camera param!");
+                return;
+                //throw libobsensor::unsupported_operation_exception("Can not find matched camera param!");
             }
 
             auto param            = calibrationCameraParamList_.at(d2cProfile.paramIndex);
