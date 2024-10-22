@@ -215,9 +215,9 @@ void AlignImpl::prepareDepthResolution() {
         unsigned long long stride    = depth_intric_.width * channel;
         unsigned long long coeff_num = depth_intric_.height * stride;
 
-        float *rot_coeff1 = new float[coeff_num];
-        float *rot_coeff2 = new float[coeff_num];
-        float *rot_coeff3 = new float[coeff_num];
+        float *rot_coeff1 = new float[static_cast<unsigned int>(coeff_num)];
+        float *rot_coeff2 = new float[static_cast<unsigned int>(coeff_num)];
+        float *rot_coeff3 = new float[static_cast<unsigned int>(coeff_num)];
 
         for(int i = 0; i < channel; i++) {
             int mutliplier = (gap_fill_copy_ ? 0 : (i ? 1 : -1));
@@ -630,8 +630,8 @@ int AlignImpl::C2D(const uint16_t *depth_buffer, int depth_width, int depth_heig
 
     // rgb x-y coordinates for each depth pixel
     unsigned long long size     = static_cast<unsigned long long>(depth_width) * depth_height * 2;
-    int               *depth_xy = new int[size];
-    memset(depth_xy, -1, size * sizeof(int));
+    int *              depth_xy = new int[static_cast<unsigned int>(size)];
+    memset(depth_xy, -1, static_cast<unsigned int>(size) * sizeof(int));
 
     int ret = -1;
     if(!D2C(depth_buffer, depth_width, depth_height, nullptr, color_width, color_height, depth_xy, withSSE)) {

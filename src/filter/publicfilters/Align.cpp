@@ -16,7 +16,7 @@ const std::map<OBStreamType, OBFrameType> streamTypeToFrameType = { { OB_STREAM_
                                                                     { OB_STREAM_IR_RIGHT, OB_FRAME_IR_RIGHT } };
 
 Align::Align() : align_to_stream_(OB_STREAM_COLOR) {
-    pImpl = new AlignImpl();
+    pImpl = static_cast<AlignImpl *>(_aligned_malloc(sizeof(AlignImpl), 16));
     memset(&from_intrin_, 0, sizeof(OBCameraIntrinsic));
     memset(&from_disto_, 0, sizeof(OBCameraDistortion));
     memset(&to_intrin_, 0, sizeof(OBCameraIntrinsic));
@@ -30,7 +30,7 @@ Align::Align() : align_to_stream_(OB_STREAM_COLOR) {
 Align::~Align() noexcept {
     reset();
     if(pImpl) {
-        delete pImpl;
+        _aligned_free(pImpl);
         pImpl = nullptr;
     }
 }
@@ -139,9 +139,9 @@ std::shared_ptr<Frame> Align::process(std::shared_ptr<const Frame> frame) {
     else {
         auto to = other_frames.front();  // depth to other
 
-        auto original_profile  = depth->getStreamProfile()->as<VideoStreamProfile>();
-        auto to_profile        = to->getStreamProfile()->as<VideoStreamProfile>();
-        auto alignProfile      = createAlignedProfile(original_profile, to_profile);
+        auto original_profile = depth->getStreamProfile()->as<VideoStreamProfile>();
+        auto to_profile       = to->getStreamProfile()->as<VideoStreamProfile>();
+        auto alignProfile     = createAlignedProfile(original_profile, to_profile);
 
         aligned_frame = FrameFactory::createVideoFrame(depth->getType(), depth->getFormat(), alignProfile->getWidth(), alignProfile->getHeight(), 0);
         if(aligned_frame) {

@@ -142,7 +142,7 @@ void Logger::createFileSink() {
         auto &fileSize = config_.fileLogMaxFileSize;
         auto &fileNum  = config_.fileLogMaxFileNum;
         try {
-            fileSink_ = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(path, fileSize, fileNum);
+            fileSink_ = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(path, static_cast<unsigned int>(fileSize), (std::size_t)fileNum);
         }
         catch(const std::exception &e) {
             LOG_ERROR("Error creating file sink for logger! {}", e.what());

@@ -133,27 +133,6 @@ private:
     template <typename T> void mapPixel(const int *map, const T *src_buffer, int src_width, int src_height, T *dst_buffer, int dst_width, int dst_height);
 
 private:
-    bool initialized_;
-
-    /** Linear/Distortion Rotation Coeff hash table */
-    std::unordered_map<std::pair<int, int>, float *, ResHashFunc, ResComp> rot_coeff_ht_x;
-    std::unordered_map<std::pair<int, int>, float *, ResHashFunc, ResComp> rot_coeff_ht_y;
-    std::unordered_map<std::pair<int, int>, float *, ResHashFunc, ResComp> rot_coeff_ht_z;
-
-    float              depth_unit_mm_;          // depth scale
-    bool               add_target_distortion_;  // distort align frame with target coefficent
-    bool               need_to_undistort_depth_;    // undistort depth is necessary
-    bool               gap_fill_copy_;          // filling cracks with copy
-    OBCameraIntrinsic  depth_intric_{};
-    OBCameraIntrinsic  rgb_intric_{};
-    OBCameraDistortion depth_disto_{};
-    OBCameraDistortion rgb_disto_{};
-    OBExtrinsic        transform_{};              // should be depth-to-rgb all the time
-    float              scaled_trans_[3] = { 0 };  // scaled translation
-
-    // possible inflection point of the calibrated K6 distortion curve
-    float r2_max_loc_;
-
     // members for SSE
     __m128 color_cx_;
     __m128 color_cy_;
@@ -176,6 +155,27 @@ private:
     const static __m128  TWO;
     const static __m128i ZERO;
     const static __m128  ZERO_F;
+    
+    bool                 initialized_;
+
+    /** Linear/Distortion Rotation Coeff hash table */
+    std::unordered_map<std::pair<int, int>, float *, ResHashFunc, ResComp> rot_coeff_ht_x;
+    std::unordered_map<std::pair<int, int>, float *, ResHashFunc, ResComp> rot_coeff_ht_y;
+    std::unordered_map<std::pair<int, int>, float *, ResHashFunc, ResComp> rot_coeff_ht_z;
+
+    float              depth_unit_mm_;            // depth scale
+    bool               add_target_distortion_;    // distort align frame with target coefficent
+    bool               need_to_undistort_depth_;  // undistort depth is necessary
+    bool               gap_fill_copy_;            // filling cracks with copy
+    OBCameraIntrinsic  depth_intric_{};
+    OBCameraIntrinsic  rgb_intric_{};
+    OBCameraDistortion depth_disto_{};
+    OBCameraDistortion rgb_disto_{};
+    OBExtrinsic        transform_{};              // should be depth-to-rgb all the time
+    float              scaled_trans_[3] = { 0 };  // scaled translation
+
+    // possible inflection point of the calibrated K6 distortion curve
+    float r2_max_loc_;
 };
 
 #endif  // D2C_DEPTH_TO_COLOR_IMPL_H
