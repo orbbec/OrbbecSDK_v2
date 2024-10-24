@@ -1108,6 +1108,7 @@ void G2XLNetDevice::fetchDeviceInfo() {
 
     // mark the device as a multi-sensor device with same clock at default
     extensionInfo_["AllSensorsUsingSameClock"] = "true";
+	extensionInfo_["MCUVersion"] = version.subSystemVersion;
 }
 
 }  // namespace libobsensor
