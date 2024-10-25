@@ -12,18 +12,38 @@
 namespace libobsensor {
 
 BootDeviceInfo::BootDeviceInfo(const SourcePortInfoList groupedInfoList) {
-    auto portInfo = std::dynamic_pointer_cast<const USBSourcePortInfo>(groupedInfoList.front());
+    auto firstPortInfo = groupedInfoList.front();
+    if(IS_USB_PORT(firstPortInfo->portType)) {
+        auto portInfo = std::dynamic_pointer_cast<const USBSourcePortInfo>(groupedInfoList.front());
 
-    name_ = "Bootloader device";
+        name_ = "Bootloader device";
 
-    fullName_ = "Orbbec " + name_;
+        fullName_ = "Orbbec " + name_;
 
-    pid_                = portInfo->pid;
-    vid_                = portInfo->vid;
-    uid_                = portInfo->uid;
-    deviceSn_           = portInfo->serial;
-    connectionType_     = portInfo->connSpec;
-    sourcePortInfoList_ = groupedInfoList;
+        pid_                = portInfo->pid;
+        vid_                = portInfo->vid;
+        uid_                = portInfo->uid;
+        deviceSn_           = portInfo->serial;
+        connectionType_     = portInfo->connSpec;
+        sourcePortInfoList_ = groupedInfoList;
+    }
+    else if(IS_NET_PORT(firstPortInfo->portType)) {
+        auto portInfo = std::dynamic_pointer_cast<const NetSourcePortInfo>(groupedInfoList.front());
+        name_         = "Bootloader device";
+
+        fullName_ = "Orbbec " + name_;
+
+        pid_                = portInfo->pid;
+        vid_                = 0x2BC5;
+        uid_                = portInfo->mac;
+        deviceSn_           = portInfo->serialNumber;
+        connectionType_     = "Ethernet";
+        sourcePortInfoList_ = groupedInfoList;
+    }
+    else {
+        throw invalid_value_exception("Invalid port type");
+    }
+
 }
 
 BootDeviceInfo::~BootDeviceInfo() noexcept {}
