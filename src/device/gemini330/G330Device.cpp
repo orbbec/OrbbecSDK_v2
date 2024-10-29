@@ -1222,34 +1222,15 @@ void G330NetDevice::init() {
 
      registerComponent(OB_DEV_COMPONENT_COLOR_FRAME_METADATA_CONTAINER, [this]() {
          std::shared_ptr<FrameMetadataParserContainer> container;
-         auto                                          envConfig                = EnvConfig::getInstance();
-         std::string                                   frameMetadataParsingPath = "";
-         envConfig->getStringValue("Device.FrameMetadataParsingPath", frameMetadataParsingPath);
-         if(frameMetadataParsingPath == "ExtensionHeader") {
-             container = std::make_shared<G330ColorFrameMetadataParserContainer>(this);
-         }
-         else {
-             // default parsing path from payload header
-             container = std::make_shared<G330ColorFrameMetadataParserContainerByScr>(this, deviceTimeFreq_, frameTimeFreq_);
-         }
+         TRY_EXECUTE({ container = std::make_shared<G330ColorFrameMetadataParserContainer>(this); })
          return container;
      });
 
      registerComponent(OB_DEV_COMPONENT_DEPTH_FRAME_METADATA_CONTAINER, [this]() {
          std::shared_ptr<FrameMetadataParserContainer> container;
-         auto                                          envConfig                = EnvConfig::getInstance();
-         std::string                                   frameMetadataParsingPath = "";
-         envConfig->getStringValue("Device.FrameMetadataParsingPath", frameMetadataParsingPath);
-         if(frameMetadataParsingPath == "ExtensionHeader") {
-             container = std::make_shared<G330DepthFrameMetadataParserContainer>(this);
-         }
-         else {
-             // default parsing path from payload header
-             container = std::make_shared<G330DepthFrameMetadataParserContainerByScr>(this, deviceTimeFreq_, frameTimeFreq_);
-         }
+         TRY_EXECUTE({ container = std::make_shared<G330DepthFrameMetadataParserContainer>(this); })
          return container;
      });
-
 }
 
 void G330NetDevice::fetchDeviceInfo() {
@@ -1691,10 +1672,10 @@ void G330NetDevice::initProperties() {
                 return accessor;
             });
 
+            propertyServer->registerProperty(OB_PROP_DEPTH_AUTO_EXPOSURE_PRIORITY_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_DEPTH_GAIN_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_DEPTH_EXPOSURE_INT, "rw", "rw", vendorPropertyAccessor);
-            //propertyServer->registerProperty(OB_PROP_COLOR_EXPOSURE_INT, "rw", "rw", vendorPropertyAccessor);  // using vendor property accessor
             propertyServer->registerProperty(OB_PROP_LDP_BOOL, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_LASER_CONTROL_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_LASER_ALWAYS_ON_BOOL, "rw", "rw", vendorPropertyAccessor);
