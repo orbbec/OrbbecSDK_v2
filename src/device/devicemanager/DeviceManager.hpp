@@ -27,7 +27,7 @@ public:
     std::shared_ptr<IDevice> createDevice(const std::shared_ptr<const IDeviceEnumInfo> &info) override;
     std::shared_ptr<IDevice> createNetDevice(std::string address, uint16_t port) override;
 
-    DeviceEnumInfoList getDeviceInfoList() const override;
+    DeviceEnumInfoList getDeviceInfoList() override;
     void               setDeviceChangedCallback(DeviceChangedCallback callback) override;
 
     void enableNetDeviceEnumeration(bool enable) override;
@@ -52,6 +52,9 @@ private:
     uint64_t                multiDeviceSyncIntervalMs_;  // unit: ms
 
     std::vector<std::shared_ptr<IDeviceEnumerator>> deviceEnumerators_;
+
+    std::map<std::string, std::shared_ptr<const IDeviceEnumInfo>> customConnectedDevices_;
+    std::mutex                                                    customConnectedDevicesMutex_;
 };
 }  // namespace libobsensor
 

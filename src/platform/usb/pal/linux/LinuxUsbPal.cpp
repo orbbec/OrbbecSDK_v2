@@ -112,6 +112,7 @@ std::shared_ptr<IPal> createUsbPal() {
 LinuxUsbPal::LinuxUsbPal() {
 #if defined(BUILD_USB_PAL)
     usbEnumerator_ = IUsbEnumerator::getInstance();
+    loadXmlConfig();
 #endif
 }
 
@@ -140,10 +141,6 @@ std::shared_ptr<ISourcePort> LinuxUsbPal::getSourcePort(std::shared_ptr<const So
             }
         }
     }
-
-#if defined(BUILD_USB_PAL)
-    loadXmlConfig();
-#endif
 
     switch(portInfo->portType) {
     case SOURCE_PORT_USB_VENDOR: {
@@ -289,7 +286,7 @@ void LinuxUsbPal::loadXmlConfig() {
     else {
         uvcBackendType_ = UVC_BACKEND_TYPE_AUTO;
     }
-    LOG_DEBUG("Uvc backend have been set to {}", uvcBackendType_);
+    LOG_DEBUG("Uvc backend have been set to {}", static_cast<int>(uvcBackendType_));
 }
 
 }  // namespace libobsensor

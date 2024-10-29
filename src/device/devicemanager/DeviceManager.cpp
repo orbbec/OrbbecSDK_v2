@@ -80,36 +80,21 @@ DeviceManager::~DeviceManager() noexcept {
 
 std::shared_ptr<IDevice> DeviceManager::createNetDevice(std::string address, uint16_t port) {
 #if defined(BUILD_NET_PAL)
-    LOG_DEBUG("DeviceManager createNetDevice...");
-    std::string uid = address + ":" + std::to_string(port);
+    LOG_DEBUG("DeviceManager createNetDevice.... address={0}, port={1}", address, port);
+    auto deviceInfo = NetDeviceEnumerator::queryNetDevice(address, port);
+    if(!deviceInfo) {
+        throw libobsensor::invalid_value_exception("Failed to query Net Device, address=" + address + ", port=" + std::to_string(port));
+    }
+    auto device     = createDevice(deviceInfo);
+
     {
-        std::unique_lock<std::mutex> lock(createdDevicesMutex_);
-        auto                         iter = createdDevices_.begin();
-        for(; iter != createdDevices_.end(); ++iter) {
-            if(iter->first == uid) {
-                auto dev = iter->second.lock();
-                if(dev) {
-                    throw invalid_value_exception("Attempting to create a device that has already been created!! address=" + address
-                                                  + ", port=" + std::to_string(port));
-                }
-                else {
-                    createdDevices_.erase(iter);
-                    break;
-                }
-            }
+        std::unique_lock<std::mutex> lock(customConnectedDevicesMutex_);
+        auto                         iter = customConnectedDevices_.find(deviceInfo->getUid());
+        if(iter == customConnectedDevices_.end()) {
+            customConnectedDevices_.insert({ deviceInfo->getUid(), deviceInfo });
         }
     }
 
-    auto device = NetDeviceEnumerator::createDevice(address, port);
-    if(device == nullptr) {
-        throw libobsensor::invalid_value_exception("Failed to create Net Device, address=" + address + ", port=" + std::to_string(port));
-    }
-
-    {
-        std::unique_lock<std::mutex> lock(createdDevicesMutex_);
-        createdDevices_.insert({ uid, device });
-    }
-    LOG_INFO("create Net Device success! address={0}, port={1}", address, port);
     return device;
 #else
     utils::unusedVar(address);
@@ -155,12 +140,35 @@ std::shared_ptr<IDevice> DeviceManager::createDevice(const std::shared_ptr<const
     return device;
 }
 
-DeviceEnumInfoList DeviceManager::getDeviceInfoList() const {
+DeviceEnumInfoList DeviceManager::getDeviceInfoList() {
     DeviceEnumInfoList deviceInfoList;
     for(auto &enumerator_: deviceEnumerators_) {
         auto infos = enumerator_->getDeviceInfoList();
         deviceInfoList.insert(deviceInfoList.end(), infos.begin(), infos.end());
     }
+
+    {
+        std::unique_lock<std::mutex> lock(customConnectedDevicesMutex_);
+        std::unique_lock<std::mutex> lock2(createdDevicesMutex_);
+        auto                         customIter = customConnectedDevices_.begin();
+        while(customIter != customConnectedDevices_.end()) {
+            auto createdIter = createdDevices_.find(customIter->first);
+            if(createdIter == createdDevices_.end()) {
+                customIter = customConnectedDevices_.erase(customIter);
+                continue;
+            }
+
+            if(createdIter->second.expired()) {
+                createdDevices_.erase(createdIter);
+                customIter = customConnectedDevices_.erase(customIter);
+                continue;
+            }
+
+            deviceInfoList.push_back(customIter->second);
+            ++customIter;
+        }
+    }
+
     return deviceInfoList;
 }
 
@@ -175,7 +183,7 @@ void DeviceManager::onDeviceChanged(const DeviceEnumInfoList &removed, const Dev
     LOG_INFO("Device changed! removed: {0}, added: {1}", removed.size(), added.size());
     if(!removed.empty()) {
         for(const auto &info: removed) {
-            auto                         iter = createdDevices_.find(info->getUid());
+            auto iter = createdDevices_.find(info->getUid());
             if(iter != createdDevices_.end()) {
                 auto dev = iter->second.lock();
                 if(dev) {
@@ -257,4 +265,3 @@ bool DeviceManager::isNetDeviceEnumerationEnable() const {
 }
 
 }  // namespace libobsensor
-

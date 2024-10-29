@@ -15,7 +15,7 @@ public:
     virtual DeviceEnumInfoList getDeviceInfoList() override;
     virtual void               setDeviceChangedCallback(DeviceChangedCallback callback) override;
 
-    static std::shared_ptr<IDevice> createDevice(std::string address, uint16_t port);
+    static std::shared_ptr<const IDeviceEnumInfo> queryNetDevice(std::string address, uint16_t port);
 
 private:
     static DeviceEnumInfoList deviceInfoMatch(const SourcePortInfoList infoList);

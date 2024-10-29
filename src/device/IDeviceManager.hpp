@@ -38,7 +38,7 @@ public:
     virtual std::shared_ptr<IDevice> createDevice(const std::shared_ptr<const IDeviceEnumInfo> &info) = 0;
     virtual std::shared_ptr<IDevice> createNetDevice(std::string address, uint16_t port)              = 0;
 
-    virtual DeviceEnumInfoList getDeviceInfoList() const                                = 0;
+    virtual DeviceEnumInfoList getDeviceInfoList()                                      = 0;
     virtual void               setDeviceChangedCallback(DeviceChangedCallback callback) = 0;
 
     virtual void enableNetDeviceEnumeration(bool enable) = 0;

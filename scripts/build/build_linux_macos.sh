@@ -11,19 +11,31 @@ cd $SCRIPT_DIR/../../
 PROJECT_ROOT=$(pwd)
 
 # Define the platform
+system=$(uname -o)
+if [ "$system" = "Darwin" ]; then
+    system=macos
+else
+    system=linux
+fi
+
 arch=$(uname -m)
 if [ "$ARCH" = "aarch64" ]; then
-    PLATFORM=linux_arm64
+    PLATFORM=${system}_arm64
 elif [ "$ARCH" = "armv7l" ]; then
-    PLATFORM=linux_arm32
+    PLATFORM=${system}_arm32
 else
-    PLATFORM=linux_$arch
+    PLATFORM=${system}_$arch
 fi
 
 echo "Building OrbbecSDK for $PLATFORM"
 
 # Variables for version and timestamp
-VERSION=$(grep -oP 'project\(\w+\s+VERSION\s+\d+\.\d+\.\d+' $PROJECT_ROOT/CMakeLists.txt | grep -oP '\d+\.\d+\.\d+')
+if [ "$system" = "macos" ]; then
+    VERSION=$(grep -o "project(\w* VERSION [0-9]*\.[0-9]*\.[0-9]*" $PROJECT_ROOT/CMakeLists.txt | grep -o "[0-9]*\.[0-9]*\.[0-9]*")
+else
+    VERSION=$(grep -oP 'project\(\w+\s+VERSION\s+\d+\.\d+\.\d+' $PROJECT_ROOT/CMakeLists.txt | grep -oP '\d+\.\d+\.\d+')
+fi
+
 TIMESTAMP=$(date +"%Y%m%d%H%M")
 
 

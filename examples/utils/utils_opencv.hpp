@@ -91,6 +91,7 @@ private:
     bool        closed_;
     bool        showInfo_;
     bool        showSyncTimeInfo_;
+    bool        isWindowDestroyed_;
     float       alpha_;
 
     std::thread                                                  processThread_;

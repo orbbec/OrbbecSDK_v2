@@ -322,12 +322,12 @@ void handleKeyPress(ob_smpl::CVWindow &win, int key) {
     //Get the key value
     if(key == KEY_ESC) {
         if(!quitStreamPreview){
-            quitStreamPreview = true;
             win.setShowInfo(false);
             win.setShowSyncTimeInfo(false);
-            std::cout << "press ESC quitStreamPreview" << std::endl;
+            quitStreamPreview = true;
             win.close();
-            //win.destroyWindow();
+            win.destroyWindow();
+            std::cout << "press ESC quitStreamPreview" << std::endl;
         }
     }
     else if(key == 'S' || key == 's') {

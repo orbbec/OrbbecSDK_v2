@@ -3,7 +3,7 @@
 
 cmake_minimum_required(VERSION 3.5)
 
-project(OrbbecSDK VERSION 2.0.16 LANGUAGES CXX C)
+project(OrbbecSDK VERSION 2.0.18 LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
@@ -54,6 +54,9 @@ if(OB_INSTALL_EXAMPLES_SOURCE AND OB_IS_MAIN_PROJECT)
     install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/examples/ DESTINATION examples/src PATTERN "*publish_files*" EXCLUDE )
     if(EXISTS ${CMAKE_CURRENT_LIST_DIR}/examples/publish_files)
         install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/examples/publish_files/CMakeLists.txt DESTINATION examples)
+        if(APPLE)
+            install(TARGETS OrbbecSDK DESTINATION ./bin)
+        endif()
         if(UNIX)
             install(PROGRAMS ${CMAKE_CURRENT_SOURCE_DIR}/examples/publish_files/build_examples.sh DESTINATION ./)
         endif()

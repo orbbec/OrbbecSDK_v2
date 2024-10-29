@@ -345,29 +345,37 @@ void foreachProfileGmsl(std::vector<std::shared_ptr<V4lDeviceHandleGmsl>>       
             frame_size.pixel_format     = pixel_format.pixelformat;
             uint32_t fourcc             = (const utils::big_endian<int> &)pixel_format.pixelformat;
 
-            LOG_DEBUG("-Recognized pixel-format {}, pixel_format.pixelformat: 0x{:0x}, fourcc:0x{:0x} ", (char *)pixel_format.description,
-                      pixel_format.pixelformat, fourcc);
+            if(pixel_format.pixelformat == 0) {
+                // unsupported format fourcc maybe in pixel_format.description
+                LOG_DEBUG("Unrecognizable pixel-format {}", (char *)pixel_format.description);
+                std::string description = std::string((const char *)pixel_format.description);
+                std::size_t index       = description.find('-');
+                if(index == std::string::npos) {
+                    ++pixel_format.index;
+                    continue;
+                }
+                description = description.substr(0, index);
+                // hex string to decimal
+                try {
+                    int descriptionFourcc = std::stoi(description, 0, 16);
+                    fourcc                = (const utils::big_endian<int> &)descriptionFourcc;
+                    LOG_DEBUG("Unrecognizable pixel-format {} with fourcc: {}", (char *)pixel_format.description, fourcc);
+                }
+                catch(std::exception &e) {
+                    LOG_DEBUG("Unrecognizable pixel-format {}: Failed to parse description:{}", (char *)pixel_format.description, e.what());
+                    ++pixel_format.index;
+                    continue;
+                }
+            }
+            else {
+                LOG_DEBUG("Recognized pixel-format {}, pixel_format.pixelformat: 0x{:0x}, fourcc:0x{:0x} ", (char *)pixel_format.description,
+                          pixel_format.pixelformat, fourcc);
+            }
 
             if(v4lFourccMapGmsl.count(fourcc)) {
                 fourcc = v4lFourccMapGmsl.at(fourcc);
             }
 
-            LOG_DEBUG("---fourcc-222-:0x{:0x} ", fourcc);
-            if(pixel_format.pixelformat == 0) {
-                // unsupported format fourcc maybe in pixel_format.description
-                std::string description = std::string((const char *)pixel_format.description);
-                std::size_t index       = description.find('-');
-                if(index != std::string::npos) {
-                    description = description.substr(0, index);
-                }
-                // hex string to dec
-                int descriptionFourcc = std::stoi(description, 0, 16);
-                fourcc                = (const utils::big_endian<int> &)descriptionFourcc;
-            }
-            else {
-                LOG_DEBUG("Recognized pixel-format {0}, pixel_format.pixelformat: {1}, fourcc:{2} ", (char *)pixel_format.description, pixel_format.pixelformat,
-                          fourcc);
-            }
             // enum format params
             while(!quit && xioctlGmsl(devHandle->fd, VIDIOC_ENUM_FRAMESIZES, &frame_size) == 0) {
                 v4l2_frmivalenum frame_interval = {};

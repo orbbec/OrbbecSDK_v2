@@ -212,24 +212,38 @@ void foreachProfile(std::vector<std::shared_ptr<V4lDeviceHandle>>               
             v4l2_frmsizeenum frame_size = {};
             frame_size.pixel_format     = pixel_format.pixelformat;
             uint32_t fourcc             = (const utils::big_endian<int> &)pixel_format.pixelformat;
+
+            if(pixel_format.pixelformat == 0) {
+                // unsupported format fourcc maybe in pixel_format.description
+                LOG_DEBUG("Unrecognizable pixel-format {}", (char *)pixel_format.description);
+                std::string description = std::string((const char *)pixel_format.description);
+                std::size_t index       = description.find('-');
+                if(index == std::string::npos) {
+                    ++pixel_format.index;
+                    continue;
+                }
+                description = description.substr(0, index);
+                // hex string to decimal
+                try {
+                    int descriptionFourcc = std::stoi(description, 0, 16);
+                    fourcc                = (const utils::big_endian<int> &)descriptionFourcc;
+                    LOG_DEBUG("Unrecognizable pixel-format {} with fourcc: {}", (char *)pixel_format.description, fourcc);
+                }
+                catch(std::exception &e) {
+                    LOG_DEBUG("Unrecognizable pixel-format {}: Failed to parse description:{}", (char *)pixel_format.description, e.what());
+                    ++pixel_format.index;
+                    continue;
+                }
+            }
+            else {
+                LOG_DEBUG("Recognized pixel-format {}, pixel_format.pixelformat: 0x{:0x}, fourcc:0x{:0x} ", (char *)pixel_format.description,
+                          pixel_format.pixelformat, fourcc);
+            }
+
             if(v4lFourccMap.count(fourcc)) {
                 fourcc = v4lFourccMap.at(fourcc);
             }
 
-            if(pixel_format.pixelformat == 0) {
-                // unsupported format fourcc maybe in pixel_format.description
-                std::string description = std::string((const char *)pixel_format.description);
-                std::size_t index       = description.find('-');
-                if(index != std::string::npos) {
-                    description = description.substr(0, index);
-                }
-                // hex string to dec
-                int descriptionFourcc = std::stoi(description, 0, 16);
-                fourcc                = (const utils::big_endian<int> &)descriptionFourcc;
-            }
-            else {
-                LOG_DEBUG("Recognized pixel-format {}", (char *)pixel_format.description);
-            }
             // enum format params
             while(!quit && xioctl(devHandle->fd, VIDIOC_ENUM_FRAMESIZES, &frame_size) == 0) {
                 v4l2_frmivalenum frame_interval = {};
@@ -750,7 +764,7 @@ void ObV4lUvcDevicePort::stopAllStream() {
 }
 uint32_t ObV4lUvcDevicePort::sendAndReceive(const uint8_t *sendData, uint32_t sendLen, uint8_t *recvData, uint32_t exceptedRecvLen) {
     std::lock_guard<std::recursive_mutex> lock(ctrlMutex_);
-    uint8_t ctrl = OB_VENDOR_XU_CTRL_ID_64;
+    uint8_t                               ctrl = OB_VENDOR_XU_CTRL_ID_64;
 
     auto alignDataLen = sendLen;
     if(alignDataLen <= 64) {
@@ -789,9 +803,9 @@ uint32_t ObV4lUvcDevicePort::sendAndReceive(const uint8_t *sendData, uint32_t se
 
 bool ObV4lUvcDevicePort::getPu(uint32_t propertyId, int32_t &value) {
     std::lock_guard<std::recursive_mutex> lock(ctrlMutex_);
-    auto                fd      = deviceHandles_.front()->fd;
-    auto                cid     = CIDFromOBPropertyID(static_cast<OBPropertyID>(propertyId));
-    struct v4l2_control control = { cid, 0 };
+    auto                                  fd      = deviceHandles_.front()->fd;
+    auto                                  cid     = CIDFromOBPropertyID(static_cast<OBPropertyID>(propertyId));
+    struct v4l2_control                   control = { cid, 0 };
     if(xioctl(fd, VIDIOC_G_CTRL, &control) < 0) {
         LOG_ERROR("get {0} xioctl(VIDIOC_G_CTRL) failed, {1}", propertyId, strerror(errno));
         return false;
@@ -807,9 +821,9 @@ bool ObV4lUvcDevicePort::getPu(uint32_t propertyId, int32_t &value) {
 
 bool ObV4lUvcDevicePort::setPu(uint32_t propertyId, int32_t value) {
     std::lock_guard<std::recursive_mutex> lock(ctrlMutex_);
-    auto                fd      = deviceHandles_.front()->fd;
-    auto                cid     = CIDFromOBPropertyID(static_cast<OBPropertyID>(propertyId));
-    struct v4l2_control control = { cid, value };
+    auto                                  fd      = deviceHandles_.front()->fd;
+    auto                                  cid     = CIDFromOBPropertyID(static_cast<OBPropertyID>(propertyId));
+    struct v4l2_control                   control = { cid, value };
     if(OB_PROP_COLOR_AUTO_EXPOSURE_BOOL == propertyId) {
         control.value = value ? V4L2_EXPOSURE_AUTO : V4L2_EXPOSURE_MANUAL;
     }
@@ -840,9 +854,9 @@ bool ObV4lUvcDevicePort::setPu(uint32_t propertyId, int32_t value) {
 
 UvcControlRange ObV4lUvcDevicePort::getXuRange(uint8_t control, int len) {
     std::lock_guard<std::recursive_mutex> lock(ctrlMutex_);
-    auto                        fd = deviceHandles_.front()->fd;
-    UvcControlRange             range;
-    struct uvc_xu_control_query xquery {};
+    auto                                  fd = deviceHandles_.front()->fd;
+    UvcControlRange                       range;
+    struct uvc_xu_control_query           xquery {};
     memset(&xquery, 0, sizeof(xquery));
     __u16 size   = 0;
     xquery.query = UVC_GET_LEN;
@@ -910,7 +924,7 @@ UvcControlRange ObV4lUvcDevicePort::getXuRange(uint8_t control, int len) {
 
 UvcControlRange ObV4lUvcDevicePort::getPuRange(uint32_t propertyId) {
     std::lock_guard<std::recursive_mutex> lock(ctrlMutex_);
-    auto fd = deviceHandles_.front()->fd;
+    auto                                  fd = deviceHandles_.front()->fd;
     if(propertyId == OB_PROP_COLOR_AUTO_EXPOSURE_PRIORITY_INT || propertyId == OB_PROP_COLOR_AUTO_EXPOSURE_BOOL
        || propertyId == OB_PROP_COLOR_AUTO_WHITE_BALANCE_BOOL) {
         int             min        = 0;
@@ -1000,4 +1014,3 @@ bool ObV4lUvcDevicePort::pendForCtrlStatusEvent() const {
 }
 
 }  // namespace libobsensor
-

@@ -54,7 +54,7 @@ If you do not intend to modify the SDK itself, it is recommended to use a pre-co
 
 To explore practical examples and gain insights on utilizing the SDK, please navigate to [Examples](examples/README.md) section for more information.
 
-Orbbec Viewer is an all-in-one graphical user interface (GUI) built on the Orbbec SDK, offering a suite of features including data stream preview, camera configuration, post-processing, and more. To learn how to effectively use the Orbbec Viewer, please refer to the  [Orbbec Viewer User Guide](docs/orbbecviewer.md).
+Orbbec Viewer is an all-in-one graphical user interface (GUI) built on the Orbbec SDK, offering a suite of features including data stream preview, camera configuration, post-processing, and more. To learn how to effectively use the Orbbec Viewer, please refer to the  [Orbbec Viewer User Guide](docs/tutorial/orbbecviewer.md).
 
 ### 2.2 API Reference
 
@@ -65,11 +65,15 @@ Remove the following as it is not updatded to v2.x.x yet.
 OrbbecSDK C++ API user guide：[orbbecsdk_c++_api_user_guide-v1.0.pdf](docs/api/orbbecsdk_c++_api_user_guide-v1.0.pdf)
 -->
 
-### 2.3 Building from Source
+### 2.3 Performance tuning
 
-If you would like to modify the SDK itself, you can build the SDK from source. Please refer to the [build guide](docs/build/building_orbbec_sdk.md) for more information.
+For different use cases, the SDK can be tuned to achieve optimal performance. Please refer to the [performance tuning guide](docs/tutorial/performance_tuning.md) for more information.
 
-### 2.4 FAQ
+### 2.4 Building from Source
+
+If you would like to modify the SDK itself, you can build the SDK from source. Please refer to the [build guide](docs/tutorial/building_orbbec_sdk.md) for more information.
+
+### 2.5 FAQ
 
 Most frequently asked questions can be found in the [FAQ](docs/FAQ.md) file.
 

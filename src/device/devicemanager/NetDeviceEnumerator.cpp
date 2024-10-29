@@ -10,6 +10,7 @@
 #include "ethernet/NetDataStreamPort.hpp"
 #include "property/VendorPropertyAccessor.hpp"
 #include "property/InternalProperty.hpp"
+#include "DevicePids.hpp"
 
 #include "utils/Utils.hpp"
 
@@ -160,23 +161,30 @@ void NetDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType
     }
 }
 
-std::shared_ptr<IDevice> NetDeviceEnumerator::createDevice(std::string address, uint16_t port) {
-    auto info =
-        std::make_shared<NetSourcePortInfo>(SOURCE_PORT_NET_VENDOR, "Unknown", address, static_cast<uint16_t>(8090), address + ":" + std::to_string(port), "Unknown", 0);
-    auto            sourcePort         = Platform::getInstance()->getNetSourcePort(info);
-    auto            vendorPropAccessor = std::make_shared<VendorPropertyAccessor>(nullptr, sourcePort);
-    OBPropertyValue value;
-    value.intValue = 0;
-    vendorPropAccessor->getPropertyValue(OB_PROP_DEVICE_PID_INT, &value);
-    info->pid = static_cast<uint16_t>(value.intValue);
+std::shared_ptr<const IDeviceEnumInfo> NetDeviceEnumerator::queryNetDevice(std::string address, uint16_t port) {
+    auto info = std::make_shared<NetSourcePortInfo>(SOURCE_PORT_NET_VENDOR,  //
+                                                    "Unknown", address, static_cast<uint16_t>(8090), address + ":" + std::to_string(port), "Unknown", 0);
+
+    auto sourcePort         = Platform::getInstance()->getNetSourcePort(info);
+    auto vendorPropAccessor = std::make_shared<VendorPropertyAccessor>(nullptr, sourcePort);
+
+    BEGIN_TRY_EXECUTE({
+        OBPropertyValue value;
+        value.intValue = 0;
+        vendorPropAccessor->getPropertyValue(OB_PROP_DEVICE_PID_INT, &value);
+        info->pid = static_cast<uint16_t>(value.intValue);
+    })
+    CATCH_EXCEPTION_AND_EXECUTE({
+        LOG_WARN("Get device pid failed, use default pid as Femto Mega Device! address:{}, port:{}", address, port);
+        info->pid = OB_FEMTO_MEGA_PID;
+    });
 
     auto deviceEnumInfoList = deviceInfoMatch({ info });
     if(deviceEnumInfoList.empty()) {
         throw invalid_value_exception("No supported device found for address: " + address + ":" + std::to_string(port));
     }
-    LOG_DEBUG("Create device for address: {}:{}", address, port);
-    return deviceEnumInfoList.front()->createDevice();
+
+    return deviceEnumInfoList.front();
 }
 
 }  // namespace libobsensor
-

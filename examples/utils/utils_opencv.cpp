@@ -23,6 +23,7 @@ CVWindow::CVWindow(std::string name, uint32_t width, uint32_t height, ArrangeMod
       closed_(false),
       showInfo_(true),
       showSyncTimeInfo_(false),
+      isWindowDestroyed_(false),
       alpha_(0.6f),
       showPrompt_(false) {
 
@@ -47,7 +48,7 @@ CVWindow::CVWindow(std::string name, uint32_t width, uint32_t height, ArrangeMod
 
 CVWindow::~CVWindow() noexcept {
     close();
-    cv::destroyWindow(name_);
+    destroyWindow();
 }
 
 void CVWindow::setKeyPressedCallback(std::function<void(int)> callback) {
@@ -130,7 +131,13 @@ void CVWindow::close() {
 }
 
 void CVWindow::destroyWindow() {
-    cv::destroyWindow(name_);
+    if(!isWindowDestroyed_){
+        cv::destroyWindow(name_);
+        cv::waitKey(1);
+        isWindowDestroyed_ = true;
+    }else{
+        std::cout << "CVWindows has been destroyed!" << std::endl;
+    }
 }
 
 void CVWindow::reset() {
