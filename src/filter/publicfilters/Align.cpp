@@ -16,7 +16,7 @@ const std::map<OBStreamType, OBFrameType> streamTypeToFrameType = { { OB_STREAM_
                                                                     { OB_STREAM_IR_RIGHT, OB_FRAME_IR_RIGHT } };
 
 Align::Align() : align_to_stream_(OB_STREAM_COLOR) {
-    pImpl = static_cast<AlignImpl *>(_aligned_malloc(sizeof(AlignImpl), 16));
+    pImpl = new AlignImpl();
     memset(&from_intrin_, 0, sizeof(OBCameraIntrinsic));
     memset(&from_disto_, 0, sizeof(OBCameraDistortion));
     memset(&to_intrin_, 0, sizeof(OBCameraIntrinsic));
@@ -30,7 +30,7 @@ Align::Align() : align_to_stream_(OB_STREAM_COLOR) {
 Align::~Align() noexcept {
     reset();
     if(pImpl) {
-        _aligned_free(pImpl);
+        delete pImpl;
         pImpl = nullptr;
     }
 }
@@ -227,4 +227,3 @@ std::shared_ptr<VideoStreamProfile> Align::createAlignedProfile(std::shared_ptr<
 }
 
 }  // namespace libobsensor
-

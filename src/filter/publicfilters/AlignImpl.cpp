@@ -215,9 +215,9 @@ void AlignImpl::prepareDepthResolution() {
         unsigned long long stride    = depth_intric_.width * channel;
         unsigned long long coeff_num = depth_intric_.height * stride;
 
-        float *rot_coeff1 = new float[static_cast<unsigned int>(coeff_num)];
-        float *rot_coeff2 = new float[static_cast<unsigned int>(coeff_num)];
-        float *rot_coeff3 = new float[static_cast<unsigned int>(coeff_num)];
+        float *rot_coeff1 = new float[coeff_num];
+        float *rot_coeff2 = new float[coeff_num];
+        float *rot_coeff3 = new float[coeff_num];
 
         for(int i = 0; i < channel; i++) {
             int mutliplier = (gap_fill_copy_ ? 0 : (i ? 1 : -1));
@@ -440,9 +440,9 @@ void AlignImpl::D2CWithoutSSE(const uint16_t *depth_buffer, uint16_t *out_depth,
                               int *map) {
 
     int       channel     = (gap_fill_copy_ ? 1 : 2);
-    float    *ptr_coeff_x = (float *)coeff_mat_x;
-    float    *ptr_coeff_y = (float *)coeff_mat_y;
-    float    *ptr_coeff_z = (float *)coeff_mat_z;
+    float *   ptr_coeff_x = (float *)coeff_mat_x;
+    float *   ptr_coeff_y = (float *)coeff_mat_y;
+    float *   ptr_coeff_z = (float *)coeff_mat_z;
     uint16_t *ptr_depth   = (uint16_t *)depth_buffer;
 
     for(int v = 0; v < depth_intric_.height; v += 1) {
@@ -520,11 +520,11 @@ void AlignImpl::D2CWithSSE(const uint16_t *depth_buffer, uint16_t *out_depth, co
                 // int coeff_idx = half_idx + fold * 2 * channel;
                 int    coeff_idx  = half_idx;
                 float  coeff_x[4] = { coeff_mat_x[coeff_idx + fold], coeff_mat_x[coeff_idx + 1 * channel + fold], coeff_mat_x[coeff_idx + 2 * channel + fold],
-                                      coeff_mat_x[coeff_idx + 3 * channel + fold] };
+                                     coeff_mat_x[coeff_idx + 3 * channel + fold] };
                 float  coeff_y[4] = { coeff_mat_y[coeff_idx + fold], coeff_mat_y[coeff_idx + 1 * channel + fold], coeff_mat_y[coeff_idx + 2 * channel + fold],
-                                      coeff_mat_y[coeff_idx + 3 * channel + fold] };
+                                     coeff_mat_y[coeff_idx + 3 * channel + fold] };
                 float  coeff_z[4] = { coeff_mat_z[coeff_idx + fold], coeff_mat_z[coeff_idx + 1 * channel + fold], coeff_mat_z[coeff_idx + 2 * channel + fold],
-                                      coeff_mat_z[coeff_idx + 3 * channel + fold] };
+                                     coeff_mat_z[coeff_idx + 3 * channel + fold] };
                 __m128 coeff_sse1 = _mm_loadu_ps(coeff_x);
                 __m128 coeff_sse2 = _mm_loadu_ps(coeff_y);
                 __m128 coeff_sse3 = _mm_loadu_ps(coeff_z);
@@ -630,8 +630,8 @@ int AlignImpl::C2D(const uint16_t *depth_buffer, int depth_width, int depth_heig
 
     // rgb x-y coordinates for each depth pixel
     unsigned long long size     = static_cast<unsigned long long>(depth_width) * depth_height * 2;
-    int *              depth_xy = new int[static_cast<unsigned int>(size)];
-    memset(depth_xy, -1, static_cast<unsigned int>(size) * sizeof(int));
+    int *              depth_xy = new int[size];
+    memset(depth_xy, -1, size * sizeof(int));
 
     int ret = -1;
     if(!D2C(depth_buffer, depth_width, depth_height, nullptr, color_width, color_height, depth_xy, withSSE)) {
