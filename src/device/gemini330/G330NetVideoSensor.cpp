@@ -17,11 +17,22 @@ G330NetVideoSensor::G330NetVideoSensor(IDevice *owner, OBSensorType sensorType, 
 }
 
 void G330NetVideoSensor::start(std::shared_ptr<const StreamProfile> sp, FrameCallback callback) {
+    auto backendIter = streamProfileBackendMap_.find(sp);
+    if(backendIter == streamProfileBackendMap_.end()) {
+        throw invalid_value_exception("Can not find backend stream profile for activated stream profile");
+    }
+   
     auto currentVSP = sp->as<VideoStreamProfile>();
+
+    OBFormat format = sp->getFormat();
+    currentFormatFilterConfig_   = backendIter->second.second;
+    if(currentFormatFilterConfig_ && currentFormatFilterConfig_->converter) {
+        format = currentFormatFilterConfig_->srcFormat;
+    }
 
     OBInternalVideoStreamProfile vsp = { 0 };
     vsp.sensorType                   = (uint16_t)utils::mapStreamTypeToSensorType(sp->getType());
-    vsp.formatFourcc                 = utils::obFormatToUvcFourcc(sp->getFormat());
+    vsp.formatFourcc                 = utils::obFormatToUvcFourcc(format);
     vsp.width                        = currentVSP->getWidth();
     vsp.height                       = currentVSP->getHeight();
     vsp.fps                          = currentVSP->getFps();
