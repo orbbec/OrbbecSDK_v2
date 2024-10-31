@@ -231,6 +231,7 @@ void VideoSensor::trySendStopStreamVendorCmd() {
             return;
         }
     }
+
     if(propServer->isPropertySupported(propertyId, PROP_OP_WRITE, PROP_ACCESS_INTERNAL)) {
         propServer->setPropertyValueT<bool>(propertyId, true);
     }
