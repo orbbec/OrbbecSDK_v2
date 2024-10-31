@@ -285,12 +285,18 @@ void ObRTPNpCapReceiver::frameProcess() {
                     //LOG_DEBUG("Callback new frame dataSize: {}, number: {}", dataSize, rtpProcessor_.getNumber());
 
                     auto frame = FrameFactory::createFrameFromStreamProfile(currentProfile_);
+                    uint32_t expectedSize = static_cast<uint32_t>(frame->getDataSize());
+                    if(IS_FIXED_SIZE_FORMAT(currentProfile_->getFormat()) && frameDataSize > expectedSize) {
+                        LOG_WARN_INTVL("{} Receive data size({}) >  expected data size! ({})", currentProfile_->getType(), frameDataSize, expectedSize);
+                        rtpProcessor_.reset();
+                        continue;
+                    }
+
                     frame->setSystemTimeStampUsec(utils::getNowTimesUs());
                     frame->setTimeStampUsec(rtpProcessor_.getTimestamp());
                     frame->setNumber(rtpProcessor_.getNumber());
                     frame->updateMetadata(rtpProcessor_.getMetaData(), metaDataSize);
                     frame->updateData(rtpProcessor_.getFrameData(), frameDataSize);
-
                     frameCallback_(frame);
                     rtpProcessor_.reset();
                 }

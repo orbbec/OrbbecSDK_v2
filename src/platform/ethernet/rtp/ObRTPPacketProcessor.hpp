@@ -73,7 +73,7 @@ public:
 
 private:
     void OnStartOfFrame();
-    bool founStartPacket();
+    bool foundStartPacket();
     void OnEndOfFrame(uint16_t sequenceNumber);
     void convertBigEndianToLittleEndian(uint8_t *recvData, uint32_t size);
     void countDown(int milliseconds);
@@ -107,6 +107,90 @@ private:
 
     std::unordered_set<uint16_t> sequenceNumberList_;
 };
+
+//======================================================================================
+
+#if 0
+
+class ObRTPPacketProcessor {
+
+public:
+    ObRTPPacketProcessor();
+
+    ~ObRTPPacketProcessor() noexcept;
+
+    bool process(RTPHeader *header, uint8_t *recvData, uint32_t length, uint32_t type);
+
+    void startCountDown();
+
+    uint8_t *getFrameData() {
+        return rtpBuffer_;
+    }
+
+    uint32_t getFrameDataSize() {
+        return dataSize_;
+    }
+
+    uint8_t *getMetaData();
+
+    uint32_t getMetaDataSize() {
+        return (RTP_FIX_METADATA_OFFSET + RTP_FIX_METADATA_SIZE);
+    }
+
+    uint64_t getNumber() {
+        return frameNumber_;
+    }
+
+    uint64_t getTimestamp() {
+        return timestamp_;
+    }
+
+    bool processError();
+
+    bool processComplete();
+
+    void reset();
+
+    void release();
+
+private:
+    void OnStartOfFrame();
+    bool foundStartPacket();
+    void OnEndOfFrame(uint16_t sequenceNumber);
+    void convertBigEndianToLittleEndian(uint8_t *recvData, uint32_t size);
+    void countDown(int milliseconds);
+
+private:
+    const uint32_t MAX_RTP_FRAME_SIZE      = 4 * 1920 * 1080;
+    const uint32_t MAX_RTP_FIX_SIZE        = 1472;
+    const uint32_t RTP_FIX_SIZE            = 12;
+    const uint32_t RTP_FIX_METADATA_OFFSET = 12;
+    const uint32_t RTP_FIX_METADATA_SIZE   = 96;
+
+    bool foundStartPacket_;
+    bool revDataComplete_;
+    bool revDataError_;
+    bool countDownStart_;
+
+    uint64_t frameNumber_;
+    uint32_t maxPacketCount_;
+    uint32_t maxCacheSize_;
+    uint32_t maxPacketSize_;
+    uint64_t timestamp_;
+
+    // metadataSize(96) + framedataSize
+    uint32_t dataSize_;
+    // metadata(96) + framedata
+    uint8_t *rtpBuffer_;
+
+    uint32_t rtpType_;
+
+    std::mutex revStatusMutex_;
+
+    std::unordered_set<uint16_t> sequenceNumberList_;
+};
+
+#endif
 
 }
 
