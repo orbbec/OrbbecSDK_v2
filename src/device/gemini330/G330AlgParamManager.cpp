@@ -151,22 +151,38 @@ void G330AlgParamManager::fetchParamFromDevice() {
 
 void G330AlgParamManager::reFetchDisparityParams() {
     try {
-        auto owner           = getOwner();
-        auto propServer      = owner->getPropertyServer();
-        depthCalibParamList_ = propServer->getStructureDataListProtoV1_1_T<OBDepthCalibrationParam, 1>(OB_RAW_DATA_DEPTH_CALIB_PARAM);
+        if(depthCalibParamList_.size() > 0) {
+            const auto &depthCalib       = depthCalibParamList_.front();
+            disparityParam_.baseline     = depthCalib.baseline;
+            disparityParam_.zpd          = depthCalib.z0;
+            disparityParam_.fx           = depthCalib.focalPix;
+            disparityParam_.zpps         = depthCalib.z0 / depthCalib.focalPix;
+            disparityParam_.bitSize      = 14;  // low 14 bit
+            disparityParam_.dispIntPlace = 8;
+            disparityParam_.unit         = depthCalib.unit;
+            disparityParam_.dispOffset   = depthCalib.dispOffset;
+            disparityParam_.invalidDisp  = depthCalib.invalidDisp;
+            disparityParam_.packMode     = OB_DISP_PACK_ORIGINAL_NEW;
+            disparityParam_.isDualCamera = true;
+        }
+        else {
+            auto owner           = getOwner();
+            auto propServer      = owner->getPropertyServer();
+            depthCalibParamList_ = propServer->getStructureDataListProtoV1_1_T<OBDepthCalibrationParam, 1>(OB_RAW_DATA_DEPTH_CALIB_PARAM);
 
-        const auto &depthCalib       = depthCalibParamList_.front();
-        disparityParam_.baseline     = depthCalib.baseline;
-        disparityParam_.zpd          = depthCalib.z0;
-        disparityParam_.fx           = depthCalib.focalPix;
-        disparityParam_.zpps         = depthCalib.z0 / depthCalib.focalPix;
-        disparityParam_.bitSize      = 14;  // low 14 bit
-        disparityParam_.dispIntPlace = 8;
-        disparityParam_.unit         = depthCalib.unit;
-        disparityParam_.dispOffset   = depthCalib.dispOffset;
-        disparityParam_.invalidDisp  = depthCalib.invalidDisp;
-        disparityParam_.packMode     = OB_DISP_PACK_ORIGINAL_NEW;
-        disparityParam_.isDualCamera = true;
+            const auto &depthCalib       = depthCalibParamList_.front();
+            disparityParam_.baseline     = depthCalib.baseline;
+            disparityParam_.zpd          = depthCalib.z0;
+            disparityParam_.fx           = depthCalib.focalPix;
+            disparityParam_.zpps         = depthCalib.z0 / depthCalib.focalPix;
+            disparityParam_.bitSize      = 14;  // low 14 bit
+            disparityParam_.dispIntPlace = 8;
+            disparityParam_.unit         = depthCalib.unit;
+            disparityParam_.dispOffset   = depthCalib.dispOffset;
+            disparityParam_.invalidDisp  = depthCalib.invalidDisp;
+            disparityParam_.packMode     = OB_DISP_PACK_ORIGINAL_NEW;
+            disparityParam_.isDualCamera = true;
+        }
     }
     catch(const std::exception &e) {
         LOG_ERROR("Get depth calibration params failed! {}", e.what());
