@@ -175,6 +175,41 @@ void ObRTPNpCapReceiver::findAlldevs() {
         throw libobsensor::invalid_value_exception(utils::string::to_string() << "Error opening net device, not found!");
     }
 
+    WSADATA wsaData;
+    int     rst = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    if(rst != 0) {
+        throw libobsensor::invalid_value_exception(utils::string::to_string() << "Failed to load Winsock! err_code=" << GET_LAST_ERROR());
+    }
+
+    // 1.Create udpsocket
+    recvSocket_ = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+
+    if(recvSocket_ < 0) {
+#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+        WSACleanup();
+#endif
+        throw libobsensor::invalid_value_exception(utils::string::to_string() << "Failed to create udpSocket! err_code=" << GET_LAST_ERROR());
+    }
+
+    // 2.Set server address
+    sockaddr_in serverAddr{};
+    serverAddr.sin_family      = AF_INET;
+    serverAddr.sin_addr.s_addr = INADDR_ANY;
+    serverAddr.sin_port        = htons(serverPort_);
+
+    // 3.Bind the socket to a local address and port.
+    if(bind(recvSocket_, (sockaddr *)&serverAddr, sizeof(serverAddr)) < 0) {
+        if(recvSocket_ > 0) {
+            auto rc = closesocket(recvSocket_);
+            if(rc < 0) {
+                LOG_ERROR("close udp socket failed! socket={0}, err_code={1}", recvSocket_, GET_LAST_ERROR());
+            }
+        }
+        LOG_DEBUG("udp socket closed! socket={}", recvSocket_);
+        recvSocket_ = INVALID_SOCKET;
+        WSACleanup();
+        throw libobsensor::invalid_value_exception(utils::string::to_string() << "Failed to bind server address! err_code=" << GET_LAST_ERROR());
+    }
     LOG_DEBUG("Net device opened successfully");
 }
 
@@ -342,6 +377,15 @@ void ObRTPNpCapReceiver::close() {
     if(alldevs_ != nullptr) {
         pcap_freealldevs(alldevs_);
     }
+
+    if(recvSocket_ > 0) {
+        auto rst = ::closesocket(recvSocket_);
+        if(rst < 0) {
+            LOG_ERROR("close udp socket failed! socket={0}, err_code={1}", recvSocket_, GET_LAST_ERROR());
+        }
+    }
+    LOG_DEBUG("udp socket closed! socket={}", recvSocket_);
+    recvSocket_ = INVALID_SOCKET;
 }
 
 }  // namespace libobsensor

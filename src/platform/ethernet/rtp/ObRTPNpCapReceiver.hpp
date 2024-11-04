@@ -7,6 +7,7 @@
 #include "ObRTPPacketProcessor.hpp"
 #include "ObRTPPacketQueue.hpp"
 #include "pcap/pcap.h"
+#include "ethernet/socket/SocketTypes.hpp"
 
 #include <string>
 #include <thread>
@@ -57,6 +58,8 @@ private:
 
     std::mutex              rtpPacketMutex_;
     std::condition_variable packetAvailableCv_;
+
+    SOCKET   recvSocket_;
 };
 
 }  // namespace libobsensor
