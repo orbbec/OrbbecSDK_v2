@@ -7,7 +7,8 @@ namespace libobsensor {
 
 G330NetDeviceClockSynchronizer::G330NetDeviceClockSynchronizer(IDevice *owner, const std::shared_ptr<ISourcePort> &backend)
     : DeviceComponentBase(owner), backend_(backend), isClockSync_(false) {
-    ptpPort_ = std::dynamic_pointer_cast<PTPDataPort>(backend_);
+    ptpPort_               = std::dynamic_pointer_cast<PTPDataPort>(backend_);
+    globalTimestampFitter_ = owner->getComponentT<GlobalTimestampFitter>(OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER).get();
 }
 
 void G330NetDeviceClockSynchronizer::setTimestampResetConfig(const OBDeviceTimestampResetConfig &timestampResetConfig) {
@@ -35,12 +36,12 @@ void G330NetDeviceClockSynchronizer::timerSyncWithHost() {
         isClockSync_ = true;
         ptpPort_->timerSyncWithHost();
         isClockSync_ = false;
+        globalTimestampFitter_->reFitting();
     })
     CATCH_EXCEPTION_AND_EXECUTE({
         LOG_ERROR("Get profile list params failed!");
         isClockSync_ = false;
     })
-    
 }
 
 }  // namespace libobsensor

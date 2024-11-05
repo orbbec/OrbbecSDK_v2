@@ -3,6 +3,8 @@
 #include "IDeviceClockSynchronizer.hpp"
 #include "DeviceComponentBase.hpp"
 #include "ethernet/PTPDataPort.hpp"
+#include "component/timestamp/GlobalTimestampFitter.hpp"
+
 
 namespace libobsensor {
 class G330NetDeviceClockSynchronizer : public IDeviceClockSynchronizer, public DeviceComponentBase {
@@ -19,6 +21,8 @@ private:
     std::shared_ptr<ISourcePort> backend_;
     std::shared_ptr<PTPDataPort> ptpPort_;
     std::atomic<bool>            isClockSync_;
+
+    std::shared_ptr<GlobalTimestampFitter> globalTimestampFitter_;
 
 };
 
