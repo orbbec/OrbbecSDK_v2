@@ -417,7 +417,6 @@ void FemtoMegaUsbDevice::initProperties() {
     propertyServer->aliasProperty(OB_PROP_IR_EXPOSURE_INT, OB_PROP_TOF_EXPOSURE_TIME_INT);
     propertyServer->aliasProperty(OB_PROP_DEPTH_EXPOSURE_INT, OB_PROP_TOF_EXPOSURE_TIME_INT);
     propertyServer->aliasProperty(OB_PROP_DEPTH_ALIGN_HARDWARE_BOOL, OB_PROP_FEMTO_MEGA_HARDWARE_D2C_BOOL);
-    propertyServer->aliasProperty(OB_PROP_STOP_IR_RIGHT_STREAM_BOOL, OB_PROP_STOP_DEPTH_STREAM_BOOL);
 
     registerComponent(OB_DEV_COMPONENT_PROPERTY_SERVER, propertyServer, true);
 
