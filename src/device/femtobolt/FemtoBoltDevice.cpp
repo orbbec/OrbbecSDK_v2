@@ -401,7 +401,6 @@ void FemtoBoltDevice::initProperties() {
 
     propertyServer->aliasProperty(OB_PROP_IR_EXPOSURE_INT, OB_PROP_TOF_EXPOSURE_TIME_INT);
     propertyServer->aliasProperty(OB_PROP_DEPTH_EXPOSURE_INT, OB_PROP_TOF_EXPOSURE_TIME_INT);
-    propertyServer->aliasProperty(OB_PROP_STOP_IR_RIGHT_STREAM_BOOL, OB_PROP_STOP_DEPTH_STREAM_BOOL);
 
     auto heartbeatPropertyAccessor = std::make_shared<HeartbeatPropertyAccessor>(this);
     propertyServer->registerProperty(OB_PROP_HEARTBEAT_BOOL, "rw", "rw", heartbeatPropertyAccessor);
