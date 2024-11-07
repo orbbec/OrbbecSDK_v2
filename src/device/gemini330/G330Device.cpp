@@ -1635,7 +1635,6 @@ void G330NetDevice::initProperties() {
     auto sensors = getSensorTypeList();
     for(auto &sensor: sensors) {
         auto  platform       = Platform::getInstance();
-        //auto &sourcePortInfo = getSensorPortInfo(sensor);
         auto &sourcePortInfo = vendorPortInfo_;
         if(sensor == OB_SENSOR_COLOR) {
             auto vendorPropertyAccessor = std::make_shared<LazySuperPropertyAccessor>([this, &sourcePortInfo]() {
@@ -1672,7 +1671,6 @@ void G330NetDevice::initProperties() {
                 return accessor;
             });
 
-            propertyServer->registerProperty(OB_PROP_DEPTH_AUTO_EXPOSURE_PRIORITY_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_DEPTH_GAIN_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_DEPTH_EXPOSURE_INT, "rw", "rw", vendorPropertyAccessor);
