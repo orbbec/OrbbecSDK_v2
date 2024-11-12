@@ -11,11 +11,11 @@ const uint16_t MAX_RECV_DATA_SIZE = 1024;
 DeviceMonitor::DeviceMonitor(IDevice *owner, std::shared_ptr<ISourcePort> dataPort)
     : DeviceComponentBase(owner),
       cbIdCounter_(0),
+      heartbeatAndFetchStateThreadStarted_(false),
       heartbeatEnabled_(false),
       heartbeatPaused_(false),
-      heartbeatAndFetchStateThreadStarted_(false),
       hbRecvData_(MAX_RECV_DATA_SIZE),
-      hbSendData_(MAX_RECV_DATA_SIZE) {
+      hbSendData_(MAX_RECV_DATA_SIZE){
     vendorDataPort_ = std::dynamic_pointer_cast<IVendorDataPort>(dataPort);
     if(!vendorDataPort_) {
         throw std::runtime_error("DeviceMonitor: data port must be a vendor data port!");

@@ -701,3 +701,57 @@ std::ostream &operator<<(std::ostream &os, const OBCameraDistortion &type) {
        << "}\n";
     return os;
 }
+
+std::ostream &operator<<(std::ostream &os, const OBFilterConfigValueType &type) {
+    switch(type) {
+    case OB_FILTER_CONFIG_VALUE_TYPE_INT:
+        os << "INT";
+        break;
+    case OB_FILTER_CONFIG_VALUE_TYPE_FLOAT:
+        os << "FLOAT";
+        break;
+    case OB_FILTER_CONFIG_VALUE_TYPE_BOOLEAN:
+        os << "BOOLEAN";
+        break;
+    default:
+        os << "INVALID";
+        break;
+    }
+    return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const OBExceptionType &type) {
+    switch(type) {
+    case OB_EXCEPTION_STD_EXCEPTION:
+        os << "STD_EXCEPTION";
+        break;
+    case OB_EXCEPTION_TYPE_CAMERA_DISCONNECTED:
+        os << "CAMERA_DISCONNECTED";
+        break;
+    case OB_EXCEPTION_TYPE_PLATFORM:
+        os << "PLATFORM";
+        break;
+    case OB_EXCEPTION_TYPE_INVALID_VALUE:
+        os << "INVALID_VALUE";
+        break;
+    case OB_EXCEPTION_TYPE_WRONG_API_CALL_SEQUENCE:
+        os << "WRONG_API_CALL_SEQUENCE";
+        break;
+    case OB_EXCEPTION_TYPE_NOT_IMPLEMENTED:
+        os << "NOT_IMPLEMENTED";
+        break;
+    case OB_EXCEPTION_TYPE_IO:
+        os << "IO";
+        break;
+    case OB_EXCEPTION_TYPE_MEMORY:
+        os << "MEMORY";
+        break;
+    case OB_EXCEPTION_TYPE_UNSUPPORTED_OPERATION:
+        os << "UNSUPPORTED_OPERATION";
+        break;
+    default:
+        os << "UNKNOWN";
+        break;
+    }
+    return os;
+}

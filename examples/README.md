@@ -15,6 +15,7 @@ There are several examples codes for users learn how to use Orbbec cameras. Here
 | stream   | [multi_streams](1.stream.multi_streams)                 | Use SDK to obtain multiple camera data streams and output them.                                                                                                                                                         |
 | stream   | [callback](1.stream.callback)                           | In this sample, users can obtain depth, RGB, and IR images. This sample also supports performing user-defined operations such as data acquisition, data processing, and data modification within the callback function. |
 | device   | [control](2.device.control)                             | The SDK can be used to modify camera-related parameters, including laser switch, laser level intensity, white balance switch, etc.                                                                                      |
+| device   | [firmware_update](2.device.firmware_update)                             | This sample demonstrates how to read a BIN file to perform firmware upgrades on the device. |
 | device   | [hot_plugin](2.device.hot_plugin)                       | Use SDK to handle the settings of device unplug callback and process the acquired code stream after unplugging.                                                                                                         |
 | advanced | [sync_align](3.advanced.sync_align)                     | Use the SDK interface to demonstrate the synchronization and alignment of sensor data streams, display the aligned image.                                                                                               |
 | advanced | [hw_d2c_align](3.advanced.hw_d2c_align)                 | Use the SDK interface to demonstrate the application of hardware depth-to-color alignment.                                                                                                                              |
@@ -25,6 +26,8 @@ There are several examples codes for users learn how to use Orbbec cameras. Here
 | advanced | [hdr](3.advanced.hdr)                                   | In this sample, user can get the HDR merge image. Also supports user to toggle HDR merge and toggle alternate show origin frame.                                                                                        |
 | advanced | [multi_devices](3.advanced.multi_devices)               | In this sample, users can connect multiple camera devices and get color and depth images of different cameras.                                                                                                          |
 | advanced | [common_usages](3.advanced.common_usages)               | Use SDK to handle the settings of device unplug callback and process the acquired code stream after unplugging.                                                                                                         |
+| misc | [logger](4.misc.logger)               | Use the SDK interface to set the log output level and customize the output path. |
+| misc | [metadata](4.misc.metadata)               | In this sample, users can retrieve metadata for each stream of the camera.   |
 
 ### C language examples
 

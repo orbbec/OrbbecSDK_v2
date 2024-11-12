@@ -4,6 +4,10 @@
 #include "Platform.hpp"
 #include "exception/ObException.hpp"
 
+#if defined(__linux__)
+#include "usb/pal/linux/LinuxUsbPal.hpp"
+#endif
+
 namespace libobsensor {
 
 std::mutex              Platform::instanceMutex_;
@@ -16,6 +20,7 @@ std::shared_ptr<Platform> Platform::getInstance() {
         instance         = std::shared_ptr<Platform>(new Platform());
         instanceWeakPtr_ = instance;
     }
+
     return instance;
 }
 
@@ -66,6 +71,25 @@ std::shared_ptr<ISourcePort> Platform::getUsbSourcePort(std::shared_ptr<const So
     }
     return pal->second->getSourcePort(portInfo);
 }
+
+#if defined(__linux__)
+std::shared_ptr<ISourcePort> Platform::getUvcSourcePort(std::shared_ptr<const SourcePortInfo> portInfo, OBUvcBackendType backendTypeHint) {
+    auto pal = palMap_.find("usb");
+    if(pal == palMap_.end()) {
+        throw pal_exception("Usb pal is not exist, please check the build config that you have enabled BUILD_USB_PAL");
+    }
+    auto linuxUsbPal = std::dynamic_pointer_cast<LinuxUsbPal>(pal->second);
+    return linuxUsbPal->getUvcSourcePort(portInfo, backendTypeHint);
+}
+void Platform::setUvcBackendType(OBUvcBackendType backendType) {
+    auto pal = palMap_.find("usb");
+    if(pal == palMap_.end()) {
+        throw pal_exception("Usb pal is not exist, please check the build config that you have enabled BUILD_USB_PAL");
+    }
+    auto linuxUsbPal = std::dynamic_pointer_cast<LinuxUsbPal>(pal->second);
+    return linuxUsbPal->setUvcBackendType(backendType);
+}
+#endif
 
 SourcePortInfoList Platform::queryNetSourcePort() {
     auto pal = palMap_.find("net");

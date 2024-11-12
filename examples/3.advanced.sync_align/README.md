@@ -38,7 +38,7 @@ D2C（Depth to Color）is the transformation from the depth image coordinate sys
 3. Perform alignment processing
 
     ```cpp
-     // Get filter according to the align mode
+        // Get filter according to the align mode
         std::shared_ptr<ob::Filter> alignFilter = depth2colorAlign;
         if(align_mode % 2 == 1) {
             alignFilter = color2depthAlign;

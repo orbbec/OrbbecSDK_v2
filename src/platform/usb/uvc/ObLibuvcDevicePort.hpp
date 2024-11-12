@@ -58,6 +58,10 @@ public:
 
     std::shared_ptr<const SourcePortInfo> getSourcePortInfo() const override;
 
+#ifdef __linux__
+    OBUvcBackendType getBackendType() const override;
+#endif
+
 private:
     virtual bool getXu(uint8_t ctrl, uint8_t *data, uint32_t *len);
     virtual bool setXu(uint8_t ctrl, const uint8_t *data, uint32_t len);

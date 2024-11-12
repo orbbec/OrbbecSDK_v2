@@ -289,7 +289,7 @@ void RawPhaseStreamer::parseAndOutputFrame(std::shared_ptr<Frame> frame) {
                                                                  outputBuffer.data(), outputBytes, &outputFrameInfo, &inputFrameInfo);
 
         if(K4A_DEPTH_ENGINE_RESULT_SUCCEEDED != retCode) {
-            LOG_ERROR("Process frame failed! Error code:{}", retCode);
+            LOG_ERROR("Process frame failed! Error code:{}", static_cast<int>(retCode));
             return;
         }
 

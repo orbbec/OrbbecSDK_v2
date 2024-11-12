@@ -19,7 +19,7 @@ namespace libobsensor {
 
 template <typename T, typename Field> class StructureMetadataParser : public IFrameMetadataParser {
 public:
-    StructureMetadataParser(Field T::*field, FrameMetadataModifier mod) : field_(field), modifier_(mod){};
+    StructureMetadataParser(Field T::*field, FrameMetadataModifier mod) : field_(field), modifier_(mod) {};
     virtual ~StructureMetadataParser() = default;
 
     int64_t getValue(const uint8_t *metadata, size_t dataSize) override {
@@ -50,7 +50,7 @@ std::shared_ptr<StructureMetadataParser<T, Field>> makeStructureMetadataParser(F
 
 template <typename T> class G330MetadataTimestampParser : public IFrameMetadataParser {
 public:
-    G330MetadataTimestampParser(){};
+    G330MetadataTimestampParser() {};
     virtual ~G330MetadataTimestampParser() = default;
 
     int64_t getValue(const uint8_t *metadata, size_t dataSize) override {
@@ -71,8 +71,8 @@ public:
 // for depth and ir sensor
 class G330MetadataSensorTimestampParser : public IFrameMetadataParser {
 public:
-    G330MetadataSensorTimestampParser(){};
-    explicit G330MetadataSensorTimestampParser(FrameMetadataModifier exp_to_usec) : exp_to_usec_(exp_to_usec){};
+    G330MetadataSensorTimestampParser() {};
+    explicit G330MetadataSensorTimestampParser(FrameMetadataModifier exp_to_usec) : exp_to_usec_(exp_to_usec) {};
     virtual ~G330MetadataSensorTimestampParser() = default;
 
     int64_t getValue(const uint8_t *metadata, size_t dataSize) override {
@@ -96,8 +96,8 @@ private:
 
 class G330ColorMetadataSensorTimestampParser : public IFrameMetadataParser {
 public:
-    G330ColorMetadataSensorTimestampParser(){};
-    explicit G330ColorMetadataSensorTimestampParser(FrameMetadataModifier exp_to_usec) : exp_to_usec_(exp_to_usec){};
+    G330ColorMetadataSensorTimestampParser() {};
+    explicit G330ColorMetadataSensorTimestampParser(FrameMetadataModifier exp_to_usec) : exp_to_usec_(exp_to_usec) {};
     virtual ~G330ColorMetadataSensorTimestampParser() = default;
 
     int64_t getValue(const uint8_t *metadata, size_t dataSize) override {
@@ -121,7 +121,7 @@ private:
 
 class G330ScrMetadataParserBase : public IFrameMetadataParser {
 public:
-    G330ScrMetadataParserBase(){};
+    G330ScrMetadataParserBase() {};
     virtual ~G330ScrMetadataParserBase() = default;
 
     bool isSupported(const uint8_t *metadata, size_t dataSize) override {
@@ -415,23 +415,25 @@ public:
         }
 
         auto propertyServer = device->getPropertyServer();
-        propertyServer->registerAccessCallback(propertyId_,
-                                               [this, type](uint32_t propertyId, const uint8_t *data, size_t dataSize, PropertyOperationType operationType) {
-                                                   utils::unusedVar(dataSize);
-                                                   utils::unusedVar(operationType);
-                                                   if(propertyId != static_cast<uint32_t>(propertyId_)) {
-                                                       return;
-                                                   }
-                                                   auto propertyServer = device_->getPropertyServer();
-                                                   auto propertyItem   = propertyServer->getPropertyItem(propertyId_, PROP_ACCESS_USER);
-                                                   if(propertyItem.type == OB_STRUCT_PROPERTY) {
-                                                       data_ = parseStructurePropertyValue(type, propertyId, data);
-                                                   }
-                                                   else {
-                                                       data_ = parsePropertyValue(propertyId, data);
-                                                   }
-                                               });
-    };
+        if(propertyServer->isPropertySupported(propertyId_, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
+            propertyServer->registerAccessCallback(
+                propertyId_, [this, type](uint32_t propertyId, const uint8_t *data, size_t dataSize, PropertyOperationType operationType) {
+                    utils::unusedVar(dataSize);
+                    utils::unusedVar(operationType);
+                    if(propertyId != static_cast<uint32_t>(propertyId_)) {
+                        return;
+                    }
+                    auto propertyServer = device_->getPropertyServer();
+                    auto propertyItem   = propertyServer->getPropertyItem(propertyId_, PROP_ACCESS_USER);
+                    if(propertyItem.type == OB_STRUCT_PROPERTY) {
+                        data_ = parseStructurePropertyValue(type, propertyId, data);
+                    }
+                    else {
+                        data_ = parsePropertyValue(propertyId, data);
+                    }
+                });
+        }
+    }
 
     virtual ~G330MetadataParserBase() = default;
 
@@ -548,6 +550,69 @@ public:
     G330DepthMetadataParser(IDevice *device, OBFrameMetadataType type, FrameMetadataModifier modifier = nullptr)
         : G330MetadataParserBase(device, type, modifier, initMetadataTypeIdMap(OB_SENSOR_DEPTH)) {}
     virtual ~G330DepthMetadataParser() = default;
+};
+
+class G330DepthMetadataHdrSequenceSizeParser : public IFrameMetadataParser {
+public:
+    G330DepthMetadataHdrSequenceSizeParser(IDevice *device, FrameMetadataModifier modifier = nullptr)
+        : device_(device), modifier_(modifier), inited_(false), frameInterleaveEnabled_(false), hdrEnabled_(false) {
+        auto propertyServer = device_->getPropertyServer();
+        if(propertyServer->isPropertySupported(OB_STRUCT_DEPTH_HDR_CONFIG, PROP_OP_WRITE, PROP_ACCESS_USER)) {
+            propertyServer->registerAccessCallback(OB_STRUCT_DEPTH_HDR_CONFIG,
+                                                   [this](uint32_t propertyId, const uint8_t *data, size_t dataSize, PropertyOperationType operationType) {
+                                                       utils::unusedVar(propertyId);
+                                                       utils::unusedVar(dataSize);
+                                                       utils::unusedVar(operationType);
+                                                       auto hdrConfig = *(reinterpret_cast<const OBHdrConfig *>(data));
+                                                       hdrEnabled_    = hdrConfig.enable;
+                                                       inited_        = true;
+                                                   });
+        }
+        if(propertyServer->isPropertySupported(OB_PROP_FRAME_INTERLEAVE_ENABLE_BOOL, PROP_OP_WRITE, PROP_ACCESS_USER)) {
+            propertyServer->registerAccessCallback(OB_PROP_FRAME_INTERLEAVE_ENABLE_BOOL,
+                                                   [this](uint32_t propertyId, const uint8_t *data, size_t dataSize, PropertyOperationType operationType) {
+                                                       utils::unusedVar(propertyId);
+
+                                                       utils::unusedVar(dataSize);
+                                                       utils::unusedVar(operationType);
+                                                       frameInterleaveEnabled_ = *(reinterpret_cast<const bool *>(data));
+                                                       inited_                 = true;
+                                                   });
+        }
+    }
+
+    virtual ~G330DepthMetadataHdrSequenceSizeParser() = default;
+
+    int64_t getValue(const uint8_t *metadata, size_t dataSize) override {
+        utils::unusedVar(metadata);
+        utils::unusedVar(dataSize);
+        if(!inited_) {
+            auto propertyServer = device_->getPropertyServer();
+            if(propertyServer->isPropertySupported(OB_STRUCT_DEPTH_HDR_CONFIG, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
+                auto hdrConfig = propertyServer->getStructureDataT<OBHdrConfig>(OB_STRUCT_DEPTH_HDR_CONFIG);
+                hdrEnabled_    = hdrConfig.enable;
+            }
+            if(propertyServer->isPropertySupported(OB_PROP_FRAME_INTERLEAVE_ENABLE_BOOL, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
+                frameInterleaveEnabled_ = propertyServer->getPropertyValueT<bool>(OB_PROP_FRAME_INTERLEAVE_ENABLE_BOOL);
+            }
+            inited_ = true;
+        }
+        return (hdrEnabled_ || frameInterleaveEnabled_) ? 2 : 0;
+    }
+
+    bool isSupported(const uint8_t *metadata, size_t dataSize) override {
+        utils::unusedVar(metadata);
+        utils::unusedVar(dataSize);
+        return true;
+    }
+
+private:
+    IDevice              *device_;
+    FrameMetadataModifier modifier_;
+
+    bool inited_;
+    bool frameInterleaveEnabled_;
+    bool hdrEnabled_;
 };
 
 }  // namespace libobsensor

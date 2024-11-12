@@ -6,6 +6,7 @@
 #include "IFilter.hpp"
 #include "ISourcePort.hpp"
 #include "IDeviceComponent.hpp"
+#include "ImuCalculator.hpp"
 
 #include <atomic>
 #include <map>
@@ -36,8 +37,10 @@ typedef struct {
 
 class ImuStreamer : public IDeviceComponent {
 public:
-    ImuStreamer(IDevice *owner, const std::shared_ptr<IDataStreamPort> &backend, const std::shared_ptr<IFilter> &filter);
-    ImuStreamer(IDevice *owner, const std::shared_ptr<IDataStreamPort> &backend, std::vector<std::shared_ptr<IFilter>> filters);
+    ImuStreamer(IDevice *owner, const std::shared_ptr<IDataStreamPort> &backend, const std::shared_ptr<IFilter> &filter,
+                std::shared_ptr<IImuCalculator> calculator = nullptr);
+    ImuStreamer(IDevice *owner, const std::shared_ptr<IDataStreamPort> &backend, std::vector<std::shared_ptr<IFilter>> filters,
+                std::shared_ptr<IImuCalculator> calculator = nullptr);
     virtual ~ImuStreamer() noexcept;
 
     void start(std::shared_ptr<const StreamProfile> sp, MutableFrameCallback callback);
@@ -50,15 +53,15 @@ private:
     virtual void outputFrame(std::shared_ptr<Frame> frame);
 
 private:
-    IDevice                         *owner_;
-    std::shared_ptr<IDataStreamPort> backend_;
+    IDevice                              *owner_;
+    std::shared_ptr<IDataStreamPort>      backend_;
     std::vector<std::shared_ptr<IFilter>> filters_;
+    std::shared_ptr<IImuCalculator>       calculator_;
 
-    std::mutex                                                          cbMtx_;
+    std::mutex                                                           cbMtx_;
     std::map<std::shared_ptr<const StreamProfile>, MutableFrameCallback> callbacks_;
 
     std::atomic_bool running_;
-
-    uint64_t frameIndex_;
+    uint64_t         frameIndex_;
 };
 }  // namespace libobsensor

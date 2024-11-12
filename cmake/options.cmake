@@ -19,6 +19,7 @@ option(OB_BUILD_GMSL_PAL "Enable this to support GMSL communication" ON)
 option(OB_INSTALL_EXAMPLES_SOURCE "Install SDK examples source files" ON)
 option(OB_INSTALL_FILTER_DEV_HEADERS "Install HEADER files for filter development" OFF)
 
+# tools options
 option(OB_ENABLE_SANITIZER "Enable sanitizer options" OFF)
 option(OB_ENABLE_CLANG_TIDY "Enable clang-tidy" OFF)
 

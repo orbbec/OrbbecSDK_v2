@@ -42,8 +42,8 @@ private:
 
 class UvcDevicePort : public IVideoStreamPort, public IVendorDataPort {
 public:
-    virtual bool         getPu(uint32_t propertyId, int32_t &value) = 0;
-    virtual bool         setPu(uint32_t propertyId, int32_t value)  = 0;
+    virtual bool            getPu(uint32_t propertyId, int32_t &value) = 0;
+    virtual bool            setPu(uint32_t propertyId, int32_t value)  = 0;
     virtual UvcControlRange getPuRange(uint32_t propertyId)            = 0;
 
     ~UvcDevicePort() noexcept override = default;
@@ -56,9 +56,12 @@ public:
     virtual std::string getUsbConnectType() = 0;
 #endif
 
+#ifdef __linux__
+    virtual OBUvcBackendType getBackendType() const = 0;
+#endif
+
 protected:
     ObExtensionUnit xuUnit_ = OB_COMMON_XU_UNIT;
 };
 
 }  // namespace libobsensor
-

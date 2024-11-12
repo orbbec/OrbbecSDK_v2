@@ -28,7 +28,7 @@ typedef void (*pfunc_ob_destroy_frame_processor_context)(ob_frame_processor_cont
 
 typedef void (*pfunc_ob_frame_processor_set_hardware_d2c_params)(ob_frame_processor *processor, ob_camera_param camera_param, uint8_t param_index,
                                                                  float depth_scale, int16_t align_left, int16_t align_top, int16_t align_right,
-                                                                 int16_t align_bottom, ob_error **error);
+                                                                 int16_t align_bottom, bool match_target_resolution, ob_error **error);
 
 #ifdef __cplusplus
 }

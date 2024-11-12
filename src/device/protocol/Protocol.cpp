@@ -16,7 +16,7 @@ bool checkStatus(HpStatus stat, bool throwException) {
     case HP_STATUS_OK:
         break;
     case HP_STATUS_DEVICE_RESPONSE_WARNING:
-        LOG_WARN("Request failed, device response with warning, errorCode: {0}, msg:{1}", stat.respErrorCode, stat.msg);
+        LOG_WARN("Request failed, device response with warning, errorCode: {0}, msg:{1}", static_cast<int>(stat.respErrorCode), stat.msg);
         return false;
     case HP_STATUS_DEVICE_RESPONSE_ERROR:
         retMsg = std::string("Request failed, device response with error, errorCode: ") + std::to_string(stat.respErrorCode) + ", msg: " + stat.msg;
@@ -423,4 +423,3 @@ ReadRawDataReq *initReadRawDataReq(uint8_t *dataBuf, uint32_t propertyId, uint32
 
 }  // namespace protocol
 }  // namespace libobsensor
-

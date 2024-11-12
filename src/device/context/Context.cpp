@@ -30,6 +30,7 @@ Context::Context(const std::string &configFilePath) {
     streamIntrinsicsManager_ = StreamIntrinsicsManager::getInstance();
     streamExtrinsicsManager_ = StreamExtrinsicsManager::getInstance();
     filterFactory_           = FilterFactory::getInstance();
+    platform_                = Platform::getInstance();
 
     if(configFilePath.empty()) {
         LOG_DEBUG("Context created! Library version: v{}", OB_LIB_VERSION_STR);
@@ -56,5 +57,8 @@ std::shared_ptr<FrameMemoryPool> Context::getFrameMemoryPool() const {
     return frameMemoryPool_;
 }
 
-}  // namespace libobsensor
+std::shared_ptr<Platform> Context::getPlatform() const {
+    return platform_;
+}
 
+}  // namespace libobsensor

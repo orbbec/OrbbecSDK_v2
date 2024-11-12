@@ -856,7 +856,7 @@ UvcControlRange ObV4lUvcDevicePort::getXuRange(uint8_t control, int len) {
     std::lock_guard<std::recursive_mutex> lock(ctrlMutex_);
     auto                                  fd = deviceHandles_.front()->fd;
     UvcControlRange                       range;
-    struct uvc_xu_control_query           xquery {};
+    struct uvc_xu_control_query           xquery{};
     memset(&xquery, 0, sizeof(xquery));
     __u16 size   = 0;
     xquery.query = UVC_GET_LEN;
@@ -977,7 +977,7 @@ bool ObV4lUvcDevicePort::setXu(uint8_t ctrl, const uint8_t *data, uint32_t len) 
 
 void ObV4lUvcDevicePort::subscribeToCtrlEvent(uint32_t ctrl_id) const {
     auto                           fd = deviceHandles_.front()->fd;
-    struct v4l2_event_subscription event_subscription {};
+    struct v4l2_event_subscription event_subscription{};
     event_subscription.flags = V4L2_EVENT_SUB_FL_ALLOW_FEEDBACK;
     event_subscription.type  = V4L2_EVENT_CTRL;
     event_subscription.id    = ctrl_id;
@@ -989,7 +989,7 @@ void ObV4lUvcDevicePort::subscribeToCtrlEvent(uint32_t ctrl_id) const {
 
 void ObV4lUvcDevicePort::unsubscribeFromCtrlEvent(uint32_t ctrl_id) const {
     auto                           fd = deviceHandles_.front()->fd;
-    struct v4l2_event_subscription event_subscription {};
+    struct v4l2_event_subscription event_subscription{};
     event_subscription.flags = V4L2_EVENT_SUB_FL_ALLOW_FEEDBACK;
     event_subscription.type  = V4L2_EVENT_CTRL;
     event_subscription.id    = ctrl_id;
@@ -1001,7 +1001,7 @@ void ObV4lUvcDevicePort::unsubscribeFromCtrlEvent(uint32_t ctrl_id) const {
 
 bool ObV4lUvcDevicePort::pendForCtrlStatusEvent() const {
     auto              fd = deviceHandles_.front()->fd;
-    struct v4l2_event event {};
+    struct v4l2_event event{};
     memset(&event, 0, sizeof(event));
     // Poll registered events and verify that set control event raised (wait max of 10 * 2 = 20 [ms])
     static int MAX_POLL_RETRIES = 10;
@@ -1011,6 +1011,10 @@ bool ObV4lUvcDevicePort::pendForCtrlStatusEvent() const {
         }
     }
     return event.type == V4L2_EVENT_CTRL;
+}
+
+OBUvcBackendType ObV4lUvcDevicePort::getBackendType() const {
+    return OB_UVC_BACKEND_TYPE_V4L2;
 }
 
 }  // namespace libobsensor

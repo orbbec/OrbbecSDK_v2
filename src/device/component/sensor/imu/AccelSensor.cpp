@@ -65,6 +65,9 @@ void AccelSensor::start(std::shared_ptr<const StreamProfile> sp, FrameCallback c
 
     BEGIN_TRY_EXECUTE({
         streamer_->start(sp, [this](std::shared_ptr<Frame> frame) {
+            if(streamState_ != STREAM_STATE_STREAMING && streamState_ != STREAM_STATE_STARTING) {
+                return;
+            }
             updateStreamState(STREAM_STATE_STREAMING);
             outputFrame(frame);
         });

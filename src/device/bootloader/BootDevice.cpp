@@ -6,7 +6,6 @@
 #include "DevicePids.hpp"
 #include "InternalTypes.hpp"
 
-#include "Platform.hpp"
 #include "utils/Utils.hpp"
 #include "environment/EnvConfig.hpp"
 #include "usb/uvc/UvcDevicePort.hpp"
@@ -28,10 +27,9 @@ BootDevice::~BootDevice() noexcept {}
 
 void BootDevice::init() {
     auto vendorPropertyAccessor = std::make_shared<LazySuperPropertyAccessor>([this]() {
-        auto pal                    = Platform::getInstance();
         auto sourcePortInfoList     = enumInfo_->getSourcePortInfoList();
         auto sourcePortInfo         = sourcePortInfoList.front();  // assume only one source port
-        auto port                   = pal->getSourcePort(sourcePortInfo);
+        auto port                   = getSourcePort(sourcePortInfo);
         auto vendorPropertyAccessor = std::make_shared<VendorPropertyAccessor>(this, port);
         return vendorPropertyAccessor;
     });
@@ -44,10 +42,9 @@ void BootDevice::init() {
     fetchDeviceInfo();
 
     registerComponent(OB_DEV_COMPONENT_DEVICE_MONITOR, [this]() {
-        auto platform           = Platform::getInstance();
         auto sourcePortInfoList = enumInfo_->getSourcePortInfoList();
         auto sourcePortInfo     = sourcePortInfoList.front();  // assume only one source port
-        auto port               = platform->getSourcePort(sourcePortInfo);
+        auto port               = getSourcePort(sourcePortInfo);
         auto devMonitor         = std::make_shared<DeviceMonitor>(this, port);
         return devMonitor;
     });

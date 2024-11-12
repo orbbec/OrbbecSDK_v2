@@ -534,13 +534,11 @@ bool WmfUvcDevicePort::setXu(uint8_t ctrl, const uint8_t *data, uint32_t len) {
     node.NodeId         = xuNodeId_;
 
     ULONG bytes_received = 0;
-    addTimeoutBarrier("setXu");
 
     // The library will first use the GET_LEN command to obtain the protocol data length and then send the data of the corresponding length based on the GET_LEN return value.
     // Therefore, when len < GET_LEN(), an error will be returned; when len > GET_LEN(), only the first GET_LEN() bytes of data will be sent.
     auto hr = xuKsControl_->KsProperty(reinterpret_cast<PKSPROPERTY>(&node), sizeof(KSP_NODE), (void *)data, len, &bytes_received);
 
-    removeTimeoutBarrier();
     return LOG_HR(hr);
 }
 
@@ -558,14 +556,12 @@ bool WmfUvcDevicePort::getXu(uint8_t ctrl, uint8_t *data, uint32_t *len) {
     node.NodeId         = xuNodeId_;
 
     ULONG bytes_received = 0;
-    addTimeoutBarrier("getXu");
 
     // The library will first use the GET_LEN command to get the protocol data length, and the data length that the device can return must be less than or equal to GET_LEN().
     // If XU_MAX_DATA_LENGTH < GET_LEN(), an error will be returned.
     auto hr = xuKsControl_->KsProperty(reinterpret_cast<PKSPROPERTY>(&node), sizeof(node), data, XU_MAX_DATA_LENGTH, &bytes_received);
     *len    = bytes_received;
 
-    removeTimeoutBarrier();
     return LOG_HR(hr);
 }
 
@@ -638,12 +634,10 @@ WmfUvcDevicePort::WmfUvcDevicePort(std::shared_ptr<const USBSourcePortInfo> port
             CHECK_HR(device->GetString(did_guid, const_cast<LPWSTR>(deviceId_.c_str()), static_cast<UINT32>(deviceId_.size()), nullptr));
         }
     });
-    initTimeoutThread();
 }
 
 WmfUvcDevicePort::~WmfUvcDevicePort() noexcept {
     std::lock_guard<std::recursive_mutex> lock(deviceMutex_);
-    terminateTimeoutThread();
     TRY_EXECUTE({
         if(isStarted_) {
             stopAllStream();
@@ -659,47 +653,6 @@ WmfUvcDevicePort::~WmfUvcDevicePort() noexcept {
             xuKsControl_ = nullptr;
         }
     });
-}
-
-void WmfUvcDevicePort::initTimeoutThread() {
-    timeoutThreadRun_ = true;
-    timeoutThread_    = std::thread([&]() {
-        while(timeoutThreadRun_) {
-            std::unique_lock<std::mutex> lk(timeoutMutex_);
-            if(!timeoutCondition_.wait_for(lk, std::chrono::seconds(10), [&]() { return !(timeoutThreadRun_ && hasTimeoutBarrier_); })) {
-                if(!timeoutMsg_.empty()) {
-                    LOG_ERROR("Catch timeout event.{}", timeoutMsg_);
-                }
-            }
-
-            timeoutCondition_.wait(lk, [&]() { return !(timeoutThreadRun_ && !hasTimeoutBarrier_); });
-        }
-    });
-}
-
-void WmfUvcDevicePort::terminateTimeoutThread() {
-    {
-        std::unique_lock<std::mutex> lk(timeoutMutex_);
-        timeoutThreadRun_  = false;
-        hasTimeoutBarrier_ = false;
-        timeoutMsg_        = "";
-        timeoutCondition_.notify_all();
-    }
-    timeoutThread_.join();
-}
-
-void WmfUvcDevicePort::addTimeoutBarrier(std::string msg) {
-    std::unique_lock<std::mutex> lk(timeoutMutex_);
-    hasTimeoutBarrier_ = true;
-    timeoutMsg_        = msg;
-    timeoutCondition_.notify_all();
-}
-
-void WmfUvcDevicePort::removeTimeoutBarrier() {
-    std::unique_lock<std::mutex> lk(timeoutMutex_);
-    hasTimeoutBarrier_ = false;
-    timeoutMsg_        = "";
-    timeoutCondition_.notify_all();
 }
 
 std::shared_ptr<const SourcePortInfo> WmfUvcDevicePort::getSourcePortInfo() const {

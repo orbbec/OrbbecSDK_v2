@@ -157,19 +157,20 @@ std::shared_ptr<ISourcePort> LinuxUsbPal::getSourcePort(std::shared_ptr<const So
         auto usbPortInfo = std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo);
         auto backend     = uvcBackendType_;
         if(isMatchDeviceByPid(usbPortInfo->pid, FemtoMegaDevPids)) {  // if the device is femto mega, force to use v4l2
-            backend = UVC_BACKEND_TYPE_V4L2;
+            backend = OB_UVC_BACKEND_TYPE_V4L2;
         }
         if(usbPortInfo->connSpec == "GMSL2") {
             LOG_DEBUG("check GMSL2 device! force to use v4l2 backend!");
-            backend = UVC_BACKEND_TYPE_V4L2;
+            backend = OB_UVC_BACKEND_TYPE_V4L2;
         }
-        if(backend == UVC_BACKEND_TYPE_AUTO) {
-            backend = UVC_BACKEND_TYPE_LIBUVC;
+        if(backend == OB_UVC_BACKEND_TYPE_AUTO) {
+            backend = OB_UVC_BACKEND_TYPE_LIBUVC;
             if(ObV4lUvcDevicePort::isContainedMetadataDevice(usbPortInfo)) {
-                backend = UVC_BACKEND_TYPE_V4L2;
+                backend = OB_UVC_BACKEND_TYPE_V4L2;
             }
         }
-        if(backend == UVC_BACKEND_TYPE_V4L2) {
+
+        if(backend == OB_UVC_BACKEND_TYPE_V4L2) {
             if(ObV4lGmslDevicePort::isGmslDeviceForPlatformNvidia(usbPortInfo)) {
                 port = std::make_shared<ObV4lGmslDevicePort>(usbPortInfo);
                 LOG_DEBUG("GMSL device have been create with V4L2 backend! dev: {}, inf: {}", usbPortInfo->url, usbPortInfo->infUrl);
@@ -214,6 +215,85 @@ std::shared_ptr<ISourcePort> LinuxUsbPal::getSourcePort(std::shared_ptr<const So
         sourcePortMap_.insert(std::make_pair(portInfo, port));
     }
     return port;
+}
+
+std::shared_ptr<ISourcePort> LinuxUsbPal::getUvcSourcePort(std::shared_ptr<const SourcePortInfo> portInfo, OBUvcBackendType backendHint) {
+    if(portInfo->portType != SOURCE_PORT_USB_UVC) {
+        throw libobsensor::invalid_value_exception("unsupported source port type!");
+    }
+
+    std::unique_lock<std::mutex> lock(sourcePortMapMutex_);
+    std::shared_ptr<ISourcePort> port;
+
+    // clear expired weak_ptr
+    for(auto it = sourcePortMap_.begin(); it != sourcePortMap_.end();) {
+        if(it->second.expired()) {
+            it = sourcePortMap_.erase(it);
+        }
+        else {
+            ++it;
+        }
+    }
+
+    // check if the port already exists in the map
+    for(const auto &pair: sourcePortMap_) {
+        if(pair.first->equal(portInfo)) {
+            port = pair.second.lock();
+            if(port != nullptr) {
+                return port;
+            }
+        }
+    }
+
+    auto usbPortInfo = std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo);
+    auto backend     = uvcBackendType_;
+    if(usbPortInfo->connSpec == "GMSL2") {
+        LOG_DEBUG("check GMSL2 device! force to use v4l2 backend!");
+        backend = OB_UVC_BACKEND_TYPE_V4L2;
+    }
+    else {
+        if(isMatchDeviceByPid(usbPortInfo->pid, FemtoMegaDevPids)) {  // if the device is femto mega, force to use v4l2
+            backend = OB_UVC_BACKEND_TYPE_V4L2;
+        }
+
+        if(backend == OB_UVC_BACKEND_TYPE_AUTO) {
+            backend = backendHint;
+            if(backend == OB_UVC_BACKEND_TYPE_AUTO && ObV4lUvcDevicePort::isContainedMetadataDevice(usbPortInfo)) {
+                backend = OB_UVC_BACKEND_TYPE_V4L2;
+            }
+            else if(backend == OB_UVC_BACKEND_TYPE_V4L2 && !ObV4lUvcDevicePort::isContainedMetadataDevice(usbPortInfo)) {
+                backend = OB_UVC_BACKEND_TYPE_LIBUVC;
+            }
+        }
+    }
+
+    if(backend == OB_UVC_BACKEND_TYPE_V4L2) {
+        if(ObV4lGmslDevicePort::isGmslDeviceForPlatformNvidia(usbPortInfo)) {
+            port = std::make_shared<ObV4lGmslDevicePort>(usbPortInfo);
+            LOG_DEBUG("GMSL device have been create with V4L2 backend! dev: {}, inf: {}", usbPortInfo->url, usbPortInfo->infUrl);
+        }
+        else {
+            port = std::make_shared<ObV4lUvcDevicePort>(usbPortInfo);
+            LOG_DEBUG("UVC device have been create with V4L2 backend! dev: {}, inf: {}", usbPortInfo->url, usbPortInfo->infUrl);
+        }
+    }
+    else {
+        auto usbDev = usbEnumerator_->openUsbDevice(std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->url);
+        if(usbDev == nullptr) {
+            throw libobsensor::camera_disconnected_exception("usbEnumerator openUsbDevice failed!");
+        }
+        port = std::make_shared<ObLibuvcDevicePort>(usbDev, std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo));
+        LOG_DEBUG("UVC device have been create with LibUVC backend! dev: {}, inf: {}", usbPortInfo->url, usbPortInfo->infUrl);
+    }
+
+    if(port != nullptr) {
+        sourcePortMap_.insert(std::make_pair(portInfo, port));
+    }
+    return port;
+}
+
+void LinuxUsbPal::setUvcBackendType(OBUvcBackendType backendType) {
+    uvcBackendType_ = backendType;
 }
 
 std::shared_ptr<IDeviceWatcher> LinuxUsbPal::createDeviceWatcher() const {
@@ -274,20 +354,19 @@ void LinuxUsbPal::loadXmlConfig() {
 
     if(envConfig->getStringValue("Device.LinuxUVCBackend", backend)) {
         if(backend == "V4L2") {
-            uvcBackendType_ = UVC_BACKEND_TYPE_V4L2;
+            uvcBackendType_ = OB_UVC_BACKEND_TYPE_V4L2;
         }
         else if(backend == "LibUVC") {
-            uvcBackendType_ = UVC_BACKEND_TYPE_LIBUVC;
+            uvcBackendType_ = OB_UVC_BACKEND_TYPE_LIBUVC;
         }
         else {
-            uvcBackendType_ = UVC_BACKEND_TYPE_AUTO;
+            uvcBackendType_ = OB_UVC_BACKEND_TYPE_AUTO;
         }
     }
     else {
-        uvcBackendType_ = UVC_BACKEND_TYPE_AUTO;
+        uvcBackendType_ = OB_UVC_BACKEND_TYPE_AUTO;
     }
     LOG_DEBUG("Uvc backend have been set to {}", static_cast<int>(uvcBackendType_));
 }
 
 }  // namespace libobsensor
-

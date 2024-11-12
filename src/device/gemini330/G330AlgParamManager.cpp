@@ -98,7 +98,7 @@ void G330AlgParamManager::fetchParamFromDevice() {
             memcpy(&param.depthDistortion, &cameraParam.depthDistortion, sizeof(param.depthDistortion));
             param.depthDistortion.model = OB_DISTORTION_BROWN_CONRADY;
             memcpy(&param.rgbDistortion, &cameraParam.rgbDistortion, sizeof(param.rgbDistortion));
-            param.rgbDistortion.model = OB_DISTORTION_BROWN_CONRADY;
+            param.rgbDistortion.model = OB_DISTORTION_BROWN_CONRADY_K6;
             param.transform           = cameraParam.transform;
             param.isMirrored          = false;
             originCalibrationCameraParamList_.emplace_back(param);
@@ -397,6 +397,33 @@ void G330AlgParamManager::fixD2CParmaList() {
     //     ss << calibrationCameraParamList_[profile.paramIndex];
     //     LOG_DEBUG("- {}", ss.str());
     // }
+
+    if(deviceInfo->pid_ != OB_DEVICE_G335LE_PID) {
+        // add depth 424*266 from 1280*800
+        auto iter = std::find_if(originCalibrationCameraParamList_.begin(), originCalibrationCameraParamList_.end(),
+                                 [](const OBCameraParam &param) { return param.depthIntrinsic.width == 1280 && param.depthIntrinsic.height == 800; });
+        if(iter != originCalibrationCameraParamList_.end()) {
+            OBCameraIntrinsic depthIntrinsic = iter->depthIntrinsic;
+            depthIntrinsic.fx                = depthIntrinsic.fx / 3;
+            depthIntrinsic.fy                = depthIntrinsic.fy / 3;
+            depthIntrinsic.cx                = (depthIntrinsic.cx - 4) / 3;
+            depthIntrinsic.cy                = (depthIntrinsic.cy - 1) / 3;
+            depthIntrinsic.width             = 424;
+            depthIntrinsic.height            = 266;
+            auto index                       = calibrationCameraParamList_.size();
+            calibrationCameraParamList_.push_back(
+                { depthIntrinsic, iter->rgbIntrinsic, iter->depthDistortion, iter->rgbDistortion, iter->transform, iter->isMirrored });
+            OBD2CProfile d2cProfile;
+            d2cProfile.alignType        = ALIGN_D2C_SW;
+            d2cProfile.postProcessParam = { 1.0f, 0, 0, 0, 0 };
+            d2cProfile.colorWidth       = 0;
+            d2cProfile.colorHeight      = 0;
+            d2cProfile.depthWidth       = 424;
+            d2cProfile.depthHeight      = 266;
+            d2cProfile.paramIndex       = (uint8_t)index;
+            d2cProfileList_.push_back(d2cProfile);
+        }
+    }
 }
 
 void G330AlgParamManager::bindIntrinsic(std::vector<std::shared_ptr<const StreamProfile>> streamProfileList) {
@@ -415,7 +442,7 @@ void G330AlgParamManager::bindIntrinsic(std::vector<std::shared_ptr<const Stream
             OBCameraDistortion distortion = { 0 };
             OBCameraParam      param{};
             auto               vsp = sp->as<VideoStreamProfile>();
-            if(!findBestMatchedCameraParam(originCalibrationCameraParamList_, vsp, param)) {
+            if(!findBestMatchedCameraParam(calibrationCameraParamList_, vsp, param)) {
                 // throw libobsensor::unsupported_operation_exception("Can not find matched camera param!");
                 continue;
             }

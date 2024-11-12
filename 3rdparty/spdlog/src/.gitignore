@@ -19,7 +19,7 @@ build/*
 
 # Compiled Dynamic libraries
 *.so
-*.Dylib
+*.dylib
 *.dll
 
 # Compiled Static libraries
@@ -72,9 +72,12 @@ install_manifest.txt
 /tests/logs/*
 spdlogConfig.cmake
 spdlogConfigVersion.cmake
+compile_commands.json
 
 # idea
 .idea/
+.cache/
+.vscode/
 cmake-build-*/
 *.db
 *.ipch
@@ -90,3 +93,6 @@ cmake-build-*/
 # macos
 *.DS_store
 *.xcodeproj/
+/.vs
+/out/build
+/CMakeSettings.json

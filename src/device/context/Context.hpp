@@ -14,6 +14,7 @@
 #include "stream/StreamIntrinsicsManager.hpp"
 #include "stream/StreamExtrinsicsManager.hpp"
 #include "FilterFactory.hpp"
+#include "Platform.hpp"
 
 namespace libobsensor {
 class Context {
@@ -31,6 +32,7 @@ public:
     std::shared_ptr<IDeviceManager>  getDeviceManager();
     std::shared_ptr<Logger>          getLogger() const;
     std::shared_ptr<FrameMemoryPool> getFrameMemoryPool() const;
+    std::shared_ptr<Platform>        getPlatform() const;
 
 private:
     std::shared_ptr<EnvConfig>               envConfig_;
@@ -40,6 +42,7 @@ private:
     std::shared_ptr<StreamIntrinsicsManager> streamIntrinsicsManager_;
     std::shared_ptr<StreamExtrinsicsManager> streamExtrinsicsManager_;
     std::shared_ptr<FilterFactory>           filterFactory_;
+    std::shared_ptr<Platform>                platform_;
 };
 }  // namespace libobsensor
 

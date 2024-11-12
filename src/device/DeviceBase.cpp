@@ -8,7 +8,9 @@
 #include "exception/ObException.hpp"
 #include "property/InternalProperty.hpp"
 #include "firmwareupdater/FirmwareUpdater.hpp"
+#include "frameprocessor/FrameProcessor.hpp"
 #include "InternalTypes.hpp"
+#include "Platform.hpp"
 
 #include <json/json.h>
 
@@ -24,12 +26,19 @@ const std::map<OBSensorType, DeviceComponentId> SensorTypeToComponentIdMap = {
     { OB_SENSOR_ACCEL, OB_DEV_COMPONENT_ACCEL_SENSOR },
 };
 
-DeviceBase::DeviceBase(const std::shared_ptr<const IDeviceEnumInfo> &info) : enumInfo_(info), ctx_(Context::getInstance()), isDeactivated_(false) {}
+DeviceBase::DeviceBase(const std::shared_ptr<const IDeviceEnumInfo> &info) : enumInfo_(info), ctx_(Context::getInstance()), isDeactivated_(false) {
+    deviceInfo_                       = std::make_shared<DeviceInfo>();
+    deviceInfo_->name_                = enumInfo_->getName();
+    deviceInfo_->pid_                 = enumInfo_->getPid();
+    deviceInfo_->vid_                 = enumInfo_->getVid();
+    deviceInfo_->uid_                 = enumInfo_->getUid();
+    deviceInfo_->connectionType_      = enumInfo_->getConnectionType();
+}
 
 void DeviceBase::fetchDeviceInfo() {
-    auto propServer                   = getPropertyServer();
+    auto propServer = getPropertyServer();
+
     auto version                      = propServer->getStructureDataT<OBVersionInfo>(OB_STRUCT_VERSION);
-    deviceInfo_                       = std::make_shared<DeviceInfo>();
     deviceInfo_->name_                = version.deviceName;
     deviceInfo_->fwVersion_           = version.firmwareVersion;
     deviceInfo_->deviceSn_            = version.serialNumber;
@@ -37,10 +46,6 @@ void DeviceBase::fetchDeviceInfo() {
     deviceInfo_->hwVersion_           = version.hardwareVersion;
     deviceInfo_->type_                = static_cast<uint16_t>(version.deviceType);
     deviceInfo_->supportedSdkVersion_ = version.sdkVersion;
-    deviceInfo_->pid_                 = enumInfo_->getPid();
-    deviceInfo_->vid_                 = enumInfo_->getVid();
-    deviceInfo_->uid_                 = enumInfo_->getUid();
-    deviceInfo_->connectionType_      = enumInfo_->getConnectionType();
 
     // remove the prefix "Orbbec " from the device name if contained
     if(deviceInfo_->name_.find("Orbbec ") == 0) {
@@ -329,6 +334,32 @@ std::vector<std::shared_ptr<IFilter>> DeviceBase::createRecommendedPostProcessin
 }
 
 std::shared_ptr<IFilter> DeviceBase::getSensorFrameFilter(const std::string &name, OBSensorType type, bool throwIfNotFound) {
+    // Initialize frameprocess to ensure the private filter is activated before retrieval.
+    DeviceComponentId frameProcessId = OB_DEV_COMPONENT_UNKNOWN;
+    switch(type) {
+    case OB_SENSOR_COLOR:
+        frameProcessId = OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR;
+        break;
+    case OB_SENSOR_DEPTH:
+        frameProcessId = OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR;
+        break;
+    case OB_SENSOR_IR:
+        frameProcessId = OB_DEV_COMPONENT_IR_FRAME_PROCESSOR;
+        break;
+    case OB_SENSOR_IR_LEFT:
+        frameProcessId = OB_DEV_COMPONENT_LEFT_IR_FRAME_PROCESSOR;
+        break;
+    case OB_SENSOR_IR_RIGHT:
+        frameProcessId = OB_DEV_COMPONENT_RIGHT_IR_FRAME_PROCESSOR;
+        break;
+    default:
+        LOG_WARN("Init frameprocessor failed, Unsupported sensor type: {}", type);
+        break;
+    }
+    if (frameProcessId != OB_DEV_COMPONENT_UNKNOWN) {
+        getComponentT<FrameProcessor>(frameProcessId, false);
+    }
+    
     auto filterIter =
         std::find_if(sensorFrameFilters_.begin(), sensorFrameFilters_.end(), [name, type](const std::pair<OBSensorType, std::shared_ptr<IFilter>> &pair) {
             if(type == OB_SENSOR_ACCEL || type == OB_SENSOR_GYRO) {
@@ -409,6 +440,31 @@ int DeviceBase::getFirmwareVersionInt() {
         return 0;
     }
     return calFwVersion;
+}
+
+std::shared_ptr<ISourcePort> DeviceBase::getSourcePort(std::shared_ptr<const SourcePortInfo> sourcePortInfo) const {
+    auto platform = Platform::getInstance();
+#ifdef __linux__
+    if(sourcePortInfo->portType == SOURCE_PORT_USB_UVC) {
+        auto        envConfig = EnvConfig::getInstance();
+        std::string key       = std::string("Device.") + utils::string::removeSpace(deviceInfo_->name_) + std::string(".LinuxUVCDefaultBackend");
+        auto        backend   = OB_UVC_BACKEND_TYPE_AUTO;
+        std::string backendStr;
+        if(envConfig->getStringValue(key, backendStr)) {
+            if(backendStr == "Auto") {
+                backend = OB_UVC_BACKEND_TYPE_AUTO;
+            }
+            else if(backendStr == "LibUVC") {
+                backend = OB_UVC_BACKEND_TYPE_LIBUVC;
+            }
+            else if(backendStr == "V4L2") {
+                backend = OB_UVC_BACKEND_TYPE_V4L2;
+            }
+        }
+        return platform->getUvcSourcePort(sourcePortInfo, backend);
+    }
+#endif
+    return platform->getSourcePort(sourcePortInfo);
 }
 
 void DeviceBase::updateFirmware(const std::vector<uint8_t> &firmware, DeviceFwUpdateCallback updateCallback, bool async) {

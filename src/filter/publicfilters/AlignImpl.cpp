@@ -79,8 +79,9 @@ const __m128i AlignImpl::ZERO       = _mm_setzero_si128();
 const __m128  AlignImpl::ZERO_F     = _mm_set_ps1(0.0);
 
 AlignImpl::AlignImpl() : initialized_(false) {
-    depth_unit_mm_ = 1.0;
-    r2_max_loc_    = 0.0;
+    depth_unit_mm_   = 1.0;
+    r2_max_loc_      = 0.0;
+    auto_down_scale_ = 1.0;
     memset(&depth_intric_, 0, sizeof(OBCameraIntrinsic));
     memset(&depth_disto_, 0, sizeof(OBCameraDistortion));
     memset(&rgb_intric_, 0, sizeof(OBCameraIntrinsic));
@@ -104,6 +105,7 @@ void AlignImpl::initialize(OBCameraIntrinsic depth_intrin, OBCameraDistortion de
     memcpy(&depth_disto_, &depth_disto, sizeof(OBCameraDistortion));
     memcpy(&rgb_intric_, &rgb_intrin, sizeof(OBCameraIntrinsic));
     memcpy(&rgb_disto_, &rgb_disto, sizeof(OBCameraDistortion));
+
     memcpy(&transform_, &extrin, sizeof(OBExtrinsic));
     add_target_distortion_ = add_target_distortion;
     // since undistorted depth (whether d2c or c2d) is necessory ...
@@ -134,6 +136,7 @@ void AlignImpl::initialize(OBCameraIntrinsic depth_intrin, OBCameraDistortion de
 
     prepareDepthResolution();
     initialized_ = true;
+    return;
 }
 
 void AlignImpl::reset() {
@@ -496,7 +499,11 @@ void AlignImpl::D2CWithSSE(const uint16_t *depth_buffer, uint16_t *out_depth, co
                            int *map) {
 
     int channel = (gap_fill_copy_ ? 1 : 2);
-    for(int i = 0; i < depth_intric_.width * depth_intric_.height; i += 8) {
+    int total_pixels = depth_intric_.width * depth_intric_.height;
+    int i;
+
+    // processing full chunks of 8 pixels
+    for(i = 0; i < total_pixels - 8; i += 8) {
         __m128i depth_i16 = _mm_loadu_si128((__m128i *)(depth_buffer + i));
         __m128i depth_i[] = { _mm_unpacklo_epi16(depth_i16, ZERO), _mm_unpackhi_epi16(depth_i16, ZERO) };
 
@@ -569,6 +576,40 @@ void AlignImpl::D2CWithSSE(const uint16_t *depth_buffer, uint16_t *out_depth, co
             transferDepth(x, y, z, 4, i + k * 4, out_depth, map);
         }
     }
+
+    // processing remaining pixels
+    for (; i < total_pixels; ++i) {
+        uint16_t depth = depth_buffer[i];
+        if(depth < EPSILON) {
+            continue;
+        }
+        float pixelx_f[2], pixely_f[2], dst[2];
+        bool skip_this_pixel = true;
+        for(int fold = 0; fold < channel; fold++) {
+            float dst_x = depth * coeff_mat_x[i * channel + fold] + scaled_trans_[0];
+            float dst_y = depth * coeff_mat_y[i * channel + fold] + scaled_trans_[1];
+            dst[fold]   = depth * coeff_mat_z[i * channel + fold] + scaled_trans_[2];
+            float tx = float(dst_x / dst[fold]);
+            float ty = float(dst_y / dst[fold]);
+            if(add_target_distortion_) {
+                float pt_ud[2] = { tx, ty };
+                float pt_d[2]  = { 0 };
+                float r2_cur   = pt_ud[0] * pt_ud[0] + pt_ud[1] * pt_ud[1];
+                if((OB_DISTORTION_BROWN_CONRADY_K6 == rgb_disto_.model) && (r2_max_loc_ != 0) && (r2_cur > r2_max_loc_)) {
+                    continue;  // break;
+                }
+                addDistortion(rgb_disto_, pt_ud, pt_d);
+                tx = pt_d[0];
+                ty = pt_d[1];
+            }
+            pixelx_f[fold]     = tx * rgb_intric_.fx + rgb_intric_.cx;
+            pixely_f[fold]     = ty * rgb_intric_.fy + rgb_intric_.cy;
+            skip_this_pixel = false;
+        }
+
+        if(!skip_this_pixel)
+            transferDepth(pixelx_f, pixely_f, dst, 1, i, out_depth, map);
+    }
 }
 
 int AlignImpl::D2C(const uint16_t *depth_buffer, int depth_width, int depth_height, uint16_t *out_depth, int color_width, int color_height, int *map,
@@ -593,7 +634,7 @@ int AlignImpl::D2C(const uint16_t *depth_buffer, int depth_width, int depth_heig
         return -1;
     }
 
-    int pixnum = color_width * color_height;
+    int pixnum = rgb_intric_.width * rgb_intric_.height;
     if(out_depth) {
         // init to 1s (depth 0 may be used as other useful date)
         memset(out_depth, 0xff, pixnum * sizeof(uint16_t));
@@ -652,7 +693,7 @@ int AlignImpl::C2D(const uint16_t *depth_buffer, int depth_width, int depth_heig
             break;
         case OB_FORMAT_BGRA:
         case OB_FORMAT_RGBA:
-            memset(out_rgb, 0, depth_width * depth_height * sizeof(uint24_t));
+            memset(out_rgb, 0, depth_width * depth_height * sizeof(uint32_t));
             mapPixel<uint32_t>(depth_xy, static_cast<const uint32_t *>(rgb_buffer), color_width, color_height, (uint32_t *)out_rgb, depth_width, depth_height);
             break;
         case OB_FORMAT_MJPG:

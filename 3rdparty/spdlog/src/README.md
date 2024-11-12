@@ -2,7 +2,7 @@
 
 Very fast, header-only/compiled, C++ logging library. [![ci](https://github.com/gabime/spdlog/actions/workflows/ci.yml/badge.svg)](https://github.com/gabime/spdlog/actions/workflows/ci.yml)&nbsp; [![Build status](https://ci.appveyor.com/api/projects/status/d2jnxclg20vd0o50?svg=true&branch=v1.x)](https://ci.appveyor.com/project/gabime/spdlog) [![Release](https://img.shields.io/github/release/gabime/spdlog.svg)](https://github.com/gabime/spdlog/releases/latest)
 
-## Install 
+## Install
 #### Header-only version
 Copy the include [folder](https://github.com/gabime/spdlog/tree/v1.x/include/spdlog) to your build tree and use a C++11 compiler.
 
@@ -12,14 +12,13 @@ $ git clone https://github.com/gabime/spdlog.git
 $ cd spdlog && mkdir build && cd build
 $ cmake .. && make -j
 ```
-      
-   see example [CMakeLists.txt](https://github.com/gabime/spdlog/blob/v1.x/example/CMakeLists.txt) on how to use.
+see example [CMakeLists.txt](https://github.com/gabime/spdlog/blob/v1.x/example/CMakeLists.txt) on how to use.
 
 ## Platforms
- * Linux, FreeBSD, OpenBSD, Solaris, AIX
- * Windows (msvc 2013+, cygwin)
- * macOS (clang 3.5+)
- * Android
+* Linux, FreeBSD, OpenBSD, Solaris, AIX
+* Windows (msvc 2013+, cygwin)
+* macOS (clang 3.5+)
+* Android
 
 ## Package managers:
 * Debian: `sudo apt install libspdlog-dev`
@@ -44,17 +43,18 @@ $ cmake .. && make -j
 * [Custom](https://github.com/gabime/spdlog/wiki/3.-Custom-formatting) formatting.
 * Multi/Single threaded loggers.
 * Various log targets:
-    * Rotating log files.
-    * Daily log files.
-    * Console logging (colors supported).
-    * syslog.
-    * Windows event log.
-    * Windows debugger (```OutputDebugString(..)```).
-    * Easily [extendable](https://github.com/gabime/spdlog/wiki/4.-Sinks#implementing-your-own-sink) with custom log targets.
+  * Rotating log files.
+  * Daily log files.
+  * Console logging (colors supported).
+  * syslog.
+  * Windows event log.
+  * Windows debugger (```OutputDebugString(..)```).
+  * Log to Qt widgets ([example](#log-to-qt-with-nice-colors)).
+  * Easily [extendable](https://github.com/gabime/spdlog/wiki/4.-Sinks#implementing-your-own-sink) with custom log targets.
 * Log filtering - log levels can be modified at runtime as well as compile time.
 * Support for loading log levels from argv or environment var.
 * [Backtrace](#backtrace-support) support - store debug messages in a ring buffer and display them later on demand.
- 
+
 ## Usage samples
 
 #### Basic usage
@@ -79,7 +79,8 @@ int main()
     spdlog::set_pattern("[%H:%M:%S %z] [%n] [%^---%L---%$] [thread %t] %v");
     
     // Compile time log levels
-    // define SPDLOG_ACTIVE_LEVEL to desired level
+    // Note that this does not change the current log level, it will only
+    // remove (depending on SPDLOG_ACTIVE_LEVEL) the call on the release code.
     SPDLOG_TRACE("Some trace message with param {}", 42);
     SPDLOG_DEBUG("Some debug message");
 }
@@ -270,8 +271,9 @@ void async_example()
 ```
 
 ---
-#### Asynchronous logger with multi sinks  
+#### Asynchronous logger with multi sinks
 ```c++
+#include "spdlog/async.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/sinks/rotating_file_sink.h"
 
@@ -292,7 +294,7 @@ void multi_sink_example2()
 template<>
 struct fmt::formatter<my_type> : fmt::formatter<std::string>
 {
-    auto format(my_type my, format_context &ctx) -> decltype(ctx.out())
+    auto format(my_type my, format_context &ctx) const -> decltype(ctx.out())
     {
         return format_to(ctx.out(), "[my_type i={}]", my.i);
     }
@@ -348,7 +350,7 @@ void err_handler_example()
 ```
 
 ---
-#### syslog 
+#### syslog
 ```c++
 #include "spdlog/sinks/syslog_sink.h"
 void syslog_example()
@@ -359,7 +361,7 @@ void syslog_example()
 }
 ```
 ---
-#### Android example 
+#### Android example
 ```c++
 #include "spdlog/sinks/android_sink.h"
 void android_example()
@@ -420,6 +422,37 @@ void replace_default_logger_example()
 }
 ```
 
+---
+#### Log to Qt with nice colors
+```c++
+#include "spdlog/spdlog.h"
+#include "spdlog/sinks/qt_sinks.h"
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
+{
+    setMinimumSize(640, 480);
+    auto log_widget = new QTextEdit(this);
+    setCentralWidget(log_widget);
+    int max_lines = 500; // keep the text widget to max 500 lines. remove old lines if needed.
+    auto logger = spdlog::qt_color_logger_mt("qt_logger", log_widget, max_lines);
+    logger->info("Some info message");
+}
+```
+---
+
+#### Mapped Diagnostic Context
+```c++
+// Mapped Diagnostic Context (MDC) is a map that stores key-value pairs (string values) in thread local storage.
+// Each thread maintains its own MDC, which loggers use to append diagnostic information to log outputs.
+// Note: it is not supported in asynchronous mode due to its reliance on thread-local storage.
+#include "spdlog/mdc.h"
+void mdc_example()
+{
+    spdlog::mdc::put("key1", "value1");
+    spdlog::mdc::put("key2", "value2");
+    // if not using the default format, use the %& formatter to print mdc data
+    // spdlog::set_pattern("[%H:%M:%S %z] [%^%L%$] [%&] %v");
+}
+```
 ---
 ## Benchmarks
 

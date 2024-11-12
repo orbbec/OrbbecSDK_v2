@@ -67,7 +67,7 @@ ObLibuvcDevicePort::ObLibuvcDevicePort(std::shared_ptr<IUsbDevice> usbDev, std::
         LOG_WARN("uvc_open  path={} already opened", portInfo->infUrl);
         std::stringstream ss;
         ss << "uvc_open  path=" << portInfo->infUrl << " failed,return res" << res;
-        LOG_WARN("uvc_open  path={0} failed,return res:${1}", portInfo->infUrl, res);
+        LOG_WARN("uvc_open  path={0} failed,return res:${1}", portInfo->infUrl, static_cast<int>(res));
         throw std::runtime_error(ss.str());
     }
     else {
@@ -365,7 +365,7 @@ StreamProfileList ObLibuvcDevicePort::getStreamProfileList() {
 }
 
 int32_t ObLibuvcDevicePort::uvcCtrlValueTranslate(uvc_req_code action, OBPropertyID propertyId, int32_t value) const {
-    LOG_DEBUG("ObLibuvcDevicePort::uvcCtrlValueTranslate propertyId={0}, action={1}, value={2}", action, propertyId, value);
+    LOG_DEBUG("ObLibuvcDevicePort::uvcCtrlValueTranslate propertyId={0}, action={1}, value={2}", static_cast<int>(action), static_cast<int>(propertyId), value);
     // Value may be translated according to action/propertyId value
     int32_t translated_value = value;
 
@@ -600,5 +600,10 @@ std::string ObLibuvcDevicePort::getUsbConnectType() {
 }
 #endif
 
-}  // namespace libobsensor
+#ifdef __linux__
+OBUvcBackendType ObLibuvcDevicePort::getBackendType() const {
+    return OB_UVC_BACKEND_TYPE_LIBUVC;
+}
+#endif
 
+}  // namespace libobsensor

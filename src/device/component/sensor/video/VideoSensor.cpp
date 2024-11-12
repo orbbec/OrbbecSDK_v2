@@ -77,7 +77,12 @@ void VideoSensor::start(std::shared_ptr<const StreamProfile> sp, FrameCallback c
         if(formatConverter) {
             formatConverter->setConversion(currentFormatFilterConfig_->srcFormat, currentFormatFilterConfig_->dstFormat);
         }
-        currentFormatFilterConfig_->converter->setCallback([this](std::shared_ptr<Frame> frame) { outputFrame(frame); });
+        currentFormatFilterConfig_->converter->setCallback([this](std::shared_ptr<Frame> frame) {
+            auto deviceInfo = owner_->getInfo();
+            LOG_FREQ_CALC(DEBUG, 5000, "{}({}): {} format converter frame callback, frameRate={freq}fps", deviceInfo->name_, deviceInfo->deviceSn_,
+                          sensorType_);
+            outputFrame(frame);
+        });
     }
 
     auto vsPort = std::dynamic_pointer_cast<IVideoStreamPort>(backend_);
@@ -103,6 +108,13 @@ void VideoSensor::start(std::shared_ptr<const StreamProfile> sp, FrameCallback c
 }
 
 void VideoSensor::onBackendFrameCallback(std::shared_ptr<Frame> frame) {
+    if(streamState_ != STREAM_STATE_STREAMING && streamState_ != STREAM_STATE_STARTING) {
+        return;
+    }
+
+    auto deviceInfo = owner_->getInfo();
+    LOG_FREQ_CALC(DEBUG, 5000, "{}({}): {} backend frame callback, frameRate={freq}fps", deviceInfo->name_, deviceInfo->deviceSn_, sensorType_);
+
     auto vsp              = currentBackendStreamProfile_->as<VideoStreamProfile>();
     auto maxFrameDataSize = vsp->getMaxFrameDataSize();
 
@@ -319,7 +331,11 @@ void VideoSensor::setFrameProcessor(std::shared_ptr<FrameProcessor> frameProcess
         throw wrong_api_call_sequence_exception("Can not update frame processor while streaming");
     }
     frameProcessor_ = frameProcessor;
-    frameProcessor_->setCallback([this](std::shared_ptr<Frame> frame) { SensorBase::outputFrame(frame); });
+    frameProcessor_->setCallback([this](std::shared_ptr<Frame> frame) {
+        auto deviceInfo = owner_->getInfo();
+        LOG_FREQ_CALC(DEBUG, 5000, "{}({}): {} frameProcessor_ callback frameRate={freq}fps", deviceInfo->name_, deviceInfo->deviceSn_, sensorType_);
+        SensorBase::outputFrame(frame);
+    });
 }
 
 }  // namespace libobsensor

@@ -30,19 +30,20 @@ private:
     void heartbeatAndFetchState();
 
 private:
-    std::mutex                       commMutex_;
     std::shared_ptr<IVendorDataPort> vendorDataPort_;
 
     uint32_t                                       cbIdCounter_;
     std::mutex                                     stateChangedCallbacksMutex_;
     std::map<uint32_t, DeviceStateChangedCallback> stateChangedCallbacks_;
 
-    std::atomic<bool> heartbeatEnabled_;
-    std::atomic<bool> heartbeatPaused_;
 
+    std::mutex                       commMutex_;
+    std::condition_variable heartbeatAndFetchStateThreadCv_;
     std::thread             heartbeatAndFetchStateThread_;
     std::atomic<bool>       heartbeatAndFetchStateThreadStarted_;
-    std::condition_variable heartbeatAndFetchStateThreadCv_;
+
+    std::atomic<bool> heartbeatEnabled_;
+    std::atomic<bool> heartbeatPaused_;
 
     std::vector<uint8_t> hbRecvData_;
     std::vector<uint8_t> hbSendData_;

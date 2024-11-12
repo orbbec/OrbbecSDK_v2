@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 #include "FemtoMegaDevice.hpp"
-#include "Platform.hpp"
 #include "environment/EnvConfig.hpp"
 #include "stream/StreamProfileFactory.hpp"
 #include "sensor/video/VideoSensor.hpp"
@@ -79,7 +78,7 @@ void FemtoMegaUsbDevice::init() {
     deviceSyncConfigurator->enableDepthDelaySupport(true);
     registerComponent(OB_DEV_COMPONENT_DEVICE_SYNC_CONFIGURATOR, deviceSyncConfigurator);
 
-    auto deviceClockSynchronizer = std::make_shared<DeviceClockSynchronizer>(this);
+    auto deviceClockSynchronizer = std::make_shared<DeviceClockSynchronizer>(this, deviceTimeFreq_, deviceTimeFreq_);
     registerComponent(OB_DEV_COMPONENT_DEVICE_CLOCK_SYNCHRONIZER, deviceClockSynchronizer);
 }
 
@@ -109,7 +108,6 @@ void FemtoMegaUsbDevice::initSensorList() {
         TRY_EXECUTE({ factory = std::make_shared<FrameProcessorFactory>(this); })
         return factory;
     });
-    auto        platform           = Platform::getInstance();
     const auto &sourcePortInfoList = enumInfo_->getSourcePortInfoList();
     auto depthPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(), [](const std::shared_ptr<const SourcePortInfo> &portInfo) {
         return portInfo->portType == SOURCE_PORT_USB_UVC && std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->infIndex == 2;
@@ -121,8 +119,7 @@ void FemtoMegaUsbDevice::initSensorList() {
         registerComponent(
             OB_DEV_COMPONENT_DEPTH_SENSOR,
             [this, depthPortInfo]() {
-                auto platform = Platform::getInstance();
-                auto port     = platform->getSourcePort(depthPortInfo);
+                auto port = getSourcePort(depthPortInfo);
 
                 auto sensor = std::make_shared<VideoSensor>(this, OB_SENSOR_DEPTH, port);
 
@@ -153,8 +150,7 @@ void FemtoMegaUsbDevice::initSensorList() {
 
         // the main property accessor is using the depth port(uvc xu)
         registerComponent(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR, [this, depthPortInfo]() {
-            auto platform = Platform::getInstance();
-            auto port     = platform->getSourcePort(depthPortInfo);
+            auto port     = getSourcePort(depthPortInfo);
             auto accessor = std::make_shared<VendorPropertyAccessor>(this, port);
             return accessor;
         });
@@ -170,8 +166,7 @@ void FemtoMegaUsbDevice::initSensorList() {
         registerComponent(
             OB_DEV_COMPONENT_IR_SENSOR,
             [this, irPortInfo]() {
-                auto platform = Platform::getInstance();
-                auto port     = platform->getSourcePort(irPortInfo);
+                auto port = getSourcePort(irPortInfo);
 
                 auto sensor = std::make_shared<VideoSensor>(this, OB_SENSOR_IR, port);
 
@@ -205,9 +200,8 @@ void FemtoMegaUsbDevice::initSensorList() {
         registerComponent(
             OB_DEV_COMPONENT_COLOR_SENSOR,
             [this, colorPortInfo]() {
-                auto platform = Platform::getInstance();
-                auto port     = platform->getSourcePort(colorPortInfo);
-                auto sensor   = std::make_shared<VideoSensor>(this, OB_SENSOR_COLOR, port);
+                auto port   = getSourcePort(colorPortInfo);
+                auto sensor = std::make_shared<VideoSensor>(this, OB_SENSOR_COLOR, port);
 
                 std::vector<FormatFilterConfig> formatFilterConfigs = {
                     { FormatFilterPolicy::REMOVE, OB_FORMAT_NV12, OB_FORMAT_ANY, nullptr },
@@ -258,8 +252,7 @@ void FemtoMegaUsbDevice::initSensorList() {
         auto imuPortInfo = *imuPortInfoIter;
         registerComponent(OB_DEV_COMPONENT_IMU_STREAMER, [this, imuPortInfo]() {
             // the gyro and accel are both on the same port and share the same filter
-            auto                                  platform           = Platform::getInstance();
-            auto                                  port               = platform->getSourcePort(imuPortInfo);
+            auto                                  port               = getSourcePort(imuPortInfo);
             auto                                  imuReversionFilter = getSensorFrameFilter("IMUFrameReversion", OB_SENSOR_ACCEL, true);
             auto                                  imuCorrectorFilter = getSensorFrameFilter("IMUCorrector", OB_SENSOR_ACCEL, true);
             std::vector<std::shared_ptr<IFilter>> imuFilters         = { imuReversionFilter, imuCorrectorFilter };
@@ -271,8 +264,7 @@ void FemtoMegaUsbDevice::initSensorList() {
         registerComponent(
             OB_DEV_COMPONENT_ACCEL_SENSOR,
             [this, imuPortInfo]() {
-                auto platform             = Platform::getInstance();
-                auto port                 = platform->getSourcePort(imuPortInfo);
+                auto port                 = getSourcePort(imuPortInfo);
                 auto imuStreamer          = getComponentT<ImuStreamer>(OB_DEV_COMPONENT_IMU_STREAMER);
                 auto imuStreamerSharedPtr = imuStreamer.get();
                 auto sensor               = std::make_shared<AccelSensor>(this, port, imuStreamerSharedPtr);
@@ -290,8 +282,7 @@ void FemtoMegaUsbDevice::initSensorList() {
         registerComponent(
             OB_DEV_COMPONENT_GYRO_SENSOR,
             [this, imuPortInfo]() {
-                auto platform             = Platform::getInstance();
-                auto port                 = platform->getSourcePort(imuPortInfo);
+                auto port                 = getSourcePort(imuPortInfo);
                 auto imuStreamer          = getComponentT<ImuStreamer>(OB_DEV_COMPONENT_IMU_STREAMER);
                 auto imuStreamerSharedPtr = imuStreamer.get();
                 auto sensor               = std::make_shared<GyroSensor>(this, port, imuStreamerSharedPtr);
@@ -316,12 +307,10 @@ void FemtoMegaUsbDevice::initProperties() {
 
     auto sensors = getSensorTypeList();
     for(auto &sensor: sensors) {
-        auto  platform       = Platform::getInstance();
         auto &sourcePortInfo = getSensorPortInfo(sensor);
         if(sensor == OB_SENSOR_COLOR) {
-            auto uvcPropertyAccessor = std::make_shared<LazyPropertyAccessor>([&sourcePortInfo]() {
-                auto platform = Platform::getInstance();
-                auto port     = platform->getSourcePort(sourcePortInfo);
+            auto uvcPropertyAccessor = std::make_shared<LazyPropertyAccessor>([this, &sourcePortInfo]() {
+                auto port     = getSourcePort(sourcePortInfo);
                 auto accessor = std::make_shared<UvcPropertyAccessor>(port);
                 return accessor;
             });
@@ -338,8 +327,7 @@ void FemtoMegaUsbDevice::initProperties() {
         }
         else if(sensor == OB_SENSOR_DEPTH) {
             auto vendorPropertyAccessor = std::make_shared<LazySuperPropertyAccessor>([this, &sourcePortInfo]() {
-                auto platform = Platform::getInstance();
-                auto port     = platform->getSourcePort(sourcePortInfo);
+                auto port     = getSourcePort(sourcePortInfo);
                 auto accessor = std::make_shared<VendorPropertyAccessor>(this, port);
                 return accessor;
             });
@@ -466,24 +454,26 @@ void FemtoMegaNetDevice::init() {
 }
 
 void FemtoMegaNetDevice::fetchDeviceInfo() {
+    auto portInfo          = enumInfo_->getSourcePortInfoList().front();
+    auto netPortInfo       = std::dynamic_pointer_cast<const NetSourcePortInfo>(portInfo);
+    auto deviceInfo        = std::make_shared<NetDeviceInfo>();
+    deviceInfo->ipAddress_ = netPortInfo->address;
+    deviceInfo_            = deviceInfo;
+
+    deviceInfo_->name_           = enumInfo_->getName();
+    deviceInfo_->pid_            = enumInfo_->getPid();
+    deviceInfo_->vid_            = enumInfo_->getVid();
+    deviceInfo_->uid_            = enumInfo_->getUid();
+    deviceInfo_->connectionType_ = enumInfo_->getConnectionType();
+
     auto propServer                   = getPropertyServer();
     auto version                      = propServer->getStructureDataT<OBVersionInfo>(OB_STRUCT_VERSION);
-    auto deviceInfo                   = std::make_shared<NetDeviceInfo>();
-    auto portInfo                     = enumInfo_->getSourcePortInfoList().front();
-    auto netPortInfo                  = std::dynamic_pointer_cast<const NetSourcePortInfo>(portInfo);
-    deviceInfo->ipAddress_            = netPortInfo->address;
-    deviceInfo_                       = deviceInfo;
-    deviceInfo_->name_                = enumInfo_->getName();
     deviceInfo_->fwVersion_           = version.firmwareVersion;
     deviceInfo_->deviceSn_            = version.serialNumber;
     deviceInfo_->asicName_            = version.depthChip;
     deviceInfo_->hwVersion_           = version.hardwareVersion;
     deviceInfo_->type_                = static_cast<uint16_t>(version.deviceType);
     deviceInfo_->supportedSdkVersion_ = version.sdkVersion;
-    deviceInfo_->pid_                 = enumInfo_->getPid();
-    deviceInfo_->vid_                 = enumInfo_->getVid();
-    deviceInfo_->uid_                 = enumInfo_->getUid();
-    deviceInfo_->connectionType_      = enumInfo_->getConnectionType();
 
     // remove the prefix "Orbbec " from the device name if contained
     if(deviceInfo_->name_.find("Orbbec ") == 0) {
@@ -502,7 +492,6 @@ void FemtoMegaNetDevice::initSensorList() {
         return factory;
     });
 
-    auto        platform           = Platform::getInstance();
     const auto &sourcePortInfoList = enumInfo_->getSourcePortInfoList();
     auto depthPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(), [](const std::shared_ptr<const SourcePortInfo> &portInfo) {
         return portInfo->portType == SOURCE_PORT_NET_RTSP && std::dynamic_pointer_cast<const RTSPStreamPortInfo>(portInfo)->streamType == OB_STREAM_DEPTH;
@@ -513,8 +502,7 @@ void FemtoMegaNetDevice::initSensorList() {
         registerComponent(
             OB_DEV_COMPONENT_DEPTH_SENSOR,
             [this, depthPortInfo]() {
-                auto platform = Platform::getInstance();
-                auto port     = platform->getSourcePort(depthPortInfo);
+                auto port = getSourcePort(depthPortInfo);
 
                 auto sensor = std::make_shared<VideoSensor>(this, OB_SENSOR_DEPTH, port);
 
@@ -554,8 +542,7 @@ void FemtoMegaNetDevice::initSensorList() {
         registerComponent(
             OB_DEV_COMPONENT_IR_SENSOR,
             [this, irPortInfo]() {
-                auto platform = Platform::getInstance();
-                auto port     = platform->getSourcePort(irPortInfo);
+                auto port = getSourcePort(irPortInfo);
 
                 auto sensor = std::make_shared<VideoSensor>(this, OB_SENSOR_IR, port);
 
@@ -587,9 +574,8 @@ void FemtoMegaNetDevice::initSensorList() {
         registerComponent(
             OB_DEV_COMPONENT_COLOR_SENSOR,
             [this, colorPortInfo]() {
-                auto platform = Platform::getInstance();
-                auto port     = platform->getSourcePort(colorPortInfo);
-                auto sensor   = std::make_shared<VideoSensor>(this, OB_SENSOR_COLOR, port);
+                auto port   = getSourcePort(colorPortInfo);
+                auto sensor = std::make_shared<VideoSensor>(this, OB_SENSOR_COLOR, port);
 
                 std::vector<FormatFilterConfig> formatFilterConfigs = {
                     { FormatFilterPolicy::REMOVE, OB_FORMAT_NV12, OB_FORMAT_ANY, nullptr },
@@ -641,8 +627,7 @@ void FemtoMegaNetDevice::initSensorList() {
         auto imuPortInfo = *imuPortInfoIter;
         registerComponent(OB_DEV_COMPONENT_IMU_STREAMER, [this, imuPortInfo]() {
             // the gyro and accel are both on the same port and share the same filter
-            auto                                  platform           = Platform::getInstance();
-            auto                                  port               = platform->getSourcePort(imuPortInfo);
+            auto                                  port               = getSourcePort(imuPortInfo);
             auto                                  imuReversionFilter = getSensorFrameFilter("IMUFrameReversion", OB_SENSOR_ACCEL, true);
             auto                                  imuCorrectorFilter = getSensorFrameFilter("IMUCorrector", OB_SENSOR_ACCEL, true);
             std::vector<std::shared_ptr<IFilter>> imuFilters         = { imuReversionFilter, imuCorrectorFilter };
@@ -654,8 +639,7 @@ void FemtoMegaNetDevice::initSensorList() {
         registerComponent(
             OB_DEV_COMPONENT_ACCEL_SENSOR,
             [this, imuPortInfo]() {
-                auto platform             = Platform::getInstance();
-                auto port                 = platform->getSourcePort(imuPortInfo);
+                auto port                 = getSourcePort(imuPortInfo);
                 auto imuStreamer          = getComponentT<ImuStreamer>(OB_DEV_COMPONENT_IMU_STREAMER);
                 auto imuStreamerSharedPtr = imuStreamer.get();
                 auto sensor               = std::make_shared<AccelSensor>(this, port, imuStreamerSharedPtr);
@@ -672,8 +656,7 @@ void FemtoMegaNetDevice::initSensorList() {
         registerComponent(
             OB_DEV_COMPONENT_GYRO_SENSOR,
             [this, imuPortInfo]() {
-                auto platform             = Platform::getInstance();
-                auto port                 = platform->getSourcePort(imuPortInfo);
+                auto port                 = getSourcePort(imuPortInfo);
                 auto imuStreamer          = getComponentT<ImuStreamer>(OB_DEV_COMPONENT_IMU_STREAMER);
                 auto imuStreamerSharedPtr = imuStreamer.get();
                 auto sensor               = std::make_shared<GyroSensor>(this, port, imuStreamerSharedPtr);
@@ -703,16 +686,14 @@ void FemtoMegaNetDevice::initProperties() {
 
     auto vendorPortInfo         = *vendorPortInfoIter;
     auto vendorPropertyAccessor = std::make_shared<LazySuperPropertyAccessor>([this, vendorPortInfo]() {
-        auto platform = Platform::getInstance();
-        auto port     = platform->getSourcePort(vendorPortInfo);
+        auto port     = getSourcePort(vendorPortInfo);
         auto accessor = std::make_shared<VendorPropertyAccessor>(this, port);
         return accessor;
     });
 
     // the main property accessor
     registerComponent(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR, [this, vendorPortInfo]() {
-        auto platform = Platform::getInstance();
-        auto port     = platform->getSourcePort(vendorPortInfo);
+        auto port     = getSourcePort(vendorPortInfo);
         auto accessor = std::make_shared<VendorPropertyAccessor>(this, port);
         return accessor;
     });

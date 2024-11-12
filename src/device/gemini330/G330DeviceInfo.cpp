@@ -3,6 +3,7 @@
 
 #include "G330DeviceInfo.hpp"
 #include "G330Device.hpp"
+#include "DabaiADevice.hpp"
 #include "DevicePids.hpp"
 #include "usb/UsbPortGroup.hpp"
 #include "ethernet/NetPortGroup.hpp"
@@ -17,10 +18,10 @@
 namespace libobsensor {
 
 const std::map<int, std::string> G300DeviceNameMap = {
-    { 0x06d0, "Gemini 2R" },     { 0x06d1, "Gemini 2RL" },   { 0x0800, "Gemini 335" },   { 0x0801, "Gemini 330" },
-    { 0x0802, "Gemini dm330" },  { 0x0803, "Gemini 336" },   { 0x0804, "Gemini 335L" },  { 0x0805, "Gemini 330L" },
-    { 0x0806, "Gemini dm330L" }, { 0x0807, "Gemini 336L" },  { 0x080B, "Gemini 335Lg" }, { 0x080C, "Gemini 330Lg" },
-    { 0x080D, "Gemini 336Lg" },  { 0x080E, "Gemini 335Le" }, { 0x080F, "Gemini 330Le" }, { 0x0810, "Gemini 336Le" },
+    { 0x06d0, "Gemini 2R" },    { 0x06d1, "Gemini 2RL" },   { 0x0800, "Gemini 335" },   { 0x0801, "Gemini 330" },    { 0x0802, "Gemini dm330" },
+    { 0x0803, "Gemini 336" },   { 0x0804, "Gemini 335L" },  { 0x0805, "Gemini 330L" },  { 0x0806, "Gemini dm330L" }, { 0x0807, "Gemini 336L" },
+    { 0x080B, "Gemini 335Lg" }, { 0x080C, "Gemini 330Lg" }, { 0x080D, "Gemini 336Lg" }, { 0x080E, "Gemini 335Le" },  { 0x080F, "Gemini 330Le" },
+    { 0x0A12, "Dabai A" },      { 0x0A13, "Dabai AL" },
 };
 
 G330DeviceInfo::G330DeviceInfo(const SourcePortInfoList groupedInfoList) {
@@ -132,4 +133,3 @@ std::vector<std::shared_ptr<IDeviceEnumInfo>> G330DeviceInfo::pickNetDevices(con
 }
 
 }  // namespace libobsensor
-

@@ -110,11 +110,6 @@ private:
 
     void queryXuNodeId(const CComPtr<IKsTopologyInfo> &topologyInfo);
 
-    void initTimeoutThread();
-    void terminateTimeoutThread();
-    void addTimeoutBarrier(std::string msg);
-    void removeTimeoutBarrier();
-
 private:
     std::recursive_mutex deviceMutex_;
 
@@ -140,13 +135,6 @@ private:
     std::wstring      deviceId_;
 
     StreamProfileList profileList_;
-
-    std::string             timeoutMsg_;
-    std::mutex              timeoutMutex_;
-    std::condition_variable timeoutCondition_;
-    std::thread             timeoutThread_;
-    std::atomic_bool        timeoutThreadRun_;
-    std::atomic_bool        hasTimeoutBarrier_;
 
 public:
     STDMETHODIMP QueryInterface(REFIID iid, void **ppv) override;

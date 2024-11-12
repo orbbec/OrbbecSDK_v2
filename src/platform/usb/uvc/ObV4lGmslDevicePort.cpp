@@ -195,7 +195,7 @@ int checkVideoIndex(const std::string &dev_name) {
         video_index = static_cast<uint8_t>(std::stoi(match[0]));
     }
     else {
-        LOG_ERROR("Unresolved Video4Linux device pattern:  name device is not support!  dev_name:{}", dev_name);
+        LOG_DEBUG("Unresolved Video4Linux device pattern: name device is not support!  dev_name:{}", dev_name);
         return -1;
     }
     return video_index;
@@ -1124,7 +1124,7 @@ void ObV4lGmslDevicePort::stopStream(std::shared_ptr<const StreamProfile> profil
             LOG_DEBUG("-deviceHandles devHandle->profile:{}, profile:{}, continue...", devHandle->profile, profile);
             continue;
         }
-        LOG_DEBUG("-deviceHandles- devHandle->isCapturing:{}, devHandle->profile:{}, profile:{}", devHandle->isCapturing, devHandle->profile, profile);
+        LOG_DEBUG("-deviceHandles- devHandle->isCapturing:{}, devHandle->profile:{}, profile:{}", devHandle->isCapturing.load(), devHandle->profile, profile);
 
         devHandle->isCapturing = false;
         // signal the capture loop to stop
@@ -1498,9 +1498,7 @@ bool ObV4lGmslDevicePort::setXuExt(uint32_t ctrl, const uint8_t *data, uint32_t 
 
     if(G2R_CAMERA_CID_SET_DATA == ctrl) {
         // struct v4l2_ext_control xctrl { cid, G2R_RW_DATA_LEN, 0, 0 };
-        struct v4l2_ext_control xctrl {
-            cid, G2R_RW_DATA_LEN, 0, 0
-        };
+        struct v4l2_ext_control xctrl{ cid, G2R_RW_DATA_LEN, 0, 0 };
         xctrl.p_u8 = const_cast<uint8_t *>(data);
 
 #if 0
@@ -1555,10 +1553,8 @@ bool ObV4lGmslDevicePort::getXuExt(uint32_t ctrl, uint8_t *data, uint32_t *len) 
     VALIDATE_NOT_NULL(len);
     auto                    fd  = deviceHandles_.front()->fd;
     auto                    cid = ctrl;  // CIDFromOBPropertyID(ctrl);
-    struct v4l2_ext_control control {
-        cid, G2R_RW_DATA_LEN, 0, 0
-    };
-    std::vector<uint8_t> dataRecvBuf(MAX_I2C_PACKET_SIZE, 0);
+    struct v4l2_ext_control control{ cid, G2R_RW_DATA_LEN, 0, 0 };
+    std::vector<uint8_t>    dataRecvBuf(MAX_I2C_PACKET_SIZE, 0);
     control.p_u8 = dataRecvBuf.data();
     v4l2_ext_controls ext{ control.id & 0xffff0000, 1, 0, 0, 0, &control };
 
@@ -1665,7 +1661,7 @@ int ObV4lGmslDevicePort::resetGmslDriver() {
     LOG_DEBUG("-Entry ObV4lGmslDevicePort::rebootFirmware");
     auto fd = deviceHandles_.front()->fd;
 
-    struct v4l2_ext_control control {};
+    struct v4l2_ext_control control{};
     memset(&control, 0, sizeof(control));
     control.id    = G2R_CAMERA_CID_RESET_POWER;
     control.value = 1;
@@ -1873,4 +1869,9 @@ const std::vector<UsbInterfaceInfo> ObV4lGmslDevicePort::queryDevicesInfo() {
     LOG_DEBUG("queryDevicesInfo done!");
     return devInfoList;
 }
+
+OBUvcBackendType ObV4lGmslDevicePort::getBackendType() const {
+    return OB_UVC_BACKEND_TYPE_V4L2;
+}
+
 }  // namespace libobsensor

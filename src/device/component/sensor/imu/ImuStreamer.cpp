@@ -14,11 +14,19 @@ namespace libobsensor {
 
 const size_t IMU_FILTER_FRAME_QUEUE_SIZE = 100;
 
-ImuStreamer::ImuStreamer(IDevice *owner, const std::shared_ptr<IDataStreamPort> &backend, const std::shared_ptr<IFilter> &filter)
-    : ImuStreamer(owner, backend, std::vector<std::shared_ptr<IFilter>>({ filter })) {}
+ImuStreamer::ImuStreamer(IDevice *owner, const std::shared_ptr<IDataStreamPort> &backend, const std::shared_ptr<IFilter> &filter,
+                         std::shared_ptr<IImuCalculator> imuCalculator)
+    : ImuStreamer(owner, backend, std::vector<std::shared_ptr<IFilter>>({ filter }), imuCalculator) {}
 
-ImuStreamer::ImuStreamer(IDevice *owner, const std::shared_ptr<IDataStreamPort> &backend, std::vector<std::shared_ptr<IFilter>> filters)
-    : owner_(owner), backend_(backend), filters_(std::move(filters)), running_(false) {
+ImuStreamer::ImuStreamer(IDevice *owner, const std::shared_ptr<IDataStreamPort> &backend, std::vector<std::shared_ptr<IFilter>> filters,
+                         std::shared_ptr<IImuCalculator> imuCalculator)
+    : owner_(owner), backend_(backend), filters_(std::move(filters)), calculator_(imuCalculator), running_(false), frameIndex_(0) {
+
+    if(!calculator_) {
+        // default to ICM42668P
+        calculator_ = std::make_shared<ImuCalculatorICM42668P>();
+    }
+
     auto iter = filters_.begin();
     while(iter != filters_.end()) {
         (*iter)->resizeFrameQueue(IMU_FILTER_FRAME_QUEUE_SIZE);
@@ -141,10 +149,10 @@ void ImuStreamer::parseIMUData(std::shared_ptr<Frame> frame) {
             auto accelFrameData = (AccelFrame::Data *)accelFrame->getData();
             auto fs             = static_cast<uint8_t>(accelStreamProfile->getFullScaleRange());
 
-            accelFrameData->value.x = IMUCorrector::calculateAccelGravity(static_cast<int16_t>(imuData->accelX), fs);
-            accelFrameData->value.y = IMUCorrector::calculateAccelGravity(static_cast<int16_t>(imuData->accelY), fs);
-            accelFrameData->value.z = IMUCorrector::calculateAccelGravity(static_cast<int16_t>(imuData->accelZ), fs);
-            accelFrameData->temp    = IMUCorrector::calculateRegisterTemperature(imuData->temperature);
+            accelFrameData->value.x = calculator_->calculateAccelGravity(static_cast<int16_t>(imuData->accelX), fs);
+            accelFrameData->value.y = calculator_->calculateAccelGravity(static_cast<int16_t>(imuData->accelY), fs);
+            accelFrameData->value.z = calculator_->calculateAccelGravity(static_cast<int16_t>(imuData->accelZ), fs);
+            accelFrameData->temp    = calculator_->calculateRegisterTemperature(imuData->temperature);
 
             accelFrame->setNumber(frameIndex);
             accelFrame->setTimeStampUsec(timestamp);
@@ -156,10 +164,10 @@ void ImuStreamer::parseIMUData(std::shared_ptr<Frame> frame) {
             auto gyroFrame         = FrameFactory::createFrameFromStreamProfile(gyroStreamProfile);
             auto gyroFrameData     = (GyroFrame::Data *)gyroFrame->getData();
             auto fs                = static_cast<uint8_t>(gyroStreamProfile->getFullScaleRange());
-            gyroFrameData->value.x = IMUCorrector::calculateGyroDPS(static_cast<int16_t>(imuData->gyroX), fs);
-            gyroFrameData->value.y = IMUCorrector::calculateGyroDPS(static_cast<int16_t>(imuData->gyroY), fs);
-            gyroFrameData->value.z = IMUCorrector::calculateGyroDPS(static_cast<int16_t>(imuData->gyroZ), fs);
-            gyroFrameData->temp    = IMUCorrector::calculateRegisterTemperature(imuData->temperature);
+            gyroFrameData->value.x = calculator_->calculateGyroDPS(static_cast<int16_t>(imuData->gyroX), fs);
+            gyroFrameData->value.y = calculator_->calculateGyroDPS(static_cast<int16_t>(imuData->gyroY), fs);
+            gyroFrameData->value.z = calculator_->calculateGyroDPS(static_cast<int16_t>(imuData->gyroZ), fs);
+            gyroFrameData->temp    = calculator_->calculateRegisterTemperature(imuData->temperature);
 
             gyroFrame->setNumber(frameIndex);
             gyroFrame->setTimeStampUsec(timestamp);

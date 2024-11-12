@@ -102,6 +102,8 @@ public:
     static std::vector<std::shared_ptr<V4lDeviceInfo>> queryRelatedDevices(std::shared_ptr<const USBSourcePortInfo> portInfo);
     static bool                                        isContainedMetadataDevice(std::shared_ptr<const USBSourcePortInfo> portInfo);
 
+    OBUvcBackendType getBackendType() const override;
+
 private:
     static void     captureLoop(std::shared_ptr<V4lDeviceHandle> deviceHandle);
     bool            getXu(uint8_t ctrl, uint8_t *data, uint32_t *len);
@@ -118,4 +120,3 @@ private:
 };
 
 }  // namespace libobsensor
-

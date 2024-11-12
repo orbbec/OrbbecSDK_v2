@@ -79,7 +79,7 @@ public:
     virtual ~DepthFrameProcessor() noexcept;
 
     void setHardwareD2CProcessParams(uint32_t colorWidth, uint32_t colorHeight, uint32_t depthWidth, uint32_t depthHeight,
-                                     std::vector<OBCameraParam> calibrationCameraParams, std::vector<OBD2CProfile> d2cProfiles);
+                                     std::vector<OBCameraParam> calibrationCameraParams, std::vector<OBD2CProfile> d2cProfiles, bool matchTargetResolution);
 
     void enableHardwareD2CProcess(bool enable);
 };

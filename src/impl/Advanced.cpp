@@ -9,6 +9,7 @@
 #include "IPresetManager.hpp"
 #include "IDevice.hpp"
 #include "IDeviceComponent.hpp"
+#include "IFrameInterleaveManager.hpp"
 
 #ifdef __cplusplus
 extern "C" {
@@ -27,8 +28,8 @@ HANDLE_EXCEPTIONS_AND_RETURN({}, device)
 
 const char *ob_device_get_current_depth_work_mode_name(const ob_device *device, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(device);
-    auto               workModeMgr = device->device->getComponentT<libobsensor::IDepthWorkModeManager>(libobsensor::OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
-    auto               &checksum    = workModeMgr->getCurrentDepthWorkMode();
+    auto  workModeMgr = device->device->getComponentT<libobsensor::IDepthWorkModeManager>(libobsensor::OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
+    auto &checksum    = workModeMgr->getCurrentDepthWorkMode();
     return checksum.name;
 }
 HANDLE_EXCEPTIONS_AND_RETURN({}, device)
@@ -187,6 +188,68 @@ bool ob_device_preset_list_has_preset(const ob_device_preset_list *preset_list, 
     return false;
 }
 HANDLE_EXCEPTIONS_AND_RETURN(false, preset_list, preset_name)
+
+bool ob_device_is_frame_interleave_supported(const ob_device *device, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(device);
+    return device->device->isComponentExists(libobsensor::OB_DEV_COMPONENT_FRAME_INTERLEAVE_MANAGER);
+}
+HANDLE_EXCEPTIONS_AND_RETURN(false, device)
+
+void ob_device_load_frame_interleave(ob_device *device, const char *frame_interleave_name, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(device);
+    VALIDATE_NOT_NULL(frame_interleave_name);
+    auto frameInterleaveMgr = device->device->getComponentT<libobsensor::IFrameInterleaveManager>(libobsensor::OB_DEV_COMPONENT_FRAME_INTERLEAVE_MANAGER);
+
+    frameInterleaveMgr->loadFrameInterleave(frame_interleave_name);
+}
+HANDLE_EXCEPTIONS_NO_RETURN(device, frame_interleave_name)
+
+ob_device_frame_interleave_list *ob_device_get_available_frame_interleave_list(ob_device *device, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(device);
+    auto impl = new ob_device_frame_interleave_list();
+
+    auto frameInterleaveMgr =
+        device->device->getComponentT<libobsensor::IFrameInterleaveManager>(libobsensor::OB_DEV_COMPONENT_FRAME_INTERLEAVE_MANAGER, false);
+    if(frameInterleaveMgr) {
+        auto frameInterleaveList  = frameInterleaveMgr->getAvailableFrameInterleaveList();
+        impl->frameInterleaveList = frameInterleaveList;
+    }
+
+    return impl;
+}
+HANDLE_EXCEPTIONS_AND_RETURN(nullptr, device)
+
+void ob_delete_frame_interleave_list(ob_device_frame_interleave_list *frame_interleave_list, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(frame_interleave_list);
+    delete frame_interleave_list;
+}
+HANDLE_EXCEPTIONS_NO_RETURN(frame_interleave_list)
+
+uint32_t ob_device_frame_interleave_list_get_count(ob_device_frame_interleave_list *frame_interleave_list, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(frame_interleave_list);
+    return static_cast<uint32_t>(frame_interleave_list->frameInterleaveList.size());
+}
+HANDLE_EXCEPTIONS_AND_RETURN(0, frame_interleave_list)
+
+const char *ob_device_frame_interleave_list_get_name(ob_device_frame_interleave_list *frame_interleave_list, uint32_t index, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(frame_interleave_list);
+    VALIDATE_UNSIGNED_INDEX(index, frame_interleave_list->frameInterleaveList.size());
+    return frame_interleave_list->frameInterleaveList.at(index).c_str();
+}
+HANDLE_EXCEPTIONS_AND_RETURN(nullptr, frame_interleave_list, index)
+
+bool ob_device_frame_interleave_list_has_frame_interleave(ob_device_frame_interleave_list *frame_interleave_list, const char *frame_interleave_name,
+                                                          ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(frame_interleave_list);
+    VALIDATE_NOT_NULL(frame_interleave_name);
+    for(auto &name: frame_interleave_list->frameInterleaveList) {
+        if(name == frame_interleave_name) {
+            return true;
+        }
+    }
+    return false;
+}
+HANDLE_EXCEPTIONS_AND_RETURN(false, frame_interleave_list, frame_interleave_name)
 
 #ifdef __cplusplus
 }

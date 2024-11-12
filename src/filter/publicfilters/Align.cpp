@@ -15,39 +15,32 @@ const std::map<OBStreamType, OBFrameType> streamTypeToFrameType = { { OB_STREAM_
                                                                     { OB_STREAM_IR_LEFT, OB_FRAME_IR_LEFT },
                                                                     { OB_STREAM_IR_RIGHT, OB_FRAME_IR_RIGHT } };
 
-Align::Align() : align_to_stream_(OB_STREAM_COLOR) {
-    pImpl = new AlignImpl();
-    memset(&from_intrin_, 0, sizeof(OBCameraIntrinsic));
-    memset(&from_disto_, 0, sizeof(OBCameraDistortion));
-    memset(&to_intrin_, 0, sizeof(OBCameraIntrinsic));
-    memset(&to_disto_, 0, sizeof(OBCameraDistortion));
-    memset(&from_to_extrin_, 0, sizeof(OBTransform));
-    depth_unit_mm_         = 1.f;
-    add_target_distortion_ = true;
-    gap_fill_copy_         = false;
-}
+Align::Align()
+    : impl_(new AlignImpl()),  //
+      alignToStreamType_(OB_STREAM_COLOR),
+      addTargetDistortion_(true),
+      gapFillCopy_(true),
+      matchTargetRes_(true) {}
 
 Align::~Align() noexcept {
     reset();
-    if(pImpl) {
-        delete pImpl;
-        pImpl = nullptr;
-    }
+    delete impl_;
 }
 
 void Align::updateConfig(std::vector<std::string> &params) {
-    // AlignType, TargetDistortion, GapFillCopy
+    // AlignType, TargetDistortion, GapFillCopy, matchTargetRes
     std::lock_guard<std::recursive_mutex> lock(alignMutex_);
-    if(params.size() != 3) {
+    if(params.size() != 4) {
         throw invalid_value_exception("Align config error: params size not match");
     }
     try {
         int align_to_stream = std::stoi(params[0]);
         if(align_to_stream >= OB_STREAM_IR && align_to_stream <= OB_STREAM_IR_RIGHT) {
-            align_to_stream_ = (OBStreamType)align_to_stream;
+            alignToStreamType_ = (OBStreamType)align_to_stream;
         }
-        add_target_distortion_ = bool(std::stoi(params[1]));
-        gap_fill_copy_         = bool(std::stoi(params[2]));
+        addTargetDistortion_ = bool(std::stoi(params[1]));
+        gapFillCopy_         = bool(std::stoi(params[2]));
+        matchTargetRes_      = bool(std::stoi(params[3]));
     }
     catch(const std::exception &e) {
         throw invalid_value_exception("Align config error: " + std::string(e.what()));
@@ -55,108 +48,128 @@ void Align::updateConfig(std::vector<std::string> &params) {
 }
 
 const std::string &Align::getConfigSchema() const {
-    static const std::string schema = "AlignType, integer, 1, 7, 1, 2, aligned to the type of data stream\n"
+    // csv format: name, type, min, max, step, default, description
+    static const std::string schema = "AlignType, integer, 1, 7, 1, 2, align to the type of data stream\n"
                                       "TargetDistortion, boolean, 0, 1, 1, 1, add distortion of the target stream\n"
-                                      "GapFillCopy, boolean, 0, 1, 1, 0, enable gap fill";
+                                      "GapFillCopy, boolean, 0, 1, 1, 0, enable gap fill\n"
+                                      "MatchTargetRes, boolean, 0, 1, 1, 1, enable match the output resolution to the align target resolution\n";
     return schema;
 }
 
 void Align::reset() {
-    pImpl->reset();
+    impl_->reset();
 }
 
 std::shared_ptr<Frame> Align::process(std::shared_ptr<const Frame> frame) {
     std::lock_guard<std::recursive_mutex> lock(alignMutex_);
-    if(!frame->is<FrameSet>()) {
-        LOG_WARN("Invalid frame!");
-        return FrameFactory::createFrameFromOtherFrame(frame, true);
-    }
 
-    auto newFrame = FrameFactory::createFrameFromOtherFrame(frame);
-    auto frames   = newFrame->as<FrameSet>();
-    // get type of align_to_stream_
-    auto existFrame = frames->getFrame(getAlignFrameType());
-    if(!existFrame) {
-        return frames;
+    std::shared_ptr<const DepthFrame> depth;
+    if(frame->is<FrameSet>()) {
+        auto fset = frame->as<FrameSet>();
+        auto df   = fset->getFrame(OB_FRAME_DEPTH);
+        if(!df) {
+            LOG_WARN("Invalid input frame, not depth frame found!");
+            return nullptr;
+        }
+        depth = df->as<DepthFrame>();
     }
-
-    auto depth = frames->getFrame(OB_FRAME_DEPTH);
-    if(!depth) {
-        LOG_WARN("Invalid depth frame!");
-        return frames;
+    else if(frame->is<DepthFrame>()) {
+        depth = frame->as<DepthFrame>();
+    }
+    else {
+        LOG_WARN("Invalid input frame, not depth frame found!");
+        return nullptr;
     }
 
     auto depthFormat = depth->getFormat();
     if(!(depthFormat == OB_FORMAT_Z16 || depthFormat == OB_FORMAT_Y16)) {
-        LOG_WARN("Invalid depth frame!");
-        return frames;
+        LOG_WARN("Invalid depth frame  format{}, only support Z16 or Y16!", depthFormat);
+        return nullptr;
     }
 
-    depth_unit_mm_ = depth->as<DepthFrame>()->getValueScale();
-
-    // prepare "other" data buffer to vector of Frame
+    // prepare "other" frames for alignment if
     std::vector<std::shared_ptr<const Frame>> other_frames;
-    if(align_to_stream_ == OB_STREAM_DEPTH) {  // other to depth
-        uint32_t frameCount = frames->getCount();
-        for(uint32_t i = 0; i < frameCount; i++) {
-            std::shared_ptr<const Frame> item = frames->getFrame(i);
-            if((item->getType() != OB_FRAME_DEPTH) && item->is<VideoFrame>()) {
-                other_frames.push_back(item);
+    if(frame->is<FrameSet>()) {
+        auto fset = frame->as<FrameSet>();
+        if(alignToStreamType_ == OB_STREAM_DEPTH) {  // other to depth
+            uint32_t frameCount = fset->getCount();
+            for(uint32_t i = 0; i < frameCount; i++) {
+                std::shared_ptr<const Frame> item = fset->getFrame(i);
+                if((item->getType() != OB_FRAME_DEPTH) && item->is<VideoFrame>()) {
+                    other_frames.push_back(item);
+                }
             }
         }
-    }
-    else {
-        uint32_t frameCount = frames->getCount();
-        for(uint32_t i = 0; i < frameCount; i++) {
-            std::shared_ptr<const Frame> item = frames->getFrame(i);
-            if((item->getType() == streamTypeToFrameType.at(align_to_stream_))) {
-                other_frames.push_back(item);
+        else {
+            uint32_t frameCount = fset->getCount();
+            for(uint32_t i = 0; i < frameCount; i++) {
+                std::shared_ptr<const Frame> item = fset->getFrame(i);
+                if((item->getType() == streamTypeToFrameType.at(alignToStreamType_))) {
+                    other_frames.push_back(item);
+                }
             }
         }
     }
 
-    // create aligned buffer and do alignment
-    std::shared_ptr<Frame> aligned_frame = nullptr;
-    if(align_to_stream_ == OB_STREAM_DEPTH) {  // other to depth
+    std::shared_ptr<Frame> outFrame;
+    // create align buffer and do alignment
+    if(alignToStreamType_ == OB_STREAM_DEPTH) {  // other to depth
+        if(!frame->is<FrameSet>()) {
+            LOG_WARN("Invalid input frame, other frame align to depth only support FrameSet!");
+        }
+        outFrame = FrameFactory::createFrameFromOtherFrame(frame);
+        auto to  = depth;
         for(auto from: other_frames) {
-            if(!from) {
-                LOG_ERROR("from is nullptr!");
-                continue;
-            }
-            auto original_profile = from->getStreamProfile()->as<VideoStreamProfile>();
-            auto to_profile       = depth->getStreamProfile()->as<VideoStreamProfile>();
-            auto alignProfile     = createAlignedProfile(original_profile, to_profile);
+            auto fromProfile    = from->getStreamProfile()->as<VideoStreamProfile>();
+            auto toProfile      = to->getStreamProfile()->as<VideoStreamProfile>();
+            auto alignToProfile = createAlignedProfile(fromProfile, toProfile);
+            auto alignToFrame   = FrameFactory::createFrameFromStreamProfile(alignToProfile);
+            alignToFrame->copyInfoFromOther(from);
+            alignFrames(from, alignToFrame, depth);
 
-            aligned_frame = FrameFactory::createVideoFrame(from->getType(), from->getFormat(), alignProfile->getWidth(), alignProfile->getHeight(), 0);
-            if(aligned_frame) {
-                aligned_frame->copyInfoFromOther(from);
-                aligned_frame->setStreamProfile(alignProfile);
-                alignFrames(aligned_frame, from, depth);
-                frames->pushFrame(std::move(aligned_frame));
-            }
+            auto outFrameSet = outFrame->as<FrameSet>();
+            outFrameSet->pushFrame(std::move(alignToFrame));
         }
     }
     else {
-        auto to = other_frames.front();  // depth to other
+        auto from = depth;
+        if(other_frames.empty() && !alignProfile_ && !toProfile_) {
+            LOG_WARN("No other frame or align profile or to profile found!");
+            return nullptr;
+        }
 
-        auto original_profile = depth->getStreamProfile()->as<VideoStreamProfile>();
-        auto to_profile       = to->getStreamProfile()->as<VideoStreamProfile>();
-        auto alignProfile     = createAlignedProfile(original_profile, to_profile);
-
-        aligned_frame = FrameFactory::createVideoFrame(depth->getType(), depth->getFormat(), alignProfile->getWidth(), alignProfile->getHeight(), 0);
-        if(aligned_frame) {
-            aligned_frame->copyInfoFromOther(depth);
-            aligned_frame->setStreamProfile(alignProfile);
-            alignFrames(aligned_frame, depth, to);
-            frames->pushFrame(std::move(aligned_frame));
+        std::shared_ptr<VideoStreamProfile> alignToProfile;
+        if(!other_frames.empty()) {
+            auto fromProfile = depth->getStreamProfile()->as<VideoStreamProfile>();
+            auto to          = other_frames.front();  // depth to other
+            auto toProfile   = to->getStreamProfile()->as<VideoStreamProfile>();
+            alignToProfile   = createAlignedProfile(fromProfile, toProfile);
+        }
+        else if(toProfile_) {
+            auto fromProfile = depth->getStreamProfile()->as<VideoStreamProfile>();
+            alignToProfile   = createAlignedProfile(fromProfile, toProfile_);
+        }
+        else {
+            alignToProfile = alignProfile_;
+        }
+        auto alignToFrame = FrameFactory::createFrameFromStreamProfile(alignToProfile);
+        alignToFrame->copyInfoFromOther(depth);
+        alignFrames(from, alignToFrame, depth);
+        if(frame->is<FrameSet>() && !outFrame) {
+            outFrame         = FrameFactory::createFrameFromOtherFrame(frame);
+            auto outFrameSet = outFrame->as<FrameSet>();
+            outFrameSet->pushFrame(std::move(alignToFrame));
+        }
+        else {
+            outFrame = alignToFrame;
         }
     }
 
-    return frames;
+    return outFrame;
 }
 
 OBFrameType Align::getAlignFrameType() {
-    switch(align_to_stream_) {
+    switch(alignToStreamType_) {
     case OB_STREAM_DEPTH:
         return OB_FRAME_DEPTH;
     case OB_STREAM_COLOR:
@@ -172,58 +185,116 @@ OBFrameType Align::getAlignFrameType() {
     }
 }
 
-void Align::alignFrames(std::shared_ptr<Frame> aligned, const std::shared_ptr<const Frame> from, const std::shared_ptr<const Frame> to) {
-    if((!from) || (!to) || (!aligned)) {
+void Align::alignFrames(const std::shared_ptr<const Frame> from, std::shared_ptr<Frame> align, const std::shared_ptr<const Frame> depth) {
+    if((!from) || (!align)) {
         LOG_ERROR_INTVL("Null pointer is unexpected");
         return;
     }
-    auto fromProfile = from->getStreamProfile();
-    auto toProfile   = to->getStreamProfile();
+    auto fromProfile  = from->getStreamProfile();
+    auto alignProfile = align->getStreamProfile();
 
-    auto fromVideoProfile = fromProfile->as<VideoStreamProfile>();
-    from_intrin_          = fromVideoProfile->getIntrinsic();
-    from_disto_           = fromVideoProfile->getDistortion();
-    auto toVideoProfile   = toProfile->as<VideoStreamProfile>();
-    to_intrin_            = toVideoProfile->getIntrinsic();
-    to_disto_             = toVideoProfile->getDistortion();
-    from_to_extrin_       = fromProfile->getExtrinsicTo(toProfile);
+    auto fromVideoProfile  = fromProfile->as<VideoStreamProfile>();
+    auto fromIntrin        = fromVideoProfile->getIntrinsic();
+    auto fromDisto         = fromVideoProfile->getDistortion();
+    auto alignVideoProfile = alignProfile->as<VideoStreamProfile>();
+    auto toIntrin          = alignVideoProfile->getIntrinsic();
+    auto toDisto           = alignVideoProfile->getDistortion();
+    auto fromToExtrin      = fromProfile->getExtrinsicTo(alignProfile);
+    auto depthUnitMm       = depth->as<DepthFrame>()->getValueScale();
 
-    if(to->getType() == OB_FRAME_DEPTH) {
-        uint8_t *alignedData = reinterpret_cast<uint8_t *>(const_cast<void *>((void *)aligned->getData()));
-        memset(alignedData, 0, aligned->getDataSize());
-        // check if already initialized inside
-        auto depth_other_extrin = toProfile->getExtrinsicTo(fromProfile);
-        pImpl->initialize(to_intrin_, to_disto_, from_intrin_, from_disto_, depth_other_extrin, depth_unit_mm_, add_target_distortion_, gap_fill_copy_);
-        auto depth = reinterpret_cast<const uint16_t *>(to->getData());
-        auto in    = const_cast<const void *>((const void *)from->getData());
-        auto out   = const_cast<void *>((void *)aligned->getData());
-        pImpl->C2D(depth, toVideoProfile->getWidth(), toVideoProfile->getHeight(), in, out, fromVideoProfile->getWidth(), fromVideoProfile->getHeight(),
-                   from->getFormat());
+    if(align->getType() == OB_FRAME_DEPTH) {
+        uint16_t *alignedData = reinterpret_cast<uint16_t *>(const_cast<void *>((void *)align->getData()));
+        impl_->initialize(fromIntrin, fromDisto, toIntrin, toDisto, fromToExtrin, depthUnitMm, addTargetDistortion_, gapFillCopy_);
+        auto in = reinterpret_cast<const uint16_t *>(from->getData());
+        impl_->D2C(in, fromVideoProfile->getWidth(), fromVideoProfile->getHeight(), alignedData, alignVideoProfile->getWidth(), alignVideoProfile->getHeight());
     }
     else {
-        uint16_t *alignedData = reinterpret_cast<uint16_t *>(const_cast<void *>((void *)aligned->getData()));
-        memset(alignedData, 0, aligned->getDataSize());
-        pImpl->initialize(from_intrin_, from_disto_, to_intrin_, to_disto_, from_to_extrin_, depth_unit_mm_, add_target_distortion_, gap_fill_copy_);
-        auto in = reinterpret_cast<const uint16_t *>(from->getData());
-        pImpl->D2C(in, fromVideoProfile->getWidth(), fromVideoProfile->getHeight(), alignedData, toVideoProfile->getWidth(), toVideoProfile->getHeight());
+        if(!depth) {
+            LOG_ERROR_INTVL("depth is nullptr!");
+            return;
+        }
+        auto depth_other_extrin = alignProfile->getExtrinsicTo(fromProfile);
+        impl_->initialize(toIntrin, toDisto, fromIntrin, fromDisto, depth_other_extrin, depthUnitMm, addTargetDistortion_, gapFillCopy_);
+        auto dep = reinterpret_cast<const uint16_t *>(depth->getData());
+        auto in  = const_cast<const void *>((const void *)from->getData());
+        auto out = const_cast<void *>((void *)align->getData());
+        impl_->C2D(dep, alignVideoProfile->getWidth(), alignVideoProfile->getHeight(), in, out, fromVideoProfile->getWidth(), fromVideoProfile->getHeight(),
+                   from->getFormat());
     }
 }
 
-std::shared_ptr<VideoStreamProfile> Align::createAlignedProfile(std::shared_ptr<const VideoStreamProfile> original_profile,
-                                                                std::shared_ptr<const VideoStreamProfile> to_profile) {
+void estimateFOV(OBCameraIntrinsic intrin, float *fovs) {
+    fovs[0] = atan2f(intrin.cx, intrin.fx) + atan2f(intrin.width - intrin.cx - 1.f, intrin.fx);
+    fovs[1] = atan2f(intrin.cy, intrin.fy) + atan2f(intrin.height - intrin.cy - 1.f, intrin.fy);
+}
 
-    if(align_streams_.first != original_profile.get() || align_streams_.second != to_profile.get()) {
-        auto aligned_profile = original_profile->clone()->as<VideoStreamProfile>();
-        aligned_profile->setWidth(to_profile->getWidth());
-        aligned_profile->setHeight(to_profile->getHeight());
-        aligned_profile->bindIntrinsic(to_profile->getIntrinsic());
-        aligned_profile->bindDistortion(to_profile->getDistortion());
-        aligned_profile->bindSameExtrinsicTo(to_profile);
-        target_stream_profile_ = aligned_profile;
-        align_streams_         = { original_profile.get(), to_profile.get() };
+std::shared_ptr<VideoStreamProfile> Align::createAlignedProfile(std::shared_ptr<const VideoStreamProfile> fromProfile,
+                                                                std::shared_ptr<const VideoStreamProfile> toProfile) {
+    if(fromProfile_ != fromProfile || toProfile_ != toProfile) {
+        auto alignProfile = fromProfile->clone()->as<VideoStreamProfile>();
+        alignProfile->setWidth(toProfile->getWidth());
+        alignProfile->setHeight(toProfile->getHeight());
+        alignProfile->bindIntrinsic(toProfile->getIntrinsic());
+        alignProfile->bindDistortion(toProfile->getDistortion());
+        alignProfile->bindSameExtrinsicTo(toProfile);
+
+        if(!matchTargetRes_ && alignProfile->getType() == OB_STREAM_DEPTH) {
+            // Not match to target resolution required, scale to match the source resolution but keep the aspect ratio same as the target.
+
+            OBCameraIntrinsic intrin  = alignProfile->getIntrinsic();
+            float             scale_x = 1.f * toProfile->getWidth() / fromProfile->getWidth();
+            float             scale_y = 1.f * toProfile->getHeight() / fromProfile->getHeight();
+            float             scale   = scale_x > scale_y ? scale_x : scale_y;
+            if(scale > 1.499) {
+                float s = 1.f * int(scale) + 0.5f * (int(scale + 0.5) - int(scale));
+                intrin.fx /= s;
+                intrin.fy /= s;
+                intrin.cx /= s;
+                intrin.cy /= s;
+                intrin.width  = static_cast<int16_t>(0.5f + (intrin.width >> 1) / s) << 1;
+                intrin.height = static_cast<int16_t>(0.5f + (intrin.height >> 1) / s) << 1;
+            }
+            else if(1.0f / scale > 1.499) {
+                float s = 1.f / (1.f * int(1.f / scale) + 0.5f * (int(1.f / scale + 0.5) - int(1.f / scale)));
+                intrin.fx /= s;
+                intrin.fy /= s;
+                intrin.cx /= s;
+                intrin.cy /= s;
+                intrin.width  = static_cast<int16_t>(0.5f + (intrin.width >> 1) / s) << 1;
+                intrin.height = static_cast<int16_t>(0.5f + (intrin.height >> 1) / s) << 1;
+            }
+
+            alignProfile->setWidth(intrin.width);
+            alignProfile->setHeight(intrin.height);
+            alignProfile->bindIntrinsic(intrin);
+        }
+
+        fromProfile_  = fromProfile;
+        toProfile_    = toProfile;
+        alignProfile_ = alignProfile;
+
+        float ori_fov[2], to_fov[2];
+        estimateFOV(fromProfile->getIntrinsic(), ori_fov);
+        estimateFOV(toProfile->getIntrinsic(), to_fov);
+
+        float ori_pix_per_ang[2] = { fromProfile->getWidth() / ori_fov[0], fromProfile->getHeight() / ori_fov[1] },
+              to_pix_per_ang[2]  = { toProfile->getWidth() / to_fov[0], toProfile->getHeight() / to_fov[1] };
+
+        if(alignToStreamType_ == OBStreamType::OB_STREAM_DEPTH) {
+            gapFillCopy_ = true;
+        }
+        else {
+            if((ori_pix_per_ang[0] / to_pix_per_ang[0] > 0.5f) && (ori_pix_per_ang[1] / to_pix_per_ang[1] > 0.5f)) {
+                gapFillCopy_ = true;
+            }
+            else {
+                gapFillCopy_ = false;
+            }
+        }
+
     }
 
-    return target_stream_profile_;
+    return alignProfile_;
 }
 
 }  // namespace libobsensor

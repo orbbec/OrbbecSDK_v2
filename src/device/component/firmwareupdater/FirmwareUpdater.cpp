@@ -23,69 +23,64 @@ FirmwareUpdater::FirmwareUpdater(IDevice *owner) : DeviceComponentBase(owner) {
     }
 }
 
-FirmwareUpdater::~FirmwareUpdater() noexcept {}
+FirmwareUpdater::~FirmwareUpdater() noexcept {
+    if(updateThread_.joinable()) {
+        updateThread_.join();
+    }
+}
 
 void FirmwareUpdater::onDeviceFwUpdateCallback(ob_fw_update_state state, const char *message, uint8_t percent, void *userData) {
     FirmwareUpdater *updater = reinterpret_cast<FirmwareUpdater *>(userData);
     if(updater && updater->deviceFwUpdateCallback_) {
-        LOG_DEBUG("Firmware update callback: state={}, message={}, percent={}", state, message, percent);
+        LOG_DEBUG("Firmware update callback: state={}, message={}, percent={}", static_cast<int>(state), message, percent);
         updater->deviceFwUpdateCallback_(state, message, percent);
     }
 }
 
 void FirmwareUpdater::updateFirmwareExt(const std::string &path, DeviceFwUpdateCallback callback, bool async) {
+    if(updateThread_.joinable()) {
+        updateThread_.join();
+    }
+    deviceFwUpdateCallback_(STAT_FILE_TRANSFER, "Ready to update firmware...", 0);
+
     deviceFwUpdateCallback_ = callback;
-    auto func               = [this, path, async]() {
+    updateThread_           = std::thread([this, path, async]() {
         ob_error *error  = nullptr;
         auto      device = std::make_shared<ob_device>();
         device->device   = getOwner()->shared_from_this();
         ctx_->update_firmware_ext(device.get(), path.c_str(), onDeviceFwUpdateCallback, async, this, &error);
         if(error) {
-            throw libobsensor_exception(std::string(error->message), error->exception_type);
+            LOG_ERROR("Firmware update failed: {}", error->message);
+            delete error;
         }
-    };
-    if(async) {
-        std::thread([func]() {
-            try {
-                func();
-            }
-            catch(const std::exception &e) {
-                LOG_ERROR("Failed to update firmware: {}", e.what());
-            }
-        }).detach();
-    }
-    else {
-        func();
+    });
+    if(!async) {
+        updateThread_.join();
     }
 }
 
 void FirmwareUpdater::updateFirmwareFromRawDataExt(const uint8_t *firmwareData, uint32_t firmwareSize, DeviceFwUpdateCallback callback, bool async) {
+    if(updateThread_.joinable()) {
+        updateThread_.join();
+    }
+
     deviceFwUpdateCallback_ = callback;
     deviceFwUpdateCallback_(STAT_FILE_TRANSFER, "Ready to update firmware...", 0);
 
     // Prevent asynchronous call data from being destroyed
     std::vector<uint8_t> data(firmwareData, firmwareData + firmwareSize);
-    auto func               = [this, data, firmwareSize, async]() {
+    updateThread_ = std::thread([this, data, firmwareSize, async]() {
         ob_error *error  = nullptr;
         auto      device = std::make_shared<ob_device>();
         device->device   = getOwner()->shared_from_this();
         ctx_->update_firmware_from_raw_data_ext(device.get(), data.data(), firmwareSize, onDeviceFwUpdateCallback, async, this, &error);
         if(error) {
-            throw libobsensor_exception(std::string(error->message), error->exception_type);
+            LOG_ERROR("Firmware update failed: {}", error->message);
+            delete error;
         }
-    };
-    if(async) {
-        std::thread([func]() {
-            try {
-                func();
-            }
-            catch(const std::exception &e) {
-                LOG_ERROR("Failed to update firmware: {}", e.what());
-            }
-        }).detach();
-    }
-    else {
-        func();
+    });
+    if(!async) {
+        updateThread_.join();
     }
 }
 

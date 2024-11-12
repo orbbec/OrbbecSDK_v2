@@ -260,7 +260,9 @@ void SensorBase::outputFrame(std::shared_ptr<Frame> frame) {
     }
 
     frameCallback_(frame);
-    LOG_FREQ_CALC(INFO, 5000, "{} Streaming... frameRate={freq}fps", utils::obSensorToStr(sensorType_));
+
+    auto deviceInfo = owner_->getInfo();
+    LOG_FREQ_CALC(INFO, 5000, "{}({}): {} Streaming... frameRate={freq}fps", deviceInfo->name_, deviceInfo->deviceSn_, sensorType_);
 }
 
 }  // namespace libobsensor

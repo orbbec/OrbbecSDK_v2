@@ -61,10 +61,11 @@ public:
 
 protected:
     // implement on subclass, and must be called to initialize the device info on construction
-    virtual void        fetchDeviceInfo();
-    virtual void        fetchExtensionInfo();
-    DeviceComponentLock tryLockResource();
-    int                 getFirmwareVersionInt();
+    virtual void                 fetchDeviceInfo();
+    virtual void                 fetchExtensionInfo();
+    DeviceComponentLock          tryLockResource();
+    int                          getFirmwareVersionInt();
+    std::shared_ptr<ISourcePort> getSourcePort(std::shared_ptr<const SourcePortInfo> sourcePortInfo) const;
 
 protected:
     const std::shared_ptr<const IDeviceEnumInfo> enumInfo_;
@@ -86,4 +87,3 @@ private:
 };
 
 }  // namespace libobsensor
-

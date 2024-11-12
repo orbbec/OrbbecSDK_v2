@@ -88,6 +88,18 @@ void ob_free_idle_memory(ob_context *context, ob_error **error) BEGIN_API_CALL {
 }
 HANDLE_EXCEPTIONS_NO_RETURN(context)
 
+void ob_set_uvc_backend_type(ob_context *context, ob_uvc_backend_type backend_type, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(context);
+#if defined(__linux__)
+    auto platform = context->context->getPlatform();
+    platform->setUvcBackendType(backend_type);
+    return;
+#endif
+    libobsensor::utils::unusedVar(backend_type);
+    LOG_DEBUG("Set UVC backend type is only available on Linux platforms, ignoring request.");
+}
+HANDLE_EXCEPTIONS_NO_RETURN(context, backend_type)
+
 void ob_set_logger_severity(ob_log_severity severity, ob_error **error) BEGIN_API_CALL {
     libobsensor::Logger::setLogSeverity(severity);
 }

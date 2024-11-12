@@ -30,7 +30,7 @@ FrameProcessorFactory::FrameProcessorFactory(IDevice *owner) : DeviceComponentBa
         context_->destroy_processor = dylib_->get_function<void(ob_frame_processor *, ob_error **)>("ob_destroy_frame_processor");
         context_->destroy_context   = dylib_->get_function<void(ob_frame_processor_context *, ob_error **)>("ob_destroy_frame_processor_context");
         context_->set_hardware_d2c_params =
-            dylib->get_function<void(ob_frame_processor *, ob_camera_param, uint8_t, float, int16_t, int16_t, int16_t, int16_t, ob_error **error)>(
+            dylib->get_function<void(ob_frame_processor *, ob_camera_param, uint8_t, float, int16_t, int16_t, int16_t, int16_t, bool, ob_error **error)>(
                 "ob_frame_processor_set_hardware_d2c_params");
     }
 
@@ -273,7 +273,8 @@ DepthFrameProcessor::DepthFrameProcessor(IDevice *owner, std::shared_ptr<FramePr
 DepthFrameProcessor::~DepthFrameProcessor() noexcept {}
 
 void DepthFrameProcessor::setHardwareD2CProcessParams(uint32_t colorWidth, uint32_t colorHeight, uint32_t depthWidth, uint32_t depthHeight,
-                                                      std::vector<OBCameraParam> calibrationCameraParams, std::vector<OBD2CProfile> d2cProfiles) {
+                                                      std::vector<OBCameraParam> calibrationCameraParams, std::vector<OBD2CProfile> d2cProfiles,
+                                                      bool matchTargetResolution) {
     OBCameraParam currentCameraParam = {};
     OBD2CProfile  currentD2CProfile  = {};
     for(const auto &d2cProfile: d2cProfiles) {
@@ -297,7 +298,8 @@ void DepthFrameProcessor::setHardwareD2CProcessParams(uint32_t colorWidth, uint3
         ob_error *error = nullptr;
         context_->set_hardware_d2c_params(privateProcessor_, currentCameraParam, currentD2CProfile.paramIndex, currentD2CProfile.postProcessParam.depthScale,
                                           currentD2CProfile.postProcessParam.alignLeft, currentD2CProfile.postProcessParam.alignTop,
-                                          currentD2CProfile.postProcessParam.alignRight, currentD2CProfile.postProcessParam.alignBottom, &error);
+                                          currentD2CProfile.postProcessParam.alignRight, currentD2CProfile.postProcessParam.alignBottom, matchTargetResolution,
+                                          &error);
         if(error) {
             LOG_ERROR("set hardware d2c params failed");
             delete error;

@@ -7,6 +7,10 @@
 #include "IDeviceWatcher.hpp"
 #include "IPal.hpp"
 
+#if defined(__linux__)
+#include "usb/uvc/UvcTypes.hpp"
+#endif
+
 #include <mutex>
 #include <map>
 #include <memory>
@@ -30,6 +34,10 @@ public:
     SourcePortInfoList              queryUsbSourcePortInfos();
     std::shared_ptr<ISourcePort>    getUsbSourcePort(std::shared_ptr<const SourcePortInfo> portInfo);
     std::shared_ptr<IDeviceWatcher> createUsbDeviceWatcher() const;
+#if defined(__linux__)
+    std::shared_ptr<ISourcePort> getUvcSourcePort(std::shared_ptr<const SourcePortInfo> portInfo, OBUvcBackendType backendTypeHint);
+    void                         setUvcBackendType(OBUvcBackendType backendType);
+#endif
 
     SourcePortInfoList              queryNetSourcePort();
     std::shared_ptr<ISourcePort>    getNetSourcePort(std::shared_ptr<const SourcePortInfo> portInfo);
@@ -44,4 +52,3 @@ private:
 };
 
 }  // namespace libobsensor
-

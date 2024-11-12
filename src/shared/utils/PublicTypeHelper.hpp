@@ -63,5 +63,5 @@ std::ostream &operator<<(std::ostream &os, const OBExtrinsic &type);
 std::ostream &operator<<(std::ostream &os, const OBPoint2f &type);
 std::ostream &operator<<(std::ostream &os, const OBCameraIntrinsic &type);
 std::ostream &operator<<(std::ostream &os, const OBCameraDistortion &type);
-
-
+std::ostream &operator<<(std::ostream &os, const OBFilterConfigValueType &type);
+std::ostream &operator<<(std::ostream &os, const OBExceptionType &type);

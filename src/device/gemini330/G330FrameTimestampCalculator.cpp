@@ -44,7 +44,7 @@ uint64_t G330FrameTimestampCalculatorBaseDeviceTime::calculate(uint64_t srcTimes
     // 4. When the last timestamp is less than 50ms, avoid missing judgments
     // LOG(INFO) << " >>> srcTimeStamp: " << srcTimestamp << " <<< ";
     // Determine whether the timestamp becomes smaller
-    bool tspDecrease = (srcTimestamp < prevSrcTsp_);
+    bool tspDecrease = (srcTimestamp < prevSrcTsp_) && (prevSrcTsp_ - srcTimestamp > 0.5 * frameTimeFreq_);  // 0.5 second
 
     // Determine whether the data frame timestamp difference is similar to the system timestamp difference
     uint64_t curHostTsp      = utils::getNowTimesMs();

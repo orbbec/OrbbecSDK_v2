@@ -81,7 +81,6 @@ protected:
     OBFormat                  format_;
     uint8_t                   index_;  // for multi-stream sensor (multi pin uvc device)
 };
-
 class VideoStreamProfile : public StreamProfile {
 public:
     VideoStreamProfile(std::shared_ptr<LazySensor> owner, OBStreamType type, OBFormat format, uint32_t width, uint32_t height, uint32_t fps);
@@ -168,3 +167,17 @@ std::vector<std::shared_ptr<const GyroStreamProfile>> matchGyroStreamProfile(con
 
 }  // namespace libobsensor
 
+OB_LOG_FORMATTER(std::shared_ptr<libobsensor::StreamProfile>)
+OB_LOG_FORMATTER(std::shared_ptr<const libobsensor::StreamProfile>)
+
+OB_LOG_FORMATTER(std::shared_ptr<libobsensor::VideoStreamProfile>)
+OB_LOG_FORMATTER(std::shared_ptr<const libobsensor::VideoStreamProfile>)
+
+OB_LOG_FORMATTER(std::shared_ptr<libobsensor::DisparityBasedStreamProfile>)
+OB_LOG_FORMATTER(std::shared_ptr<const libobsensor::DisparityBasedStreamProfile>)
+
+OB_LOG_FORMATTER(std::shared_ptr<libobsensor::AccelStreamProfile>)
+OB_LOG_FORMATTER(std::shared_ptr<const libobsensor::AccelStreamProfile>)
+
+OB_LOG_FORMATTER(std::shared_ptr<libobsensor::GyroStreamProfile>)
+OB_LOG_FORMATTER(std::shared_ptr<const libobsensor::GyroStreamProfile>)

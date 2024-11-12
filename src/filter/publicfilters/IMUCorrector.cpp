@@ -42,65 +42,6 @@ OBIMUCalibrateParams IMUCorrector::getDefaultImuCalibParam() {
     return params;
 }
 
-float IMUCorrector::calculateAccelGravity(int16_t accelValue, uint8_t accelFSR) {
-    float sensitivity = 0.f;
-
-    switch(accelFSR) {
-    case OB_ACCEL_FS_2g: /*!< 2g*/
-        sensitivity = ACCEL_MAX / 2.0f;
-        break;
-    case OB_ACCEL_FS_4g: /*!< 4g*/
-        sensitivity = ACCEL_MAX / 4.0f;
-        break;
-    case OB_ACCEL_FS_8g: /*!< 8g*/
-        sensitivity = ACCEL_MAX / 8.0f;
-        break;
-    case OB_ACCEL_FS_16g: /*!< 16g*/
-        sensitivity = ACCEL_MAX / 16.0f;
-        break;
-    }
-
-    return (accelValue / sensitivity);
-}
-
-float IMUCorrector::calculateGyroDPS(int16_t gyroValue, uint8_t gyroFSR) {
-    float sensitivity = 0.f;
-
-    switch(gyroFSR) {
-    case OB_GYRO_FS_16dps: /*!< 16dps*/
-        sensitivity = GYRO_MAX / 16.0f;
-        break;
-    case OB_GYRO_FS_31dps: /*!< 31dps*/
-        sensitivity = GYRO_MAX / 31.0f;
-        break;
-    case OB_GYRO_FS_62dps: /*!< 62dps*/
-        sensitivity = GYRO_MAX / 62.0f;
-        break;
-    case OB_GYRO_FS_125dps: /*!< 125dps*/
-        sensitivity = GYRO_MAX / 125.0f;
-        break;
-    case OB_GYRO_FS_250dps: /*!< 250dps*/
-        sensitivity = GYRO_MAX / 250.0f;
-        break;
-    case OB_GYRO_FS_500dps: /*!< 500dps*/
-        sensitivity = GYRO_MAX / 500.0f;
-        break;
-    case OB_GYRO_FS_1000dps: /*!< 1000dps*/
-        sensitivity = GYRO_MAX / 1000.0f;
-        break;
-    case OB_GYRO_FS_2000dps: /*!< 2000dps*/
-        sensitivity = GYRO_MAX / 2000.0f;
-        break;
-    }
-
-    return (gyroValue / sensitivity);
-}
-
-float IMUCorrector::calculateRegisterTemperature(int16_t tempValue) {
-    float ret = static_cast<float>(tempValue / 132.48 + 25);
-    return ret;
-}
-
 IMUCorrector::IMUCorrector() {}
 
 void IMUCorrector::updateConfig(std::vector<std::string> &params) {
@@ -195,4 +136,3 @@ OBGyroValue IMUCorrector::correctGyro(const OBGyroValue &gyroValue, OBGyroIntrin
 }
 
 }  // namespace libobsensor
-

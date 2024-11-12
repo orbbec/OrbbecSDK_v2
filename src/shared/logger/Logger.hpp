@@ -38,8 +38,8 @@
 #include <memory>
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>
+#include "LoggerTypeHelper.hpp"
 #include <libobsensor/h/ObTypes.h>
-#include "utils/PublicTypeHelper.hpp"
 
 namespace libobsensor {
 typedef std::function<void(OBLogSeverity severity, const std::string &logMsg)> LogCallback;

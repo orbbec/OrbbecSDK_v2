@@ -108,7 +108,8 @@ void HidDevicePortGmsl::startStream(MutableFrameCallback callback) {
             if(imuRetryReadNum > 0) {
                 imuReadFps      = getImuFps();
                 imuPollInterval = (imuReadFps >= 500) ? 5 : calculateImuPollInterval(imuReadFps);
-                LOG_DEBUG("get current imuReadFps:{}, imuPollInterval:{}ms, imuRetryReadNum:{} ", imuReadFps, imuPollInterval, imuRetryReadNum);
+                LOG_DEBUG("get current imuReadFps:{}, imuPollInterval:{}ms, imuRetryReadNum:{} ", imuReadFps.load(), imuPollInterval.load(),
+                          imuRetryReadNum.load());
                 imuRetryReadNum--;
             }
             imuSleepMs(imuPollInterval);

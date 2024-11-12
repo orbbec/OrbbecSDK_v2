@@ -106,9 +106,9 @@ struct V4lDeviceHandleGmsl {
     MutableFrameCallback                      frameCallback;
     std::shared_ptr<const VideoStreamProfile> profile = nullptr;
 
-    int                          stopPipeFd[2] = { -1, -1 };  // pipe to signal the capture thread to stop
-    std::shared_ptr<std::thread> captureThread = nullptr;
-    std::atomic<bool>            isCapturing   = { false };
+    int                          stopPipeFd[2]  = { -1, -1 };  // pipe to signal the capture thread to stop
+    std::shared_ptr<std::thread> captureThread  = nullptr;
+    std::atomic<bool>            isCapturing    = { false };
     std::atomic<std::uint64_t>   loopFrameIndex = { 0 };
 };
 
@@ -129,7 +129,9 @@ public:
     bool            setPu(uint32_t propertyId, int32_t value) override;
     UvcControlRange getPuRange(uint32_t propertyId) override;
 
-    virtual std::shared_ptr<const SourcePortInfo>          getSourcePortInfo() const override;
+    std::shared_ptr<const SourcePortInfo> getSourcePortInfo() const override;
+    OBUvcBackendType                      getBackendType() const override;
+
     static std::vector<std::shared_ptr<V4lDeviceInfoGmsl>> queryRelatedDevices(std::shared_ptr<const USBSourcePortInfo> portInfo);
     static bool                                            isContainedMetadataDevice(std::shared_ptr<const USBSourcePortInfo> portInfo);
     static bool                                            isGmslDeviceForPlatformNvidia(std::shared_ptr<const USBSourcePortInfo> portInfo);
@@ -158,4 +160,3 @@ private:
 };
 
 }  // namespace libobsensor
-

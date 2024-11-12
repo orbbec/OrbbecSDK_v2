@@ -287,7 +287,7 @@ int main__(int argc, char *argv[]) {
 
 int main(int argc, char *argv[]) {
     if(argc < 4) {
-        std::cerr << "Usage: %s <param_file> <depth_image_file> <color_image_file>" << std::endl;
+        std::cerr << "Usage: %s <param_file> <depth_image_file> <color_image_file> [swap_endianness=0]" << std::endl;
         return -1;
     }
 
@@ -323,15 +323,21 @@ int main(int argc, char *argv[]) {
     uint32_t  depth_size = depth_intr.width * depth_intr.height * sizeof(uint16_t);
     uint16_t *depth_data = (uint16_t *)malloc(depth_size);
     fread(depth_data, depth_size, 1, depth_file);
-    //for(int i = 0; i < depth_intr.width * depth_intr.height; i++) {
-    //    depth_data[i] = _byteswap_ushort(depth_data[i]);
-    //}
+    bool swap_endianness = false;
+    if(argc > 4)
+        swap_endianness = bool(std::atoi(argv[4]));
+    if(swap_endianness) {
+		for(int i = 0; i < depth_intr.width * depth_intr.height; i++) {
+			depth_data[i] = _byteswap_ushort(depth_data[i]);
+		}
+    }
+
     uint32_t  aligned_depth_size = color_intr.width * color_intr.height * sizeof(uint16_t);
     uint16_t *aligned_depth_data = (uint16_t *)malloc(aligned_depth_size);
     //if(0 == impl->D2C(depth_data, depth_intr.width, depth_intr.height, aligned_depth_data, color_intr.width, color_intr.height, nullptr, true)) {
     if(0 == impl->D2C(depth_data, depth_intr.width, depth_intr.height, aligned_depth_data, color_intr.width, color_intr.height, nullptr, false)) {
         char nname[256];
-        sprintf(nname, "%s_filtered.raw", argv[2]);
+        sprintf(nname, "%s_filtered_%dx%d.raw", argv[2], color_intr.width, color_intr.height);
         FILE *fp = fopen(nname, "wb");
         if(fp) {
             fwrite(aligned_depth_data, 1, aligned_depth_size, fp);

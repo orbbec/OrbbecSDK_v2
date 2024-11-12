@@ -13,9 +13,6 @@ class IMUCorrector : public IFilterBase {
 public:
     static OBIMUCalibrateParams parserIMUCalibParamRaw(uint8_t *data, uint32_t size);
     static OBIMUCalibrateParams getDefaultImuCalibParam();
-    static float                calculateAccelGravity(int16_t accelValue, uint8_t accelFSR);
-    static float                calculateGyroDPS(int16_t gyroValue, uint8_t gyroFSR);
-    static float                calculateRegisterTemperature(int16_t tempValue);
 
 public:
     IMUCorrector();
@@ -39,4 +36,3 @@ protected:
 };
 
 }  // namespace libobsensor
-

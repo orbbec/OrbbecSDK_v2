@@ -4,6 +4,7 @@
 #pragma once
 
 #include "ISensor.hpp"
+#include "IDevice.hpp"
 #include "ISourcePort.hpp"
 
 #include <map>
@@ -61,7 +62,7 @@ protected:
     const OBSensorType           sensorType_;
     std::shared_ptr<ISourcePort> backend_;
 
-    StreamProfileList streamProfileList_;
+    StreamProfileList                     streamProfileList_;
     std::shared_ptr<IStreamProfileFilter> streamProfileFilter_;
 
     std::shared_ptr<const StreamProfile> activatedStreamProfile_;
@@ -89,4 +90,3 @@ protected:
 };
 
 }  // namespace libobsensor
-
