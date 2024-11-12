@@ -18,14 +18,16 @@ VendorNetDataPort::~VendorNetDataPort() noexcept {}
 uint32_t VendorNetDataPort::sendAndReceive(const uint8_t *sendData, uint32_t sendLen, uint8_t *recvData, uint32_t exceptedRecvLen) {
     utils::unusedVar(exceptedRecvLen);
 
-    std::lock_guard<std::mutex> lock(tcpMtx_); 
-    tcpClient_->write(sendData, sendLen);
-    int recvd = tcpClient_->read(recvData, OB_VENDOR_CMD_RECV_LEN);
-    if(recvd < 0) {
-        LOG_ERROR("Failed to read data from tcp client, error_code: {}", recvd);
-        return 0;
+    std::lock_guard<std::mutex> lock(tcpMtx_);
+    {
+        tcpClient_->write(sendData, sendLen);
+        int recvd = tcpClient_->read(recvData, OB_VENDOR_CMD_RECV_LEN);
+        if(recvd < 0) {
+            LOG_ERROR("Failed to read data from tcp client, error_code: {}", recvd);
+            return 0;
+        }
+        return static_cast<uint32_t>(recvd);
     }
-    return static_cast<uint32_t>(recvd);
 }
 
 std::shared_ptr<const SourcePortInfo> VendorNetDataPort::getSourcePortInfo() const {

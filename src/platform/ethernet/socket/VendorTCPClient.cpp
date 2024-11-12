@@ -164,7 +164,7 @@ int VendorTCPClient::read(uint8_t *data, const uint32_t dataLen) {
             if((rst == EAGAIN || rst == EWOULDBLOCK) && retry >= 1) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
-            else if(rst == ENOTCONN && retry >= 1) {
+            else if((rst == ENOTCONN || rst == ECONNRESET || rst == ENETRESET) && retry >= 1) {
 #endif
                 socketReconnect();
                 return -1;
@@ -193,7 +193,7 @@ void VendorTCPClient::write(const uint8_t *data, const uint32_t dataLen) {
             if((rst == EAGAIN || rst == EWOULDBLOCK) && retry >= 1) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }
-            else if(rst == ENOTCONN && retry >= 1) {
+            else if((rst == ENOTCONN || rst == ECONNRESET || rst == ENETRESET) && retry >= 1) {
 #endif
                 socketReconnect();
             }
