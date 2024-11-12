@@ -13,6 +13,18 @@
 
 namespace libobsensor {
 
+struct ip_header {
+    u_char         ip_hl : 4, ip_v : 4;
+    u_char         ip_tos;
+    u_short        ip_len;
+    u_short        ip_id;
+    u_short        ip_off;
+    u_char         ip_ttl;
+    u_char         ip_p;
+    u_short        ip_sum;
+    struct in_addr ip_src, ip_dst;
+};
+
 ObRTPNpCapReceiver::ObRTPNpCapReceiver(std::string localAddress, std::string address, uint16_t port)
     : localIp_(localAddress), serverIp_(address), serverPort_(port), startReceive_(false), alldevs_(nullptr), dev_(nullptr), handle_(nullptr) {
     findAlldevs();
@@ -108,6 +120,8 @@ void ObRTPNpCapReceiver::findAlldevs() {
         // std::string        stringFilter = "udp port " + strPort;
         // const char *       filter_exp   = "udp and src host 192.168.1.100 and src port 12345";
         std::string stringFilter = "udp and src host " + serverIp_ + " and src port " + strPort;
+        //std::string stringFilter = "udp and (src host " + serverIp_ + " and src port " + strPort + " and dst host " + localIp_ + " and dst port " + strPort + ")";
+        LOG_DEBUG("Set pcap filter: {}", stringFilter);
         if(pcap_compile(handle_, &fp, stringFilter.c_str(), 0, PCAP_NETMASK_UNKNOWN) == -1) {
             pcap_close(handle_);
             pcap_freealldevs(alldevs_);
@@ -151,6 +165,9 @@ void ObRTPNpCapReceiver::findAlldevs() {
             struct bpf_program fp;
             std::string        strPort      = std::to_string(serverPort_);
             std::string        stringFilter = "udp and src host " + serverIp_ + " and src port " + strPort;
+            /*std::string        stringFilter =
+                "udp and (src host " + serverIp_ + " and src port " + strPort + " and dst host " + localIp_ + " and dst port " + strPort + ")";*/
+            LOG_DEBUG("Set pcap filter: {}", stringFilter);
             if(pcap_compile(handle, &fp, stringFilter.c_str(), 0, PCAP_NETMASK_UNKNOWN) == 0) {
                 LOG_DEBUG("Found net device");
             }
@@ -183,13 +200,14 @@ void ObRTPNpCapReceiver::findAlldevs() {
 
     // 1.Create udpsocket
     recvSocket_ = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-
     if(recvSocket_ < 0) {
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
-        WSACleanup();
-#endif
+        close();
         throw libobsensor::invalid_value_exception(utils::string::to_string() << "Failed to create udpSocket! err_code=" << GET_LAST_ERROR());
     }
+
+    //Set up multiple processes to bind the same port and share data.
+    int reuse = 1;
+    setsockopt(recvSocket_, SOL_SOCKET, SO_REUSEADDR, (const char *)&reuse, sizeof(reuse));
 
     // 2.Set server address
     sockaddr_in serverAddr{};
@@ -197,17 +215,18 @@ void ObRTPNpCapReceiver::findAlldevs() {
     serverAddr.sin_addr.s_addr = INADDR_ANY;
     serverAddr.sin_port        = htons(serverPort_);
 
+    /*sockaddr_in serverAddr{};
+    serverAddr.sin_family      = AF_INET;
+    serverAddr.sin_addr.s_addr = INADDR_ANY;
+    if(inet_pton(AF_INET, localIp_.c_str(), &serverAddr.sin_addr) <= 0) {
+        LOG_ERROR("Failed to bind server address!");
+    }
+    serverAddr.sin_port = htons(serverPort_);*/
+
     // 3.Bind the socket to a local address and port.
     if(bind(recvSocket_, (sockaddr *)&serverAddr, sizeof(serverAddr)) < 0) {
-        if(recvSocket_ > 0) {
-            auto rc = closesocket(recvSocket_);
-            if(rc < 0) {
-                LOG_ERROR("close udp socket failed! socket={0}, err_code={1}", recvSocket_, GET_LAST_ERROR());
-            }
-        }
-        LOG_DEBUG("udp socket closed! socket={}", recvSocket_);
-        recvSocket_ = INVALID_SOCKET;
-        WSACleanup();
+        LOG_ERROR("Failed to bind server address!");
+        close();
         throw libobsensor::invalid_value_exception(utils::string::to_string() << "Failed to bind server address! err_code=" << GET_LAST_ERROR());
     }
     LOG_DEBUG("Net device opened successfully");
@@ -276,8 +295,25 @@ void ObRTPNpCapReceiver::frameReceive2(pcap_t *handle) {
         if(res > 0) {
             foundPcapHandle_ = true;
             receiveData = true;
+
+            //const u_char *ip_header = packet + 14;                  // 跳过Ethernet头部
+            //struct ip_header *ip        = (struct ip_header *)(ip_header);  // IP头部开始处
+            //// 获取源IP地址
+            //struct in_addr src_ip;
+            //src_ip.s_addr = ip->ip_src.s_addr;
+            //char src_ip_str[INET_ADDRSTRLEN];
+            //inet_ntop(AF_INET, &src_ip, src_ip_str, sizeof(src_ip_str));
+
+            //// 打印源IP地址
+            //if(n == 1000) {
+            //    LOG_DEBUG("Received UDP packet from IP: {}", src_ip_str);
+            //    n = 0;
+            //}
+            //n++;
+            
             // Ethernet + IP header lengths
             const u_char *payload = packet + 42;
+
             // Adjust based on header lengths
             int recvLen = header->len - 42;
             if(recvLen > 0) {
@@ -385,6 +421,7 @@ void ObRTPNpCapReceiver::close() {
         }
     }
     LOG_DEBUG("udp socket closed! socket={}", recvSocket_);
+    WSACleanup();
     recvSocket_ = INVALID_SOCKET;
 }
 
