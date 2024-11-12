@@ -38,8 +38,8 @@ void G330NetDisparitySensor::start(std::shared_ptr<const StreamProfile> sp, Fram
 void G330NetDisparitySensor::stop() {
     auto propServer = owner_->getPropertyServer();
     BEGIN_TRY_EXECUTE({
-        DisparityBasedSensor::stop();
         propServer->setPropertyValueT<bool>(OB_PROP_START_DEPTH_STREAM_BOOL, false);
+        DisparityBasedSensor::stop();
     })
     CATCH_EXCEPTION_AND_EXECUTE({ LOG_ERROR("Start {} stream failed!", utils::obSensorToStr(sensorType_)); })
 }
