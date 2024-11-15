@@ -441,6 +441,19 @@ typedef enum {
     OB_PROP_DISP_SEARCH_RANGE_MODE_INT = 191,
 
     /**
+     * @brief Laser high temperature protection
+     */
+    OB_PROP_LASER_HIGH_TEMPERATURE_PROTECT_BOOL = 193,
+
+    /**
+     * @brief low exposure laser control
+     *
+     * @brief Currently using for DabaiA device,if the exposure value is lower than a certain threshold, the laser is turned off;
+     * if it exceeds another threshold, the laser is turned on again.
+     */
+    OB_PROP_LOW_EXPOSURE_LASER_CONTROL_BOOL = 194,
+
+    /**
      * @brief Repower device (cut off power and power on again)
      *
      * @brief Currently using for GMSL device, cut off power and power on again by GMSL host driver.

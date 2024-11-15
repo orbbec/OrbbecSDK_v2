@@ -977,6 +977,9 @@ void DabaiADevice::initProperties() {
             propertyServer->registerProperty(OB_STRUCT_DEPTH_AE_ROI, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_RAW_DATA_IMU_CALIB_PARAM, "", "rw", vendorPropertyAccessor);
 
+            propertyServer->registerProperty(OB_PROP_LASER_HIGH_TEMPERATURE_PROTECT_BOOL, "rw", "rw", vendorPropertyAccessor);
+            propertyServer->registerProperty(OB_PROP_LOW_EXPOSURE_LASER_CONTROL_BOOL, "rw", "rw", vendorPropertyAccessor);
+
             // todo: add these properties to the frame processor
             // propertyServer->registerProperty(OB_PROP_SDK_DEPTH_FRAME_UNPACK_BOOL, "rw", "rw", vendorPropertyAccessor);
 
