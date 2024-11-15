@@ -274,6 +274,9 @@ void startStream() {
 }
 std::shared_ptr<ob::FrameSet> fileterAlign(std::shared_ptr<ob::FrameSet> frameset) {
     auto newFrame    = align->process(frameset);
+    if (!newFrame) {
+        return nullptr;
+    }
     auto newFrameSet = newFrame->as<ob::FrameSet>();
     return newFrameSet;
 }

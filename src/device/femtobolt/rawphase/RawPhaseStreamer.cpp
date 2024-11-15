@@ -374,9 +374,9 @@ void RawPhaseStreamer::startDepthEngineThread(std::shared_ptr<const StreamProfil
 
     lastStreamProfile_     = profile;
     depthEngineThreadExit_ = false;
+    depthEngineReady_      = false;
     depthEngineThread_     = std::thread([profile, this] {
         // depth engine must be initialize, using and deinitialize in the same thread
-        // todo: catch exceptions
         initDepthEngine(profile);  // init depth engine
         std::shared_ptr<Frame> frame;
         while(!depthEngineThreadExit_) {
@@ -394,9 +394,17 @@ void RawPhaseStreamer::startDepthEngineThread(std::shared_ptr<const StreamProfil
         }
         deinitDepthEngine();
     });
+
+    // wait for depth engine ready
+    std::unique_lock<std::mutex> depthEngineLock(depthEngineMutex_);
+    depthEngineCV_.wait_for(depthEngineLock, std::chrono::seconds(5), [&]() { return depthEngineReady_; });
+    if(!depthEngineReady_) {
+        throw io_exception("Depth engine thread start failed, timeout!");
+    }
 }
 
 void RawPhaseStreamer::initDepthEngine(std::shared_ptr<const StreamProfile> profile) {
+    std::unique_lock<std::mutex> depthEngineLock(depthEngineMutex_);
     LOG_DEBUG("Depth engine create and initialize...");
 
     waitNvramDataReady();
@@ -420,6 +428,8 @@ void RawPhaseStreamer::initDepthEngine(std::shared_ptr<const StreamProfile> prof
     }
 
     LOG_DEBUG("Depth engine init succeed!");
+    depthEngineReady_ = true;
+    depthEngineCV_.notify_all();
 }
 
 void RawPhaseStreamer::deinitDepthEngine() {

@@ -72,6 +72,9 @@ private:
     bool                                    depthEngineThreadExit_ = false;
     std::thread                             depthEngineThread_;
     std::shared_ptr<const StreamProfile>    lastStreamProfile_;
+    std::mutex                              depthEngineMutex_;
+    std::condition_variable                 depthEngineCV_;
+    bool                                    depthEngineReady_ = false;
 
     std::mutex                         frameQueueMutex_;
     std::condition_variable            frameQueueCV_;

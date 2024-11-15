@@ -29,6 +29,9 @@ int main() try {
     while(isRunning) {
         // Wait for frameSet from the pipeline, the default timeout is 1000ms.
         auto frameSet = pipe.waitForFrameset();
+        if(!frameSet) {
+            continue;
+        }
 
         // Get the count of frames in the frameSet
         auto frameCount = frameSet->getCount();
