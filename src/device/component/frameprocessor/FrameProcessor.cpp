@@ -170,13 +170,13 @@ void FrameProcessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue
     case OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT: {
         setConfigValue("DisparityTransform#2", static_cast<double>(value.floatValue));
     } break;
-    case OB_PROP_DEPTH_SOFT_FILTER_BOOL: {
+    case OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL: {
         setConfigValueSync("NoiseRemovalFilter#255", static_cast<double>(value.intValue));
     } break;
-    case OB_PROP_DEPTH_MAX_SPECKLE_SIZE_INT: {
+    case OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_SPECKLE_SIZE_INT: {
         setConfigValueSync("NoiseRemovalFilter#0", static_cast<double>(value.intValue));
     } break;
-    case OB_PROP_DEPTH_MAX_DIFF_INT: {
+    case OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT: {
         setConfigValueSync("NoiseRemovalFilter#1", static_cast<double>(value.intValue));
     } break;
     default:
@@ -199,15 +199,15 @@ void FrameProcessor::getPropertyValue(uint32_t propertyId, OBPropertyValue *valu
         auto getValue     = getConfigValue("DisparityTransform#2");
         value->floatValue = static_cast<float>(getValue);
     } break;
-    case OB_PROP_DEPTH_SOFT_FILTER_BOOL: {
+    case OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL: {
         auto getValue   = getConfigValue("NoiseRemovalFilter#255");
         value->intValue = static_cast<int32_t>(getValue);
     } break;
-    case OB_PROP_DEPTH_MAX_SPECKLE_SIZE_INT: {
+    case OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_SPECKLE_SIZE_INT: {
         auto getValue   = getConfigValue("NoiseRemovalFilter#0");
         value->intValue = static_cast<int32_t>(getValue);
     } break;
-    case OB_PROP_DEPTH_MAX_DIFF_INT: {
+    case OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT: {
         auto getValue   = getConfigValue("NoiseRemovalFilter#1");
         value->intValue = static_cast<int32_t>(getValue);
     } break;
@@ -226,13 +226,13 @@ void FrameProcessor::getPropertyRange(uint32_t propertyId, OBPropertyRange *rang
     case OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT:
         configName = "DisparityTransform#2";
         break;
-    case OB_PROP_DEPTH_SOFT_FILTER_BOOL:
+    case OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL:
         configName = "NoiseRemovalFilter#255";
         break;
-    case OB_PROP_DEPTH_MAX_SPECKLE_SIZE_INT:
+    case OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_SPECKLE_SIZE_INT:
         configName = "NoiseRemovalFilter#0";
         break;
-    case OB_PROP_DEPTH_MAX_DIFF_INT:
+    case OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT:
         configName = "NoiseRemovalFilter#1";
         break;
     case OB_PROP_DEPTH_PRECISION_LEVEL_INT:

@@ -7,7 +7,7 @@ FemtoMegaColorFrameTimestampCalculatorV10300::FemtoMegaColorFrameTimestampCalcul
 
 void FemtoMegaColorFrameTimestampCalculatorV10300::calculate(std::shared_ptr<Frame> frame) {
     auto format = frame->getFormat();
-    if(format == OB_FORMAT_MJPEG) {
+    if(format == OB_FORMAT_MJPEG || format == OB_FORMAT_RGB || format == OB_FORMAT_RGBA || format == OB_FORMAT_BGRA) {
         return;
     }
     FrameTimestampCalculatorBaseDeviceTime::calculate(frame);

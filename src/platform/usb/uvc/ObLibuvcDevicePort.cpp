@@ -64,10 +64,9 @@ ObLibuvcDevicePort::ObLibuvcDevicePort(std::shared_ptr<IUsbDevice> usbDev, std::
 
     auto res = uvc_open(uvcDev_, portInfo->infIndex, &uvcDevHandle_, libusbDevHandle);
     if(res < 0) {
-        LOG_WARN("uvc_open  path={} already opened", portInfo->infUrl);
         std::stringstream ss;
-        ss << "uvc_open  path=" << portInfo->infUrl << " failed,return res" << res;
-        LOG_WARN("uvc_open  path={0} failed,return res:${1}", portInfo->infUrl, static_cast<int>(res));
+        ss << "uvc_open failed: [Path: " << portInfo->infUrl << ", Return Code: " << res << "]";
+        LOG_WARN(ss.str());
         throw std::runtime_error(ss.str());
     }
     else {
