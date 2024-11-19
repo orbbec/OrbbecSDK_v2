@@ -43,6 +43,8 @@ private:
 
     struct sockaddr_ll socketAddress_;
 
+    std::thread receiverThread_;
+
 };
 
 }  // namespace libobsensor
