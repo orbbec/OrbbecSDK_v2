@@ -454,6 +454,11 @@ typedef enum {
     OB_PROP_LOW_EXPOSURE_LASER_CONTROL_BOOL = 194,
 
     /**
+     * @brief check pps sync in signal
+     */
+    OB_PROP_CHECK_PPS_SYNC_IN_SIGNAL_BOOL = 195,
+
+    /**
      * @brief Repower device (cut off power and power on again)
      *
      * @brief Currently using for GMSL device, cut off power and power on again by GMSL host driver.

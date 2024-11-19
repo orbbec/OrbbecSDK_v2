@@ -953,7 +953,7 @@ void DabaiADevice::initProperties() {
             propertyServer->registerProperty(OB_PROP_LASER_ALWAYS_ON_BOOL, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_LASER_ON_OFF_PATTERN_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_TEMPERATURE_COMPENSATION_BOOL, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_LDP_STATUS_BOOL, "r", "r", vendorPropertyAccessor);
+
             propertyServer->registerProperty(OB_PROP_DEPTH_ALIGN_HARDWARE_BOOL, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_LASER_POWER_LEVEL_CONTROL_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_LDP_MEASURE_DISTANCE_INT, "r", "r", vendorPropertyAccessor);
@@ -979,6 +979,7 @@ void DabaiADevice::initProperties() {
 
             propertyServer->registerProperty(OB_PROP_LASER_HIGH_TEMPERATURE_PROTECT_BOOL, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_LOW_EXPOSURE_LASER_CONTROL_BOOL, "rw", "rw", vendorPropertyAccessor);
+            propertyServer->registerProperty(OB_PROP_CHECK_PPS_SYNC_IN_SIGNAL_BOOL, "rw", "rw", vendorPropertyAccessor);
 
             // todo: add these properties to the frame processor
             // propertyServer->registerProperty(OB_PROP_SDK_DEPTH_FRAME_UNPACK_BOOL, "rw", "rw", vendorPropertyAccessor);
