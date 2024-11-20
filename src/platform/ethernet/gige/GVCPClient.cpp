@@ -125,6 +125,7 @@ int GVCPClient::openClientSockets() {
             addrSrv.sin_family = AF_INET;
             addrSrv.sin_port   = htons(0);
             auto ipStr         = inet_ntoa(addrSrv.sin_addr);
+            // "169.254.xxx.xxx" is link-local address for windows, "127.0.0.1" is loopback address
             if(strncmp(ipStr, "169.254", 7) == 0 || strcmp(ipStr, "127.0.0.1") == 0) {
                 continue;
             }

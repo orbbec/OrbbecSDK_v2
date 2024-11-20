@@ -472,9 +472,7 @@ ObV4lGmslDevicePort::ObV4lGmslDevicePort(std::shared_ptr<const USBSourcePortInfo
     auto                                 iter      = devs.begin();
     while(iter != devs.end()) {
         if(((*iter)->cap.device_caps & V4L2_CAP_META_CAPTURE) && devHandle != nullptr) {
-            // LOG_DEBUG("-V4L2_CAP_META_CAPTURE-1-");
             devHandle->metadataInfo = *iter;
-            devHandle->metadataFd   = -1;
             auto fd                 = open(devHandle->metadataInfo->name.c_str(), O_RDWR | O_NONBLOCK, 0);
             if(fd < 0) {
                 LOG_ERROR("Failed to open metadata dev: {}", devHandle->metadataInfo->name);
@@ -484,12 +482,10 @@ ObV4lGmslDevicePort::ObV4lGmslDevicePort(std::shared_ptr<const USBSourcePortInfo
             devHandle->metadataFd = fd;
         }
         else {
-            // LOG_DEBUG("-V4L2_CAP_CAPTURE-2-");
-            devHandle       = std::make_shared<V4lDeviceHandleGmsl>();
-            devHandle->info = *iter;
-            devHandle->fd   = -1;
-            // devHandle->info->name = "/dev/video1";  //for test use.
-            int fd = open(devHandle->info->name.c_str(), O_RDWR | O_NONBLOCK, 0);
+            devHandle             = std::make_shared<V4lDeviceHandleGmsl>();
+            devHandle->info       = *iter;
+            devHandle->metadataFd = -1;
+            int fd                = open(devHandle->info->name.c_str(), O_RDWR | O_NONBLOCK, 0);
             if(fd < 0) {
                 throw io_exception("Failed to open: " + devHandle->info->name);
             }
@@ -677,8 +673,6 @@ void ObV4lGmslDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandleGmsl> devHa
                     devHandle->metadataBuffers[buf.index].actual_length = buf.bytesused;
                     devHandle->metadataBuffers[buf.index].sequence      = buf.sequence;
                     metadataBufferIndex                                 = buf.index;
-                    // LOG_DEBUG("captureLoop-metadata devname:{}, buf.sequence:{}, buf.bytesused:{}, buf.index:{}", devHandle->info->name, buf.sequence,
-                    // buf.bytesused, buf.index);
                 }
 
                 if(devHandle->isCapturing) {
@@ -699,8 +693,6 @@ void ObV4lGmslDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandleGmsl> devHa
                     LOG_DEBUG("VIDIOC_DQBUF failed, {}, {}", strerror(errno), devHandle->metadataInfo->name);
                 }
 
-                // LOG_DEBUG("captureLoop-buf.index:{}, buf.sequence:{}, buf.length:{}, buf.flags:{} ", buf.index, buf.sequence, buf.length, buf.flags);
-                // if( (buf.bytesused) && (buf.flags&V4L2_BUF_FLAG_DONE) )
                 if((buf.bytesused) && (!(buf.flags & V4L2_BUF_FLAG_ERROR))) {
                     TRY_EXECUTE({
                         auto rawframe   = FrameFactory::createFrameFromStreamProfile(devHandle->profile);
@@ -726,32 +718,32 @@ void ObV4lGmslDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandleGmsl> devHa
                                 auto payloadHeader = (StandardUvcFramePayloadHeader *)uvc_payload_header;
                                 videoFrame->setTimeStampUsec(payloadHeader->dwPresentationTime);
                             }
+                        }
 
-                            auto realtime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-                            videoFrame->setSystemTimeStampUsec(realtime);
-                            // videoFrame->setNumber(buf.sequence);
-                            // for debug use. it is not necessary
-                            // auto metaFrameCount=*(uint32_t *)(uvc_payload_header);
-                            // LOG_DEBUG("read metaFrameCount:{}", metaFrameCount);
+                        auto realtime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+                        videoFrame->setSystemTimeStampUsec(realtime);
+                        // videoFrame->setNumber(buf.sequence);
+                        // for debug use. it is not necessary
+                        // auto metaFrameCount=*(uint32_t *)(uvc_payload_header);
+                        // LOG_DEBUG("read metaFrameCount:{}", metaFrameCount);
 
-                            // fix frame index zero issue.
-                            videoFrame->setNumber(devHandle->loopFrameIndex);
-                            // LOG_DEBUG("set loopFrameIndex:{}", devHandle->loopFrameIndex);
+                        // fix frame index zero issue.
+                        videoFrame->setNumber(devHandle->loopFrameIndex);
+                        // LOG_DEBUG("set loopFrameIndex:{}", devHandle->loopFrameIndex);
 
-                            if(devHandle->profile->getType() == OB_STREAM_COLOR) {
-                                if(colorFrameNum >= 3) {
-                                    devHandle->frameCallback(videoFrame);
-                                }
-                                else {
-                                    colorFrameNum++;
-                                    LOG_DEBUG("captureLoop colorFrameNum<3 drop. colorFrameNum:{}", colorFrameNum);
-                                }
-                            }
-                            else {
+                        if(devHandle->profile->getType() == OB_STREAM_COLOR) {
+                            if(colorFrameNum >= 3) {
                                 devHandle->frameCallback(videoFrame);
                             }
-                            devHandle->loopFrameIndex++;
+                            else {
+                                colorFrameNum++;
+                                LOG_DEBUG("captureLoop colorFrameNum<3 drop. colorFrameNum:{}", colorFrameNum);
+                            }
                         }
+                        else {
+                            devHandle->frameCallback(videoFrame);
+                        }
+                        devHandle->loopFrameIndex++;
                     });
                 }
 
@@ -1500,7 +1492,9 @@ bool ObV4lGmslDevicePort::setXuExt(uint32_t ctrl, const uint8_t *data, uint32_t 
 
     if(G2R_CAMERA_CID_SET_DATA == ctrl) {
         // struct v4l2_ext_control xctrl { cid, G2R_RW_DATA_LEN, 0, 0 };
-        struct v4l2_ext_control xctrl{ cid, G2R_RW_DATA_LEN, 0, 0 };
+        struct v4l2_ext_control xctrl {
+            cid, G2R_RW_DATA_LEN, 0, 0
+        };
         xctrl.p_u8 = const_cast<uint8_t *>(data);
 
 #if 0
@@ -1555,8 +1549,10 @@ bool ObV4lGmslDevicePort::getXuExt(uint32_t ctrl, uint8_t *data, uint32_t *len) 
     VALIDATE_NOT_NULL(len);
     auto                    fd  = deviceHandles_.front()->fd;
     auto                    cid = ctrl;  // CIDFromOBPropertyID(ctrl);
-    struct v4l2_ext_control control{ cid, G2R_RW_DATA_LEN, 0, 0 };
-    std::vector<uint8_t>    dataRecvBuf(MAX_I2C_PACKET_SIZE, 0);
+    struct v4l2_ext_control control {
+        cid, G2R_RW_DATA_LEN, 0, 0
+    };
+    std::vector<uint8_t> dataRecvBuf(MAX_I2C_PACKET_SIZE, 0);
     control.p_u8 = dataRecvBuf.data();
     v4l2_ext_controls ext{ control.id & 0xffff0000, 1, 0, 0, 0, &control };
 
@@ -1663,7 +1659,7 @@ int ObV4lGmslDevicePort::resetGmslDriver() {
     LOG_DEBUG("-Entry ObV4lGmslDevicePort::rebootFirmware");
     auto fd = deviceHandles_.front()->fd;
 
-    struct v4l2_ext_control control{};
+    struct v4l2_ext_control control {};
     memset(&control, 0, sizeof(control));
     control.id    = G2R_CAMERA_CID_RESET_POWER;
     control.value = 1;
