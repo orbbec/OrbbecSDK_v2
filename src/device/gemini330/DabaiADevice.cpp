@@ -158,7 +158,7 @@ std::shared_ptr<const StreamProfile> DabaiADevice::loadDefaultStreamProfile(OBSe
 
     OBStreamType defStreamType = OB_STREAM_UNKNOWN;
     int          defFps        = 10;
-    int          defWidth      = 848;
+    int          defWidth      = 640;
     int          defHeight     = 480;
     OBFormat     defFormat     = OB_FORMAT_Y16;
 

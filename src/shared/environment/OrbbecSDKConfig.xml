@@ -1592,7 +1592,7 @@
                 <FPS>30</FPS>
                 <Format>Y8</Format>
             </IR>
-            <IR_LEFT>
+            <LeftIR>
                 <!--The
                 resolution width is enabled by default, int type-->
                 <Width>640</Width>
@@ -1603,8 +1603,8 @@
                 frame rate of the resolution enabled by default, int type-->
                 <FPS>30</FPS>
                 <Format>Y8</Format>
-            </IR_LEFT>
-            <IR_RIGHT>
+            </LeftIR>
+            <RightIR>
                 <!--The
                 resolution width is enabled by default, int type-->
                 <Width>640</Width>
@@ -1615,7 +1615,7 @@
                 frame rate of the resolution enabled by default, int type-->
                 <FPS>30</FPS>
                 <Format>Y8</Format>
-            </IR_RIGHT>
+            </RightIR>
         </DaBaiA>
 
         <!--DaBaiA
@@ -1693,7 +1693,7 @@
                 <FPS>30</FPS>
                 <Format>Y8</Format>
             </IR>
-            <IR_LEFT>
+            <LeftIR>
                 <!--The
                 resolution width is enabled by default, int type-->
                 <Width>640</Width>
@@ -1704,8 +1704,8 @@
                 frame rate of the resolution enabled by default, int type-->
                 <FPS>30</FPS>
                 <Format>Y8</Format>
-            </IR_LEFT>
-            <IR_RIGHT>
+            </LeftIR>
+            <RightIR>
                 <!--The
                 resolution width is enabled by default, int type-->
                 <Width>640</Width>
@@ -1716,7 +1716,7 @@
                 frame rate of the resolution enabled by default, int type-->
                 <FPS>30</FPS>
                 <Format>Y8</Format>
-            </IR_RIGHT>
+            </RightIR>
         </DaBaiAL>
 		<!-- Gemini210 config -->
         <Gemini210>
