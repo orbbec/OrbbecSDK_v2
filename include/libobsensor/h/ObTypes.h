@@ -856,6 +856,11 @@ typedef enum {
     OB_SYNC_MODE_SECONDARY_SOFT_TRIGGER = 0x07,
 
     /**
+     * @brief IR and IMU sync signal
+     */
+    OB_SYNC_MODE_IR_IMU_SYNC = 0x08,
+
+    /**
      * @brief Unknown type
      */
     OB_SYNC_MODE_UNKNOWN = 0xff,
@@ -1245,6 +1250,11 @@ typedef enum {
      * signal as input-trigger signal.
      */
     OB_MULTI_DEVICE_SYNC_MODE_HARDWARE_TRIGGERING = 1 << 6,
+
+    /**
+     * @brief IR and IMU sync mode
+     */
+    OB_MULTI_DEVICE_SYNC_MODE_IR_IMU_SYNC = 1 << 7,
 
 } ob_multi_device_sync_mode,
     OBMultiDeviceSyncMode;
