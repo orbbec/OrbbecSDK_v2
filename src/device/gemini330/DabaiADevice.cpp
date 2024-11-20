@@ -42,6 +42,7 @@
 #include "G330SensorStreamStrategy.hpp"
 #include "G330PropertyAccessors.hpp"
 #include "G330FrameMetadataParserContainer.hpp"
+#include "DabaiAMetadataModifier.hpp"
 
 #include <algorithm>
 
@@ -612,6 +613,9 @@ void                 DabaiADevice::initSensorListGMSL() {
                     sensor->setFrameProcessor(frameProcessor.get());
                 }
 
+                auto metadataModifer = std::make_shared<DabaiALGMSLMetadataModifier>(this);
+                sensor->setFrameMetadataModifer(metadataModifer);
+
                 auto propServer = getPropertyServer();
                 auto depthUnit  = propServer->getPropertyValueT<float>(OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT);
                 sensor->setDepthUnit(depthUnit);
@@ -707,6 +711,9 @@ void                 DabaiADevice::initSensorListGMSL() {
                     sensor->setFrameProcessor(frameProcessor.get());
                 }
 
+                auto metadataModifer = std::make_shared<DabaiALGMSLMetadataModifier>(this);
+                sensor->setFrameMetadataModifer(metadataModifer);
+
                 initSensorStreamProfile(sensor);
 
                 return sensor;
@@ -762,6 +769,9 @@ void                 DabaiADevice::initSensorListGMSL() {
                 if(frameProcessor) {
                     sensor->setFrameProcessor(frameProcessor.get());
                 }
+
+                auto metadataModifer = std::make_shared<DabaiALGMSLMetadataModifier>(this);
+                sensor->setFrameMetadataModifer(metadataModifer);
 
                 initSensorStreamProfile(sensor);
 
@@ -824,6 +834,9 @@ void                 DabaiADevice::initSensorListGMSL() {
                 if(frameProcessor) {
                     sensor->setFrameProcessor(frameProcessor.get());
                 }
+
+                auto metadataModifer = std::make_shared<DabaiALGMSLMetadataModifier>(this);
+                sensor->setFrameMetadataModifer(metadataModifer);
 
                 initSensorStreamProfile(sensor);
 

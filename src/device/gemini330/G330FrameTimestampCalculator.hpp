@@ -2,8 +2,8 @@
 // Licensed under the MIT License.
 
 #pragma once
-#include "IFrame.hpp"
 #include "IDevice.hpp"
+#include "timestamp/IFrameTimestampCalculator.hpp"
 
 namespace libobsensor {
 
@@ -20,7 +20,7 @@ public:
 
 private:
     IDevice *device_;
-    
+
     uint64_t deviceTimeFreq_;
     uint64_t frameTimeFreq_;
 

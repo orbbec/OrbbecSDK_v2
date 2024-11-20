@@ -46,7 +46,7 @@ static const std::string GMSL_ASIC_SN_DEFAULT = "12345";
 
 static const uint32_t MAX_META_DATA_SIZE_GMSL = 255;
 static const uint32_t MAX_BUFFER_COUNT_GMSL   = 8;  // 4; //v4l3_buf default 4 buf. opt to 4->8
-// static const uint32_t LOCAL_V4L2_META_FMT_D4XX_GMSL = v4l2_fourcc('D', '4', 'X', 'X'); // borrows from videodev2.h, using for getting extention metadata
+
 static const uint32_t LOCAL_V4L2_META_FMT_D4XX_GMSL = v4l2_fourcc('G', '2', 'X', 'X');  // borrows from videodev2.h, using for getting extention metadata
 
 #define LOCAL_V4L2_BUF_TYPE_META_CAPTURE_GMSL ((v4l2_buf_type)13)

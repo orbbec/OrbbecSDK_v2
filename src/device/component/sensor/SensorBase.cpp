@@ -255,6 +255,7 @@ void SensorBase::outputFrame(std::shared_ptr<Frame> frame) {
     if(frameTimestampCalculator_) {
         TRY_EXECUTE(frameTimestampCalculator_->calculate(frame));
     }
+
     if(globalTimestampCalculator_) {
         TRY_EXECUTE(globalTimestampCalculator_->calculate(frame));
     }

@@ -5,6 +5,7 @@
 #include "sensor/SensorBase.hpp"
 #include "IFrame.hpp"
 #include "IFilter.hpp"
+#include "metadata/IFrameMetadataModifier.hpp"
 #include "frameprocessor/FrameProcessor.hpp"
 
 #include <map>
@@ -37,6 +38,7 @@ public:
     virtual void updateFormatFilterConfig(const std::vector<FormatFilterConfig> &configs);
     void         setStreamProfileList(const StreamProfileList &profileList) override;
     void         setFrameProcessor(std::shared_ptr<FrameProcessor> frameProcessor);
+    void         setFrameMetadataModifer(std::shared_ptr<IFrameMetadataModifier> modifier);
 
 protected:
     virtual void trySendStopStreamVendorCmd();
@@ -52,8 +54,8 @@ protected:
     std::shared_ptr<const StreamProfile> currentBackendStreamProfile_;
     StreamProfileList                    backendStreamProfileList_;
 
-    std::shared_ptr<FrameProcessor> frameProcessor_;
+    std::shared_ptr<FrameProcessor>         frameProcessor_;
+    std::shared_ptr<IFrameMetadataModifier> frameMetadataModifier_;
 };
 
 }  // namespace libobsensor
-

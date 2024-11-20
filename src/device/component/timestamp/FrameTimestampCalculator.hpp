@@ -4,6 +4,7 @@
 #pragma once
 
 #include "IFrame.hpp"
+#include "IFrameTimestampCalculator.hpp"
 #include "DeviceComponentBase.hpp"
 #include "GlobalTimestampFitter.hpp"
 
@@ -84,4 +85,3 @@ private:
 };
 
 }  // namespace libobsensor
-

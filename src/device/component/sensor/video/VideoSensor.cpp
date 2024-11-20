@@ -153,6 +153,10 @@ void VideoSensor::onBackendFrameCallback(std::shared_ptr<Frame> frame) {
 
     updateStreamState(STREAM_STATE_STREAMING);
 
+    if(frameMetadataModifier_) {
+        frameMetadataModifier_->modify(frame);
+    }
+
     if(currentFormatFilterConfig_ && currentFormatFilterConfig_->converter) {
         currentFormatFilterConfig_->converter->pushFrame(frame);
     }
@@ -343,6 +347,13 @@ void VideoSensor::setFrameProcessor(std::shared_ptr<FrameProcessor> frameProcess
         LOG_FREQ_CALC(DEBUG, 5000, "{}({}): {} frameProcessor_ callback frameRate={freq}fps", deviceInfo->name_, deviceInfo->deviceSn_, sensorType_);
         SensorBase::outputFrame(frame);
     });
+}
+
+void VideoSensor::setFrameMetadataModifer(std::shared_ptr<IFrameMetadataModifier> modifier) {
+    if(isStreamActivated()) {
+        throw wrong_api_call_sequence_exception("Can not update frame metadata modifier while streaming");
+    }
+    frameMetadataModifier_ = modifier;
 }
 
 }  // namespace libobsensor
