@@ -40,6 +40,15 @@ GyroSensor::GyroSensor(IDevice *owner, const std::shared_ptr<ISourcePort> &backe
             streamProfileList_.emplace_back(profile);
         }
     }
+
+    if(propServer->isPropertySupported(OB_PROP_GYRO_ODR_INT, PROP_OP_READ, PROP_ACCESS_INTERNAL)
+       && propServer->isPropertySupported(OB_PROP_GYRO_FULL_SCALE_INT, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
+        auto currentSampleRate = propServer->getPropertyValueT<OBGyroSampleRate>(OB_PROP_GYRO_ODR_INT);
+        auto currentFullScale  = propServer->getPropertyValueT<OBGyroFullScaleRange>(OB_PROP_GYRO_FULL_SCALE_INT);
+        auto defaultProfile    = StreamProfileFactory::createGyroStreamProfile(lazySensor, currentFullScale, currentSampleRate);
+        updateDefaultStreamProfile(defaultProfile);
+    }
+
     LOG_DEBUG("GyroSensor is created!");
 }
 

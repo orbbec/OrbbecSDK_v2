@@ -154,7 +154,7 @@ void DabaiADevice::init() {
 }
 
 std::shared_ptr<const StreamProfile> DabaiADevice::loadDefaultStreamProfile(OBSensorType sensorType) {
-    std::shared_ptr<StreamProfile> defaultStreamProfile = nullptr;
+    std::shared_ptr<const StreamProfile> defaultStreamProfile = nullptr;
     LOG_DEBUG("loadDefaultStreamProfile: deviceConnectionType:={}", deviceInfo_->connectionType_);
 
     OBStreamType defStreamType = OB_STREAM_UNKNOWN;
@@ -231,19 +231,18 @@ std::shared_ptr<const StreamProfile> DabaiADevice::loadDefaultStreamProfile(OBSe
         LOG_DEBUG("default profile StreamType:{}, Format:{}, Width:{}, Height:{}, Fps:{}", defStreamType, defFormat, defWidth, defHeight, defFps);
     }
 
+    if(!defaultStreamProfile) {
+        // load default stream profile from env config
+        defaultStreamProfile = StreamProfileFactory::getDefaultStreamProfileFromEnvConfig(deviceInfo_->name_, sensorType);
+    }
+
     return defaultStreamProfile;
 }
 
 void DabaiADevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
-    auto streamProfile = StreamProfileFactory::getDefaultStreamProfileFromEnvConfig(deviceInfo_->name_, sensor->getSensorType());
-    if(streamProfile) {
-        auto defaultStreamProfile = loadDefaultStreamProfile(sensor->getSensorType());
-        if(defaultStreamProfile != nullptr) {
-            sensor->updateDefaultStreamProfile(defaultStreamProfile);
-        }
-        else {
-            sensor->updateDefaultStreamProfile(streamProfile);
-        }
+    auto defaultStreamProfile = loadDefaultStreamProfile(sensor->getSensorType());
+    if(defaultStreamProfile != nullptr) {
+        sensor->updateDefaultStreamProfile(defaultStreamProfile);
     }
 
     // bind params: extrinsics, intrinsics, etc.

@@ -40,6 +40,15 @@ AccelSensor::AccelSensor(IDevice *owner, const std::shared_ptr<ISourcePort> &bac
             streamProfileList_.emplace_back(profile);
         }
     }
+
+    if(propServer->isPropertySupported(OB_PROP_ACCEL_ODR_INT, PROP_OP_READ, PROP_ACCESS_INTERNAL)
+       && propServer->isPropertySupported(OB_PROP_ACCEL_FULL_SCALE_INT, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
+        auto currentSampleRate = propServer->getPropertyValueT<OBAccelSampleRate>(OB_PROP_ACCEL_ODR_INT);
+        auto currentFullScale  = propServer->getPropertyValueT<OBAccelFullScaleRange>(OB_PROP_ACCEL_FULL_SCALE_INT);
+        auto defaultProfile    = StreamProfileFactory::createAccelStreamProfile(lazySensor, currentFullScale, currentSampleRate);
+        updateDefaultStreamProfile(defaultProfile);
+    }
+
     LOG_DEBUG("AccelSensor is created!");
 }
 

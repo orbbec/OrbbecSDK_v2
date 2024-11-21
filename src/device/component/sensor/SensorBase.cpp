@@ -80,7 +80,6 @@ void SensorBase::setStreamProfileList(const StreamProfileList &profileList) {
 
 void SensorBase::updateDefaultStreamProfile(const std::shared_ptr<const StreamProfile> &profile) {
     std::shared_ptr<const StreamProfile> defaultProfile;
-    auto                                 aa = profile->as<VideoStreamProfile>();
     LOG_DEBUG("Set default stream profile to: {}", profile);
     for(auto iter = streamProfileList_.begin(); iter != streamProfileList_.end(); ++iter) {
         if((*iter)->is<VideoStreamProfile>() && profile->is<VideoStreamProfile>()) {
