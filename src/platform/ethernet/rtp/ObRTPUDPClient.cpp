@@ -59,13 +59,6 @@ void ObRTPUDPClient::socketConnect() {
     setsockopt(recvSocket_, SOL_SOCKET, SO_RCVBUF, (const char *)&nRecvBuf, sizeof(int));
     setsockopt(recvSocket_, SOL_SOCKET, SO_RCVTIMEO, (char *)&commTimeout, sizeof(commTimeout));
 
-    // blocking mode
-    /*unsigned long mode = 0;  
-    if(ioctlsocket(recvSocket_, FIONBIO, &mode) < 0) {
-        throw libobsensor::invalid_value_exception(utils::string::to_string() << "ObRTPUDPClient: ioctlsocket to blocking mode failed! addr=" << serverIp_
-                                                                              << ", port=" << serverPort_ << ", err_code=" << GET_LAST_ERROR());
-    }*/
-
     // 3.Set server address
     sockaddr_in serverAddr{};
     serverAddr.sin_family      = AF_INET;
@@ -74,25 +67,43 @@ void ObRTPUDPClient::socketConnect() {
 
     // 4.Bind the socket to a local address and port.
     if(bind(recvSocket_, (sockaddr *)&serverAddr, sizeof(serverAddr)) < 0) {
-        socketClose();
+        if(GET_LAST_ERROR() == EADDRINUSE) {
+            socketClose();
+            serverPort_+=2;
+            socketConnect();
+        }
+        else {
+            socketClose();
 #if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
-        WSACleanup();
+            WSACleanup();
 #endif
-        throw libobsensor::invalid_value_exception(utils::string::to_string() << "Failed to bind server address! err_code=" << GET_LAST_ERROR());
+            throw libobsensor::invalid_value_exception(utils::string::to_string() << "Failed to bind server address! err_code=" << GET_LAST_ERROR());
+        }
     }
+    LOG_DEBUG("Net device socket open successfully");
+}
+
+uint16_t ObRTPUDPClient::getPort() {
+    return serverPort_;
 }
 
 void ObRTPUDPClient::start(std::shared_ptr<const StreamProfile> profile, MutableFrameCallback callback) {
-    if(startReceive_) {
-        LOG_WARN("The UDP data receive thread has been started!");
+    if(recvSocket_ == INVALID_SOCKET) {
+        LOG_WARN("The UDP socket is not initialized!");
         return;
     }
 
-    currentProfile_  = profile;
-    frameCallback_   = callback;
-    startReceive_    = true;
-    receiverThread_  = std::thread(&ObRTPUDPClient::frameReceive, this);
-    callbackThread_  = std::thread(&ObRTPUDPClient::frameProcess, this);
+    if(startReceive_) {
+        LOG_WARN("The udp data receive thread has been started!");
+        return;
+    }
+
+    rtpQueue_.reset();
+    currentProfile_ = profile;
+    frameCallback_  = callback;
+    startReceive_   = true;
+    receiverThread_ = std::thread(&ObRTPUDPClient::frameReceive, this);
+    callbackThread_ = std::thread(&ObRTPUDPClient::frameProcess, this);
 }
 
 void ObRTPUDPClient::socketClose() {
@@ -153,7 +164,7 @@ void ObRTPUDPClient::frameProcess() {
     while(startReceive_) {
         if(rtpQueue_.pop(data)) {
             RTPHeader *header = (RTPHeader *)data.data();
-            if(serverPort_ != 20010) {
+            if(currentProfile_ != nullptr) {
                 rtpProcessor_.process(header, data.data(), (uint32_t)data.size(), currentProfile_->getType());
                 if(rtpProcessor_.processComplete()) {
                     uint32_t frameDataSize = rtpProcessor_.getFrameDataSize();
@@ -197,8 +208,8 @@ void ObRTPUDPClient::frameProcess() {
     LOG_DEBUG("Exit frame process thread...");
 }
 
-void ObRTPUDPClient::close() {
-    LOG_DEBUG("close start...");
+void ObRTPUDPClient::stop() {
+    LOG_DEBUG("stop stream start...");
     startReceive_ = false;
     if(receiverThread_.joinable()) {
         receiverThread_.join();
@@ -207,13 +218,18 @@ void ObRTPUDPClient::close() {
     if(callbackThread_.joinable()) {
         callbackThread_.join();
     }
+    LOG_DEBUG("stop stream end...");
+}
+
+void ObRTPUDPClient::close() {
+    LOG_DEBUG("close start...");
+    stop();
     if(recvSocket_ > 0) {
         socketClose();
 #if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
         WSACleanup();
 #endif
     }
-    
     LOG_DEBUG("close end...");
 }
 

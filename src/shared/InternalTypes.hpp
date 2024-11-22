@@ -187,6 +187,7 @@ typedef struct {
     uint32_t height;
     uint32_t fps;
     uint32_t formatFourcc;
+    uint16_t port;
 } OBInternalVideoStreamProfile;
 
 #pragma pack(pop)

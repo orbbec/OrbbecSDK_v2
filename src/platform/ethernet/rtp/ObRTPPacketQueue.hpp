@@ -17,6 +17,7 @@ public:
     void push(const std::vector<uint8_t> &data);
     bool pop(std::vector<uint8_t> &data);
     void destroy();
+    void reset();
 
 private:
     std::queue<std::vector<uint8_t>> queue_;

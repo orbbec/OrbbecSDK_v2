@@ -21,14 +21,19 @@ public:
     ObRTPNpCapReceiver(std::string localAddress, std::string address, uint16_t port);
     ~ObRTPNpCapReceiver() noexcept;
 
-    void start(std::shared_ptr<const StreamProfile> profile, MutableFrameCallback callback);
-    void close();
+    void     start(std::shared_ptr<const StreamProfile> profile, MutableFrameCallback callback);
+    void     stop();
+    void     close();
+    uint16_t getPort();
 
 private:
-    void findAlldevs();
-    void parseIPAddress(const u_char *ip_header, std::string &src_ip, std::string &dst_ip);
-    void frameReceive();
-    void frameProcess();
+    uint16_t getAvailableUdpPort();
+    bool     isPortInUse(uint16_t port);
+    
+    void     findAlldevs();
+    void     parseIPAddress(const u_char *ip_header, std::string &src_ip, std::string &dst_ip);
+    void     frameReceive();
+    void     frameProcess();
 
     void frameReceive2(pcap_t *handle);
     
@@ -56,8 +61,7 @@ private:
     ObRTPPacketQueue    rtpQueue_;
     ObRTPPacketProcessor rtpProcessor_;
 
-    std::mutex              rtpPacketMutex_;
-    std::condition_variable packetAvailableCv_;
+    std::mutex rtpPacketMutex_;
 
     SOCKET   recvSocket_;
 };

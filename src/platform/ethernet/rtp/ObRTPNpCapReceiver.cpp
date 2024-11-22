@@ -33,7 +33,51 @@ ObRTPNpCapReceiver::ObRTPNpCapReceiver(std::string localAddress, std::string add
 ObRTPNpCapReceiver::~ObRTPNpCapReceiver() noexcept {
 }
 
+uint16_t ObRTPNpCapReceiver::getAvailableUdpPort() {
+    uint16_t port = serverPort_;
+    while(isPortInUse(port)) {
+        port+=2;
+    }
+    LOG_DEBUG("Found available port: {}", port);
+    return port;
+}
+
+bool ObRTPNpCapReceiver::isPortInUse(uint16_t port) {
+    WSADATA wsaData;
+    int     rst = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    if(rst != 0) {
+        throw libobsensor::invalid_value_exception(utils::string::to_string() << "Failed to load Winsock! err_code=" << GET_LAST_ERROR());
+    }
+
+    SOCKET sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if(sock == INVALID_SOCKET) {
+        close();
+        throw libobsensor::invalid_value_exception(utils::string::to_string() << "Failed to create udpSocket! err_code=" << GET_LAST_ERROR());
+    }
+
+    sockaddr_in serverAddr;
+    serverAddr.sin_family      = AF_INET;
+    serverAddr.sin_port        = htons(port);
+    serverAddr.sin_addr.s_addr = INADDR_ANY;
+    int  bindResult            = bind(sock, (sockaddr *)&serverAddr, sizeof(serverAddr));
+    bool inUse                 = (bindResult == SOCKET_ERROR && WSAGetLastError() == WSAEADDRINUSE);
+    if(inUse) {
+        closesocket(sock);
+        WSACleanup();
+    }
+    else {
+        recvSocket_ = sock;
+    }
+    return inUse;
+}
+
+uint16_t ObRTPNpCapReceiver::getPort() {
+    return serverPort_;
+}
+
 void ObRTPNpCapReceiver::findAlldevs() {
+    serverPort_ = getAvailableUdpPort();
+
     //IMU Port 20010
     if(serverPort_ == 20010) {
         COMM_TIMEOUT_MS = 50;
@@ -191,44 +235,6 @@ void ObRTPNpCapReceiver::findAlldevs() {
     if(!foundDevice && handles_.size() == 0) {
         throw libobsensor::invalid_value_exception(utils::string::to_string() << "Error opening net device, not found!");
     }
-
-    WSADATA wsaData;
-    int     rst = WSAStartup(MAKEWORD(2, 2), &wsaData);
-    if(rst != 0) {
-        throw libobsensor::invalid_value_exception(utils::string::to_string() << "Failed to load Winsock! err_code=" << GET_LAST_ERROR());
-    }
-
-    // 1.Create udpsocket
-    recvSocket_ = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-    if(recvSocket_ < 0) {
-        close();
-        throw libobsensor::invalid_value_exception(utils::string::to_string() << "Failed to create udpSocket! err_code=" << GET_LAST_ERROR());
-    }
-
-    //Set up multiple processes to bind the same port and share data.
-    int reuse = 1;
-    setsockopt(recvSocket_, SOL_SOCKET, SO_REUSEADDR, (const char *)&reuse, sizeof(reuse));
-
-    // 2.Set server address
-    sockaddr_in serverAddr{};
-    serverAddr.sin_family      = AF_INET;
-    serverAddr.sin_addr.s_addr = INADDR_ANY;
-    serverAddr.sin_port        = htons(serverPort_);
-
-    /*sockaddr_in serverAddr{};
-    serverAddr.sin_family      = AF_INET;
-    serverAddr.sin_addr.s_addr = INADDR_ANY;
-    if(inet_pton(AF_INET, localIp_.c_str(), &serverAddr.sin_addr) <= 0) {
-        LOG_ERROR("Failed to bind server address!");
-    }
-    serverAddr.sin_port = htons(serverPort_);*/
-
-    // 3.Bind the socket to a local address and port.
-    if(bind(recvSocket_, (sockaddr *)&serverAddr, sizeof(serverAddr)) < 0) {
-        LOG_ERROR("Failed to bind server address!");
-        close();
-        throw libobsensor::invalid_value_exception(utils::string::to_string() << "Failed to bind server address! err_code=" << GET_LAST_ERROR());
-    }
     LOG_DEBUG("Net device opened successfully");
 }
 
@@ -241,6 +247,7 @@ void ObRTPNpCapReceiver::start(std::shared_ptr<const StreamProfile> profile, Mut
     currentProfile_  = profile;
     frameCallback_   = callback;
     startReceive_    = true;
+    rtpQueue_.reset();
     if(handle_) {
         receiverThread_ = std::thread(&ObRTPNpCapReceiver::frameReceive, this);
         callbackThread_ = std::thread(&ObRTPNpCapReceiver::frameProcess, this);
@@ -294,6 +301,9 @@ void ObRTPNpCapReceiver::frameReceive2(pcap_t *handle) {
         int res = pcap_next_ex(handle, &header, &packet);
         if(res > 0) {
             foundPcapHandle_ = true;
+            if(foundPcapHandle_) {
+                handle_ = handle;
+            }
             receiveData = true;
 
             //const u_char *ip_header = packet + 14;                  // Ìø¹ýEthernetÍ·²¿
@@ -329,7 +339,7 @@ void ObRTPNpCapReceiver::frameReceive2(pcap_t *handle) {
         }
     }
 
-    pcap_close(handle);
+    //pcap_close(handle);
     LOG_DEBUG("Exit udp data receive thread...");
 }
 
@@ -348,7 +358,7 @@ void ObRTPNpCapReceiver::frameProcess() {
     while(startReceive_) {
         if(rtpQueue_.pop(data)) {
             RTPHeader *header = (RTPHeader *)data.data();
-            if(serverPort_ != 20010) {
+            if(currentProfile_ != nullptr) {
                 rtpProcessor_.process(header, data.data(), (uint32_t)data.size(), currentProfile_->getType());
                 if(rtpProcessor_.processComplete()) {
                     uint32_t frameDataSize = rtpProcessor_.getFrameDataSize();
@@ -391,23 +401,29 @@ void ObRTPNpCapReceiver::frameProcess() {
     LOG_DEBUG("Exit frame process thread...");
 }
 
-void ObRTPNpCapReceiver::close() {
+void ObRTPNpCapReceiver::stop() {
+    LOG_DEBUG("stop stream start...");
     startReceive_ = false;
     if(receiverThread_.joinable()) {
         receiverThread_.join();
     }
-
     for(auto &thread: handleThreads_) {
-        thread.join();
+        if(thread.joinable()) {
+            thread.join();
+        }
     }
-
     rtpQueue_.destroy();
     if(callbackThread_.joinable()) {
         callbackThread_.join();
     }
+    LOG_DEBUG("stop stream end...");
+}
 
-    if(handle_ != nullptr) {
-        pcap_close(handle_);
+void ObRTPNpCapReceiver::close() {
+    for(auto &handle: handles_) {
+        if(handle != nullptr) {
+            pcap_close(handle);
+        }
     }
     
     if(alldevs_ != nullptr) {

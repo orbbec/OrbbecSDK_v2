@@ -108,16 +108,16 @@ std::vector<std::shared_ptr<IDeviceEnumInfo>> G330DeviceInfo::pickNetDevices(con
             iter->emplace_back(std::make_shared<RTPStreamPortInfo>(portInfo->localMac, "portInfo.lcalIp", portInfo->address, static_cast<uint16_t>(20000),
                                                                    portInfo->port, OB_STREAM_COLOR, portInfo->mac, portInfo->serialNumber, portInfo->pid));
 
-            iter->emplace_back(std::make_shared<RTPStreamPortInfo>(portInfo->localMac, "portInfo.lcalIp", portInfo->address, static_cast<uint16_t>(20002),
+            iter->emplace_back(std::make_shared<RTPStreamPortInfo>(portInfo->localMac, "portInfo.lcalIp", portInfo->address, static_cast<uint16_t>(20100),
                                                                    portInfo->port, OB_STREAM_DEPTH, portInfo->mac, portInfo->serialNumber, portInfo->pid));
 
-            iter->emplace_back(std::make_shared<RTPStreamPortInfo>(portInfo->localMac, "portInfo.lcalIp", portInfo->address, static_cast<uint16_t>(20004),
+            iter->emplace_back(std::make_shared<RTPStreamPortInfo>(portInfo->localMac, "portInfo.lcalIp", portInfo->address, static_cast<uint16_t>(20200),
                                                                    portInfo->port, OB_STREAM_IR_LEFT, portInfo->mac, portInfo->serialNumber, portInfo->pid));
 
-            iter->emplace_back(std::make_shared<RTPStreamPortInfo>(portInfo->localMac, "portInfo.lcalIp", portInfo->address, static_cast<uint16_t>(20006),
+            iter->emplace_back(std::make_shared<RTPStreamPortInfo>(portInfo->localMac, "portInfo.lcalIp", portInfo->address, static_cast<uint16_t>(20300),
                                                                    portInfo->port, OB_STREAM_IR_RIGHT, portInfo->mac, portInfo->serialNumber, portInfo->pid));
 
-            iter->emplace_back(std::make_shared<RTPStreamPortInfo>(portInfo->localMac, "portInfo.lcalIp", portInfo->address, static_cast<uint16_t>(20010),
+            iter->emplace_back(std::make_shared<RTPStreamPortInfo>(portInfo->localMac, "portInfo.lcalIp", portInfo->address, static_cast<uint16_t>(20400),
                                                                    portInfo->port, OB_STREAM_ACCEL, portInfo->mac, portInfo->serialNumber, portInfo->pid));
 
             iter->emplace_back(std::make_shared<PTPSourcePortInfo>(portInfo->localMac, portInfo->address, static_cast<uint16_t>(20012), portInfo->port,

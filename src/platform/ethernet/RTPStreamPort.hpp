@@ -38,6 +38,8 @@ public:
     RTPStreamPort(std::shared_ptr<const RTPStreamPortInfo> portInfo);
     virtual ~RTPStreamPort() noexcept;
     
+    uint16_t getStreamPort();
+
     virtual StreamProfileList                     getStreamProfileList() override;
     virtual void                                  startStream(std::shared_ptr<const StreamProfile> profile, MutableFrameCallback callback) override;
     virtual void                                  stopStream(std::shared_ptr<const StreamProfile> profile) override;
@@ -49,10 +51,10 @@ public:
     virtual std::shared_ptr<const SourcePortInfo> getSourcePortInfo() const override;
 
 private:
-    void startClientTask(std::shared_ptr<const StreamProfile> profile, MutableFrameCallback callback);
-    void closeClientTask();
+    void initRTPClient();
 
 private:
+    uint16_t                                 streamPort_;
     std::shared_ptr<const RTPStreamPortInfo> portInfo_;
     bool                                     streamStarted_;
     std::shared_ptr<ObRTPClient>             rtpClient_;

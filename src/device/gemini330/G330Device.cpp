@@ -45,6 +45,8 @@
 #include "G330NetDisparitySensor.hpp"
 #include "G330NetVideoSensor.hpp"
 #include "G330NetDeviceClockSynchronizer.hpp"
+#include "G330NetAccelSensor.hpp"
+#include "G330NetGyroSensor.hpp"
 #include "utils/BufferParser.hpp"
 #include "G330FrameInterleaveManager.hpp"
 
@@ -1561,7 +1563,7 @@ void G330NetDevice::initSensorList() {
                 auto port                 = getSourcePort(imuPortInfo);
                 auto imuStreamer          = getComponentT<ImuStreamer>(OB_DEV_COMPONENT_IMU_STREAMER);
                 auto imuStreamerSharedPtr = imuStreamer.get();
-                auto sensor               = std::make_shared<AccelSensor>(this, port, imuStreamerSharedPtr);
+                auto sensor               = std::make_shared<G330NetAccelSensor>(this, port, imuStreamerSharedPtr);
 
                 auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
                 sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
@@ -1579,7 +1581,7 @@ void G330NetDevice::initSensorList() {
                 auto port                 = getSourcePort(imuPortInfo);
                 auto imuStreamer          = getComponentT<ImuStreamer>(OB_DEV_COMPONENT_IMU_STREAMER);
                 auto imuStreamerSharedPtr = imuStreamer.get();
-                auto sensor               = std::make_shared<GyroSensor>(this, port, imuStreamerSharedPtr);
+                auto sensor               = std::make_shared<G330NetGyroSensor>(this, port, imuStreamerSharedPtr);
 
                 auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
                 sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
@@ -1692,6 +1694,7 @@ void G330NetDevice::initProperties() {
             propertyServer->registerProperty(OB_PROP_GYRO_ODR_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_ACCEL_ODR_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_ACCEL_SWITCH_BOOL, "", "rw", vendorPropertyAccessor);
+            propertyServer->registerProperty(OB_PROP_IMU_STREAM_PORT_INT, "", "w", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_GYRO_SWITCH_BOOL, "", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_GYRO_FULL_SCALE_INT, "", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_ACCEL_FULL_SCALE_INT, "", "rw", vendorPropertyAccessor);

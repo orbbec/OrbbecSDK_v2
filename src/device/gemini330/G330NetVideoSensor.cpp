@@ -5,6 +5,7 @@
 #include "utils/BufferParser.hpp"
 #include "frame/Frame.hpp"
 #include "IProperty.hpp"
+#include "ethernet/RTPStreamPort.hpp"
 
 namespace libobsensor {
 
@@ -30,15 +31,21 @@ void G330NetVideoSensor::start(std::shared_ptr<const StreamProfile> sp, FrameCal
         format = currentFormatFilterConfig_->srcFormat;
     }
 
+    auto rtpStreamPort = std::dynamic_pointer_cast<RTPStreamPort>(backend_);
+    uint16_t port = rtpStreamPort->getStreamPort();
+    LOG_DEBUG("Start stream port: {}", port);
+
     OBInternalVideoStreamProfile vsp = { 0 };
     vsp.sensorType                   = (uint16_t)utils::mapStreamTypeToSensorType(sp->getType());
     vsp.formatFourcc                 = utils::obFormatToUvcFourcc(format);
     vsp.width                        = currentVSP->getWidth();
     vsp.height                       = currentVSP->getHeight();
     vsp.fps                          = currentVSP->getFps();
+    vsp.port                         = port;
 
     auto propServer = owner_->getPropertyServer();
     propServer->setStructureDataT<OBInternalVideoStreamProfile>(profilesSwitchPropertyId_, vsp);
+
     VideoSensor::start(sp, callback);
     BEGIN_TRY_EXECUTE({
         propServer->setPropertyValueT<bool>(streamSwitchPropertyId_, true);

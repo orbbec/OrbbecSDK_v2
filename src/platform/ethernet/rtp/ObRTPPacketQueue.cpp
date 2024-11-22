@@ -38,4 +38,12 @@ void ObRTPPacketQueue::destroy() {
     cond_var_.notify_all();
 }
 
+void ObRTPPacketQueue::reset() {
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        destroy_ = false;
+    }
+    cond_var_.notify_all();
+}
+
 }  // namespace libobsensor

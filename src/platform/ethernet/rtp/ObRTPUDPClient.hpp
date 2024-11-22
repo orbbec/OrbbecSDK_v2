@@ -18,8 +18,10 @@ public:
     ObRTPUDPClient(std::string address, uint16_t port);
     ~ObRTPUDPClient() noexcept;
 
-    void start(std::shared_ptr<const StreamProfile> profile, MutableFrameCallback callback);
-    void close();
+    void     start(std::shared_ptr<const StreamProfile> profile, MutableFrameCallback callback);
+    void     stop();
+    void     close();
+    uint16_t getPort();
 
 private:
     void socketConnect();

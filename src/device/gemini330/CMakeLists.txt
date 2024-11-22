@@ -31,6 +31,10 @@ target_sources(
     ${CMAKE_CURRENT_LIST_DIR}/G330NetDisparitySensor.hpp
     ${CMAKE_CURRENT_LIST_DIR}/G330NetVideoSensor.cpp
     ${CMAKE_CURRENT_LIST_DIR}/G330NetVideoSensor.hpp
+	${CMAKE_CURRENT_LIST_DIR}/G330NetAccelSensor.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/G330NetAccelSensor.hpp
+	${CMAKE_CURRENT_LIST_DIR}/G330NetGyroSensor.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/G330NetGyroSensor.hpp
 	${CMAKE_CURRENT_LIST_DIR}/G330NetDeviceClockSynchronizer.cpp
     ${CMAKE_CURRENT_LIST_DIR}/G330NetDeviceClockSynchronizer.hpp
 )
