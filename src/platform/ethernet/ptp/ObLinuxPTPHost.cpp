@@ -89,12 +89,14 @@ void ObLinuxPTPHost::createSokcet() {
     timeout.tv_usec = 50000;
     if (setsockopt(ptpSocket_, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
         close(ptpSocket_);
+        ptpSocket_ = INVALID_SOCKET;
         throw libobsensor::invalid_value_exception(utils::string::to_string() << "PTP socket setting socket options failed!");
     }
 
     int bufferSize = 1 * 1024 * 1024;
     if (setsockopt(ptpSocket_, SOL_SOCKET, SO_RCVBUF, &bufferSize, sizeof(bufferSize)) < 0) {
         close(ptpSocket_);
+        ptpSocket_ = INVALID_SOCKET;
         throw libobsensor::invalid_value_exception(utils::string::to_string() << "PTP socket setting receive bufferSize options failed!");
     }
 
@@ -109,6 +111,8 @@ void ObLinuxPTPHost::createSokcet() {
     int             family;
     if(getifaddrs(&ifaddr) == -1) {
         LOG_ERROR("PTP socket getifaddrs failed,error: {}", strerror(errno));
+        close(ptpSocket_);
+        ptpSocket_ = INVALID_SOCKET;
         throw libobsensor::invalid_value_exception(utils::string::to_string() << "PTP getifaddrs failed!");
     }
 
@@ -146,6 +150,8 @@ void ObLinuxPTPHost::createSokcet() {
     freeifaddrs(ifaddr);
 
     if(ifIndex_ == -1) {
+        close(ptpSocket_);
+        ptpSocket_ = INVALID_SOCKET;
         throw libobsensor::invalid_value_exception(utils::string::to_string() << "Error opening ptp net device, not found!");
     }
 
@@ -155,6 +161,7 @@ void ObLinuxPTPHost::createSokcet() {
     socketAddress_.sll_ifindex  = ifIndex_;
     if (bind(ptpSocket_, (sockaddr *)&socketAddress_, sizeof(socketAddress_)) < 0) {
         close(ptpSocket_);
+        ptpSocket_ = INVALID_SOCKET;
         throw libobsensor::invalid_value_exception(utils::string::to_string() << "Bind ptp socket failed!");
     }
 
@@ -174,24 +181,27 @@ void ObLinuxPTPHost::timeSync() {
 
     startSync_ = true;
 
-    // SYNC_CONTROL
+    // 1.SYNC_CONTROL
     Frame1588 syncControlFrame;
     int       len = ptpPacketCreator_.createPTPPacket(SYNC_CONTROL, &syncControlFrame);
     t1[0]         = syncControlFrame.txSeconds;
     t1[1]         = syncControlFrame.txNanoSeconds;
     sendPTPPacket(&syncControlFrame, len);
 
-    // FOLLOW_UP_CONTROL
+    // 2.FOLLOW_UP_CONTROL
     Frame1588 followUpControlControlFrame;
     len                                       = ptpPacketCreator_.createPTPPacket(FOLLOW_UP_CONTROL, &followUpControlControlFrame);
     followUpControlControlFrame.txSeconds     = t1[0];
     followUpControlControlFrame.txNanoSeconds = t1[1];
+
+    // 3.Receive delay request
+    if(receiverThread_.joinable()) {
+        receiverThread_.join();
+    }
+    receiverThread_  = std::thread(&ObLinuxPTPHost::receivePTPPacket, this);
+
+    // 2.send
     sendPTPPacket(&followUpControlControlFrame, len);
-
-    // Receive delay request
-    receivePTPPacket();
-
-    startSync_ = false;
 }
 
 void ObLinuxPTPHost::sendPTPPacket(void *data, int len) {
@@ -260,12 +270,16 @@ void ObLinuxPTPHost::receivePTPPacket() {
         maxRevCount--;
     }
 
+    startSync_ = false;
     LOG_DEBUG("Exit ptp data receive...");
 }
 
 void ObLinuxPTPHost::destroy() {
     LOG_DEBUG("close start...");
     startSync_ = false;
+    if(receiverThread_.joinable()) {
+        receiverThread_.join();
+    }
     if(ptpSocket_ > 0) {
         auto rst = ::closesocket(ptpSocket_);
         if(rst < 0) {
