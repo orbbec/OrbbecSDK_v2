@@ -9,7 +9,7 @@
 #include "frame/FrameFactory.hpp"
 #include "stream/StreamProfile.hpp"
 
-#define OB_UDP_BUFFER_SIZE 1600
+#define OB_UDP_BUFFER_SIZE 1048576
 
 namespace libobsensor {
 
