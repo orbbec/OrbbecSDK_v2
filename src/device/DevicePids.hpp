@@ -57,7 +57,7 @@ const std::vector<uint16_t> G330LDevPids = {
     0x0810,  // Gemini 336Le
 };
 
-const std::vector<uint16_t> DaBaiDevPids = {
+const std::vector<uint16_t> DaBaiADevPids = {
     0x0A12,  // DaBai A
     0x0A13,  // DaBai AL
 };

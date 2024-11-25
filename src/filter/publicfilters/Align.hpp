@@ -23,6 +23,8 @@ public:
     void               updateConfig(std::vector<std::string> &params) override;
     const std::string &getConfigSchema() const override;
 
+    void setAlignToStreamProfile(std::shared_ptr<const VideoStreamProfile> toProfile);
+
     void reset() override;
 
 private:

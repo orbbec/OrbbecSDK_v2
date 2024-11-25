@@ -5,6 +5,8 @@
 
 #include "ImplTypes.hpp"
 #include "FilterFactory.hpp"
+#include "publicfilters/Align.hpp"
+#include "FilterDecorator.hpp"
 
 #ifdef __cplusplus
 extern "C" {
@@ -182,6 +184,23 @@ void ob_delete_filter_list(ob_filter_list *filter_list, ob_error **error) BEGIN_
     delete filter_list;
 }
 HANDLE_EXCEPTIONS_NO_RETURN(filter_list)
+
+void ob_align_filter_set_align_to_stream_profile(ob_filter *filter, const ob_stream_profile *align_to_stream_profile, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(filter);
+    VALIDATE_NOT_NULL(align_to_stream_profile);
+    auto filterDecorator = std::dynamic_pointer_cast<libobsensor::FilterDecorator>(filter->filter);
+    if(!filterDecorator) {
+        throw libobsensor::invalid_value_exception("filter is not a filter decorator");
+    }
+    auto baseFilter = filterDecorator->getBaseFilter();
+    auto align      = std::dynamic_pointer_cast<libobsensor::Align>(baseFilter);
+    if(!align) {
+        throw libobsensor::invalid_value_exception("base filter is not an align filter");
+    }
+    auto vsp = align_to_stream_profile->profile->as<const libobsensor::VideoStreamProfile>();
+    align->setAlignToStreamProfile(vsp);
+}
+HANDLE_EXCEPTIONS_NO_RETURN(filter, align_to_stream_profile)
 
 #ifdef __cplusplus
 }

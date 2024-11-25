@@ -554,8 +554,7 @@ public:
 
 class G330DepthMetadataHdrSequenceSizeParser : public IFrameMetadataParser {
 public:
-    G330DepthMetadataHdrSequenceSizeParser(IDevice *device, FrameMetadataModifier modifier = nullptr)
-        : device_(device), modifier_(modifier), inited_(false), frameInterleaveEnabled_(false), hdrEnabled_(false) {
+    G330DepthMetadataHdrSequenceSizeParser(IDevice *device) : device_(device), inited_(false), frameInterleaveEnabled_(false), hdrEnabled_(false) {
         auto propertyServer = device_->getPropertyServer();
         if(propertyServer->isPropertySupported(OB_STRUCT_DEPTH_HDR_CONFIG, PROP_OP_WRITE, PROP_ACCESS_USER)) {
             propertyServer->registerAccessCallback(OB_STRUCT_DEPTH_HDR_CONFIG,
@@ -607,8 +606,7 @@ public:
     }
 
 private:
-    IDevice              *device_;
-    FrameMetadataModifier modifier_;
+    IDevice *device_;
 
     bool inited_;
     bool frameInterleaveEnabled_;

@@ -291,10 +291,13 @@ std::shared_ptr<VideoStreamProfile> Align::createAlignedProfile(std::shared_ptr<
                 gapFillCopy_ = false;
             }
         }
-
     }
 
     return alignProfile_;
+}
+
+void Align::setAlignToStreamProfile(std::shared_ptr<const VideoStreamProfile> toProfile) {
+    toProfile_ = toProfile;
 }
 
 }  // namespace libobsensor

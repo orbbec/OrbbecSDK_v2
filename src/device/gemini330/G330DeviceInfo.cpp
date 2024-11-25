@@ -76,6 +76,9 @@ std::shared_ptr<IDevice> G330DeviceInfo::createDevice() const {
         return std::make_shared<G330NetDevice>(shared_from_this());
     }
     else {
+        if(std::find(DaBaiADevPids.begin(), DaBaiADevPids.end(), pid_) != DaBaiADevPids.end()) {
+            return std::make_shared<DabaiADevice>(shared_from_this());
+        }
         return std::make_shared<G330Device>(shared_from_this());
     }
 }
