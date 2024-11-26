@@ -11,9 +11,9 @@
 namespace libobsensor {
 
 struct PTPSourcePortInfo : public NetSourcePortInfo {
-    PTPSourcePortInfo(std::string localMac, std::string address, uint16_t port, uint16_t vendorPort, std::string mac = "unknown",
+    PTPSourcePortInfo(std::string localMac, std::string localAdress, std::string address, uint16_t port, uint16_t vendorPort, std::string mac = "unknown",
                       std::string serialNumber = "unknown", uint32_t pid = 0)
-        : NetSourcePortInfo(SOURCE_PORT_NET_PTP, localMac, address, port, mac, serialNumber, pid), vendorPort(vendorPort) {}
+        : NetSourcePortInfo(SOURCE_PORT_NET_PTP, localMac, localAdress, address, port, mac, serialNumber, pid), vendorPort(vendorPort) {}
 
     virtual bool equal(std::shared_ptr<const SourcePortInfo> cmpInfo) const override {
         if(cmpInfo->portType != portType) {

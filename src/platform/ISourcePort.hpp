@@ -37,8 +37,16 @@ struct SourcePortInfo {
 };
 
 struct NetSourcePortInfo : public SourcePortInfo {
-    NetSourcePortInfo(SourcePortType portType, std::string localMac, std::string address, uint16_t port, std::string mac, std::string serialNumber, uint32_t pid)
-        : SourcePortInfo(portType), localMac(localMac), address(address), port(port), mac(mac), serialNumber(serialNumber), pid(pid) {}
+    NetSourcePortInfo(SourcePortType portType, std::string localMac, std::string localAddress, std::string address, uint16_t port, std::string mac,
+                      std::string serialNumber, uint32_t pid)
+        : SourcePortInfo(portType),
+          localMac(localMac),
+          localAddress(localAddress),
+          address(address),
+          port(port),
+          mac(mac),
+          serialNumber(serialNumber),
+          pid(pid) {}
 
     ~NetSourcePortInfo() noexcept override = default;
 
@@ -47,12 +55,12 @@ struct NetSourcePortInfo : public SourcePortInfo {
             return false;
         }
         auto netCmpInfo = std::dynamic_pointer_cast<const NetSourcePortInfo>(cmpInfo);
-        return (localMac == netCmpInfo->localMac) && (address == netCmpInfo->address) && (port == netCmpInfo->port) && (mac == netCmpInfo->mac)
-               && (serialNumber == netCmpInfo->serialNumber)
-               && (pid == netCmpInfo->pid);
+        return (localMac == netCmpInfo->localMac) && (localAddress == netCmpInfo->localAddress) && (address == netCmpInfo->address) && (port == netCmpInfo->port)
+               && (mac == netCmpInfo->mac) && (serialNumber == netCmpInfo->serialNumber) && (pid == netCmpInfo->pid);
     }
 
     std::string localMac;
+    std::string localAddress;
     std::string address;
     uint16_t    port;
     std::string mac;

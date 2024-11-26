@@ -9,7 +9,7 @@
 #include "frame/FrameFactory.hpp"
 #include "stream/StreamProfile.hpp"
 
-#define OB_UDP_BUFFER_SIZE 1048576
+#define OB_UDP_BUFFER_SIZE 26214400
 
 namespace libobsensor {
 
@@ -55,10 +55,15 @@ bool ObRTPNpCapReceiver::isPortInUse(uint16_t port) {
         throw libobsensor::invalid_value_exception(utils::string::to_string() << "Failed to create udpSocket! err_code=" << GET_LAST_ERROR());
     }
 
+    int nRecvBuf = OB_UDP_BUFFER_SIZE;
+    setsockopt(sock, SOL_SOCKET, SO_RCVBUF, (const char *)&nRecvBuf, sizeof(int));
+
     sockaddr_in serverAddr;
     serverAddr.sin_family      = AF_INET;
     serverAddr.sin_port        = htons(port);
-    serverAddr.sin_addr.s_addr = INADDR_ANY;
+    //serverAddr.sin_addr.s_addr = INADDR_ANY;
+    //inet_pton(AF_INET, "192.168.2.31", &serverAddr.sin_addr);
+    inet_pton(AF_INET, localIp_.c_str(), &serverAddr.sin_addr);
     int  bindResult            = bind(sock, (sockaddr *)&serverAddr, sizeof(serverAddr));
     bool inUse                 = (bindResult == SOCKET_ERROR && WSAGetLastError() == WSAEADDRINUSE);
     if(inUse) {
@@ -338,8 +343,6 @@ void ObRTPNpCapReceiver::frameReceive2(pcap_t *handle) {
             LOG_ERROR_INTVL("Receive rtp packet error: {}!", res);
         }
     }
-
-    //pcap_close(handle);
     LOG_DEBUG("Exit udp data receive thread...");
 }
 

@@ -15,7 +15,7 @@ namespace libobsensor {
 
 class ObRTPUDPClient {
 public:
-    ObRTPUDPClient(std::string address, uint16_t port);
+    ObRTPUDPClient(std::string localAddress, std::string address, uint16_t port);
     ~ObRTPUDPClient() noexcept;
 
     void     start(std::shared_ptr<const StreamProfile> profile, MutableFrameCallback callback);
@@ -30,6 +30,7 @@ private:
     void frameProcess();
     
 private:
+    std::string localIp_;
     std::string serverIp_;
     uint16_t    serverPort_;
     bool        startReceive_;

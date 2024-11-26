@@ -108,23 +108,23 @@ std::vector<std::shared_ptr<IDeviceEnumInfo>> G330DeviceInfo::pickNetDevices(con
     while(iter != groups.end()) {
         if(iter->size() >= 1) {
             auto portInfo = std::dynamic_pointer_cast<const NetSourcePortInfo>(iter->front());
-            iter->emplace_back(std::make_shared<RTPStreamPortInfo>(portInfo->localMac, "portInfo.lcalIp", portInfo->address, static_cast<uint16_t>(20000),
+            iter->emplace_back(std::make_shared<RTPStreamPortInfo>(portInfo->localMac, portInfo->localAddress, portInfo->address, static_cast<uint16_t>(20000),
                                                                    portInfo->port, OB_STREAM_COLOR, portInfo->mac, portInfo->serialNumber, portInfo->pid));
 
-            iter->emplace_back(std::make_shared<RTPStreamPortInfo>(portInfo->localMac, "portInfo.lcalIp", portInfo->address, static_cast<uint16_t>(20100),
+            iter->emplace_back(std::make_shared<RTPStreamPortInfo>(portInfo->localMac, portInfo->localAddress, portInfo->address, static_cast<uint16_t>(20100),
                                                                    portInfo->port, OB_STREAM_DEPTH, portInfo->mac, portInfo->serialNumber, portInfo->pid));
 
-            iter->emplace_back(std::make_shared<RTPStreamPortInfo>(portInfo->localMac, "portInfo.lcalIp", portInfo->address, static_cast<uint16_t>(20200),
+            iter->emplace_back(std::make_shared<RTPStreamPortInfo>(portInfo->localMac, portInfo->localAddress, portInfo->address, static_cast<uint16_t>(20200),
                                                                    portInfo->port, OB_STREAM_IR_LEFT, portInfo->mac, portInfo->serialNumber, portInfo->pid));
 
-            iter->emplace_back(std::make_shared<RTPStreamPortInfo>(portInfo->localMac, "portInfo.lcalIp", portInfo->address, static_cast<uint16_t>(20300),
+            iter->emplace_back(std::make_shared<RTPStreamPortInfo>(portInfo->localMac, portInfo->localAddress, portInfo->address, static_cast<uint16_t>(20300),
                                                                    portInfo->port, OB_STREAM_IR_RIGHT, portInfo->mac, portInfo->serialNumber, portInfo->pid));
 
-            iter->emplace_back(std::make_shared<RTPStreamPortInfo>(portInfo->localMac, "portInfo.lcalIp", portInfo->address, static_cast<uint16_t>(20400),
+            iter->emplace_back(std::make_shared<RTPStreamPortInfo>(portInfo->localMac, portInfo->localAddress, portInfo->address, static_cast<uint16_t>(20400),
                                                                    portInfo->port, OB_STREAM_ACCEL, portInfo->mac, portInfo->serialNumber, portInfo->pid));
 
-            iter->emplace_back(std::make_shared<PTPSourcePortInfo>(portInfo->localMac, portInfo->address, static_cast<uint16_t>(20012), portInfo->port,
-                                                                   portInfo->mac, portInfo->serialNumber, portInfo->pid));
+            iter->emplace_back(std::make_shared<PTPSourcePortInfo>(portInfo->localMac, portInfo->localAddress, portInfo->address, static_cast<uint16_t>(20012),
+                                                                   portInfo->port, portInfo->mac, portInfo->serialNumber, portInfo->pid));
 
             auto deviceEnumInfo = std::make_shared<G330DeviceInfo>(*iter);
             G330DeviceInfos.push_back(deviceEnumInfo);

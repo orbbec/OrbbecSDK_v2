@@ -19,7 +19,7 @@ void ObRTPClient::init(std::string localAddress, std::string address, uint16_t p
 #if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
     udpClient_ = std::make_shared<ObRTPNpCapReceiver>(localAddress, address, port);
 #else
-    udpClient_ = std::make_shared<ObRTPUDPClient>(address, port);
+    udpClient_ = std::make_shared<ObRTPUDPClient>(localAddress, address, port);
 #endif
 
 }
