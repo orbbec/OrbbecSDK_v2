@@ -423,11 +423,19 @@ void ObRTPNpCapReceiver::stop() {
 }
 
 void ObRTPNpCapReceiver::close() {
-    for(auto &handle: handles_) {
-        if(handle != nullptr) {
-            pcap_close(handle);
+    if(handles_.size() > 0) {
+        for(auto &handle: handles_) {
+            if(handle != nullptr) {
+                pcap_close(handle);
+            }
         }
     }
+    else {
+        if(handle_ != nullptr) {
+            pcap_close(handle_);
+        }
+    }
+    
     
     if(alldevs_ != nullptr) {
         pcap_freealldevs(alldevs_);
