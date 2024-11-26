@@ -6,7 +6,7 @@
 #include "ISensor.hpp"
 #include "IDevice.hpp"
 #include "ISourcePort.hpp"
-#include "timestamp/IFrameTimestampCalculator.hpp"
+#include "IFrameTimestampCalculator.hpp"
 
 #include <map>
 #include <mutex>
