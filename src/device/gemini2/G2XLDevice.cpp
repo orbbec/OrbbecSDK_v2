@@ -650,6 +650,7 @@ void G2XLNetDevice::initSensorList() {
                 sensor->setDepthUnit(1.0f);
 
                 initSensorStreamProfile(sensor);
+                sensor->enableStreamRecovery(15, 6000, 2000);
 
                 return sensor;
             },
@@ -688,6 +689,7 @@ void G2XLNetDevice::initSensorList() {
                 }
 
                 initSensorStreamProfile(sensor);
+                sensor->enableStreamRecovery(15, 6000, 2000);
 
                 return sensor;
             },
@@ -724,6 +726,8 @@ void G2XLNetDevice::initSensorList() {
                 }
 
                 initSensorStreamProfile(sensor);
+                sensor->enableStreamRecovery(15, 6000, 2000);
+
                 return sensor;
             },
             true);
@@ -775,6 +779,7 @@ void G2XLNetDevice::initSensorList() {
                 }
 
                 initSensorStreamProfile(sensor);
+                sensor->enableStreamRecovery(15, 6000, 2000);
 
                 return sensor;
             },

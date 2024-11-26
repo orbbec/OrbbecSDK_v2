@@ -39,6 +39,7 @@ VideoSensor::VideoSensor(IDevice *owner, OBSensorType sensorType, const std::sha
 
 VideoSensor::~VideoSensor() noexcept {
     try {
+        disableStreamRecovery();
         stop();
     }
     catch(const std::exception &e) {
