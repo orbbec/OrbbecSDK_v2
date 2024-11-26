@@ -466,15 +466,16 @@ void GVCPClient::sendGVCPDiscovery2(GVCPSocketInfo socketInfo) {
 
     discoverCmd.header = cmdHeader;
 
-    ////Get local ip
+    //Get local ip
     // struct sockaddr_in addr;
     // socklen_t addrLen = sizeof(addr);
 
-    ////Get the address information of the socket
-    // if(getsockname(sock, (struct sockaddr *)&addr, &addrLen) == 0) {
-    // LOG_INFO("cur addr {}:{}", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
+    //Get the address information of the socket
+    // if(getsockname(socketInfo.sock, (struct sockaddr *)&addr, &addrLen) == 0) {
+    //     LOG_INFO("cur addr {}:{}", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
     // }
 
+    LOG_DEBUG("sendto {}");
     // send data
     int err = sendto(socketInfo.sock, (const char *)&discoverCmd, sizeof(discoverCmd), 0, (SOCKADDR *)&destAddr, sizeof(destAddr));
     if(err == SOCKET_ERROR) {
@@ -863,8 +864,9 @@ void GVCPClient::checkAndUpdateSockets() {
             }
 
             if(!found) {
-                closeClientSockets();
-                index           = 0;
+                //closeClientSockets();
+                //index           = 0;
+
                 /*socks_[index++] = openClientSocket(addrSrv);
                 ipAddressStrSet_.insert(ipStr);
                 LOG_INFO("new ip segment found,new ip addr:{}", ipStr);*/
