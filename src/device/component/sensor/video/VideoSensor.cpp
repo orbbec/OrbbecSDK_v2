@@ -2,6 +2,8 @@
 // Licensed under the MIT License.
 
 #include "VideoSensor.hpp"
+#include "ISensorStreamStrategy.hpp"
+#include "IDevice.hpp"
 #include "exception/ObException.hpp"
 #include "logger/LoggerInterval.hpp"
 #include "logger/LoggerHelper.hpp"
@@ -10,9 +12,7 @@
 #include "frame/Frame.hpp"
 #include "FilterDecorator.hpp"
 #include "publicfilters/FormatConverterProcess.hpp"
-#include "ISensorStreamStrategy.hpp"
-#include "IDevice.hpp"
-#include "component/property/InternalProperty.hpp"
+#include "property/InternalProperty.hpp"
 
 namespace libobsensor {
 

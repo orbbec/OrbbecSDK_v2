@@ -4,7 +4,7 @@
 #pragma once
 #include "DeviceBase.hpp"
 #include "IDeviceManager.hpp"
-#include "IFrameTimestampCalculator.hpp"
+#include "IFrameTimestamp.hpp"
 
 #include <map>
 #include <memory>

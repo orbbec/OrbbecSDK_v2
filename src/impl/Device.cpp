@@ -11,7 +11,7 @@
 #include "IDevice.hpp"
 #include "IDeviceMonitor.hpp"
 #include "IAlgParamManager.hpp"
-#include "component/timestamp/GlobalTimestampFitter.hpp"
+#include "IFrameTimestamp.hpp"
 
 #ifdef __cplusplus
 extern "C" {
@@ -309,7 +309,7 @@ HANDLE_EXCEPTIONS_AND_RETURN(false, device)
 
 void ob_device_enable_global_timestamp(ob_device *device, bool enable, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(device);
-    auto globalTimestampFilter = device->device->getComponentT<libobsensor::GlobalTimestampFitter>(libobsensor::OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER);
+    auto globalTimestampFilter = device->device->getComponentT<libobsensor::IGlobalTimestampFitter>(libobsensor::OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER);
     globalTimestampFilter->enable(enable);
 }
 HANDLE_EXCEPTIONS_NO_RETURN(device, enable)

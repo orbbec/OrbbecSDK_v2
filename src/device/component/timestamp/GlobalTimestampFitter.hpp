@@ -3,6 +3,7 @@
 
 #pragma once
 #include "IDevice.hpp"
+#include "IFrameTimestamp.hpp"
 #include "DeviceComponentBase.hpp"
 
 #include <thread>
@@ -12,25 +13,18 @@
 
 namespace libobsensor {
 
-// First degree function coefficient y=ax+b
-typedef struct {
-    double   coefficientA;
-    double   constantB;
-    uint64_t checkDataX;
-    uint64_t checkDataY;
-} LinearFuncParam;
-
-class GlobalTimestampFitter : public DeviceComponentBase {
+class GlobalTimestampFitter : public IGlobalTimestampFitter, public DeviceComponentBase {
 public:
     GlobalTimestampFitter(IDevice *owner);
-    ~GlobalTimestampFitter();
-    LinearFuncParam getLinearFuncParam();
-    void            reFitting();
-    void            pause();
-    void            resume();
+    virtual ~GlobalTimestampFitter();
 
-    void enable(bool en);
-    bool isEnabled() const;
+    LinearFuncParam getLinearFuncParam() override;
+    void            reFitting() override;
+    void            pause() override;
+    void            resume() override;
+
+    void enable(bool en) override;
+    bool isEnabled() const override;
 
 private:
     void fittingLoop();

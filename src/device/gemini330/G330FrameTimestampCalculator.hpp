@@ -3,7 +3,7 @@
 
 #pragma once
 #include "IDevice.hpp"
-#include "IFrameTimestampCalculator.hpp"
+#include "IFrameTimestamp.hpp"
 
 namespace libobsensor {
 

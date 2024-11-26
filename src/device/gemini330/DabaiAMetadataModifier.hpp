@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "metadata/IFrameMetadataModifier.hpp"
+#include "IFrameMetadataModifier.hpp"
 #include "DeviceComponentBase.hpp"
 
 namespace libobsensor {
