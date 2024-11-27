@@ -100,10 +100,10 @@ void ObRTPUDPClient::start(std::shared_ptr<const StreamProfile> profile, Mutable
         return;
     }
 
+    startReceive_   = true;
     rtpQueue_.reset();
     currentProfile_ = profile;
     frameCallback_  = callback;
-    startReceive_   = true;
     receiverThread_ = std::thread(&ObRTPUDPClient::frameReceive, this);
     callbackThread_ = std::thread(&ObRTPUDPClient::frameProcess, this);
 }

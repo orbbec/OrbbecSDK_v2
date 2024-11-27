@@ -18,7 +18,7 @@ void G330NetDisparitySensor::start(std::shared_ptr<const StreamProfile> sp, Fram
 
     auto rtpStreamPort = std::dynamic_pointer_cast<RTPStreamPort>(backend_);
     uint16_t port = rtpStreamPort->getStreamPort();
-    LOG_ERROR("Start stream port: {}", port);
+    LOG_DEBUG("Start {} stream port: {}", utils::obSensorToStr(sensorType_), port);
 
     OBInternalVideoStreamProfile vsp = { 0 };
     vsp.sensorType                   = (uint16_t)utils::mapStreamTypeToSensorType(sp->getType());
@@ -45,9 +45,9 @@ void G330NetDisparitySensor::stop() {
     auto propServer = owner_->getPropertyServer();
     BEGIN_TRY_EXECUTE({
         propServer->setPropertyValueT<bool>(OB_PROP_START_DEPTH_STREAM_BOOL, false);
-        DisparityBasedSensor::stop();
     })
-    CATCH_EXCEPTION_AND_EXECUTE({ LOG_ERROR("Start {} stream failed!", utils::obSensorToStr(sensorType_)); })
+    CATCH_EXCEPTION_AND_EXECUTE({ LOG_ERROR("Failed to send the {} stream stop command!", utils::obSensorToStr(sensorType_)); })
+    DisparityBasedSensor::stop();
 }
 
 void G330NetDisparitySensor::setStreamProfileList(const StreamProfileList &profileList) {

@@ -33,7 +33,7 @@ void G330NetVideoSensor::start(std::shared_ptr<const StreamProfile> sp, FrameCal
 
     auto rtpStreamPort = std::dynamic_pointer_cast<RTPStreamPort>(backend_);
     uint16_t port = rtpStreamPort->getStreamPort();
-    LOG_DEBUG("Start stream port: {}", port);
+    LOG_DEBUG("Start {} stream port: {}", utils::obSensorToStr(sensorType_), port);
 
     OBInternalVideoStreamProfile vsp = { 0 };
     vsp.sensorType                   = (uint16_t)utils::mapStreamTypeToSensorType(sp->getType());
@@ -61,9 +61,9 @@ void G330NetVideoSensor::stop() {
     auto propServer = owner_->getPropertyServer();
     BEGIN_TRY_EXECUTE({
         propServer->setPropertyValueT<bool>(streamSwitchPropertyId_, false);
-        VideoSensor::stop();
     })
-    CATCH_EXCEPTION_AND_EXECUTE({ LOG_ERROR("Stop {} stream failed!", utils::obSensorToStr(sensorType_)); })
+    CATCH_EXCEPTION_AND_EXECUTE({ LOG_ERROR("Failed to send the {} stream stop command!", utils::obSensorToStr(sensorType_)); })
+    VideoSensor::stop();
 }
 
 void G330NetVideoSensor::initStreamPropertyId() {
