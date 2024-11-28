@@ -370,7 +370,7 @@ void ObRTPNpCapReceiver::frameProcess() {
 
                     auto frame = FrameFactory::createFrameFromStreamProfile(currentProfile_);
                     uint32_t expectedSize = static_cast<uint32_t>(frame->getDataSize());
-                    if(IS_FIXED_SIZE_FORMAT(currentProfile_->getFormat()) && frameDataSize > expectedSize) {
+                    if(frameDataSize > expectedSize) {
                         LOG_WARN_INTVL("{} Receive data size({}) >  expected data size! ({})", currentProfile_->getType(), frameDataSize, expectedSize);
                         rtpProcessor_.reset();
                         continue;
