@@ -12,6 +12,7 @@ namespace libobsensor {
 
 const uint16_t DEFAULT_CMD_PORT                     = 8090;
 const uint16_t DEVICE_WATCHER_POLLING_INTERVAL_MSEC = 5000;
+const uint16_t DEVICE_CHECK_POLLING_INTERVAL_MSEC   = 1000;
 
 NetDeviceWatcher::~NetDeviceWatcher() noexcept {
     if(!stopWatch_) {
@@ -22,19 +23,45 @@ NetDeviceWatcher::~NetDeviceWatcher() noexcept {
 void NetDeviceWatcher::start(deviceChangedCallback callback) {
     callback_          = callback;
     stopWatch_         = false;
+    stopCheck_         = false;
     deviceWatchThread_ = std::thread([&]() {
         std::mutex                   mutex;
         std::unique_lock<std::mutex> lock(mutex);
         while(!stopWatch_) {
             auto list    = GVCPClient::instance().queryNetDeviceList();
-            auto added   = utils::subtract_sets(list, netDevInfoList_);
             auto removed = utils::subtract_sets(netDevInfoList_, list);
+            if (removed.size() > 0) {
+                condVarCheck_.wait_for(lock, std::chrono::milliseconds(DEVICE_CHECK_POLLING_INTERVAL_MSEC), [&]() { return stopCheck_; });
+                if(!stopCheck_) {
+                    list    = GVCPClient::instance().queryNetDeviceList();
+                    removed = utils::subtract_sets(netDevInfoList_, list);
+                    if(removed.size() > 0) {
+                        condVarCheck_.wait_for(lock, std::chrono::milliseconds(DEVICE_CHECK_POLLING_INTERVAL_MSEC), [&]() { return stopCheck_; });
+                        if (!stopCheck_) {
+                            list    = GVCPClient::instance().queryNetDeviceList();
+                            removed = utils::subtract_sets(netDevInfoList_, list);
+                        }
+                    }
+                }
+            }
+
+            auto added   = utils::subtract_sets(list, netDevInfoList_);
             for(auto &&info: removed) {
                 callback_(OB_DEVICE_REMOVED, info.mac);
             }
             for(auto &&info: added) {
                 callback_(OB_DEVICE_ARRIVAL, info.mac);
             }
+
+            // auto list    = GVCPClient::instance().queryNetDeviceList();
+            // auto added   = utils::subtract_sets(list, netDevInfoList_);
+            // auto removed = utils::subtract_sets(netDevInfoList_, list);
+            // for(auto &&info: removed) {
+            //     callback_(OB_DEVICE_REMOVED, info.mac);
+            // }
+            // for(auto &&info: added) {
+            //     callback_(OB_DEVICE_ARRIVAL, info.mac);
+            // }
 
             netDevInfoList_ = list;
             condVar_.wait_for(lock, std::chrono::milliseconds(DEVICE_WATCHER_POLLING_INTERVAL_MSEC), [&]() { return stopWatch_; });
@@ -43,6 +70,9 @@ void NetDeviceWatcher::start(deviceChangedCallback callback) {
 }
 
 void NetDeviceWatcher::stop() {
+    stopCheck_ = true;
+    condVarCheck_.notify_all();
+
     stopWatch_ = true;
     condVar_.notify_all();
     if(deviceWatchThread_.joinable()) {
