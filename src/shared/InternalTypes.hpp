@@ -67,6 +67,19 @@ typedef struct {
 } OBD2CProfile, ob_d2c_supported_profile_info;
 
 typedef struct {
+    float   colorScale;
+    int16_t alignLeft;
+    int16_t alignTop;
+    int16_t alignRight;
+    int16_t alignBottom;
+} OBD2CPreProcessParam, ob_d2c_pre_process_param;
+
+typedef struct {
+    uint32_t             reserved;
+    OBD2CPreProcessParam preProcessParam;
+} OBD2CColorPreProcessProfile;
+
+typedef struct {
     uint32_t depthMode;    ///< Monocular/Binocular
     float    baseline;     ///< baseline distance
     float    z0;           ///< Calibration distance

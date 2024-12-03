@@ -28,9 +28,12 @@ private:
                                     OBCameraParam &result);
 
 private:
-    std::vector<OBDepthCalibrationParam> depthCalibParamList_;
-    std::vector<OBCameraParam>           originCalibrationCameraParamList_;
-    std::vector<OBD2CProfile>            originD2cProfileList_;
+    std::vector<OBDepthCalibrationParam>     depthCalibParamList_;
+    std::vector<OBCameraParam>               originCalibrationCameraParamList_;
+    std::vector<OBD2CProfile>                originD2cProfileList_;
+    std::vector<OBD2CColorPreProcessProfile> originD2cColorPreProcessProfileList_;
+    // pre process calibration camera list
+    std::vector<OBCameraParam> preProcessCameraParamList_;
 };
 
 }  // namespace libobsensor

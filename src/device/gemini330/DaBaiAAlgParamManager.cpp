@@ -2,9 +2,6 @@
 // Licensed under the MIT License.
 
 #include "DaBaiAAlgParamManager.hpp"
-// #include "stream/StreamIntrinsicsManager.hpp"
-// #include "stream/StreamExtrinsicsManager.hpp"
-// #include "stream/StreamProfileFactory.hpp"
 #include "property/InternalProperty.hpp"
 #include "DevicePids.hpp"
 #include "exception/ObException.hpp"
@@ -121,6 +118,16 @@ void DaBaiAAlgParamManager::fetchParamFromDevice() {
         LOG_ERROR("Get depth to color profile list failed! {}", e.what());
     }
 
+    try {
+        auto owner      = getOwner();
+        auto propServer = owner->getPropertyServer();
+        originD2cColorPreProcessProfileList_ =
+            propServer->getStructureDataListProtoV1_1_T<OBD2CColorPreProcessProfile, 0>(OB_RAW_DATA_D2C_ALIGN_COLOR_PRE_PROCESS_PROFILE_LIST);
+    }
+    catch(const std::exception &e) {
+        LOG_ERROR("Get d2c pre process profile list failed,unsupport cmd {}", e.what());
+    }
+
     // imu param
     std::vector<uint8_t> data;
     BEGIN_TRY_EXECUTE({
@@ -229,36 +236,60 @@ typedef struct {
 } Resolution;
 
 void DaBaiAAlgParamManager::fixD2CParmaList() {
-    std::vector<Resolution>       appendColorResolutions = { { 1920, 1080 }, { 1280, 960 }, { 1280, 720 }, { 640, 480 }, { 640, 360 } };
-    const std::vector<Resolution> depthResolutions       = { { 640, 480 } };
-
-    auto owner = getOwner();
-
-    auto deviceInfo = owner->getInfo();
-    {
-        auto iter = std::find(DaBaiDevPids.begin(), DaBaiDevPids.end(), deviceInfo->pid_);
-
-        if(iter != DaBaiDevPids.end()) {
-            appendColorResolutions.push_back({ 480, 270 });
-        }
-    }
 
     if(originD2cProfileList_.empty()) {
         return;
     }
 
     d2cProfileList_ = originD2cProfileList_;
+
     for(auto &profile: d2cProfileList_) {
         profile.alignType = ALIGN_D2C_HW;
     }
 
-    calibrationCameraParamList_ = originCalibrationCameraParamList_;
-    for(const auto &colorRes: appendColorResolutions) {
-        auto          colorProfile = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_COLOR, OB_FORMAT_UNKNOWN, colorRes.width, colorRes.height, 30);
+    calibrationCameraParamList_.clear();
+    // save color pre process param
+    preProcessCameraParamList_.clear();
+
+    // fix color pre process param
+    for(size_t i = 0; i < originD2cProfileList_.size(); ++i) {
+        // color pre process param
+        auto colorPreParam = originD2cColorPreProcessProfileList_[i].preProcessParam;
+        // d2c profile list
+        auto         &profile      = originD2cProfileList_[i];
+        auto          colorWidth   = profile.colorWidth;
+        auto          colorHeight  = profile.colorHeight;
+        auto          colorProfile = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_COLOR, OB_FORMAT_UNKNOWN, colorWidth, colorHeight, 30);
         OBCameraParam colorAlignParam;
         if(!findBestMatchedCameraParam(originCalibrationCameraParamList_, colorProfile, colorAlignParam)) {
             continue;
         }
+
+        // TODO: color pre process
+        colorAlignParam.rgbIntrinsic.fx = colorAlignParam.rgbIntrinsic.fx / colorPreParam.colorScale;
+        colorAlignParam.rgbIntrinsic.fy = colorAlignParam.rgbIntrinsic.fy / colorPreParam.colorScale;
+        colorAlignParam.rgbIntrinsic.cx = (colorAlignParam.rgbIntrinsic.cx - colorPreParam.alignLeft) / colorPreParam.colorScale;
+        colorAlignParam.rgbIntrinsic.cy = (colorAlignParam.rgbIntrinsic.cy - colorPreParam.alignTop) / colorPreParam.colorScale;
+
+        colorAlignParam.rgbIntrinsic.width  = profile.colorWidth;
+        colorAlignParam.rgbIntrinsic.height = profile.colorHeight;
+
+        preProcessCameraParamList_.push_back(colorAlignParam);
+    }
+
+    calibrationCameraParamList_ = preProcessCameraParamList_;
+
+    // fix soft d2c param
+    for(size_t i = 0; i < originD2cProfileList_.size(); ++i) {
+        auto         &profile      = originD2cProfileList_[i];
+        auto          colorWidth   = profile.colorWidth;
+        auto          colorHeight  = profile.colorHeight;
+        auto          colorProfile = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_COLOR, OB_FORMAT_UNKNOWN, colorWidth, colorHeight, 30);
+        OBCameraParam colorAlignParam;
+        if(!findBestMatchedCameraParam(preProcessCameraParamList_, colorProfile, colorAlignParam)) {
+            continue;
+        }
+
         OBCameraIntrinsic colorIntrinsic = colorAlignParam.rgbIntrinsic;
         float             ratio          = (float)colorProfile->getWidth() / colorIntrinsic.width;
         colorIntrinsic.fx *= ratio;
@@ -267,35 +298,36 @@ void DaBaiAAlgParamManager::fixD2CParmaList() {
         colorIntrinsic.cy *= ratio;
         colorIntrinsic.width  = static_cast<int16_t>(colorProfile->getWidth());
         colorIntrinsic.height = static_cast<int16_t>((float)colorIntrinsic.height * ratio);
-        for(const auto &depthRes: depthResolutions) {
-            auto depthProfile = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_DEPTH, OB_FORMAT_UNKNOWN, depthRes.width, depthRes.height, 30);
-            OBCameraParam depthAlignParam;
-            if(!findBestMatchedCameraParam(originCalibrationCameraParamList_, depthProfile, depthAlignParam)) {
-                continue;
-            }
-            OBCameraIntrinsic depthIntrinsic = depthAlignParam.depthIntrinsic;
-            ratio                            = (float)depthProfile->getWidth() / depthIntrinsic.width;
-            depthIntrinsic.fx *= ratio;
-            depthIntrinsic.fy *= ratio;
-            depthIntrinsic.cx *= ratio;
-            depthIntrinsic.cy *= ratio;
-            depthIntrinsic.width  = static_cast<int16_t>(depthProfile->getWidth());
-            depthIntrinsic.height = static_cast<int16_t>((float)depthIntrinsic.height * ratio);
 
-            auto index = calibrationCameraParamList_.size();
-            calibrationCameraParamList_.push_back({ depthIntrinsic, colorIntrinsic, depthAlignParam.depthDistortion, depthAlignParam.rgbDistortion,
-                                                    depthAlignParam.transform, depthAlignParam.isMirrored });
-
-            OBD2CProfile d2cProfile;
-            d2cProfile.alignType        = ALIGN_D2C_SW;
-            d2cProfile.postProcessParam = { 1.0f, 0, 0, 0, 0 };
-            d2cProfile.colorWidth       = static_cast<int16_t>(colorProfile->getWidth());
-            d2cProfile.colorHeight      = static_cast<int16_t>(colorProfile->getHeight());
-            d2cProfile.depthWidth       = static_cast<int16_t>(depthProfile->getWidth());
-            d2cProfile.depthHeight      = static_cast<int16_t>(depthProfile->getHeight());
-            d2cProfile.paramIndex       = (uint8_t)index;
-            d2cProfileList_.push_back(d2cProfile);
+        auto          depthWidth   = profile.depthWidth;
+        auto          depthHeight  = profile.depthHeight;
+        auto          depthProfile = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_DEPTH, OB_FORMAT_UNKNOWN, depthWidth, depthHeight, 30);
+        OBCameraParam depthAlignParam;
+        if(!findBestMatchedCameraParam(originCalibrationCameraParamList_, depthProfile, depthAlignParam)) {
+            continue;
         }
+        OBCameraIntrinsic depthIntrinsic = depthAlignParam.depthIntrinsic;
+        ratio                            = (float)depthProfile->getWidth() / depthIntrinsic.width;
+        depthIntrinsic.fx *= ratio;
+        depthIntrinsic.fy *= ratio;
+        depthIntrinsic.cx *= ratio;
+        depthIntrinsic.cy *= ratio;
+        depthIntrinsic.width  = static_cast<int16_t>(depthProfile->getWidth());
+        depthIntrinsic.height = static_cast<int16_t>((float)depthIntrinsic.height * ratio);
+
+        auto index = calibrationCameraParamList_.size();
+        calibrationCameraParamList_.push_back({ depthIntrinsic, colorIntrinsic, depthAlignParam.depthDistortion, depthAlignParam.rgbDistortion,
+                                                depthAlignParam.transform, depthAlignParam.isMirrored });
+
+        OBD2CProfile d2cProfile;
+        d2cProfile.alignType        = ALIGN_D2C_SW;
+        d2cProfile.postProcessParam = { 1.0f, 0, 0, 0, 0 };
+        d2cProfile.colorWidth       = static_cast<int16_t>(colorProfile->getWidth());
+        d2cProfile.colorHeight      = static_cast<int16_t>(colorProfile->getHeight());
+        d2cProfile.depthWidth       = static_cast<int16_t>(depthProfile->getWidth());
+        d2cProfile.depthHeight      = static_cast<int16_t>(depthProfile->getHeight());
+        d2cProfile.paramIndex       = (uint8_t)index;
+        d2cProfileList_.push_back(d2cProfile);
     }
 
     // fix depth intrinsic according to post process param and rgb intrinsic
