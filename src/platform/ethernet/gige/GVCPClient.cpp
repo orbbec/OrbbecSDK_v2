@@ -192,7 +192,7 @@ int GVCPClient::openClientSockets() {
             addrSrv.sin_family = AF_INET;
             addrSrv.sin_port   = htons(0);
             auto ipStr         = inet_ntoa(addrSrv.sin_addr);
-            if(strcmp(ipStr, "127.0.0.1") == 0) {
+            if(strncmp(ipStr, "169.254", 7) == 0 || strcmp(ipStr, "127.0.0.1") == 0) {
                 continue;
             }
             ipAddressStrSet_.insert(ipStr);
@@ -620,7 +620,7 @@ void GVCPClient::checkAndUpdateSockets() {
             addrSrv.sin_family = AF_INET;
             addrSrv.sin_port   = htons(0);
             std::string ipStr  = inet_ntoa(addrSrv.sin_addr);
-            if(strcmp(ipStr.c_str(), "127.0.0.1") == 0) {
+            if(strncmp(ipStr.c_str(), "169.254", 7) == 0 ||strcmp(ipStr.c_str(), "127.0.0.1") == 0) {
                 continue;
             }
 
