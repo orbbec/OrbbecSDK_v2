@@ -1822,6 +1822,14 @@ std::vector<std::shared_ptr<IFilter>> G330NetDevice::createRecommendedPostProces
     return {};
 }
 
+void G330NetDevice::deactivate() {
+    if(isComponentExists(OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER)){
+        auto globalTimestampFilter = getComponentT<GlobalTimestampFitter>(OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER);
+        globalTimestampFilter->enable(false);
+    }
+    DeviceBase::deactivate();
+}
+
 void libobsensor::G330NetDevice::initSensorStreamProfileList(std::shared_ptr<ISensor> sensor) {
     auto sensorType = sensor->getSensorType();
     OBStreamType      streamType = utils::mapSensorTypeToStreamType(sensorType);

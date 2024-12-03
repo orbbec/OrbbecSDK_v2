@@ -46,6 +46,8 @@ public:
 
     std::vector<std::shared_ptr<IFilter>> createRecommendedPostProcessingFilters(OBSensorType type) override;
 
+    void deactivate() override;
+
 private:
     void init() override;
     void initSensorList();

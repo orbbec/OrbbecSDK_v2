@@ -109,9 +109,9 @@ DeviceBase::~DeviceBase() noexcept {
 }
 
 void DeviceBase::deactivate() {
-    // if(hasAnySensorStreamActivated()) {
-    //     LOG_WARN("Device is deactivated or disconnected while there are still sensors streaming!");
-    // }
+    if(hasAnySensorStreamActivated()) {
+        LOG_WARN("Device is deactivated or disconnected while there are still sensors streaming!");
+    }
 
     isDeactivated_ = true;
 

@@ -475,7 +475,6 @@ void GVCPClient::sendGVCPDiscovery2(GVCPSocketInfo socketInfo) {
     //     LOG_INFO("cur addr {}:{}", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
     // }
 
-    LOG_DEBUG("sendto {}");
     // send data
     int err = sendto(socketInfo.sock, (const char *)&discoverCmd, sizeof(discoverCmd), 0, (SOCKADDR *)&destAddr, sizeof(destAddr));
     if(err == SOCKET_ERROR) {

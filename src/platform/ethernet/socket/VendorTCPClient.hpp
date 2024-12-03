@@ -4,6 +4,7 @@
 #pragma once
 #include "SocketTypes.hpp"
 #include <string>
+#include <mutex>
 
 namespace libobsensor {
 
@@ -29,6 +30,8 @@ private:
     bool              flushed_;
     uint32_t          CONNECT_TIMEOUT_MS   = 2000;
     uint32_t          COMM_TIMEOUT_MS      = 5000;
+
+    std::mutex tcpMtx_;
 };
 
 }  // namespace libobsensor

@@ -27,7 +27,8 @@ VendorTCPClient::VendorTCPClient(std::string address, uint16_t port, uint32_t co
 }
 
 VendorTCPClient::~VendorTCPClient() noexcept{
-    socketClose();
+    flush();
+    //socketClose();
 #if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
     WSACleanup();
 #endif
@@ -138,6 +139,7 @@ void VendorTCPClient::socketConnect() {
 void VendorTCPClient::socketClose() {
     if(socketFd_ > 0) {
         auto rst = closesocket(socketFd_);
+        LOG_DEBUG("TCP client socket closed.");
         if(rst < 0) {
             LOG_ERROR("close socket failed! socket={0}, err_code={1}", socketFd_, GET_LAST_ERROR());
         }
@@ -153,65 +155,90 @@ void VendorTCPClient::socketReconnect() {
 }
 
 int VendorTCPClient::read(uint8_t *data, const uint32_t dataLen) {
-    uint8_t retry = 2;
-    while(retry-- && !flushed_) {
-        int rst = recv(socketFd_, (char *)data, dataLen, 0);
-        if(rst < 0) {
-            rst = GET_LAST_ERROR();
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
-            if((rst == WSAECONNRESET || rst == WSAENOTCONN || rst == WSAETIMEDOUT) && retry >= 1) {
+    std::lock_guard<std::mutex> lock(tcpMtx_);
+    {
+        uint8_t retry = 2;
+        while(retry-- && !flushed_) {
+            int rst = 0;
+#if defined(__linux__)
+            rst = recv(socketFd_, (char *)data, dataLen, MSG_NOSIGNAL);
 #else
-            if((rst == EAGAIN || rst == EWOULDBLOCK) && retry >= 1) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            }
-            else if((rst == ENOTCONN || rst == ECONNRESET || rst == ENETRESET) && retry >= 1) {
+            rst = recv(socketFd_, (char *)data, dataLen, 0);
 #endif
-                socketReconnect();
-                return -1;
+
+            if(rst < 0) {
+                rst = GET_LAST_ERROR();
+#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+                if((rst == WSAECONNRESET || rst == WSAENOTCONN || rst == WSAETIMEDOUT) && retry >= 1) {
+#else
+                if((rst == EAGAIN || rst == EWOULDBLOCK) && retry >= 1) {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                }
+                else if((rst == ENOTCONN || rst == ECONNRESET || rst == ETIMEDOUT) && retry >= 1) {
+#endif
+                    socketReconnect();
+                    return -1;
+                }
+                else {
+                    throw libobsensor::io_exception(utils::string::to_string()
+                                                    << "VendorTCPClient read data failed! socket=" << socketFd_ << ", err_code=" << rst);
+                }
             }
             else {
-                throw libobsensor::io_exception(utils::string::to_string() << "VendorTCPClient read data failed! socket=" << socketFd_ << ", err_code=" << rst);
+                return rst;
             }
         }
-        else {
-            return rst;
-        }
-    }
 
-    return -1;
+        return -1;
+    }
 }
 
 void VendorTCPClient::write(const uint8_t *data, const uint32_t dataLen) {
-    uint8_t retry = 2;
-    while(retry-- && !flushed_) {
-        int rst = send(socketFd_, (const char *)data, dataLen, 0);
-        if(rst < 0) {
-            rst = GET_LAST_ERROR();
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
-            if((rst == WSAECONNRESET || rst == WSAENOTCONN || rst == WSAETIMEDOUT) && retry >= 1) {
+    std::lock_guard<std::mutex> lock(tcpMtx_);
+    {
+        uint8_t retry = 2;
+        while(retry-- && !flushed_) {
+            int rst = 0;
+#if defined(__linux__)
+            rst = send(socketFd_, (const char *)data, dataLen, MSG_NOSIGNAL);
 #else
-            if((rst == EAGAIN || rst == EWOULDBLOCK) && retry >= 1) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            }
-            else if((rst == ENOTCONN || rst == ECONNRESET || rst == ENETRESET) && retry >= 1) {
+            rst = send(socketFd_, (const char *)data, dataLen, 0);
 #endif
-                socketReconnect();
+
+            if(rst < 0) {
+                rst = GET_LAST_ERROR();
+#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+                if((rst == WSAECONNRESET || rst == WSAENOTCONN || rst == WSAETIMEDOUT) && retry >= 1) {
+#else
+                if((rst == EAGAIN || rst == EWOULDBLOCK) && retry >= 1) {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                }
+                else if((rst == ENOTCONN || rst == ECONNRESET || rst == ETIMEDOUT) && retry >= 1) {
+#endif
+                    socketReconnect();
+                }
+                else {
+                    throw libobsensor::io_exception(utils::string::to_string()
+                                                    << "VendorTCPClient write data failed! socket=" << socketFd_ << ", err_code=" << rst);
+                }
+                continue;
             }
-            else {
-                throw libobsensor::io_exception(utils::string::to_string()
-                                                << "VendorTCPClient write data failed! socket=" << socketFd_ << ", err_code=" << rst);
-            }
-            continue;
+            break;
         }
-        break;
     }
 }
 
 void VendorTCPClient::flush() {
-    if(socketFd_) {
-        flushed_ = true;
-        shutdown(socketFd_, SD_BOTH);
-        socketClose();
+    std::lock_guard<std::mutex> lock(tcpMtx_);
+    {
+        if(socketFd_) {
+            LOG_DEBUG("TCP client socket flush.");
+            flushed_ = true;
+            LOG_DEBUG("TCP client socket flush end.");
+            shutdown(socketFd_, SD_BOTH);
+            LOG_DEBUG("TCP client socket shutdown end.");
+            socketClose();
+        }
     }
 }
 
