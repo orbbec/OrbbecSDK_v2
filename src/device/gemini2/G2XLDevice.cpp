@@ -31,6 +31,7 @@
 #include "monitor/DeviceMonitor.hpp"
 #include "syncconfig/DeviceSyncConfigurator.hpp"
 #include "firmwareupdater/FirmwareUpdater.hpp"
+#include "firmwareupdater/firmwareupdateguard/FirmwareUpdateGuard.hpp"
 
 #include "G2AlgParamManager.hpp"
 #include "G2StreamProfileFilter.hpp"
@@ -600,6 +601,21 @@ void G2XLNetDevice::init() {
     initSensorList();
     initProperties();
     G2XLDeviceBase::init();
+
+    registerComponent(OB_DEV_COMPONENT_FIRMWARE_UPDATER, [this]() {
+        std::shared_ptr<FirmwareUpdater> firmwareUpdater;
+        TRY_EXECUTE({ firmwareUpdater = std::make_shared<FirmwareUpdater>(this); })
+        return firmwareUpdater;
+    });
+
+    registerComponent(OB_DEV_COMPONENT_FIRMWARE_UPDATE_GUARD_FACTORY, [this] {
+        return std::make_shared<FirmwareUpdateGuardFactory>(this);
+    });
+
+    registerComponent(OB_DEV_COMPONENT_FIRMWARE_UPDATE_GUARD, [this] {
+        auto factory = getComponentT<FirmwareUpdateGuardFactory>(OB_DEV_COMPONENT_FIRMWARE_UPDATE_GUARD_FACTORY);
+        return factory->create();
+    });
 }
 
 void G2XLNetDevice::initSensorList() {
@@ -610,12 +626,6 @@ void G2XLNetDevice::initSensorList() {
     });
 
     registerComponent(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER, [this]() { return std::make_shared<G2StreamProfileFilter>(this); });
-
-    registerComponent(OB_DEV_COMPONENT_FIRMWARE_UPDATER, [this]() {
-        std::shared_ptr<FirmwareUpdater> firmwareUpdater;
-        TRY_EXECUTE({ firmwareUpdater = std::make_shared<FirmwareUpdater>(this); })
-        return firmwareUpdater;
-    });
 
     const auto &sourcePortInfoList = enumInfo_->getSourcePortInfoList();
     auto depthPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(), [](const std::shared_ptr<const SourcePortInfo> &portInfo) {

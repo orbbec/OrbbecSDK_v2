@@ -5,7 +5,8 @@
 #include "environment/EnvConfig.hpp"
 #include "exception/ObException.hpp"
 #include "logger/Logger.hpp"
-#include "FirmwareUpdaterGuard.hpp"
+#include "IDeviceComponent.hpp"
+#include "firmwareupdateguard/FirmwareUpdateGuard.hpp"
 
 namespace libobsensor {
 FirmwareUpdater::FirmwareUpdater(IDevice *owner) : DeviceComponentBase(owner) {
@@ -58,11 +59,11 @@ void FirmwareUpdater::updateFirmwareExt(const std::string &path, DeviceFwUpdateC
         auto      device = std::make_shared<ob_device>();
         device->device   = getOwner()->shared_from_this();
 
-        std::shared_ptr<IFirmwareUpdaterGuard> guard;
-        if (device->device->getInfo()->pid_ == 0x0671 /* G2XL */) {
-            guard = std::make_shared<G2XLFirmwareUpdaterGuard>(device);
+        std::shared_ptr<IFirmwareUpdateGuard> guard;
+        if (device->device->isComponentExists(OB_DEV_COMPONENT_FIRMWARE_UPDATE_GUARD)) {
+            guard = device->device->getComponentT<IFirmwareUpdateGuard>(OB_DEV_COMPONENT_FIRMWARE_UPDATE_GUARD).get();
         }
-        
+
         ctx_->update_firmware_ext(device.get(), path.c_str(), onDeviceFwUpdateCallback, async, this, &error);
         if(error) {
             LOG_ERROR("Firmware update failed: {}", error->message);
@@ -89,9 +90,9 @@ void FirmwareUpdater::updateFirmwareFromRawDataExt(const uint8_t *firmwareData, 
         auto      device = std::make_shared<ob_device>();
         device->device   = getOwner()->shared_from_this();
 
-        std::shared_ptr<IFirmwareUpdaterGuard> guard;
-        if (device->device->getInfo()->pid_ == 0x0671 /* G2XL */) {
-            guard = std::make_shared<G2XLFirmwareUpdaterGuard>(device);
+        std::shared_ptr<IFirmwareUpdateGuard> guard;
+        if (device->device->isComponentExists(OB_DEV_COMPONENT_FIRMWARE_UPDATE_GUARD)) {
+            guard = device->device->getComponentT<IFirmwareUpdateGuard>(OB_DEV_COMPONENT_FIRMWARE_UPDATE_GUARD).get();
         }
 
         ctx_->update_firmware_from_raw_data_ext(device.get(), data.data(), firmwareSize, onDeviceFwUpdateCallback, async, this, &error);
