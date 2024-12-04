@@ -1683,6 +1683,7 @@ void G330NetDevice::initProperties() {
             propertyServer->registerProperty(OB_PROP_START_IR_RIGHT_STREAM_BOOL, "", "w", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_STRUCT_IR_RIGHT_STREAM_PROFILE, "", "w", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_STRUCT_DEVICE_IP_ADDR_CONFIG, "rw", "rw", vendorPropertyAccessor);
+            propertyServer->registerProperty(OB_PROP_NETWORK_BANDWIDTH_TYPE_INT, "r", "r", vendorPropertyAccessor);
 
             // todo: add these properties to the frame processor
             // propertyServer->registerProperty(OB_PROP_SDK_DEPTH_FRAME_UNPACK_BOOL, "rw", "rw", vendorPropertyAccessor);
