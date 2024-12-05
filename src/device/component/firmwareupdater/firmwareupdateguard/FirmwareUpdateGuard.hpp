@@ -8,24 +8,15 @@
 
 namespace libobsensor {
 
-class IFirmwareUpdateGuard : public DeviceComponentBase {
+class IFirmwareUpdateGuard {
 public:
-    IFirmwareUpdateGuard(IDevice *owner);
     virtual ~IFirmwareUpdateGuard() = default;
 
     virtual void prepare() = 0;
     virtual void revert()  = 0;
 };
 
-class FirmwareUpdateGuardFactory : public DeviceComponentBase {
-public:
-    FirmwareUpdateGuardFactory(IDevice *owner);
-    virtual ~FirmwareUpdateGuardFactory() noexcept override = default;
-
-    std::shared_ptr<IFirmwareUpdateGuard> create();
-};
-
-class G2XLNetFirmwareUpdateGuard : public IFirmwareUpdateGuard {
+class G2XLNetFirmwareUpdateGuard : public IFirmwareUpdateGuard, public DeviceComponentBase {
 public:
     G2XLNetFirmwareUpdateGuard(IDevice *owner);
     virtual ~G2XLNetFirmwareUpdateGuard() noexcept override;

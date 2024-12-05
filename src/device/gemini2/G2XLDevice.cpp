@@ -608,13 +608,10 @@ void G2XLNetDevice::init() {
         return firmwareUpdater;
     });
 
-    registerComponent(OB_DEV_COMPONENT_FIRMWARE_UPDATE_GUARD_FACTORY, [this] {
-        return std::make_shared<FirmwareUpdateGuardFactory>(this);
-    });
-
     registerComponent(OB_DEV_COMPONENT_FIRMWARE_UPDATE_GUARD, [this] {
-        auto factory = getComponentT<FirmwareUpdateGuardFactory>(OB_DEV_COMPONENT_FIRMWARE_UPDATE_GUARD_FACTORY);
-        return factory->create();
+        std::shared_ptr<G2XLNetFirmwareUpdateGuard> guard;
+        TRY_EXECUTE({ guard = std::make_shared<G2XLNetFirmwareUpdateGuard>(this); })
+        return guard;
     });
 }
 
