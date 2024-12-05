@@ -118,15 +118,26 @@ void DaBaiAAlgParamManager::fetchParamFromDevice() {
         LOG_ERROR("Get depth to color profile list failed! {}", e.what());
     }
 
-    try {
-        auto owner      = getOwner();
-        auto propServer = owner->getPropertyServer();
-        originD2cColorPreProcessProfileList_ =
-            propServer->getStructureDataListProtoV1_1_T<OBD2CColorPreProcessProfile, 0>(OB_RAW_DATA_D2C_ALIGN_COLOR_PRE_PROCESS_PROFILE_LIST);
+    /*
+        try {
+            auto owner      = getOwner();
+            auto propServer = owner->getPropertyServer();
+            originD2cColorPreProcessProfileList_ =
+                propServer->getStructureDataListProtoV1_1_T<OBD2CColorPreProcessProfile, 0>(OB_RAW_DATA_D2C_ALIGN_COLOR_PRE_PROCESS_PROFILE_LIST);
+        }
+        catch(const std::exception &e) {
+            LOG_ERROR("Get d2c pre process profile list failed,unsupport cmd {}", e.what());
+        }
+    */
+
+    //////////////////////////////////////////
+    // TODO:
+    for(size_t i = 0; i < originD2cProfileList_.size(); ++i) {
+        OBD2CColorPreProcessProfile preProcessProfile = { 0 };
+        preProcessProfile.preProcessParam.colorScale  = 1;
+        originD2cColorPreProcessProfileList_.push_back(preProcessProfile);
     }
-    catch(const std::exception &e) {
-        LOG_ERROR("Get d2c pre process profile list failed,unsupport cmd {}", e.what());
-    }
+    //////////////////////////////////////////
 
     // imu param
     std::vector<uint8_t> data;
@@ -248,6 +259,7 @@ void DaBaiAAlgParamManager::fixD2CParmaList() {
     }
 
     calibrationCameraParamList_.clear();
+
     // save color pre process param
     preProcessCameraParamList_.clear();
 
@@ -271,8 +283,8 @@ void DaBaiAAlgParamManager::fixD2CParmaList() {
         colorAlignParam.rgbIntrinsic.cx = (colorAlignParam.rgbIntrinsic.cx - colorPreParam.alignLeft) / colorPreParam.colorScale;
         colorAlignParam.rgbIntrinsic.cy = (colorAlignParam.rgbIntrinsic.cy - colorPreParam.alignTop) / colorPreParam.colorScale;
 
-        colorAlignParam.rgbIntrinsic.width  = profile.colorWidth;
-        colorAlignParam.rgbIntrinsic.height = profile.colorHeight;
+        colorAlignParam.rgbIntrinsic.width  = colorAlignParam.rgbIntrinsic.width;
+        colorAlignParam.rgbIntrinsic.height = colorAlignParam.rgbIntrinsic.height;
 
         preProcessCameraParamList_.push_back(colorAlignParam);
     }
