@@ -148,7 +148,7 @@ bool getFirmwarePath(std::string &firmwarePath) {
         input = input.substr(1, input.size() - 2);
     }
 
-    if(input.size() > 4 && input.substr(input.size() - 4) == ".bin") {
+    if(input.size() > 4 && (input.substr(input.size() - 4) == ".bin" || input.substr(input.size() - 4) == ".img")) {
         firmwarePath = input;
         std::cout << "Firmware file confirmed: " << firmwarePath << std::endl << std::endl;
         return true;
