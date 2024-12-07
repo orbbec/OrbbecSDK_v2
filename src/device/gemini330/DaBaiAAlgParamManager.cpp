@@ -6,7 +6,7 @@
 #include "DevicePids.hpp"
 #include "exception/ObException.hpp"
 #include "publicfilters/IMUCorrector.hpp"
-
+#include "G330DepthWorkModeManager.hpp"
 #include <vector>
 #include <sstream>
 namespace libobsensor {
@@ -15,7 +15,14 @@ bool DaBaiAAlgParamManager::findBestMatchedCameraParam(const std::vector<OBCamer
                                                        const std::shared_ptr<const VideoStreamProfile> &profile, OBCameraParam &result) {
     bool found = false;
     // match same resolution
-    for(auto &param: cameraParamList) {
+    for(int i = 0; i < cameraParamList.size(); ++i) {
+        if(!calibrationParamValidMap_.empty()) {
+            if(!calibrationParamValidMap_[i]) {
+                continue;
+            }
+        }
+        const auto &param = cameraParamList[i];
+
         auto streamType = profile->getType();
         if((streamType == OB_STREAM_DEPTH || streamType == OB_STREAM_IR || streamType == OB_STREAM_IR_LEFT || streamType == OB_STREAM_IR_RIGHT)
            && static_cast<uint32_t>(param.depthIntrinsic.width) == profile->getWidth()
@@ -35,7 +42,14 @@ bool DaBaiAAlgParamManager::findBestMatchedCameraParam(const std::vector<OBCamer
     if(!found) {
         // match same ratio
         float ratio = (float)profile->getWidth() / profile->getHeight();
-        for(auto &param: cameraParamList) {
+        for(int i = 0; i < cameraParamList.size(); ++i) {
+            if(!calibrationParamValidMap_.empty()) {
+                if(!calibrationParamValidMap_[i]) {
+                    continue;
+                }
+            }
+            const auto &param = cameraParamList[i];
+
             auto streamType = profile->getType();
             if((streamType == OB_STREAM_DEPTH || streamType == OB_STREAM_IR || streamType == OB_STREAM_IR_LEFT || streamType == OB_STREAM_IR_RIGHT)
                && (float)param.depthIntrinsic.width / param.depthIntrinsic.height == ratio) {
@@ -55,6 +69,10 @@ bool DaBaiAAlgParamManager::findBestMatchedCameraParam(const std::vector<OBCamer
 }
 
 DaBaiAAlgParamManager::DaBaiAAlgParamManager(IDevice *owner) : DisparityAlgParamManagerBase(owner) {
+    auto        depthWorkModeManager = owner->getComponentT<G330DepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
+    auto        currentWorkMode      = depthWorkModeManager->getCurrentDepthWorkMode();
+    std::string name(currentWorkMode.name);
+    currentDepthAlgMode_ = name;
     fetchParamFromDevice();
     fixD2CParmaList();
     registerBasicExtrinsics();
@@ -138,6 +156,8 @@ void DaBaiAAlgParamManager::fetchParamFromDevice() {
         originD2cColorPreProcessProfileList_.push_back(preProcessProfile);
     }
     //////////////////////////////////////////
+
+    d2CProfileListFilter(currentDepthAlgMode_);
 
     // imu param
     std::vector<uint8_t> data;
@@ -248,12 +268,6 @@ typedef struct {
 
 void DaBaiAAlgParamManager::fixD2CParmaList() {
 
-    if(originD2cProfileList_.empty()) {
-        return;
-    }
-
-    d2cProfileList_ = originD2cProfileList_;
-
     for(auto &profile: d2cProfileList_) {
         profile.alignType = ALIGN_D2C_HW;
     }
@@ -264,11 +278,11 @@ void DaBaiAAlgParamManager::fixD2CParmaList() {
     preProcessCameraParamList_.clear();
 
     // fix color pre process param
-    for(size_t i = 0; i < originD2cProfileList_.size(); ++i) {
+    for(size_t i = 0; i < d2cProfileList_.size(); ++i) {
         // color pre process param
-        auto colorPreParam = originD2cColorPreProcessProfileList_[i].preProcessParam;
+        auto colorPreParam = d2cColorPreProcessProfileList_[i].preProcessParam;
         // d2c profile list
-        auto         &profile      = originD2cProfileList_[i];
+        auto         &profile      = d2cProfileList_[i];
         auto          colorWidth   = profile.colorWidth;
         auto          colorHeight  = profile.colorHeight;
         auto          colorProfile = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_COLOR, OB_FORMAT_UNKNOWN, colorWidth, colorHeight, 30);
@@ -439,4 +453,77 @@ void DaBaiAAlgParamManager::bindIntrinsic(std::vector<std::shared_ptr<const Stre
         }
     }
 }
+
+void DaBaiAAlgParamManager::d2CProfileListFilter(const std::string currentDepthAlgMode) {
+
+    if(originD2cProfileList_.empty() || originD2cColorPreProcessProfileList_.empty()) {
+        return;
+    }
+
+    bool isEnable = false;
+
+    // Check if any profile is enabled
+    for(const auto &profile: originD2cProfileList_) {
+        if(profile.mixedBits.enableFlag) {
+            isEnable = true;
+            break;
+        }
+    }
+
+    if(!isEnable) {
+        // If no profiles are enabled, copy all profiles
+        d2cProfileList_                = originD2cProfileList_;
+        d2cColorPreProcessProfileList_ = originD2cColorPreProcessProfileList_;
+        return;
+    }
+
+    // Determine work mode value based on currentDepthAlgMode
+    uint8_t workModeVal = 0;
+    if(std::strcmp(currentDepthAlgMode.c_str(), "Wide") == 0) {
+        workModeVal = 1;
+    }
+
+    d2cProfileList_.clear();
+    d2cColorPreProcessProfileList_.clear();
+    // Filter profiles based on enable flag and work mode
+    for(int i = 0; i < originD2cProfileList_.size(); i++) {
+        const auto &profile = originD2cProfileList_[i];
+        if(profile.mixedBits.enableFlag && workModeVal == profile.mixedBits.workModeVal) {
+            auto fixProfile      = profile;
+            fixProfile.alignType = fixProfile.mixedBits.aligntypeVal;
+            d2cProfileList_.push_back(fixProfile);
+            const auto &preProcessProfile = originD2cColorPreProcessProfileList_[i];
+            d2cColorPreProcessProfileList_.push_back(preProcessProfile);
+        }
+    }
+
+    // update valid calibration camera param
+    if(calibrationCameraParamList_.size() == 4) {
+        if(std::strcmp(currentDepthAlgMode.c_str(), "Wide") == 0) {
+            calibrationParamValidMap_[0] = false;
+            calibrationParamValidMap_[1] = false;
+            calibrationParamValidMap_[2] = true;
+            calibrationParamValidMap_[3] = true;
+        }
+        else if(std::strcmp(currentDepthAlgMode.c_str(), "Default") == 0) {
+            calibrationParamValidMap_[0] = true;
+            calibrationParamValidMap_[1] = true;
+            calibrationParamValidMap_[2] = false;
+            calibrationParamValidMap_[3] = false;
+        }
+    }
+}
+
+void DaBaiAAlgParamManager::updateD2CProfileList(const std::string currentDepthAlgMode) {
+    if(currentDepthAlgMode == currentDepthAlgMode_) {
+        return;
+    }
+
+    d2CProfileListFilter(currentDepthAlgMode);
+
+    fixD2CParmaList();
+
+    currentDepthAlgMode_ = currentDepthAlgMode;
+}
+
 }  // namespace libobsensor

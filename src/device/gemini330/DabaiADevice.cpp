@@ -83,11 +83,11 @@ void DabaiADevice::init() {
     auto globalTimestampFilter = std::make_shared<GlobalTimestampFitter>(this);
     registerComponent(OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER, globalTimestampFilter);
 
-    auto algParamManager = std::make_shared<DaBaiAAlgParamManager>(this);
-    registerComponent(OB_DEV_COMPONENT_ALG_PARAM_MANAGER, algParamManager);
-
     auto depthWorkModeManager = std::make_shared<G330DepthWorkModeManager>(this);
     registerComponent(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER, depthWorkModeManager);
+
+    auto algParamManager = std::make_shared<DaBaiAAlgParamManager>(this);
+    registerComponent(OB_DEV_COMPONENT_ALG_PARAM_MANAGER, algParamManager);
 
     auto presetManager = std::make_shared<G330PresetManager>(this);
     registerComponent(OB_DEV_COMPONENT_PRESET_MANAGER, presetManager);
@@ -151,6 +151,22 @@ void DabaiADevice::init() {
         container = std::make_shared<G330DepthFrameMetadataParserContainer>(this);
         return container;
     });
+
+    auto propServer = getPropertyServer();
+    propServer->registerAccessCallback(
+        {
+            OB_STRUCT_CURRENT_DEPTH_ALG_MODE,
+        },
+        [&](uint32_t propertyId, const uint8_t *, size_t, PropertyOperationType operationType) {
+            if(operationType == PROP_OP_WRITE && propertyId == OB_STRUCT_CURRENT_DEPTH_ALG_MODE) {
+                auto        depthWorkModeManager = getComponentT<G330DepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
+                auto        propServer           = getPropertyServer();
+                auto        currentWorkMode      = propServer->getStructureDataProtoV1_1_T<OBDepthWorkMode_Internal, 0>(OB_STRUCT_CURRENT_DEPTH_ALG_MODE);
+                std::string name(currentWorkMode.name);
+                auto        algParamManager = getComponentT<DaBaiAAlgParamManager>(OB_DEV_COMPONENT_ALG_PARAM_MANAGER);
+                algParamManager->updateD2CProfileList(name);
+            }
+        });
 }
 
 std::shared_ptr<const StreamProfile> DabaiADevice::loadDefaultStreamProfile(OBSensorType sensorType) {

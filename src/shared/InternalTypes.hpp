@@ -57,11 +57,18 @@ typedef enum {
  *
  */
 typedef struct {
-    uint16_t              colorWidth;
-    uint16_t              colorHeight;
-    uint16_t              depthWidth;
-    uint16_t              depthHeight;
-    uint8_t               alignType;
+    uint16_t colorWidth;
+    uint16_t colorHeight;
+    uint16_t depthWidth;
+    uint16_t depthHeight;
+    union {
+        uint8_t alignType;
+        struct {
+            uint8_t aligntypeVal : 3;  // lowest 3 bits represents the original  align type
+            uint8_t workModeVal : 4;   // middle 4 bits  represents the index of work mode
+            uint8_t enableFlag : 1;    // the enable bit of work mode
+        } mixedBits;
+    };
     uint8_t               paramIndex;
     OBD2CPostProcessParam postProcessParam;
 } OBD2CProfile, ob_d2c_supported_profile_info;

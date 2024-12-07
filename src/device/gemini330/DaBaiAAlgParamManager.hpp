@@ -19,6 +19,7 @@ public:
 
     void bindIntrinsic(std::vector<std::shared_ptr<const StreamProfile>> streamProfileList) override;
     void reFetchDisparityParams();
+    void updateD2CProfileList(const std::string currentDepthAlgMode);
 
 private:
     void fetchParamFromDevice() override;
@@ -26,6 +27,7 @@ private:
     void fixD2CParmaList();
     bool findBestMatchedCameraParam(const std::vector<OBCameraParam> &cameraParamList, const std::shared_ptr<const VideoStreamProfile> &profile,
                                     OBCameraParam &result);
+    void d2CProfileListFilter(const std::string currentDepthAlgMode);
 
 private:
     std::vector<OBDepthCalibrationParam>     depthCalibParamList_;
@@ -34,6 +36,9 @@ private:
     std::vector<OBD2CColorPreProcessProfile> originD2cColorPreProcessProfileList_;
     // pre process calibration camera list
     std::vector<OBCameraParam> preProcessCameraParamList_;
+    std::string                currentDepthAlgMode_;
+    std::map<int, bool>        calibrationParamValidMap_;
+    std::vector<OBD2CColorPreProcessProfile> d2cColorPreProcessProfileList_;
 };
 
 }  // namespace libobsensor
