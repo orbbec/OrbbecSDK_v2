@@ -11,7 +11,7 @@
 namespace libobsensor {
 
 const uint16_t DEFAULT_CMD_PORT                     = 8090;
-const uint16_t DEVICE_WATCHER_POLLING_INTERVAL_MSEC = 3000;
+const uint16_t DEVICE_WATCHER_POLLING_INTERVAL_MSEC = 2000;
 const uint16_t DEVICE_CHECK_POLLING_INTERVAL_MSEC   = 1000;
 
 NetDeviceWatcher::~NetDeviceWatcher() noexcept {
@@ -53,15 +53,15 @@ void NetDeviceWatcher::start(deviceChangedCallback callback) {
                 callback_(OB_DEVICE_ARRIVAL, info.mac);
             }
 
-            // auto list    = GVCPClient::instance().queryNetDeviceList();
-            // auto added   = utils::subtract_sets(list, netDevInfoList_);
-            // auto removed = utils::subtract_sets(netDevInfoList_, list);
-            // for(auto &&info: removed) {
-            //     callback_(OB_DEVICE_REMOVED, info.mac);
-            // }
-            // for(auto &&info: added) {
-            //     callback_(OB_DEVICE_ARRIVAL, info.mac);
-            // }
+            /*auto list    = GVCPClient::instance().queryNetDeviceList();
+            auto added   = utils::subtract_sets(list, netDevInfoList_);
+            auto removed = utils::subtract_sets(netDevInfoList_, list);
+            for(auto &&info: removed) {
+                callback_(OB_DEVICE_REMOVED, info.mac);
+            }
+            for(auto &&info: added) {
+                callback_(OB_DEVICE_ARRIVAL, info.mac);
+            }*/
 
             netDevInfoList_ = list;
             condVar_.wait_for(lock, std::chrono::milliseconds(DEVICE_WATCHER_POLLING_INTERVAL_MSEC), [&]() { return stopWatch_; });

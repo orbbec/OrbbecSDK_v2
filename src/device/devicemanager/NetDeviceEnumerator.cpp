@@ -119,6 +119,7 @@ void NetDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType
 
     DeviceEnumInfoList addDevs;
     DeviceEnumInfoList rmDevs;
+    DeviceEnumInfoList newRmDevs;
 
     {
         auto                                   devices = queryDeviceList();
@@ -143,11 +144,49 @@ void NetDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType
         }
 
         if(!rmDevs.empty()) {
-            LOG_DEBUG("{} net device(s) removed:", rmDevs.size());
+            LOG_DEBUG("{} net device(s) in removedeviceList:", rmDevs.size());
             for(auto &&item: rmDevs) {
                 auto firstPortInfo = item->getSourcePortInfoList().front();
                 auto info          = std::dynamic_pointer_cast<const NetSourcePortInfo>(firstPortInfo);
-                LOG_DEBUG("  - Name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", item->getName(), item->getPid(), item->getDeviceSn(), info->mac,
+                if(info->pid == OB_DEVICE_G335LE_PID) {
+                    bool    disconnected = true;
+                    bool    exception    = false;
+                    uint8_t retry        = 1;
+                    do {
+                        BEGIN_TRY_EXECUTE({
+                            auto            sourcePort         = Platform::getInstance()->getNetSourcePort(info);
+                            auto            vendorPropAccessor = std::make_shared<VendorPropertyAccessor>(nullptr, sourcePort);
+                            OBPropertyValue value;
+                            value.intValue = 0;
+                            vendorPropAccessor->getPropertyValue(OB_PROP_DEVICE_PID_INT, &value);
+                            disconnected = false;
+                            LOG_DEBUG("Get device pid success, pid:{}", value.intValue);
+                        })
+                        CATCH_EXCEPTION_AND_EXECUTE({
+                            exception = true;
+                            LOG_WARN("Get pid failed, ip:{},mac:{},device is disconnect.", info->address, info->mac);
+                        });
+                    } while(exception && retry-- > 0);
+
+                    if(!disconnected) {
+                        deviceInfoList_.push_back(item);
+                    }
+                    else {
+                        newRmDevs.push_back(item);
+                    }
+                }
+                else {
+                    newRmDevs.push_back(item);
+                }
+            }
+        }
+
+        if(!newRmDevs.empty()) {
+            LOG_WARN("{} net device(s) removed:", newRmDevs.size());
+            for(auto &&item: newRmDevs) {
+                auto firstPortInfo = item->getSourcePortInfoList().front();
+                auto info          = std::dynamic_pointer_cast<const NetSourcePortInfo>(firstPortInfo);
+                LOG_WARN("  - Name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", item->getName(), item->getPid(), item->getDeviceSn(), info->mac,
                           info->address);
             }
         }
@@ -159,7 +198,7 @@ void NetDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType
             LOG_DEBUG("  - Name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", item->getName(), item->getPid(), item->getDeviceSn(), info->mac, info->address);
         }
 
-        deviceChangedCallback_(rmDevs, addDevs);
+        deviceChangedCallback_(newRmDevs, addDevs);
     }
 }
 

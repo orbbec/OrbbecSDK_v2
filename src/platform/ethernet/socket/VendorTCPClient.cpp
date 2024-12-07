@@ -27,8 +27,7 @@ VendorTCPClient::VendorTCPClient(std::string address, uint16_t port, uint32_t co
 }
 
 VendorTCPClient::~VendorTCPClient() noexcept{
-    flush();
-    //socketClose();
+    socketClose();
 #if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
     WSACleanup();
 #endif
