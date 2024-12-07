@@ -59,6 +59,8 @@ public:
     void                                      updateFirmware(const std::vector<uint8_t> &firmware, DeviceFwUpdateCallback updateCallback, bool async) override;
     static std::map<std::string, std::string> parseExtensionInfo(std::string extensionInfo);
 
+    void activateDeviceAccessor() override;
+
 protected:
     // implement on subclass, and must be called to initialize the device info on construction
     virtual void                 fetchDeviceInfo();

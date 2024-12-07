@@ -13,8 +13,7 @@ static bool judgeTransformValid(OBD2CTransform cameraRotParam) {
     // r1 .*r2 = 0 ;
     float r1r2 = cameraRotParam.rot[0] * cameraRotParam.rot[3] + cameraRotParam.rot[1] * cameraRotParam.rot[4] + cameraRotParam.rot[2] * cameraRotParam.rot[5];
 
-    float r1r3 =
-        cameraRotParam.rot[0] * cameraRotParam.rot[6] + cameraRotParam.rot[1] * cameraRotParam.rot[7] + cameraRotParam.rot[2] * cameraRotParam.rot[8];
+    float r1r3 = cameraRotParam.rot[0] * cameraRotParam.rot[6] + cameraRotParam.rot[1] * cameraRotParam.rot[7] + cameraRotParam.rot[2] * cameraRotParam.rot[8];
 
     if(fabsf(r1r2) < EPS && fabs(r1r3) < EPS) {
         return true;
@@ -27,7 +26,7 @@ static bool judgeIntrinsicValid(OBCameraIntrinsic param) {
         return false;
     }
 
-    if((param.fx < 1.0f) || (param.fy < 1.0f )||(param.cx < 1.0f) || (param.cy <1.0f)) {
+    if((param.fx < 1.0f) || (param.fy < 1.0f) || (param.cx < 1.0f) || (param.cy < 1.0f)) {
         return false;
     }
     if((param.fx > FMAX) || (param.fy > FMAX) | (param.cx > FMAX) || (param.cy > FMAX)) {
@@ -45,10 +44,10 @@ static bool undistortIterativeUnproject(const OBCameraIntrinsic intrinsic, const
     xd = (pixel.x - intrinsic.cx) / intrinsic.fx;
     yd = (pixel.y - intrinsic.cy) / intrinsic.fy;
 
-    x               = xd;
-    y               = yd;
+    x              = xd;
+    y              = yd;
     double bestErr = 99999;
-    int valid          = 1;
+    int    valid   = 1;
 
     // if(disto.model == OB_DISTORTION_BROWN_CONRADY) {
     {
@@ -94,15 +93,14 @@ static bool undistortIterativeUnproject(const OBCameraIntrinsic intrinsic, const
 
     if(bestErr > 0.5) {
         valid = 0;
-        xy->x     = (float)xd;
-        xy->y     = (float)yd;
+        xy->x = (float)xd;
+        xy->y = (float)yd;
         return valid;
     }
 
-     xy->x = (float)x, xy->y = (float)y;
+    xy->x = (float)x, xy->y = (float)y;
     return valid;
 }
-
 
 void calculateInverseMatrix(OBD2CTransform srcTrans, OBD2CTransform *dstTrans) {
 
@@ -147,15 +145,16 @@ void nextPixel(OBPoint2f &curr, const OBPoint2f start, const OBPoint2f end) {
     }
 }
 
-static void project3dPointToPixelWithDistortion(const OBCameraIntrinsic intrinsic, const OBCameraDistortion distortion, OBPoint3f point, OBPoint2f *pixel, int &valid) {
+static void project3dPointToPixelWithDistortion(const OBCameraIntrinsic intrinsic, const OBCameraDistortion distortion, OBPoint3f point, OBPoint2f *pixel,
+                                                int &valid) {
     double x = point.x / point.z;
     double y = point.y / point.z;
 
     valid     = 1;
     double xd = x, yd = y;
-    //if k1 >0, we need to take image distortion into accout when projecting onto an image
+    // if k1 >0, we need to take image distortion into accout when projecting onto an image
     if(fabsf(distortion.k1) > EPS || fabsf(distortion.k2) > EPS) {
-        if(distortion.model == OB_DISTORTION_BROWN_CONRADY){
+        if(distortion.model == OB_DISTORTION_BROWN_CONRADY) {
             double a1, a2, a3, cdist;
             double r2, r4, r6;
             r2    = x * x + y * y;
@@ -179,7 +178,6 @@ static void project3dPointToPixelWithDistortion(const OBCameraIntrinsic intrinsi
     if(pixel->x < 0 || pixel->y < 0) {
         valid = 0;
     }
-
 }
 
 bool CoordinateUtil::transformation3dTo3d(const OBPoint3f sourcePoint3f, OBD2CTransform transSourceToTarget, OBPoint3f *targetPoint3f) {
@@ -193,13 +191,10 @@ bool CoordinateUtil::transformation3dTo3d(const OBPoint3f sourcePoint3f, OBD2CTr
     }
 
     // step 2: Calculate conversion relationship
-   // R *X + t
-    float rx =
-        transSourceToTarget.rot[0] * sourcePoint3f.x + transSourceToTarget.rot[1] * sourcePoint3f.y + transSourceToTarget.rot[2] * sourcePoint3f.z;
-    float ry =
-        transSourceToTarget.rot[3] * sourcePoint3f.x + transSourceToTarget.rot[4] * sourcePoint3f.y + transSourceToTarget.rot[5] * sourcePoint3f.z;
-    float rz =
-        transSourceToTarget.rot[6] * sourcePoint3f.x + transSourceToTarget.rot[7] * sourcePoint3f.y + transSourceToTarget.rot[8] * sourcePoint3f.z;
+    // R *X + t
+    float rx = transSourceToTarget.rot[0] * sourcePoint3f.x + transSourceToTarget.rot[1] * sourcePoint3f.y + transSourceToTarget.rot[2] * sourcePoint3f.z;
+    float ry = transSourceToTarget.rot[3] * sourcePoint3f.x + transSourceToTarget.rot[4] * sourcePoint3f.y + transSourceToTarget.rot[5] * sourcePoint3f.z;
+    float rz = transSourceToTarget.rot[6] * sourcePoint3f.x + transSourceToTarget.rot[7] * sourcePoint3f.y + transSourceToTarget.rot[8] * sourcePoint3f.z;
 
     (*targetPoint3f).x = rx + transSourceToTarget.trans[0];
     (*targetPoint3f).y = ry + transSourceToTarget.trans[1];
@@ -242,9 +237,8 @@ bool CoordinateUtil::transformation2dTo3d(const OBCameraIntrinsic sourceIntrinsi
 }
 
 bool CoordinateUtil::transformation2dTo3d(const OBCameraIntrinsic sourceIntrinsic, const OBCameraDistortion sourceDistortion, const OBPoint2f sourcePoint2f,
-                                                      const float sourceDepthPixelValue, OBD2CTransform transSourceToTarget,
-                                                      OBPoint3f *targetPoint3f) {
-  // step 1: parameter validity judgment
+                                          const float sourceDepthPixelValue, OBD2CTransform transSourceToTarget, OBPoint3f *targetPoint3f) {
+    // step 1: parameter validity judgment
     if(!judgeIntrinsicValid(sourceIntrinsic)) {
         return false;
     }
@@ -287,7 +281,7 @@ bool CoordinateUtil::transformation3dTo2d(const OBPoint3f sourcePoint3f, const O
 
     // step 1: Convert the 3D point under the source to the target camera coordinates
     OBPoint3f targetPoint3f;
-    bool ret = transformation3dTo3d(sourcePoint3f, transSourceToTarget, &targetPoint3f);
+    bool      ret = transformation3dTo3d(sourcePoint3f, transSourceToTarget, &targetPoint3f);
     if(!ret) {
         return ret;
     }
@@ -300,8 +294,8 @@ bool CoordinateUtil::transformation3dTo2d(const OBPoint3f sourcePoint3f, const O
 }
 
 bool CoordinateUtil::transformation2dTo2d(const OBCameraIntrinsic sourceIntrinsic, const OBCameraDistortion sourceDistortion, const OBPoint2f sourcePoint2f,
-                                          const float sourceDepthPixelValue, const OBCameraIntrinsic targetIntrinsic,
-                                          const OBCameraDistortion targetDistortion,OBD2CTransform transSourceToTarget, OBPoint2f *targetPoint2f) {
+                                          const float sourceDepthPixelValue, const OBCameraIntrinsic targetIntrinsic, const OBCameraDistortion targetDistortion,
+                                          OBD2CTransform transSourceToTarget, OBPoint2f *targetPoint2f) {
 
     // step 1: First convert the 2d of the source into the 3d of the target.
     OBPoint3f targetPoint3f;
@@ -322,21 +316,21 @@ bool CoordinateUtil::transformationColor2dToDepth2d(const OBCameraIntrinsic colo
                                                     const OBCameraDistortion depthDistortion, OBD2CTransform transDepthToColor,
                                                     OBD2CTransform transColorToDepth, OBPoint2f *depthPixel) {
 
-    float depthRangeMm[2] = { 60.f, 16000.f };
+    float     depthRangeMm[2] = { 60.f, 16000.f };
     OBPoint2f nearPixelDepth, farthestPixelDepth;
-    bool   nearValid = 0, farthestValid = 0;
+    bool      nearValid = 0, farthestValid = 0;
 
-    //color pixel to depth pixel when z= depthRangeMm[0]
-    nearValid = transformation2dTo2d(colorIntrinsic, colorDistortion, colorPixel, depthRangeMm[0], depthIntrinsic, depthDistortion, transColorToDepth,
-                                  &nearPixelDepth);
+    // color pixel to depth pixel when z= depthRangeMm[0]
+    nearValid =
+        transformation2dTo2d(colorIntrinsic, colorDistortion, colorPixel, depthRangeMm[0], depthIntrinsic, depthDistortion, transColorToDepth, &nearPixelDepth);
     if(!nearValid) {
-        if(nearPixelDepth.x< 0) {
+        if(nearPixelDepth.x < 0) {
             nearPixelDepth.x = 0;
         }
-        if(nearPixelDepth.y <0) {
+        if(nearPixelDepth.y < 0) {
             nearPixelDepth.y = 0;
         }
-        if(nearPixelDepth.x > depthIntrinsic.width -1) {
+        if(nearPixelDepth.x > depthIntrinsic.width - 1) {
             nearPixelDepth.x = (float)depthIntrinsic.width - 1;
         }
         if(nearPixelDepth.y > depthIntrinsic.height - 1) {
@@ -346,7 +340,7 @@ bool CoordinateUtil::transformationColor2dToDepth2d(const OBCameraIntrinsic colo
 
     // color pixel to depth pixel when z= depthRangeMm[1]
     farthestValid = transformation2dTo2d(colorIntrinsic, colorDistortion, colorPixel, depthRangeMm[1], depthIntrinsic, depthDistortion, transColorToDepth,
-                                  &farthestPixelDepth);
+                                         &farthestPixelDepth);
     if(!farthestValid) {
         if(farthestPixelDepth.x < 0) {
             farthestPixelDepth.x = 0;
@@ -369,7 +363,7 @@ bool CoordinateUtil::transformationColor2dToDepth2d(const OBCameraIntrinsic colo
 
         int x     = (int)curPixel.x;
         int y     = (int)curPixel.y;
-        int index =  y* depthIntrinsic.width + x;
+        int index = y * depthIntrinsic.width + x;
 
         if(depthMap[index] == 0)
             continue;
@@ -381,7 +375,7 @@ bool CoordinateUtil::transformationColor2dToDepth2d(const OBCameraIntrinsic colo
         transformation2dTo2d(depthIntrinsic, depthDistortion, curPixel, depth, colorIntrinsic, colorDistortion, transDepthToColor, &curColorPixel);
         float errDist = (float)(pow((curColorPixel.x - colorPixel.x), 2) + pow((curColorPixel.y - colorPixel.y), 2));
         if(errDist < minDist) {
-            minDist     = errDist;
+            minDist       = errDist;
             depthPixel->x = curPixel.x;
             depthPixel->y = curPixel.y;
         }
@@ -389,7 +383,7 @@ bool CoordinateUtil::transformationColor2dToDepth2d(const OBCameraIntrinsic colo
 
     return true;
 }
-    // std::shared_ptr<Frame> CoordinateUtil::transformationDepthFrameToColorCamera(std::shared_ptr<IDevice> device, std::shared_ptr<Frame> depthFrame,
+// std::shared_ptr<Frame> CoordinateUtil::transformationDepthFrameToColorCamera(std::shared_ptr<IDevice> device, std::shared_ptr<Frame> depthFrame,
 // uint32_t targetColorCameraWidth, uint32_t targetColorCameraHeight) {
 // auto absDevice = std::dynamic_pointer_cast<AbstractDevice>(device);
 // if(absDevice == nullptr) {
@@ -413,7 +407,7 @@ bool CoordinateUtil::transformationColor2dToDepth2d(const OBCameraIntrinsic colo
 // auto depthWidth = depthFrame->getWidth();
 // auto depthHeight = depthFrame->getHeight();
 ////Since the default parameters stored in the module may not match the current image state, for example, the MX6600 project parameters are calibrated in the
-///mirrored state, but the output image is non-mirrored, so the parameters need to be processed.
+/// mirrored state, but the output image is non-mirrored, so the parameters need to be processed.
 // cameraParam = absDevice->preProcessCameraParam(cameraParam);
 ////soft D2C filter
 // auto d2cFilter = std::make_shared<D2CFilter>();
@@ -504,8 +498,8 @@ bool CoordinateUtil::transformationInitXYTables(const OBCameraIntrinsic intrinsi
 
 bool CoordinateUtil::transformationInitAddDistortionUVTables(const OBCameraIntrinsic intrinsic, const OBCameraDistortion distortion, float *data,
                                                              uint32_t *dataSize, OBXYTables *uvTables) {
-    int                width     = intrinsic.width;
-    int                height    = intrinsic.height;
+    int width  = intrinsic.width;
+    int height = intrinsic.height;
 
     size_t tableSize = (size_t)(width * height);
     if(data == NULL)  // If no external memory is requested, an error will be reported
@@ -533,20 +527,20 @@ bool CoordinateUtil::transformationInitAddDistortionUVTables(const OBCameraIntri
 
                 double xd = x, yd = y;
                 if(distortion.model == OB_DISTORTION_BROWN_CONRADY) {
-                     // Add distortion, only supports Brown model, k2, k3, k6 model, KB is not supported
-                     // double a1, a2, a3, cdist, icdist2;
-                     double a1, a2, a3, cdist;
-                     double r2, r4, r6;
-                     r2    = x * x + y * y;
-                     r4    = r2 * r2;
-                     r6    = r4 * r2;
-                     a1    = 2 * x * y;
-                     a2    = r2 + 2 * x * x;
-                     a3    = r2 + 2 * y * y;
-                     cdist = (1 + distortion.k1 * r2 + distortion.k2 * r4 + distortion.k3 * r6)
-                             / (1 + distortion.k4 * r2 + distortion.k5 * r4 + distortion.k6 * r6);
-                     xd = x * cdist + distortion.p1 * a1 + distortion.p2 * a2;
-                     yd = y * cdist + distortion.p1 * a3 + distortion.p2 * a1;
+                    // Add distortion, only supports Brown model, k2, k3, k6 model, KB is not supported
+                    // double a1, a2, a3, cdist, icdist2;
+                    double a1, a2, a3, cdist;
+                    double r2, r4, r6;
+                    r2 = x * x + y * y;
+                    r4 = r2 * r2;
+                    r6 = r4 * r2;
+                    a1 = 2 * x * y;
+                    a2 = r2 + 2 * x * x;
+                    a3 = r2 + 2 * y * y;
+                    cdist =
+                        (1 + distortion.k1 * r2 + distortion.k2 * r4 + distortion.k3 * r6) / (1 + distortion.k4 * r2 + distortion.k5 * r4 + distortion.k6 * r6);
+                    xd = x * cdist + distortion.p1 * a1 + distortion.p2 * a2;
+                    yd = y * cdist + distortion.p1 * a3 + distortion.p2 * a1;
                 }
 
                 float x_proj = (float)xd * intrinsic.fx + intrinsic.cx;
@@ -575,7 +569,7 @@ bool CoordinateUtil::transformationInitAddDistortionUVTables(const OBCameraIntri
 void CoordinateUtil::transformationDepthToPointCloud(OBXYTables *xyTables, const void *depthImageData, void *pointCloudData, float positionDataScale,
                                                      OBCoordinateSystemType type) {
     const uint16_t *imageData = (const uint16_t *)depthImageData;
-    float          *xyzData   = (float *)pointCloudData;
+    float *         xyzData   = (float *)pointCloudData;
     float           x, y, z;
     int             coordinateSystemCoefficient = type == OB_LEFT_HAND_COORDINATE_SYSTEM ? -1 : 1;
 
@@ -605,47 +599,64 @@ void CoordinateUtil::transformationDepthToPointCloud(OBXYTables *xyTables, const
 }
 
 void CoordinateUtil::transformationDepthToRGBDPointCloud(OBXYTables *xyTables, const void *depthImageData, const void *colorImageData, void *pointCloudData,
-                                                         float positionDataScale, OBCoordinateSystemType type, bool colorDataNormalization) {
+                                                         float positionDataScale, OBCoordinateSystemType type, bool colorDataNormalization, uint32_t colorWidth,
+                                                         uint32_t colorHeight) {
     const uint16_t *dImageData = (const uint16_t *)depthImageData;
-    const uint8_t  *cImageData = (const uint8_t *)colorImageData;
-    float          *xyzrgbData = (float *)pointCloudData;
+    const uint8_t * cImageData = (const uint8_t *)colorImageData;
+    float *         xyzrgbData = (float *)pointCloudData;
     float           x, y, z;
     float           r, g, b;
     int             coordinateSystemCoefficient = type == OB_LEFT_HAND_COORDINATE_SYSTEM ? -1 : 1;
     float           colorDivCoeff               = colorDataNormalization ? 255.0f : 1.0f;
+    float           colorScaleX                 = 1.f;
+    float           colorScaleY                 = 1.f;
+    if((xyTables->width != (int)colorWidth) || (xyTables->height != (int)colorHeight)) {
+        colorScaleX = 1.f * colorWidth / xyTables->width;
+        colorScaleY = 1.f * colorHeight / xyTables->height;
+        float scale = colorScaleX > colorScaleY ? colorScaleX : colorScaleY;
+        float s     = 1.f * int(scale) + 0.5f * (int(scale + 0.5) - int(scale));
+        colorScaleX = s;
+        colorScaleY = s;
+    }
 
-    for(int i = 0; i < xyTables->width * xyTables->height; i++) {
-        float x_tab = xyTables->xTable[i];
+    for(int i = 0; i < xyTables->height; i++) {
+        int id = i * xyTables->width;
+        int ic = static_cast<int>(colorScaleX * i * colorWidth);
+        for(int j = 0; j < xyTables->width; j++) {
+            int   idc   = id + j;
+            float x_tab = xyTables->xTable[idc];
 
-        uint16_t depthValue = dImageData[i];
-        if(!std::isnan(x_tab) && depthValue != 65535) {
-            z = (float)depthValue;
-            x = x_tab * (float)z;
-            y = xyTables->yTable[i] * (float)z * coordinateSystemCoefficient;
+            uint16_t depthValue = dImageData[idc];
+            if(!std::isnan(x_tab) && depthValue != 65535) {
+                z = (float)depthValue;
+                x = x_tab * (float)z;
+                y = xyTables->yTable[idc] * (float)z * coordinateSystemCoefficient;
 
-            z *= positionDataScale;
-            x *= positionDataScale;
-            y *= positionDataScale;
+                z *= positionDataScale;
+                x *= positionDataScale;
+                y *= positionDataScale;
 
-            r = cImageData[3 * i + 0] / colorDivCoeff;
-            g = cImageData[3 * i + 1] / colorDivCoeff;
-            b = cImageData[3 * i + 2] / colorDivCoeff;
+                int icc = static_cast<int>(ic + j * colorScaleY);
+                r       = cImageData[3 * icc + 0] / colorDivCoeff;
+                g       = cImageData[3 * icc + 1] / colorDivCoeff;
+                b       = cImageData[3 * icc + 2] / colorDivCoeff;
+            }
+            else {
+                x = 0.0;
+                y = 0.0;
+                z = 0.0;
+                r = 0.0;
+                g = 0.0;
+                b = 0.0;
+            }
+
+            xyzrgbData[6 * idc + 0] = x;
+            xyzrgbData[6 * idc + 1] = y;
+            xyzrgbData[6 * idc + 2] = z;
+            xyzrgbData[6 * idc + 3] = r;
+            xyzrgbData[6 * idc + 4] = g;
+            xyzrgbData[6 * idc + 5] = b;
         }
-        else {
-            x = 0.0;
-            y = 0.0;
-            z = 0.0;
-            r = 0.0;
-            g = 0.0;
-            b = 0.0;
-        }
-
-        xyzrgbData[6 * i + 0] = x;
-        xyzrgbData[6 * i + 1] = y;
-        xyzrgbData[6 * i + 2] = z;
-        xyzrgbData[6 * i + 3] = r;
-        xyzrgbData[6 * i + 4] = g;
-        xyzrgbData[6 * i + 5] = b;
     }
 }
 
@@ -653,13 +664,20 @@ void CoordinateUtil::transformationDepthToRGBDPointCloudByUVTables(const OBCamer
                                                                    const void *colorImageData, void *pointCloudData, float positionDataScale,
                                                                    OBCoordinateSystemType type, bool colorDataNormalization) {
     const uint16_t *dImageData = (const uint16_t *)depthImageData;
-    const uint8_t  *cImageData = (const uint8_t *)colorImageData;
-    float          *xyzrgbData = (float *)pointCloudData;
+    const uint8_t * cImageData = (const uint8_t *)colorImageData;
+    float *         xyzrgbData = (float *)pointCloudData;
     float           x, y, z;
     float           r, g, b;
     int             coordinateSystemCoefficient = type == OB_LEFT_HAND_COORDINATE_SYSTEM ? -1 : 1;
     float           colorDivCoeff               = colorDataNormalization ? 255.0f : 1.0f;
 
+    float colorScale = 1.f;
+    if((uvTables->width != (int)rgbIntrinsic.width) || (uvTables->height != (int)rgbIntrinsic.height)) {
+        float colorScaleX = 1.f * rgbIntrinsic.width / uvTables->width, colorScaleY = 1.f * rgbIntrinsic.height / uvTables->height;
+        colorScale = colorScaleX > colorScaleY ? colorScaleX : colorScaleY;
+        colorScale = 1.f * int(colorScale) + 0.5f * (int(colorScale + 0.5) - int(colorScale));
+    }
+    int colorWidth = static_cast<int>(colorScale * uvTables->width);
     for(int i = 0; i < uvTables->width * uvTables->height; i++) {
         // int u_tab = (int)uvTables->xTable[i];
         // int v_tab = (int)uvTables->yTable[i];
@@ -677,9 +695,9 @@ void CoordinateUtil::transformationDepthToRGBDPointCloudByUVTables(const OBCamer
             x *= positionDataScale;
             y *= positionDataScale;
 
-            int u_rgb   = (int)round(uvTables->xTable[i]);
-            int v_rgb   = (int)round(uvTables->yTable[i]);
-            int idx_rgb = v_rgb * uvTables->width + u_rgb;
+            int u_rgb   = (int)round(uvTables->xTable[i] * colorScale);
+            int v_rgb   = (int)round(uvTables->yTable[i] * colorScale);
+            int idx_rgb = v_rgb * colorWidth + u_rgb;
 
             r = cImageData[3 * idx_rgb + 0] / colorDivCoeff;
             g = cImageData[3 * idx_rgb + 1] / colorDivCoeff;

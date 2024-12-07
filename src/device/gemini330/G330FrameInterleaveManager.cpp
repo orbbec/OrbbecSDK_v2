@@ -5,10 +5,11 @@
 #include "utils/Utils.hpp"
 
 namespace libobsensor {
-
+const std::string hdr_interleave   = "Depth from HDR";
+const std::string laser_interleave = "Laser On-Off";
 G330FrameInterleaveManager::G330FrameInterleaveManager(IDevice *owner) : DeviceComponentBase(owner) {
-    availableFrameInterleaves_.emplace_back("hdr interleave");
-    availableFrameInterleaves_.emplace_back("laser interleave");
+    availableFrameInterleaves_.emplace_back(hdr_interleave);
+    availableFrameInterleaves_.emplace_back(laser_interleave);
 
     currentIndex_ = -1;
 
@@ -87,13 +88,15 @@ void G330FrameInterleaveManager::loadFrameInterleave(const std::string &frameInt
             setPropertyValue(owner, OB_PROP_LASER_CONTROL_INT, interleave[sequenceId].laserSwitch);
         };
 
-        if(frameInterleaveName == "hdr interleave") {
+        if(frameInterleaveName == hdr_interleave) {
             setProperties(hdr_, i);
         }
-        else if(frameInterleaveName == "laser interleave") {
+        else if(frameInterleaveName == laser_interleave) {
             setProperties(laserInterleave_, i);
         }
     }
+
+    currentFrameInterleave_ = frameInterleaveName;
 }
 
 const std::vector<std::string> &G330FrameInterleaveManager::getAvailableFrameInterleaveList() const {
@@ -141,10 +144,10 @@ void G330FrameInterleaveManager::updateFrameInterleaveParam(uint32_t propertyId)
         }
     };
 
-    if(currentFrameInterleave_ == "hdr interleave") {
+    if(currentFrameInterleave_ == hdr_interleave) {
         updateProperty(hdr_);
     }
-    else if(currentFrameInterleave_ == "laser interleave") {
+    else if(currentFrameInterleave_ == laser_interleave) {
         updateProperty(laserInterleave_);
     }
 }

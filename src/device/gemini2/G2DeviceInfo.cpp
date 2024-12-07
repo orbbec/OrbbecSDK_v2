@@ -4,6 +4,7 @@
 #include "G2DeviceInfo.hpp"
 #include "G2Device.hpp"
 #include "G2XLDevice.hpp"
+#include "G210Device.hpp"
 #include "usb/UsbPortGroup.hpp"
 #include "DevicePids.hpp"
 #include "utils/Utils.hpp"
@@ -16,7 +17,9 @@
 
 namespace libobsensor {
 
-const std::map<int, std::string> G2DeviceNameMap = { { 0x0670, "Gemini2" }, { 0x0673, "Gemini2 L" }, { 0x0671, "Gemini2 XL" } };
+const std::map<int, std::string> G2DeviceNameMap = {
+    { 0x0670, "Gemini2" }, { 0x0673, "Gemini2 L" }, { 0x0671, "Gemini2 XL" }, { 0x0808, "Gemini 215" }, { 0x0809, "Gemini 210" }
+};
 
 G2DeviceInfo::G2DeviceInfo(const SourcePortInfoList groupedInfoList) {
     auto firstPortInfo = groupedInfoList.front();
@@ -73,6 +76,9 @@ std::shared_ptr<IDevice> G2DeviceInfo::createDevice() const {
         }
         return std::make_shared<G2XLUSBDevice>(shared_from_this());
     }
+    else if(pid_ == 0x0808 || pid_ == 0x0809) {
+        return std::make_shared<G210Device>(shared_from_this());
+    }
     return std::make_shared<G2Device>(shared_from_this());
 }
 
@@ -122,4 +128,3 @@ std::vector<std::shared_ptr<IDeviceEnumInfo>> G2DeviceInfo::pickNetDevices(const
 }
 
 }  // namespace libobsensor
-

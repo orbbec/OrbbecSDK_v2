@@ -152,6 +152,10 @@ void RawPhaseStreamer::startStream(std::shared_ptr<const StreamProfile> sp, Muta
     auto  realSp = StreamProfileFactory::createVideoStreamProfile(profile->getType(), profile->getFormat(), pair.first, pair.second, profile->getFps());
     backend_->startStream(realSp, [this](std::shared_ptr<Frame> frame) {
         std::unique_lock<std::mutex> lock(frameQueueMutex_);
+        if(frameQueue_.size() > 1){
+            frameQueue_.pop();
+        }
+        
         frameQueue_.push(frame);
         frameQueueCV_.notify_one();
     });

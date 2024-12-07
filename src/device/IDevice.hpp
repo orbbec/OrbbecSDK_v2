@@ -68,6 +68,9 @@ public:
     // device firmware update
     virtual void updateFirmware(const std::vector<uint8_t> &firmware, DeviceFwUpdateCallback updateCallback, bool async) = 0;
 
+    // activate device accessor
+    virtual void activateDeviceAccessor() = 0;
+
 public:
     // templated functions
     template <typename T> DeviceComponentPtr<T> getComponentT(DeviceComponentId compId, bool throwExIfNotFound = true) {

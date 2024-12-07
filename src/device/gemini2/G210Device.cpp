@@ -1,7 +1,7 @@
 // Copyright (c) Orbbec Inc. All Rights Reserved.
 // Licensed under the MIT License.
 
-#include "Astra2Device.hpp"
+#include "G210Device.hpp"
 
 #include "DevicePids.hpp"
 #include "InternalTypes.hpp"
@@ -29,14 +29,14 @@
 #include "property/FilterPropertyAccessors.hpp"
 #include "property/PrivateFilterPropertyAccessors.hpp"
 #include "monitor/DeviceMonitor.hpp"
+#include "syncconfig/DeviceSyncConfigurator.hpp"
 #include "firmwareupdater/FirmwareUpdater.hpp"
 
-#include "Astra2AlgParamManager.hpp"
-#include "Astra2StreamProfileFilter.hpp"
-#include "Astra2PropertyAccessors.hpp"
-#include "Astra2DepthWorkModeManager.hpp"
-#include "Astra2FrameTimestampCalculator.hpp"
-#include "Astra2DeviceSyncConfigurator.hpp"
+#include "G2AlgParamManager.hpp"
+#include "G2StreamProfileFilter.hpp"
+#include "G2PropertyAccessors.hpp"
+#include "G2DepthWorkModeManager.hpp"
+#include "G2FrameTimestampCalculator.hpp"
 
 #include <algorithm>
 
@@ -46,40 +46,44 @@ constexpr uint8_t INTERFACE_COLOR = 4;
 constexpr uint8_t INTERFACE_IR    = 2;
 constexpr uint8_t INTERFACE_DEPTH = 0;
 
-Astra2Device::Astra2Device(const std::shared_ptr<const IDeviceEnumInfo> &info) : DeviceBase(info) {
+G210Device::G210Device(const std::shared_ptr<const IDeviceEnumInfo> &info) : DeviceBase(info) {
     init();
 }
 
-Astra2Device::~Astra2Device() noexcept {}
+G210Device::~G210Device() noexcept {}
 
-void Astra2Device::init() {
+void G210Device::init() {
     initSensorList();
     initProperties();
 
     fetchDeviceInfo();
     fetchExtensionInfo();
 
-    videoFrameTimestampCalculatorCreator_ = [this]() { return std::make_shared<Astra2VideoFrameTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_); };
+    videoFrameTimestampCalculatorCreator_ = [this]() {
+        std::shared_ptr<IFrameTimestampCalculator> calculator;
+        calculator = std::make_shared<G2VideoFrameTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
+        return calculator;
+    };
 
     auto globalTimestampFilter = std::make_shared<GlobalTimestampFitter>(this);
     registerComponent(OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER, globalTimestampFilter);
 
-    auto algParamManager = std::make_shared<Astra2AlgParamManager>(this);
+    auto algParamManager = std::make_shared<G2AlgParamManager>(this);
     registerComponent(OB_DEV_COMPONENT_ALG_PARAM_MANAGER, algParamManager);
 
-    auto depthWorkModeManager = std::make_shared<Astra2DepthWorkModeManager>(this);
+    auto depthWorkModeManager = std::make_shared<G2DepthWorkModeManager>(this);
     registerComponent(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER, depthWorkModeManager);
 
-    // auto sensorStreamStrategy = std::make_shared<Astra2SensorStreamStrategy>(this);
-    // registerComponent(OB_DEV_COMPONENT_SENSOR_STREAM_STRATEGY, sensorStreamStrategy);
+    static const std::vector<OBMultiDeviceSyncMode> supportedSyncModes = { OB_MULTI_DEVICE_SYNC_MODE_FREE_RUN, OB_MULTI_DEVICE_SYNC_MODE_STANDALONE,
+                                                                           OB_MULTI_DEVICE_SYNC_MODE_PRIMARY, OB_MULTI_DEVICE_SYNC_MODE_SECONDARY_SYNCED };
 
-    static const std::vector<OBMultiDeviceSyncMode> supportedSyncModes     = { OB_MULTI_DEVICE_SYNC_MODE_FREE_RUN, OB_MULTI_DEVICE_SYNC_MODE_STANDALONE,
-                                                                               OB_MULTI_DEVICE_SYNC_MODE_PRIMARY, OB_MULTI_DEVICE_SYNC_MODE_SECONDARY_SYNCED };
-    auto                                            deviceSyncConfigurator = std::make_shared<Astra2DeviceSyncConfigurator>(this, supportedSyncModes);
+    auto deviceSyncConfigurator = std::make_shared<DeviceSyncConfiguratorOldProtocol>(this, supportedSyncModes);
     registerComponent(OB_DEV_COMPONENT_DEVICE_SYNC_CONFIGURATOR, deviceSyncConfigurator);
 
-    auto deviceClockSynchronizer = std::make_shared<DeviceClockSynchronizer>(this, deviceTimeFreq_, 1000);
-    registerComponent(OB_DEV_COMPONENT_DEVICE_CLOCK_SYNCHRONIZER, deviceClockSynchronizer);
+    registerComponent(OB_DEV_COMPONENT_DEVICE_CLOCK_SYNCHRONIZER, [this] {
+        auto deviceClockSynchronizer = std::make_shared<DeviceClockSynchronizer>(this, deviceTimeFreq_, 1000);
+        return deviceClockSynchronizer;
+    });
 
     registerComponent(OB_DEV_COMPONENT_FIRMWARE_UPDATER, [this]() {
         std::shared_ptr<FirmwareUpdater> firmwareUpdater;
@@ -88,7 +92,7 @@ void Astra2Device::init() {
     });
 }
 
-void Astra2Device::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
+void G210Device::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
 
     auto streamProfileFilter = getComponentT<IStreamProfileFilter>(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER);
     sensor->setStreamProfileFilter(streamProfileFilter.get());
@@ -119,14 +123,14 @@ void Astra2Device::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
     }
 }
 
-void Astra2Device::initSensorList() {
+void G210Device::initSensorList() {
     registerComponent(OB_DEV_COMPONENT_FRAME_PROCESSOR_FACTORY, [this]() {
         std::shared_ptr<FrameProcessorFactory> factory;
         TRY_EXECUTE({ factory = std::make_shared<FrameProcessorFactory>(this); })
         return factory;
     });
 
-    registerComponent(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER, [this]() { return std::make_shared<Astra2StreamProfileFilter>(this); });
+    registerComponent(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER, [this]() { return std::make_shared<G2StreamProfileFilter>(this); });
 
     const auto &sourcePortInfoList = enumInfo_->getSourcePortInfoList();
     auto depthPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(), [](const std::shared_ptr<const SourcePortInfo> &portInfo) {
@@ -144,10 +148,7 @@ void Astra2Device::initSensorList() {
                 std::vector<FormatFilterConfig> formatFilterConfigs = {
                     { FormatFilterPolicy::REPLACE, OB_FORMAT_MJPG, OB_FORMAT_RLE, nullptr },
                 };
-                auto formatConverter = getSensorFrameFilter("FrameUnpacker", OB_SENSOR_DEPTH, false);
-                if(formatConverter) {
-                    formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_MJPG, OB_FORMAT_Y16, formatConverter });
-                }
+
                 sensor->updateFormatFilterConfig(formatFilterConfigs);
 
                 auto frameTimestampCalculator = videoFrameTimestampCalculatorCreator_();
@@ -250,7 +251,6 @@ void Astra2Device::initSensorList() {
 
                 std::vector<FormatFilterConfig> formatFilterConfigs = {
                     { FormatFilterPolicy::REMOVE, OB_FORMAT_NV12, OB_FORMAT_ANY, nullptr },
-                    { FormatFilterPolicy::REPLACE, OB_FORMAT_BYR2, OB_FORMAT_RW16, nullptr },
                 };
 
                 auto formatConverter = getSensorFrameFilter("FormatConverter", OB_SENSOR_COLOR, false);
@@ -299,6 +299,7 @@ void Astra2Device::initSensorList() {
 
         registerComponent(OB_DEV_COMPONENT_IMU_STREAMER, [this, imuPortInfo]() {
             // the gyro and accel are both on the same port and share the same filter
+
             auto port               = getSourcePort(imuPortInfo);
             auto imuCorrectorFilter = getSensorFrameFilter("IMUCorrector", OB_SENSOR_ACCEL, true);
 
@@ -346,10 +347,10 @@ void Astra2Device::initSensorList() {
     }
 }
 
-void Astra2Device::initProperties() {
+void G210Device::initProperties() {
     auto propertyServer = std::make_shared<PropertyServer>(this);
 
-    auto d2dPropertyAccessor = std::make_shared<Astra2Disp2DepthPropertyAccessor>(this);
+    auto d2dPropertyAccessor = std::make_shared<G210Disp2DepthPropertyAccessor>(this);
     propertyServer->registerProperty(OB_PROP_DISPARITY_TO_DEPTH_BOOL, "rw", "rw", d2dPropertyAccessor);      // hw
     propertyServer->registerProperty(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL, "rw", "rw", d2dPropertyAccessor);  // sw
     propertyServer->registerProperty(OB_PROP_DEPTH_PRECISION_LEVEL_INT, "rw", "rw", d2dPropertyAccessor);
@@ -359,9 +360,6 @@ void Astra2Device::initProperties() {
     propertyServer->registerProperty(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL, "rw", "rw", privatePropertyAccessor);
     propertyServer->registerProperty(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT, "rw", "rw", privatePropertyAccessor);
     propertyServer->registerProperty(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_SPECKLE_SIZE_INT, "rw", "rw", privatePropertyAccessor);
-
-    auto tempPropertyAccessor = std::make_shared<Astra2TempPropertyAccessor>(this);
-    propertyServer->registerProperty(OB_STRUCT_DEVICE_TEMPERATURE, "r", "r", tempPropertyAccessor);
 
     auto sensors = getSensorTypeList();
     for(auto &sensor: sensors) {
@@ -384,7 +382,7 @@ void Astra2Device::initProperties() {
             propertyServer->registerProperty(OB_PROP_COLOR_POWER_LINE_FREQUENCY_INT, "rw", "rw", uvcPropertyAccessor);
         }
         else if(sensor == OB_SENSOR_IR) {
-            auto uvcPropertyAccessor = std::make_shared<LazyPropertyAccessor>([this, sourcePortInfo]() {
+            auto uvcPropertyAccessor = std::make_shared<LazyPropertyAccessor>([this, &sourcePortInfo]() {
                 auto port     = getSourcePort(sourcePortInfo);
                 auto accessor = std::make_shared<UvcPropertyAccessor>(port);
                 return accessor;
@@ -407,37 +405,36 @@ void Astra2Device::initProperties() {
 
             propertyServer->registerProperty(OB_PROP_IR_EXPOSURE_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_COLOR_EXPOSURE_INT, "rw", "rw", vendorPropertyAccessor);  // using vendor property accessor
-            propertyServer->registerProperty(OB_PROP_LDP_BOOL, "rw", "rw", vendorPropertyAccessor);
+
             propertyServer->registerProperty(OB_PROP_LASER_BOOL, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_DEPTH_HOLEFILTER_BOOL, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_LDP_STATUS_BOOL, "r", "r", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_DEPTH_ALIGN_HARDWARE_BOOL, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_DEPTH_ALIGN_HARDWARE_MODE_INT, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_HARDWARE_DISTORTION_SWITCH_BOOL, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_LASER_MODE_INT, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_BRT_BOOL, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_DEVICE_WORK_MODE_INT, "rw", "rw", vendorPropertyAccessor);
+            propertyServer->registerProperty(OB_PROP_TIMER_RESET_SIGNAL_BOOL, "w", "w", vendorPropertyAccessor);
+            propertyServer->registerProperty(OB_PROP_TIMER_RESET_TRIGGER_OUT_ENABLE_BOOL, "rw", "rw", vendorPropertyAccessor);
+            propertyServer->aliasProperty(OB_PROP_SYNC_SIGNAL_TRIGGER_OUT_BOOL, OB_PROP_TIMER_RESET_TRIGGER_OUT_ENABLE_BOOL);
+            propertyServer->registerProperty(OB_PROP_TIMER_RESET_DELAY_US_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_DEPTH_MIRROR_MODULE_STATUS_BOOL, "", "r", vendorPropertyAccessor);
 
             propertyServer->registerProperty(OB_STRUCT_VERSION, "", "r", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_RAW_DATA_EFFECTIVE_VIDEO_STREAM_PROFILE_LIST, "", "r", vendorPropertyAccessor);
-            // OB_RAW_DATA_DISPARITY_TO_DEPTH_PROFILE_LIST // todo: implemented it
-
-            propertyServer->registerProperty(OB_PROP_WATCHDOG_BOOL, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_EXTERNAL_SIGNAL_RESET_BOOL, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_STRUCT_DEVICE_TIME, "rw", "rw", vendorPropertyAccessor);
-
+            propertyServer->registerProperty(OB_STRUCT_DEVICE_TEMPERATURE, "r", "r", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_STRUCT_CURRENT_DEPTH_ALG_MODE, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_STRUCT_DEVICE_SERIAL_NUMBER, "r", "r", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_STRUCT_MULTI_DEVICE_SYNC_CONFIG, "rw", "rw", vendorPropertyAccessor);
 
+            propertyServer->registerProperty(OB_RAW_DATA_EFFECTIVE_VIDEO_STREAM_PROFILE_LIST, "", "r", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_RAW_DATA_DEPTH_ALG_MODE_LIST, "r", "r", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_RAW_DATA_IMU_CALIB_PARAM, "", "r", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_RAW_DATA_DEPTH_CALIB_PARAM, "", "r", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_RAW_DATA_ALIGN_CALIB_PARAM, "", "r", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_RAW_DATA_D2C_ALIGN_SUPPORT_PROFILE_LIST, "", "r", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_SDK_DEPTH_FRAME_UNPACK_BOOL, "", "rw", vendorPropertyAccessor);
-            // propertyServer->registerProperty(OB_PROP_DEPTH_RM_FILTER_BOOL, "rw", "rw", vendorPropertyAccessor);
+            propertyServer->registerProperty(OB_PROP_IR_CHANNEL_DATA_SOURCE_INT, "rw", "rw", vendorPropertyAccessor);
+            propertyServer->registerProperty(OB_PROP_DEPTH_RM_FILTER_BOOL, "rw", "rw", vendorPropertyAccessor);
+            propertyServer->registerProperty(OB_PROP_WATCHDOG_BOOL, "rw", "rw", vendorPropertyAccessor);
+            propertyServer->registerProperty(OB_PROP_EXTERNAL_SIGNAL_RESET_BOOL, "rw", "rw", vendorPropertyAccessor);
+            propertyServer->registerProperty(OB_PROP_LASER_POWER_ACTUAL_LEVEL_INT, "r", "r", vendorPropertyAccessor);
+            propertyServer->registerProperty(OB_STRUCT_DEVICE_TIME, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_GYRO_ODR_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_ACCEL_ODR_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_ACCEL_SWITCH_BOOL, "", "rw", vendorPropertyAccessor);
@@ -449,9 +446,9 @@ void Astra2Device::initProperties() {
             propertyServer->registerProperty(OB_STRUCT_GET_GYRO_PRESETS_ODR_LIST, "", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_STRUCT_GET_GYRO_PRESETS_FULL_SCALE_LIST, "", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_DEVICE_RESET_BOOL, "", "w", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_STOP_IR_STREAM_BOOL, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_STOP_COLOR_STREAM_BOOL, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_STOP_DEPTH_STREAM_BOOL, "rw", "rw", vendorPropertyAccessor);
+            propertyServer->registerProperty(OB_PROP_STOP_DEPTH_STREAM_BOOL, "", "w", vendorPropertyAccessor);
+            propertyServer->registerProperty(OB_PROP_STOP_IR_STREAM_BOOL, "", "w", vendorPropertyAccessor);
+            propertyServer->registerProperty(OB_PROP_STOP_COLOR_STREAM_BOOL, "", "w", vendorPropertyAccessor);
         }
         else if(sensor == OB_SENSOR_ACCEL) {
             auto imuCorrectorFilter = getSensorFrameFilter("IMUCorrector", sensor);
@@ -482,66 +479,59 @@ void Astra2Device::initProperties() {
     registerComponent(OB_DEV_COMPONENT_PROPERTY_SERVER, propertyServer, true);
 }
 
-std::vector<std::shared_ptr<IFilter>> Astra2Device::createRecommendedPostProcessingFilters(OBSensorType type) {
-    auto filterFactory = FilterFactory::getInstance();
-    if(type == OB_SENSOR_DEPTH) {
-        std::vector<std::shared_ptr<IFilter>> depthFilterList;
-
-        if(filterFactory->isFilterCreatorExists("DecimationFilter")) {
-            auto decimationFilter = filterFactory->createFilter("DecimationFilter");
-            depthFilterList.push_back(decimationFilter);
-        }
-
-        if(filterFactory->isFilterCreatorExists("SpatialAdvancedFilter")) {
-            auto spatFilter = filterFactory->createFilter("SpatialAdvancedFilter");
-            // magnitude, alpha, disp_diff, radius
-            std::vector<std::string> params = { "1", "0.5", "160", "1" };
-            spatFilter->updateConfig(params);
-            depthFilterList.push_back(spatFilter);
-        }
-
-        if(filterFactory->isFilterCreatorExists("TemporalFilter")) {
-            auto tempFilter = filterFactory->createFilter("TemporalFilter");
-            // diff_scale, weight
-            std::vector<std::string> params = { "0.1", "0.4" };
-            tempFilter->updateConfig(params);
-            depthFilterList.push_back(tempFilter);
-        }
-
-        if(filterFactory->isFilterCreatorExists("HoleFillingFilter")) {
-            auto hfFilter = filterFactory->createFilter("HoleFillingFilter");
-            depthFilterList.push_back(hfFilter);
-        }
-
-        if(filterFactory->isFilterCreatorExists("DisparityTransform")) {
-            auto dtFilter = filterFactory->createFilter("DisparityTransform");
-            depthFilterList.push_back(dtFilter);
-        }
-
-        if(filterFactory->isFilterCreatorExists("ThresholdFilter")) {
-            auto thresholdFilter = filterFactory->createFilter("ThresholdFilter");
-            depthFilterList.push_back(thresholdFilter);
-        }
-
-        for(size_t i = 0; i < depthFilterList.size(); i++) {
-            auto filter = depthFilterList[i];
-            if(filter->getName() != "DisparityTransform") {
-                filter->enable(false);
-            }
-        }
-        return depthFilterList;
+std::vector<std::shared_ptr<IFilter>> G210Device::createRecommendedPostProcessingFilters(OBSensorType type) {
+    if(type != OB_SENSOR_DEPTH) {
+        return {};
     }
-    else if(type == OB_SENSOR_COLOR) {
-        std::vector<std::shared_ptr<IFilter>> colorFilterList;
-        if(filterFactory->isFilterCreatorExists("DecimationFilter")) {
-            auto decimationFilter = filterFactory->createFilter("DecimationFilter");
-            decimationFilter->enable(false);
-            colorFilterList.push_back(decimationFilter);
-        }
-        return colorFilterList;
+    // activate depth frame processor library
+    getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR, false);
+
+    auto                                  filterFactory = FilterFactory::getInstance();
+    std::vector<std::shared_ptr<IFilter>> depthFilterList;
+
+    if(filterFactory->isFilterCreatorExists("EdgeNoiseRemovalFilter")) {
+        auto enrFilter = filterFactory->createFilter("EdgeNoiseRemovalFilter");
+        enrFilter->enable(false);
+        // todo: set default values
+        depthFilterList.push_back(enrFilter);
     }
 
-    return {};
+    if(filterFactory->isFilterCreatorExists("SpatialAdvancedFilter")) {
+        auto spatFilter = filterFactory->createFilter("SpatialAdvancedFilter");
+        spatFilter->enable(false);
+        // magnitude, alpha, disp_diff, radius
+        std::vector<std::string> params = { "1", "0.5", "64", "1" };
+        spatFilter->updateConfig(params);
+        depthFilterList.push_back(spatFilter);
+    }
+
+    if(filterFactory->isFilterCreatorExists("TemporalFilter")) {
+        auto tempFilter = filterFactory->createFilter("TemporalFilter");
+        tempFilter->enable(false);
+        // diff_scale, weight
+        std::vector<std::string> params = { "0.1", "0.4" };
+        tempFilter->updateConfig(params);
+        depthFilterList.push_back(tempFilter);
+    }
+
+    if(filterFactory->isFilterCreatorExists("HoleFillingFilter")) {
+        auto hfFilter = filterFactory->createFilter("HoleFillingFilter");
+        hfFilter->enable(false);
+        depthFilterList.push_back(hfFilter);
+    }
+
+    if(filterFactory->isFilterCreatorExists("DisparityTransform")) {
+        auto dtFilter = filterFactory->createFilter("DisparityTransform");
+        dtFilter->enable(true);
+        depthFilterList.push_back(dtFilter);
+    }
+
+    if(filterFactory->isFilterCreatorExists("ThresholdFilter")) {
+        auto ThresholdFilter = filterFactory->createFilter("ThresholdFilter");
+        depthFilterList.push_back(ThresholdFilter);
+    }
+
+    return depthFilterList;
 }
 
 }  // namespace libobsensor

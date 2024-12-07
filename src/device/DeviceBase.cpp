@@ -27,12 +27,12 @@ const std::map<OBSensorType, DeviceComponentId> SensorTypeToComponentIdMap = {
 };
 
 DeviceBase::DeviceBase(const std::shared_ptr<const IDeviceEnumInfo> &info) : enumInfo_(info), ctx_(Context::getInstance()), isDeactivated_(false) {
-    deviceInfo_                       = std::make_shared<DeviceInfo>();
-    deviceInfo_->name_                = enumInfo_->getName();
-    deviceInfo_->pid_                 = enumInfo_->getPid();
-    deviceInfo_->vid_                 = enumInfo_->getVid();
-    deviceInfo_->uid_                 = enumInfo_->getUid();
-    deviceInfo_->connectionType_      = enumInfo_->getConnectionType();
+    deviceInfo_                  = std::make_shared<DeviceInfo>();
+    deviceInfo_->name_           = enumInfo_->getName();
+    deviceInfo_->pid_            = enumInfo_->getPid();
+    deviceInfo_->vid_            = enumInfo_->getVid();
+    deviceInfo_->uid_            = enumInfo_->getUid();
+    deviceInfo_->connectionType_ = enumInfo_->getConnectionType();
 }
 
 void DeviceBase::fetchDeviceInfo() {
@@ -336,32 +336,6 @@ std::vector<std::shared_ptr<IFilter>> DeviceBase::createRecommendedPostProcessin
 }
 
 std::shared_ptr<IFilter> DeviceBase::getSensorFrameFilter(const std::string &name, OBSensorType type, bool throwIfNotFound) {
-    // Initialize frameprocess to ensure the private filter is activated before retrieval.
-    DeviceComponentId frameProcessId = OB_DEV_COMPONENT_UNKNOWN;
-    switch(type) {
-    case OB_SENSOR_COLOR:
-        frameProcessId = OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR;
-        break;
-    case OB_SENSOR_DEPTH:
-        frameProcessId = OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR;
-        break;
-    case OB_SENSOR_IR:
-        frameProcessId = OB_DEV_COMPONENT_IR_FRAME_PROCESSOR;
-        break;
-    case OB_SENSOR_IR_LEFT:
-        frameProcessId = OB_DEV_COMPONENT_LEFT_IR_FRAME_PROCESSOR;
-        break;
-    case OB_SENSOR_IR_RIGHT:
-        frameProcessId = OB_DEV_COMPONENT_RIGHT_IR_FRAME_PROCESSOR;
-        break;
-    default:
-        LOG_WARN("Init frameprocessor failed, Unsupported sensor type: {}", type);
-        break;
-    }
-    if (frameProcessId != OB_DEV_COMPONENT_UNKNOWN) {
-        getComponentT<FrameProcessor>(frameProcessId, false);
-    }
-    
     auto filterIter =
         std::find_if(sensorFrameFilters_.begin(), sensorFrameFilters_.end(), [name, type](const std::pair<OBSensorType, std::shared_ptr<IFilter>> &pair) {
             if(type == OB_SENSOR_ACCEL || type == OB_SENSOR_GYRO) {
@@ -494,6 +468,32 @@ std::map<std::string, std::string> DeviceBase::parseExtensionInfo(std::string ex
         }
     }
     return dataMap;
+}
+
+void DeviceBase::activateDeviceAccessor() {
+    // Activate filter accessor
+    auto sensorTypeList = getSensorTypeList();
+    for(const auto &sensorType: sensorTypeList) {
+        switch(sensorType) {
+        case OB_SENSOR_DEPTH:
+            getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR, false);
+            break;
+        case OB_SENSOR_COLOR:
+            getComponentT<FrameProcessor>(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR, false);
+            break;
+        case OB_SENSOR_IR:
+            getComponentT<FrameProcessor>(OB_DEV_COMPONENT_IR_FRAME_PROCESSOR, false);
+            break;
+        case OB_SENSOR_IR_LEFT:
+            getComponentT<FrameProcessor>(OB_DEV_COMPONENT_LEFT_IR_FRAME_PROCESSOR, false);
+            break;
+        case OB_SENSOR_IR_RIGHT:
+            getComponentT<FrameProcessor>(OB_DEV_COMPONENT_RIGHT_IR_FRAME_PROCESSOR, false);
+            break;
+        default:
+            break;
+        }
+    }
 }
 
 }  // namespace libobsensor

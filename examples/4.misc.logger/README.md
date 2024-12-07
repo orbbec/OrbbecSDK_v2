@@ -37,12 +37,27 @@ The default output path settings(Windows/Linux) is `${CWD}/Log/OrbbecSDK.log`, w
 
 ## Configuration via XML
 
-The log level can be configured via the XML file. After compiling and installing the project, you can find the configuration files `OrbbecSDKConfig.xml` and `OrbbecSDKConfig.md` in the following paths:
+### Priority of Log Level Configuration
+**1. API Overrides:**
+If the log level is set through the SDK's API, it overrides the XML configuration. The final log level will always follow the API setting, even if the XML file specifies a different level.
 
-- `shared` directory
+**2. XML Configuration Priority:**
+The <Log> node in the XML file sets the default log level and output parameters. This setting is used if the log level is not explicitly set via the API.
+
+### Overview of XML Configuration
+The log level and other logging parameters can be configured via the XML configuration file. After compiling and installing the project using `cmake install`, you will find the configuration files (`OrbbecSDKConfig.xml` and `OrbbecSDKConfig.md`) in the following locations:
+
 - `bin` directory
+- `shared` directory
 
-You can locate the configuration file `OrbbecSDKConfig.xml` specifically at `OrbbecSDK_v2/src/shared/environment/OrbbecSDKConfig.xml`. Once you open it, find the <Log> node, where you’ll see a setting similar to the following:
+Additionally, the original configuration file can be located in the source directory at:
+```bash
+    OrbbecSDK_v2/src/shared/environment/OrbbecSDKConfig.xml
+```
+**To ensure proper loading, place the `OrbbecSDKConfig.xml` file in the same directory as your executable.**
+
+### Log Level Configuration
+Open the `OrbbecSDKConfig.xml` file and locate the `<Log>` node. The configuration should look like the following example:
 
 ```xml
     <Log>
@@ -65,7 +80,18 @@ You can locate the configuration file `OrbbecSDKConfig.xml` specifically at `Orb
         <Async>false</Async>
     </Log>
 ```
-You can modify the value of the `MaxFileSize` node to control the maximum size of a single file log; by modifying the value of the `MaxFileNum` node, you can control the maximum number of logs generated.
+
+#### Configuration Details
+**1. Log Levels**:
+- `FileLogLevel`: Controls the logging level for file output.
+- `ConsoleLogLevel`: Controls the logging level for console output.
+
+**2. File Output Parameters**:  
+   - `MaxFileSize`: Maximum size of a single log file in MB.  
+   - `MaxFileNum`: Maximum number of log files before old logs are overwritten (circular overwrite).
+
+**3. Asynchronous Logging**:  
+- Enabling asynchronous logging (`<Async>true</Async>`) can reduce blocking during log output but may result in log loss if the program exits abnormally.
 
 ## Run Sample
 If you are on Windows, you can switch to the directory `OrbbecSDK_v2/build/win_XX/bin` to find the `ob_logger.exe`.

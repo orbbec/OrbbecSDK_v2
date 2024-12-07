@@ -257,7 +257,7 @@ std::shared_ptr<Frame> PointCloudFilter::createRGBDPointCloud(std::shared_ptr<co
     }
     else {
         CoordinateUtil::transformationDepthToRGBDPointCloud(&xyTables_, depthFrame->getData(), colorData, (void *)pointFrame->getData(), positionDataScale_,
-                                                            coordinateSystemType_, isColorDataNormalization_);
+                                                            coordinateSystemType_, isColorDataNormalization_, colorVideoFrame->getWidth(), colorVideoFrame->getHeight());
     }
 
     float depthValueScale = depthVideoFrame->as<DepthFrame>()->getValueScale();

@@ -1,4 +1,7 @@
-# Orbbec SDK dev
+# Open Source Orbbec SDK
+
+> [!IMPORTANT]
+> Welcome to Orbbec's latest open-source Orbbec SDK! Before you begin using this version of the SDK, it's crucial to check the [device support list](#12-supported-devices) to verify that your device is supported to ensure compatibility.
 
 ## 1. Introduction
 
@@ -8,7 +11,7 @@ This is the open source library of the Orbbec SDK v2.x. The Orbbec SDK is a cros
 <img src="docs/resource/Overview.jpg" width="400" align="center" />
 </div>
 
-To enhance performance and accommodate the diverse needs of our customers, the Orbbec SDK has been open source since version 2.0.0. For projects currently utilizing version 1.x of the Orbbec SDK that are considering an upgrade to Orbbec SDK v2.x, we advise using the pre-compiled binaries available in the [Release](https://github.com/orbbec/OrbbecSDK-dev/releases) page. This ensures a seamless transition and maintains consistency with your existing setup.
+To enhance performance and accommodate the diverse needs of our customers, the Orbbec SDK has been open source since version 2.0.0. For projects currently utilizing version 1.x of the Orbbec SDK that are considering an upgrade to Orbbec SDK v2.x, we advise using the pre-compiled binaries available in the [Release](https://github.com/orbbec/OrbbecSDK_v2/releases) page. This ensures a seamless transition and maintains consistency with your existing setup.
 
 We have made every effort to maintain backward compatibility with our APIs. However, in pursuit of enhanced performance and an improved user experience, we have made necessary updates. Some interfaces have been removed or altered due to infrequent use or design imperfections. These changes are intended to be minimally disruptive and should not interfere with the standard functionality of the SDK.
 
@@ -29,24 +32,28 @@ If you prefer to continue with Orbbec SDK v1.x, you can still access the pre-com
 
 ### 1.2 Supported Devices
 
-| **Products List** | **Firmware Version**        |
-|-------------------|-----------------------------|
-| Gemini 335        | 1.2.20                      |
-| Gemini 335L       | 1.2.20                      |
-| Gemini 336        | 1.2.20                      |
-| Gemini 336L       | 1.2.20                      |
-| Gemini 335Lg      | 1.3.46                      |
-| Femto Bolt        | 1.0.6/1.0.9                 |
-| Femto Mega        | 1.1.7/1.2.7                 |
-| Astra 2           | 2.8.20                      |
-| Gemini 2 L        | 1.4.32                      |
-| Gemini 2          | 1.4.60 /1.4.76              |
+| **Products List** | **Minimal Firmware Version** |
+|-------------------|------------------------------|
+| Gemini 330        | 1.2.20                       |
+| Gemini 330L       | 1.2.20                       |
+| Gemini 335        | 1.2.20                       |
+| Gemini 335L       | 1.2.20                       |
+| Gemini 336        | 1.2.20                       |
+| Gemini 336L       | 1.2.20                       |
+| Gemini 335Lg      | 1.3.46                       |
+| Femto Bolt        | 1.0.6/1.0.9                  |
+| Femto Mega        | 1.1.7/1.2.7                  |
+| Astra 2           | 2.8.20                       |
+| Gemini 2 L        | 1.4.32                       |
+| Gemini 2          | 1.4.60 /1.4.76               |
+
+For optimal performance, we strongly recommend updating to the latest firmware version. This ensures that you benefit from the most recent enhancements and bug fixes.
 
 More devices support will be added in the near future. If you can not find your device in the table above currently, try the version v1.x.y at [Orbbec SDK](https://github.com/orbbec/OrbbecSDK)
 
 ## 2. Documentation
 
-*The Orbbec SDK documentation is available on [GitHub Pages](https://orbbec.github.io/OrbbecSDK-dev/).*
+*The Orbbec SDK documentation is available on [GitHub Pages](https://orbbec.github.io/OrbbecSDK_v2/).*
 
 ### 2.1 Quick Start
 
@@ -77,7 +84,7 @@ If you would like to modify the SDK itself, you can build the SDK from source. P
 
 Most frequently asked questions can be found in the [FAQ](docs/FAQ.md) file.
 
-More asked and answered questions can be found in the [issues](https://github.com/orbbec/OrbbecSDK-dev/issues) channel. Use key words for searching may help you find the answer you are looking for.
+More asked and answered questions can be found in the [issues](https://github.com/orbbec/OrbbecSDK_v2/issues) channel. Use key words for searching may help you find the answer you are looking for.
 
 ## 3. Gallery
 
@@ -115,7 +122,7 @@ pipe.stop();
 
 At present, we are focusing our efforts on the internal development of the SDK and are not accepting external contributions for functionality expansion. However, we value your input and are open to reviewing any pull requests or suggestions you might have.
 
-Should you have any questions or concerns, please feel free to reach out to us through the [issues](https://github.com/orbbec/OrbbecSDK-dev/issues) channel.
+Should you have any questions or concerns, please feel free to reach out to us through the [issues](https://github.com/orbbec/OrbbecSDK_v2/issues) channel.
 
 ## 5. License
 
@@ -123,7 +130,7 @@ This project is licensed under the MIT License with some other licenses for thir
 
 ## 6. Links
 
-- [Orbbec SDK V2.x Open Source Library](https://github.com/orbbec/OrbbecSDK-dev)
+- [Orbbec SDK V2.x Open Source Library](https://github.com/orbbec/OrbbecSDK_v2)
 - [Orbbec SDK V1.x Pre-Compiled Library](https://github.com/orbbec/OrbbecSDK)
 - [Orbbec Company Main Page](https://www.orbbec.com/)
 - [Orbbec 3D Club](https://3dclub.orbbec3d.com)

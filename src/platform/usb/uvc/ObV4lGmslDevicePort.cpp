@@ -705,7 +705,9 @@ void ObV4lGmslDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandleGmsl> devHa
                     TRY_EXECUTE({
                         auto rawframe   = FrameFactory::createFrameFromStreamProfile(devHandle->profile);
                         auto videoFrame = rawframe->as<VideoFrame>();
-                        if((DetectPlatform() == Platform::Xavier) || (DetectPlatform() == Platform::Orin)) {
+                        //if((DetectPlatform() == Platform::Xavier) || (DetectPlatform() == Platform::Orin))
+                        if(1>0) //Modify the default setting to apply special resolution processing to all NVIDIA platforms
+                        {
                             handleSpecialResolution(devHandle, devHandle->buffers[buf.index].ptr, buf.bytesused, videoFrame);
                         }
                         else {

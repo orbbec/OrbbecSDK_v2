@@ -88,10 +88,10 @@ echo "Building examples..."
 mkdir build
 cd build
 cmake -DCMAKE_BUILD_TYPE=Release -DOB_BUILD_LINUX=ON -DCMAKE_INSTALL_PREFIX=$project_dir $examples_dir
-ehco "Building examples with $half_cpu_count threads..."
-cmake --build . -j$half_cpu_count # build with thread count equal to half of cpu count
+echo "Building examples with $half_cpu_count threads..."
+cmake --build . -- -j$half_cpu_count # build with thread count equal to half of cpu count
 # install the executable files to the project directory
-cmake --install .
+make install
 
 # clean up
 cd $project_dir

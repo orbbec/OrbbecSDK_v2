@@ -19,9 +19,8 @@ public:
     static bool transformation2dTo3d(const OBCameraIntrinsic sourceIntrinsic, const OBPoint2f sourcePoint2f, const float sourceDepthPixelValue,
                                      OBD2CTransform transSourceToTarget, OBPoint3f *targetPoint3f);
 
-    static bool transformation2dTo3d(const OBCameraIntrinsic sourceIntrinsic, const OBCameraDistortion sourceDistortion,
-                                                   const OBPoint2f sourcePoint2f,const float sourceDepthPixelValue,
-                                                 const OBD2CTransform transSourceToTarget, OBPoint3f *targetPoint3f);
+    static bool transformation2dTo3d(const OBCameraIntrinsic sourceIntrinsic, const OBCameraDistortion sourceDistortion, const OBPoint2f sourcePoint2f,
+                                     const float sourceDepthPixelValue, const OBD2CTransform transSourceToTarget, OBPoint3f *targetPoint3f);
 
     static bool transformation3dTo2d(const OBPoint3f sourcePoint3f, const OBCameraIntrinsic targetIntrinsic, const OBCameraDistortion targetDistortion,
                                      OBD2CTransform transSourceToTarget, OBPoint2f *targetPoint2f);
@@ -49,13 +48,14 @@ public:
     static void transformationDepthToPointCloud(OBXYTables *xyTables, const void *depthImageData, void *pointCloudData, float positionDataScale = 1.0f,
                                                 OBCoordinateSystemType type = OB_RIGHT_HAND_COORDINATE_SYSTEM);
 
+    // colorResolution = colorScale * depthResolution
     static void transformationDepthToRGBDPointCloud(OBXYTables *xyTables, const void *depthImageData, const void *colorImageData, void *pointCloudData,
                                                     float positionDataScale = 1.0f, OBCoordinateSystemType type = OB_RIGHT_HAND_COORDINATE_SYSTEM,
-                                                    bool colorDataNormalization = false);
+                                                    bool colorDataNormalization = false, uint32_t colorWidth = 0, uint32_t colorHeight = 0);
 
+    // colorResolution = colorScale * depthResolution
     static void transformationDepthToRGBDPointCloudByUVTables(const OBCameraIntrinsic rgbIntrinsic, OBXYTables *uvTables, const void *depthImageData,
                                                               const void *colorImageData, void *pointCloudData, float positionDataScale = 1.0f,
-                                                              OBCoordinateSystemType type                   = OB_RIGHT_HAND_COORDINATE_SYSTEM,
-                                                              bool                   colorDataNormalization = false);
+                                                              OBCoordinateSystemType type = OB_RIGHT_HAND_COORDINATE_SYSTEM, bool colorDataNormalization = false);
 };
 }  // namespace libobsensor

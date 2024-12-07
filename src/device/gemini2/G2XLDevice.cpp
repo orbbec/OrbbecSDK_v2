@@ -100,10 +100,6 @@ std::vector<std::shared_ptr<IFilter>> G2XLDeviceBase::createRecommendedPostProce
     if(type != OB_SENSOR_DEPTH) {
         return {};
     }
-
-    // create depth frame processor first to activate private filters
-    getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR, false);
-
     auto                                  filterFactory = FilterFactory::getInstance();
     std::vector<std::shared_ptr<IFilter>> depthFilterList;
 

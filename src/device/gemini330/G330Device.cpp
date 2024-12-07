@@ -98,7 +98,7 @@ void G330Device::init() {
     registerComponent(OB_DEV_COMPONENT_PRESET_MANAGER, presetManager);
 
     if(getFirmwareVersionInt() > 10370) {
-        auto propertyServer = getPropertyServer();
+        auto propertyServer         = getPropertyServer();
         auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
         propertyServer->registerProperty(OB_PROP_FRAME_INTERLEAVE_CONFIG_INDEX_INT, "rw", "rw", vendorPropertyAccessor.get());
         propertyServer->registerProperty(OB_PROP_FRAME_INTERLEAVE_ENABLE_BOOL, "rw", "rw", vendorPropertyAccessor.get());
@@ -1064,9 +1064,6 @@ void G330Device::initProperties() {
 std::vector<std::shared_ptr<IFilter>> G330Device::createRecommendedPostProcessingFilters(OBSensorType type) {
     auto filterFactory = FilterFactory::getInstance();
     if(type == OB_SENSOR_DEPTH) {
-        // activate depth frame processor library
-        getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR, false);
-
         std::vector<std::shared_ptr<IFilter>> depthFilterList;
 
         if(filterFactory->isFilterCreatorExists("DecimationFilter")) {
@@ -1126,9 +1123,6 @@ std::vector<std::shared_ptr<IFilter>> G330Device::createRecommendedPostProcessin
         return depthFilterList;
     }
     else if(type == OB_SENSOR_COLOR) {
-        // activate color frame processor library
-        getComponentT<FrameProcessor>(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR, false);
-
         std::vector<std::shared_ptr<IFilter>> colorFilterList;
         if(filterFactory->isFilterCreatorExists("DecimationFilter")) {
             auto decimationFilter = filterFactory->createFilter("DecimationFilter");

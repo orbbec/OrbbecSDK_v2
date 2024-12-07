@@ -9,7 +9,11 @@
 namespace libobsensor {
 
 G2Disp2DepthPropertyAccessor::G2Disp2DepthPropertyAccessor(IDevice *owner)
-    : owner_(owner), hwDisparityToDepthEnabled_(true), currentDepthUnitLevel_(OB_PRECISION_1MM) {}
+    : currentDepthUnitLevel_(OB_PRECISION_1MM), owner_(owner), hwDisparityToDepthEnabled_(true) {}
+
+IDevice *G2Disp2DepthPropertyAccessor::getOwner() {
+    return owner_;
+}
 
 void G2Disp2DepthPropertyAccessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
     switch(propertyId) {
@@ -148,6 +152,66 @@ const std::vector<uint8_t> &G2Disp2DepthPropertyAccessor::getStructureData(uint3
         }
     }
     throw invalid_value_exception(utils::string::to_string() << "unsupported property id:" << propertyId);
+}
+
+G210Disp2DepthPropertyAccessor::G210Disp2DepthPropertyAccessor(IDevice *owner) : G2Disp2DepthPropertyAccessor(owner) {
+    hwD2DSupportList_ = { OB_PRECISION_0MM4, OB_PRECISION_0MM1, OB_PRECISION_0MM05 };
+}
+
+void G210Disp2DepthPropertyAccessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
+    switch(propertyId) {
+    case OB_PROP_DEPTH_PRECISION_LEVEL_INT: {
+        auto            owner     = getOwner();
+        auto            processor = owner->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR);
+        OBPropertyValue swDisparityEnable;
+        processor->getPropertyValue(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL, &swDisparityEnable);
+        if(swDisparityEnable.intValue == 1) {
+            processor->setPropertyValue(propertyId, value);
+        }
+        else {
+            auto            commandPort             = owner->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+            auto            realPrecisionLevelValue = utils::depthPrecisionLevelToUnit(static_cast<OBDepthPrecisionLevel>(value.intValue)) / 0.5f;
+            OBPropertyValue propertyValue;
+            propertyValue.intValue = static_cast<int32_t>(utils::depthUnitToPrecisionLevel(realPrecisionLevelValue));
+            commandPort->setPropertyValue(propertyId, propertyValue);
+        }
+
+        // update depth unit
+        auto sensor = owner->getComponentT<DisparityBasedSensor>(OB_DEV_COMPONENT_DEPTH_SENSOR, false);
+        if(sensor) {
+            auto depthUnit = utils::depthPrecisionLevelToUnit(static_cast<OBDepthPrecisionLevel>(value.intValue));
+            sensor->setDepthUnit(depthUnit);
+        }
+
+        currentDepthUnitLevel_ = value.intValue;
+    } break;
+    default: {
+        G2Disp2DepthPropertyAccessor::setPropertyValue(propertyId, value);
+    }
+    }
+}
+
+void G210Disp2DepthPropertyAccessor::getPropertyValue(uint32_t propertyId, OBPropertyValue *value) {
+    switch(propertyId) {
+    case OB_PROP_DEPTH_PRECISION_LEVEL_INT: {
+        auto            owner     = getOwner();
+        auto            processor = owner->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR);
+        OBPropertyValue swDisparityEnable;
+        processor->getPropertyValue(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL, &swDisparityEnable);
+        if(swDisparityEnable.intValue == 1) {
+            processor->getPropertyValue(propertyId, value);
+        }
+        else {
+            auto commandPort = owner->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+            commandPort->getPropertyValue(propertyId, value);
+            auto realPrecisionLevelValue = utils::depthPrecisionLevelToUnit(static_cast<OBDepthPrecisionLevel>(value->intValue)) * 0.5f;
+            value->intValue              = static_cast<int32_t>(utils::depthUnitToPrecisionLevel(realPrecisionLevelValue));
+        }
+    } break;
+    default: {
+        G2Disp2DepthPropertyAccessor::getPropertyValue(propertyId, value);
+    } break;
+    }
 }
 
 }  // namespace libobsensor
