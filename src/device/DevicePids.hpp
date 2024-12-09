@@ -90,4 +90,49 @@ const std::vector<uint16_t> FemtoMegaDevPids = {
 const std::vector<uint16_t> FemtoBoltDevPids = {
     0x066B,  // Femto Bolt
 };
+
+const std::vector<uint16_t> OpenNIDevPids = {
+    0x060e,  // Dabai
+    0x0659,  // Dabai DCW
+    0x065a,  // Dabai DW
+    0x065b,  // Astra Mini Pro
+    0x065c,  // Gemini E
+    0x065d,  // Gemini E Lite
+    0x065e,  // Astra mini s pro
+    0x069a,  // Dabai Max
+    0x069f,  // Dabai DW2
+    0x06a7,  // Gemini EW Lite
+    0x06a0,  // Dabai DCW2
+    0x06a6,  // Gemini EW
+    0x069e,  // Dabai Max Pro
+    0x06aa,  // Gemini UW
+};
+
+const std::vector<uint16_t> OpenniAstraPids = {
+    0x0407,  // Astra mini S
+    0x065a,  // Dabai DW
+    0x065b,  // Astra Mini Pro
+    0x065d,  // Gemini E Lite
+    0x065e,  // Astra mini s pro
+    0x069a,  // Dabai Max
+    0x069f,  // Dabai DW2
+    0x06a7,   // Gemini EW Lite
+};
+
+const std::vector<uint16_t> OpenniRgbPids = {
+
+    0x050b,  // deeyea
+    0x050e,  // Dabai
+    0x0511,  // gemini
+    0x0555,  // Dabai plus
+    0x0557,  // Dabai DC1
+    0x0559,  // Dabai DCW
+    0x055c,  // Gemini E
+    0x0561,  // Dabai DCW2
+    0x05a6,  // Gemini EW
+    0x0560,  // Dabai Max Pro
+    0x05aa   // Gemini UW
+
+};
+
 }  // namespace libobsensor

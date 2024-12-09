@@ -26,6 +26,7 @@ add_subdirectory(gemini2) # Gemini 2 series
 add_subdirectory(astra2) # Astra 2 series
 add_subdirectory(femtobolt) # FemtoBolt
 add_subdirectory(femtomega) # FemtoMega
+add_subdirectory(openni) # OpenNI device
 add_subdirectory(bootloader) # Bootloader device
 
 # dependecies:
