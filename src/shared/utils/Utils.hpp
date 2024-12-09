@@ -76,6 +76,16 @@ template <typename T> std::vector<std::vector<T>> groupVector(const std::vector<
     return group;
 }
 
+template <class T> static bool isMatchDeviceByPid(uint16_t pid, T &pids) {
+    for(auto pid_: pids) {
+        if(pid_ == pid)
+            return true;
+        else
+            continue;
+    }
+    return false;
+}
+
 bool checkJpgImageData(const uint8_t *data, size_t dataLen);
 }  // namespace utils
 }  // namespace libobsensor
