@@ -91,6 +91,7 @@ const std::vector<uint16_t> FemtoBoltDevPids = {
     0x066B,  // Femto Bolt
 };
 
+
 // OpenNI Devices
 const uint16_t OB_DEVICE_DCW_PID            = 0x0659;
 const uint16_t OB_DEVICE_DW_PID             = 0x065a;
