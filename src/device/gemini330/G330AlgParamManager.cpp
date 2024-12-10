@@ -252,7 +252,7 @@ void G330AlgParamManager::fixD2CParmaList() {
     auto deviceInfo = owner->getInfo();
     if(deviceInfo->pid_ == 0x080E) {
         std::vector<Resolution> leColorResolutions = { { 1280, 800 }, { 1280, 720 }, { 848, 530 }, { 640, 480 }, { 640, 400 }, { 640, 360 }, { 320, 200 } };
-        std::vector<Resolution> ledepthResolutions = { { 1280, 800 }, { 848, 530 }, { 640, 480 }, { 640, 400 }, { 320, 200 } };
+        std::vector<Resolution> ledepthResolutions = { { 1280, 800 }, { 848, 530 }, { 640, 480 }, { 640, 400 }, {424, 266}, { 320, 200 } };
 
         appendColorResolutions.assign(leColorResolutions.begin(), leColorResolutions.end());
         depthResolutions.assign(ledepthResolutions.begin(), ledepthResolutions.end());
