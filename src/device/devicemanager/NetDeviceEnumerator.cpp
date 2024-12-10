@@ -220,6 +220,10 @@ std::shared_ptr<const IDeviceEnumInfo> NetDeviceEnumerator::queryNetDevice(std::
         info->pid = OB_FEMTO_MEGA_PID;
     });
 
+    if(info->pid == OB_DEVICE_G335LE_PID) {
+        throw invalid_value_exception("No supported G335Le found for address: " + address + ":" + std::to_string(port));
+    }
+
     auto deviceEnumInfoList = deviceInfoMatch({ info });
     if(deviceEnumInfoList.empty()) {
         throw invalid_value_exception("No supported device found for address: " + address + ":" + std::to_string(port));
