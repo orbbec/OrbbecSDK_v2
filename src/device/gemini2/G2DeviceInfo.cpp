@@ -18,9 +18,13 @@
 
 namespace libobsensor {
 
+<<<<<<< HEAD
 const std::map<int, std::string> G2DeviceNameMap = {
     { 0x0670, "Gemini2" }, { 0x0673, "Gemini2 L" }, { 0x0671, "Gemini2 XL" }, { 0x0808, "Gemini 215" }, { 0x0809, "Gemini 210" }
 };
+=======
+const std::map<int, std::string> G2DeviceNameMap = { { 0x0670, "Gemini2" }, { 0x0673, "Gemini2 L" }, { 0x0671, "Gemini2 XL" }, { 0x0815, "Gemini 435Le" } };
+>>>>>>> e208c999 (1、Add G435Le inGemini435Leformation to the configuration file)
 
 G2DeviceInfo::G2DeviceInfo(const SourcePortInfoList groupedInfoList) {
     auto firstPortInfo = groupedInfoList.front();
