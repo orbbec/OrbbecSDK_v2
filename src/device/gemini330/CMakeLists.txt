@@ -32,5 +32,8 @@ target_sources(
     ${CMAKE_CURRENT_LIST_DIR}/DabaiAMetadataModifier.hpp
     ${CMAKE_CURRENT_LIST_DIR}/DaBaiAAlgParamManager.cpp
     ${CMAKE_CURRENT_LIST_DIR}/DaBaiAAlgParamManager.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/DaBaiAPresetManager.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/DaBaiAPresetManager.hpp
+
 )
 
