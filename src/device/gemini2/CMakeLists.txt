@@ -24,4 +24,6 @@ target_sources(
     ${CMAKE_CURRENT_LIST_DIR}/G2FrameTimestampCalculator.cpp
     ${CMAKE_CURRENT_LIST_DIR}/G2AlgParamManager.hpp
     ${CMAKE_CURRENT_LIST_DIR}/G2AlgParamManager.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/G435LeDevice.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/G435LeDevice.cpp
 )

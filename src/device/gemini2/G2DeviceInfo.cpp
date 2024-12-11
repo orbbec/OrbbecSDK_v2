@@ -5,6 +5,7 @@
 #include "G2Device.hpp"
 #include "G2XLDevice.hpp"
 #include "G210Device.hpp"
+#include "G435LeDevice.hpp"
 #include "usb/UsbPortGroup.hpp"
 #include "DevicePids.hpp"
 #include "utils/Utils.hpp"
@@ -75,6 +76,11 @@ std::shared_ptr<IDevice> G2DeviceInfo::createDevice() const {
             return std::make_shared<G2XLNetDevice>(shared_from_this());
         }
         return std::make_shared<G2XLUSBDevice>(shared_from_this());
+    } else if(pid_ == 0x0815) {
+        if(IS_NET_PORT(sourcePortInfoList_.front()->portType)) {
+            return std::make_shared<G435LeDevice>(shared_from_this());
+        }
+        return std::make_shared<G435LeDevice>(shared_from_this());
     }
     else if(pid_ == 0x0808 || pid_ == 0x0809) {
         return std::make_shared<G210Device>(shared_from_this());
