@@ -136,17 +136,17 @@ void DaBaiAAlgParamManager::fetchParamFromDevice() {
         LOG_ERROR("Get depth to color profile list failed! {}", e.what());
     }
 
-    /*
-        try {
-            auto owner      = getOwner();
-            auto propServer = owner->getPropertyServer();
-            originD2cColorPreProcessProfileList_ =
-                propServer->getStructureDataListProtoV1_1_T<OBD2CColorPreProcessProfile, 0>(OB_RAW_DATA_D2C_ALIGN_COLOR_PRE_PROCESS_PROFILE_LIST);
-        }
-        catch(const std::exception &e) {
-            LOG_ERROR("Get d2c pre process profile list failed,unsupport cmd {}", e.what());
-        }
-    */
+#if 1
+    try {
+        auto owner      = getOwner();
+        auto propServer = owner->getPropertyServer();
+        originD2cColorPreProcessProfileList_ =
+            propServer->getStructureDataListProtoV1_1_T<OBD2CColorPreProcessProfile, 0>(OB_RAW_DATA_D2C_ALIGN_COLOR_PRE_PROCESS_PROFILE_LIST);
+    }
+    catch(const std::exception &e) {
+        LOG_ERROR("Get d2c pre process profile list failed,unsupport cmd {}", e.what());
+    }
+#elif
 
     //////////////////////////////////////////
     // TODO:
@@ -156,6 +156,7 @@ void DaBaiAAlgParamManager::fetchParamFromDevice() {
         originD2cColorPreProcessProfileList_.push_back(preProcessProfile);
     }
     //////////////////////////////////////////
+#endif
 
     d2CProfileListFilter(currentDepthAlgMode_);
 
