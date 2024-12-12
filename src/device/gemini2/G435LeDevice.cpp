@@ -55,9 +55,9 @@ static const uint8_t INTERFACE_RIGHT_IR = 6;
 G435LeDeviceBase::G435LeDeviceBase(const std::shared_ptr<const IDeviceEnumInfo> &info) : DeviceBase(info) {}
 G435LeDeviceBase::~G435LeDeviceBase() noexcept {}
 
-void G435LeDeviceBase::init() {
-    fetchDeviceInfo();
+void G435LeDeviceBase::init() {    
     fetchExtensionInfo();
+    fetchDeviceInfo();
 
     auto globalTimestampFilter = std::make_shared<GlobalTimestampFitter>(this);
     registerComponent(OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER, globalTimestampFilter);
@@ -551,7 +551,8 @@ void G435LeDevice::initProperties() {
     propertyServer->registerProperty(OB_PROP_STOP_COLOR_STREAM_BOOL, "", "w", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_DEVICE_COMMUNICATION_TYPE_INT, "", "w", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_STRUCT_DEVICE_IP_ADDR_CONFIG, "rw", "rw", vendorPropertyAccessor);
-
+    propertyServer->registerProperty(OB_RAW_DATA_DEVICE_EXTENSION_INFORMATION, "", "r", vendorPropertyAccessor);
+    
     auto imuCorrectorFilter = getSensorFrameFilter("IMUCorrector", OB_SENSOR_ACCEL);
     if(imuCorrectorFilter) {
         auto filterStateProperty = std::make_shared<FilterStatePropertyAccessor>(imuCorrectorFilter);
