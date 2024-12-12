@@ -15,7 +15,7 @@ bool DaBaiAAlgParamManager::findBestMatchedCameraParam(const std::vector<OBCamer
                                                        const std::shared_ptr<const VideoStreamProfile> &profile, OBCameraParam &result) {
     bool found = false;
     // match same resolution
-    for(int i = 0; i < cameraParamList.size(); ++i) {
+    for(uint32_t i = 0; i < cameraParamList.size(); ++i) {
         if(!calibrationParamValidMap_.empty()) {
             if(!calibrationParamValidMap_[i]) {
                 continue;
@@ -42,7 +42,7 @@ bool DaBaiAAlgParamManager::findBestMatchedCameraParam(const std::vector<OBCamer
     if(!found) {
         // match same ratio
         float ratio = (float)profile->getWidth() / profile->getHeight();
-        for(int i = 0; i < cameraParamList.size(); ++i) {
+        for(uint32_t i = 0; i < cameraParamList.size(); ++i) {
             if(!calibrationParamValidMap_.empty()) {
                 if(!calibrationParamValidMap_[i]) {
                     continue;
@@ -487,7 +487,7 @@ void DaBaiAAlgParamManager::d2CProfileListFilter(const std::string currentDepthA
     d2cProfileList_.clear();
     d2cColorPreProcessProfileList_.clear();
     // Filter profiles based on enable flag and work mode
-    for(int i = 0; i < originD2cProfileList_.size(); i++) {
+    for(size_t i = 0; i < originD2cProfileList_.size(); i++) {
         const auto &profile = originD2cProfileList_[i];
         if(profile.mixedBits.enableFlag && workModeVal == profile.mixedBits.workModeVal) {
             auto fixProfile      = profile;
