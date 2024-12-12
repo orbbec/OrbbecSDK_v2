@@ -20,7 +20,7 @@ DaBaiAPresetManager::DaBaiAPresetManager(IDevice *owner) : DeviceComponentBase(o
         availablePresets_.emplace_back(mode.name);
     }
 
-    if(availablePresets_.size() > 1) {
+    if(availablePresets_.size() >= 1) {
         currentPreset_ = availablePresets_[0];
         depthWorkModeManager->switchDepthWorkMode(currentPreset_.c_str());
     }
