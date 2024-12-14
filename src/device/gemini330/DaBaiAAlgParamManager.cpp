@@ -499,7 +499,7 @@ void DaBaiAAlgParamManager::d2CProfileListFilter(const std::string currentDepthA
     }
 
     // update valid calibration camera param
-    if(calibrationCameraParamList_.size() == 4) {
+    if(originCalibrationCameraParamList_.size() == 4) {
         if(std::strcmp(currentDepthAlgMode.c_str(), "Wide") == 0) {
             calibrationParamValidMap_[0] = false;
             calibrationParamValidMap_[1] = false;
@@ -523,6 +523,8 @@ void DaBaiAAlgParamManager::updateD2CProfileList(const std::string currentDepthA
     d2CProfileListFilter(currentDepthAlgMode);
 
     fixD2CParmaList();
+
+    //TODO£º
 
     currentDepthAlgMode_ = currentDepthAlgMode;
 }
