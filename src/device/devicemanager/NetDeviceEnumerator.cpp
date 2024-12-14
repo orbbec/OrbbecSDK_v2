@@ -150,7 +150,7 @@ void NetDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType
                 auto info          = std::dynamic_pointer_cast<const NetSourcePortInfo>(firstPortInfo);
                 if(info->pid == OB_DEVICE_G335LE_PID) {
                     bool    disconnected = true;
-                    bool    exception    = false;
+                    //bool    exception    = false;
                     //uint8_t retry        = 1;
                     //do {
                         BEGIN_TRY_EXECUTE({
@@ -163,7 +163,7 @@ void NetDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType
                             LOG_DEBUG("Get device pid success, pid:{}", value.intValue);
                         })
                         CATCH_EXCEPTION_AND_EXECUTE({
-                            exception = true;
+                            //exception = true;
                             LOG_WARN("Get pid failed, ip:{},mac:{},device is disconnect.", info->address, info->mac);
                         });
                     //} while(exception && retry-- > 0);
