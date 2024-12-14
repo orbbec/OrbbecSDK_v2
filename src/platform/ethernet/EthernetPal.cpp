@@ -12,7 +12,7 @@ namespace libobsensor {
 
 const uint16_t DEFAULT_CMD_PORT                     = 8090;
 const uint16_t DEVICE_WATCHER_POLLING_INTERVAL_MSEC = 2000;
-const uint16_t DEVICE_CHECK_POLLING_INTERVAL_MSEC   = 1000;
+const uint16_t DEVICE_CHECK_POLLING_INTERVAL_MSEC   = 500;
 
 NetDeviceWatcher::~NetDeviceWatcher() noexcept {
     if(!stopWatch_) {

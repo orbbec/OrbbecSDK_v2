@@ -29,7 +29,7 @@ private:
     SOCKET            socketFd_;
     bool              flushed_;
     uint32_t          CONNECT_TIMEOUT_MS   = 2000;
-    uint32_t          COMM_TIMEOUT_MS      = 5000;
+    uint32_t          COMM_TIMEOUT_MS      = 2000;
 
     std::mutex tcpMtx_;
 };

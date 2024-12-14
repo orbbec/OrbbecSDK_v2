@@ -151,8 +151,8 @@ void NetDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType
                 if(info->pid == OB_DEVICE_G335LE_PID) {
                     bool    disconnected = true;
                     bool    exception    = false;
-                    uint8_t retry        = 1;
-                    do {
+                    //uint8_t retry        = 1;
+                    //do {
                         BEGIN_TRY_EXECUTE({
                             auto            sourcePort         = Platform::getInstance()->getNetSourcePort(info);
                             auto            vendorPropAccessor = std::make_shared<VendorPropertyAccessor>(nullptr, sourcePort);
@@ -166,7 +166,7 @@ void NetDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType
                             exception = true;
                             LOG_WARN("Get pid failed, ip:{},mac:{},device is disconnect.", info->address, info->mac);
                         });
-                    } while(exception && retry-- > 0);
+                    //} while(exception && retry-- > 0);
 
                     if(!disconnected) {
                         deviceInfoList_.push_back(item);
