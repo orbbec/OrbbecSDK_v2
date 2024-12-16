@@ -7,6 +7,7 @@
 #include "exception/ObException.hpp"
 #include "publicfilters/IMUCorrector.hpp"
 #include "G330DepthWorkModeManager.hpp"
+#include "sensor/video/DisparityBasedSensor.hpp"
 #include <vector>
 #include <sstream>
 namespace libobsensor {
@@ -515,6 +516,9 @@ void DaBaiAAlgParamManager::d2CProfileListFilter(const std::string currentDepthA
     }
 }
 
+const std::vector<DeviceComponentId> updateDeviceComponentIds = { OB_DEV_COMPONENT_LEFT_IR_SENSOR, OB_DEV_COMPONENT_RIGHT_IR_SENSOR,
+                                                                  OB_DEV_COMPONENT_COLOR_SENSOR };
+
 void DaBaiAAlgParamManager::updateD2CProfileList(const std::string currentDepthAlgMode) {
     if(currentDepthAlgMode == currentDepthAlgMode_) {
         return;
@@ -524,7 +528,17 @@ void DaBaiAAlgParamManager::updateD2CProfileList(const std::string currentDepthA
 
     fixD2CParmaList();
 
-    //TODO£º
+    // update intrinsic
+    auto owner                  = getOwner();
+    auto depthSensor            = owner->getComponentT<DisparityBasedSensor>(OB_DEV_COMPONENT_DEPTH_SENSOR, false);
+    auto depthStreamProfileList = depthSensor->getStreamProfileList();
+    bindIntrinsic(depthStreamProfileList);
+
+    for(const auto &componentId: updateDeviceComponentIds) {
+        auto sensor            = owner->getComponentT<VideoSensor>(componentId);
+        auto streamProfileList = sensor->getStreamProfileList();
+        bindIntrinsic(streamProfileList);
+    }
 
     currentDepthAlgMode_ = currentDepthAlgMode;
 }
