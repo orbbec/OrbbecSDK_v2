@@ -17,11 +17,6 @@ bool DaBaiAAlgParamManager::findBestMatchedCameraParam(const std::vector<OBCamer
     bool found = false;
     // match same resolution
     for(uint32_t i = 0; i < cameraParamList.size(); ++i) {
-        if(!calibrationParamValidMap_.empty()) {
-            if(!calibrationParamValidMap_[i]) {
-                continue;
-            }
-        }
         const auto &param = cameraParamList[i];
 
         auto streamType = profile->getType();
@@ -44,11 +39,6 @@ bool DaBaiAAlgParamManager::findBestMatchedCameraParam(const std::vector<OBCamer
         // match same ratio
         float ratio = (float)profile->getWidth() / profile->getHeight();
         for(uint32_t i = 0; i < cameraParamList.size(); ++i) {
-            if(!calibrationParamValidMap_.empty()) {
-                if(!calibrationParamValidMap_[i]) {
-                    continue;
-                }
-            }
             const auto &param = cameraParamList[i];
 
             auto streamType = profile->getType();
@@ -148,15 +138,12 @@ void DaBaiAAlgParamManager::fetchParamFromDevice() {
         LOG_ERROR("Get d2c pre process profile list failed,unsupport cmd {}", e.what());
     }
 #elif
-
-    //////////////////////////////////////////
-    // TODO:
+    // debug
     for(size_t i = 0; i < originD2cProfileList_.size(); ++i) {
         OBD2CColorPreProcessProfile preProcessProfile = { 0 };
         preProcessProfile.preProcessParam.colorScale  = 1;
         originD2cColorPreProcessProfileList_.push_back(preProcessProfile);
     }
-    //////////////////////////////////////////
 #endif
 
     d2CProfileListFilter(currentDepthAlgMode_);
@@ -289,7 +276,7 @@ void DaBaiAAlgParamManager::fixD2CParmaList() {
         auto          colorHeight  = profile.colorHeight;
         auto          colorProfile = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_COLOR, OB_FORMAT_UNKNOWN, colorWidth, colorHeight, 30);
         OBCameraParam colorAlignParam;
-        if(!findBestMatchedCameraParam(originCalibrationCameraParamList_, colorProfile, colorAlignParam)) {
+        if(!findBestMatchedCameraParam(depthModefilterCameraParamList_, colorProfile, colorAlignParam)) {
             continue;
         }
 
@@ -331,7 +318,7 @@ void DaBaiAAlgParamManager::fixD2CParmaList() {
         auto          depthHeight  = profile.depthHeight;
         auto          depthProfile = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_DEPTH, OB_FORMAT_UNKNOWN, depthWidth, depthHeight, 30);
         OBCameraParam depthAlignParam;
-        if(!findBestMatchedCameraParam(originCalibrationCameraParamList_, depthProfile, depthAlignParam)) {
+        if(!findBestMatchedCameraParam(preProcessCameraParamList_, depthProfile, depthAlignParam)) {
             continue;
         }
         OBCameraIntrinsic depthIntrinsic = depthAlignParam.depthIntrinsic;
@@ -369,7 +356,7 @@ void DaBaiAAlgParamManager::fixD2CParmaList() {
 
         OBCameraParam fixedCameraParam = cameraParam;
         OBCameraParam matchedCameraParam;
-        if(!findBestMatchedCameraParam(originCalibrationCameraParamList_, colorProfile, matchedCameraParam)) {
+        if(!findBestMatchedCameraParam(preProcessCameraParamList_, colorProfile, matchedCameraParam)) {
             continue;
         }
         fixedCameraParam.rgbIntrinsic = matchedCameraParam.rgbIntrinsic;
@@ -474,8 +461,9 @@ void DaBaiAAlgParamManager::d2CProfileListFilter(const std::string currentDepthA
 
     if(!isEnable) {
         // If no profiles are enabled, copy all profiles
-        d2cProfileList_                = originD2cProfileList_;
-        d2cColorPreProcessProfileList_ = originD2cColorPreProcessProfileList_;
+        d2cProfileList_                 = originD2cProfileList_;
+        d2cColorPreProcessProfileList_  = originD2cColorPreProcessProfileList_;
+        depthModefilterCameraParamList_ = originCalibrationCameraParamList_;
         return;
     }
 
@@ -487,6 +475,7 @@ void DaBaiAAlgParamManager::d2CProfileListFilter(const std::string currentDepthA
 
     d2cProfileList_.clear();
     d2cColorPreProcessProfileList_.clear();
+    depthModefilterCameraParamList_.clear();
     // Filter profiles based on enable flag and work mode
     for(size_t i = 0; i < originD2cProfileList_.size(); i++) {
         const auto &profile = originD2cProfileList_[i];
@@ -502,16 +491,12 @@ void DaBaiAAlgParamManager::d2CProfileListFilter(const std::string currentDepthA
     // update valid calibration camera param
     if(originCalibrationCameraParamList_.size() == 4) {
         if(std::strcmp(currentDepthAlgMode.c_str(), "Wide") == 0) {
-            calibrationParamValidMap_[0] = false;
-            calibrationParamValidMap_[1] = false;
-            calibrationParamValidMap_[2] = true;
-            calibrationParamValidMap_[3] = true;
+            depthModefilterCameraParamList_.push_back(originCalibrationCameraParamList_[2]);
+            depthModefilterCameraParamList_.push_back(originCalibrationCameraParamList_[3]);
         }
         else if(std::strcmp(currentDepthAlgMode.c_str(), "Default") == 0) {
-            calibrationParamValidMap_[0] = true;
-            calibrationParamValidMap_[1] = true;
-            calibrationParamValidMap_[2] = false;
-            calibrationParamValidMap_[3] = false;
+            depthModefilterCameraParamList_.push_back(originCalibrationCameraParamList_[0]);
+            depthModefilterCameraParamList_.push_back(originCalibrationCameraParamList_[1]);
         }
     }
 }

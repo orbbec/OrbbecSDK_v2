@@ -34,10 +34,12 @@ private:
     std::vector<OBCameraParam>               originCalibrationCameraParamList_;
     std::vector<OBD2CProfile>                originD2cProfileList_;
     std::vector<OBD2CColorPreProcessProfile> originD2cColorPreProcessProfileList_;
-    // pre process calibration camera list
-    std::vector<OBCameraParam> preProcessCameraParamList_;
-    std::string                currentDepthAlgMode_;
-    std::map<int, bool>        calibrationParamValidMap_;
+    // save depth mode filter calibration camera list
+    std::vector<OBCameraParam> depthModefilterCameraParamList_;
+    //  pre process calibration camera list
+    std::vector<OBCameraParam>               preProcessCameraParamList_;
+    std::string                              currentDepthAlgMode_;
+    std::map<int, bool>                      calibrationParamValidMap_;
     std::vector<OBD2CColorPreProcessProfile> d2cColorPreProcessProfileList_;
 };
 
