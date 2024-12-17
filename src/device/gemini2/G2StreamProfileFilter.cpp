@@ -65,6 +65,11 @@ void G2StreamProfileFilter::fetchEffectiveStreamProfiles() {
             nerProfile.format = OB_FORMAT_BGRA;
             effectiveStreamProfiles_.push_back(nerProfile);
         }
+        else if(profile.sensorType == OB_SENSOR_DEPTH && profile.format == OB_FORMAT_RLE) {
+            auto nerProfile   = profile;
+            nerProfile.format = OB_FORMAT_Y16;
+            effectiveStreamProfiles_.push_back(nerProfile);
+        }
     }
 }
 

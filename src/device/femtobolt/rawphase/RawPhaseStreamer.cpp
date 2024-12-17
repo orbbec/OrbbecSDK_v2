@@ -9,6 +9,20 @@
 #include "logger/LoggerInterval.hpp"
 #include "stream/StreamProfileFactory.hpp"
 #include "property/InternalProperty.hpp"
+
+#ifdef OPENGL_FOUND
+#ifdef __linux__
+#include <GL/glx.h>
+#elif(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+#include <GL/gl.h>
+#include <GL/wglext.h>
+#define glXGetCurrentContext wglGetCurrentContext
+#define glXGetCurrentDrawable wglGetCurrentDrawable
+#define glXGetCurrentDisplay wglGetCurrentDisplay
+#define glXMakeCurrent wglMakeCurrent
+#endif
+#endif
+
 namespace libobsensor {
 
 // Chip defintions
@@ -152,10 +166,10 @@ void RawPhaseStreamer::startStream(std::shared_ptr<const StreamProfile> sp, Muta
     auto  realSp = StreamProfileFactory::createVideoStreamProfile(profile->getType(), profile->getFormat(), pair.first, pair.second, profile->getFps());
     backend_->startStream(realSp, [this](std::shared_ptr<Frame> frame) {
         std::unique_lock<std::mutex> lock(frameQueueMutex_);
-        if(frameQueue_.size() > 1){
+        if(frameQueue_.size() > 1) {
             frameQueue_.pop();
         }
-        
+
         frameQueue_.push(frame);
         frameQueueCV_.notify_one();
     });
@@ -379,7 +393,14 @@ void RawPhaseStreamer::startDepthEngineThread(std::shared_ptr<const StreamProfil
     lastStreamProfile_     = profile;
     depthEngineThreadExit_ = false;
     depthEngineReady_      = false;
-    depthEngineThread_     = std::thread([profile, this] {
+#ifdef OPENGL_FOUND
+    // clear opengl context before depth engine initialize
+    auto display        = glXGetCurrentDisplay();
+    auto drawable       = glXGetCurrentDrawable();
+    auto currentContext = glXGetCurrentContext();
+    glXMakeCurrent(nullptr, None, nullptr);
+#endif
+    depthEngineThread_ = std::thread([profile, this] {
         // depth engine must be initialize, using and deinitialize in the same thread
         initDepthEngine(profile);  // init depth engine
         std::shared_ptr<Frame> frame;
@@ -405,6 +426,11 @@ void RawPhaseStreamer::startDepthEngineThread(std::shared_ptr<const StreamProfil
     if(!depthEngineReady_) {
         throw io_exception("Depth engine thread start failed, timeout!");
     }
+
+#ifdef OPENGL_FOUND
+    // resume opengl current context
+    glXMakeCurrent(display, drawable, currentContext);
+#endif
 }
 
 void RawPhaseStreamer::initDepthEngine(std::shared_ptr<const StreamProfile> profile) {

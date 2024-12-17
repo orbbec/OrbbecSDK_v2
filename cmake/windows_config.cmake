@@ -20,15 +20,16 @@ if(MSVC)
     # build with multiple cores
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP /bigobj /wd4819")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MP")
+
     # set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:LIBCMTD")
     set(LBS_TRY_USE_AVX true)
 
     SET(OBSENSOR_DEPENTENCIES_INCLUDE_DIR
-    ${DepthEngine_INCLUDE_DIRS}
-       )
+        ${DepthEngine_INCLUDE_DIRS}
+    )
     add_definitions(-D_UNICODE -DUNICODE -D_CRT_SECURE_NO_WARNINGS)
+    add_compile_definitions(" _DISABLE_VECTOR_ANNOTATION")
+    add_compile_definitions(" _DISABLE_STRING_ANNOTATION")
 endif()
+
 set(OB_BUILD_WIN32 ON)
-
-
-

@@ -193,7 +193,7 @@ const std::vector<uint8_t> &BaselinePropertyAccessor::getStructureData(uint32_t 
 
     auto algParamManager = owner_->getComponentT<IDisparityAlgParamManager>(OB_DEV_COMPONENT_ALG_PARAM_MANAGER);
     auto disparityParam  = algParamManager->getDisparityParam();
-    param->baseline      = disparityParam.baseline;
+    param->baseline      = disparityParam.baseline * disparityParam.unit;
     param->zpd           = static_cast<float>(disparityParam.zpd);
     return baselineData_;
 }

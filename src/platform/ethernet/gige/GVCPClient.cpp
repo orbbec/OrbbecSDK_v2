@@ -109,27 +109,25 @@ bool GVCPClient::changeNetDeviceIpConfig(std::string mac, const OBNetIpConfig &c
 
 int GVCPClient::openClientSockets() {
 #if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
-    DWORD                       rv, size;
-    PIP_ADAPTER_ADDRESSES       adapter_addresses, aa;
-    PIP_ADAPTER_UNICAST_ADDRESS ua;
+    DWORD                                                                   ret, size;
+    std::unique_ptr<IP_ADAPTER_ADDRESSES, void (*)(IP_ADAPTER_ADDRESSES *)> adapterAddresses(nullptr, [](IP_ADAPTER_ADDRESSES *p) { free(p); });
 
-    rv = GetAdaptersAddresses(AF_INET, GAA_FLAG_INCLUDE_PREFIX, NULL, NULL, &size);
-    if(rv != ERROR_BUFFER_OVERFLOW) {
+    ret = GetAdaptersAddresses(AF_INET, GAA_FLAG_INCLUDE_PREFIX, NULL, NULL, &size);
+    if(ret != ERROR_BUFFER_OVERFLOW) {
         fprintf(stderr, "GetAdaptersAddresses() failed...");
         return -1;
     }
-    adapter_addresses = (PIP_ADAPTER_ADDRESSES)malloc(size);
+    adapterAddresses.reset(reinterpret_cast<IP_ADAPTER_ADDRESSES *>(malloc(size)));
 
-    rv = GetAdaptersAddresses(AF_INET, GAA_FLAG_INCLUDE_PREFIX, NULL, adapter_addresses, &size);
-    if(rv != ERROR_SUCCESS) {
+    ret = GetAdaptersAddresses(AF_INET, GAA_FLAG_INCLUDE_PREFIX, NULL, adapterAddresses.get(), &size);
+    if(ret != ERROR_SUCCESS) {
         fprintf(stderr, "GetAdaptersAddresses() failed...");
-        free(adapter_addresses);
         return -1;
     }
 
     int index = 0;
 
-    for(aa = adapter_addresses; aa != NULL; aa = aa->Next) {
+    for(PIP_ADAPTER_ADDRESSES aa = adapterAddresses.get(); aa != NULL; aa = aa->Next) {
         std::cout << "Interface: " << aa->AdapterName << std::endl;
         /*std::cout << "  MAC Address: ";
         for(int i = 0; i < 6; i++) {
@@ -146,7 +144,7 @@ int GVCPClient::openClientSockets() {
         }
         std::string macAddress = macAddressStream.str();
 
-        for(ua = aa->FirstUnicastAddress; ua != NULL; ua = ua->Next) {
+        for(PIP_ADAPTER_UNICAST_ADDRESS ua = aa->FirstUnicastAddress; ua != NULL; ua = ua->Next) {
             SOCKADDR_IN addrSrv;
             addrSrv            = *(SOCKADDR_IN *)ua->Address.lpSockaddr;
             addrSrv.sin_family = AF_INET;
@@ -700,28 +698,26 @@ void GVCPClient::sendGVCPForceIP2(GVCPSocketInfo socketInfo, std::string mac, co
 
 void GVCPClient::checkAndUpdateSockets() {
 #if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
-    DWORD                       rv, size;
-    PIP_ADAPTER_ADDRESSES       adapter_addresses, aa;
-    PIP_ADAPTER_UNICAST_ADDRESS ua;
+    DWORD                                                                   ret, size;
+    std::unique_ptr<IP_ADAPTER_ADDRESSES, void (*)(IP_ADAPTER_ADDRESSES *)> adapterAddresses(nullptr, [](IP_ADAPTER_ADDRESSES *p) { free(p); });
 
-    rv = GetAdaptersAddresses(AF_INET, GAA_FLAG_INCLUDE_PREFIX, NULL, NULL, &size);
-    if(rv != ERROR_BUFFER_OVERFLOW) {
+    ret = GetAdaptersAddresses(AF_INET, GAA_FLAG_INCLUDE_PREFIX, NULL, NULL, &size);
+    if(ret != ERROR_BUFFER_OVERFLOW) {
         LOG_ERROR("GetAdaptersAddresses() failed...");
         return;
     }
-    adapter_addresses = (PIP_ADAPTER_ADDRESSES)malloc(size);
+    adapterAddresses.reset(reinterpret_cast<IP_ADAPTER_ADDRESSES *>(malloc(size)));
 
-    rv = GetAdaptersAddresses(AF_INET, GAA_FLAG_INCLUDE_PREFIX, NULL, adapter_addresses, &size);
-    if(rv != ERROR_SUCCESS) {
+    ret = GetAdaptersAddresses(AF_INET, GAA_FLAG_INCLUDE_PREFIX, NULL, adapterAddresses.get(), &size);
+    if(ret != ERROR_SUCCESS) {
         LOG_ERROR("GetAdaptersAddresses() failed...");
-        free(adapter_addresses);
         return;
     }
 
     int index = sockCount_;
 
-    for(aa = adapter_addresses; aa != NULL; aa = aa->Next) {
-        for(ua = aa->FirstUnicastAddress; ua != NULL; ua = ua->Next) {
+    for(PIP_ADAPTER_ADDRESSES aa = adapterAddresses.get(); aa != NULL; aa = aa->Next) {
+        for(PIP_ADAPTER_UNICAST_ADDRESS ua = aa->FirstUnicastAddress; ua != NULL; ua = ua->Next) {
             SOCKADDR_IN addrSrv;
             addrSrv            = *(SOCKADDR_IN *)ua->Address.lpSockaddr;
             addrSrv.sin_family = AF_INET;
@@ -906,4 +902,3 @@ void GVCPClient::checkAndUpdateSockets() {
 }
 
 }  // namespace libobsensor
-

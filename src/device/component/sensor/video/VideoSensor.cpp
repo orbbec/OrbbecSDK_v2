@@ -176,19 +176,26 @@ void VideoSensor::stop() {
         return;
     }
 
-    {
+    try {
         auto owner    = getOwner();
         auto strategy = owner->getComponentT<ISensorStreamStrategy>(OB_DEV_COMPONENT_SENSOR_STREAM_STRATEGY, false);
         if(strategy) {
             strategy->markStreamDeactivated(activatedStreamProfile_);
         }
     }
+    catch(const std::exception &e) {
+        LOG_WARN("Failed to mark stream as deactivated: {}", e.what());
+    }
+
     updateStreamState(STREAM_STATE_STOPPING);
 
     auto vsPort = std::dynamic_pointer_cast<IVideoStreamPort>(backend_);
     vsPort->stopStream(currentBackendStreamProfile_);
 
-    trySendStopStreamVendorCmd();
+    try { trySendStopStreamVendorCmd();}
+    catch(const std::exception &e) { 
+        LOG_WARN("Failed to send stop stream vendor command: {}", e.what()); 
+    }
 
     updateStreamState(STREAM_STATE_STOPPED);
 

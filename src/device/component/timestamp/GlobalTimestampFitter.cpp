@@ -12,18 +12,22 @@
 namespace libobsensor {
 GlobalTimestampFitter::GlobalTimestampFitter(IDevice *owner)
     : DeviceComponentBase(owner), enable_(false), sampleLoopExit_(false), linearFuncParam_({ 0, 0, 0, 0 }) {
-    auto envConfig = EnvConfig::getInstance();
-    int  value     = 0;
-    if(envConfig->getIntValue("Misc.GlobalTimestampFitterQueueSize", value) && value >= 4) {
+    std::string deviceName = utils::string::removeSpace(owner->getInfo()->name_);
+    auto        envConfig  = EnvConfig::getInstance();
+    int         value      = 0;
+    std::string key        = std::string("Device.") + deviceName + std::string(".Misc.GlobalTimestampFitterQueueSize");
+    if(envConfig->getIntValue(key, value) && value >= 4) {
         maxQueueSize_ = value;
     }
     value = 0;
-    if(envConfig->getIntValue("Misc.GlobalTimestampFitterInterval", value) && value >= 100) {
+    key   = std::string("Device.") + deviceName + std::string(".Misc.GlobalTimestampFitterInterval");
+    if(envConfig->getIntValue(key, value) && value >= 100) {
         refreshIntervalMsec_ = value;
     }
 
     bool en = false;
-    if(envConfig->getBooleanValue("Misc.GlobalTimestampFitterEnable", en)){
+    key     = std::string("Device.") + deviceName + std::string(".Misc.GlobalTimestampFitterEnable");
+    if(envConfig->getBooleanValue(key, en)) {
         enable(en);
     }
 
@@ -107,7 +111,7 @@ bool GlobalTimestampFitter::isEnabled() const {
 }
 
 void GlobalTimestampFitter::fittingLoop() {
-    const int MAX_RETRY_COUNT = 5;
+    const int      MAX_RETRY_COUNT = 5;
     const uint64_t MAX_VALID_RTT   = 20000;  // 10ms
 
     int retryCount = 0;

@@ -145,9 +145,9 @@ void G210Device::initSensorList() {
                 auto port   = getSourcePort(depthPortInfo);
                 auto sensor = std::make_shared<DisparityBasedSensor>(this, OB_SENSOR_DEPTH, port);
 
-                std::vector<FormatFilterConfig> formatFilterConfigs = {
-                    { FormatFilterPolicy::REPLACE, OB_FORMAT_MJPG, OB_FORMAT_RLE, nullptr },
-                };
+                auto                            formatConverter     = getSensorFrameFilter("FrameUnpacker", OB_SENSOR_DEPTH, false);
+                std::vector<FormatFilterConfig> formatFilterConfigs = { { FormatFilterPolicy::REPLACE, OB_FORMAT_MJPG, OB_FORMAT_RLE, nullptr },
+                                                                        { FormatFilterPolicy::ADD, OB_FORMAT_MJPG, OB_FORMAT_Y16, formatConverter } };
 
                 sensor->updateFormatFilterConfig(formatFilterConfigs);
 
@@ -356,11 +356,6 @@ void G210Device::initProperties() {
     propertyServer->registerProperty(OB_PROP_DEPTH_PRECISION_LEVEL_INT, "rw", "rw", d2dPropertyAccessor);
     propertyServer->registerProperty(OB_STRUCT_DEPTH_PRECISION_SUPPORT_LIST, "r", "r", d2dPropertyAccessor);
 
-    auto privatePropertyAccessor = std::make_shared<PrivateFilterPropertyAccessor>(this);
-    propertyServer->registerProperty(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL, "rw", "rw", privatePropertyAccessor);
-    propertyServer->registerProperty(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT, "rw", "rw", privatePropertyAccessor);
-    propertyServer->registerProperty(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_SPECKLE_SIZE_INT, "rw", "rw", privatePropertyAccessor);
-
     auto sensors = getSensorTypeList();
     for(auto &sensor: sensors) {
         auto &sourcePortInfo = getSensorPortInfo(sensor);
@@ -415,6 +410,7 @@ void G210Device::initProperties() {
             propertyServer->aliasProperty(OB_PROP_SYNC_SIGNAL_TRIGGER_OUT_BOOL, OB_PROP_TIMER_RESET_TRIGGER_OUT_ENABLE_BOOL);
             propertyServer->registerProperty(OB_PROP_TIMER_RESET_DELAY_US_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_DEPTH_MIRROR_MODULE_STATUS_BOOL, "", "r", vendorPropertyAccessor);
+            propertyServer->registerProperty(OB_PROP_FLOOD_BOOL, "rw", "rw", vendorPropertyAccessor);
 
             propertyServer->registerProperty(OB_STRUCT_VERSION, "", "r", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_STRUCT_DEVICE_TEMPERATURE, "r", "r", vendorPropertyAccessor);
@@ -433,7 +429,6 @@ void G210Device::initProperties() {
             propertyServer->registerProperty(OB_PROP_DEPTH_RM_FILTER_BOOL, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_WATCHDOG_BOOL, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_EXTERNAL_SIGNAL_RESET_BOOL, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_LASER_POWER_ACTUAL_LEVEL_INT, "r", "r", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_STRUCT_DEVICE_TIME, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_GYRO_ODR_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_ACCEL_ODR_INT, "rw", "rw", vendorPropertyAccessor);
@@ -480,58 +475,8 @@ void G210Device::initProperties() {
 }
 
 std::vector<std::shared_ptr<IFilter>> G210Device::createRecommendedPostProcessingFilters(OBSensorType type) {
-    if(type != OB_SENSOR_DEPTH) {
-        return {};
-    }
-    // activate depth frame processor library
-    getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR, false);
-
-    auto                                  filterFactory = FilterFactory::getInstance();
-    std::vector<std::shared_ptr<IFilter>> depthFilterList;
-
-    if(filterFactory->isFilterCreatorExists("EdgeNoiseRemovalFilter")) {
-        auto enrFilter = filterFactory->createFilter("EdgeNoiseRemovalFilter");
-        enrFilter->enable(false);
-        // todo: set default values
-        depthFilterList.push_back(enrFilter);
-    }
-
-    if(filterFactory->isFilterCreatorExists("SpatialAdvancedFilter")) {
-        auto spatFilter = filterFactory->createFilter("SpatialAdvancedFilter");
-        spatFilter->enable(false);
-        // magnitude, alpha, disp_diff, radius
-        std::vector<std::string> params = { "1", "0.5", "64", "1" };
-        spatFilter->updateConfig(params);
-        depthFilterList.push_back(spatFilter);
-    }
-
-    if(filterFactory->isFilterCreatorExists("TemporalFilter")) {
-        auto tempFilter = filterFactory->createFilter("TemporalFilter");
-        tempFilter->enable(false);
-        // diff_scale, weight
-        std::vector<std::string> params = { "0.1", "0.4" };
-        tempFilter->updateConfig(params);
-        depthFilterList.push_back(tempFilter);
-    }
-
-    if(filterFactory->isFilterCreatorExists("HoleFillingFilter")) {
-        auto hfFilter = filterFactory->createFilter("HoleFillingFilter");
-        hfFilter->enable(false);
-        depthFilterList.push_back(hfFilter);
-    }
-
-    if(filterFactory->isFilterCreatorExists("DisparityTransform")) {
-        auto dtFilter = filterFactory->createFilter("DisparityTransform");
-        dtFilter->enable(true);
-        depthFilterList.push_back(dtFilter);
-    }
-
-    if(filterFactory->isFilterCreatorExists("ThresholdFilter")) {
-        auto ThresholdFilter = filterFactory->createFilter("ThresholdFilter");
-        depthFilterList.push_back(ThresholdFilter);
-    }
-
-    return depthFilterList;
+    utils::unusedVar(type);
+    return {};
 }
 
 }  // namespace libobsensor

@@ -4,6 +4,14 @@
 #include "DeviceClockSynchronizer.hpp"
 #include "InternalTypes.hpp"
 
+const std::vector<uint16_t> Mx6600DevPids = {
+    0x0660,  // astra2
+    0x0670,  // Gemini2
+    0x0673,  // Gemini2L
+    0x0808,  // Gemini215
+    0x0809,  // Gemini210
+};
+
 namespace libobsensor {
 
 DeviceClockSynchronizer::DeviceClockSynchronizer(IDevice *owner, uint64_t deviceClockFreqIn, uint64_t deviceClockFreqOut)
@@ -76,18 +84,27 @@ void DeviceClockSynchronizer::timerSyncWithHost() {
 
     while(repeated < MAX_REPEAT_TIME) {
         {
-            auto owner          = getOwner();
-            auto propertyServer = owner->getPropertyServer();
-
-            auto now = utils::getNowTimesUs();
+            auto         owner          = getOwner();
+            auto         propertyServer = owner->getPropertyServer();
+            auto         now            = utils::getNowTimesUs();
             OBDeviceTime devTsp;
             devTsp.time = static_cast<uint64_t>(static_cast<double>(now) / 1000000 * deviceClockFreqOut_);
             devTsp.rtt  = static_cast<uint64_t>(static_cast<double>(rtt) / 1000000 * deviceClockFreqOut_);
+
+            auto pid    = owner->getInfo()->pid_;
+            bool exists = std::find(Mx6600DevPids.begin(), Mx6600DevPids.end(), pid) != Mx6600DevPids.end();
+
+            if(exists) {
+                if(devTsp.rtt == 0) {
+                    devTsp.rtt = 1;
+                }
+            }
+
             propertyServer->setStructureDataT<OBDeviceTime>(OB_STRUCT_DEVICE_TIME, devTsp);
             uint64_t after = utils::getNowTimesUs();
             rtt            = after - now;
         }
-        if(repeated == 0){
+        if(repeated == 0) {
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
             repeated++;
             continue;
@@ -118,4 +135,3 @@ void DeviceClockSynchronizer::timerSyncWithHost() {
 }
 
 }  // namespace libobsensor
-

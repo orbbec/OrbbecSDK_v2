@@ -284,17 +284,18 @@ std::shared_ptr<Frame> FrameMirror::process(std::shared_ptr<const Frame> frame) 
         return nullptr;
     }
 
-    auto outFrame = FrameFactory::createFrameFromOtherFrame(frame);
-    if(frame->is<FrameSet>()) {
-        return outFrame;
-    }
-
     if(frame->getFormat() != OB_FORMAT_Y16 && frame->getFormat() != OB_FORMAT_Y8 && frame->getFormat() != OB_FORMAT_YUYV && frame->getFormat() != OB_FORMAT_RGB
        && frame->getFormat() != OB_FORMAT_BGR && frame->getFormat() != OB_FORMAT_RGBA && frame->getFormat() != OB_FORMAT_BGRA) {
         LOG_WARN_INTVL("FrameMirror unsupported to process this format: {}", frame->getFormat());
+        return std::const_pointer_cast<Frame>(frame);
+    }
+
+    if(frame->is<FrameSet>()) {
+        auto outFrame = FrameFactory::createFrameFromOtherFrame(frame, true);
         return outFrame;
     }
 
+    auto outFrame        = FrameFactory::createFrameFromOtherFrame(frame);
     auto videoFrame      = frame->as<VideoFrame>();
     bool isMirrorSupport = true;
     switch(frame->getFormat()) {
@@ -399,16 +400,18 @@ std::shared_ptr<Frame> FrameFlip::process(std::shared_ptr<const Frame> frame) {
         return nullptr;
     }
 
-    auto outFrame = FrameFactory::createFrameFromOtherFrame(frame);
-    if(frame->is<FrameSet>()) {
-        return outFrame;
-    }
-
     if(frame->getFormat() != OB_FORMAT_Y16 && frame->getFormat() != OB_FORMAT_Y8 && frame->getFormat() != OB_FORMAT_YUYV && frame->getFormat() != OB_FORMAT_BGR
        && frame->getFormat() != OB_FORMAT_RGB && frame->getFormat() != OB_FORMAT_RGBA && frame->getFormat() != OB_FORMAT_BGRA) {
         LOG_WARN_INTVL("FrameFlip unsupported to process this format:{}", frame->getFormat());
+        return std::const_pointer_cast<Frame>(frame);
+    }
+
+    if(frame->is<FrameSet>()) {
+        auto outFrame = FrameFactory::createFrameFromOtherFrame(frame, true);
         return outFrame;
     }
+
+    auto outFrame = FrameFactory::createFrameFromOtherFrame(frame, true);
 
     bool isSupportFlip = true;
     auto videoFrame    = frame->as<VideoFrame>();
@@ -509,20 +512,22 @@ std::shared_ptr<Frame> FrameRotate::process(std::shared_ptr<const Frame> frame) 
         return nullptr;
     }
 
-    auto outFrame = FrameFactory::createFrameFromOtherFrame(frame);
     if(frame->is<FrameSet>()) {
+        auto outFrame = FrameFactory::createFrameFromOtherFrame(frame, true);
         return outFrame;
     }
 
     if(rotateDegree_ == 0) {
-        return outFrame;
+        return std::const_pointer_cast<Frame>(frame);
     }
 
     if(frame->getFormat() != OB_FORMAT_Y16 && frame->getFormat() != OB_FORMAT_Y8 && frame->getFormat() != OB_FORMAT_YUYV && frame->getFormat() != OB_FORMAT_RGB
        && frame->getFormat() != OB_FORMAT_BGR && frame->getFormat() != OB_FORMAT_RGBA && frame->getFormat() != OB_FORMAT_BGRA) {
         LOG_WARN_INTVL("FrameRotate unsupported to process this format: {}", frame->getFormat());
-        return outFrame;
+        return std::const_pointer_cast<Frame>(frame);
     }
+
+    auto outFrame = FrameFactory::createFrameFromOtherFrame(frame);
 
     std::lock_guard<std::mutex> rotateLock(mtx_);
     bool                        isSupportRotate = true;
@@ -631,4 +636,3 @@ OBExtrinsic FrameRotate::rotateOBExtrinsic(uint32_t rotateDegree) {
 }
 
 }  // namespace libobsensor
-
