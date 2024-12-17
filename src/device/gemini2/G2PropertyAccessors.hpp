@@ -24,11 +24,11 @@ private:
     void markOutputDisparityFrame(bool enable);
 
 protected:
+    bool hwDisparityToDepthEnabled_;
     std::vector<uint16_t> hwD2DSupportList_ = { OB_PRECISION_0MM8, OB_PRECISION_0MM4, OB_PRECISION_0MM2 };
 
 private:
     IDevice                    *owner_;
-    bool                        hwDisparityToDepthEnabled_;
     const std::vector<uint16_t> swD2DSupportList_ = { OB_PRECISION_1MM, OB_PRECISION_0MM8, OB_PRECISION_0MM4, OB_PRECISION_0MM2, OB_PRECISION_0MM1 };
 };
 
@@ -39,6 +39,14 @@ public:
 
     void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
     void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
+};
+
+class G435LeDisp2DepthPropertyAccessor : public G2Disp2DepthPropertyAccessor {
+public:
+    explicit G435LeDisp2DepthPropertyAccessor(IDevice *owner);
+    virtual ~G435LeDisp2DepthPropertyAccessor() noexcept = default;
+
+    const std::vector<uint8_t> &getStructureData(uint32_t propertyId) override;    
 };
 
 }  // namespace libobsensor

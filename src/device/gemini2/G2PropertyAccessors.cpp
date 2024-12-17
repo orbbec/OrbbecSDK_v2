@@ -208,4 +208,22 @@ void G210Disp2DepthPropertyAccessor::getPropertyValue(uint32_t propertyId, OBPro
     }
 }
 
+G435LeDisp2DepthPropertyAccessor::G435LeDisp2DepthPropertyAccessor(IDevice *owner)
+    : G2Disp2DepthPropertyAccessor(owner){
+         hwD2DSupportList_ = { OB_PRECISION_1MM, OB_PRECISION_0MM4, OB_PRECISION_0MM2 };
+    }
+
+const std::vector<uint8_t> &G435LeDisp2DepthPropertyAccessor::getStructureData(uint32_t propertyId) {
+    if(propertyId == OB_STRUCT_DEPTH_PRECISION_SUPPORT_LIST) {
+        if(hwDisparityToDepthEnabled_) {
+            auto owner = getOwner();
+            auto commandPort = owner->getComponentT<IStructureDataAccessorV1_1>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+            return commandPort->getStructureDataProtoV1_1(propertyId, 0);
+        }
+        else {            
+            return G2Disp2DepthPropertyAccessor::getStructureData(propertyId);
+        }
+    }
+    throw invalid_value_exception(utils::string::to_string() << "unsupported property id:" << propertyId);
+}
 }  // namespace libobsensor
