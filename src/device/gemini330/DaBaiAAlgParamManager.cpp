@@ -494,7 +494,7 @@ void DaBaiAAlgParamManager::d2CProfileListFilter(const std::string currentDepthA
             depthModefilterCameraParamList_.push_back(originCalibrationCameraParamList_[2]);
             depthModefilterCameraParamList_.push_back(originCalibrationCameraParamList_[3]);
         }
-        else if(std::strcmp(currentDepthAlgMode.c_str(), "Default") == 0) {
+        else if(std::strcmp(currentDepthAlgMode.c_str(), "Standard") == 0) {
             depthModefilterCameraParamList_.push_back(originCalibrationCameraParamList_[0]);
             depthModefilterCameraParamList_.push_back(originCalibrationCameraParamList_[1]);
         }
