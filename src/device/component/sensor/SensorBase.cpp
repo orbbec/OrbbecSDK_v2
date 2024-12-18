@@ -6,6 +6,8 @@
 #include "frame/Frame.hpp"
 #include "stream/StreamProfile.hpp"
 #include "logger/LoggerHelper.hpp"
+#include "environment/EnvConfig.hpp"
+#include "IDevice.hpp"
 
 namespace libobsensor {
 SensorBase::SensorBase(IDevice *owner, OBSensorType sensorType, const std::shared_ptr<ISourcePort> &backend)
@@ -18,7 +20,9 @@ SensorBase::SensorBase(IDevice *owner, OBSensorType sensorType, const std::share
       maxRecoveryCount_(DefaultMaxRecoveryCount),
       recoveryCount_(0),
       noStreamTimeoutMs_(DefaultNoStreamTimeoutMs),
-      streamInterruptTimeoutMs_(DefaultStreamInterruptTimeoutMs) {}
+      streamInterruptTimeoutMs_(DefaultStreamInterruptTimeoutMs) {
+        startStreamRecovery();
+      }
 
 SensorBase::~SensorBase() noexcept {
     if(streamStateWatcherThread_.joinable()) {
@@ -179,6 +183,27 @@ void SensorBase::enableStreamRecovery(uint32_t maxRecoveryCount, int noStreamTim
         return;
     }
     streamStateWatcherThread_ = std::thread([this]() { watchStreamState(); });
+}
+
+void SensorBase::startStreamRecovery() {
+    auto        envConfig    = EnvConfig::getInstance();
+    std::string nodePathName = "Device." + getOwner()->getInfo()->name_ + ".";
+    auto nodePath = nodePathName + utils::obSensorToStr(getSensorType());
+    nodePath      = utils::string::removeSpace(nodePath);
+    int streamFailedRetry = 0;
+    int maxStartStreamDelayMs = 0;
+    int  maxFrameIntervalMs = 0;
+    if(envConfig->getIntValue(nodePath + ".StreamFailedRetry", streamFailedRetry) &&
+        envConfig->getIntValue(nodePath + ".MaxStartStreamDelayMs", maxStartStreamDelayMs) &&
+        envConfig->getIntValue(nodePath + ".MaxFrameIntervalMs", maxFrameIntervalMs)) {  
+        LOG_DEBUG(" Recovery config found for sensor: {}", utils::obSensorToStr(sensorType_));   
+        LOG_DEBUG(" StreamFailedRetry: {}, MaxStartStreamDelayMs: {}, MaxFrameIntervalMs: {}", streamFailedRetry, maxStartStreamDelayMs, maxFrameIntervalMs);               
+        if(streamFailedRetry > 0) {
+            enableStreamRecovery(streamFailedRetry, maxStartStreamDelayMs, maxFrameIntervalMs);
+        }
+    } else {
+        LOG_INFO(" No recovery config found for sensor: {}"), utils::obSensorToStr(sensorType_);
+    }
 }
 
 void SensorBase::disableStreamRecovery() {

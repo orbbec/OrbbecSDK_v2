@@ -256,7 +256,6 @@ void G435LeDevice::initSensorList() {
                 sensor->setDepthUnit(1.0f);
 
                 initSensorStreamProfile(sensor);
-                sensor->enableStreamRecovery(15, 6000, 2000);
 
                 return sensor;
             },
@@ -295,7 +294,6 @@ void G435LeDevice::initSensorList() {
                 }
 
                 initSensorStreamProfile(sensor);
-                sensor->enableStreamRecovery(15, 6000, 2000);
 
                 return sensor;
             },
@@ -332,7 +330,6 @@ void G435LeDevice::initSensorList() {
                 }
 
                 initSensorStreamProfile(sensor);
-                sensor->enableStreamRecovery(15, 6000, 2000);
 
                 return sensor;
             },
@@ -381,7 +378,6 @@ void G435LeDevice::initSensorList() {
                 }
 
                 initSensorStreamProfile(sensor);
-                sensor->enableStreamRecovery(15, 6000, 2000);
 
                 return sensor;
             },
