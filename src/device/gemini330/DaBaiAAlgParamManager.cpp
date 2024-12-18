@@ -127,7 +127,6 @@ void DaBaiAAlgParamManager::fetchParamFromDevice() {
         LOG_ERROR("Get depth to color profile list failed! {}", e.what());
     }
 
-#if 1
     try {
         auto owner      = getOwner();
         auto propServer = owner->getPropertyServer();
@@ -136,15 +135,13 @@ void DaBaiAAlgParamManager::fetchParamFromDevice() {
     }
     catch(const std::exception &e) {
         LOG_ERROR("Get d2c pre process profile list failed,unsupport cmd {}", e.what());
+        //
+        for(size_t i = 0; i < originD2cProfileList_.size(); ++i) {
+            OBD2CColorPreProcessProfile preProcessProfile = { 0 };
+            preProcessProfile.preProcessParam.colorScale  = 1;
+            originD2cColorPreProcessProfileList_.push_back(preProcessProfile);
+        }
     }
-#elif
-    // debug
-    for(size_t i = 0; i < originD2cProfileList_.size(); ++i) {
-        OBD2CColorPreProcessProfile preProcessProfile = { 0 };
-        preProcessProfile.preProcessParam.colorScale  = 1;
-        originD2cColorPreProcessProfileList_.push_back(preProcessProfile);
-    }
-#endif
 
     d2CProfileListFilter(currentDepthAlgMode_);
 
@@ -280,7 +277,7 @@ void DaBaiAAlgParamManager::fixD2CParmaList() {
             continue;
         }
 
-        // TODO: color pre process
+        // color pre process
         colorAlignParam.rgbIntrinsic.fx = colorAlignParam.rgbIntrinsic.fx / colorPreParam.colorScale;
         colorAlignParam.rgbIntrinsic.fy = colorAlignParam.rgbIntrinsic.fy / colorPreParam.colorScale;
         colorAlignParam.rgbIntrinsic.cx = (colorAlignParam.rgbIntrinsic.cx - colorPreParam.alignLeft) / colorPreParam.colorScale;
