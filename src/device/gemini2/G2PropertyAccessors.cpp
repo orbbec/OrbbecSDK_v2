@@ -137,9 +137,8 @@ const std::vector<uint8_t> &G2Disp2DepthPropertyAccessor::getStructureData(uint3
     if(propertyId == OB_STRUCT_DEPTH_PRECISION_SUPPORT_LIST) {
         if(hwDisparityToDepthEnabled_) {
 
-            static std::vector<uint8_t> hwD2DSupportListBytes(reinterpret_cast<const uint8_t *>(hwD2DSupportList_.data()),
-                                                              reinterpret_cast<const uint8_t *>(hwD2DSupportList_.data()) + hwD2DSupportList_.size() * 2);
-            return hwD2DSupportListBytes;
+            auto commandPort = owner_->getComponentT<IStructureDataAccessorV1_1>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+            return commandPort->getStructureDataProtoV1_1(propertyId, 0);
         }
         else {
             static std::vector<uint8_t> swD2DSupportListBytes(reinterpret_cast<const uint8_t *>(swD2DSupportList_.data()),

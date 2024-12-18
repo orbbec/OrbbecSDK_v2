@@ -451,12 +451,11 @@ void G2XLUSBDevice::initSensorList() {
 
 void G2XLUSBDevice::initProperties() {
     auto propertyServer = std::make_shared<PropertyServer>(this);
-
-    auto d2dPropertyAccessor = std::make_shared<G2Disp2DepthPropertyAccessor>(this);
-    propertyServer->registerProperty(OB_PROP_DISPARITY_TO_DEPTH_BOOL, "rw", "rw", d2dPropertyAccessor);      // hw
-    propertyServer->registerProperty(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL, "rw", "rw", d2dPropertyAccessor);  // sw
-    propertyServer->registerProperty(OB_PROP_DEPTH_PRECISION_LEVEL_INT, "rw", "rw", d2dPropertyAccessor);
+    
     auto g435LeDisp2DepthPropertyAccessor = std::make_shared<G435LeDisp2DepthPropertyAccessor>(this);
+    propertyServer->registerProperty(OB_PROP_DISPARITY_TO_DEPTH_BOOL, "rw", "rw", g435LeDisp2DepthPropertyAccessor);      // hw
+    propertyServer->registerProperty(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL, "rw", "rw", g435LeDisp2DepthPropertyAccessor);  // sw
+    propertyServer->registerProperty(OB_PROP_DEPTH_PRECISION_LEVEL_INT, "rw", "rw", g435LeDisp2DepthPropertyAccessor);
     propertyServer->registerProperty(OB_STRUCT_DEPTH_PRECISION_SUPPORT_LIST, "r", "r", g435LeDisp2DepthPropertyAccessor);
 
     auto privatePropertyAccessor = std::make_shared<PrivateFilterPropertyAccessor>(this);
