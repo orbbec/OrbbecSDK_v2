@@ -25,7 +25,6 @@ private:
 
 protected:
     std::vector<uint16_t> hwD2DSupportList_ = { OB_PRECISION_0MM8, OB_PRECISION_0MM4, OB_PRECISION_0MM2 };
-    int32_t               currentDepthUnitLevel_;
 
 private:
     IDevice                    *owner_;

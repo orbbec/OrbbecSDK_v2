@@ -8,8 +8,7 @@
 
 namespace libobsensor {
 
-G2Disp2DepthPropertyAccessor::G2Disp2DepthPropertyAccessor(IDevice *owner)
-    : currentDepthUnitLevel_(OB_PRECISION_1MM), owner_(owner), hwDisparityToDepthEnabled_(true) {}
+G2Disp2DepthPropertyAccessor::G2Disp2DepthPropertyAccessor(IDevice *owner) : owner_(owner), hwDisparityToDepthEnabled_(true) {}
 
 IDevice *G2Disp2DepthPropertyAccessor::getOwner() {
     return owner_;
@@ -22,7 +21,7 @@ void G2Disp2DepthPropertyAccessor::setPropertyValue(uint32_t propertyId, const O
         processor->setPropertyValue(propertyId, value);
     } break;
     case OB_PROP_DISPARITY_TO_DEPTH_BOOL: {
-        if(value.intValue == 1 && std::find(hwD2DSupportList_.cbegin(), hwD2DSupportList_.cend(), currentDepthUnitLevel_) == hwD2DSupportList_.end()) {
+        if(value.intValue == 1) {
             OBPropertyValue precisionLevel;
             precisionLevel.intValue = hwD2DSupportList_.front();
             setPropertyValue(OB_PROP_DEPTH_PRECISION_LEVEL_INT, precisionLevel);
@@ -50,9 +49,6 @@ void G2Disp2DepthPropertyAccessor::setPropertyValue(uint32_t propertyId, const O
             auto depthUnit = utils::depthPrecisionLevelToUnit(static_cast<OBDepthPrecisionLevel>(value.intValue));
             sensor->setDepthUnit(depthUnit);
         }
-
-        currentDepthUnitLevel_ = value.intValue;
-
     } break;
 
     default: {
@@ -182,8 +178,6 @@ void G210Disp2DepthPropertyAccessor::setPropertyValue(uint32_t propertyId, const
             auto depthUnit = utils::depthPrecisionLevelToUnit(static_cast<OBDepthPrecisionLevel>(value.intValue));
             sensor->setDepthUnit(depthUnit);
         }
-
-        currentDepthUnitLevel_ = value.intValue;
     } break;
     default: {
         G2Disp2DepthPropertyAccessor::setPropertyValue(propertyId, value);

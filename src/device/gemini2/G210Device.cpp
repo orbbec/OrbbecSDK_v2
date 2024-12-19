@@ -257,10 +257,10 @@ void G210Device::initSensorList() {
                 if(formatConverter) {
 #ifdef WIN32
                     formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_BGR, OB_FORMAT_RGB, formatConverter });
+                    formatFilterConfigs.push_back({ FormatFilterPolicy::REMOVE, OB_FORMAT_BGR });
+                    formatFilterConfigs.push_back({ FormatFilterPolicy::REMOVE, OB_FORMAT_BGRA });
 #else
                     formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_MJPG, OB_FORMAT_RGB, formatConverter });
-                    formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_MJPG, OB_FORMAT_BGR, formatConverter });
-                    formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_MJPG, OB_FORMAT_BGRA, formatConverter });
 #endif
                 }
                 sensor->updateFormatFilterConfig(formatFilterConfigs);

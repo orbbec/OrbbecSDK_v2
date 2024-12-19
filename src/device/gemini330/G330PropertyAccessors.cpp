@@ -54,7 +54,9 @@ void G330Disp2DepthPropertyAccessor::getPropertyValue(uint32_t propertyId, OBPro
         processor->getPropertyValue(propertyId, value);
     } break;
     case OB_PROP_DISPARITY_TO_DEPTH_BOOL: {
-        value->intValue = hwDisparityToDepthEnabled_;
+        auto commandPort = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        commandPort->getPropertyValue(OB_PROP_DISPARITY_TO_DEPTH_BOOL, value);
+        hwDisparityToDepthEnabled_ = static_cast<bool>(value->intValue);
     } break;
     case OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT: {
         auto            commandPort = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
