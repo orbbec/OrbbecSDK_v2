@@ -150,23 +150,18 @@ void NetDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType
                 auto info          = std::dynamic_pointer_cast<const NetSourcePortInfo>(firstPortInfo);
                 if(info->pid == OB_DEVICE_G335LE_PID) {
                     bool    disconnected = true;
-                    //bool    exception    = false;
-                    //uint8_t retry        = 1;
-                    //do {
-                        BEGIN_TRY_EXECUTE({
-                            auto            sourcePort         = Platform::getInstance()->getNetSourcePort(info);
-                            auto            vendorPropAccessor = std::make_shared<VendorPropertyAccessor>(nullptr, sourcePort);
-                            OBPropertyValue value;
-                            value.intValue = 0;
-                            vendorPropAccessor->getPropertyValue(OB_PROP_DEVICE_PID_INT, &value);
-                            disconnected = false;
-                            LOG_DEBUG("Get device pid success, pid:{}", value.intValue);
-                        })
-                        CATCH_EXCEPTION_AND_EXECUTE({
-                            //exception = true;
-                            LOG_WARN("Get pid failed, ip:{},mac:{},device is disconnect.", info->address, info->mac);
-                        });
-                    //} while(exception && retry-- > 0);
+                    BEGIN_TRY_EXECUTE({
+                        auto            sourcePort         = Platform::getInstance()->getNetSourcePort(info);
+                        auto            vendorPropAccessor = std::make_shared<VendorPropertyAccessor>(nullptr, sourcePort);
+                        OBPropertyValue value;
+                        value.intValue = 0;
+                        vendorPropAccessor->getPropertyValue(OB_PROP_DEVICE_PID_INT, &value);
+                        disconnected = false;
+                        LOG_DEBUG("Get device pid success, pid:{}", value.intValue);
+                    })
+                    CATCH_EXCEPTION_AND_EXECUTE({
+                        LOG_WARN("Get pid failed, ip:{},mac:{},device is disconnect.", info->address, info->mac);
+                    });
 
                     if(!disconnected) {
                         deviceInfoList_.push_back(item);
