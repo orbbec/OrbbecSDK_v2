@@ -11,12 +11,11 @@ public:
     OpenNIAlgParamManager(IDevice *owner);
     virtual ~OpenNIAlgParamManager() = default;
 
+private:
     void fetchParamFromDevice() override;
     void registerBasicExtrinsics() override;
 
 private:
     std::vector<OBCalibrationParamContent> depthCalibParamList_;
-    std::vector<OBCameraParam>             calibrationCameraParamList_;
-    std::vector<OBD2CProfile>              d2cProfileList_;
 };
 }  // namespace libobsensor

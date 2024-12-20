@@ -11,6 +11,7 @@
 #include "stream/StreamProfileFactory.hpp"
 #include "exception/ObException.hpp"
 #include "DevicePids.hpp"
+#include <vector>
 
 namespace libobsensor {
 OpenNIAlgParamManager::OpenNIAlgParamManager(IDevice *owner) : DisparityAlgParamManagerBase(owner) {
@@ -34,28 +35,26 @@ void OpenNIAlgParamManager::fetchParamFromDevice() {
                 groupIndex = OB_RAW_DATA_DUAL_CAMERA_PARAMS_1;
             }
 
-            OBCalibrationParamContent content;
-            int                       contentSize = sizeof(OBCalibrationParamContent);
-            memset(&content, 0, contentSize);
+            OBCalibrationParamContent content = {};
 
-            uint8_t *data       = nullptr;
-            uint32_t size       = 0;
-            auto     propServer = owner->getPropertyServer();
+            std::vector<uint8_t> data;
+            uint32_t             size       = 0;
+            auto                 propServer = owner->getPropertyServer();
             propServer->getRawData(
                 OB_RAW_DATA_DUAL_CAMERA_PARAMS_0,
                 [&](OBDataTranState state, OBDataChunk *dataChunk) {
                     if(state == DATA_TRAN_STAT_TRANSFERRING) {
-                        if(data == nullptr) {
+                        if(size == 0) {
                             size = dataChunk->fullDataSize;
-                            data = new uint8_t[size];
+                            data.resize(size);
                         }
-                        memcpy(data + dataChunk->offset, dataChunk->data, dataChunk->size);
+                        memcpy(data.data() + dataChunk->offset, dataChunk->data, dataChunk->size);
                     }
                 },
                 PROP_ACCESS_INTERNAL);
 
-            if(size > 0 && data != nullptr) {
-                memcpy(&content, data, size);
+            if(size > 0) {
+                memcpy(&content, data.data(), size);
             }
             depthCalibParamList_.push_back(content);
             disparityParam_.baseline     = content.HOST.virCam.bl;
@@ -74,8 +73,7 @@ void OpenNIAlgParamManager::fetchParamFromDevice() {
             case OB_DEVICE_MAX_PRO_PID:
             case OB_DEVICE_GEMINI_UW_PID: {
                 content.HOST.soft_d2c;
-                OBCameraParam param;
-                memset(&param, 0, sizeof(param));
+                OBCameraParam param = {};
                 memcpy(&param.depthIntrinsic, content.HOST.soft_d2c.d_intr_p, sizeof(content.HOST.soft_d2c.d_intr_p));
                 param.depthIntrinsic.width  = 640;
                 param.depthIntrinsic.height = 400;
@@ -105,7 +103,7 @@ void OpenNIAlgParamManager::fetchParamFromDevice() {
                 int16_t depthWidth  = 640;
                 int16_t depthHeight = 400;
                 for(int i = 0; i < 2; i++) {
-                    OBCameraParam realParam;
+                    OBCameraParam realParam       = {};
                     int16_t       paramScaleValue = (int16_t)pow(2, i);
                     memcpy(&realParam, &param, sizeof(param));
                     realParam.depthIntrinsic.fx      = realParam.depthIntrinsic.fx / paramScaleValue;
@@ -124,7 +122,7 @@ void OpenNIAlgParamManager::fetchParamFromDevice() {
                 depthWidth  = 640;
                 depthHeight = 320;
                 for(int i = 0; i < 2; i++) {
-                    OBCameraParam realParam;
+                    OBCameraParam realParam       = {};
                     int16_t       paramScaleValue = (int16_t)pow(2, i);
                     memcpy(&realParam, &param, sizeof(param));
                     realParam.depthIntrinsic.fx = static_cast<float>(realParam.depthIntrinsic.fx * 1.1204);
@@ -149,7 +147,7 @@ void OpenNIAlgParamManager::fetchParamFromDevice() {
                 depthWidth  = 640;
                 depthHeight = 400;
                 for(int i = 0; i < 2; i++) {
-                    OBCameraParam realParam;
+                    OBCameraParam realParam       = {};
                     int16_t       paramScaleValue = (int16_t)pow(2, i);
                     memcpy(&realParam, &param, sizeof(param));
                     realParam.depthIntrinsic.fx = realParam.depthIntrinsic.fx / paramScaleValue;
@@ -174,7 +172,7 @@ void OpenNIAlgParamManager::fetchParamFromDevice() {
                 depthWidth  = 640;
                 depthHeight = 400;
                 for(int i = 0; i < 2; i++) {
-                    OBCameraParam realParam;
+                    OBCameraParam realParam       = {};
                     int16_t       paramScaleValue = (int16_t)pow(2, i);
                     memcpy(&realParam, &param, sizeof(param));
                     realParam.depthIntrinsic.fx = realParam.depthIntrinsic.fx / paramScaleValue;
@@ -219,7 +217,7 @@ void OpenNIAlgParamManager::registerBasicExtrinsics() {
     auto deviceInfo = owner->getInfo();
     int  pid        = deviceInfo->pid_;
     auto iter       = std::find(OpenniAstraPids.begin(), OpenniAstraPids.end(), pid);
-    if(iter == OpenNIDualPids.end()) {
+    if(iter == OpenniAstraPids.end()) {
         auto extrinsicMgr            = StreamExtrinsicsManager::getInstance();
         auto depthBasicStreamProfile = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_DEPTH, OB_FORMAT_ANY, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY);
         auto colorBasicStreamProfile = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_COLOR, OB_FORMAT_ANY, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY);
