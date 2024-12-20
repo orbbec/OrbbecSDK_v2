@@ -241,6 +241,141 @@ typedef struct {
     uint16_t port;
 } OBInternalVideoStreamProfile;
 
+typedef struct RotateMatrix {
+    float r00;
+    float r01;
+    float r02;
+    float r10;
+    float r11;
+    float r12;
+    float r20;
+    float r21;
+    float r22;
+} RotateMatrix;
+
+typedef struct Intrinsic {
+    float fx;
+    float fy;
+    float cx;
+    float cy;
+} Intrinsic;
+
+typedef struct Translate {
+    float t0;
+    float t1;
+    float t2;
+} Translate;
+
+typedef struct Distortion {
+    float k0;
+    float k1;
+    float k2;
+    float k3;
+    float k4;
+} Distortion;
+
+
+
+// Mx6000 dual camera struct
+struct ObIntrinsicRefinement {
+    uint8_t refinement_[2016];
+};
+
+struct ObCameraIntrinsic {
+    uint32_t              vc_mode_;
+    uint32_t              img_height_;
+    uint32_t              img_width_;
+    float                 focal_x_;
+    float                 focal_y_;
+    float                 cx_;
+    float                 cy_;
+    float                 k1_;
+    float                 k2_;
+    float                 k3_;
+    float                 k4_;
+    float                 p1_;
+    float                 p2_;
+    ObIntrinsicRefinement refine_;  // refinement
+};
+
+struct ObRelativePose {
+    float rx_;
+    float ry_;
+    float rz_;
+    float tx_;
+    float ty_;
+    float tz_;
+};
+//
+typedef struct {
+    struct {
+        struct {
+            uint32_t buf_pos : 12;       // 0-11
+            uint32_t totalBufRows : 12;  // 12-23
+            uint32_t rsv0 : 6;           // 24-29
+            uint32_t dep_sign : 1;       // 30
+            uint32_t shft_dep : 1;       // 31
+
+            uint32_t iZ0;
+            uint32_t PBF;
+            uint32_t W[12];
+        } dep2color;
+        struct {
+            uint32_t k[9];
+            uint32_t r[9];
+            uint32_t fx;
+            uint32_t fy;
+            uint32_t cx;
+            uint32_t cy;
+        } mdlCamL;
+        struct {
+            uint32_t k[9];
+            uint32_t r[9];
+            uint32_t fx;
+            uint32_t fy;
+            uint32_t cx;
+            uint32_t cy;
+        } mdlCamR;
+        struct {
+            uint32_t dY;
+            uint32_t dT;
+            uint32_t iRow;
+            uint32_t img_size;
+        } mdlRef;
+        struct {
+            uint32_t cam : 16;
+            uint32_t ref : 16;
+        } startPixBuf;
+    } DPU;
+    struct {
+        struct {
+            uint32_t w, h;
+            float    fx, fy, cx, cy, bl;
+            float    rotL[3];
+            float    rotR[3];
+        } virCam;
+        struct {
+            ObCameraIntrinsic irL;
+            ObCameraIntrinsic irR;
+            ObCameraIntrinsic rgb;
+            ObRelativePose    irL_pose;
+            ObRelativePose    irR_pose;
+            ObRelativePose    rgb_pose;
+
+        } camera_params;
+        struct {
+            float d_intr_p[4];  //[fx,fy,cx,cy]
+            float c_intr_p[4];  //[fx,fy,cx,cy]
+            float d2c_r[9];     //[r00,r01,r02;r10,r11,r12;r20,r21,r22]
+            float d2c_t[3];     //[t1,t2,t3]
+            float d_k[5];       //[k1,k2,k3,p1,p2]
+            float c_k[5];
+            // float pixelsize;
+        } soft_d2c;
+    } HOST;
+
+} OBCalibrationParamContent;
+
 enum OBDeviceErrorCode : uint64_t {
     // bit 0~31: error code
     OB_ERROR_RGB_SENSOR    = 1 << 0,   // RGB sensor error

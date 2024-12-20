@@ -91,6 +91,22 @@ const std::vector<uint16_t> FemtoBoltDevPids = {
     0x066B,  // Femto Bolt
 };
 
+// OpenNI Devices
+const uint16_t OB_DEVICE_DCW_PID            = 0x0659;
+const uint16_t OB_DEVICE_DW_PID             = 0x065a;
+const uint16_t OB_DEVICE_ASTRA_MINI_PRO_PID = 0x065b;
+const uint16_t OB_DEVICE_GEMINI_E_PID       = 0x065b;
+const uint16_t OB_DEVICE_GEMINI_E_LITE_PID  = 0x065d;
+const uint16_t OB_DEVICE_MINI_S_PRO_PID     = 0x065e;
+const uint16_t OB_DEVICE_DABAI_MAX_PID      = 0x069a;
+const uint16_t OB_DEVICE_DABAI_DW2_PID      = 0x069f;
+const uint16_t OB_DEVICE_GEMINI_EW_LITE_PID = 0x06a7;
+const uint16_t OB_DEVICE_DABAI_DCW2_PID     = 0x06a0;
+const uint16_t OB_DEVICE_GEMINI_EW_PID      = 0x06a6;
+const uint16_t OB_DEVICE_MAX_PRO_PID        = 0x069e;
+const uint16_t OB_DEVICE_GEMINI_UW_PID      = 0x06aa;
+
+
 const std::vector<uint16_t> OpenNIDevPids = {
     0x060e,  // Dabai
     0x0659,  // Dabai DCW
@@ -132,7 +148,21 @@ const std::vector<uint16_t> OpenniRgbPids = {
     0x05a6,  // Gemini EW
     0x0560,  // Dabai Max Pro
     0x05aa   // Gemini UW
+};
 
+const std::vector<uint16_t> OpenNIDualPids = {
+    0x060e,  // Dabai
+    0x0659,  // Dabai DCW
+    0x065a,  // Dabai DW
+    0x065c,  // Gemini E
+    0x065d,  // Gemini E Lite
+    0x069a,  // Dabai Max
+    0x069f,  // Dabai DW2
+    0x06a7,  // Gemini EW Lite
+    0x06a0,  // Dabai DCW2
+    0x06a6,  // Gemini EW
+    0x069e,  // Dabai Max Pro
+    0x06aa,  // Gemini UW
 };
 
 }  // namespace libobsensor

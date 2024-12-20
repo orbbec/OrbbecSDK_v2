@@ -1,0 +1,112 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
+#include "OpenNIDeviceInfo.hpp"
+#include "usb/UsbPortGroup.hpp"
+#include "DevicePids.hpp"
+#include "utils/Utils.hpp"
+#include "OpenNIDeviceBase.hpp"
+#include "exception/ObException.hpp"
+#include "ethernet/NetPortGroup.hpp"
+#include "ethernet/RTSPStreamPort.hpp"
+#include "ethernet/NetDataStreamPort.hpp"
+
+#include <map>
+
+namespace libobsensor {
+
+const std::map<int, std::string> OpenNIDeviceNameMap = { { 0x060e, "DaBai" },          { 0x0655, "DaBai Pro" },      { 0x0659, "DaBai DCW" },
+                                                         { 0x065a, "DaBai DW" },       { 0x065c, "Gemini E" },       { 0x065d, "Gemini E Lite" },
+                                                         { 0x065e, "AstraMiniSPro" },  { 0x065b, "Astra Mini Pro" }, { 0x069a, "DaBai Max" },
+                                                         { 0x069e, "DaBai Max Pro" },  { 0x06aa, "Gemini UW" },      { 0x069f, "DaBai DW2" },
+                                                         { 0x06a7, "Gemini EW Lite" }, { 0x06a0, "DaBai DCW2" },     { 0x06a6, "Gemini EW" } };
+
+const std::map<int, int> depthRgbPidMaps = {
+    { 0x060e, 0x050e },  // Dabai
+    { 0x0657, 0x0557 },  // Dabai DC1
+    { 0x0659, 0x0559 },  // Dabai DCW
+    { 0x065c, 0x055c },  // Gemini E
+    { 0x06a0, 0x0561 },  // Dabai DCW2
+    { 0x06a6, 0x05a6 },  // Gemini EW
+    { 0x069e, 0x0560 },  // Dabai Max Pro
+    { 0x06aa, 0x05aa }   // Gemini UW
+};
+
+OpenNIDeviceInfo::OpenNIDeviceInfo(const SourcePortInfoList groupedInfoList) {
+    auto portInfo = std::dynamic_pointer_cast<const USBSourcePortInfo>(groupedInfoList.front());
+    auto iter     = OpenNIDeviceNameMap.find(portInfo->pid);
+    if(iter != OpenNIDeviceNameMap.end()) {
+        name_ = iter->second;
+    }
+    else {
+        name_ = "OpenNI series device";
+    }
+
+    fullName_           = "Orbbec " + name_;
+    pid_                = portInfo->pid;
+    vid_                = portInfo->vid;
+    uid_                = portInfo->uid;
+    deviceSn_           = portInfo->serial;
+    connectionType_     = portInfo->connSpec;
+    sourcePortInfoList_ = groupedInfoList;
+}
+
+OpenNIDeviceInfo::~OpenNIDeviceInfo() noexcept {}
+
+std::shared_ptr<IDevice> OpenNIDeviceInfo::createDevice() const {
+    /*if(pid_ == 0x0671) {
+        if(IS_NET_PORT(sourcePortInfoList_.front()->portType)) {
+            return std::make_shared<G2XLNetDevice>(shared_from_this());
+        }
+        return std::make_shared<G2XLUSBDevice>(shared_from_this());
+    }
+    else if(pid_ == 0x0808 || pid_ == 0x0809) {
+        return std::make_shared<G210Device>(shared_from_this());
+    }
+    return std::make_shared<G2Device>(shared_from_this());*/
+
+    return std::make_shared<OpenNIDeviceBase>(shared_from_this());
+}
+
+std::vector<std::shared_ptr<IDeviceEnumInfo>> OpenNIDeviceInfo::pickDevices(const SourcePortInfoList infoList) {
+    std::vector<std::shared_ptr<IDeviceEnumInfo>> OpenNIDeviceInfos;
+    auto                                          uvcRemainder   = FilterUSBPortInfoByPid(infoList, OpenniRgbPids);
+    auto                                          depthRemainder = FilterUSBPortInfoByPid(infoList, OpenNIDevPids);
+
+    auto groups = utils::groupVector<std::shared_ptr<const SourcePortInfo>>(depthRemainder, GroupUSBSourcePortByUrl);
+    auto iter   = groups.begin();
+    while(iter != groups.end()) {
+        if(iter->size() == 2) {
+            auto item = iter->begin();
+            auto depthPortInfo = std::dynamic_pointer_cast<const USBSourcePortInfo>(*item);
+            if(utils::isMatchDeviceByPid(depthPortInfo->pid, OpenniAstraPids)) {
+                auto info = std::make_shared<OpenNIDeviceInfo>(*iter);
+                OpenNIDeviceInfos.push_back(info);
+            }
+            else {
+                auto mapItem = depthRgbPidMaps.find((int)depthPortInfo->pid);
+                if(mapItem == depthRgbPidMaps.end()) {
+                    continue;
+                }
+
+               auto rgbDevicePid = mapItem->second;
+               for(auto uvcInfoIter = uvcRemainder.begin(); uvcInfoIter != uvcRemainder.end();) {
+                   auto uvcPortInfo = std::dynamic_pointer_cast<const USBSourcePortInfo>(*uvcInfoIter);
+                   if((rgbDevicePid == uvcPortInfo->pid) && (depthPortInfo->hubId == uvcPortInfo->hubId)) {
+                       iter->push_back(*uvcInfoIter);
+                       uvcInfoIter = uvcRemainder.erase(uvcInfoIter);
+                       break;
+                   }
+                   uvcInfoIter++;
+               }
+               auto info = std::make_shared<OpenNIDeviceInfo>(*iter);
+               OpenNIDeviceInfos.push_back(info);
+            }
+        }
+
+        iter++;
+    }
+    return OpenNIDeviceInfos;
+}
+
+}  // namespace libobsensor
