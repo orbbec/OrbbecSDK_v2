@@ -52,6 +52,9 @@ typedef enum {
     OB_RAW_DATA_DUAL_CAMERA_PARAMS_0                = 4045, /**< Obtain Mx6000 binocular Content0 parameters */
     OB_RAW_DATA_DUAL_CAMERA_PARAMS_1                = 4046, /**< Obtain Mx6000 binocular Content1 parameters */
     OB_RAW_DATA_DUAL_CAMERA_PARAMS_2                = 4047, /**< Obtain Mx6000 binocular Content2 parameters */
+    OB_RAW_DATA_DUAL_CAMERA_PARAMS_0                = 4045, /**< Obtain Mx6000 binocular Content0 parameters */
+    OB_RAW_DATA_DUAL_CAMERA_PARAMS_1                = 4046, /**< Obtain Mx6000 binocular Content1 parameters */
+    OB_RAW_DATA_DUAL_CAMERA_PARAMS_2                = 4047, /**< Obtain Mx6000 binocular Content2 parameters */
 
     OB_PROP_IMU_STREAM_PORT_INT = 3026, /**< set stream port to imu*/
 
