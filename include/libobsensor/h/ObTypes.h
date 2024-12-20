@@ -1605,6 +1605,16 @@ typedef enum {
     OB_FRAME_METADATA_TYPE_GPIO_INPUT_DATA = 31,
 
     /**
+     * @brief disparity search offset value
+     */
+    OB_FRAME_METADATA_TYPE_DISPARITY_SEARCH_OFFSET = 32,
+
+    /**
+     * @brief disparity search range
+     */
+    OB_FRAME_METADATA_TYPE_DISPARITY_SEARCH_RANGE = 33,
+
+    /**
      * @brief The number of frame metadata types, using for types iterating
      * @attention It is not a valid frame metadata type
      */
