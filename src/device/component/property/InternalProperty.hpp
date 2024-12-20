@@ -46,6 +46,9 @@ typedef enum {
     OB_STRUCT_DEPTH_STREAM_PROFILE    = 1049, /**< set stream profile to depth*/
     OB_STRUCT_IR_STREAM_PROFILE       = 1050, /**< set stream profile to ir or left ir*/
     OB_STRUCT_IR_RIGHT_STREAM_PROFILE = 1065, /**< set stream profile to right ir*/
+    OB_RAW_DATA_DUAL_CAMERA_PARAMS_0                = 4045, /**< Obtain Mx6000 binocular Content0 parameters */
+    OB_RAW_DATA_DUAL_CAMERA_PARAMS_1                = 4046, /**< Obtain Mx6000 binocular Content1 parameters */
+    OB_RAW_DATA_DUAL_CAMERA_PARAMS_2                = 4047, /**< Obtain Mx6000 binocular Content2 parameters */
 
     OB_PROP_IMU_STREAM_PORT_INT = 3026, /**< set stream port to imu*/
 
