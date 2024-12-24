@@ -23,6 +23,9 @@ void G330Disp2DepthPropertyAccessor::setPropertyValue(uint32_t propertyId, const
 
         // update convert output frame as disparity frame
         markOutputDisparityFrame(!hwDisparityToDepthEnabled_);
+
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR);
+        processor->setPropertyValue(propertyId, value);
     } break;
     case OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT: {
         auto commandPort = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
@@ -39,7 +42,18 @@ void G330Disp2DepthPropertyAccessor::setPropertyValue(uint32_t propertyId, const
         }
 
     } break;
+    case OB_PROP_DISP_SEARCH_OFFSET_INT: {
+        auto sensor = owner_->getComponentT<ISensor>(OB_DEV_COMPONENT_DEPTH_SENSOR).get();
+        if (!sensor->isStreamActivated()) {
+            throw libobsensor::wrong_api_call_sequence_exception("disp search offset can only be set when depth sensor is activated");
+        }
 
+        auto commandPort = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        commandPort->setPropertyValue(propertyId, value);
+
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR);
+        processor->setPropertyValue(propertyId, value);
+    } break;
     default: {
         auto commandPort = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
         commandPort->setPropertyValue(propertyId, value);
