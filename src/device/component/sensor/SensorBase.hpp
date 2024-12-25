@@ -7,6 +7,7 @@
 #include "IDevice.hpp"
 #include "ISourcePort.hpp"
 #include "IFrameTimestamp.hpp"
+#include "frameprocessor/FrameProcessor.hpp"
 
 #include <map>
 #include <mutex>
@@ -50,6 +51,7 @@ public:
     void setFrameMetadataParserContainer(std::shared_ptr<IFrameMetadataParserContainer> container);
     void setFrameTimestampCalculator(std::shared_ptr<IFrameTimestampCalculator> calculator);
     void setGlobalTimestampCalculator(std::shared_ptr<IFrameTimestampCalculator> calculator);
+    void setFrameProcessor(std::shared_ptr<FrameProcessor> frameProcessor);
 
 protected:
     virtual void restartStream();
@@ -88,6 +90,7 @@ protected:
     std::shared_ptr<IFrameMetadataParserContainer> frameMetadataParserContainer_;
     std::shared_ptr<IFrameTimestampCalculator>     frameTimestampCalculator_;
     std::shared_ptr<IFrameTimestampCalculator>     globalTimestampCalculator_;
+    std::shared_ptr<FrameProcessor>                frameProcessor_;
 };
 
 }  // namespace libobsensor

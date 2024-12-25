@@ -246,11 +246,26 @@ void SensorBase::setGlobalTimestampCalculator(std::shared_ptr<IFrameTimestampCal
     globalTimestampCalculator_ = calculator;
 }
 
+void SensorBase::setFrameProcessor(std::shared_ptr<FrameProcessor> frameProcessor) {
+    if(isStreamActivated()) {
+        throw wrong_api_call_sequence_exception("Can not update frame processor while streaming");
+    }
+    frameProcessor_ = frameProcessor;
+    frameProcessor_->setCallback([this](std::shared_ptr<Frame> frame) {
+        auto deviceInfo = owner_->getInfo();
+        LOG_FREQ_CALC(DEBUG, 5000, "{}({}): {} frameProcessor_ callback frameRate={freq}fps", deviceInfo->name_, deviceInfo->deviceSn_, sensorType_);
+        frameCallback_(frame);
+        LOG_FREQ_CALC(INFO, 5000, "{}({}): {} Streaming... frameRate={freq}fps", deviceInfo->name_, deviceInfo->deviceSn_, sensorType_);
+    });
+}
+
 void SensorBase::outputFrame(std::shared_ptr<Frame> frame) {
+    if(activatedStreamProfile_) {
+        frame->setStreamProfile(activatedStreamProfile_);
+    }
     if(frameMetadataParserContainer_) {
         TRY_EXECUTE(frame->registerMetadataParsers(frameMetadataParserContainer_));
     }
-
     if(frameTimestampCalculator_) {
         TRY_EXECUTE(frameTimestampCalculator_->calculate(frame));
     }
@@ -259,10 +274,14 @@ void SensorBase::outputFrame(std::shared_ptr<Frame> frame) {
         TRY_EXECUTE(globalTimestampCalculator_->calculate(frame));
     }
 
-    frameCallback_(frame);
-
-    auto deviceInfo = owner_->getInfo();
-    LOG_FREQ_CALC(INFO, 5000, "{}({}): {} Streaming... frameRate={freq}fps", deviceInfo->name_, deviceInfo->deviceSn_, sensorType_);
+    if(frameProcessor_) {
+        frameProcessor_->pushFrame(frame);
+    }
+    else {
+        frameCallback_(frame);
+        auto deviceInfo = owner_->getInfo();
+        LOG_FREQ_CALC(INFO, 5000, "{}({}): {} Streaming... frameRate={freq}fps", deviceInfo->name_, deviceInfo->deviceSn_, sensorType_);
+    }
 }
 
 }  // namespace libobsensor

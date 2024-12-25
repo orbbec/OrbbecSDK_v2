@@ -6,7 +6,6 @@
 #include "IFilter.hpp"
 #include "IFrameMetadataModifier.hpp"
 #include "sensor/SensorBase.hpp"
-#include "frameprocessor/FrameProcessor.hpp"
 
 #include <map>
 
@@ -37,13 +36,11 @@ public:
 
     virtual void updateFormatFilterConfig(const std::vector<FormatFilterConfig> &configs);
     void         setStreamProfileList(const StreamProfileList &profileList) override;
-    void         setFrameProcessor(std::shared_ptr<FrameProcessor> frameProcessor);
     void         setFrameMetadataModifer(std::shared_ptr<IFrameMetadataModifier> modifier);
 
 protected:
     virtual void trySendStopStreamVendorCmd();
     void         onBackendFrameCallback(std::shared_ptr<Frame> frame);
-    void         outputFrame(std::shared_ptr<Frame> frame) override;
 
 protected:
     typedef std::pair<std::shared_ptr<const StreamProfile>, const FormatFilterConfig *> StreamProfileBackendMapValue;
@@ -54,7 +51,6 @@ protected:
     std::shared_ptr<const StreamProfile> currentBackendStreamProfile_;
     StreamProfileList                    backendStreamProfileList_;
 
-    std::shared_ptr<FrameProcessor>         frameProcessor_;
     std::shared_ptr<IFrameMetadataModifier> frameMetadataModifier_;
 };
 
