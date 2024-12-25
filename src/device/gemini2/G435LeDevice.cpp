@@ -62,7 +62,7 @@ void G435LeDeviceBase::init() {
     auto globalTimestampFilter = std::make_shared<GlobalTimestampFitter>(this);
     registerComponent(OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER, globalTimestampFilter);
 
-    auto algParamManager = std::make_shared<G2AlgParamManager>(this);
+    auto algParamManager = std::make_shared<G435LeAlgParamManager>(this);
     registerComponent(OB_DEV_COMPONENT_ALG_PARAM_MANAGER, algParamManager);
 
     auto depthWorkModeManager = std::make_shared<G2DepthWorkModeManager>(this);

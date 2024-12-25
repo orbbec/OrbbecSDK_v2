@@ -169,4 +169,10 @@ void G2AlgParamManager::registerBasicExtrinsics() {
     basicStreamProfileList_.emplace_back(gyroBasicStreamProfile);
 }
 
+G435LeAlgParamManager::G435LeAlgParamManager(IDevice *owner) : G2AlgParamManager(owner) {
+    fetchParamFromDevice();
+    registerBasicExtrinsics();
+    disparityParam_.packMode = OB_DISP_PACK_GEMINI2XL;
+}
+
 }  // namespace libobsensor

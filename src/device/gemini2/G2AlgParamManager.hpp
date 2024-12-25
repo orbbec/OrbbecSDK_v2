@@ -17,4 +17,11 @@ public:
 private:
     std::vector<OBDepthCalibrationParam> depthCalibParamList_;
 };
+
+class G435LeAlgParamManager : public G2AlgParamManager {
+public:
+    G435LeAlgParamManager(IDevice *owner);
+    virtual ~G435LeAlgParamManager() = default;
+};
+
 }  // namespace libobsensor
