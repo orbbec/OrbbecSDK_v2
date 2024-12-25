@@ -12,7 +12,6 @@ public:
     virtual ~G2Disp2DepthPropertyAccessor() noexcept override = default;
 
     IDevice *getOwner();
-
     void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
     void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
     void getPropertyRange(uint32_t propertyId, OBPropertyRange *range) override;
