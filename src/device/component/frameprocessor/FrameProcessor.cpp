@@ -182,9 +182,6 @@ void FrameProcessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue
     case OB_PROP_DISPARITY_TO_DEPTH_BOOL: {
         setConfigValue("HardwareD2DCorrectionFilter#255", static_cast<double>(value.intValue));
     } break;
-    case OB_PROP_DISP_SEARCH_OFFSET_INT: {
-        setConfigValue("HardwareD2DCorrectionFilter#0", static_cast<double>(value.intValue));
-    } break;
     default:
         throw invalid_value_exception("Invalid property id");
     }

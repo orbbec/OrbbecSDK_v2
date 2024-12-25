@@ -50,9 +50,6 @@ void G330Disp2DepthPropertyAccessor::setPropertyValue(uint32_t propertyId, const
 
         auto commandPort = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
         commandPort->setPropertyValue(propertyId, value);
-
-        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR);
-        processor->setPropertyValue(propertyId, value);
     } break;
     default: {
         auto commandPort = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
