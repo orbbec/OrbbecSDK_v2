@@ -293,23 +293,27 @@ void ObWinPTPHost::timeSync() {
     if(handle_) {
         startSync_ = true;
         
-        // SYNC_CONTROL
+        // 1.SYNC_CONTROL
         Frame1588 syncControlFrame;
         int       len = ptpPacketCreator_.createPTPPacket(SYNC_CONTROL, &syncControlFrame);
         t1[0]         = syncControlFrame.txSeconds;
         t1[1]         = syncControlFrame.txNanoSeconds;
         sendPTPPacket(handle_, &syncControlFrame, len);
 
-        // FOLLOW_UP_CONTROL
+        // 2.FOLLOW_UP_CONTROL
         Frame1588 followUpControlControlFrame;
         len                                       = ptpPacketCreator_.createPTPPacket(FOLLOW_UP_CONTROL, &followUpControlControlFrame);
         followUpControlControlFrame.txSeconds     = t1[0];
         followUpControlControlFrame.txNanoSeconds = t1[1];
+
+        // 3.Receive delay request
+        if(receiverThread_.joinable()) {
+            receiverThread_.join();
+        }
+        receiverThread_ = std::thread(&ObWinPTPHost::receivePTPPacket, this, handle_);
+
+        // 2.send
         sendPTPPacket(handle_, &followUpControlControlFrame, len);
-
-        receivePTPPacket(handle_);
-
-        startSync_ = false;
     }
     else {
         LOG_ERROR("PTP time synchronization failure, net handle is null!");
@@ -355,21 +359,6 @@ void ObWinPTPHost::receivePTPPacket(pcap_t *handle) {
             else {
                 LOG_DEBUG("Receive ptp delay req data timeout!");
             }
-
-            // struct tm  ltime;
-            // char       timestr[16];
-            // Frame1588 *ptpdata;
-            // time_t local_tv_sec;
-
-            /* convert the timestamp to readable format */
-            // local_tv_sec = header->ts.tv_sec;
-            // localtime_s(&ltime, &local_tv_sec);
-            // strftime(timestr, sizeof timestr, "%H:%M:%S", &ltime);
-
-            /* print timestamp and length of the packet */
-            // printf("%s.%.6d len:%d ", timestr, header->ts.tv_usec, header->len);
-
-            // ptpdata = (Frame1588 *)(buffer.data() + 44);  // length of ethernet header
         }
         else {
             if(res == 0) {
@@ -382,6 +371,7 @@ void ObWinPTPHost::receivePTPPacket(pcap_t *handle) {
         maxRevCount--;
     }
 
+    startSync_ = false;
     LOG_DEBUG("Exit ptp data receive...");
 }
 
@@ -395,6 +385,10 @@ void ObWinPTPHost::sendPTPPacket(pcap_t *handle, void *data, int len) {
 void ObWinPTPHost::destroy() {
     LOG_DEBUG("close start...");
     startSync_ = false;
+    if(receiverThread_.joinable()) {
+        receiverThread_.join();
+    }
+
     if(handle_ != nullptr) {
         pcap_close(handle_);
         handle_ = nullptr;

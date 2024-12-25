@@ -40,6 +40,8 @@ private:
     char *     name_;
     pcap_if_t *alldevs_;
     pcap_t *   handle_;
+
+    std::thread receiverThread_;
 };
 
 }  // namespace libobsensor
