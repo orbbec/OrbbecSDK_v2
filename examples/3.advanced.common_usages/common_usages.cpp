@@ -55,6 +55,8 @@ void startStream();
 
 void inputWatcher();
 
+std::string convertSensorTypeToString(OBSensorType sensorType);
+
 int main(void) try {
 
     // create window for render
@@ -273,8 +275,8 @@ void startStream() {
     std::cout << "Stream started!" << std::endl;
 }
 std::shared_ptr<ob::FrameSet> fileterAlign(std::shared_ptr<ob::FrameSet> frameset) {
-    auto newFrame    = align->process(frameset);
-    if (!newFrame) {
+    auto newFrame = align->process(frameset);
+    if(!newFrame) {
         return nullptr;
     }
     auto newFrameSet = newFrame->as<ob::FrameSet>();
@@ -282,7 +284,7 @@ std::shared_ptr<ob::FrameSet> fileterAlign(std::shared_ptr<ob::FrameSet> framese
 }
 void handleFrameset(std::shared_ptr<ob::FrameSet> frameset) {
     auto alignFrameSet = fileterAlign(frameset);
-    //If no depthframe is present, it is discarded
+    // If no depthframe is present, it is discarded
     if(frameset->getCount() < 3) {
         return;
     }
@@ -318,10 +320,13 @@ void getCameraParams() {
                 auto type       = item.first;
                 auto intrinsics = profile->getIntrinsic();
                 auto distortion = profile->getDistortion();
-                std::cout << type << " intrinsics - " << "fx:" << intrinsics.fx << ", fy: " << intrinsics.fy << ", cx: " << intrinsics.cx
-                          << ", cy: " << intrinsics.cy << " ,width: " << intrinsics.width << ", height: " << intrinsics.height << std::endl;
+                auto typeString = convertSensorTypeToString(type);
+                std::cout << typeString << " intrinsics: "
+                          << "fx:" << intrinsics.fx << ", fy: " << intrinsics.fy << ", cx: " << intrinsics.cx << ", cy: " << intrinsics.cy
+                          << " ,width: " << intrinsics.width << ", height: " << intrinsics.height << std::endl;
 
-                std::cout << "rgbDistortion k1:" << distortion.k1 << ", k2:" << distortion.k2 << ", k3:" << distortion.k3 << ", k4:" << distortion.k4
+                std::cout << typeString << " distortion: "
+                          << "k1:" << distortion.k1 << ", k2:" << distortion.k2 << ", k3:" << distortion.k3 << ", k4:" << distortion.k4
                           << ", k5:" << distortion.k5 << ", k6:" << distortion.k6 << ", p1:" << distortion.p1 << ", p2:" << distortion.p2 << std::endl;
             }
         }
@@ -856,3 +861,23 @@ void inputWatcher() {
     }
 }
 
+std::string convertSensorTypeToString(OBSensorType sensorType) {
+    switch(sensorType) {
+    case OB_SENSOR_DEPTH:
+        return "Depth";
+    case OB_SENSOR_COLOR:
+        return "Color";
+    case OB_SENSOR_IR:
+        return "IR";
+    case OB_SENSOR_ACCEL:
+        return "Accel";
+    case OB_SENSOR_GYRO:
+        return "Gyro";
+    case OB_SENSOR_IR_LEFT:
+        return "IR Left";
+    case OB_SENSOR_IR_RIGHT:
+        return "IR Right";
+    default:
+        return "Unknown";
+    }
+}

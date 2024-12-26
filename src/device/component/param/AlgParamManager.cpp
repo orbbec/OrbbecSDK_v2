@@ -132,8 +132,8 @@ void AlgParamManagerBase::bindIntrinsic(std::vector<std::shared_ptr<const Stream
                 throw libobsensor::unsupported_operation_exception("Can not find matched camera param!");
             }
 
-            auto        param                      = calibrationCameraParamList_.at(d2cProfile.paramIndex);
-            auto        postProcessParam           = d2cProfile.postProcessParam;
+            auto param            = calibrationCameraParamList_.at(d2cProfile.paramIndex);
+            auto postProcessParam = d2cProfile.postProcessParam;
 
             // Fix intrinsic from calibration to d2c profile according to the ratio of resolution
             auto ratio = static_cast<float>(d2cProfile.depthWidth) / param.depthIntrinsic.width;
@@ -166,7 +166,7 @@ void AlgParamManagerBase::bindIntrinsic(std::vector<std::shared_ptr<const Stream
             if(mirrored) {
                 // mirror intrinsic
                 intrinsic.cx  = (float)1.0 * intrinsic.width - intrinsic.cx - 1;
-                distortion.p2 = -distortion.p2;
+                distortion.p2 = distortion.p2 != 0.0f ? -distortion.p2 : 0.0f;
             }
 
             if(streamType == OB_STREAM_COLOR) {

@@ -171,7 +171,7 @@ void G330Device::init() {
 }
 
 std::shared_ptr<const StreamProfile> G330Device::loadDefaultStreamProfile(OBSensorType sensorType) {
-    std::shared_ptr<StreamProfile> defaultStreamProfile = nullptr;
+    std::shared_ptr<const StreamProfile> defaultStreamProfile = nullptr;
     LOG_DEBUG("loadDefaultStreamProfile: deviceConnectionType:={}", deviceInfo_->connectionType_);
 
     OBStreamType defStreamType = OB_STREAM_UNKNOWN;
@@ -248,19 +248,18 @@ std::shared_ptr<const StreamProfile> G330Device::loadDefaultStreamProfile(OBSens
         LOG_DEBUG("default profile StreamType:{}, Format:{}, Width:{}, Height:{}, Fps:{}", defStreamType, defFormat, defWidth, defHeight, defFps);
     }
 
+    if(!defaultStreamProfile) {
+        // load default stream profile from env config
+        defaultStreamProfile = StreamProfileFactory::getDefaultStreamProfileFromEnvConfig(deviceInfo_->name_, sensorType);
+    }
+
     return defaultStreamProfile;
 }
 
 void G330Device::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
-    auto streamProfile = StreamProfileFactory::getDefaultStreamProfileFromEnvConfig(deviceInfo_->name_, sensor->getSensorType());
-    if(streamProfile) {
-        auto defaultStreamProfile = loadDefaultStreamProfile(sensor->getSensorType());
-        if(defaultStreamProfile != nullptr) {
-            sensor->updateDefaultStreamProfile(defaultStreamProfile);
-        }
-        else {
-            sensor->updateDefaultStreamProfile(streamProfile);
-        }
+    auto defaultStreamProfile = loadDefaultStreamProfile(sensor->getSensorType());
+    if(defaultStreamProfile != nullptr) {
+        sensor->updateDefaultStreamProfile(defaultStreamProfile);
     }
 
     // bind params: extrinsics, intrinsics, etc.
@@ -920,9 +919,9 @@ void G330Device::initProperties() {
     propertyServer->registerProperty(OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT, "rw", "rw", d2dPropertyAccessor);
 
     auto privatePropertyAccessor = std::make_shared<PrivateFilterPropertyAccessor>(this);
-    propertyServer->registerProperty(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL, "rw", "rw", privatePropertyAccessor);
-    propertyServer->registerProperty(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT, "rw", "rw", privatePropertyAccessor);
-    propertyServer->registerProperty(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_SPECKLE_SIZE_INT, "rw", "rw", privatePropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_DEPTH_SOFT_FILTER_BOOL, "rw", "rw", privatePropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_DEPTH_MAX_DIFF_INT, "rw", "rw", privatePropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_DEPTH_MAX_SPECKLE_SIZE_INT, "rw", "rw", privatePropertyAccessor);
 
     auto sensors = getSensorTypeList();
     for(auto &sensor: sensors) {
@@ -1064,6 +1063,9 @@ void G330Device::initProperties() {
 std::vector<std::shared_ptr<IFilter>> G330Device::createRecommendedPostProcessingFilters(OBSensorType type) {
     auto filterFactory = FilterFactory::getInstance();
     if(type == OB_SENSOR_DEPTH) {
+        // activate depth frame processor library
+        getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR, false);
+
         std::vector<std::shared_ptr<IFilter>> depthFilterList;
 
         if(filterFactory->isFilterCreatorExists("DecimationFilter")) {
@@ -1123,6 +1125,9 @@ std::vector<std::shared_ptr<IFilter>> G330Device::createRecommendedPostProcessin
         return depthFilterList;
     }
     else if(type == OB_SENSOR_COLOR) {
+        // activate color frame processor library
+        getComponentT<FrameProcessor>(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR, false);
+
         std::vector<std::shared_ptr<IFilter>> colorFilterList;
         if(filterFactory->isFilterCreatorExists("DecimationFilter")) {
             auto decimationFilter = filterFactory->createFilter("DecimationFilter");
@@ -1130,6 +1135,26 @@ std::vector<std::shared_ptr<IFilter>> G330Device::createRecommendedPostProcessin
             colorFilterList.push_back(decimationFilter);
         }
         return colorFilterList;
+    }
+    else if(type == OB_SENSOR_IR_LEFT) {
+        getComponentT<FrameProcessor>(OB_DEV_COMPONENT_LEFT_IR_FRAME_PROCESSOR, false);
+        std::vector<std::shared_ptr<IFilter>> leftIRFilterList;
+        if(filterFactory->isFilterCreatorExists("SequenceIdFilter")) {
+            auto sequenceIdFilter = filterFactory->createFilter("SequenceIdFilter");
+            sequenceIdFilter->enable(false);
+            leftIRFilterList.push_back(sequenceIdFilter);
+            return leftIRFilterList;
+        }
+    }
+    else if(type == OB_SENSOR_IR_RIGHT) {
+        getComponentT<FrameProcessor>(OB_DEV_COMPONENT_RIGHT_IR_FRAME_PROCESSOR, false);
+        std::vector<std::shared_ptr<IFilter>> rightIRFilterList;
+        if(filterFactory->isFilterCreatorExists("SequenceIdFilter")) {
+            auto sequenceIdFilter = filterFactory->createFilter("SequenceIdFilter");
+            sequenceIdFilter->enable(false);
+            rightIRFilterList.push_back(sequenceIdFilter);
+            return rightIRFilterList;
+        }
     }
 
     return {};

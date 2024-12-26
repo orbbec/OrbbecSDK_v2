@@ -21,7 +21,7 @@ void check_ob_error(ob_error **err) {
 
 int select_index(const char *prompt, int min_value, int max_value) {  // todo: to support select index > 9
     int value = 0;
-    printf("\n%s (Input a number between %d and %d or \'q\' to exit program): ", prompt, min_value, max_value);
+    printf("\n%s (Input device index or \'q\' to exit program): ", prompt);
     while(true) {
         char input;
         int  ret = scanf("%c", &input);

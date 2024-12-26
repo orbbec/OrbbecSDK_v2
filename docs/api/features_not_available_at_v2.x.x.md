@@ -8,8 +8,5 @@ In order to reduce coupling and improve performance, OrbbecSDK v2.x will no long
 
 The recording and playback function is temporarily unavaiable and will soon be redesigned and released in a future version of OrbbecSDK v2.x. 
 
-## Firmware upgrade and OrbbecViewer OTA function
-
-The firmware upgrade function is temporarily unavaiable and will soon be redesigned and released in a future version of OrbbecSDK v2.x. Current users need to use OrbbecSDK v1.x and tools based on OrbbecSDK v1.x to upgrade the firmware.
 
 

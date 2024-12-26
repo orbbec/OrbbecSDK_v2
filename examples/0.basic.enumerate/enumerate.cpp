@@ -97,7 +97,7 @@ void enumerateSensors(std::shared_ptr<ob::Device> device) {
         // Select a sensor.
         int sensorSelected = ob_smpl::getInputOption();
         if(sensorSelected >= static_cast<int>(sensorList->getCount()) || sensorSelected < 0) {
-            if (sensorSelected == -1) {
+            if(sensorSelected == -1) {
                 break;
             }
             else {
@@ -136,16 +136,16 @@ int main(void) try {
             device = deviceList->getDevice(index);
             // Get device information from device
             deviceInfo = device->getDeviceInfo();
-            std::cout << " - " << index << ". name: " << deviceInfo->getName() << " pid: " << deviceInfo->getPid() << " SN: " << deviceInfo->getSerialNumber()
-                      << std::endl;
+            std::cout << "  " << index << " - device name: " << deviceInfo->getName() << ", device pid: " << deviceInfo->getPid()
+                      << ", device sn: " << deviceInfo->getSerialNumber() << ", connection type:" << deviceInfo->getConnectionType() << std::endl;
         }
 
-        std::cout << "enumerate sensors of device (input device index or \'ESC\' to exit program):" <<std::endl;
+        std::cout << "Select a device to enumerate its sensors (Input device index or \'ESC\' to exit program):" << std::endl;
 
         // select a device.
         int deviceSelected = ob_smpl::getInputOption();
         if(deviceSelected >= static_cast<int>(deviceList->getCount()) || deviceSelected < 0) {
-            if (deviceSelected == -1) {
+            if(deviceSelected == -1) {
                 break;
             }
             else {
@@ -167,4 +167,3 @@ catch(ob::Error &e) {
     ob_smpl::waitForKeyPressed();
     exit(EXIT_FAILURE);
 }
-
