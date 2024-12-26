@@ -44,8 +44,10 @@ void VendorTCPClient::socketConnect() {
     uint32_t commTimeout = COMM_TIMEOUT_MS;
 #else
     TIMEVAL commTimeout;
-    commTimeout.tv_sec  = COMM_TIMEOUT_MS / 1000;
-    commTimeout.tv_usec = COMM_TIMEOUT_MS % 1000 * 1000;
+    //commTimeout.tv_sec  = COMM_TIMEOUT_MS / 1000;
+    //commTimeout.tv_usec = COMM_TIMEOUT_MS % 1000 * 1000;
+    commTimeout.tv_sec  = 2;
+    commTimeout.tv_usec = 0;
 #endif
 
     setsockopt(socketFd_, SOL_SOCKET, SO_SNDTIMEO, (char *)&commTimeout, sizeof(commTimeout));  // Send timeout limit
