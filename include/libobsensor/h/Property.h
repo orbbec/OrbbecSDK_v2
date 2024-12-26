@@ -460,7 +460,14 @@ typedef enum {
      * @brief laser pattern sync with delay(us)
      */
     OB_PROP_FRAME_INTERLEAVE_LASER_PATTERN_SYNC_DELAY_INT = 206,
-
+    /**
+     * @brief hardware noise remove filter switch
+     */
+    OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL = 211,
+    /**
+     * @brief hardware noise remove filter threshold ,range [0.0 - 1.0]
+     */
+    OB_PROP_HW_NOISE_REMOVE_FILTER_THRESHOLD_FLOAT = 212,
     /**
      * @brief Baseline calibration parameters
      */

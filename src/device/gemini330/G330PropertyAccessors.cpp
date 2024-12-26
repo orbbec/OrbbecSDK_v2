@@ -121,4 +121,65 @@ void G330Disp2DepthPropertyAccessor::markOutputDisparityFrame(bool enable) {
     }
 }
 
+G330HWNoiseRemovePropertyAccessor::G330HWNoiseRemovePropertyAccessor(IDevice *owner) : owner_(owner) {}
+
+void G330HWNoiseRemovePropertyAccessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
+    switch(propertyId) {
+    case OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL: {
+        auto processor = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        processor->setPropertyValue(propertyId, value);
+    } break;
+    case OB_PROP_HW_NOISE_REMOVE_FILTER_THRESHOLD_FLOAT: {
+        auto processor = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        // due to the firmware not supporting the log function, the log function conversion is done in the SDK.
+        auto            threhold = log(value.floatValue / (1 - value.floatValue));
+        OBPropertyValue hwNoiseRemoveFilterThreshold;
+        hwNoiseRemoveFilterThreshold.floatValue = threhold;
+        processor->setPropertyValue(propertyId, hwNoiseRemoveFilterThreshold);
+    } break;
+
+    default: {
+        auto commandPort = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        commandPort->setPropertyValue(propertyId, value);
+    } break;
+    }
+}
+
+void G330HWNoiseRemovePropertyAccessor::getPropertyValue(uint32_t propertyId, OBPropertyValue *value) {
+    switch(propertyId) {
+    case OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL: {
+        auto processor = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        processor->getPropertyValue(propertyId, value);
+    } break;
+    case OB_PROP_HW_NOISE_REMOVE_FILTER_THRESHOLD_FLOAT: {
+        auto            processor = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        OBPropertyValue hwNoiseRemoveFilterThreshold;
+        processor->getPropertyValue(propertyId, &hwNoiseRemoveFilterThreshold);
+        auto threshold    = exp(hwNoiseRemoveFilterThreshold.floatValue) / (1 + exp(hwNoiseRemoveFilterThreshold.floatValue));
+        value->floatValue = threshold;
+
+    } break;
+    default: {
+        auto commandPort = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        commandPort->getPropertyValue(propertyId, value);
+    } break;
+    }
+}
+
+void G330HWNoiseRemovePropertyAccessor::getPropertyRange(uint32_t propertyId, OBPropertyRange *range) {
+    switch(propertyId) {
+    case OB_PROP_HW_NOISE_REMOVE_FILTER_THRESHOLD_FLOAT: {
+        auto commandPort = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        commandPort->getPropertyRange(propertyId, range);
+        auto cur              = exp(range->cur.floatValue) / (1 + exp(range->cur.floatValue));
+        range->cur.floatValue = cur;
+    } break;
+
+    default: {
+        auto commandPort = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        commandPort->getPropertyRange(propertyId, range);
+    } break;
+    }
+}
+
 }  // namespace libobsensor
