@@ -75,6 +75,7 @@ const std::vector<uint16_t> FemtoMegaDevPids = {
     0x06c0,  // Femto Mega i
 };
 #define OB_FEMTO_MEGA_PID 0x0669
+#define IS_OB_FEMTO_MEGA_I_PID(pid) (((pid) == 0x06c0))
 
 const std::vector<uint16_t> FemtoBoltDevPids = {
     0x066B,  // Femto Bolt
