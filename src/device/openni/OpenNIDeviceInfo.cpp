@@ -6,6 +6,7 @@
 #include "DevicePids.hpp"
 #include "utils/Utils.hpp"
 #include "OpenNIDeviceBase.hpp"
+#include "MaxProDevice.hpp"
 #include "exception/ObException.hpp"
 #include "ethernet/NetPortGroup.hpp"
 #include "ethernet/RTSPStreamPort.hpp"
@@ -54,17 +55,9 @@ OpenNIDeviceInfo::OpenNIDeviceInfo(const SourcePortInfoList groupedInfoList) {
 OpenNIDeviceInfo::~OpenNIDeviceInfo() noexcept {}
 
 std::shared_ptr<IDevice> OpenNIDeviceInfo::createDevice() const {
-    /*if(pid_ == 0x0671) {
-        if(IS_NET_PORT(sourcePortInfoList_.front()->portType)) {
-            return std::make_shared<G2XLNetDevice>(shared_from_this());
-        }
-        return std::make_shared<G2XLUSBDevice>(shared_from_this());
+    if(pid_ == OB_DEVICE_MAX_PRO_PID) {
+        return std::make_shared<MaxProDevice>(shared_from_this());
     }
-    else if(pid_ == 0x0808 || pid_ == 0x0809) {
-        return std::make_shared<G210Device>(shared_from_this());
-    }
-    return std::make_shared<G2Device>(shared_from_this());*/
-
     return std::make_shared<OpenNIDeviceBase>(shared_from_this());
 }
 

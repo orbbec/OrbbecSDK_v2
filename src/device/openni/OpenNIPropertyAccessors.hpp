@@ -22,7 +22,7 @@ private:
     void markOutputDisparityFrame(bool enable);
 
 private:
-    IDevice *owner_;
+    IDevice *owner_; 
 
     bool swDisparityToDepthEnabled_;
 

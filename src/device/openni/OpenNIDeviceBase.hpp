@@ -5,6 +5,8 @@
 #include "DeviceBase.hpp"
 #include "IDeviceManager.hpp"
 #include "frameprocessor/FrameProcessor.hpp"
+#include "property/PropertyServer.hpp"
+#include "property/CommonPropertyAccessors.hpp"
 
 #include <map>
 #include <memory>
@@ -18,14 +20,16 @@ public:
 
     std::vector<std::shared_ptr<IFilter>> createRecommendedPostProcessingFilters(OBSensorType type) override;
 
-private:
-    void init() override;
-    void initSensorList();
-    void initProperties();
+protected:
+    virtual void init();
+    virtual void initSensorList();
+    virtual void initProperties();
 
 protected:
     const uint64_t deviceTimeFreq_ = 1000;     // in ms
     const uint64_t frameTimeFreq_  = 1000000;  // in us
+    std::function<std::shared_ptr<IFrameTimestampCalculator>()> videoFrameTimestampCalculatorCreator_;
+    std::shared_ptr<LazySuperPropertyAccessor>                  vendorPropertyAccessor_;
 };
 
 }  // namespace libobsensor
