@@ -386,15 +386,17 @@ OBCameraParam Pipeline::getCameraParam() {
 
     auto colorStreamProfile = config_->getEnabledStreamProfile(OB_STREAM_COLOR);
     auto depthStreamProfile = config_->getEnabledStreamProfile(OB_STREAM_DEPTH);
-    if(!colorStreamProfile || !depthStreamProfile) {
-        return curCameraParam;
+    if(colorStreamProfile) {
+        curCameraParam.rgbIntrinsic  = colorStreamProfile->as<VideoStreamProfile>()->getIntrinsic();
+        curCameraParam.rgbDistortion = colorStreamProfile->as<VideoStreamProfile>()->getDistortion();
     }
-
-    curCameraParam.rgbIntrinsic    = colorStreamProfile->as<VideoStreamProfile>()->getIntrinsic();
-    curCameraParam.rgbDistortion   = colorStreamProfile->as<VideoStreamProfile>()->getDistortion();
-    curCameraParam.depthIntrinsic  = depthStreamProfile->as<VideoStreamProfile>()->getIntrinsic();
-    curCameraParam.depthDistortion = depthStreamProfile->as<VideoStreamProfile>()->getDistortion();
-    curCameraParam.transform       = depthStreamProfile->getExtrinsicTo(colorStreamProfile);
+    if(depthStreamProfile) {
+        curCameraParam.depthIntrinsic  = depthStreamProfile->as<VideoStreamProfile>()->getIntrinsic();
+        curCameraParam.depthDistortion = depthStreamProfile->as<VideoStreamProfile>()->getDistortion();
+    }
+    if(colorStreamProfile && depthStreamProfile) {
+        curCameraParam.transform = depthStreamProfile->getExtrinsicTo(colorStreamProfile);
+    }
 
     return curCameraParam;
 }
