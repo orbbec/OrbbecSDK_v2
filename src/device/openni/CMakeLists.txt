@@ -11,7 +11,9 @@ target_sources(
     ${CMAKE_CURRENT_LIST_DIR}/OpenNIDeviceBase.hpp
     ${CMAKE_CURRENT_LIST_DIR}/OpenNIAlgParamManager.cpp
     ${CMAKE_CURRENT_LIST_DIR}/OpenNIAlgParamManager.hpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenNIPropertyAccessors.cpp
     ${CMAKE_CURRENT_LIST_DIR}/OpenNIPropertyAccessors.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/OpenNIPropertyAccessors.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/MaxProDevice.cpp
+	${CMAKE_CURRENT_LIST_DIR}/MaxProDevice.hpp
 )
 
