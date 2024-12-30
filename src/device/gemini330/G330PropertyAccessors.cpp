@@ -83,7 +83,7 @@ void G330Disp2DepthPropertyAccessor::getPropertyValue(uint32_t propertyId, OBPro
     } break;
     case OB_PROP_DISP_SEARCH_OFFSET_INT: {
         auto commandPort = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
-        commandPort->getPropertyValue(OB_PROP_DISPARITY_TO_DEPTH_BOOL, value);
+        commandPort->getPropertyValue(OB_PROP_DISP_SEARCH_OFFSET_INT, value);
     } break;
     default: {
         auto commandPort = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
