@@ -77,10 +77,9 @@ void OpenNIDeviceBase::initSensorList() {
                     { FormatFilterPolicy::REMOVE, OB_FORMAT_Z16, OB_FORMAT_ANY, nullptr },
                 };
 
-                auto formatConverter = getSensorFrameFilter("FrameUnpacker", OB_SENSOR_IR, false);
+                auto formatConverter = getSensorFrameFilter("FrameUnpacker", OB_SENSOR_DEPTH, true);
                 if(formatConverter) {
                     formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_Y12, OB_FORMAT_Y16, formatConverter });
-                    formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_Y11, OB_FORMAT_Y16, formatConverter });
                 }
                 sensor->updateFormatFilterConfig(formatFilterConfigs);
 
@@ -93,14 +92,13 @@ void OpenNIDeviceBase::initSensorList() {
                 }
 
                 auto propServer = getPropertyServer();
-                propServer->setPropertyValueT<bool>(OB_PROP_DISPARITY_TO_DEPTH_BOOL, false);
                 propServer->setPropertyValueT<bool>(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL, true);
                 sensor->markOutputDisparityFrame(false);
 
                 propServer->setPropertyValueT(OB_PROP_DEPTH_PRECISION_LEVEL_INT, OB_PRECISION_1MM);
                 sensor->setDepthUnit(1.0f);
 
-                //initSensorStreamProfile(sensor);
+                initSensorStreamProfile(sensor);
 
                 return sensor;
             },
@@ -144,11 +142,6 @@ void OpenNIDeviceBase::initSensorList() {
                 std::vector<FormatFilterConfig> formatFilterConfigs = {
                     { FormatFilterPolicy::REMOVE, OB_FORMAT_Z16, OB_FORMAT_ANY, nullptr },
                 };
-
-                auto formatConverter = getSensorFrameFilter("FrameUnpacker", OB_SENSOR_IR, false);
-                if(formatConverter) {
-                    formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_Y10, OB_FORMAT_Y16, formatConverter });
-                }
                 sensor->updateFormatFilterConfig(formatFilterConfigs);
 
                 auto frameTimestampCalculator = videoFrameTimestampCalculatorCreator_();
@@ -159,7 +152,7 @@ void OpenNIDeviceBase::initSensorList() {
                     sensor->setFrameProcessor(frameProcessor.get());
                 }
 
-                //initSensorStreamProfile(sensor);
+                initSensorStreamProfile(sensor);
                 return sensor;
             },
             true);
@@ -171,6 +164,26 @@ void OpenNIDeviceBase::initSensorList() {
             auto frameProcessor = factory->createFrameProcessor(OB_SENSOR_IR);
             return frameProcessor;
         });
+    }
+}
+
+void OpenNIDeviceBase::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
+    auto streamProfile = StreamProfileFactory::getDefaultStreamProfileFromEnvConfig(deviceInfo_->name_, sensor->getSensorType());
+    if(streamProfile) {
+        sensor->updateDefaultStreamProfile(streamProfile);
+    }
+
+    // bind params: extrinsics, intrinsics, etc.
+    auto profiles = sensor->getStreamProfileList();
+    {
+        auto algParamManager = getComponentT<OpenNIAlgParamManager>(OB_DEV_COMPONENT_ALG_PARAM_MANAGER);
+        algParamManager->bindStreamProfileParams(profiles);
+    }
+
+    auto sensorType = sensor->getSensorType();
+    LOG_INFO("Sensor {} created! Found {} stream profiles.", sensorType, profiles.size());
+    for(auto &profile: profiles) {
+        LOG_INFO(" - {}", profile);
     }
 }
 
