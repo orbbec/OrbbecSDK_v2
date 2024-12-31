@@ -24,7 +24,7 @@ protected:
     virtual void init();
     virtual void initSensorList();
     virtual void initProperties();
-    void         initSensorStreamProfile(std::shared_ptr<ISensor> sensor);
+    virtual void initSensorStreamProfile(std::shared_ptr<ISensor> sensor);
 
 protected:
     const uint64_t deviceTimeFreq_ = 1000;     // in ms

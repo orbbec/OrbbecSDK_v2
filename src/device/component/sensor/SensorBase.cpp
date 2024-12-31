@@ -85,6 +85,10 @@ void SensorBase::setStreamProfileList(const StreamProfileList &profileList) {
     streamProfileList_ = profileList;
 }
 
+void SensorBase::reSetStreamProfileList(const StreamProfileList &profileList) {
+    streamProfileList_ = profileList;
+}
+
 void SensorBase::updateDefaultStreamProfile(const std::shared_ptr<const StreamProfile> &profile) {
     std::shared_ptr<const StreamProfile> defaultProfile;
     LOG_DEBUG("Set default stream profile to: {}", profile);
