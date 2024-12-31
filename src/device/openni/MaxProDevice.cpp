@@ -142,4 +142,38 @@ void MaxProDevice::initProperties() {
     }
 }
 
+ void MaxProDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
+    if(sensor->getSensorType() == OB_SENSOR_COLOR) {
+         StreamProfileList streamProfileList;
+         auto profiles = sensor->getStreamProfileList();
+         for(auto iter = profiles.begin(); iter != profiles.end(); ++iter) {
+             if((*iter)->is<VideoStreamProfile>()) {
+                 auto vsp = (*iter)->as<VideoStreamProfile>();
+                 if((vsp->getWidth() == 640 && vsp->getHeight() == 480 && vsp->getFps() == 5)
+                    || (vsp->getWidth() == 640 && vsp->getHeight() == 480 && vsp->getFps() == 10)
+                    || (vsp->getWidth() == 640 && vsp->getHeight() == 480 && vsp->getFps() == 15)
+                    || (vsp->getWidth() == 640 && vsp->getHeight() == 480 && vsp->getFps() == 20)
+                    || (vsp->getWidth() == 640 && vsp->getHeight() == 480 && vsp->getFps() == 25)
+                    || (vsp->getWidth() == 640 && vsp->getHeight() == 480 && vsp->getFps() == 30)
+                    || (vsp->getWidth() == 1280 && vsp->getHeight() == 960 && vsp->getFps() == 5)
+                    || (vsp->getWidth() == 1280 && vsp->getHeight() == 960 && vsp->getFps() == 10)
+                    || (vsp->getWidth() == 1280 && vsp->getHeight() == 960 && vsp->getFps() == 15)
+                    || (vsp->getWidth() == 1280 && vsp->getHeight() == 960 && vsp->getFps() == 20)
+                    || (vsp->getWidth() == 1280 && vsp->getHeight() == 960 && vsp->getFps() == 25)
+                    || (vsp->getWidth() == 1280 && vsp->getHeight() == 960 && vsp->getFps() == 30)
+                    || (vsp->getWidth() == 1600 && vsp->getHeight() == 1200 && vsp->getFps() == 5)
+                    || (vsp->getWidth() == 1600 && vsp->getHeight() == 1200 && vsp->getFps() == 10)
+                    || (vsp->getWidth() == 1600 && vsp->getHeight() == 1200 && vsp->getFps() == 15)
+                    || (vsp->getWidth() == 1600 && vsp->getHeight() == 1200 && vsp->getFps() == 20)
+                    || (vsp->getWidth() == 1600 && vsp->getHeight() == 1200 && vsp->getFps() == 25)
+                    || (vsp->getWidth() == 1600 && vsp->getHeight() == 1200 && vsp->getFps() == 30)) {
+                     streamProfileList.push_back(vsp);
+                 }
+             }
+         }
+         sensor->reSetStreamProfileList(streamProfileList);
+    }
+    OpenNIDeviceBase::initSensorStreamProfile(sensor);
+ }
+
 }  // namespace libobsensor
