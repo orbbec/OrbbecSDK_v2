@@ -37,7 +37,6 @@ public:
     virtual void updateFormatFilterConfig(const std::vector<FormatFilterConfig> &configs);
     void         setStreamProfileList(const StreamProfileList &profileList) override;
     void         setFrameMetadataModifer(std::shared_ptr<IFrameMetadataModifier> modifier);
-    void         reSetStreamProfileList(const StreamProfileList &profileList) override;
     void         setFrameProcessor(std::shared_ptr<FrameProcessor> frameProcessor);
 
 protected:
