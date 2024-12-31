@@ -37,10 +37,13 @@ public:
     virtual void updateFormatFilterConfig(const std::vector<FormatFilterConfig> &configs);
     void         setStreamProfileList(const StreamProfileList &profileList) override;
     void         setFrameMetadataModifer(std::shared_ptr<IFrameMetadataModifier> modifier);
+    void         reSetStreamProfileList(const StreamProfileList &profileList) override;
+    void         setFrameProcessor(std::shared_ptr<FrameProcessor> frameProcessor);
 
 protected:
     virtual void trySendStopStreamVendorCmd();
     void         onBackendFrameCallback(std::shared_ptr<Frame> frame);
+    void         outputFrame(std::shared_ptr<Frame> frame) override;
 
 protected:
     std::shared_ptr<LazySensor>                                                         lazySelf_;
