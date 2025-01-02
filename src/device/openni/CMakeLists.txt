@@ -13,6 +13,8 @@ target_sources(
     ${CMAKE_CURRENT_LIST_DIR}/OpenNIAlgParamManager.hpp
 	${CMAKE_CURRENT_LIST_DIR}/OpenNIPropertyAccessors.cpp
     ${CMAKE_CURRENT_LIST_DIR}/OpenNIPropertyAccessors.hpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenNIFrameTimestampCalculator.hpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenNIFrameTimestampCalculator.cpp
     ${CMAKE_CURRENT_LIST_DIR}/MaxProDevice.cpp
 	${CMAKE_CURRENT_LIST_DIR}/MaxProDevice.hpp
 )
