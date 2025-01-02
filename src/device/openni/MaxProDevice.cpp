@@ -28,7 +28,9 @@
 namespace libobsensor {
 
 constexpr uint8_t  INTERFACE_COLOR   = 0;
+constexpr uint8_t  INTERFACE_DEPTH   = 0;
 constexpr uint16_t MAX_PRO_COLOR_PID = 0x0560;
+constexpr uint16_t MAX_PRO_DEPTH_PID = 0x069e;
 
 MaxProDevice::MaxProDevice(const std::shared_ptr<const IDeviceEnumInfo> &info) : OpenNIDeviceBase(info) {
     init();
@@ -40,14 +42,79 @@ MaxProDevice::~MaxProDevice() noexcept {
 
 void MaxProDevice::init() {
     OpenNIDeviceBase::init();
-
-
 }
 
 void MaxProDevice::initSensorList() {
     OpenNIDeviceBase::initSensorList();
 
     const auto &sourcePortInfoList = enumInfo_->getSourcePortInfoList();
+    auto depthPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(), [](const std::shared_ptr<const SourcePortInfo> &portInfo) {
+        return portInfo->portType == SOURCE_PORT_USB_UVC && std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->infIndex == INTERFACE_DEPTH
+               && std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->pid == MAX_PRO_DEPTH_PID;
+    });
+
+    if(depthPortInfoIter != sourcePortInfoList.end()) {
+        auto depthPortInfo = *depthPortInfoIter;
+        registerComponent(
+            OB_DEV_COMPONENT_DEPTH_SENSOR,
+            [this, depthPortInfo]() {
+                auto port   = getSourcePort(depthPortInfo);
+                auto sensor = std::make_shared<DisparityBasedSensor>(this, OB_SENSOR_DEPTH, port);
+
+                std::vector<FormatFilterConfig> formatFilterConfigs = {
+                    { FormatFilterPolicy::REMOVE, OB_FORMAT_Z16, OB_FORMAT_ANY, nullptr },
+                };
+
+                auto formatConverter = getSensorFrameFilter("FrameUnpacker", OB_SENSOR_DEPTH, true);
+                if(formatConverter) {
+                    formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_Y12, OB_FORMAT_Y16, formatConverter });
+                }
+                sensor->updateFormatFilterConfig(formatFilterConfigs);
+
+                auto frameTimestampCalculator = videoFrameTimestampCalculatorCreator_();
+                sensor->setFrameTimestampCalculator(frameTimestampCalculator);
+
+                auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR, false);
+                if(frameProcessor) {
+                    sensor->setFrameProcessor(frameProcessor.get());
+                }
+
+                auto propServer = getPropertyServer();
+                propServer->setPropertyValueT<bool>(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL, true);
+                sensor->markOutputDisparityFrame(false);
+
+                propServer->setPropertyValueT(OB_PROP_DEPTH_PRECISION_LEVEL_INT, OB_PRECISION_1MM);
+                sensor->setDepthUnit(1.0f);
+
+                initSensorStreamProfile(sensor);
+
+                return sensor;
+            },
+            true);
+
+        registerSensorPortInfo(OB_SENSOR_DEPTH, depthPortInfo);
+
+        registerComponent(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR, [this]() {
+            auto factory        = getComponentT<FrameProcessorFactory>(OB_DEV_COMPONENT_FRAME_PROCESSOR_FACTORY);
+            auto frameProcessor = factory->createFrameProcessor(OB_SENSOR_DEPTH);
+            return frameProcessor;
+        });
+
+        // the main property accessor is using the depth port(uvc xu)
+        registerComponent(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR, [this, depthPortInfo]() {
+            auto port     = getSourcePort(depthPortInfo);
+            auto accessor = std::make_shared<VendorPropertyAccessor>(this, port);
+            return accessor;
+        });
+
+        // The device monitor is using the depth port(uvc xu)
+        /*registerComponent(OB_DEV_COMPONENT_DEVICE_MONITOR, [this, depthPortInfo]() {
+            auto port       = getSourcePort(depthPortInfo);
+            auto devMonitor = std::make_shared<DeviceMonitor>(this, port);
+            return devMonitor;
+        });*/
+    }
+
     auto colorPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(), [](const std::shared_ptr<const SourcePortInfo> &portInfo) {
         return portInfo->portType == SOURCE_PORT_USB_UVC && std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->infIndex == INTERFACE_COLOR
                && std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->pid == MAX_PRO_COLOR_PID;
@@ -75,14 +142,8 @@ void MaxProDevice::initSensorList() {
                 }
                 sensor->updateFormatFilterConfig(formatFilterConfigs);
 
-                /*auto colorMdParserContainer = getComponentT<IFrameMetadataParserContainer>(OB_DEV_COMPONENT_COLOR_FRAME_METADATA_CONTAINER);
-                sensor->setFrameMetadataParserContainer(colorMdParserContainer.get());*/
-
                 auto frameTimestampCalculator = videoFrameTimestampCalculatorCreator_();
                 sensor->setFrameTimestampCalculator(frameTimestampCalculator);
-
-                /*auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
-                sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);*/
 
                 auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR, false);
                 if(frameProcessor) {
