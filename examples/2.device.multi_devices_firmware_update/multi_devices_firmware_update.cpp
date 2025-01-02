@@ -175,22 +175,23 @@ bool getFirmwarePathFromCommandLine(int argc, char **argv, std::string &firmware
     std::vector<std::string> validExtensions = { ".bin", ".img" };
     firmwarePath                             = argv[1];
 
-    std::string extension = firmwarePath.substr(firmwarePath.size() - 4);
+    if(firmwarePath.size() > 4) {
+        std::string extension = firmwarePath.substr(firmwarePath.size() - 4);
 
-    if(firmwarePath.size() > 4 && std::find_if(validExtensions.begin(), validExtensions.end(), [extension](const std::string &validExtension) {
-                                      return extension == validExtension;
-                                  }) != validExtensions.end()) {
-        std::cout << "Firmware file confirmed: " << firmwarePath << std::endl << std::endl;
-        return true;
-    }
-    else {
-        std::cout << "Invalid input file: Please provide a valid firmware file, supported formats: ";
-        for(const auto &ext: validExtensions) {
-            std::cout << ext << " ";
+        auto result = std::find_if(validExtensions.begin(), validExtensions.end(),
+                                   [extension](const std::string &validExtension) { return extension == validExtension; });
+        if(result != validExtensions.end()) {
+            std::cout << "Firmware file confirmed: " << firmwarePath << std::endl << std::endl;
+            return true;
         }
-        std::cout << std::endl;
-        return false;
     }
+
+    std::cout << "Invalid input file: Please provide a valid firmware file, supported formats: ";
+    for(const auto &ext: validExtensions) {
+        std::cout << ext << " ";
+    }
+    std::cout << std::endl;
+    return false;
 }
 
 void printDeviceList() {
