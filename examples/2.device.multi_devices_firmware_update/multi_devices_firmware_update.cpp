@@ -89,7 +89,9 @@ int main(int argc, char *argv[]) try {
     for(const auto &device: misMatchDevices) {
         std::cout << "  - Name: " << device->getDeviceInfo()->getName() << std::endl;
     }
-    std::cout << "Please check use the correct firmware version and retry the upgrade." << std::endl;
+    if (misMatchDevices.size() > 0) {
+        std::cout << "Please check use the correct firmware version and retry the upgrade." << std::endl;
+    }
 
     std::cout << "\nFailure (" << failedDevices.size() << "):\n";
     for(const auto &device: failedDevices) {
