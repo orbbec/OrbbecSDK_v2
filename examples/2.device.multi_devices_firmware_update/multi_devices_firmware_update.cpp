@@ -27,13 +27,11 @@ std::vector<std::shared_ptr<ob::Device>> misMatchDevices{};
 std::vector<std::shared_ptr<ob::Device>> failedDevices{};
 
 int main(int argc, char *argv[]) try {
-    (void)argc;
-    (void)argv;
-    std::string firmwarePath("~/testPkg/firmware/MFG_MX6600_Gemini2_L_1453.bin");
-    // if(!getFirmwarePathFromCommandLine(argc, argv, firmwarePath)) {
-    //     std::cout << "Press any key to exit..." << std::endl;
-    //     exit(EXIT_FAILURE);
-    // }
+    std::string firmwarePath;
+    if(!getFirmwarePathFromCommandLine(argc, argv, firmwarePath)) {
+        std::cout << "Press any key to exit..." << std::endl;
+        exit(EXIT_FAILURE);
+    }
 
     std::shared_ptr<ob::Context> context = std::make_shared<ob::Context>();
 
@@ -101,7 +99,7 @@ int main(int argc, char *argv[]) try {
     std::cout << "\nUpgrade process completed. Please reboot devices manually." << std::endl;
     std::cout << "Press any key to exit..." << std::endl;
     ob_smpl::waitForKeyPressed();
-    return EXIT_SUCCESS;
+    return 0;
 }
 catch(ob::Error &e) {
     std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\ntype:" << e.getExceptionType() << std::endl;
