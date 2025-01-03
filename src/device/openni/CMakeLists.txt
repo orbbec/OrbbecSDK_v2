@@ -17,5 +17,9 @@ target_sources(
 	${CMAKE_CURRENT_LIST_DIR}/OpenNIFrameTimestampCalculator.cpp
     ${CMAKE_CURRENT_LIST_DIR}/MaxProDevice.cpp
 	${CMAKE_CURRENT_LIST_DIR}/MaxProDevice.hpp
+	${CMAKE_CURRENT_LIST_DIR}/MaxProStreamProfileFilter.cpp
+	${CMAKE_CURRENT_LIST_DIR}/MaxProStreamProfileFilter.hpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenNIVideoSensor.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenNIVideoSensor.hpp
 )
 
