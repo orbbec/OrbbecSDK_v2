@@ -21,7 +21,6 @@ protected:
     virtual void init() override;
     virtual void initSensorList() override;
     virtual void initProperties() override;
-    virtual void initSensorStreamProfile(std::shared_ptr<ISensor> sensor) override;
 
 private:
 
