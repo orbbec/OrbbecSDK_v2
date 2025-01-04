@@ -574,6 +574,11 @@ typedef enum {
      * @brief ASIC serial number
      */
     OB_STRUCT_ASIC_SERIAL_NUMBER = 1063,
+    
+    /**
+     * @brief Disparity offset interleaving
+     */
+    OB_STRUCT_DISP_OFFSET_CONFIG  = 1064,
 
     /**
      * @brief Color camera auto exposure
