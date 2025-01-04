@@ -35,7 +35,8 @@ FrameAggregator::FrameAggregator()
       frameAggregateOutputMode_(OB_FRAME_AGGREGATE_OUTPUT_ANY_SITUATION),
       frameCnt_(0),
       withColorFrame_(false),
-      matchingRateFirst_(true) {}
+      matchingRateFirst_(true),
+      maxNormalModeQueueSize_(MAX_NORMAL_MODE_QUEUE_SIZE) {}
 
 FrameAggregator::~FrameAggregator() noexcept {
     reset();
@@ -64,6 +65,14 @@ void FrameAggregator::updateConfig(std::shared_ptr<const Config> config, const b
 
         float maxSyncQueueSize = fps * MAX_FRAME_DELAY + 1;
         maxSyncQueueSize += ((maxSyncQueueSize - (int)maxSyncQueueSize) > 0 ? 1 : 0);
+        if(frameAggregateOutputMode_ == OB_FRAME_AGGREGATE_OUTPUT_DISABLE) {
+            maxSyncQueueSize        = 1;
+            maxNormalModeQueueSize_ = 1;
+        }
+        else {
+            maxNormalModeQueueSize_ = MAX_NORMAL_MODE_QUEUE_SIZE;
+        }
+
         auto halfTspGap = static_cast<uint32_t>(500.0f / fps + 0.5);  // +0.5 to complete rounding
         srcFrameQueueMap_.insert(
             { STREAM_FRAME_TYPE_MAP.find(profile->getType())->second, { std::queue<std::shared_ptr<const Frame>>(), (uint32_t)maxSyncQueueSize, halfTspGap } });
@@ -79,7 +88,7 @@ void FrameAggregator::pushFrame(std::shared_ptr<const Frame> frame) {
     for(auto &item: srcFrameQueueMap_) {
         if(item.first == frameType) {
             item.second.queue.push(frame);
-            uint32_t maxQueueSize_ = frameSyncMode_ == FrameSyncModeDisable ? MAX_NORMAL_MODE_QUEUE_SIZE : item.second.maxSyncQueueSize_;
+            uint32_t maxQueueSize_ = frameSyncMode_ == FrameSyncModeDisable ? maxNormalModeQueueSize_ : item.second.maxSyncQueueSize_;
             // auto size = item.second.queue.size();
             // LOG_INFO("Type: {}, queueSize: {}", frame->getType(), size);
             if(item.second.queue.size() >= maxQueueSize_) {
@@ -203,7 +212,7 @@ void FrameAggregator::tryAggregator() {
         else {
             // Asynchronous matching
             for(auto &item: srcFrameQueueMap_) {
-                if(!withEmptyQueue_ || item.second.queue.size() >= MAX_NORMAL_MODE_QUEUE_SIZE - 1) {
+                if(!withEmptyQueue_ || item.second.queue.size() >= maxNormalModeQueueSize_) {
                     auto &srcFrame = item.second.queue.front();
                     frameSet->pushFrame(std::move(srcFrame));
                     item.second.queue.pop();
@@ -252,6 +261,9 @@ void FrameAggregator::outputFrameset(std::shared_ptr<const FrameSet> frameSet) {
             FrameSetCallbackFunc_(frameSet);
         }
         else if(frameAggregateOutputMode_ == OB_FRAME_AGGREGATE_OUTPUT_ALL_TYPE_FRAME_REQUIRE && frameCnt_ == srcFrameQueueMap_.size()) {
+            FrameSetCallbackFunc_(frameSet);
+        }
+        else if(frameAggregateOutputMode_ == OB_FRAME_AGGREGATE_OUTPUT_DISABLE) {
             FrameSetCallbackFunc_(frameSet);
         }
     }

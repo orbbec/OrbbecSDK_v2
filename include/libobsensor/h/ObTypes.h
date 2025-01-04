@@ -1128,6 +1128,12 @@ typedef enum {
      * @attention In this mode, the user may return null when getting the specified type of data frame from the acquired FrameSet
      */
     OB_FRAME_AGGREGATE_OUTPUT_ANY_SITUATION,
+    /**
+     * @brief Disable Frame Aggreate
+     *
+     * @attention In this mode, All types of data frames will output independently.
+     */
+    OB_FRAME_AGGREGATE_OUTPUT_DISABLE,
 } OB_FRAME_AGGREGATE_OUTPUT_MODE,
     OBFrameAggregateOutputMode, ob_frame_aggregate_output_mode;
 #define OB_FRAME_AGGREGATE_OUTPUT_FULL_FRAME_REQUIRE OB_FRAME_AGGREGATE_OUTPUT_ALL_TYPE_FRAME_REQUIRE
