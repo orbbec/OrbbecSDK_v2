@@ -459,6 +459,11 @@ typedef enum {
     OB_PROP_CHECK_PPS_SYNC_IN_SIGNAL_BOOL = 195,
 
     /**
+     * @brief Disparity search range offset, range: [0, 127]
+     */
+    OB_PROP_DISP_SEARCH_OFFSET_INT = 196,
+
+    /**
      * @brief Repower device (cut off power and power on again)
      *
      * @brief Currently using for GMSL device, cut off power and power on again by GMSL host driver.
@@ -569,6 +574,11 @@ typedef enum {
      * @brief ASIC serial number
      */
     OB_STRUCT_ASIC_SERIAL_NUMBER = 1063,
+    
+    /**
+     * @brief Disparity offset interleaving
+     */
+    OB_STRUCT_DISP_OFFSET_CONFIG  = 1064,
 
     /**
      * @brief Color camera auto exposure
