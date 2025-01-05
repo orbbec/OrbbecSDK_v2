@@ -33,8 +33,15 @@ int main(int argc, char *argv[]) try {
         exit(EXIT_FAILURE);
     }
 
+    // Create a context to access the devices
     std::shared_ptr<ob::Context> context = std::make_shared<ob::Context>();
 
+#if defined(__linux__)
+    // On Linux, it is recommended to use the libuvc backend for device access as v4l2 is not always reliable on some systems for firmware update.
+    context->setUvcBackendType(OB_UVC_BACKEND_TYPE_LIBUVC);
+#endif
+
+    // Query the device list
     std::shared_ptr<ob::DeviceList> deviceList = context->queryDeviceList();
     if(deviceList->getCount() == 0) {
         std::cout << "No device found. Please connect a device first!" << std::endl;
@@ -43,6 +50,7 @@ int main(int argc, char *argv[]) try {
         exit(EXIT_FAILURE);
     }
 
+    // Get all devices
     for(uint32_t i = 0; i < deviceList->getCount(); ++i) {
         totalDevices.push_back(deviceList->getDevice(i));
     }
@@ -58,9 +66,13 @@ int main(int argc, char *argv[]) try {
             std::cout << "\nUpgrading device: " << i + 1 << "/" << totalDevices.size() 
                       << " - " << totalDevices[i]->getDeviceInfo()->getName() << std::endl;
 
+            // Upgrade each device with async set to false for synchronous calls.
+            // You can set a callback function to retrieve the device's upgrade progress and related information in real time.
             totalDevices[i]->updateFirmware(firmwarePath.c_str(), firmwareUpdateCallback, false);
         }
         catch(ob::Error &e) {
+            // Unexpected situations, such as device disconnection, will typically throw an exception.
+            // Note that common issues like verification failures are usually reported through the callback status.
             std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\ntype:" << e.getExceptionType()
                       << std::endl;
             finalFailure = true;
@@ -158,9 +170,11 @@ void firmwareUpdateCallback(OBFwUpdateState state, const char *message, uint8_t 
         finalFailure = false;
     }
     else if(state == ERR_MISMATCH) {
+        // If the device's firmware version does not match the image file, the callback status will be ERR_MISMATCH.
         finalMismatch = true;
     }
     else if(state < 0) {
+        // While state < 0, it means an error occurred.
         finalFailure = true;
     }
 }
