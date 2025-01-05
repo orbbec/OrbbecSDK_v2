@@ -251,7 +251,9 @@ typedef enum {
     ERR_IMAGE_SIZE      = -5, /**< Image file size error */
     ERR_OTHER           = -6, /**< other errors */
     ERR_DDR             = -7, /**< DDR access error */
-    ERR_TIMEOUT         = -8  /**< timeout error */
+    ERR_TIMEOUT         = -8,  /**< timeout error */
+    ERR_MISMATCH        = -9, /**< Mismatch firmware error */
+    ERR_UNSUPPORT_DEV   = -10, /**< Unsupported device error */
 } OBUpgradeState,
     OBFwUpdateState, ob_upgrade_state, ob_fw_update_state;
 
