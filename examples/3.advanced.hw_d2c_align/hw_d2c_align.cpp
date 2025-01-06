@@ -102,7 +102,9 @@ int main(void) try {
     auto config = createHwD2CAlignConfig(pipe);
     if(config == nullptr) {
         std::cerr << "Current device does not support hardware depth-to-color alignment." << std::endl;
-        return 1;
+        std::cout << "\nPress any key to exit.";
+        ob_smpl::waitForKeyPressed();
+        exit(EXIT_FAILURE);
     }
 
     // Start the pipeline with config
