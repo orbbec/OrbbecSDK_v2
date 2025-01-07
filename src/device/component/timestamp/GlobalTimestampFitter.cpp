@@ -11,7 +11,7 @@
 
 namespace libobsensor {
 GlobalTimestampFitter::GlobalTimestampFitter(IDevice *owner)
-    : DeviceComponentBase(owner), enable_(false), sampleLoopExit_(false), linearFuncParam_({ 0, 0, 0, 0 }) {
+    : DeviceComponentBase(owner), enable_(false), sampleLoopExit_(false), linearFuncParam_({ 0, 0, 0, 0 }), maxValidRtt_(MAX_VALID_RTT) {
     std::string deviceName = utils::string::removeSpace(owner->getInfo()->name_);
     auto        envConfig  = EnvConfig::getInstance();
     int         value      = 0;
@@ -84,6 +84,10 @@ void GlobalTimestampFitter::resume() {
     }
 }
 
+void GlobalTimestampFitter::setMaxValidRtt(uint64_t maxValidTime) {
+    maxValidRtt_ = maxValidTime;
+}
+
 void GlobalTimestampFitter::enable(bool en) {
     if(en == enable_) {
         return;
@@ -112,7 +116,6 @@ bool GlobalTimestampFitter::isEnabled() const {
 
 void GlobalTimestampFitter::fittingLoop() {
     const int      MAX_RETRY_COUNT = 5;
-    const uint64_t MAX_VALID_RTT   = 20000;  // 10ms
 
     int retryCount = 0;
     do {
@@ -129,7 +132,7 @@ void GlobalTimestampFitter::fittingLoop() {
             auto sysTsp2Usec = utils::getNowTimesUs();
             sysTspUsec       = (sysTsp2Usec + sysTsp1Usec) / 2;
             devTime.rtt      = sysTsp2Usec - sysTsp1Usec;
-            if(devTime.rtt > MAX_VALID_RTT) {
+            if(devTime.rtt > maxValidRtt_) {
                 LOG_DEBUG("Get device time rtt is too large! rtt={}", devTime.rtt);
                 throw std::runtime_error("RTT too large");
             }
@@ -170,6 +173,7 @@ void GlobalTimestampFitter::fittingLoop() {
         double   Ey       = 0;
         double   Exy      = 0;
         auto     it       = samplingQueue_.begin();
+        uint32_t n = 0;
         while(it != samplingQueue_.end()) {
             auto systemTimestamp = it->systemTimestamp - offset_y;
             auto deviceTimestamp = it->deviceTimestamp - offset_x;
@@ -178,6 +182,7 @@ void GlobalTimestampFitter::fittingLoop() {
             Ey += systemTimestamp;
             Exy += deviceTimestamp * systemTimestamp;
             it++;
+            n++;
         }
 
         {
