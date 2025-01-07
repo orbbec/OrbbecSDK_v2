@@ -14,6 +14,7 @@
 #include "property/PropertyServer.hpp"
 #include "property/VendorPropertyAccessor.hpp"
 #include "property/CommonPropertyAccessors.hpp"
+#include "property/InternalProperty.hpp"
 
 #include <algorithm>
 
@@ -37,6 +38,7 @@ void BootDevice::init() {
     auto propertyServer = std::make_shared<PropertyServer>(this);
     propertyServer->registerProperty(OB_STRUCT_VERSION, "", "r", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_STRUCT_ASIC_SERIAL_NUMBER, "r", "r", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_REBOOT_DEVICE_BOOL, "", "w", vendorPropertyAccessor);
     registerComponent(OB_DEV_COMPONENT_PROPERTY_SERVER, propertyServer, true);
 
     fetchDeviceInfo();

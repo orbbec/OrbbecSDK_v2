@@ -2,6 +2,8 @@
 // Licensed under the MIT License.
 
 #include "VideoSensor.hpp"
+#include "ISensorStreamStrategy.hpp"
+#include "IDevice.hpp"
 #include "exception/ObException.hpp"
 #include "logger/LoggerInterval.hpp"
 #include "logger/LoggerHelper.hpp"
@@ -10,9 +12,7 @@
 #include "frame/Frame.hpp"
 #include "FilterDecorator.hpp"
 #include "publicfilters/FormatConverterProcess.hpp"
-#include "ISensorStreamStrategy.hpp"
-#include "IDevice.hpp"
-#include "component/property/InternalProperty.hpp"
+#include "property/InternalProperty.hpp"
 
 namespace libobsensor {
 
@@ -153,21 +153,15 @@ void VideoSensor::onBackendFrameCallback(std::shared_ptr<Frame> frame) {
 
     updateStreamState(STREAM_STATE_STREAMING);
 
+    if(frameMetadataModifier_) {
+        frameMetadataModifier_->modify(frame);
+    }
+
     if(currentFormatFilterConfig_ && currentFormatFilterConfig_->converter) {
         currentFormatFilterConfig_->converter->pushFrame(frame);
     }
     else {
         outputFrame(frame);
-    }
-}
-
-void VideoSensor::outputFrame(std::shared_ptr<Frame> frame) {
-    frame->setStreamProfile(activatedStreamProfile_);
-    if(frameProcessor_) {
-        frameProcessor_->pushFrame(frame);
-    }
-    else {
-        SensorBase::outputFrame(frame);
     }
 }
 
@@ -192,9 +186,11 @@ void VideoSensor::stop() {
     auto vsPort = std::dynamic_pointer_cast<IVideoStreamPort>(backend_);
     vsPort->stopStream(currentBackendStreamProfile_);
 
-    try { trySendStopStreamVendorCmd();}
-    catch(const std::exception &e) { 
-        LOG_WARN("Failed to send stop stream vendor command: {}", e.what()); 
+    try {
+        trySendStopStreamVendorCmd();
+    }
+    catch(const std::exception &e) {
+        LOG_WARN("Failed to send stop stream vendor command: {}", e.what());
     }
 
     updateStreamState(STREAM_STATE_STOPPED);
@@ -333,16 +329,11 @@ void VideoSensor::setStreamProfileList(const StreamProfileList &profileList) {
     }
 }
 
-void VideoSensor::setFrameProcessor(std::shared_ptr<FrameProcessor> frameProcessor) {
+void VideoSensor::setFrameMetadataModifer(std::shared_ptr<IFrameMetadataModifier> modifier) {
     if(isStreamActivated()) {
-        throw wrong_api_call_sequence_exception("Can not update frame processor while streaming");
+        throw wrong_api_call_sequence_exception("Can not update frame metadata modifier while streaming");
     }
-    frameProcessor_ = frameProcessor;
-    frameProcessor_->setCallback([this](std::shared_ptr<Frame> frame) {
-        auto deviceInfo = owner_->getInfo();
-        LOG_FREQ_CALC(DEBUG, 5000, "{}({}): {} frameProcessor_ callback frameRate={freq}fps", deviceInfo->name_, deviceInfo->deviceSn_, sensorType_);
-        SensorBase::outputFrame(frame);
-    });
+    frameMetadataModifier_ = modifier;
 }
 
 }  // namespace libobsensor

@@ -73,6 +73,8 @@ public:
         registerParser(OB_FRAME_METADATA_TYPE_HDR_SEQUENCE_NAME, makeStructureMetadataParser(&G330DepthUvcMetadata::sequence_name));
         registerParser(OB_FRAME_METADATA_TYPE_HDR_SEQUENCE_SIZE, makeStructureMetadataParser(&G330DepthUvcMetadata::sequence_size));
         registerParser(OB_FRAME_METADATA_TYPE_HDR_SEQUENCE_INDEX, makeStructureMetadataParser(&G330DepthUvcMetadata::sequence_id));
+        registerParser(OB_FRAME_METADATA_TYPE_DISPARITY_SEARCH_OFFSET, makeStructureMetadataParser(&G330DepthUvcMetadata::disparity_search_offset));
+        registerParser(OB_FRAME_METADATA_TYPE_DISPARITY_SEARCH_RANGE, makeStructureMetadataParser(&G330DepthUvcMetadata::disparity_search_range));
     }
 
     virtual ~G330DepthFrameMetadataParserContainer() = default;

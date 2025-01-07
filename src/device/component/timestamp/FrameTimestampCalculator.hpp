@@ -4,8 +4,9 @@
 #pragma once
 
 #include "IFrame.hpp"
+#include "IFrameTimestamp.hpp"
+#include "IFrameTimestamp.hpp"
 #include "DeviceComponentBase.hpp"
-#include "GlobalTimestampFitter.hpp"
 
 namespace libobsensor {
 class GlobalTimestampCalculator : public IFrameTimestampCalculator, public DeviceComponentBase {
@@ -20,7 +21,7 @@ public:
 private:
     uint64_t                               deviceTimeFreq_;
     uint64_t                               frameTimeFreq_;
-    std::shared_ptr<GlobalTimestampFitter> globalTimestampFitter_;
+    std::shared_ptr<IGlobalTimestampFitter> globalTimestampFitter_;
 };
 
 class FrameTimestampCalculatorDirectly : public IFrameTimestampCalculator, public DeviceComponentBase {
@@ -84,4 +85,3 @@ private:
 };
 
 }  // namespace libobsensor
-

@@ -3,6 +3,7 @@
 
 #include "FemtoMegaDeviceInfo.hpp"
 #include "FemtoMegaDevice.hpp"
+#include "FemtoMegaIDevice.hpp"
 #include "DevicePids.hpp"
 #include "usb/UsbPortGroup.hpp"
 #include "ethernet/NetPortGroup.hpp"
@@ -64,7 +65,12 @@ FemtoMegaDeviceInfo::~FemtoMegaDeviceInfo() noexcept {}
 std::shared_ptr<IDevice> FemtoMegaDeviceInfo::createDevice() const {
     std::shared_ptr<IDevice> device;
     if(connectionType_ == "Ethernet") {
-        device = std::make_shared<FemtoMegaNetDevice>(shared_from_this());
+        if(IS_OB_FEMTO_MEGA_I_PID(pid_)) {
+            // for Femto Mega i
+            device = std::make_shared<FemtoMegaINetDevice>(shared_from_this());
+        } else {
+            device = std::make_shared<FemtoMegaNetDevice>(shared_from_this());
+        }
     }
     else {
         device = std::make_shared<FemtoMegaUsbDevice>(shared_from_this());

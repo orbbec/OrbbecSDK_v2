@@ -109,6 +109,14 @@ void G330Device::init() {
         registerComponent(OB_DEV_COMPONENT_FRAME_INTERLEAVE_MANAGER, frameInterleaveManager);
     }
 
+    // TODO: version
+    if(getFirmwareVersionInt() >= 10401) {
+        auto propertyServer                = getPropertyServer();
+        auto hwNoiseRemovePropertyAccessor = std::make_shared<G330HWNoiseRemovePropertyAccessor>(this);
+        propertyServer->registerProperty(OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL, "rw", "rw", hwNoiseRemovePropertyAccessor);
+        propertyServer->registerProperty(OB_PROP_HW_NOISE_REMOVE_FILTER_THRESHOLD_FLOAT, "rw", "rw", hwNoiseRemovePropertyAccessor);
+    }
+
     auto sensorStreamStrategy = std::make_shared<G330SensorStreamStrategy>(this);
     registerComponent(OB_DEV_COMPONENT_SENSOR_STREAM_STRATEGY, sensorStreamStrategy);
 
@@ -960,6 +968,9 @@ void G330Device::initProperties() {
                 auto accessor = getComponentT<IPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
                 return accessor.get();
             });
+
+            propertyServer->registerProperty(OB_PROP_DISP_SEARCH_OFFSET_INT, "rw", "rw", d2dPropertyAccessor); // using d2d property accessor
+            propertyServer->registerProperty(OB_STRUCT_DISP_OFFSET_CONFIG, "rw", "rw", vendorPropertyAccessor);
 
             propertyServer->registerProperty(OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_DEPTH_AUTO_EXPOSURE_PRIORITY_INT, "rw", "rw", vendorPropertyAccessor);

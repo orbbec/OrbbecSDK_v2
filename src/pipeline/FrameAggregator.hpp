@@ -59,5 +59,6 @@ private:
     uint32_t                                frameCnt_;
     bool                                    withColorFrame_;
     bool                                    matchingRateFirst_;
+    uint32_t                                maxNormalModeQueueSize_;
 };
 }  // namespace libobsensor

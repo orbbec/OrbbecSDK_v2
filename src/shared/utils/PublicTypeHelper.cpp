@@ -370,7 +370,9 @@ std::map<OBFrameMetadataType, std::string> Metadata_Str_Map = { { OB_FRAME_METAD
                                                                 { OB_FRAME_METADATA_TYPE_LASER_POWER, "Laser Power" },
                                                                 { OB_FRAME_METADATA_TYPE_LASER_POWER_LEVEL, "Laser Power Level" },
                                                                 { OB_FRAME_METADATA_TYPE_LASER_STATUS, "Laser Status" },
-                                                                { OB_FRAME_METADATA_TYPE_GPIO_INPUT_DATA, "GPIO Input Data" } };
+                                                                { OB_FRAME_METADATA_TYPE_GPIO_INPUT_DATA, "GPIO Input Data" },
+                                                                { OB_FRAME_METADATA_TYPE_DISPARITY_SEARCH_OFFSET, "Disparity Search Offset" },
+                                                                { OB_FRAME_METADATA_TYPE_DISPARITY_SEARCH_RANGE, "Disparity Search Range" } };
 
 // type to string
 const std::string &obFormatToStr(OBFormat type) {

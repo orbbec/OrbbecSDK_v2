@@ -251,7 +251,9 @@ typedef enum {
     ERR_IMAGE_SIZE      = -5, /**< Image file size error */
     ERR_OTHER           = -6, /**< other errors */
     ERR_DDR             = -7, /**< DDR access error */
-    ERR_TIMEOUT         = -8  /**< timeout error */
+    ERR_TIMEOUT         = -8,  /**< timeout error */
+    ERR_MISMATCH        = -9, /**< Mismatch firmware error */
+    ERR_UNSUPPORT_DEV   = -10, /**< Unsupported device error */
 } OBUpgradeState,
     OBFwUpdateState, ob_upgrade_state, ob_fw_update_state;
 
@@ -865,6 +867,11 @@ typedef enum {
     OB_SYNC_MODE_SECONDARY_SOFT_TRIGGER = 0x07,
 
     /**
+     * @brief IR and IMU sync signal
+     */
+    OB_SYNC_MODE_IR_IMU_SYNC = 0x08,
+
+    /**
      * @brief Unknown type
      */
     OB_SYNC_MODE_UNKNOWN = 0xff,
@@ -1137,6 +1144,12 @@ typedef enum {
      * @attention In this mode, the user may return null when getting the specified type of data frame from the acquired FrameSet
      */
     OB_FRAME_AGGREGATE_OUTPUT_ANY_SITUATION,
+    /**
+     * @brief Disable Frame Aggreate
+     *
+     * @attention In this mode, All types of data frames will output independently.
+     */
+    OB_FRAME_AGGREGATE_OUTPUT_DISABLE,
 } OB_FRAME_AGGREGATE_OUTPUT_MODE,
     OBFrameAggregateOutputMode, ob_frame_aggregate_output_mode;
 #define OB_FRAME_AGGREGATE_OUTPUT_FULL_FRAME_REQUIRE OB_FRAME_AGGREGATE_OUTPUT_ALL_TYPE_FRAME_REQUIRE
@@ -1248,6 +1261,11 @@ typedef enum {
      * signal as input-trigger signal.
      */
     OB_MULTI_DEVICE_SYNC_MODE_HARDWARE_TRIGGERING = 1 << 6,
+
+    /**
+     * @brief IR and IMU sync mode
+     */
+    OB_MULTI_DEVICE_SYNC_MODE_IR_IMU_SYNC = 1 << 7,
 
 } ob_multi_device_sync_mode,
     OBMultiDeviceSyncMode;
@@ -1413,6 +1431,16 @@ typedef struct {
 typedef struct {
     char numberStr[16];
 } OBDeviceSerialNumber, ob_device_serial_number, OBSerialNumber, ob_serial_number;
+
+/**
+ * @brief Disparity offset interleaving configuration
+ */
+typedef struct{
+  uint8_t enable;
+  uint8_t offset0;
+  uint8_t offset1;
+  uint8_t reserved;
+} OBDispOffsetConfig, ob_disp_offset_config;
 
 /**
  * @brief Frame metadata types
@@ -1596,6 +1624,16 @@ typedef enum {
      * @brief GPIO input data
      */
     OB_FRAME_METADATA_TYPE_GPIO_INPUT_DATA = 31,
+
+    /**
+     * @brief disparity search offset value
+     */
+    OB_FRAME_METADATA_TYPE_DISPARITY_SEARCH_OFFSET = 32,
+
+    /**
+     * @brief disparity search range
+     */
+    OB_FRAME_METADATA_TYPE_DISPARITY_SEARCH_RANGE = 33,
 
     /**
      * @brief The number of frame metadata types, using for types iterating

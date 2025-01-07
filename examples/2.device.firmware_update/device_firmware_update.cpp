@@ -12,11 +12,12 @@
 #include <algorithm>
 #include <cctype>
 
+void firmwareUpdateCallback(OBFwUpdateState state, const char *message, uint8_t percent);
 bool getFirmwarePath(std::string &firmwarePath);
 bool selectDevice(int &deviceIndex);
 void printDeviceList();
 
-bool                                     firstCall   = true;
+bool                                     firstCall = true;
 std::vector<std::shared_ptr<ob::Device>> devices{};
 
 int main() try {
@@ -42,48 +43,6 @@ int main() try {
     }
     std::cout << "Devices found:" << std::endl;
     printDeviceList();
-
-    // Callback function for device firmware update progress
-    ob::Device::DeviceFwUpdateCallback firmwareUpdateCallback = [](OBFwUpdateState state, const char *message, uint8_t percent) {
-        if(firstCall) {
-            firstCall = !firstCall;
-        }
-        else {
-            std::cout << "\033[3F";  // Move cursor up 3 lines
-        }
-
-        std::cout << "\033[K";  // Clear the current line
-        std::cout << "Progress: " << static_cast<uint32_t>(percent) << "%" << std::endl;
-
-        std::cout << "\033[K";
-        std::cout << "Status  : ";
-        switch(state) {
-        case STAT_VERIFY_SUCCESS:
-            std::cout << "Image file verification success" << std::endl;
-            break;
-        case STAT_FILE_TRANSFER:
-            std::cout << "File transfer in progress" << std::endl;
-            break;
-        case STAT_DONE:
-            std::cout << "Update completed" << std::endl;
-            break;
-        case STAT_IN_PROGRESS:
-            std::cout << "Upgrade in progress" << std::endl;
-            break;
-        case STAT_START:
-            std::cout << "Starting the upgrade" << std::endl;
-            break;
-        case STAT_VERIFY_IMAGE:
-            std::cout << "Verifying image file" << std::endl;
-            break;
-        default:
-            std::cout << "Unknown status or error" << std::endl;
-            break;
-        }
-
-        std::cout << "\033[K";
-        std::cout << "Message : " << message << std::endl << std::flush;
-    };
 
     while(true) {
         firstCall       = true;
@@ -125,6 +84,47 @@ catch(ob::Error &e) {
     std::cout << "\nPress any key to exit.";
     ob_smpl::waitForKeyPressed();
     exit(EXIT_FAILURE);
+}void firmwareUpdateCallback(OBFwUpdateState state, const char *message, uint8_t percent)
+
+ {
+    if(firstCall) {
+        firstCall = !firstCall;
+    }
+    else {
+        std::cout << "\033[3F";  // Move cursor up 3 lines
+    }
+
+    std::cout << "\033[K";  // Clear the current line
+    std::cout << "Progress: " << static_cast<uint32_t>(percent) << "%" << std::endl;
+
+    std::cout << "\033[K";
+    std::cout << "Status  : ";
+    switch(state) {
+    case STAT_VERIFY_SUCCESS:
+        std::cout << "Image file verification success" << std::endl;
+        break;
+    case STAT_FILE_TRANSFER:
+        std::cout << "File transfer in progress" << std::endl;
+        break;
+    case STAT_DONE:
+        std::cout << "Update completed" << std::endl;
+        break;
+    case STAT_IN_PROGRESS:
+        std::cout << "Upgrade in progress" << std::endl;
+        break;
+    case STAT_START:
+        std::cout << "Starting the upgrade" << std::endl;
+        break;
+    case STAT_VERIFY_IMAGE:
+        std::cout << "Verifying image file" << std::endl;
+        break;
+    default:
+        std::cout << "Unknown status or error" << std::endl;
+        break;
+    }
+
+    std::cout << "\033[K";
+    std::cout << "Message : " << message << std::endl << std::flush;
 }
 
 bool getFirmwarePath(std::string &firmwarePath) {
@@ -139,9 +139,7 @@ bool getFirmwarePath(std::string &firmwarePath) {
     }
 
     // Remove leading and trailing whitespaces
-    input.erase(std::find_if(input.rbegin(), input.rend(), [](unsigned char ch) {
-        return !std::isspace(ch);
-    }).base(), input.end());
+    input.erase(std::find_if(input.rbegin(), input.rend(), [](unsigned char ch) { return !std::isspace(ch); }).base(), input.end());
 
     // Remove leading and trailing quotes
     if(!input.empty() && input.front() == '\'' && input.back() == '\'') {

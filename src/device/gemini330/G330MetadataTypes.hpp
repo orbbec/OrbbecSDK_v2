@@ -78,11 +78,14 @@ struct G330DepthUvcMetadata : public G330CommonUvcMetadata {
     uint8_t  format;
     uint8_t  sku_id;
     uint8_t  hw_type;
-    uint8_t  UD0;
+    uint8_t  disparity_search_offset;
     uint8_t  sequence_name;
     uint8_t  sequence_id;
     uint8_t  sequence_size;
-    uint32_t UD1;
+    uint8_t  UD0;
+    uint8_t  UD1;
+    uint8_t  UD2;
+    uint8_t  disparity_search_range;
 };
 
 #pragma pack(pop)

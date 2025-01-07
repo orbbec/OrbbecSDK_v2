@@ -8,8 +8,12 @@
 
 #include "libobsensor/h/ObTypes.h"
 
-namespace libobsensor
-{
+namespace libobsensor {
+
+class Frame;
+
+typedef std::function<void(std::shared_ptr<const Frame>)> FrameCallback;
+typedef std::function<void(std::shared_ptr<Frame>)>       MutableFrameCallback;
 
 class IFrameMetadataParser {
 public:
@@ -29,28 +33,14 @@ public:
     virtual std::shared_ptr<IFrameMetadataParser> get(OBFrameMetadataType type)                                                          = 0;
 };
 
-class Frame;
-
-typedef std::function<void(std::shared_ptr<const Frame>)> FrameCallback;
-typedef std::function<void(std::shared_ptr<Frame>)> MutableFrameCallback;
-
-class IFrameTimestampCalculator {
-public:
-    virtual ~IFrameTimestampCalculator() = default;
-
-    virtual void calculate(std::shared_ptr<Frame> frame) = 0;
-    virtual void clear()                                 = 0;
-};
-
-} // namespace libobsensor
-
+}  // namespace libobsensor
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 struct ob_frame_t {
     std::shared_ptr<libobsensor::Frame> frame;
-    std::atomic<int>                    refCnt = {1};
+    std::atomic<int>                    refCnt = { 1 };
 };
 #ifdef __cplusplus
 }

@@ -1,8 +1,8 @@
-# C++ Sample：2.device.firmware_update
+# C++ Sample：2.multi_devices_firmware_update
 
 ## Overview
 
-This sample demonstrates how to use the SDK to update the firmware of a connected device. It includes functions to list connected devices, select a device, and update its firmware.
+If you want to upgrade multiple Orbbec cameras connected to your system, this sample might be helpful for you. For detailed information about firmware upgrades, please refer to the [2.device.firmware_update](../2.device.firmware_update/README.md).
 
 > Note: This sample are not suiltable for Femto Mega, Femto Mega i, and Femto Bolt devices.
 > For these devices, please refer to the this repo:[https://github.com/orbbec/OrbbecFirmware](https://github.com/orbbec/OrbbecFirmware)
@@ -28,9 +28,26 @@ Device is the device object, which can be used to obtain the device information,
             devices.push_back(deviceList->getDevice(i));
         }
     ```
-3. Define a Callback Function for Firmware Update Progress.
+3. Update each device.
 
-    You can define a callback function to get the progress of the firmware update. The callback function will be called every time the device updates its progress.
+    You don't need to worry about issues caused by using incorrect firmware during the upgrade process. The SDK performs internal verification of the firmware to ensure its compatibility and validity.
+
+    ```c++
+        for(uint32_t i = 0; i < totalDevices.size(); ++i) {
+            try {
+                std::cout << "\nUpgrading device: " << i + 1 << "/" << totalDevices.size() 
+                            << " - " << totalDevices[i]->getDeviceInfo()->getName() << std::endl;
+
+                totalDevices[i]->updateFirmware(firmwarePath.c_str(), firmwareUpdateCallback, false);
+            }
+            catch(ob::Error &e) {
+                std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\ntype:" << e.getExceptionType()
+                            << std::endl;
+            }
+        }
+    ```
+
+4. Retrieve Status from the Callback
 
     ```c++
         void firmwareUpdateCallback(OBFwUpdateState state, const char *message, uint8_t percent) {
@@ -65,6 +82,9 @@ Device is the device object, which can be used to obtain the device information,
             case STAT_VERIFY_IMAGE:
                 std::cout << "Verifying image file" << std::endl;
                 break;
+            case ERR_MISMATCH:
+                std::cout << "Mismatch between device and image file" << std::endl;
+                break;
             default:
                 std::cout << "Unknown status or error" << std::endl;
                 break;
@@ -72,15 +92,20 @@ Device is the device object, which can be used to obtain the device information,
 
             std::cout << "\033[K";
             std::cout << "Message : " << message << std::endl << std::flush;
+
+            if(state == STAT_DONE) {
+                finalSuccess = true;
+                finalFailure = false;
+            }
+            else if(state == ERR_MISMATCH) {
+                // If the device's firmware version does not match the image file, the callback status will be ERR_MISMATCH.
+                finalMismatch = true;
+            }
+            else if(state < 0) {
+                // While state < 0, it means an error occurred.
+                finalFailure = true;
+            }
         }
-    ```
-
-4. Update the Device Firmware.
-
-    After selecting a device, update its firmware by calling the updateFirmware function with the specified callback.
-
-    ```c++
-        devices[deviceIndex]->updateFirmware(firmwarePath.c_str(), firmwareUpdateCallback, false);
     ```
 
 ### Attention
@@ -101,8 +126,8 @@ Device is the device object, which can be used to obtain the device information,
 
 ## Run Sample
 
-Select the device for firmware update and input the path of the firmware file. The SDK will start updating the firmware, and the progress will be displayed on the console.
+By providing the firmware file path via the command line, the program will automatically upgrade the devices that match the firmware.
 
 ### Result
 
-![image](../../docs/resource/device_firmware_update.jpg)
+![image](../../docs/resource/multi_devices_firmware_update.jpg)

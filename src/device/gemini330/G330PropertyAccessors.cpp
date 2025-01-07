@@ -24,6 +24,9 @@ void G330Disp2DepthPropertyAccessor::setPropertyValue(uint32_t propertyId, const
 
         // update convert output frame as disparity frame
         markOutputDisparityFrame(!hwDisparityToDepthEnabled_);
+
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR);
+        processor->setPropertyValue(propertyId, value);
     } break;
     case OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT: {
         auto commandPort = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
@@ -40,7 +43,15 @@ void G330Disp2DepthPropertyAccessor::setPropertyValue(uint32_t propertyId, const
         }
 
     } break;
+    case OB_PROP_DISP_SEARCH_OFFSET_INT: {
+        auto sensor = owner_->getComponentT<ISensor>(OB_DEV_COMPONENT_DEPTH_SENSOR).get();
+        if (!sensor->isStreamActivated()) {
+            throw libobsensor::wrong_api_call_sequence_exception("disp search offset can only be set when depth sensor is activated");
+        }
 
+        auto commandPort = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        commandPort->setPropertyValue(propertyId, value);
+    } break;
     default: {
         auto commandPort = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
         commandPort->setPropertyValue(propertyId, value);
@@ -70,6 +81,10 @@ void G330Disp2DepthPropertyAccessor::getPropertyValue(uint32_t propertyId, OBPro
         else {
             commandPort->getPropertyValue(propertyId, value);
         }
+    } break;
+    case OB_PROP_DISP_SEARCH_OFFSET_INT: {
+        auto commandPort = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        commandPort->getPropertyValue(OB_PROP_DISP_SEARCH_OFFSET_INT, value);
     } break;
     default: {
         auto commandPort = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
@@ -170,6 +185,67 @@ void G330NetPerformanceModePropertyAccessor::getPropertyRange(uint32_t propertyI
 void G330NetPerformanceModePropertyAccessor::updatePerformanceMode(uint32_t mode) {
     auto streamProfileFilter = owner_->getComponentT<G330NetStreamProfileFilter>(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER);
     streamProfileFilter->switchFilterMode((OBCameraPerformanceMode)mode);
+}
+
+G330HWNoiseRemovePropertyAccessor::G330HWNoiseRemovePropertyAccessor(IDevice *owner) : owner_(owner) {}
+
+void G330HWNoiseRemovePropertyAccessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
+    switch(propertyId) {
+    case OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL: {
+        auto processor = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        processor->setPropertyValue(propertyId, value);
+    } break;
+    case OB_PROP_HW_NOISE_REMOVE_FILTER_THRESHOLD_FLOAT: {
+        auto processor = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        // due to the firmware not supporting the log function, the log function conversion is done in the SDK.
+        auto            threhold = log(value.floatValue / (1 - value.floatValue));
+        OBPropertyValue hwNoiseRemoveFilterThreshold;
+        hwNoiseRemoveFilterThreshold.floatValue = threhold;
+        processor->setPropertyValue(propertyId, hwNoiseRemoveFilterThreshold);
+    } break;
+
+    default: {
+        auto commandPort = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        commandPort->setPropertyValue(propertyId, value);
+    } break;
+    }
+}
+
+void G330HWNoiseRemovePropertyAccessor::getPropertyValue(uint32_t propertyId, OBPropertyValue *value) {
+    switch(propertyId) {
+    case OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL: {
+        auto processor = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        processor->getPropertyValue(propertyId, value);
+    } break;
+    case OB_PROP_HW_NOISE_REMOVE_FILTER_THRESHOLD_FLOAT: {
+        auto            processor = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        OBPropertyValue hwNoiseRemoveFilterThreshold;
+        processor->getPropertyValue(propertyId, &hwNoiseRemoveFilterThreshold);
+        auto threshold    = exp(hwNoiseRemoveFilterThreshold.floatValue) / (1 + exp(hwNoiseRemoveFilterThreshold.floatValue));
+        value->floatValue = threshold;
+
+    } break;
+    default: {
+        auto commandPort = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        commandPort->getPropertyValue(propertyId, value);
+    } break;
+    }
+}
+
+void G330HWNoiseRemovePropertyAccessor::getPropertyRange(uint32_t propertyId, OBPropertyRange *range) {
+    switch(propertyId) {
+    case OB_PROP_HW_NOISE_REMOVE_FILTER_THRESHOLD_FLOAT: {
+        auto commandPort = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        commandPort->getPropertyRange(propertyId, range);
+        auto cur              = exp(range->cur.floatValue) / (1 + exp(range->cur.floatValue));
+        range->cur.floatValue = cur;
+    } break;
+
+    default: {
+        auto commandPort = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        commandPort->getPropertyRange(propertyId, range);
+    } break;
+    }
 }
 
 }  // namespace libobsensor

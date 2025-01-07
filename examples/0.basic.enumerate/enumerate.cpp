@@ -6,6 +6,7 @@
 #include "utils.hpp"
 
 #include <iostream>
+#include <iomanip>
 
 // get input option
 int getInputOption() {
@@ -136,8 +137,8 @@ int main(void) try {
             device = deviceList->getDevice(index);
             // Get device information from device
             deviceInfo = device->getDeviceInfo();
-            std::cout << "  " << index << " - device name: " << deviceInfo->getName() << ", device pid: " << deviceInfo->getPid()
-                      << ", device sn: " << deviceInfo->getSerialNumber() << ", connection type:" << deviceInfo->getConnectionType() << std::endl;
+            std::cout << "  " << index << "- device name: " << deviceInfo->getName() << ", device pid: 0x" << std::hex << std::setw(4) << std::setfill('0')
+                      << deviceInfo->getPid() << std::dec << " ,device SN: " << deviceInfo->getSerialNumber() << ", connection type:" << deviceInfo->getConnectionType() << std::endl;
         }
 
         std::cout << "Select a device to enumerate its sensors (Input device index or \'ESC\' to exit program):" << std::endl;

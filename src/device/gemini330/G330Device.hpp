@@ -4,6 +4,7 @@
 #pragma once
 #include "DeviceBase.hpp"
 #include "IDeviceManager.hpp"
+#include "IFrameTimestamp.hpp"
 
 #if defined(BUILD_NET_PAL)
 #include "ethernet/RTPStreamPort.hpp"

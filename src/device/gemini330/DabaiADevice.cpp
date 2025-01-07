@@ -36,12 +36,13 @@
 
 #include "G330MetadataParser.hpp"
 #include "G330MetadataTypes.hpp"
-#include "G330AlgParamManager.hpp"
-#include "G330PresetManager.hpp"
+#include "DaBaiAAlgParamManager.hpp"
+#include "DaBaiAPresetManager.hpp"
 #include "G330DepthWorkModeManager.hpp"
 #include "G330SensorStreamStrategy.hpp"
 #include "G330PropertyAccessors.hpp"
 #include "G330FrameMetadataParserContainer.hpp"
+#include "DabaiAMetadataModifier.hpp"
 
 #include <algorithm>
 
@@ -82,23 +83,22 @@ void DabaiADevice::init() {
     auto globalTimestampFilter = std::make_shared<GlobalTimestampFitter>(this);
     registerComponent(OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER, globalTimestampFilter);
 
-    auto algParamManager = std::make_shared<G330AlgParamManager>(this);
-    registerComponent(OB_DEV_COMPONENT_ALG_PARAM_MANAGER, algParamManager);
-
     auto depthWorkModeManager = std::make_shared<G330DepthWorkModeManager>(this);
     registerComponent(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER, depthWorkModeManager);
 
-    auto presetManager = std::make_shared<G330PresetManager>(this);
+    auto presetManager = std::make_shared<DaBaiAPresetManager>(this);
     registerComponent(OB_DEV_COMPONENT_PRESET_MANAGER, presetManager);
+
+    auto algParamManager = std::make_shared<DaBaiAAlgParamManager>(this);
+    registerComponent(OB_DEV_COMPONENT_ALG_PARAM_MANAGER, algParamManager);
 
     auto sensorStreamStrategy = std::make_shared<G330SensorStreamStrategy>(this);
     registerComponent(OB_DEV_COMPONENT_SENSOR_STREAM_STRATEGY, sensorStreamStrategy);
 
-    static const std::vector<OBMultiDeviceSyncMode> supportedSyncModes = {
-        OB_MULTI_DEVICE_SYNC_MODE_FREE_RUN,         OB_MULTI_DEVICE_SYNC_MODE_STANDALONE,          OB_MULTI_DEVICE_SYNC_MODE_PRIMARY,
-        OB_MULTI_DEVICE_SYNC_MODE_SECONDARY_SYNCED, OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_TRIGGERING, OB_MULTI_DEVICE_SYNC_MODE_HARDWARE_TRIGGERING
-    };
-    auto deviceSyncConfigurator = std::make_shared<DeviceSyncConfigurator>(this, supportedSyncModes);
+    static const std::vector<OBMultiDeviceSyncMode> supportedSyncModes     = { OB_MULTI_DEVICE_SYNC_MODE_FREE_RUN, OB_MULTI_DEVICE_SYNC_MODE_STANDALONE,
+                                                                               OB_MULTI_DEVICE_SYNC_MODE_PRIMARY, OB_MULTI_DEVICE_SYNC_MODE_SECONDARY_SYNCED,
+                                                                               OB_MULTI_DEVICE_SYNC_MODE_IR_IMU_SYNC };
+    auto                                            deviceSyncConfigurator = std::make_shared<DeviceSyncConfigurator>(this, supportedSyncModes);
     registerComponent(OB_DEV_COMPONENT_DEVICE_SYNC_CONFIGURATOR, deviceSyncConfigurator);
 
     auto deviceClockSynchronizer = std::make_shared<DeviceClockSynchronizer>(this);
@@ -151,15 +151,31 @@ void DabaiADevice::init() {
         container = std::make_shared<G330DepthFrameMetadataParserContainer>(this);
         return container;
     });
+
+    auto propServer = getPropertyServer();
+    propServer->registerAccessCallback(
+        {
+            OB_STRUCT_CURRENT_DEPTH_ALG_MODE,
+        },
+        [&](uint32_t propertyId, const uint8_t *, size_t, PropertyOperationType operationType) {
+            if(operationType == PROP_OP_WRITE && propertyId == OB_STRUCT_CURRENT_DEPTH_ALG_MODE) {
+                auto        depthWorkModeManager = getComponentT<G330DepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
+                auto        propServer           = getPropertyServer();
+                auto        currentWorkMode      = propServer->getStructureDataProtoV1_1_T<OBDepthWorkMode_Internal, 0>(OB_STRUCT_CURRENT_DEPTH_ALG_MODE);
+                std::string name(currentWorkMode.name);
+                auto        algParamManager = getComponentT<DaBaiAAlgParamManager>(OB_DEV_COMPONENT_ALG_PARAM_MANAGER);
+                algParamManager->updateD2CProfileList(name);
+            }
+        });
 }
 
 std::shared_ptr<const StreamProfile> DabaiADevice::loadDefaultStreamProfile(OBSensorType sensorType) {
-    std::shared_ptr<StreamProfile> defaultStreamProfile = nullptr;
+    std::shared_ptr<const StreamProfile> defaultStreamProfile = nullptr;
     LOG_DEBUG("loadDefaultStreamProfile: deviceConnectionType:={}", deviceInfo_->connectionType_);
 
     OBStreamType defStreamType = OB_STREAM_UNKNOWN;
     int          defFps        = 10;
-    int          defWidth      = 848;
+    int          defWidth      = 640;
     int          defHeight     = 480;
     OBFormat     defFormat     = OB_FORMAT_Y16;
 
@@ -231,25 +247,24 @@ std::shared_ptr<const StreamProfile> DabaiADevice::loadDefaultStreamProfile(OBSe
         LOG_DEBUG("default profile StreamType:{}, Format:{}, Width:{}, Height:{}, Fps:{}", defStreamType, defFormat, defWidth, defHeight, defFps);
     }
 
+    if(!defaultStreamProfile) {
+        // load default stream profile from env config
+        defaultStreamProfile = StreamProfileFactory::getDefaultStreamProfileFromEnvConfig(deviceInfo_->name_, sensorType);
+    }
+
     return defaultStreamProfile;
 }
 
 void DabaiADevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
-    auto streamProfile = StreamProfileFactory::getDefaultStreamProfileFromEnvConfig(deviceInfo_->name_, sensor->getSensorType());
-    if(streamProfile) {
-        auto defaultStreamProfile = loadDefaultStreamProfile(sensor->getSensorType());
-        if(defaultStreamProfile != nullptr) {
-            sensor->updateDefaultStreamProfile(defaultStreamProfile);
-        }
-        else {
-            sensor->updateDefaultStreamProfile(streamProfile);
-        }
+    auto defaultStreamProfile = loadDefaultStreamProfile(sensor->getSensorType());
+    if(defaultStreamProfile != nullptr) {
+        sensor->updateDefaultStreamProfile(defaultStreamProfile);
     }
 
     // bind params: extrinsics, intrinsics, etc.
     auto profiles = sensor->getStreamProfileList();
     {
-        auto algParamManager = getComponentT<G330AlgParamManager>(OB_DEV_COMPONENT_ALG_PARAM_MANAGER);
+        auto algParamManager = getComponentT<DaBaiAAlgParamManager>(OB_DEV_COMPONENT_ALG_PARAM_MANAGER);
         algParamManager->bindStreamProfileParams(profiles);
     }
 
@@ -314,7 +329,7 @@ void DabaiADevice::initSensorList() {
 
                 sensor->registerStreamStateChangedCallback([&](OBStreamState state, const std::shared_ptr<const StreamProfile> &sp) {
                     if(state == STREAM_STATE_STREAMING) {
-                        auto algParamManager = getComponentT<G330AlgParamManager>(OB_DEV_COMPONENT_ALG_PARAM_MANAGER);
+                        auto algParamManager = getComponentT<DaBaiAAlgParamManager>(OB_DEV_COMPONENT_ALG_PARAM_MANAGER);
                         algParamManager->reFetchDisparityParams();
                         algParamManager->bindDisparityParam({ sp });
                     }
@@ -461,19 +476,14 @@ void DabaiADevice::initSensorList() {
                 auto port   = getSourcePort(colorPortInfo);
                 auto sensor = std::make_shared<VideoSensor>(this, OB_SENSOR_COLOR, port);
 
-                std::vector<FormatFilterConfig> formatFilterConfigs = {
-                    { FormatFilterPolicy::REMOVE, OB_FORMAT_NV12, OB_FORMAT_ANY, nullptr },
-                    { FormatFilterPolicy::REPLACE, OB_FORMAT_BYR2, OB_FORMAT_RW16, nullptr },
-                };
+                std::vector<FormatFilterConfig> formatFilterConfigs = { { FormatFilterPolicy::REMOVE, OB_FORMAT_NV12, OB_FORMAT_ANY, nullptr },
+                                                                        { FormatFilterPolicy::REPLACE, OB_FORMAT_BYR2, OB_FORMAT_RW16, nullptr },
+                                                                        { FormatFilterPolicy::REMOVE, OB_FORMAT_BGR, OB_FORMAT_ANY, nullptr },
+                                                                        { FormatFilterPolicy::REMOVE, OB_FORMAT_BGRA, OB_FORMAT_ANY, nullptr } };
 
                 auto formatConverter = getSensorFrameFilter("FormatConverter", OB_SENSOR_COLOR, false);
                 if(formatConverter) {
                     formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_YUYV, OB_FORMAT_RGB, formatConverter });
-                    formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_YUYV, OB_FORMAT_RGBA, formatConverter });
-                    formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_YUYV, OB_FORMAT_BGR, formatConverter });
-                    formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_YUYV, OB_FORMAT_BGRA, formatConverter });
-                    formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_YUYV, OB_FORMAT_Y16, formatConverter });
-                    formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_YUYV, OB_FORMAT_Y8, formatConverter });
                 }
 
                 sensor->updateFormatFilterConfig(formatFilterConfigs);
@@ -613,6 +623,9 @@ void                 DabaiADevice::initSensorListGMSL() {
                     sensor->setFrameProcessor(frameProcessor.get());
                 }
 
+                auto metadataModifer = std::make_shared<DabaiALGMSLMetadataModifier>(this);
+                sensor->setFrameMetadataModifer(metadataModifer);
+
                 auto propServer = getPropertyServer();
                 auto depthUnit  = propServer->getPropertyValueT<float>(OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT);
                 sensor->setDepthUnit(depthUnit);
@@ -624,7 +637,7 @@ void                 DabaiADevice::initSensorListGMSL() {
 
                 sensor->registerStreamStateChangedCallback([&](OBStreamState state, const std::shared_ptr<const StreamProfile> &sp) {
                     if(state == STREAM_STATE_STREAMING) {
-                        auto algParamManager = getComponentT<G330AlgParamManager>(OB_DEV_COMPONENT_ALG_PARAM_MANAGER);
+                        auto algParamManager = getComponentT<DaBaiAAlgParamManager>(OB_DEV_COMPONENT_ALG_PARAM_MANAGER);
                         algParamManager->reFetchDisparityParams();
                         algParamManager->bindDisparityParam({ sp });
                     }
@@ -708,6 +721,9 @@ void                 DabaiADevice::initSensorListGMSL() {
                     sensor->setFrameProcessor(frameProcessor.get());
                 }
 
+                auto metadataModifer = std::make_shared<DabaiALGMSLMetadataModifier>(this);
+                sensor->setFrameMetadataModifer(metadataModifer);
+
                 initSensorStreamProfile(sensor);
 
                 return sensor;
@@ -763,6 +779,9 @@ void                 DabaiADevice::initSensorListGMSL() {
                 if(frameProcessor) {
                     sensor->setFrameProcessor(frameProcessor.get());
                 }
+
+                auto metadataModifer = std::make_shared<DabaiALGMSLMetadataModifier>(this);
+                sensor->setFrameMetadataModifer(metadataModifer);
 
                 initSensorStreamProfile(sensor);
 
@@ -825,6 +844,9 @@ void                 DabaiADevice::initSensorListGMSL() {
                 if(frameProcessor) {
                     sensor->setFrameProcessor(frameProcessor.get());
                 }
+
+                auto metadataModifer = std::make_shared<DabaiALGMSLMetadataModifier>(this);
+                sensor->setFrameMetadataModifer(metadataModifer);
 
                 initSensorStreamProfile(sensor);
 
@@ -921,16 +943,15 @@ void DabaiADevice::initProperties() {
             propertyServer->registerProperty(OB_PROP_COLOR_AUTO_EXPOSURE_BOOL, "rw", "rw", uvcPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_COLOR_GAIN_INT, "rw", "rw", uvcPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_COLOR_SATURATION_INT, "rw", "rw", uvcPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_COLOR_AUTO_WHITE_BALANCE_BOOL, "rw", "rw", uvcPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_COLOR_WHITE_BALANCE_INT, "rw", "rw", uvcPropertyAccessor);
+            // propertyServer->registerProperty(OB_PROP_COLOR_AUTO_WHITE_BALANCE_BOOL, "rw", "rw", uvcPropertyAccessor);
+            // propertyServer->registerProperty(OB_PROP_COLOR_WHITE_BALANCE_INT, "rw", "rw", uvcPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_COLOR_BRIGHTNESS_INT, "rw", "rw", uvcPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_COLOR_SHARPNESS_INT, "rw", "rw", uvcPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_COLOR_CONTRAST_INT, "rw", "rw", uvcPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_COLOR_HUE_INT, "rw", "rw", uvcPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_COLOR_GAMMA_INT, "rw", "rw", uvcPropertyAccessor);
+            // propertyServer->registerProperty(OB_PROP_COLOR_GAMMA_INT, "rw", "rw", uvcPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_COLOR_POWER_LINE_FREQUENCY_INT, "rw", "rw", uvcPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_COLOR_BACKLIGHT_COMPENSATION_INT, "rw", "rw", uvcPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_COLOR_AUTO_EXPOSURE_PRIORITY_INT, "rw", "rw", uvcPropertyAccessor);
         }
         else if(sensor == OB_SENSOR_DEPTH) {
             auto uvcPropertyAccessor = std::make_shared<LazyPropertyAccessor>([this, &sourcePortInfo]() {
@@ -946,15 +967,13 @@ void DabaiADevice::initProperties() {
             });
 
             propertyServer->registerProperty(OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_DEPTH_AUTO_EXPOSURE_PRIORITY_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_DEPTH_EXPOSURE_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_COLOR_EXPOSURE_INT, "rw", "rw", vendorPropertyAccessor);  // using vendor property accessor
-            propertyServer->registerProperty(OB_PROP_LDP_BOOL, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_LASER_CONTROL_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_LASER_ALWAYS_ON_BOOL, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_LASER_ON_OFF_PATTERN_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_TEMPERATURE_COMPENSATION_BOOL, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_LDP_STATUS_BOOL, "r", "r", vendorPropertyAccessor);
+
             propertyServer->registerProperty(OB_PROP_DEPTH_ALIGN_HARDWARE_BOOL, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_LASER_POWER_LEVEL_CONTROL_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_LDP_MEASURE_DISTANCE_INT, "r", "r", vendorPropertyAccessor);
@@ -978,6 +997,10 @@ void DabaiADevice::initProperties() {
             propertyServer->registerProperty(OB_STRUCT_DEPTH_AE_ROI, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_RAW_DATA_IMU_CALIB_PARAM, "", "rw", vendorPropertyAccessor);
 
+            propertyServer->registerProperty(OB_PROP_LASER_HIGH_TEMPERATURE_PROTECT_BOOL, "rw", "rw", vendorPropertyAccessor);
+            propertyServer->registerProperty(OB_PROP_LOW_EXPOSURE_LASER_CONTROL_BOOL, "rw", "rw", vendorPropertyAccessor);
+            propertyServer->registerProperty(OB_PROP_CHECK_PPS_SYNC_IN_SIGNAL_BOOL, "rw", "rw", vendorPropertyAccessor);
+
             // todo: add these properties to the frame processor
             // propertyServer->registerProperty(OB_PROP_SDK_DEPTH_FRAME_UNPACK_BOOL, "rw", "rw", vendorPropertyAccessor);
 
@@ -997,8 +1020,6 @@ void DabaiADevice::initProperties() {
             propertyServer->registerProperty(OB_STRUCT_GET_GYRO_PRESETS_FULL_SCALE_LIST, "", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_IR_BRIGHTNESS_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_RAW_DATA_DEVICE_EXTENSION_INFORMATION, "", "r", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_IR_AE_MAX_EXPOSURE_INT, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_COLOR_AE_MAX_EXPOSURE_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_DISP_SEARCH_RANGE_MODE_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_SLAVE_DEVICE_SYNC_STATUS_BOOL, "r", "r", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_DEVICE_RESET_BOOL, "", "w", vendorPropertyAccessor);
@@ -1007,6 +1028,7 @@ void DabaiADevice::initProperties() {
             propertyServer->registerProperty(OB_PROP_STOP_IR_STREAM_BOOL, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_STOP_COLOR_STREAM_BOOL, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_STOP_DEPTH_STREAM_BOOL, "rw", "rw", vendorPropertyAccessor);
+            propertyServer->registerProperty(OB_RAW_DATA_D2C_ALIGN_COLOR_PRE_PROCESS_PROFILE_LIST, "", "r", vendorPropertyAccessor);
             if(isGmslDevice_) {
                 propertyServer->registerProperty(OB_PROP_DEVICE_REPOWER_BOOL, "w", "w", vendorPropertyAccessor);
             }

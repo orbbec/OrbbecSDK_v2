@@ -8,9 +8,11 @@
 
 #include <mutex>
 #include <string>
+#include <iomanip>
 
-const std::map<std::string, int> gemini_330_list = { { "gemini335", 0x0800 },  { "gemini335L", 0x0804 }, { "gemini336", 0x0803 },
-                                                     { "gemini336L", 0x0807 }, { "gemini330", 0x0801 },  { "gemini330L", 0x0805 } };
+const std::map<std::string, int> gemini_330_list = { { "gemini335", 0x0800 }, { "gemini335L", 0x0804 }, { "gemini336", 0x0803 }, { "gemini336L", 0x0807 },
+                                                     { "gemini330", 0x0801 }, { "gemini330L", 0x0805 }, { "DabaiA", 0x0A12 },    { "DabaiAL", 0x0A13 },
+                                                     { "Gemini345", 0x0812 }, { "Gemini345Lg", 0x0813 } };
 
 bool isGemini330Series(int pid) {
     bool find = false;
@@ -298,7 +300,8 @@ void getDeviceInformation() {
         // Get the name of the device
         std::cout << "-Device name: " << info->getName() << std::endl;
         // Get the pid, vid, uid of the device
-        std::cout << "-Device pid: " << info->getPid() << " vid: " << info->getVid() << " uid: " << info->getUid() << std::endl;
+        std::cout << "-Device pid: 0x" << std::hex << std::setw(4) << std::setfill('0') << info->getPid() << " vid: 0x" << std::hex << std::setw(4)
+                  << std::setfill('0') << info->getVid() << " uid: " << info->getUid() << std::dec << std::endl;
         // By getting the firmware version number of the device
         auto fwVer = info->getFirmwareVersion();
         std::cout << "-Firmware version: " << fwVer << std::endl;
