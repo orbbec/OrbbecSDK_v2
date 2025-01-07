@@ -41,6 +41,7 @@ void G330NetDeviceClockSynchronizer::timerSyncWithHost() {
     })
     CATCH_EXCEPTION_AND_EXECUTE({
         LOG_ERROR("Net device time sync failed!");
+        globalTimestampFitter_->reFitting();
         isClockSync_ = false;
     })
 }

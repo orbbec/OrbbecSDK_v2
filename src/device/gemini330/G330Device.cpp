@@ -49,6 +49,7 @@
 #include "G330NetGyroSensor.hpp"
 #include "utils/BufferParser.hpp"
 #include "G330FrameInterleaveManager.hpp"
+#include "G330NetStreamProfileFilter.hpp"
 
 #include <algorithm>
 
@@ -1312,6 +1313,9 @@ void G330NetDevice::initSensorList() {
         return factory;
     });
 
+    auto netStreamProfileFilter = std::make_shared<G330NetStreamProfileFilter>(this);
+    registerComponent(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER, netStreamProfileFilter);
+
     const auto &sourcePortInfoList = enumInfo_->getSourcePortInfoList();
 
     auto ptpPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(),
@@ -1367,7 +1371,7 @@ void G330NetDevice::initSensorList() {
                 sensor->markOutputDisparityFrame(!hwD2D);
 
                 initSensorStreamProfile(sensor);
-
+                initStreamProfileFilter(sensor);
                 sensor->registerStreamStateChangedCallback([&](OBStreamState state, const std::shared_ptr<const StreamProfile> &sp) {
                     if(state == STREAM_STATE_STREAMING) {
                         auto algParamManager = getComponentT<G330AlgParamManager>(OB_DEV_COMPONENT_ALG_PARAM_MANAGER);
@@ -1429,7 +1433,7 @@ void G330NetDevice::initSensorList() {
                 }
 
                 initSensorStreamProfile(sensor);
-
+                initStreamProfileFilter(sensor);
                 return sensor;
             },
             true);
@@ -1484,7 +1488,7 @@ void G330NetDevice::initSensorList() {
                 }
 
                 initSensorStreamProfile(sensor);
-
+                initStreamProfileFilter(sensor);
                 return sensor;
             },
             true);
@@ -1555,7 +1559,7 @@ void G330NetDevice::initSensorList() {
                 }
 
                 initSensorStreamProfile(sensor);
-
+                initStreamProfileFilter(sensor);
                 return sensor;
             },
             true);
@@ -1630,6 +1634,9 @@ void G330NetDevice::initProperties() {
     propertyServer->registerProperty(OB_PROP_DISPARITY_TO_DEPTH_BOOL, "rw", "rw", d2dPropertyAccessor);      // hw
     propertyServer->registerProperty(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL, "rw", "rw", d2dPropertyAccessor);  // sw
     propertyServer->registerProperty(OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT, "rw", "rw", d2dPropertyAccessor);
+
+    auto netPerformanceModePropertyAccessor = std::make_shared<G330NetPerformanceModePropertyAccessor>(this);
+    propertyServer->registerProperty(OB_PROP_DEVICE_PERFORMANCE_MODE_INT, "rw", "rw", netPerformanceModePropertyAccessor);
 
     auto privatePropertyAccessor = std::make_shared<PrivateFilterPropertyAccessor>(this);
     propertyServer->registerProperty(OB_PROP_DEPTH_SOFT_FILTER_BOOL, "rw", "rw", privatePropertyAccessor);
@@ -1893,6 +1900,14 @@ void G330NetDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
     for(auto &profile: profiles) {
         LOG_INFO(" - {}", profile);
     }
+}
+
+void libobsensor::G330NetDevice::initStreamProfileFilter(std::shared_ptr<ISensor> sensor) {
+    auto propServer          = getPropertyServer();
+    auto performanceMode     = propServer->getPropertyValueT<int>(OB_PROP_DEVICE_PERFORMANCE_MODE_INT);
+    auto streamProfileFilter = getComponentT<G330NetStreamProfileFilter>(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER);
+    streamProfileFilter->switchFilterMode((OBCameraPerformanceMode)performanceMode);
+    sensor->setStreamProfileFilter(streamProfileFilter.get());
 }
 
 }  // namespace libobsensor

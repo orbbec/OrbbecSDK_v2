@@ -752,6 +752,11 @@ typedef enum {
     OB_PROP_NETWORK_BANDWIDTH_TYPE_INT = 3027,
 
     /**
+     * @brief Switch device performance mode, currently available in Adaptive Mode and High Performance Mode, such as G335LE.
+     */
+    OB_PROP_DEVICE_PERFORMANCE_MODE_INT = 3028,
+
+    /**
      * @brief Calibration JSON file read from device (Femto Mega, read only)
      */
     OB_RAW_DATA_CAMERA_CALIB_JSON_FILE = 4029,

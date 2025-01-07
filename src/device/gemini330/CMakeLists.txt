@@ -37,5 +37,7 @@ target_sources(
     ${CMAKE_CURRENT_LIST_DIR}/G330NetGyroSensor.hpp
 	${CMAKE_CURRENT_LIST_DIR}/G330NetDeviceClockSynchronizer.cpp
     ${CMAKE_CURRENT_LIST_DIR}/G330NetDeviceClockSynchronizer.hpp
+	${CMAKE_CURRENT_LIST_DIR}/G330NetStreamProfileFilter.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/G330NetStreamProfileFilter.hpp
 )
 

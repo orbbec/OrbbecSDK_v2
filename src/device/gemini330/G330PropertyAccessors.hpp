@@ -24,4 +24,23 @@ private:
     bool hwDisparityToDepthEnabled_;
     bool swDisparityToDepthEnabled_;
 };
+
+class G330NetPerformanceModePropertyAccessor : public IBasicPropertyAccessor {
+public:
+    explicit G330NetPerformanceModePropertyAccessor(IDevice *owner);
+    virtual ~G330NetPerformanceModePropertyAccessor() noexcept = default;
+
+    virtual void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
+    virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
+    virtual void getPropertyRange(uint32_t propertyId, OBPropertyRange *range) override;
+
+private:
+    void updatePerformanceMode(uint32_t mode);
+
+private:
+    IDevice *owner_;
+
+    uint32_t performanceMode_;
+};
+
 }  // namespace libobsensor

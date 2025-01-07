@@ -54,6 +54,7 @@ private:
     void initProperties();
     void initSensorStreamProfileList(std::shared_ptr<ISensor> sensor);
     void initSensorStreamProfile(std::shared_ptr<ISensor> sensor);
+    void initStreamProfileFilter(std::shared_ptr<ISensor> sensor);
 
     void fetchDeviceInfo() override;
     void fetchAllProfileList();
