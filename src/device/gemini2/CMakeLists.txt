@@ -26,4 +26,8 @@ target_sources(
     ${CMAKE_CURRENT_LIST_DIR}/G2AlgParamManager.cpp
     ${CMAKE_CURRENT_LIST_DIR}/G435LeDevice.hpp
     ${CMAKE_CURRENT_LIST_DIR}/G435LeDevice.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/G435LeFrameMetadataParserContainer.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/G435LeMetadataParser.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/G435LeMetadataTypes.hpp
+
 )

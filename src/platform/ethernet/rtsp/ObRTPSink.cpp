@@ -27,10 +27,10 @@ namespace libobsensor {
 #pragma pack(2)
 typedef struct {
     uint64_t frameCounter;  // Frame number
-    uint16_t extentionLen;  // Extended data length, default is 0
+    uint16_t extentionLen;  // Extended data length, default is 0    
     uint64_t timestamp;     // timestamp
     uint32_t width;         // Frame pixel width
-    uint32_t height;        // Frame pixel height
+    uint32_t height;        // Frame pixel height    
 } OBNetworkFrameHeader;
 #pragma pack()
 
@@ -237,7 +237,7 @@ void ObRTPSink::outputFrameFunc() {
                 break;
             }
 
-            TRY_EXECUTE({
+           // TRY_EXECUTE({
                 auto frame = FrameFactory::createFrameFromStreamProfile(streamProfile_);
 
                 uint32_t frameOffset = 0;
@@ -248,6 +248,11 @@ void ObRTPSink::outputFrameFunc() {
                     frame->setTimeStampUsec(header->timestamp);
                     frame->setSystemTimeStampUsec(utils::getNowTimesUs());
                     frame->setNumber(header->frameCounter);
+                    
+                    if(header->extentionLen != 0) {
+                        frame->updateMetadata(output->getRecvdDataBuffer() + frameOffset, header->extentionLen);
+                        frameOffset += header->extentionLen;
+                    }                    
                 }
                 else {
                     frame->setTimeStampUsec(output->getTimestamp());
@@ -263,7 +268,7 @@ void ObRTPSink::outputFrameFunc() {
                 }
 
                 frameCallback_(frame);
-            });
+           // });
         } while(0);
 
         {

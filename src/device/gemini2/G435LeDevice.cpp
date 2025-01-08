@@ -38,6 +38,7 @@
 #include "G2PropertyAccessors.hpp"
 #include "G2DepthWorkModeManager.hpp"
 #include "G2FrameTimestampCalculator.hpp"
+#include "G435LeFrameMetadataParserContainer.hpp"
 
 #include <algorithm>
 
@@ -77,6 +78,18 @@ void G435LeDeviceBase::init() {
 
     registerComponent(OB_DEV_COMPONENT_DEVICE_CLOCK_SYNCHRONIZER, [this] {  //
         return std::make_shared<DeviceClockSynchronizer>(this, deviceTimeFreq_, deviceTimeFreq_);
+    });
+
+    registerComponent(OB_DEV_COMPONENT_COLOR_FRAME_METADATA_CONTAINER, [this]() {
+        std::shared_ptr<FrameMetadataParserContainer> container;
+        container = std::make_shared<G435LeColorFrameMetadataParserContainer>(this);
+        return container;
+    });
+
+    registerComponent(OB_DEV_COMPONENT_DEPTH_FRAME_METADATA_CONTAINER, [this]() {
+        std::shared_ptr<FrameMetadataParserContainer> container;
+        container = std::make_shared<G435LeDepthFrameMetadataParserContainer>(this);
+        return container;
     });
 }
 
