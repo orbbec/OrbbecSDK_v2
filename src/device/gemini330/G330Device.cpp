@@ -1913,9 +1913,17 @@ void G330NetDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
     }
 }
 
-void libobsensor::G330NetDevice::initStreamProfileFilter(std::shared_ptr<ISensor> sensor) {
+void G330NetDevice::initStreamProfileFilter(std::shared_ptr<ISensor> sensor) {
     auto propServer          = getPropertyServer();
-    auto performanceMode     = propServer->getPropertyValueT<int>(OB_PROP_DEVICE_PERFORMANCE_MODE_INT);
+    OBCameraPerformanceMode performanceMode = ADAPTIVE_PERFORMANCE_MODE;
+    BEGIN_TRY_EXECUTE({ 
+        auto mode = propServer->getPropertyValueT<int>(OB_PROP_DEVICE_PERFORMANCE_MODE_INT);
+        performanceMode = (OBCameraPerformanceMode)mode;
+    })
+    CATCH_EXCEPTION_AND_EXECUTE({
+        LOG_ERROR("Get camera performance mode failed!");
+        performanceMode = ADAPTIVE_PERFORMANCE_MODE;
+    })
     auto streamProfileFilter = getComponentT<G330NetStreamProfileFilter>(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER);
     streamProfileFilter->switchFilterMode((OBCameraPerformanceMode)performanceMode);
     sensor->setStreamProfileFilter(streamProfileFilter.get());
