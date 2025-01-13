@@ -4,6 +4,7 @@
 #include "MaxProStreamProfileFilter.hpp"
 #include "utils/Utils.hpp"
 #include "stream/StreamProfile.hpp"
+#include "stream/StreamProfileFactory.hpp"
 #include "exception/ObException.hpp"
 #include "property/InternalProperty.hpp"
 
@@ -35,9 +36,19 @@ StreamProfileList MaxProStreamProfileFilter::filter(const StreamProfileList &pro
             }
         }
         else if(sensorType == OB_SENSOR_DEPTH) {
-
+            if(videoProfile->getWidth() == 640 && videoProfile->getHeight() == 400) {
+                auto newStreamProfile =
+                    StreamProfileFactory::createVideoStreamProfile(OB_STREAM_DEPTH, videoProfile->getFormat(), 640, 320, videoProfile->getFps());
+                filteredProfiles.push_back(newStreamProfile);
+                filteredProfiles.push_back(profile);
+            }
+            else if(videoProfile->getWidth() == 320 && videoProfile->getHeight() == 200) {
+                auto newStreamProfile =
+                    StreamProfileFactory::createVideoStreamProfile(OB_STREAM_DEPTH, videoProfile->getFormat(), 320, 160, videoProfile->getFps());
+                filteredProfiles.push_back(newStreamProfile);
+                filteredProfiles.push_back(profile);
+            }
         }
-        
     }
     return filteredProfiles;
 }
