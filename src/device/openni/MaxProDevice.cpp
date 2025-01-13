@@ -13,6 +13,7 @@
 #include "OpenNIAlgParamManager.hpp"
 #include "MaxStreamProfileFilter.hpp"
 #include "MaxProDisparitySensor.hpp"
+#include "MaxProDisparitySensor.hpp"
 #include "publicfilters/FormatConverterProcess.hpp"
 #include "sensor/video/VideoSensor.hpp"
 #include "sensor/video/DisparityBasedSensor.hpp"
@@ -88,9 +89,6 @@ void MaxProDevice::initSensorList() {
 
                 propServer->setPropertyValueT(OB_PROP_DEPTH_PRECISION_LEVEL_INT, OB_PRECISION_1MM);
                 sensor->setDepthUnit(1.0f);
-
-                auto streamProfileFilter = getComponentT<IStreamProfileFilter>(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER);
-                sensor->setStreamProfileFilter(streamProfileFilter.get());
 
                 initSensorStreamProfile(sensor);
 
