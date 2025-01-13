@@ -12,6 +12,7 @@
 #include "OpenNIPropertyAccessors.hpp"
 #include "OpenNIAlgParamManager.hpp"
 #include "MaxProStreamProfileFilter.hpp"
+#include "MaxProDisparitySensor.hpp"
 #include "publicfilters/FormatConverterProcess.hpp"
 #include "sensor/video/VideoSensor.hpp"
 #include "sensor/video/DisparityBasedSensor.hpp"
@@ -62,7 +63,7 @@ void MaxProDevice::initSensorList() {
             OB_DEV_COMPONENT_DEPTH_SENSOR,
             [this, depthPortInfo]() {
                 auto port   = getSourcePort(depthPortInfo);
-                auto sensor = std::make_shared<DisparityBasedSensor>(this, OB_SENSOR_DEPTH, port);
+                auto sensor = std::make_shared<MaxProDisparitySensor>(this, OB_SENSOR_DEPTH, port);
 
                 std::vector<FormatFilterConfig> formatFilterConfigs = {
                     { FormatFilterPolicy::REMOVE, OB_FORMAT_Z16, OB_FORMAT_ANY, nullptr },
@@ -89,11 +90,9 @@ void MaxProDevice::initSensorList() {
                 propServer->setPropertyValueT(OB_PROP_DEPTH_PRECISION_LEVEL_INT, OB_PRECISION_1MM);
                 sensor->setDepthUnit(1.0f);
 
-                auto streamProfileFilter = getComponentT<IStreamProfileFilter>(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER);
-                sensor->setStreamProfileFilter(streamProfileFilter.get());
-
                 initSensorStreamProfile(sensor);
 
+                sensor->initProfileVirtualRealMap();
                 return sensor;
             },
             true);
@@ -205,6 +204,7 @@ void MaxProDevice::initProperties() {
         if(sensor == OB_SENSOR_DEPTH) {
             propertyServer->registerProperty(OB_PROP_IR_CHANNEL_DATA_SOURCE_INT, "rw", "rw", vendorPropertyAccessor_);
             propertyServer->registerProperty(OB_PROP_IR_LONG_EXPOSURE_BOOL, "w", "w", vendorPropertyAccessor_);
+            propertyServer->registerProperty(OB_PROP_DEPTH_LOAD_ENGINE_GROUP_PARAM_INT, "", "w", vendorPropertyAccessor_);
             // propertyServer->registerProperty(OB_PROP_WATCHDOG_BOOL, "w", "w", vendorPropertyAccessor_);
             // propertyServer->registerProperty(OB_PROP_HEARTBEAT_BOOL, "w", "w", vendorPropertyAccessor_);
             // propertyServer->registerProperty(OB_STRUCT_CUSTOMER_DATA, "w", "w", vendorPropertyAccessor_);
