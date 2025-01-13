@@ -89,9 +89,6 @@ void MaxProDevice::initSensorList() {
                 propServer->setPropertyValueT(OB_PROP_DEPTH_PRECISION_LEVEL_INT, OB_PRECISION_1MM);
                 sensor->setDepthUnit(1.0f);
 
-                auto streamProfileFilter = getComponentT<IStreamProfileFilter>(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER);
-                sensor->setStreamProfileFilter(streamProfileFilter.get());
-
                 initSensorStreamProfile(sensor);
 
                 sensor->initProfileVirtualRealMap();
