@@ -23,6 +23,7 @@ typedef enum {
     OB_PROP_STOP_IR_RIGHT_STREAM_BOOL       = 139, /**<Disable the right IR stream*/
     OB_PROP_STOP_CONFIDENCE_STREAM_BOOL     = 228, /**<Disable the confidence stream*/
 
+    OB_PROP_DEPTH_LOAD_ENGINE_GROUP_PARAM_INT = 172, /**< Load depth engine group parameters*/
     OB_STRUCT_DEVICE_UPGRADE_STATUS    = 1006, /**< Firmware upgrade status, read only*/
     OB_PROP_START_COLOR_STREAM_BOOL    = 125,  /**< Start or stop color stream */
     OB_PROP_START_DEPTH_STREAM_BOOL    = 126,  /**< Start or stop depth stream */
