@@ -33,6 +33,7 @@ void OpenNIAlgParamManager::fetchParamFromDevice() {
 
             if(pid == OB_DEVICE_MAX_PRO_PID || pid == OB_DEVICE_GEMINI_UW_PID) {
                 groupIndex = OB_RAW_DATA_DUAL_CAMERA_PARAMS_1;
+                disparityParam_.minDisparity = 80.0f;
             }
 
             OBCalibrationParamContent content = {};

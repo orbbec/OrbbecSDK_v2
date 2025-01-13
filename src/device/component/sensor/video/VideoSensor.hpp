@@ -31,7 +31,7 @@ public:
 
     virtual ~VideoSensor() noexcept override;
 
-    void start(std::shared_ptr<const StreamProfile> sp, FrameCallback callback) override;
+    virtual void start(std::shared_ptr<const StreamProfile> sp, FrameCallback callback) override;
     void stop() override;
 
     virtual void updateFormatFilterConfig(const std::vector<FormatFilterConfig> &configs);
