@@ -1286,7 +1286,9 @@ void G330NetDevice::fetchDeviceInfo() {
     deviceInfo_->vid_                 = enumInfo_->getVid();
     deviceInfo_->uid_                 = enumInfo_->getUid();
     deviceInfo_->connectionType_      = enumInfo_->getConnectionType();
-    
+
+    netBandwidth_ = 1000;
+    netBandwidth_ = propServer->getPropertyValueT<int>(OB_PROP_NETWORK_BANDWIDTH_TYPE_INT);
 }
 
 void libobsensor::G330NetDevice::fetchAllProfileList() {
@@ -1900,8 +1902,60 @@ void libobsensor::G330NetDevice::initSensorStreamProfileList(std::shared_ptr<ISe
     }
 }
 
+std::shared_ptr<const StreamProfile> G330NetDevice::loadDefaultStreamProfile(OBSensorType sensorType) {
+    std::shared_ptr<const StreamProfile> defaultStreamProfile = nullptr;
+
+    OBStreamType defStreamType = OB_STREAM_UNKNOWN;
+    int          defFps        = 10;
+    int          defWidth      = 640;
+    int          defHeight     = 400;
+    OBFormat     defFormat     = OB_FORMAT_Y16;
+
+    // USB2.0 default resolution config
+    if(netBandwidth_ == 100) {
+        LOG_DEBUG("loadDefaultStreamProfile set USB2.1 device default stream profile.");
+        switch(sensorType) {
+        case OB_SENSOR_DEPTH:
+            defFormat     = OB_FORMAT_Y16;
+            defStreamType = OB_STREAM_DEPTH;
+            break;
+        case OB_SENSOR_IR_LEFT:
+            defFormat     = OB_FORMAT_Y8;
+            defStreamType = OB_STREAM_IR_LEFT;
+            break;
+        case OB_SENSOR_IR_RIGHT:
+            defFormat     = OB_FORMAT_Y8;
+            defStreamType = OB_STREAM_IR_RIGHT;
+            break;
+        case OB_SENSOR_IR:
+            defFormat     = OB_FORMAT_Y8;
+            defStreamType = OB_STREAM_IR;
+            break;
+        case OB_SENSOR_COLOR: {
+            defFormat     = OB_FORMAT_MJPG;
+            defStreamType = OB_STREAM_COLOR;
+
+        } break;
+        default:
+            break;
+        }
+    }
+
+    if(defStreamType != OB_STREAM_UNKNOWN) {
+        defaultStreamProfile = StreamProfileFactory::createVideoStreamProfile(defStreamType, defFormat, defWidth, defHeight, defFps);
+        LOG_DEBUG("default profile StreamType:{}, Format:{}, Width:{}, Height:{}, Fps:{}", defStreamType, defFormat, defWidth, defHeight, defFps);
+    }
+
+    if(!defaultStreamProfile) {
+        // load default stream profile from env config
+        defaultStreamProfile = StreamProfileFactory::getDefaultStreamProfileFromEnvConfig(deviceInfo_->name_, sensorType);
+    }
+
+    return defaultStreamProfile;
+}
+
 void G330NetDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
-    auto streamProfile = StreamProfileFactory::getDefaultStreamProfileFromEnvConfig(deviceInfo_->name_, sensor->getSensorType());
+    auto streamProfile = loadDefaultStreamProfile(sensor->getSensorType());
     if(streamProfile) {
         sensor->updateDefaultStreamProfile(streamProfile);
     }

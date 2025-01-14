@@ -60,6 +60,8 @@ private:
     void fetchDeviceInfo() override;
     void fetchAllProfileList();
 
+    std::shared_ptr<const StreamProfile> loadDefaultStreamProfile(OBSensorType sensorType);
+
 private:
     std::shared_ptr<const SourcePortInfo>                       vendorPortInfo_;
     std::shared_ptr<const SourcePortInfo>                       ptpPortInfo_;
@@ -68,6 +70,8 @@ private:
     std::function<std::shared_ptr<IFrameTimestampCalculator>()> videoFrameTimestampCalculatorCreator_;
 
     StreamProfileList allNetProfileList_;
+
+    int netBandwidth_;
 };
 
 }  // namespace libobsensor
