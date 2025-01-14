@@ -1385,45 +1385,45 @@
                 that the stream is interrupted -->
                 <MaxFrameIntervalMs>2000</MaxFrameIntervalMs>
                 <!-- The resolution width is enabled by default, int type -->
-                <Width>1280</Width>
+                <Width>640</Width>
                 <!-- High resolution is enabled by default, int type -->
-                <Height>800</Height>
+                <Height>400</Height>
                 <!-- The frame rate of the resolution enabled by default, int type -->
                 <FPS>15</FPS>
                 <Format>Y16</Format>
             </Depth>
             <Color>
                 <!-- The resolution width is enabled by default, int type -->
-                <Width>1280</Width>
+                <Width>640</Width>
                 <!-- High resolution is enabled by default, int type -->
-                <Height>800</Height>
+                <Height>400</Height>
                 <!-- The frame rate of the resolution enabled by default, int type -->
                 <FPS>15</FPS>
                 <Format>MJPG</Format>
             </Color>
             <IR>
                 <!-- The resolution width is enabled by default, int type -->
-                <Width>1280</Width>
+                <Width>640</Width>
                 <!-- High resolution is enabled by default, int type -->
-                <Height>800</Height>
+                <Height>400</Height>
                 <!-- The frame rate of the resolution enabled by default, int type -->
                 <FPS>15</FPS>
                 <Format>Y8</Format>
             </IR>
             <LeftIR>
                 <!-- The resolution width is enabled by default, int type -->
-                <Width>1280</Width>
+                <Width>640</Width>
                 <!-- High resolution is enabled by default, int type -->
-                <Height>800</Height>
+                <Height>400</Height>
                 <!-- The frame rate of the resolution enabled by default, int type -->
                 <FPS>15</FPS>
                 <Format>Y8</Format>
             </LeftIR>
             <RightIR>
                 <!-- The resolution width is enabled by default, int type -->
-                <Width>1280</Width>
+                <Width>640</Width>
                 <!-- High resolution is enabled by default, int type -->
-                <Height>800</Height>
+                <Height>400</Height>
                 <!-- The frame rate of the resolution enabled by default, int type -->
                 <FPS>15</FPS>
                 <Format>Y8</Format>
