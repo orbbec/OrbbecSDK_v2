@@ -15,27 +15,42 @@
 // Save point cloud data to ply
 void savePointsToPly(std::shared_ptr<ob::Frame> frame, std::string fileName) {
     // get point cloud size (number of points)
-    uint32_t pointsSize = frame->getDataSize() / sizeof(OBPoint);
-
-    // open file for writing, ply format
+    int   pointsSize = frame->dataSize() / sizeof(OBPoint);
     FILE *fp         = fopen(fileName.c_str(), "wb+");
+
+    if(!fp) {
+        throw std::runtime_error("Failed to open file for writing");
+    }
+
+    OBPoint          *point            = (OBPoint *)frame->data();
+    int               validPointsCount = 0;
+    static const auto min_distance     = 1e-6;
+
+    // First pass: Count valid points (non-zero points)
+    for(int i = 0; i < pointsSize; i++) {
+        if(fabs(point->x) >= min_distance || fabs(point->y) >= min_distance || fabs(point->z) >= min_distance) {
+            validPointsCount++;
+        }
+        point++;
+    }
+
+    // Reset pointer to the start of the data
+    point = (OBPoint *)frame->data();
+
+    // Write PLY header
     fprintf(fp, "ply\n");
     fprintf(fp, "format ascii 1.0\n");
-    fprintf(fp, "element vertex %d\n", pointsSize);
+    fprintf(fp, "element vertex %d\n", validPointsCount);  // Use valid points count
     fprintf(fp, "property float x\n");
     fprintf(fp, "property float y\n");
     fprintf(fp, "property float z\n");
     fprintf(fp, "end_header\n");
 
-    // get point cloud data
-    auto data = frame->getData();
-
-    // cast data to OBPoint pointer
-    auto point = reinterpret_cast<OBPoint *>(data);
-
-    // iterate through all points and save to file
-    for(uint32_t i = 0; i < pointsSize; i++) {
-        fprintf(fp, "%.3f %.3f %.3f\n", point->x, point->y, point->z);
+    // Second pass: Write valid points to the file
+    for(int i = 0; i < pointsSize; i++) {
+        if(fabs(point->x) >= min_distance || fabs(point->y) >= min_distance || fabs(point->z) >= min_distance) {
+            fprintf(fp, "%.3f %.3f %.3f\n", point->x, point->y, point->z);
+        }
         point++;
     }
 
@@ -47,13 +62,31 @@ void savePointsToPly(std::shared_ptr<ob::Frame> frame, std::string fileName) {
 // Save colored point cloud data to ply
 void saveRGBPointsToPly(std::shared_ptr<ob::Frame> frame, std::string fileName) {
     // get point cloud size (number of points)
-    uint32_t pointsSize = frame->getDataSize() / sizeof(OBColorPoint);
-
-    // open file for writing, ply format
+    int   pointsSize = frame->dataSize() / sizeof(OBColorPoint);
     FILE *fp         = fopen(fileName.c_str(), "wb+");
+
+    if(!fp) {
+        throw std::runtime_error("Failed to open file for writing");
+    }
+
+    OBColorPoint     *point            = (OBColorPoint *)frame->data();
+    int               validPointsCount = 0;
+    static const auto min_distance     = 1e-6;
+    // First pass: Count valid points (non-zero points)
+    for(int i = 0; i < pointsSize; i++) {
+        if(fabs(point->x) >= min_distance || fabs(point->y) >= min_distance || fabs(point->z) >= min_distance) {
+            validPointsCount++;
+        }
+        point++;
+    }
+
+    // Reset pointer to the start of the data
+    point = (OBColorPoint *)frame->data();
+
+    // Write PLY header
     fprintf(fp, "ply\n");
     fprintf(fp, "format ascii 1.0\n");
-    fprintf(fp, "element vertex %d\n", pointsSize);
+    fprintf(fp, "element vertex %d\n", validPointsCount);  // Use valid points count
     fprintf(fp, "property float x\n");
     fprintf(fp, "property float y\n");
     fprintf(fp, "property float z\n");
@@ -62,15 +95,11 @@ void saveRGBPointsToPly(std::shared_ptr<ob::Frame> frame, std::string fileName) 
     fprintf(fp, "property uchar blue\n");
     fprintf(fp, "end_header\n");
 
-    // get point cloud data
-    auto data = frame->getData();
-
-    // cast data to OBColorPoint pointer
-    auto point = reinterpret_cast<OBColorPoint *>(data);
-
-    // iterate through all points and save to file
-    for(uint32_t i = 0; i < pointsSize; i++) {
-        fprintf(fp, "%.3f %.3f %.3f %d %d %d\n", point->x, point->y, point->z, (int)point->r, (int)point->g, (int)point->b);
+    // Second pass: Write valid points to the file
+    for(int i = 0; i < pointsSize; i++) {
+        if(fabs(point->x) >= min_distance || fabs(point->y) >= min_distance || fabs(point->z) >= min_distance) {
+            fprintf(fp, "%.3f %.3f %.3f %d %d %d\n", point->x, point->y, point->z, (int)point->r, (int)point->g, (int)point->b);
+        }
         point++;
     }
 
@@ -124,7 +153,7 @@ int main(void) try {
             std::shared_ptr<ob::FrameSet> frameset = nullptr;
             while(true) {
                 frameset = pipeline->waitForFrameset(1000);
-                if (frameset) {
+                if(frameset) {
                     break;
                 }
             }
@@ -149,7 +178,7 @@ int main(void) try {
             std::shared_ptr<ob::FrameSet> frameset = nullptr;
             while(true) {
                 frameset = pipeline->waitForFrameset(1000);
-                if (frameset) {
+                if(frameset) {
                     break;
                 }
             }
@@ -180,4 +209,3 @@ catch(ob::Error &e) {
     ob_smpl::waitForKeyPressed();
     exit(EXIT_FAILURE);
 }
-

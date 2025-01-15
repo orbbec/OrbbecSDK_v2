@@ -118,6 +118,10 @@ void G330Disp2DepthPropertyAccessor::getPropertyRange(uint32_t propertyId, OBPro
             commandPort->getPropertyRange(propertyId, range);
         }
     } break;
+    case OB_PROP_DISP_SEARCH_OFFSET_INT: {
+        auto commandPort = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        commandPort->getPropertyRange(propertyId, range);
+    } break;
     default: {
         auto commandPort = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
         commandPort->getPropertyRange(propertyId, range);

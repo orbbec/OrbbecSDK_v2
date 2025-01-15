@@ -176,7 +176,7 @@ public:
         auto calculatedTimestamp = G330PayloadHeadMetadataTimestampParser::getValue(metadata, dataSize);
         // get frame offset,unit 100us
         auto    standardUvcMetadata = *(reinterpret_cast<const StandardUvcFramePayloadHeader *>(metadata));
-        int16_t frameOffset         = (((standardUvcMetadata.scrSourceClock[1] & 0xF8) >> 3) | ((standardUvcMetadata.scrSourceClock[2] & 0x7F) << 5)) * 100;
+        int32_t frameOffset         = (((standardUvcMetadata.scrSourceClock[1] & 0xF8) >> 3) | ((standardUvcMetadata.scrSourceClock[2] & 0x7F) << 5)) * 100;
         calculatedTimestamp += frameOffset;
 
         return calculatedTimestamp;

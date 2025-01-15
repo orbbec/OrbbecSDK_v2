@@ -46,6 +46,8 @@ If you prefer to continue with Orbbec SDK v1.x, you can still access the pre-com
 | Astra 2           | 2.8.20                       |
 | Gemini 2 L        | 1.4.32                       |
 | Gemini 2          | 1.4.60 /1.4.76               |
+| Gemini 215        | 1.0.9                        |
+| Gemini 210        | 1.0.9                        |
 
 For optimal performance, we strongly recommend updating to the latest firmware version. This ensures that you benefit from the most recent enhancements and bug fixes.
 

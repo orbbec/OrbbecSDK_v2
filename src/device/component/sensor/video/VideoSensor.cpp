@@ -221,6 +221,8 @@ void VideoSensor::trySendStopStreamVendorCmd() {
             propertyId = OB_PROP_STOP_COLOR_STREAM_BOOL;
             break;
         case OB_SENSOR_IR_RIGHT:
+            propertyId = OB_PROP_STOP_IR_RIGHT_STREAM_BOOL;
+            break;
         case OB_SENSOR_DEPTH:
             propertyId = OB_PROP_STOP_DEPTH_STREAM_BOOL;
             break;

@@ -92,9 +92,6 @@ void DabaiADevice::init() {
     auto algParamManager = std::make_shared<DaBaiAAlgParamManager>(this);
     registerComponent(OB_DEV_COMPONENT_ALG_PARAM_MANAGER, algParamManager);
 
-    auto sensorStreamStrategy = std::make_shared<G330SensorStreamStrategy>(this);
-    registerComponent(OB_DEV_COMPONENT_SENSOR_STREAM_STRATEGY, sensorStreamStrategy);
-
     static const std::vector<OBMultiDeviceSyncMode> supportedSyncModes     = { OB_MULTI_DEVICE_SYNC_MODE_FREE_RUN, OB_MULTI_DEVICE_SYNC_MODE_STANDALONE,
                                                                                OB_MULTI_DEVICE_SYNC_MODE_PRIMARY, OB_MULTI_DEVICE_SYNC_MODE_SECONDARY_SYNCED,
                                                                                OB_MULTI_DEVICE_SYNC_MODE_IR_IMU_SYNC };

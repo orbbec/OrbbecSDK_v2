@@ -20,6 +20,7 @@ typedef enum {
     OB_PROP_DEVICE_PID_INT                  = 111, /**< Device product id*/
     OB_PROP_DEPTH_MIRROR_MODULE_STATUS_BOOL = 108, /**< Depth mirror module status*/
     OB_PROP_FAN_WORK_SPEED_INT              = 120, /**< Fan speed*/
+    OB_PROP_STOP_IR_RIGHT_STREAM_BOOL       = 139, /**<Disable the right IR stream*/
 
     OB_STRUCT_DEVICE_UPGRADE_STATUS         = 1006, /**< Firmware upgrade status, read only*/
     OB_PROP_START_COLOR_STREAM_BOOL         = 125, /**< Start or stop color stream */

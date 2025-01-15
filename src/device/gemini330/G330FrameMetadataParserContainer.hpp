@@ -49,6 +49,8 @@ public:
 class G330DepthFrameMetadataParserContainer : public FrameMetadataParserContainer {
 public:
     G330DepthFrameMetadataParserContainer(IDevice *owner) : FrameMetadataParserContainer(owner) {
+        auto device     = getOwner();
+        auto propServer = device->getPropertyServer();
         registerParser(OB_FRAME_METADATA_TYPE_TIMESTAMP, std::make_shared<G330MetadataTimestampParser<G330DepthUvcMetadata>>());
         registerParser(OB_FRAME_METADATA_TYPE_SENSOR_TIMESTAMP, std::make_shared<G330MetadataSensorTimestampParser>());
         registerParser(OB_FRAME_METADATA_TYPE_FRAME_NUMBER, makeStructureMetadataParser(&G330DepthUvcMetadata::frame_counter));
@@ -61,7 +63,10 @@ public:
                                                        return ((G330ColorUvcMetadata::bitmap_union_0_fields *)&param)->auto_exposure;
                                                    }));
         registerParser(OB_FRAME_METADATA_TYPE_EXPOSURE, makeStructureMetadataParser(&G330CommonUvcMetadata::exposure));
-        registerParser(OB_FRAME_METADATA_TYPE_EXPOSURE_PRIORITY, makeStructureMetadataParser(&G330DepthUvcMetadata::exposure_priority));
+        if(propServer->isPropertySupported(OB_FRAME_METADATA_TYPE_EXPOSURE_PRIORITY, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
+            registerParser(OB_FRAME_METADATA_TYPE_EXPOSURE_PRIORITY, makeStructureMetadataParser(&G330DepthUvcMetadata::exposure_priority));
+        }
+
         registerParser(OB_FRAME_METADATA_TYPE_LASER_POWER, makeStructureMetadataParser(&G330DepthUvcMetadata::laser_power));
         registerParser(OB_FRAME_METADATA_TYPE_LASER_POWER_LEVEL, makeStructureMetadataParser(&G330DepthUvcMetadata::laser_power_level));
         registerParser(OB_FRAME_METADATA_TYPE_LASER_STATUS, makeStructureMetadataParser(&G330DepthUvcMetadata::laser_status));
@@ -121,7 +126,8 @@ class G330DepthFrameMetadataParserContainerByScr : public FrameMetadataParserCon
 public:
     G330DepthFrameMetadataParserContainerByScr(IDevice *owner, const uint64_t deviceTimeFreq, const uint64_t frameTimeFreq)
         : FrameMetadataParserContainer(owner) {
-        auto device = getOwner();
+        auto device     = getOwner();
+        auto propServer = device->getPropertyServer();
         registerParser(OB_FRAME_METADATA_TYPE_TIMESTAMP, std::make_shared<G330PayloadHeadMetadataTimestampParser>(device, deviceTimeFreq, frameTimeFreq));
         registerParser(OB_FRAME_METADATA_TYPE_SENSOR_TIMESTAMP,
                        std::make_shared<G330PayloadHeadMetadataDepthSensorTimestampParser>(device, deviceTimeFreq, frameTimeFreq));
@@ -130,13 +136,16 @@ public:
         registerParser(OB_FRAME_METADATA_TYPE_ACTUAL_FRAME_RATE, std::make_shared<G330DepthScrMetadataActualFrameRateParser>(device));
 
         registerParser(OB_FRAME_METADATA_TYPE_AUTO_EXPOSURE, std::make_shared<G330DepthMetadataParser>(device, OB_FRAME_METADATA_TYPE_AUTO_EXPOSURE));
-        registerParser(OB_FRAME_METADATA_TYPE_EXPOSURE_PRIORITY, std::make_shared<G330DepthMetadataParser>(device, OB_FRAME_METADATA_TYPE_EXPOSURE_PRIORITY));
+        if(propServer->isPropertySupported(OB_FRAME_METADATA_TYPE_EXPOSURE_PRIORITY, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
+            registerParser(OB_FRAME_METADATA_TYPE_EXPOSURE_PRIORITY,
+                           std::make_shared<G330DepthMetadataParser>(device, OB_FRAME_METADATA_TYPE_EXPOSURE_PRIORITY));
+        }
+
         registerParser(OB_FRAME_METADATA_TYPE_LASER_POWER,
                        std::make_shared<G330DepthScrMetadataLaserPowerLevelParser>([](const int64_t &param) { return param * 80; }));
         registerParser(OB_FRAME_METADATA_TYPE_LASER_POWER_LEVEL, std::make_shared<G330DepthScrMetadataLaserPowerLevelParser>());
         registerParser(OB_FRAME_METADATA_TYPE_LASER_STATUS, std::make_shared<G330DepthScrMetadataLaserStatusParser>());
         {
-            auto propServer = device->getPropertyServer();
             if(propServer->isPropertySupported(OB_STRUCT_DEPTH_HDR_CONFIG, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
                 registerParser(OB_FRAME_METADATA_TYPE_FRAME_NUMBER,
                                std::make_shared<G330DepthScrMetadataHDRSequenceIDParser>());  // todo: remove this line after fix hdr merge issue

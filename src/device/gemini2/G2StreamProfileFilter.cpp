@@ -57,18 +57,25 @@ void G2StreamProfileFilter::fetchEffectiveStreamProfiles() {
     effectiveStreamProfiles_ = profiles;
     for(auto &profile: profiles) {
         if(profile.sensorType == OB_SENSOR_COLOR && profile.format == OB_FORMAT_MJPG) {
-            auto nerProfile   = profile;
-            nerProfile.format = OB_FORMAT_RGB;
-            effectiveStreamProfiles_.push_back(nerProfile);
-            nerProfile.format = OB_FORMAT_BGR;
-            effectiveStreamProfiles_.push_back(nerProfile);
-            nerProfile.format = OB_FORMAT_BGRA;
-            effectiveStreamProfiles_.push_back(nerProfile);
+            auto newProfile   = profile;
+            newProfile.format = OB_FORMAT_RGB;
+            effectiveStreamProfiles_.push_back(newProfile);
+            newProfile.format = OB_FORMAT_BGR;
+            effectiveStreamProfiles_.push_back(newProfile);
+            newProfile.format = OB_FORMAT_BGRA;
+            effectiveStreamProfiles_.push_back(newProfile);
         }
         else if(profile.sensorType == OB_SENSOR_DEPTH && profile.format == OB_FORMAT_RLE) {
-            auto nerProfile   = profile;
-            nerProfile.format = OB_FORMAT_Y16;
-            effectiveStreamProfiles_.push_back(nerProfile);
+            auto newProfile   = profile;
+            newProfile.format = OB_FORMAT_Y16;
+            auto iter         = std::find_if(profiles.begin(), profiles.end(), [&newProfile](const OBEffectiveStreamProfile &profile) {
+                return profile.sensorType == newProfile.sensorType && profile.format == OB_FORMAT_Y16 && profile.width == newProfile.width
+                       && profile.height == newProfile.height && profile.maxFps == newProfile.maxFps;
+            });
+
+            if(iter == profiles.end()) {
+                effectiveStreamProfiles_.push_back(newProfile);
+            }
         }
     }
 }
