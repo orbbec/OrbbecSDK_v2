@@ -1152,6 +1152,21 @@ public:
     }
 
     /**
+     * @brief get the local mac address of the device at the specified index
+     *
+     * @attention Only valid for network devices, otherwise it will return "0:0:0:0:0:0".
+     *
+     * @param index the index of the device
+     * @return const char* the local mac address of the device
+     */
+    const char *getLocalMacAddress(uint32_t index) const {
+        ob_error *error = nullptr;
+        auto      mac    = ob_device_list_get_device_local_mac(impl_, index, &error);
+        Error::handle(&error);
+        return mac;
+    }
+
+    /**
      * @brief Get the device object at the specified index
      *
      * @attention If the device has already been acquired and created elsewhere, repeated acquisition will throw an exception
