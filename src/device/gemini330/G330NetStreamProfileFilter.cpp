@@ -14,11 +14,11 @@ G330NetStreamProfileFilter::G330NetStreamProfileFilter(IDevice *owner) : DeviceC
 
 }
 
-static bool isMatch(OBSensorType sensorType, std::shared_ptr<const VideoStreamProfile> videoProfile, OBEffectiveStreamProfile effProfile) {
-    bool isSensorTypeEqual = sensorType == effProfile.sensorType;
-    return isSensorTypeEqual && (videoProfile->getFps() <= effProfile.maxFps) && (videoProfile->getWidth() == effProfile.width)
-           && (videoProfile->getHeight() == effProfile.height);
-}
+//static bool isMatch(OBSensorType sensorType, std::shared_ptr<const VideoStreamProfile> videoProfile, OBEffectiveStreamProfile effProfile) {
+//    bool isSensorTypeEqual = sensorType == effProfile.sensorType;
+//    return isSensorTypeEqual && (videoProfile->getFps() <= effProfile.maxFps) && (videoProfile->getWidth() == effProfile.width)
+//           && (videoProfile->getHeight() == effProfile.height);
+//}
 
 StreamProfileList G330NetStreamProfileFilter::filter(const StreamProfileList &profiles) const {
     StreamProfileList filteredProfiles;
@@ -27,7 +27,7 @@ StreamProfileList G330NetStreamProfileFilter::filter(const StreamProfileList &pr
         return filteredProfiles;
     }
 
-    for(const auto &profile: profiles) {
+    /*for(const auto &profile: profiles) {
         auto videoProfile = profile->as<VideoStreamProfile>();
         auto streamType   = profile->getType();
         auto sensorType   = utils::mapStreamTypeToSensorType(streamType);
@@ -36,6 +36,14 @@ StreamProfileList G330NetStreamProfileFilter::filter(const StreamProfileList &pr
                 filteredProfiles.push_back(profile);
             }
         }
+    }*/
+
+    for(const auto &profile: profiles) {
+        auto videoProfile = profile->as<VideoStreamProfile>();
+        if(videoProfile->getWidth() == 640 && videoProfile->getHeight() == 480 && videoProfile->getFps() == 90) {
+            continue;
+        }
+        filteredProfiles.push_back(profile);
     }
     return filteredProfiles;
 }
