@@ -148,6 +148,7 @@ void VendorTCPClient::socketConnect() {
 
 #if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
     if(isValidIP_) {
+        LOG_DEBUG("bind local address {}", localAddress_);
         struct sockaddr_in localAddr;
         localAddr.sin_family = AF_INET;
         localAddr.sin_port   = htons(0);
@@ -162,6 +163,7 @@ void VendorTCPClient::socketConnect() {
             throw libobsensor::invalid_value_exception(utils::string::to_string()
                                                        << "VendorTCPClient: local ip bind failed! addr=" << localAddress_ << ", err_code=" << GET_LAST_ERROR());
         }
+        LOG_DEBUG("bind local address success!");
     }
 #endif
 
