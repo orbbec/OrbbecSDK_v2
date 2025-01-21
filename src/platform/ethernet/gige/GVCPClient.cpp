@@ -129,12 +129,6 @@ int GVCPClient::openClientSockets() {
 
     for(PIP_ADAPTER_ADDRESSES aa = adapterAddresses.get(); aa != NULL; aa = aa->Next) {
         std::cout << "Interface: " << aa->AdapterName << std::endl;
-        /*std::cout << "  MAC Address: ";
-        for(int i = 0; i < 6; i++) {
-            printf("%02X", aa->PhysicalAddress[i]);
-            if(i < 5)
-                printf(":");
-        }*/
 
         std::ostringstream macAddressStream;
         for(int i = 0; i < 6; i++) {
@@ -154,13 +148,14 @@ int GVCPClient::openClientSockets() {
             if(strncmp(ipStr, "169.254", 7) == 0 || strcmp(ipStr, "127.0.0.1") == 0) {
                 continue;
             }
-            std::cout << "  IP Address: " << ipStr << std::endl;
             //socks_[index++] = openClientSocket(addrSrv);
 
-            SOCKET socket               = openClientSocket(addrSrv);
-            int    curIndex             = index++;
-            socketInfos_[curIndex].sock = socket;
-            socketInfos_[curIndex].mac  = macAddress;
+            SOCKET socket                  = openClientSocket(addrSrv);
+            int    curIndex                = index++;
+            socketInfos_[curIndex].sock    = socket;
+            socketInfos_[curIndex].mac     = macAddress;
+            socketInfos_[curIndex].address = ipStr;
+            LOG_DEBUG("local mac address: {},local ip address:{}", macAddress, ipStr);
         }
     }
     sockCount_ = index;
@@ -220,9 +215,9 @@ int GVCPClient::openClientSockets() {
                 }
 
                 std::string macAddress = macAddressStream.str();
-                LOG_DEBUG("mac address: {}", macAddress);
-
                 socketInfos_[curIndex].mac = macAddress;
+                socketInfos_[curIndex].address = ipStr;
+                LOG_DEBUG("local mac address: {},local ip address:{}", macAddress, ipStr);
             }
         }
     }
@@ -573,15 +568,8 @@ void GVCPClient::sendGVCPDiscovery2(GVCPSocketInfo socketInfo) {
                     if(strcmp(ackPayload.szFacName, "Orbbec") != 0)
                         continue;
 
-                    SOCKADDR_IN addrLocal;
-                    socklen_t   addrLen = sizeof(addrLocal);
-                    std::string sockIp;
-                    if(getsockname(socketInfo.sock, (struct sockaddr *)&addrLocal, &addrLen) == 0) {
-                        sockIp = inet_ntoa(addrLocal.sin_addr);
-                    }
-
                     GVCPDeviceInfo info;
-                    info.lcalIp   = sockIp;
+                    info.lcalIp   = socketInfo.address;
                     info.localMac = socketInfo.mac;
                     info.mac      = macStr;
                     info.ip       = curIPStr;
@@ -791,11 +779,11 @@ void GVCPClient::checkAndUpdateSockets() {
                     }
                     std::string macAddress = macAddressStream.str();
 
-                    int curIndex                = index++;
-                    socketInfos_[curIndex].sock = socketFd;
-                    socketInfos_[curIndex].mac  = macAddress;
-
-                    LOG_INFO("new ip segment found,new ip addr:{}", ipStr);
+                    int curIndex                   = index++;
+                    socketInfos_[curIndex].sock    = socketFd;
+                    socketInfos_[curIndex].mac     = macAddress;
+                    socketInfos_[curIndex].address = ipStr;
+                    LOG_INFO("New ip segment found,new ip addr:{}, mac:{}", ipStr, macAddress);
                 }
             }
         }
@@ -887,13 +875,12 @@ void GVCPClient::checkAndUpdateSockets() {
                     }
 
                     std::string macAddress = macAddressStream.str();
-                    LOG_DEBUG("mac address: {}", macAddress);
-
-                    socketInfos_[curIndex].mac = macAddress;
+                    socketInfos_[curIndex].mac     = macAddress;
+                    socketInfos_[curIndex].address = ipStr;
+                    LOG_INFO("New ip segment found,new ip addr:{}, mac:{}", ipStr, macAddress);
                 }
 
                 ipAddressStrSet_.insert(ipStr);
-                LOG_INFO("new ip segment found,new ip addr:{}", ipStr);
             }
         }
     }

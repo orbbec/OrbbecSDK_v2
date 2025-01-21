@@ -6,24 +6,100 @@
 #include "utils/Utils.hpp"
 #include "exception/ObException.hpp"
 
+#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+#include <windows.h>
+#include <iphlpapi.h>
+#include <iostream>
+#include <string>
+#include <sstream>
+#include <iomanip>
+#endif
+
 #include <thread>
 
 namespace libobsensor {
 
-VendorTCPClient::VendorTCPClient(std::string address, uint16_t port, uint32_t connectTimeout, uint32_t commTimeout)
-    : address_(address), port_(port), socketFd_(INVALID_SOCKET), flushed_(false), CONNECT_TIMEOUT_MS(connectTimeout), COMM_TIMEOUT_MS(commTimeout) {
+VendorTCPClient::VendorTCPClient(std::string localAddress, std::string localMac, std::string address, uint16_t port, uint32_t connectTimeout,
+                                 uint32_t commTimeout)
+    : isValidIP_(false),
+      localAddress_(localAddress),
+      localMac_(localMac),
+      address_(address),
+      port_(port),
+      socketFd_(INVALID_SOCKET),
+      flushed_(false),
+      CONNECT_TIMEOUT_MS(connectTimeout),
+      COMM_TIMEOUT_MS(commTimeout) {
+    LOG_DEBUG("VendorTCPClient create localAddress:{}, localMac:{}", localAddress_, localMac_);
 #if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
     WSADATA wsaData;
     int     rst = WSAStartup(MAKEWORD(2, 2), &wsaData);
     if(rst != 0) {
         throw libobsensor::invalid_value_exception(utils::string::to_string() << "Failed to load Winsock! err_code=" << GET_LAST_ERROR());
     }
+    checkLocalIP();
 #endif
-// Due to network configuration changes causing socket connection pipeline errors, macOS throws a SIGPIPE exception to the application, leading to a crash (this does not occur on Linux). This exception needs to be filtered out.
+// Due to network configuration changes causing socket connection pipeline errors, macOS throws a SIGPIPE exception to the application, leading to a crash (this
+// does not occur on Linux). This exception needs to be filtered out.
 #if(defined(OS_IOS) || defined(OS_MACOS))
     signal(SIGPIPE, SIG_IGN);
 #endif
     socketConnect();
+}
+
+void VendorTCPClient::checkLocalIP() {
+#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+    unsigned int a, b, c, d;
+    if(sscanf(localAddress_.c_str(), "%u.%u.%u.%u", &a, &b, &c, &d) == 4) {
+        if((a == 10) ||                         // 10.0.0.0 - 10.255.255.255
+           (a == 172 && b >= 16 && b <= 31) ||  // 172.16.0.0 - 172.31.255.255
+           (a == 192 && b == 168)) {            // 192.168.0.0 - 192.168.255.255
+            isValidIP_ = true;
+        }
+    }
+
+    if(!isValidIP_) {
+        localAddress_ = "";
+        IP_ADAPTER_INFO adapterInfo[16];  // Buffer to hold adapter info
+        DWORD           bufLen = sizeof(adapterInfo);
+
+        // Get the network adapter information
+        DWORD dwRetVal = GetAdaptersInfo(adapterInfo, &bufLen);
+        if(dwRetVal == ERROR_SUCCESS) {
+            // Loop through all the adapters
+            PIP_ADAPTER_INFO pAdapterInfo = adapterInfo;
+            while(pAdapterInfo) {
+                // Convert MAC address to string format
+                std::ostringstream oss;
+                for(int i = 0; i < 6; ++i) {
+                    if(i > 0)
+                        oss << ":";
+                    oss << std::setw(2) << std::setfill('0') << std::hex << (int)pAdapterInfo->Address[i];
+                }
+
+                // Compare MAC address with the input MAC address
+                std::string currentMac = oss.str();
+                if(currentMac == localMac_) {
+                    // If MAC matches, get the associated IP address (return the first one)
+                    PIP_ADDR_STRING pIpAddr = &pAdapterInfo->IpAddressList;
+                    if(pIpAddr) {
+                        localAddress_ = pIpAddr->IpAddress.String;  // Return the first IP address
+                    }
+                    break;  // If no IP address found, break out of the loop
+                }
+                pAdapterInfo = pAdapterInfo->Next;
+            }
+        }
+
+        if(sscanf(localAddress_.c_str(), "%u.%u.%u.%u", &a, &b, &c, &d) == 4) {
+            if((a == 10) ||                         // 10.0.0.0 - 10.255.255.255
+               (a == 172 && b >= 16 && b <= 31) ||  // 172.16.0.0 - 172.31.255.255
+               (a == 192 && b == 168)) {            // 192.168.0.0 - 192.168.255.255
+                isValidIP_ = true;
+            }
+        }
+    }
+#endif
 }
 
 VendorTCPClient::~VendorTCPClient() noexcept{
@@ -65,14 +141,35 @@ void VendorTCPClient::socketConnect() {
     // Set to non-blocking; handle connect timeout
     rst = ioctlsocket(socketFd_, FIONBIO, &mode);
     if(rst < 0) {
+        socketClose();
         throw libobsensor::invalid_value_exception(utils::string::to_string() << "VendorTCPClient: ioctlsocket to non-blocking mode failed! addr=" << address_
                                                                               << ", port=" << port_ << ", err_code=" << GET_LAST_ERROR());
     }
+
+#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+    if(isValidIP_) {
+        struct sockaddr_in localAddr;
+        localAddr.sin_family = AF_INET;
+        localAddr.sin_port   = htons(0);
+        if(inet_pton(AF_INET, localAddress_.c_str(), &localAddr.sin_addr) <= 0) {
+            socketClose();
+            throw libobsensor::invalid_value_exception(utils::string::to_string() << "VendorTCPClient: Invalid local ip address! addr=" << localAddress_
+                                                                                  << ", err_code=" << GET_LAST_ERROR());
+        }
+
+        if(bind(socketFd_, (struct sockaddr *)&localAddr, sizeof(localAddr)) < 0) {
+            socketClose();
+            throw libobsensor::invalid_value_exception(utils::string::to_string()
+                                                       << "VendorTCPClient: local ip bind failed! addr=" << localAddress_ << ", err_code=" << GET_LAST_ERROR());
+        }
+    }
+#endif
 
     struct sockaddr_in serverAddr;
     serverAddr.sin_family = AF_INET;                                       // ipv4
     serverAddr.sin_port   = htons(port_);                                  // convert uint16_t from host to network byte sequence
     if(inet_pton(AF_INET, address_.c_str(), &serverAddr.sin_addr) <= 0) {  // address string to sin_addr
+        socketClose();
         throw libobsensor::invalid_value_exception("Invalid address!");
     }
 
@@ -84,6 +181,7 @@ void VendorTCPClient::socketConnect() {
 #else
         if(rst != EINPROGRESS) {  // EINPROGRESS due to non-blocking mode
 #endif
+            socketClose();
             throw libobsensor::invalid_value_exception(utils::string::to_string() << "VendorTCPClient: Connect to server failed! addr=" << address_
                                                                                   << ", port=" << port_ << ", err_code=" << rst);
         }
@@ -122,6 +220,7 @@ void VendorTCPClient::socketConnect() {
     // check if the socket is ready
     rst = select(0, NULL, &write, &err, &connTimeout);
     if(!FD_ISSET(socketFd_, &write)) {
+        socketClose();
         throw libobsensor::invalid_value_exception(utils::string::to_string() << "VendorTCPClient: Connect to server failed! addr=" << address_
                                                                               << ", port=" << port_ << ", err=socket is not ready & timeout");
     }
@@ -131,6 +230,7 @@ void VendorTCPClient::socketConnect() {
     mode = 0;  // blocking mode
     rst  = ioctlsocket(socketFd_, FIONBIO, &mode);
     if(rst < 0) {
+        socketClose();
         throw libobsensor::invalid_value_exception(utils::string::to_string() << "VendorTCPClient: ioctlsocket to blocking mode failed! addr=" << address_
                                                                               << ", port=" << port_ << ", err_code=" << GET_LAST_ERROR());
     }

@@ -10,7 +10,7 @@ namespace libobsensor {
 #define OB_VENDOR_CMD_RECV_LEN 1024
 VendorNetDataPort::VendorNetDataPort(std::shared_ptr<const NetSourcePortInfo> portInfo) : portInfo_(portInfo) {
     auto noConstPortInfo = std::const_pointer_cast<const NetSourcePortInfo>(portInfo);
-    tcpClient_           = std::make_shared<VendorTCPClient>(noConstPortInfo->address, noConstPortInfo->port);
+    tcpClient_ = std::make_shared<VendorTCPClient>(noConstPortInfo->localAddress, noConstPortInfo->localMac, noConstPortInfo->address, noConstPortInfo->port);
 }
 
 VendorNetDataPort::~VendorNetDataPort() noexcept {}

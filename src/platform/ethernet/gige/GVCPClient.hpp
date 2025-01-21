@@ -105,6 +105,7 @@ struct GVCPDeviceInfo {
 
 struct GVCPSocketInfo {
     std::string mac = "unknown";
+    std::string address  = "unknown";
     SOCKET      sock = 0;
 };
 
