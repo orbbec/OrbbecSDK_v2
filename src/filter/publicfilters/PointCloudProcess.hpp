@@ -49,10 +49,12 @@ protected:
 
     std::shared_ptr<FormatConverter> formatConverter_;
 
-    uint32_t               tablesDataSize_;
-    std::shared_ptr<float> tablesData_;
-    OBXYTables             xyTables_;
+    uint32_t               depthTablesDataSize_;
+    uint32_t               rgbdTablesDataSize_;
+    std::shared_ptr<float> depthTablesData_;
+    std::shared_ptr<float> rgbdTablesData_;
+    OBXYTables             depthXyTables_;
+    OBXYTables             rgbdXyTables_;
 };
 
 }  // namespace libobsensor
-

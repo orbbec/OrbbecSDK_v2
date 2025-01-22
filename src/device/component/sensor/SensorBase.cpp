@@ -142,6 +142,10 @@ void SensorBase::updateStreamState(OBStreamState state) {
         return;
     }
     auto oldState = streamState_.load();
+    if(state == STREAM_STATE_STREAMING && oldState == STREAM_STATE_STOPPING) {
+        return;
+    }
+
     streamState_.store(state);
     if(oldState != state && !streamStateChangedCallbacks_.empty()) {
         for(auto &callback: streamStateChangedCallbacks_) {
@@ -254,12 +258,20 @@ void SensorBase::setFrameProcessor(std::shared_ptr<FrameProcessor> frameProcesso
     frameProcessor_->setCallback([this](std::shared_ptr<Frame> frame) {
         auto deviceInfo = owner_->getInfo();
         LOG_FREQ_CALC(DEBUG, 5000, "{}({}): {} frameProcessor_ callback frameRate={freq}fps", deviceInfo->name_, deviceInfo->deviceSn_, sensorType_);
-        frameCallback_(frame);
+        if (frameCallback_)
+        {
+            frameCallback_(frame);
+        }
+        
         LOG_FREQ_CALC(INFO, 5000, "{}({}): {} Streaming... frameRate={freq}fps", deviceInfo->name_, deviceInfo->deviceSn_, sensorType_);
     });
 }
 
 void SensorBase::outputFrame(std::shared_ptr<Frame> frame) {
+    if(streamState_ != STREAM_STATE_STREAMING && streamState_ != STREAM_STATE_STARTING) {
+        return;
+    }
+
     if(activatedStreamProfile_) {
         frame->setStreamProfile(activatedStreamProfile_);
     }
@@ -278,7 +290,10 @@ void SensorBase::outputFrame(std::shared_ptr<Frame> frame) {
         frameProcessor_->pushFrame(frame);
     }
     else {
-        frameCallback_(frame);
+        if (frameCallback_)
+        {
+            frameCallback_(frame);
+        }
         auto deviceInfo = owner_->getInfo();
         LOG_FREQ_CALC(INFO, 5000, "{}({}): {} Streaming... frameRate={freq}fps", deviceInfo->name_, deviceInfo->deviceSn_, sensorType_);
     }

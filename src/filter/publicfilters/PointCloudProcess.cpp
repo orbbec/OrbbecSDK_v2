@@ -17,8 +17,21 @@ PointCloudFilter::PointCloudFilter()
       positionDataScale_(1.0f),
       coordinateSystemType_(OB_RIGHT_HAND_COORDINATE_SYSTEM),
       isColorDataNormalization_(false),
-      tablesDataSize_(0),
-      tablesData_(nullptr) {}
+      depthTablesDataSize_(0),
+      rgbdTablesDataSize_(0),
+      depthTablesData_(nullptr),
+      rgbdTablesData_(nullptr) {
+
+    depthXyTables_.xTable = nullptr;
+    depthXyTables_.yTable = nullptr;
+    depthXyTables_.height = 0;
+    depthXyTables_.width  = 0;
+
+    rgbdXyTables_.xTable = nullptr;
+    rgbdXyTables_.yTable = nullptr;
+    rgbdXyTables_.height = 0;
+    rgbdXyTables_.width  = 0;
+}
 
 PointCloudFilter::~PointCloudFilter() noexcept {
     reset();
@@ -28,9 +41,21 @@ void PointCloudFilter::reset() {
     if(formatConverter_) {
         formatConverter_.reset();
     }
-    if(tablesData_) {
-        tablesData_.reset();
-        tablesDataSize_ = 0;
+    if(depthTablesData_) {
+        depthTablesData_.reset();
+        depthTablesDataSize_  = 0;
+        depthXyTables_.xTable = nullptr;
+        depthXyTables_.yTable = nullptr;
+        depthXyTables_.height = 0;
+        depthXyTables_.width  = 0;
+    }
+    if(rgbdTablesData_) {
+        rgbdTablesData_.reset();
+        rgbdTablesDataSize_   = 0;
+        rgbdXyTables_.xTable  = nullptr;
+        rgbdXyTables_.yTable  = nullptr;
+        rgbdXyTables_.height  = 0;
+        rgbdXyTables_.width   = 0;
     }
 }
 
@@ -100,25 +125,25 @@ std::shared_ptr<Frame> PointCloudFilter::createDepthPointCloud(std::shared_ptr<c
     }
 
     auto frameSize = depthWidth * depthHeight * 2;
-    if(tablesData_ && tablesDataSize_ != frameSize) {
-        tablesData_.reset();
-        tablesData_ = nullptr;
+    if(depthTablesData_ && depthTablesDataSize_ != frameSize) {
+        depthTablesData_.reset();
+        depthTablesData_ = nullptr;
     }
 
-    if(tablesData_ == nullptr) {
-        tablesDataSize_                   = frameSize;
-        tablesData_                       = std::shared_ptr<float>(new float[tablesDataSize_], std::default_delete<float[]>());
+    if(depthTablesData_ == nullptr) {
+        depthTablesDataSize_              = frameSize;
+        depthTablesData_                  = std::shared_ptr<float>(new float[depthTablesDataSize_], std::default_delete<float[]>());
         OBCameraIntrinsic  depthIntrinsic = depthVideoStreamProfile->getIntrinsic();
         OBCameraDistortion depthDisto     = depthVideoStreamProfile->getDistortion();
-        if(!CoordinateUtil::transformationInitXYTables(depthIntrinsic, depthDisto, reinterpret_cast<float *>(tablesData_.get()), &tablesDataSize_,
-                                                       &xyTables_)) {
+        if(!CoordinateUtil::transformationInitXYTables(depthIntrinsic, depthDisto, reinterpret_cast<float *>(depthTablesData_.get()), &depthTablesDataSize_,
+                                                       &depthXyTables_)) {
             LOG_ERROR_INTVL("Init transformation coordinate tables failed!");
-            tablesData_.reset();
+            depthTablesData_.reset();
             return nullptr;
         }
     }
 
-    CoordinateUtil::transformationDepthToPointCloud(&xyTables_, depthFrame->getData(), (void *)pointFrame->getData(), positionDataScale_,
+    CoordinateUtil::transformationDepthToPointCloud(&depthXyTables_, depthFrame->getData(), (void *)pointFrame->getData(), positionDataScale_,
                                                     coordinateSystemType_);
 
     float depthValueScale = depthFrame->as<DepthFrame>()->getValueScale();
@@ -223,28 +248,28 @@ std::shared_ptr<Frame> PointCloudFilter::createRGBDPointCloud(std::shared_ptr<co
     }
 
     auto frameSize = dstWidth * dstHeight * 2;
-    if(tablesData_ && tablesDataSize_ != frameSize) {
-        tablesData_.reset();
-        tablesData_ = nullptr;
+    if(rgbdTablesData_ && rgbdTablesDataSize_ != frameSize) {
+        rgbdTablesData_.reset();
+        rgbdTablesData_ = nullptr;
     }
 
-    if(tablesData_ == nullptr) {
-        tablesDataSize_ = frameSize;
-        tablesData_     = std::shared_ptr<float>(new float[tablesDataSize_], std::default_delete<float[]>());
+    if(rgbdTablesData_ == nullptr) {
+        rgbdTablesDataSize_ = frameSize;
+        rgbdTablesData_     = std::shared_ptr<float>(new float[rgbdTablesDataSize_], std::default_delete<float[]>());
         if(distortionType == OBPointCloudDistortionType::OB_POINT_CLOUD_ZERO_DISTORTION_TYPE) {
             memset(&dstDistortion, 0, sizeof(OBCameraDistortion));
         }
 
         if(distortionType == OBPointCloudDistortionType::OB_POINT_CLOUD_ADD_DISTORTION_TYPE) {
-            if(!CoordinateUtil::transformationInitAddDistortionUVTables(dstIntrinsic, dstDistortion, reinterpret_cast<float *>(tablesData_.get()),
-                                                                        &tablesDataSize_, &xyTables_)) {
+            if(!CoordinateUtil::transformationInitAddDistortionUVTables(dstIntrinsic, dstDistortion, reinterpret_cast<float *>(rgbdTablesData_.get()),
+                                                                        &rgbdTablesDataSize_, &rgbdXyTables_)) {
                 LOG_ERROR_INTVL("Init add distortion transformation coordinate tables failed!");
                 return nullptr;
             }
         }
         else {
-            if(!CoordinateUtil::transformationInitXYTables(dstIntrinsic, dstDistortion, reinterpret_cast<float *>(tablesData_.get()), &tablesDataSize_,
-                                                           &xyTables_)) {
+            if(!CoordinateUtil::transformationInitXYTables(dstIntrinsic, dstDistortion, reinterpret_cast<float *>(rgbdTablesData_.get()), &rgbdTablesDataSize_,
+                                                           &rgbdXyTables_)) {
                 LOG_ERROR_INTVL("Init transformation coordinate tables failed!");
                 return nullptr;
             }
@@ -252,11 +277,13 @@ std::shared_ptr<Frame> PointCloudFilter::createRGBDPointCloud(std::shared_ptr<co
     }
 
     if(distortionType == OBPointCloudDistortionType::OB_POINT_CLOUD_ADD_DISTORTION_TYPE) {
-        CoordinateUtil::transformationDepthToRGBDPointCloudByUVTables(dstIntrinsic, &xyTables_, depthFrame->getData(), colorData, (void *)pointFrame->getData(),
+        CoordinateUtil::transformationDepthToRGBDPointCloudByUVTables(dstIntrinsic, &rgbdXyTables_, depthFrame->getData(), colorData,
+                                                                      (void *)pointFrame->getData(),
                                                                       positionDataScale_, coordinateSystemType_, isColorDataNormalization_);
     }
     else {
-        CoordinateUtil::transformationDepthToRGBDPointCloud(&xyTables_, depthFrame->getData(), colorData, (void *)pointFrame->getData(), positionDataScale_,
+        CoordinateUtil::transformationDepthToRGBDPointCloud(&rgbdXyTables_, depthFrame->getData(), colorData, (void *)pointFrame->getData(),
+                                                            positionDataScale_,
                                                             coordinateSystemType_, isColorDataNormalization_, colorVideoFrame->getWidth(), colorVideoFrame->getHeight());
     }
 

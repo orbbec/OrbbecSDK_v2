@@ -7,6 +7,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <cmath>
 
 #define KEY_ESC 27
 #define KEY_R 82
