@@ -111,15 +111,57 @@ public:
 
 private:
     void clearMatrixCache();
+    void setLimitROI();
 
-    void D2CWithoutSSE(const uint16_t *depth_buffer, uint16_t *out_depth, const float *coeff_x, const float *coeff_y, const float *coeff_z, int *map = nullptr);
-    void D2CWithSSE(const uint16_t *depth_buffer, uint16_t *out_depth, const float *coeff_x, const float *coeff_y, const float *coeff_z, int *map = nullptr);
+    void K3DistortedD2CWithoutSSE(const uint16_t *depth_buffer, uint16_t *out_depth, const float *coeff_mat_x[2], const float *coeff_mat_y[2],
+                                  const float *coeff_mat_z[2], int *map = nullptr);
+    void K6DistortedD2CWithoutSSE(const uint16_t *depth_buffer, uint16_t *out_depth, const float *coeff_mat_x[2], const float *coeff_mat_y[2],
+                                  const float *coeff_mat_z[2], int *map = nullptr);
+    void KBDistortedD2CWithoutSSE(const uint16_t *depth_buffer, uint16_t *out_depth, const float *coeff_mat_x[2], const float *coeff_mat_y[2],
+                                  const float *coeff_mat_z[2], int *map = nullptr);
+    void LinearDistortedD2CWithoutSSE(const uint16_t *depth_buffer, uint16_t *out_depth, const float *coeff_mat_x[2], const float *coeff_mat_y[2],
+                                      const float *coeff_mat_z[2], int *map = nullptr);
+    inline bool K3ProcessWithoutSSE(uint16_t depth, const float *coeff_mat_x[2], const float *coeff_mat_y[2], const float *coeff_mat_z[2], int channel,
+                                    float *pixelx_f, float *pixely_f, float *dst);
+    inline bool K6ProcessWithoutSSE(uint16_t depth, const float *coeff_mat_x[2], const float *coeff_mat_y[2], const float *coeff_mat_z[2], int channel,
+                                    float *pixelx_f, float *pixely_f, float *dst);
+    inline bool KBProcessWithoutSSE(uint16_t depth, const float *coeff_mat_x[2], const float *coeff_mat_y[2], const float *coeff_mat_z[2], int channel,
+                                    float *pixelx_f, float *pixely_f, float *dst);
+    inline bool LinearProcessWithoutSSE(uint16_t depth, const float *coeff_mat_x[2], const float *coeff_mat_y[2], const float *coeff_mat_z[2], int channel,
+                                        float *pixelx_f, float *pixely_f, float *dst);
+    void FillSingleChannelWithoutSSE(const float *pixelx_f, const float *pixely_f, const float *dst, uint16_t *out_depth, int *map, int depth_idx, int width,
+                                     int height);
+    void FillMultiChannelWithoutSSE(const float *pixelx_f, const float *pixely_f, const float *dst, uint16_t *out_depth, int *map, int depth_idx, int width,
+                                    int height);
+    void K3DistortedD2CWithSSE(const uint16_t *depth_buffer, uint16_t *out_depth, const float *coeff_mat_x[2], const float *coeff_mat_y[2],
+                               const float *coeff_mat_z[2], int *map = nullptr);
+    void K6DistortedD2CWithSSE(const uint16_t *depth_buffer, uint16_t *out_depth, const float *coeff_mat_x[2], const float *coeff_mat_y[2],
+                               const float *coeff_mat_z[2], int *map = nullptr);
+    void KBDistortedD2CWithSSE(const uint16_t *depth_buffer, uint16_t *out_depth, const float *coeff_mat_x[2], const float *coeff_mat_y[2],
+                               const float *coeff_mat_z[2], int *map = nullptr);
+    void LinearD2CWithSSE(const uint16_t *depth_buffer, uint16_t *out_depth, const float *coeff_mat_x[2], const float *coeff_mat_y[2],
+                          const float *coeff_mat_z[2], int *map = nullptr);
+    inline void K3ProcessWithSSE(const uint16_t *depth_buffer, const float *coeff_mat_x[2], const float *coeff_mat_y[2], const float *coeff_mat_z[2],
+                                 float *x_lo, float *y_lo, float *z_lo, float *x_hi, float *y_hi, float *z_hi, int start_idx, int channel);
+    inline void K6ProcessWithSSE(const uint16_t *depth_buffer, const float *coeff_mat_x[2], const float *coeff_mat_y[2], const float *coeff_mat_z[2],
+                                 float *x_lo, float *y_lo, float *z_lo, float *x_hi, float *y_hi, float *z_hi, int start_idx, int channel);
+    inline void KBProcessWithSSE(const uint16_t *depth_buffer, const float *coeff_mat_x[2], const float *coeff_mat_y[2], const float *coeff_mat_z[2],
+                                 float *x_lo, float *y_lo, float *z_lo, float *x_hi, float *y_hi, float *z_hi, int start_idx, int channel);
+    inline void LinearProcessWithSSE(const uint16_t *depth_buffer, const float *coeff_mat_x[2], const float *coeff_mat_y[2], const float *coeff_mat_z[2],
+                                     float *x_lo, float *y_lo, float *z_lo, float *x_hi, float *y_hi, float *z_hi, int start_idx, int channel);
+    void CalcNormCorrdWithSSE(const __m128 &depth_sse, const __m128 &coeff_sse1, const __m128 &coeff_sse2, const __m128 &coeff_sse3, __m128 &depth_o, __m128 &nx, __m128 &ny);
+    inline void FillSingleChannelWithSSE(const float *x, const float *y, const float *z, uint16_t *out_depth, int *map, int start_idx, int width, int height);
+    inline void FillMultiChannelWithSSE(const float *x, const float *y, const float *z, uint16_t *out_depth, int *map, int start_idx, int width, int height);
+    
+    /** WithoutSSE depth to color alignment with different distortion model */
+    void distortedWithoutSSE(const float pt_ud[2], float pt_d[2]);
+    void KBDistortedWithoutSSE(const float pt_ud[2], float pt_d[2]);
+    void BMDistortedWithoutSSE(const float pt_ud[2], float pt_d[2]);
+    
     /** SSE speed-ed depth to color alignment with different distortion model */
     void distortedWithSSE(__m128 &nx, __m128 &ny, const __m128 x2, const __m128 y2, const __m128 r2);
     void KBDistortedWithSSE(__m128 &nx, __m128 &ny, const __m128 r2);
     void BMDistortedWithSSE(__m128 &nx, __m128 &ny, const __m128 x2, const __m128 y2, const __m128 r2);
-
-    void transferDepth(const float *pixelx, const float *pixely, const float *depth, const int npts, const int point_index, uint16_t *out_depth, int *map);
 
     /**
      * @brief               Transfer pixels of the source image buffer to the target
@@ -137,9 +179,9 @@ private:
     bool initialized_;
 
     /** Linear/Distortion Rotation Coeff hash table */
-    std::unordered_map<std::pair<int, int>, float *, ResHashFunc, ResComp> rot_coeff_ht_x;
-    std::unordered_map<std::pair<int, int>, float *, ResHashFunc, ResComp> rot_coeff_ht_y;
-    std::unordered_map<std::pair<int, int>, float *, ResHashFunc, ResComp> rot_coeff_ht_z;
+    std::unordered_map<std::pair<int, int>, float *[2], ResHashFunc, ResComp> rot_coeff_ht_x;
+    std::unordered_map<std::pair<int, int>, float *[2], ResHashFunc, ResComp> rot_coeff_ht_y;
+    std::unordered_map<std::pair<int, int>, float *[2], ResHashFunc, ResComp> rot_coeff_ht_z;
 
     float              depth_unit_mm_;            // depth scale
     bool               add_target_distortion_;    // distort align frame with target coefficent
@@ -174,6 +216,10 @@ private:
     __m128 scaled_trans_2_;
     __m128 scaled_trans_3_;
     __m128 r2_max_loc_sse_;
+    __m128 x1_limit;
+    __m128 x2_limit;
+    __m128 y1_limit;
+    __m128 y2_limit;
 
     const static __m128  POINT_FIVE;
     const static __m128  TWO;
