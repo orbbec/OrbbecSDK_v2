@@ -237,7 +237,7 @@ void ObRTPSink::outputFrameFunc() {
                 break;
             }
 
-           // TRY_EXECUTE({
+            TRY_EXECUTE({
                 auto frame = FrameFactory::createFrameFromStreamProfile(streamProfile_);
 
                 uint32_t frameOffset = 0;
@@ -268,7 +268,7 @@ void ObRTPSink::outputFrameFunc() {
                 }
 
                 frameCallback_(frame);
-           // });
+            });
         } while(0);
 
         {

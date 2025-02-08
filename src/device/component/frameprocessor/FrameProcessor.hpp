@@ -62,6 +62,10 @@ public:
 
     std::shared_ptr<Frame> process(std::shared_ptr<const Frame> frame) override;
 
+    std::shared_ptr<FrameProcessorContext> getContext() {
+        return context_;
+    }
+
 protected:
     std::shared_ptr<FrameProcessorContext> context_;
 
