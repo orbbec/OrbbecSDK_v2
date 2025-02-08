@@ -12,9 +12,9 @@ namespace libobsensor {
 class G435LeColorFrameMetadataParserContainer : public FrameMetadataParserContainer {
 public:
     G435LeColorFrameMetadataParserContainer(IDevice *owner) : FrameMetadataParserContainer(owner) {
-        registerParser(OB_FRAME_METADATA_TYPE_TIMESTAMP, std::make_shared<G435LeMetadataTimestampParser<G435LeColorUvcMetadata>>());
-        registerParser(OB_FRAME_METADATA_TYPE_SENSOR_TIMESTAMP,
-                       std::make_shared<G435LeColorMetadataSensorTimestampParser>([](const int64_t &param) { return param * 100; }));
+        //registerParser(OB_FRAME_METADATA_TYPE_TIMESTAMP, std::make_shared<G435LeMetadataTimestampParser<G435LeColorUvcMetadata>>());
+        // registerParser(OB_FRAME_METADATA_TYPE_SENSOR_TIMESTAMP,
+        //                std::make_shared<G435LeColorMetadataSensorTimestampParser>([](const int64_t &param) { return param * 100; }));
         registerParser(OB_FRAME_METADATA_TYPE_FRAME_NUMBER, makeStructureMetadataParser(&G435LeCommonUvcMetadata::frame_counter));
         // todo: calculate actual fps according exposure and frame rate
         registerParser(OB_FRAME_METADATA_TYPE_ACTUAL_FRAME_RATE, makeStructureMetadataParser(&G435LeColorUvcMetadata::actual_fps));
@@ -49,8 +49,8 @@ public:
 class G435LeDepthFrameMetadataParserContainer : public FrameMetadataParserContainer {
 public:
     G435LeDepthFrameMetadataParserContainer(IDevice *owner) : FrameMetadataParserContainer(owner) {
-        registerParser(OB_FRAME_METADATA_TYPE_TIMESTAMP, std::make_shared<G435LeMetadataTimestampParser<G435LeDepthUvcMetadata>>());
-        registerParser(OB_FRAME_METADATA_TYPE_SENSOR_TIMESTAMP, std::make_shared<G435LeMetadataSensorTimestampParser>());
+        //registerParser(OB_FRAME_METADATA_TYPE_TIMESTAMP, std::make_shared<G435LeMetadataTimestampParser<G435LeDepthUvcMetadata>>());
+        // registerParser(OB_FRAME_METADATA_TYPE_SENSOR_TIMESTAMP, std::make_shared<G435LeMetadataSensorTimestampParser>());
         registerParser(OB_FRAME_METADATA_TYPE_FRAME_NUMBER, makeStructureMetadataParser(&G435LeDepthUvcMetadata::frame_counter));
         // todo: calculate actual fps according exposure and frame rate
         registerParser(OB_FRAME_METADATA_TYPE_ACTUAL_FRAME_RATE, makeStructureMetadataParser(&G435LeDepthUvcMetadata::actual_fps));
