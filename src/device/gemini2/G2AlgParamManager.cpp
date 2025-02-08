@@ -118,7 +118,7 @@ void G2AlgParamManager::registerBasicExtrinsics() {
             auto owner      = getOwner();
             auto propServer = owner->getPropertyServer();
             if(propServer->isPropertySupported(OB_PROP_DEPTH_MIRROR_MODULE_STATUS_BOOL, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
-                //mirrored = propServer->getPropertyValueT<bool>(OB_PROP_DEPTH_MIRROR_MODULE_STATUS_BOOL);
+                mirrored = propServer->getPropertyValueT<bool>(OB_PROP_DEPTH_MIRROR_MODULE_STATUS_BOOL);
             }
         }
         if(mirrored) {
