@@ -47,6 +47,8 @@ private:
 
     std::thread receiverThread_;
 
+    PTPTimeSyncCallback callback_;
+
 };
 
 }  // namespace libobsensor
