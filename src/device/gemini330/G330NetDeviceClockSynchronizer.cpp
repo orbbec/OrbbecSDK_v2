@@ -2,8 +2,6 @@
 #include "ethernet/PTPDataPort.hpp"
 #include "exception/ObException.hpp"
 #include "InternalTypes.hpp"
-#include <thread>
-#include <chrono>
 
 namespace libobsensor {
 
@@ -48,12 +46,6 @@ void G330NetDeviceClockSynchronizer::timerSyncWithHost() {
         globalTimestampFitter_->reFitting();
         isClockSync_ = false;
     })
-
-    /*std::thread([this](){
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        globalTimestampFitter_->reFitting();
-        isClockSync_ = false;
-    }).detach();*/
 }
 
 }  // namespace libobsensor
