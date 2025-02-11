@@ -2,6 +2,8 @@
 #include "ethernet/PTPDataPort.hpp"
 #include "exception/ObException.hpp"
 #include "InternalTypes.hpp"
+#include <thread>
+#include <chrono>
 
 namespace libobsensor {
 
@@ -33,17 +35,20 @@ void G330NetDeviceClockSynchronizer::timerSyncWithHost() {
     if(isClockSync_) {
         return;
     }
+
+    isClockSync_ = true;
     BEGIN_TRY_EXECUTE({
-        isClockSync_ = true;
         ptpPort_->timerSyncWithHost();
-        isClockSync_ = false;
-        globalTimestampFitter_->reFitting();
     })
     CATCH_EXCEPTION_AND_EXECUTE({
         LOG_ERROR("Net device time sync failed!");
+    })
+
+    std::thread([this](){
+        std::this_thread::sleep_for(std::chrono::milliseconds(25));
         globalTimestampFitter_->reFitting();
         isClockSync_ = false;
-    })
+    }).detach();
 }
 
 }  // namespace libobsensor
