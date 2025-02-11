@@ -21,6 +21,8 @@ public:
     void timeSync() override;
     void destroy() override;
 
+    void setPTPTimeSyncCallback(PTPTimeSyncCallback callback) override;
+
 private:
     void convertMacAddress();
     void findDevice();
@@ -42,6 +44,8 @@ private:
     pcap_t *   handle_;
 
     std::thread receiverThread_;
+
+    PTPTimeSyncCallback callback_;
 };
 
 }  // namespace libobsensor

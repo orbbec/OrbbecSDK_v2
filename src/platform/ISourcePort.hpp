@@ -9,6 +9,7 @@
 #include "libobsensor/h/ObTypes.h"
 #include "IFrame.hpp"
 #include "IStreamProfile.hpp"
+#include <functional>
 
 namespace libobsensor {
 enum SourcePortType {
@@ -150,10 +151,12 @@ public:
 };
 
 // for ptp data
+typedef std::function<void()> TimerSyncWithHostCallback;
+
 class IPTPDataPort : virtual public ISourcePort {  // Virtual inheritance solves diamond inheritance problem
 public:
     ~IPTPDataPort() noexcept override = default;
-    virtual bool timerSyncWithHost() = 0;
+    virtual bool timerSyncWithHost(TimerSyncWithHostCallback callback) = 0;
 };
 
 }  // namespace libobsensor

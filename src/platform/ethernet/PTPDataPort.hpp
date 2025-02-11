@@ -34,7 +34,7 @@ public:
 
     virtual std::shared_ptr<const SourcePortInfo> getSourcePortInfo() const override;
 
-    virtual bool timerSyncWithHost() override;
+    virtual bool timerSyncWithHost(TimerSyncWithHostCallback callback) override;
 
 private:
     std::shared_ptr<const PTPSourcePortInfo> portInfo_;

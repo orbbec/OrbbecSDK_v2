@@ -3,8 +3,11 @@
 #include "ObPTPPacketCreator.hpp"
 #include <string>
 #include <thread>
+#include <functional>
 
 namespace libobsensor {
+
+typedef std::function<void()> PTPTimeSyncCallback;
 
 class ObPTPHost {
 public:
@@ -15,6 +18,7 @@ public:
 
     virtual void timeSync() = 0;
     virtual void destroy()  = 0;
+    virtual void setPTPTimeSyncCallback(PTPTimeSyncCallback callback) = 0;
     
 protected:
     ObPTPPacketCreator ptpPacketCreator_;

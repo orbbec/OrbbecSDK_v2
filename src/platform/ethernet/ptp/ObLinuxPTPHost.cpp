@@ -175,8 +175,7 @@ void ObLinuxPTPHost::timeSync() {
     }
 
     if(ptpSocket_ < 0) {
-        LOG_ERROR("PTP time synchronization failure, socket craete failed!");
-        return;
+        throw libobsensor::invalid_value_exception(utils::string::to_string() << "PTP time synchronization failure, socket craete failed!");
     }
 
     startSync_ = true;
@@ -228,6 +227,9 @@ void ObLinuxPTPHost::receivePTPPacket() {
     socklen_t addrLen          = sizeof(socketAddress_);
     while(startSync_) {
         if(maxRevCount == 0) {
+            if(callback_) {
+                callback_();
+            }
             break;
         }
 
@@ -254,6 +256,9 @@ void ObLinuxPTPHost::receivePTPPacket() {
                     Frame1588 delayRespControlFrame;
                     int       len = ptpPacketCreator_.createPTPPacket(DELAY_RESP_CONTROL, &delayRespControlFrame);
                     sendPTPPacket(&delayRespControlFrame, len);
+                    if(callback_) {
+                        callback_();
+                    }
                     LOG_DEBUG("Send ptp delay resp control finished.");
                     break;
                 }
@@ -289,6 +294,10 @@ void ObLinuxPTPHost::destroy() {
     LOG_DEBUG("ptp socket closed!");
     ptpSocket_ = INVALID_SOCKET;
     LOG_DEBUG("close end...");
+}
+
+void ObLinuxPTPHost::setPTPTimeSyncCallback(PTPTimeSyncCallback callback) {
+    callback_ = callback;
 }
 
 }  // namespace libobsensor

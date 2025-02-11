@@ -25,7 +25,7 @@ std::shared_ptr<const SourcePortInfo> PTPDataPort::getSourcePortInfo() const {
     return portInfo_;
 }
 
-bool PTPDataPort::timerSyncWithHost() {
+bool PTPDataPort::timerSyncWithHost(TimerSyncWithHostCallback callback) {
     if(!ptpHost_) {
 #if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
         ptpHost_ = std::make_shared<ObWinPTPHost>(portInfo_->localMac, "localAddress", portInfo_->address, portInfo_->port, portInfo_->mac);
@@ -35,6 +35,11 @@ bool PTPDataPort::timerSyncWithHost() {
     }
 
     if(ptpHost_) {
+        ptpHost_->setPTPTimeSyncCallback([callback] {
+            if(callback) {
+                callback();
+            }
+        });
         ptpHost_->timeSync();
     }
     

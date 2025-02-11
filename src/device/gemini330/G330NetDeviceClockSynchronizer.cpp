@@ -38,17 +38,22 @@ void G330NetDeviceClockSynchronizer::timerSyncWithHost() {
 
     isClockSync_ = true;
     BEGIN_TRY_EXECUTE({
-        ptpPort_->timerSyncWithHost();
+        ptpPort_->timerSyncWithHost([this]{
+            globalTimestampFitter_->reFitting();
+            isClockSync_ = false;
+        });
     })
     CATCH_EXCEPTION_AND_EXECUTE({
         LOG_ERROR("Net device time sync failed!");
-    })
-
-    std::thread([this](){
-        std::this_thread::sleep_for(std::chrono::milliseconds(25));
         globalTimestampFitter_->reFitting();
         isClockSync_ = false;
-    }).detach();
+    })
+
+    /*std::thread([this](){
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        globalTimestampFitter_->reFitting();
+        isClockSync_ = false;
+    }).detach();*/
 }
 
 }  // namespace libobsensor

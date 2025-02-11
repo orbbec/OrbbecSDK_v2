@@ -317,6 +317,7 @@ void ObWinPTPHost::timeSync() {
     }
     else {
         LOG_ERROR("PTP time synchronization failure, net handle is null!");
+        throw libobsensor::invalid_value_exception(utils::string::to_string() << "PTP time synchronization failure, net handle is null!");
     }
 }
 
@@ -327,6 +328,9 @@ void ObWinPTPHost::receivePTPPacket(pcap_t *handle) {
     int                 maxRevCount = 20;
     while(startSync_) {
         if(maxRevCount == 0) {
+            if(callback_) {
+                callback_();
+            }
             break;
         }
         int res = pcap_next_ex(handle, &header, &packet);
@@ -352,6 +356,9 @@ void ObWinPTPHost::receivePTPPacket(pcap_t *handle) {
                     Frame1588 delayRespControlFrame;
                     int       len = ptpPacketCreator_.createPTPPacket(DELAY_RESP_CONTROL, &delayRespControlFrame);
                     sendPTPPacket(handle, &delayRespControlFrame, len);
+                    if(callback_) {
+                        callback_();
+                    }
                     LOG_DEBUG("Send ptp delay resp control finished.");
                     break;
                 }
@@ -399,6 +406,10 @@ void ObWinPTPHost::destroy() {
         alldevs_ = nullptr;
     }
     LOG_DEBUG("close end...");
+}
+
+void ObWinPTPHost::setPTPTimeSyncCallback(PTPTimeSyncCallback callback) {
+    callback_ = callback;
 }
 
 }  // namespace libobsensor
