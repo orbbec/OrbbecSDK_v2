@@ -5,25 +5,16 @@
 #include "frame/FrameFactory.hpp"
 
 namespace libobsensor {
+struct G435LeMetadataHearder {
+    uint8_t  magic[8];  // fixed magic:"ORBBEC"
+    uint32_t data_len;  // Length of the entire metadata data structure
 
-int findSequence(const uint8_t *data, uint32_t size) {
-    const uint8_t target[]     = { 0xFF, 0xDA, 0x00, 0x0C };
-    const size_t  targetLength = sizeof(target) / sizeof(target[0]);
-
-    for(int i = 0; i <= size - targetLength; ++i) {
-        bool match = true;
-        for(size_t j = 0; j < targetLength; ++j) {
-            if(data[i + j] != target[j]) {
-                match = false;
-                break;
-            }
-        }
-        if(match) {
-            return i;  // 返回匹配的起始位置
-        }
+    bool validateMagic() {
+        const char expectedMagic[8] = "ORBBEC";
+        return std::memcmp(magic, expectedMagic, sizeof(expectedMagic)) == 0;
     }
-    return -1;  // 如果没有找到匹配的序列，返回-1
-}
+};
+
 // Depth frame processor
 G435LeDepthFrameProcessor::G435LeDepthFrameProcessor(IDevice *owner, std::shared_ptr<FrameProcessorContext> context) : DepthFrameProcessor(owner, context) {}
 
@@ -46,40 +37,72 @@ std::shared_ptr<Frame> G435LeColorFrameProcessor::process(std::shared_ptr<const 
     int index = findSequence(frame->getData(), static_cast<uint32_t>(frame->getDataSize()));
     if (index == -1) {
         LOG_ERROR("findSequence not found");
-        return std::shared_ptr<Frame>(); // 返回无效指针
+        return FrameProcessor::process(frame);
+    }
+    
+    const int fixedDistanse = 14; 
+    
+    if (index + 14 >= frame->getDataSize()) {
+        LOG_ERROR("Index out of bounds");
+        return FrameProcessor::process(frame);
+    }    
+
+    G435LeMetadataHearder *header = reinterpret_cast<G435LeMetadataHearder *>(const_cast<uint8_t *>(frame->getData() + index + fixedDistanse));
+
+    if(!header->validateMagic()) {
+        return FrameProcessor::process(frame);
     }
 
-    // 确保索引不会越界
-    if (index + 14 >= frame->getDataSize() || index + 14 + 122 >= frame->getDataSize()) {
+    const int metadatasize = header->data_len;
+
+    if (index + fixedDistanse + metadatasize >= frame->getDataSize()) {
         LOG_ERROR("Index out of bounds");
-        return std::shared_ptr<Frame>(); // 返回无效指针
+        return FrameProcessor::process(frame);
     }
 
     std::vector<uint8_t> data;
-    data.assign(frame->getData(), frame->getData() + index + 14);
-    data.insert(data.end(), frame->getData() + index + 14 + 122, frame->getData() + frame->getDataSize());
+    data.assign(frame->getData(), frame->getData() + index + fixedDistanse - 4);
+    data.insert(data.end(), frame->getData() + index + fixedDistanse + metadatasize, frame->getData() + frame->getDataSize());
 
     outFrame->updateData(data.data(), data.size());
-    outFrame->updateMetadata(frame->getData() + index + 14 + 26, 122 - 26);
+    outFrame->updateMetadata(frame->getData() + index + fixedDistanse, metadatasize);
 
-    std::ofstream outputFileOrg("frame_data_org.bin", std::ios::binary);  // 创建一个二进制输出文件流对象
-    if(outputFileOrg.is_open()) {
-        outputFileOrg.write(reinterpret_cast<const char *>(frame->getData()), frame->getDataSize());  // 将frame->getData()写入二进制文件
-        outputFileOrg.close();                                                                        // 关闭文件流
-    }
+    // std::ofstream outputFileOrg("frame_data_org.bin", std::ios::binary); 
+    // if(outputFileOrg.is_open()) {
+    //     outputFileOrg.write(reinterpret_cast<const char *>(frame->getData()), frame->getDataSize());  
+    //     outputFileOrg.close();                                                                       
+    // }
 
-    std::ofstream outputFile("frame_data.bin", std::ios::binary);  // 创建一个二进制输出文件流对象
-    if(outputFile.is_open()) {
-        outputFile.write(reinterpret_cast<const char *>(outFrame->getData()), outFrame->getDataSize());  // 将frame->getData()写入二进制文件
-        outputFile.close();                                                                        // 关闭文件流
-    }
+    // std::ofstream outputFile("frame_data.bin", std::ios::binary);  
+    // if(outputFile.is_open()) {
+    //     outputFile.write(reinterpret_cast<const char *>(outFrame->getData()), outFrame->getDataSize());  
+    //     outputFile.close();                                                                        
+    // }
 
-    std::ofstream outputFileMetadata("frame_data_metadata.bin", std::ios::binary);  // 创建一个二进制输出文件流对象
-    if(outputFileMetadata.is_open()) {
-        outputFileMetadata.write(reinterpret_cast<const char *>(outFrame->getMetadata()), outFrame->getMetadataSize());  // 将frame->getData()写入二进制文件
-        outputFileMetadata.close();                                                                        // 关闭文件流
-    }
+    // std::ofstream outputFileMetadata("frame_data_metadata.bin", std::ios::binary);  
+    // if(outputFileMetadata.is_open()) {
+    //     outputFileMetadata.write(reinterpret_cast<const char *>(outFrame->getMetadata()), outFrame->getMetadataSize());  
+    //     outputFileMetadata.close();                                                                        
+    // }
     return FrameProcessor::process(outFrame);
+}
+int G435LeColorFrameProcessor::findSequence(const uint8_t *data, uint32_t size) {
+    const uint8_t target[]     = { 0xFF, 0xDA, 0x00, 0x0C };
+    const size_t  targetLength = sizeof(target) / sizeof(target[0]);
+
+    for(int i = 0; i <= size - targetLength; ++i) {
+        bool match = true;
+        for(size_t j = 0; j < targetLength; ++j) {
+            if(data[i + j] != target[j]) {
+                match = false;
+                break;
+            }
+        }
+        if(match) {
+            return i; 
+        }
+    }
+    return -1;  
 }
 
 }  // namespace libobsensor

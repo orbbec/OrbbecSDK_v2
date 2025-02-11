@@ -18,6 +18,8 @@ public:
     G435LeColorFrameProcessor(IDevice *owner, std::shared_ptr<FrameProcessorContext> context);
     virtual ~G435LeColorFrameProcessor() noexcept;
     std::shared_ptr<Frame> process(std::shared_ptr<const Frame> frame) override;
+private:
+    int findSequence(const uint8_t *data, uint32_t size);
 };
 
 }  // namespace libobsensor

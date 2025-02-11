@@ -8,9 +8,11 @@
 
 namespace libobsensor {
 
-#define G435Le_UVC_METADATA_SIZE 96
-#pragma pack(push, 1)
+#define G435Le_UVC_METADATA_SIZE 108
+#pragma pack(push, 2)
 struct G435LeCommonUvcMetadata {
+    uint8_t                       magic[8];         //fixed magic:"ORBBEC"
+    uint32_t                      data_len;         //Length of the entire metadata data structure
     uint32_t                      frame_counter;
     uint32_t                      timestamp_fsin_h32;
     uint32_t                      timestamp_fsin_l32;
