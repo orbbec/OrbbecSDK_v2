@@ -8,11 +8,7 @@
 namespace libobsensor {
 
 G330DepthWorkModeManager::G330DepthWorkModeManager(IDevice *owner) : DeviceComponentBase(owner) {
-
-    auto propServer = owner->getPropertyServer();
-
-    depthWorkModeList_ = propServer->getStructureDataListProtoV1_1_T<OBDepthWorkMode_Internal, 0>(OB_RAW_DATA_DEPTH_ALG_MODE_LIST);
-    currentWorkMode_   = propServer->getStructureDataProtoV1_1_T<OBDepthWorkMode_Internal, 0>(OB_STRUCT_CURRENT_DEPTH_ALG_MODE);
+    fetchDepthWorkModeList();
 }
 
 std::vector<OBDepthWorkMode_Internal> G330DepthWorkModeManager::getDepthWorkModeList() const {
@@ -59,6 +55,14 @@ void G330DepthWorkModeManager::switchDepthWorkMode(const OBDepthWorkMode_Interna
     propServer->setStructureDataProtoV1_1_T<OBDepthWorkMode_Internal, 0>(OB_STRUCT_CURRENT_DEPTH_ALG_MODE, targetDepthMode);
     currentWorkMode_ = targetDepthMode;
     LOG_DEBUG("switchDepthWorkMode done with mode: {1}", currentWorkMode_.name, targetDepthMode.name);
+}
+
+void G330DepthWorkModeManager::fetchDepthWorkModeList() {
+    auto owner      = getOwner();
+    auto propServer = owner->getPropertyServer();
+
+    depthWorkModeList_ = propServer->getStructureDataListProtoV1_1_T<OBDepthWorkMode_Internal, 0>(OB_RAW_DATA_DEPTH_ALG_MODE_LIST);
+    currentWorkMode_   = propServer->getStructureDataProtoV1_1_T<OBDepthWorkMode_Internal, 0>(OB_STRUCT_CURRENT_DEPTH_ALG_MODE);
 }
 
 }  // namespace libobsensor

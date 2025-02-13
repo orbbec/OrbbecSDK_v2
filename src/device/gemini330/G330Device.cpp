@@ -177,6 +177,21 @@ void G330Device::init() {
         container = std::make_shared<G330DepthFrameMetadataParserContainer>(this);
         return container;
     });
+
+    if(getFirmwareVersionInt() >= 10441) {
+        // support custom presets upgrade
+        auto propertyServer = getPropertyServer();
+        propertyServer->registerAccessCallback(
+            {
+                OB_STRUCT_CURRENT_DEPTH_ALG_MODE,
+            },
+            [&](uint32_t propertyId, const uint8_t *, size_t, PropertyOperationType operationType) {
+                if(operationType == PROP_OP_WRITE && propertyId == OB_STRUCT_CURRENT_DEPTH_ALG_MODE) {
+                    // fetch preset version info via fetchExtensionInfo
+                    fetchExtensionInfo();
+                }
+            });
+    }
 }
 
 std::shared_ptr<const StreamProfile> G330Device::loadDefaultStreamProfile(OBSensorType sensorType) {

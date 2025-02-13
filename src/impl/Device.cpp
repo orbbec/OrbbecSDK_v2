@@ -360,6 +360,21 @@ void ob_device_update_firmware_from_data(ob_device *device, const uint8_t *data,
 }
 HANDLE_EXCEPTIONS_NO_RETURN(device, data, data_size, callback, async, user_data)
 
+void ob_device_update_optional_depth_presets(ob_device *device, const char file_path_list[][OB_PATH_MAX], uint8_t path_count,
+                                             ob_device_fw_update_callback callback, void *user_data, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(device);
+    VALIDATE_NOT_NULL(file_path_list);
+    VALIDATE_GE(path_count, 0);
+    VALIDATE_NOT_NULL(callback);
+    
+    device->device->updateOptionalDepthPresets(
+        file_path_list, path_count,
+        [callback, user_data](ob_fw_update_state status, const char *message, uint8_t percent) {
+            callback(status, message, percent, user_data);
+        });
+}
+HANDLE_EXCEPTIONS_NO_RETURN(device, file_path_list, path_count, callback, user_data)
+
 void ob_device_reboot(ob_device *device, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(device);
     device->device->reboot();

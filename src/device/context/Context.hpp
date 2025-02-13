@@ -35,6 +35,9 @@ public:
     std::shared_ptr<Platform>        getPlatform() const;
 
 private:
+#ifdef OB_BUILD_WITH_EXTENSIONS_COMMIT_HASH
+    void logExtensionsCommitHashes();
+#endif
     std::shared_ptr<EnvConfig>               envConfig_;
     std::shared_ptr<Logger>                  logger_;
     std::shared_ptr<IDeviceManager>          deviceManager_;

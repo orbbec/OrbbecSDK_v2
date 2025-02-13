@@ -177,8 +177,14 @@ DeviceEnumInfoList DeviceManager::getDeviceInfoList() {
 }
 
 void DeviceManager::setDeviceChangedCallback(DeviceChangedCallback callback) {
+    if (!callback) {
+        LOG_WARN("Device changed callback is nullptr, ignore it!");
+        return;
+    }
+ 
     std::unique_lock<std::mutex> lock(callbackMutex_);
-    devChangedCallback_ = callback;
+    devChangedCallbacks_.emplace_back(callback);
+    LOG_DEBUG("Add device changed callback, callback index = {}", devChangedCallbacks_.size() - 1);
 }
 
 void DeviceManager::onDeviceChanged(const DeviceEnumInfoList &removed, const DeviceEnumInfoList &added) {
@@ -201,8 +207,8 @@ void DeviceManager::onDeviceChanged(const DeviceEnumInfoList &removed, const Dev
     auto deviceInfoList = getDeviceInfoList();
     printDeviceList("Current device(s) list", deviceInfoList);
 
-    if(devChangedCallback_) {
-        devChangedCallback_(removed, added);
+    for (auto &callback : devChangedCallbacks_) {
+        callback(removed, added);
     }
 }
 

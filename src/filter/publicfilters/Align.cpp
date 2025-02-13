@@ -18,7 +18,7 @@ const std::map<OBStreamType, OBFrameType> streamTypeToFrameType = { { OB_STREAM_
 Align::Align()
     : impl_(new AlignImpl()),  //
       alignToStreamType_(OB_STREAM_COLOR),
-      addTargetDistortion_(true),
+      addTargetDistortion_(false),
       gapFillCopy_(true),
       matchTargetRes_(true) {}
 
@@ -50,7 +50,7 @@ void Align::updateConfig(std::vector<std::string> &params) {
 const std::string &Align::getConfigSchema() const {
     // csv format: name, type, min, max, step, default, description
     static const std::string schema = "AlignType, integer, 1, 7, 1, 2, align to the type of data stream\n"
-                                      "TargetDistortion, boolean, 0, 1, 1, 1, add distortion of the target stream\n"
+                                      "TargetDistortion, boolean, 0, 1, 1, 0, add distortion of the target stream\n"
                                       "GapFillCopy, boolean, 0, 1, 1, 0, enable gap fill\n"
                                       "MatchTargetRes, boolean, 0, 1, 1, 1, enable match the output resolution to the align target resolution\n";
     return schema;
@@ -199,8 +199,8 @@ void Align::alignFrames(const std::shared_ptr<const Frame> from, std::shared_ptr
     auto alignVideoProfile = alignProfile->as<VideoStreamProfile>();
     auto toIntrin          = alignVideoProfile->getIntrinsic();
     auto toDisto           = alignVideoProfile->getDistortion();
-    auto fromToExtrin      = fromProfile->getExtrinsicTo(alignProfile);
-    auto depthUnitMm       = depth->as<DepthFrame>()->getValueScale();
+    auto fromToExtrin = fromProfile->getExtrinsicTo(alignProfile);
+    auto depthUnitMm  = depth->as<DepthFrame>()->getValueScale();
 
     if(align->getType() == OB_FRAME_DEPTH) {
         uint16_t *alignedData = reinterpret_cast<uint16_t *>(const_cast<void *>((void *)align->getData()));
@@ -235,7 +235,13 @@ std::shared_ptr<VideoStreamProfile> Align::createAlignedProfile(std::shared_ptr<
         alignProfile->setWidth(toProfile->getWidth());
         alignProfile->setHeight(toProfile->getHeight());
         alignProfile->bindIntrinsic(toProfile->getIntrinsic());
-        alignProfile->bindDistortion(toProfile->getDistortion());
+        if(!addTargetDistortion_) {
+            alignProfile->bindDistortion(fromProfile->getDistortion());
+        }
+        else {
+            alignProfile->bindDistortion(toProfile->getDistortion());
+        }
+
         alignProfile->bindSameExtrinsicTo(toProfile);
 
         if(!matchTargetRes_ && alignProfile->getType() == OB_STREAM_DEPTH) {
@@ -263,7 +269,6 @@ std::shared_ptr<VideoStreamProfile> Align::createAlignedProfile(std::shared_ptr<
                 intrin.width  = static_cast<int16_t>(0.5f + (intrin.width >> 1) / s) << 1;
                 intrin.height = static_cast<int16_t>(0.5f + (intrin.height >> 1) / s) << 1;
             }
-
             alignProfile->setWidth(intrin.width);
             alignProfile->setHeight(intrin.height);
             alignProfile->bindIntrinsic(intrin);

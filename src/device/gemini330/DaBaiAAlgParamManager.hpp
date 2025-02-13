@@ -28,6 +28,9 @@ private:
     bool findBestMatchedCameraParam(const std::vector<OBCameraParam> &cameraParamList, const std::shared_ptr<const VideoStreamProfile> &profile,
                                     OBCameraParam &result);
     void d2CProfileListFilter(const std::string currentDepthAlgMode);
+    void eulerAnglesToTransform(const OBDETransformEuler &euler, OBExtrinsic &extrinsic);
+    void refreshCameraParams();
+    void refreshExtrinsicsParams();
 
 private:
     std::vector<OBDepthCalibrationParam>     depthCalibParamList_;
@@ -41,6 +44,10 @@ private:
     std::string                              currentDepthAlgMode_;
     std::map<int, bool>                      calibrationParamValidMap_;
     std::vector<OBD2CColorPreProcessProfile> d2cColorPreProcessProfileList_;
+    // RectifyD2C params
+    OBDERectifyD2CParams d2cRectifyParam_;
+    OBDEIRTransformParam depthEngineTransformParam_;
+    bool                 irRectifyEnable_ = false;
 };
 
 }  // namespace libobsensor

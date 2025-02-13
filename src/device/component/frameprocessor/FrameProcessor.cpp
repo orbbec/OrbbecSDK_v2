@@ -158,33 +158,53 @@ void FrameProcessor::updateConfig(std::vector<std::string> &params) {
 }
 
 void FrameProcessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
+    std::string configSchemaName = "";
+    double      configValue      = 0.0;
     switch(propertyId) {
     case OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL: {
-        setConfigValue("DisparityTransform#255", static_cast<double>(value.intValue));
+        configSchemaName = "DisparityTransform#255";
+        configValue      = static_cast<double>(value.intValue);
     } break;
     case OB_PROP_DEPTH_PRECISION_LEVEL_INT: {
-        auto level     = static_cast<OBDepthPrecisionLevel>(value.intValue);
-        auto depthUnit = utils::depthPrecisionLevelToUnit(level);
-        setConfigValue("DisparityTransform#2", static_cast<double>(depthUnit));
+        auto level       = static_cast<OBDepthPrecisionLevel>(value.intValue);
+        auto depthUnit   = utils::depthPrecisionLevelToUnit(level);
+        configSchemaName = "DisparityTransform#2";
+        configValue      = static_cast<double>(depthUnit);
     } break;
     case OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT: {
-        setConfigValue("DisparityTransform#2", static_cast<double>(value.floatValue));
+        configSchemaName = "DisparityTransform#2";
+        configValue      = static_cast<double>(value.floatValue);
     } break;
     case OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL: {
-        setConfigValueSync("NoiseRemovalFilter#255", static_cast<double>(value.intValue));
+        configSchemaName = "NoiseRemovalFilter#255";
+        configValue      = static_cast<double>(value.intValue);
     } break;
     case OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_SPECKLE_SIZE_INT: {
-        setConfigValueSync("NoiseRemovalFilter#0", static_cast<double>(value.intValue));
+        configSchemaName = "NoiseRemovalFilter#0";
+        configValue      = static_cast<double>(value.intValue);
     } break;
     case OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT: {
-        setConfigValueSync("NoiseRemovalFilter#1", static_cast<double>(value.intValue));
+        configSchemaName = "NoiseRemovalFilter#1";
+        configValue      = static_cast<double>(value.intValue);
     } break;
     case OB_PROP_DISPARITY_TO_DEPTH_BOOL: {
-        setConfigValue("HardwareD2DCorrectionFilter#255", static_cast<double>(value.intValue));
+        configSchemaName = "HardwareD2DCorrectionFilter#255";
+        configValue      = static_cast<double>(value.intValue);
     } break;
-    default:
+    default: {
         throw invalid_value_exception("Invalid property id");
     }
+    }
+
+    // check config schema supported
+    try {
+        getConfigValue(configSchemaName);
+    }
+    catch(...) {
+        return;
+    }
+
+    setConfigValue(configSchemaName, configValue);
 }
 
 void FrameProcessor::getPropertyValue(uint32_t propertyId, OBPropertyValue *value) {

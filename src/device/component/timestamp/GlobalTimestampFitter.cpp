@@ -139,8 +139,20 @@ void GlobalTimestampFitter::fittingLoop() {
             LOG_TRACE("sys={}, dev={}, rtt={}", sysTspUsec, devTime.time, devTime.rtt);
         }
         catch(...) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
             retryCount++;
+            if(retryCount > MAX_RETRY_COUNT) {
+                std::unique_lock<std::mutex> lock(sampleMutex_);
+                auto                         interval = refreshIntervalMsec_;
+                if(samplingQueue_.size() >= 15) {
+                    interval *= 10;
+                }
+                LOG_DEBUG("The device time RTT has reached the upper limit several times. Sleep for {}ms and retry", interval);
+                sampleCondVar_.wait_for(lock, std::chrono::milliseconds(interval));
+                retryCount = 0;
+            }
+            else {
+                std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            }
             continue;
         }
 
@@ -166,30 +178,37 @@ void GlobalTimestampFitter::fittingLoop() {
         }
 
         // Use the first set of data as offset to prevent overflow during calculation
-        uint64_t offset_x = samplingQueue_.front().deviceTimestamp;
-        uint64_t offset_y = samplingQueue_.front().systemTimestamp;
+        uint64_t offset_x = 0;
+        uint64_t offset_y = 0;
         double   Ex       = 0;
         double   Exx      = 0;
         double   Ey       = 0;
-        double   Exy      = 0;
-        auto     it       = samplingQueue_.begin();
-        uint32_t n = 0;
-        while(it != samplingQueue_.end()) {
-            auto systemTimestamp = it->systemTimestamp - offset_y;
-            auto deviceTimestamp = it->deviceTimestamp - offset_x;
-            Ex += deviceTimestamp;
-            Exx += deviceTimestamp * deviceTimestamp;
-            Ey += systemTimestamp;
-            Exy += deviceTimestamp * systemTimestamp;
-            it++;
-            n++;
+        double   Exy       = 0;
+        size_t   queueSize = 0;
+        {
+            std::unique_lock<std::mutex> lock(sampleMutex_);
+            auto                         it = samplingQueue_.begin();
+
+            offset_x = samplingQueue_.front().deviceTimestamp;
+            offset_y = samplingQueue_.front().systemTimestamp;
+            queueSize = samplingQueue_.size();
+
+            while(it != samplingQueue_.end()) {
+                auto systemTimestamp = it->systemTimestamp - offset_y;
+                auto deviceTimestamp = it->deviceTimestamp - offset_x;
+                Ex += deviceTimestamp;
+                Exx += deviceTimestamp * deviceTimestamp;
+                Ey += systemTimestamp;
+                Exy += deviceTimestamp * systemTimestamp;
+                it++;
+            }
         }
 
         {
             std::unique_lock<std::mutex> linearFuncParamLock(linearFuncParamMutex_);
             // Linear regression to find a and b: y=ax+b
-            linearFuncParam_.coefficientA = (Exy * samplingQueue_.size() - Ex * Ey) / (samplingQueue_.size() * Exx - Ex * Ex);
-            linearFuncParam_.constantB  = (Exx * Ey - Exy * Ex) / (samplingQueue_.size() * Exx - Ex * Ex) + offset_y - linearFuncParam_.coefficientA * offset_x;
+            linearFuncParam_.coefficientA = (Exy * queueSize - Ex * Ey) / (queueSize * Exx - Ex * Ex);
+            linearFuncParam_.constantB    = (Exx * Ey - Exy * Ex) / (queueSize * Exx - Ex * Ex) + offset_y - linearFuncParam_.coefficientA * offset_x;
             linearFuncParam_.checkDataX = devTime.time;
             linearFuncParam_.checkDataY = sysTspUsec;
 
@@ -210,7 +229,7 @@ void GlobalTimestampFitter::fittingLoop() {
             sampleCondVar_.wait_for(lock, std::chrono::milliseconds(interval));
         }
 
-    } while(!sampleLoopExit_ && retryCount <= MAX_RETRY_COUNT);
+    } while(!sampleLoopExit_);
 
     if(retryCount > MAX_RETRY_COUNT) {
         LOG_ERROR("GlobalTimestampFitter fittingLoop retry count exceed max retry count!");

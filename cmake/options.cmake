@@ -7,6 +7,9 @@ option(OB_BUILD_TESTS "Build tests" OFF)
 option(OB_BUILD_TOOLS "Build tools" OFF)
 option(OB_BUILD_DOCS "Build api document and install doc" ON)
 
+# information options
+option(OB_BUILD_WITH_EXTENSIONS_COMMIT_HASH "Build with extensions commit hash" ON)
+
 # platform options
 option(OB_BUILD_ANDROID "Build Android " OFF)
 
@@ -38,3 +41,6 @@ if(OB_BUILD_GMSL_PAL)
     add_definitions(-DBUILD_GMSL_PAL)
 endif()
 
+if(OB_BUILD_WITH_EXTENSIONS_COMMIT_HASH)
+    add_definitions(-DOB_BUILD_WITH_EXTENSIONS_COMMIT_HASH)
+endif()

@@ -126,6 +126,34 @@ typedef struct {
     OBD2CTransform              transform;      ///< Rotation/transformation matrix
 } OBCameraParam_Internal_V0;
 
+/**
+ * @brief Depth alignment rectify parameter
+ *
+ */
+typedef struct {
+    OBCameraIntrinsic           leftIntrin;
+    OBCameraDistortion_Internal leftDisto;
+    float                       leftRot[9];
+
+    OBCameraIntrinsic           rightIntrin;  // ref
+    OBCameraDistortion_Internal rightDisto;
+    float                       rightRot[9];
+
+    OBCameraIntrinsic leftVirtualIntrin;  // output intrinsics from rectification (and rotation)
+    OBCameraIntrinsic rightVirtualIntrin;
+} OBDERectifyD2CParams;
+
+typedef struct {
+    float rot[3];  // Euler,[rx,ry,rz]
+    float trans[3];
+} OBDETransformEuler;
+
+typedef struct {
+    OBExtrinsic        transform_vlr;
+    OBDETransformEuler transform_lr;
+    uint32_t           reserve[2];
+} OBDEIRTransformParam;
+
 typedef struct {
     uint8_t  checksum[16];  ///< The camera depth mode corresponds to the hash binary array
     char     name[32];      ///< name
@@ -136,6 +164,7 @@ typedef enum {
     NORMAL                             = 0,           // Normal mode, no special processing required
     MX6600_RIGHT_IR_FROM_DEPTH_CHANNEL = 2,           // Gemini2 calibration mode, right IR data goes through the depth channel
     RIGHT_IR_NO_FROM_DEPTH_CHANNEL     = 4,           // Gemini2XL, right IR goes to the right IR channel
+    CUSTOM_DEPTH_MODE_TAG              = 0x01 << 6,   // Custom preset tag
     INVALID                            = 0xffffffff,  // Invalid value
 } OBDepthModeOptionCode;
 

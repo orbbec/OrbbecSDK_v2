@@ -78,6 +78,13 @@ ob_depth_work_mode ob_depth_work_mode_list_get_item(const ob_depth_work_mode_lis
     ob_depth_work_mode impl;
     memcpy(impl.checksum, workMode.checksum, sizeof(workMode.checksum));
     memcpy(impl.name, workMode.name, sizeof(workMode.name));
+    if(workMode.optionCode & CUSTOM_DEPTH_MODE_TAG) {
+        impl.tag = OB_CUSTOM_DEPTH_WORK_MODE;
+    }
+    else {
+        impl.tag = OB_DEVICE_DEPTH_WORK_MODE;
+    }
+
     return impl;
 }
 HANDLE_EXCEPTIONS_AND_RETURN({}, work_mode_list, index)

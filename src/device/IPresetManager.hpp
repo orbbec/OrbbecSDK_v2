@@ -18,6 +18,7 @@ public:
     virtual void                            loadPresetFromJsonFile(const std::string &filePath)                                         = 0;
     virtual const std::vector<uint8_t>     &exportSettingsAsPresetJsonData(const std::string &presetName)                               = 0;
     virtual void                            exportSettingsAsPresetJsonFile(const std::string &filePath)                                 = 0;
+    virtual void                            fetchPreset()                                                                               = 0;
 };
 }  // namespace libobsensor
 

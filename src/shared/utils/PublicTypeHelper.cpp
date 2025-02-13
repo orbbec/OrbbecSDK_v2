@@ -757,3 +757,59 @@ std::ostream &operator<<(std::ostream &os, const OBExceptionType &type) {
     }
     return os;
 }
+std::ostream &operator<<(std::ostream &os, const OBDERectifyD2CParams &params) {
+    os << "{\n"
+       << "  leftIntrin: { fx: " << params.leftIntrin.fx << ", fy: " << params.leftIntrin.fy << ", cx: " << params.leftIntrin.cx
+       << ", cy: " << params.leftIntrin.cy << ", width: " << params.leftIntrin.width << ", height: " << params.leftIntrin.height << " },\n"
+
+       << "  leftDisto: {  k1: " << params.leftDisto.k1 << ", k2: " << params.leftDisto.k2 << ", k3: " << params.leftDisto.k3 << ", k4: " << params.leftDisto.k4
+       << ", k5: " << params.leftDisto.k5 << ", k6: " << params.leftDisto.k6 << ", p1: " << params.leftDisto.p1 << ", p2: " << params.leftDisto.p2 << " },\n"
+
+       << "  leftRot: [ ";
+    for(int i = 0; i < 9; ++i) {
+        os << params.leftRot[i] << (i < 8 ? ", " : " ");
+    }
+    os << "],\n"
+
+       << "  rightIntrin: { fx: " << params.rightIntrin.fx << ", fy: " << params.rightIntrin.fy << ", cx: " << params.rightIntrin.cx
+       << ", cy: " << params.rightIntrin.cy << ", width: " << params.rightIntrin.width << ", height: " << params.rightIntrin.height << " },\n"
+
+       << "  rightDisto: {  k1: " << params.rightDisto.k1 << ", k2: " << params.rightDisto.k2 << ", k3: " << params.rightDisto.k3
+       << ", k4: " << params.rightDisto.k4 << ", k5: " << params.rightDisto.k5 << ", k6: " << params.rightDisto.k6 << ", p1: " << params.rightDisto.p1
+       << ", p2: " << params.rightDisto.p2 << " },\n"
+
+       << "  rightRot: [ ";
+    for(int i = 0; i < 9; ++i) {
+        os << params.rightRot[i] << (i < 8 ? ", " : " ");
+    }
+    os << "],\n"
+
+       << "  leftVirtualIntrin: { fx: " << params.leftVirtualIntrin.fx << ", fy: " << params.leftVirtualIntrin.fy << ", cx: " << params.leftVirtualIntrin.cx
+       << ", cy: " << params.leftVirtualIntrin.cy << ", width: " << params.leftVirtualIntrin.width << ", height: " << params.leftVirtualIntrin.height << " },\n"
+
+       << "  rightVirtualIntrin: { fx: " << params.rightVirtualIntrin.fx << ", fy: " << params.rightVirtualIntrin.fy << ", cx: " << params.rightVirtualIntrin.cx
+       << ", cy: " << params.rightVirtualIntrin.cy << ", width: " << params.rightVirtualIntrin.width << ", height: " << params.rightVirtualIntrin.height
+       << " }\n"
+
+       << "}";
+
+    return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const OBDEIRTransformParam &params) {
+    os << "{\n"
+       << "  transform_vlr: {\n"
+       << "    rot: [ " << params.transform_vlr.rot[0] << ", " << params.transform_vlr.rot[1] << ", " << params.transform_vlr.rot[2] << ", "
+       << params.transform_vlr.rot[3] << ", " << params.transform_vlr.rot[4] << ", " << params.transform_vlr.rot[5] << ", " << params.transform_vlr.rot[6]
+       << ", " << params.transform_vlr.rot[7] << ", " << params.transform_vlr.rot[8] << " ],\n"
+       << "    trans: [ " << params.transform_vlr.trans[0] << ", " << params.transform_vlr.trans[1] << ", " << params.transform_vlr.trans[2] << " ]\n"
+       << "  },\n"
+       << "  transform_lr: {\n"
+       << "    rot(Euler): [ " << params.transform_lr.rot[0] << ", " << params.transform_lr.rot[1] << ", " << params.transform_lr.rot[2] << " ],\n"
+       << "    trans: [ " << params.transform_lr.trans[0] << ", " << params.transform_lr.trans[1] << ", " << params.transform_lr.trans[2] << " ]\n"
+       << "  },\n"
+       << "  reserve: [ " << params.reserve[0] << ", " << params.reserve[1] << " ]\n"
+       << "}";
+
+    return os;
+}

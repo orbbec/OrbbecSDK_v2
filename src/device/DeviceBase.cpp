@@ -452,6 +452,32 @@ void DeviceBase::updateFirmware(const std::vector<uint8_t> &firmware, DeviceFwUp
     updater->updateFirmwareFromRawDataExt(firmware.data(), static_cast<uint32_t>(firmware.size()), updateCallback, async);
 }
 
+void DeviceBase::updateOptionalDepthPresets(const char filePathList[][OB_PATH_MAX], uint8_t pathCount, DeviceFwUpdateCallback updateCallback) {
+    if(hasAnySensorStreamActivated()) {
+        throw libobsensor::wrong_api_call_sequence_exception("Device is streaming, please stop all sensors before updating preset!");
+    }
+
+    auto updater = getComponentT<FirmwareUpdater>(OB_DEV_COMPONENT_FIRMWARE_UPDATER, true);
+    bool success = false;
+    updater->updateOptionalDepthPresetsExt(filePathList, pathCount, [updateCallback, &success](OBFwUpdateState state, const char *message, uint8_t percent) {
+        updateCallback(state, message, percent);
+        if(state == STAT_DONE_WITH_DUPLICATES || state == STAT_DONE) {
+            // success
+            success = true;
+        }
+    });
+
+    if ( success ) {
+        // refresh extension info and preset list
+        fetchExtensionInfo();
+        // update preset list
+        auto presetMgr = getComponentT<libobsensor::IPresetManager>(libobsensor::OB_DEV_COMPONENT_PRESET_MANAGER, false);
+        if(presetMgr) {
+            presetMgr->fetchPreset();
+        }
+    }
+ }
+
 std::map<std::string, std::string> DeviceBase::parseExtensionInfo(std::string extensionInfo) {
     Json::Value                        root;
     Json::Reader                       reader;

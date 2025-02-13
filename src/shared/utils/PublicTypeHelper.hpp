@@ -4,6 +4,7 @@
 #pragma once
 
 #include "libobsensor/h/ObTypes.h"
+#include "InternalTypes.hpp"
 #include <iostream>
 
 namespace libobsensor {
@@ -65,3 +66,5 @@ std::ostream &operator<<(std::ostream &os, const OBCameraIntrinsic &type);
 std::ostream &operator<<(std::ostream &os, const OBCameraDistortion &type);
 std::ostream &operator<<(std::ostream &os, const OBFilterConfigValueType &type);
 std::ostream &operator<<(std::ostream &os, const OBExceptionType &type);
+std::ostream &operator<<(std::ostream &os, const OBDERectifyD2CParams &params);
+std::ostream &operator<<(std::ostream &os, const OBDEIRTransformParam &params);

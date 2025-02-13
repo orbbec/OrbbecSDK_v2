@@ -42,7 +42,9 @@ private:
     bool destroy_;
 
     std::mutex            callbackMutex_;
-    DeviceChangedCallback devChangedCallback_ = nullptr;
+    // trying to resolve the multi-node callback issues in ROS1
+    // DeviceChangedCallback devChangedCallback_ = nullptr;
+    std::vector<DeviceChangedCallback> devChangedCallbacks_;
 
     std::map<std::string, std::weak_ptr<IDevice>> createdDevices_;
     std::mutex                                    createdDevicesMutex_;

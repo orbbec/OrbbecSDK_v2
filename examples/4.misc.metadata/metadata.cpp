@@ -139,6 +139,10 @@ const char *metadataTypeToString(OBFrameMetadataType type) {
         return "OB_FRAME_METADATA_TYPE_LASER_STATUS";
     case OB_FRAME_METADATA_TYPE_GPIO_INPUT_DATA:
         return "OB_FRAME_METADATA_TYPE_GPIO_INPUT_DATA";
+    case OB_FRAME_METADATA_TYPE_DISPARITY_SEARCH_OFFSET:
+        return "OB_FRAME_METADATA_TYPE_DISPARITY_SEARCH_OFFSET";
+    case OB_FRAME_METADATA_TYPE_DISPARITY_SEARCH_RANGE:
+        return "OB_FRAME_METADATA_TYPE_DISPARITY_SEARCH_RANGE";
     default:
         return "unknown metadata type";
     }

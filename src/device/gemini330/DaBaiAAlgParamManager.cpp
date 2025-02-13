@@ -10,7 +10,85 @@
 #include "sensor/video/DisparityBasedSensor.hpp"
 #include <vector>
 #include <sstream>
+#include <math.h>
 namespace libobsensor {
+
+void rotation_x(float angle, float *mat) {
+    float c = cosf(angle);
+    float s = sinf(angle);
+    mat[0]  = 1.0f;
+    mat[1]  = 0.0f;
+    mat[2]  = 0.0f;
+    mat[3]  = 0.0f;
+    mat[4]  = c;
+    mat[5]  = -s;
+    mat[6]  = 0.0f;
+    mat[7]  = s;
+    mat[8]  = c;
+}
+
+void rotation_y(float angle, float *mat) {
+    float c = cosf(angle);
+    float s = sinf(angle);
+    mat[0]  = c;
+    mat[1]  = 0.0f;
+    mat[2]  = s;
+    mat[3]  = 0.0f;
+    mat[4]  = 1.0f;
+    mat[5]  = 0.0f;
+    mat[6]  = -s;
+    mat[7]  = 0.0f;
+    mat[8]  = c;
+}
+
+void rotation_z(float angle, float *mat) {
+    float c = cosf(angle);
+    float s = sinf(angle);
+    mat[0]  = c;
+    mat[1]  = -s;
+    mat[2]  = 0.0f;
+    mat[3]  = s;
+    mat[4]  = c;
+    mat[5]  = 0.0f;
+    mat[6]  = 0.0f;
+    mat[7]  = 0.0f;
+    mat[8]  = 1.0f;
+}
+
+void multiply_matrices(const float *a, const float *b, float *result) {
+    for(int i = 0; i < 3; ++i) {
+        for(int j = 0; j < 3; ++j) {
+            float sum = 0.0f;
+            for(int k = 0; k < 3; ++k) {
+                sum += a[i * 3 + k] * b[k * 3 + j];
+            }
+            result[i * 3 + j] = sum;
+        }
+    }
+}
+
+void EulerAnglesToRotationMatrix(float rx, float ry, float rz, float *result) {
+    float Rz[9], Rx[9], Ry[9];
+    rotation_z(rz, Rz);
+    rotation_x(rx, Rx);
+    rotation_y(ry, Ry);
+
+    float temp[9];
+    multiply_matrices(Rz, Rx, temp);
+    multiply_matrices(temp, Ry, result);
+}
+
+void DaBaiAAlgParamManager::eulerAnglesToTransform(const OBDETransformEuler &euler, OBExtrinsic &extrinsic) {
+    float rot[9];
+    EulerAnglesToRotationMatrix(euler.rot[0], euler.rot[1], euler.rot[2], rot);
+    for(int i = 0; i < 9; i++) {
+        extrinsic.rot[i] = rot[i];
+    }
+
+    for(int i = 0; i < 3; i++) {
+        extrinsic.trans[i] = euler.trans[i];
+    }
+}
 
 bool DaBaiAAlgParamManager::findBestMatchedCameraParam(const std::vector<OBCameraParam>                &cameraParamList,
                                                        const std::shared_ptr<const VideoStreamProfile> &profile, OBCameraParam &result) {
@@ -67,6 +145,7 @@ DaBaiAAlgParamManager::DaBaiAAlgParamManager(IDevice *owner) : DisparityAlgParam
     fetchParamFromDevice();
     fixD2CParmaList();
     registerBasicExtrinsics();
+    refreshCameraParams();
 }
 
 void DaBaiAAlgParamManager::fetchParamFromDevice() {
@@ -104,7 +183,7 @@ void DaBaiAAlgParamManager::fetchParamFromDevice() {
             memcpy(&param.depthDistortion, &cameraParam.depthDistortion, sizeof(param.depthDistortion));
             param.depthDistortion.model = OB_DISTORTION_BROWN_CONRADY;
             memcpy(&param.rgbDistortion, &cameraParam.rgbDistortion, sizeof(param.rgbDistortion));
-            param.rgbDistortion.model = OB_DISTORTION_BROWN_CONRADY_K6;
+            param.rgbDistortion.model = OB_DISTORTION_BROWN_CONRADY;
             param.transform           = cameraParam.transform;
             param.isMirrored          = false;
             originCalibrationCameraParamList_.emplace_back(param);
@@ -118,6 +197,50 @@ void DaBaiAAlgParamManager::fetchParamFromDevice() {
         LOG_ERROR("Get depth calibration params failed! {}", e.what());
     }
 
+    // add rectify params
+    try {
+        auto owner           = getOwner();
+        auto propServer      = owner->getPropertyServer();
+        auto rectifyD2CParam = propServer->getStructureDataProtoV1_1_T<OBDERectifyD2CParams, 0>(OB_RAW_DATA_DE_IR_RECTIFY_PARAMS);
+        d2cRectifyParam_     = rectifyD2CParam;
+        std::stringstream ss;
+        ss << rectifyD2CParam;
+        LOG_DEBUG("rectify d2c param -{}", ss.str());
+    }
+    catch(const std::exception &e) {
+        LOG_ERROR("Get rectify d2c params failed! {}", e.what());
+    }
+
+    try {
+        auto owner                 = getOwner();
+        auto propServer            = owner->getPropertyServer();
+        auto transformParam        = propServer->getStructureDataProtoV1_1_T<OBDEIRTransformParam, 0>(OB_RAW_DATA_DE_IR_TRANSFORM_PARAMS);
+        depthEngineTransformParam_ = transformParam;
+        std::stringstream ss;
+        ss << transformParam;
+        LOG_DEBUG("transfrom param -{}", ss.str());
+    }
+    catch(const std::exception &e) {
+        LOG_ERROR("Get depth engine transform params failed! {}", e.what());
+    }
+
+    try {
+        auto            owner       = getOwner();
+        auto            commandPort = owner->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        OBPropertyValue value;
+        commandPort->getPropertyValue(OB_PROP_IR_RECTIFY_BOOL, &value);
+        if(value.intValue == 1) {
+            irRectifyEnable_ = true;
+        }
+        else {
+            irRectifyEnable_ = false;
+        }
+    }
+    catch(const std::exception &e) {
+        LOG_ERROR("Get OB_PROP_IR_RECTIFY_BOOL  failed! {}", e.what());
+    }
+
+    // End: add rectify params
     try {
         auto owner            = getOwner();
         auto propServer       = owner->getPropertyServer();
@@ -206,16 +329,30 @@ void DaBaiAAlgParamManager::registerBasicExtrinsics() {
     auto accelBasicStreamProfile   = StreamProfileFactory::createAccelStreamProfile(OB_ACCEL_FS_2g, OB_SAMPLE_RATE_1_5625_HZ);
     auto gyroBasicStreamProfile    = StreamProfileFactory::createGyroStreamProfile(OB_GYRO_FS_16dps, OB_SAMPLE_RATE_1_5625_HZ);
 
+    // depth to color extrinsic
     if(!originCalibrationCameraParamList_.empty()) {
         auto d2cExtrinsic = originCalibrationCameraParamList_.front().transform;
         extrinsicMgr->registerExtrinsics(depthBasicStreamProfile, colorBasicStreamProfile, d2cExtrinsic);
     }
-    extrinsicMgr->registerSameExtrinsics(leftIrBasicStreamProfile, depthBasicStreamProfile);
 
-    if(!depthCalibParamList_.empty()) {
-        auto left_to_right     = IdentityExtrinsics;
-        left_to_right.trans[0] = -1.0f * depthCalibParamList_.front().baseline * depthCalibParamList_.front().unit;
-        extrinsicMgr->registerExtrinsics(leftIrBasicStreamProfile, rightIrBasicStreamProfile, left_to_right);
+    // left ir to depth extrinsic
+    OBExtrinsic leftIRToDepthExtrinsic = { 0 };
+    // left ir to right ir extrinsic
+    OBExtrinsic leftToRightIRExtrinsic = { 0 };
+    if(irRectifyEnable_) {
+        leftIRToDepthExtrinsic.rot[0] = 1;
+        leftIRToDepthExtrinsic.rot[4] = 1;
+        leftIRToDepthExtrinsic.rot[8] = 1;
+        extrinsicMgr->registerExtrinsics(leftIrBasicStreamProfile, depthBasicStreamProfile, leftIRToDepthExtrinsic);
+        extrinsicMgr->registerExtrinsics(leftIrBasicStreamProfile, rightIrBasicStreamProfile, depthEngineTransformParam_.transform_vlr);
+    }
+    else {
+
+        memcpy(leftIRToDepthExtrinsic.rot, d2cRectifyParam_.leftRot, sizeof(leftIRToDepthExtrinsic.rot));
+        extrinsicMgr->registerExtrinsics(leftIrBasicStreamProfile, depthBasicStreamProfile, leftIRToDepthExtrinsic);
+
+        eulerAnglesToTransform(depthEngineTransformParam_.transform_lr, leftToRightIRExtrinsic);
+        extrinsicMgr->registerExtrinsics(leftIrBasicStreamProfile, rightIrBasicStreamProfile, leftToRightIRExtrinsic);
     }
 
     const auto &imuCalibParam = getIMUCalibrationParam();
@@ -405,24 +542,50 @@ void DaBaiAAlgParamManager::bindIntrinsic(std::vector<std::shared_ptr<const Stre
         else {
             OBCameraIntrinsic  intrinsic  = { 0 };
             OBCameraDistortion distortion = { 0 };
-            OBCameraParam      param{};
-            auto               vsp = sp->as<VideoStreamProfile>();
-            if(!findBestMatchedCameraParam(calibrationCameraParamList_, vsp, param)) {
-                // throw libobsensor::unsupported_operation_exception("Can not find matched camera param!");
-                continue;
-            }
+            auto               vsp        = sp->as<VideoStreamProfile>();
             switch(sp->getType()) {
             case OB_STREAM_COLOR:
-                intrinsic  = param.rgbIntrinsic;
-                distortion = param.rgbDistortion;
-                break;
-            case OB_STREAM_DEPTH:
-            case OB_STREAM_IR:
+            case OB_STREAM_DEPTH: {
+                OBCameraParam param{};
+                if(!findBestMatchedCameraParam(calibrationCameraParamList_, vsp, param)) {
+                    // throw libobsensor::unsupported_operation_exception("Can not find matched camera param!");
+                    continue;
+                }
+                if(sp->getType() == OB_STREAM_COLOR) {
+                    intrinsic  = param.rgbIntrinsic;
+                    distortion = param.rgbDistortion;
+                }
+                else {
+                    intrinsic  = param.depthIntrinsic;
+                    distortion = param.depthDistortion;
+                }
+            } break;
+
             case OB_STREAM_IR_LEFT:
-            case OB_STREAM_IR_RIGHT:
-                intrinsic  = param.depthIntrinsic;
-                distortion = param.depthDistortion;
+                if(irRectifyEnable_) {
+                    intrinsic = d2cRectifyParam_.leftVirtualIntrin;
+                    memset(&distortion, 0, sizeof(distortion));
+                    distortion.model = OB_DISTORTION_BROWN_CONRADY;
+                }
+                else {
+                    intrinsic = d2cRectifyParam_.leftIntrin;
+                    memcpy(&distortion, &d2cRectifyParam_.leftDisto, sizeof(OBCameraDistortion_Internal));
+                    distortion.model = OB_DISTORTION_BROWN_CONRADY;
+                }
+
                 break;
+            case OB_STREAM_IR_RIGHT: {
+                if(irRectifyEnable_) {
+                    intrinsic = d2cRectifyParam_.leftVirtualIntrin;
+                    memset(&distortion, 0, sizeof(distortion));
+                    distortion.model = OB_DISTORTION_BROWN_CONRADY;
+                }
+                else {
+                    intrinsic = d2cRectifyParam_.rightIntrin;
+                    memcpy(&distortion, &d2cRectifyParam_.rightDisto, sizeof(OBCameraDistortion_Internal));
+                    distortion.model = OB_DISTORTION_BROWN_CONRADY;
+                }
+            } break;
             default:
                 break;
             }
@@ -523,6 +686,89 @@ void DaBaiAAlgParamManager::updateD2CProfileList(const std::string currentDepthA
     }
 
     currentDepthAlgMode_ = currentDepthAlgMode;
+}
+
+void DaBaiAAlgParamManager::refreshCameraParams() {
+    auto                  owner      = getOwner();
+    auto                  propServer = owner->getPropertyServer();
+    std::vector<uint32_t> supportedProps;
+    if(propServer->isPropertySupported(OB_PROP_IR_RECTIFY_BOOL, PROP_OP_WRITE, PROP_ACCESS_USER)) {
+        supportedProps.push_back(OB_PROP_IR_RECTIFY_BOOL);
+    }
+
+    if(!supportedProps.empty()) {
+        propServer->registerAccessCallback(supportedProps, [&](uint32_t, const uint8_t *data, size_t dataSize, PropertyOperationType operationType) {
+            if(operationType == PROP_OP_WRITE) {
+                if(dataSize != sizeof(uint32_t) || data == nullptr) {
+                    return;
+                }
+
+                uint32_t value = *(uint32_t *)data;
+                if(value == 0) {
+                    irRectifyEnable_ = false;
+                }
+                else {
+                    irRectifyEnable_ = true;
+                }
+                refreshExtrinsicsParams();
+
+                auto owner                   = getOwner();
+                auto leftIRSensor            = owner->getComponentT<VideoSensor>(OB_DEV_COMPONENT_LEFT_IR_SENSOR, false);
+                auto leftIRStreamProfileList = leftIRSensor->getStreamProfileList();
+                bindIntrinsic(leftIRStreamProfileList);
+                bindExtrinsic(leftIRStreamProfileList);
+
+                auto rightIRSensor            = owner->getComponentT<VideoSensor>(OB_DEV_COMPONENT_RIGHT_IR_SENSOR, false);
+                auto rightIRStreamProfileList = rightIRSensor->getStreamProfileList();
+                bindIntrinsic(rightIRStreamProfileList);
+                bindExtrinsic(rightIRStreamProfileList);
+            }
+        });
+    }
+}
+
+void DaBaiAAlgParamManager::refreshExtrinsicsParams() {
+    auto                                 extrinsicMgr         = StreamExtrinsicsManager::getInstance();
+    std::shared_ptr<const StreamProfile> depthStreamProfile   = nullptr;
+    std::shared_ptr<const StreamProfile> leftIRStreamProfile  = nullptr;
+    std::shared_ptr<const StreamProfile> rightIRStreamProfile = nullptr;
+
+    for(const auto &profile: basicStreamProfileList_) {
+        auto streamType = profile->getType();
+        switch(streamType) {
+        case OB_STREAM_DEPTH:
+            depthStreamProfile = profile;
+            break;
+        case OB_STREAM_IR_LEFT:
+            leftIRStreamProfile = profile;
+            break;
+        case OB_STREAM_IR_RIGHT:
+            rightIRStreamProfile = profile;
+            break;
+        default:
+            break;
+        }
+    }
+
+    if(depthStreamProfile && leftIRStreamProfile && rightIRStreamProfile) {
+        OBExtrinsic leftIRToDepthExtrinsic = { 0 };
+        OBExtrinsic leftToRightIRExtrinsic = { 0 };
+        if(irRectifyEnable_) {
+            leftIRToDepthExtrinsic.rot[0] = 1;
+            leftIRToDepthExtrinsic.rot[4] = 1;
+            leftIRToDepthExtrinsic.rot[8] = 1;
+            extrinsicMgr->registerExtrinsics(leftIRStreamProfile, depthStreamProfile, leftIRToDepthExtrinsic);
+            extrinsicMgr->registerExtrinsics(leftIRStreamProfile, rightIRStreamProfile, depthEngineTransformParam_.transform_vlr);
+        }
+        else {
+
+            memcpy(leftIRToDepthExtrinsic.rot, d2cRectifyParam_.leftRot, sizeof(leftIRToDepthExtrinsic.rot));
+            extrinsicMgr->registerExtrinsics(leftIRStreamProfile, depthStreamProfile, leftIRToDepthExtrinsic);
+
+            eulerAnglesToTransform(depthEngineTransformParam_.transform_lr, leftToRightIRExtrinsic);
+            extrinsicMgr->registerExtrinsics(leftIRStreamProfile, rightIRStreamProfile, leftToRightIRExtrinsic);
+        }
+    }
 }
 
 }  // namespace libobsensor

@@ -57,6 +57,9 @@ public:
     DeviceComponentPtr<IPropertyServer> getPropertyServer() override;
 
     void                                      updateFirmware(const std::vector<uint8_t> &firmware, DeviceFwUpdateCallback updateCallback, bool async) override;
+
+    void updateOptionalDepthPresets(const char filePathList[][OB_PATH_MAX], uint8_t pathCount, DeviceFwUpdateCallback updateCallback) override;
+
     static std::map<std::string, std::string> parseExtensionInfo(std::string extensionInfo);
 
     void activateDeviceAccessor() override;

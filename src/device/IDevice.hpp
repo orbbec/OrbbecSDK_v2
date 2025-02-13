@@ -69,6 +69,9 @@ public:
     // device firmware update
     virtual void updateFirmware(const std::vector<uint8_t> &firmware, DeviceFwUpdateCallback updateCallback, bool async) = 0;
 
+    // update device depth presets
+    virtual void updateOptionalDepthPresets(const char filePathList[][OB_PATH_MAX], uint8_t pathCount, DeviceFwUpdateCallback updateCallback) = 0;
+
     // activate device accessor
     virtual void activateDeviceAccessor() = 0;
 

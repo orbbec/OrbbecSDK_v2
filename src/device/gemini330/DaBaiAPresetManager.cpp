@@ -196,6 +196,10 @@ void DaBaiAPresetManager::exportSettingsAsPresetJsonFile(const std::string &file
     writer->write(root, &ofs);
 }
 
+void DaBaiAPresetManager::fetchPreset() {
+    // todo
+}
+
 template <typename T> void setPropertyValue(IDevice *dev, uint32_t propertyId, T value) {
     // get and release property server on this scope to avoid handle device resource lock for an extended duration
     auto propServer = dev->getPropertyServer();

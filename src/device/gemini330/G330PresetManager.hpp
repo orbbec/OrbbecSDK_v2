@@ -68,6 +68,7 @@ public:
     void                            loadPresetFromJsonFile(const std::string &filePath) override;
     const std::vector<uint8_t>     &exportSettingsAsPresetJsonData(const std::string &presetName) override;
     void                            exportSettingsAsPresetJsonFile(const std::string &filePath) override;
+    void                            fetchPreset() override;
 
 private:
     void        storeCurrentParamsAsCustomPreset(const std::string &presetName);

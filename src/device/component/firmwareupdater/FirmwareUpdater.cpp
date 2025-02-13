@@ -17,6 +17,10 @@ FirmwareUpdater::FirmwareUpdater(IDevice *owner) : DeviceComponentBase(owner) {
         ctx_->update_firmware_from_raw_data_ext =
             ctx_->dylib_->get_function<void(ob_device *, const uint8_t *, uint32_t, ob_device_fw_update_callback, bool, void *, ob_error **)>(
                 "ob_device_update_firmware_from_raw_data_ext");
+        ctx_->update_optional_depth_presets_ext =
+            ctx_->dylib_
+                ->get_function<void(ob_device *, const char filePathList[][OB_PATH_MAX], uint8_t, ob_device_fw_update_callback, void *, ob_error **)>(
+            "ob_device_update_optional_depth_presets_ext");
     }
     catch(const std::exception &e) {
         LOG_DEBUG("Failed to load firmwareupdater library: {}", e.what());
@@ -41,9 +45,10 @@ void FirmwareUpdater::updateFirmwareExt(const std::string &path, DeviceFwUpdateC
     if(updateThread_.joinable()) {
         updateThread_.join();
     }
-    deviceFwUpdateCallback_(STAT_FILE_TRANSFER, "Ready to update firmware...", 0);
 
     deviceFwUpdateCallback_ = callback;
+    deviceFwUpdateCallback_(STAT_FILE_TRANSFER, "Ready to update firmware...", 0);
+
     updateThread_           = std::thread([this, path, async]() {
         ob_error *error  = nullptr;
         auto      device = std::make_shared<ob_device>();
@@ -82,6 +87,27 @@ void FirmwareUpdater::updateFirmwareFromRawDataExt(const uint8_t *firmwareData, 
     if(!async) {
         updateThread_.join();
     }
+}
+
+void FirmwareUpdater::updateOptionalDepthPresetsExt(const char filePathList[][OB_PATH_MAX], uint8_t pathCount, DeviceFwUpdateCallback callback) {
+    if(updateThread_.joinable()) {
+        updateThread_.join();
+    }
+
+    deviceFwUpdateCallback_ = callback;
+    deviceFwUpdateCallback_(STAT_START, "Ready to update custom preset...", 0);
+
+    updateThread_           = std::thread([this, filePathList, pathCount]() {
+        ob_error *error  = nullptr;
+        auto      device = std::make_shared<ob_device>();
+        device->device   = getOwner()->shared_from_this();
+        ctx_->update_optional_depth_presets_ext(device.get(), filePathList, pathCount, onDeviceFwUpdateCallback, this, &error);
+        if(error) {
+            LOG_ERROR("Preset update failed: {}", error->message);
+            delete error;
+        }
+    });
+    updateThread_.join();
 }
 
 }  // namespace libobsensor
