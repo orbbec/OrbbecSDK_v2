@@ -34,7 +34,7 @@ void G330NetDeviceClockSynchronizer::timerSyncWithHost() {
     }
 
     isClockSync_ = true;
-    BEGIN_TRY_EXECUTE({
+    /*BEGIN_TRY_EXECUTE({
         ptpPort_->timerSyncWithHost([this]{
             globalTimestampFitter_->reFitting();
             isClockSync_ = false;
@@ -44,7 +44,7 @@ void G330NetDeviceClockSynchronizer::timerSyncWithHost() {
         LOG_ERROR("Net device time sync failed!");
         globalTimestampFitter_->reFitting();
         isClockSync_ = false;
-    })
+    })*/
 }
 
 }  // namespace libobsensor
