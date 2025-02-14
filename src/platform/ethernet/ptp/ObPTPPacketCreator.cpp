@@ -82,7 +82,7 @@ int ObPTPPacketCreator::createPTPPacket(PTPPacketControlType type, Frame1588 *fr
 }
 
 void ObPTPPacketCreator::getCurrentTimeStamp(unsigned int &s_time, unsigned int &n_time) {
-    std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+    /*std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
 
     std::time_t now_time_t = std::chrono::system_clock::to_time_t(now);
     std::tm *   now_tm     = std::localtime(&now_time_t);
@@ -105,7 +105,15 @@ void ObPTPPacketCreator::getCurrentTimeStamp(unsigned int &s_time, unsigned int 
     ss << buffer << ":" << ms.count() << ":" << cs.count() % 1000 << ":" << ns.count() % 1000;
     std::string s_print = ss.str();
     s_time              = static_cast<int>(s.count());
-    n_time              = static_cast<int>(ns.count());
+    n_time              = static_cast<int>(ns.count());*/
+
+    std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+
+    std::chrono::seconds seconds = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch());
+    s_time                       = static_cast<unsigned int>(seconds.count());
+
+    std::chrono::nanoseconds ns = std::chrono::duration_cast<std::chrono::nanoseconds>(now.time_since_epoch()) % 1000000000;
+    n_time                      = static_cast<unsigned int>(ns.count());
 }
 
 }  // namespace libobsensor
