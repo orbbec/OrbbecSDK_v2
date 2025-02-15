@@ -4,11 +4,13 @@
 # target options
 option(OB_BUILD_EXAMPLES "Build SDK examples" ON)
 option(OB_BUILD_TESTS "Build tests" OFF)
-option(OB_BUILD_TOOLS "Build tools" OFF)
+option(OB_BUILD_TOOLS "Build tools" ON)
 option(OB_BUILD_DOCS "Build api document and install doc" ON)
+option(OB_BUILD_PCL "Build Point Cloud Library examples" OFF)
 
 # information options
 option(OB_BUILD_WITH_EXTENSIONS_COMMIT_HASH "Build with extensions commit hash" ON)
+option(OB_BUILD_SOVERSION "Build with so version" ON)
 
 # platform options
 option(OB_BUILD_ANDROID "Build Android " OFF)

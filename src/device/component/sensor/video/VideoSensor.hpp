@@ -2,10 +2,10 @@
 // Licensed under the MIT License.
 
 #pragma once
+#include "sensor/SensorBase.hpp"
 #include "IFrame.hpp"
 #include "IFilter.hpp"
 #include "IFrameMetadataModifier.hpp"
-#include "sensor/SensorBase.hpp"
 
 #include <map>
 

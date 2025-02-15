@@ -624,7 +624,7 @@ std::vector<std::shared_ptr<IFilter>> G2Device::createRecommendedPostProcessingF
         auto spatFilter = filterFactory->createFilter("SpatialAdvancedFilter");
         spatFilter->enable(false);
         // magnitude, alpha, disp_diff, radius
-        std::vector<std::string> params = { "1", "0.5", "64", "1" };
+        std::vector<std::string> params = { "1", "0.5", "160", "1" };
         spatFilter->updateConfig(params);
         depthFilterList.push_back(spatFilter);
     }

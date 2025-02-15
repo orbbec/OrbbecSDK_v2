@@ -14,6 +14,12 @@ const std::map<std::string, int> gemini_330_list = { { "gemini335", 0x0800 }, { 
                                                      { "gemini330", 0x0801 }, { "gemini330L", 0x0805 }, { "DabaiA", 0x0A12 },    { "DabaiAL", 0x0A13 },
                                                      { "Gemini345", 0x0812 }, { "Gemini345Lg", 0x0813 } };
 
+const std::map<OBSensorType, std::string> sensorTypeToStringMap = { { OB_SENSOR_COLOR, "Color profile: " },
+                                                                    { OB_SENSOR_DEPTH, "Depth profile: " },
+                                                                    { OB_SENSOR_IR, "IR profile: " },
+                                                                    { OB_SENSOR_IR_LEFT, "Left IR profile: " },
+                                                                    { OB_SENSOR_IR_RIGHT, "Right IR profile: " } };
+
 bool isGemini330Series(int pid) {
     bool find = false;
     for(auto it = gemini_330_list.begin(); it != gemini_330_list.end(); ++it) {
@@ -248,19 +254,26 @@ void startStream() {
         if(sensorType == OB_SENSOR_IR || sensorType == OB_SENSOR_IR_LEFT || sensorType == OB_SENSOR_IR_RIGHT || sensorType == OB_SENSOR_COLOR
            || sensorType == OB_SENSOR_DEPTH) {
             try {
-                auto sensor           = sensorList->getSensor(sensorType);
-                auto colorProfileList = sensor->getStreamProfileList();
-                if(colorProfileList->getCount() > 0) {
+                auto sensor      = sensorList->getSensor(sensorType);
+                auto profileList = sensor->getStreamProfileList();
+                if(profileList->getCount() > 0) {
                     // get default (index=0) stream profile
-                    auto profile = colorProfileList->getProfile(OB_PROFILE_DEFAULT);
+                    auto defProfile = profileList->getProfile(OB_PROFILE_DEFAULT);
 
-                    auto colorProfile = profile->as<ob::VideoStreamProfile>();
-                    profilesMap.insert(std::make_pair(sensorType, colorProfile));
-                    std::cout << "color profile: " << colorProfile->getWidth() << "x" << colorProfile->getHeight() << " @ " << colorProfile->getFps() << "fps"
-                              << std::endl;
+                    auto defVsProfile = defProfile->as<ob::VideoStreamProfile>();
+                    profilesMap.insert(std::make_pair(sensorType, defVsProfile));
+                    auto it = sensorTypeToStringMap.find(sensorType);
+                    if(it != sensorTypeToStringMap.end()) {
+                        std::cout << it->second << defVsProfile->getWidth() << "x" << defVsProfile->getHeight() << " @ " << defVsProfile->getFps() << "fps"
+                                  << std::endl;
+                    }
+                    else {
+                        std::cout << "unknown profile: " << defVsProfile->getWidth() << "x" << defVsProfile->getHeight() << " @ " << defVsProfile->getFps()
+                                  << "fps" << std::endl;
+                    }
 
                     // enable color stream.
-                    config->enableStream(colorProfile);
+                    config->enableStream(defVsProfile);
                 }
             }
             catch(ob::Error &e) {

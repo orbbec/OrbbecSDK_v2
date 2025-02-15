@@ -52,7 +52,13 @@ INSTALL_DIR=$(pwd)/install/$PACKAGE_NAME
 mkdir -p $INSTALL_DIR
 
 # Build and install OrbbecSDK
-cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR -DOB_BUILD_EXAMPLES=OFF || { echo 'Failed to run cmake'; exit 1; }
+cmake_script="cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR -DOB_BUILD_EXAMPLES=OFF"
+if [ "$system" = "macos" ]; then
+    cmake_script="${cmake_script} -DOB_BUILD_SOVERSION=OFF"
+fi
+
+$cmake_script || { echo 'Failed to run cmake'; exit 1; }
+
 make install -j8 || { echo 'Failed to build OrbbecSDK'; exit 1; }
 
 # Compress the installation directory

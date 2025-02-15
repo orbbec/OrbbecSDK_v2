@@ -300,23 +300,24 @@ const std::map<OBStreamType, std::string> Stream_Str_Map = {
     { OB_STREAM_IR_RIGHT, "Right IR" }, { OB_STREAM_RAW_PHASE, "RawPhase" }
 };
 
-const std::map<OBIMUSampleRate, std::string> ImuRate_Str_Map = { { OB_SAMPLE_RATE_UNKNOWN, "UNKNOWN" },   { OB_SAMPLE_RATE_1_5625_HZ, "1_5625_HZ" },
-                                                                 { OB_SAMPLE_RATE_3_125_HZ, "3_125_HZ" }, { OB_SAMPLE_RATE_6_25_HZ, "6_25_HZ" },
-                                                                 { OB_SAMPLE_RATE_12_5_HZ, "12_5_HZ" },   { OB_SAMPLE_RATE_25_HZ, "25_HZ" },
-                                                                 { OB_SAMPLE_RATE_50_HZ, "50_HZ" },       { OB_SAMPLE_RATE_100_HZ, "100_HZ" },
-                                                                 { OB_SAMPLE_RATE_200_HZ, "200_HZ" },     { OB_SAMPLE_RATE_500_HZ, "500_HZ" },
-                                                                 { OB_SAMPLE_RATE_1_KHZ, "1_KHZ" },       { OB_SAMPLE_RATE_2_KHZ, "2_KHZ" },
-                                                                 { OB_SAMPLE_RATE_4_KHZ, "4_KHZ" },       { OB_SAMPLE_RATE_8_KHZ, "8_KHZ" },
-                                                                 { OB_SAMPLE_RATE_16_KHZ, "16_KHZ" },     { OB_SAMPLE_RATE_32_KHZ, "32_KHZ" } };
+const std::map<OBIMUSampleRate, std::string> ImuRate_Str_Map = {
+    { OB_SAMPLE_RATE_UNKNOWN, "UNKNOWN" }, { OB_SAMPLE_RATE_1_5625_HZ, "1_5625_HZ" }, { OB_SAMPLE_RATE_3_125_HZ, "3_125_HZ" },
+    { OB_SAMPLE_RATE_6_25_HZ, "6_25_HZ" }, { OB_SAMPLE_RATE_12_5_HZ, "12_5_HZ" },     { OB_SAMPLE_RATE_25_HZ, "25_HZ" },
+    { OB_SAMPLE_RATE_50_HZ, "50_HZ" },     { OB_SAMPLE_RATE_100_HZ, "100_HZ" },       { OB_SAMPLE_RATE_200_HZ, "200_HZ" },
+    { OB_SAMPLE_RATE_500_HZ, "500_HZ" },   { OB_SAMPLE_RATE_1_KHZ, "1_KHZ" },         { OB_SAMPLE_RATE_2_KHZ, "2_KHZ" },
+    { OB_SAMPLE_RATE_4_KHZ, "4_KHZ" },     { OB_SAMPLE_RATE_8_KHZ, "8_KHZ" },         { OB_SAMPLE_RATE_16_KHZ, "16_KHZ" },
+    { OB_SAMPLE_RATE_32_KHZ, "32_KHZ" },   { OB_SAMPLE_RATE_400_HZ, "400_HZ" },       { OB_SAMPLE_RATE_800_HZ, "800_HZ" }
+};
 
-const std::map<OBGyroFullScaleRange, std::string> GyroFullScaleRange_STR_MAP = { { OB_GYRO_FS_UNKNOWN, "Unknown" }, { OB_GYRO_FS_16dps, "16dps" },
-                                                                                 { OB_GYRO_FS_31dps, "31dps" },     { OB_GYRO_FS_62dps, "62dps" },
-                                                                                 { OB_GYRO_FS_125dps, "125dps" },   { OB_GYRO_FS_250dps, "250dps" },
-                                                                                 { OB_GYRO_FS_500dps, "500dps" },   { OB_GYRO_FS_1000dps, "1000dps" },
-                                                                                 { OB_GYRO_FS_2000dps, "2000dps" } };
+const std::map<OBGyroFullScaleRange, std::string> GyroFullScaleRange_STR_MAP = {
+    { OB_GYRO_FS_UNKNOWN, "Unknown" }, { OB_GYRO_FS_16dps, "16dps" },   { OB_GYRO_FS_31dps, "31dps" },   { OB_GYRO_FS_62dps, "62dps" },
+    { OB_GYRO_FS_125dps, "125dps" },   { OB_GYRO_FS_250dps, "250dps" }, { OB_GYRO_FS_500dps, "500dps" }, { OB_GYRO_FS_1000dps, "1000dps" },
+    { OB_GYRO_FS_2000dps, "2000dps" }, { OB_GYRO_FS_400dps, "400dps" }, { OB_GYRO_FS_800dps, "800dps" }
+};
 
 const std::map<OBAccelFullScaleRange, std::string> AccelFullScaleRange_Str_Map = {
-    { OB_ACCEL_FS_UNKNOWN, "Unknown" }, { OB_ACCEL_FS_2g, "2g" }, { OB_ACCEL_FS_4g, "4g" }, { OB_ACCEL_FS_8g, "8g" }, { OB_ACCEL_FS_16g, "16g" }
+    { OB_ACCEL_FS_UNKNOWN, "Unknown" }, { OB_ACCEL_FS_2g, "2g" }, { OB_ACCEL_FS_4g, "4g" },   { OB_ACCEL_FS_8g, "8g" },  { OB_ACCEL_FS_16g, "16g" },
+    { OB_ACCEL_FS_3g, "3g" },           { OB_ACCEL_FS_6g, "6g" }, { OB_ACCEL_FS_12g, "12g" }, { OB_ACCEL_FS_24g, "24g" }
 };
 
 const std::map<OBFormat, std::string> Format_Str_Map = {
