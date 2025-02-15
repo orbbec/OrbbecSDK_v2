@@ -73,10 +73,6 @@ void DabaiADevice::init() {
 
     videoFrameTimestampCalculatorCreator_ = [this]() {
         auto metadataType = OB_FRAME_METADATA_TYPE_TIMESTAMP;
-        auto iter         = std::find(G330LDevPids.begin(), G330LDevPids.end(), deviceInfo_->pid_);
-        if(iter == G330LDevPids.end()) {
-            metadataType = OB_FRAME_METADATA_TYPE_SENSOR_TIMESTAMP;
-        }
         return std::make_shared<FrameTimestampCalculatorOverMetadata>(this, metadataType, frameTimeFreq_);
     };
 
