@@ -87,9 +87,9 @@ std::shared_ptr<Frame> G435LeColorFrameProcessor::process(std::shared_ptr<const 
 }
 int G435LeColorFrameProcessor::findSequence(const uint8_t *data, uint32_t size) {
     const uint8_t target[]     = { 0xFF, 0xDA, 0x00, 0x0C };
-    const size_t  targetLength = sizeof(target) / sizeof(target[0]);
+    const uint32_t  targetLength = sizeof(target) / sizeof(target[0]);
 
-    for(int i = 0; i <= size - targetLength; ++i) {
+    for(uint32_t i = 0; i <= size - targetLength; ++i) {
         bool match = true;
         for(size_t j = 0; j < targetLength; ++j) {
             if(data[i + j] != target[j]) {
