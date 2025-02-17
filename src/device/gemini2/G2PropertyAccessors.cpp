@@ -8,7 +8,7 @@
 
 namespace libobsensor {
 
-G2Disp2DepthPropertyAccessor::G2Disp2DepthPropertyAccessor(IDevice *owner) : owner_(owner), hwDisparityToDepthEnabled_(true) {}
+G2Disp2DepthPropertyAccessor::G2Disp2DepthPropertyAccessor(IDevice *owner) : hwDisparityToDepthEnabled_(true) ,owner_(owner){}
 
 IDevice *G2Disp2DepthPropertyAccessor::getOwner() {
     return owner_;

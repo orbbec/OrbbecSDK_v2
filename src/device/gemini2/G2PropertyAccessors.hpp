@@ -23,11 +23,11 @@ private:
     void markOutputDisparityFrame(bool enable);
 
 protected:
-    bool hwDisparityToDepthEnabled_ = true;
+    bool hwDisparityToDepthEnabled_;
     std::vector<uint16_t> hwD2DSupportList_ = { OB_PRECISION_0MM8, OB_PRECISION_0MM4, OB_PRECISION_0MM2 };
 
 private:
-    IDevice                    *owner_ = nullptr;
+    IDevice                    *owner_;
     const std::vector<uint16_t> swD2DSupportList_ = { OB_PRECISION_1MM, OB_PRECISION_0MM8, OB_PRECISION_0MM4, OB_PRECISION_0MM2, OB_PRECISION_0MM1 };
 };
 
