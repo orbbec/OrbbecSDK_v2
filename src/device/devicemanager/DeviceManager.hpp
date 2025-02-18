@@ -57,6 +57,7 @@ private:
 
     std::map<std::string, std::shared_ptr<const IDeviceEnumInfo>> customConnectedDevices_;
     std::mutex                                                    customConnectedDevicesMutex_;
+    bool isCustomConnectedDevice_ = false;
 };
 }  // namespace libobsensor
 

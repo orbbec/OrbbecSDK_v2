@@ -87,8 +87,9 @@ std::shared_ptr<IDevice> DeviceManager::createNetDevice(std::string address, uin
     if(!deviceInfo) {
         throw libobsensor::invalid_value_exception("Failed to query Net Device, address=" + address + ", port=" + std::to_string(port));
     }
+    isCustomConnectedDevice_ = true;
     auto device = createDevice(deviceInfo);
-
+    isCustomConnectedDevice_ = false;
     {
         std::unique_lock<std::mutex> lock(customConnectedDevicesMutex_);
         auto                         iter = customConnectedDevices_.find(deviceInfo->getUid());
@@ -97,6 +98,7 @@ std::shared_ptr<IDevice> DeviceManager::createNetDevice(std::string address, uin
         }
     }
 
+    device->activateDeviceAccessor();
     return device;
 #else
     utils::unusedVar(address);
@@ -138,7 +140,9 @@ std::shared_ptr<IDevice> DeviceManager::createDevice(const std::shared_ptr<const
     }
 
     // activate device accessor
-    device->activateDeviceAccessor();
+    if(!isCustomConnectedDevice_) {
+        device->activateDeviceAccessor();
+    }
 
     auto devInfo = device->getInfo();
     LOG_INFO("Device created successfully! Name: {0}, PID: 0x{1:04x}, SN/ID: {2} FW: {3}", devInfo->name_, devInfo->pid_, devInfo->deviceSn_,
