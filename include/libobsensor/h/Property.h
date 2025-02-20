@@ -817,6 +817,11 @@ typedef enum {
      * @brief Calibration JSON file read from device (Femto Mega, read only)
      */
     OB_RAW_DATA_CAMERA_CALIB_JSON_FILE = 4029,
+
+    /**
+     * @brief Confidence degree
+     */
+    OB_PROP_DEBUG_ESGM_CONFIDENCE_FLOAT = 5013,
 } OBPropertyID,
     ob_property_id;
 

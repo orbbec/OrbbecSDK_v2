@@ -562,6 +562,7 @@ void G435LeDevice::initProperties() {
     propertyServer->registerProperty(OB_PROP_DEVICE_COMMUNICATION_TYPE_INT, "", "w", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_STRUCT_DEVICE_IP_ADDR_CONFIG, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_RAW_DATA_DEVICE_EXTENSION_INFORMATION, "", "r", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_DEBUG_ESGM_CONFIDENCE_FLOAT, "rw", "rw", vendorPropertyAccessor);
     
     auto imuCorrectorFilter = getSensorFrameFilter("IMUCorrector", OB_SENSOR_ACCEL);
     if(imuCorrectorFilter) {
