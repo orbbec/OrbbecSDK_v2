@@ -16,3 +16,4 @@ The libraries included in this folder are:
 | tinyxml2       | A simple, small, efficient, C++ XML parser                                    | Zlib         | <https://github.com/leethomason/tinyxml2>           |
 | cmrc           | A Resource Compiler in a Single CMake Script                                  | MIT          | <https://github.com/vector-of-bool/cmrc>          |
 | josncpp        | A C++ library for interacting with JSON.                                      | MIT          | <https://github.com/open-source-parsers/jsoncpp>   |
+| mdns-1.4.3     | A cross-platform C library for mDNS and DNS-DS                                | FREE         | https://github.com/mjansson/mdns                  |

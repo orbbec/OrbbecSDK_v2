@@ -28,6 +28,8 @@ endif()
 if(OB_BUILD_NET_PAL)
     add_subdirectory(ethernet)
     add_subdirectory(${OB_3RDPARTY_DIR}/live555 live555)
+    add_subdirectory(${OB_3RDPARTY_DIR}/mdns mdns EXCLUDE_FROM_ALL)
+    target_include_directories(${OB_TARGET_PAL} PRIVATE ${OB_3RDPARTY_DIR})
     target_link_libraries(${OB_TARGET_PAL} PUBLIC live555::live555)
 endif()
 

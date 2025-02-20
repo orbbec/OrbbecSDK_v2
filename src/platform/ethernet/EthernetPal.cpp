@@ -4,6 +4,7 @@
 #include "EthernetPal.hpp"
 #include "exception/ObException.hpp"
 #include "utils/Utils.hpp"
+#include "mdns/MDNSDiscovery.hpp"
 #include "RTPStreamPort.hpp"
 #include "logger/Logger.hpp"
 
@@ -30,37 +31,54 @@ void EthernetPal::start(deviceChangedCallback callback) {
             return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
         };
         while(!stopWatch_) {
-            auto list    = GVCPClient::instance().queryNetDeviceList();
-            auto start   = getNow();
-            auto added   = utils::subtract_sets(list, netDevInfoList_);
-            auto removed = utils::subtract_sets(netDevInfoList_, list);
-            updateSourcePortInfoList(added, removed);
+            {
+                auto list    = GVCPClient::instance().queryNetDeviceList();
+                auto start   = getNow();
+                auto added   = utils::subtract_sets(list, netDevInfoList_);
+                auto removed = utils::subtract_sets(netDevInfoList_, list);
+                updateSourcePortInfoList(added, removed);
 
-            for(auto &&info: removed) {
-                if(!callback_(OB_DEVICE_REMOVED, info.mac)) {
-                    // if device is still online, restore it to the list
-                    list.push_back(info);
-                    updateSourcePortInfoList({ info }, {});
+                for(auto &&info: removed) {
+                    if(!callback_(OB_DEVICE_REMOVED, info.mac)) {
+                        // if device is still online, restore it to the list
+                        list.push_back(info);
+                        updateSourcePortInfoList({ info }, {});
+                    }
                 }
+                for(auto &&info: added) {
+                    (void)callback_(OB_DEVICE_ARRIVAL, info.mac);
+                }
+                // update info list
+                netDevInfoList_ = list;
+                // calc the interval
+                int64_t interval = DEVICE_WATCHER_POLLING_INTERVAL_MSEC;
+                if(netDevInfoList_.empty()) {
+                    // Speed up discovery when no devices are found
+                    interval = DEVICE_WATCHER_POLLING_SHORT_INTERVAL_MSEC;
+                }
+                auto now = getNow();
+                if(now >= start + interval) {
+                    // Callback takes too long, query the device list immediately for optimization
+                    continue;
+                }
+                interval = start + interval - now;
+                condVar_.wait_for(lock, std::chrono::milliseconds(interval), [&]() { return stopWatch_.load(); });
             }
-            for(auto &&info: added) {
-                (void)callback_(OB_DEVICE_ARRIVAL, info.mac);
+
+            // mDNS device
+            {
+                auto list    = MDNSDiscovery::instance().queryDeviceList();
+                auto added   = utils::subtract_sets(list, mdnsDevInfoList_);
+                auto removed = utils::subtract_sets(mdnsDevInfoList_, list);
+                for(auto &&info: removed) {
+                    callback_(OB_DEVICE_REMOVED, info.id);
+                }
+                for(auto &&info: added) {
+                    callback_(OB_DEVICE_ARRIVAL, info.id);
+                }
+                mdnsDevInfoList_ = list;
+                condVar_.wait_for(lock, std::chrono::milliseconds(DEVICE_WATCHER_POLLING_INTERVAL_MSEC), [&]() { return stopWatch_.load(); });
             }
-            // update info list
-            netDevInfoList_ = list;
-            // calc the interval
-            int64_t interval = DEVICE_WATCHER_POLLING_INTERVAL_MSEC;
-            if(netDevInfoList_.empty()) {
-                // Speed up discovery when no devices are found
-                interval = DEVICE_WATCHER_POLLING_SHORT_INTERVAL_MSEC;
-            }
-            auto now = getNow();
-            if(now >= start + interval) {
-                // Callback takes too long, query the device list immediately for optimization
-                continue;
-            }
-            interval = start + interval - now;
-            condVar_.wait_for(lock, std::chrono::milliseconds(interval), [&]() { return stopWatch_.load(); });
         }
     });
 }

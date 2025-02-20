@@ -10,6 +10,7 @@
 #include "RTSPStreamPort.hpp"
 #include "NetDataStreamPort.hpp"
 #include "gige/GVCPClient.hpp"
+#include "mDNS/MDNSDiscovery.hpp"
 
 #include <vector>
 #include <map>
@@ -50,6 +51,9 @@ private:
     std::atomic<bool>           stopWatch_{ false };
     std::vector<GVCPDeviceInfo> netDevInfoList_;
     std::condition_variable     condVar_;
+
+    // mDNS
+    std::vector<MDNSDeviceInfo> mdnsDevInfoList_;
 };
 
 }  // namespace libobsensor
