@@ -46,13 +46,15 @@ typedef struct MDNSAckData {
 static int query_callback(int sock, const struct sockaddr *from, size_t addrlen, mdns_entry_type_t entry, uint16_t query_id, uint16_t rtype, uint16_t rclass,
                           uint32_t ttl, const void *data, size_t size, size_t name_offset, size_t name_length, size_t record_offset, size_t record_length,
                           void *user_data) {
+    (void)from;
+    (void)addrlen;
     (void)sizeof(sock);
     (void)sizeof(query_id);
     (void)rclass;
     (void)sizeof(name_length);
     (void)ttl;
 
-    char              addrbuffer[64];
+    // char              addrbuffer[64];
     char              entrybuffer[256];
     char              namebuffer[256];
     mdns_record_txt_t txtbuffer[128];
@@ -62,7 +64,7 @@ static int query_callback(int sock, const struct sockaddr *from, size_t addrlen,
         return 0;
     }
 
-    mdns_string_t fromaddrstr = MDNSUtil::ip_address_to_string(addrbuffer, sizeof(addrbuffer), from, addrlen);
+    // mdns_string_t fromaddrstr = MDNSUtil::ip_address_to_string(addrbuffer, sizeof(addrbuffer), from, addrlen);
     mdns_string_t entrystr    = mdns_string_extract(data, size, &name_offset, entrybuffer, sizeof(entrybuffer));
 
     if(rtype == MDNS_RECORDTYPE_PTR) {
@@ -166,14 +168,11 @@ std::vector<SOCKET> MDNSDiscovery::openClientSockets() {
 #else
     struct ifaddrs *ifaddr, *ifa;
     int             family, n;
-    char            host[NI_MAXHOST];
 
     if(getifaddrs(&ifaddr) == -1) {
         perror("Unable to get interface addresses\n");
-        return -1;
+        return socks;
     }
-
-    int index = 0;
 
     for(ifa = ifaddr, n = 0; ifa != NULL; ifa = ifa->ifa_next, n++) {
         if(ifa->ifa_addr == NULL) {
@@ -203,7 +202,6 @@ std::vector<SOCKET> MDNSDiscovery::openClientSockets() {
             }
         }
     }
-    sockCount_ = index;
     freeifaddrs(ifaddr);
 #endif
 

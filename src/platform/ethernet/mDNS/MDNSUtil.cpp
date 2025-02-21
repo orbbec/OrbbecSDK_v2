@@ -4,6 +4,15 @@
 #include <stdio.h>
 #include <string.h>
 #include "MDNSUtil.hpp"
+#ifdef _WIN32
+#include <winsock2.h>
+#include <iphlpapi.h>
+#else
+#include <netdb.h>
+#include <ifaddrs.h>
+#include <net/if.h>
+#include <sys/time.h>
+#endif
 
 namespace libobsensor {
 

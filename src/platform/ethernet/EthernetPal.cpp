@@ -4,7 +4,7 @@
 #include "EthernetPal.hpp"
 #include "exception/ObException.hpp"
 #include "utils/Utils.hpp"
-#include "mdns/MDNSDiscovery.hpp"
+#include "mDNS/MDNSDiscovery.hpp"
 #include "RTPStreamPort.hpp"
 #include "logger/Logger.hpp"
 
