@@ -95,12 +95,12 @@ void ObRTPUDPClient::start(std::shared_ptr<const StreamProfile> profile, Mutable
         return;
     }
 
-    if(startReceive_) {
+    if(startReceive_.load()) {
         LOG_WARN("The udp data receive thread has been started!");
         return;
     }
 
-    startReceive_   = true;
+    startReceive_.store(true);
     rtpQueue_.reset();
     currentProfile_ = profile;
     frameCallback_  = callback;
@@ -124,7 +124,7 @@ void ObRTPUDPClient::frameReceive() {
     sockaddr_in          serverAddr;
     socklen_t            serverAddrSize = sizeof(serverAddr);
     std::vector<uint8_t> buffer(OB_UDP_BUFFER_SIZE);
-    while(startReceive_) {
+    while(startReceive_.load()) {
         int recvLen = recvfrom(recvSocket_, (char *)buffer.data(), (int)buffer.size(), 0, (sockaddr *)&serverAddr, &serverAddrSize);
         if(recvLen < 0) {
             int error = GET_LAST_ERROR();
@@ -163,7 +163,7 @@ void ObRTPUDPClient::frameReceive() {
 void ObRTPUDPClient::frameProcess() {
     LOG_DEBUG("start frame process thread...");
     std::vector<uint8_t> data;
-    while(startReceive_) {
+    while(startReceive_.load()) {
         if(rtpQueue_.pop(data)) {
             RTPHeader *header = (RTPHeader *)data.data();
             if(currentProfile_ != nullptr) {
@@ -212,7 +212,7 @@ void ObRTPUDPClient::frameProcess() {
 
 void ObRTPUDPClient::stop() {
     LOG_DEBUG("stop stream start...");
-    startReceive_ = false;
+    startReceive_.store(false);
     if(receiverThread_.joinable()) {
         receiverThread_.join();
     }

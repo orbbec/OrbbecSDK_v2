@@ -244,14 +244,14 @@ void ObRTPNpCapReceiver::findAlldevs() {
 }
 
 void ObRTPNpCapReceiver::start(std::shared_ptr<const StreamProfile> profile, MutableFrameCallback callback) {
-    if(startReceive_) {
+    if(startReceive_.load()) {
         LOG_WARN("The UDP data receive thread has been started!");
         return;
     }
 
     currentProfile_  = profile;
     frameCallback_   = callback;
-    startReceive_    = true;
+    startReceive_.store(true);
     rtpQueue_.reset();
     if(handle_) {
         receiverThread_ = std::thread(&ObRTPNpCapReceiver::frameReceive, this);
@@ -270,7 +270,7 @@ void ObRTPNpCapReceiver::frameReceive() {
     LOG_DEBUG("start udp data receive thread...");
     struct pcap_pkthdr *header;
     const u_char *      packet;
-    while(startReceive_) {
+    while(startReceive_.load()) {
         int res = pcap_next_ex(handle_, &header, &packet);
         if(res > 0) {
             // Ethernet + IP header lengths
@@ -302,7 +302,7 @@ void ObRTPNpCapReceiver::frameReceive2(pcap_t *handle) {
     struct pcap_pkthdr *header;
     const u_char *      packet;
     bool receiveData = false;
-    while(startReceive_) {
+    while(startReceive_.load()) {
         int res = pcap_next_ex(handle, &header, &packet);
         if(res > 0) {
             foundPcapHandle_ = true;
@@ -358,7 +358,7 @@ void ObRTPNpCapReceiver::parseIPAddress(const u_char *ip_header, std::string &sr
 void ObRTPNpCapReceiver::frameProcess() {
     LOG_DEBUG("start frame process thread...");
     std::vector<uint8_t> data;
-    while(startReceive_) {
+    while(startReceive_.load()) {
         if(rtpQueue_.pop(data)) {
             RTPHeader *header = (RTPHeader *)data.data();
             if(currentProfile_ != nullptr) {
@@ -406,7 +406,7 @@ void ObRTPNpCapReceiver::frameProcess() {
 
 void ObRTPNpCapReceiver::stop() {
     LOG_DEBUG("stop stream start...");
-    startReceive_ = false;
+    startReceive_.store(false);
     if(receiverThread_.joinable()) {
         receiverThread_.join();
     }

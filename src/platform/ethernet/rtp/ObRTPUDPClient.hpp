@@ -9,6 +9,7 @@
 #include <string>
 #include <thread>
 #include <mutex>
+#include <atomic>
 #include <condition_variable>
 
 namespace libobsensor {
@@ -30,12 +31,12 @@ private:
     void frameProcess();
     
 private:
-    std::string localIp_;
-    std::string serverIp_;
-    uint16_t    serverPort_;
-    bool        startReceive_;
-    SOCKET      recvSocket_;
-    uint32_t    COMM_TIMEOUT_MS = 100;
+    std::string       localIp_;
+    std::string       serverIp_;
+    uint16_t          serverPort_;
+    std::atomic<bool> startReceive_;
+    SOCKET            recvSocket_;
+    uint32_t          COMM_TIMEOUT_MS = 100;
 
     std::shared_ptr<const StreamProfile> currentProfile_;
     MutableFrameCallback                 frameCallback_;
