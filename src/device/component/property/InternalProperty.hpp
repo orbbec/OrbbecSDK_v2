@@ -75,6 +75,8 @@ typedef enum {
 
     OB_STRUCT_DEVICE_ERROR_STATE = 5524, /**< Device error state*/
     OB_RAW_PRESET_RESOLUTION_CONFIG_LIST                 = 4061, /**< Resolution ratio configuration list*/
+
+    OB_PROP_LIDAR_STREAMING_ON_OFF_INT                   = 8100, /**< LiDAR: straming on/off*/
 } OBInternalPropertyID;
 
 }  // namespace libobsensor

@@ -4,6 +4,7 @@
 #include "NetDeviceEnumerator.hpp"
 #include "femtomega/FemtoMegaDeviceInfo.hpp"
 #include "gemini330/G330DeviceInfo.hpp"
+#include "lidar/LiDARDeviceInfo.hpp"
 #include "gemini2/G2DeviceInfo.hpp"
 #include "bootloader/BootDeviceInfo.hpp"
 #include "SourcePortInfo.hpp"
@@ -99,6 +100,9 @@ DeviceEnumInfoList NetDeviceEnumerator::deviceInfoMatch(const SourcePortInfoList
 
     auto bootDevices = BootDeviceInfo::pickNetDevices(infoList);
     deviceInfoList.insert(deviceInfoList.end(), bootDevices.begin(), bootDevices.end());
+
+    auto lidarDevices = LiDARDeviceInfo::pickNetDevices(infoList);
+    deviceInfoList.insert(deviceInfoList.end(), lidarDevices.begin(), lidarDevices.end());
 
     return deviceInfoList;
 }
@@ -303,8 +307,8 @@ bool NetDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType
 
 std::shared_ptr<const IDeviceEnumInfo> NetDeviceEnumerator::queryNetDevice(std::string address, uint16_t port) {
     auto info               = std::make_shared<NetSourcePortInfo>(SOURCE_PORT_NET_VENDOR,  //
-                                                                  "Unknown", "Unknown", "Unknown", address, static_cast<uint16_t>(8090), address + ":" + std::to_string(port),
-                                                                  "Unknown", ORBBEC_DEVICE_VID, 0);
+                                                    "Unknown", "Unknown", "Unknown", address, static_cast<uint16_t>(8090), address + ":" + std::to_string(port),
+                                                    "Unknown", ORBBEC_DEVICE_VID, 0);
     auto sourcePort         = Platform::getInstance()->getNetSourcePort(info);
     auto vendorPropAccessor = std::make_shared<VendorPropertyAccessor>(nullptr, sourcePort);
 

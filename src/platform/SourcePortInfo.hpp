@@ -28,6 +28,7 @@ enum SourcePortType {
     SOURCE_PORT_NET_RTSP,
     SOURCE_PORT_NET_RTP,
     SOURCE_PORT_IPC_VENDOR,  // Inter-process communication port
+    SOURCE_PORT_NET_UDP_VENDOR_STREAM, // UDP VENDOR stream
     SOURCE_PORT_UNKNOWN = 0xff,
 };
 

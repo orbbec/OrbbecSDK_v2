@@ -261,7 +261,8 @@ void MDNSDiscovery::sendAndRecvMDNSQuery(SOCKET sock) {
 
                 info.ip   = ack.ip;
                 info.port = ack.port;
-                info.id   = info.ip + ":" + std::to_string(info.port);
+                info.mac  = info.ip + ":" + std::to_string(info.port);  // TODO: get mac address
+                info.pid  = 0x5678; // TODO: pid
 
                 std::lock_guard<std::mutex> lock(devInfoListMtx_);
                 // check for duplication

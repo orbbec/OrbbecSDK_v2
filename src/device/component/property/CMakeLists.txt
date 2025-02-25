@@ -24,3 +24,10 @@ if(OB_BUILD_USB_PAL)
         ${CMAKE_CURRENT_LIST_DIR}/UvcPropertyAccessor.hpp
     )
 endif()
+
+if(OB_BUILD_NET_PAL)
+    target_sources(
+        ${OB_TARGET_DEVICE} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/LiDARPropertyAccessor.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/LiDARPropertyAccessor.hpp
+    )
+endif()

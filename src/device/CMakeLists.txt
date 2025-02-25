@@ -29,6 +29,7 @@ add_subdirectory(femtobolt) # FemtoBolt
 add_subdirectory(femtomega) # FemtoMega
 add_subdirectory(openni) # OpenNI device
 add_subdirectory(bootloader) # Bootloader device
+add_subdirectory(lidar) # LiDAR series
 
 # dependecies:
 add_subdirectory(${OB_3RDPARTY_DIR}/jsoncpp jsoncpp)

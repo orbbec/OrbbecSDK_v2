@@ -18,12 +18,12 @@ typedef struct MDNSDeviceInfo {
     std::string ip    = "unknown";
     std::string sn    = "unknown";
     std::string model = "unknown";
-    std::string id    = "unknown";
+    std::string mac   = "unknown"; // unique
     uint16_t    port  = 0;
     uint32_t    pid   = 0;
 
     virtual bool operator==(const MDNSDeviceInfo &other) const {
-        return other.id == id;
+        return other.mac == mac;
     }
     virtual ~MDNSDeviceInfo() {}
 } MDNSDeviceInfo;
