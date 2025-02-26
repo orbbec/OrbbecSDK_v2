@@ -11,8 +11,7 @@
 
 namespace libobsensor {
 
-static inline void addDistortion(const OBCameraDistortion &distort_param, const float pt_ud[2], float pt_d[2])
-{
+static inline void addDistortion(const OBCameraDistortion &distort_param, const float pt_ud[2], float pt_d[2]) {
     float k1 = distort_param.k1, k2 = distort_param.k2, k3 = distort_param.k3;
     float k4 = distort_param.k4, k5 = distort_param.k5, k6 = distort_param.k6;
     float p1 = distort_param.p1, p2 = distort_param.p2;
@@ -49,8 +48,7 @@ static inline void addDistortion(const OBCameraDistortion &distort_param, const 
     }
 }
 
-static inline void removeDistortion(const OBCameraDistortion &distort_param, const float pt_d[2], float pt_ud[2])
-{
+static inline void removeDistortion(const OBCameraDistortion &distort_param, const float pt_d[2], float pt_ud[2]) {
     const float epsilon       = 1e-6f;
     const int   max_iteration = 20;
     float       tmp_p_ud[2]   = { pt_d[0], pt_d[1] };
@@ -80,8 +78,7 @@ const __m128  AlignImpl::TWO        = _mm_set_ps1(2);
 const __m128i AlignImpl::ZERO       = _mm_setzero_si128();
 const __m128  AlignImpl::ZERO_F     = _mm_set_ps1(0.0);
 
-AlignImpl::AlignImpl() : initialized_(false)
-{
+AlignImpl::AlignImpl() : initialized_(false) {
     depth_unit_mm_   = 1.0;
     r2_max_loc_      = 0.0;
     auto_down_scale_ = 1.0;
@@ -91,15 +88,13 @@ AlignImpl::AlignImpl() : initialized_(false)
     memset(&rgb_disto_, 0, sizeof(OBCameraDistortion));
 }
 
-AlignImpl::~AlignImpl()
-{
+AlignImpl::~AlignImpl() {
     clearMatrixCache();
     initialized_ = false;
 }
 
 void AlignImpl::initialize(OBCameraIntrinsic depth_intrin, OBCameraDistortion depth_disto, OBCameraIntrinsic rgb_intrin, OBCameraDistortion rgb_disto,
-                           OBExtrinsic extrin, float depth_unit_mm, bool add_target_distortion, bool gap_fill_copy)
-{
+                           OBExtrinsic extrin, float depth_unit_mm, bool add_target_distortion, bool gap_fill_copy) {
     if(initialized_ && memcmp(&depth_intrin, &depth_intric_, sizeof(OBCameraIntrinsic)) == 0
        && memcmp(&depth_disto, &depth_disto_, sizeof(OBCameraDistortion)) == 0 && memcmp(&rgb_intrin, &rgb_intric_, sizeof(OBCameraIntrinsic)) == 0
        && memcmp(&rgb_disto, &rgb_disto_, sizeof(OBCameraDistortion)) == 0 && memcmp(&extrin, &transform_, sizeof(OBExtrinsic)) == 0
@@ -138,7 +133,7 @@ void AlignImpl::initialize(OBCameraIntrinsic depth_intrin, OBCameraDistortion de
     scaled_trans_1_ = _mm_set_ps1(scaled_trans_[0]);
     scaled_trans_2_ = _mm_set_ps1(scaled_trans_[1]);
     scaled_trans_3_ = _mm_set_ps1(scaled_trans_[2]);
-    
+
     prepareDepthResolution();
     setLimitROI();
     initialized_ = true;
@@ -150,13 +145,11 @@ void AlignImpl::reset() {
     initialized_ = false;
 }
 
-float polynomial(float x, float a, float b, float c, float d)
-{
+float polynomial(float x, float a, float b, float c, float d) {
     return (a * x * x * x + b * x * x + c * x + d);
 }
 
-float binarySearch(float left, float right, float a, float b, float c, float d, float tolerance = 1e-4)
-{
+float binarySearch(float left, float right, float a, float b, float c, float d, float tolerance = 1e-4) {
     while((right - left) > tolerance) {
         float mid   = (left + right) / 2.f;
         float f_mid = polynomial(mid, a, b, c, d);
@@ -170,8 +163,7 @@ float binarySearch(float left, float right, float a, float b, float c, float d, 
     return (left + right) / 2.f;
 }
 
-float estimateInflectionPoint(ob_camera_intrinsic depth_intr, ob_camera_intrinsic rgb_intr, ob_camera_distortion disto)
-{
+float estimateInflectionPoint(ob_camera_intrinsic depth_intr, ob_camera_intrinsic rgb_intr, ob_camera_distortion disto) {
     float result = 0.f;
     if(OB_DISTORTION_BROWN_CONRADY_K6 == disto.model) {
         // with k6 distortion model, the denominator (involving k4~k6) should should not be zero
@@ -212,8 +204,7 @@ float estimateInflectionPoint(ob_camera_intrinsic depth_intr, ob_camera_intrinsi
     return result;
 }
 
-void AlignImpl::prepareDepthResolution()
-{
+void AlignImpl::prepareDepthResolution() {
     clearMatrixCache();
 
     // There may be outliers due to possible inflection points of the calibrated K6 distortion curve;
@@ -230,7 +221,7 @@ void AlignImpl::prepareDepthResolution()
     float *rot_coeff1[2];
     float *rot_coeff2[2];
     float *rot_coeff3[2];
-    for (int i = 0; i < channel; i++) {
+    for(int i = 0; i < channel; i++) {
         rot_coeff1[i] = new float[coeff_num];
         rot_coeff2[i] = new float[coeff_num];
         rot_coeff3[i] = new float[coeff_num];
@@ -265,15 +256,14 @@ void AlignImpl::prepareDepthResolution()
         }
     }
 
-    for (int i = 0; i < channel; i++) {
+    for(int i = 0; i < channel; i++) {
         rot_coeff_ht_x[std::make_pair(depth_intric_.width, depth_intric_.height)][i] = rot_coeff1[i];
         rot_coeff_ht_y[std::make_pair(depth_intric_.width, depth_intric_.height)][i] = rot_coeff2[i];
         rot_coeff_ht_z[std::make_pair(depth_intric_.width, depth_intric_.height)][i] = rot_coeff3[i];
     }
 }
 
-void AlignImpl::clearMatrixCache()
-{
+void AlignImpl::clearMatrixCache() {
     for(auto item: rot_coeff_ht_x) {
         if(item.second) {
             delete[] item.second[0];
@@ -298,16 +288,14 @@ void AlignImpl::clearMatrixCache()
     rot_coeff_ht_z.clear();
 }
 
-void AlignImpl::setLimitROI() 
-{
-    x1_limit = _mm_set_ps1(0);
-    x2_limit = _mm_set_ps1(rgb_intric_.width - 1);
-    y1_limit = _mm_set_ps1(0);
-    y2_limit = _mm_set_ps1(rgb_intric_.height - 1);
+void AlignImpl::setLimitROI() {
+    x1_limit = _mm_set_ps1(0.0f);
+    x2_limit = _mm_set_ps1(static_cast<float>(rgb_intric_.width - 1));
+    y1_limit = _mm_set_ps1(0.0f);
+    y2_limit = _mm_set_ps1(static_cast<float>(rgb_intric_.height - 1));
 }
 
-template <typename T> void fillPixelGap(const int *u, const int *v, const int width, const int height, const T val, T *buffer, bool copy = true)
-{
+template <typename T> void fillPixelGap(const int *u, const int *v, const int width, const int height, const T val, T *buffer, bool copy = true) {
     // point index and output depth buffer should be checked outside
 
     if(copy) {
@@ -344,8 +332,7 @@ template <typename T> void fillPixelGap(const int *u, const int *v, const int wi
     }
 }
 
-void AlignImpl::distortedWithSSE(__m128 &tx, __m128 &ty, const __m128 x2, const __m128 y2, const __m128 r2)
-{
+void AlignImpl::distortedWithSSE(__m128 &tx, __m128 &ty, const __m128 x2, const __m128 y2, const __m128 r2) {
     __m128 xy = _mm_mul_ps(tx, ty);
     __m128 r4 = _mm_mul_ps(r2, r2);
     __m128 r6 = _mm_mul_ps(r4, r2);
@@ -357,17 +344,16 @@ void AlignImpl::distortedWithSSE(__m128 &tx, __m128 &ty, const __m128 x2, const 
     __m128 x_qx = _mm_add_ps(_mm_mul_ps(color_p2_, _mm_add_ps(_mm_mul_ps(x2, TWO), r2)), _mm_mul_ps(_mm_mul_ps(color_p1_, xy), TWO));
 
     // float y_qx = p1 * (2 * y2 + r2) + 2 * p2 * xy;
-    __m128 y_qx   = _mm_add_ps(_mm_mul_ps(color_p1_, _mm_add_ps(_mm_mul_ps(y2, TWO), r2)), _mm_mul_ps(_mm_mul_ps(color_p2_, xy), TWO));
+    __m128 y_qx = _mm_add_ps(_mm_mul_ps(color_p1_, _mm_add_ps(_mm_mul_ps(y2, TWO), r2)), _mm_mul_ps(_mm_mul_ps(color_p2_, xy), TWO));
 
     // float distx = tx * k_jx + x_qx;
     tx = _mm_add_ps(_mm_mul_ps(tx, k_jx), x_qx);
-    
+
     // float disty = ty * k_jx + y_qx;
     ty = _mm_add_ps(_mm_mul_ps(ty, k_jx), y_qx);
 }
 
-void AlignImpl::BMDistortedWithSSE(__m128 &tx, __m128 &ty, const __m128 x2, const __m128 y2, const __m128 r2)
-{
+void AlignImpl::BMDistortedWithSSE(__m128 &tx, __m128 &ty, const __m128 x2, const __m128 y2, const __m128 r2) {
     __m128 xy = _mm_mul_ps(tx, ty);
     __m128 r4 = _mm_mul_ps(r2, r2);
     __m128 r6 = _mm_mul_ps(r4, r2);
@@ -390,8 +376,7 @@ void AlignImpl::BMDistortedWithSSE(__m128 &tx, __m128 &ty, const __m128 x2, cons
     ty = _mm_add_ps(_mm_mul_ps(ty, k_jx), y_qx);
 }
 
-void AlignImpl::KBDistortedWithSSE(__m128 &tx, __m128 &ty, const __m128 r2)
-{
+void AlignImpl::KBDistortedWithSSE(__m128 &tx, __m128 &ty, const __m128 r2) {
     __m128 r = _mm_sqrt_ps(r2);
 
     // float theta=atan(r)
@@ -423,8 +408,7 @@ void AlignImpl::KBDistortedWithSSE(__m128 &tx, __m128 &ty, const __m128 r2)
     ty = _mm_mul_ps(_mm_div_ps(theta_jx, r), ty);
 }
 
-void AlignImpl::distortedWithoutSSE(const float pt_ud[2], float pt_d[2])
-{
+void AlignImpl::distortedWithoutSSE(const float pt_ud[2], float pt_d[2]) {
     float k1 = rgb_disto_.k1, k2 = rgb_disto_.k2, k3 = rgb_disto_.k3;
     float p1 = rgb_disto_.p1, p2 = rgb_disto_.p2;
 
@@ -442,10 +426,9 @@ void AlignImpl::distortedWithoutSSE(const float pt_ud[2], float pt_d[2])
     pt_d[1] = pt_ud[1] * k_diff + t_y;
 }
 
-void AlignImpl::KBDistortedWithoutSSE(const float pt_ud[2], float pt_d[2])
-{
+void AlignImpl::KBDistortedWithoutSSE(const float pt_ud[2], float pt_d[2]) {
     float k1 = rgb_disto_.k1, k2 = rgb_disto_.k2, k3 = rgb_disto_.k3, k4 = rgb_disto_.k4;
-    
+
     const float r2 = pt_ud[0] * pt_ud[0] + pt_ud[1] * pt_ud[1];
 
     const double r      = sqrt(r2);
@@ -461,8 +444,7 @@ void AlignImpl::KBDistortedWithoutSSE(const float pt_ud[2], float pt_d[2])
     pt_d[1] = static_cast<float>(k_diff / r * pt_ud[1]);
 }
 
-void AlignImpl::BMDistortedWithoutSSE(const float pt_ud[2], float pt_d[2])
-{
+void AlignImpl::BMDistortedWithoutSSE(const float pt_ud[2], float pt_d[2]) {
     float k1 = rgb_disto_.k1, k2 = rgb_disto_.k2, k3 = rgb_disto_.k3;
     float k4 = rgb_disto_.k4, k5 = rgb_disto_.k5, k6 = rgb_disto_.k6;
     float p1 = rgb_disto_.p1, p2 = rgb_disto_.p2;
@@ -483,18 +465,17 @@ void AlignImpl::BMDistortedWithoutSSE(const float pt_ud[2], float pt_d[2])
 }
 
 void AlignImpl::K3DistortedD2CWithoutSSE(const uint16_t *depth_buffer, uint16_t *out_depth, const float *coeff_mat_x[2], const float *coeff_mat_y[2],
-                                         const float *coeff_mat_z[2], int *map)
-{
-    int             channel     = (gap_fill_copy_ ? 1 : 2);
-    const float     *ptr_coeff_x[2];
-    const float     *ptr_coeff_y[2];
-    const float     *ptr_coeff_z[2];
-    for (int i = 0; i < channel; i++) {
+                                         const float *coeff_mat_z[2], int *map) {
+    int          channel = (gap_fill_copy_ ? 1 : 2);
+    const float *ptr_coeff_x[2];
+    const float *ptr_coeff_y[2];
+    const float *ptr_coeff_z[2];
+    for(int i = 0; i < channel; i++) {
         ptr_coeff_x[i] = coeff_mat_x[i];
         ptr_coeff_y[i] = coeff_mat_y[i];
         ptr_coeff_z[i] = coeff_mat_z[i];
     }
-    const uint16_t *ptr_depth   = depth_buffer;
+    const uint16_t *ptr_depth = depth_buffer;
 
     int depth_width  = depth_intric_.width;
     int depth_height = depth_intric_.height;
@@ -512,7 +493,7 @@ void AlignImpl::K3DistortedD2CWithoutSSE(const uint16_t *depth_buffer, uint16_t 
 
                 bool valid = K3ProcessWithoutSSE(depth, ptr_coeff_x, ptr_coeff_y, ptr_coeff_z, channel, pixelx_f, pixely_f, dst);
 
-                if (!valid) {
+                if(!valid) {
                     continue;
                 }
 
@@ -540,8 +521,7 @@ void AlignImpl::K3DistortedD2CWithoutSSE(const uint16_t *depth_buffer, uint16_t 
 }
 
 void AlignImpl::K6DistortedD2CWithoutSSE(const uint16_t *depth_buffer, uint16_t *out_depth, const float *coeff_mat_x[2], const float *coeff_mat_y[2],
-                                         const float *coeff_mat_z[2], int *map)
-{
+                                         const float *coeff_mat_z[2], int *map) {
     int          channel = (gap_fill_copy_ ? 1 : 2);
     const float *ptr_coeff_x[2];
     const float *ptr_coeff_y[2];
@@ -597,8 +577,7 @@ void AlignImpl::K6DistortedD2CWithoutSSE(const uint16_t *depth_buffer, uint16_t 
 }
 
 void AlignImpl::KBDistortedD2CWithoutSSE(const uint16_t *depth_buffer, uint16_t *out_depth, const float *coeff_mat_x[2], const float *coeff_mat_y[2],
-                                         const float *coeff_mat_z[2], int *map)
-{
+                                         const float *coeff_mat_z[2], int *map) {
     int          channel = (gap_fill_copy_ ? 1 : 2);
     const float *ptr_coeff_x[2];
     const float *ptr_coeff_y[2];
@@ -654,8 +633,7 @@ void AlignImpl::KBDistortedD2CWithoutSSE(const uint16_t *depth_buffer, uint16_t 
 }
 
 void AlignImpl::LinearDistortedD2CWithoutSSE(const uint16_t *depth_buffer, uint16_t *out_depth, const float *coeff_mat_x[2], const float *coeff_mat_y[2],
-                                             const float *coeff_mat_z[2], int *map)
-{
+                                             const float *coeff_mat_z[2], int *map) {
     int          channel = (gap_fill_copy_ ? 1 : 2);
     const float *ptr_coeff_x[2];
     const float *ptr_coeff_y[2];
@@ -711,10 +689,9 @@ void AlignImpl::LinearDistortedD2CWithoutSSE(const uint16_t *depth_buffer, uint1
 }
 
 inline bool AlignImpl::K3ProcessWithoutSSE(uint16_t depth, const float *coeff_mat_x[2], const float *coeff_mat_y[2], const float *coeff_mat_z[2], int channel,
-                                           float *pixelx_f, float *pixely_f, float *dst)
-{
+                                           float *pixelx_f, float *pixely_f, float *dst) {
     if(depth < EPSILON) {
-        for (int i = 0; i < channel; i++) {
+        for(int i = 0; i < channel; i++) {
             coeff_mat_x[i] += 1;
             coeff_mat_y[i] += 1;
             coeff_mat_z[i] += 1;
@@ -752,8 +729,7 @@ inline bool AlignImpl::K3ProcessWithoutSSE(uint16_t depth, const float *coeff_ma
 }
 
 inline bool AlignImpl::K6ProcessWithoutSSE(uint16_t depth, const float *coeff_mat_x[2], const float *coeff_mat_y[2], const float *coeff_mat_z[2], int channel,
-                                           float *pixelx_f, float *pixely_f, float *dst)
-{
+                                           float *pixelx_f, float *pixely_f, float *dst) {
     if(depth < EPSILON) {
         for(int i = 0; i < channel; i++) {
             coeff_mat_x[i] += 1;
@@ -783,7 +759,7 @@ inline bool AlignImpl::K6ProcessWithoutSSE(uint16_t depth, const float *coeff_ma
         float pt_d[2]  = { 0 };
         float r2_cur   = pt_ud[0] * pt_ud[0] + pt_ud[1] * pt_ud[1];
 
-        if ((r2_max_loc_ != 0) && (r2_cur > r2_max_loc_)) {
+        if((r2_max_loc_ != 0) && (r2_cur > r2_max_loc_)) {
             valid = false;
             break;
         }
@@ -800,8 +776,7 @@ inline bool AlignImpl::K6ProcessWithoutSSE(uint16_t depth, const float *coeff_ma
 }
 
 inline bool AlignImpl::KBProcessWithoutSSE(uint16_t depth, const float *coeff_mat_x[2], const float *coeff_mat_y[2], const float *coeff_mat_z[2], int channel,
-                                           float *pixelx_f, float *pixely_f, float *dst)
-{
+                                           float *pixelx_f, float *pixely_f, float *dst) {
     if(depth < EPSILON) {
         for(int i = 0; i < channel; i++) {
             coeff_mat_x[i] += 1;
@@ -841,8 +816,7 @@ inline bool AlignImpl::KBProcessWithoutSSE(uint16_t depth, const float *coeff_ma
 }
 
 inline bool AlignImpl::LinearProcessWithoutSSE(uint16_t depth, const float *coeff_mat_x[2], const float *coeff_mat_y[2], const float *coeff_mat_z[2],
-                                               int channel, float *pixelx_f, float *pixely_f, float *dst)
-{
+                                               int channel, float *pixelx_f, float *pixely_f, float *dst) {
     if(depth < EPSILON) {
         for(int i = 0; i < channel; i++) {
             coeff_mat_x[i] += 1;
@@ -876,16 +850,15 @@ inline bool AlignImpl::LinearProcessWithoutSSE(uint16_t depth, const float *coef
 }
 
 void AlignImpl::FillSingleChannelWithoutSSE(const float *pixelx_f, const float *pixely_f, const float *dst, uint16_t *out_depth, int *map, int depth_idx,
-                                            int width, int height)
-{
-    int      u_rgb     = static_cast<int>(pixelx_f[0] + 0.5f);
-    int      v_rgb     = static_cast<int>(pixely_f[0] + 0.5f);
+                                            int width, int height) {
+    int u_rgb = static_cast<int>(pixelx_f[0] + 0.5f);
+    int v_rgb = static_cast<int>(pixely_f[0] + 0.5f);
 
     if(u_rgb >= 0 && u_rgb < width && v_rgb >= 0 && v_rgb < height) {
-        if (out_depth) {
+        if(out_depth) {
             uint16_t cur_depth = static_cast<uint16_t>(dst[0]);
-            int pos        = v_rgb * width + u_rgb;
-            out_depth[pos] = std::min(out_depth[pos], cur_depth);
+            int      pos       = v_rgb * width + u_rgb;
+            out_depth[pos]     = std::min(out_depth[pos], cur_depth);
 
             if((u_rgb + 1) < width) {
                 out_depth[pos + 1] = std::min(out_depth[pos + 1], cur_depth);
@@ -898,7 +871,7 @@ void AlignImpl::FillSingleChannelWithoutSSE(const float *pixelx_f, const float *
                 out_depth[pos + width] = std::min(out_depth[pos + width], cur_depth);
             }
         }
-        
+
         if(map) {
             int map_idx      = 2 * (depth_idx - 1);
             map[map_idx]     = u_rgb;
@@ -908,12 +881,11 @@ void AlignImpl::FillSingleChannelWithoutSSE(const float *pixelx_f, const float *
 }
 
 void AlignImpl::FillMultiChannelWithoutSSE(const float *pixelx_f, const float *pixely_f, const float *dst, uint16_t *out_depth, int *map, int depth_idx,
-                                           int width, int height)
-{
+                                           int width, int height) {
     int u_rgb0 = static_cast<int>(pixelx_f[0] + 0.5f);
     int v_rgb0 = static_cast<int>(pixely_f[0] + 0.5f);
 
-    if (out_depth) {
+    if(out_depth) {
         int u_rgb1 = static_cast<int>(pixelx_f[1] + 0.5f);
         int v_rgb1 = static_cast<int>(pixely_f[1] + 0.5f);
         int u0     = std::max(0, u_rgb0);
@@ -931,7 +903,7 @@ void AlignImpl::FillMultiChannelWithoutSSE(const float *pixelx_f, const float *p
             }
         }
     }
-    
+
     if(map) {
         if((u_rgb0 >= 0) && (u_rgb0 < width) && (v_rgb0 >= 0) && (v_rgb0 < height)) {
             int map_idx      = 2 * (depth_idx - 1);
@@ -942,8 +914,7 @@ void AlignImpl::FillMultiChannelWithoutSSE(const float *pixelx_f, const float *p
 }
 
 void AlignImpl::K3DistortedD2CWithSSE(const uint16_t *depth_buffer, uint16_t *out_depth, const float *coeff_mat_x[2], const float *coeff_mat_y[2],
-                                      const float *coeff_mat_z[2], int *map)
-{
+                                      const float *coeff_mat_z[2], int *map) {
     int channel      = (gap_fill_copy_ ? 1 : 2);
     int total_pixels = depth_intric_.width * depth_intric_.height;
     int width        = rgb_intric_.width;
@@ -966,7 +937,7 @@ void AlignImpl::K3DistortedD2CWithSSE(const uint16_t *depth_buffer, uint16_t *ou
             FillSingleChannelWithSSE(x_hi, y_hi, z_hi, out_depth, map, i + 4, width, height);
         }
     }
-    else {// top - left - and-bottom - right
+    else {  // top - left - and-bottom - right
         for(int i = 0; i < total_pixels; i += 8) {
             K3ProcessWithSSE(depth_buffer, coeff_mat_x, coeff_mat_y, coeff_mat_z, x_lo, y_lo, z_lo, x_hi, y_hi, z_hi, i, channel);
 
@@ -977,8 +948,7 @@ void AlignImpl::K3DistortedD2CWithSSE(const uint16_t *depth_buffer, uint16_t *ou
 }
 
 void AlignImpl::K6DistortedD2CWithSSE(const uint16_t *depth_buffer, uint16_t *out_depth, const float *coeff_mat_x[2], const float *coeff_mat_y[2],
-                                      const float *coeff_mat_z[2], int *map)
-{   
+                                      const float *coeff_mat_z[2], int *map) {
     int channel      = (gap_fill_copy_ ? 1 : 2);
     int total_pixels = depth_intric_.width * depth_intric_.height;
     int width        = rgb_intric_.width;
@@ -1012,8 +982,7 @@ void AlignImpl::K6DistortedD2CWithSSE(const uint16_t *depth_buffer, uint16_t *ou
 }
 
 void AlignImpl::KBDistortedD2CWithSSE(const uint16_t *depth_buffer, uint16_t *out_depth, const float *coeff_mat_x[2], const float *coeff_mat_y[2],
-                                      const float *coeff_mat_z[2], int *map)
-{   
+                                      const float *coeff_mat_z[2], int *map) {
     int channel      = (gap_fill_copy_ ? 1 : 2);
     int total_pixels = depth_intric_.width * depth_intric_.height;
     int width        = rgb_intric_.width;
@@ -1047,8 +1016,7 @@ void AlignImpl::KBDistortedD2CWithSSE(const uint16_t *depth_buffer, uint16_t *ou
 }
 
 void AlignImpl::LinearD2CWithSSE(const uint16_t *depth_buffer, uint16_t *out_depth, const float *coeff_mat_x[2], const float *coeff_mat_y[2],
-                                 const float *coeff_mat_z[2], int *map)
-{
+                                 const float *coeff_mat_z[2], int *map) {
     int channel      = (gap_fill_copy_ ? 1 : 2);
     int total_pixels = depth_intric_.width * depth_intric_.height;
     int width        = rgb_intric_.width;
@@ -1082,8 +1050,7 @@ void AlignImpl::LinearD2CWithSSE(const uint16_t *depth_buffer, uint16_t *out_dep
 }
 
 inline void AlignImpl::K3ProcessWithSSE(const uint16_t *depth_buffer, const float *coeff_mat_x[2], const float *coeff_mat_y[2], const float *coeff_mat_z[2],
-                                        float *x_lo, float *y_lo, float *z_lo, float *x_hi, float *y_hi, float *z_hi, int start_idx, int channel)
-{
+                                        float *x_lo, float *y_lo, float *z_lo, float *x_hi, float *y_hi, float *z_hi, int start_idx, int channel) {
     __m128i depth_i16  = _mm_loadu_si128((__m128i *)(depth_buffer + start_idx));
     __m128i depth_i_lo = _mm_unpacklo_epi16(depth_i16, ZERO);
     __m128i depth_i_hi = _mm_unpackhi_epi16(depth_i16, ZERO);
@@ -1129,8 +1096,7 @@ inline void AlignImpl::K3ProcessWithSSE(const uint16_t *depth_buffer, const floa
 }
 
 inline void AlignImpl::K6ProcessWithSSE(const uint16_t *depth_buffer, const float *coeff_mat_x[2], const float *coeff_mat_y[2], const float *coeff_mat_z[2],
-                                        float *x_lo, float *y_lo, float *z_lo, float *x_hi, float *y_hi, float *z_hi, int start_idx, int channel)
-{
+                                        float *x_lo, float *y_lo, float *z_lo, float *x_hi, float *y_hi, float *z_hi, int start_idx, int channel) {
     __m128i depth_i16  = _mm_loadu_si128((__m128i *)(depth_buffer + start_idx));
     __m128i depth_i_lo = _mm_unpacklo_epi16(depth_i16, ZERO);
     __m128i depth_i_hi = _mm_unpackhi_epi16(depth_i16, ZERO);
@@ -1181,8 +1147,7 @@ inline void AlignImpl::K6ProcessWithSSE(const uint16_t *depth_buffer, const floa
 }
 
 inline void AlignImpl::KBProcessWithSSE(const uint16_t *depth_buffer, const float *coeff_mat_x[2], const float *coeff_mat_y[2], const float *coeff_mat_z[2],
-                                        float *x_lo, float *y_lo, float *z_lo, float *x_hi, float *y_hi, float *z_hi, int start_idx, int channel)
-{
+                                        float *x_lo, float *y_lo, float *z_lo, float *x_hi, float *y_hi, float *z_hi, int start_idx, int channel) {
     __m128i depth_i16  = _mm_loadu_si128((__m128i *)(depth_buffer + start_idx));
     __m128i depth_i_lo = _mm_unpacklo_epi16(depth_i16, ZERO);
     __m128i depth_i_hi = _mm_unpackhi_epi16(depth_i16, ZERO);
@@ -1228,8 +1193,7 @@ inline void AlignImpl::KBProcessWithSSE(const uint16_t *depth_buffer, const floa
 }
 
 inline void AlignImpl::LinearProcessWithSSE(const uint16_t *depth_buffer, const float *coeff_mat_x[2], const float *coeff_mat_y[2], const float *coeff_mat_z[2],
-                                            float *x_lo, float *y_lo, float *z_lo, float *x_hi, float *y_hi, float *z_hi, int start_idx, int channel)
-{
+                                            float *x_lo, float *y_lo, float *z_lo, float *x_hi, float *y_hi, float *z_hi, int start_idx, int channel) {
     __m128i depth_i16  = _mm_loadu_si128((__m128i *)(depth_buffer + start_idx));
     __m128i depth_i_lo = _mm_unpacklo_epi16(depth_i16, ZERO);
     __m128i depth_i_hi = _mm_unpackhi_epi16(depth_i16, ZERO);
@@ -1265,30 +1229,29 @@ inline void AlignImpl::LinearProcessWithSSE(const uint16_t *depth_buffer, const 
 }
 
 void AlignImpl::CalcNormCorrdWithSSE(const __m128 &depth_sse, const __m128 &coeff_sse1, const __m128 &coeff_sse2, const __m128 &coeff_sse3, __m128 &depth_o,
-                                     __m128 &nx, __m128 &ny)
-{
-    __m128 Y       = _mm_add_ps(_mm_mul_ps(depth_sse, coeff_sse2), scaled_trans_2_);
-    __m128 X       = _mm_add_ps(_mm_mul_ps(depth_sse, coeff_sse1), scaled_trans_1_);
-    depth_o = _mm_add_ps(_mm_mul_ps(depth_sse, coeff_sse3), scaled_trans_3_);
+                                     __m128 &nx, __m128 &ny) {
+    __m128 Y = _mm_add_ps(_mm_mul_ps(depth_sse, coeff_sse2), scaled_trans_2_);
+    __m128 X = _mm_add_ps(_mm_mul_ps(depth_sse, coeff_sse1), scaled_trans_1_);
+    depth_o  = _mm_add_ps(_mm_mul_ps(depth_sse, coeff_sse3), scaled_trans_3_);
 
     nx = _mm_div_ps(X, depth_o);
     ny = _mm_div_ps(Y, depth_o);
 }
 
-inline void AlignImpl::FillSingleChannelWithSSE(const float *x, const float *y, const float *z, uint16_t *out_depth, int *map, int start_idx, int width, int height)
-{
+inline void AlignImpl::FillSingleChannelWithSSE(const float *x, const float *y, const float *z, uint16_t *out_depth, int *map, int start_idx, int width,
+                                                int height) {
     for(int j = 0; j < 4; j++) {
         if(z[j] < EPSILON)
             continue;
 
-        int      u_rgb     = static_cast<int>(x[j] + 0.5f);
-        int      v_rgb     = static_cast<int>(y[j] + 0.5f);
+        int u_rgb = static_cast<int>(x[j] + 0.5f);
+        int v_rgb = static_cast<int>(y[j] + 0.5f);
 
-        if ((u_rgb >= 0) && (u_rgb < width) && (v_rgb >= 0) && (v_rgb < height)) {
-            if (out_depth) {
+        if((u_rgb >= 0) && (u_rgb < width) && (v_rgb >= 0) && (v_rgb < height)) {
+            if(out_depth) {
                 uint16_t cur_depth = static_cast<uint16_t>(z[j]);
-                int pos        = v_rgb * width + u_rgb;
-                out_depth[pos] = std::min(out_depth[pos], cur_depth);
+                int      pos       = v_rgb * width + u_rgb;
+                out_depth[pos]     = std::min(out_depth[pos], cur_depth);
                 if((u_rgb + 1) < width) {
                     out_depth[pos + 1] = std::min(out_depth[pos + 1], cur_depth);
                     if((v_rgb + 1) < height) {
@@ -1300,7 +1263,7 @@ inline void AlignImpl::FillSingleChannelWithSSE(const float *x, const float *y, 
                     out_depth[pos + width] = std::min(out_depth[pos + width], cur_depth);
                 }
             }
-            
+
             if(map) {  // coordinates mapping for C2D
                 int map_idx      = 2 * (start_idx + j);
                 map[map_idx]     = u_rgb;
@@ -1310,8 +1273,8 @@ inline void AlignImpl::FillSingleChannelWithSSE(const float *x, const float *y, 
     }
 }
 
-inline void AlignImpl::FillMultiChannelWithSSE(const float* x, const float* y, const float* z, uint16_t* out_depth, int* map, int start_idx, int width, int height)
-{
+inline void AlignImpl::FillMultiChannelWithSSE(const float *x, const float *y, const float *z, uint16_t *out_depth, int *map, int start_idx, int width,
+                                               int height) {
     for(int j = 0; j < 4; j++) {
         bool     valid     = true;
         int      u_rgb[2]  = { -1, -1 };
@@ -1333,7 +1296,7 @@ inline void AlignImpl::FillMultiChannelWithSSE(const float* x, const float* y, c
         if(!valid)
             continue;
 
-        if (out_depth) {
+        if(out_depth) {
             int v0 = std::max(0, v_rgb[0]);
             int u0 = std::max(0, u_rgb[0]);
             int v1 = std::min(v_rgb[1], height - 1);
@@ -1347,7 +1310,7 @@ inline void AlignImpl::FillMultiChannelWithSSE(const float* x, const float* y, c
                 }
             }
         }
-        
+
         if(map) {
             if((u_rgb[0] >= 0) && (u_rgb[0] < width) && (v_rgb[0] >= 0) && (v_rgb[0] < height)) {
                 int map_idx      = 2 * (start_idx + j);
@@ -1374,30 +1337,30 @@ int AlignImpl::D2C(const uint16_t *depth_buffer, int depth_width, int depth_heig
         LOG_ERROR("Found a new resolution, but initialization failed!");
         return -1;
     }
-    
+
     if((!depth_buffer) || ((!out_depth && !map))) {
         LOG_ERROR("Buffer not initialized");
         return -1;
     }
-    
+
     int pixnum = rgb_intric_.width * rgb_intric_.height;
     if(out_depth) {
         // init to 1s (depth 0 may be used as other useful date)
         memset(out_depth, 0xff, pixnum * sizeof(uint16_t));
     }
-    
+
     const float *coeff_mat_x[2];
     const float *coeff_mat_y[2];
     const float *coeff_mat_z[2];
-    for (int i = 0; i < 2; i++) {
+    for(int i = 0; i < 2; i++) {
         coeff_mat_x[i] = finder_x->second[i];
         coeff_mat_y[i] = finder_y->second[i];
         coeff_mat_z[i] = finder_z->second[i];
     }
 
     if(withSSE) {
-        if (add_target_distortion_) {
-            switch (rgb_disto_.model) {
+        if(add_target_distortion_) {
+            switch(rgb_disto_.model) {
             case OB_DISTORTION_BROWN_CONRADY:
                 K3DistortedD2CWithSSE(depth_buffer, out_depth, coeff_mat_x, coeff_mat_y, coeff_mat_z, map);
                 break;
