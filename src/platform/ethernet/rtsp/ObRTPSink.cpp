@@ -45,6 +45,7 @@ bool isOBVendorCodec(const std::string &codec) {
 const std::map<std::string, OBFormat> CodecToFormatMap = {
     { "H264", OB_FORMAT_H264 },    { "H265", OB_FORMAT_H265 },      { "JPEG", OB_FORMAT_MJPG },      { "OB_FMT_Y16", OB_FORMAT_Y16 },
     { "OB_FMT_Y8", OB_FORMAT_Y8 }, { "OB_FMT_Y10", OB_FORMAT_Y10 }, { "OB_FMT_RVL", OB_FORMAT_RVL }, { "OB_FMT_MJPEG", OB_FORMAT_MJPG },
+    { "YUYV", OB_FORMAT_YUYV }, { "OB_FMT_YUYV", OB_FORMAT_YUYV }
 };
 
 OBFormat codecToOBFormat(const std::string &codec) {
