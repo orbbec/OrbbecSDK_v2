@@ -375,21 +375,21 @@ void G435LeDevice::initSensorList() {
                 auto colorMdParserContainer = getComponentT<IFrameMetadataParserContainer>(OB_DEV_COMPONENT_COLOR_FRAME_METADATA_CONTAINER);
                 sensor->setFrameMetadataParserContainer(colorMdParserContainer.get());
 
-                auto frameTimestampCalculator = std::make_shared<FrameTimestampCalculatorBaseDeviceTime>(this, deviceTimeFreq_, colorframeTimeFreq_);
+                auto frameTimestampCalculator = std::make_shared<G435LeFrameTimestampCalculatorDeviceTime>(this, deviceTimeFreq_, colorframeTimeFreq_, frameTimeFreq_);
                 sensor->setFrameTimestampCalculator(frameTimestampCalculator);
 
                 auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, colorframeTimeFreq_);
                 sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
 
                 auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR, false);
-                // if(frameProcessor) {
-                //     sensor->setFrameProcessor(frameProcessor.get());
-                // }
-
-                if(frameProcessor) {   
-                    auto colorFrameProcessor = std::make_shared<G435LeColorFrameProcessor>(frameProcessor->getOwner(), frameProcessor->getContext());
-                    sensor->setFrameProcessor(colorFrameProcessor);
+                if(frameProcessor) {
+                    sensor->setFrameProcessor(frameProcessor.get());
                 }
+
+                // if(frameProcessor) {   
+                //     auto colorFrameProcessor = std::make_shared<G435LeColorFrameProcessor>(frameProcessor->getOwner(), frameProcessor->getContext());
+                //     sensor->setFrameProcessor(colorFrameProcessor);
+                // }
 
                 initSensorStreamProfile(sensor);
 
