@@ -134,6 +134,7 @@ FrameCallback SensorBase::getFrameCallback() const {
 }
 
 void SensorBase::restartStream() {
+    VALIDATE_NOT_NULL(activatedStreamProfile_);
     auto curSp    = activatedStreamProfile_;
     auto callback = frameCallback_;
     stop();
