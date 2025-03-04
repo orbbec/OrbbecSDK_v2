@@ -129,6 +129,14 @@ void VendorTCPClient::socketConnect() {
     setsockopt(socketFd_, SOL_SOCKET, SO_SNDTIMEO, (char *)&commTimeout, sizeof(commTimeout));  // Send timeout limit
     setsockopt(socketFd_, SOL_SOCKET, SO_RCVTIMEO, (char *)&commTimeout, sizeof(commTimeout));  // Receive timeout limit
 
+    // Add SO_LINGER configuration here
+    struct linger linger_opt;
+    linger_opt.l_onoff  = 1;   // Enable SO_LINGER
+    linger_opt.l_linger = 0;   // Set linger timeout to 0 seconds
+    if(setsockopt(socketFd_, SOL_SOCKET, SO_LINGER, (char *)&linger_opt, sizeof(linger_opt)) < 0) {
+        LOG_WARN("Failed to set SO_LINGER option");
+    }
+
     // Adjust the window size to resolve the network retransmission issue at any frame rate @LingYi
     // Adjust the window size
     // int sendBufSize = 1024 * 1024 * 2;  // 2MB
