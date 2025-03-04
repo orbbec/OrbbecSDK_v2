@@ -10,20 +10,23 @@ namespace libobsensor {
 FirmwareUpdater::FirmwareUpdater(IDevice *owner) : DeviceComponentBase(owner) {
     std::string moduleLoadPath = EnvConfig::getExtensionsDirectory() + "/firmwareupdater/";
     try {
-        ctx_                      = std::make_shared<FirmwareUpdateContext>();
-        ctx_->dylib_              = std::make_shared<dylib>(moduleLoadPath.c_str(), "firmwareupdater");
-        ctx_->update_firmware_ext = ctx_->dylib_->get_function<void(ob_device *, const char *, ob_device_fw_update_callback, bool, void *, ob_error **)>(
-            "ob_device_update_firmware_ext");
-        ctx_->update_firmware_from_raw_data_ext =
-            ctx_->dylib_->get_function<void(ob_device *, const uint8_t *, uint32_t, ob_device_fw_update_callback, bool, void *, ob_error **)>(
-                "ob_device_update_firmware_from_raw_data_ext");
-        ctx_->update_optional_depth_presets_ext =
-            ctx_->dylib_
-                ->get_function<void(ob_device *, const char filePathList[][OB_PATH_MAX], uint8_t, ob_device_fw_update_callback, void *, ob_error **)>(
-            "ob_device_update_optional_depth_presets_ext");
+        ctx_         = std::make_shared<FirmwareUpdateContext>();
+        ctx_->dylib_ = std::make_shared<dylib>(moduleLoadPath.c_str(), "firmwareupdater");
+        if(ctx_ && ctx_->dylib_) {
+            ctx_->update_firmware_ext = ctx_->dylib_->get_function<void(ob_device *, const char *, ob_device_fw_update_callback, bool, void *, ob_error **)>(
+                "ob_device_update_firmware_ext");
+            ctx_->update_firmware_from_raw_data_ext =
+                ctx_->dylib_->get_function<void(ob_device *, const uint8_t *, uint32_t, ob_device_fw_update_callback, bool, void *, ob_error **)>(
+                    "ob_device_update_firmware_from_raw_data_ext");
+            ctx_->update_optional_depth_presets_ext =
+                ctx_->dylib_
+                    ->get_function<void(ob_device *, const char filePathList[][OB_PATH_MAX], uint8_t, ob_device_fw_update_callback, void *, ob_error **)>(
+                        "ob_device_update_optional_depth_presets_ext");
+        }
     }
     catch(const std::exception &e) {
-        LOG_DEBUG("Failed to load firmwareupdater library: {}", e.what());
+        LOG_WARN("Failed to load firmwareupdater library: {}", e.what());
+        throw std::runtime_error(e.what());
     }
 }
 
