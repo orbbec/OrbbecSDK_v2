@@ -60,6 +60,7 @@ private:
     void fetchAllProfileList();
 
     std::shared_ptr<const StreamProfile> loadDefaultStreamProfile(OBSensorType sensorType);
+    void                                 loadDefaultDepthPostProcessingConfig();  // todo: declare in base class
 
 private:
     std::shared_ptr<const SourcePortInfo>                       vendorPortInfo_;
