@@ -11,7 +11,7 @@
 #include <process.h>
 #include <tchar.h>
 #include <conio.h>
-#elif defined(__linux__)
+#elif defined(__linux__) || defined(__APPLE__)
 #include <fstream>
 #include <string>
 #include <unistd.h>
@@ -45,36 +45,22 @@ public:
 
 #if (defined(_WIN32) || defined(_WIN64))
     uint64_t convertTimeFormat(const FILETIME *ftime);
-
-    /**
-     * @brief Get the cpu usage of the process as a percentage
-     *
-     * @return The cpu usage of the process as a percentage
-     */
-    float getCpuUsage();
-
-    /**
-     * @brief Get the memory usage of the process in megabytes
-     *
-     * @return The memory usage of the process in megabytes
-     */
-    float getMemoryUsage();
-
-#elif defined(__linux__)
-    /**
-     * @brief Get the cpu usage of the process as a percentage
-     *
-     * @return The cpu usage of the process as a percentage
-     */
-    float getCpuUsage();
-
-    /**
-     * @brief Get the memory usage of the process in megabytes
-     *
-     * @return The memory usage of the process in megabytes
-     */
-    float getMemoryUsage();
 #endif
+
+    /**
+     * @brief Get the cpu usage of the process as a percentage
+     *
+     * @return The cpu usage of the process as a percentage
+     */
+    float getCpuUsage();
+
+    /**
+     * @brief Get the memory usage of the process in megabytes
+     *
+     * @return The memory usage of the process in megabytes
+     */
+    float getMemoryUsage();
+
     const std::vector<SystemInfo>& getData() const;
 
 private:

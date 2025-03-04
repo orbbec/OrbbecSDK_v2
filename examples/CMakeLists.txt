@@ -6,7 +6,6 @@ cmake_minimum_required(VERSION 3.5)
 file(GLOB subdirectories RELATIVE ${CMAKE_CURRENT_LIST_DIR} "*")
 
 # dependecies
-# set(OpenCV_DIR /Users/lesley/Downloads/opencv-4.7.0/build)
 find_package(OpenCV QUIET)
 if(NOT ${OpenCV_FOUND})
     message(WARNING "OpenCV not found, some examples may not be built. Please install OpenCV or set OpenCV_DIR to the directory of your OpenCV installation.")

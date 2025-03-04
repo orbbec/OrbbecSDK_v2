@@ -1,4 +1,4 @@
-# C++ Sample：2.device.firmware_update
+# C++ Sample：2.device.optional_depth_presets_update
 
 ## Overview
 
@@ -52,11 +52,6 @@ Device is the device object, which can be used to obtain the device information,
 
 2. Don't plug out the device during the presets update process.
 
-3. For linux users, it is recommended to use the `LibUVC` as the backend as the `V4L2` backend may cause some issues on some systems. Switch backend before create device like this:
-
-    ```c++
-        context->setUvcBackendType(OB_UVC_BACKEND_TYPE_LIBUVC);
-    ```
 
 
 ## Run Sample

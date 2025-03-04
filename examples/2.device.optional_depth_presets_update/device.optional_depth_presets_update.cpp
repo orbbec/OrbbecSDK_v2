@@ -26,11 +26,6 @@ int main() try {
     // Create a context to access the connected devices
     std::shared_ptr<ob::Context> context = std::make_shared<ob::Context>();
 
-#if defined(__linux__)
-    // On Linux, it is recommended to use the libuvc backend for device access as v4l2 is not always reliable on some systems for preset update.
-    context->setUvcBackendType(OB_UVC_BACKEND_TYPE_LIBUVC);
-#endif
-
     // Get connected devices from the context
     std::shared_ptr<ob::DeviceList> deviceList = context->queryDeviceList();
     if(deviceList->getCount() == 0) {
@@ -96,7 +91,7 @@ int main() try {
         }
 
         std::cout << std::endl;
-        if ( updateState == STAT_DONE || updateState == STAT_DONE_WITH_DUPLICATES) {
+        if(updateState == STAT_DONE || updateState == STAT_DONE_WITH_DUPLICATES) {
             // success
             std::cout << "After updating the preset: " << std::endl;
             printPreset(device);
@@ -173,8 +168,7 @@ static bool getPresetPath(std::vector<std::string> &pathList) {
     uint8_t count = 0;
 
     pathList.clear();
-    do 
-    {
+    do {
         std::cout << "Enter Path: ";
         std::string input;
         std::getline(std::cin, input);
@@ -210,14 +204,14 @@ static bool getPresetPath(std::vector<std::string> &pathList) {
             std::cout << "Invalid file format. Please provide a .bin file." << std::endl << std::endl;
             continue;
         }
-    } while(count<10);
+    } while(count < 10);
 
     return true;
 }
 
-static bool selectDevice(std::shared_ptr<ob::Device>& device) {
+static bool selectDevice(std::shared_ptr<ob::Device> &device) {
     std::string input;
-    
+
     device = nullptr;
     while(true) {
         std::cout << "Please select a device to update the optional depth preset, enter 'l' to list devices, or enter 'q' to quit: " << std::endl;
