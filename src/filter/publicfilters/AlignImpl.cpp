@@ -5,6 +5,7 @@
 #include "logger/Logger.hpp"
 #include "exception/ObException.hpp"
 #include <fstream>
+#include <algorithm>
 #include <iostream>
 #include <chrono>
 #include <complex>
