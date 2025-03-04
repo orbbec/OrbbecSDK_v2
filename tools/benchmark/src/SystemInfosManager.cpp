@@ -185,6 +185,115 @@ float SystemInfosManager::getMemoryUsage() {
     }
     return rss / 1024.0f;  // to MB
 }
+
+#elif defined(__APPLE__)
+
+float SystemInfosManager::getCpuUsage() {
+    auto               pid = getpid();
+    const std::string  header = "usage";
+    std::ostringstream command;
+
+    command << "ps -p " << pid << " -o %cpu=" << header;
+
+    auto deleter = [](FILE *file) {
+        if(file) {
+            pclose(file);
+        }
+    };
+    std::unique_ptr<FILE, decltype(deleter)> pipe(popen(command.str().c_str(), "r"), deleter);
+    if(!pipe) {
+        std::cerr << "Failed to run command" << std::endl;
+        return -1.0f;
+    }
+
+    std::string result;
+    std::array<char, 128> buffer;
+    while(fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+        result += buffer.data();
+    }
+
+    std::istringstream outStream(result);
+    std::string line;
+    float usage = -1.0f;
+    while(std::getline(outStream, line)) {
+        size_t pos = line.find(header);
+        
+        if ( pos != std::string::npos ) {
+            // header
+            continue;
+        }
+        try {
+            usage = std::stof(line);
+            return usage;
+        } catch ( const std::exception &e) {
+            std::cerr << "Error reading usage: " << e.what() << std::endl;
+            break;
+        }
+    }
+
+    std::cerr << "Failed to read CPU usage" << std::endl;
+    return -1.0f;
+}
+
+float SystemInfosManager::getMemoryUsage() {
+    auto               pid = getpid();
+    const std::string  header = "usage";
+    std::ostringstream command;
+
+    command << "ps -p " << pid << " -o rss=" << header;
+
+    auto deleter = [](FILE *file) {
+        if(file) {
+            pclose(file);
+        }
+    };
+    std::unique_ptr<FILE, decltype(deleter)> pipe(popen(command.str().c_str(), "r"), deleter);
+    if(!pipe) {
+        std::cerr << "Failed to run command" << std::endl;
+        return -1.0f;
+    }
+
+    std::string result;
+    std::array<char, 128> buffer;
+    while(fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+        result += buffer.data();
+    }
+
+    std::istringstream outStream(result);
+    std::string line;
+    float usage = -1.0f;
+    while(std::getline(outStream, line)) {
+        size_t pos = line.find(header);
+        
+        if ( pos != std::string::npos ) {
+            // header
+            continue;
+        }
+        try {
+            usage = std::stof(line);
+            return usage / 1024.0f; // to MB
+        } catch ( const std::exception &e) {
+            std::cerr << "Error reading usage: " << e.what() << std::endl;
+            break;
+        }
+    }
+
+    std::cerr << "Failed to read memory usage" << std::endl;
+    return -1.0f;
+}
+
+#else
+
+float SystemInfosManager::getCpuUsage() {
+    std::cerr << "getMemoryUsage: unsupported os" << std::endl;
+    return -1.0f;
+}
+
+float SystemInfosManager::getMemoryUsage() {
+    std::cerr << "getMemoryUsage: unsupported os" << std::endl;
+    return -1.0f;
+}
+
 #endif
 
 const std::vector<SystemInfo> &SystemInfosManager::getData() const {
