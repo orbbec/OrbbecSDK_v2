@@ -16,7 +16,8 @@
 
 namespace libobsensor {
 
-VideoSensor::VideoSensor(IDevice *owner, OBSensorType sensorType, const std::shared_ptr<ISourcePort> &backend) : SensorBase(owner, sensorType, backend) {
+VideoSensor::VideoSensor(IDevice *owner, OBSensorType sensorType, const std::shared_ptr<ISourcePort> &backend)
+    : SensorBase(owner, sensorType, backend), lazySelf_(std::make_shared<LazySensor>(owner, sensorType)) {
     auto vsPort = std::dynamic_pointer_cast<IVideoStreamPort>(backend_);
     if(!vsPort) {
         throw invalid_value_exception("Backend is not a valid IVideoStreamPort");
@@ -242,8 +243,6 @@ void VideoSensor::updateFormatFilterConfig(const std::vector<FormatFilterConfig>
     formatFilterConfigs_ = configs;
     streamProfileList_.clear();
 
-    auto owner      = getOwner();
-    auto lazySelf   = std::make_shared<LazySensor>(owner, sensorType_);
     auto streamType = utils::mapSensorTypeToStreamType(sensorType_);
     for(const auto &backendSp: backendStreamProfileList_) {
         auto format   = backendSp->getFormat();
@@ -261,7 +260,7 @@ void VideoSensor::updateFormatFilterConfig(const std::vector<FormatFilterConfig>
             // FormatFilterPolicy is ADD or REPLACE, add a new stream profile with the new format
             auto sp = backendSp->clone();
             sp->setFormat(config.dstFormat);
-            sp->bindOwner(lazySelf);
+            sp->bindOwner(lazySelf_);
             sp->setType(streamType);
             streamProfileList_.push_back(sp);
             streamProfileBackendMap_[sp] = { backendSp, &config };
@@ -271,7 +270,7 @@ void VideoSensor::updateFormatFilterConfig(const std::vector<FormatFilterConfig>
 
         if(!filtered) {  // if no filter applied, add the original stream profile
             auto sp = backendSp->clone();
-            sp->bindOwner(lazySelf);
+            sp->bindOwner(lazySelf_);
             sp->setType(streamType);
             streamProfileList_.push_back(sp);
             streamProfileBackendMap_[sp] = { backendSp, nullptr };
@@ -288,12 +287,11 @@ void VideoSensor::updateFormatFilterConfig(const std::vector<FormatFilterConfig>
 }
 
 void VideoSensor::setStreamProfileList(const StreamProfileList &profileList) {
-    auto              lazySelf      = std::make_shared<LazySensor>(owner_, sensorType_);
     auto              streamType    = utils::mapSensorTypeToStreamType(sensorType_);
     StreamProfileList backendSpList = profileList;
     for(auto &backendSp: backendSpList) {
         auto sp = backendSp->clone();
-        sp->bindOwner(lazySelf);
+        sp->bindOwner(lazySelf_);
         sp->setType(streamType);
         backendStreamProfileList_.push_back(sp);
         LOG_DEBUG("Backend stream profile {}", backendSp);
@@ -320,7 +318,7 @@ void VideoSensor::setStreamProfileList(const StreamProfileList &profileList) {
     // The stream profile list is same as the backend stream profile list at default.
     for(auto &backendSp: backendStreamProfileList_) {
         auto sp = backendSp->clone();
-        sp->bindOwner(lazySelf);
+        sp->bindOwner(lazySelf_);
         sp->setType(streamType);
         streamProfileList_.push_back(sp);
         streamProfileBackendMap_[sp] = { backendSp, nullptr };

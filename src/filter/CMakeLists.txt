@@ -13,7 +13,7 @@ file(GLOB_RECURSE HEADERS_FILES "*.hpp" EXCLUDE unittest)
 target_sources(filter PRIVATE ${SOURCE_FILES} ${HEADERS_FILES})
 
 # depedecencies
-target_link_libraries(filter PUBLIC ob::shared ob::core )
+target_link_libraries(filter PUBLIC ob::shared ob::core ob::device)
 target_include_directories(filter PUBLIC ${OB_PUBLIC_HEADERS_DIR} ${CMAKE_CURRENT_LIST_DIR})
 
 add_subdirectory(${OB_3RDPARTY_DIR}/dylib dylib)
