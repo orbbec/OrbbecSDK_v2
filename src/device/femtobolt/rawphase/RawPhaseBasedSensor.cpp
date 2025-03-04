@@ -26,14 +26,12 @@ void RawPhaseBasedSensor::refreshStreamProfiles() {
     auto streamProfileList = getStreamProfileList();
     auto defaultSp         = streamProfileList.front();
 
-    auto owner         = getOwner();
     auto vsPort        = std::dynamic_pointer_cast<IVideoStreamPort>(backend_);
-    auto lazySelf      = std::make_shared<LazySensor>(owner, sensorType_);
     auto streamType    = utils::mapSensorTypeToStreamType(sensorType_);
     auto backendSpList = vsPort->getStreamProfileList();
     for(auto &backendSp: backendSpList) {
         auto sp = backendSp->clone();
-        sp->bindOwner(lazySelf);
+        sp->bindOwner(lazySelf_);
         sp->setType(streamType);
         backendStreamProfileList_.push_back(sp);
         LOG_DEBUG("Backend stream profile {}", backendSp);
@@ -60,7 +58,7 @@ void RawPhaseBasedSensor::refreshStreamProfiles() {
     // The stream profile list is same as the backend stream profile list at default.
     for(auto &backendSp: backendStreamProfileList_) {
         auto sp = backendSp->clone();
-        sp->bindOwner(lazySelf);
+        sp->bindOwner(lazySelf_);
         sp->setType(streamType);
         streamProfileList_.push_back(sp);
         streamProfileBackendMap_[sp] = { backendSp, nullptr };

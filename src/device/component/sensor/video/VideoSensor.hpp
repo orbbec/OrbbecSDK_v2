@@ -43,6 +43,7 @@ protected:
     void         onBackendFrameCallback(std::shared_ptr<Frame> frame);
 
 protected:
+    std::shared_ptr<LazySensor>                                                         lazySelf_;
     typedef std::pair<std::shared_ptr<const StreamProfile>, const FormatFilterConfig *> StreamProfileBackendMapValue;
     std::map<std::shared_ptr<const StreamProfile>, StreamProfileBackendMapValue>        streamProfileBackendMap_;
 

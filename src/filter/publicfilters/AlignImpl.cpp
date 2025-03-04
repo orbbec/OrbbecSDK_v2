@@ -94,11 +94,11 @@ AlignImpl::~AlignImpl() {
 }
 
 void AlignImpl::initialize(OBCameraIntrinsic depth_intrin, OBCameraDistortion depth_disto, OBCameraIntrinsic rgb_intrin, OBCameraDistortion rgb_disto,
-                           OBExtrinsic extrin, float depth_unit_mm, bool add_target_distortion, bool gap_fill_copy) {
+                           OBExtrinsic extrin, float depth_unit_mm, bool add_target_distortion, bool gap_fill_copy, bool use_scale) {
     if(initialized_ && memcmp(&depth_intrin, &depth_intric_, sizeof(OBCameraIntrinsic)) == 0
        && memcmp(&depth_disto, &depth_disto_, sizeof(OBCameraDistortion)) == 0 && memcmp(&rgb_intrin, &rgb_intric_, sizeof(OBCameraIntrinsic)) == 0
        && memcmp(&rgb_disto, &rgb_disto_, sizeof(OBCameraDistortion)) == 0 && memcmp(&extrin, &transform_, sizeof(OBExtrinsic)) == 0
-       && depth_unit_mm == depth_unit_mm_ && add_target_distortion == add_target_distortion_ && gap_fill_copy == gap_fill_copy_) {
+       && depth_unit_mm == depth_unit_mm_ && add_target_distortion == add_target_distortion_ && gap_fill_copy == gap_fill_copy_ && use_scale == use_scale_) {
         return;
     }
     memcpy(&depth_intric_, &depth_intrin, sizeof(OBCameraIntrinsic));
@@ -113,6 +113,7 @@ void AlignImpl::initialize(OBCameraIntrinsic depth_intrin, OBCameraDistortion de
                                 || (depth_disto.k6 != 0) || (depth_disto.p1 != 0) || (depth_disto.p2 != 0));
     depth_unit_mm_           = depth_unit_mm;
     gap_fill_copy_           = gap_fill_copy;
+    use_scale_               = use_scale;
     // Translation is related to depth unit.
     for(int i = 0; i < 3; ++i) {
         scaled_trans_[i] = transform_.trans[i] / depth_unit_mm_;
@@ -1321,6 +1322,39 @@ inline void AlignImpl::FillMultiChannelWithSSE(const float *x, const float *y, c
     }
 }
 
+void AlignImpl::D2CPostProcess(const uint16_t *ptr_src, const int in_width, const int in_height, const float scale, uint16_t *ptr_dst, int out_width,
+                               int out_height) {
+
+    // int dst_w = static_cast<int>(in_width * scale);
+    // int dst_h = static_cast<int>(in_height * scale);
+
+    unsigned int xrIntFloat_16 = static_cast<unsigned int>(powf(2, 16) / scale + 1);
+    unsigned int yrIntFloat_16 = xrIntFloat_16;
+    memset(ptr_dst, 0, sizeof(uint16_t) * out_width * out_height);
+
+    int y_end   = static_cast<int>(in_height * scale);
+    int x_end   = static_cast<int>(in_width * scale);
+    int y_start = 0;
+    int x_start = 0;
+
+    int          y0 = 0, x0 = 0;
+    uint16_t    *ptr_dst_line = ptr_dst + y_start * out_width;
+    unsigned int src_y_16     = y0 << 16;
+
+    for(int y = y_start; y < y_end; ++y) {
+        int             y_src        = (src_y_16 >> 16);
+        int             y_pix_src    = y_src * in_width;
+        const uint16_t *ptr_src_line = ptr_src + y_pix_src;
+        unsigned int    src_x_16     = x0 << 16;
+        for(int x = x_start; x < x_end; ++x) {
+            *(ptr_dst_line + x) = *(ptr_src_line + (src_x_16 >> 16));
+            src_x_16 += xrIntFloat_16;
+        }
+        src_y_16 += yrIntFloat_16;
+        ptr_dst_line += out_width;
+    }
+}
+
 int AlignImpl::D2C(const uint16_t *depth_buffer, int depth_width, int depth_height, uint16_t *out_depth, int color_width, int color_height, int *map,
                    bool withSSE) {
     int ret = 0;
@@ -1343,12 +1377,38 @@ int AlignImpl::D2C(const uint16_t *depth_buffer, int depth_width, int depth_heig
         return -1;
     }
 
+    float    scale           = 0;
+    float    rgb_temp_fx     = 0.0f;
+    float    rgb_temp_fy     = 0.0f;
+    float    rgb_temp_cx     = 0.0f;
+    float    rgb_temp_cy     = 0.0f;
+    uint16_t rgb_temp_width  = 0;
+    uint16_t rgb_temp_height = 0;
+    if(use_scale_) {
+        scale              = rgb_intric_.fx / depth_intric_.fx;
+        rgb_temp_fx        = rgb_intric_.fx;
+        rgb_temp_fy        = rgb_intric_.fy;
+        rgb_temp_cx        = rgb_intric_.cx;
+        rgb_temp_cy        = rgb_intric_.cy;
+        rgb_temp_width     = rgb_intric_.width;
+        rgb_temp_height    = rgb_intric_.height;
+        rgb_intric_.fx     = rgb_intric_.fx / scale;
+        rgb_intric_.fy     = rgb_intric_.fy / scale;
+        rgb_intric_.cx     = rgb_intric_.cx / scale;
+        rgb_intric_.cy     = rgb_intric_.cy / scale;
+        rgb_intric_.width  = static_cast<int16_t>(rgb_intric_.width / scale);
+        rgb_intric_.height = static_cast<int16_t>(rgb_intric_.height / scale);
+        color_fx_          = _mm_set_ps1(rgb_intric_.fx);
+        color_cx_          = _mm_set_ps1(rgb_intric_.cx);
+        color_fy_          = _mm_set_ps1(rgb_intric_.fy);
+        color_cy_          = _mm_set_ps1(rgb_intric_.cy);
+    }
+
     int pixnum = rgb_intric_.width * rgb_intric_.height;
     if(out_depth) {
         // init to 1s (depth 0 may be used as other useful date)
         memset(out_depth, 0xff, pixnum * sizeof(uint16_t));
     }
-
     const float *coeff_mat_x[2];
     const float *coeff_mat_y[2];
     const float *coeff_mat_z[2];
@@ -1401,6 +1461,25 @@ int AlignImpl::D2C(const uint16_t *depth_buffer, int depth_width, int depth_heig
         }
     }
 
+    if(use_scale_) {
+        uint16_t *out_depth_dst = (uint16_t *)malloc(pixnum * sizeof(uint16_t));
+        memcpy(out_depth_dst, out_depth, pixnum * sizeof(uint16_t));
+        int pixnumutemp = rgb_temp_width * rgb_temp_height;
+        memset(out_depth, 0xff, pixnumutemp * sizeof(uint16_t));
+        D2CPostProcess(out_depth_dst, rgb_intric_.width, rgb_intric_.height, scale, out_depth, rgb_temp_width, rgb_temp_height);
+        free(out_depth_dst);
+        rgb_intric_.fx     = rgb_temp_fx;
+        rgb_intric_.fy     = rgb_temp_fy;
+        rgb_intric_.cx     = rgb_temp_cx;
+        rgb_intric_.cy     = rgb_temp_cy;
+        rgb_intric_.width  = rgb_temp_width;
+        rgb_intric_.height = rgb_temp_height;
+        color_fx_          = _mm_set_ps1(rgb_intric_.fx);
+        color_cx_          = _mm_set_ps1(rgb_intric_.cx);
+        color_fy_          = _mm_set_ps1(rgb_intric_.fy);
+        color_cy_          = _mm_set_ps1(rgb_intric_.cy);
+    }
+    pixnum = rgb_intric_.width * rgb_intric_.height;
     if(out_depth) {
         for(int idx = 0; idx < pixnum; idx++) {
             if(65535 == out_depth[idx]) {
