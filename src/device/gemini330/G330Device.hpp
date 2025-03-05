@@ -30,6 +30,7 @@ private:
     void initSensorStreamProfile(std::shared_ptr<ISensor> sensor);
 
     std::shared_ptr<const StreamProfile> loadDefaultStreamProfile(OBSensorType sensorType);
+    void                                 loadDefaultDepthPostProcessingConfig(); // todo: declare in base class
 
 private:
     const uint64_t                                              deviceTimeFreq_ = 1000;     // in ms
@@ -59,6 +60,7 @@ private:
     void fetchAllProfileList();
 
     std::shared_ptr<const StreamProfile> loadDefaultStreamProfile(OBSensorType sensorType);
+    void                                 loadDefaultDepthPostProcessingConfig();  // todo: declare in base class
 
 private:
     std::shared_ptr<const SourcePortInfo>                       vendorPortInfo_;
@@ -73,4 +75,3 @@ private:
 };
 
 }  // namespace libobsensor
-

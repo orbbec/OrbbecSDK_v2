@@ -360,6 +360,7 @@ void G330Device::initSensorList() {
                     }
                 });
 
+                loadDefaultDepthPostProcessingConfig();
                 return sensor;
             },
             true);
@@ -1189,6 +1190,38 @@ std::vector<std::shared_ptr<IFilter>> G330Device::createRecommendedPostProcessin
     return {};
 }
 
+void G330Device::loadDefaultDepthPostProcessingConfig() {
+    auto envConfig = EnvConfig::getInstance();
+
+    try {
+        std::string deviceName = utils::string::removeSpace(deviceInfo_->name_);
+        std::string nodeName   = std::string("Device.") + deviceName + std::string(".DepthPostProcessing");
+        if(envConfig->isNodeContained(nodeName)) {
+            bool hwNoiseRmEnable = true;
+            bool swNoiseRmEnable = true;
+
+            auto propertyServer = getPropertyServer();
+            if(propertyServer->isPropertySupported(OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL, PROP_OP_READ_WRITE, PROP_ACCESS_USER)) {
+                if(envConfig->getBooleanValue(nodeName + std::string(".HardwareNoiseRemoveFilter"), hwNoiseRmEnable)
+                   && envConfig->getBooleanValue(nodeName + std::string(".SoftwareNoiseRemoveFilter"), swNoiseRmEnable)) {
+                    propertyServer->setPropertyValueT(OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL, hwNoiseRmEnable, PROP_ACCESS_USER);
+                    propertyServer->setPropertyValueT(OB_PROP_DEPTH_SOFT_FILTER_BOOL, swNoiseRmEnable, PROP_ACCESS_USER);
+                }
+                else {
+                    LOG_DEBUG("Getting depth post processing XML node failed");
+                }
+            }
+        }
+        else {
+            LOG_DEBUG("No depth post processing config found for device");
+        }
+    }
+    catch(libobsensor_exception &e) {
+        std::string errorMsg = "Failed to load default depth post processing config: " + std::string(e.what());
+        LOG_WARN(errorMsg);
+    }
+}
+
 //====================================================================================================================================
 //=========================================================G330NetDevice==============================================================
 
@@ -1419,6 +1452,7 @@ void G330NetDevice::initSensorList() {
                     }
                 });
 
+                loadDefaultDepthPostProcessingConfig();
                 return sensor;
             },
             true);
@@ -1965,6 +1999,38 @@ std::shared_ptr<const StreamProfile> G330NetDevice::loadDefaultStreamProfile(OBS
     }
 
     return defaultStreamProfile;
+}
+
+void G330NetDevice::loadDefaultDepthPostProcessingConfig() {
+    auto envConfig = EnvConfig::getInstance();
+
+    try {
+        std::string deviceName = utils::string::removeSpace(deviceInfo_->name_);
+        std::string nodeName   = std::string("Device.") + deviceName + std::string(".DepthPostProcessing");
+        if(envConfig->isNodeContained(nodeName)) {
+            bool hwNoiseRmEnable = true;
+            bool swNoiseRmEnable = true;
+
+            auto propertyServer = getPropertyServer();
+            if(propertyServer->isPropertySupported(OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL, PROP_OP_READ_WRITE, PROP_ACCESS_USER)) {
+                if(envConfig->getBooleanValue(nodeName + std::string(".HardwareNoiseRemoveFilter"), hwNoiseRmEnable)
+                   && envConfig->getBooleanValue(nodeName + std::string(".SoftwareNoiseRemoveFilter"), swNoiseRmEnable)) {
+                    propertyServer->setPropertyValueT(OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL, hwNoiseRmEnable, PROP_ACCESS_USER);
+                    propertyServer->setPropertyValueT(OB_PROP_DEPTH_SOFT_FILTER_BOOL, swNoiseRmEnable, PROP_ACCESS_USER);
+                }
+                else {
+                    LOG_DEBUG("Getting depth post processing XML node failed");
+                }
+            }
+        }
+        else {
+            LOG_DEBUG("No depth post processing config found for device");
+        }
+    }
+    catch(libobsensor_exception &e) {
+        std::string errorMsg = "Failed to load default depth post processing config: " + std::string(e.what());
+        LOG_WARN(errorMsg);
+    }
 }
 
 void G330NetDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {

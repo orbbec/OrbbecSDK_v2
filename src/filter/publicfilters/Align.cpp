@@ -6,8 +6,12 @@
 #include "logger/LoggerInterval.hpp"
 #include "frame/FrameFactory.hpp"
 #include "frame/FrameMemoryPool.hpp"
+#include "ISensor.hpp"
+#include "IDevice.hpp"
 
 namespace libobsensor {
+
+#define IS_FEMTO_MEGA_SERIES(pid) (pid == 0x0669 || pid == 0x066B || pid == 0x06C0)
 
 const std::map<OBStreamType, OBFrameType> streamTypeToFrameType = { { OB_STREAM_COLOR, OB_FRAME_COLOR },
                                                                     { OB_STREAM_DEPTH, OB_FRAME_DEPTH },
@@ -199,12 +203,24 @@ void Align::alignFrames(const std::shared_ptr<const Frame> from, std::shared_ptr
     auto alignVideoProfile = alignProfile->as<VideoStreamProfile>();
     auto toIntrin          = alignVideoProfile->getIntrinsic();
     auto toDisto           = alignVideoProfile->getDistortion();
-    auto fromToExtrin = fromProfile->getExtrinsicTo(alignProfile);
-    auto depthUnitMm  = depth->as<DepthFrame>()->getValueScale();
+    auto fromToExtrin      = fromProfile->getExtrinsicTo(alignProfile);
+    auto depthUnitMm       = depth->as<DepthFrame>()->getValueScale();
 
     if(align->getType() == OB_FRAME_DEPTH) {
+        bool useScale   = false;
+        auto lazySensor = fromVideoProfile->getOwner();
+        if(lazySensor && lazySensor->device) {
+            auto device     = lazySensor->device;
+            auto deviceInfo = device->getInfo();
+            auto pid        = deviceInfo->pid_;
+
+            if(IS_FEMTO_MEGA_SERIES(pid) && matchTargetRes_) {
+                useScale = true;
+            }
+        }
+
         uint16_t *alignedData = reinterpret_cast<uint16_t *>(const_cast<void *>((void *)align->getData()));
-        impl_->initialize(fromIntrin, fromDisto, toIntrin, toDisto, fromToExtrin, depthUnitMm, addTargetDistortion_, gapFillCopy_);
+        impl_->initialize(fromIntrin, fromDisto, toIntrin, toDisto, fromToExtrin, depthUnitMm, addTargetDistortion_, gapFillCopy_, useScale);
         auto in = reinterpret_cast<const uint16_t *>(from->getData());
         impl_->D2C(in, fromVideoProfile->getWidth(), fromVideoProfile->getHeight(), alignedData, alignVideoProfile->getWidth(), alignVideoProfile->getHeight());
     }
@@ -236,7 +252,11 @@ std::shared_ptr<VideoStreamProfile> Align::createAlignedProfile(std::shared_ptr<
         alignProfile->setHeight(toProfile->getHeight());
         alignProfile->bindIntrinsic(toProfile->getIntrinsic());
         if(!addTargetDistortion_) {
-            alignProfile->bindDistortion(fromProfile->getDistortion());
+            OBCameraDistortion alignDistortion = { 0 };
+            auto               distortion      = fromProfile->getDistortion();
+            auto               model           = distortion.model;
+            alignDistortion.model              = model;
+            alignProfile->bindDistortion(alignDistortion);
         }
         else {
             alignProfile->bindDistortion(toProfile->getDistortion());

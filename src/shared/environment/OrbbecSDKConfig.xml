@@ -1122,6 +1122,11 @@
                 <GlobalTimestampFitterQueueSize>100</GlobalTimestampFitterQueueSize>
             </Misc>
 
+            <DepthPostProcessing>
+                <HardwareNoiseRemoveFilter>true</HardwareNoiseRemoveFilter>
+                <SoftwareNoiseRemoveFilter>false</SoftwareNoiseRemoveFilter>
+            </DepthPostProcessing>
+
             <!-- Whether to enable heartbeat by default -->
             <DefaultHeartBeat>0</DefaultHeartBeat>
             <!-- Whether to enable firmware upgrade foolproof by default, only internal version
@@ -1204,6 +1209,11 @@
                 <!-- Global timestamp fitter queue size, default value: 100, minimum value: 20 -->
                 <GlobalTimestampFitterQueueSize>100</GlobalTimestampFitterQueueSize>
             </Misc>
+
+            <DepthPostProcessing>
+                <HardwareNoiseRemoveFilter>true</HardwareNoiseRemoveFilter>
+                <SoftwareNoiseRemoveFilter>false</SoftwareNoiseRemoveFilter>
+            </DepthPostProcessing>
 
             <!-- Whether to enable heartbeat by default -->
             <DefaultHeartBeat>0</DefaultHeartBeat>
@@ -1288,6 +1298,11 @@
                 <GlobalTimestampFitterQueueSize>100</GlobalTimestampFitterQueueSize>
             </Misc>
 
+            <DepthPostProcessing>
+                <HardwareNoiseRemoveFilter>true</HardwareNoiseRemoveFilter>
+                <SoftwareNoiseRemoveFilter>false</SoftwareNoiseRemoveFilter>
+            </DepthPostProcessing>
+
             <!-- Whether to enable heartbeat by default -->
             <DefaultHeartBeat>0</DefaultHeartBeat>
             <!-- Whether to enable firmware upgrade foolproof by default, only internal version
@@ -1367,6 +1382,17 @@
                 <!-- Global timestamp fitter queue size, default value: 100, minimum value: 20 -->
                 <GlobalTimestampFitterQueueSize>100</GlobalTimestampFitterQueueSize>
             </Misc>
+			
+			<DepthPostProcessing>
+                <HardwareNoiseRemoveFilter>true</HardwareNoiseRemoveFilter>
+                <SoftwareNoiseRemoveFilter>false</SoftwareNoiseRemoveFilter>
+            </DepthPostProcessing>
+			
+			<!-- Whether to enable heartbeat by default -->
+            <DefaultHeartBeat>0</DefaultHeartBeat>
+            <!-- Whether to enable firmware upgrade foolproof by default, only internal version
+            supports -->
+            <FirmwareUpgradeFoolproof>1</FirmwareUpgradeFoolproof>
 
             <!--  Depth Filter Params -->
             <!--
@@ -1435,6 +1461,11 @@
             <!-- The default Linux UVC backend. If the LinuxUVCBackend is set to "Auto," this item
             will determine the device's speciality. Optional values: V4L2, LibUVC -->
             <LinuxUVCDefaultBackend>LibUVC</LinuxUVCDefaultBackend>
+
+            <DepthPostProcessing>
+                <HardwareNoiseRemoveFilter>true</HardwareNoiseRemoveFilter>
+                <SoftwareNoiseRemoveFilter>false</SoftwareNoiseRemoveFilter>
+            </DepthPostProcessing>
 
             <Misc>
                 <GlobalTimestampFitterEnable>true</GlobalTimestampFitterEnable>
@@ -1518,6 +1549,11 @@
             <!-- The default Linux UVC backend. If the LinuxUVCBackend is set to "Auto," this item
             will determine the device's speciality. Optional values: V4L2, LibUVC -->
             <LinuxUVCDefaultBackend>LibUVC</LinuxUVCDefaultBackend>
+
+            <DepthPostProcessing>
+                <HardwareNoiseRemoveFilter>true</HardwareNoiseRemoveFilter>
+                <SoftwareNoiseRemoveFilter>false</SoftwareNoiseRemoveFilter>
+            </DepthPostProcessing>
 
             <Misc>
                 <GlobalTimestampFitterEnable>true</GlobalTimestampFitterEnable>

@@ -10,6 +10,9 @@
 #include <map>
 #include <sstream>
 #include <string>
+#include <windows.h>
+
+#include "get_time.h"
 
 // Data structure to hold the sections, keys, and values
 using IniSection = std::map<std::string, std::string>;
@@ -83,7 +86,7 @@ int parse_bolt_data(char *filename, OBCameraIntrinsic &depth_intr, OBCameraIntri
     color_disto.k6  = static_cast<float>(std::atof(inidata["ColorDistortion"]["k6"].c_str()));
     color_disto.p1  = static_cast<float>(std::atof(inidata["ColorDistortion"]["p1"].c_str()));
     color_disto.p2  = static_cast<float>(std::atof(inidata["ColorDistortion"]["p2"].c_str()));
-    color_disto.model   = OBCameraDistortionModel::OB_DISTORTION_BROWN_CONRADY_K6;
+    color_disto.model   = OBCameraDistortionModel::OB_DISTORTION_BROWN_CONRADY;
     color_intr.fx   = static_cast<float>(std::atof(inidata["ColorIntrinsic"]["fx"].c_str()));
     color_intr.fy   = static_cast<float>(std::atof(inidata["ColorIntrinsic"]["fy"].c_str()));
     color_intr.cx   = static_cast<float>(std::atof(inidata["ColorIntrinsic"]["cx"].c_str()));
@@ -286,10 +289,14 @@ int main__(int argc, char *argv[]) {
 }
 
 int main(int argc, char *argv[]) {
-    if(argc < 4) {
-        std::cerr << "Usage: %s <param_file> <depth_image_file> <color_image_file> [swap_endianness=0]" << std::endl;
+    // swap_endianness ´óÐ¡¶Ë ÉèÖÃ1
+    if(argc < 6) {
+        std::cerr << "Usage: %s <param_file> <depth_image_file> <color_image_file> <copy1> <sse> [swap_endianness=0]" << std::endl;
         return -1;
     }
+
+    bool is_copy1 = std::atoi(argv[4]) == 1;
+    bool is_sse   = std::atoi(argv[5]) == 1;
 
     OBCameraIntrinsic  depth_intr, color_intr;
     OBCameraDistortion depth_disto, color_disto;
@@ -309,7 +316,7 @@ int main(int argc, char *argv[]) {
         return -1;
     }
     libobsensor::AlignImpl *impl = new libobsensor::AlignImpl();
-    impl->initialize(depth_intr, depth_disto, color_intr, color_disto, transform, 1, true, true);
+    impl->initialize(depth_intr, depth_disto, color_intr, color_disto, transform, 1, true, is_copy1);
 
     ob_error *err = nullptr;
 
@@ -320,22 +327,45 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    uint32_t  depth_size = depth_intr.width * depth_intr.height * sizeof(uint16_t);
+    int       depth_width  = depth_intr.width;
+    int       depth_height = depth_intr.height;
+    int       color_width  = color_intr.width;
+    int       color_height = color_intr.height;
+    uint32_t  depth_size = depth_width * depth_height * sizeof(uint16_t);
     uint16_t *depth_data = (uint16_t *)malloc(depth_size);
     fread(depth_data, depth_size, 1, depth_file);
     bool swap_endianness = false;
-    if(argc > 4)
-        swap_endianness = bool(std::atoi(argv[4]));
+    if(argc > 6)
+        swap_endianness = bool(std::atoi(argv[6]));
     if(swap_endianness) {
 		for(int i = 0; i < depth_intr.width * depth_intr.height; i++) {
 			depth_data[i] = _byteswap_ushort(depth_data[i]);
 		}
     }
 
-    uint32_t  aligned_depth_size = color_intr.width * color_intr.height * sizeof(uint16_t);
+    uint32_t  aligned_depth_size = color_width * color_height * sizeof(uint16_t);
     uint16_t *aligned_depth_data = (uint16_t *)malloc(aligned_depth_size);
-    //if(0 == impl->D2C(depth_data, depth_intr.width, depth_intr.height, aligned_depth_data, color_intr.width, color_intr.height, nullptr, true)) {
-    if(0 == impl->D2C(depth_data, depth_intr.width, depth_intr.height, aligned_depth_data, color_intr.width, color_intr.height, nullptr, false)) {
+    int num = 0;
+    double sum_time = 0.0;
+    while (true) {
+        TINIT;
+        TIC;
+        // SSE
+        //impl->D2C(depth_data, depth_width, depth_height, aligned_depth_data, color_width, color_height, nullptr, true);
+        //TOC("D2C_withSSE");
+        // without SSE
+        impl->D2C(depth_data, depth_intr.width, depth_intr.height, aligned_depth_data, color_intr.width, color_intr.height, nullptr, is_sse);
+        TOC("D2C_withoutSSE");
+        sum_time += time;
+        ++num;
+        if(num > 100)
+            break;
+    }
+    double ave_time = sum_time / num;
+    printf("ave_time: %f\n", ave_time);
+
+    if(0 == impl->D2C(depth_data, depth_intr.width, depth_intr.height, aligned_depth_data, color_intr.width, color_intr.height, nullptr, is_sse)) {
+    //if(0 == impl->D2C(depth_data, depth_intr.width, depth_intr.height, aligned_depth_data, color_intr.width, color_intr.height, nullptr, false)) {
         char nname[256];
         sprintf(nname, "%s_filtered_%dx%d.raw", argv[2], color_intr.width, color_intr.height);
         FILE *fp = fopen(nname, "wb");
@@ -357,7 +387,7 @@ int main(int argc, char *argv[]) {
     fread(color_data, color_size, 1, color_file);
     uint32_t aligned_color_size = depth_intr.width * depth_intr.height * sizeof(uint8_t) * 3;
     uint8_t *aligned_color_data = (uint8_t *)malloc(aligned_color_size);
-    if(0 == impl->C2D(depth_data, depth_intr.width, depth_intr.height, color_data, aligned_color_data, color_intr.width, color_intr.height, OB_FORMAT_RGB, false)) {
+    if(0 == impl->C2D(depth_data, depth_intr.width, depth_intr.height, color_data, aligned_color_data, color_intr.width, color_intr.height, OB_FORMAT_RGB, true)) {
         char nname[256];
         sprintf(nname, "%s_filtered.raw", argv[3]);
         FILE *fp = fopen(nname, "wb");
@@ -366,7 +396,7 @@ int main(int argc, char *argv[]) {
             fclose(fp);
         }
     }
-
+    
     free(depth_data);
     free(color_data);
     free(aligned_color_data);
