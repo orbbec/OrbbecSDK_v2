@@ -29,7 +29,4 @@ target_sources(
     ${CMAKE_CURRENT_LIST_DIR}/G435LeFrameMetadataParserContainer.hpp
     ${CMAKE_CURRENT_LIST_DIR}/G435LeMetadataParser.hpp
     ${CMAKE_CURRENT_LIST_DIR}/G435LeMetadataTypes.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/G435LeFrameProcessor.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/G435LeFrameProcessor.cpp
-
 )
