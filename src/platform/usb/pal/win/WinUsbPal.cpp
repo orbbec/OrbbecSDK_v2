@@ -252,8 +252,16 @@ SourcePortInfoList WinUsbPal::querySourcePortInfos() {
 }
 
 WinUsbDeviceWatcher::WinUsbDeviceWatcher(const IPal *backend) {
-    extraData_.backend_ = backend;
-    extraData_.stopped_ = true;
+    extraData_.backend_         = backend;
+    extraData_.stopped_         = true;
+    extraData_.callback_        = nullptr;
+    extraData_.hWnd             = NULL;
+    extraData_.hDevNotifyHW     = NULL;
+    extraData_.hDevNotifyUVC    = NULL;
+    extraData_.hDevNotifySensor = NULL;
+    extraData_.hDevNotifyHID    = NULL;
+    extraData_.hDevNotifyUSB    = NULL;
+    extraData_.hDevNotifyOpenNI = NULL;
 }
 
 WinUsbDeviceWatcher::~WinUsbDeviceWatcher() noexcept {
