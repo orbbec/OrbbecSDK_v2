@@ -37,8 +37,8 @@ bool ObRTPPacketProcessor::foundStartPacket() {
 
 bool ObRTPPacketProcessor::process(RTPHeader *header, uint8_t *recvData, uint32_t length, uint32_t type) {
     if(fameSequenceNumberCount_ >= maxPacketCount_) {
-        LOG_WARN("RTP data buffer overflow type:{}, fameSequenceNumberCount:{},  maxPacketCount:{}!", type, fameSequenceNumberCount_, maxPacketCount_);
-        fameSequenceNumberCount_ = 0;
+        LOG_WARN("RTP data buffer overflow!");
+        reset();
         return false;
     }
 
@@ -120,7 +120,9 @@ void ObRTPPacketProcessor::reset() {
     foundStartPacket_        = false;
     revDataComplete_         = false;
     revDataError_            = false;
+    dataSize_                = 0;
     fameSequenceNumberCount_ = 0;
+    memset(rtpBuffer_, 0, maxCacheSize_);
 }
 
 void ObRTPPacketProcessor::release() {
