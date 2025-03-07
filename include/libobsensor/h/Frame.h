@@ -148,7 +148,7 @@ OB_EXPORT void ob_delete_frame(const ob_frame *frame, ob_error **error);
 
 /**
  * @brief Copy the information of the source frame object to the destination frame object.
- * @brief Including the index，timestamp，system timestamp，global timestamp and metadata will be copied.
+ * @brief Including the index, timestamp, system timestamp, global timestamp and metadata will be copied.
  *
  * @param[in] src_frame Source frame object to copy the information from.
  * @param[in] dst_frame Destination frame object to copy the information to.
