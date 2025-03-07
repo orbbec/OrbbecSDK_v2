@@ -39,11 +39,11 @@ on the nvidia arm64 xavier/orin platform ,this example demo sync multi gmsl devi
 
 static bool quitStreamPreview = false;
 
-const std::string GMSL2_DEVICE_TAG= "GMSL2";
+const std::string GMSL2_DEVICE_TAG = "GMSL2";
 
-const std::map<std::string, uint16_t> gemini_330_list = {
-    { "gemini335", 0x0800 }, { "gemini335L", 0x0804 }, { "gemini336", 0x0803 }, { "gemini336L", 0x0807 }, { "gemini335Lg", 0x080B }
-};
+const std::map<std::string, uint16_t> gemini_330_list = { { "gemini335", 0x0800 },  { "gemini335L", 0x0804 },  { "gemini336", 0x0803 },
+                                                          { "gemini336L", 0x0807 }, { "gemini335Lg", 0x080B }, { "CAM-5330", 0x0816 },
+                                                          { "CAM-5530", 0x0817 } };
 
 typedef struct DeviceConfigInfo_t {
     std::string             deviceSN;
@@ -109,8 +109,7 @@ bool IsGemini330Series(uint16_t pid) {
     return find;
 }
 
-
-int triggerFd = -1;
+int triggerFd          = -1;
 int hardwareTriggerFps = 0;  // 0 means hardware trigger is disabled
 typedef struct {
     uint8_t  mode;
@@ -253,14 +252,14 @@ int configMultiDeviceSync() {
         int  devCount = devList->deviceCount();
         for(int i = 0; i < devCount; i++) {
             std::shared_ptr<ob::Device> device = devList->getDevice(i);
-            auto pid = device->getDeviceInfo()->getPid();
-            if(!IsGemini330Series(pid)){
+            auto                        pid    = device->getDeviceInfo()->getPid();
+            if(!IsGemini330Series(pid)) {
                 std::cout << "Device pid: " << pid << " is not Gemini 330 series, skip" << std::endl;
                 continue;
             }
             auto ConnectionType = device->getDeviceInfo()->getConnectionType();
             std::cout << "Device ConnectionType: " << ConnectionType << std::endl;
-            if( ConnectionType != GMSL2_DEVICE_TAG) {
+            if(ConnectionType != GMSL2_DEVICE_TAG) {
                 std::cout << "Device ConnectionType: " << ConnectionType << " is not GMSL2 devices, skip" << std::endl;
                 continue;
             }
@@ -319,9 +318,9 @@ void startDeviceStreams(const std::vector<std::shared_ptr<ob::Device>> &devices,
 
 // key press event processing
 void handleKeyPress(ob_smpl::CVWindow &win, int key) {
-    //Get the key value
+    // Get the key value
     if(key == KEY_ESC) {
-        if(!quitStreamPreview){
+        if(!quitStreamPreview) {
             win.setShowInfo(false);
             win.setShowSyncTimeInfo(false);
             quitStreamPreview = true;
@@ -379,11 +378,12 @@ int testMultiDeviceSync() {
         startDeviceStreams(secondary_devices, 0);
 
         // Delay and wait for 5s to ensure that the initialization of the slave device is completed
-        //std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+        // std::this_thread::sleep_for(std::chrono::milliseconds(5000));
 
         if(primary_devices.empty()) {
             std::cerr << "WARNING primary_devices is empty!!!" << std::endl;
-        } else {
+        }
+        else {
             std::cout << "Primary device start..." << std::endl;
             startDeviceStreams(primary_devices, secondary_devices.size());
         }
@@ -397,12 +397,12 @@ int testMultiDeviceSync() {
         // set key prompt
         win.setKeyPrompt("'S': syncDevicesTime, 'T': software triiger");
         // set the callback function for the window to handle key press events
-        win.setKeyPressedCallback([&](int key){ handleKeyPress(win, key); });
+        win.setKeyPressedCallback([&](int key) { handleKeyPress(win, key); });
 
         win.setShowInfo(true);
         win.setShowSyncTimeInfo(true);
         while(win.run() && !quitStreamPreview) {
-            if(quitStreamPreview){
+            if(quitStreamPreview) {
                 break;
             }
             std::vector<std::pair<std::shared_ptr<ob::Frame>, std::shared_ptr<ob::Frame>>> framePairs;
@@ -427,7 +427,7 @@ int testMultiDeviceSync() {
         }
         pipelineHolderList.clear();
         depthFrames.clear();
-        colorFrames.clear();      
+        colorFrames.clear();
 
         // Release resource
         streamDevList.clear();
@@ -459,8 +459,8 @@ void processFrame(std::shared_ptr<ob::FrameSet> frameSet, OBFrameType frameType,
         return;
     }
 
-    if(quitStreamPreview){
-        //std::cerr << "press ESC quit Stream ProcessFrame." << std::endl;
+    if(quitStreamPreview) {
+        // std::cerr << "press ESC quit Stream ProcessFrame." << std::endl;
         return;
     }
 
@@ -546,7 +546,7 @@ std::string readFileContent(const char *filePath) {
 bool loadConfigFile() {
     int                               deviceCount   = 0;
     std::shared_ptr<DeviceConfigInfo> devConfigInfo = nullptr;
-    cJSON *                           deviceElem    = nullptr;
+    cJSON                            *deviceElem    = nullptr;
 
     auto content = readFileContent(CONFIG_FILE);
     if(content.empty()) {
