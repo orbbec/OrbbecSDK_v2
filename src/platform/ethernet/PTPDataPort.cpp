@@ -42,7 +42,9 @@ bool PTPDataPort::timerSyncWithHost(TimerSyncWithHostCallback callback) {
 //        });
 //        ptpHost_->timeSync();
 //    }
-    
+    if (callback){
+        return true;
+    }
     return true;
 }
 
