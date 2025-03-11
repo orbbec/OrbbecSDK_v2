@@ -43,4 +43,9 @@ endif()
 
     install(DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/firmwareupdater/${OB_CURRENT_OS}/" DESTINATION "bin/extensions/firmwareupdater")
     install(DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/firmwareupdater/${OB_CURRENT_OS}/" DESTINATION "lib/extensions/firmwareupdater")
+
+if(MSVC)
+    install(DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/wpcap/${OB_CURRENT_OS}/" DESTINATION "bin/extensions/wpcap")
+endif()
+
 endif()

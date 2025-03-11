@@ -32,7 +32,7 @@ if(OB_BUILD_NET_PAL)
 
     if(OB_BUILD_WIN32)
         add_subdirectory(${OB_3RDPARTY_DIR}/npcaplib npcaplib)
-        target_link_libraries(${OB_TARGET_PAL} PUBLIC npcaplib::npcaplib)
+        target_link_libraries(${OB_TARGET_PAL} PUBLIC npcaplib::npcaplib dylib::dylib)
     endif()
 endif()
 
