@@ -18,7 +18,7 @@
 #include <functional>
 
 /**
- *  Frame classis inheritance hierarchy：
+ *  Frame classis inheritance hierarchy:
  *         Frame
  *          |
  *      +-----------+----------+----------+-----------+

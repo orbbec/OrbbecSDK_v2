@@ -723,14 +723,14 @@ typedef struct {
     double  zpps;          // zpps=z0/fx
     float   baseline;      // baseline length, for monocular camera,it means the distance of laser to the center of IR-CMOS
     double  fx;            // focus
-    uint8_t bitSize;       // disparity bit size（raw disp bit size，for example: MX6000 is 12, MX6600 is 14）
-    float   unit;          // reference units：unit=10 denote 1cm; unit=1 denote 1mm; unit=0.5 denote 0.5mm; and so on
+    uint8_t bitSize;       // disparity bit size (raw disp bit size, for example: MX6000 is 12, MX6600 is 14)
+    float   unit;          // reference units: unit=10 denote 1cm; unit=1 denote 1mm; unit=0.5 denote 0.5mm; and so on
     float   minDisparity;  // dual disparity coefficient
     uint8_t packMode;      // data pack mode
-    float   dispOffset;    // disparity offset，actual disp=chip disp + disp_offset
-    int32_t invalidDisp;   // invalid disparity，usually is 0，dual IR add a auxiliary value.
-    int32_t dispIntPlace;  // disp integer digits，default is 8，Gemini2 XL is 10
-    uint8_t isDualCamera;  // 0 monocular camera，1 dual camera
+    float   dispOffset;    // disparity offset, actual disp=chip disp + disp_offset
+    int32_t invalidDisp;   // invalid disparity, usually is 0, dual IR add a auxiliary value.
+    int32_t dispIntPlace;  // disp integer digits, default is 8, Gemini2 XL is 10
+    uint8_t isDualCamera;  // 0 monocular camera, 1 dual camera
 } OBDisparityParam, ob_disparity_param;
 
 /**
@@ -835,7 +835,7 @@ typedef enum {
     /**
      * @brief Secondary synchronize mode
      * @brief Secondary device. Both process input trigger signal and output trigger signal to other devices.
-     * @brief Different sensors in a single devices receive trigger signals respectively：ext trigger -> RGB && ext trigger -> IR/Depth/TOF
+     * @brief Different sensors in a single devices receive trigger signals respectively: ext trigger -> RGB && ext trigger -> IR/Depth/TOF
      *
      * @attention With the current Gemini 2 device set to this mode, each Sensor receives the first external trigger signal
      *     after the stream is turned on and starts timing self-triggering at the set frame rate until the stream is turned off
@@ -869,7 +869,7 @@ typedef enum {
      * @brief Software trigger synchronize mode as secondary device
      * @brief The slave receives the external trigger signal (the external trigger signal comes from the soft trigger host) and outputs the trigger signal to
      * the external relay.
-     * @brief Different sensors in a single machine receive trigger signals respectively：ext trigger -> RGB && ext  trigger -> IR/Depth/TOF
+     * @brief Different sensors in a single machine receive trigger signals respectively: ext trigger -> RGB && ext  trigger -> IR/Depth/TOF
      */
     OB_SYNC_MODE_SECONDARY_SOFT_TRIGGER = 0x07,
 
@@ -1304,14 +1304,14 @@ typedef struct {
     /**
      * @brief The delay time of the depth image capture after receiving the capture command or trigger signal in microseconds.
      *
-     * @attention This parameter is only valid for some models， please refer to the product manual for details.
+     * @attention This parameter is only valid for some models, please refer to the product manual for details.
      */
     int depthDelayUs;
 
     /**
      * @brief The delay time of the color image capture after receiving the capture command or trigger signal in microseconds.
      *
-     * @attention This parameter is only valid for some models， please refer to the product manual for details.
+     * @attention This parameter is only valid for some models, please refer to the product manual for details.
      */
     int colorDelayUs;
 
@@ -1557,14 +1557,14 @@ typedef enum {
 
     /**
      * @brief Power line frequency
-     * @brief For anti-flickering， 0：Close， 1： 50Hz， 2： 60Hz， 3： Auto
+     * @brief For anti-flickering, 0: Close, 1: 50Hz, 2: 60Hz, 3: Auto
      */
     OB_FRAME_METADATA_TYPE_POWER_LINE_FREQUENCY = 15,
 
     /**
      * @brief Low light compensation
      *
-     * @attention The low light compensation is a feature inside the device，and can not manually control it.
+     * @attention The low light compensation is a feature inside the device, and can not manually control it.
      */
     OB_FRAME_METADATA_TYPE_LOW_LIGHT_COMPENSATION = 16,
 

@@ -39,6 +39,8 @@ const std::vector<uint16_t> G330DevPids = {
     0x0A13,  // DaBai AL
     0x0812,  // Gemini 345
     0x0813,  // Gemini 345Lg
+    0x0816,  // CAM-5330
+    0x0817,  // CAM-5530
 };
 
 const uint16_t OB_DEVICE_G336_PID   = 0x0803;
@@ -57,6 +59,7 @@ const std::vector<uint16_t> G330LDevPids = {
     0x080E,  // Gemini 335Le
     0x080F,  // Gemini 330Le
     0x0810,  // Gemini 336Le
+    0x0817,  // CAM-5530
 };
 
 const std::vector<uint16_t> DaBaiADevPids = {
