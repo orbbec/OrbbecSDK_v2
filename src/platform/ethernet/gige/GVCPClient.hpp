@@ -128,10 +128,8 @@ private:
     int    openClientSockets();
     void   closeClientSockets();
     SOCKET openClientSocket(SOCKADDR_IN addr);
-    void   sendGVCPDiscovery(SOCKET sock);
-    void   sendGVCPDiscovery2(GVCPSocketInfo socketInfo);
-    void   sendGVCPForceIP(SOCKET sock, std::string mac, const OBNetIpConfig &config);
-    void   sendGVCPForceIP2(GVCPSocketInfo socketInfo, std::string mac, const OBNetIpConfig &config);
+    void   sendGVCPDiscovery(GVCPSocketInfo socketInfo);
+    void   sendGVCPForceIP(GVCPSocketInfo socketInfo, std::string mac, const OBNetIpConfig &config);
 
     //
     void checkAndUpdateSockets();
