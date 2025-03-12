@@ -249,9 +249,11 @@ void G435LeDevice::initSensorList() {
                 propServer->setPropertyValueT<bool>(OB_PROP_DISPARITY_TO_DEPTH_BOOL, true);
                 propServer->setPropertyValueT<bool>(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL, false);
                 sensor->markOutputDisparityFrame(false);
-
-                propServer->setPropertyValueT(OB_PROP_DEPTH_PRECISION_LEVEL_INT, OB_PRECISION_1MM);
-                sensor->setDepthUnit(1.0f);
+                
+                auto depthPrecisionRange = propServer->getPropertyRangeT<int32_t>(OB_PROP_DEPTH_PRECISION_LEVEL_INT);  
+                LOG_DEBUG("Depth precision level range: min={}, max={}, def={}, cur={}", depthPrecisionRange.min, depthPrecisionRange.max, depthPrecisionRange.def, depthPrecisionRange.cur);              
+                propServer->setPropertyValueT(OB_PROP_DEPTH_PRECISION_LEVEL_INT, depthPrecisionRange.def);
+                sensor->setDepthUnit( utils::depthPrecisionLevelToUnit((OBDepthPrecisionLevel)depthPrecisionRange.def));
 
                 initSensorStreamProfile(sensor);
 
@@ -599,6 +601,10 @@ void G435LeDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
         streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y16, 640, 400, 10));
         streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y16, 640, 400, 15));
         streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y16, 640, 400, 20));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y16, 640, 480, 5));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y16, 640, 480, 10));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y16, 640, 480, 15));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y16, 640, 480, 20));
         streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y16, 1280, 800, 5));
         streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y16, 1280, 800, 10));
 
@@ -606,6 +612,10 @@ void G435LeDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
         streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_RVL, 640, 400, 10));
         streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_RVL, 640, 400, 15));
         streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_RVL, 640, 400, 20));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_RVL, 640, 480, 5));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_RVL, 640, 480, 10));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_RVL, 640, 480, 15));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_RVL, 640, 480, 20));
         streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_RVL, 1280, 800, 5));
         streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_RVL, 1280, 800, 10));
     }
@@ -647,6 +657,23 @@ void G435LeDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
         streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_YUYV, 800, 600, 20));
         streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_YUYV, 1280, 720, 5));
         streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_YUYV, 1280, 720, 10));
+
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_I420, 1280, 800, 10));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_I420, 1280, 800, 5));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_I420, 640, 360, 5));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_I420, 640, 360, 10));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_I420, 640, 360, 15));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_I420, 640, 360, 20));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_I420, 640, 400, 5));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_I420, 640, 400, 10));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_I420, 640, 400, 15));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_I420, 640, 400, 20));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_I420, 800, 600, 5));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_I420, 800, 600, 10));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_I420, 800, 600, 15));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_I420, 800, 600, 20));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_I420, 1280, 720, 5));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_I420, 1280, 720, 10));
     }
     else if(streamType == OB_STREAM_IR_LEFT) {
         streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y8, 1280, 800, 5));

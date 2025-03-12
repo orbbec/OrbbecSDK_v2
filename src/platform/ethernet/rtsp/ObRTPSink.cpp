@@ -35,7 +35,7 @@ typedef struct {
 #pragma pack()
 
 const std::vector<std::string> OBVendorCodecs = {
-    "OB_FMT_Y16", "OB_FMT_Y8", "OB_FMT_Y10", "OB_FMT_RVL", "OB_FMT_MJPEG", "YUYV",
+    "OB_FMT_Y16", "OB_FMT_Y8", "OB_FMT_Y10", "OB_FMT_RVL", "OB_FMT_MJPEG", "YUYV", "I420"
 };
 
 bool isOBVendorCodec(const std::string &codec) {
@@ -45,7 +45,7 @@ bool isOBVendorCodec(const std::string &codec) {
 const std::map<std::string, OBFormat> CodecToFormatMap = {
     { "H264", OB_FORMAT_H264 },    { "H265", OB_FORMAT_H265 },      { "JPEG", OB_FORMAT_MJPG },      { "OB_FMT_Y16", OB_FORMAT_Y16 },
     { "OB_FMT_Y8", OB_FORMAT_Y8 }, { "OB_FMT_Y10", OB_FORMAT_Y10 }, { "OB_FMT_RVL", OB_FORMAT_RVL }, { "OB_FMT_MJPEG", OB_FORMAT_MJPG },
-    { "YUYV", OB_FORMAT_YUYV }, { "OB_FMT_YUYV", OB_FORMAT_YUYV }
+    { "YUYV", OB_FORMAT_YUYV }, { "OB_FMT_YUYV", OB_FORMAT_YUYV }, {"I420", OB_FORMAT_I420}
 };
 
 OBFormat codecToOBFormat(const std::string &codec) {

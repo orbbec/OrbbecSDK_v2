@@ -173,7 +173,7 @@ G435LeFrameTimestampCalculatorDeviceTime::G435LeFrameTimestampCalculatorDeviceTi
 }
 
 void G435LeFrameTimestampCalculatorDeviceTime::calculate(std::shared_ptr<Frame> frame)  {
-    if(frame->getFormat() == OB_FORMAT_YUYV || frame->getFormat() == OB_FORMAT_Y8 || frame->getFormat() == OB_FORMAT_Y10) {
+    if(frame->getFormat() == OB_FORMAT_YUYV || frame->getFormat() == OB_FORMAT_I420 ||frame->getFormat() == OB_FORMAT_Y8 || frame->getFormat() == OB_FORMAT_Y10) {
         directCalculator_->calculate(frame);
     }
     else {
