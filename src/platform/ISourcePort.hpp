@@ -21,13 +21,12 @@ enum SourcePortType {
     SOURCE_PORT_NET_VENDOR_STREAM,
     SOURCE_PORT_NET_RTSP,
     SOURCE_PORT_NET_RTP,
-    SOURCE_PORT_NET_PTP,
     SOURCE_PORT_IPC_VENDOR,  // Inter-process communication port
     SOURCE_PORT_UNKNOWN = 0xff,
 };
 
 #define IS_USB_PORT(type) ((type) >= SOURCE_PORT_USB_VENDOR && (type) <= SOURCE_PORT_USB_HID)
-#define IS_NET_PORT(type) ((type) >= SOURCE_PORT_NET_VENDOR && (type) <= SOURCE_PORT_NET_PTP)
+#define IS_NET_PORT(type) ((type) >= SOURCE_PORT_NET_VENDOR && (type) <= SOURCE_PORT_NET_RTP)
 
 struct SourcePortInfo {
     SourcePortInfo(SourcePortType portType) : portType(portType) {}
@@ -148,15 +147,6 @@ public:
     virtual void              startStream(std::shared_ptr<const StreamProfile> profile, MutableFrameCallback callback) = 0;
     virtual void              stopStream(std::shared_ptr<const StreamProfile> profile)                                 = 0;
     virtual void              stopAllStream()                                                                          = 0;
-};
-
-// for ptp data
-typedef std::function<void()> TimerSyncWithHostCallback;
-
-class IPTPDataPort : virtual public ISourcePort {  // Virtual inheritance solves diamond inheritance problem
-public:
-    ~IPTPDataPort() noexcept override = default;
-    virtual bool timerSyncWithHost(TimerSyncWithHostCallback callback) = 0;
 };
 
 }  // namespace libobsensor

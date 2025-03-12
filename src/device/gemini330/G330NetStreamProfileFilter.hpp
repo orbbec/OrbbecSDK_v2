@@ -9,6 +9,7 @@
 #include "libobsensor/h/ObTypes.h"
 
 namespace libobsensor {
+
 class G330NetStreamProfileFilter : public DeviceComponentBase, public IStreamProfileFilter {
 public:
     G330NetStreamProfileFilter(IDevice *owner);
@@ -19,11 +20,7 @@ public:
     void switchFilterMode(OBCameraPerformanceMode mode);
 
 private:
-    void fetchEffectiveStreamProfiles();
-
-private:
-    std::vector<OBEffectiveStreamProfile> effectiveStreamProfiles_;
-
     OBCameraPerformanceMode perFormanceMode_;
 };
+
 }  // namespace libobsensor

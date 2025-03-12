@@ -11,7 +11,6 @@
 #include "exception/ObException.hpp"
 #include "ethernet/RTPStreamPort.hpp"
 #include "ethernet/NetDataStreamPort.hpp"
-#include "ethernet/PTPDataPort.hpp"
 
 #include <map>
 
@@ -122,9 +121,6 @@ std::vector<std::shared_ptr<IDeviceEnumInfo>> G330DeviceInfo::pickNetDevices(con
 
             iter->emplace_back(std::make_shared<RTPStreamPortInfo>(portInfo->localMac, portInfo->localAddress, portInfo->address, static_cast<uint16_t>(20400),
                                                                    portInfo->port, OB_STREAM_ACCEL, portInfo->mac, portInfo->serialNumber, portInfo->pid));
-
-            iter->emplace_back(std::make_shared<PTPSourcePortInfo>(portInfo->localMac, portInfo->localAddress, portInfo->address, static_cast<uint16_t>(20012),
-                                                                   portInfo->port, portInfo->mac, portInfo->serialNumber, portInfo->pid));
 
             auto deviceEnumInfo = std::make_shared<G330DeviceInfo>(*iter);
             G330DeviceInfos.push_back(deviceEnumInfo);

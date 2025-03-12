@@ -107,7 +107,7 @@ bool NpCapLoader::init() {
         pcap_geterr_ = reinterpret_cast<pcap_geterr_t>(pcapGeterr);
 
         wpcapDllLoaded_ = true;
-        LOG_ERROR("wpcap.dll loaded successfully.");
+        LOG_DEBUG("wpcap.dll loaded successfully.");
         return true;
     }
 }

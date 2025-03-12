@@ -44,7 +44,6 @@
 #include "G330FrameMetadataParserContainer.hpp"
 #include "G330NetDisparitySensor.hpp"
 #include "G330NetVideoSensor.hpp"
-#include "G330NetDeviceClockSynchronizer.hpp"
 #include "G330NetAccelSensor.hpp"
 #include "G330NetGyroSensor.hpp"
 #include "utils/BufferParser.hpp"
@@ -1270,10 +1269,6 @@ void G330NetDevice::init() {
     };
     auto deviceSyncConfigurator = std::make_shared<DeviceSyncConfigurator>(this, supportedSyncModes);
     registerComponent(OB_DEV_COMPONENT_DEVICE_SYNC_CONFIGURATOR, deviceSyncConfigurator);
-;
-    /*auto port                    = getSourcePort(ptpPortInfo_);
-    auto deviceClockSynchronizer = std::make_shared<G330NetDeviceClockSynchronizer>(this, port);
-    registerComponent(OB_DEV_COMPONENT_DEVICE_CLOCK_SYNCHRONIZER, deviceClockSynchronizer);*/
 
     auto deviceClockSynchronizer = std::make_shared<DeviceClockSynchronizer>(this);
     registerComponent(OB_DEV_COMPONENT_DEVICE_CLOCK_SYNCHRONIZER, deviceClockSynchronizer);
@@ -1302,15 +1297,7 @@ void G330NetDevice::init() {
          return container;
      });
 
-     auto propertyServer         = getPropertyServer();
-    /* auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
-     propertyServer->registerProperty(OB_PROP_FRAME_INTERLEAVE_CONFIG_INDEX_INT, "rw", "rw", vendorPropertyAccessor.get());
-     propertyServer->registerProperty(OB_PROP_FRAME_INTERLEAVE_ENABLE_BOOL, "rw", "rw", vendorPropertyAccessor.get());
-     propertyServer->registerProperty(OB_PROP_FRAME_INTERLEAVE_LASER_PATTERN_SYNC_DELAY_INT, "rw", "rw", vendorPropertyAccessor.get());
-     auto frameInterleaveManager = std::make_shared<G330FrameInterleaveManager>(this);
-     registerComponent(OB_DEV_COMPONENT_FRAME_INTERLEAVE_MANAGER, frameInterleaveManager);*/
-
-     // TODO: version
+     auto propertyServer = getPropertyServer();
      if(getFirmwareVersionInt() >= 373) {
          auto hwNoiseRemovePropertyAccessor = std::make_shared<G330HWNoiseRemovePropertyAccessor>(this);
          propertyServer->registerProperty(OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL, "rw", "rw", hwNoiseRemovePropertyAccessor);
@@ -1389,12 +1376,6 @@ void G330NetDevice::initSensorList() {
     registerComponent(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER, netStreamProfileFilter);
 
     const auto &sourcePortInfoList = enumInfo_->getSourcePortInfoList();
-
-    auto ptpPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(),
-                                        [](const std::shared_ptr<const SourcePortInfo> &portInfo) { return portInfo->portType == SOURCE_PORT_NET_PTP; });
-    if(ptpPortInfoIter != sourcePortInfoList.end()) {
-        ptpPortInfo_ = *ptpPortInfoIter;
-    }
 
     auto vendorPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(),
                                            [](const std::shared_ptr<const SourcePortInfo> &portInfo) { return portInfo->portType == SOURCE_PORT_NET_VENDOR; });
@@ -1795,12 +1776,7 @@ void G330NetDevice::initProperties() {
             propertyServer->registerProperty(OB_STRUCT_IR_RIGHT_STREAM_PROFILE, "", "w", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_STRUCT_DEVICE_IP_ADDR_CONFIG, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_NETWORK_BANDWIDTH_TYPE_INT, "r", "r", vendorPropertyAccessor);
-
-            // todo: add these properties to the frame processor
-            // propertyServer->registerProperty(OB_PROP_SDK_DEPTH_FRAME_UNPACK_BOOL, "rw", "rw", vendorPropertyAccessor);
-
             propertyServer->registerProperty(OB_PROP_EXTERNAL_SIGNAL_RESET_BOOL, "rw", "rw", vendorPropertyAccessor);
-            // propertyServer->registerProperty(OB_PROP_GPM_BOOL, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_LASER_POWER_ACTUAL_LEVEL_INT, "r", "r", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_STRUCT_DEVICE_TIME, "", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_GYRO_ODR_INT, "rw", "rw", vendorPropertyAccessor);
