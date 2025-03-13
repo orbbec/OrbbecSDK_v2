@@ -83,4 +83,8 @@ void G330NetVideoSensor::initStreamPropertyId() {
     }
 }
 
+G330NetVideoSensor::~G330NetVideoSensor() noexcept {
+    disableStreamRecovery();
+}
+
 }  // namespace libobsensor
