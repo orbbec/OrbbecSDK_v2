@@ -1434,7 +1434,6 @@ void G330NetDevice::initSensorList() {
                 });
 
                 loadDefaultDepthPostProcessingConfig();
-                loadDefaultSensorStreamStartConfig(sensor);
                 return sensor;
             },
             true);
@@ -1489,7 +1488,6 @@ void G330NetDevice::initSensorList() {
 
                 initSensorStreamProfile(sensor);
                 initStreamProfileFilter(sensor);
-                loadDefaultSensorStreamStartConfig(sensor);
                 return sensor;
             },
             true);
@@ -1545,7 +1543,6 @@ void G330NetDevice::initSensorList() {
 
                 initSensorStreamProfile(sensor);
                 initStreamProfileFilter(sensor);
-                loadDefaultSensorStreamStartConfig(sensor);
                 return sensor;
             },
             true);
@@ -1617,7 +1614,6 @@ void G330NetDevice::initSensorList() {
 
                 initSensorStreamProfile(sensor);
                 initStreamProfileFilter(sensor);
-                loadDefaultSensorStreamStartConfig(sensor);
                 return sensor;
             },
             true);
@@ -2012,40 +2008,6 @@ void G330NetDevice::loadDefaultDepthPostProcessingConfig() {
         LOG_WARN(errorMsg);
     }
 }
-
-void G330NetDevice::loadDefaultSensorStreamStartConfig(std::shared_ptr<SensorBase> sensor) {
-    auto         envConfig  = EnvConfig::getInstance();
-    std::string  deviceName = utils::string::removeSpace(deviceInfo_->name_);
-    std::string  nodeName   = std::string("Device.") + deviceName;
-    OBSensorType sensorType = sensor->getSensorType();
-    switch(sensorType) {
-    case OB_SENSOR_DEPTH:
-        nodeName = nodeName + std::string(".Depth");
-        break;
-    case OB_SENSOR_IR_LEFT:
-        nodeName = nodeName + std::string(".LeftIR");
-        break;
-    case OB_SENSOR_IR_RIGHT:
-        nodeName = nodeName + std::string(".RightIR");
-        break;
-    case OB_SENSOR_COLOR:
-        nodeName = nodeName + std::string(".Color");
-        break;
-    default:
-        break;
-    }
-
-    if(envConfig->isNodeContained(nodeName)) {
-        int maxRecoveryCount         = 3;
-        int noStreamTimeoutMs        = 3000;
-        int streamInterruptTimeoutMs = 3000;
-        envConfig->getIntValue(nodeName + std::string(".MaxRecoveryCount"), maxRecoveryCount);
-        envConfig->getIntValue(nodeName + std::string(".NoStreamTimeoutMs"), noStreamTimeoutMs);
-        envConfig->getIntValue(nodeName + std::string(".StreamInterruptTimeoutMs"), maxRecoveryCount);
-        sensor->enableStreamRecovery(maxRecoveryCount, noStreamTimeoutMs, streamInterruptTimeoutMs);
-    }
-}
-
 
 void G330NetDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
     auto streamProfile = loadDefaultStreamProfile(sensor->getSensorType());

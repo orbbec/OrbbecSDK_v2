@@ -55,7 +55,6 @@ void G330NetDisparitySensor::setStreamProfileList(const StreamProfileList &profi
 }
 
 G330NetDisparitySensor::~G330NetDisparitySensor() noexcept {
-    disableStreamRecovery();
 }
 
 }  // namespace libobsensor

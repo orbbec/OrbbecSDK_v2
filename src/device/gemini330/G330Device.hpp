@@ -5,7 +5,6 @@
 #include "DeviceBase.hpp"
 #include "IDeviceManager.hpp"
 #include "IFrameTimestamp.hpp"
-#include "sensor/SensorBase.hpp"
 
 #if defined(BUILD_NET_PAL)
 #include "ethernet/RTPStreamPort.hpp"
@@ -62,7 +61,6 @@ private:
 
     std::shared_ptr<const StreamProfile> loadDefaultStreamProfile(OBSensorType sensorType);
     void                                 loadDefaultDepthPostProcessingConfig();  // todo: declare in base class
-    void                                 loadDefaultSensorStreamStartConfig(std::shared_ptr<SensorBase> sensor);
 
 private:
     std::shared_ptr<const SourcePortInfo>                       vendorPortInfo_;

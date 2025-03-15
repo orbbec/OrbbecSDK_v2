@@ -1065,14 +1065,6 @@
             <DepthFilterDDOConfig>./Gemini2_v1.0.json</DepthFilterDDOConfig>
 			 -->
             <Depth>
-				<!-- Number of retries for open stream failures, 0 means no retries -->
-                <MaxRecoveryCount>1</MaxRecoveryCount>
-                <!-- Open flow waits for the timeout period of the first frame of data, after which
-                the open flow will fail -->
-                <NoStreamTimeoutMs>3000</NoStreamTimeoutMs>
-                <!-- The maximum frame interval time, if this value is exceeded, it will be judged
-                that the stream is interrupted -->
-                <StreamInterruptTimeoutMs>3000</StreamInterruptTimeoutMs>
                 <!-- The resolution width is enabled by default, int type -->
                 <Width>640</Width>
                 <!-- High resolution is enabled by default, int type -->
@@ -1082,14 +1074,6 @@
                 <Format>Y16</Format>
             </Depth>
             <Color>
-				<!-- Number of retries for open stream failures, 0 means no retries -->
-                <MaxRecoveryCount>1</MaxRecoveryCount>
-                <!-- Open flow waits for the timeout period of the first frame of data, after which
-                the open flow will fail -->
-                <NoStreamTimeoutMs>3000</NoStreamTimeoutMs>
-                <!-- The maximum frame interval time, if this value is exceeded, it will be judged
-                that the stream is interrupted -->
-                <StreamInterruptTimeoutMs>3000</StreamInterruptTimeoutMs>
                 <!-- The resolution width is enabled by default, int type -->
                 <Width>640</Width>
                 <!-- High resolution is enabled by default, int type -->
@@ -1099,14 +1083,6 @@
                 <Format>MJPG</Format>
             </Color>
             <LeftIR>
-				<!-- Number of retries for open stream failures, 0 means no retries -->
-                <MaxRecoveryCount>1</MaxRecoveryCount>
-                <!-- Open flow waits for the timeout period of the first frame of data, after which
-                the open flow will fail -->
-                <NoStreamTimeoutMs>3000</NoStreamTimeoutMs>
-                <!-- The maximum frame interval time, if this value is exceeded, it will be judged
-                that the stream is interrupted -->
-                <StreamInterruptTimeoutMs>3000</StreamInterruptTimeoutMs>
                 <!-- The resolution width is enabled by default, int type -->
                 <Width>640</Width>
                 <!-- High resolution is enabled by default, int type -->
@@ -1116,14 +1092,6 @@
                 <Format>Y8</Format>
             </LeftIR>
             <RightIR>
-				<!-- Number of retries for open stream failures, 0 means no retries -->
-                <MaxRecoveryCount>1</MaxRecoveryCount>
-                <!-- Open flow waits for the timeout period of the first frame of data, after which
-                the open flow will fail -->
-                <NoStreamTimeoutMs>3000</NoStreamTimeoutMs>
-                <!-- The maximum frame interval time, if this value is exceeded, it will be judged
-                that the stream is interrupted -->
-                <StreamInterruptTimeoutMs>3000</StreamInterruptTimeoutMs>
                 <!-- The resolution width is enabled by default, int type -->
                 <Width>640</Width>
                 <!-- High resolution is enabled by default, int type -->
