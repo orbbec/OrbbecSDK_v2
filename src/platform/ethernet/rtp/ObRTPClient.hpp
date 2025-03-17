@@ -4,11 +4,6 @@
 #include "IFrame.hpp"
 #include "ObRTPUDPClient.hpp"
 
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
-#include "ObRTPNpCapReceiver.hpp"
-#endif
-
-
 namespace libobsensor {
 
 class ObRTPClient {
@@ -23,12 +18,6 @@ public:
     void     close();
 
 private:
-    
-//#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
-//    std::shared_ptr<ObRTPNpCapReceiver> udpClient_;
-//#else
-//    std::shared_ptr<ObRTPUDPClient> udpClient_;
-//#endif
     std::shared_ptr<ObRTPUDPClient> udpClient_;
 
 };
