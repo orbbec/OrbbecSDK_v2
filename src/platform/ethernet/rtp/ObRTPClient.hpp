@@ -24,11 +24,12 @@ public:
 
 private:
     
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
-    std::shared_ptr<ObRTPNpCapReceiver> udpClient_;
-#else
+//#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+//    std::shared_ptr<ObRTPNpCapReceiver> udpClient_;
+//#else
+//    std::shared_ptr<ObRTPUDPClient> udpClient_;
+//#endif
     std::shared_ptr<ObRTPUDPClient> udpClient_;
-#endif
 
 };
 
