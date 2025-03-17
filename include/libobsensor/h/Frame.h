@@ -224,7 +224,7 @@ OB_EXPORT void ob_frame_set_system_timestamp_us(ob_frame *frame, uint64_t system
 
 /**
  * @brief Get the global timestamp of the frame in microseconds.
- * @brief The global timestamp is the time point when the frame was was captured by the device, and has been converted to the host clock domain. The
+ * @brief The global timestamp is the time point when the frame was captured by the device, and has been converted to the host clock domain. The
  * conversion process base on the frame timestamp and can eliminate the timer drift of the device
  *
  * @attention The global timestamp is disabled by default. If global timestamp is not enabled, the function will return 0. To enable it, call @ref
