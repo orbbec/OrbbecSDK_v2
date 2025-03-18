@@ -15,12 +15,12 @@
 namespace libobsensor {
 
 /**
- * @brief LiDARStreamer class for TL2401 LiDAR
+ * @brief MS600Streamer class for MS600 LiDAR
  */
-class LiDARStreamer : public ILiDARStreamer {
+class MS600Streamer : public ILiDARStreamer {
 public:
-    LiDARStreamer(IDevice *owner, const std::shared_ptr<IDataStreamPort> &backend);
-    virtual ~LiDARStreamer() noexcept;
+    MS600Streamer(IDevice *owner, const std::shared_ptr<IDataStreamPort> &backend);
+    virtual ~MS600Streamer() noexcept;
 
     void start(std::shared_ptr<const StreamProfile> sp, MutableFrameCallback callback) override;
     void stop() override;
@@ -42,9 +42,9 @@ private:
     MutableFrameCallback                 callback_;
     std::atomic_bool                     running_;
     uint64_t                             frameIndex_;
-    std::shared_ptr<Frame>               frame_;      // cache frame data
-    uint32_t                             frameDataOffset_;  // frame data offset
-    uint16_t                             expectedDataNumber_; // expected data block number in the next data block
+    std::shared_ptr<Frame>               frame_;               // cache frame data
+    uint32_t                             frameDataOffset_;     // frame data offset
+    uint16_t                             expectedDataNumber_;  // expected data block number in the next data block
 };
 
 }  // namespace libobsensor

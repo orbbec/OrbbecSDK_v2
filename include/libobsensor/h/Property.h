@@ -1055,6 +1055,11 @@ typedef enum {
      * @brief LiDAR: get mems version
      */
     OB_RAW_DATA_LIDAR_MEMS_VERSION = 8032,
+
+    /**
+     * @brief LiDAR: get/set specific mode
+     */
+    OB_PROP_LIDAR_SPECIFIC_MODE = 8033,
 } OBPropertyID,
     ob_property_id;
 

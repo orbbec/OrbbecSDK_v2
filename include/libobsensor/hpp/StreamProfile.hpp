@@ -391,11 +391,11 @@ public:
 
     ~LiDARStreamProfile() noexcept override = default;
 
-    OBLiDARScanSpeed getScanSpeed() const {
+    OBLiDARScanRate getScanRate() const {
         ob_error *error = nullptr;
-        auto      speed = ob_lidar_stream_profile_get_scan_speed(impl_, &error);
+        auto      rate  = ob_lidar_stream_profile_get_scan_rate(impl_, &error);
         Error::handle(&error);
-        return speed;
+        return rate;
     }
 };
 
@@ -545,12 +545,12 @@ public:
      * @brief Match the corresponding LiDAR stream profile based on the passed-in parameters. If multiple Match are found, the first one in the list is
      * returned by default. Throws an exception if no matching profile is found.
      *
-     * @param scanSpeed The scan speed LiDAR. Pass OB_LIDAR_SCAN_ANY if no matching condition is required.
+     * @param scanRate The scan rate of LiDAR. Pass OB_LIDAR_SCAN_ANY if no matching condition is required.
      * @param format The type of the stream. Pass OB_FORMAT_ANY if no matching condition is required.
      */
-    std::shared_ptr<LiDARStreamProfile> getLiDARStreamProfile(OBLiDARScanSpeed scanSpeed, OBFormat format) const {
+    std::shared_ptr<LiDARStreamProfile> getLiDARStreamProfile(OBLiDARScanRate scanRate, OBFormat format) const {
         ob_error *error   = nullptr;
-        auto      profile = ob_stream_profile_list_get_lidar_stream_profile(impl_, scanSpeed, format, &error);
+        auto      profile = ob_stream_profile_list_get_lidar_stream_profile(impl_, scanRate, format, &error);
         Error::handle(&error);
         auto lsp = StreamProfileFactory::create(profile);
         return lsp->as<LiDARStreamProfile>();

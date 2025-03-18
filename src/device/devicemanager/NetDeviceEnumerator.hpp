@@ -27,6 +27,8 @@ private:
     bool               handleDeviceArrival(std::string devUid);
     DeviceEnumInfoList queryDeviceList();
 
+    static uint16_t getDevicePid(std::shared_ptr<const NetSourcePortInfo> info);
+
 private:
     std::shared_ptr<Platform> platform_;
 

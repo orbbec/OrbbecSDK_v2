@@ -33,7 +33,7 @@ typedef struct {
     uint16_t dataLen;            // data lenth
     uint8_t  model;              // 0: MS600; 1:TL2401
     uint8_t  scanRate;           // 1:5HZ;2:10HZ;3:15HZ;4:20HZ;
-    uint16_t dataBlockNum;     // data block index based 1
+    uint16_t dataBlockNum;       // data block index based 1
     uint16_t frameIndex;         // 1~65535
     uint8_t  dataFormat;         // 0:IMU; 1:point cloud; 2: spherical point cloud;5: calibration point cloud
     uint64_t timestamp;          // timestamp, 0~3600e9, unit 1ns
@@ -87,7 +87,7 @@ static inline uint64_t ntohll(uint64_t val) {
 #endif
 
 static inline void copyToOBLiDARSpherePoint(const LiDARSpherePoint *point, OBLiDARSpherePoint *obPoint) {
-    // to host order and to uint mm / degrees
+    // to host order and to unit mm / degrees
     obPoint->distance     = ntohs(point->distance) * 2.0f;
     obPoint->theta        = ntohs(point->theta) * 0.01f;
     obPoint->phi          = ntohs(point->phi) * 0.001f;
@@ -103,9 +103,9 @@ static inline void convertToCartesianCoordinate(const LiDARSpherePoint *sphere, 
 
     constexpr float MY_PI = 3.14159265358979323846f;
 
-    distance *= 2;   // to unit mm
+    distance *= 2;                    // to unit mm
     theta *= 0.01f * MY_PI / 180.0f;  // unit 0.01 degrees to unit rad
-    phi *= 0.001f * MY_PI / 180.0f;    // unit 0.01 degrees to unit rad
+    phi *= 0.001f * MY_PI / 180.0f;   // unit 0.01 degrees to unit rad
 
     point->x            = distance * cos(theta) * cos(phi);
     point->y            = distance * sin(theta) * cos(phi);
@@ -148,10 +148,10 @@ void LiDARStreamer::start(std::shared_ptr<const StreamProfile> sp, MutableFrameC
         }
         // check stream profile and convert to scan profile
         checkAndConvertProfile(sp);
-        profile_  = sp;
-        callback_ = callback;
-        running_  = true;
-        expectedDataNumber_ = 1; // the first data block
+        profile_            = sp;
+        callback_           = callback;
+        running_            = true;
+        expectedDataNumber_ = 1;  // the first data block
     }
 
     // 1. send command to stop stream
@@ -177,7 +177,8 @@ void LiDARStreamer::start(std::shared_ptr<const StreamProfile> sp, MutableFrameC
         frame_.reset();
         backend_->stopStream();
         callback_ = nullptr;
-        running_ = false;
+        running_  = false;
+        throw;
     })
 }
 
@@ -201,11 +202,11 @@ void LiDARStreamer::stop() {
     LOG_DEBUG("LiDARStreamer stop backend...");
     backend_->stopStream();
     scanProfile_.clear();
-    frameIndex_     = 0;
+    frameIndex_ = 0;
     frame_.reset();
-    frameDataOffset_ = 0;
+    frameDataOffset_    = 0;
     expectedDataNumber_ = 0;
-    running_ = false;
+    running_            = false;
     LOG_DEBUG("LiDARStreamer stop finished.");
 }
 
@@ -269,7 +270,7 @@ void LiDARStreamer::checkAndConvertProfile(std::shared_ptr<const StreamProfile> 
     scanProfile_.frameType = utils::mapStreamTypeToFrameType(lidarProfile->getType());
     // format
     scanProfile_.format = lidarProfile->getFormat();
-    if ( scanProfile_.format == OB_FORMAT_LIDAR_CALIBRATION ) {
+    if(scanProfile_.format == OB_FORMAT_LIDAR_CALIBRATION) {
         // calibration data
         scanProfile_.dataBlockSize = 944;
         scanProfile_.pointsNum     = 25;
@@ -298,15 +299,15 @@ void LiDARStreamer::checkAndConvertProfile(std::shared_ptr<const StreamProfile> 
     // speed and max data block number
     // TODO hard-coded here, should be re-factored.
 
-    // std::pair: first scanspeed; second: data block num for a circle
-    static std::unordered_map<OBLiDARScanSpeed, std::pair<uint32_t, uint32_t>> macScanSpeed = {
+    // std::pair: first scan speed; second: data block num for a circle
+    static std::unordered_map<OBLiDARScanRate, std::pair<uint32_t, uint32_t>> mapScanRate = {
         { OB_LIDAR_SCAN_5HZ, { 300, 240 } },
         { OB_LIDAR_SCAN_10HZ, { 600, 120 } },
         { OB_LIDAR_SCAN_15HZ, { 900, 80 } },
         { OB_LIDAR_SCAN_20HZ, { 1200, 60 } },
     };
-    // std::pair: first scanspeed; second: data block num for a circle
-    static std::unordered_map<OBLiDARScanSpeed, std::pair<uint32_t, uint32_t>> macScanSpeedCalibration = {
+    // std::pair: first scan speed; second: data block num for a circle
+    static std::unordered_map<OBLiDARScanRate, std::pair<uint32_t, uint32_t>> mapScanRateCalibration = {
         { OB_LIDAR_SCAN_5HZ, { 300, 1200 } },
         { OB_LIDAR_SCAN_10HZ, { 600, 600 } },
         { OB_LIDAR_SCAN_15HZ, { 900, 400 } },
@@ -315,16 +316,16 @@ void LiDARStreamer::checkAndConvertProfile(std::shared_ptr<const StreamProfile> 
 
     bool found = false;
     if(scanProfile_.format == OB_FORMAT_LIDAR_CALIBRATION) {
-        auto iter = macScanSpeedCalibration.find(lidarProfile->getScanSpeed());
-        if(iter != macScanSpeedCalibration.end()) {
+        auto iter = mapScanRateCalibration.find(lidarProfile->getScanRate());
+        if(iter != mapScanRateCalibration.end()) {
             scanProfile_.scanSpeed       = (*iter).second.first;
             scanProfile_.maxDataBlockNum = (*iter).second.second;
             found                        = true;
         }
     }
     else {
-        auto iter = macScanSpeed.find(lidarProfile->getScanSpeed());
-        if(iter != macScanSpeed.end()) {
+        auto iter = mapScanRate.find(lidarProfile->getScanRate());
+        if(iter != mapScanRate.end()) {
             scanProfile_.scanSpeed       = (*iter).second.first;
             scanProfile_.maxDataBlockNum = (*iter).second.second;
             found                        = true;
@@ -332,7 +333,7 @@ void LiDARStreamer::checkAndConvertProfile(std::shared_ptr<const StreamProfile> 
     }
     if(!found) {
         scanProfile_.clear();
-        throw invalid_value_exception("Invalid LiDAR scan speed");
+        throw invalid_value_exception("Invalid LiDAR scan rate");
     }
 
     scanProfile_.frameSize = dataSizePerBlock * scanProfile_.maxDataBlockNum;
@@ -349,27 +350,27 @@ void LiDARStreamer::parseLiDARData(std::shared_ptr<Frame> frame) {
     LiDARDataHeader *header          = (LiDARDataHeader *)data;
 
     // data block format: LiDARDataHeader(40) || point 1 ... point n || tail magic(FE FE FE FE)
-    // The input parameter "frame" represents a data block. 
-    // Each frame consists of n blocks (determined by the scan speed). 
+    // The input parameter "frame" represents a data block.
+    // Each frame consists of n blocks (determined by the scan speed).
     // We must acquire all data blocks in order to assemble a complete data frame.
-    // Currently, the out-of-order issue is not considered. 
+    // Currently, the out-of-order issue is not considered.
     // If the data is discontinuous or incomplete, the data blocks will be discarded.
-    
+
     // check data size
     if(dataSize != dataBlockSize) {
         LOG_WARN("This LiDAR block data will be dropped because data size({}) is not equal to {}!", dataSize, dataBlockSize);
         return;
     }
     // convert to host order
-    header->dataLen = ntohs(header->dataLen);
-    header->dataBlockNum = ntohs(header->dataBlockNum);
-    header->frameIndex     = ntohs(header->frameIndex);
-    header->timestamp      = ntohll(header->timestamp);
-    header->warningInfo    = ntohl(header->warningInfo);
-    header->scanSpeed      = ntohs(header->scanSpeed);
+    header->dataLen          = ntohs(header->dataLen);
+    header->dataBlockNum     = ntohs(header->dataBlockNum);
+    header->frameIndex       = ntohs(header->frameIndex);
+    header->timestamp        = ntohll(header->timestamp);
+    header->warningInfo      = ntohl(header->warningInfo);
+    header->scanSpeed        = ntohs(header->scanSpeed);
     header->verticalScanRate = ntohs(header->verticalScanRate);
     header->apdtemperature   = ntohs(header->apdtemperature);
-    
+
     // check header and tail magic
     if((0 != memcmp(header->magic, HEAD_MAGIC, HEAD_MAGIC_LEN)) || (0 != memcmp(data + dataSize - TAIL_MAGIC_LEN, TAIL_MAGIC, TAIL_MAGIC_LEN))) {
         LOG_WARN("This LiDAR block data will be dropped because magic is invalid!");
@@ -378,7 +379,7 @@ void LiDARStreamer::parseLiDARData(std::shared_ptr<Frame> frame) {
 
     // check data size
     uint32_t pointDataSize = static_cast<uint32_t>(dataSize - sizeof(LiDARDataHeader) - TAIL_MAGIC_LEN);  // point data size in this block data
-    uint16_t curPointsNum = 0;
+    uint16_t curPointsNum  = 0;
 
     // format and data size
     OBFormat format = OB_FORMAT_UNKNOWN;
@@ -408,15 +409,15 @@ void LiDARStreamer::parseLiDARData(std::shared_ptr<Frame> frame) {
                  scanProfile_.format);
         return;
     }
-    if ( curPointsNum != pointsNum ) {
-        LOG_WARN("This LiDAR block data will be dropped because data point nume({}) is not equal to {}", pointsNum, format);
+    if(curPointsNum != pointsNum) {
+        LOG_WARN("This LiDAR block data will be dropped because data point num({}) is not equal to {}", curPointsNum, pointsNum);
         return;
     }
 
     if(expectedDataNumber_ != header->dataBlockNum) {
-        expectedDataNumber_ = 1;  // reset to 1
         // not the first data block?
         if(header->dataBlockNum != 1) {
+            expectedDataNumber_ = 1;  // reset to 1
             LOG_WARN("This LiDAR block data will be dropped because data block number({}) is not equal to {}", header->dataBlockNum, expectedDataNumber_);
             return;
         }
@@ -424,8 +425,9 @@ void LiDARStreamer::parseLiDARData(std::shared_ptr<Frame> frame) {
         if(frameDataOffset_ > 0) {
             LOG_WARN("This LiDAR last frame data will be dropped because we received the new first data block. Data size: {}", frameDataOffset_);
         }
-        frame_           = nullptr;
-        frameDataOffset_ = 0;
+        expectedDataNumber_ = 1;  // reset to 1
+        frame_              = nullptr;
+        frameDataOffset_    = 0;
     }
 
     // alloc frame memory
@@ -436,6 +438,7 @@ void LiDARStreamer::parseLiDARData(std::shared_ptr<Frame> frame) {
         frameDataOffset_ = 0;
     }
 
+    data += sizeof(LiDARDataHeader);
     auto frameData = frame_->getDataMutable() + frameDataOffset_;
     // convert coordinate system
     if(format == OB_FORMAT_LIDAR_SPHERE_POINT) {
@@ -452,6 +455,7 @@ void LiDARStreamer::parseLiDARData(std::shared_ptr<Frame> frame) {
             }
             else {
                 LOG_WARN("This LiDAR block data will be dropped because frame data is invalid. Data number: {}", header->dataBlockNum);
+                return;
             }
         }
         else {
@@ -467,25 +471,26 @@ void LiDARStreamer::parseLiDARData(std::shared_ptr<Frame> frame) {
             }
             else {
                 LOG_WARN("This LiDAR block data will be dropped because frame data is invalid. Data number: {}", header->dataBlockNum);
+                return;
             }
         }
     }
     else {
         // OB_FORMAT_LIDAR_CALIBRATION
         // just copy all data
-        memcpy(frameData, data + sizeof(LiDARDataHeader), pointDataSize);
+        memcpy(frameData, data, pointDataSize);
         // update data offset
         frameDataOffset_ += pointDataSize;
     }
     // timestamp
-    frame_->setTimeStampUsec(header->timestamp/1000); // to us
+    frame_->setTimeStampUsec(header->timestamp / 1000);  // to us
     frame_->setSystemTimeStampUsec(utils::getNowTimesUs());
 
     if(header->dataBlockNum >= maxDataBlockNum) {
         // reach the max data block num - all data for a circle
         // or get the last data block for a circle
         // Tips: for now, we do not consider out-of-order transmission or packet loss
-        
+
         // update frame info
         auto frameIndex = frameIndex_++;
         frame_->setDataSize(frameDataOffset_);
@@ -496,9 +501,9 @@ void LiDARStreamer::parseLiDARData(std::shared_ptr<Frame> frame) {
             callback_(frame_);
         }
         // release the frame
-        frame_ = nullptr;
-        frameDataOffset_ = 0;
-        expectedDataNumber_ = 1; // reset to 1
+        frame_              = nullptr;
+        frameDataOffset_    = 0;
+        expectedDataNumber_ = 1;  // reset to 1
     }
     else {
         // wait for more data

@@ -83,6 +83,39 @@ DeviceEnumInfoList NetDeviceEnumerator::queryDeviceList() {
     return deviceInfoMatch(sourcePortInfoList);
 }
 
+uint16_t NetDeviceEnumerator::getDevicePid(std::shared_ptr<const NetSourcePortInfo> info) {
+    if(info == nullptr) {
+        return 0;
+    }
+
+    // check if camera device
+    BEGIN_TRY_EXECUTE({
+        OBPropertyValue value;
+        value.intValue = 0;
+
+        auto port         = Platform::getInstance()->getSourcePort(info);
+        auto propAccessor = std::make_shared<VendorPropertyAccessor>(nullptr, port);
+        propAccessor->getPropertyValue(OB_PROP_DEVICE_PID_INT, &value);
+        return static_cast<uint16_t>(value.intValue);
+    })
+    CATCH_EXCEPTION_AND_EXECUTE({ LOG_WARN("Get device pid failed with VendorPropertyAccessor! address:{}, port:{}", info->address, info->port); });
+
+    // check if is LiDAR device
+    BEGIN_TRY_EXECUTE({
+        OBPropertyValue value;
+        value.intValue = 0;
+
+        auto port         = Platform::getInstance()->getSourcePort(info);
+        auto propAccessor = std::make_shared<LiDARPropertyAccessor>(nullptr, port);
+        propAccessor->getPropertyValue(OB_PROP_DEVICE_PID_INT, &value);
+        return static_cast<uint16_t>(value.intValue);
+    })
+    CATCH_EXCEPTION_AND_EXECUTE({ LOG_WARN("Get device pid failed with LiDARPropertyAccessor! address:{}, port:{}", info->address, info->port); });
+
+    LOG_WARN("Use default pid({}) of Femto Mega Device! address:{}, port:{}", OB_FEMTO_MEGA_PID, info->address, info->port);
+    return OB_FEMTO_MEGA_PID;
+}
+
 DeviceEnumInfoList NetDeviceEnumerator::getDeviceInfoList() {
     std::unique_lock<std::recursive_mutex> lock(deviceInfoListMutex_);
     return deviceInfoList_;
@@ -307,44 +340,13 @@ bool NetDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType
 }
 
 std::shared_ptr<const IDeviceEnumInfo> NetDeviceEnumerator::queryNetDevice(std::string address, uint16_t port) {
-    auto info               = std::make_shared<NetSourcePortInfo>(SOURCE_PORT_NET_VENDOR,  //
-                                                    "Unknown", "Unknown", "Unknown", address, port, address + ":" + std::to_string(port),
-                                                    "Unknown", ORBBEC_DEVICE_VID, 0);
-    auto sourcePort         = Platform::getInstance()->getNetSourcePort(info);
-    auto vendorPropAccessor = std::make_shared<VendorPropertyAccessor>(nullptr, sourcePort);
-    bool found              = false;
-
-    BEGIN_TRY_EXECUTE({
-        OBPropertyValue value;
-        value.intValue = 0;
-        vendorPropAccessor->getPropertyValue(OB_PROP_DEVICE_PID_INT, &value);
-        info->pid = static_cast<uint16_t>(value.intValue);
-        found     = true;
-    })
-    CATCH_EXCEPTION_AND_EXECUTE({
-        LOG_WARN("Get device pid failed, use default pid as Femto Mega Device! address:{}, port:{}", address, port);
-        info->pid = OB_FEMTO_MEGA_PID;
-    });
+    auto info = std::make_shared<NetSourcePortInfo>(SOURCE_PORT_NET_VENDOR,  //
+                                                    "Unknown", "Unknown", "Unknown", address, port, address + ":" + std::to_string(port), "Unknown",
+                                                    ORBBEC_DEVICE_VID, 0);
+    info->pid = getDevicePid(info);
 
     if(isDeviceInContainer(G335LeDevPids, info->vid, info->pid)) {
         throw invalid_value_exception("No supported G335Le found for address: " + address + ":" + std::to_string(port));
-    }
-
-    if(!found) {
-        // check if is LiDAR device
-        BEGIN_TRY_EXECUTE({
-            OBPropertyValue value;
-            value.intValue = 0;
-
-            auto propAccessor = std::make_shared<LiDARPropertyAccessor>(nullptr, sourcePort);
-            propAccessor->getPropertyValue(OB_PROP_DEVICE_PID_INT, &value);
-            info->pid = static_cast<uint16_t>(value.intValue);
-            found     = true;
-        })
-        CATCH_EXCEPTION_AND_EXECUTE({
-            LOG_WARN("Get device pid failed with LiDARPropertyAccessor, use default pid as Femto Mega Device! address:{}, port:{}", address, port);
-            info->pid = OB_FEMTO_MEGA_PID;
-        });
     }
 
     auto deviceEnumInfoList = deviceInfoMatch({ info });

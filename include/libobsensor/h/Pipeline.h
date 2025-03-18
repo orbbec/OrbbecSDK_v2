@@ -248,11 +248,11 @@ OB_EXPORT void ob_config_enable_gyro_stream(ob_config *config, ob_gyro_full_scal
  * @brief Enable LiDAR stream with specified parameters
  *
  * @param config[in] The pipeline configuration object
- * @param scan_speed[in] The scan speed LiDAR
+ * @param scan_rate[in] The scan rate of LiDAR
  * @param format[in] The format of the LiDAR stream
  * @param error[out] Pointer to an error object that will be set if an error occurs.
  */
-OB_EXPORT void ob_config_enable_lidar_stream(ob_config *config, ob_lidar_scan_speed scan_speed, ob_format format, ob_error **error);
+OB_EXPORT void ob_config_enable_lidar_stream(ob_config *config, ob_lidar_scan_rate scan_rate, ob_format format, ob_error **error);
 
 /**
  * @brief  Get the enabled stream profile list in the pipeline configuration
@@ -354,4 +354,3 @@ OB_EXPORT ob_calibration_param ob_pipeline_get_calibration_param(ob_pipeline *pi
 #ifdef __cplusplus
 }
 #endif
-

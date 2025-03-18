@@ -4,12 +4,12 @@
 cmake_minimum_required(VERSION 3.5)
 
 if(OB_BUILD_NET_PAL)
-    target_sources(
-        ${OB_TARGET_DEVICE} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/LiDARDevice.cpp
-                                    ${CMAKE_CURRENT_LIST_DIR}/LiDARDevice.hpp
-                                    ${CMAKE_CURRENT_LIST_DIR}/LiDARDeviceInfo.cpp
-                                    ${CMAKE_CURRENT_LIST_DIR}/LiDARDeviceInfo.hpp
-                                    ${CMAKE_CURRENT_LIST_DIR}/LiDARStreamProfileFilter.cpp
-                                    ${CMAKE_CURRENT_LIST_DIR}/LiDARStreamProfileFilter.hpp
+    file(GLOB_RECURSE SOURCES 
+        "${CMAKE_CURRENT_LIST_DIR}/*.cpp"
+        "${CMAKE_CURRENT_LIST_DIR}/*.hpp"
+        "${CMAKE_CURRENT_LIST_DIR}/*.c"
+        "${CMAKE_CURRENT_LIST_DIR}/*.h"
     )
+
+    target_sources(${OB_TARGET_DEVICE} PRIVATE ${SOURCES})
 endif()

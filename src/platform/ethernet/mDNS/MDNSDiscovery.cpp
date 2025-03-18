@@ -295,10 +295,9 @@ void MDNSDiscovery::sendAndRecvMDNSQuery(SOCKET sock) {
                 info.ip    = ack.ip;
                 info.port  = ack.port;
                 info.mac   = info.ip + ":" + std::to_string(info.port);  // TODO: get mac address
-                info.sn    = findTxtRecord(ack.txtList, "SN");
-                info.model = findTxtRecord(ack.txtList, "MODEL");
-
-                auto pid = findTxtRecord(ack.txtList, "PID");
+                info.sn    = findTxtRecord(ack.txtList, "SN", "unknown");
+                info.model = findTxtRecord(ack.txtList, "MODEL", "");
+                auto pid   = findTxtRecord(ack.txtList, "PID", "");
                 try {
                     uint32_t uintPid = std::stoul(pid, nullptr, 16);
                     info.pid = static_cast<uint16_t>(uintPid);
@@ -314,6 +313,16 @@ void MDNSDiscovery::sendAndRecvMDNSQuery(SOCKET sock) {
                 // check for duplication
                 auto it = std::find_if(devInfoList_.begin(), devInfoList_.end(), [&info](const MDNSDeviceInfo &item) { return item == info; });
                 if(it == devInfoList_.end()) {
+                    // TODO: It is recommended to send a command to get the informations
+                    // pid
+                    if(info.pid == 0) {
+                        if(info.model == "TL2401") {
+                            info.pid = 0x5555;  // multi-lines
+                        }
+                        else if(info.model == "MS600" || info.model == "SL450") {
+                            info.pid = 0x1234;  // single-line
+                        }
+                    }
                     devInfoList_.emplace_back(info);
                 }
             } while(1);
@@ -322,7 +331,7 @@ void MDNSDiscovery::sendAndRecvMDNSQuery(SOCKET sock) {
     }
 }
 
-std::string MDNSDiscovery::findTxtRecord(const std::vector<std::string> &txtList, const std::string &key) {
+std::string MDNSDiscovery::findTxtRecord(const std::vector<std::string> &txtList, const std::string &key, const std::string &default) {
     // data format: "key:value,key:value,key:value"
     for(const auto &str: txtList) {
         std::istringstream iss(str);
@@ -334,7 +343,7 @@ std::string MDNSDiscovery::findTxtRecord(const std::vector<std::string> &txtList
             }
         }
     }
-    return ""; // not found
+    return default;  // not found
 }
 
 std::vector<MDNSDeviceInfo> MDNSDiscovery::queryDeviceList() {

@@ -28,7 +28,7 @@ OBFormat uvcFourccToOBFormat(uint32_t fourcc);
 uint32_t obFormatToUvcFourcc(OBFormat format);
 
 float mapIMUSampleRateToValue(OBIMUSampleRate rate);
-float mapLiDARScanSpeedToValue(OBLiDARScanSpeed speed);
+float mapLiDARScanRateToValue(OBLiDARScanRate rate);
 
 const std::string &obFormatToStr(OBFormat type);
 const std::string &obFrameToStr(OBFrameType type);
@@ -37,7 +37,7 @@ const std::string &obSensorToStr(OBSensorType type);
 const std::string &obImuRateToStr(OBIMUSampleRate type);
 const std::string &GyroFullScaleRangeToStr(OBGyroFullScaleRange range);
 const std::string &AccelFullScaleRangeToStr(OBAccelFullScaleRange params);
-const std::string &LiDARScanSpeedToStr(OBLiDARScanSpeed scanSpeed);
+const std::string &LiDARScanRateToStr(OBLiDARScanRate scanRate);
 const std::string &MetaDataToStr(OBFrameMetadataType params);
 
 OBFormat              strToOBFormat(const std::string str);

@@ -23,7 +23,7 @@ typedef struct MDNSDeviceInfo {
     uint32_t    pid   = 0;
 
     virtual bool operator==(const MDNSDeviceInfo &other) const {
-        return other.mac == mac;
+        return other.ip == ip && other.port == port;
     }
     virtual ~MDNSDeviceInfo() {}
 } MDNSDeviceInfo;
@@ -45,7 +45,7 @@ private:
     std::vector<SOCKET> openClientSockets();
     void                closeClientSockets(std::vector<SOCKET> &socks);
     void                sendAndRecvMDNSQuery(SOCKET sock);
-    std::string         findTxtRecord(const std::vector<std::string> &txtList, const std::string &key);
+    std::string         findTxtRecord(const std::vector<std::string> &txtList, const std::string &key, const std::string &default);
 
 private:
     std::vector<MDNSDeviceInfo>         devInfoList_;

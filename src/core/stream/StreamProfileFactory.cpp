@@ -84,12 +84,12 @@ std::shared_ptr<GyroStreamProfile> createGyroStreamProfile(std::shared_ptr<LazyS
     return gsp;
 }
 
-std::shared_ptr<LiDARStreamProfile> createLiDARStreamProfile(OBLiDARScanSpeed scanSpeed, OBFormat format) {
-    return createLiDARStreamProfile(std::shared_ptr<LazySensor>(), scanSpeed, format);
+std::shared_ptr<LiDARStreamProfile> createLiDARStreamProfile(OBLiDARScanRate scanRate, OBFormat format) {
+    return createLiDARStreamProfile(std::shared_ptr<LazySensor>(), scanRate, format);
 }
 
-std::shared_ptr<LiDARStreamProfile> createLiDARStreamProfile(std::shared_ptr<LazySensor> owner, OBLiDARScanSpeed scanSpeed, OBFormat format) {
-    auto sp = std::make_shared<LiDARStreamProfile>(owner, scanSpeed, format);
+std::shared_ptr<LiDARStreamProfile> createLiDARStreamProfile(std::shared_ptr<LazySensor> owner, OBLiDARScanRate scanRate, OBFormat format) {
+    auto sp = std::make_shared<LiDARStreamProfile>(owner, scanRate, format);
     return sp;
 }
 

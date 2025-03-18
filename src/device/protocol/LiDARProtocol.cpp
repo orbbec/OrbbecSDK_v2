@@ -63,7 +63,7 @@ HpStatus validateResp(uint8_t *dataBuf, uint16_t &dataSize, uint16_t expectedOpc
     }
     if(header->magic != htons(HP_RESPONSE_MAGIC)) {
         std::ostringstream ssMsg;
-        ssMsg << "Device response with bad magic " << std::hex << ", magic=0x" << header->magic << ", expectOpCode=0x" << HP_RESPONSE_MAGIC;
+        ssMsg << "Device response with bad magic" << std::hex << ", magic=0x" << header->magic << ", expectOpCode=0x" << HP_RESPONSE_MAGIC;
         retStatus.statusCode    = HP_STATUS_DEVICE_RESPONSE_BAD_MAGIC;
         retStatus.respErrorCode = HP_RESP_ERROR_UNKNOWN;
         retStatus.msg           = ssMsg.str();

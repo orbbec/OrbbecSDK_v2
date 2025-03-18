@@ -11,7 +11,7 @@
 
 namespace libobsensor {
 
-VendorUDPClient::VendorUDPClient(std::string address, uint16_t port, uint32_t commTimeout)
+VendorUDPClient::VendorUDPClient(const std::string &address, uint16_t port, uint32_t commTimeout)
     : address_(address), port_(port), socketFd_(INVALID_SOCKET), commTimeoutMs_(commTimeout) {
     // os socket
     initOsSocket();

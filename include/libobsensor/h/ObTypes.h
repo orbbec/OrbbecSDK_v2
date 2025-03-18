@@ -652,7 +652,7 @@ typedef struct {
 } OBAccelValue, OBGyroValue, OBFloat3D, ob_accel_value, ob_gyro_value, ob_float_3d;
 
 /**
- * @brief Data structures for LiDAR scan speed
+ * @brief Data structures for LiDAR scan rate
  */
 typedef enum {
     OB_LIDAR_SCAN_UNKNOWN = 0,
@@ -662,8 +662,8 @@ typedef enum {
     OB_LIDAR_SCAN_20HZ    = 4,
     OB_LIDAR_SCAN_25HZ    = 5,
     OB_LIDAR_SCAN_30HZ    = 6,
-} OBLiDARScanSpeed,
-    ob_lidar_scan_speed, OB_LIDAR_SCAN_SPEED;
+} OBLiDARScanRate,
+    ob_lidar_scan_rate, OB_LIDAR_SCAN_RATE;
 
 /**
  * @brief Device state
@@ -826,8 +826,9 @@ typedef struct {
  * @brief 3D point structure with LiDAR information
  */
 typedef struct {
+    float    angle;      ///< angle, unit: degrees
     float    distance;   ///< distance, unit: mm
-    uint16_t intensity;  ///< intensity
+    uint16_t intensity;  ///< intensity, 0~2000
 } OBLiDARScanPoint, ob_lidar_scan_point;
 
 /**

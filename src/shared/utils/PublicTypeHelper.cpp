@@ -329,8 +329,8 @@ float mapIMUSampleRateToValue(OBIMUSampleRate rate) {
     }
 }
 
-float mapLiDARScanSpeedToValue(OBLiDARScanSpeed speed) {
-    switch(speed) {
+float mapLiDARScanRateToValue(OBLiDARScanRate rate) {
+    switch(rate) {
     case OB_LIDAR_SCAN_5HZ:
         return 5.0f;
     case OB_LIDAR_SCAN_10HZ:
@@ -405,7 +405,7 @@ const std::map<OBAccelFullScaleRange, std::string> AccelFullScaleRange_Str_Map =
     { OB_ACCEL_FS_3g, "3g" },           { OB_ACCEL_FS_6g, "6g" }, { OB_ACCEL_FS_12g, "12g" }, { OB_ACCEL_FS_24g, "24g" }
 };
 
-const std::map<OBLiDARScanSpeed, std::string> LiDARScanSpeed_Str_Map = {
+const std::map<OBLiDARScanRate, std::string> LiDARScanRate_Str_Map = {
     { OB_LIDAR_SCAN_UNKNOWN, "Unknown" }, { OB_LIDAR_SCAN_5HZ, "5HZ" },   { OB_LIDAR_SCAN_10HZ, "10HZ" }, { OB_LIDAR_SCAN_15HZ, "15HZ" },
     { OB_LIDAR_SCAN_20HZ, "20HZ" },       { OB_LIDAR_SCAN_25HZ, "25HZ" }, { OB_LIDAR_SCAN_30HZ, "30HZ" },
 };
@@ -544,10 +544,10 @@ const std::string &AccelFullScaleRangeToStr(OBAccelFullScaleRange type) {
     return it->second;
 }
 
-const std::string &LiDARScanSpeedToStr(OBLiDARScanSpeed scanSpeed) {
-    auto it = LiDARScanSpeed_Str_Map.find(scanSpeed);
-    if(it == LiDARScanSpeed_Str_Map.end()) {
-        throw invalid_value_exception("Unregistered LiDAR scan speed name");
+const std::string &LiDARScanRateToStr(OBLiDARScanRate scanRate) {
+    auto it = LiDARScanRate_Str_Map.find(scanRate);
+    if(it == LiDARScanRate_Str_Map.end()) {
+        throw invalid_value_exception("Unregistered LiDAR scan rate name");
     }
     return it->second;
 }

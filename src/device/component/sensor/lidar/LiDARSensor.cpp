@@ -8,7 +8,7 @@
 
 namespace libobsensor {
 
-LiDARSensor::LiDARSensor(IDevice *owner, const std::shared_ptr<ISourcePort> &backend, const std::shared_ptr<LiDARStreamer> &streamer)
+LiDARSensor::LiDARSensor(IDevice *owner, const std::shared_ptr<ISourcePort> &backend, const std::shared_ptr<ILiDARStreamer> &streamer)
     : SensorBase(owner, OB_SENSOR_LIDAR, backend), streamer_(streamer) {
     auto port = std::dynamic_pointer_cast<IDataStreamPort>(backend_);
     if(!port) {

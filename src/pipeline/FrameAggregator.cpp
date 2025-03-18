@@ -75,7 +75,7 @@ void FrameAggregator::updateConfig(std::shared_ptr<const Config> config, const b
         }
         else if(profile->is<const LiDARStreamProfile>()) {
             auto lidarStreamProfile = profile->as<const LiDARStreamProfile>();
-            fps                     = utils::mapLiDARScanSpeedToValue(lidarStreamProfile->getScanSpeed());
+            fps                     = utils::mapLiDARScanRateToValue(lidarStreamProfile->getScanRate());
         }
 
         float maxSyncQueueSize = fps * maxFrameDelay_ + 1;

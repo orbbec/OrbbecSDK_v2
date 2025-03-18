@@ -186,7 +186,7 @@ std::shared_ptr<Config> Pipeline::checkAndSetConfig(std::shared_ptr<const Config
         }
         else if(sensorType == OB_SENSOR_LIDAR) {
             auto profile            = sp->as<LiDARStreamProfile>();
-            auto matchedProfileList = matchLiDARStreamProfile(sensorSpList, profile->getScanSpeed(), profile->getFormat());
+            auto matchedProfileList = matchLiDARStreamProfile(sensorSpList, profile->getScanRate(), profile->getFormat());
             if(matchedProfileList.empty()) {
                 throw invalid_value_exception(utils::string::to_string() << "No matched profile found for:" << sp);
             }

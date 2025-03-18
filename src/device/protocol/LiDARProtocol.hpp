@@ -44,7 +44,8 @@ enum HpOpCode {
     OPCODE_APPLY_CONFIGS = 0x010E,
     // enable or disable streaming
     OPCODE_STREAMING_ON_OFF = 0x010F,
-    // 0x0110 is reserved
+    // set specific mode: 0-normal; 1-fog
+    OPCODE_SET_SPECIFIC_MODE = 0x0100,
     // set tail filter level
     OPCODE_SET_TAIL_FILTER_LEVEL = 0x0111,
 
@@ -106,7 +107,8 @@ enum HpOpCode {
     OPCODE_GET_APD_TEMPERATURE = 0x0215,
     // get TX high power voltage
     OPCODE_GET_TX_HIGH_POWER_VOLTAGE = 0x0216,
-    // 0x0217 is reserved
+    // get specific mode
+    OPCODE_GET_SPECIFIC_MODE = 0x0217,
     // get tail filter level
     OPCODE_GET_TAIL_FILTER_LEVEL = 0x0218,
     // get TX lower power voltage

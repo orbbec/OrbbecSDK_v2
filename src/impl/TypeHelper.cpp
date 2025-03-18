@@ -42,8 +42,8 @@ const char *ob_accel_range_type_to_string(OBAccelFullScaleRange type) {
     return libobsensor::utils::AccelFullScaleRangeToStr(type).c_str();
 }
 
-const char* ob_lidar_scan_speed_type_to_string(OBLiDARScanSpeed type) {
-    return libobsensor::utils::LiDARScanSpeedToStr(type).c_str();
+const char *ob_lidar_scan_rate_type_to_string(OBLiDARScanRate type) {
+    return libobsensor::utils::LiDARScanRateToStr(type).c_str();
 }
 
 const char *ob_meta_data_type_to_string(OBFrameMetadataType type) {

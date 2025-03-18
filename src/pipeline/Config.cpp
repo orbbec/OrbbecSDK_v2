@@ -36,8 +36,8 @@ void Config::enableGyroStream(OBGyroFullScaleRange fullScaleRange, ob_gyro_sampl
     enableStream(prf);
 }
 
-void Config::enableLiDARStream(OBLiDARScanSpeed scanSpeed, OBFormat format) {
-    auto prf = StreamProfileFactory::createLiDARStreamProfile(scanSpeed, format);
+void Config::enableLiDARStream(OBLiDARScanRate scanRate, OBFormat format) {
+    auto prf = StreamProfileFactory::createLiDARStreamProfile(scanRate, format);
     enableStream(prf);
 }
 

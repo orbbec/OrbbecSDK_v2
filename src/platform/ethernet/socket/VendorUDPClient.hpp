@@ -12,7 +12,7 @@ namespace libobsensor {
  */
 class VendorUDPClient {
 public:
-    VendorUDPClient(std::string address, uint16_t port, uint32_t commTimeout = 1000);
+    VendorUDPClient(const std::string &address, uint16_t port, uint32_t commTimeout = 1000);
     virtual ~VendorUDPClient() noexcept;
 
     int  read(uint8_t *data, const uint32_t dataLen);

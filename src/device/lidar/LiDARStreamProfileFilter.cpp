@@ -19,12 +19,9 @@ StreamProfileList LiDARStreamProfileFilter::filter(const StreamProfileList &prof
     auto              propServer = owner->getPropertyServer();
     bool              isCalibrationMode = false; // default is normal mode
 
-    try {
-        auto workMode = propServer->getPropertyValueT<int32_t>(OB_PROP_LIDAR_WORK_MODE_INT, PROP_ACCESS_INTERNAL);
+    if(propServer->isPropertySupported(OB_PROP_LIDAR_WORK_MODE_INT, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
+        auto workMode     = propServer->getPropertyValueT<int32_t>(OB_PROP_LIDAR_WORK_MODE_INT, PROP_ACCESS_INTERNAL);
         isCalibrationMode = workMode == 0x03;
-    } catch (std::exception &e) {
-        LOG_WARN("Get LiDAR work mode failed, error: %s", e.what());
-        isCalibrationMode = false;  // default is normal mode
     }
 
     for(const auto &profile: profiles) {

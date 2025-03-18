@@ -3,6 +3,7 @@
 
 #include "LiDARDeviceInfo.hpp"
 #include "LiDARDevice.hpp"
+#include "MS600Device.hpp"
 #include "DevicePids.hpp"
 #include "ethernet/NetPortGroup.hpp"
 #include "utils/Utils.hpp"
@@ -15,23 +16,19 @@
 #endif
 
 namespace libobsensor {
-const std::map<int, std::string> LiDARDeviceNameMap = {
-    // TODO need to change pid and name
-    { LIDAR_PID_MS600, "LiDAR MS600" },
-    { LIDAR_PID_TL2401, "LiDAR TL2401" },
-};
 
 LiDARDeviceInfo::LiDARDeviceInfo(const SourcePortInfoList groupedInfoList) {
     auto firstPortInfo = groupedInfoList.front();
     if(IS_NET_PORT(firstPortInfo->portType)) {
         auto portInfo = std::dynamic_pointer_cast<const NetSourcePortInfo>(groupedInfoList.front());
 
-        auto iter = LiDARDeviceNameMap.find(portInfo->pid);
+        auto iter = std::find_if(LiDARDeviceNameMap.begin(), LiDARDeviceNameMap.end(),
+                                 [portInfo](const std::pair<std::string, uint32_t> &pair) { return portInfo->pid == pair.second; });
         if(iter != LiDARDeviceNameMap.end()) {
-            name_ = iter->second;
+            name_ = "LiDAR " + iter->first;
         }
         else {
-            name_ = "LiDAr series device";
+            name_ = "LiDAR series device";
         }
         fullName_           = "Orbbec " + name_;
         pid_                = portInfo->pid;
@@ -54,7 +51,9 @@ std::shared_ptr<IDevice> LiDARDeviceInfo::createDevice() const {
         if ( IS_OB_LIDAR_TL2401(pid_) ) {
             return std::make_shared<LiDARDevice>(shared_from_this());
         }
-        // TODO to support single line LiDAR MS600
+        else if(IS_OB_LIDAR_MS600(pid_)) {
+            return std::make_shared<MS600Device>(shared_from_this());
+        }
     }
 
     return nullptr;
