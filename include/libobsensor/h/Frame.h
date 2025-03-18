@@ -148,7 +148,7 @@ OB_EXPORT void ob_delete_frame(const ob_frame *frame, ob_error **error);
 
 /**
  * @brief Copy the information of the source frame object to the destination frame object.
- * @brief Including the index，timestamp，system timestamp，global timestamp and metadata will be copied.
+ * @brief Including the index, timestamp, system timestamp, global timestamp and metadata will be copied.
  *
  * @param[in] src_frame Source frame object to copy the information from.
  * @param[in] dst_frame Destination frame object to copy the information to.
@@ -224,7 +224,7 @@ OB_EXPORT void ob_frame_set_system_timestamp_us(ob_frame *frame, uint64_t system
 
 /**
  * @brief Get the global timestamp of the frame in microseconds.
- * @brief The global timestamp is the time point when the frame was was captured by the device, and has been converted to the host clock domain. The
+ * @brief The global timestamp is the time point when the frame was captured by the device, and has been converted to the host clock domain. The
  * conversion process base on the frame timestamp and can eliminate the timer drift of the device
  *
  * @attention The global timestamp is disabled by default. If global timestamp is not enabled, the function will return 0. To enable it, call @ref

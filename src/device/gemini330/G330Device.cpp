@@ -123,12 +123,18 @@ void G330Device::init() {
         registerComponent(OB_DEV_COMPONENT_FRAME_INTERLEAVE_MANAGER, frameInterleaveManager);
     }
 
-    // TODO: version
     if(getFirmwareVersionInt() >= 10401) {
         auto propertyServer                = getPropertyServer();
         auto hwNoiseRemovePropertyAccessor = std::make_shared<G330HWNoiseRemovePropertyAccessor>(this);
         propertyServer->registerProperty(OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL, "rw", "rw", hwNoiseRemovePropertyAccessor);
         propertyServer->registerProperty(OB_PROP_HW_NOISE_REMOVE_FILTER_THRESHOLD_FLOAT, "rw", "rw", hwNoiseRemovePropertyAccessor);
+    }
+
+    if(getFirmwareVersionInt() >= 10510) {
+        auto propertyServer         = getPropertyServer();
+        auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        propertyServer->registerProperty(OB_DEVICE_AUTO_CAPTURE_ENABLE_BOOL, "rw", "rw", vendorPropertyAccessor.get());
+        propertyServer->registerProperty(OB_DEVICE_AUTO_CAPTURE_INTERVAL_TIME_INT, "rw", "rw", vendorPropertyAccessor.get());
     }
 
     auto sensorStreamStrategy = std::make_shared<G330SensorStreamStrategy>(this);

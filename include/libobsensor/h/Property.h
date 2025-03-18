@@ -306,7 +306,7 @@ typedef enum {
     OB_PROP_DEPTH_ROTATE_INT = 118,
 
     /**
-     * @brief Get hardware laser power actual level which real state of laser element. OB_PROP_LASER_POWER_LEVEL_CONTROL_INT99）will effect this command
+     * @brief Get hardware laser power actual level which real state of laser element. OB_PROP_LASER_POWER_LEVEL_CONTROL_INT99 will effect this command
      * which it setting and changed the hardware laser energy level.
      */
     OB_PROP_LASER_POWER_ACTUAL_LEVEL_INT = 119,
@@ -502,6 +502,14 @@ typedef enum {
      */
     OB_PROP_HW_NOISE_REMOVE_FILTER_THRESHOLD_FLOAT = 212,
     /**
+     * @brief soft trigger auto capture enable，use in OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_TRIGGERING mode
+     */
+    OB_DEVICE_AUTO_CAPTURE_ENABLE_BOOL = 216,
+    /**
+     * @brief soft trigger auto capture interval time，use in OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_TRIGGERING mode
+     */
+    OB_DEVICE_AUTO_CAPTURE_INTERVAL_TIME_INT = 217,
+    /**
      * @brief Baseline calibration parameters
      */
     OB_STRUCT_BASELINE_CALIBRATION_PARAM = 1002,
@@ -553,7 +561,7 @@ typedef enum {
 
     /**
      * @brief Device network static ip config record
-     * @brief Using for get last static ip config，witch is record in device flash when user set static ip config
+     * @brief Using for get last static ip config, witch is record in device flash when user set static ip config
      *
      * @attention read only
      */

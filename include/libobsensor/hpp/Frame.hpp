@@ -18,7 +18,7 @@
 #include <functional>
 
 /**
- *  Frame classis inheritance hierarchy：
+ *  Frame classis inheritance hierarchy:
  *         Frame
  *          |
  *      +-----------+----------+----------+-----------+
@@ -181,7 +181,7 @@ public:
 
     /**
      * @brief Get the global timestamp of the frame in microseconds.
-     * @brief The global timestamp is the time point when the frame was was captured by the device, and has been converted to the host clock domain. The
+     * @brief The global timestamp is the time point when the frame was captured by the device, and has been converted to the host clock domain. The
      * conversion process base on the device timestamp and can eliminate the timer drift of the device
      *
      * @attention The global timestamp disable by default. If global timestamp is not enabled, the function will return 0. To enable the global timestamp,
@@ -957,7 +957,7 @@ private:
 
     static void BufferDestroy(uint8_t *buffer, void *context) {
         auto *ctx = static_cast<BufferDestroyContext *>(context);
-        if (ctx->callback) {
+        if(ctx->callback) {
             ctx->callback(buffer);
         }
         delete ctx;
