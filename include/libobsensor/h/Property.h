@@ -502,6 +502,14 @@ typedef enum {
      */
     OB_PROP_HW_NOISE_REMOVE_FILTER_THRESHOLD_FLOAT = 212,
     /**
+     * @brief soft trigger auto capture enable，use in OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_TRIGGERING mode
+     */
+    OB_DEVICE_AUTO_CAPTURE_ENABLE_BOOL = 216,
+    /**
+     * @brief soft trigger auto capture interval time，use in OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_TRIGGERING mode
+     */
+    OB_DEVICE_AUTO_CAPTURE_INTERVAL_TIME_INT = 217,
+    /**
      * @brief Baseline calibration parameters
      */
     OB_STRUCT_BASELINE_CALIBRATION_PARAM = 1002,
