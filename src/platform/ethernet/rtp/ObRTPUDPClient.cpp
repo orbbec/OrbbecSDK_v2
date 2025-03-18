@@ -53,7 +53,11 @@ void ObRTPUDPClient::socketConnect() {
     // 4.Bind the socket to a local address and port.
     int bindResult = bind(recvSocket_, (sockaddr *)&serverAddr, sizeof(serverAddr));
     if(bindResult < 0) {
-        if(GET_LAST_ERROR() == EADDRINUSE || GET_LAST_ERROR() == WSAEADDRINUSE) {
+#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+        if(GET_LAST_ERROR() == WSAEADDRINUSE) {
+#else
+        if(GET_LAST_ERROR() == EADDRINUSE) {
+#endif
             socketClose();
             serverPort_ += 2;
             socketConnect();
