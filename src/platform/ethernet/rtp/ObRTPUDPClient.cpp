@@ -51,10 +51,11 @@ void ObRTPUDPClient::socketConnect() {
     inet_pton(AF_INET, localIp_.c_str(), &serverAddr.sin_addr);
 
     // 4.Bind the socket to a local address and port.
-    if(bind(recvSocket_, (sockaddr *)&serverAddr, sizeof(serverAddr)) < 0) {
-        if(GET_LAST_ERROR() == EADDRINUSE) {
+    int bindResult = bind(recvSocket_, (sockaddr *)&serverAddr, sizeof(serverAddr));
+    if(bindResult < 0) {
+        if(GET_LAST_ERROR() == EADDRINUSE || GET_LAST_ERROR() == WSAEADDRINUSE) {
             socketClose();
-            serverPort_+=2;
+            serverPort_ += 2;
             socketConnect();
         }
         else {
