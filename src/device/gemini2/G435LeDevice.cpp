@@ -560,6 +560,8 @@ void G435LeDevice::initProperties() {
     propertyServer->registerProperty(OB_PROP_DEBUG_ESGM_CONFIDENCE_FLOAT, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_STRUCT_COLOR_AE_ROI, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_STRUCT_DEPTH_AE_ROI, "rw", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_IR_BRIGHTNESS_INT, "rw", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_IR_AE_MAX_EXPOSURE_INT, "rw", "rw", vendorPropertyAccessor);
     
     auto imuCorrectorFilter = getSensorFrameFilter("IMUCorrector", OB_SENSOR_ACCEL);
     if(imuCorrectorFilter) {
