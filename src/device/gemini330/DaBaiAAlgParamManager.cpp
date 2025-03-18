@@ -166,7 +166,7 @@ void DaBaiAAlgParamManager::fetchParamFromDevice() {
         disparityParam_.dispOffset   = depthCalib.dispOffset;
         disparityParam_.invalidDisp  = depthCalib.invalidDisp;
         disparityParam_.packMode     = OB_DISP_PACK_ORIGINAL_NEW;
-        disparityParam_.isDualCamera = true;
+        disparityParam_.isDualCamera = false;
     }
     catch(const std::exception &e) {
         LOG_ERROR("Get depth calibration params failed! {}", e.what());
@@ -313,7 +313,7 @@ void DaBaiAAlgParamManager::reFetchDisparityParams() {
         disparityParam_.dispOffset   = depthCalib.dispOffset;
         disparityParam_.invalidDisp  = depthCalib.invalidDisp;
         disparityParam_.packMode     = OB_DISP_PACK_ORIGINAL_NEW;
-        disparityParam_.isDualCamera = true;
+        disparityParam_.isDualCamera = false;
     }
     catch(const std::exception &e) {
         LOG_ERROR("Get depth calibration params failed! {}", e.what());
