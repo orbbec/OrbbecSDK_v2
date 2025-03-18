@@ -13,19 +13,6 @@ namespace libobsensor {
 
 ObRTPUDPClient::ObRTPUDPClient(std::string localAddress, std::string address, uint16_t port)
     : localIp_(localAddress), serverIp_(address), serverPort_(port), startReceive_(false), recvSocket_(INVALID_SOCKET) {
-
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
-    WSADATA wsaData;
-    int     rst = WSAStartup(MAKEWORD(2, 2), &wsaData);
-    if(rst != 0) {
-        throw libobsensor::invalid_value_exception(utils::string::to_string() << "Failed to load Winsock! err_code=" << GET_LAST_ERROR());
-    }
-#endif
-
-#if(defined(OS_IOS) || defined(OS_MACOS))
-    signal(SIGPIPE, SIG_IGN);
-#endif
-
     socketConnect();
 }
 
@@ -42,9 +29,6 @@ void ObRTPUDPClient::socketConnect() {
 #endif
 
     if(recvSocket_ < 0) {
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
-        WSACleanup();
-#endif
         throw libobsensor::invalid_value_exception(utils::string::to_string() << "Failed to create udpSocket! err_code=" << GET_LAST_ERROR());
     }
 
@@ -62,9 +46,8 @@ void ObRTPUDPClient::socketConnect() {
 
     // 3.Set server address
     sockaddr_in serverAddr{};
-    serverAddr.sin_family      = AF_INET;
-    //serverAddr.sin_addr.s_addr = INADDR_ANY;
-    serverAddr.sin_port        = htons(serverPort_);
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_port   = htons(serverPort_);
     inet_pton(AF_INET, localIp_.c_str(), &serverAddr.sin_addr);
 
     // 4.Bind the socket to a local address and port.
@@ -76,9 +59,6 @@ void ObRTPUDPClient::socketConnect() {
         }
         else {
             socketClose();
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
-            WSACleanup();
-#endif
             throw libobsensor::invalid_value_exception(utils::string::to_string() << "Failed to bind server address! err_code=" << GET_LAST_ERROR());
         }
     }
@@ -228,9 +208,6 @@ void ObRTPUDPClient::close() {
     stop();
     if(recvSocket_ > 0) {
         socketClose();
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
-        WSACleanup();
-#endif
     }
     LOG_DEBUG("close end...");
 }

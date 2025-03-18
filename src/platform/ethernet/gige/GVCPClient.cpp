@@ -551,24 +551,29 @@ void GVCPClient::checkAndUpdateSockets() {
             }
 
             if(!found) {
-                auto socketFd = openClientSocket(addrSrv);
-                if(socketFd != 0) {
-                    //socks_[index++] = socketFd;
-                    //LOG_INFO("new ip segment found,new ip addr:{}", ipStr);
+                try {
+                    auto socketFd = openClientSocket(addrSrv);
+                    if(socketFd != 0) {
+                        // socks_[index++] = socketFd;
+                        // LOG_INFO("new ip segment found,new ip addr:{}", ipStr);
 
-                    std::ostringstream macAddressStream;
-                    for(int i = 0; i < 6; i++) {
-                        macAddressStream << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(aa->PhysicalAddress[i]);
-                        if(i < 5)
-                            macAddressStream << ":";
+                        std::ostringstream macAddressStream;
+                        for(int i = 0; i < 6; i++) {
+                            macAddressStream << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(aa->PhysicalAddress[i]);
+                            if(i < 5)
+                                macAddressStream << ":";
+                        }
+                        std::string macAddress = macAddressStream.str();
+
+                        int curIndex                   = index++;
+                        socketInfos_[curIndex].sock    = socketFd;
+                        socketInfos_[curIndex].mac     = macAddress;
+                        socketInfos_[curIndex].address = ipStr;
+                        LOG_INFO("New ip segment found,new ip addr:{}, mac:{}", ipStr, macAddress);
                     }
-                    std::string macAddress = macAddressStream.str();
-
-                    int curIndex                   = index++;
-                    socketInfos_[curIndex].sock    = socketFd;
-                    socketInfos_[curIndex].mac     = macAddress;
-                    socketInfos_[curIndex].address = ipStr;
-                    LOG_INFO("New ip segment found,new ip addr:{}, mac:{}", ipStr, macAddress);
+                }
+                catch(const std::exception &) {
+                    LOG_WARN("Open client socket failed");
                 }
             }
         }
