@@ -24,6 +24,10 @@ FirmwareUpdater::FirmwareUpdater(IDevice *owner) : DeviceComponentBase(owner) {
                 ctx_->dylib_
                     ->get_function<void(ob_device *, const char filePathList[][OB_PATH_MAX], uint8_t, ob_device_fw_update_callback, void *, ob_error **)>(
                         "ob_device_update_optional_depth_presets_ext");
+            ctx_->read_customer_data_ext = ctx_->dylib_->get_function<void(ob_device *, void *, uint32_t* , ob_error **)>(
+                "ob_device_read_customer_data_ext");
+            ctx_->write_customer_data_ext = ctx_->dylib_->get_function<void(ob_device *, const void *, uint32_t , ob_error **)>(
+                "ob_device_write_customer_data_ext");
         }
     }
     catch(const std::exception &e) {
@@ -125,6 +129,23 @@ void FirmwareUpdater::updateOptionalDepthPresetsExt(const char filePathList[][OB
         }
     });
     updateThread_.join();
+}
+void FirmwareUpdater::writeCustomerDataExt(const uint8_t *customerData, uint32_t customerDataSize, ob_error **error) {
+    auto      device = std::make_shared<ob_device>();
+    device->device   = getOwner()->shared_from_this();
+    ctx_->write_customer_data_ext(device.get(), customerData, customerDataSize, error);
+    if(*error) {
+        LOG_ERROR("Firmware update failed: {}", (*error)->message);
+    }
+}
+
+void FirmwareUpdater::readCustomerDataExt(uint8_t *customerData, uint32_t *customerDataSize, ob_error **error) {
+    auto      device = std::make_shared<ob_device>();
+    device->device   = getOwner()->shared_from_this();
+    ctx_->read_customer_data_ext(device.get(), customerData, customerDataSize, error);
+    if(*error) {
+        LOG_ERROR("Firmware update failed: {}", (*error)->message);
+    }
 }
 
 }  // namespace libobsensor

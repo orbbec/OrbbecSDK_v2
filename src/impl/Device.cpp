@@ -5,6 +5,7 @@
 
 #include "ImplTypes.hpp"
 #include "exception/ObException.hpp"
+#include "firmwareupdater/FirmwareUpdater.hpp"
 
 #include "IDeviceManager.hpp"
 #include "IProperty.hpp"
@@ -284,6 +285,22 @@ void ob_device_get_raw_data(ob_device *device, ob_property_id property_id, ob_ge
         libobsensor::PROP_ACCESS_USER);
 }
 HANDLE_EXCEPTIONS_NO_RETURN(device, property_id, user_data)
+
+void ob_device_write_customer_data(ob_device *device, const void *data, uint32_t data_size, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(device);
+    VALIDATE_NOT_NULL(data);
+    auto updater =  device->device->getComponentT<libobsensor::FirmwareUpdater>(libobsensor::OB_DEV_COMPONENT_FIRMWARE_UPDATER, true);
+    updater->writeCustomerDataExt(reinterpret_cast<const uint8_t *>(data), data_size, error);
+}
+HANDLE_EXCEPTIONS_NO_RETURN(device)
+
+void ob_device_read_customer_data(ob_device *device, void *data, uint32_t *data_size, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(device);
+    VALIDATE_NOT_NULL(data);
+    auto updater =  device->device->getComponentT<libobsensor::FirmwareUpdater>(libobsensor::OB_DEV_COMPONENT_FIRMWARE_UPDATER, true);
+    updater->readCustomerDataExt(reinterpret_cast<uint8_t *>(data), data_size, error);
+}
+HANDLE_EXCEPTIONS_NO_RETURN(device)
 
 uint32_t ob_device_get_supported_property_count(const ob_device *device, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(device);

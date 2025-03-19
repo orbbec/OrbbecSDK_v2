@@ -167,6 +167,26 @@ OB_EXPORT void ob_device_get_structured_data(ob_device *device, ob_property_id p
 OB_EXPORT void ob_device_get_raw_data(ob_device *device, ob_property_id property_id, ob_get_data_callback cb, void *user_data, ob_error **error);
 
 /**
+ * @brief Set customer data.
+ *
+ * @param[in] device The device object.
+ * @param[in] data The property data to be set.
+ * @param[in] data_size The size of the property to be set,the maximum length cannot exceed 65532 bytes.
+ * @param[out] error Log error messages.
+ */
+OB_EXPORT void ob_device_write_customer_data(ob_device *device, const void *data, uint32_t data_size, ob_error **error);
+
+/**
+ * @brief Get customer data of a device property.
+ *
+ * @param[in] device The device object.
+ * @param[out] data The obtained property data.
+ * @param[out] data_size The size of the obtained property data.
+ * @param[out] error Log error messages.
+ */
+OB_EXPORT void ob_device_read_customer_data(ob_device *device, void *data, uint32_t *data_size, ob_error **error);
+
+/**
  * @brief Get the number of properties supported by the device.
  *
  * @param[in] device The device object.
