@@ -35,4 +35,3 @@ std::shared_ptr<const SourcePortInfo> VendorNetDataPort::getSourcePortInfo() con
 }
 
 }  // namespace libobsensor
-

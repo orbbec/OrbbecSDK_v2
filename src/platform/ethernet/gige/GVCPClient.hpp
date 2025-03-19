@@ -85,7 +85,7 @@ struct gvcp_forceip_ack {
 #pragma pack(pop)
 
 struct GVCPDeviceInfo {
-    std::string lcalIp  = "unknown";
+    std::string localIp  = "unknown";
     std::string localMac= "unknown";
     std::string mac     = "unknown";
     std::string ip      = "unknown";

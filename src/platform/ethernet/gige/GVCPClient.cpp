@@ -419,7 +419,7 @@ void GVCPClient::sendGVCPDiscovery(GVCPSocketInfo socketInfo) {
                         continue;
 
                     GVCPDeviceInfo info;
-                    info.lcalIp   = socketInfo.address;
+                    info.localIp  = socketInfo.address;
                     info.localMac = socketInfo.mac;
                     info.mac      = macStr;
                     info.ip       = curIPStr;
@@ -435,7 +435,7 @@ void GVCPClient::sendGVCPDiscovery(GVCPSocketInfo socketInfo) {
                     std::lock_guard<std::mutex> lock(devInfoListMtx_);
                     devInfoList_.push_back(info);
 #else
-                    if((info.lcalIp == "0.0.0.0") && (info.localMac == "0:0:0:0") && info.pid == 0x80e) {
+                    if((info.localIp == "0.0.0.0") && (info.localMac == "0:0:0:0") && info.pid == 0x80e) {
                         //Do nothing
                     }
                     else {
