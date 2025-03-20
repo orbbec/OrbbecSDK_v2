@@ -11,9 +11,10 @@
 namespace libobsensor {
 
 struct NetDataStreamPortInfo : public NetSourcePortInfo {
-    NetDataStreamPortInfo(std::string address, uint16_t port, uint16_t vendorPort, std::string mac = "unknown", std::string serialNumber = "unknown",
+    NetDataStreamPortInfo(std::string localMac, std::string localAddress, std::string address, uint16_t port, uint16_t vendorPort, std::string mac = "unknown",
+                          std::string serialNumber = "unknown",
                           uint32_t pid = 0)
-        : NetSourcePortInfo(SOURCE_PORT_NET_VENDOR_STREAM, address, port, mac, serialNumber, pid), vendorPort(vendorPort) {}
+        : NetSourcePortInfo(SOURCE_PORT_NET_VENDOR_STREAM, localMac, localAddress, address, port, mac, serialNumber, pid), vendorPort(vendorPort) {}
 
     virtual bool equal(std::shared_ptr<const SourcePortInfo> cmpInfo) const {
         if(cmpInfo->portType != portType) {

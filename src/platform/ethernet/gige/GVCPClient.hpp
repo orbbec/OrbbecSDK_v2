@@ -85,6 +85,8 @@ struct gvcp_forceip_ack {
 #pragma pack(pop)
 
 struct GVCPDeviceInfo {
+    std::string localIp  = "unknown";
+    std::string localMac= "unknown";
     std::string mac     = "unknown";
     std::string ip      = "unknown";
     std::string mask    = "unknown";
@@ -99,6 +101,12 @@ struct GVCPDeviceInfo {
         return other.mac == mac && other.sn == sn && other.ip == ip;
     }
     virtual ~GVCPDeviceInfo() {}
+};
+
+struct GVCPSocketInfo {
+    std::string mac = "unknown";
+    std::string address  = "unknown";
+    SOCKET      sock = 0;
 };
 
 #define MAX_SOCKETS 32
@@ -120,14 +128,15 @@ private:
     int    openClientSockets();
     void   closeClientSockets();
     SOCKET openClientSocket(SOCKADDR_IN addr);
-    void   sendGVCPDiscovery(SOCKET sock);
-    void   sendGVCPForceIP(SOCKET sock, std::string mac, const OBNetIpConfig &config);
+    void   sendGVCPDiscovery(GVCPSocketInfo socketInfo);
+    void   sendGVCPForceIP(GVCPSocketInfo socketInfo, std::string mac, const OBNetIpConfig &config);
 
     //
     void checkAndUpdateSockets();
 
 private:
     SOCKET                     socks_[MAX_SOCKETS];
+    GVCPSocketInfo             socketInfos_[MAX_SOCKETS];
     int                        sockCount_ = 0;
     std::vector<GVCPDeviceInfo> devInfoList_;
     std::mutex                 queryMtx_;

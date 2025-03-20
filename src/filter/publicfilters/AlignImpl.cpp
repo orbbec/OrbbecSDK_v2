@@ -1501,7 +1501,7 @@ int AlignImpl::C2D(const uint16_t *depth_buffer, int depth_width, int depth_heig
 
     // rgb x-y coordinates for each depth pixel
     unsigned long long size     = static_cast<unsigned long long>(depth_width) * depth_height * 2;
-    int               *depth_xy = new int[size];
+    int *              depth_xy = new int[size];
     memset(depth_xy, -1, size * sizeof(int));
 
     int ret = -1;

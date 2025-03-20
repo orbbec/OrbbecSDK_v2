@@ -87,38 +87,59 @@ void G330AlgParamManager::fetchParamFromDevice() {
         LOG_ERROR("Get depth calibration params failed! {}", e.what());
     }
 
-    try {
-        auto owner           = getOwner();
-        auto propServer      = owner->getPropertyServer();
-        auto cameraParamList = propServer->getStructureDataListProtoV1_1_T<OBCameraParam_Internal_V0, 0>(OB_RAW_DATA_ALIGN_CALIB_PARAM);
-        for(auto &cameraParam: cameraParamList) {
-            OBCameraParam param;
-            param.depthIntrinsic = cameraParam.depthIntrinsic;
-            param.rgbIntrinsic   = cameraParam.rgbIntrinsic;
-            memcpy(&param.depthDistortion, &cameraParam.depthDistortion, sizeof(param.depthDistortion));
-            param.depthDistortion.model = OB_DISTORTION_BROWN_CONRADY;
-            memcpy(&param.rgbDistortion, &cameraParam.rgbDistortion, sizeof(param.rgbDistortion));
-            param.rgbDistortion.model = OB_DISTORTION_BROWN_CONRADY;
-            param.transform           = cameraParam.transform;
-            param.isMirrored          = false;
-            originCalibrationCameraParamList_.emplace_back(param);
+    uint8_t retry                  = 2;
+    bool    readCalibParamsSuccess = false;
+    while(retry > 0 && !readCalibParamsSuccess) {
+        try {
+            auto owner           = getOwner();
+            auto propServer      = owner->getPropertyServer();
+            auto cameraParamList = propServer->getStructureDataListProtoV1_1_T<OBCameraParam_Internal_V0, 0>(OB_RAW_DATA_ALIGN_CALIB_PARAM);
+            readCalibParamsSuccess = true;
+            for(auto &cameraParam: cameraParamList) {
+                OBCameraParam param;
+                param.depthIntrinsic = cameraParam.depthIntrinsic;
+                param.rgbIntrinsic   = cameraParam.rgbIntrinsic;
+                memcpy(&param.depthDistortion, &cameraParam.depthDistortion, sizeof(param.depthDistortion));
+                param.depthDistortion.model = OB_DISTORTION_BROWN_CONRADY;
+                memcpy(&param.rgbDistortion, &cameraParam.rgbDistortion, sizeof(param.rgbDistortion));
+                param.rgbDistortion.model = OB_DISTORTION_BROWN_CONRADY_K6;
+                param.transform           = cameraParam.transform;
+                param.isMirrored          = false;
+                originCalibrationCameraParamList_.emplace_back(param);
 
-            std::stringstream ss;
-            ss << param;
-            LOG_DEBUG("-{}", ss.str());
+                std::stringstream ss;
+                ss << param;
+                LOG_DEBUG("-{}", ss.str());
+            }
+        }
+        catch(const std::exception &e) {
+            LOG_ERROR("Get depth calibration params failed! {}", e.what());
+            retry--;
+            if(retry > 0) {
+                LOG_DEBUG("Retrying to depth calibration params.");
+                std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            }
         }
     }
-    catch(const std::exception &e) {
-        LOG_ERROR("Get depth calibration params failed! {}", e.what());
-    }
 
-    try {
-        auto owner            = getOwner();
-        auto propServer       = owner->getPropertyServer();
-        originD2cProfileList_ = propServer->getStructureDataListProtoV1_1_T<OBD2CProfile, 0>(OB_RAW_DATA_D2C_ALIGN_SUPPORT_PROFILE_LIST);
-    }
-    catch(const std::exception &e) {
-        LOG_ERROR("Get depth to color profile list failed! {}", e.what());
+    retry                   = 2;
+    bool readD2CListSuccess = false;
+    while(retry > 0 && !readD2CListSuccess) {
+        try {
+            auto owner            = getOwner();
+            auto propServer       = owner->getPropertyServer();
+            originD2cProfileList_ = propServer->getStructureDataListProtoV1_1_T<OBD2CProfile, 0>(OB_RAW_DATA_D2C_ALIGN_SUPPORT_PROFILE_LIST);
+            readD2CListSuccess    = true;
+            LOG_DEBUG("Read origin D2C profile list success,size:{}!", originD2cProfileList_.size());
+        }
+        catch(const std::exception &e) {
+            LOG_ERROR("Get depth to color profile list failed! {}", e.what());
+            retry--;
+            if(retry > 0) {
+                LOG_DEBUG("Retrying to read origin D2C profile list.");
+                std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            }
+        }
     }
 
     // imu param
@@ -229,20 +250,32 @@ typedef struct {
 } Resolution;
 
 void G330AlgParamManager::fixD2CParmaList() {
-    std::vector<Resolution> appendColorResolutions = { { 1920, 1080 }, { 1280, 800 }, { 1280, 720 }, { 960, 540 }, { 848, 480 }, { 640, 480 },
-                                                       { 640, 400 },   { 640, 360 },  { 424, 270 },  { 424, 240 }, { 320, 240 }, { 320, 180 } };
-
-    const std::vector<Resolution> depthResolutions = { { 1280, 800 }, { 1280, 720 }, { 848, 480 }, { 640, 480 }, { 640, 400 },
-                                                       { 640, 360 },  { 480, 270 },  { 424, 240 }, { 848, 100 } };
+    std::vector<Resolution> appendColorResolutions;
+    std::vector<Resolution> depthResolutions;
 
     auto owner      = getOwner();
     auto deviceInfo = owner->getInfo();
-    {
-        auto iter = std::find(G330LDevPids.begin(), G330LDevPids.end(), deviceInfo->pid_);
+    if(deviceInfo->pid_ == 0x080E) {
+        std::vector<Resolution> leColorResolutions = { { 1280, 800 }, { 1280, 720 }, { 848, 530 }, { 640, 480 }, { 640, 400 }, { 640, 360 }, { 320, 200 } };
+        std::vector<Resolution> ledepthResolutions = { { 1280, 800 }, { 848, 530 }, { 640, 480 }, { 640, 400 }, {424, 266}, { 320, 200 } };
 
+        appendColorResolutions.assign(leColorResolutions.begin(), leColorResolutions.end());
+        depthResolutions.assign(ledepthResolutions.begin(), ledepthResolutions.end());
+    }
+    else {
+        std::vector<Resolution> otherDeviceColorResolutions = { { 1920, 1080 }, { 1280, 800 }, { 1280, 720 }, { 960, 540 }, { 848, 480 }, { 640, 480 },
+                                                           { 640, 400 },   { 640, 360 },  { 424, 270 },  { 424, 240 }, { 320, 240 }, { 320, 180 } };
+
+        std::vector<Resolution> otherDevicedepthResolutions = { { 1280, 800 }, { 1280, 720 }, { 848, 480 }, { 640, 480 }, { 640, 400 },
+                                                           { 640, 360 },  { 480, 270 },  { 424, 240 }, { 848, 100 } };
+
+        auto iter = std::find(G330LDevPids.begin(), G330LDevPids.end(), deviceInfo->pid_);
         if(iter != G330LDevPids.end()) {
-            appendColorResolutions.push_back({ 480, 270 });
+            otherDeviceColorResolutions.push_back({ 480, 270 });
         }
+
+        appendColorResolutions.assign(otherDeviceColorResolutions.begin(), otherDeviceColorResolutions.end());
+        depthResolutions.assign(otherDevicedepthResolutions.begin(), otherDevicedepthResolutions.end());
     }
 
     if(originD2cProfileList_.empty()) {

@@ -5,6 +5,7 @@
 
 #include "ISourcePort.hpp"
 #include "ethernet/socket/VendorTCPClient.hpp"
+#include <mutex>
 
 namespace libobsensor {
 
@@ -17,6 +18,8 @@ public:
     uint32_t sendAndReceive(const uint8_t *sendData, uint32_t sendLen, uint8_t *recvData, uint32_t exceptedRecvLen) override;
 
 private:
+    std::mutex tcpMtx_;
+
     std::shared_ptr<VendorTCPClient>         tcpClient_;
     std::shared_ptr<const NetSourcePortInfo> portInfo_;
 };

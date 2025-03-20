@@ -17,7 +17,7 @@ option(OB_BUILD_ANDROID "Build Android " OFF)
 
 # platform abstract layer options
 option(OB_BUILD_USB_PAL "Enable this to support USB/UVC/HID communication" ON)
-option(OB_BUILD_NET_PAL "Enable this to support network/GVCP/RTSP communication" ON)
+option(OB_BUILD_NET_PAL "Enable this to support network/GVCP/RTSP/RTP communication" ON)
 option(OB_BUILD_GMSL_PAL "Enable this to support GMSL communication" ON)
 
 # install options

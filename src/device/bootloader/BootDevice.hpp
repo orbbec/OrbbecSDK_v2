@@ -16,6 +16,9 @@ public:
     BootDevice(const std::shared_ptr<const IDeviceEnumInfo> &info);
     virtual ~BootDevice() noexcept;
 
+protected:
+    void fetchDeviceInfo() override;
+
 private:
     void init() override;
 };

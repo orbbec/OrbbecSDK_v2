@@ -92,6 +92,21 @@ const char *ob_device_list_get_device_ip_address(const ob_device_list *list, uin
 }
 HANDLE_EXCEPTIONS_AND_RETURN(nullptr, list, index)
 
+const char *ob_device_list_get_device_local_mac(const ob_device_list *list, uint32_t index, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(list);
+    VALIDATE_UNSIGNED_INDEX(index, list->list.size());
+    auto &info = list->list[index];
+    if(std::string(info->getConnectionType()) != "Ethernet") {
+        LOG_WARN("get localMac() failed! Only valid for Ethernet devices.");
+        return "0:0:0:0:0:0";
+    }
+
+    auto sourcePort    = info->getSourcePortInfoList().front();
+    auto netSourcePort = std::dynamic_pointer_cast<const libobsensor::NetSourcePortInfo>(sourcePort);
+    return netSourcePort->localMac.c_str();
+}
+HANDLE_EXCEPTIONS_AND_RETURN(nullptr, list, index)
+
 ob_device *ob_device_list_get_device(const ob_device_list *list, uint32_t index, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(list);
     VALIDATE_UNSIGNED_INDEX(index, list->list.size());

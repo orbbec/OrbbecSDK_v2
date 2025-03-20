@@ -28,7 +28,7 @@ void NetDataStreamPort::startStream(MutableFrameCallback callback) {
     }
     callback_        = callback;
     auto netPortInfo = std::const_pointer_cast<NetDataStreamPortInfo>(portInfo_);
-    tcpClient_       = std::make_shared<VendorTCPClient>(netPortInfo->address, netPortInfo->port);
+    tcpClient_       = std::make_shared<VendorTCPClient>(netPortInfo->localAddress, netPortInfo->localMac, netPortInfo->address, netPortInfo->port);
 
     isStreaming_    = true;
     readDataThread_ = std::thread(&NetDataStreamPort::readData, this);

@@ -5,6 +5,7 @@
 #include "frameprocessor/FrameProcessor.hpp"
 #include "sensor/video/DisparityBasedSensor.hpp"
 #include "IDeviceComponent.hpp"
+#include "G330NetStreamProfileFilter.hpp"
 
 namespace libobsensor {
 
@@ -138,6 +139,56 @@ void G330Disp2DepthPropertyAccessor::markOutputDisparityFrame(bool enable) {
     if(disparitySensor) {
         disparitySensor->markOutputDisparityFrame(enable);
     }
+}
+
+
+
+G330NetPerformanceModePropertyAccessor::G330NetPerformanceModePropertyAccessor(IDevice *owner) : owner_(owner) {}
+
+void G330NetPerformanceModePropertyAccessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
+    switch(propertyId) {
+    case OB_PROP_DEVICE_PERFORMANCE_MODE_INT: {
+        auto commandPort = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        commandPort->setPropertyValue(OB_PROP_DEVICE_PERFORMANCE_MODE_INT, value);
+        performanceMode_ = value.intValue;
+
+        // update performance mode
+        updatePerformanceMode(performanceMode_);
+    } break;
+    default: {
+    } break;
+    }
+}
+
+void G330NetPerformanceModePropertyAccessor::getPropertyValue(uint32_t propertyId, OBPropertyValue *value) {
+    switch(propertyId) {
+    case OB_PROP_DEVICE_PERFORMANCE_MODE_INT: {
+        auto commandPort = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        commandPort->getPropertyValue(OB_PROP_DEVICE_PERFORMANCE_MODE_INT, value);
+        performanceMode_ = value->intValue;
+    } break;
+    default: {
+    } break;
+    }
+}
+
+void G330NetPerformanceModePropertyAccessor::getPropertyRange(uint32_t propertyId, OBPropertyRange *range) {
+    switch(propertyId) {
+    case OB_PROP_DEVICE_PERFORMANCE_MODE_INT: {
+        range->min.intValue  = 0;
+        range->max.intValue  = 1;
+        range->step.intValue = 1;
+        range->def.intValue  = 1;
+        range->cur.intValue  = performanceMode_;
+    } break;
+    default: {
+    } break;
+    }
+}
+
+void G330NetPerformanceModePropertyAccessor::updatePerformanceMode(uint32_t mode) {
+    auto streamProfileFilter = owner_->getComponentT<G330NetStreamProfileFilter>(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER);
+    streamProfileFilter->switchFilterMode((OBCameraPerformanceMode)mode);
 }
 
 G330HWNoiseRemovePropertyAccessor::G330HWNoiseRemovePropertyAccessor(IDevice *owner) : owner_(owner) {}

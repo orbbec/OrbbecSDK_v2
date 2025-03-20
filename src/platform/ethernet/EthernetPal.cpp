@@ -4,11 +4,13 @@
 #include "EthernetPal.hpp"
 #include "exception/ObException.hpp"
 #include "utils/Utils.hpp"
+#include "RTPStreamPort.hpp"
+#include "logger/Logger.hpp"
 
 namespace libobsensor {
 
 const uint16_t DEFAULT_CMD_PORT                     = 8090;
-const uint16_t DEVICE_WATCHER_POLLING_INTERVAL_MSEC = 5000;
+const uint16_t DEVICE_WATCHER_POLLING_INTERVAL_MSEC = 2000;
 
 NetDeviceWatcher::~NetDeviceWatcher() noexcept {
     if(!stopWatch_) {
@@ -19,6 +21,7 @@ NetDeviceWatcher::~NetDeviceWatcher() noexcept {
 void NetDeviceWatcher::start(deviceChangedCallback callback) {
     callback_          = callback;
     stopWatch_         = false;
+    stopCheck_         = false;
     deviceWatchThread_ = std::thread([&]() {
         std::mutex                   mutex;
         std::unique_lock<std::mutex> lock(mutex);
@@ -40,6 +43,9 @@ void NetDeviceWatcher::start(deviceChangedCallback callback) {
 }
 
 void NetDeviceWatcher::stop() {
+    stopCheck_ = true;
+    condVarCheck_.notify_all();
+
     stopWatch_ = true;
     condVar_.notify_all();
     if(deviceWatchThread_.joinable()) {
@@ -81,6 +87,9 @@ std::shared_ptr<ISourcePort> EthernetPal::getSourcePort(std::shared_ptr<const So
     case SOURCE_PORT_NET_RTSP:
         port = std::make_shared<RTSPStreamPort>(std::dynamic_pointer_cast<const RTSPStreamPortInfo>(portInfo));
         break;
+    case SOURCE_PORT_NET_RTP:
+        port = std::make_shared<RTPStreamPort>(std::dynamic_pointer_cast<const RTPStreamPortInfo>(portInfo));
+        break;
     default:
         throw invalid_value_exception("Invalid port type!");
     }
@@ -97,7 +106,8 @@ SourcePortInfoList EthernetPal::querySourcePortInfos() {
 
     // Only re-query port information for newly online devices
     for(auto &&info: added) {
-        sourcePortInfoList_.push_back(std::make_shared<NetSourcePortInfo>(SOURCE_PORT_NET_VENDOR, info.ip, DEFAULT_CMD_PORT, info.mac, info.sn, info.pid));
+        sourcePortInfoList_.push_back(
+            std::make_shared<NetSourcePortInfo>(SOURCE_PORT_NET_VENDOR, info.localMac, info.localIp, info.ip, DEFAULT_CMD_PORT, info.mac, info.sn, info.pid));
     }
 
     // Delete devices that have been offline from the list

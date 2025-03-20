@@ -106,16 +106,17 @@ std::vector<std::shared_ptr<IDeviceEnumInfo>> G2DeviceInfo::pickNetDevices(const
     while(iter != groups.end()) {
         if(iter->size() >= 1) {
             auto portInfo = std::dynamic_pointer_cast<const NetSourcePortInfo>(iter->front());
-            iter->emplace_back(std::make_shared<RTSPStreamPortInfo>(portInfo->address, static_cast<uint16_t>(8888), portInfo->port, OB_STREAM_COLOR,
-                                                                    portInfo->mac, portInfo->serialNumber, portInfo->pid));
-            iter->emplace_back(std::make_shared<RTSPStreamPortInfo>(portInfo->address, static_cast<uint16_t>(8554), portInfo->port, OB_STREAM_DEPTH,
-                                                                    portInfo->mac, portInfo->serialNumber, portInfo->pid));
-            iter->emplace_back(std::make_shared<RTSPStreamPortInfo>(portInfo->address, static_cast<uint16_t>(8555), portInfo->port, OB_STREAM_IR_LEFT,
-                                                                    portInfo->mac, portInfo->serialNumber, portInfo->pid));
-            iter->emplace_back(std::make_shared<RTSPStreamPortInfo>(portInfo->address, static_cast<uint16_t>(8556), portInfo->port, OB_STREAM_IR_RIGHT,
-                                                                    portInfo->mac, portInfo->serialNumber, portInfo->pid));
-            iter->emplace_back(std::make_shared<NetDataStreamPortInfo>(portInfo->address, static_cast<uint16_t>(8900), portInfo->port, portInfo->mac,
-                                                                       portInfo->serialNumber, portInfo->pid));
+            iter->emplace_back(std::make_shared<RTSPStreamPortInfo>(portInfo->localMac, portInfo->localAddress, portInfo->address, static_cast<uint16_t>(8888),
+                                                                    portInfo->port, OB_STREAM_COLOR, portInfo->mac, portInfo->serialNumber, portInfo->pid));
+            iter->emplace_back(std::make_shared<RTSPStreamPortInfo>(portInfo->localMac, portInfo->localAddress, portInfo->address, static_cast<uint16_t>(8554),
+                                                                    portInfo->port, OB_STREAM_DEPTH, portInfo->mac, portInfo->serialNumber, portInfo->pid));
+            iter->emplace_back(std::make_shared<RTSPStreamPortInfo>(portInfo->localMac, portInfo->localAddress, portInfo->address, static_cast<uint16_t>(8555),
+                                                                    portInfo->port, OB_STREAM_IR_LEFT, portInfo->mac, portInfo->serialNumber, portInfo->pid));
+            iter->emplace_back(std::make_shared<RTSPStreamPortInfo>(portInfo->localMac, portInfo->localAddress, portInfo->address, static_cast<uint16_t>(8556),
+                                                                    portInfo->port, OB_STREAM_IR_RIGHT, portInfo->mac, portInfo->serialNumber, portInfo->pid));
+            iter->emplace_back(std::make_shared<NetDataStreamPortInfo>(portInfo->localMac, portInfo->localAddress, portInfo->address,
+                                                                       static_cast<uint16_t>(8900), portInfo->port, portInfo->mac, portInfo->serialNumber,
+                                                                       portInfo->pid));
 
             auto deviceEnumInfo = std::make_shared<G2DeviceInfo>(*iter);
             gemini2DeviceInfos.push_back(deviceEnumInfo);

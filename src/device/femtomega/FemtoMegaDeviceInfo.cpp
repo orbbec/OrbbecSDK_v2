@@ -103,14 +103,15 @@ std::vector<std::shared_ptr<IDeviceEnumInfo>> FemtoMegaDeviceInfo::pickNetDevice
         if(iter->size() >= 1) {
 
             auto portInfo = std::dynamic_pointer_cast<const NetSourcePortInfo>(iter->front());
-            iter->emplace_back(std::make_shared<RTSPStreamPortInfo>(portInfo->address, static_cast<uint16_t>(8888), portInfo->port, OB_STREAM_COLOR,
-                                                                    portInfo->mac, portInfo->serialNumber, portInfo->pid));
-            iter->emplace_back(std::make_shared<RTSPStreamPortInfo>(portInfo->address, static_cast<uint16_t>(8554), portInfo->port, OB_STREAM_DEPTH,
-                                                                    portInfo->mac, portInfo->serialNumber, portInfo->pid));
-            iter->emplace_back(std::make_shared<RTSPStreamPortInfo>(portInfo->address, static_cast<uint16_t>(8554), portInfo->port, OB_STREAM_IR, portInfo->mac,
-                                                                    portInfo->serialNumber, portInfo->pid));
-            iter->emplace_back(std::make_shared<NetDataStreamPortInfo>(portInfo->address, static_cast<uint16_t>(8900), portInfo->port, portInfo->mac,
-                                                                       portInfo->serialNumber, portInfo->pid));  // imu data stream
+            iter->emplace_back(std::make_shared<RTSPStreamPortInfo>(portInfo->localMac, portInfo->localAddress, portInfo->address, static_cast<uint16_t>(8888),
+                                                                    portInfo->port, OB_STREAM_COLOR, portInfo->mac, portInfo->serialNumber, portInfo->pid));
+            iter->emplace_back(std::make_shared<RTSPStreamPortInfo>(portInfo->localMac, portInfo->localAddress, portInfo->address, static_cast<uint16_t>(8554),
+                                                                    portInfo->port, OB_STREAM_DEPTH, portInfo->mac, portInfo->serialNumber, portInfo->pid));
+            iter->emplace_back(std::make_shared<RTSPStreamPortInfo>(portInfo->localMac, portInfo->localAddress, portInfo->address, static_cast<uint16_t>(8554),
+                                                                    portInfo->port, OB_STREAM_IR, portInfo->mac, portInfo->serialNumber, portInfo->pid));
+            iter->emplace_back(std::make_shared<NetDataStreamPortInfo>(portInfo->localMac, portInfo->localAddress, portInfo->address,
+                                                                       static_cast<uint16_t>(8900), portInfo->port, portInfo->mac, portInfo->serialNumber,
+                                                                       portInfo->pid));  // imu data stream
 
             auto deviceEnumInfo = std::make_shared<FemtoMegaDeviceInfo>(*iter);
             femtoMegaDeviceInfos.push_back(deviceEnumInfo);

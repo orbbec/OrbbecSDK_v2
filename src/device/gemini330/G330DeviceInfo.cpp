@@ -8,6 +8,9 @@
 #include "usb/UsbPortGroup.hpp"
 #include "ethernet/NetPortGroup.hpp"
 #include "utils/Utils.hpp"
+#include "exception/ObException.hpp"
+#include "ethernet/RTPStreamPort.hpp"
+#include "ethernet/NetDataStreamPort.hpp"
 
 #include <map>
 
@@ -22,34 +25,62 @@ const std::map<int, std::string> G300DeviceNameMap = {
 };
 
 G330DeviceInfo::G330DeviceInfo(const SourcePortInfoList groupedInfoList) {
-    auto portInfo = std::dynamic_pointer_cast<const USBSourcePortInfo>(groupedInfoList.front());
+    auto firstPortInfo = groupedInfoList.front();
+    if(IS_USB_PORT(firstPortInfo->portType)) {
+        auto portInfo = std::dynamic_pointer_cast<const USBSourcePortInfo>(groupedInfoList.front());
+        auto iter = G300DeviceNameMap.find(portInfo->pid);
+        if(iter != G300DeviceNameMap.end()) {
+            name_ = iter->second;
+        }
+        else {
+            name_ = "Gemini 300 series device";
+        }
 
-    auto iter = G300DeviceNameMap.find(portInfo->pid);
-    if(iter != G300DeviceNameMap.end()) {
-        name_ = iter->second;
+        fullName_ = "Orbbec " + name_;
+
+        pid_                = portInfo->pid;
+        vid_                = portInfo->vid;
+        uid_                = portInfo->uid;
+        deviceSn_           = portInfo->serial;
+        connectionType_     = portInfo->connSpec;
+        sourcePortInfoList_ = groupedInfoList;
+    }
+    else if(IS_NET_PORT(firstPortInfo->portType)) {
+        auto portInfo = std::dynamic_pointer_cast<const NetSourcePortInfo>(groupedInfoList.front());
+        auto iter     = G300DeviceNameMap.find(portInfo->pid);
+        if(iter != G300DeviceNameMap.end()) {
+            name_ = iter->second;
+        }
+        else {
+            name_ = "Gemini 300 series device";
+        }
+
+        fullName_ = "Orbbec " + name_;
+
+        pid_                = portInfo->pid;
+        vid_                = 0x2BC5;
+        uid_                = portInfo->mac;
+        deviceSn_           = portInfo->serialNumber;
+        connectionType_     = "Ethernet";
+        sourcePortInfoList_ = groupedInfoList;
     }
     else {
-        name_ = "Gemini 300 series device";
+        throw invalid_value_exception("Invalid port type");
     }
-
-    fullName_ = "Orbbec " + name_;
-
-    pid_                = portInfo->pid;
-    vid_                = portInfo->vid;
-    uid_                = portInfo->uid;
-    deviceSn_           = portInfo->serial;
-    connectionType_     = portInfo->connSpec;
-    sourcePortInfoList_ = groupedInfoList;
 }
 
 G330DeviceInfo::~G330DeviceInfo() noexcept {}
 
 std::shared_ptr<IDevice> G330DeviceInfo::createDevice() const {
-    if(std::find(DaBaiADevPids.begin(), DaBaiADevPids.end(), pid_) != DaBaiADevPids.end()) {
-        return std::make_shared<DabaiADevice>(shared_from_this());
+    if(connectionType_ == "Ethernet") {
+        return std::make_shared<G330NetDevice>(shared_from_this());
     }
-
-    return std::make_shared<G330Device>(shared_from_this());
+    else {
+        if(std::find(DaBaiADevPids.begin(), DaBaiADevPids.end(), pid_) != DaBaiADevPids.end()) {
+            return std::make_shared<DabaiADevice>(shared_from_this());
+        }
+        return std::make_shared<G330Device>(shared_from_this());
+    }
 }
 
 std::vector<std::shared_ptr<IDeviceEnumInfo>> G330DeviceInfo::pickDevices(const SourcePortInfoList infoList) {
@@ -66,15 +97,34 @@ std::vector<std::shared_ptr<IDeviceEnumInfo>> G330DeviceInfo::pickDevices(const 
         }
         iter++;
     }
+    return G330DeviceInfos;
+}
 
-    // pick ethernet device
-    remainder = FilterNetPortInfoByPid(infoList, G330DevPids);
-    groups    = utils::groupVector<std::shared_ptr<const SourcePortInfo>>(remainder, GroupNetSourcePortByMac);
-    iter      = groups.begin();
+std::vector<std::shared_ptr<IDeviceEnumInfo>> G330DeviceInfo::pickNetDevices(const SourcePortInfoList infoList) {
+    std::vector<std::shared_ptr<IDeviceEnumInfo>> G330DeviceInfos;
+    auto                                          remainder = FilterNetPortInfoByPid(infoList, G330DevPids);
+    auto                                          groups    = utils::groupVector<std::shared_ptr<const SourcePortInfo>>(remainder, GroupNetSourcePortByMac);
+    auto                                          iter      = groups.begin();
     while(iter != groups.end()) {
-        if(iter->size() >= 3) {
-            auto info = std::make_shared<G330DeviceInfo>(*iter);
-            G330DeviceInfos.push_back(info);
+        if(iter->size() >= 1) {
+            auto portInfo = std::dynamic_pointer_cast<const NetSourcePortInfo>(iter->front());
+            iter->emplace_back(std::make_shared<RTPStreamPortInfo>(portInfo->localMac, portInfo->localAddress, portInfo->address, static_cast<uint16_t>(20000),
+                                                                   portInfo->port, OB_STREAM_COLOR, portInfo->mac, portInfo->serialNumber, portInfo->pid));
+
+            iter->emplace_back(std::make_shared<RTPStreamPortInfo>(portInfo->localMac, portInfo->localAddress, portInfo->address, static_cast<uint16_t>(20100),
+                                                                   portInfo->port, OB_STREAM_DEPTH, portInfo->mac, portInfo->serialNumber, portInfo->pid));
+
+            iter->emplace_back(std::make_shared<RTPStreamPortInfo>(portInfo->localMac, portInfo->localAddress, portInfo->address, static_cast<uint16_t>(20200),
+                                                                   portInfo->port, OB_STREAM_IR_LEFT, portInfo->mac, portInfo->serialNumber, portInfo->pid));
+
+            iter->emplace_back(std::make_shared<RTPStreamPortInfo>(portInfo->localMac, portInfo->localAddress, portInfo->address, static_cast<uint16_t>(20300),
+                                                                   portInfo->port, OB_STREAM_IR_RIGHT, portInfo->mac, portInfo->serialNumber, portInfo->pid));
+
+            iter->emplace_back(std::make_shared<RTPStreamPortInfo>(portInfo->localMac, portInfo->localAddress, portInfo->address, static_cast<uint16_t>(20400),
+                                                                   portInfo->port, OB_STREAM_ACCEL, portInfo->mac, portInfo->serialNumber, portInfo->pid));
+
+            auto deviceEnumInfo = std::make_shared<G330DeviceInfo>(*iter);
+            G330DeviceInfos.push_back(deviceEnumInfo);
         }
         iter++;
     }

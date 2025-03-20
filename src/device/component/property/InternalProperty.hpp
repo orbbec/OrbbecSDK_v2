@@ -22,7 +22,12 @@ typedef enum {
     OB_PROP_FAN_WORK_SPEED_INT              = 120, /**< Fan speed*/
     OB_PROP_STOP_IR_RIGHT_STREAM_BOOL       = 139, /**<Disable the right IR stream*/
 
-    OB_STRUCT_DEVICE_UPGRADE_STATUS = 1006, /**< Firmware upgrade status, read only*/
+    OB_STRUCT_DEVICE_UPGRADE_STATUS         = 1006, /**< Firmware upgrade status, read only*/
+    OB_PROP_START_COLOR_STREAM_BOOL         = 125, /**< Start or stop color stream */
+    OB_PROP_START_DEPTH_STREAM_BOOL         = 126, /**< Start or stop depth stream */
+    OB_PROP_START_IR_STREAM_BOOL            = 127, /**< Start or stop left ir stream */
+    OB_PROP_START_IR_RIGHT_STREAM_BOOL      = 201, /**< Start or stop right ir stream */
+
 
     OB_PROP_GYRO_SWITCH_BOOL     = 2019, /**< Gyroscope switch*/
     OB_PROP_ACCEL_SWITCH_BOOL    = 2020, /**< Accelerometer switch*/
@@ -37,7 +42,14 @@ typedef enum {
     OB_STRUCT_GET_GYRO_PRESETS_FULL_SCALE_LIST  = 1033, /**< Get the range list supported by the gyroscope*/
     OB_STRUCT_GET_ACCEL_PRESETS_FULL_SCALE_LIST = 1034, /**< Get the range list supported by the accelerometer*/
 
-    OB_RAW_DATA_D2C_ALIGN_SUPPORT_PROFILE_LIST           = 4024, /**< D2C Alignment Resolution List*/
+    OB_STRUCT_COLOR_STREAM_PROFILE    = 1048, /**< set stream profile to color*/
+    OB_STRUCT_DEPTH_STREAM_PROFILE    = 1049, /**< set stream profile to depth*/
+    OB_STRUCT_IR_STREAM_PROFILE       = 1050, /**< set stream profile to ir or left ir*/
+    OB_STRUCT_IR_RIGHT_STREAM_PROFILE = 1065, /**< set stream profile to right ir*/
+
+    OB_PROP_IMU_STREAM_PORT_INT = 3026, /**< set stream port to imu*/
+
+    OB_RAW_DATA_D2C_ALIGN_SUPPORT_PROFILE_LIST           = 4024, /**< D2C Aligned Resolution List*/
     OB_RAW_DATA_DEPTH_CALIB_PARAM                        = 4026, /**< Depth calibration parameters*/
     OB_RAW_DATA_ALIGN_CALIB_PARAM                        = 4027,
     OB_RAW_DATA_DEPTH_ALG_MODE_LIST                      = 4034, /**< Depth algorithm mode list*/

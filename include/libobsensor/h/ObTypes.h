@@ -496,6 +496,15 @@ typedef enum {
     ob_align_mode;
 
 /**
+ * @brief Camera performance mode
+ */
+typedef enum {
+    ADAPTIVE_PERFORMANCE_MODE, /**< Camera adaptive mode */
+    HIGH_PERFORMANCE_MODE,     /**< High Performance Mode */
+} OBCameraPerformanceMode,
+    ob_camera_performance_mode;
+
+/**
  * @brief Rectangle
  */
 typedef struct {

@@ -311,10 +311,12 @@ std::vector<OBSensorType> DeviceBase::getSensorTypeList() const {
 bool DeviceBase::hasAnySensorStreamActivated() {
     for(auto &item: sensorPortInfos_) {
         if(isSensorCreated(item.first)) {
-            auto sensor = getSensor(item.first);
-            if(sensor && sensor->isStreamActivated()) {
-                return true;
-            }
+            TRY_EXECUTE({
+                auto sensor = getSensor(item.first);
+                if(sensor && sensor->isStreamActivated()) {
+                    return true;
+                }
+            })
         }
     }
     return false;

@@ -30,6 +30,9 @@ private:
     bool                        stopWatch_ = false;
     std::vector<GVCPDeviceInfo> netDevInfoList_;
     std::condition_variable     condVar_;
+
+    bool                        stopCheck_ = false;
+    std::condition_variable     condVarCheck_;
 };
 
 class EthernetPal : public IPal {

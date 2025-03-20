@@ -551,6 +551,18 @@ OB_EXPORT const char *ob_device_list_get_device_connection_type(const ob_device_
 OB_EXPORT const char *ob_device_list_get_device_ip_address(const ob_device_list *list, uint32_t index, ob_error **error);
 
 /**
+ * @brief Get device local mac address
+ *
+ * @attention Only valid for network devices, otherwise it will return "0:0:0:0:0:0".
+ *
+ * @param list Device list object
+ * @param index Device index
+ * @param error Pointer to an error object that will be set if an error occurs.
+ * @return const char* returns the device mac address
+ */
+OB_EXPORT const char *ob_device_list_get_device_local_mac(const ob_device_list *list, uint32_t index, ob_error **error);
+
+/**
  * @brief Create a device.
  *
  * @attention If the device has already been acquired and created elsewhere, repeated acquisitions will return an error.

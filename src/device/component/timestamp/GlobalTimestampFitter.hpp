@@ -22,6 +22,7 @@ public:
     void            reFitting() override;
     void            pause() override;
     void            resume() override;
+    void            setMaxValidRtt(uint64_t maxValidTime);
 
     void enable(bool en) override;
     bool isEnabled() const override;
@@ -30,6 +31,8 @@ private:
     void fittingLoop();
 
 private:
+    const uint64_t MAX_VALID_RTT = 20000;  // 10ms
+
     bool enable_;
     std::thread             sampleThread_;
     std::mutex              sampleMutex_;
@@ -50,5 +53,6 @@ private:
     std::mutex              linearFuncParamMutex_;
     std::condition_variable linearFuncParamCondVar_;
     LinearFuncParam         linearFuncParam_;
+    uint64_t                maxValidRtt_;
 };
 }  // namespace libobsensor
