@@ -19,11 +19,12 @@ public:
 
     void flush();
 
+    void socketReconnect();
+
 private:
     void checkLocalIP();
     void socketConnect();
     void socketClose();
-    void socketReconnect();
 
 private:
     bool              isValidIP_;
