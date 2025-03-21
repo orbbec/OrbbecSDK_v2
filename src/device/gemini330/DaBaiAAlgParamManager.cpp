@@ -165,7 +165,7 @@ void DaBaiAAlgParamManager::fetchParamFromDevice() {
         disparityParam_.unit         = depthCalib.unit;
         disparityParam_.dispOffset   = depthCalib.dispOffset;
         disparityParam_.invalidDisp  = depthCalib.invalidDisp;
-        disparityParam_.packMode     = OB_DISP_PACK_ORIGINAL_NEW;
+        disparityParam_.packMode     = OB_DISP_PACK_MX6800_MONOCULAR;
         disparityParam_.isDualCamera = false;
     }
     catch(const std::exception &e) {
@@ -312,7 +312,7 @@ void DaBaiAAlgParamManager::reFetchDisparityParams() {
         disparityParam_.unit         = depthCalib.unit;
         disparityParam_.dispOffset   = depthCalib.dispOffset;
         disparityParam_.invalidDisp  = depthCalib.invalidDisp;
-        disparityParam_.packMode     = OB_DISP_PACK_ORIGINAL_NEW;
+        disparityParam_.packMode     = OB_DISP_PACK_MX6800_MONOCULAR;
         disparityParam_.isDualCamera = false;
     }
     catch(const std::exception &e) {

@@ -97,10 +97,11 @@ typedef struct {
 } OBDepthCalibrationParam;
 
 typedef enum {
-    OB_DISP_PACK_ORIGINAL     = 0,  // MX6000 Parallax
-    OB_DISP_PACK_OPENNI       = 1,  // OpenNI disparity
-    OB_DISP_PACK_ORIGINAL_NEW = 2,  // MX6600 Parallax
-    OB_DISP_PACK_GEMINI2XL    = 3,  // Gemini2XL parallax
+    OB_DISP_PACK_ORIGINAL         = 0,  // MX6000 Parallax
+    OB_DISP_PACK_OPENNI           = 1,  // OpenNI disparity
+    OB_DISP_PACK_ORIGINAL_NEW     = 2,  // MX6600 Parallax
+    OB_DISP_PACK_GEMINI2XL        = 3,  // Gemini2XL parallax
+    OB_DISP_PACK_MX6800_MONOCULAR = 4,  // MX6800 monocular
 } OBDisparityPackMode;
 
 /**
