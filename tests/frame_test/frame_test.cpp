@@ -12,7 +12,7 @@ extern "C" {
 void check_ob_error(ob_error **err) {
     if(*err) {
         std::cerr << "Error: " << ob_error_get_message(*err) << std::endl;
-        ob_delete_error(*err);
+        ob_delete_error(err);
         exit(-1);
     }
     *err = nullptr;

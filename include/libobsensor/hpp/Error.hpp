@@ -42,7 +42,7 @@ public:
             throw Error(*error);
         }
         else {
-            ob_delete_error(*error);
+            ob_delete_error(error);
             *error = nullptr;
         }
     }
@@ -52,7 +52,7 @@ public:
      */
     ~Error() override {
         if(impl_) {
-            ob_delete_error(impl_);
+            ob_delete_error(&impl_);
             impl_ = nullptr;
         }
     }
