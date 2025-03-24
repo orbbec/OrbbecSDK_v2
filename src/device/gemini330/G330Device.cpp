@@ -1340,6 +1340,9 @@ void G330NetDevice::fetchDeviceInfo() {
 
     netBandwidth_ = 1000;
     netBandwidth_ = propServer->getPropertyValueT<int>(OB_PROP_NETWORK_BANDWIDTH_TYPE_INT);
+    if(netBandwidth_ == 10) {
+        LOG_WARN("G335le link speed is 10Mb/s, please reset the device!");
+    }
 }
 
 void libobsensor::G330NetDevice::fetchAllProfileList() {
