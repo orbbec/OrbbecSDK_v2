@@ -11,7 +11,7 @@
 
 namespace libobsensor {
 
-#define MAX_FRAME_DELAY 1.2f  // 0.3s max delay diff + 0.1s max frame gap
+#define MAX_FRAME_DELAY 0.5f  // 0.3s max delay diff + 0.1s max frame gap
 #define MAX_NORMAL_MODE_QUEUE_SIZE 3
 
 typedef std::map<OBFrameType, SourceFrameQueue>::iterator FrameQueuePair;
