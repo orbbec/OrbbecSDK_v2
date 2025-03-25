@@ -143,7 +143,7 @@ Based on the device's timestamp and considering data transmission delays, the ti
 ```cpp
     <!--Default configuration of data streams for different types of devices-->
     <Device>
-        <EnumerateNetDevice>false</EnumerateNetDevice>
+        <EnumerateNetDevice>true</EnumerateNetDevice>
         <!--UVC Backend select on Linux; optional values: Auto, V4L2, LibUVC; Auto is the default value-->
         <LinuxUVCBackend>LibUVC</LinuxUVCBackend>
 
@@ -211,7 +211,7 @@ Based on the device's timestamp and considering data transmission delays, the ti
 
 1. Set whether to enumerate network devices. Femto Mega and Gemini 2 XL support network functions. If you need to use the network functions of these two devices, you can set this to true.
 ```cpp
-        <EnumerateNetDevice>false</EnumerateNetDevice>
+        <EnumerateNetDevice>true</EnumerateNetDevice>
 ```
 
 2. Set whether to use LibUVC or V4L2 to receive data on Linux or ARM. V4L2 is not supported by all devices, and we recommend using LibUVC. The Gemini 330 series devices support V4L2, but kernel patches are needed to obtain Metadata data.
