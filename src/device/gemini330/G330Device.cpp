@@ -54,9 +54,11 @@
 
 namespace libobsensor {
 
-constexpr uint8_t  INTERFACE_COLOR        = 4;
-constexpr uint8_t  INTERFACE_DEPTH        = 0;
-constexpr uint16_t GMSL_MAX_CMD_DATA_SIZE = 232;
+constexpr uint8_t  INTERFACE_COLOR             = 4;
+constexpr uint8_t  INTERFACE_DEPTH             = 0;
+constexpr uint16_t GMSL_MAX_CMD_DATA_SIZE      = 232;
+constexpr uint32_t G335LE_10M_NET_BAND_WIDTH   = 10;
+constexpr uint32_t G335LE_1000M_NET_BAND_WIDTH = 1000;
 
 G330Device::G330Device(const std::shared_ptr<const IDeviceEnumInfo> &info) : DeviceBase(info), isGmslDevice_(info->getConnectionType() == "GMSL2") {
     init();
@@ -1338,10 +1340,13 @@ void G330NetDevice::fetchDeviceInfo() {
     deviceInfo_->uid_                 = enumInfo_->getUid();
     deviceInfo_->connectionType_      = enumInfo_->getConnectionType();
 
-    netBandwidth_ = 1000;
+    netBandwidth_ = G335LE_1000M_NET_BAND_WIDTH;
     netBandwidth_ = propServer->getPropertyValueT<int>(OB_PROP_NETWORK_BANDWIDTH_TYPE_INT);
-    if(netBandwidth_ == 10) {
-        LOG_WARN("G335le link speed is 10Mb/s, please reset the device!");
+    if(netBandwidth_ == G335LE_10M_NET_BAND_WIDTH) {
+        LOG_WARN("G335Le link speed is 10Mb/s, please reset the device!");
+    }
+    else {
+        LOG_DEBUG("G335Le link speed is {}Mb/s.", netBandwidth_);
     }
 }
 
