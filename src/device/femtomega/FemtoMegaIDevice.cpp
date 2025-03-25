@@ -224,8 +224,15 @@ void FemtoMegaINetDevice::initSensorList() {
                 }
                 sensor->updateFormatFilterConfig(formatFilterConfigs);
 
-                auto videoFrameTimestampCalculator_ = std::make_shared<FrameTimestampCalculatorBaseDeviceTime>(this, deviceTimeFreq_, colorFrameTimeFreq_);
-                sensor->setFrameTimestampCalculator(videoFrameTimestampCalculator_);
+                if(getFirmwareVersionInt() >= 20003) {
+                    auto videoFrameTimestampCalculator_ =
+                        std::make_shared<FemtoMegaColorFrameTimestampCalculatorV10300>(this, deviceTimeFreq_, colorFrameTimeFreq_);
+                    sensor->setFrameTimestampCalculator(videoFrameTimestampCalculator_);
+                }
+                else {
+                    auto videoFrameTimestampCalculator_ = std::make_shared<FrameTimestampCalculatorBaseDeviceTime>(this, deviceTimeFreq_, colorFrameTimeFreq_);
+                    sensor->setFrameTimestampCalculator(videoFrameTimestampCalculator_);
+                }
 
                 auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, colorFrameTimeFreq_);
                 sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
