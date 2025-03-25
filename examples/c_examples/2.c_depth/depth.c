@@ -14,7 +14,7 @@ void check_ob_error(ob_error **err) {
     if(*err) {
         const char *error_message = ob_error_get_message(*err);
         fprintf(stderr, "Error: %s\n", error_message);
-        ob_delete_error(err);
+        ob_delete_error(*err);
         exit(-1);
     }
     *err = NULL;

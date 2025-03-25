@@ -29,7 +29,7 @@ char ob_smpl_wait_for_key_press(uint32_t timeout_ms);
     if(*error) {                                                  \
         const char *error_message = ob_error_get_message(*error); \
         fprintf(stderr, "Error: %s\n", error_message);            \
-        ob_delete_error(error);                                   \
+        ob_delete_error(*error);                                  \
         *error = NULL;                                            \
         exit(-1);                                                 \
     }                                                             \
