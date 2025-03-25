@@ -123,8 +123,6 @@ int GVCPClient::openClientSockets() {
     int index = 0;
 
     for(PIP_ADAPTER_ADDRESSES aa = adapterAddresses.get(); aa != NULL; aa = aa->Next) {
-        std::cout << "Interface: " << aa->AdapterName << std::endl;
-
         std::ostringstream macAddressStream;
         for(int i = 0; i < 6; i++) {
             macAddressStream << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(aa->PhysicalAddress[i]);
