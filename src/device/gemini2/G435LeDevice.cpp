@@ -94,59 +94,102 @@ void G435LeDeviceBase::init() {
 }
 
 std::vector<std::shared_ptr<IFilter>> G435LeDeviceBase::createRecommendedPostProcessingFilters(OBSensorType type) {
-    if(type != OB_SENSOR_DEPTH) {
-        return {};
+    auto filterFactory = FilterFactory::getInstance();
+    if(type == OB_SENSOR_DEPTH) {
+        // activate depth frame processor library
+        getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR, false);
+
+        std::vector<std::shared_ptr<IFilter>> depthFilterList;
+
+        if(filterFactory->isFilterCreatorExists("DecimationFilter")) {
+            auto decimationFilter = filterFactory->createFilter("DecimationFilter");
+            depthFilterList.push_back(decimationFilter);
+        }
+
+        if(filterFactory->isFilterCreatorExists("HDRMerge")) {
+            auto hdrMergeFilter = filterFactory->createFilter("HDRMerge");
+            depthFilterList.push_back(hdrMergeFilter);
+        }
+
+        if(filterFactory->isFilterCreatorExists("SequenceIdFilter")) {
+            auto sequenceIdFilter = filterFactory->createFilter("SequenceIdFilter");
+            depthFilterList.push_back(sequenceIdFilter);
+        }
+
+        if(filterFactory->isFilterCreatorExists("SpatialAdvancedFilter")) {
+            auto spatFilter = filterFactory->createFilter("SpatialAdvancedFilter");
+            // magnitude, alpha, disp_diff, radius
+            std::vector<std::string> params = { "1", "0.5", "160", "1" };
+            spatFilter->updateConfig(params);
+            depthFilterList.push_back(spatFilter);
+        }
+
+        if(filterFactory->isFilterCreatorExists("TemporalFilter")) {
+            auto tempFilter = filterFactory->createFilter("TemporalFilter");
+            // diff_scale, weight
+            std::vector<std::string> params = { "0.1", "0.4" };
+            tempFilter->updateConfig(params);
+            depthFilterList.push_back(tempFilter);
+        }
+
+        if(filterFactory->isFilterCreatorExists("HoleFillingFilter")) {
+            auto                     hfFilter = filterFactory->createFilter("HoleFillingFilter");
+            std::vector<std::string> params   = { "2" };
+            hfFilter->updateConfig(params);
+            depthFilterList.push_back(hfFilter);
+        }
+
+        if(filterFactory->isFilterCreatorExists("DisparityTransform")) {
+            auto dtFilter = filterFactory->createFilter("DisparityTransform");
+            depthFilterList.push_back(dtFilter);
+        }
+
+        if(filterFactory->isFilterCreatorExists("ThresholdFilter")) {
+            auto ThresholdFilter = filterFactory->createFilter("ThresholdFilter");
+            depthFilterList.push_back(ThresholdFilter);
+        }
+
+        for(size_t i = 0; i < depthFilterList.size(); i++) {
+            auto filter = depthFilterList[i];
+            if(filter->getName() != "DisparityTransform") {
+                filter->enable(false);
+            }
+        }
+        return depthFilterList;
     }
+    else if(type == OB_SENSOR_COLOR) {
+        // activate color frame processor library
+        getComponentT<FrameProcessor>(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR, false);
 
-    // create depth frame processor first to activate private filters
-    getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR, false);
-
-    auto                                  filterFactory = FilterFactory::getInstance();
-    std::vector<std::shared_ptr<IFilter>> depthFilterList;
-
-    if(filterFactory->isFilterCreatorExists("EdgeNoiseRemovalFilter")) {
-        auto enrFilter = filterFactory->createFilter("EdgeNoiseRemovalFilter");
-        enrFilter->enable(false);
-        // todo: set default values
-        depthFilterList.push_back(enrFilter);
+        std::vector<std::shared_ptr<IFilter>> colorFilterList;
+        if(filterFactory->isFilterCreatorExists("DecimationFilter")) {
+            auto decimationFilter = filterFactory->createFilter("DecimationFilter");
+            decimationFilter->enable(false);
+            colorFilterList.push_back(decimationFilter);
+        }
+        return colorFilterList;
     }
-
-    if(filterFactory->isFilterCreatorExists("SpatialAdvancedFilter")) {
-        auto spatFilter = filterFactory->createFilter("SpatialAdvancedFilter");
-        spatFilter->enable(false);
-        // magnitude, alpha, disp_diff, radius
-        std::vector<std::string> params = { "1", "0.5", "64", "1" };
-        spatFilter->updateConfig(params);
-        depthFilterList.push_back(spatFilter);
+    else if(type == OB_SENSOR_IR_LEFT) {
+        getComponentT<FrameProcessor>(OB_DEV_COMPONENT_LEFT_IR_FRAME_PROCESSOR, false);
+        std::vector<std::shared_ptr<IFilter>> leftIRFilterList;
+        if(filterFactory->isFilterCreatorExists("SequenceIdFilter")) {
+            auto sequenceIdFilter = filterFactory->createFilter("SequenceIdFilter");
+            sequenceIdFilter->enable(false);
+            leftIRFilterList.push_back(sequenceIdFilter);
+            return leftIRFilterList;
+        }
     }
-
-    if(filterFactory->isFilterCreatorExists("TemporalFilter")) {
-        auto tempFilter = filterFactory->createFilter("TemporalFilter");
-        tempFilter->enable(false);
-        // diff_scale, weight
-        std::vector<std::string> params = { "0.1", "0.4" };
-        tempFilter->updateConfig(params);
-        depthFilterList.push_back(tempFilter);
+    else if(type == OB_SENSOR_IR_RIGHT) {
+        getComponentT<FrameProcessor>(OB_DEV_COMPONENT_RIGHT_IR_FRAME_PROCESSOR, false);
+        std::vector<std::shared_ptr<IFilter>> rightIRFilterList;
+        if(filterFactory->isFilterCreatorExists("SequenceIdFilter")) {
+            auto sequenceIdFilter = filterFactory->createFilter("SequenceIdFilter");
+            sequenceIdFilter->enable(false);
+            rightIRFilterList.push_back(sequenceIdFilter);
+            return rightIRFilterList;
+        }
     }
-
-    if(filterFactory->isFilterCreatorExists("HoleFillingFilter")) {
-        auto hfFilter = filterFactory->createFilter("HoleFillingFilter");
-        hfFilter->enable(false);
-        depthFilterList.push_back(hfFilter);
-    }
-
-    if(filterFactory->isFilterCreatorExists("DisparityTransform")) {
-        auto dtFilter = filterFactory->createFilter("DisparityTransform");
-        dtFilter->enable(true);
-        depthFilterList.push_back(dtFilter);
-    }
-
-    if(filterFactory->isFilterCreatorExists("ThresholdFilter")) {
-        auto ThresholdFilter = filterFactory->createFilter("ThresholdFilter");
-        depthFilterList.push_back(ThresholdFilter);
-    }
-
-    return depthFilterList;
+    return {};
 }
 
 void G435LeDeviceBase::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
