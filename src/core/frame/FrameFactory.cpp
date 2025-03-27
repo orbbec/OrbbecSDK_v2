@@ -110,6 +110,34 @@ std::shared_ptr<Frame> FrameFactory::createFrameFromUserBuffer(OBFrameType frame
     return frame;
 }
 
+std::shared_ptr<Frame> FrameFactory::createFrameFromUserBuffer(OBFrameType frameType, OBFormat format, uint8_t *buffer, size_t bufferSize) {
+    std::shared_ptr<StreamProfile> sp;
+
+    switch(frameType) {
+    case OB_FRAME_VIDEO:
+    case OB_FRAME_DEPTH:
+    case OB_FRAME_IR_LEFT:
+    case OB_FRAME_IR_RIGHT:
+    case OB_FRAME_IR:
+    case OB_FRAME_COLOR:
+        sp = StreamProfileFactory::createVideoStreamProfile(utils::mapFrameTypeToStreamType(frameType), format, 0, 0, 0);
+        break;
+    case OB_FRAME_ACCEL:
+        sp = StreamProfileFactory::createAccelStreamProfile(OB_ACCEL_FS_2g, OB_SAMPLE_RATE_1_5625_HZ);
+        break;
+    case OB_FRAME_GYRO:
+        sp = StreamProfileFactory::createGyroStreamProfile(OB_GYRO_FS_16dps, OB_SAMPLE_RATE_1_5625_HZ);
+        break;
+    default:
+        throw libobsensor::invalid_value_exception("Invalid frame type for user frame.");
+        break;
+    }
+
+    auto frame = FrameFactory::createFrameFromStreamProfile(sp);
+    frame->updateData(buffer, bufferSize);
+    return frame;
+}
+
 std::shared_ptr<Frame> FrameFactory::createVideoFrameFromUserBuffer(OBFrameType frameType, OBFormat format, uint32_t width, uint32_t height,
                                                                     uint32_t strideBytes, uint8_t *buffer, size_t bufferSize,
                                                                     FrameBufferReclaimFunc bufferReclaimFunc) {
@@ -144,12 +172,34 @@ std::shared_ptr<Frame> FrameFactory::createVideoFrameFromUserBuffer(OBFrameType 
     frame->setStreamProfile(sp);
 
     if(strideBytes == 0) {
-        strideBytes =  utils::calcDefaultStrideBytes(format, width);
+        strideBytes = utils::calcDefaultStrideBytes(format, width);
     }
     frame->as<VideoFrame>()->setStride(strideBytes);
     if(strideBytes * height > bufferSize) {
         LOG_WARN("The strideBytes * height is greater than to the bufferSize, it is dangerous to access the buffer!");
     }
+    return frame;
+}
+
+std::shared_ptr<Frame> FrameFactory::createVideoFrameFromUserBuffer(OBFrameType frameType, OBFormat format, uint32_t width, uint32_t height, uint8_t *buffer,
+                                                                    size_t bufferSize) {
+    std::shared_ptr<StreamProfile> sp = nullptr;
+    switch(frameType) {
+    case OB_FRAME_VIDEO:
+    case OB_FRAME_DEPTH:
+    case OB_FRAME_IR_LEFT:
+    case OB_FRAME_IR_RIGHT:
+    case OB_FRAME_IR:
+    case OB_FRAME_COLOR:
+        sp = StreamProfileFactory::createVideoStreamProfile(utils::mapFrameTypeToStreamType(frameType), format, width, height, 0);
+        break;
+    default:
+        throw libobsensor::invalid_value_exception("Invalid frame type for video frame.");
+        break;
+    }
+
+    auto frame = FrameFactory::createFrameFromStreamProfile(sp);
+    frame->updateData(buffer, bufferSize);
     return frame;
 }
 

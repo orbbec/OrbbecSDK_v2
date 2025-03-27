@@ -3,6 +3,7 @@
 
 #pragma once
 #include <vector>
+#include <cstdint>
 
 namespace libobsensor {
 const std::vector<uint16_t> BootDevPids = {

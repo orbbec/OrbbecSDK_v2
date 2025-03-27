@@ -341,22 +341,22 @@ uint32_t PointsFrame::getHeight() const {
 AccelFrame::AccelFrame(uint8_t *data, size_t dataBufSize, FrameBufferReclaimFunc bufferReclaimFunc)
     : Frame(data, dataBufSize, OB_FRAME_ACCEL, bufferReclaimFunc) {}
 
-OBAccelValue AccelFrame::value() {
+OBAccelValue AccelFrame::value() const {
     return *(OBAccelValue *)getData();
 }
 
-float AccelFrame::temperature() {
+float AccelFrame::temperature() const {
     return ((AccelFrame::Data *)getData())->temp;
 }
 
 GyroFrame::GyroFrame(uint8_t *data, size_t dataBufSize, FrameBufferReclaimFunc bufferReclaimFunc)
     : Frame(data, dataBufSize, OB_FRAME_GYRO, bufferReclaimFunc) {}
 
-OBGyroValue GyroFrame ::value() {
+OBGyroValue GyroFrame ::value() const {
     return *(OBGyroValue *)getData();
 }
 
-float GyroFrame ::temperature() {
+float GyroFrame ::temperature() const {
     return ((GyroFrame::Data *)getData())->temp;
 }
 

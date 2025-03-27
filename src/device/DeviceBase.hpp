@@ -25,6 +25,8 @@ private:
 
 public:
     DeviceBase(const std::shared_ptr<const IDeviceEnumInfo> &info);
+    DeviceBase(); // declared for playback device
+
     virtual ~DeviceBase() noexcept;
 
     void reset() override;
@@ -56,10 +58,8 @@ public:
 
     DeviceComponentPtr<IPropertyServer> getPropertyServer() override;
 
-    void                                      updateFirmware(const std::vector<uint8_t> &firmware, DeviceFwUpdateCallback updateCallback, bool async) override;
-
+    void updateFirmware(const std::vector<uint8_t> &firmware, DeviceFwUpdateCallback updateCallback, bool async) override;
     void updateOptionalDepthPresets(const char filePathList[][OB_PATH_MAX], uint8_t pathCount, DeviceFwUpdateCallback updateCallback) override;
-
     static std::map<std::string, std::string> parseExtensionInfo(std::string extensionInfo);
 
     void activateDeviceAccessor() override;
@@ -75,7 +75,6 @@ protected:
 protected:
     const std::shared_ptr<const IDeviceEnumInfo> enumInfo_;
     std::shared_ptr<DeviceInfo>                  deviceInfo_;
-    std::shared_ptr<NetDeviceInfo>               netDeviceInfo_;
     std::map<std::string, std::string>           extensionInfo_;
 
 private:

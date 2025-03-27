@@ -11,7 +11,7 @@ namespace libobsensor {
 
 template <typename T = Frame> class FrameQueue {
 public:
-    explicit FrameQueue(size_t capacity) : capacity_(capacity), stoped_(true), stopping_(false), callback_(nullptr), flushing_(false) {}
+    explicit FrameQueue(size_t capacity) : capacity_(capacity), stopped_(true), stopping_(false), callback_(nullptr), flushing_(false) {}
 
     ~FrameQueue() noexcept {
         reset();
@@ -75,31 +75,38 @@ public:
             throw libobsensor::wrong_api_call_sequence_exception("FrameQueue have already started!");
         }
         callback_      = callback;
-        stoped_        = false;
+        stopped_       = false;
         stopping_      = false;
         flushing_      = false;
         dequeueThread_ = std::thread([&] {
-            std::unique_lock<std::mutex> lock(mutex_);
             while(true) {
-                condition_.wait(lock, [this] { return !queue_.empty() || stopping_ || flushing_; });
-                if(stopping_) {
-                    break;
+                std::shared_ptr<T> frame;
+                {
+                    std::unique_lock<std::mutex> lock(mutex_);
+                    condition_.wait(lock, [this] { return !queue_.empty() || stopping_ || flushing_; });
+                    if(stopping_) {
+                        break;
+                    }
+                    if(flushing_ && queue_.empty()) {
+                        break;
+                    }
+
+                    if (!queue_.empty()) {
+                        frame = queue_.front();
+                        queue_.pop();
+                    }
                 }
-                if(flushing_ && queue_.empty()) {
-                    break;
-                }
-                std::shared_ptr<T> frame = queue_.front();
-                queue_.pop();
+
                 if(frame) {
                     callback_(frame);
                 }
             }
-            stoped_ = true;
+            stopped_ = true;
         });
     }
 
     bool isStarted() const {  // returns true if dequeue thread is running
-        return !stoped_;
+        return !stopped_;
     }
 
     void flush() {  // stop until all frames are called back
@@ -135,7 +142,7 @@ public:
         callback_ = nullptr;
         stopping_ = false;
         flushing_ = false;
-        stoped_   = true;
+        stopped_   = true;
     }
 
 private:
@@ -145,7 +152,7 @@ private:
     size_t                         capacity_;
 
     std::thread                             dequeueThread_;
-    std::atomic<bool>                       stoped_;
+    std::atomic<bool>                       stopped_;
     std::atomic<bool>                       stopping_;
     std::function<void(std::shared_ptr<T>)> callback_;
     std::atomic<bool>                       flushing_;

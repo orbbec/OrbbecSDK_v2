@@ -53,6 +53,8 @@ public:
     void setGlobalTimestampCalculator(std::shared_ptr<IFrameTimestampCalculator> calculator);
     void setFrameProcessor(std::shared_ptr<FrameProcessor> frameProcessor);
 
+    void setFrameRecordingCallback(FrameCallback callback) override;
+
 protected:
     virtual void restartStream();
     virtual void updateStreamState(OBStreamState state);
@@ -70,6 +72,7 @@ protected:
 
     std::shared_ptr<const StreamProfile> activatedStreamProfile_;
     FrameCallback                        frameCallback_;
+    FrameCallback                        frameRecordingCallback_;
 
     std::mutex                                     streamStateCallbackMutex_;
     std::map<uint32_t, StreamStateChangedCallback> streamStateChangedCallbacks_;

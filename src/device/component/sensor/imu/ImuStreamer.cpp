@@ -59,7 +59,7 @@ ImuStreamer::~ImuStreamer() noexcept {
     }
 }
 
-void ImuStreamer::start(std::shared_ptr<const StreamProfile> sp, MutableFrameCallback callback) {
+void ImuStreamer::startStream(std::shared_ptr<const StreamProfile> sp, MutableFrameCallback callback) {
     {
         std::lock_guard<std::mutex> lock(cbMtx_);
         callbacks_[sp] = callback;
@@ -72,7 +72,7 @@ void ImuStreamer::start(std::shared_ptr<const StreamProfile> sp, MutableFrameCal
     backend_->startStream([this](std::shared_ptr<Frame> frame) { ImuStreamer::parseIMUData(frame); });
 }
 
-void ImuStreamer::stop(std::shared_ptr<const StreamProfile> sp) {
+void ImuStreamer::stopStream(std::shared_ptr<const StreamProfile> sp) {
     LOG_DEBUG("ImuStreamer stop....");
     {
         std::lock_guard<std::mutex> lock(cbMtx_);

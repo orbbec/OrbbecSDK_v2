@@ -7,6 +7,7 @@
 #include "ISourcePort.hpp"
 #include "IDeviceComponent.hpp"
 #include "ImuCalculator.hpp"
+#include "IStreamer.hpp"
 
 #include <atomic>
 #include <map>
@@ -35,7 +36,7 @@ typedef struct {
     uint32_t timestamp[2];
 } OBImuOriginData;
 
-class ImuStreamer : public IDeviceComponent {
+class ImuStreamer : public IDeviceComponent, public IStreamer {
 public:
     ImuStreamer(IDevice *owner, const std::shared_ptr<IDataStreamPort> &backend, const std::shared_ptr<IFilter> &filter,
                 std::shared_ptr<IImuCalculator> calculator = nullptr);
@@ -43,8 +44,8 @@ public:
                 std::shared_ptr<IImuCalculator> calculator = nullptr);
     virtual ~ImuStreamer() noexcept;
 
-    void start(std::shared_ptr<const StreamProfile> sp, MutableFrameCallback callback);
-    void stop(std::shared_ptr<const StreamProfile> sp);
+    virtual void startStream(std::shared_ptr<const StreamProfile> profile, MutableFrameCallback callback) override;
+    virtual void stopStream(std::shared_ptr<const StreamProfile> profile) override;
 
     IDevice *getOwner() const override;
 

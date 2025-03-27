@@ -215,8 +215,8 @@ public:
 public:
     AccelFrame(uint8_t *data, size_t dataBufSize, FrameBufferReclaimFunc bufferReclaimFunc = nullptr);
 
-    OBAccelValue value();
-    float        temperature();
+    OBAccelValue value() const;
+    float        temperature() const;
 };
 
 class GyroFrame : public Frame {
@@ -231,8 +231,8 @@ public:
 public:
     GyroFrame(uint8_t *data, size_t dataBufSize, FrameBufferReclaimFunc bufferReclaimFunc = nullptr);
 
-    OBGyroValue value();
-    float       temperature();
+    OBGyroValue value() const;
+    float       temperature() const;
 };
 
 class FrameSet : public Frame {

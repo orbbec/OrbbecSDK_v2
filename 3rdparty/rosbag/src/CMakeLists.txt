@@ -21,6 +21,15 @@ add_library(rosbag STATIC
     ${SOURCE_FILES_ROSBAG}
 )
 
+# if(ANDROID_NDK_TOOLCHAIN_INCLUDED AND CMAKE_ANDROID_NDK_VERSION VERSION_LESS 24)
+#     aux_source_directory(android_ifaddrs_addition ANDROID_ADDITION_SRCS)
+#     target_sources(live555 PRIVATE "${ANDROID_ADDITION_SRCS}")
+#     set(LIVE555_INCLUDE_DIRS
+#         ${LIVE555_INCLUDE_DIRS}
+#         ${CMAKE_CURRENT_SOURCE_DIR}/android_ifaddrs_addition
+#     )
+# endif()
+
 target_include_directories(${PROJECT_NAME} PUBLIC
         ${ROSBAG_HEADER_DIRS}
         ${LZ4_INCLUDE_PATH}
@@ -29,3 +38,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 if (WIN32)
     target_link_libraries(rosbag PRIVATE Ws2_32)
 endif ()
+
+# for test:
+# add_subdirectory(mediaServer)
+# add_subdirectory(testProgs)

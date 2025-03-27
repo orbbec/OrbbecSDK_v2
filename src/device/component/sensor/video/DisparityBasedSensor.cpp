@@ -36,8 +36,8 @@ void DisparityBasedSensor::convertProfileAsDisparityBasedProfile() {
     for(auto &sp: oldSpList) {
         auto vsp   = sp->as<const VideoStreamProfile>();
         auto newSp = StreamProfileFactory::createDisparityBasedStreamProfile(vsp);
-        auto iter = streamProfileBackendMap_.find(sp);
-        streamProfileBackendMap_.insert({newSp,{iter->second.first, iter->second.second}});
+        auto iter  = streamProfileBackendMap_.find(sp);
+        streamProfileBackendMap_.insert({ newSp, { iter->second.first, iter->second.second } });
         streamProfileList_.push_back(newSp);
     }
 }
@@ -46,7 +46,7 @@ void DisparityBasedSensor::markOutputDisparityFrame(bool enable) {
     outputDisparityFrame_ = enable;
 }
 
-void DisparityBasedSensor::setDepthUnit(float unit){
+void DisparityBasedSensor::setDepthUnit(float unit) {
     depthUnit_ = unit;
 }
 

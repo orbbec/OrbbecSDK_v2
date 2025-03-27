@@ -20,7 +20,7 @@ typedef struct {
 } GyroFullScaleRangeList;
 #pragma pack()
 
-GyroSensor::GyroSensor(IDevice *owner, const std::shared_ptr<ISourcePort> &backend, const std::shared_ptr<ImuStreamer> &streamer)
+GyroSensor::GyroSensor(IDevice *owner, const std::shared_ptr<ISourcePort> &backend, const std::shared_ptr<IStreamer> &streamer)
     : SensorBase(owner, OB_SENSOR_GYRO, backend), streamer_(streamer) {
     auto propServer = owner->getPropertyServer();
 
@@ -73,10 +73,11 @@ void GyroSensor::start(std::shared_ptr<const StreamProfile> sp, FrameCallback ca
     propServer->setPropertyValueT(OB_PROP_GYRO_SWITCH_BOOL, true);
 
     BEGIN_TRY_EXECUTE({
-        streamer_->start(sp, [this](std::shared_ptr<Frame> frame) {
+        streamer_->startStream(sp, [this](std::shared_ptr<Frame> frame) {
             if(streamState_ != STREAM_STATE_STREAMING && streamState_ != STREAM_STATE_STARTING) {
                 return;
             }
+
             updateStreamState(STREAM_STATE_STREAMING);
             outputFrame(frame);
         });
@@ -91,7 +92,7 @@ void GyroSensor::start(std::shared_ptr<const StreamProfile> sp, FrameCallback ca
 
 void GyroSensor::stop() {
     updateStreamState(STREAM_STATE_STOPPING);
-    streamer_->stop(activatedStreamProfile_);
+    streamer_->stopStream(activatedStreamProfile_);
     auto owner      = getOwner();
     auto propServer = owner->getPropertyServer();
     propServer->setPropertyValueT(OB_PROP_GYRO_SWITCH_BOOL, false);
