@@ -109,10 +109,6 @@ Based on the device's timestamp and considering data transmission delays, the ti
             </Color>
             <!--If you need to open other streams, you can refer to the above format to add configuration-->
         </Stream>
-        <!--Image alignment, int type, optional values: 0 disable, 1 hardware d2c alignment, 2 software d2c alignment-->
-        <AlignMode>0</AlignMode>
-        <!--Frame synchronization output between different data streams, bool type, true-enable frame synchronization, false-disable frame synchronization-->
-        <FrameSync>false</FrameSync>
     </Pipeline>
 ```
 
@@ -128,14 +124,6 @@ Based on the device's timestamp and considering data transmission delays, the ti
             <RightIR>
                 <UseDefaultStreamProfile>true</UseDefaultStreamProfile>
             </RightIR>
-```
-2. Pipeline can set D2C, such as hardware D2C and software D2C. Some devices do not support hardware D2C, such as Femto Bolt. If you need to use various different types of devices, it is recommended to set this in the user code based on the device type.
-```cpp
-  <AlignMode>0</AlignMode>
-```
-3. Pipeline can set frame synchronization. Enabling frame synchronization will match Depth, Color, and other video frames based on the timestamp and output them as FrameSet within the Pipeline.
-```cpp
-        <FrameSync>false</FrameSync>
 ```
 
 ## Device Configuration

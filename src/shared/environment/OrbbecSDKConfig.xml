@@ -61,12 +61,6 @@
             </Color>
             <!-- If you need to open other streams, you can refer to the above configuration to add -->
         </Stream>
-        <!-- Image alignment, int type, optional values: 0 disable, 1 hardware d2c alignment, 2
-        software d2c alignment -->
-        <AlignMode>0</AlignMode>
-        <!-- Frame synchronization output between different data streams, bool type, true-enable
-        frame synchronization, false-disable frame synchronization -->
-        <FrameSync>false</FrameSync>
     </Pipeline>
 
     <!-- Default configuration of data streams for different types of devices -->
