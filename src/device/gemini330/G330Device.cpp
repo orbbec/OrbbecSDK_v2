@@ -58,9 +58,9 @@
 
 namespace libobsensor {
 
-constexpr uint8_t  INTERFACE_COLOR             = 4;
-constexpr uint8_t  INTERFACE_DEPTH             = 0;
-constexpr uint16_t GMSL_MAX_CMD_DATA_SIZE      = 232;
+constexpr uint8_t  INTERFACE_COLOR        = 4;
+constexpr uint8_t  INTERFACE_DEPTH        = 0;
+constexpr uint16_t GMSL_MAX_CMD_DATA_SIZE = 232;
 
 G330Device::G330Device(const std::shared_ptr<const IDeviceEnumInfo> &info) : DeviceBase(info), isGmslDevice_(info->getConnectionType() == "GMSL2") {
     init();
@@ -678,7 +678,7 @@ void                 G330Device::initSensorListGMSL() {
                         algParamManager->bindDisparityParam({ sp });
                     }
                 });
-
+                loadDefaultDepthPostProcessingConfig();
                 return sensor;
             },
             true);
@@ -1234,7 +1234,6 @@ void G330Device::loadDefaultDepthPostProcessingConfig() {
 //====================================================================================================================================
 //=========================================================G330NetDevice==============================================================
 
-
 G330NetDevice::G330NetDevice(const std::shared_ptr<const IDeviceEnumInfo> &info) : DeviceBase(info) {
     LOG_INFO("Create {} net device.", info->getName());
     init();
@@ -1295,30 +1294,30 @@ void G330NetDevice::init() {
         return firmwareUpdater;
     });
 
-     registerComponent(OB_DEV_COMPONENT_COLOR_FRAME_METADATA_CONTAINER, [this]() {
-         std::shared_ptr<FrameMetadataParserContainer> container;
-         TRY_EXECUTE({ container = std::make_shared<G330ColorFrameMetadataParserContainer>(this); })
-         return container;
-     });
+    registerComponent(OB_DEV_COMPONENT_COLOR_FRAME_METADATA_CONTAINER, [this]() {
+        std::shared_ptr<FrameMetadataParserContainer> container;
+        TRY_EXECUTE({ container = std::make_shared<G330ColorFrameMetadataParserContainer>(this); })
+        return container;
+    });
 
-     registerComponent(OB_DEV_COMPONENT_DEPTH_FRAME_METADATA_CONTAINER, [this]() {
-         std::shared_ptr<FrameMetadataParserContainer> container;
-         TRY_EXECUTE({ container = std::make_shared<G330DepthFrameMetadataParserContainer>(this); })
-         return container;
-     });
+    registerComponent(OB_DEV_COMPONENT_DEPTH_FRAME_METADATA_CONTAINER, [this]() {
+        std::shared_ptr<FrameMetadataParserContainer> container;
+        TRY_EXECUTE({ container = std::make_shared<G330DepthFrameMetadataParserContainer>(this); })
+        return container;
+    });
 
-     auto propertyServer = getPropertyServer();
-     if(getFirmwareVersionInt() >= 373) {
-         auto hwNoiseRemovePropertyAccessor = std::make_shared<G330HWNoiseRemovePropertyAccessor>(this);
-         propertyServer->registerProperty(OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL, "rw", "rw", hwNoiseRemovePropertyAccessor);
-         propertyServer->registerProperty(OB_PROP_HW_NOISE_REMOVE_FILTER_THRESHOLD_FLOAT, "rw", "rw", hwNoiseRemovePropertyAccessor);
-     }
+    auto propertyServer = getPropertyServer();
+    if(getFirmwareVersionInt() >= 373) {
+        auto hwNoiseRemovePropertyAccessor = std::make_shared<G330HWNoiseRemovePropertyAccessor>(this);
+        propertyServer->registerProperty(OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL, "rw", "rw", hwNoiseRemovePropertyAccessor);
+        propertyServer->registerProperty(OB_PROP_HW_NOISE_REMOVE_FILTER_THRESHOLD_FLOAT, "rw", "rw", hwNoiseRemovePropertyAccessor);
+    }
 
-     if(getFirmwareVersionInt() >= 10510) {
-         auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
-         propertyServer->registerProperty(OB_DEVICE_AUTO_CAPTURE_ENABLE_BOOL, "rw", "rw", vendorPropertyAccessor.get());
-         propertyServer->registerProperty(OB_DEVICE_AUTO_CAPTURE_INTERVAL_TIME_INT, "rw", "rw", vendorPropertyAccessor.get());
-     }
+    if(getFirmwareVersionInt() >= 10510) {
+        auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        propertyServer->registerProperty(OB_DEVICE_AUTO_CAPTURE_ENABLE_BOOL, "rw", "rw", vendorPropertyAccessor.get());
+        propertyServer->registerProperty(OB_DEVICE_AUTO_CAPTURE_INTERVAL_TIME_INT, "rw", "rw", vendorPropertyAccessor.get());
+    }
 }
 
 void G330NetDevice::fetchDeviceInfo() {
@@ -1363,7 +1362,7 @@ void G330NetDevice::fetchDeviceInfo() {
 }
 
 void libobsensor::G330NetDevice::fetchAllProfileList() {
-    auto propServer = getPropertyServer();
+    auto                 propServer = getPropertyServer();
     std::vector<uint8_t> data;
     BEGIN_TRY_EXECUTE({
         propServer->getRawData(
@@ -1423,7 +1422,7 @@ void G330NetDevice::initSensorList() {
         registerComponent(
             OB_DEV_COMPONENT_DEPTH_SENSOR,
             [this, depthPortInfo]() {
-                auto port     = getSourcePort(depthPortInfo);
+                auto port   = getSourcePort(depthPortInfo);
                 auto sensor = std::make_shared<G330NetDisparitySensor>(this, OB_SENSOR_DEPTH, port, linkSpeed_);
 
                 initSensorStreamProfileList(sensor);
@@ -1487,7 +1486,7 @@ void G330NetDevice::initSensorList() {
         registerComponent(
             OB_DEV_COMPONENT_LEFT_IR_SENSOR,
             [this, irLeftPortInfo]() {
-                auto port     = getSourcePort(irLeftPortInfo);
+                auto port   = getSourcePort(irLeftPortInfo);
                 auto sensor = std::make_shared<G330NetVideoSensor>(this, OB_SENSOR_IR_LEFT, port, linkSpeed_);
 
                 std::vector<FormatFilterConfig> formatFilterConfigs = {
@@ -1541,7 +1540,7 @@ void G330NetDevice::initSensorList() {
         registerComponent(
             OB_DEV_COMPONENT_RIGHT_IR_SENSOR,
             [this, irRightPortInfo]() {
-                auto port     = getSourcePort(irRightPortInfo);
+                auto port   = getSourcePort(irRightPortInfo);
                 auto sensor = std::make_shared<G330NetVideoSensor>(this, OB_SENSOR_IR_RIGHT, port, linkSpeed_);
 
                 std::vector<FormatFilterConfig> formatFilterConfigs = {
@@ -1609,7 +1608,7 @@ void G330NetDevice::initSensorList() {
         registerComponent(
             OB_DEV_COMPONENT_COLOR_SENSOR,
             [this, colorPortInfo]() {
-                auto port     = getSourcePort(colorPortInfo);
+                auto port   = getSourcePort(colorPortInfo);
                 auto sensor = std::make_shared<G330NetVideoSensor>(this, OB_SENSOR_COLOR, port, linkSpeed_);
 
                 std::vector<FormatFilterConfig> formatFilterConfigs = {
@@ -1756,7 +1755,6 @@ void G330NetDevice::initProperties() {
             propertyServer->registerProperty(OB_RAW_DATA_STREAM_PROFILE_LIST, "", "r", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_START_COLOR_STREAM_BOOL, "", "w", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_STRUCT_COLOR_STREAM_PROFILE, "", "w", vendorPropertyAccessor);
-
         }
         else if(sensor == OB_SENSOR_DEPTH) {
             auto vendorPropertyAccessor = std::make_shared<LazySuperPropertyAccessor>([this, &sourcePortInfo]() {
@@ -1863,7 +1861,7 @@ void G330NetDevice::initProperties() {
 }
 
 std::vector<std::shared_ptr<IFilter>> G330NetDevice::createRecommendedPostProcessingFilters(OBSensorType type) {
-        auto filterFactory = FilterFactory::getInstance();
+    auto filterFactory = FilterFactory::getInstance();
     if(type == OB_SENSOR_DEPTH) {
         // activate depth frame processor library
         getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR, false);
@@ -1943,7 +1941,7 @@ std::vector<std::shared_ptr<IFilter>> G330NetDevice::createRecommendedPostProces
 }
 
 void libobsensor::G330NetDevice::initSensorStreamProfileList(std::shared_ptr<ISensor> sensor) {
-    auto sensorType = sensor->getSensorType();
+    auto              sensorType = sensor->getSensorType();
     OBStreamType      streamType = utils::mapSensorTypeToStreamType(sensorType);
     StreamProfileList ProfileList;
     for(const auto &profile: allNetProfileList_) {
@@ -2062,10 +2060,10 @@ void G330NetDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
 }
 
 void G330NetDevice::initStreamProfileFilter(std::shared_ptr<ISensor> sensor) {
-    auto propServer          = getPropertyServer();
+    auto                    propServer      = getPropertyServer();
     OBCameraPerformanceMode performanceMode = ADAPTIVE_PERFORMANCE_MODE;
     BEGIN_TRY_EXECUTE({
-        auto mode = propServer->getPropertyValueT<int>(OB_PROP_DEVICE_PERFORMANCE_MODE_INT);
+        auto mode       = propServer->getPropertyValueT<int>(OB_PROP_DEVICE_PERFORMANCE_MODE_INT);
         performanceMode = (OBCameraPerformanceMode)mode;
     })
     CATCH_EXCEPTION_AND_EXECUTE({
