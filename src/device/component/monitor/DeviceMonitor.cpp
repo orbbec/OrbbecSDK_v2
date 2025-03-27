@@ -15,7 +15,7 @@ DeviceMonitor::DeviceMonitor(IDevice *owner, std::shared_ptr<ISourcePort> dataPo
       heartbeatEnabled_(false),
       heartbeatPaused_(false),
       hbRecvData_(MAX_RECV_DATA_SIZE),
-      hbSendData_(MAX_RECV_DATA_SIZE){
+      hbSendData_(MAX_RECV_DATA_SIZE) {
     vendorDataPort_ = std::dynamic_pointer_cast<IVendorDataPort>(dataPort);
     if(!vendorDataPort_) {
         throw std::runtime_error("DeviceMonitor: data port must be a vendor data port!");
@@ -70,6 +70,9 @@ void DeviceMonitor::heartbeatAndFetchState() {
         auto     res          = protocol::execute(vendorDataPort_, hbSendData_.data(), sizeof(req), hbRecvData_.data(), &respDataSize);
         if(!protocol::checkStatus(res, false)) {
             utils::sleepMs(50);
+            if(!heartbeatAndFetchStateThreadStarted_) {
+                break;
+            }
             continue;
         }
 
