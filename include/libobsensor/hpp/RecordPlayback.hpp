@@ -23,15 +23,9 @@ private:
     ob_record_device_t *impl_;
 
 public:
-    explicit RecordDevice(std::shared_ptr<Device> device, const std::string &file) {
+    explicit RecordDevice(std::shared_ptr<Device> device, const std::string &file, bool compressionEnabled = true) {
         ob_error *error = nullptr;
-        impl_           = ob_create_record_device(device->getImpl(), file.c_str(), &error);
-        Error::handle(&error);
-    }
-
-    explicit RecordDevice(std::shared_ptr<Device> device, const std::string &file, bool compressionEnabled) {
-        ob_error *error = nullptr;
-        impl_           = ob_create_record_device_ext(device->getImpl(), file.c_str(), compressionEnabled, &error);
+        impl_           = ob_create_record_device(device->getImpl(), file.c_str(), compressionEnabled, &error);
         Error::handle(&error);
     }
 

@@ -14,18 +14,7 @@
 extern "C" {
 #endif
 
-ob_record_device *ob_create_record_device(ob_device *device, const char *file_path, ob_error **error) BEGIN_API_CALL {
-    VALIDATE_NOT_NULL(device);
-    VALIDATE_NOT_NULL(file_path);
-    auto recorder = std::make_shared<libobsensor::RecordDevice>(device->device, file_path);
-
-    auto impl      = new ob_record_device();
-    impl->recorder = recorder;
-    return impl;
-}
-HANDLE_EXCEPTIONS_AND_RETURN(nullptr, device, file_path)
-
-ob_record_device *ob_create_record_device_ext(ob_device *device, const char *file_path, bool compression_enabled, ob_error **error) BEGIN_API_CALL {
+ob_record_device *ob_create_record_device(ob_device *device, const char *file_path, bool compression_enabled, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(device);
     VALIDATE_NOT_NULL(file_path);
     auto recorder = std::make_shared<libobsensor::RecordDevice>(device->device, file_path, compression_enabled);

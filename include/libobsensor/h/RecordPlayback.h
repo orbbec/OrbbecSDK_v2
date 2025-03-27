@@ -16,16 +16,6 @@ extern "C" {
 #include "Device.h"
 
 /**
- * @brief Create a recording device for the specified device with a specified file path.
- *
- * @param[in] device The device to record.
- * @param[in] file_path The file path to record to.
- * @param[out] error Pointer to an error object that will be set if an error occurs.
- * @return A pointer to the newly created recording device, or NULL if an error occurred.
- */
-OB_EXPORT ob_record_device *ob_create_record_device(ob_device *device, const char *file_path, ob_error **error);
-
-/**
  * @brief Create a recording device for the specified device with a specified file path and compression enabled.
  *
  * @param[in] device The device to record.
@@ -34,7 +24,7 @@ OB_EXPORT ob_record_device *ob_create_record_device(ob_device *device, const cha
  * @param[out] error Pointer to an error object that will be set if an error occurs.
  * @return A pointer to the newly created recording device, or NULL if an error occurred.
  */
-OB_EXPORT ob_record_device *ob_create_record_device_ext(ob_device *device, const char *file_path, bool compression_enabled, ob_error **error);
+OB_EXPORT ob_record_device *ob_create_record_device(ob_device *device, const char *file_path, bool compression_enabled, ob_error **error);
 
 /**
  * @brief Delete a recording device.
