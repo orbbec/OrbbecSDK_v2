@@ -84,9 +84,11 @@ catch(ob::Error &e) {
     std::cout << "\nPress any key to exit.";
     ob_smpl::waitForKeyPressed();
     exit(EXIT_FAILURE);
-}void firmwareUpdateCallback(OBFwUpdateState state, const char *message, uint8_t percent)
+}
 
- {
+void firmwareUpdateCallback(OBFwUpdateState state, const char *message, uint8_t percent)
+
+{
     if(firstCall) {
         firstCall = !firstCall;
     }

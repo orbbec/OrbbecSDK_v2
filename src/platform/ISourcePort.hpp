@@ -9,6 +9,8 @@
 #include "libobsensor/h/ObTypes.h"
 #include "IFrame.hpp"
 #include "IStreamProfile.hpp"
+#include "IStreamer.hpp"
+
 #include <functional>
 
 namespace libobsensor {
@@ -89,7 +91,7 @@ struct ShmStreamPortInfo : public SourcePortInfo {  // shared memory stream port
 };
 
 struct USBSourcePortInfo : public SourcePortInfo {
-    USBSourcePortInfo(): SourcePortInfo(SOURCE_PORT_USB_VENDOR) {};
+    USBSourcePortInfo() : SourcePortInfo(SOURCE_PORT_USB_VENDOR) {};
     explicit USBSourcePortInfo(SourcePortType type) : SourcePortInfo(type) {}
     ~USBSourcePortInfo() noexcept override = default;
 
@@ -142,15 +144,12 @@ public:
 };
 
 // for video data stream: depth, color, ir, etc.
-class IVideoStreamPort : virtual public ISourcePort {  // Virtual inheritance solves diamond inheritance problem
+class IVideoStreamPort : virtual public ISourcePort, public IStreamer {  // Virtual inheritance solves diamond inheritance problem
 public:
     ~IVideoStreamPort() noexcept override = default;
 
-    virtual StreamProfileList getStreamProfileList()                                                                   = 0;
-    virtual void              startStream(std::shared_ptr<const StreamProfile> profile, MutableFrameCallback callback) = 0;
-    virtual void              stopStream(std::shared_ptr<const StreamProfile> profile)                                 = 0;
-    virtual void              stopAllStream()                                                                          = 0;
+    virtual StreamProfileList getStreamProfileList() = 0;
+    virtual void              stopAllStream()        = 0;
 };
 
 }  // namespace libobsensor
-

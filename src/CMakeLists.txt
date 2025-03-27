@@ -12,6 +12,7 @@ add_subdirectory(filter)
 add_subdirectory(platform)
 add_subdirectory(device)
 add_subdirectory(pipeline)
+add_subdirectory(media) # record playback, etc.
 
 # config version info
 if(MSVC)
@@ -28,7 +29,7 @@ file(GLOB_RECURSE SOURCE_FILES ${CMAKE_CURRENT_LIST_DIR}/impl/*.cpp ${CMAKE_CURR
 file(GLOB_RECURSE HEADER_FILES ${CMAKE_CURRENT_LIST_DIR}/impl/*.hpp ${CMAKE_CURRENT_LIST_DIR}/context/*.hpp)
 
 target_sources(OrbbecSDK PRIVATE ${SOURCE_FILES} ${HEADER_FILES})
-target_link_libraries(OrbbecSDK PRIVATE ob::shared ob::core ob::filter ob::platform ob::device ob::pipeline)
+target_link_libraries(OrbbecSDK PRIVATE ob::shared ob::core ob::filter ob::platform ob::device ob::pipeline ob::media)
 target_include_directories(OrbbecSDK PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 target_include_directories(
     OrbbecSDK PUBLIC "$<BUILD_INTERFACE:${OB_PUBLIC_HEADERS_DIR}>" "$<INSTALL_INTERFACE:include>"

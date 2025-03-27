@@ -53,6 +53,7 @@ protected:
     StreamProfileList                    backendStreamProfileList_;
 
     std::shared_ptr<IFrameMetadataModifier> frameMetadataModifier_;
+    std::shared_ptr<IFrameMetadataParserContainer> frameMetadataParserContainer_;
 };
 
 }  // namespace libobsensor

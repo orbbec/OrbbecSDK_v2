@@ -16,12 +16,16 @@ public:
 
     static std::shared_ptr<Frame> createFrameFromUserBuffer(OBFrameType frameType, OBFormat format, uint8_t *buffer, size_t bufferSize,
                                                             FrameBufferReclaimFunc bufferReclaimFunc);
+    // todo: add commit for these overloads functions
+    static std::shared_ptr<Frame> createFrameFromUserBuffer(OBFrameType frameType, OBFormat format, uint8_t *buffer, size_t bufferSize);
+
     static std::shared_ptr<Frame> createVideoFrameFromUserBuffer(OBFrameType frameType, OBFormat format, uint32_t width, uint32_t height, uint32_t strideBytes,
                                                                  uint8_t *buffer, size_t bufferSize, FrameBufferReclaimFunc bufferReclaimFunc);
+    static std::shared_ptr<Frame> createVideoFrameFromUserBuffer(OBFrameType frameType, OBFormat format, uint32_t width, uint32_t height, uint8_t *buffer,
+                                                                 size_t bufferSize);
 
     static std::shared_ptr<Frame> createFrameFromStreamProfile(std::shared_ptr<const StreamProfile> sp);
 
     static std::shared_ptr<FrameSet> createFrameSet();
 };
 }  // namespace libobsensor
-

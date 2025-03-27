@@ -13,10 +13,11 @@ float    getBytesPerPixel(OBFormat format);
 uint32_t calcDefaultStrideBytes(OBFormat format, uint32_t width);
 uint32_t calcVideoFrameMaxDataSize(OBFormat format, uint32_t width, uint32_t height);
 
-OBFrameType  mapStreamTypeToFrameType(OBStreamType type);
+OBFrameType mapStreamTypeToFrameType(OBStreamType type);
 OBStreamType mapFrameTypeToStreamType(OBFrameType type);
 OBStreamType mapSensorTypeToStreamType(OBSensorType type);
 OBSensorType mapStreamTypeToSensorType(OBStreamType type);
+OBSensorType mapFrameTypeToSensorType(OBFrameType type);
 
 template <typename T> uint32_t fourCc2Int(const T a, const T b, const T c, const T d) {
     static_assert((std::is_integral<T>::value), "fourcc supports integral built-in types only");

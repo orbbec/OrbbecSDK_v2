@@ -26,6 +26,8 @@ struct DeviceInfo {
     std::string supportedSdkVersion_;
     std::string asicName_;
     std::string deviceSn_;
+
+    OBUvcBackendType backendType_;
 };
 
 struct NetDeviceInfo : public DeviceInfo {

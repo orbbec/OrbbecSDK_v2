@@ -12,6 +12,10 @@
 #include "InternalTypes.hpp"
 #include "Platform.hpp"
 
+#ifdef __linux__
+#include "usb/uvc/UvcDevicePort.hpp"
+#endif
+
 #include <json/json.h>
 
 namespace libobsensor {
@@ -25,6 +29,8 @@ const std::map<OBSensorType, DeviceComponentId> SensorTypeToComponentIdMap = {
     { OB_SENSOR_GYRO, OB_DEV_COMPONENT_GYRO_SENSOR },
     { OB_SENSOR_ACCEL, OB_DEV_COMPONENT_ACCEL_SENSOR },
 };
+
+DeviceBase::DeviceBase() : ctx_(Context::getInstance()), isDeactivated_(false) {}
 
 DeviceBase::DeviceBase(const std::shared_ptr<const IDeviceEnumInfo> &info) : enumInfo_(info), ctx_(Context::getInstance()), isDeactivated_(false) {
     deviceInfo_                  = std::make_shared<DeviceInfo>();
@@ -52,6 +58,18 @@ void DeviceBase::fetchDeviceInfo() {
         deviceInfo_->name_ = deviceInfo_->name_.substr(7);
     }
     deviceInfo_->fullName_ = "Orbbec " + deviceInfo_->name_;
+
+#ifdef __linux__
+    // todo: net device does not have backend type
+    auto sensorPortInfo = getSensorPortInfo(OB_SENSOR_DEPTH);
+    if(sensorPortInfo->portType == SOURCE_PORT_USB_UVC) {
+        auto port    = getSourcePort(sensorPortInfo);
+        auto uvcPort = std::dynamic_pointer_cast<UvcDevicePort>(port);
+        deviceInfo_->backendType_ = uvcPort->getBackendType();
+    }
+#else
+    deviceInfo_->backendType_ = OB_UVC_BACKEND_TYPE_MSMF;
+#endif
 
     // mark the device as a multi-sensor device with same clock at default
     extensionInfo_["AllSensorsUsingSameClock"] = "true";
@@ -467,7 +485,7 @@ void DeviceBase::updateOptionalDepthPresets(const char filePathList[][OB_PATH_MA
         }
     });
 
-    if ( success ) {
+    if(success) {
         // refresh extension info and preset list
         fetchExtensionInfo();
         // update preset list
@@ -476,7 +494,7 @@ void DeviceBase::updateOptionalDepthPresets(const char filePathList[][OB_PATH_MA
             presetMgr->fetchPreset();
         }
     }
- }
+}
 
 std::map<std::string, std::string> DeviceBase::parseExtensionInfo(std::string extensionInfo) {
     Json::Value                        root;

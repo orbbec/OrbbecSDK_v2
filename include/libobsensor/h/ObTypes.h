@@ -23,6 +23,8 @@ typedef struct ob_context_t                      ob_context;
 typedef struct ob_device_t                       ob_device;
 typedef struct ob_device_info_t                  ob_device_info;
 typedef struct ob_device_list_t                  ob_device_list;
+typedef struct ob_record_device_t                ob_record_device;
+typedef struct ob_playback_device_t              ob_playback_device;
 typedef struct ob_camera_param_list_t            ob_camera_param_list;
 typedef struct ob_sensor_t                       ob_sensor;
 typedef struct ob_sensor_list_t                  ob_sensor_list;
@@ -1687,8 +1689,25 @@ typedef enum {
      *
      */
     OB_UVC_BACKEND_TYPE_V4L2,
+
+    /**
+     * @brief Use MSMF backend to access the UVC device
+     */
+    OB_UVC_BACKEND_TYPE_MSMF,
 } ob_uvc_backend_type,
     OBUvcBackendType;
+
+
+/**
+ * @brief The playback status of the media
+ */
+typedef enum {
+    OB_PLAYBACK_UNKNOWN ,
+    OB_PLAYBACK_PLAYING,  /**< The media is playing */
+    OB_PLAYBACK_PAUSED, /**< The media is paused */
+    OB_PLAYBACK_STOPPED, /**< The media is stopped */
+    OB_PLAYBACK_COUNT,
+} ob_playback_status, OBPlaybackStatus;
 
 // For compatibility
 #define OB_FRAME_METADATA_TYPE_LASER_POWER_MODE OB_FRAME_METADATA_TYPE_LASER_POWER_LEVEL
@@ -1796,6 +1815,7 @@ typedef void(ob_frame_destroy_callback)(uint8_t *buffer, void *user_data);
  */
 typedef void(ob_log_callback)(ob_log_severity severity, const char *message, void *user_data);
 
+typedef void(*ob_playback_status_changed_callback)(ob_playback_status status, void *user_data);
 /**
  * @brief Check if the sensor_type is a video sensor
  *

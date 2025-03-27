@@ -250,6 +250,10 @@ void SensorBase::setGlobalTimestampCalculator(std::shared_ptr<IFrameTimestampCal
     globalTimestampCalculator_ = calculator;
 }
 
+void SensorBase::setFrameRecordingCallback(FrameCallback callback) {
+    frameRecordingCallback_ = callback;
+}
+
 void SensorBase::setFrameProcessor(std::shared_ptr<FrameProcessor> frameProcessor) {
     if(isStreamActivated()) {
         throw wrong_api_call_sequence_exception("Can not update frame processor while streaming");
@@ -286,6 +290,10 @@ void SensorBase::outputFrame(std::shared_ptr<Frame> frame) {
         TRY_EXECUTE(globalTimestampCalculator_->calculate(frame));
     }
 
+    if (frameRecordingCallback_) {
+        frameRecordingCallback_(frame);
+    }
+    
     if(frameProcessor_) {
         frameProcessor_->pushFrame(frame);
     }

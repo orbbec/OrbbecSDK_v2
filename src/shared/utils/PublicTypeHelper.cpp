@@ -210,6 +210,26 @@ OBSensorType mapStreamTypeToSensorType(OBStreamType type) {
     return OB_SENSOR_UNKNOWN;
 }
 
+OBSensorType mapFrameTypeToSensorType(OBFrameType type) {
+    switch(type) {
+    case OB_FRAME_COLOR:
+        return OB_SENSOR_COLOR;
+    case OB_FRAME_DEPTH:
+        return OB_SENSOR_DEPTH;
+    case OB_FRAME_IR:
+        return OB_SENSOR_IR;
+    case OB_FRAME_ACCEL:
+        return OB_SENSOR_ACCEL;
+    case OB_FRAME_GYRO:
+        return OB_SENSOR_GYRO;
+    case OB_FRAME_IR_LEFT:
+        return OB_SENSOR_IR_LEFT;
+    case OB_FRAME_IR_RIGHT:
+        return OB_SENSOR_IR_RIGHT;
+    }
+    return OB_SENSOR_UNKNOWN;
+}
+
 const std::map<uint32_t, OBFormat> fourccToOBFormat = {
     { fourCc2Int('U', 'Y', 'V', 'Y'), OB_FORMAT_UYVY }, { fourCc2Int('Y', 'U', 'Y', '2'), OB_FORMAT_YUYV }, { fourCc2Int('Y', 'U', 'Y', 'V'), OB_FORMAT_YUYV },
     { fourCc2Int('N', 'V', '1', '2'), OB_FORMAT_NV12 }, { fourCc2Int('N', 'V', '2', '1'), OB_FORMAT_NV21 }, { fourCc2Int('M', 'J', 'P', 'G'), OB_FORMAT_MJPG },
