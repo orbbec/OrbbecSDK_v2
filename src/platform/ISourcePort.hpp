@@ -37,9 +37,10 @@ struct SourcePortInfo {
 };
 
 struct NetSourcePortInfo : public SourcePortInfo {
-    NetSourcePortInfo(SourcePortType portType, std::string localMac, std::string localAddress, std::string address, uint16_t port, std::string mac,
-                      std::string serialNumber, uint32_t pid)
+    NetSourcePortInfo(SourcePortType portType, std::string netInterfaceName, std::string localMac, std::string localAddress, std::string address, uint16_t port,
+                      std::string mac, std::string serialNumber, uint32_t pid)
         : SourcePortInfo(portType),
+          netInterfaceName(netInterfaceName),
           localMac(localMac),
           localAddress(localAddress),
           address(address),
@@ -55,10 +56,12 @@ struct NetSourcePortInfo : public SourcePortInfo {
             return false;
         }
         auto netCmpInfo = std::dynamic_pointer_cast<const NetSourcePortInfo>(cmpInfo);
-        return (localMac == netCmpInfo->localMac) && (localAddress == netCmpInfo->localAddress) && (address == netCmpInfo->address) && (port == netCmpInfo->port)
-               && (mac == netCmpInfo->mac) && (serialNumber == netCmpInfo->serialNumber) && (pid == netCmpInfo->pid);
+        return (netInterfaceName == netCmpInfo->netInterfaceName) && (localMac == netCmpInfo->localMac) && (localAddress == netCmpInfo->localAddress)
+               && (address == netCmpInfo->address) && (port == netCmpInfo->port) && (mac == netCmpInfo->mac) && (serialNumber == netCmpInfo->serialNumber)
+               && (pid == netCmpInfo->pid);
     }
 
+    std::string netInterfaceName;
     std::string localMac;
     std::string localAddress;
     std::string address;

@@ -7,13 +7,18 @@
 #include "frame/Frame.hpp"
 #include "IProperty.hpp"
 #include "ethernet/RTPStreamPort.hpp"
+#include "G330DeviceInfo.hpp"
 
 namespace libobsensor {
-G330NetDisparitySensor::G330NetDisparitySensor(IDevice *owner, OBSensorType sensorType, const std::shared_ptr<ISourcePort> &backend)
-    : DisparityBasedSensor(owner, sensorType, backend) {
-}
+G330NetDisparitySensor::G330NetDisparitySensor(IDevice *owner, OBSensorType sensorType, const std::shared_ptr<ISourcePort> &backend, uint32_t linkSpeed)
+    : DisparityBasedSensor(owner, sensorType, backend), linkSpeed_(linkSpeed) {}
 
 void G330NetDisparitySensor::start(std::shared_ptr<const StreamProfile> sp, FrameCallback callback) {
+    if(linkSpeed_ <= G335LE_10M_NET_BAND_WIDTH) {
+        throw libobsensor::unsupported_operation_exception(utils::string::to_string() << "Depth stream start failed, link speed is " << linkSpeed_
+                                                                                      << "Mb/s, please reboot the device!");
+    }
+
     auto currentVSP = sp->as<VideoStreamProfile>();
 
     auto rtpStreamPort = std::dynamic_pointer_cast<RTPStreamPort>(backend_);

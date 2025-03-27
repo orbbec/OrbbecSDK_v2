@@ -11,6 +11,9 @@
 
 namespace libobsensor {
 
+constexpr uint32_t G335LE_10M_NET_BAND_WIDTH   = 10;
+constexpr uint32_t G335LE_1000M_NET_BAND_WIDTH = 1000;
+
 class G330DeviceInfo : public DeviceEnumInfoBase, public std::enable_shared_from_this<G330DeviceInfo> {
 public:
     G330DeviceInfo(const SourcePortInfoList groupedInfoList);

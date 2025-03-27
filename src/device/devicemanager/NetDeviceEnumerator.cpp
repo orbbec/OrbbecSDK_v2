@@ -65,9 +65,8 @@ DeviceEnumInfoList NetDeviceEnumerator::queryDeviceList() {
             OBPropertyValue value;
             value.intValue = 0;
             vendorPropAccessor->getPropertyValue(OB_PROP_DEVICE_PID_INT, &value);
-            auto newInfo = std::make_shared<NetSourcePortInfo>(info->portType, info->localMac, info->localAddress, info->address, info->port, info->mac,
-                                                               info->serialNumber,
-                                                               value.intValue);
+            auto newInfo = std::make_shared<NetSourcePortInfo>(info->portType, info->netInterfaceName, info->localMac, info->localAddress, info->address,
+                                                               info->port, info->mac, info->serialNumber, value.intValue);
             sourcePortInfoList_.push_back(newInfo);
         })
         CATCH_EXCEPTION_AND_LOG(DEBUG, "Get device pid failed! address:{}, port:{}", info->address, info->port);
@@ -199,7 +198,7 @@ void NetDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType
 
 std::shared_ptr<const IDeviceEnumInfo> NetDeviceEnumerator::queryNetDevice(std::string address, uint16_t port) {
     auto info = std::make_shared<NetSourcePortInfo>(SOURCE_PORT_NET_VENDOR,  //
-                                            "Unknown", "Unknown", address, static_cast<uint16_t>(8090), address + ":" + std::to_string(port), "Unknown", 0);
+                                            "Unknown", "Unknown", "Unknown", address, static_cast<uint16_t>(8090), address + ":" + std::to_string(port), "Unknown", 0);
 
     auto sourcePort         = Platform::getInstance()->getNetSourcePort(info);
     auto vendorPropAccessor = std::make_shared<VendorPropertyAccessor>(nullptr, sourcePort);

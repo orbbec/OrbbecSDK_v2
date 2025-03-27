@@ -85,15 +85,16 @@ struct gvcp_forceip_ack {
 #pragma pack(pop)
 
 struct GVCPDeviceInfo {
-    std::string localIp  = "unknown";
-    std::string localMac= "unknown";
-    std::string mac     = "unknown";
-    std::string ip      = "unknown";
-    std::string mask    = "unknown";
-    std::string gateway = "unknown";
-    std::string sn      = "unknown";
-    std::string name    = "unknown";
-    uint32_t    pid     = 0;
+    std::string netInterfaceName = "unknown";
+    std::string localIp          = "unknown";
+    std::string localMac         = "unknown";
+    std::string mac              = "unknown";
+    std::string ip               = "unknown";
+    std::string mask             = "unknown";
+    std::string gateway          = "unknown";
+    std::string sn               = "unknown";
+    std::string name             = "unknown";
+    uint32_t    pid              = 0;
     // std::string version      = "";
     // std::string manufacturer = "";
 
@@ -104,9 +105,10 @@ struct GVCPDeviceInfo {
 };
 
 struct GVCPSocketInfo {
-    std::string mac = "unknown";
-    std::string address  = "unknown";
-    SOCKET      sock = 0;
+    std::string mac              = "unknown";
+    std::string address          = "unknown";
+    std::string netInterfaceName = "unknown";
+    SOCKET      sock             = 0;
 };
 
 #define MAX_SOCKETS 32

@@ -206,10 +206,12 @@ int GVCPClient::openClientSockets() {
                     }
                 }
 
-                std::string macAddress = macAddressStream.str();
-                socketInfos_[curIndex].mac = macAddress;
+                std::string macAddress         = macAddressStream.str();
+                socketInfos_[curIndex].mac     = macAddress;
                 socketInfos_[curIndex].address = ipStr;
-                LOG_DEBUG("local mac address: {},local ip address:{}", macAddress, ipStr);
+                std::string interfaceNameStr(ifa->ifa_name);
+                socketInfos_[curIndex].netInterfaceName = interfaceNameStr;
+                LOG_DEBUG("local mac address: {},local ip address:{}, interfaceName:{}", macAddress, ipStr, interfaceNameStr);
             }
         }
     }
@@ -417,15 +419,16 @@ void GVCPClient::sendGVCPDiscovery(GVCPSocketInfo socketInfo) {
                         continue;
 
                     GVCPDeviceInfo info;
-                    info.localIp  = socketInfo.address;
-                    info.localMac = socketInfo.mac;
-                    info.mac      = macStr;
-                    info.ip       = curIPStr;
-                    info.mask     = subMaskStr;
-                    info.gateway  = gatewayStr;
-                    info.sn       = ackPayload.szSerial;
-                    info.name     = ackPayload.szModelName;
-                    info.pid      = curPID;
+                    info.netInterfaceName = socketInfo.netInterfaceName;
+                    info.localIp          = socketInfo.address;
+                    info.localMac         = socketInfo.mac;
+                    info.mac              = macStr;
+                    info.ip               = curIPStr;
+                    info.mask             = subMaskStr;
+                    info.gateway          = gatewayStr;
+                    info.sn               = ackPayload.szSerial;
+                    info.name             = ackPayload.szModelName;
+                    info.pid              = curPID;
                     // info.manufacturer = ackPayload.szFacName;
                     // info.version      = ackPayload.szDevVer;
 
@@ -642,7 +645,9 @@ void GVCPClient::checkAndUpdateSockets() {
                     std::string macAddress = macAddressStream.str();
                     socketInfos_[curIndex].mac     = macAddress;
                     socketInfos_[curIndex].address = ipStr;
-                    LOG_INFO("New ip segment found,new ip addr:{}, mac:{}", ipStr, macAddress);
+                    std::string interfaceNameStr(ifa->ifa_name);
+                    socketInfos_[curIndex].netInterfaceName = interfaceNameStr;
+                    LOG_INFO("New ip segment found,new ip addr:{}, mac:{}, interfaceName:{}", ipStr, macAddress, interfaceNameStr);
                 }
 
                 ipAddressStrSet_.insert(ipStr);

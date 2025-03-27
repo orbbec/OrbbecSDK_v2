@@ -49,16 +49,18 @@
 #include "utils/BufferParser.hpp"
 #include "G330FrameInterleaveManager.hpp"
 #include "G330NetStreamProfileFilter.hpp"
+#include "G330DeviceInfo.hpp"
 
 #include <algorithm>
+#include <fstream>
+#include <iostream>
+#include <string>
 
 namespace libobsensor {
 
 constexpr uint8_t  INTERFACE_COLOR             = 4;
 constexpr uint8_t  INTERFACE_DEPTH             = 0;
 constexpr uint16_t GMSL_MAX_CMD_DATA_SIZE      = 232;
-constexpr uint32_t G335LE_10M_NET_BAND_WIDTH   = 10;
-constexpr uint32_t G335LE_1000M_NET_BAND_WIDTH = 1000;
 
 G330Device::G330Device(const std::shared_ptr<const IDeviceEnumInfo> &info) : DeviceBase(info), isGmslDevice_(info->getConnectionType() == "GMSL2") {
     init();
@@ -1342,12 +1344,22 @@ void G330NetDevice::fetchDeviceInfo() {
 
     netBandwidth_ = G335LE_1000M_NET_BAND_WIDTH;
     netBandwidth_ = propServer->getPropertyValueT<int>(OB_PROP_NETWORK_BANDWIDTH_TYPE_INT);
-    if(netBandwidth_ == G335LE_10M_NET_BAND_WIDTH) {
-        LOG_WARN("G335Le link speed is 10Mb/s, please reset the device!");
+    LOG_DEBUG("The network bandwidth read from device is {}.", netBandwidth_);
+
+    linkSpeed_ = netBandwidth_;
+#if (!defined(WIN32) && !defined(_WIN32) && !defined(WINCE))
+    std::string   path = "/sys/class/net/" + netPortInfo->netInterfaceName + "/speed";
+    std::ifstream file(path);
+    if(file.is_open()) {
+        file >> linkSpeed_;
+        if(linkSpeed_ <= G335LE_10M_NET_BAND_WIDTH) {
+            LOG_WARN("Link speed is {}Mb/s, please reset the device!", linkSpeed_);
+        }
+        else {
+            LOG_DEBUG("Link speed is {}Mb/s.", linkSpeed_);
+        }
     }
-    else {
-        LOG_DEBUG("G335Le link speed is {}Mb/s.", netBandwidth_);
-    }
+#endif
 }
 
 void libobsensor::G330NetDevice::fetchAllProfileList() {
@@ -1412,7 +1424,7 @@ void G330NetDevice::initSensorList() {
             OB_DEV_COMPONENT_DEPTH_SENSOR,
             [this, depthPortInfo]() {
                 auto port     = getSourcePort(depthPortInfo);
-                auto sensor   = std::make_shared<G330NetDisparitySensor>(this, OB_SENSOR_DEPTH, port);
+                auto sensor = std::make_shared<G330NetDisparitySensor>(this, OB_SENSOR_DEPTH, port, linkSpeed_);
 
                 initSensorStreamProfileList(sensor);
                 sensor->updateFormatFilterConfig({ { FormatFilterPolicy::REMOVE, OB_FORMAT_Y8, OB_FORMAT_ANY, nullptr },
@@ -1476,7 +1488,7 @@ void G330NetDevice::initSensorList() {
             OB_DEV_COMPONENT_LEFT_IR_SENSOR,
             [this, irLeftPortInfo]() {
                 auto port     = getSourcePort(irLeftPortInfo);
-                auto sensor   = std::make_shared<G330NetVideoSensor>(this, OB_SENSOR_IR_LEFT, port);
+                auto sensor = std::make_shared<G330NetVideoSensor>(this, OB_SENSOR_IR_LEFT, port, linkSpeed_);
 
                 std::vector<FormatFilterConfig> formatFilterConfigs = {
                     { FormatFilterPolicy::REMOVE, OB_FORMAT_Z16, OB_FORMAT_ANY, nullptr },
@@ -1530,7 +1542,7 @@ void G330NetDevice::initSensorList() {
             OB_DEV_COMPONENT_RIGHT_IR_SENSOR,
             [this, irRightPortInfo]() {
                 auto port     = getSourcePort(irRightPortInfo);
-                auto sensor   = std::make_shared<G330NetVideoSensor>(this, OB_SENSOR_IR_RIGHT, port);
+                auto sensor = std::make_shared<G330NetVideoSensor>(this, OB_SENSOR_IR_RIGHT, port, linkSpeed_);
 
                 std::vector<FormatFilterConfig> formatFilterConfigs = {
                     { FormatFilterPolicy::REMOVE, OB_FORMAT_Z16, OB_FORMAT_ANY, nullptr },
@@ -1598,7 +1610,7 @@ void G330NetDevice::initSensorList() {
             OB_DEV_COMPONENT_COLOR_SENSOR,
             [this, colorPortInfo]() {
                 auto port     = getSourcePort(colorPortInfo);
-                auto sensor   = std::make_shared<G330NetVideoSensor>(this, OB_SENSOR_COLOR, port);
+                auto sensor = std::make_shared<G330NetVideoSensor>(this, OB_SENSOR_COLOR, port, linkSpeed_);
 
                 std::vector<FormatFilterConfig> formatFilterConfigs = {
                     { FormatFilterPolicy::REMOVE, OB_FORMAT_NV12, OB_FORMAT_ANY, nullptr },

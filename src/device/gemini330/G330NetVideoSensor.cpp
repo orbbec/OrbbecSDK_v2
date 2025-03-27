@@ -6,18 +6,25 @@
 #include "frame/Frame.hpp"
 #include "IProperty.hpp"
 #include "ethernet/RTPStreamPort.hpp"
+#include "G330DeviceInfo.hpp"
 
 namespace libobsensor {
 
-G330NetVideoSensor::G330NetVideoSensor(IDevice *owner, OBSensorType sensorType, const std::shared_ptr<ISourcePort> &backend)
+G330NetVideoSensor::G330NetVideoSensor(IDevice *owner, OBSensorType sensorType, const std::shared_ptr<ISourcePort> &backend, uint32_t linkSpeed)
     : VideoSensor(owner, sensorType, backend),
       streamSwitchPropertyId_(OB_PROP_START_COLOR_STREAM_BOOL),
-      profilesSwitchPropertyId_(OB_STRUCT_COLOR_STREAM_PROFILE) {
+      profilesSwitchPropertyId_(OB_STRUCT_COLOR_STREAM_PROFILE),
+      linkSpeed_(linkSpeed) {
 
     initStreamPropertyId();
 }
 
 void G330NetVideoSensor::start(std::shared_ptr<const StreamProfile> sp, FrameCallback callback) {
+    if(linkSpeed_ <= G335LE_10M_NET_BAND_WIDTH) {
+        throw libobsensor::unsupported_operation_exception(utils::string::to_string() << sensorType_ << " stream start failed, link speed is " << linkSpeed_
+                                                                                  << "Mb/s, please reboot the device!");
+    }
+
     auto backendIter = streamProfileBackendMap_.find(sp);
     if(backendIter == streamProfileBackendMap_.end()) {
         throw invalid_value_exception("Can not find backend stream profile for activated stream profile");

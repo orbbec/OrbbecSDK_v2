@@ -70,7 +70,8 @@ private:
 
     StreamProfileList allNetProfileList_;
 
-    int netBandwidth_;
+    int      netBandwidth_;
+    uint32_t linkSpeed_;
 };
 
 }  // namespace libobsensor
