@@ -263,9 +263,11 @@ void PlaybackDevice::initProperties() {
         auto filterAccessor = std::make_shared<PlaybackFilterPropertyAccessor>(port_, this);
         propertyServer->registerProperty(OB_PROP_DISPARITY_TO_DEPTH_BOOL, "r", "r", filterAccessor);
         propertyServer->registerProperty(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL, "rw", "rw", filterAccessor);
-        propertyServer->registerProperty(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL, "rw", "rw", filterAccessor);
-        propertyServer->registerProperty(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_SPECKLE_SIZE_INT, "rw", "rw", filterAccessor);
-        propertyServer->registerProperty(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT, "rw", "rw", filterAccessor);
+        if(!isDeviceInSeries({ 0x0808, 0x0809 }, deviceInfo_->pid_)) {  // G210, G215 not support depth noise removal filter
+            propertyServer->registerProperty(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL, "rw", "rw", filterAccessor);
+            propertyServer->registerProperty(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_SPECKLE_SIZE_INT, "rw", "rw", filterAccessor);
+            propertyServer->registerProperty(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT, "rw", "rw", filterAccessor);
+        }
     }
 
     if(deviceInfo_->backendType_ == OB_UVC_BACKEND_TYPE_V4L2 && isDeviceInSeries(G330DevPids, deviceInfo_->pid_)) {

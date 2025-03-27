@@ -180,7 +180,7 @@ void RosWriter::writeVideoStreamProfile(const OBSensorType sensorType, const std
     custom_msg::StreamProfileInfoPtr          streamInfoMsg(new custom_msg::StreamProfileInfo());
     std::chrono::duration<double, std::micro> timestampUs(startTime_);
     streamInfoMsg->header.stamp = orbbecRosbag::Time(std::chrono::duration<double>(timestampUs).count());
-    auto streamPrefile          = RosTopic::streamPrefileTopic((uint8_t)streamProfile->getType());
+    auto strStreamProfile          = RosTopic::streamProfileTopic((uint8_t)streamProfile->getType());
     auto videoStreamProfile     = streamProfile->as<VideoStreamProfile>();
     if(videoStreamProfile != nullptr) {
 
@@ -218,7 +218,7 @@ void RosWriter::writeVideoStreamProfile(const OBSensorType sensorType, const std
 
         streamInfoMsg->streamType = static_cast<uint8_t>(videoStreamProfile->getType());
         streamInfoMsg->format     = static_cast<uint8_t>(videoStreamProfile->getFormat());
-        file_->write(streamPrefile, streamInfoMsg->header.stamp, streamInfoMsg);
+        file_->write(strStreamProfile, streamInfoMsg->header.stamp, streamInfoMsg);
     }
 }
 
@@ -226,7 +226,7 @@ void RosWriter::writeAccelStreamProfile(const std::shared_ptr<const StreamProfil
     custom_msg::ImuStreamProfileInfoPtr       accelStreamInfoMsg(new custom_msg::ImuStreamProfileInfo());
     std::chrono::duration<double, std::micro> timestampUs(startTime_);
     accelStreamInfoMsg->header.stamp = orbbecRosbag::Time(std::chrono::duration<double>(timestampUs).count());
-    auto StreamPrefile               = RosTopic::streamPrefileTopic((uint8_t)streamProfile->getType());
+    auto strStreamProfile               = RosTopic::streamProfileTopic((uint8_t)streamProfile->getType());
     auto accelStreamProfile          = streamProfile->as<AccelStreamProfile>();
 
     accelStreamInfoMsg->format              = static_cast<OBFormat>(accelStreamProfile->getFormat());
@@ -259,14 +259,14 @@ void RosWriter::writeAccelStreamProfile(const std::shared_ptr<const StreamProfil
             accelStreamInfoMsg->translationMatrix[i] = extrinsic.trans[i];
         }
     }
-    file_->write(StreamPrefile, accelStreamInfoMsg->header.stamp, accelStreamInfoMsg);
+    file_->write(strStreamProfile, accelStreamInfoMsg->header.stamp, accelStreamInfoMsg);
 }
 
 void RosWriter::writeGyroStreamProfile(const std::shared_ptr<const StreamProfile> &streamProfile) {
     custom_msg::ImuStreamProfileInfoPtr       gyroStreamInfoMsg(new custom_msg::ImuStreamProfileInfo());
     std::chrono::duration<double, std::micro> timestampUs(startTime_);
     gyroStreamInfoMsg->header.stamp = orbbecRosbag::Time(std::chrono::duration<double>(timestampUs).count());
-    auto StreamPrefile              = RosTopic::streamPrefileTopic((uint8_t)streamProfile->getType());
+    auto strStreamProfile              = RosTopic::streamProfileTopic((uint8_t)streamProfile->getType());
     auto gyroStreamProfile          = streamProfile->as<GyroStreamProfile>();
 
     gyroStreamInfoMsg->format             = static_cast<OBFormat>(gyroStreamProfile->getFormat());
@@ -285,7 +285,7 @@ void RosWriter::writeGyroStreamProfile(const std::shared_ptr<const StreamProfile
     for(int i = 0; i < 9; i++) {
         gyroStreamInfoMsg->tempSlope[i] = gyroStreamProfile->getIntrinsic().tempSlope[i];
     }
-    file_->write(StreamPrefile, gyroStreamInfoMsg->header.stamp, gyroStreamInfoMsg);
+    file_->write(strStreamProfile, gyroStreamInfoMsg->header.stamp, gyroStreamInfoMsg);
 }
 
 }  // namespace libobsensor

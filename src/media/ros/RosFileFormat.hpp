@@ -55,7 +55,7 @@ public:
 class StreamProfileQuery : public RegexTopicQuery {
 public:
     StreamProfileQuery() : RegexTopicQuery("/cam/streamProfileType_\\d+") {}
-    StreamProfileQuery(const OBStreamType &streamType) : RegexTopicQuery("/cam/streamProfileType_" + std::to_string((uint8_t)streamType) + "\\d+") {}
+    StreamProfileQuery(const OBStreamType &streamType) : RegexTopicQuery("/cam/streamProfileType_" + std::to_string((uint8_t)streamType)) {}
 };
 
 class PropertyQuery : public RegexTopicQuery {
@@ -130,7 +130,7 @@ public:
     static std::string deviceTopic() {
         return create_from({ cameraPrefix(), deviceInfoPrefix() });
     }
-    static std::string streamPrefileTopic(const uint8_t &streamType) {
+    static std::string streamProfileTopic(const uint8_t &streamType) {
         return create_from({ cameraPrefix(), streamProfilePrefix(streamType) });
     }
     static std::string disparityParmTopic() {
