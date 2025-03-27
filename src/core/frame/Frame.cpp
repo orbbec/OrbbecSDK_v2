@@ -324,6 +324,20 @@ float PointsFrame::getCoordinateValueScale() const {
     return coordValueScale_;
 }
 
+void PointsFrame::setWidth(uint32_t width) {
+    width_ = width;
+}
+uint32_t PointsFrame::getWidth() const {
+    return width_;
+}
+
+void PointsFrame::setHeight(uint32_t height) {
+    height_ = height;
+}
+uint32_t PointsFrame::getHeight() const {
+    return height_;
+}
+
 AccelFrame::AccelFrame(uint8_t *data, size_t dataBufSize, FrameBufferReclaimFunc bufferReclaimFunc)
     : Frame(data, dataBufSize, OB_FRAME_ACCEL, bufferReclaimFunc) {}
 
@@ -447,4 +461,3 @@ void FrameSet::foreachFrame(ForeachBack foreachBack) const {
 }
 
 }  // namespace libobsensor
-

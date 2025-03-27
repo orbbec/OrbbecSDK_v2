@@ -2,112 +2,15 @@
 // Licensed under the MIT License.
 
 #include <libobsensor/ObSensor.hpp>
-
+#include "libobsensor/hpp/Utils.hpp"
 #include "utils.hpp"
 
 #include <fstream>
 #include <iostream>
-#include <cmath>
 
 #define KEY_ESC 27
 #define KEY_R 82
 #define KEY_r 114
-
-// Save point cloud data to ply
-void savePointsToPly(std::shared_ptr<ob::Frame> frame, std::string fileName) {
-    // get point cloud size (number of points)
-    int   pointsSize = frame->dataSize() / sizeof(OBPoint);
-    FILE *fp         = fopen(fileName.c_str(), "wb+");
-
-    if(!fp) {
-        throw std::runtime_error("Failed to open file for writing");
-    }
-
-    OBPoint          *point            = (OBPoint *)frame->data();
-    int               validPointsCount = 0;
-    static const auto min_distance     = 1e-6;
-
-    // First pass: Count valid points (non-zero points)
-    for(int i = 0; i < pointsSize; i++) {
-        if(fabs(point->x) >= min_distance || fabs(point->y) >= min_distance || fabs(point->z) >= min_distance) {
-            validPointsCount++;
-        }
-        point++;
-    }
-
-    // Reset pointer to the start of the data
-    point = (OBPoint *)frame->data();
-
-    // Write PLY header
-    fprintf(fp, "ply\n");
-    fprintf(fp, "format ascii 1.0\n");
-    fprintf(fp, "element vertex %d\n", validPointsCount);  // Use valid points count
-    fprintf(fp, "property float x\n");
-    fprintf(fp, "property float y\n");
-    fprintf(fp, "property float z\n");
-    fprintf(fp, "end_header\n");
-
-    // Second pass: Write valid points to the file
-    for(int i = 0; i < pointsSize; i++) {
-        if(fabs(point->x) >= min_distance || fabs(point->y) >= min_distance || fabs(point->z) >= min_distance) {
-            fprintf(fp, "%.3f %.3f %.3f\n", point->x, point->y, point->z);
-        }
-        point++;
-    }
-
-    // flush and close file
-    fflush(fp);
-    fclose(fp);
-}
-
-// Save colored point cloud data to ply
-void saveRGBPointsToPly(std::shared_ptr<ob::Frame> frame, std::string fileName) {
-    // get point cloud size (number of points)
-    int   pointsSize = frame->dataSize() / sizeof(OBColorPoint);
-    FILE *fp         = fopen(fileName.c_str(), "wb+");
-
-    if(!fp) {
-        throw std::runtime_error("Failed to open file for writing");
-    }
-
-    OBColorPoint     *point            = (OBColorPoint *)frame->data();
-    int               validPointsCount = 0;
-    static const auto min_distance     = 1e-6;
-    // First pass: Count valid points (non-zero points)
-    for(int i = 0; i < pointsSize; i++) {
-        if(fabs(point->x) >= min_distance || fabs(point->y) >= min_distance || fabs(point->z) >= min_distance) {
-            validPointsCount++;
-        }
-        point++;
-    }
-
-    // Reset pointer to the start of the data
-    point = (OBColorPoint *)frame->data();
-
-    // Write PLY header
-    fprintf(fp, "ply\n");
-    fprintf(fp, "format ascii 1.0\n");
-    fprintf(fp, "element vertex %d\n", validPointsCount);  // Use valid points count
-    fprintf(fp, "property float x\n");
-    fprintf(fp, "property float y\n");
-    fprintf(fp, "property float z\n");
-    fprintf(fp, "property uchar red\n");
-    fprintf(fp, "property uchar green\n");
-    fprintf(fp, "property uchar blue\n");
-    fprintf(fp, "end_header\n");
-
-    // Second pass: Write valid points to the file
-    for(int i = 0; i < pointsSize; i++) {
-        if(fabs(point->x) >= min_distance || fabs(point->y) >= min_distance || fabs(point->z) >= min_distance) {
-            fprintf(fp, "%.3f %.3f %.3f %d %d %d\n", point->x, point->y, point->z, (int)point->r, (int)point->g, (int)point->b);
-        }
-        point++;
-    }
-
-    // flush and close file
-    fflush(fp);
-    fclose(fp);
-}
 
 int main(void) try {
 
@@ -140,6 +43,7 @@ int main(void) try {
     std::cout << "Depth and Color stream are started!" << std::endl;
     std::cout << "Press R or r to create RGBD PointCloud and save to ply file! " << std::endl;
     std::cout << "Press D or d to create Depth PointCloud and save to ply file! " << std::endl;
+    std::cout << "Press M or m to create RGBD PointCloud and save to Mesh ply file! " << std::endl;
     std::cout << "Press ESC to exit! " << std::endl;
 
     while(true) {
@@ -169,7 +73,7 @@ int main(void) try {
             std::shared_ptr<ob::Frame> frame = pointCloud->process(alignedFrameset);
 
             // save point cloud data to ply file
-            saveRGBPointsToPly(frame, "RGBPoints.ply");
+            ob::PointCloudHelper::savePointcloudToPly("RGBPoints.ply", frame, false, false, 50);
 
             std::cout << "RGBPoints.ply Saved" << std::endl;
         }
@@ -194,9 +98,32 @@ int main(void) try {
             std::shared_ptr<ob::Frame> frame = pointCloud->process(alignedFrameset);
 
             // save point cloud data to ply file
-            savePointsToPly(frame, "DepthPoints.ply");
+            ob::PointCloudHelper::savePointcloudToPly("DepthPoints.ply", frame, false, false, 50);
 
             std::cout << "DepthPoints.ply Saved" << std::endl;
+        }
+        else if(key == 'm' || key == 'M') {
+            std::cout << "Save RGBD PointCloud(mesh) to ply file, this will take some time..." << std::endl;
+
+            std::shared_ptr<ob::FrameSet> frameset = nullptr;
+            while(true) {
+                frameset = pipeline->waitForFrameset(1000);
+                if(frameset) {
+                    break;
+                }
+            }
+
+            // align depth frame to color frame
+            auto alignedFrameset = align->process(frameset);
+
+            // set to create RGBD point cloud format (will be effective only if color frame and depth frame are contained in the frameset)
+            pointCloud->setCreatePointFormat(OB_FORMAT_RGB_POINT);
+
+            // process the frameset to generate point cloud frame
+            std::shared_ptr<ob::Frame> frame = pointCloud->process(alignedFrameset);
+
+            ob::PointCloudHelper::savePointcloudToPly("ColorMeshPoints.ply", frame, false, true, 50);
+            std::cout << "ColorMeshPoints.ply Saved" << std::endl;
         }
     }
     // stop the pipeline

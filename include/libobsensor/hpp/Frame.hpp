@@ -593,6 +593,33 @@ public:
         return scale;
     }
 
+    /**
+     * @brief Get the width of the frame.
+     *
+     * @return uint32_t The width of the frame.
+     */
+    uint32_t getWidth() const {
+        ob_error *error = nullptr;
+        // TODO
+        auto width = ob_point_cloud_frame_get_width(impl_, &error);
+        Error::handle(&error);
+
+        return width;
+    }
+
+    /**
+     * @brief Get the height of the frame.
+     *
+     * @return uint32_t The height of the frame.
+     */
+    uint32_t getHeight() const {
+        ob_error *error  = nullptr;
+        auto      height = ob_point_cloud_frame_get_height(impl_, &error);
+        Error::handle(&error);
+
+        return height;
+    }
+
 public:
     // The following interfaces are deprecated and are retained here for compatibility purposes.
 #define getPositionValueScale getCoordinateValueScale

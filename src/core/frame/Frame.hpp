@@ -191,8 +191,16 @@ public:
     void  setCoordinateValueScale(float valueScale);
     float getCoordinateValueScale() const;
 
+    void     setWidth(uint32_t width);
+    uint32_t getWidth() const;
+
+    void     setHeight(uint32_t height);
+    uint32_t getHeight() const;
+
 private:
-    float coordValueScale_;  // coordinate value scale, multiply by this value to get actual coordinate value in mm
+    float    coordValueScale_;  // coordinate value scale, multiply by this value to get actual coordinate value in mm
+    uint32_t width_;
+    uint32_t height_;
 };
 
 class AccelFrame : public Frame {
@@ -252,4 +260,3 @@ public:
 };
 
 }  // namespace libobsensor
-

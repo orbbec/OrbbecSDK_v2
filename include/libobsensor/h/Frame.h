@@ -603,6 +603,24 @@ OB_EXPORT ob_frame *ob_frameset_get_frame_by_index(const ob_frame *frameset, uin
  */
 OB_EXPORT void ob_frameset_push_frame(ob_frame *frameset, const ob_frame *frame, ob_error **error);
 
+/**
+ * @brief Get point cloud frame width
+ *
+ * @param[in] frame point cloud Frame object
+ * @param[out] error Pointer to an error object that will be set if an error occurs.
+ * @return uint32_t return the point cloud frame width
+ */
+OB_EXPORT uint32_t ob_point_cloud_frame_get_width(const ob_frame *frame, ob_error **error);
+
+/**
+ * @brief Get point cloud frame height
+ *
+ * @param[in] frame point cloud Frame object
+ * @param[out] error Pointer to an error object that will be set if an error occurs.
+ * @return uint32_t return the point cloud frame height
+ */
+OB_EXPORT uint32_t ob_point_cloud_frame_get_height(const ob_frame *frame, ob_error **error);
+
 // The following interfaces are deprecated and are retained here for compatibility purposes.
 #define ob_frame_index ob_frame_get_index
 #define ob_frame_format ob_frame_get_format

@@ -526,6 +526,24 @@ void ob_frameset_push_frame(ob_frame *frameset, const ob_frame *frame, ob_error 
 }
 HANDLE_EXCEPTIONS_NO_RETURN(frameset, frame)
 
+uint32_t ob_point_cloud_frame_get_width(const ob_frame *frame, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(frame);
+    if(!frame->frame->is<libobsensor::PointsFrame>()) {
+        throw libobsensor::unsupported_operation_exception("It's not a video frame!");
+    }
+    return frame->frame->as<libobsensor::PointsFrame>()->getWidth();
+}
+HANDLE_EXCEPTIONS_AND_RETURN(uint32_t(0), frame)
+
+uint32_t ob_point_cloud_frame_get_height(const ob_frame *frame, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(frame);
+    if(!frame->frame->is<libobsensor::PointsFrame>()) {
+        throw libobsensor::unsupported_operation_exception("It's not a video frame!");
+    }
+    return frame->frame->as<libobsensor::PointsFrame>()->getHeight();
+}
+HANDLE_EXCEPTIONS_AND_RETURN(uint32_t(0), frame)
+
 #ifdef __cplusplus
 }
 #endif

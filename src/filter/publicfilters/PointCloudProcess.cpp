@@ -51,11 +51,11 @@ void PointCloudFilter::reset() {
     }
     if(rgbdTablesData_) {
         rgbdTablesData_.reset();
-        rgbdTablesDataSize_   = 0;
-        rgbdXyTables_.xTable  = nullptr;
-        rgbdXyTables_.yTable  = nullptr;
-        rgbdXyTables_.height  = 0;
-        rgbdXyTables_.width   = 0;
+        rgbdTablesDataSize_  = 0;
+        rgbdXyTables_.xTable = nullptr;
+        rgbdXyTables_.yTable = nullptr;
+        rgbdXyTables_.height = 0;
+        rgbdXyTables_.width  = 0;
     }
 }
 
@@ -150,6 +150,11 @@ std::shared_ptr<Frame> PointCloudFilter::createDepthPointCloud(std::shared_ptr<c
     pointFrame->copyInfoFromOther(depthFrame);
     // Actual coordinate scaling = Depth scaling factor / Set coordinate scaling factor.
     pointFrame->as<PointsFrame>()->setCoordinateValueScale(depthValueScale / positionDataScale_);
+    uint32_t width = depthFrame->as<DepthFrame>()->getWidth();
+    pointFrame->as<PointsFrame>()->setWidth(width);
+
+    uint32_t height = depthFrame->as<DepthFrame>()->getHeight();
+    pointFrame->as<PointsFrame>()->setHeight(height);
 
     return pointFrame;
 }
@@ -278,19 +283,24 @@ std::shared_ptr<Frame> PointCloudFilter::createRGBDPointCloud(std::shared_ptr<co
 
     if(distortionType == OBPointCloudDistortionType::OB_POINT_CLOUD_ADD_DISTORTION_TYPE) {
         CoordinateUtil::transformationDepthToRGBDPointCloudByUVTables(dstIntrinsic, &rgbdXyTables_, depthFrame->getData(), colorData,
-                                                                      (void *)pointFrame->getData(),
-                                                                      positionDataScale_, coordinateSystemType_, isColorDataNormalization_);
+                                                                      (void *)pointFrame->getData(), positionDataScale_, coordinateSystemType_,
+                                                                      isColorDataNormalization_);
     }
     else {
-        CoordinateUtil::transformationDepthToRGBDPointCloud(&rgbdXyTables_, depthFrame->getData(), colorData, (void *)pointFrame->getData(),
-                                                            positionDataScale_,
-                                                            coordinateSystemType_, isColorDataNormalization_, colorVideoFrame->getWidth(), colorVideoFrame->getHeight());
+        CoordinateUtil::transformationDepthToRGBDPointCloud(&rgbdXyTables_, depthFrame->getData(), colorData, (void *)pointFrame->getData(), positionDataScale_,
+                                                            coordinateSystemType_, isColorDataNormalization_, colorVideoFrame->getWidth(),
+                                                            colorVideoFrame->getHeight());
     }
 
     float depthValueScale = depthVideoFrame->as<DepthFrame>()->getValueScale();
     pointFrame->copyInfoFromOther(depthFrame);
     // Actual coordinate scaling = Depth scaling factor / Set coordinate scaling factor.
     pointFrame->as<PointsFrame>()->setCoordinateValueScale(depthValueScale / positionDataScale_);
+    uint32_t width = depthFrame->as<DepthFrame>()->getWidth();
+    pointFrame->as<PointsFrame>()->setWidth(width);
+
+    uint32_t height = depthFrame->as<DepthFrame>()->getHeight();
+    pointFrame->as<PointsFrame>()->setHeight(height);
     return pointFrame;
 }
 
@@ -328,4 +338,3 @@ PointCloudFilter::OBPointCloudDistortionType PointCloudFilter::getDistortionType
 }
 
 }  // namespace libobsensor
-

@@ -19,7 +19,7 @@ add_subdirectory(${OB_3RDPARTY_DIR}/tinyxml2 tinyxml2)
 target_link_libraries(shared PUBLIC tinyxml2::tinyxml2)
 
 add_subdirectory(environment)
-target_link_libraries(shared PUBLIC ob::env_config_rc)
+target_link_libraries(shared PUBLIC ob::env_config_rc ob::core)
 
 add_library(ob::shared ALIAS shared)
 ob_source_group(ob::shared)
