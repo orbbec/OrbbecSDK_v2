@@ -301,6 +301,9 @@ void PlaybackDevicePort::setPlaybackRate(const float &rate) {
 }
 
 void PlaybackDevicePort::setPlaybackStatusCallback(const PlaybackStatusCallback callback) {
+    if (callback == nullptr) {
+        return;
+    }
     playbackStatus_.clearGlobalCallbacks();
     playbackStatusCallback_ = callback;
     playbackStatus_.registerGlobalCallback([this]() {
