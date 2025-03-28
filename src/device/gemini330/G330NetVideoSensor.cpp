@@ -22,7 +22,7 @@ G330NetVideoSensor::G330NetVideoSensor(IDevice *owner, OBSensorType sensorType, 
 void G330NetVideoSensor::start(std::shared_ptr<const StreamProfile> sp, FrameCallback callback) {
     if(linkSpeed_ <= G335LE_10M_NET_BAND_WIDTH) {
         throw libobsensor::unsupported_operation_exception(utils::string::to_string() << sensorType_ << " stream start failed, link speed is " << linkSpeed_
-                                                                                  << "Mb/s, please reboot the device!");
+                                                                                  << "Mb/s, please refer to the GitHub FAQ for details!");
     }
 
     auto backendIter = streamProfileBackendMap_.find(sp);
