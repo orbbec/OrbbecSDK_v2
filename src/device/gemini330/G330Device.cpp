@@ -1352,7 +1352,7 @@ void G330NetDevice::fetchDeviceInfo() {
     if(file.is_open()) {
         file >> linkSpeed_;
         if(linkSpeed_ <= G335LE_10M_NET_BAND_WIDTH) {
-            LOG_WARN("Link speed is {}Mb/s, please refer to the GitHub FAQ for details!", linkSpeed_);
+            LOG_WARN("Link speed is {}Mb/s, Please check the ethernet connection and reconnect the device!", linkSpeed_);
         }
         else {
             LOG_DEBUG("Link speed is {}Mb/s.", linkSpeed_);

@@ -15,8 +15,9 @@ G330NetDisparitySensor::G330NetDisparitySensor(IDevice *owner, OBSensorType sens
 
 void G330NetDisparitySensor::start(std::shared_ptr<const StreamProfile> sp, FrameCallback callback) {
     if(linkSpeed_ <= G335LE_10M_NET_BAND_WIDTH) {
-        throw libobsensor::unsupported_operation_exception(utils::string::to_string() << "Depth stream start failed, link speed is " << linkSpeed_
-                                                                                      << "Mb/s, please refer to the GitHub FAQ for details!");
+        throw libobsensor::unsupported_operation_exception(utils::string::to_string()
+                                                           << "Failed to start " << sensorType_ << " stream: the ethernet link speed is limited to "
+                                                           << linkSpeed_ << "Mb/s! Please check the ethernet connection and reconnect the device.");
     }
 
     auto currentVSP = sp->as<VideoStreamProfile>();
