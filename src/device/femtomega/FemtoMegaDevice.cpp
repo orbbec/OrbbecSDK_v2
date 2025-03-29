@@ -33,6 +33,8 @@
 
 #include "FemtoMegaPropertyAccessor.hpp"
 #include "FemtoMegaFrameTimestampCalculator.hpp"
+#include "firmwareupdater/FirmwareUpdater.hpp"
+#include "monitor/DeviceMonitor.hpp"
 
 #if defined(BUILD_NET_PAL)
 #include "ethernet/RTSPStreamPort.hpp"
@@ -462,6 +464,12 @@ void FemtoMegaNetDevice::init() {
 
     auto deviceClockSynchronizer = std::make_shared<DeviceClockSynchronizer>(this, deviceTimeFreq_, deviceTimeFreq_);
     registerComponent(OB_DEV_COMPONENT_DEVICE_CLOCK_SYNCHRONIZER, deviceClockSynchronizer);
+
+    registerComponent(OB_DEV_COMPONENT_FIRMWARE_UPDATER, [this]() {
+        std::shared_ptr<FirmwareUpdater> firmwareUpdater;
+        TRY_EXECUTE({ firmwareUpdater = std::make_shared<FirmwareUpdater>(this); })
+        return firmwareUpdater;
+    });
 }
 
 void FemtoMegaNetDevice::fetchDeviceInfo() {
@@ -707,6 +715,12 @@ void FemtoMegaNetDevice::initProperties() {
         auto port     = getSourcePort(vendorPortInfo);
         auto accessor = std::make_shared<VendorPropertyAccessor>(this, port);
         return accessor;
+    });
+
+    registerComponent(OB_DEV_COMPONENT_DEVICE_MONITOR, [this, vendorPortInfo]() {
+        auto port       = getSourcePort(vendorPortInfo);
+        auto devMonitor = std::make_shared<DeviceMonitor>(this, port);
+        return devMonitor;
     });
 
     propertyServer->registerProperty(OB_PROP_COLOR_AUTO_EXPOSURE_BOOL, "rw", "rw", vendorPropertyAccessor);
