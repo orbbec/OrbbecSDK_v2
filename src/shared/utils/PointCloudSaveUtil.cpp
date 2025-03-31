@@ -229,7 +229,7 @@ bool PointCloudSaveUtil::savePointCloudToPly(const char *fileName, std::shared_p
                         float dist1 = computePointsDistance(vertices[idxA], vertices[idxB]);
                         float dist2 = computePointsDistance(vertices[idxA], vertices[idxC]);
                         if(dist1 < meshThreshold && dist2 < meshThreshold) {
-                            faces.emplace_back(Triangle(idxA, idxB, idxC));
+                            faces.emplace_back(Triangle(idxA, idxC, idxB));
                         }
                     }
                 }
@@ -240,7 +240,7 @@ bool PointCloudSaveUtil::savePointCloudToPly(const char *fileName, std::shared_p
                         float dist1 = computePointsDistance(vertices[idxA], vertices[idxD]);
                         float dist2 = computePointsDistance(vertices[idxA], vertices[idxC]);
                         if(dist1 < meshThreshold && dist2 < meshThreshold) {
-                            faces.emplace_back(Triangle(idxA, idxC, idxD));
+                            faces.emplace_back(Triangle(idxA, idxD, idxC));
                         }
                     }
                 }
