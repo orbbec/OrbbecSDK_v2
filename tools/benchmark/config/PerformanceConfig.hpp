@@ -15,10 +15,10 @@ std::vector<std::function<std::string(std::shared_ptr<DeviceResource>&)>> update
         std::cout << msg << std::endl;
 
         auto config = std::make_shared<ob::Config>();
-        config->enableVideoStream(OB_SENSOR_DEPTH, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY, OB_FORMAT_Y16);
-        config->enableVideoStream(OB_SENSOR_COLOR, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY, OB_FORMAT_RGB);
-        config->enableVideoStream(OB_SENSOR_IR_LEFT, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY, OB_FORMAT_Y8);
-        config->enableVideoStream(OB_SENSOR_IR_RIGHT, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY, OB_FORMAT_Y8);
+        config->enableVideoStream(OB_SENSOR_DEPTH, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY, OB_FORMAT_ANY);
+        config->enableVideoStream(OB_SENSOR_COLOR, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY, OB_FORMAT_ANY);
+        config->enableVideoStream(OB_SENSOR_IR_LEFT, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY, OB_FORMAT_ANY);
+        config->enableVideoStream(OB_SENSOR_IR_RIGHT, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY, OB_FORMAT_ANY);
 
         deviceResource->startStream(config);
         return msg;
@@ -34,8 +34,8 @@ std::vector<std::function<std::string(std::shared_ptr<DeviceResource>&)>> update
         deviceResource->enableAlignFilter(true);
 
         auto config = std::make_shared<ob::Config>();
-        config->enableVideoStream(OB_SENSOR_DEPTH, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY, OB_FORMAT_Y16);
-        config->enableVideoStream(OB_SENSOR_COLOR, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY, OB_FORMAT_RGB);
+        config->enableVideoStream(OB_SENSOR_DEPTH, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY, OB_FORMAT_ANY);
+        config->enableVideoStream(OB_SENSOR_COLOR, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY, OB_FORMAT_ANY);
         config->setFrameAggregateOutputMode(OB_FRAME_AGGREGATE_OUTPUT_ALL_TYPE_FRAME_REQUIRE);
 
         deviceResource->startStream(config);
@@ -50,8 +50,8 @@ std::vector<std::function<std::string(std::shared_ptr<DeviceResource>&)>> update
         deviceResource->enablePointCloudFilter(true);
 
         auto config = std::make_shared<ob::Config>();
-        config->enableVideoStream(OB_SENSOR_DEPTH, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY, OB_FORMAT_Y16);
-        config->enableVideoStream(OB_SENSOR_COLOR, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY, OB_FORMAT_RGB);
+        config->enableVideoStream(OB_SENSOR_DEPTH, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY, OB_FORMAT_ANY);
+        config->enableVideoStream(OB_SENSOR_COLOR, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY, OB_FORMAT_ANY);
         config->setFrameAggregateOutputMode(OB_FRAME_AGGREGATE_OUTPUT_ALL_TYPE_FRAME_REQUIRE);
 
         deviceResource->startStream(config);
@@ -66,8 +66,8 @@ std::vector<std::function<std::string(std::shared_ptr<DeviceResource>&)>> update
         deviceResource->enableRGBPointCloudFilter(true);
 
         auto config = std::make_shared<ob::Config>();
-        config->enableVideoStream(OB_SENSOR_DEPTH, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY, OB_FORMAT_Y16);
-        config->enableVideoStream(OB_SENSOR_COLOR, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY, OB_FORMAT_RGB);
+        config->enableVideoStream(OB_SENSOR_DEPTH, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY, OB_FORMAT_ANY);
+        config->enableVideoStream(OB_SENSOR_COLOR, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY, OB_FORMAT_ANY);
         config->setFrameAggregateOutputMode(OB_FRAME_AGGREGATE_OUTPUT_ALL_TYPE_FRAME_REQUIRE);
 
         deviceResource->startStream(config);
