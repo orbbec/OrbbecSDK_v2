@@ -48,48 +48,53 @@ FemtoMegaINetDevice::FemtoMegaINetDevice(const std::shared_ptr<const IDeviceEnum
 FemtoMegaINetDevice::~FemtoMegaINetDevice() noexcept {}
 
 void FemtoMegaINetDevice::init() {
-    initSensorList();
     initProperties();
 
     fetchDeviceInfo();
     fetchExtensionInfo();
-    fetchAllVideoStreamProfileList();
 
-    if(getFirmwareVersionInt() >= 10209) {
-        deviceTimeFreq_     = 1000000;
-        depthFrameTimeFreq_ = 1000000;
+    if(!inRecoveryMode_) {
+        initSensorList();
+        fetchAllVideoStreamProfileList();
+
+        if(getFirmwareVersionInt() >= 10209) {
+            deviceTimeFreq_     = 1000000;
+            depthFrameTimeFreq_ = 1000000;
+        }
+
+        auto globalTimestampFilter = std::make_shared<GlobalTimestampFitter>(this);
+        registerComponent(OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER, globalTimestampFilter);
+
+        auto algParamManager = std::make_shared<TOFDeviceCommonAlgParamManager>(this);
+        registerComponent(OB_DEV_COMPONENT_ALG_PARAM_MANAGER, algParamManager);
+
+        static const std::vector<OBMultiDeviceSyncMode> supportedSyncModes = { OB_MULTI_DEVICE_SYNC_MODE_FREE_RUN, OB_MULTI_DEVICE_SYNC_MODE_STANDALONE,
+                                                                               OB_MULTI_DEVICE_SYNC_MODE_PRIMARY, OB_MULTI_DEVICE_SYNC_MODE_SECONDARY,
+                                                                               OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_TRIGGERING };
+        static const std::map<OBMultiDeviceSyncMode, OBSyncMode> syncModeNewToOldMap = {
+            { OB_MULTI_DEVICE_SYNC_MODE_FREE_RUN, OB_SYNC_MODE_CLOSE },
+            { OB_MULTI_DEVICE_SYNC_MODE_STANDALONE, OB_SYNC_MODE_STANDALONE },
+            { OB_MULTI_DEVICE_SYNC_MODE_PRIMARY, OB_SYNC_MODE_PRIMARY_MCU_TRIGGER },
+            { OB_MULTI_DEVICE_SYNC_MODE_SECONDARY, OB_SYNC_MODE_SECONDARY },
+            { OB_MULTI_DEVICE_SYNC_MODE_SECONDARY_SYNCED, OB_SYNC_MODE_SECONDARY },
+            { OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_TRIGGERING, OB_SYNC_MODE_PRIMARY_SOFT_TRIGGER }
+        };
+        static const std::map<OBSyncMode, OBMultiDeviceSyncMode> syncModeOldToNewMap = {
+            { OB_SYNC_MODE_CLOSE, OB_MULTI_DEVICE_SYNC_MODE_FREE_RUN },
+            { OB_SYNC_MODE_STANDALONE, OB_MULTI_DEVICE_SYNC_MODE_STANDALONE },
+            { OB_SYNC_MODE_PRIMARY_MCU_TRIGGER, OB_MULTI_DEVICE_SYNC_MODE_PRIMARY },
+            { OB_SYNC_MODE_SECONDARY, OB_MULTI_DEVICE_SYNC_MODE_SECONDARY },
+            { OB_SYNC_MODE_PRIMARY_SOFT_TRIGGER, OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_TRIGGERING }
+        };
+        auto deviceSyncConfigurator = std::make_shared<DeviceSyncConfiguratorOldProtocol>(this, supportedSyncModes);
+        deviceSyncConfigurator->updateModeAliasMap(syncModeOldToNewMap, syncModeNewToOldMap);
+        deviceSyncConfigurator->enableDepthDelaySupport(true);
+        registerComponent(OB_DEV_COMPONENT_DEVICE_SYNC_CONFIGURATOR, deviceSyncConfigurator);
+
+        auto deviceClockSynchronizer = std::make_shared<DeviceClockSynchronizer>(this, deviceTimeFreq_, deviceTimeFreq_);
+        registerComponent(OB_DEV_COMPONENT_DEVICE_CLOCK_SYNCHRONIZER, deviceClockSynchronizer);
     }
-
-    auto globalTimestampFilter = std::make_shared<GlobalTimestampFitter>(this);
-    registerComponent(OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER, globalTimestampFilter);
-
-    auto algParamManager = std::make_shared<TOFDeviceCommonAlgParamManager>(this);
-    registerComponent(OB_DEV_COMPONENT_ALG_PARAM_MANAGER, algParamManager);
-
-    static const std::vector<OBMultiDeviceSyncMode>          supportedSyncModes  = { OB_MULTI_DEVICE_SYNC_MODE_FREE_RUN, OB_MULTI_DEVICE_SYNC_MODE_STANDALONE,
-                                                                                     OB_MULTI_DEVICE_SYNC_MODE_PRIMARY, OB_MULTI_DEVICE_SYNC_MODE_SECONDARY,
-                                                                                     OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_TRIGGERING };
-    static const std::map<OBMultiDeviceSyncMode, OBSyncMode> syncModeNewToOldMap = { { OB_MULTI_DEVICE_SYNC_MODE_FREE_RUN, OB_SYNC_MODE_CLOSE },
-                                                                                     { OB_MULTI_DEVICE_SYNC_MODE_STANDALONE, OB_SYNC_MODE_STANDALONE },
-                                                                                     { OB_MULTI_DEVICE_SYNC_MODE_PRIMARY, OB_SYNC_MODE_PRIMARY_MCU_TRIGGER },
-                                                                                     { OB_MULTI_DEVICE_SYNC_MODE_SECONDARY, OB_SYNC_MODE_SECONDARY },
-                                                                                     { OB_MULTI_DEVICE_SYNC_MODE_SECONDARY_SYNCED, OB_SYNC_MODE_SECONDARY },
-                                                                                     { OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_TRIGGERING,
-                                                                                       OB_SYNC_MODE_PRIMARY_SOFT_TRIGGER } };
-    static const std::map<OBSyncMode, OBMultiDeviceSyncMode> syncModeOldToNewMap = { { OB_SYNC_MODE_CLOSE, OB_MULTI_DEVICE_SYNC_MODE_FREE_RUN },
-                                                                                     { OB_SYNC_MODE_STANDALONE, OB_MULTI_DEVICE_SYNC_MODE_STANDALONE },
-                                                                                     { OB_SYNC_MODE_PRIMARY_MCU_TRIGGER, OB_MULTI_DEVICE_SYNC_MODE_PRIMARY },
-                                                                                     { OB_SYNC_MODE_SECONDARY, OB_MULTI_DEVICE_SYNC_MODE_SECONDARY },
-                                                                                     { OB_SYNC_MODE_PRIMARY_SOFT_TRIGGER,
-                                                                                       OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_TRIGGERING } };
-    auto deviceSyncConfigurator = std::make_shared<DeviceSyncConfiguratorOldProtocol>(this, supportedSyncModes);
-    deviceSyncConfigurator->updateModeAliasMap(syncModeOldToNewMap, syncModeNewToOldMap);
-    deviceSyncConfigurator->enableDepthDelaySupport(true);
-    registerComponent(OB_DEV_COMPONENT_DEVICE_SYNC_CONFIGURATOR, deviceSyncConfigurator);
-
-    auto deviceClockSynchronizer = std::make_shared<DeviceClockSynchronizer>(this, deviceTimeFreq_, deviceTimeFreq_);
-    registerComponent(OB_DEV_COMPONENT_DEVICE_CLOCK_SYNCHRONIZER, deviceClockSynchronizer);
-
+    // firmware updater
     registerComponent(OB_DEV_COMPONENT_FIRMWARE_UPDATER, [this]() {
         std::shared_ptr<FirmwareUpdater> firmwareUpdater;
         TRY_EXECUTE({ firmwareUpdater = std::make_shared<FirmwareUpdater>(this); })
@@ -421,13 +426,7 @@ void FemtoMegaINetDevice::initProperties() {
     propertyServer->aliasProperty(OB_PROP_DEPTH_EXPOSURE_INT, OB_PROP_TOF_EXPOSURE_TIME_INT);
     propertyServer->registerProperty(OB_PROP_CAPTURE_IMAGE_SIGNAL_BOOL, "w", "w", vendorPropertyAccessor);
 
-    BEGIN_TRY_EXECUTE({
-        auto inRecoveryMode = propertyServer->getPropertyValueT<bool>(OB_PROP_DEVICE_IN_RECOVERY_MODE_BOOL);
-        if(!inRecoveryMode) {
-            propertyServer->registerProperty(OB_PROP_RESTORE_FACTORY_SETTINGS_BOOL, "w", "w", vendorPropertyAccessor);
-        }
-    })
-    CATCH_EXCEPTION_AND_EXECUTE({ LOG_ERROR("Get device in recovery mode failed!"); })
+    propertyServer->registerProperty(OB_PROP_RESTORE_FACTORY_SETTINGS_BOOL, "w", "w", vendorPropertyAccessor);
 
     auto imuCorrectorFilter = getSensorFrameFilter("IMUCorrector", OB_SENSOR_ACCEL);
     if(imuCorrectorFilter) {
@@ -442,6 +441,23 @@ void FemtoMegaINetDevice::initProperties() {
 
     BEGIN_TRY_EXECUTE({ propertyServer->setPropertyValueT(OB_PROP_DEVICE_COMMUNICATION_TYPE_INT, OB_COMM_NET); })
     CATCH_EXCEPTION_AND_EXECUTE({ LOG_ERROR("Set device communication type to ethernet mode failed!"); })
+
+    // check recovery mode
+    inRecoveryMode_ = false;
+    BEGIN_TRY_EXECUTE({
+        inRecoveryMode_ = propertyServer->getPropertyValueT<bool>(OB_PROP_DEVICE_IN_RECOVERY_MODE_BOOL);
+        if(inRecoveryMode_) {
+            // device is in recovery mode
+            LOG_DEBUG("Femto Mega I net device is in recovery mode, skip init ...");
+            propertyServer->unregisterAllProperties();
+            // only support these properties
+            propertyServer->registerProperty(OB_STRUCT_VERSION, "", "r", vendorPropertyAccessor);
+            propertyServer->registerProperty(OB_PROP_BOOT_INTO_RECOVERY_MODE_BOOL, "w", "w", vendorPropertyAccessor);
+            propertyServer->registerProperty(OB_PROP_DEVICE_IN_RECOVERY_MODE_BOOL, "r", "r", vendorPropertyAccessor);
+            return;
+        }
+    })
+    CATCH_EXCEPTION_AND_EXECUTE({ LOG_ERROR("Get device in recovery mode failed!"); })
 }
 
 void FemtoMegaINetDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {

@@ -52,6 +52,12 @@ void PropertyServer::registerProperty(uint32_t propertyId, const std::string &us
     registerProperty(propertyId, userPerms, intPerms, accessor);
 }
 
+void PropertyServer::unregisterAllProperties() {
+    innerPropertiesVec_.clear();
+    userPropertiesVec_.clear();
+    properties_.clear();
+}
+
 void addProperty(std::vector<OBPropertyItem> &vec, int propertyId, const char *propName, OBPropertyType propType, OBPermissionType perms) {
     OBPropertyItem propertyItem;
     propertyItem.id         = static_cast<OBPropertyID>(propertyId);

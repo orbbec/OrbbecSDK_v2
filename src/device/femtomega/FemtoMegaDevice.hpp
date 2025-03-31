@@ -46,6 +46,7 @@ private:
     uint64_t colorFrameTimeFreq_ = 90000;
 
     StreamProfileList allVideoStreamProfileList_;  // fetch from device via vendor-specific protocol for all types of video stream
+    bool              inRecoveryMode_ = false; // whether the device is in recovery mode
 };
 
 }  // namespace libobsensor

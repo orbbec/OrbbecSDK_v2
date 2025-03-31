@@ -30,7 +30,8 @@ public:
 
     void registerProperty(uint32_t propertyId, OBPermissionType userPerms, OBPermissionType intPerms, std::shared_ptr<IPropertyAccessor> accessor) override;
     void registerProperty(uint32_t propertyId, const std::string &userPermsStr, const std::string &intPermsStr,
-                          std::shared_ptr<IPropertyAccessor> accessor) override;
+                                  std::shared_ptr<IPropertyAccessor> accessor) override;
+    void unregisterAllProperties() override;
     void aliasProperty(uint32_t aliasId, uint32_t propertyId) override;
 
     bool isPropertySupported(uint32_t propertyId, PropertyOperationType operationType, PropertyAccessType accessType) const override;
