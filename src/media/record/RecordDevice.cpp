@@ -5,6 +5,7 @@
 #include "DevicePids.hpp"
 #include "frame/FrameFactory.hpp"
 #include "DeviceBase.hpp"
+#include "IAlgParamManager.hpp"
 
 namespace libobsensor {
 
@@ -34,8 +35,8 @@ RecordDevice::~RecordDevice() {
         }
     }
 
-    writer_->writeDeviceInfo(std::dynamic_pointer_cast<DeviceBase>(device_)->getInfo());
-    writer_->stop();
+    //stop recorder and write device&frame info
+    stopRecord();
     LOG_DEBUG("RecordDevice Destructor");
 }
 
@@ -117,6 +118,15 @@ void RecordDevice::writeAllProperties() {
         writePropertyT<int>(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_SPECKLE_SIZE_INT);
         writePropertyT<int>(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT);
     }
+}
+
+void RecordDevice::stopRecord(){
+    auto server = device_->getPropertyServer();
+    bool isHWD2C = server->getPropertyValueT<bool>(OB_PROP_DEPTH_ALIGN_HARDWARE_BOOL);
+    auto algParamManager = device_->getComponentT<IAlgParamManager>(OB_DEV_COMPONENT_ALG_PARAM_MANAGER, false);
+    auto d2cProfileList  = algParamManager->getD2CProfileList();
+    writer_->writeDeviceInfo(std::dynamic_pointer_cast<DeviceBase>(device_)->getInfo());
+    writer_->writeStreamProfiles(isHWD2C,d2cProfileList);
 }
 
 }  // namespace libobsensor

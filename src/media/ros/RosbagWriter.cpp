@@ -140,7 +140,7 @@ void RosWriter::writeDeviceInfo(const std::shared_ptr<const DeviceInfo> &deviceI
     file_->write(deviceInfoTopic, deviceInfoMsg->header.stamp, deviceInfoMsg);
 }
 
-void RosWriter::stop() {
+void RosWriter::writeStreamProfiles(bool isHardwareD2CMode,const std::vector<OBD2CProfile> &d2cProfileList){
     std::lock_guard<std::mutex> lock(writeMutex_);
     for(auto &it: streamProfileMap_) {
         if(it.first == OB_SENSOR_GYRO) {
@@ -150,7 +150,7 @@ void RosWriter::stop() {
             writeAccelStreamProfile(it.second);
         }
         else {
-            writeVideoStreamProfile(it.first, it.second);
+            writeVideoStreamProfile(it.first, it.second,isHardwareD2CMode,d2cProfileList);
         }
     }
 }
@@ -176,27 +176,13 @@ void RosWriter::writeDisparityParam(std::shared_ptr<const DisparityBasedStreamPr
     file_->write(disparityParamTopic, disparityParamMsg->header.stamp, disparityParamMsg);
 }
 
-void RosWriter::writeVideoStreamProfile(const OBSensorType sensorType, const std::shared_ptr<const StreamProfile> &streamProfile) {
+void RosWriter::writeVideoStreamProfile(const OBSensorType sensorType, const std::shared_ptr<const StreamProfile> &streamProfile,bool isHardwareD2CMode,const std::vector<OBD2CProfile> &d2cProfileList) {
     custom_msg::StreamProfileInfoPtr          streamInfoMsg(new custom_msg::StreamProfileInfo());
     std::chrono::duration<double, std::micro> timestampUs(startTime_);
     streamInfoMsg->header.stamp = orbbecRosbag::Time(std::chrono::duration<double>(timestampUs).count());
     auto strStreamProfile          = RosTopic::streamProfileTopic((uint8_t)streamProfile->getType());
     auto videoStreamProfile     = streamProfile->as<VideoStreamProfile>();
     if(videoStreamProfile != nullptr) {
-
-        if(streamProfileMap_.count(OB_SENSOR_COLOR) && streamProfileMap_.count(OB_SENSOR_DEPTH)) {
-            if(sensorType == OB_SENSOR_DEPTH) {
-                auto Extrinsic = streamProfile->getExtrinsicTo(streamProfileMap_.at(OB_SENSOR_COLOR));
-                for(int i = 0; i < 9; i++) {
-                    streamInfoMsg->rotationMatrix[i] = Extrinsic.rot[i];
-                }
-
-                for(int i = 0; i < 3; i++) {
-                    streamInfoMsg->translationMatrix[i] = Extrinsic.trans[i];
-                }
-            }
-        }
-
         if(videoStreamProfile->is<const DisparityBasedStreamProfile>()) {
             writeDisparityParam(videoStreamProfile->as<const DisparityBasedStreamProfile>());
         }
@@ -215,9 +201,40 @@ void RosWriter::writeVideoStreamProfile(const OBSensorType sensorType, const std
         streamInfoMsg->width              = videoStreamProfile->getWidth();
         streamInfoMsg->height             = videoStreamProfile->getHeight();
         streamInfoMsg->fps                = videoStreamProfile->getFps();
-
         streamInfoMsg->streamType = static_cast<uint8_t>(videoStreamProfile->getType());
         streamInfoMsg->format     = static_cast<uint8_t>(videoStreamProfile->getFormat());
+
+        //deal with extrinsic and hardware d2c mode
+        if(sensorType == OB_SENSOR_DEPTH && streamProfileMap_.count(OB_SENSOR_COLOR) && streamProfileMap_.count(OB_SENSOR_DEPTH)) {
+            auto Extrinsic = streamProfile->getExtrinsicTo(streamProfileMap_.at(OB_SENSOR_COLOR));
+            for(int i = 0; i < 9; i++) {
+                streamInfoMsg->rotationMatrix[i] = Extrinsic.rot[i];
+            }
+            for(int i = 0; i < 3; i++) {
+                streamInfoMsg->translationMatrix[i] = Extrinsic.trans[i];
+            }
+            
+            //check hardware d2c mode
+            if(isHardwareD2CMode){
+                OBExtrinsic  identityExtrinsics = { { 1, 0, 0, 0, 1, 0, 0, 0, 1 }, { 0, 0, 0 } };
+                memcpy(&streamInfoMsg->rotationMatrix, &identityExtrinsics.rot, sizeof(float) * 9);
+                memcpy(&streamInfoMsg->translationMatrix,&identityExtrinsics.trans, sizeof(float) * 3);
+                auto colorStreamProfile = streamProfileMap_.at(OB_SENSOR_COLOR)->as<VideoStreamProfile>();
+                OBD2CPostProcessParam param = { 1.0f, 0, 0, 0, 0 };
+                for(const auto &item: d2cProfileList) {
+                    if(item.colorWidth == colorStreamProfile->getWidth() && item.colorHeight == colorStreamProfile->getHeight()
+                       && item.depthWidth == videoStreamProfile->getWidth() && item.depthHeight == videoStreamProfile->getHeight()) {
+                        param = item.postProcessParam;
+                        break;
+                    }
+                }
+                streamInfoMsg->cameraIntrinsic[0] = colorStreamProfile->getIntrinsic().fx / param.depthScale;
+                streamInfoMsg->cameraIntrinsic[1] = colorStreamProfile->getIntrinsic().fy / param.depthScale;
+                streamInfoMsg->cameraIntrinsic[2] = (colorStreamProfile->getIntrinsic().cx - param.alignLeft) / param.depthScale;
+                streamInfoMsg->cameraIntrinsic[3] = (colorStreamProfile->getIntrinsic().cy - param.alignTop) / param.depthScale;
+            }
+        }
+
         file_->write(strStreamProfile, streamInfoMsg->header.stamp, streamInfoMsg);
     }
 }
