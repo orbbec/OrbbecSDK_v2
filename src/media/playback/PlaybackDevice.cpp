@@ -187,6 +187,11 @@ void PlaybackDevice::initSensorList() {
         auto sensor = std::make_shared<VideoSensor>(this, OB_SENSOR_IR_LEFT, port_);
         sensor->setStreamProfileList(port_->getStreamProfileList(OB_SENSOR_IR_LEFT));
 
+        auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_LEFT_IR_FRAME_PROCESSOR, false);
+        if(frameProcessor) {
+            sensor->setFrameProcessor(frameProcessor.get());
+        }
+
         if(isDeviceInSeries(G330DevPids, deviceInfo_->pid_)) {
             auto depthMdParserContainer = getComponentT<IFrameMetadataParserContainer>(OB_DEV_COMPONENT_DEPTH_FRAME_METADATA_CONTAINER);
             sensor->setFrameMetadataParserContainer(depthMdParserContainer.get());
@@ -204,6 +209,11 @@ void PlaybackDevice::initSensorList() {
     registerComponent(OB_DEV_COMPONENT_RIGHT_IR_SENSOR, [this]() {
         auto sensor = std::make_shared<VideoSensor>(this, OB_SENSOR_IR_RIGHT, port_);
         sensor->setStreamProfileList(port_->getStreamProfileList(OB_SENSOR_IR_RIGHT));
+
+        auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_RIGHT_IR_FRAME_PROCESSOR, false);
+        if(frameProcessor) {
+            sensor->setFrameProcessor(frameProcessor.get());
+        }
 
         if(isDeviceInSeries(G330DevPids, deviceInfo_->pid_)) {
             auto depthMdParserContainer = getComponentT<IFrameMetadataParserContainer>(OB_DEV_COMPONENT_DEPTH_FRAME_METADATA_CONTAINER);

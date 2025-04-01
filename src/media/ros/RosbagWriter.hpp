@@ -37,15 +37,15 @@ public:
     explicit RosWriter(const std::string &file, bool compressWhileRecord);
     virtual ~RosWriter() noexcept override = default;
 
-    virtual void writeFrame(const OBSensorType &sensorTpye, std::shared_ptr<const Frame> curFrame) override;
+    virtual void writeFrame(const OBSensorType &sensorType, std::shared_ptr<const Frame> curFrame) override;
     virtual void writeDeviceInfo(const std::shared_ptr<const DeviceInfo> &deviceInfo) override;
     virtual void writeProperty(uint32_t propertyID, const uint8_t *data, const uint32_t datasize) override;
 
     virtual void writeStreamProfiles(bool isHardwareD2CMode,const std::vector<OBD2CProfile> &d2cProfileList) override;
 
 private:
-    void writeVideoFrame(const OBSensorType &sensorTpye, std::shared_ptr<const Frame> curFrame);
-    void writeImuFrame(const OBSensorType &sensorTpye, std::shared_ptr<const Frame> curFrame);
+    void writeVideoFrame(const OBSensorType &sensorType, std::shared_ptr<const Frame> curFrame);
+    void writeImuFrame(const OBSensorType &sensorType, std::shared_ptr<const Frame> curFrame);
     void writeVideoStreamProfile(const OBSensorType sensorType, const std::shared_ptr<const StreamProfile> &streamProfile,bool isHardwareD2CMode,const std::vector<OBD2CProfile> &d2cProfileList);
     void writeAccelStreamProfile(const std::shared_ptr<const StreamProfile> &streamProfile);
     void writeGyroStreamProfile(const std::shared_ptr<const StreamProfile> &streamProfile);

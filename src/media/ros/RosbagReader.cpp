@@ -342,8 +342,8 @@ std::shared_ptr<Frame> RosReader::createImuFrame(const rosbag::MessageInstance &
     frame->setTimeStampUsec(imuPtr->timestamp_usec);
     frame->setSystemTimeStampUsec(imuPtr->timestamp_systemusec);
     frame->setGlobalTimeStampUsec(imuPtr->timestamp_globalusec);
-    if(streamProfileList_.count(utils::mapFrameTypeToStreamType(RosTopic::getFrameTpyeIdentifier(imuMsgTopic)))) {
-        frame->setStreamProfile(streamProfileList_[utils::mapFrameTypeToStreamType(RosTopic::getFrameTpyeIdentifier(imuMsgTopic))]);
+    if(streamProfileList_.count(utils::mapFrameTypeToStreamType(RosTopic::getFrameTypeIdentifier(imuMsgTopic)))) {
+        frame->setStreamProfile(streamProfileList_[utils::mapFrameTypeToStreamType(RosTopic::getFrameTypeIdentifier(imuMsgTopic))]);
     }
     return frame;
 }
@@ -352,7 +352,7 @@ std::shared_ptr<Frame> RosReader::createVideoFrame(const rosbag::MessageInstance
     auto                         videoMsgTopic = msg.getTopic();
     sensor_msgs::Image::ConstPtr imagePtr      = msg.instantiate<sensor_msgs::Image>();
     auto                         frame         = libobsensor::FrameFactory::createVideoFrameFromUserBuffer(
-        RosTopic::getFrameTpyeIdentifier(videoMsgTopic), convertStringToFormat(imagePtr->encoding), imagePtr->width, imagePtr->height,
+        RosTopic::getFrameTypeIdentifier(videoMsgTopic), convertStringToFormat(imagePtr->encoding), imagePtr->width, imagePtr->height,
         (uint8_t *)imagePtr->data.data() + imagePtr->metadatasize, imagePtr->data.size() - imagePtr->metadatasize);
 
     frame->updateMetadata(imagePtr->data.data(), imagePtr->metadatasize);
@@ -360,8 +360,10 @@ std::shared_ptr<Frame> RosReader::createVideoFrame(const rosbag::MessageInstance
     frame->setTimeStampUsec(imagePtr->timestamp_usec);
     frame->setSystemTimeStampUsec(imagePtr->timestamp_systemusec);
     frame->setGlobalTimeStampUsec(imagePtr->timestamp_globalusec);
-    if(streamProfileList_.count(utils::mapFrameTypeToStreamType(RosTopic::getFrameTpyeIdentifier(videoMsgTopic)))) {
-        frame->setStreamProfile(streamProfileList_[utils::mapFrameTypeToStreamType(RosTopic::getFrameTpyeIdentifier(videoMsgTopic))]);
+    auto format = frame->getFormat();
+    (void)format;
+    if(streamProfileList_.count(utils::mapFrameTypeToStreamType(RosTopic::getFrameTypeIdentifier(videoMsgTopic)))) {
+        frame->setStreamProfile(streamProfileList_[utils::mapFrameTypeToStreamType(RosTopic::getFrameTypeIdentifier(videoMsgTopic))]);
     }
     return frame;
 }

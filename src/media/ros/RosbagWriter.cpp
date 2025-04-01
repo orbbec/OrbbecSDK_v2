@@ -13,25 +13,25 @@ RosWriter::RosWriter(const std::string &file, bool compressWhileRecord) : filePa
     }
 }
 
-void RosWriter::writeFrame(const OBSensorType &sensorTpye, std::shared_ptr<const Frame> curFrame) {
-    if(sensorTpye == OB_SENSOR_GYRO || sensorTpye == OB_SENSOR_ACCEL) {
-        writeImuFrame(sensorTpye, curFrame);
+void RosWriter::writeFrame(const OBSensorType &sensorType, std::shared_ptr<const Frame> curFrame) {
+    if(sensorType == OB_SENSOR_GYRO || sensorType == OB_SENSOR_ACCEL) {
+        writeImuFrame(sensorType, curFrame);
     }
     else {
-        writeVideoFrame(sensorTpye, curFrame);
+        writeVideoFrame(sensorType, curFrame);
     }
 }
-void RosWriter::writeImuFrame(const OBSensorType &sensorTpye, std::shared_ptr<const Frame> curFrame) {
+void RosWriter::writeImuFrame(const OBSensorType &sensorType, std::shared_ptr<const Frame> curFrame) {
     std::lock_guard<std::mutex> lock(writeMutex_);
     if(startTime_ == 0) {
         startTime_ = curFrame->getTimeStampUsec();
     }
-    auto                                      imuTopic = RosTopic::imuDataTopic((uint8_t)sensorTpye, (uint8_t)curFrame->getType());
+    auto                                      imuTopic = RosTopic::imuDataTopic((uint8_t)sensorType, (uint8_t)curFrame->getType());
     std::chrono::duration<double, std::micro> timestampUs(curFrame->getTimeStampUsec());
     sensor_msgs::ImuPtr                       imuMsg(new sensor_msgs::Imu());
     imuMsg->header.stamp = orbbecRosbag::Time(std::chrono::duration<double>(timestampUs).count());
-    streamProfileMap_.insert({ sensorTpye, curFrame->getStreamProfile() });
-    if(sensorTpye == OB_SENSOR_ACCEL) {
+    streamProfileMap_.insert({ sensorType, curFrame->getStreamProfile() });
+    if(sensorType == OB_SENSOR_ACCEL) {
         auto accelFrame               = curFrame->as<AccelFrame>();
         imuMsg->linear_acceleration.x = static_cast<double>(accelFrame->value().x);
         imuMsg->linear_acceleration.y = static_cast<double>(accelFrame->value().y);
@@ -62,14 +62,14 @@ void RosWriter::writeImuFrame(const OBSensorType &sensorTpye, std::shared_ptr<co
     }
 }
 
-void RosWriter::writeVideoFrame(const OBSensorType &sensorTpye, std::shared_ptr<const Frame> curFrame) {
+void RosWriter::writeVideoFrame(const OBSensorType &sensorType, std::shared_ptr<const Frame> curFrame) {
     std::lock_guard<std::mutex> lock(writeMutex_);
     if(startTime_ == 0) {
         startTime_ = curFrame->getTimeStampUsec();
     }
     std::chrono::duration<double, std::micro> timestampUs(curFrame->getTimeStampUsec());
-    auto                                      imageTopic = RosTopic::frameDataTopic((uint8_t)sensorTpye, (uint8_t)curFrame->getType());
-    streamProfileMap_.insert({ sensorTpye, curFrame->getStreamProfile() });
+    auto                                      imageTopic = RosTopic::frameDataTopic((uint8_t)sensorType, (uint8_t)curFrame->getType());
+    streamProfileMap_.insert({ sensorType, curFrame->getStreamProfile() });
     try {
         sensor_msgs::ImagePtr imageMsg(new sensor_msgs::Image());
         imageMsg->header.stamp = orbbecRosbag::Time(std::chrono::duration<double>(timestampUs).count());
@@ -80,7 +80,8 @@ void RosWriter::writeVideoFrame(const OBSensorType &sensorTpye, std::shared_ptr<
         imageMsg->timestamp_usec       = curFrame->getTimeStampUsec();
         imageMsg->timestamp_systemusec = curFrame->getSystemTimeStampUsec();
         imageMsg->timestamp_globalusec = curFrame->getGlobalTimeStampUsec();
-        imageMsg->step = curFrame->getFormat() == OB_FORMAT_RGB ? (curFrame->as<VideoFrame>()->getWidth() * 3) : (curFrame->as<VideoFrame>()->getWidth() * 2);
+        //imageMsg->step = curFrame->getFormat() == OB_FORMAT_RGB ? (curFrame->as<VideoFrame>()->getWidth() * 3) : (curFrame->as<VideoFrame>()->getWidth() * 2);
+        imageMsg->step         = curFrame->as<VideoFrame>()->getStride();
         imageMsg->metadatasize = static_cast<uint32_t>(curFrame->getMetadataSize());
         imageMsg->data.clear();
         imageMsg->encoding = convertFormatToString(curFrame->getFormat());

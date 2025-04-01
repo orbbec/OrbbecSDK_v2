@@ -43,8 +43,8 @@ private:
 
 class FrameQuery : public RegexTopicQuery {
 public:
-    FrameQuery() : RegexTopicQuery(R"RRR(/cam/sensor_\d+/frameTpye_\d+)RRR") {}
-    FrameQuery(const OBSensorType &sensorTpye) : RegexTopicQuery("/cam/sensor_" + std::to_string((uint8_t)sensorTpye) + "/frameTpye_\\d+") {}
+    FrameQuery() : RegexTopicQuery(R"RRR(/cam/sensor_\d+/frameType_\d+)RRR") {}
+    FrameQuery(const OBSensorType &sensorType) : RegexTopicQuery("/cam/sensor_" + std::to_string((uint8_t)sensorType) + "/frameType_\\d+") {}
 };
 
 class DeviceInfoQuery : public RegexTopicQuery {
@@ -96,14 +96,14 @@ public:
     static std::string streamProfilePrefix(uint8_t streamType) {
         return "streamProfileType_" + std::to_string(streamType);
     }
-    static std::string frameTpyePrefix(uint8_t frameTpye) {
-        return "frameTpye_" + std::to_string(frameTpye);
+    static std::string frameTypePrefix(uint8_t frameType) {
+        return "frameType_" + std::to_string(frameType);
     }
-    static std::string sensorPrefix(uint8_t sensorTpye) {
-        return "sensor_" + std::to_string(sensorTpye);
+    static std::string sensorPrefix(uint8_t sensorType) {
+        return "sensor_" + std::to_string(sensorType);
     }
-    static OBFrameType getFrameTpyeIdentifier(std::string &topic) {
-        std::regex  pattern(R"(/frameTpye_(\d+))");
+    static OBFrameType getFrameTypeIdentifier(std::string &topic) {
+        std::regex  pattern(R"(/frameType_(\d+))");
         std::smatch match;
 
         std::regex_search(topic, match, pattern);
@@ -118,11 +118,11 @@ public:
         int FrameType = std::stoi(match[1].str());
         return static_cast<OBStreamType>(FrameType);
     }
-    static std::string frameDataTopic(const uint8_t &sensorName, const uint8_t &frameTpye) {
-        return create_from({ cameraPrefix(), sensorPrefix(sensorName), frameTpyePrefix(frameTpye) });
+    static std::string frameDataTopic(const uint8_t &sensorName, const uint8_t &frameType) {
+        return create_from({ cameraPrefix(), sensorPrefix(sensorName), frameTypePrefix(frameType) });
     }
-    static std::string imuDataTopic(const uint8_t &sensorName, const uint8_t &frameTpye) {
-        return create_from({ cameraPrefix(), sensorPrefix(sensorName), frameTpyePrefix(frameTpye) });
+    static std::string imuDataTopic(const uint8_t &sensorName, const uint8_t &frameType) {
+        return create_from({ cameraPrefix(), sensorPrefix(sensorName), frameTypePrefix(frameType) });
     }
     static std::string propertyTopic() {
         return create_from({ cameraPrefix(), propertyPrefix() });

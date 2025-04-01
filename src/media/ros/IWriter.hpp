@@ -19,7 +19,7 @@ class IWriter {
 public:
     virtual ~IWriter() = default;
 
-    virtual void writeFrame(const OBSensorType &sensorTpye, std::shared_ptr<const Frame> curFrame) = 0;
+    virtual void writeFrame(const OBSensorType &sensorType, std::shared_ptr<const Frame> curFrame) = 0;
     virtual void writeDeviceInfo(const std::shared_ptr<const DeviceInfo> &deviceInfo)              = 0;
     virtual void writeProperty(uint32_t propertyID, const uint8_t *data, const uint32_t datasize)  = 0;
     virtual void writeStreamProfiles(bool isHardwareD2CMode,const std::vector<OBD2CProfile> &d2cProfileList) = 0;
