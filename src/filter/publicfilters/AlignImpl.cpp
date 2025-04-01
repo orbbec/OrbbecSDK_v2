@@ -1463,12 +1463,15 @@ int AlignImpl::D2C(const uint16_t *depth_buffer, int depth_width, int depth_heig
     }
 
     if(use_scale_) {
-        uint16_t *out_depth_dst = (uint16_t *)malloc(pixnum * sizeof(uint16_t));
-        memcpy(out_depth_dst, out_depth, pixnum * sizeof(uint16_t));
-        int pixnumutemp = rgb_temp_width * rgb_temp_height;
-        memset(out_depth, 0xff, pixnumutemp * sizeof(uint16_t));
-        D2CPostProcess(out_depth_dst, rgb_intric_.width, rgb_intric_.height, scale, out_depth, rgb_temp_width, rgb_temp_height);
-        free(out_depth_dst);
+        if(out_depth) {
+            uint16_t *out_depth_dst = (uint16_t *)malloc(pixnum * sizeof(uint16_t));
+            memcpy(out_depth_dst, out_depth, pixnum * sizeof(uint16_t));
+            int pixnumutemp = rgb_temp_width * rgb_temp_height;
+            memset(out_depth, 0xff, pixnumutemp * sizeof(uint16_t));
+            D2CPostProcess(out_depth_dst, rgb_intric_.width, rgb_intric_.height, scale, out_depth, rgb_temp_width, rgb_temp_height);
+            free(out_depth_dst);
+        }
+
         rgb_intric_.fx     = rgb_temp_fx;
         rgb_intric_.fy     = rgb_temp_fy;
         rgb_intric_.cx     = rgb_temp_cx;
@@ -1501,7 +1504,7 @@ int AlignImpl::C2D(const uint16_t *depth_buffer, int depth_width, int depth_heig
 
     // rgb x-y coordinates for each depth pixel
     unsigned long long size     = static_cast<unsigned long long>(depth_width) * depth_height * 2;
-    int *              depth_xy = new int[size];
+    int               *depth_xy = new int[size];
     memset(depth_xy, -1, size * sizeof(int));
 
     int ret = -1;
