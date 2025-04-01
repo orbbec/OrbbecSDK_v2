@@ -1,10 +1,6 @@
 // Copyright (c) Orbbec Inc. All Rights Reserved.
 // Licensed under the MIT License.
 
-/*
-Notes: ob_multi_devices_sync_gmsl.cpp for GMSL device
-on the nvidia arm64 xavier/orin platform ,this example demo sync multi gmsl devices.
-*/
 #include <libobsensor/ObSensor.hpp>
 
 #include "utils.hpp"
@@ -23,27 +19,11 @@ on the nvidia arm64 xavier/orin platform ,this example demo sync multi gmsl devi
 #include <iostream>
 #include <chrono>
 
-#ifdef __linux__
-#include <unistd.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <sstream>
-#include <cstdlib>
-#include <strings.h>
-#endif
-
 #define MAX_DEVICE_COUNT 9
-#define CONFIG_FILE "./ob_multi_devices_sync_gmsl_config.json"
-#define DEVICE_PATH "/dev/camsync"
+#define CONFIG_FILE "./MultiDeviceSyncConfig.json"
 #define KEY_ESC 27
 
 static bool quitStreamPreview = false;
-
-const std::string GMSL2_DEVICE_TAG = "GMSL2";
-
-const std::map<std::string, uint16_t> gemini_330_list = { { "gemini335", 0x0800 },  { "gemini335L", 0x0804 },  { "gemini336", 0x0803 },
-                                                          { "gemini336L", 0x0807 }, { "gemini335Lg", 0x080B }, { "CAM-5330", 0x0816 },
-                                                          { "CAM-5530", 0x0817 } };
 
 typedef struct DeviceConfigInfo_t {
     std::string             deviceSN;
@@ -56,6 +36,7 @@ typedef struct PipelineHolder_t {
     int                           deviceIndex;
     std::string                   deviceSN;
 } PipelineHolder;
+
 std::ostream &operator<<(std::ostream &os, const PipelineHolder &holder);
 std::ostream &operator<<(std::ostream &os, std::shared_ptr<PipelineHolder> holder) {
     return os << *holder;
@@ -81,8 +62,8 @@ int  testMultiDeviceSync();
 void startStream(std::shared_ptr<PipelineHolder> pipelineHolder);
 void stopStream(std::shared_ptr<PipelineHolder> pipelineHolder);
 
-void handleColorStream(int devIndex, std::shared_ptr<ob::Frame> frame);
-void handleDepthStream(int devIndex, std::shared_ptr<ob::Frame> frame);
+void handleColorStream(uint8_t devIndex, std::shared_ptr<ob::Frame> frame);
+void handleDepthStream(uint8_t devIndex, std::shared_ptr<ob::Frame> frame);
 
 std::string           OBSyncModeToString(const OBMultiDeviceSyncMode syncMode);
 OBMultiDeviceSyncMode stringToOBSyncMode(const std::string &modeString);
@@ -97,75 +78,6 @@ std::shared_ptr<PipelineHolder> createPipelineHolder(std::shared_ptr<ob::Device>
 
 ob::Context context;
 
-bool IsGemini330Series(uint16_t pid) {
-    bool find = false;
-    for(auto it = gemini_330_list.begin(); it != gemini_330_list.end(); ++it) {
-        if(it->second == pid) {
-            // std::cout << "find gemini 330 series : " << it->first << std::endl;
-            find = true;
-            break;
-        }
-    }
-    return find;
-}
-
-int triggerFd          = -1;
-int hardwareTriggerFps = 0;  // 0 means hardware trigger is disabled
-typedef struct {
-    uint8_t  mode;
-    uint16_t fps;
-} cs_param_t;
-
-// cs_param_t rd_par = {0, 0}, param = {1, 3000}; //30
-int openSocSyncPwmTrigger(uint16_t fps) {
-    const char *devicePath           = DEVICE_PATH;
-    const int   TRIGGER_MODE_ENABLE  = 1;
-    const int   TRIGGER_MODE_DISABLE = 0;
-
-    int        ret    = -1;
-    cs_param_t param  = { TRIGGER_MODE_ENABLE, fps };
-    cs_param_t rd_par = { TRIGGER_MODE_DISABLE, 0 };
-
-    if(access(devicePath, F_OK) != 0) {
-        std::cerr << "Device node " << devicePath << " does not exist." << std::endl;
-        return ret;
-    }
-    triggerFd = open(DEVICE_PATH, O_RDWR);
-    if(triggerFd < 0) {
-        perror("open device failed\n");
-        return triggerFd;
-    }
-
-    std::cout << "Written param mode=" << param.mode << ", fps=" << param.fps << std::endl;
-    ret = write(triggerFd, &param, sizeof(param));
-    if(ret < 0) {
-        perror("write device failed\n");
-        close(triggerFd);
-        return ret;
-    }
-
-    ret = read(triggerFd, &rd_par, sizeof(rd_par));
-    if(ret < 0) {
-        perror("read device failed\n");
-        close(triggerFd);
-        return ret;
-    }
-    std::cout << "Read param mode=" << rd_par.mode << ", fps=" << rd_par.fps << std::endl;
-
-    std::cout << "Start hardware triggering..." << std::endl;
-
-    return 0;
-}
-int closeSocSyncPwmTrigger() {
-    if(triggerFd >= 0) {
-        close(triggerFd);
-        triggerFd = -1;  // Reset file descriptors
-        std::cout << "close camSync success" << std::endl;
-        return 0;
-    }
-    return -1;
-}
-
 int main(void) try {
     int                       choice;
     int                       exitValue      = 0;
@@ -176,15 +88,13 @@ int main(void) try {
         std::cout << "Please select options: \n";
         std::cout << " 0 --> config devices sync mode. \n";
         std::cout << " 1 --> start stream \n";
-        std::cout << " 2 --> start hardwareTrigger (Dependent on soc trigger source) \n";
-        std::cout << " 3 --> close hardwareTrigger & Exit program \n";
         std::cout << "--------------------------------------------------\n";
         std::cout << "Please select input: ";
         // std::cin >> choice;
         if(!(std::cin >> choice)) {
             std::cin.clear();
             std::cin.ignore(maxInputIgnore, '\n');
-            std::cout << "Invalid input. Please enter a number [0~3]." << std::endl;
+            std::cout << "Invalid input. Please enter a number [0~1]" << std::endl;
             continue;
         }
         std::cout << std::endl;
@@ -194,36 +104,18 @@ int main(void) try {
             exitValue = configMultiDeviceSync();
             if(exitValue == 0) {
                 std::cout << "Config MultiDeviceSync Success. \n" << std::endl;
+
+                exitValue = testMultiDeviceSync();
             }
             break;
         case 1:
-            std::cout << "\nStart Slave Devices video stream." << std::endl;
-            testMultiDeviceSync();
+            std::cout << "\nStart Devices video stream." << std::endl;
+            exitValue = testMultiDeviceSync();
             break;
-        case 2:
-            if(!loadConfigFile()) {
-                std::cout << "load config failed" << std::endl;
-                return -1;
-            }
-            if(hardwareTriggerFps > 0) {
-                std::cout << "\nStart HardwareTrigger by soc-trigger-source. triggerFps:" << hardwareTriggerFps << std::endl;
-                openSocSyncPwmTrigger(hardwareTriggerFps);
-            }
-            else {
-                std::cout << "Please repeat set hardwareTriggerFps (0 to disable): ";
-                std::cin >> hardwareTriggerFps;
-                std::cout << "You has set hardwareTriggerFps: " << hardwareTriggerFps << std::endl;
-            }
-            break;
-        case 3:
-            closeSocSyncPwmTrigger();
-            std::cout << "Program exit & close device! " << std::endl;
-            exit(0);
-            return 0;
+        }
 
-        default:
-            std::cout << "-input Invalid index. \n"
-                      << "-Please re-select and input valid param. \n";
+        if(exitValue == 0) {
+            break;
         }
     }
     return exitValue;
@@ -252,18 +144,6 @@ int configMultiDeviceSync() {
         int  devCount = devList->deviceCount();
         for(int i = 0; i < devCount; i++) {
             std::shared_ptr<ob::Device> device = devList->getDevice(i);
-            auto                        pid    = device->getDeviceInfo()->getPid();
-            if(!IsGemini330Series(pid)) {
-                std::cout << "Device pid: " << pid << " is not Gemini 330 series, skip" << std::endl;
-                continue;
-            }
-            auto ConnectionType = device->getDeviceInfo()->getConnectionType();
-            std::cout << "Device ConnectionType: " << ConnectionType << std::endl;
-            if(ConnectionType != GMSL2_DEVICE_TAG) {
-                std::cout << "Device ConnectionType: " << ConnectionType << " is not GMSL2 devices, skip" << std::endl;
-                continue;
-            }
-
             configDevList.push_back(devList->getDevice(i));
         }
 
@@ -331,7 +211,7 @@ void handleKeyPress(ob_smpl::CVWindow &win, int key) {
     }
     else if(key == 'S' || key == 's') {
         std::cout << "syncDevicesTime..." << std::endl;
-        context.enableDeviceClockSync(3600000);  // Manual update synchronization
+        context.enableDeviceClockSync(60000);  // Manual update synchronization
     }
     else if(key == 'T' || key == 't') {
         // software trigger
@@ -341,6 +221,9 @@ void handleKeyPress(ob_smpl::CVWindow &win, int key) {
             if(multiDeviceSyncConfig.syncMode == OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_TRIGGERING) {
                 std::cout << "software trigger..." << std::endl;
                 dev->triggerCapture();
+            }
+            else {
+                std::cout << "Current sync mode is not software trigger mode." << std::endl;
             }
         }
     }
@@ -385,7 +268,7 @@ int testMultiDeviceSync() {
         }
         else {
             std::cout << "Primary device start..." << std::endl;
-            startDeviceStreams(primary_devices, secondary_devices.size());
+            startDeviceStreams(primary_devices, static_cast<int>(secondary_devices.size()));
         }
 
         // Start the multi-device time synchronization function
@@ -395,7 +278,7 @@ int testMultiDeviceSync() {
         ob_smpl::CVWindow win("MultiDeviceSyncViewer", 1600, 900, ob_smpl::ARRANGE_GRID);
 
         // set key prompt
-        win.setKeyPrompt("'S': syncDevicesTime, 'T': software triiger");
+        win.setKeyPrompt("'S': syncDevicesTime, 'T': software trigger");
         // set the callback function for the window to handle key press events
         win.setKeyPressedCallback([&](int key) { handleKeyPress(win, key); });
 
@@ -408,7 +291,7 @@ int testMultiDeviceSync() {
             std::vector<std::pair<std::shared_ptr<ob::Frame>, std::shared_ptr<ob::Frame>>> framePairs;
             {
                 std::lock_guard<std::mutex> lock(frameMutex);
-                for(int i = 0; i < std::min(MAX_DEVICE_COUNT, (int)depthFrames.size()); i++) {
+                for(uint8_t i = 0; i < static_cast<uint8_t>(std::min(MAX_DEVICE_COUNT, (int)depthFrames.size())); i++) {
                     if(depthFrames[i] != nullptr && colorFrames[i] != nullptr) {
                         framePairs.emplace_back(depthFrames[i], colorFrames[i]);
                     }
@@ -467,10 +350,10 @@ void processFrame(std::shared_ptr<ob::FrameSet> frameSet, OBFrameType frameType,
     auto frame = frameSet->getFrame(frameType);
     if(frame) {
         if(frameType == OB_FRAME_COLOR) {
-            handleColorStream(deviceIndex, frame);
+            handleColorStream(static_cast<uint8_t>(deviceIndex), frame);
         }
         else if(frameType == OB_FRAME_DEPTH) {
-            handleDepthStream(deviceIndex, frame);
+            handleDepthStream(static_cast<uint8_t>(deviceIndex), frame);
         }
     }
 }
@@ -511,9 +394,9 @@ void stopStream(std::shared_ptr<PipelineHolder> holder) {
     }
 }
 
-void handleStream(int devIndex, std::shared_ptr<ob::Frame> frame, const char *frameType) {
+void handleStream(uint8_t devIndex, std::shared_ptr<ob::Frame> frame, const char *frameType) {
     std::lock_guard<std::mutex> lock(frameMutex);
-    std::cout << "Device#" << devIndex << ", " << frameType << " frame "
+    std::cout << "Device#" << static_cast<int>(devIndex) << ", " << frameType << " frame "
               << ", frame timestamp=" << frame->timeStamp() << ", system timestamp=" << frame->systemTimeStamp() << std::endl;
 
     if(strcmp(frameType, "color") == 0) {
@@ -524,13 +407,14 @@ void handleStream(int devIndex, std::shared_ptr<ob::Frame> frame, const char *fr
     }
 }
 
-void handleColorStream(int devIndex, std::shared_ptr<ob::Frame> frame) {
+void handleColorStream(uint8_t devIndex, std::shared_ptr<ob::Frame> frame) {
     handleStream(devIndex, frame, "color");
 }
 
-void handleDepthStream(int devIndex, std::shared_ptr<ob::Frame> frame) {
+void handleDepthStream(uint8_t devIndex, std::shared_ptr<ob::Frame> frame) {
     handleStream(devIndex, frame, "depth");
 }
+
 std::string readFileContent(const char *filePath) {
     std::ostringstream oss;
     std::ifstream      file(filePath, std::fstream::in);
@@ -607,12 +491,6 @@ bool loadConfigFile() {
                 devConfigInfo->syncConfig.framesPerTrigger = bElem->valueint;
             }
         }
-        cJSON *hardwareTriggerFpsElem = nullptr;
-        hardwareTriggerFpsElem        = cJSON_GetObjectItemCaseSensitive(rootElem, "hardwareTriggerFps");
-        if(cJSON_IsNumber(hardwareTriggerFpsElem)) {
-            hardwareTriggerFps = hardwareTriggerFpsElem->valueint;
-            std::cout << "From json get HardwareTriggerFps=" << hardwareTriggerFps << std::endl;
-        }
 
         if(OB_MULTI_DEVICE_SYNC_MODE_FREE_RUN != devConfigInfo->syncConfig.syncMode) {
             deviceConfigList.push_back(devConfigInfo);
@@ -667,7 +545,11 @@ std::string OBSyncModeToString(const OBMultiDeviceSyncMode syncMode) {
 }
 
 int strcmp_nocase(const char *str0, const char *str1) {
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
+    return _strcmpi(str0, str1);
+#else
     return strcasecmp(str0, str1);
+#endif
 }
 
 OBFrameType mapFrameType(OBSensorType sensorType) {

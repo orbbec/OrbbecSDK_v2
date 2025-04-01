@@ -3,29 +3,28 @@
     "configTime": "2023/01/01",
     "devices": [
         {
-            "sn": "CP4H74D0003D",
+            "sn": "CP2194200060",
             "syncConfig": {
-                "syncMode": "OB_MULTI_DEVICE_SYNC_MODE_SECONDARY",
+                "syncMode": "OB_MULTI_DEVICE_SYNC_MODE_PRIMARY",
                 "depthDelayUs": 0,
                 "colorDelayUs": 0,
                 "trigger2ImageDelayUs": 0,
-                "triggerOutEnable": false,
+                "triggerOutEnable": true,
                 "triggerOutDelayUs": 0,
-                "framesPerTrigger": 30
+                "framesPerTrigger": 1
             }
         },
         {
-            "sn": "GMSL00000005",
+            "sn": "CP0Y8420004K",
             "syncConfig": {
                 "syncMode": "OB_MULTI_DEVICE_SYNC_MODE_SECONDARY",
                 "depthDelayUs": 0,
                 "colorDelayUs": 0,
                 "trigger2ImageDelayUs": 0,
-                "triggerOutEnable": false,
+                "triggerOutEnable": true,
                 "triggerOutDelayUs": 0,
-                "framesPerTrigger": 30
+                "framesPerTrigger": 1
             }
         }
-    ],
-    "hardwareTriggerFps": 3000
+    ]
 }
