@@ -34,6 +34,7 @@ public:
     void deactivate() override;
 
     std::shared_ptr<const DeviceInfo> getInfo() const override;
+    bool                              isDeactivated() const override;
     const std::string                &getExtensionInfo(const std::string &infoKey) const override;
     bool                              isExtensionInfoExists(const std::string &infoKey) const override;
 

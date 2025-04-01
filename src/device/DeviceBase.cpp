@@ -79,6 +79,10 @@ std::shared_ptr<const DeviceInfo> DeviceBase::getInfo() const {
     return deviceInfo_;
 }
 
+bool DeviceBase::isDeactivated() const {
+    return isDeactivated_.load();
+}
+
 void DeviceBase::fetchExtensionInfo() {
     auto propServer = getPropertyServer();
     if(propServer->isPropertySupported(OB_RAW_DATA_DEVICE_EXTENSION_INFORMATION, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
