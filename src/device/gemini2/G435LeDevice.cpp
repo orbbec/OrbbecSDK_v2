@@ -538,6 +538,7 @@ void G435LeDevice::initProperties() {
     propertyServer->registerProperty(OB_PROP_COLOR_BRIGHTNESS_INT, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_COLOR_SHARPNESS_INT, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_COLOR_CONTRAST_INT, "rw", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_COLOR_HUE_INT, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_COLOR_POWER_LINE_FREQUENCY_INT, "rw", "rw", vendorPropertyAccessor);
 
     propertyServer->registerProperty(OB_PROP_IR_GAIN_INT, "rw", "rw", vendorPropertyAccessor);
