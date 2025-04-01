@@ -80,7 +80,6 @@ void RosWriter::writeVideoFrame(const OBSensorType &sensorType, std::shared_ptr<
         imageMsg->timestamp_usec       = curFrame->getTimeStampUsec();
         imageMsg->timestamp_systemusec = curFrame->getSystemTimeStampUsec();
         imageMsg->timestamp_globalusec = curFrame->getGlobalTimeStampUsec();
-        //imageMsg->step = curFrame->getFormat() == OB_FORMAT_RGB ? (curFrame->as<VideoFrame>()->getWidth() * 3) : (curFrame->as<VideoFrame>()->getWidth() * 2);
         imageMsg->step         = curFrame->as<VideoFrame>()->getStride();
         imageMsg->metadatasize = static_cast<uint32_t>(curFrame->getMetadataSize());
         imageMsg->data.clear();
