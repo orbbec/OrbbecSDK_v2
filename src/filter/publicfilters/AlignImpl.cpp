@@ -267,22 +267,16 @@ void AlignImpl::prepareDepthResolution() {
 
 void AlignImpl::clearMatrixCache() {
     for(auto item: rot_coeff_ht_x) {
-        if(item.second) {
-            delete[] item.second[0];
-            delete[] item.second[1];
-        }
+        delete[] item.second[0];
+        delete[] item.second[1];
     }
     for(auto item: rot_coeff_ht_y) {
-        if(item.second) {
-            delete[] item.second[0];
-            delete[] item.second[1];
-        }
+        delete[] item.second[0];
+        delete[] item.second[1];
     }
     for(auto item: rot_coeff_ht_z) {
-        if(item.second) {
-            delete[] item.second[0];
-            delete[] item.second[1];
-        }
+        delete[] item.second[0];
+        delete[] item.second[1];
     }
 
     rot_coeff_ht_x.clear();
