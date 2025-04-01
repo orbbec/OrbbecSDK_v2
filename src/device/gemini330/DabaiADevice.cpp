@@ -89,7 +89,7 @@ void DabaiADevice::init() {
     registerComponent(OB_DEV_COMPONENT_ALG_PARAM_MANAGER, algParamManager);
 
     static const std::vector<OBMultiDeviceSyncMode> supportedSyncModes     = { OB_MULTI_DEVICE_SYNC_MODE_FREE_RUN, OB_MULTI_DEVICE_SYNC_MODE_STANDALONE,
-                                                                               OB_MULTI_DEVICE_SYNC_MODE_PRIMARY, OB_MULTI_DEVICE_SYNC_MODE_SECONDARY_SYNCED,
+                                                                               OB_MULTI_DEVICE_SYNC_MODE_PRIMARY, OB_MULTI_DEVICE_SYNC_MODE_SECONDARY,
                                                                                OB_MULTI_DEVICE_SYNC_MODE_IR_IMU_SYNC };
     auto                                            deviceSyncConfigurator = std::make_shared<DeviceSyncConfigurator>(this, supportedSyncModes);
     registerComponent(OB_DEV_COMPONENT_DEVICE_SYNC_CONFIGURATOR, deviceSyncConfigurator);
