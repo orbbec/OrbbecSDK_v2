@@ -119,7 +119,7 @@ std::vector<std::shared_ptr<IFilter>> G435LeDeviceBase::createRecommendedPostPro
         if(filterFactory->isFilterCreatorExists("SpatialAdvancedFilter")) {
             auto spatFilter = filterFactory->createFilter("SpatialAdvancedFilter");
             // magnitude, alpha, disp_diff, radius
-            std::vector<std::string> params = { "1", "0.5", "160", "1" };
+            std::vector<std::string> params = { "1", "0.5", "64", "1" };
             spatFilter->updateConfig(params);
             depthFilterList.push_back(spatFilter);
         }
