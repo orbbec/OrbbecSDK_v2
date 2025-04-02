@@ -6,6 +6,7 @@
 #include "IDevice.hpp"
 #include "frame/FrameQueue.hpp"
 #include "ros/RosbagWriter.hpp"
+#include "component/property/PropertyHelper.hpp"
 
 #include <queue>
 #include <mutex>
@@ -29,14 +30,39 @@ private:
     template<typename T>
     void writePropertyT(uint32_t id) {
         auto server = device_->getPropertyServer();
+        if (!server->isPropertySupported(id, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
+            LOG_DEBUG("Property {} is not supported by device, skipping recording value", id);
+            return;
+        }
+
         try {
             T value = server->getPropertyValueT<T>(id);
             std::vector<uint8_t> data(sizeof(T));
             data.assign(reinterpret_cast<uint8_t *>(&value), reinterpret_cast<uint8_t *>(&value) + sizeof(T));
             writer_->writeProperty(id, data.data(), static_cast<uint32_t>(data.size()));
+            writeProperyRangeT<T>(id);
         }
         catch (const std::exception& e) {
             LOG_WARN("Failed to record property: {}, message: {}", id, e.what());
+        }
+    }
+
+    template<typename T>
+    void writeProperyRangeT(uint32_t id) {
+        auto server = device_->getPropertyServer();
+        if (!server->isPropertySupported(id, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
+            LOG_DEBUG("Property {} is not supported by device, skipping recording range", id);
+            return;
+        }
+
+        try {
+            auto range = server->getPropertyRangeT<T>(id);
+            std::vector<uint8_t> data(sizeof(range));
+            data.assign(reinterpret_cast<uint8_t *>(&range), reinterpret_cast<uint8_t *>(&range) + sizeof(range));
+            writer_->writeProperty(id + rangeOffset_, data.data(), static_cast<uint32_t>(data.size()));
+        }
+        catch (const std::exception& e) {
+            LOG_WARN("Failed to record property range: {}, message: {}", id, e.what());
         }
     }
 
@@ -58,6 +84,8 @@ private:
 
     std::unordered_map<OBSensorType, std::shared_ptr<FrameQueue<const Frame>>> frameQueueMap_;
     std::unordered_map<OBSensorType, std::unique_ptr<std::once_flag>>          sensorOnceFlags_;
+
+    const uint32_t rangeOffset_ = UINT16_MAX; // used to record property range
 };
 }  // namespace libobsensor
 

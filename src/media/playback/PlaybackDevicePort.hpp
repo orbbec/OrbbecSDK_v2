@@ -67,6 +67,7 @@ public:
     }
 
     void getRecordedPropertyValue(uint32_t propertyId, OBPropertyValue *value);
+    void getRecordedPropertyRange(uint32_t propertyId, OBPropertyRange *range);
     std::vector<uint8_t> getRecordedStructData(uint32_t propertyId);
 
 private:
@@ -104,5 +105,6 @@ private:
 
     const uint32_t maxFrameQueueSize_ = 10;
     const uint32_t playbackTimeFreq_  = 1000000;  // for converting ns to ms
+    const uint32_t rangeOffset_       = UINT16_MAX;
 };
 }  // namespace libobsensor

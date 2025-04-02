@@ -8,11 +8,13 @@
 
 #include <mutex>
 #include <thread>
+#include <atomic>
 
 bool getRosbagPath(std::string &rosbagPath);
 
 int main(void) try {
-    std::string filePath;
+    std::atomic<bool> exited(false);
+    std::string       filePath;
     // Get valid .bag file path from user input
     getRosbagPath(filePath);
 
@@ -20,10 +22,19 @@ int main(void) try {
     std::shared_ptr<ob::PlaybackDevice> playback = std::make_shared<ob::PlaybackDevice>(filePath);
     // Create a pipeline with the playback device
     std::shared_ptr<ob::Pipeline> pipe = std::make_shared<ob::Pipeline>(playback);
-
     // Enable all recording streams from the playback device
-    std::shared_ptr<ob::Config> config     = std::make_shared<ob::Config>();
-    auto                        sensorList = playback->getSensorList();
+    std::shared_ptr<ob::Config> config = std::make_shared<ob::Config>();
+
+    // Set playback status change callback, when the playback stops, start the pipeline again with the same config
+    playback->setPlaybackStatusChangeCallback([&](OBPlaybackStatus status) {
+        if(status == OB_PLAYBACK_STOPPED && !exited) {
+            pipe->stop();
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            pipe->start(config);
+        }
+    });
+
+    auto sensorList = playback->getSensorList();
     for(uint32_t i = 0; i < sensorList->getCount(); i++) {
         auto sensorType = sensorList->getSensorType(i);
 
@@ -35,17 +46,13 @@ int main(void) try {
 
     ob_smpl::CVWindow win("Playback", 1280, 720, ob_smpl::ARRANGE_GRID);
     while(win.run()) {
-        auto frameSet = pipe->waitForFrames();
-        win.pushFramesToView(frameSet);
-
-        // Handle playback loop when reaching end
-        if(playback->getPosition() == playback->getDuration()) {
-            // Restart the pipeline if the playback has reached the end of the file
-            pipe->stop();
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));
-            pipe->start(config);
+        auto frameSet = pipe->waitForFrames(1000);
+        if(frameSet == nullptr) {
+            continue;
         }
+        win.pushFramesToView(frameSet);
     }
+    exited = true;
 
     pipe->stop();
     return 0;
@@ -69,6 +76,10 @@ bool getRosbagPath(std::string &rosbagPath) {
 
         // Remove leading and trailing quotes
         if(!input.empty() && input.front() == '\'' && input.back() == '\'') {
+            input = input.substr(1, input.size() - 2);
+        }
+
+        if(!input.empty() && input.front() == '\"' && input.back() == '\"') {
             input = input.substr(1, input.size() - 2);
         }
 

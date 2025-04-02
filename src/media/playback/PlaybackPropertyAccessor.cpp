@@ -71,10 +71,8 @@ void PlaybackVendorPropertyAccessor::getPropertyValue(uint32_t propertyId, OBPro
 }
 
 void PlaybackVendorPropertyAccessor::getPropertyRange(uint32_t propertyId, OBPropertyRange *range) {
-    // todo: implement this
-    (void)propertyId;
-    (void)range;
-    memset(range, 0, sizeof(OBPropertyRange));
+    auto playPort_ = std::dynamic_pointer_cast<PlaybackDevicePort>(port_);
+    playPort_->getRecordedPropertyRange(propertyId, range);
 }
 
 void PlaybackVendorPropertyAccessor::setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) {

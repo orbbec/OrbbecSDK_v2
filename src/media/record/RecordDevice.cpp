@@ -10,7 +10,7 @@
 namespace libobsensor {
 
 RecordDevice::RecordDevice(std::shared_ptr<IDevice> device, const std::string &filePath, bool compressionsEnabled)
-    : device_(device), filePath_(filePath), isCompressionsEnabled_(compressionsEnabled), maxFrameQueueSize_(100), isPaused_(false) {
+    : device_(device), filePath_(filePath), isCompressionsEnabled_(compressionsEnabled), maxFrameQueueSize_(UINT16_MAX), isPaused_(false) {
 
     writer_ = std::make_shared<RosWriter>(filePath_, isCompressionsEnabled_);
     writeAllProperties();
@@ -35,7 +35,7 @@ RecordDevice::~RecordDevice() {
         }
     }
 
-    //stop recorder and write device&frame info
+    // stop recorder and write device&frame info
     stopRecord();
     LOG_DEBUG("RecordDevice Destructor");
 }
@@ -118,15 +118,48 @@ void RecordDevice::writeAllProperties() {
         writePropertyT<int>(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_SPECKLE_SIZE_INT);
         writePropertyT<int>(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT);
     }
+
+    // depth property
+    writePropertyT<bool>(OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL);
+    writePropertyT<int>(OB_PROP_DEPTH_EXPOSURE_INT);
+    writePropertyT<int>(OB_PROP_DEPTH_GAIN_INT);
+
+    // color property
+    writePropertyT<bool>(OB_PROP_COLOR_AUTO_EXPOSURE_BOOL);
+    writePropertyT<bool>(OB_PROP_COLOR_AUTO_WHITE_BALANCE_BOOL);
+    writePropertyT<int>(OB_PROP_COLOR_POWER_LINE_FREQUENCY_INT);
+    writePropertyT<int>(OB_PROP_COLOR_AE_MAX_EXPOSURE_INT);
+    writePropertyT<int>(OB_PROP_COLOR_AUTO_EXPOSURE_PRIORITY_INT);
+    writePropertyT<int>(OB_PROP_COLOR_EXPOSURE_INT);
+    writePropertyT<int>(OB_PROP_COLOR_GAIN_INT);
+    writePropertyT<int>(OB_PROP_COLOR_WHITE_BALANCE_INT);
+    writePropertyT<int>(OB_PROP_COLOR_BRIGHTNESS_INT);
+    writePropertyT<int>(OB_PROP_COLOR_SHARPNESS_INT);
+    writePropertyT<int>(OB_PROP_COLOR_SATURATION_INT);
+    writePropertyT<int>(OB_PROP_COLOR_CONTRAST_INT);
+    writePropertyT<int>(OB_PROP_COLOR_GAMMA_INT);
+    writePropertyT<int>(OB_PROP_COLOR_HUE_INT);
+
+    // ir property
+    writePropertyT<bool>(OB_PROP_IR_AUTO_EXPOSURE_BOOL);
+    writePropertyT<int>(OB_PROP_IR_AE_MAX_EXPOSURE_INT);
+    writePropertyT<int>(OB_PROP_IR_BRIGHTNESS_INT);
+    writePropertyT<int>(OB_PROP_IR_EXPOSURE_INT);
+    writePropertyT<int>(OB_PROP_IR_GAIN_INT);
 }
 
-void RecordDevice::stopRecord(){
-    auto server = device_->getPropertyServer();
-    bool isHWD2C = server->getPropertyValueT<bool>(OB_PROP_DEPTH_ALIGN_HARDWARE_BOOL);
+void RecordDevice::stopRecord() {
+    auto server  = device_->getPropertyServer();
+    bool isHWD2C = false;
+    try {
+        isHWD2C = server->getPropertyValueT<bool>(OB_PROP_DEPTH_ALIGN_HARDWARE_BOOL);
+    }
+    catch(...) {
+    }
     auto algParamManager = device_->getComponentT<IAlgParamManager>(OB_DEV_COMPONENT_ALG_PARAM_MANAGER, false);
     auto d2cProfileList  = algParamManager->getD2CProfileList();
     writer_->writeDeviceInfo(std::dynamic_pointer_cast<DeviceBase>(device_)->getInfo());
-    writer_->writeStreamProfiles(isHWD2C,d2cProfileList);
+    writer_->writeStreamProfiles(isHWD2C, d2cProfileList);
 }
 
 }  // namespace libobsensor

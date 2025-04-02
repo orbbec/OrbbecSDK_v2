@@ -5,12 +5,14 @@
 
 #include "DeviceBase.hpp"
 #include "PlaybackDevicePort.hpp"
+#include "component/property/PropertyServer.hpp"
 
 #include <string>
 #include <memory>
 
 namespace libobsensor {
 
+typedef std::function<bool()> ConditionCheckHandler;
 class PlaybackDevice : public DeviceBase {
 public:
     PlaybackDevice(const std::string &filePath);
@@ -41,12 +43,15 @@ private:
 
     bool isDeviceInSeries(const std::vector<uint16_t> &pids, const uint16_t &pid);
 
+    void registerPropertyCondition(std::shared_ptr<PropertyServer> server, uint32_t propertyId, const std::string &userPermsStr, const std::string &intPermsStr,
+                                   std::shared_ptr<IPropertyAccessor> accessor, ConditionCheckHandler condition = nullptr);
+
 private:
     const std::string                   filePath_;
     std::shared_ptr<PlaybackDevicePort> port_;
     std::vector<OBSensorType>           sensorTypeList_;
-    
-    const uint32_t G330DeviceTimeFreq_ = 1000;    // in ms
-    const uint32_t G330FrameTimeFreq_  = 1000000; // in us
+
+    const uint32_t G330DeviceTimeFreq_ = 1000;     // in ms
+    const uint32_t G330FrameTimeFreq_  = 1000000;  // in us
 };
 }  // namespace libobsensor

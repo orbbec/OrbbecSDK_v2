@@ -4,32 +4,11 @@
 #include "PlaybackDevicePort.hpp"
 #include "stream/StreamProfile.hpp"
 #include "utils/PublicTypeHelper.hpp"
+#include "component/property/PropertyHelper.hpp"
 
 namespace libobsensor {
 
-constexpr const uint64_t MAX_SLEEP_TIME_US = 24ULL * 60ULL * 60ULL * 1000000ULL;  // 24 hours
-
-static const std::unordered_map<uint32_t, OBPropertyType> playbackPropertyMap = {
-    { OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL, OB_BOOL_PROPERTY },
-    { OB_PROP_DISPARITY_TO_DEPTH_BOOL, OB_BOOL_PROPERTY },
-    { OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL, OB_BOOL_PROPERTY },
-    { OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_SPECKLE_SIZE_INT, OB_INT_PROPERTY },
-    { OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT, OB_INT_PROPERTY },
-    { OB_PROP_COLOR_AUTO_EXPOSURE_BOOL, OB_BOOL_PROPERTY },
-    { OB_PROP_COLOR_AUTO_EXPOSURE_PRIORITY_INT, OB_INT_PROPERTY },
-    { OB_PROP_COLOR_AUTO_WHITE_BALANCE_BOOL, OB_BOOL_PROPERTY },
-    { OB_PROP_COLOR_WHITE_BALANCE_INT, OB_INT_PROPERTY },
-    { OB_PROP_COLOR_BRIGHTNESS_INT, OB_INT_PROPERTY },
-    { OB_PROP_COLOR_CONTRAST_INT, OB_INT_PROPERTY },
-    { OB_PROP_COLOR_SATURATION_INT, OB_INT_PROPERTY },
-    { OB_PROP_COLOR_SHARPNESS_INT, OB_INT_PROPERTY },
-    { OB_PROP_COLOR_BACKLIGHT_COMPENSATION_INT, OB_INT_PROPERTY },
-    { OB_PROP_COLOR_HUE_INT, OB_INT_PROPERTY },
-    { OB_PROP_COLOR_GAMMA_INT, OB_INT_PROPERTY },
-    { OB_PROP_COLOR_POWER_LINE_FREQUENCY_INT, OB_INT_PROPERTY },
-    { OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL, OB_BOOL_PROPERTY },
-    { OB_PROP_DEPTH_AUTO_EXPOSURE_PRIORITY_INT, OB_INT_PROPERTY },
-};
+constexpr const uint64_t MAX_SLEEP_TIME_US = 6ULL * 60ULL * 60ULL * 1000000ULL;  // 6 hours
 
 PlaybackDevicePort::PlaybackDevicePort(const std::string &filePath)
     : reader_(std::make_shared<RosReader>(filePath)),
@@ -259,13 +238,14 @@ void PlaybackDevicePort::getRecordedPropertyValue(uint32_t propertyId, OBPropert
     }
 
     memset(value, 0, sizeof(OBPropertyValue));
-    if(!playbackPropertyMap.count(propertyId)) {
+    auto it = OBPropertyBaseInfoMap.find(propertyId);
+    if (it == OBPropertyBaseInfoMap.end()) {
         LOG_WARN("Unsupported property id for current playback device: {}", propertyId);
         return;
     }
 
     std::vector<uint8_t> data    = reader_->getPropertyData(propertyId);
-    auto                 proType = playbackPropertyMap.at(propertyId);
+    auto                 proType = it->second.type;
 
     if(proType == OB_BOOL_PROPERTY || proType == OB_INT_PROPERTY) {
         memcpy(&value->intValue, data.data(), data.size());
@@ -274,6 +254,23 @@ void PlaybackDevicePort::getRecordedPropertyValue(uint32_t propertyId, OBPropert
     else if(proType == OB_FLOAT_PROPERTY) {
         memcpy(&value->floatValue, data.data(), data.size());
     }
+}
+
+void PlaybackDevicePort::getRecordedPropertyRange(uint32_t propertyId, OBPropertyRange *range) {
+    if(!range) {
+        LOG_ERROR("Output range pointer is null for property {}", propertyId);
+        return;
+    }
+
+    memset(range, 0, sizeof(OBPropertyRange));
+
+    std::vector<uint8_t> data = reader_->getPropertyData(propertyId + rangeOffset_);
+    if (data.size() != sizeof(OBPropertyRange)) {
+        LOG_WARN("Failed to get recorded property range for property id: {}, excepted size: {}, actual size: {}", propertyId, sizeof(OBPropertyRange), data.size());
+        return;
+    }
+
+    memcpy(range, data.data(), data.size());
 }
 
 std::vector<uint8_t> PlaybackDevicePort::getRecordedStructData(uint32_t propertyId) {

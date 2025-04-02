@@ -44,18 +44,13 @@ This example demonstrates how to use the SDK to read and visualize data from a R
 4. Automatically restart playback when reaching file end:
 
     ```cpp
-        while(win.run()) {
-            auto frameSet = pipe->waitForFrames();
-            win.pushFramesToView(frameSet);
-
-            // Handle playback loop when reaching end
-            if(playback->getPosition() == playback->getDuration()) {
-                // Restart the pipeline if the playback has reached the end of the file
+        playback->setPlaybackStatusChangeCallback([&](OBPlaybackStatus status) {
+            if(status == OB_PLAYBACK_STOPPED && !exited) {
                 pipe->stop();
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                std::this_thread::sleep_for(std::chrono::milliseconds(1000));
                 pipe->start(config);
             }
-        }
+        });
     ```
 
 ## Run Sample

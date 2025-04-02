@@ -8,6 +8,11 @@
 
 #include <mutex>
 #include <thread>
+#include <atomic>
+
+std::atomic<bool> isPaused{false};
+
+void handleKeyPress(ob_smpl::CVWindow &win, std::shared_ptr<ob::RecordDevice> recorder, int key);
 
 int main(void) try {
 
@@ -41,9 +46,6 @@ std::cout << "Please enter the output filename (with .bag extension) and press E
         config->enableStream(sensorType);
     }
 
-    // Initialize recording device with output file
-    auto recordDevice = std::make_shared<ob::RecordDevice>(device, filePath);
-
     std::mutex                          frameMutex;
     std::shared_ptr<const ob::FrameSet> renderFrameSet;
     pipe->start(config, [&](std::shared_ptr<ob::FrameSet> frameSet) {
@@ -51,7 +53,15 @@ std::cout << "Please enter the output filename (with .bag extension) and press E
         renderFrameSet = frameSet;
     });
 
+    // Initialize recording device with output file
+    auto recordDevice = std::make_shared<ob::RecordDevice>(device, filePath);
+
     ob_smpl::CVWindow win("Record", 1280, 720, ob_smpl::ARRANGE_GRID);
+
+    win.setKeyPrompt("Press 'S' to pause/resume recording.");
+    // set the callback function for the window to handle key press events
+    win.setKeyPressedCallback([&win, recordDevice](int key) { handleKeyPress(win, recordDevice, key); });
+
     while(win.run()) {
         std::lock_guard<std::mutex> lock(frameMutex);
         if(renderFrameSet == nullptr) {
@@ -73,4 +83,19 @@ catch(ob::Error &e) {
     std::cout << "\nPress any key to exit.";
     ob_smpl::waitForKeyPressed();
     exit(EXIT_FAILURE);
+}
+
+void handleKeyPress(ob_smpl::CVWindow& win, std::shared_ptr<ob::RecordDevice> recorder, int key) {
+    if(key == 'S' || key == 's') {
+        if(!isPaused) {
+            recorder->pause();
+            isPaused.store(true);
+            win.addLog("[PAUSED] Recording paused");
+		}
+		else {
+            recorder->resume();
+            isPaused.store(false);
+            win.addLog("[RESUMED] Recording resumed");
+		}
+    }
 }
