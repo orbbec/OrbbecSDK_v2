@@ -222,9 +222,6 @@ void handleKeyPress(ob_smpl::CVWindow &win, int key) {
                 std::cout << "software trigger..." << std::endl;
                 dev->triggerCapture();
             }
-            else {
-                std::cout << "Current sync mode is not software trigger mode." << std::endl;
-            }
         }
     }
 }
