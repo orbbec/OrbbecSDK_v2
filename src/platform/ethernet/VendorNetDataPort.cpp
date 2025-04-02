@@ -20,24 +20,11 @@ uint32_t VendorNetDataPort::sendAndReceive(const uint8_t *sendData, uint32_t sen
 
     std::lock_guard<std::mutex> lock(tcpMtx_);
     {
-        int recvd = 0;
-        try {
-            tcpClient_->write(sendData, sendLen);
-            recvd = tcpClient_->read(recvData, OB_VENDOR_CMD_RECV_LEN);
-            if(recvd < 0) {
-                LOG_ERROR("Failed to read data from tcp client, error_code: {}", recvd);
-                return 0;
-            }
-        }
-        catch(const std::exception &) {
-            LOG_DEBUG("Try reconnect tcp socket read and write.");
-            tcpClient_->socketReconnect();
-            tcpClient_->write(sendData, sendLen);
-            recvd = tcpClient_->read(recvData, OB_VENDOR_CMD_RECV_LEN);
-            if(recvd < 0) {
-                LOG_ERROR("Failed to read data from tcp client, error_code: {}", recvd);
-                return 0;
-            }
+        tcpClient_->write(sendData, sendLen);
+        int recvd = tcpClient_->read(recvData, OB_VENDOR_CMD_RECV_LEN);
+        if(recvd < 0) {
+            LOG_ERROR("Failed to read data from tcp client, error_code: {}", recvd);
+            return 0;
         }
         return static_cast<uint32_t>(recvd);
     }
