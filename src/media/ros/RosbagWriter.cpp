@@ -7,7 +7,8 @@
 
 namespace libobsensor {
 const uint64_t INVALID_DIFF = 6ULL * 60ULL * 60ULL * 1000000ULL;  // 6 hours
-RosWriter::RosWriter(const std::string &file, bool compressWhileRecord) : filePath_(file), startTime_(0), preFrameTime_(0), errFlag_(false) {
+
+RosWriter::RosWriter(const std::string &file, bool compressWhileRecord) : filePath_(file), startTime_(0), minFrameTime_(0), maxFrameTime_(0) {
     file_ = std::make_shared<rosbag::Bag>();
     file_->open(filePath_, rosbag::BagMode::Write);
     if(compressWhileRecord) {
@@ -19,24 +20,24 @@ RosWriter::~RosWriter() {
     file_.reset();
     file_ = nullptr;
 
-    if(errFlag_) {
-        LOG_ERROR("Error when saving rosbag file! There are abnormal timestamp data frames during recording!");
+    if(maxFrameTime_ - minFrameTime_ >= INVALID_DIFF) {
+        LOG_DEBUG("Error timestamp data frames during recording! maxFrametime: {}, minFrameTime: {}, diff: {}", maxFrameTime_, minFrameTime_, maxFrameTime_ - minFrameTime_);
+        LOG_WARN("Error when saving rosbag file! There are abnormal timestamp data frames during recording!");
         std::string errFilePath = filePath_ + "_error";
         std::rename(filePath_.c_str(), errFilePath.c_str());
     }
 }
 
 void RosWriter::writeFrame(const OBSensorType &sensorType, std::shared_ptr<const Frame> curFrame) {
-    if(preFrameTime_ == 0) {
-        preFrameTime_ = curFrame->getTimeStampUsec();
+    if (minFrameTime_ == 0 && maxFrameTime_ == 0) {
+        minFrameTime_ = curFrame->getTimeStampUsec();
+        maxFrameTime_ = curFrame->getTimeStampUsec();
     }
-    if(!errFlag_ && (preFrameTime_ > curFrame->getTimeStampUsec()) ? (preFrameTime_ - curFrame->getTimeStampUsec())
-                                                                   : (curFrame->getTimeStampUsec() - preFrameTime_) >= INVALID_DIFF) {
-        errFlag_ = true;
+    else {
+        minFrameTime_ = std::min(minFrameTime_, curFrame->getTimeStampUsec());
+        maxFrameTime_ = std::max(maxFrameTime_, curFrame->getTimeStampUsec());
     }
-    if(!errFlag_) {
-        preFrameTime_ = curFrame->getTimeStampUsec();
-    }
+
     if(sensorType == OB_SENSOR_GYRO || sensorType == OB_SENSOR_ACCEL) {
         writeImuFrame(sensorType, curFrame);
     }

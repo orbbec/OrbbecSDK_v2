@@ -57,11 +57,12 @@ private:
     std::shared_ptr<rosbag::Bag>                                 file_;
     std::mutex                                                   writeMutex_;
     uint64_t                                                     startTime_;
-    uint64_t                                                     preFrameTime_;
-    bool                                                         errFlag_;
     std::shared_ptr<const StreamProfile>                         colorStreamProfile_;
     std::shared_ptr<const StreamProfile>                         depthStreamProfile_;
     std::map<OBSensorType, std::shared_ptr<const StreamProfile>> streamProfileMap_;
+
+    uint64_t minFrameTime_;
+    uint64_t maxFrameTime_;
 };
 
 }  // namespace libobsensor
