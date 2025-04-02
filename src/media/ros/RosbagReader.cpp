@@ -4,7 +4,7 @@
 #include "RosbagReader.hpp"
 
 namespace libobsensor {
-
+const uint64_t INVALID_DURATION = 6ULL * 60ULL * 60ULL * 1000000ULL;  // 6 hours
 RosReader::RosReader(const std::string &filePath) : filePath_(filePath), totalDuration_(0), unit_(0.0), baseline_(0.0) {
     initView();
     queryDeviceInfo();
@@ -22,6 +22,9 @@ void RosReader::initView() try {
         enabledStreamsTopics_.push_back(info->topic);
     }
     totalDuration_ = std::chrono::nanoseconds(streamingDuration.toNSec());
+    if(static_cast<uint64_t>(totalDuration_.count()) >= INVALID_DURATION) {
+        throw io_exception("The streaming duration is too long, please check the rosbag file.");
+    }
 }
 catch(const rosbag::BagException &e) {
     throw io_exception(e.what());

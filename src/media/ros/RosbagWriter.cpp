@@ -3,17 +3,40 @@
 
 #include "RosbagWriter.hpp"
 
-namespace libobsensor {
+#include <cstdio>
 
-RosWriter::RosWriter(const std::string &file, bool compressWhileRecord) : filePath_(file), startTime_(0) {
+namespace libobsensor {
+const uint64_t INVALID_DIFF = 6ULL * 60ULL * 60ULL * 1000000ULL;  // 6 hours
+RosWriter::RosWriter(const std::string &file, bool compressWhileRecord) : filePath_(file), startTime_(0), preFrameTime_(0), errFlag_(false) {
     file_ = std::make_shared<rosbag::Bag>();
-    file_->open(file, rosbag::BagMode::Write);
+    file_->open(filePath_, rosbag::BagMode::Write);
     if(compressWhileRecord) {
         file_->setCompression(rosbag::CompressionType::LZ4);
     }
 }
 
+RosWriter::~RosWriter() {
+    file_.reset();
+    file_ = nullptr;
+
+    if(errFlag_) {
+        LOG_ERROR("Error when saving rosbag file! There are abnormal timestamp data frames during recording!");
+        std::string errFilePath = filePath_ + "_error";
+        std::rename(filePath_.c_str(), errFilePath.c_str());
+    }
+}
+
 void RosWriter::writeFrame(const OBSensorType &sensorType, std::shared_ptr<const Frame> curFrame) {
+    if(preFrameTime_ == 0) {
+        preFrameTime_ = curFrame->getTimeStampUsec();
+    }
+    if(!errFlag_ && (preFrameTime_ > curFrame->getTimeStampUsec()) ? (preFrameTime_ - curFrame->getTimeStampUsec())
+                                                                   : (curFrame->getTimeStampUsec() - preFrameTime_) >= INVALID_DIFF) {
+        errFlag_ = true;
+    }
+    if(!errFlag_) {
+        preFrameTime_ = curFrame->getTimeStampUsec();
+    }
     if(sensorType == OB_SENSOR_GYRO || sensorType == OB_SENSOR_ACCEL) {
         writeImuFrame(sensorType, curFrame);
     }
@@ -80,8 +103,8 @@ void RosWriter::writeVideoFrame(const OBSensorType &sensorType, std::shared_ptr<
         imageMsg->timestamp_usec       = curFrame->getTimeStampUsec();
         imageMsg->timestamp_systemusec = curFrame->getSystemTimeStampUsec();
         imageMsg->timestamp_globalusec = curFrame->getGlobalTimeStampUsec();
-        imageMsg->step         = curFrame->as<VideoFrame>()->getStride();
-        imageMsg->metadatasize = static_cast<uint32_t>(curFrame->getMetadataSize());
+        imageMsg->step                 = curFrame->as<VideoFrame>()->getStride();
+        imageMsg->metadatasize         = static_cast<uint32_t>(curFrame->getMetadataSize());
         imageMsg->data.clear();
         imageMsg->encoding = convertFormatToString(curFrame->getFormat());
         imageMsg->data.insert(imageMsg->data.begin(), curFrame->getMetadata(), curFrame->getMetadata() + curFrame->getMetadataSize());
@@ -140,7 +163,7 @@ void RosWriter::writeDeviceInfo(const std::shared_ptr<const DeviceInfo> &deviceI
     file_->write(deviceInfoTopic, deviceInfoMsg->header.stamp, deviceInfoMsg);
 }
 
-void RosWriter::writeStreamProfiles(bool isHardwareD2CMode,const std::vector<OBD2CProfile> &d2cProfileList){
+void RosWriter::writeStreamProfiles(bool isHardwareD2CMode, const std::vector<OBD2CProfile> &d2cProfileList) {
     std::lock_guard<std::mutex> lock(writeMutex_);
     for(auto &it: streamProfileMap_) {
         if(it.first == OB_SENSOR_GYRO) {
@@ -150,7 +173,7 @@ void RosWriter::writeStreamProfiles(bool isHardwareD2CMode,const std::vector<OBD
             writeAccelStreamProfile(it.second);
         }
         else {
-            writeVideoStreamProfile(it.first, it.second,isHardwareD2CMode,d2cProfileList);
+            writeVideoStreamProfile(it.first, it.second, isHardwareD2CMode, d2cProfileList);
         }
     }
 }
@@ -176,11 +199,12 @@ void RosWriter::writeDisparityParam(std::shared_ptr<const DisparityBasedStreamPr
     file_->write(disparityParamTopic, disparityParamMsg->header.stamp, disparityParamMsg);
 }
 
-void RosWriter::writeVideoStreamProfile(const OBSensorType sensorType, const std::shared_ptr<const StreamProfile> &streamProfile,bool isHardwareD2CMode,const std::vector<OBD2CProfile> &d2cProfileList) {
+void RosWriter::writeVideoStreamProfile(const OBSensorType sensorType, const std::shared_ptr<const StreamProfile> &streamProfile, bool isHardwareD2CMode,
+                                        const std::vector<OBD2CProfile> &d2cProfileList) {
     custom_msg::StreamProfileInfoPtr          streamInfoMsg(new custom_msg::StreamProfileInfo());
     std::chrono::duration<double, std::micro> timestampUs(startTime_);
     streamInfoMsg->header.stamp = orbbecRosbag::Time(std::chrono::duration<double>(timestampUs).count());
-    auto strStreamProfile          = RosTopic::streamProfileTopic((uint8_t)streamProfile->getType());
+    auto strStreamProfile       = RosTopic::streamProfileTopic((uint8_t)streamProfile->getType());
     auto videoStreamProfile     = streamProfile->as<VideoStreamProfile>();
     if(videoStreamProfile != nullptr) {
         if(videoStreamProfile->is<const DisparityBasedStreamProfile>()) {
@@ -201,10 +225,10 @@ void RosWriter::writeVideoStreamProfile(const OBSensorType sensorType, const std
         streamInfoMsg->width              = videoStreamProfile->getWidth();
         streamInfoMsg->height             = videoStreamProfile->getHeight();
         streamInfoMsg->fps                = videoStreamProfile->getFps();
-        streamInfoMsg->streamType = static_cast<uint8_t>(videoStreamProfile->getType());
-        streamInfoMsg->format     = static_cast<uint8_t>(videoStreamProfile->getFormat());
+        streamInfoMsg->streamType         = static_cast<uint8_t>(videoStreamProfile->getType());
+        streamInfoMsg->format             = static_cast<uint8_t>(videoStreamProfile->getFormat());
 
-        //deal with extrinsic and hardware d2c mode
+        // deal with extrinsic and hardware d2c mode
         if(sensorType == OB_SENSOR_DEPTH && streamProfileMap_.count(OB_SENSOR_COLOR) && streamProfileMap_.count(OB_SENSOR_DEPTH)) {
             auto Extrinsic = streamProfile->getExtrinsicTo(streamProfileMap_.at(OB_SENSOR_COLOR));
             for(int i = 0; i < 9; i++) {
@@ -213,14 +237,14 @@ void RosWriter::writeVideoStreamProfile(const OBSensorType sensorType, const std
             for(int i = 0; i < 3; i++) {
                 streamInfoMsg->translationMatrix[i] = Extrinsic.trans[i];
             }
-            
-            //check hardware d2c mode
-            if(isHardwareD2CMode){
-                OBExtrinsic  identityExtrinsics = { { 1, 0, 0, 0, 1, 0, 0, 0, 1 }, { 0, 0, 0 } };
+
+            // check hardware d2c mode
+            if(isHardwareD2CMode) {
+                OBExtrinsic identityExtrinsics = { { 1, 0, 0, 0, 1, 0, 0, 0, 1 }, { 0, 0, 0 } };
                 memcpy(&streamInfoMsg->rotationMatrix, &identityExtrinsics.rot, sizeof(float) * 9);
-                memcpy(&streamInfoMsg->translationMatrix,&identityExtrinsics.trans, sizeof(float) * 3);
-                auto colorStreamProfile = streamProfileMap_.at(OB_SENSOR_COLOR)->as<VideoStreamProfile>();
-                OBD2CPostProcessParam param = { 1.0f, 0, 0, 0, 0 };
+                memcpy(&streamInfoMsg->translationMatrix, &identityExtrinsics.trans, sizeof(float) * 3);
+                auto                  colorStreamProfile = streamProfileMap_.at(OB_SENSOR_COLOR)->as<VideoStreamProfile>();
+                OBD2CPostProcessParam param              = { 1.0f, 0, 0, 0, 0 };
                 for(const auto &item: d2cProfileList) {
                     if(item.colorWidth == colorStreamProfile->getWidth() && item.colorHeight == colorStreamProfile->getHeight()
                        && item.depthWidth == videoStreamProfile->getWidth() && item.depthHeight == videoStreamProfile->getHeight()) {
@@ -243,7 +267,7 @@ void RosWriter::writeAccelStreamProfile(const std::shared_ptr<const StreamProfil
     custom_msg::ImuStreamProfileInfoPtr       accelStreamInfoMsg(new custom_msg::ImuStreamProfileInfo());
     std::chrono::duration<double, std::micro> timestampUs(startTime_);
     accelStreamInfoMsg->header.stamp = orbbecRosbag::Time(std::chrono::duration<double>(timestampUs).count());
-    auto strStreamProfile               = RosTopic::streamProfileTopic((uint8_t)streamProfile->getType());
+    auto strStreamProfile            = RosTopic::streamProfileTopic((uint8_t)streamProfile->getType());
     auto accelStreamProfile          = streamProfile->as<AccelStreamProfile>();
 
     accelStreamInfoMsg->format              = static_cast<OBFormat>(accelStreamProfile->getFormat());
@@ -283,7 +307,7 @@ void RosWriter::writeGyroStreamProfile(const std::shared_ptr<const StreamProfile
     custom_msg::ImuStreamProfileInfoPtr       gyroStreamInfoMsg(new custom_msg::ImuStreamProfileInfo());
     std::chrono::duration<double, std::micro> timestampUs(startTime_);
     gyroStreamInfoMsg->header.stamp = orbbecRosbag::Time(std::chrono::duration<double>(timestampUs).count());
-    auto strStreamProfile              = RosTopic::streamProfileTopic((uint8_t)streamProfile->getType());
+    auto strStreamProfile           = RosTopic::streamProfileTopic((uint8_t)streamProfile->getType());
     auto gyroStreamProfile          = streamProfile->as<GyroStreamProfile>();
 
     gyroStreamInfoMsg->format             = static_cast<OBFormat>(gyroStreamProfile->getFormat());
