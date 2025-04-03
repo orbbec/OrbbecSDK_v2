@@ -70,6 +70,7 @@ void RecordDevice::resume() {
 void RecordDevice::initializeFrameQueueOnce(OBSensorType sensorType, std::shared_ptr<const Frame> frame) {
     // todo: change lazy initialization to eager initialization
     std::call_once(*sensorOnceFlags_[sensorType], [this, sensorType, frame]() {
+        std::unique_lock<std::mutex> lock(frameQueueInitMutex_);
         frameQueueMap_[sensorType] = std::make_shared<FrameQueue<const Frame>>(maxFrameQueueSize_);
         frameQueueMap_[sensorType]->start([this, sensorType](std::shared_ptr<const Frame> frame) { writer_->writeFrame(sensorType, frame); });
     });

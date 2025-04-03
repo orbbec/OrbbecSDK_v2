@@ -81,6 +81,7 @@ private:
     std::atomic<bool>          isPaused_;
     std::shared_ptr<IWriter>   writer_;
     std::mutex                 frameCallbackMutex_;
+    std::mutex                 frameQueueInitMutex_;
 
     std::unordered_map<OBSensorType, std::shared_ptr<FrameQueue<const Frame>>> frameQueueMap_;
     std::unordered_map<OBSensorType, std::unique_ptr<std::once_flag>>          sensorOnceFlags_;
