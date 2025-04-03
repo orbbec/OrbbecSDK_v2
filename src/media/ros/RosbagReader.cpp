@@ -22,7 +22,7 @@ void RosReader::initView() try {
         enabledStreamsTopics_.push_back(info->topic);
     }
     totalDuration_ = std::chrono::nanoseconds(streamingDuration.toNSec());
-    if(static_cast<uint64_t>(totalDuration_.count()) >= INVALID_DURATION) {
+    if(static_cast<uint64_t>(totalDuration_.count() / 1000) >= INVALID_DURATION) {
         throw io_exception("The streaming duration is too long, please check the rosbag file.");
     }
 }
