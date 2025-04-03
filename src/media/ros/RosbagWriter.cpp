@@ -253,6 +253,8 @@ void RosWriter::writeVideoStreamProfile(const OBSensorType sensorType, const std
                         break;
                     }
                 }
+                std::fill(distortion.begin(), distortion.end(), 0.0f);
+                streamInfoMsg->cameraDistortion   = distortion;
                 streamInfoMsg->cameraIntrinsic[0] = colorStreamProfile->getIntrinsic().fx / param.depthScale;
                 streamInfoMsg->cameraIntrinsic[1] = colorStreamProfile->getIntrinsic().fy / param.depthScale;
                 streamInfoMsg->cameraIntrinsic[2] = (colorStreamProfile->getIntrinsic().cx - param.alignLeft) / param.depthScale;
