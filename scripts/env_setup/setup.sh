@@ -11,7 +11,7 @@ cd "$(dirname "$0")"
 project_dir=$(pwd)
 
 # set up environment variables
-shared_dir=$project_dir/scripts
+shared_dir=$project_dir/shared
 examples_dir=$project_dir/examples
 
 # build the examples
