@@ -47,6 +47,7 @@ constexpr uint8_t INTERFACE_IR    = 2;
 constexpr uint8_t INTERFACE_DEPTH = 0;
 
 constexpr uint16_t GEMINI2L_PID = 0x0673;
+constexpr uint16_t GEMINI2_PID  = 0x0670;
 
 G2Device::G2Device(const std::shared_ptr<const IDeviceEnumInfo> &info) : DeviceBase(info) {
     init();
@@ -574,6 +575,9 @@ void G2Device::initProperties() {
             propertyServer->registerProperty(OB_PROP_STOP_DEPTH_STREAM_BOOL, "", "w", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_STOP_IR_STREAM_BOOL, "", "w", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_STOP_COLOR_STREAM_BOOL, "", "w", vendorPropertyAccessor);
+            if(getFirmwareVersionInt() >= 10398 && deviceInfo_->pid_ == GEMINI2_PID) {
+                propertyServer->registerProperty(OB_STRUCT_DEPTH_AE_ROI, "rw", "rw", vendorPropertyAccessor);
+            }
         }
         else if(sensor == OB_SENSOR_ACCEL) {
             auto imuCorrectorFilter = getSensorFrameFilter("IMUCorrector", sensor);
