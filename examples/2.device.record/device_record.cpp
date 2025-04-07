@@ -38,6 +38,9 @@ std::cout << "Please enter the output filename (with .bag extension) and press E
     // Create a pipeline the specified device
     auto pipe = std::make_shared<ob::Pipeline>(device);
 
+    // Activate device clock synchronization
+    context->enableDeviceClockSync(0);
+
     // Create a config and enable all streams
     std::shared_ptr<ob::Config>  config  = std::make_shared<ob::Config>();
     auto sensorList = device->getSensorList();
