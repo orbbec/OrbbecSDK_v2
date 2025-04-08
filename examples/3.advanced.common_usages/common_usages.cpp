@@ -85,7 +85,7 @@ int main(void) try {
     // Query the list of connected devices.
     std::shared_ptr<ob::DeviceList> devices = ctx->queryDeviceList();
 
-    // Handle connected devices（and open one device）
+    // Handle connected devices(and open one device)
     handleDeviceConnected(devices);
 
     if(!device) {

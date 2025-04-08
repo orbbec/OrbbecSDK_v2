@@ -60,7 +60,7 @@ int main(void) {
             continue;
         }
 
-        // Get the depth frame from frameset。
+        // Get the depth frame from frameset.
         const ob_frame *depth_frame = ob_frameset_get_depth_frame(frameset, &error);
         check_ob_error(&error);
 
@@ -89,7 +89,7 @@ int main(void) {
             // pixel value multiplied by scale is the actual distance value in millimeters
             float center_distance = data[width * height / 2 + width / 2] * scale;
 
-            // attention: if the distance is 0, it means that the depth camera cannot detect the object（may be out of detection range）
+            // attention: if the distance is 0, it means that the depth camera cannot detect the object (may be out of detection range)
             printf("Facing an object at a distance of %.3f mm away.\n", center_distance);
         }
 
