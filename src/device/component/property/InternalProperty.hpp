@@ -22,12 +22,11 @@ typedef enum {
     OB_PROP_FAN_WORK_SPEED_INT              = 120, /**< Fan speed*/
     OB_PROP_STOP_IR_RIGHT_STREAM_BOOL       = 139, /**<Disable the right IR stream*/
 
-    OB_STRUCT_DEVICE_UPGRADE_STATUS         = 1006, /**< Firmware upgrade status, read only*/
-    OB_PROP_START_COLOR_STREAM_BOOL         = 125, /**< Start or stop color stream */
-    OB_PROP_START_DEPTH_STREAM_BOOL         = 126, /**< Start or stop depth stream */
-    OB_PROP_START_IR_STREAM_BOOL            = 127, /**< Start or stop left ir stream */
-    OB_PROP_START_IR_RIGHT_STREAM_BOOL      = 201, /**< Start or stop right ir stream */
-
+    OB_STRUCT_DEVICE_UPGRADE_STATUS    = 1006, /**< Firmware upgrade status, read only*/
+    OB_PROP_START_COLOR_STREAM_BOOL    = 125,  /**< Start or stop color stream */
+    OB_PROP_START_DEPTH_STREAM_BOOL    = 126,  /**< Start or stop depth stream */
+    OB_PROP_START_IR_STREAM_BOOL       = 127,  /**< Start or stop left ir stream */
+    OB_PROP_START_IR_RIGHT_STREAM_BOOL = 201,  /**< Start or stop right ir stream */
 
     OB_PROP_GYRO_SWITCH_BOOL     = 2019, /**< Gyroscope switch*/
     OB_PROP_ACCEL_SWITCH_BOOL    = 2020, /**< Accelerometer switch*/
@@ -61,7 +60,7 @@ typedef enum {
     OB_RAW_DATA_DEVICE_EXTENSION_INFORMATION             = 4041, /**< Device extension information*/
     OB_RAW_DATA_D2C_ALIGN_COLOR_PRE_PROCESS_PROFILE_LIST = 4046, /**< D2C Alignment Resolution List*/
     OB_RAW_DATA_DE_IR_TRANSFORM_PARAMS                   = 4059, /**< DE-IR transform parameters*/
-
+    OB_PROP_DEVICE_LOG_SEVERITY_LEVEL_INT                = 5003, /**< Device log level*/
 } OBInternalPropertyID;
 
 }  // namespace libobsensor

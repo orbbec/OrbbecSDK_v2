@@ -3,6 +3,7 @@
 
 #include "DeviceMonitor.hpp"
 #include "protocol/Protocol.hpp"
+#include "property/InternalProperty.hpp"
 
 namespace libobsensor {
 
@@ -141,12 +142,15 @@ void DeviceMonitor::enableHeartbeat() {
         return;
     }
 
-    auto            owner = getOwner();
+    auto owner      = getOwner();
+    auto propServer = owner->getComponentT<IPropertyServer>(OB_DEV_COMPONENT_PROPERTY_SERVER);
+    if(propServer->isPropertySupported(OB_PROP_DEVICE_LOG_SEVERITY_LEVEL_INT, PROP_OP_WRITE, PROP_ACCESS_INTERNAL)) {
+        propServer->setPropertyValueT<int32_t>(OB_PROP_DEVICE_LOG_SEVERITY_LEVEL_INT, OB_LOG_SEVERITY_DEBUG);
+    }
     OBPropertyValue value;
     value.intValue    = 1;
     auto propAccessor = owner->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
     propAccessor->setPropertyValue(OB_PROP_HEARTBEAT_BOOL, value);
-
     heartbeatEnabled_ = true;
     heartbeatPaused_  = false;
     if(!heartbeatAndFetchStateThreadStarted_) {
