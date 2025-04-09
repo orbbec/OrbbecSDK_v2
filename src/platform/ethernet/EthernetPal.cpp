@@ -21,7 +21,6 @@ NetDeviceWatcher::~NetDeviceWatcher() noexcept {
 void NetDeviceWatcher::start(deviceChangedCallback callback) {
     callback_          = callback;
     stopWatch_         = false;
-    stopCheck_         = false;
     deviceWatchThread_ = std::thread([&]() {
         std::mutex                   mutex;
         std::unique_lock<std::mutex> lock(mutex);
@@ -43,9 +42,6 @@ void NetDeviceWatcher::start(deviceChangedCallback callback) {
 }
 
 void NetDeviceWatcher::stop() {
-    stopCheck_ = true;
-    condVarCheck_.notify_all();
-
     stopWatch_ = true;
     condVar_.notify_all();
     if(deviceWatchThread_.joinable()) {
