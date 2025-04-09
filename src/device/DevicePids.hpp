@@ -4,6 +4,7 @@
 #pragma once
 #include <vector>
 #include <map>
+#include <string>
 #include <cstdint>
 #include "common/DeviceSeriesInfo.hpp"
 #include <string>

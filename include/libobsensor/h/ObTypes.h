@@ -179,7 +179,7 @@ typedef enum {
     OB_FRAME_IR_RIGHT     = 9,  /**< Right IR frame for stereo camera */
     OB_FRAME_RAW_PHASE    = 10, /**< Raw Phase frame*/
     OB_FRAME_CONFIDENCE   = 11, /**< Confidence frame*/
-    OB_FRAME_LIDAR_POINTS = 12, /**< LiDAR point3f cloud frame*/
+    OB_FRAME_LIDAR_POINTS = 12, /**< LiDAR point3d cloud frame*/
     OB_FRAME_TYPE_COUNT,        /**< The total number of frame types, is not a valid frame type */
 } OBFrameType,
     ob_frame_type;

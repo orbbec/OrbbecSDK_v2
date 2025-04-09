@@ -149,8 +149,8 @@ std::shared_ptr<ISourcePort> EthernetPal::getSourcePort(std::shared_ptr<const So
 void EthernetPal::updateMDNSDeviceSourceInfo() {
     auto infos = mdnsDiscovery_->queryDeviceList();
 
-    auto added          = utils::subtract_sets(infos, mdnsDevInfoList_);
-    auto removed        = utils::subtract_sets(mdnsDevInfoList_, infos);
+    auto added       = utils::subtract_sets(infos, mdnsDevInfoList_);
+    auto removed     = utils::subtract_sets(mdnsDevInfoList_, infos);
     mdnsDevInfoList_ = infos;
 
     // Only re-query port information for newly online devices
