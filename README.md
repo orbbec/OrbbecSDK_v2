@@ -34,6 +34,7 @@ If you prefer to continue with Orbbec SDK v1.x, you can still access the pre-com
 
 | **Products List** | **Minimal Firmware Version** |
 |-------------------|------------------------------|
+| Gemini 335Le        | 1.5.31                       |
 | Gemini 330        | 1.2.20                       |
 | Gemini 330L       | 1.2.20                       |
 | Gemini 335        | 1.2.20                       |
@@ -119,6 +120,19 @@ pipe.stop();
 ### 3.2 The Orbbec Viewer
 
 ![Orbbec Viewer](docs/resource/OrbbecViewer.jpg)
+- Notes
+
+If the Orbbec Viewer is used under Linux OS and is used for updating any camera firmware, users may encounter the issue that the firmware file selection window is not poping up. Users are unable to proceed with the firmware update work flow and are unable to update the camera firmware.
+
+- Solution:
+1. Exit the Orbbec Viewer under Linux OS .
+2. Run the following command as root in a terminal for installing the necessary tool Zenity.
+```
+sudo apt-get install zenity
+```
+
+3. Start the Orbbec Viewer under Linux OS and proceed with the firmware update work flow.
+
 
 ## 4. Contributing
 
