@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include "OpenNIDisparitySensor.hpp"
@@ -33,4 +32,5 @@ private:
 
     std::shared_ptr<const StreamProfile> realActivatedStreamProfile_;
 };
-}  // namespace libobsensor
+}  // namespace libobs
+
