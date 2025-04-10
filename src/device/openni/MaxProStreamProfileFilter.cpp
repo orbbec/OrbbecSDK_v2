@@ -35,7 +35,7 @@ StreamProfileList MaxProStreamProfileFilter::filter(const StreamProfileList &pro
                 }
             }
         }
-        else if(sensorType == OB_SENSOR_DEPTH) {
+        /*else if(sensorType == OB_SENSOR_DEPTH) {
             if(videoProfile->getWidth() == 640 && videoProfile->getHeight() == 400) {
                 auto newStreamProfile =
                     StreamProfileFactory::createVideoStreamProfile(OB_STREAM_DEPTH, videoProfile->getFormat(), 640, 320, videoProfile->getFps());
@@ -48,7 +48,7 @@ StreamProfileList MaxProStreamProfileFilter::filter(const StreamProfileList &pro
                 filteredProfiles.push_back(newStreamProfile);
                 filteredProfiles.push_back(profile);
             }
-        }
+        }*/
     }
     return filteredProfiles;
 }
