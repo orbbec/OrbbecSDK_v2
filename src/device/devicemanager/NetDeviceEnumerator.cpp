@@ -143,7 +143,7 @@ void NetDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType
         }
 
         if(!rmDevs.empty()) {
-            LOG_DEBUG("{} net device(s) removed:", rmDevs.size());
+            LOG_DEBUG("{} net device(s) in removedeviceList:", rmDevs.size());
             for(auto &&item: rmDevs) {
                 auto firstPortInfo = item->getSourcePortInfoList().front();
                 auto info          = std::dynamic_pointer_cast<const NetSourcePortInfo>(firstPortInfo);
@@ -192,7 +192,7 @@ void NetDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType
             LOG_DEBUG("  - Name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", item->getName(), item->getPid(), item->getDeviceSn(), info->mac, info->address);
         }
 
-        deviceChangedCallback_(rmDevs, addDevs);
+        deviceChangedCallback_(newRmDevs, addDevs);
     }
 }
 
