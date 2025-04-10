@@ -35,11 +35,12 @@ constexpr uint16_t MAX_PRO_COLOR_PID = 0x0560;
 constexpr uint16_t MAX_PRO_DEPTH_PID = 0x069e;
 
 MaxProDevice::MaxProDevice(const std::shared_ptr<const IDeviceEnumInfo> &info) : OpenNIDeviceBase(info) {
+    LOG_INFO("Create {} device.", info->getName());
     init();
 }
 
 MaxProDevice::~MaxProDevice() noexcept {
-
+    LOG_INFO("Destroy {} device.", deviceInfo_->name_);
 }
 
 void MaxProDevice::init() {
@@ -65,15 +66,14 @@ void MaxProDevice::initSensorList() {
                 auto port   = getSourcePort(depthPortInfo);
                 auto sensor = std::make_shared<MaxProDisparitySensor>(this, OB_SENSOR_DEPTH, port);
 
-                std::vector<FormatFilterConfig> formatFilterConfigs = {
+                /*std::vector<FormatFilterConfig> formatFilterConfigs = {
                     { FormatFilterPolicy::REMOVE, OB_FORMAT_Z16, OB_FORMAT_ANY, nullptr },
                 };
-
-                auto formatConverter = getSensorFrameFilter("FrameUnpacker", OB_SENSOR_DEPTH, true);
+                auto formatConverter = getSensorFrameFilter("FrameUnpacker", OB_SENSOR_DEPTH, false);
                 if(formatConverter) {
                     formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_Y12, OB_FORMAT_Y16, formatConverter });
                 }
-                sensor->updateFormatFilterConfig(formatFilterConfigs);
+                sensor->updateFormatFilterConfig(formatFilterConfigs);*/
 
                 auto frameTimestampCalculator = videoFrameTimestampCalculatorCreator_();
                 sensor->setFrameTimestampCalculator(frameTimestampCalculator);
@@ -85,7 +85,6 @@ void MaxProDevice::initSensorList() {
 
                 auto propServer = getPropertyServer();
                 propServer->setPropertyValueT<bool>(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL, true);
-                sensor->markOutputDisparityFrame(false);
 
                 propServer->setPropertyValueT(OB_PROP_DEPTH_PRECISION_LEVEL_INT, OB_PRECISION_1MM);
                 sensor->setDepthUnit(1.0f);
@@ -111,13 +110,6 @@ void MaxProDevice::initSensorList() {
             auto accessor = std::make_shared<VendorPropertyAccessor>(this, port);
             return accessor;
         });
-
-        // The device monitor is using the depth port(uvc xu)
-        /*registerComponent(OB_DEV_COMPONENT_DEVICE_MONITOR, [this, depthPortInfo]() {
-            auto port       = getSourcePort(depthPortInfo);
-            auto devMonitor = std::make_shared<DeviceMonitor>(this, port);
-            return devMonitor;
-        });*/
     }
 
     auto colorPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(), [](const std::shared_ptr<const SourcePortInfo> &portInfo) {
@@ -136,12 +128,11 @@ void MaxProDevice::initSensorList() {
                 std::vector<FormatFilterConfig> formatFilterConfigs = {
                     { FormatFilterPolicy::REMOVE, OB_FORMAT_NV12, OB_FORMAT_ANY, nullptr },
                     { FormatFilterPolicy::REMOVE, OB_FORMAT_NV21, OB_FORMAT_ANY, nullptr },
-                    { FormatFilterPolicy::REMOVE, OB_FORMAT_BGR, OB_FORMAT_ANY, nullptr },
-                    { FormatFilterPolicy::REMOVE, OB_FORMAT_BGRA, OB_FORMAT_ANY, nullptr },
                 };
 
                 auto formatConverter = getSensorFrameFilter("FormatConverter", OB_SENSOR_COLOR, false);
                 if(formatConverter) {
+                    formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_YUYV, OB_FORMAT_RGB, formatConverter });
                     formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_YUYV, OB_FORMAT_Y16, formatConverter });
                     formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_YUYV, OB_FORMAT_Y8, formatConverter });
                 }
