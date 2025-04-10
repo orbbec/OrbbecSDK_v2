@@ -11,6 +11,9 @@
 
 namespace libobsensor {
 
+#define ISP_FW_VER_KEY "IspFwVer"
+#define ISP_NEED_VER_KEY "IspNeedVer"
+
 G330SensorStreamStrategy::G330SensorStreamStrategy(IDevice *owner) : DeviceComponentBase(owner) {}
 
 G330SensorStreamStrategy::~G330SensorStreamStrategy() noexcept {}
@@ -43,6 +46,7 @@ void G330SensorStreamStrategy::validateStream(const std::shared_ptr<const Stream
 }
 
 void G330SensorStreamStrategy::validateStream(const std::vector<std::shared_ptr<const StreamProfile>> &profiles) {
+    validateISPFirmwareVersion();
     {
         std::lock_guard<std::mutex> lock(startedStreamListMutex_);
         for(auto profile: profiles) {
@@ -56,6 +60,19 @@ void G330SensorStreamStrategy::validateStream(const std::vector<std::shared_ptr<
     }
     validateDepthAndIrStream(profiles);
     validatePreset(profiles);
+}
+
+void G330SensorStreamStrategy::validateISPFirmwareVersion() {
+    bool needUpgrade = false;
+    std::string ispFwVer    = getOwner()->getExtensionInfo(ISP_FW_VER_KEY);
+    std::string ispNeedVer  = getOwner()->getExtensionInfo(ISP_NEED_VER_KEY);
+    if(!ispFwVer.empty() && !ispNeedVer.empty()) {
+        needUpgrade = ispNeedVer > ispFwVer;
+    }
+
+    if(needUpgrade) {
+        throw unsupported_operation_exception("unexpected isp firmware version, please update your camera firmware before streaming data.");
+    }
 }
 
 void G330SensorStreamStrategy::validateDepthAndIrStream(const std::vector<std::shared_ptr<const StreamProfile>> &profiles) {
