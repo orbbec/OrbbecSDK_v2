@@ -25,10 +25,9 @@ If you prefer to continue with Orbbec SDK v1.x, you can still access the pre-com
 
 - Windows 10 or later: x86 and x64 architectures
 - Linux x64: tested on Ubuntu 20.04, 22.04 and 24.04
-- Linux ARM64: tested on AGX Orin and AGX Xavier
+- Linux ARM64: tested on  NVIDIA Jetson AGX Orin , NVIDIA Jetson Orin NX , NVIDIA Jetson Orin Nano , NVIDIA Jetson AGX Xavier , NVIDIA Jetson Xavier NX 
 - Android: coming soon
 - macOS: coming soon
-- Linux ARM32: coming soon
 
 ### 1.2 Supported Devices
 
