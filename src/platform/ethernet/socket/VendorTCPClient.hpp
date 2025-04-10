@@ -34,10 +34,8 @@ private:
     const uint16_t    port_;
     SOCKET            socketFd_;
     bool              flushed_;
-    uint32_t          CONNECT_TIMEOUT_MS = 2000;
-    uint32_t          COMM_TIMEOUT_MS    = 2000;
-
-    std::mutex tcpMtx_;
+    uint32_t          CONNECT_TIMEOUT_MS   = 2000;
+    uint32_t          COMM_TIMEOUT_MS      = 2000;
 };
 
 }  // namespace libobsensor
