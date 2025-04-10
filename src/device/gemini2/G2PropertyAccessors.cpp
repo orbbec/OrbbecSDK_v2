@@ -15,6 +15,7 @@ IDevice *G2Disp2DepthPropertyAccessor::getOwner() {
 }
 
 void G2Disp2DepthPropertyAccessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
+    owner_->getComponentT<DisparityBasedSensor>(OB_DEV_COMPONENT_DEPTH_SENSOR, false);
     switch(propertyId) {
     case OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL: {
         auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR);
