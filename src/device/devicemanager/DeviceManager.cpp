@@ -83,6 +83,22 @@ DeviceManager::~DeviceManager() noexcept {
 std::shared_ptr<IDevice> DeviceManager::createNetDevice(std::string address, uint16_t port) {
 #if defined(BUILD_NET_PAL)
     LOG_DEBUG("DeviceManager createNetDevice.... address={0}, port={1}", address, port);
+    DeviceEnumInfoList deviceInfoList;
+    for(auto &enumerator: deviceEnumerators_) {
+        auto infos = enumerator->getDeviceInfoList();
+        deviceInfoList.insert(deviceInfoList.end(), infos.begin(), infos.end());
+    }
+    for(auto &info: deviceInfoList) {
+        if(info->getConnectionType() == "Ethernet") {
+            auto netPortInfo = std::dynamic_pointer_cast<const NetSourcePortInfo>(info->getSourcePortInfoList().front());
+            LOG_INFO("\t- Name: {0}, PID: 0x{1:04x}, SN/ID: {2}, Connection: {3}, MAC:{4}, ip:{5}", info->getName(), info->getPid(),
+            info->getDeviceSn(), info->getConnectionType(), netPortInfo->mac, netPortInfo->address);
+            if(netPortInfo->address == address && netPortInfo->port == port) {
+                return createDevice(info);
+            }
+        }
+    }
+
     auto deviceInfo = NetDeviceEnumerator::queryNetDevice(address, port);
     if(!deviceInfo) {
         throw libobsensor::invalid_value_exception("Failed to query Net Device, address=" + address + ", port=" + std::to_string(port));
