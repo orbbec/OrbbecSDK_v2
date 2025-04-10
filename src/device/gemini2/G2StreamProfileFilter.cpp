@@ -56,6 +56,8 @@ void G2StreamProfileFilter::fetchEffectiveStreamProfiles() {
     profiles                 = propServer->getStructureDataListProtoV1_1_T<OBEffectiveStreamProfile, 0>(OB_RAW_DATA_EFFECTIVE_VIDEO_STREAM_PROFILE_LIST);
     effectiveStreamProfiles_ = profiles;
     for(auto &profile: profiles) {
+        LOG_DEBUG("effective stream profile: sensorType: {}, format: {}, width: {}, height: {}, maxFps: {}", profile.sensorType, profile.format,
+                  profile.width, profile.height, profile.maxFps);
         if(profile.sensorType == OB_SENSOR_COLOR && profile.format == OB_FORMAT_MJPG) {
             auto newProfile   = profile;
             newProfile.format = OB_FORMAT_RGB;
