@@ -13,11 +13,11 @@ public:
 
     void updateFormatFilterConfig(const std::vector<FormatFilterConfig> &configs) override;
 
-    void markOutputDisparityFrame(bool enable);
-
     void setDepthUnit(float unit);
 
     void initProfileVirtualRealMap();
+
+    void setFrameProcessor(std::shared_ptr<FrameProcessor> frameProcessor);
 
 private:
     void outputFrame(std::shared_ptr<Frame> frame) override;
@@ -27,12 +27,11 @@ private:
     void syncDisparityToDepthModeStatus();
 
 private:
-    bool outputDisparityFrame_ = false;
-
-    float depthUnit_ = 1.0f;
+    bool  isCropStreamProfile_ = false;
+    float depthUnit_           = 1.0f;
 
     std::map<std::shared_ptr<const StreamProfile>, std::shared_ptr<const StreamProfile>> profileVirtualRealMap_;
 
-
+    std::shared_ptr<const StreamProfile> realActivatedStreamProfile_;
 };
 }  // namespace libobsensor
