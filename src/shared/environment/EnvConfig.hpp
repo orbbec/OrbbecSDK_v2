@@ -16,6 +16,7 @@ class EnvConfig {
     static std::weak_ptr<EnvConfig> instanceWeakPtr_;
 
     static std::string extensionsDir_;
+    static std::string currentWorkDir_;
 
 public:
     static std::shared_ptr<EnvConfig> getInstance(const std::string &configFilePath = "");
@@ -34,6 +35,12 @@ public:
 
 private:
     std::vector<std::shared_ptr<XmlReader>> xmlReaders_;
+
+#ifdef __ANDROID__
+    std::string defaultConfigFile_ = "/sdcard/orbbec/OrbbecSDKConfig.xml";
+#else
+    std::string defaultConfigFile_ = "OrbbecSDKConfig.xml";
+#endif
 };
 
 }  // namespace libobsensor

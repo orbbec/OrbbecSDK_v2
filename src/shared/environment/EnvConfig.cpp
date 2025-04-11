@@ -22,17 +22,19 @@ std::shared_ptr<EnvConfig> EnvConfig::getInstance(const std::string &configFileP
     return ctxInstance;
 }
 
-#ifdef __ANDROID__
-constexpr const char *defaultConfigFile = "/sdcard/orbbec/OrbbecSDKConfig.xml";
-#else
-constexpr const char *defaultConfigFile = "./OrbbecSDKConfig.xml";
-#endif
-
 EnvConfig::EnvConfig(const std::string &configFile) {
     // add external config file
     auto extConfigFile = configFile;
     if(extConfigFile.empty()) {
-        extConfigFile = defaultConfigFile;
+#ifndef __ANDROID__
+        auto currentWorkDir = utils::getCurrentWorkDirectory();
+        if(currentWorkDir == "") {
+            currentWorkDir = "./";
+        }
+        extConfigFile = utils::joinPaths(currentWorkDir, defaultConfigFile_);
+#else
+        extConfigFile = defaultConfigFile_;
+#endif
     }
     if(utils::fileExists(extConfigFile.c_str())) {
         TRY_EXECUTE({
@@ -102,10 +104,18 @@ bool EnvConfig::getStringValue(const std::string &nodePathName, std::string &t) 
     return false;
 }
 
-std::string EnvConfig::extensionsDir_ = "./extensions";
+std::string EnvConfig::extensionsDir_ = "extensions";
+std::string EnvConfig::currentWorkDir_ = "./";
 
 const std::string &EnvConfig::getExtensionsDirectory() {
-    return extensionsDir_;
+    if(currentWorkDir_ == "./") {
+        auto currentWorkDir = utils::getCurrentWorkDirectory();
+        if(currentWorkDir != "") {
+            currentWorkDir_ = currentWorkDir;
+        }
+        currentWorkDir_ = utils::joinPaths(currentWorkDir_, extensionsDir_);
+    }
+    return currentWorkDir_;
 }
 
 void EnvConfig::setExtensionsDirectory(const std::string &dir) {

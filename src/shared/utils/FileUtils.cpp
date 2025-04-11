@@ -19,6 +19,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <dlfcn.h>
 #endif
 
 #include "logger/Logger.hpp"
@@ -93,20 +94,45 @@ int mkDirs(const char *dir) {
 
 std::string getCurrentWorkDirectory() {
 #ifdef WIN32
-    const DWORD size = GetCurrentDirectoryA(0, nullptr);
-    std::string pathStr;
-    pathStr.resize(size - 1);
-    GetCurrentDirectoryA(size, &pathStr[0]);
-    return pathStr;
-#else
-    char cwd[PATH_MAX] = {};
-    if(getcwd(cwd, sizeof(cwd)) != nullptr) {
-        return cwd;
-    }
-    else {
-        perror("getcwd() error");
+    wchar_t buffer[MAX_PATH] = {0};
+    HMODULE hModule = NULL;
+    if (!GetModuleHandleExW(
+        GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+        (LPCWSTR)&getCurrentWorkDirectory,&hModule)) 
+    {
+        LOG_ERROR("Failed to get module handle");
         return "";
     }
+
+    if (!GetModuleFileNameW(hModule, buffer, MAX_PATH)) {
+        LOG_ERROR("Failed to get module file name");
+        return "";
+    }
+
+    std::wstring wpathStr(buffer);
+    size_t last_slash = wpathStr.find_last_of(L"\\/");
+    if (last_slash != std::wstring::npos) {
+        wpathStr = wpathStr.substr(0, last_slash);
+    }
+
+    int sizeNeeded = WideCharToMultiByte(CP_UTF8, 0, wpathStr.c_str(), (int)wpathStr.length(),
+                                        nullptr, 0, nullptr, nullptr);
+    std::string pathStr(sizeNeeded, 0);
+    WideCharToMultiByte(CP_UTF8, 0, wpathStr.c_str(), (int)wpathStr.length(),
+                       &pathStr[0], sizeNeeded, nullptr, nullptr);
+
+    return pathStr;
+#else
+    Dl_info info;
+    std::string pathStr = "";
+    if(dladdr((void *)getCurrentWorkDirectory, &info)) { 
+        pathStr = info.dli_fname;
+        size_t lastSlashPos = pathStr.rfind('/');
+        if(lastSlashPos != std::string::npos) {
+            return pathStr.substr(0, lastSlashPos);
+        }
+    }
+    return pathStr;
 #endif
 }
 
