@@ -88,6 +88,13 @@ void DabaiADevice::init() {
     auto algParamManager = std::make_shared<DaBaiAAlgParamManager>(this);
     registerComponent(OB_DEV_COMPONENT_ALG_PARAM_MANAGER, algParamManager);
 
+    if(getFirmwareVersionInt() >= 10700) {
+        auto propertyServer                = getPropertyServer();
+        auto hwNoiseRemovePropertyAccessor = std::make_shared<G330HWNoiseRemovePropertyAccessor>(this);
+        propertyServer->registerProperty(OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL, "rw", "rw", hwNoiseRemovePropertyAccessor);
+        propertyServer->registerProperty(OB_PROP_HW_NOISE_REMOVE_FILTER_THRESHOLD_FLOAT, "rw", "rw", hwNoiseRemovePropertyAccessor);
+    }
+
     static const std::vector<OBMultiDeviceSyncMode> supportedSyncModes     = { OB_MULTI_DEVICE_SYNC_MODE_FREE_RUN, OB_MULTI_DEVICE_SYNC_MODE_STANDALONE,
                                                                                OB_MULTI_DEVICE_SYNC_MODE_PRIMARY, OB_MULTI_DEVICE_SYNC_MODE_SECONDARY,
                                                                                OB_MULTI_DEVICE_SYNC_MODE_IR_IMU_SYNC };
@@ -327,7 +334,7 @@ void DabaiADevice::initSensorList() {
                         algParamManager->bindDisparityParam({ sp });
                     }
                 });
-
+                loadDefaultDepthPostProcessingConfig();
                 return sensor;
             },
             true);
@@ -1124,5 +1131,37 @@ std::vector<std::shared_ptr<IFilter>> DabaiADevice::createRecommendedPostProcess
     }
 
     return {};
+}
+
+void DabaiADevice::loadDefaultDepthPostProcessingConfig() {
+    auto envConfig = EnvConfig::getInstance();
+
+    try {
+        std::string deviceName = utils::string::removeSpace(deviceInfo_->name_);
+        std::string nodeName   = std::string("Device.") + deviceName + std::string(".DepthPostProcessing");
+        if(envConfig->isNodeContained(nodeName)) {
+            bool hwNoiseRmEnable = true;
+            bool swNoiseRmEnable = true;
+
+            auto propertyServer = getPropertyServer();
+            if(propertyServer->isPropertySupported(OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL, PROP_OP_READ_WRITE, PROP_ACCESS_USER)) {
+                if(envConfig->getBooleanValue(nodeName + std::string(".HardwareNoiseRemoveFilter"), hwNoiseRmEnable)
+                   && envConfig->getBooleanValue(nodeName + std::string(".SoftwareNoiseRemoveFilter"), swNoiseRmEnable)) {
+                    propertyServer->setPropertyValueT(OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL, hwNoiseRmEnable, PROP_ACCESS_USER);
+                    propertyServer->setPropertyValueT(OB_PROP_DEPTH_SOFT_FILTER_BOOL, swNoiseRmEnable, PROP_ACCESS_USER);
+                }
+                else {
+                    LOG_DEBUG("Getting depth post processing XML node failed");
+                }
+            }
+        }
+        else {
+            LOG_DEBUG("No depth post processing config found for device");
+        }
+    }
+    catch(libobsensor_exception &e) {
+        std::string errorMsg = "Failed to load default depth post processing config: " + std::string(e.what());
+        LOG_WARN(errorMsg);
+    }
 }
 }  // namespace libobsensor

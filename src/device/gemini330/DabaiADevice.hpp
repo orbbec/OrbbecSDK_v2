@@ -26,6 +26,7 @@ private:
     void initSensorStreamProfile(std::shared_ptr<ISensor> sensor);
 
     std::shared_ptr<const StreamProfile> loadDefaultStreamProfile(OBSensorType sensorType);
+    void                                 loadDefaultDepthPostProcessingConfig();
 
 private:
     const uint64_t                                              deviceTimeFreq_ = 1000;     // in ms
