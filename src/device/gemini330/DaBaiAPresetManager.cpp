@@ -197,7 +197,28 @@ void DaBaiAPresetManager::exportSettingsAsPresetJsonFile(const std::string &file
 }
 
 void DaBaiAPresetManager::fetchPreset() {
-    // todo
+    auto owner                = getOwner();
+    auto depthWorkModeManager = owner->getComponentT<G330DepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
+
+    // refetch list
+    depthWorkModeManager->fetchDepthWorkModeList();
+
+    // clear data
+    availablePresets_.clear();
+    currentPreset_.clear();
+    tmpJsonData_.clear();
+    customPresets_.clear();
+
+    auto depthWorkModeList = depthWorkModeManager->getDepthWorkModeList();
+    for(auto &mode: depthWorkModeList) {
+        availablePresets_.emplace_back(mode.name);
+    }
+
+    if(availablePresets_.size() > 1) {
+        currentPreset_ = availablePresets_[0];
+        depthWorkModeManager->switchDepthWorkMode(currentPreset_.c_str());
+    }
+    storeCurrentParamsAsCustomPreset("Custom");
 }
 
 template <typename T> void setPropertyValue(IDevice *dev, uint32_t propertyId, T value) {
