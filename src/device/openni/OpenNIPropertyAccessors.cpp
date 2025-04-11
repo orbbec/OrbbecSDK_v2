@@ -3,7 +3,7 @@
 
 #include "OpenNIPropertyAccessors.hpp"
 #include "frameprocessor/FrameProcessor.hpp"
-#include "sensor/video/DisparityBasedSensor.hpp"
+#include "OpenNIDisparitySensor.hpp"
 #include "IDeviceComponent.hpp"
 
 namespace libobsensor {
@@ -29,7 +29,7 @@ void OpenNIDisp2DepthPropertyAccessor::setPropertyValue(uint32_t propertyId, con
         }
 
         // update depth unit
-        auto sensor = owner_->getComponentT<DisparityBasedSensor>(OB_DEV_COMPONENT_DEPTH_SENSOR, false);
+        auto sensor = owner_->getComponentT<OpenNIDisparitySensor>(OB_DEV_COMPONENT_DEPTH_SENSOR, false);
         if(sensor) {
             auto depthUnit = utils::depthPrecisionLevelToUnit(static_cast<OBDepthPrecisionLevel>(value.intValue));
             sensor->setDepthUnit(depthUnit);
@@ -96,7 +96,7 @@ void OpenNIDisp2DepthPropertyAccessor::getPropertyRange(uint32_t propertyId, OBP
 }
 
 void OpenNIDisp2DepthPropertyAccessor::markOutputDisparityFrame(bool enable) {
-    auto sensor = owner_->getComponentT<DisparityBasedSensor>(OB_DEV_COMPONENT_DEPTH_SENSOR, false);
+    auto sensor = owner_->getComponentT<OpenNIDisparitySensor>(OB_DEV_COMPONENT_DEPTH_SENSOR, false);
     if(sensor) {
         sensor->markOutputDisparityFrame(enable);
     }

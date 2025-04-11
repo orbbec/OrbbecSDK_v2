@@ -23,9 +23,9 @@ constexpr uint16_t VIRTUAL_PROFILE_WIDTH_320  = 320;
 constexpr uint16_t VIRTUAL_PROFILE_HEIGHT_200 = 200;
 
 MaxProDisparitySensor::MaxProDisparitySensor(IDevice *owner, OBSensorType sensorType, const std::shared_ptr<ISourcePort> &backend)
-    : VideoSensor(owner, sensorType, backend), isCropStreamProfile_(false) {
-    convertProfileAsDisparityBasedProfile();
-}
+    : OpenNIDisparitySensor(owner, sensorType, backend), isCropStreamProfile_(false) {}
+
+MaxProDisparitySensor::~MaxProDisparitySensor() noexcept {}
 
 void MaxProDisparitySensor::start(std::shared_ptr<const StreamProfile> sp, FrameCallback callback) {
     auto                                 owner          = getOwner();
@@ -56,23 +56,6 @@ void MaxProDisparitySensor::start(std::shared_ptr<const StreamProfile> sp, Frame
     })
 
     VideoSensor::start(playStreamProfile, callback);
-}
-
-void MaxProDisparitySensor::updateFormatFilterConfig(const std::vector<FormatFilterConfig> &configs) {
-    VideoSensor::updateFormatFilterConfig(configs);
-    convertProfileAsDisparityBasedProfile();
-}
-
-void MaxProDisparitySensor::convertProfileAsDisparityBasedProfile() {
-    auto oldSpList = streamProfileList_;
-    streamProfileList_.clear();
-    for(auto &sp: oldSpList) {
-        auto vsp   = sp->as<const VideoStreamProfile>();
-        auto newSp = StreamProfileFactory::createDisparityBasedStreamProfile(vsp);
-        auto iter  = streamProfileBackendMap_.find(sp);
-        streamProfileBackendMap_.insert({ newSp, { iter->second.first, iter->second.second } });
-        streamProfileList_.push_back(newSp);
-    }
 }
 
 void MaxProDisparitySensor::initProfileVirtualRealMap() {
@@ -111,10 +94,6 @@ void MaxProDisparitySensor::initProfileVirtualRealMap() {
             }
         }
     }
-}
-
-void MaxProDisparitySensor::setDepthUnit(float unit) {
-    depthUnit_ = unit;
 }
 
 void MaxProDisparitySensor::outputFrame(std::shared_ptr<Frame> frame) {
