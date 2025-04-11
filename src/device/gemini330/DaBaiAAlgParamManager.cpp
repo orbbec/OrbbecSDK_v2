@@ -11,6 +11,8 @@
 #include <vector>
 #include <sstream>
 #include <math.h>
+#include <algorithm>  // for std::transform
+#include <cctype>     // for std::tolower
 namespace libobsensor {
 
 void rotation_x(float angle, float *mat) {
@@ -604,7 +606,6 @@ void DaBaiAAlgParamManager::bindIntrinsic(std::vector<std::shared_ptr<const Stre
 }
 
 void DaBaiAAlgParamManager::d2CProfileListFilter(const std::string currentDepthAlgMode) {
-
     if(originD2cProfileList_.empty() || originD2cColorPreProcessProfileList_.empty()) {
         return;
     }
@@ -627,15 +628,20 @@ void DaBaiAAlgParamManager::d2CProfileListFilter(const std::string currentDepthA
         return;
     }
 
-    // Determine work mode value based on currentDepthAlgMode
+    // Convert currentDepthAlgMode to lowercase for case-insensitive search
+    std::string lowerAlgMode = currentDepthAlgMode;
+    std::transform(lowerAlgMode.begin(), lowerAlgMode.end(), lowerAlgMode.begin(), [](unsigned char c) -> char { return static_cast<char>(std::tolower(c)); });
+
+    // Determine work mode value based on currentDepthAlgMode: if it contains "wide", set workModeVal to 1.
     uint8_t workModeVal = 0;
-    if(std::strcmp(currentDepthAlgMode.c_str(), "Wide") == 0) {
+    if(lowerAlgMode.find("wide") != std::string::npos) {
         workModeVal = 1;
     }
 
     d2cProfileList_.clear();
     d2cColorPreProcessProfileList_.clear();
     depthModefilterCameraParamList_.clear();
+
     // Filter profiles based on enable flag and work mode
     for(size_t i = 0; i < originD2cProfileList_.size(); i++) {
         const auto &profile = originD2cProfileList_[i];
@@ -648,13 +654,13 @@ void DaBaiAAlgParamManager::d2CProfileListFilter(const std::string currentDepthA
         }
     }
 
-    // update valid calibration camera param
+    // Update valid calibration camera parameters
     if(originCalibrationCameraParamList_.size() == 4) {
-        if(std::strcmp(currentDepthAlgMode.c_str(), "Wide") == 0) {
+        if(lowerAlgMode.find("wide") != std::string::npos) {
             depthModefilterCameraParamList_.push_back(originCalibrationCameraParamList_[2]);
             depthModefilterCameraParamList_.push_back(originCalibrationCameraParamList_[3]);
         }
-        else if(std::strcmp(currentDepthAlgMode.c_str(), "Standard") == 0) {
+        else {
             depthModefilterCameraParamList_.push_back(originCalibrationCameraParamList_[0]);
             depthModefilterCameraParamList_.push_back(originCalibrationCameraParamList_[1]);
         }
