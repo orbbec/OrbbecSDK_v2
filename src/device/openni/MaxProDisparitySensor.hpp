@@ -1,34 +1,25 @@
 
 #pragma once
 
-#include "sensor/video/VideoSensor.hpp"
+#include "OpenNIDisparitySensor.hpp"
 
 namespace libobsensor {
-class MaxProDisparitySensor : public VideoSensor {
+class MaxProDisparitySensor : public OpenNIDisparitySensor {
 public:
     MaxProDisparitySensor(IDevice *owner, OBSensorType sensorType, const std::shared_ptr<ISourcePort> &backend);
-    ~MaxProDisparitySensor() override = default;
+    ~MaxProDisparitySensor() noexcept;
 
     void start(std::shared_ptr<const StreamProfile> sp, FrameCallback callback) override;
-
-    void updateFormatFilterConfig(const std::vector<FormatFilterConfig> &configs) override;
-
-    void setDepthUnit(float unit);
 
     void initProfileVirtualRealMap();
 
     void setFrameProcessor(std::shared_ptr<FrameProcessor> frameProcessor);
 
-private:
+protected:
     void outputFrame(std::shared_ptr<Frame> frame) override;
 
-    void convertProfileAsDisparityBasedProfile();
-
-    void syncDisparityToDepthModeStatus();
-
 private:
-    bool  isCropStreamProfile_ = false;
-    float depthUnit_           = 1.0f;
+    bool isCropStreamProfile_ = false;
 
     std::map<std::shared_ptr<const StreamProfile>, std::shared_ptr<const StreamProfile>> profileVirtualRealMap_;
 
