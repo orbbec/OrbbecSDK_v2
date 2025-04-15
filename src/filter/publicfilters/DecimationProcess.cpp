@@ -304,11 +304,13 @@ bool DecimationFilter::isFrameFormatTypeSupported(OBFormat type) {
 }
 
 void DecimationFilter::updateOutputProfile(const std::shared_ptr<const Frame> frame) {
-    auto streamProfile = frame->getStreamProfile();
-    if(options_changed_ || streamProfile.get() != source_stream_profile_.get()) {
+    auto streamProfile = frame->getStreamProfile()->as<VideoStreamProfile>();
+    if(options_changed_ || !(*(streamProfile) == *(source_stream_profile_))) {
         options_changed_       = false;
-        source_stream_profile_ = streamProfile->as<VideoStreamProfile>();
-        const auto pf          = registered_profiles_.find(std::make_tuple(source_stream_profile_.get(), decimation_factor_));
+        source_stream_profile_ = streamProfile->clone()->as<VideoStreamProfile>();
+        std::stringstream oss;
+        *source_stream_profile_ << oss;
+        const auto pf          = registered_profiles_.find(std::make_tuple(oss.str(), decimation_factor_));
         if(registered_profiles_.end() != pf) {
             target_stream_profile_ = pf->second;
 
@@ -353,8 +355,9 @@ void DecimationFilter::updateOutputProfile(const std::shared_ptr<const Frame> fr
         target_stream_profile_->setHeight(padded_height_);
         // extrinsic and distortion parameters remain unchanged.
         target_stream_profile_->bindIntrinsic(intrinsic);
-
-        registered_profiles_[std::make_tuple(source_stream_profile_.get(), decimation_factor_)] = target_stream_profile_;
+        std::stringstream oss;
+        *source_stream_profile_ << oss;
+        registered_profiles_[std::make_tuple(oss.str(), decimation_factor_)] = target_stream_profile_;
 
         recalc_profile_ = false;
     }
