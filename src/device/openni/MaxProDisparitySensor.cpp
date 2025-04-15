@@ -55,6 +55,41 @@ void MaxProDisparitySensor::start(std::shared_ptr<const StreamProfile> sp, Frame
         throw; 
     })
 
+    OpenNIFrameProcessParam processParam = { 1, 0, 0, 0, 0, 0, 0 };
+    auto it = profileProcessParamMap_.find(sp);
+    if(it != profileProcessParamMap_.end()) {
+        processParam = it->second;
+    }
+
+    auto        processor        = getOwner()->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR);
+    std::string configSchemaName = "DisparityTransform#3";
+    double      configValue      = static_cast<double>(processParam.dstWidth);
+    processor->setConfigValue(configSchemaName, configValue);
+
+    configSchemaName = "DisparityTransform#4";
+    configValue      = static_cast<double>(processParam.dstHeight);
+    processor->setConfigValue(configSchemaName, configValue);
+
+    configSchemaName = "DisparityTransform#5";
+    configValue      = static_cast<double>(processParam.scale);
+    processor->setConfigValue(configSchemaName, configValue);
+
+    configSchemaName = "DisparityTransform#6";
+    configValue      = static_cast<double>(processParam.yCut);
+    processor->setConfigValue(configSchemaName, configValue);
+
+    configSchemaName = "DisparityTransform#7";
+    configValue      = static_cast<double>(processParam.xCut);
+    processor->setConfigValue(configSchemaName, configValue);
+
+    configSchemaName = "DisparityTransform#8";
+    configValue      = static_cast<double>(processParam.ySet);
+    processor->setConfigValue(configSchemaName, configValue);
+
+    configSchemaName = "DisparityTransform#9";
+    configValue      = static_cast<double>(processParam.xSet);
+    processor->setConfigValue(configSchemaName, configValue);
+
     VideoSensor::start(playStreamProfile, callback);
 }
 
@@ -65,13 +100,17 @@ void MaxProDisparitySensor::initProfileVirtualRealMap() {
     StreamProfileList virtualProfileList;
     for(const auto &streamProfile: profileList) {
         auto vsp = streamProfile->as<const VideoStreamProfile>();
+        OpenNIFrameProcessParam processParam = {1,0,0,0,0,0,0};
         if(vsp->getHeight() == REAL_PROFILE_HEIGHT_320 || vsp->getHeight() == REAL_PROFILE_HEIGHT_160) {
+            processParam.dstWidth  = vsp->getWidth();
+            processParam.dstHeight = vsp->getHeight();
             realProfileList.push_back(vsp);
         }
 
         if(vsp->getHeight() == VIRTUAL_PROFILE_HEIGHT_400 || vsp->getHeight() == VIRTUAL_PROFILE_HEIGHT_200) {
             virtualProfileList.push_back(vsp);
         }
+        profileProcessParamMap_[streamProfile] = processParam;
     }
 
     for(const auto &streamProfile: realProfileList) {
@@ -96,41 +135,34 @@ void MaxProDisparitySensor::initProfileVirtualRealMap() {
     }
 }
 
-void MaxProDisparitySensor::outputFrame(std::shared_ptr<Frame> frame) {
-    auto vsp = frame->as<VideoFrame>();
-    vsp->setPixelType(OB_PIXEL_DISPARITY);
-
-    auto depthFrame = frame->as<DepthFrame>();
-    if(depthFrame) {
-        depthFrame->setValueScale(depthUnit_);
-    }
-
-    frame->setStreamProfile(activatedStreamProfile_);
-    if(frameProcessor_) {
-        frameProcessor_->pushFrame(frame);
-    }
-    else {
-        SensorBase::outputFrame(frame);
-    }
-}
-
 void MaxProDisparitySensor::setFrameProcessor(std::shared_ptr<FrameProcessor> frameProcessor) {
     if(isStreamActivated()) {
         throw wrong_api_call_sequence_exception("Can not update frame processor while streaming");
     }
     frameProcessor_ = frameProcessor;
     frameProcessor_->setCallback([this](std::shared_ptr<Frame> frame) {
-        if(isCropStreamProfile_) {
-            auto streamProfile      = realActivatedStreamProfile_->clone();
-            auto videoStreamProfile = streamProfile->as<const VideoStreamProfile>();
-            streamProfile->setFormat(OB_FORMAT_Y16);
-            frame->setStreamProfile(streamProfile);
-            frame->setDataSize(videoStreamProfile->getWidth() * videoStreamProfile->getHeight() * 2);
-        }
+        auto depthFrame = frame->as<DepthFrame>();
+        uint32_t dataSize = (uint32_t)depthFrame->getDataSize();
+        uint32_t w        = depthFrame->getWidth();
+        uint32_t h        = depthFrame->getHeight();
+        LOG_DEBUG("{},{},{}", dataSize, w, h);
+
+        auto              streamProfile     = depthFrame->getStreamProfile();
+        auto              vdStreamProfile   = streamProfile->as<VideoStreamProfile>();
+        OBCameraIntrinsic obCameraIntrinsic = vdStreamProfile->getIntrinsic();
+        LOG_DEBUG("{}", obCameraIntrinsic.cx);
+        OBCameraDistortion obCameraDistortion = vdStreamProfile->getDistortion();
+        LOG_DEBUG("{}", obCameraDistortion.k1);
+        OBExtrinsic obExtrinsic = vdStreamProfile->getExtrinsicTo(streamProfile);
+        LOG_DEBUG("{}", obExtrinsic.rot[0]);
 
         auto deviceInfo = owner_->getInfo();
         LOG_FREQ_CALC(DEBUG, 5000, "{}({}): {} frameProcessor_ callback frameRate={freq}fps", deviceInfo->name_, deviceInfo->deviceSn_, sensorType_);
-        SensorBase::outputFrame(frame);
+        if(frameCallback_) {
+            frameCallback_(frame);
+        }
+
+        LOG_FREQ_CALC(INFO, 5000, "{}({}): {} Streaming... frameRate={freq}fps", deviceInfo->name_, deviceInfo->deviceSn_, sensorType_);
     });
 }
 

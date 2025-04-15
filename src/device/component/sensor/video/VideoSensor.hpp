@@ -42,7 +42,6 @@ public:
 protected:
     virtual void trySendStopStreamVendorCmd();
     void         onBackendFrameCallback(std::shared_ptr<Frame> frame);
-    void         outputFrame(std::shared_ptr<Frame> frame) override;
 
 protected:
     std::shared_ptr<LazySensor>                                                         lazySelf_;

@@ -4,6 +4,16 @@
 #include "OpenNIDisparitySensor.hpp"
 
 namespace libobsensor {
+typedef struct OpenNIFrameProcessParam {
+    float scale;
+    int   xCut;
+    int   yCut;
+    int   xSet;
+    int   ySet;
+    int   dstWidth;
+    int   dstHeight;
+} OpenNIFrameProcessParam;
+
 class MaxProDisparitySensor : public OpenNIDisparitySensor {
 public:
     MaxProDisparitySensor(IDevice *owner, OBSensorType sensorType, const std::shared_ptr<ISourcePort> &backend);
@@ -15,13 +25,11 @@ public:
 
     void setFrameProcessor(std::shared_ptr<FrameProcessor> frameProcessor);
 
-protected:
-    void outputFrame(std::shared_ptr<Frame> frame) override;
-
 private:
     bool isCropStreamProfile_ = false;
 
     std::map<std::shared_ptr<const StreamProfile>, std::shared_ptr<const StreamProfile>> profileVirtualRealMap_;
+    std::map<std::shared_ptr<const StreamProfile>, OpenNIFrameProcessParam>              profileProcessParamMap_;
 
     std::shared_ptr<const StreamProfile> realActivatedStreamProfile_;
 };
