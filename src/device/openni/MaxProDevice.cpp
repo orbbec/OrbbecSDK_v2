@@ -90,7 +90,7 @@ void MaxProDevice::initSensorList() {
                 sensor->setDepthUnit(1.0f);
 
                 initSensorStreamProfile(sensor);
-
+                sensor->markOutputDisparityFrame(true);
                 sensor->initProfileVirtualRealMap();
                 return sensor;
             },
@@ -197,7 +197,7 @@ void MaxProDevice::initProperties() {
         if(sensor == OB_SENSOR_DEPTH) {
             propertyServer->registerProperty(OB_PROP_TEMPERATURE_COMPENSATION_BOOL, "rw", "rw", vendorPropertyAccessor_);
             propertyServer->registerProperty(OB_PROP_IR_CHANNEL_DATA_SOURCE_INT, "rw", "rw", vendorPropertyAccessor_);
-            propertyServer->registerProperty(OB_PROP_IR_LONG_EXPOSURE_BOOL, "w", "w", vendorPropertyAccessor_);
+            propertyServer->registerProperty(OB_PROP_IR_LONG_EXPOSURE_BOOL, "rw", "rw", vendorPropertyAccessor_);
             propertyServer->registerProperty(OB_PROP_DEPTH_LOAD_ENGINE_GROUP_PARAM_INT, "", "w", vendorPropertyAccessor_);
             // propertyServer->registerProperty(OB_PROP_WATCHDOG_BOOL, "w", "w", vendorPropertyAccessor_);
             // propertyServer->registerProperty(OB_PROP_HEARTBEAT_BOOL, "w", "w", vendorPropertyAccessor_);
