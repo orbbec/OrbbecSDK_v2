@@ -305,7 +305,7 @@ bool DecimationFilter::isFrameFormatTypeSupported(OBFormat type) {
 
 void DecimationFilter::updateOutputProfile(const std::shared_ptr<const Frame> frame) {
     auto streamProfile = frame->getStreamProfile()->as<VideoStreamProfile>();
-    if(options_changed_ || !(*(streamProfile) == *(source_stream_profile_))) {
+    if(options_changed_ || !source_stream_profile_ ||!(*(streamProfile) == *(source_stream_profile_))) {
         options_changed_       = false;
         source_stream_profile_ = streamProfile->clone()->as<VideoStreamProfile>();
         std::stringstream oss;
