@@ -291,6 +291,7 @@ void PlaybackDevice::initProperties() {
     registerPropertyCondition(propertyServer, OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL, "r", "r", vendorAccessor, isNonFemtoDevice);
     registerPropertyCondition(propertyServer, OB_PROP_DEPTH_EXPOSURE_INT, "r", "r", vendorAccessor);
     registerPropertyCondition(propertyServer, OB_PROP_DEPTH_GAIN_INT, "r", "r", vendorAccessor, isNonFemtoDevice);
+    registerPropertyCondition(propertyServer, OB_PROP_DEPTH_AUTO_EXPOSURE_PRIORITY_INT, "r", "r", vendorAccessor, isG330Device);
     // Color sensor properties
     registerPropertyCondition(propertyServer, OB_PROP_COLOR_POWER_LINE_FREQUENCY_INT, "r", "r", vendorAccessor);
     registerPropertyCondition(propertyServer, OB_PROP_COLOR_AUTO_EXPOSURE_BOOL, "r", "r", vendorAccessor);
@@ -316,7 +317,6 @@ void PlaybackDevice::initProperties() {
     // G330 metadata properties(v4l2 backend only)
     // Color sensor properties
     registerPropertyCondition(propertyServer, OB_PROP_COLOR_AUTO_EXPOSURE_BOOL, "r", "r", vendorAccessor, isG330V4L2Backend);
-    registerPropertyCondition(propertyServer, OB_PROP_COLOR_AUTO_EXPOSURE_PRIORITY_INT, "r", "r", vendorAccessor, isG330V4L2Backend);
     registerPropertyCondition(propertyServer, OB_PROP_COLOR_AUTO_WHITE_BALANCE_BOOL, "r", "r", vendorAccessor, isG330V4L2Backend);
     registerPropertyCondition(propertyServer, OB_PROP_COLOR_WHITE_BALANCE_INT, "r", "r", vendorAccessor, isG330V4L2Backend);
     registerPropertyCondition(propertyServer, OB_PROP_COLOR_BRIGHTNESS_INT, "r", "r", vendorAccessor, isG330V4L2Backend);
@@ -330,7 +330,6 @@ void PlaybackDevice::initProperties() {
     registerPropertyCondition(propertyServer, OB_STRUCT_COLOR_AE_ROI, "r", "r", vendorAccessor, isG330V4L2Backend);
     // Depth sensor properties
     registerPropertyCondition(propertyServer, OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL, "r", "r", vendorAccessor, isG330V4L2Backend);
-    registerPropertyCondition(propertyServer, OB_PROP_DEPTH_AUTO_EXPOSURE_PRIORITY_INT, "r", "r", vendorAccessor, isG330V4L2Backend);
     registerPropertyCondition(propertyServer, OB_STRUCT_DEPTH_HDR_CONFIG, "r", "r", vendorAccessor, isG330V4L2Backend);
     registerPropertyCondition(propertyServer, OB_STRUCT_DEPTH_AE_ROI, "r", "r", vendorAccessor, isG330V4L2Backend);
     registerPropertyCondition(propertyServer, OB_STRUCT_DEVICE_TIME, "r", "r", vendorAccessor, isG330V4L2Backend);
