@@ -142,6 +142,16 @@ OB_EXPORT ob_extrinsic ob_stream_profile_get_extrinsic_to(const ob_stream_profil
 OB_EXPORT void ob_stream_profile_set_extrinsic_to(ob_stream_profile *source, const ob_stream_profile *target, ob_extrinsic extrinsic, ob_error **error);
 
 /**
+ * @brief Set the extrinsic for source stream to target stream type
+ *
+ * @param[in] source Source stream profile
+ * @param[in]  type Target stream type
+ * @param[out] error Pointer to an error object that will be set if an error occurs.
+ * @return ob_extrinsic The extrinsic
+ */
+OB_EXPORT void ob_stream_profile_set_extrinsic_to_type(ob_stream_profile *source, const ob_stream_type type, ob_extrinsic extrinsic, ob_error **error);
+
+/**
  * @brief Get the frame rate of the video stream
  *
  * @param[in] profile Stream profile object

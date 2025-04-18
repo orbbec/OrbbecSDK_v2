@@ -6,6 +6,7 @@
 #include "frame/FrameFactory.hpp"
 #include "DeviceBase.hpp"
 #include "IAlgParamManager.hpp"
+#include "property/InternalProperty.hpp"
 
 namespace libobsensor {
 
@@ -96,6 +97,7 @@ void RecordDevice::writeAllProperties() {
         // depth sensor property
         writePropertyT<bool>(OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL);
         writePropertyT<int>(OB_PROP_DEPTH_AUTO_EXPOSURE_PRIORITY_INT);
+        writePropertyT<bool>(OB_PROP_DEPTH_ALIGN_HARDWARE_BOOL);
 
         // depth & color struct property
         auto server         = device_->getPropertyServer();
@@ -147,20 +149,23 @@ void RecordDevice::writeAllProperties() {
     writePropertyT<int>(OB_PROP_IR_BRIGHTNESS_INT);
     writePropertyT<int>(OB_PROP_IR_EXPOSURE_INT);
     writePropertyT<int>(OB_PROP_IR_GAIN_INT);
+
+    // d2c profile list
+    auto algParamManager = device_->getComponentT<IAlgParamManager>(OB_DEV_COMPONENT_ALG_PARAM_MANAGER, false);
+    auto d2cProfileList  = algParamManager->getD2CProfileList();
+    writer_->writeProperty(OB_RAW_DATA_D2C_ALIGN_SUPPORT_PROFILE_LIST, reinterpret_cast<uint8_t *>(d2cProfileList.data()),static_cast<uint32_t>(d2cProfileList.size() * sizeof(OBD2CProfile)));
+
+    //calibration param list
+    auto calibrationList = algParamManager->getCalibrationCameraParamList();
+    writer_->writeProperty(OB_RAW_DATA_ALIGN_CALIB_PARAM,reinterpret_cast<uint8_t *>(calibrationList.data()),static_cast<uint32_t>(calibrationList.size() * sizeof(OBCameraParam)));
+
+    auto imuCalibrationParam = algParamManager->getIMUCalibrationParam();
+    writer_->writeProperty(OB_RAW_DATA_IMU_CALIB_PARAM, reinterpret_cast<uint8_t *>(&imuCalibrationParam), sizeof(OBIMUCalibrateParams));
 }
 
 void RecordDevice::stopRecord() {
-    auto server  = device_->getPropertyServer();
-    bool isHWD2C = false;
-    try {
-        isHWD2C = server->getPropertyValueT<bool>(OB_PROP_DEPTH_ALIGN_HARDWARE_BOOL);
-    }
-    catch(...) {
-    }
-    auto algParamManager = device_->getComponentT<IAlgParamManager>(OB_DEV_COMPONENT_ALG_PARAM_MANAGER, false);
-    auto d2cProfileList  = algParamManager->getD2CProfileList();
     writer_->writeDeviceInfo(std::dynamic_pointer_cast<DeviceBase>(device_)->getInfo());
-    writer_->writeStreamProfiles(isHWD2C, d2cProfileList);
+    writer_->writeStreamProfiles();
 }
 
 }  // namespace libobsensor

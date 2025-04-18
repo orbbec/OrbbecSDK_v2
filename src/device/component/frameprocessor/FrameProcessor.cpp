@@ -5,6 +5,7 @@
 #include "frame/FrameFactory.hpp"
 #include "utils/Utils.hpp"
 #include "environment/EnvConfig.hpp"
+#include "property/InternalProperty.hpp"
 
 namespace libobsensor {
 FrameProcessorFactory::FrameProcessorFactory(IDevice *owner) : DeviceComponentBase(owner) {
@@ -30,7 +31,7 @@ FrameProcessorFactory::FrameProcessorFactory(IDevice *owner) : DeviceComponentBa
         context_->destroy_processor = dylib_->get_function<void(ob_frame_processor *, ob_error **)>("ob_destroy_frame_processor");
         context_->destroy_context   = dylib_->get_function<void(ob_frame_processor_context *, ob_error **)>("ob_destroy_frame_processor_context");
         context_->set_hardware_d2c_params =
-            dylib->get_function<void(ob_frame_processor *, ob_camera_param, uint8_t, float, int16_t, int16_t, int16_t, int16_t, bool, ob_error **error)>(
+            dylib->get_function<void(ob_frame_processor *, ob_camera_intrinsic, uint8_t, float, int16_t, int16_t, int16_t, int16_t, bool,bool, ob_error **error)>(
                 "ob_frame_processor_set_hardware_d2c_params");
     }
 
@@ -295,33 +296,49 @@ DepthFrameProcessor::DepthFrameProcessor(IDevice *owner, std::shared_ptr<FramePr
 
 DepthFrameProcessor::~DepthFrameProcessor() noexcept {}
 
-void DepthFrameProcessor::setHardwareD2CProcessParams(uint32_t colorWidth, uint32_t colorHeight, uint32_t depthWidth, uint32_t depthHeight,
+void DepthFrameProcessor::setHardwareD2CProcessParams(std::shared_ptr<const VideoStreamProfile> colorVideoStreamProfile,std::shared_ptr<const VideoStreamProfile> depthVideoStreamProfile,
                                                       std::vector<OBCameraParam> calibrationCameraParams, std::vector<OBD2CProfile> d2cProfiles,
                                                       bool matchTargetResolution) {
+    uint32_t colorWidth  = colorVideoStreamProfile->getWidth();
+    uint32_t colorHeight = colorVideoStreamProfile->getHeight();
+    uint32_t depthWidth  = depthVideoStreamProfile->getWidth();
+    uint32_t depthHeight = depthVideoStreamProfile->getHeight();
+
     OBCameraParam currentCameraParam = {};
-    OBD2CProfile  currentD2CProfile  = {};
-    for(const auto &d2cProfile: d2cProfiles) {
-        if(d2cProfile.colorWidth == colorWidth && d2cProfile.colorHeight == colorHeight && d2cProfile.depthWidth == depthWidth
-           && d2cProfile.depthHeight == depthHeight && (d2cProfile.alignType & ALIGN_D2C_HW)) {
-            currentD2CProfile = d2cProfile;
+    OBD2CProfile  d2cProfile  = {};
+    for(const auto &profile: d2cProfiles) {
+        if(profile.colorWidth == colorWidth && profile.colorHeight == colorHeight && profile.depthWidth == depthWidth
+           && profile.depthHeight == depthHeight && (profile.alignType & ALIGN_D2C_HW)) {
+            d2cProfile = profile;
             break;
         }
     }
 
-    bool valid =
-        currentD2CProfile.colorWidth != 0 && currentD2CProfile.colorHeight != 0 && currentD2CProfile.depthWidth != 0 && currentD2CProfile.depthHeight != 0;
-    if(!valid || static_cast<size_t>(currentD2CProfile.paramIndex) + 1 > calibrationCameraParams.size()) {
+    bool valid = d2cProfile.colorWidth != 0 && d2cProfile.colorHeight != 0 && d2cProfile.depthWidth != 0 && d2cProfile.depthHeight != 0;
+    if(!valid || static_cast<size_t>(d2cProfile.paramIndex) + 1 > calibrationCameraParams.size()) {
         throw invalid_value_exception("Current stream profile is not support hardware d2c process");
         return;
     }
 
-    currentCameraParam = calibrationCameraParams.at(currentD2CProfile.paramIndex);
-
+    currentCameraParam = calibrationCameraParams.at(d2cProfile.paramIndex);
+    currentD2CProfile_ = d2cProfile;
     if(context_->set_hardware_d2c_params) {
+        //get module mirror status
+        bool moduleMirrorStatus = false;
+        auto owner = getOwner();
+        auto propertyServer = owner->getPropertyServer();
+        auto isSupported = propertyServer->isPropertySupported(OB_PROP_DEPTH_MIRROR_MODULE_STATUS_BOOL,PROP_OP_READ,PROP_ACCESS_INTERNAL);
+        if(isSupported) {
+            moduleMirrorStatus = propertyServer->getPropertyValueT<bool>(OB_PROP_DEPTH_MIRROR_MODULE_STATUS_BOOL);
+        }
+
+        //get target intrinsic
+        auto targetIntrinsic = colorVideoStreamProfile->getIntrinsic();
+
         ob_error *error = nullptr;
-        context_->set_hardware_d2c_params(privateProcessor_, currentCameraParam, currentD2CProfile.paramIndex, currentD2CProfile.postProcessParam.depthScale,
-                                          currentD2CProfile.postProcessParam.alignLeft, currentD2CProfile.postProcessParam.alignTop,
-                                          currentD2CProfile.postProcessParam.alignRight, currentD2CProfile.postProcessParam.alignBottom, matchTargetResolution,
+        context_->set_hardware_d2c_params(privateProcessor_,targetIntrinsic , d2cProfile.paramIndex, d2cProfile.postProcessParam.depthScale,
+            d2cProfile.postProcessParam.alignLeft, d2cProfile.postProcessParam.alignTop,
+            d2cProfile.postProcessParam.alignRight, d2cProfile.postProcessParam.alignBottom, matchTargetResolution,moduleMirrorStatus,
                                           &error);
         if(error) {
             LOG_ERROR("set hardware d2c params failed");
@@ -331,6 +348,18 @@ void DepthFrameProcessor::setHardwareD2CProcessParams(uint32_t colorWidth, uint3
 }
 
 void DepthFrameProcessor::enableHardwareD2CProcess(bool enable) {
+    auto owner = getOwner();
+    auto propertyServer = owner->getPropertyServer();
+    bool isSupported = propertyServer->isPropertySupported(OB_PROP_DEPTH_ALIGN_HARDWARE_MODE_INT,PROP_OP_WRITE,PROP_ACCESS_INTERNAL);
+    if(isSupported && enable) {
+        propertyServer->setPropertyValueT(OB_PROP_DEPTH_ALIGN_HARDWARE_MODE_INT, currentD2CProfile_.paramIndex);
+    }
+
+    isSupported = propertyServer->isPropertySupported(OB_PROP_DEPTH_ALIGN_HARDWARE_BOOL, PROP_OP_WRITE,PROP_ACCESS_INTERNAL);
+    if(isSupported) {
+        propertyServer->setPropertyValueT(OB_PROP_DEPTH_ALIGN_HARDWARE_BOOL, enable);
+    }
+
     TRY_EXECUTE(setConfigValueSync("HardwareD2CProcessor#255", static_cast<double>(enable)));
 }
 

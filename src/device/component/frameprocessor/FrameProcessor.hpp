@@ -78,10 +78,13 @@ public:
     DepthFrameProcessor(IDevice *owner, std::shared_ptr<FrameProcessorContext> context);
     virtual ~DepthFrameProcessor() noexcept;
 
-    void setHardwareD2CProcessParams(uint32_t colorWidth, uint32_t colorHeight, uint32_t depthWidth, uint32_t depthHeight,
-                                     std::vector<OBCameraParam> calibrationCameraParams, std::vector<OBD2CProfile> d2cProfiles, bool matchTargetResolution);
+    void setHardwareD2CProcessParams(std::shared_ptr<const VideoStreamProfile> colorVideoStreamProfile,std::shared_ptr<const VideoStreamProfile> depthVideoStreamProfile,std::vector<OBCameraParam> calibrationCameraParams, std::vector<OBD2CProfile> d2cProfiles, bool matchTargetResolution);
 
     void enableHardwareD2CProcess(bool enable);
+
+private:
+    OBD2CProfile  currentD2CProfile_ = {};
+
 };
 
 }  // namespace libobsensor

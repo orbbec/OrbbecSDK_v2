@@ -58,6 +58,11 @@ void StreamProfile::bindExtrinsicTo(std::shared_ptr<const StreamProfile> targetS
     extrinsicsMgr->registerExtrinsics(shared_from_this(), targetStreamProfile, extrinsic);
 }
 
+void StreamProfile::bindExtrinsicTo(const OBStreamType &type, const OBExtrinsic &extrinsic){
+    auto extrinsicsMgr = StreamExtrinsicsManager::getInstance();
+    extrinsicsMgr->registerExtrinsics(shared_from_this(), type, extrinsic);
+}
+
 void StreamProfile::bindSameExtrinsicTo(std::shared_ptr<const StreamProfile> targetStreamProfile) {
     auto extrinsicsMgr = StreamExtrinsicsManager::getInstance();
     extrinsicsMgr->registerSameExtrinsics(shared_from_this(), targetStreamProfile);

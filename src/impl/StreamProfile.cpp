@@ -108,6 +108,13 @@ void ob_stream_profile_set_extrinsic_to(ob_stream_profile *source, const ob_stre
 }
 HANDLE_EXCEPTIONS_NO_RETURN(source, target /*, extrinsic*/)  // TODO: add ob_extrinsic operator<<
 
+void ob_stream_profile_set_extrinsic_to_type(ob_stream_profile *source, const ob_stream_type type, ob_extrinsic extrinsic, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(source);
+    auto noneConstProfile = std::const_pointer_cast<libobsensor::StreamProfile>(source->profile);
+    noneConstProfile->bindExtrinsicTo(type, extrinsic);
+}
+HANDLE_EXCEPTIONS_NO_RETURN(source , type /*, extrinsic*/)  // TODO: add ob_extrinsic operator<<
+
 uint32_t ob_video_stream_profile_get_fps(const ob_stream_profile *profile, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(profile);
     if(!profile->profile->is<libobsensor::VideoStreamProfile>()) {
