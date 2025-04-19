@@ -40,6 +40,7 @@ public:
     }
 
     void stop() {
+        LOG_DEBUG("Try stop StateMachine...");
         {
             std::lock_guard<std::mutex> lock(mutex_);
             running_ = false;
@@ -48,6 +49,7 @@ public:
         if(worker_.joinable()) {
             worker_.join();
         }
+        LOG_DEBUG("Stop StateMachine done...");
     }
 
     void pushTask(std::function<void()> task) {
@@ -71,9 +73,11 @@ public:
     using Callback = std::function<void()>;
 
     explicit StateMachineBase(State initialState) : currentState_(initialState) {
+        LOG_DEBUG("StateMachine init");
         taskQueue_.start();
     }
     virtual ~StateMachineBase() {
+        LOG_DEBUG("StateMachine destory");
         taskQueue_.stop();
     }
 

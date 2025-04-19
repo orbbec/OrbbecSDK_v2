@@ -37,6 +37,7 @@ PlaybackDevicePort::PlaybackDevicePort(const std::string &filePath)
 }
 
 PlaybackDevicePort::~PlaybackDevicePort() {
+    LOG_DEBUG("~PlaybackDevicePort");
     {
         std::unique_lock<std::mutex> lock(playbackMutex_);
         isLooping_ = false;
@@ -46,6 +47,8 @@ PlaybackDevicePort::~PlaybackDevicePort() {
     if(playbackThread_.joinable()) {
         playbackThread_.join();
     }
+
+    LOG_DEBUG("~PlaybackDevicePort done");
 }
 
 void PlaybackDevicePort::startStream(std::shared_ptr<const StreamProfile> profile, MutableFrameCallback callback) {
@@ -298,15 +301,15 @@ void PlaybackDevicePort::setPlaybackRate(const float &rate) {
 }
 
 void PlaybackDevicePort::setPlaybackStatusCallback(const PlaybackStatusCallback callback) {
-    if (callback == nullptr) {
-        return;
-    }
     playbackStatus_.clearGlobalCallbacks();
     playbackStatusCallback_ = callback;
-    playbackStatus_.registerGlobalCallback([this]() {
-        LOG_DEBUG("Playback status change to {}", static_cast<int>(playbackStatus_.getCurrentState()));
-        playbackStatusCallback_(playbackStatus_.getCurrentState());
-    });
+
+    if (playbackStatusCallback_) {
+        playbackStatus_.registerGlobalCallback([this]() {
+            LOG_DEBUG("Playback status change to {}", static_cast<int>(playbackStatus_.getCurrentState()));
+            playbackStatusCallback_(playbackStatus_.getCurrentState());
+        });
+    }
 }
 
 OBPlaybackStatus PlaybackDevicePort::getCurrentPlaybackStatus() const {
