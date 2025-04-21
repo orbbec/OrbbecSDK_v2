@@ -4,12 +4,14 @@
 cmake_minimum_required(VERSION 3.5)
 
 project(ob_enumerate_c)
-add_executable(ob_enumerate_c enumerate.c)
+add_executable(${PROJECT_NAME} enumerate.c)
 
-target_link_libraries(ob_enumerate_c PRIVATE ob::OrbbecSDK ob::examples::utils)
+target_link_libraries(${PROJECT_NAME} PRIVATE ob::OrbbecSDK ob::examples::utils)
 
-set_target_properties(ob_enumerate_c PROPERTIES FOLDER "examples_c")
-set_target_properties(ob_enumerate_c PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "examples_c")
+if(MSVC)
+    set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+endif()
 
-install(TARGETS ob_enumerate_c RUNTIME DESTINATION bin)
+install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
 

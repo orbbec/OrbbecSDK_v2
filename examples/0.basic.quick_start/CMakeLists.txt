@@ -4,11 +4,14 @@
 cmake_minimum_required(VERSION 3.5)
 project(ob_quick_start)
 
-add_executable(ob_quick_start quick_start.cpp)
+add_executable(${PROJECT_NAME} quick_start.cpp)
 
-set_property(TARGET ob_quick_start PROPERTY CXX_STANDARD 11)
-target_link_libraries(ob_quick_start ob::OrbbecSDK ob::examples::utils)
-set_target_properties (ob_quick_start PROPERTIES FOLDER "examples")
+set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 11)
+target_link_libraries(${PROJECT_NAME} ob::OrbbecSDK ob::examples::utils)
 
-install(TARGETS ob_quick_start RUNTIME DESTINATION bin)
+set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "examples")
+if(MSVC)
+    set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+endif()
 
+install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)

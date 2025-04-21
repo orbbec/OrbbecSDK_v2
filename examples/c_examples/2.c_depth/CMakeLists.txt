@@ -4,12 +4,14 @@
 cmake_minimum_required(VERSION 3.5)
 
 project(ob_depth_c)
-add_executable(ob_depth_c depth.c)
+add_executable(${PROJECT_NAME} depth.c)
 
-target_link_libraries(ob_depth_c PRIVATE ob::OrbbecSDK ob::examples::utils)
+target_link_libraries(${PROJECT_NAME} PRIVATE ob::OrbbecSDK ob::examples::utils)
 
-set_target_properties(ob_depth_c PROPERTIES FOLDER "examples_c")
-set_target_properties(ob_depth_c PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "examples_c")
+if(MSVC)
+    set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+endif()
 
-install(TARGETS ob_depth_c RUNTIME DESTINATION bin)
+install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
 

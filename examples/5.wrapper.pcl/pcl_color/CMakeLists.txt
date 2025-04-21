@@ -20,11 +20,14 @@ if (PCL_FOUND)
 endif()
 list(APPEND DEPENDENCIES ${PCL_LIBRARIES})
 
-add_executable(ob_pcl_color pcl_color.cpp)
+add_executable(${PROJECT_NAME} pcl_color.cpp)
 
-set_property(TARGET ob_pcl_color PROPERTY CXX_STANDARD 11)
-target_link_libraries(ob_pcl_color ob::OrbbecSDK ob::examples::utils ${DEPENDENCIES})
+set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 11)
+target_link_libraries(${PROJECT_NAME} ob::OrbbecSDK ob::examples::utils)
 
-set_target_properties(ob_pcl_color PROPERTIES FOLDER "examples")
+set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "examples")
+if(MSVC)
+    set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+endif()
 
-install(TARGETS ob_pcl RUNTIME DESTINATION bin)
+install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)

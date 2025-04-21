@@ -8,6 +8,10 @@ add_executable(${PROJECT_NAME} device_firmware_update.cpp)
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 11)
 target_link_libraries(${PROJECT_NAME} ob::OrbbecSDK ob::examples::utils)
-set_target_properties (${PROJECT_NAME} PROPERTIES FOLDER "examples")
 
-install(TARGETS ob_device_firmware_update RUNTIME DESTINATION bin)
+set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "examples")
+if(MSVC)
+    set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+endif()
+
+install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)

@@ -7,9 +7,11 @@ project(ob_device_control)
 add_executable(${PROJECT_NAME} device_control.cpp)
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 11)
-target_link_libraries(${PROJECT_NAME} ob::OrbbecSDK ob::examples::utils )
+target_link_libraries(${PROJECT_NAME} ob::OrbbecSDK ob::examples::utils)
 
-set_target_properties (${PROJECT_NAME} PROPERTIES FOLDER "examples")
+set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "examples")
+if(MSVC)
+    set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+endif()
 
-install(TARGETS ob_device_control RUNTIME DESTINATION bin)
-
+install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)

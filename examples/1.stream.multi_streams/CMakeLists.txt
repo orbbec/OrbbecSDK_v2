@@ -4,11 +4,15 @@
 cmake_minimum_required(VERSION 3.5)
 project(ob_multi_streams)
 
-add_executable(ob_multi_streams multi_streams.cpp)
+add_executable(${PROJECT_NAME} multi_streams.cpp)
 
-set_property(TARGET ob_multi_streams PROPERTY CXX_STANDARD 11)
-target_link_libraries(ob_multi_streams ob::OrbbecSDK ob::examples::utils)
-set_target_properties(ob_multi_streams PROPERTIES FOLDER "examples")
+set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 11)
+target_link_libraries(${PROJECT_NAME} ob::OrbbecSDK ob::examples::utils)
 
-install(TARGETS ob_multi_streams RUNTIME DESTINATION bin)
+set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "examples")
+if(MSVC)
+    set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+endif()
+
+install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
 
