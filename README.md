@@ -43,6 +43,7 @@ If you prefer to continue with Orbbec SDK v1.x, you can still access the pre-com
 | Gemini 335Lg      | 1.3.46                       |
 | Femto Bolt        | 1.1.2                  |
 | Femto Mega        | 1.3.0                  |
+| Femto Mega I        | 2.0.4                  |
 | Astra 2           | 2.8.20                       |
 | Gemini 2 L        | 1.4.53                       |
 | Gemini 2          | 1.4.92               |
