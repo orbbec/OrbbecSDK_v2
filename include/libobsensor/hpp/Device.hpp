@@ -1394,9 +1394,9 @@ public:
     }
 
     /**
-     * @brief Get the number of device presets in the list
+     * @brief Get the number of camera parameters in the list.
      *
-     * @return uint32_t the number of device presets in the list
+     * @return uint32_t the number of camera parameters in the list.
      */
     uint32_t getCount() {
         ob_error *error = nullptr;
