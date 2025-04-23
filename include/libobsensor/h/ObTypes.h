@@ -10,14 +10,14 @@
 
 #include "Export.h"
 
+#include <stdbool.h>
+#include <stdint.h>
+
 #pragma pack(push, 1)  // struct 1-byte align
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include <stdbool.h>
-#include <stdint.h>
 
 typedef struct ob_context_t                      ob_context;
 typedef struct ob_device_t                       ob_device;

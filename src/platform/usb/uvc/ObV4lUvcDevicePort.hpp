@@ -104,6 +104,10 @@ public:
 
     OBUvcBackendType getBackendType() const override;
 
+#ifdef __ANDROID__
+    virtual std::string getUsbConnectType() override {return "";}
+#endif
+
 private:
     static void     captureLoop(std::shared_ptr<V4lDeviceHandle> deviceHandle);
     bool            getXu(uint8_t ctrl, uint8_t *data, uint32_t *len);

@@ -12,7 +12,7 @@ namespace libobsensor {
 class VendorNetDataPort : public IVendorDataPort {
 public:
     VendorNetDataPort(std::shared_ptr<const NetSourcePortInfo> portInfo);
-    virtual ~VendorNetDataPort() noexcept;
+    virtual ~VendorNetDataPort() noexcept override;
 
     std::shared_ptr<const SourcePortInfo> getSourcePortInfo() const override;
     uint32_t sendAndReceive(const uint8_t *sendData, uint32_t sendLen, uint8_t *recvData, uint32_t exceptedRecvLen) override;

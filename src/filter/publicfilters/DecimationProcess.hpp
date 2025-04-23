@@ -13,7 +13,7 @@ namespace libobsensor {
 class DecimationFilter : public IFilterBase {
 public:
     DecimationFilter();
-    virtual ~DecimationFilter() noexcept;
+    virtual ~DecimationFilter() noexcept override;
 
     void               updateConfig(std::vector<std::string> &params) override;
     const std::string &getConfigSchema() const override;

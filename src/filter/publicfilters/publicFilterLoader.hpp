@@ -14,7 +14,7 @@ public:
 public:
     publicFilterCreator(std::function<std::shared_ptr<IFilter>()> creatorFunc);
 
-    virtual ~publicFilterCreator() = default;
+    virtual ~publicFilterCreator() override = default;
 
     std::shared_ptr<IFilter> create() override;
 private:

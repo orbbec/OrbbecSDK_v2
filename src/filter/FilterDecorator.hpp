@@ -17,7 +17,7 @@ namespace libobsensor {
 class FilterExtension : public IFilter {
 public:
     FilterExtension(const std::string &name);
-    virtual ~FilterExtension() noexcept;
+    virtual ~FilterExtension() noexcept override;
 
     const std::string &getName() const override;
 
@@ -59,7 +59,7 @@ private:
 class FilterDecorator : public FilterExtension {
 public:
     FilterDecorator(const std::string &name, std::shared_ptr<IFilterBase> baseFilter);
-    virtual ~FilterDecorator() noexcept;
+    virtual ~FilterDecorator() noexcept override;
 
     virtual void                   reset() override;
     virtual void                   updateConfig(std::vector<std::string> &params) override;

@@ -20,7 +20,7 @@ typedef std::vector<std::shared_ptr<NetSourcePortInfo>> NetSourcePortList;
 
 class NetDeviceWatcher : public IDeviceWatcher {
 public:
-    virtual ~NetDeviceWatcher() noexcept;
+    virtual ~NetDeviceWatcher() noexcept override;
     virtual void start(deviceChangedCallback callback) override;
     virtual void stop() override;
 
@@ -35,7 +35,7 @@ private:
 class EthernetPal : public IPal {
 public:
     EthernetPal() {}
-    ~EthernetPal() = default;
+    virtual ~EthernetPal() noexcept override = default;
 
     std::shared_ptr<ISourcePort>    getSourcePort(std::shared_ptr<const SourcePortInfo>) override;
     SourcePortInfoList              querySourcePortInfos() override;

@@ -57,4 +57,5 @@ std::string usbSpecToString(UsbSpec spec);
 
 SourcePortType cvtUsbClassToPortType(uint8_t cls);
 
+extern const std::map<UsbSpec, std::string> usb_spec_names;
 }  // namespace libobsensor

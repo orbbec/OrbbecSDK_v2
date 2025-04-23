@@ -13,7 +13,7 @@ namespace libobsensor {
 class FemtoBoltDeviceInfo : public DeviceEnumInfoBase, public std::enable_shared_from_this<FemtoBoltDeviceInfo> {
 public:
     FemtoBoltDeviceInfo(const SourcePortInfoList groupedInfoList);
-    ~FemtoBoltDeviceInfo() noexcept;
+    ~FemtoBoltDeviceInfo() noexcept override;
 
     std::shared_ptr<IDevice>                             createDevice() const override;
     static std::vector<std::shared_ptr<IDeviceEnumInfo>> pickDevices(const SourcePortInfoList infoList);

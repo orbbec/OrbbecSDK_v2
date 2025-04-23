@@ -3,34 +3,38 @@
 
 #include "AndroidUsbPal.hpp"
 
-#if defined(BUILD_USB_PAL)
-#include <pal/android/AndroidUsbDeviceManager.hpp>
-#include "usb/vendor/VendorUsbDevicePort.hpp"
-#include "usb/uvc/ObLibuvcDevicePort.hpp"
 #include <usb/hid/HidDevicePort.hpp>
-#include "usb/uvc/rawPhaseConverter/MSDEConverterDevice.hpp"
+#include <usb/pal/android/AndroidUsbDeviceManager.hpp>
+
+#include "usb/enumerator/UsbTypes.hpp"
+#include "usb/uvc/ObLibuvcDevicePort.hpp"
+#include "usb/uvc/ObV4lUvcDevicePort.hpp"
+#include "usb/vendor/VendorUsbDevicePort.hpp"
+
 #include "logger/Logger.hpp"
 #include "exception/ObException.hpp"
-#endif
 
-#if defined(BUILD_NET_PAL)
-#include "ethernet/Ethernet.hpp"
-#endif
+#include "ethernet/EthernetPal.hpp"
+#include "environment/EnvConfig.hpp"
 
 namespace libobsensor {
 
+std::shared_ptr<IPal> createUsbPal() {
+    return std::make_shared<AndroidUsbPal>();
+}
+
 AndroidUsbPal::AndroidUsbPal() {
-#if defined(BUILD_USB_PAL)
-    androidUsbManager_ = std::make_shared<AndroidUsbDeviceManager>();
-#endif
+    androidUsbManager_ = AndroidUsbDeviceManager::getInstance();
+    loadXmlConfig();
+    LOG_DEBUG("Create AndroidUsbPal!");
 }
 AndroidUsbPal::~AndroidUsbPal() noexcept {
-#if defined(BUILD_USB_PAL)
     androidUsbManager_ = nullptr;
-#endif
+    LOG_DEBUG("Destructor of AndroidUsbPal");
 };
 
 std::shared_ptr<ISourcePort> AndroidUsbPal::getSourcePort(std::shared_ptr<const SourcePortInfo> portInfo) {
+    LOG_DEBUG(">>Create source port for");
     std::unique_lock<std::mutex> lock(sourcePortMapMutex_);
     std::shared_ptr<ISourcePort> port;
 
@@ -55,7 +59,6 @@ std::shared_ptr<ISourcePort> AndroidUsbPal::getSourcePort(std::shared_ptr<const 
     }
 
     switch(portInfo->portType) {
-#if defined(BUILD_USB_PAL)
     case SOURCE_PORT_USB_VENDOR: {
         auto usbDev = androidUsbManager_->openUsbDevice(std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->url);
         if(usbDev == nullptr) {
@@ -65,11 +68,23 @@ std::shared_ptr<ISourcePort> AndroidUsbPal::getSourcePort(std::shared_ptr<const 
         break;
     }
     case SOURCE_PORT_USB_UVC: {
-        auto usbDev = androidUsbManager_->openUsbDevice(std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->url);
-        if(usbDev == nullptr) {
-            throw libobsensor::camera_disconnected_exception("usbEnumerator openUsbDevice failed!");
+        auto backend     = uvcBackendType_;
+        if(backend == OB_UVC_BACKEND_TYPE_V4L2) {
+            auto usbPortInfo = std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo);
+            port = std::make_shared<ObV4lUvcDevicePort>(usbPortInfo);
+            LOG_DEBUG("UVC device have been create with V4L2 backend! dev: {}, inf: {}", usbPortInfo->url, usbPortInfo->infUrl);
+        } else {
+            auto usbDev = androidUsbManager_->openUsbDevice(
+                    std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->url);
+            if (usbDev == nullptr) {
+                throw libobsensor::camera_disconnected_exception(
+                        "usbEnumerator openUsbDevice failed!");
+            }
+            LOG_DEBUG("Create ObLibuvcDevicePort!");
+            port = std::make_shared<ObLibuvcDevicePort>(usbDev,
+                                                        std::dynamic_pointer_cast<const USBSourcePortInfo>(
+                                                                portInfo));
         }
-        port = std::make_shared<ObLibuvcDevicePort>(usbDev, std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo));
         break;
     }
     case SOURCE_PORT_USB_HID: {
@@ -80,7 +95,6 @@ std::shared_ptr<ISourcePort> AndroidUsbPal::getSourcePort(std::shared_ptr<const 
         port = std::make_shared<HidDevicePort>(usbDev, std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo));
         break;
     }
-#endif
 
 #if defined(BUILD_NET_PAL)
     case SOURCE_PORT_NET_VENDOR:
@@ -103,10 +117,73 @@ std::shared_ptr<ISourcePort> AndroidUsbPal::getSourcePort(std::shared_ptr<const 
     return port;
 }
 
-#if defined(BUILD_USB_PAL)
+std::shared_ptr<ISourcePort> AndroidUsbPal::getUvcSourcePort(std::shared_ptr<const SourcePortInfo> portInfo, OBUvcBackendType backendHint){
+    if(portInfo->portType != SOURCE_PORT_USB_UVC) {
+        throw libobsensor::invalid_value_exception("unsupported source port type!");
+    }
+
+    std::unique_lock<std::mutex> lock(sourcePortMapMutex_);
+    std::shared_ptr<ISourcePort> port;
+
+    // clear expired weak_ptr
+    for(auto it = sourcePortMap_.begin(); it != sourcePortMap_.end();) {
+        if(it->second.expired()) {
+            it = sourcePortMap_.erase(it);
+        }
+        else {
+            ++it;
+        }
+    }
+
+    // check if the port already exists in the map
+    for(const auto &pair: sourcePortMap_) {
+        if(pair.first->equal(portInfo)) {
+            port = pair.second.lock();
+            if(port != nullptr) {
+                return port;
+            }
+        }
+    }
+
+    auto usbPortInfo = std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo);
+    auto backend     = uvcBackendType_;
+    if(backend == OB_UVC_BACKEND_TYPE_AUTO) {
+        backend = backendHint;
+        if(backend == OB_UVC_BACKEND_TYPE_AUTO && ObV4lUvcDevicePort::isContainedMetadataDevice(usbPortInfo)) {
+            backend = OB_UVC_BACKEND_TYPE_V4L2;
+        }
+        else if(backend == OB_UVC_BACKEND_TYPE_V4L2 && !ObV4lUvcDevicePort::isContainedMetadataDevice(usbPortInfo)) {
+            backend = OB_UVC_BACKEND_TYPE_LIBUVC;
+        }
+    }
+
+    if(backend == OB_UVC_BACKEND_TYPE_V4L2) {
+        port = std::make_shared<ObV4lUvcDevicePort>(usbPortInfo);
+        LOG_DEBUG("UVC device have been create with V4L2 backend! dev: {}, inf: {}", usbPortInfo->url, usbPortInfo->infUrl);
+    }
+    else {
+        auto usbDev = androidUsbManager_->openUsbDevice(std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->url);
+        if(usbDev == nullptr) {
+            throw libobsensor::camera_disconnected_exception("usbEnumerator openUsbDevice failed!");
+        }
+        LOG_DEBUG("Create ObLibuvcDevicePort!");
+        port = std::make_shared<ObLibuvcDevicePort>(usbDev, std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo));
+        LOG_DEBUG("UVC device have been create with LibUVC backend! dev: {}, inf: {}", usbPortInfo->url, usbPortInfo->infUrl);
+    }
+
+    if(port != nullptr) {
+        sourcePortMap_.insert(std::make_pair(portInfo, port));
+    }
+    return port;
+}
+
+void AndroidUsbPal::setUvcBackendType(OBUvcBackendType backendType) {
+    uvcBackendType_ = backendType;
+}
+
 std::shared_ptr<IDeviceWatcher> AndroidUsbPal::createDeviceWatcher() const {
     LOG_INFO("Create AndroidUsbDeviceManager!");
-    return androidUsbManager_;
+    return AndroidUsbDeviceManager::getInstance();
 }
 
 SourcePortInfoList AndroidUsbPal::querySourcePortInfos() {
@@ -120,7 +197,7 @@ SourcePortInfoList AndroidUsbPal::querySourcePortInfos() {
         portInfo->vid      = info.vid;
         portInfo->pid      = info.pid;
         portInfo->serial   = info.serial;
-        portInfo->connSpec = usb_spec_names.find(info.conn_spec)->second;
+        portInfo->connSpec = usb_spec_names.find(static_cast<UsbSpec>(info.conn_spec))->second;
         portInfo->infUrl   = info.infUrl;
         portInfo->infIndex = info.infIndex;
         portInfo->infName  = info.infName;
@@ -131,53 +208,24 @@ SourcePortInfoList AndroidUsbPal::querySourcePortInfos() {
     return portInfoList;
 }
 
-std::shared_ptr<ISourcePort> AndroidUsbPal::createOpenNIDevicePort(std::shared_ptr<const SourcePortInfo> portInfo) {
-    if(portInfo->portType == SOURCE_PORT_USB_VENDOR) {
-        auto usbDev = androidUsbManager_->openUsbDevice(std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->url);
-        if(usbDev == nullptr) {
-            throw libobsensor::camera_disconnected_exception("usbEnumerator openUsbDevice failed!");
-        }
-        return std::make_shared<OpenNIDevicePortLinux>(usbDev, std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo));
-    }
+void AndroidUsbPal::loadXmlConfig() {
+    auto        envConfig = EnvConfig::getInstance();
+    std::string backend   = "";
 
-    return nullptr;
+    if (envConfig->getStringValue("Device.LinuxUVCBackend", backend)) {
+        if (backend == "V4L2") {
+            uvcBackendType_ = OB_UVC_BACKEND_TYPE_V4L2;
+        }
+        else if (backend == "LIBUVC") {
+            uvcBackendType_ = OB_UVC_BACKEND_TYPE_LIBUVC;
+        }
+        else {
+            uvcBackendType_ = OB_UVC_BACKEND_TYPE_AUTO;
+        }
+    } else {
+        uvcBackendType_ = OB_UVC_BACKEND_TYPE_AUTO;
+    }
+    LOG_DEBUG("Uvc backend have been set to {}", static_cast<int>(uvcBackendType_));
 }
-
-std::shared_ptr<ISourcePort> AndroidUsbPal::createRawPhaseConverterDevicePort(RawPhaseConverterPortType type, std::shared_ptr<const SourcePortInfo> portInfo) {
-    switch(type) {
-    case RAW_PHASE_CONVERTER_MSDE: {
-        std::unique_lock<std::mutex> lock(sourcePortMapMutex_);
-        std::shared_ptr<ISourcePort> port;
-        auto                         it = sourcePortMap_.find(portInfo);
-        if(it != sourcePortMap_.end()) {
-            port = it->second.lock();
-            if(port != nullptr) {
-                return port;
-            }
-        }
-        auto usbDev = androidUsbManager_->openUsbDevice(std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->url);
-        if(usbDev == nullptr) {
-            throw libobsensor::camera_disconnected_exception("usbEnumerator create UnpackDevicePort failed!");
-        }
-        port = std::make_shared<MSDEConverterDevice>(usbDev, std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo));
-        if(port != nullptr) {
-            sourcePortMap_.insert(std::make_pair(portInfo, port));
-        }
-        return port;
-    }
-    }
-    return nullptr;
-}
-
-std::shared_ptr<ISourcePort> AndroidUsbPal::createMultiUvcDevicePort(std::shared_ptr<const SourcePortInfo> portInfo) {
-    auto usbDev = androidUsbManager_->openUsbDevice(std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->url);
-    if(usbDev == nullptr) {
-        throw libobsensor::camera_disconnected_exception("usbEnumerator openUsbDevice failed!");
-    }
-    return std::make_shared<ObMultiUvcDevice>(usbDev, std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo));
-}
-
-#endif
 
 }  // namespace libobsensor
-

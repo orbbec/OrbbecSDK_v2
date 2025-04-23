@@ -90,13 +90,14 @@ HANDLE_EXCEPTIONS_NO_RETURN(context)
 
 void ob_set_uvc_backend_type(ob_context *context, ob_uvc_backend_type backend_type, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(context);
-#if defined(__linux__)
+#if defined(__linux__) || defined(__ANDROID__)
     auto platform = context->context->getPlatform();
     platform->setUvcBackendType(backend_type);
     return;
-#endif
+#else
     libobsensor::utils::unusedVar(backend_type);
     LOG_DEBUG("Set UVC backend type is only available on Linux platforms, ignoring request.");
+#endif
 }
 HANDLE_EXCEPTIONS_NO_RETURN(context, backend_type)
 

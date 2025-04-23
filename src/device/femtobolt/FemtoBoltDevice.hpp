@@ -13,7 +13,7 @@ namespace libobsensor {
 class FemtoBoltDevice : public DeviceBase {
 public:
     FemtoBoltDevice(const std::shared_ptr<const IDeviceEnumInfo> &info);
-    virtual ~FemtoBoltDevice() noexcept;
+    virtual ~FemtoBoltDevice() noexcept override;
 
 private:
     void init() override;

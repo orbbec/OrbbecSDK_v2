@@ -15,7 +15,7 @@ namespace libobsensor {
 class G330SensorStreamStrategy : public ISensorStreamStrategy, public DeviceComponentBase {
 public:
     G330SensorStreamStrategy(IDevice *owner);
-    virtual ~G330SensorStreamStrategy() noexcept;
+    virtual ~G330SensorStreamStrategy() noexcept override;
 
     void validateStream(const std::shared_ptr<const StreamProfile> &profile) override;
     void validateStream(const std::vector<std::shared_ptr<const StreamProfile>> &profiles) override;

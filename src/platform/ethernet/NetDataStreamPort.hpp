@@ -30,7 +30,7 @@ struct NetDataStreamPortInfo : public NetSourcePortInfo {
 class NetDataStreamPort : public IDataStreamPort {
 public:
     NetDataStreamPort(std::shared_ptr<const NetDataStreamPortInfo> portInfo);
-    virtual ~NetDataStreamPort() noexcept;
+    virtual ~NetDataStreamPort() noexcept override;
     std::shared_ptr<const SourcePortInfo> getSourcePortInfo() const override {
         return portInfo_;
     }

@@ -18,7 +18,7 @@ namespace libobsensor {
 class RawPhaseStreamer : public IDeviceComponent, public IVideoStreamPort {
 public:
     RawPhaseStreamer(IDevice *owner, const std::shared_ptr<IVideoStreamPort> &backend);
-    virtual ~RawPhaseStreamer() noexcept;
+    virtual ~RawPhaseStreamer() noexcept override;
 
     IDevice *getOwner() const override;
 

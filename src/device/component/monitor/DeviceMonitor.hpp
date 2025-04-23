@@ -11,7 +11,7 @@ namespace libobsensor {
 class DeviceMonitor : public IDeviceMonitor, public DeviceComponentBase {
 public:
     DeviceMonitor(IDevice *owner, std::shared_ptr<ISourcePort> sourcePort);
-    virtual ~DeviceMonitor() noexcept;
+    virtual ~DeviceMonitor() noexcept override;
 
     OBDeviceState getCurrentDeviceState() const override;
     int           registerStateChangedCallback(DeviceStateChangedCallback callback) override;

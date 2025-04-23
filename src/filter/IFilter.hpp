@@ -31,6 +31,8 @@ public:
 
 class IFilterExtension {
 public:
+    virtual ~IFilterExtension() noexcept = default;
+
     virtual const std::string &getName() const = 0;
 
     virtual void enable(bool en)   = 0;

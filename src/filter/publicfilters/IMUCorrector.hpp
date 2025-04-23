@@ -17,7 +17,7 @@ public:
 public:
     IMUCorrector();
 
-    virtual ~IMUCorrector() = default;
+    virtual ~IMUCorrector() override = default;
 
     // Config
     void               updateConfig(std::vector<std::string> &params) override;

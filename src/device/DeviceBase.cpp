@@ -53,6 +53,14 @@ void DeviceBase::fetchDeviceInfo() {
     deviceInfo_->type_                = static_cast<uint16_t>(version.deviceType);
     deviceInfo_->supportedSdkVersion_ = version.sdkVersion;
 
+#ifdef __ANDROID__
+    // Android need to query usb connect type from port
+    auto depthPortInfo           = getSensorPortInfo(OB_SENSOR_DEPTH);
+    auto sourcePort              = getSourcePort(depthPortInfo);
+    auto uvcDevicePort           = std::dynamic_pointer_cast<UvcDevicePort>(sourcePort);
+    deviceInfo_->connectionType_ = uvcDevicePort->getUsbConnectType();
+#endif
+
     // remove the prefix "Orbbec " from the device name if contained
     if(deviceInfo_->name_.find("Orbbec ") == 0) {
         deviceInfo_->name_ = deviceInfo_->name_.substr(7);
@@ -442,7 +450,7 @@ int DeviceBase::getFirmwareVersionInt() {
 
 std::shared_ptr<ISourcePort> DeviceBase::getSourcePort(std::shared_ptr<const SourcePortInfo> sourcePortInfo) const {
     auto platform = Platform::getInstance();
-#ifdef __linux__
+#if defined(__linux__) || defined(__ANDROID__)
     if(sourcePortInfo->portType == SOURCE_PORT_USB_UVC) {
         auto        envConfig = EnvConfig::getInstance();
         std::string key       = std::string("Device.") + utils::string::removeSpace(deviceInfo_->name_) + std::string(".LinuxUVCDefaultBackend");

@@ -28,6 +28,16 @@
 #include "logger/LoggerHelper.hpp"
 #include "utils/StringUtils.hpp"
 
+#if defined(__ANDROID__) && (__ANDROID_API__ < 24)
+    #ifdef __cplusplus
+    extern "C" {
+    #endif
+    #include "ifaddrs_add.h"
+    #ifdef __cplusplus
+    }
+    #endif
+#endif // __ANDROID__ and API < 24
+
 namespace libobsensor {
 
 GVCPClient::GVCPClient() {

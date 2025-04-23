@@ -17,7 +17,7 @@ namespace libobsensor {
 class DeviceSyncConfigurator : public IDeviceSyncConfigurator, public DeviceComponentBase {
 public:
     DeviceSyncConfigurator(IDevice *owner, const std::vector<OBMultiDeviceSyncMode> &supportedSyncModes);
-    virtual ~DeviceSyncConfigurator() = default;
+    virtual ~DeviceSyncConfigurator() override = default;
 
     OBMultiDeviceSyncConfig getSyncConfig() override;
     void                    setSyncConfig(const OBMultiDeviceSyncConfig &deviceSyncConfig) override;
@@ -34,7 +34,7 @@ private:
 class DeviceSyncConfiguratorOldProtocol : public IDeviceSyncConfigurator, public DeviceComponentBase {
 public:
     DeviceSyncConfiguratorOldProtocol(IDevice *owner, const std::vector<OBMultiDeviceSyncMode> &supportedSyncModes);
-    virtual ~DeviceSyncConfiguratorOldProtocol() = default;
+    virtual ~DeviceSyncConfiguratorOldProtocol() override = default;
 
     OBMultiDeviceSyncConfig getSyncConfig() override;
     void                    setSyncConfig(const OBMultiDeviceSyncConfig &deviceSyncConfig) override;

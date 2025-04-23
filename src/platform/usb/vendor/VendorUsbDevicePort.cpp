@@ -12,6 +12,10 @@
 #include "exception/ObException.hpp"
 #include "usb/enumerator/UsbEnumeratorLibusb.hpp"
 
+#ifdef __ANDROID__
+#include "usb/enumerator/UsbTypes.hpp"
+#endif
+
 namespace libobsensor {
 
 VendorUsbDevicePort::VendorUsbDevicePort(const std::shared_ptr<IUsbDevice> &usbDevice, std::shared_ptr<const USBSourcePortInfo> portInfo)
@@ -45,7 +49,7 @@ uint32_t VendorUsbDevicePort::sendAndReceive(const uint8_t *sendData, uint32_t s
         LOG_ERROR("Failed to receive data from device. Error: {}", libusb_strerror(transferred));
         return 0;
     }
-    return transferred;
+    return static_cast<uint32_t>(transferred);
 }
 
 bool VendorUsbDevicePort::readFromBulkEndPoint(std::vector<uint8_t> &data) {
@@ -66,9 +70,17 @@ std::shared_ptr<const SourcePortInfo> VendorUsbDevicePort::getSourcePortInfo() c
 
 #ifdef __ANDROID__
 std::string VendorUsbDevicePort::getUsbConnectType() {
-    auto                     libusbDev = std::static_pointer_cast<UsbDeviceLibusb>(usbDev_);
+    auto libusbDev = std::dynamic_pointer_cast<UsbDeviceLibusb>(usbDev_);
+    auto devHandle = libusbDev->getLibusbDeviceHandle();
+    auto device    = libusb_get_device(devHandle);
+
     libusb_device_descriptor desc;
-    auto                     ret = libusb_get_device_descriptor(libusbDev->getDevice(), &desc);
+    auto  ret = libusb_get_device_descriptor(device, &desc);
+    if(ret < 0) {
+        LOG_ERROR("Failed to get device descriptor. Error: {}", libusb_strerror(ret));
+        return "";
+    }
+
     return usb_spec_names.find(UsbSpec(desc.bcdUSB))->second;
 }
 #endif

@@ -11,7 +11,7 @@ namespace libobsensor {
 class PrivateFilterPropertyAccessor : public IBasicPropertyAccessor {
 public:
     PrivateFilterPropertyAccessor(IDevice *device);
-    virtual ~PrivateFilterPropertyAccessor() noexcept = default;
+    virtual ~PrivateFilterPropertyAccessor() noexcept override = default;
 
     void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
     void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;

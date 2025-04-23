@@ -13,7 +13,7 @@ namespace libobsensor {
 class PrivFilterCppWrapper : public IFilterBase {
 public:
     PrivFilterCppWrapper(const std::string &filterName, std::shared_ptr<ob_priv_filter_context> filterCtx);
-    virtual ~PrivFilterCppWrapper() noexcept;
+    virtual ~PrivFilterCppWrapper() noexcept override;
 
     // Config
     void               updateConfig(std::vector<std::string> &params) override;

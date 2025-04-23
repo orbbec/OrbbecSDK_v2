@@ -19,7 +19,7 @@ namespace libobsensor {
 class AlgParamManagerBase : public DeviceComponentBase, public IAlgParamManager {
 public:
     AlgParamManagerBase(IDevice *owner);
-    virtual ~AlgParamManagerBase() = default;
+    virtual ~AlgParamManagerBase() noexcept override = default;
 
     void bindStreamProfileParams(std::vector<std::shared_ptr<const StreamProfile>> streamProfileList) override;
 
@@ -46,7 +46,7 @@ class DisparityAlgParamManagerBase : public AlgParamManagerBase, public IDispari
 public:
     DisparityAlgParamManagerBase(IDevice *owner);
 
-    virtual ~DisparityAlgParamManagerBase() = default;
+    virtual ~DisparityAlgParamManagerBase() noexcept override = default;
 
     void                    bindStreamProfileParams(std::vector<std::shared_ptr<const StreamProfile>> streamProfileList) override;
     const OBDisparityParam &getDisparityParam() const override;
@@ -60,7 +60,7 @@ protected:
 class TOFDeviceCommonAlgParamManager : public AlgParamManagerBase {
 public:
     TOFDeviceCommonAlgParamManager(IDevice *owner);
-    virtual ~TOFDeviceCommonAlgParamManager() noexcept = default;
+    virtual ~TOFDeviceCommonAlgParamManager() noexcept override = default;
 
 private:
     void fetchParamFromDevice() override;

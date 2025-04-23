@@ -11,7 +11,7 @@ class G330FrameTimestampCalculatorBaseDeviceTime : public IFrameTimestampCalcula
 public:
     G330FrameTimestampCalculatorBaseDeviceTime(IDevice *device, uint64_t deviceTimeFreq, uint64_t frameTimeFreq);
 
-    virtual ~G330FrameTimestampCalculatorBaseDeviceTime() = default;
+    virtual ~G330FrameTimestampCalculatorBaseDeviceTime() noexcept override = default;
 
     void calculate(std::shared_ptr<Frame> frame) override;
     void clear() override;

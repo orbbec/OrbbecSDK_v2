@@ -207,7 +207,6 @@ std::tuple<std::string, uint64_t, uint64_t> Bag::getCompressionInfo() const {
     std::map<std::string, uint64_t> compression_counts;
     std::map<std::string, uint64_t> compression_uncompressed;
     std::map<std::string, uint64_t> compression_compressed;
-    auto                            compression  = compression_;
     uint64_t                        uncompressed = 0;
     uint64_t                        compressed   = 0;
     for(ChunkInfo const &curr_chunk_info: chunks_) {
@@ -225,7 +224,6 @@ std::tuple<std::string, uint64_t, uint64_t> Bag::getCompressionInfo() const {
         compressed += chunk_header.compressed_size;
     }
 
-    auto        chunk_count            = chunks_.size();
     uint64_t    main_compression_count = 0;
     std::string main_compression;
     for(auto &&kvp: compression_counts) {

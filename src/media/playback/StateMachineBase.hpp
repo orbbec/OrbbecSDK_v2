@@ -113,7 +113,7 @@ public:
     }
 
     bool transitionTo(State newState) {
-        State oldState;
+        State oldState{};
         bool  success = false;
 
         std::vector<Callback> syncExitCbs;

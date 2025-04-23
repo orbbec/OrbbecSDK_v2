@@ -11,7 +11,7 @@ namespace libobsensor {
 class NetDeviceEnumerator : public IDeviceEnumerator {
 public:
     NetDeviceEnumerator(DeviceChangedCallback callback);
-    virtual ~NetDeviceEnumerator() noexcept;
+    virtual ~NetDeviceEnumerator() noexcept override;
     virtual DeviceEnumInfoList getDeviceInfoList() override;
     virtual void               setDeviceChangedCallback(DeviceChangedCallback callback) override;
 

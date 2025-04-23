@@ -22,7 +22,8 @@
 #define UVC_AE_MODE_D3_AP (1 << 3)
 
 #ifdef __ANDROID__
-#include "pal/android/AndroidUsbDeviceManager.hpp"
+#include "usb/pal/android/AndroidUsbDeviceManager.hpp"
+#include "usb/enumerator/UsbTypes.hpp"
 #endif
 
 namespace libobsensor {
@@ -593,8 +594,17 @@ std::shared_ptr<const SourcePortInfo> ObLibuvcDevicePort::getSourcePortInfo() co
 
 #ifdef __ANDROID__
 std::string ObLibuvcDevicePort::getUsbConnectType() {
+    auto libusbDev = std::dynamic_pointer_cast<UsbDeviceLibusb>(usbDev_);
+    auto devHandle = libusbDev->getLibusbDeviceHandle();
+    auto device    = libusb_get_device(devHandle);
+
     libusb_device_descriptor desc;
-    auto                     ret = libusb_get_device_descriptor(uvcDev_->usb_dev, &desc);
+    auto  ret = libusb_get_device_descriptor(device, &desc);
+    if(ret < 0) {
+        LOG_ERROR("Failed to get device descriptor, error code={}", ret);
+        return "";
+    }
+    
     return usb_spec_names.find(UsbSpec(desc.bcdUSB))->second;
 }
 #endif

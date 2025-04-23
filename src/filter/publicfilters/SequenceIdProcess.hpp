@@ -11,7 +11,7 @@ namespace libobsensor {
 class SequenceIdFilter : public IFilterBase {
 public:
     SequenceIdFilter();
-    virtual ~SequenceIdFilter() noexcept;
+    virtual ~SequenceIdFilter() noexcept override;
 
     void               updateConfig(std::vector<std::string> &params) override;
     const std::string &getConfigSchema() const override;

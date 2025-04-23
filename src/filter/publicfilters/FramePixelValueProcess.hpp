@@ -27,7 +27,7 @@ protected:
 class ThresholdFilter : public IFilterBase {
 public:
     ThresholdFilter();
-    virtual ~ThresholdFilter() noexcept;
+    virtual ~ThresholdFilter() noexcept override;
 
     void               updateConfig(std::vector<std::string> &params) override;
     const std::string &getConfigSchema() const override;
@@ -45,7 +45,7 @@ protected:
 class PixelValueOffset : public IFilterBase {
 public:
     PixelValueOffset();
-    virtual ~PixelValueOffset() noexcept;
+    virtual ~PixelValueOffset() noexcept override;
 
     void               updateConfig(std::vector<std::string> &params) override;
     const std::string &getConfigSchema() const override;

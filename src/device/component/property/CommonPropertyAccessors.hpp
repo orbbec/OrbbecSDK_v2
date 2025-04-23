@@ -13,7 +13,7 @@ namespace libobsensor {
 class DeviceComponentPropertyAccessor : public IBasicPropertyAccessor {
 public:
     DeviceComponentPropertyAccessor(IDevice *device, DeviceComponentId compId);
-    virtual ~DeviceComponentPropertyAccessor() noexcept = default;
+    virtual ~DeviceComponentPropertyAccessor() noexcept override = default;
 
     void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
     void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
@@ -29,7 +29,7 @@ public:
     FunctionPropertyAccessor(std::function<OBPropertyValue(uint32_t)> getter, std::function<void(uint32_t, OBPropertyValue)> setter,
                              std::function<OBPropertyRange(uint32_t)> rangeGetter);
 
-    virtual ~FunctionPropertyAccessor() noexcept = default;
+    virtual ~FunctionPropertyAccessor() noexcept override = default;
 
     void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
     void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
@@ -45,7 +45,7 @@ class LazyPropertyAccessor : public virtual IBasicPropertyAccessor {
 public:
     LazyPropertyAccessor(std::function<std::shared_ptr<IPropertyAccessor>()> accessorCreator);
 
-    virtual ~LazyPropertyAccessor() noexcept = default;
+    virtual ~LazyPropertyAccessor() noexcept override = default;
 
     void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
     void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
@@ -60,7 +60,7 @@ protected:
 class LazySuperPropertyAccessor : public LazyPropertyAccessor, public IStructureDataAccessor, public IStructureDataAccessorV1_1, public IRawDataAccessor {
 public:
     LazySuperPropertyAccessor(std::function<std::shared_ptr<IPropertyAccessor>()> accessorCreator);
-    virtual ~LazySuperPropertyAccessor() noexcept = default;
+    virtual ~LazySuperPropertyAccessor() noexcept override = default;
 
     void                        setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) override;
     const std::vector<uint8_t> &getStructureData(uint32_t propertyId) override;
@@ -76,7 +76,7 @@ class StructureDataOverV1_1Accessor : public IStructureDataAccessor {
 public:
     StructureDataOverV1_1Accessor(std::shared_ptr<IStructureDataAccessorV1_1> structureDataV1_1Accessor, uint16_t cmdVersion);
 
-    virtual ~StructureDataOverV1_1Accessor() noexcept = default;
+    virtual ~StructureDataOverV1_1Accessor() noexcept override = default;
 
     void                        setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) override;
     const std::vector<uint8_t> &getStructureData(uint32_t propertyId) override;
@@ -90,7 +90,7 @@ class HeartbeatPropertyAccessor : public IBasicPropertyAccessor {
 public:
     HeartbeatPropertyAccessor(IDevice *owner);
 
-    virtual ~HeartbeatPropertyAccessor() noexcept = default;
+    virtual ~HeartbeatPropertyAccessor() noexcept override = default;
 
     void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
     void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
@@ -104,7 +104,7 @@ class BaselinePropertyAccessor : public IStructureDataAccessor {
 public:
     BaselinePropertyAccessor(IDevice *owner);
 
-    virtual ~BaselinePropertyAccessor() noexcept = default;
+    virtual ~BaselinePropertyAccessor() noexcept override = default;
 
     void                        setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) override;
     const std::vector<uint8_t> &getStructureData(uint32_t propertyId) override;

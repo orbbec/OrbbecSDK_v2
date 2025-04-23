@@ -10,7 +10,7 @@ namespace libobsensor {
 class HDRMerge : public IFilterBase {
 public:
     HDRMerge();
-    virtual ~HDRMerge() noexcept;
+    virtual ~HDRMerge() noexcept override;
 
     void               updateConfig(std::vector<std::string> &params) override;
     const std::string &getConfigSchema() const override;

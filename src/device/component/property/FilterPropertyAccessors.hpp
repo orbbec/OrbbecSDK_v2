@@ -11,7 +11,7 @@ namespace libobsensor {
 class FilterStatePropertyAccessor : public IBasicPropertyAccessor {
 public:
     FilterStatePropertyAccessor(std::shared_ptr<IFilter> filter);
-    virtual ~FilterStatePropertyAccessor() noexcept = default;
+    virtual ~FilterStatePropertyAccessor() noexcept override = default;
 
     void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
     void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;

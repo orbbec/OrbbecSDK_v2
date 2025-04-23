@@ -9,7 +9,7 @@ namespace libobsensor {
 class G330Disp2DepthPropertyAccessor : public IBasicPropertyAccessor {
 public:
     explicit G330Disp2DepthPropertyAccessor(IDevice *owner);
-    virtual ~G330Disp2DepthPropertyAccessor() noexcept = default;
+    virtual ~G330Disp2DepthPropertyAccessor() noexcept override = default;
 
     virtual void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
     virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;

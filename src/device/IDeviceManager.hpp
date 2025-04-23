@@ -9,6 +9,8 @@ namespace libobsensor {
 class IDeviceManager;
 class IDeviceEnumInfo {
 public:
+    virtual ~IDeviceEnumInfo() = default;
+
     virtual int                             getPid() const                = 0;
     virtual int                             getVid() const                = 0;
     virtual const std::string              &getUid() const                = 0;
@@ -35,6 +37,8 @@ public:
 
 class IDeviceManager {
 public:
+    virtual ~IDeviceManager() = default;
+
     virtual std::shared_ptr<IDevice> createDevice(const std::shared_ptr<const IDeviceEnumInfo> &info) = 0;
     virtual std::shared_ptr<IDevice> createNetDevice(std::string address, uint16_t port)              = 0;
 

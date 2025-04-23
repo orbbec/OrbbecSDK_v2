@@ -14,7 +14,7 @@ namespace libobsensor {
 class DabaiADevice : public DeviceBase {
 public:
     DabaiADevice(const std::shared_ptr<const IDeviceEnumInfo> &info);
-    virtual ~DabaiADevice() noexcept;
+    virtual ~DabaiADevice() noexcept override;
 
     std::vector<std::shared_ptr<IFilter>> createRecommendedPostProcessingFilters(OBSensorType type) override;
 

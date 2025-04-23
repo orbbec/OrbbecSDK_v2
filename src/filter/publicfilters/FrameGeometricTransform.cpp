@@ -3,7 +3,6 @@
 
 #include "FrameGeometricTransform.hpp"
 #include "exception/ObException.hpp"
-#include "logger/LoggerInterval.hpp"
 #include "frame/FrameFactory.hpp"
 #include "libobsensor/h/ObTypes.h"
 #include "utils/CameraParamProcess.hpp"
@@ -11,21 +10,6 @@
 #include <turbojpeg.h>
 
 namespace libobsensor {
-
-template <typename T> void imageMirror(const T *src, T *dst, uint32_t width, uint32_t height) {
-    const T *srcPixel;
-    T       *dstPixel = dst;
-    for(uint32_t h = 0; h < height; h++) {
-        srcPixel = src + (h + 1) * width - 1;
-        for(uint32_t w = 0; w < width; w++) {
-            // mirror row
-            *dstPixel = *srcPixel;
-            srcPixel--;
-            dstPixel++;
-        }
-    }
-}
-
 void mirrorRGBImage(const uint8_t *src, uint8_t *dst, uint32_t width, uint32_t height) {
     const uint8_t *srcPixel;
     uint8_t       *dstPixel = dst;
@@ -74,127 +58,14 @@ void mirrorYUYVImage(uint8_t *src, uint8_t *dst, int width, int height) {
     }
 }
 
-template <typename T> void imageFlip(const T *src, T *dst, uint32_t width, uint32_t height) {
-
-    const T *flipSrc = src + (width * height);
-    for(uint32_t h = 0; h < height; h++) {
-        flipSrc -= width;
-        memcpy(dst, flipSrc, width * sizeof(T));
-        dst += width;
-    }
-}
-
 void flipRGBImage(int pixelSize, const uint8_t *src, uint8_t *dst, uint32_t width, uint32_t height) {
     // const uint32_t pixelSize = 3;  // RGB888 format occupies 3 bytes per pixel
-    const uint32_t rowSize = width * pixelSize;
+    const uint32_t rowSize = width * static_cast<uint32_t>(pixelSize);
 
     for(uint32_t h = 0; h < height; h++) {
         const uint8_t *flipSrc = src + (height - h - 1) * rowSize;
         memcpy(dst, flipSrc, rowSize);
         dst += rowSize;
-    }
-}
-
-// #define imageRotate180 imageFlip
-
-// Rotate 90 degrees clockwise
-template <typename T> void imageRotate90(const T *src, T *dst, uint32_t width, uint32_t height) {
-    const T *srcPixel;
-    T       *dstPixel = dst;
-    for(uint32_t h = 0; h < width; h++) {
-        for(uint32_t w = 0; w < height; w++) {
-            srcPixel  = src + width * (height - w - 1) + h;
-            *dstPixel = *srcPixel;
-            dstPixel++;
-        }
-    }
-}
-
-template <typename T> void imageRotate180(const T *src, T *dst, uint32_t width, uint32_t height) {
-    const T *srcPixel;
-    T       *dstPixel = dst;
-    for(uint32_t h = 0; h < height; h++) {
-        for(uint32_t w = 0; w < width; w++) {
-            srcPixel  = src + width * (height - h - 1) + (width - w - 1);
-            *dstPixel = *srcPixel;
-            dstPixel++;
-        }
-    }
-}
-
-template <typename T> void imageRotate270(const T *src, T *dst, uint32_t width, uint32_t height) {
-    const T *srcPixel;
-    T       *dstPixel = dst;
-    for(uint32_t h = 0; h < width; h++) {
-        for(uint32_t w = 0; w < height; w++) {
-            srcPixel  = src + width * w + (width - h - 1);
-            *dstPixel = *srcPixel;
-            dstPixel++;
-        }
-    }
-}
-
-template <typename T> void imageRotate(const T *src, T *dst, uint32_t width, uint32_t height, uint32_t rotateDegree) {
-    switch(rotateDegree) {
-    case 90:
-        imageRotate90<T>(src, dst, width, height);
-        break;
-    case 180:
-        imageRotate180<T>(src, dst, width, height);
-        break;
-    case 270:
-        imageRotate270<T>(src, dst, width, height);
-        break;
-    default:
-        LOG_WARN_INTVL_THREAD("Unsupported rotate degree!");
-        break;
-    }
-}
-
-template <typename T> void rgbImageRotate90(const uint8_t *src, uint8_t *dst, uint32_t width, uint32_t height, uint32_t pixelSize) {
-    for(uint32_t h = 0; h < width; h++) {
-        for(uint32_t w = 0; w < height; w++) {
-            const uint8_t *srcPixel = src + (height - w - 1) * width * pixelSize + h * pixelSize;
-            uint8_t       *dstPixel = dst + h * height * pixelSize + w * pixelSize;
-            memcpy(dstPixel, srcPixel, pixelSize);
-        }
-    }
-}
-
-template <typename T> void rgbImageRotate180(const uint8_t *src, uint8_t *dst, uint32_t width, uint32_t height, uint32_t pixelSize) {
-    for(uint32_t h = 0; h < height; h++) {
-        for(uint32_t w = 0; w < width; w++) {
-            const uint8_t *srcPixel = src + (height - h - 1) * width * pixelSize + (width - w - 1) * pixelSize;
-            uint8_t       *dstPixel = dst + h * width * pixelSize + w * pixelSize;
-            memcpy(dstPixel, srcPixel, pixelSize);
-        }
-    }
-}
-
-template <typename T> void rgbImageRotate270(const uint8_t *src, uint8_t *dst, uint32_t width, uint32_t height, uint32_t pixelSize) {
-    for(uint32_t h = 0; h < width; h++) {
-        for(uint32_t w = 0; w < height; w++) {
-            const T *srcPixel = src + ((w * width + h) * pixelSize);
-            T       *dstPixel = dst + (((width - h - 1) * height + w) * pixelSize);
-            memcpy(dstPixel, srcPixel, pixelSize * sizeof(T));
-        }
-    }
-}
-
-template <typename T> void rotateRGBImage(const T *src, T *dst, uint32_t width, uint32_t height, uint32_t rotateDegree, uint32_t pixelSize) {
-    switch(rotateDegree) {
-    case 90:
-        rgbImageRotate90<T>(src, dst, width, height, pixelSize);
-        break;
-    case 180:
-        rgbImageRotate180<T>(src, dst, width, height, pixelSize);
-        break;
-    case 270:
-        rgbImageRotate270<T>(src, dst, width, height, pixelSize);
-        break;
-    default:
-        LOG_WARN_INTVL_THREAD("Unsupported rotate degree!");
-        break;
     }
 }
 
@@ -224,7 +95,8 @@ void yuyvImageRotate(uint8_t *src, uint8_t *dst, uint32_t width, uint32_t height
     uint32_t dst_stride_u = dst_width / 2;
     uint8_t *dst_v        = dst + dst_width * dst_height + (dst_width * dst_height) / 4;
     uint32_t dst_stride_v = dst_width / 2;
-    libyuv::YUY2ToI420(src, width * 2, dst_y, dst_stride_y, dst_u, dst_stride_u, dst_v, dst_stride_v, dst_width, dst_height);
+    libyuv::YUY2ToI420(src, static_cast<int>(width * 2), dst_y, static_cast<int>(dst_stride_y), dst_u, static_cast<int>(dst_stride_u), dst_v,
+                       static_cast<int>(dst_stride_v), static_cast<int>(dst_width), static_cast<int>(dst_height));
 
     // 2. rotate
     uint8_t *src_y        = dst_y;
@@ -244,8 +116,9 @@ void yuyvImageRotate(uint8_t *src, uint8_t *dst, uint32_t width, uint32_t height
     dst_stride_u = dst_width / 2;
     dst_v        = dst + dst_width * dst_height + (dst_width * dst_height) / 4;
     dst_stride_v = dst_width / 2;
-    libyuv::I420Rotate(src_y, src_stride_y, src_u, src_stride_u, src_v, src_stride_v, dst_y, dst_stride_y, dst_u, dst_stride_u, dst_v, dst_stride_v, width,
-                       height, rotationMode);
+    libyuv::I420Rotate(src_y, static_cast<int>(src_stride_y), src_u, static_cast<int>(src_stride_u), src_v, static_cast<int>(src_stride_v), dst_y,
+                       static_cast<int>(dst_stride_y), dst_u, static_cast<int>(dst_stride_u), dst_v, static_cast<int>(dst_stride_v), static_cast<int>(width),
+                       static_cast<int>(height), rotationMode);
 
     // 3.I420 to yuyv
     src_y        = dst_y;

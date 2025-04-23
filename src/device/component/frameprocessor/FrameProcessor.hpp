@@ -44,7 +44,7 @@ class FrameProcessor : public FilterExtension, public IBasicPropertyAccessor, pu
 public:
     FrameProcessor(IDevice *owner, std::shared_ptr<FrameProcessorContext> context, OBSensorType sensorType);
 
-    virtual ~FrameProcessor() noexcept;
+    virtual ~FrameProcessor() noexcept override;
 
     const std::string &getConfigSchema() const override;
 

@@ -1,8 +1,6 @@
 // Copyright (c) Orbbec Inc. All Rights Reserved.
 // Licensed under the MIT License.
 
-#ifndef __ANDROID__
-
 #include "UsbEnumeratorLibusb.hpp"
 
 #include "logger/Logger.hpp"
@@ -10,6 +8,9 @@
 #include "utils/Utils.hpp"
 #include "exception/ObException.hpp"
 
+#ifdef __ANDROID__
+#include "usb/pal/android/AndroidUsbDeviceManager.hpp"
+#endif
 namespace libobsensor {
 
 std::string getDevicePath(libusb_device *device) {
@@ -255,7 +256,16 @@ std::vector<UsbInterfaceInfo> queryInterfaces(libusb_device *device, libusb_devi
     return rv;
 }
 
+#ifndef __ANDROID__
 UsbDeviceLibusb::UsbDeviceLibusb(libusb_context *libusbCtx, std::shared_ptr<libusb_device_handle> handle) : libusbCtx_(libusbCtx), handle_(handle) {}
+#else
+UsbDeviceLibusb::UsbDeviceLibusb(libusb_context *libusbCtx, std::shared_ptr<libusb_device_handle> handle, const std::string& devUrl)
+    : libusbCtx_(libusbCtx), handle_(handle), devUrl_(devUrl) {}
+
+UsbDeviceLibusb::~UsbDeviceLibusb() {
+    // AndroidUsbDeviceManager::getInstance()->closeUsbDevice(devUrl_); // close in deleter
+}
+#endif
 
 libusb_device_handle *UsbDeviceLibusb::getLibusbDeviceHandle() const {
     return handle_.get();
@@ -304,7 +314,7 @@ libusb_endpoint_descriptor UsbDeviceLibusb::getEndpointDesc(int interfaceIndex, 
     }
     return ep;
 }
-
+#ifndef __ANDROID__
 std::weak_ptr<IUsbEnumerator> IUsbEnumerator::instanceWeakPtr_;
 std::mutex                    IUsbEnumerator::instanceMutex_;
 
@@ -319,14 +329,6 @@ std::shared_ptr<IUsbEnumerator> IUsbEnumerator::getInstance() {
 }
 
 UsbEnumeratorLibusb::UsbEnumeratorLibusb() {
-#ifdef __ANDROID__
-    auto rc = libusb_set_option(ctx_, LIBUSB_OPTION_WEAK_AUTHORITY, NULL);
-    if(rc != LIBUSB_SUCCESS) {
-        LOG_ERROR("libusb set option LIBUSB_OPTION_WEAK_AUTHORITY failed!");
-        throw std::runtime_error("libusb set option LIBUSB_OPTION_WEAK_AUTHORITY failed");
-    }
-#endif
-
     auto sts = libusb_init(&libusbCtx_);
     if(sts != LIBUSB_SUCCESS) {
         LOG_ERROR("libusb_init failed");
@@ -515,6 +517,5 @@ std::shared_ptr<libusb_device_handle> UsbEnumeratorLibusb::openLibusbDevice(cons
 
     return devHandle;
 }
-
+#endif
 }  // namespace libobsensor
-#endif  // __ANDROID__

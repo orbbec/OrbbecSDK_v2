@@ -9,7 +9,7 @@ namespace libobsensor {
 class Astra2Disp2DepthPropertyAccessor : public IBasicPropertyAccessor, public IStructureDataAccessor {
 public:
     explicit Astra2Disp2DepthPropertyAccessor(IDevice *owner);
-    virtual ~Astra2Disp2DepthPropertyAccessor() noexcept = default;
+    virtual ~Astra2Disp2DepthPropertyAccessor() noexcept override = default;
 
     virtual void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
     virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
@@ -35,7 +35,7 @@ private:
 class Astra2TempPropertyAccessor : public IStructureDataAccessor {
 public:
     explicit Astra2TempPropertyAccessor(IDevice *owner);
-    virtual ~Astra2TempPropertyAccessor() noexcept = default;
+    virtual ~Astra2TempPropertyAccessor() noexcept override = default;
 
     virtual void                        setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) override;
     virtual const std::vector<uint8_t> &getStructureData(uint32_t propertyId) override;

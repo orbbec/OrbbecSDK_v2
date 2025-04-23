@@ -26,7 +26,7 @@ class PointCloudFilter : public IFilterBase {
 
 public:
     PointCloudFilter();
-    virtual ~PointCloudFilter() noexcept;
+    virtual ~PointCloudFilter() noexcept override;
 
     void reset() override;
 

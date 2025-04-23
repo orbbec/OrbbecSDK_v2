@@ -3,8 +3,6 @@
 
 #pragma once
 
-#ifndef __ANDROID__
-
 #include "UsbTypes.hpp"
 
 #include <memory>
@@ -19,22 +17,34 @@ namespace libobsensor {
 
 class UsbDeviceLibusb : public IUsbDevice {
 public:
+#ifndef __ANDROID__
     UsbDeviceLibusb(libusb_context *libusbCtx, std::shared_ptr<libusb_device_handle> handle);
-    virtual ~UsbDeviceLibusb() noexcept = default;
 
-    libusb_device_handle *getLibusbDeviceHandle() const;
-    libusb_context *getLibusbContext() const;
+    virtual ~UsbDeviceLibusb() noexcept override = default;
+#else
+    UsbDeviceLibusb(libusb_context *libusbCtx, std::shared_ptr<libusb_device_handle> handle, const std::string &devUrl);
+
+    virtual ~UsbDeviceLibusb() noexcept override;
+#endif
+
+    libusb_device_handle      *getLibusbDeviceHandle() const;
+    libusb_context            *getLibusbContext() const;
     libusb_endpoint_descriptor getEndpointDesc(int interfaceIndex, libusb_endpoint_transfer_type transferType, libusb_endpoint_direction direction) const;
 
 private:
     libusb_context                       *libusbCtx_;
     std::shared_ptr<libusb_device_handle> handle_;
+
+#ifdef __ANDROID__
+    const std::string devUrl_;
+#endif
 };
 
+#ifndef __ANDROID__
 class UsbEnumeratorLibusb : public IUsbEnumerator {
 public:
     UsbEnumeratorLibusb();
-    ~UsbEnumeratorLibusb() noexcept;
+    virtual ~UsbEnumeratorLibusb() noexcept override;
 
     const std::vector<UsbInterfaceInfo> &queryUsbInterfaces() override;
 
@@ -55,7 +65,5 @@ private:
     std::mutex                                                 libusbDeviceHandleMutex_;
     std::map<std::string, std::weak_ptr<libusb_device_handle>> libusbDeviceHandles_;
 };
-
+#endif
 }  // namespace libobsensor
-
-#endif  // __ANDROID__

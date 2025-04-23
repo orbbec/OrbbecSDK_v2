@@ -49,7 +49,7 @@ DeviceManager::DeviceManager() : destroy_(false), multiDeviceSyncIntervalMs_(0) 
     LOG_DEBUG("Enable USB Device Enumerator ...");
     auto usbDeviceEnumerator =
         std::make_shared<UsbDeviceEnumerator>([&](const DeviceEnumInfoList &removed, const DeviceEnumInfoList &added) { onDeviceChanged(removed, added); });
-
+    LOG_DEBUG("<<Enable USB Device Enumerator ...");
     deviceEnumerators_.emplace_back(usbDeviceEnumerator);
 #endif
 

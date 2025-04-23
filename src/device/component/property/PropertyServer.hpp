@@ -23,7 +23,7 @@ class PropertyServer : public IPropertyServer, public DeviceComponentBase {
 
 public:
     PropertyServer(IDevice *owner);
-    ~PropertyServer() noexcept = default;
+    ~PropertyServer() noexcept override = default;
 
     virtual void registerAccessCallback(uint32_t propertyId, PropertyAccessCallback callback) override;
     virtual void registerAccessCallback(std::vector<uint32_t> propertyIds, PropertyAccessCallback callback) override;

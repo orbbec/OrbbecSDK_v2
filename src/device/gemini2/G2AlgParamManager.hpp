@@ -9,7 +9,7 @@ namespace libobsensor {
 class G2AlgParamManager : public DisparityAlgParamManagerBase {
 public:
     G2AlgParamManager(IDevice *owner);
-    virtual ~G2AlgParamManager() = default;
+    virtual ~G2AlgParamManager() noexcept override = default;
 
     void fetchParamFromDevice() override;
     void registerBasicExtrinsics() override;

@@ -26,6 +26,8 @@ private:
      */
     explicit Error(ob_error *error) : impl_(error) {};
 
+    Error& operator=(const Error&) = default;
+
 public:
     /**
      * @brief A static function to handle the ob_error and throw an exception if needed.

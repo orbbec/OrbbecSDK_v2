@@ -8,7 +8,7 @@ file(GLOB _src_files
     AndroidUsbPal.hpp
 )
 
-if(BUILD_USB_PAL)
+if(OB_BUILD_USB_PAL)
     file(GLOB _usb_src_files
         AndroidUsbDeviceManager.cpp
         AndroidUsbDeviceManager.hpp

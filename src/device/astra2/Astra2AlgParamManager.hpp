@@ -9,7 +9,7 @@ namespace libobsensor {
 class Astra2AlgParamManager : public DisparityAlgParamManagerBase {
 public:
     Astra2AlgParamManager(IDevice *owner);
-    virtual ~Astra2AlgParamManager() = default;
+    virtual ~Astra2AlgParamManager() noexcept override = default;
 
     void fetchParamFromDevice() override;
     void registerBasicExtrinsics() override;

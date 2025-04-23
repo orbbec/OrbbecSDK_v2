@@ -42,7 +42,7 @@ public:
                 std::shared_ptr<IImuCalculator> calculator = nullptr);
     ImuStreamer(IDevice *owner, const std::shared_ptr<IDataStreamPort> &backend, std::vector<std::shared_ptr<IFilter>> filters,
                 std::shared_ptr<IImuCalculator> calculator = nullptr);
-    virtual ~ImuStreamer() noexcept;
+    virtual ~ImuStreamer() noexcept override;
 
     virtual void startStream(std::shared_ptr<const StreamProfile> profile, MutableFrameCallback callback) override;
     virtual void stopStream(std::shared_ptr<const StreamProfile> profile) override;

@@ -14,7 +14,7 @@ else()
     target_sources(${OB_TARGET_PAL} PRIVATE "${CMAKE_CURRENT_LIST_DIR}/ObLibuvcDevicePort.cpp")
     target_sources(${OB_TARGET_PAL} PRIVATE "${CMAKE_CURRENT_LIST_DIR}/ObLibuvcDevicePort.hpp")
 
-    if(OB_BUILD_LINUX)
+    if(OB_BUILD_LINUX OR OB_BUILD_ANDROID)
         target_sources(${OB_TARGET_PAL} PRIVATE "${CMAKE_CURRENT_LIST_DIR}/ObV4lUvcDevicePort.hpp")
         target_sources(${OB_TARGET_PAL} PRIVATE "${CMAKE_CURRENT_LIST_DIR}/ObV4lUvcDevicePort.cpp")
         if(OB_BUILD_GMSL_PAL)

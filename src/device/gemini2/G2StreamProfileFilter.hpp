@@ -11,7 +11,7 @@ namespace libobsensor {
 class G2StreamProfileFilter : public DeviceComponentBase, public IStreamProfileFilter {
 public:
     G2StreamProfileFilter(IDevice *owner);
-    virtual ~G2StreamProfileFilter() noexcept = default;
+    virtual ~G2StreamProfileFilter() noexcept override = default;
 
     StreamProfileList filter(const StreamProfileList &profiles) const override;
 

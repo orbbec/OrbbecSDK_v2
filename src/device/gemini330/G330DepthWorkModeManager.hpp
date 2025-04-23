@@ -12,7 +12,7 @@ namespace libobsensor {
 class G330DepthWorkModeManager : public IDepthWorkModeManager, public DeviceComponentBase {
 public:
     G330DepthWorkModeManager(IDevice *owner);
-    virtual ~G330DepthWorkModeManager() = default;
+    virtual ~G330DepthWorkModeManager() noexcept override = default;
 
     std::vector<OBDepthWorkMode_Internal> getDepthWorkModeList() const override;
     const OBDepthWorkMode_Internal &      getCurrentDepthWorkMode() const override;

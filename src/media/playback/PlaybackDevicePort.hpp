@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "libobsensor/h/ObTypes.h"
 #include "ISourcePort.hpp"
 #include "StateMachineBase.hpp"
 #include "frame/FrameQueue.hpp"
@@ -15,6 +16,15 @@
 #include <string>
 #include <mutex>
 #include <bitset>
+
+namespace std {
+template<>
+struct hash<ob_playback_status> {
+    size_t operator()(const ob_playback_status& s) const noexcept {
+        return static_cast<size_t>(s);
+    }
+};
+}
 
 namespace libobsensor {
 
@@ -39,7 +49,7 @@ public:
     virtual void stopStream() override;
 
     // ISourcePort
-    virtual std::shared_ptr<const SourcePortInfo> getSourcePortInfo() const;
+    virtual std::shared_ptr<const SourcePortInfo> getSourcePortInfo() const override;
 
 public:
     StreamProfileList           getStreamProfileList(OBSensorType sensorType);  // add for compatibility using one port for multisensor
@@ -81,8 +91,8 @@ private:
     std::shared_ptr<FrameQueue<Frame>> &getFrameQueue(OBSensorType sensorType);
 
 private:
-    std::unordered_map<OBSensorType, std::shared_ptr<FrameQueue<Frame>>> frameQueues_;
-    std::bitset<OB_SENSOR_TYPE_COUNT - 1>                                activeSensors_;  // exclude OB_SENSOR_UNKNOWN
+    std::map<OBSensorType, std::shared_ptr<FrameQueue<Frame>>> frameQueues_;
+    std::bitset<OB_SENSOR_TYPE_COUNT - 1>                      activeSensors_;  // exclude OB_SENSOR_UNKNOWN
 
     StreamProfileList          streamProfileList_;
     std::shared_ptr<IReader>   reader_;

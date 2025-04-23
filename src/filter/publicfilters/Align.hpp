@@ -14,7 +14,7 @@ namespace libobsensor {
 class Align : public IFilterBase {
 public:
     explicit Align();
-    virtual ~Align() noexcept;
+    virtual ~Align() noexcept override;
 
     OBStreamType getAlignToStreamType() {
         return alignToStreamType_;

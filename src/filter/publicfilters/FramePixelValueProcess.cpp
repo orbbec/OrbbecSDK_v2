@@ -24,7 +24,7 @@ template <typename T> void imagePixelValueOffset(T *src, T *dst, uint32_t width,
     T *dstPixel = dst;
     T *srcPixel = src;
     if(offset > 0) {
-        uint8_t shiftCount = offset;
+        uint8_t shiftCount = static_cast<uint8_t>(offset);
         for(uint32_t h = 0; h < height; h++) {
             for(uint32_t w = 0; w < width; w++) {
                 *dstPixel = *srcPixel >> shiftCount;
@@ -34,7 +34,7 @@ template <typename T> void imagePixelValueOffset(T *src, T *dst, uint32_t width,
         }
     }
     else if(offset < 0) {
-        uint8_t shiftCount = -offset;
+        uint8_t shiftCount = static_cast<uint8_t>(-offset);
         for(uint32_t h = 0; h < height; h++) {
             for(uint32_t w = 0; w < width; w++) {
                 *dstPixel = *srcPixel << shiftCount;

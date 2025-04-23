@@ -14,7 +14,7 @@ namespace libobsensor {
 class Astra2DeviceInfo : public DeviceEnumInfoBase, public std::enable_shared_from_this<Astra2DeviceInfo> {
 public:
     Astra2DeviceInfo(const SourcePortInfoList groupedInfoList);
-    ~Astra2DeviceInfo() noexcept;
+    ~Astra2DeviceInfo() noexcept override;
 
     std::shared_ptr<IDevice> createDevice() const override;
 

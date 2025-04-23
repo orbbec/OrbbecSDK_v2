@@ -14,7 +14,7 @@ namespace libobsensor {
 class BootDeviceInfo : public DeviceEnumInfoBase, public std::enable_shared_from_this<BootDeviceInfo> {
 public:
     BootDeviceInfo(const SourcePortInfoList groupedInfoList);
-    ~BootDeviceInfo() noexcept;
+    ~BootDeviceInfo() noexcept override;
 
     std::shared_ptr<IDevice> createDevice() const override;
 

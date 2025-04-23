@@ -6,8 +6,6 @@
 #include "IPal.hpp"
 #include "logger/Logger.hpp"
 #include "exception/ObException.hpp"
-#include "logger/Logger.hpp"
-#include "exception/ObException.hpp"
 #include "usb/enumerator/IUsbEnumerator.hpp"
 
 #include <iostream>

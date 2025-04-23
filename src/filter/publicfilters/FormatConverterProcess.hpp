@@ -10,7 +10,7 @@ namespace libobsensor {
 class FormatConverter : public IFilterBase {
 public:
     FormatConverter();
-    virtual ~FormatConverter() noexcept;
+    virtual ~FormatConverter() noexcept override;
 
     void                   updateConfig(std::vector<std::string> &params) override;
     const std::string     &getConfigSchema() const override;

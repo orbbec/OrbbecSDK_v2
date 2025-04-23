@@ -12,7 +12,7 @@ namespace libobsensor {
 class G2DepthWorkModeManager : public IDepthWorkModeManager, public DeviceComponentBase {
 public:
     G2DepthWorkModeManager(IDevice *owner);
-    virtual ~G2DepthWorkModeManager() = default;
+    virtual ~G2DepthWorkModeManager() noexcept override = default;
 
     std::vector<OBDepthWorkMode_Internal> getDepthWorkModeList() const override;
     const OBDepthWorkMode_Internal       &getCurrentDepthWorkMode() const override;

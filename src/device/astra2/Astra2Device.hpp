@@ -15,7 +15,7 @@ namespace libobsensor {
 class Astra2Device : public DeviceBase {
 public:
     Astra2Device(const std::shared_ptr<const IDeviceEnumInfo> &info);
-    virtual ~Astra2Device() noexcept;
+    virtual ~Astra2Device() noexcept override;
 
     std::vector<std::shared_ptr<IFilter>> createRecommendedPostProcessingFilters(OBSensorType type) override;
 

@@ -11,7 +11,7 @@ namespace libobsensor {
 class Astra2StreamProfileFilter : public DeviceComponentBase, public IStreamProfileFilter {
 public:
     Astra2StreamProfileFilter(IDevice *owner);
-    virtual ~Astra2StreamProfileFilter() noexcept = default;
+    virtual ~Astra2StreamProfileFilter() noexcept override = default;
 
     StreamProfileList filter(const StreamProfileList &profiles) const override;
 

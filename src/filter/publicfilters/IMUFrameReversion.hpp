@@ -10,7 +10,7 @@ namespace libobsensor {
 class IMUFrameReversion : public IFilterBase {
 public:
     IMUFrameReversion();
-    virtual ~IMUFrameReversion() noexcept;
+    virtual ~IMUFrameReversion() noexcept override;
 
     void               updateConfig(std::vector<std::string> &params) override;
     const std::string &getConfigSchema() const override;

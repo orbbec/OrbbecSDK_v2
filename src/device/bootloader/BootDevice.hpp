@@ -14,7 +14,7 @@ namespace libobsensor {
 class BootDevice : public DeviceBase {
 public:
     BootDevice(const std::shared_ptr<const IDeviceEnumInfo> &info);
-    virtual ~BootDevice() noexcept;
+    virtual ~BootDevice() noexcept override;
 
 protected:
     void fetchDeviceInfo() override;

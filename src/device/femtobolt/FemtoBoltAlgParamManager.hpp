@@ -8,7 +8,7 @@ namespace libobsensor {
 class FemtoBoltAlgParamManager : public TOFDeviceCommonAlgParamManager {
 public:
     FemtoBoltAlgParamManager(IDevice *owner);
-    ~FemtoBoltAlgParamManager() = default;
+    ~FemtoBoltAlgParamManager() noexcept override = default;
 
     const std::vector<OBD2CProfile> &getD2CProfileList() const override;
 

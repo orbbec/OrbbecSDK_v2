@@ -17,15 +17,15 @@ public:
     FrameMetadataParserContainer(IDevice *owner) : DeviceComponentBase(owner) {}
     virtual ~FrameMetadataParserContainer() = default;
 
-    virtual void registerParser(OBFrameMetadataType type, std::shared_ptr<IFrameMetadataParser> phaser) {
+    virtual void registerParser(OBFrameMetadataType type, std::shared_ptr<IFrameMetadataParser> phaser) override {
         parsers[type] = phaser;
     }
 
-    virtual bool isContained(OBFrameMetadataType type) {
+    virtual bool isContained(OBFrameMetadataType type) override {
         return parsers.find(type) != parsers.end();
     }
 
-    virtual std::shared_ptr<IFrameMetadataParser> get(OBFrameMetadataType type) {
+    virtual std::shared_ptr<IFrameMetadataParser> get(OBFrameMetadataType type) override {
         if(!isContained(type)) {
             throw unsupported_operation_exception(utils::string::to_string() << "Not registered metadata parser for type: " << type);
         }

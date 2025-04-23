@@ -31,7 +31,7 @@ public:
 protected:
     ObUsageEnvironment(TaskScheduler &taskScheduler);
     // called only by "createNew()" (or subclass constructors)
-    virtual ~ObUsageEnvironment();
+    virtual ~ObUsageEnvironment() noexcept override;
 
 private:
     void outputLog();

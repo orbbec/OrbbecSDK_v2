@@ -13,7 +13,7 @@ namespace libobsensor {
 class G330AlgParamManager : public DisparityAlgParamManagerBase {
 public:
     G330AlgParamManager(IDevice *owner);
-    virtual ~G330AlgParamManager() = default;
+    virtual ~G330AlgParamManager() noexcept override = default;
 
     void bindIntrinsic(std::vector<std::shared_ptr<const StreamProfile>> streamProfileList) override;
     void reFetchDisparityParams();

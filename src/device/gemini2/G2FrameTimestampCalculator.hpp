@@ -9,7 +9,7 @@ namespace libobsensor {
 class G2VideoFrameTimestampCalculator : public FrameTimestampCalculatorBaseDeviceTime {
 public:
     G2VideoFrameTimestampCalculator(IDevice *owner, uint64_t deviceTimeFreq, uint64_t frameTimeFreq);
-    ~G2VideoFrameTimestampCalculator() = default;
+    ~G2VideoFrameTimestampCalculator() noexcept override = default;
 
     void calculate(std::shared_ptr<Frame> frame) override;
 };
@@ -17,7 +17,7 @@ public:
 class G2LVideoFrameTimestampCalculator : public FrameTimestampCalculatorBaseDeviceTime {
 public:
     G2LVideoFrameTimestampCalculator(IDevice *owner, uint64_t deviceTimeFreq, uint64_t frameTimeFreq);
-    ~G2LVideoFrameTimestampCalculator() = default;
+    ~G2LVideoFrameTimestampCalculator() noexcept override = default;
 
     void calculate(std::shared_ptr<Frame> frame) override;
 };

@@ -49,7 +49,7 @@ void log_intvl_invoke(std::shared_ptr<ObLogIntvlRecord> record, uint64_t minIntv
     record->cv.wait_for(lock, std::chrono::milliseconds(record->interval));
     if(record->count > 0) {
         auto     nowTime  = std::chrono::system_clock::now();
-        uint64_t duration = std::chrono::duration_cast<std::chrono::milliseconds>(nowTime - record->lastInvokeTime).count();
+        uint64_t duration = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(nowTime - record->lastInvokeTime).count());
 
         char   timestampStr[100];
         time_t timestamp = std::chrono::duration_cast<std::chrono::seconds>(record->lastLogTime.time_since_epoch()).count();
@@ -90,7 +90,7 @@ void log_intvl(std::shared_ptr<ObLogIntvlRecord> record, uint64_t minIntvlMsec, 
         auto                         nowTime = std::chrono::system_clock::now();
         record->lastLogTime                  = nowTime;
         record->count++;
-        uint64_t duration           = std::chrono::duration_cast<std::chrono::milliseconds>(nowTime - record->lastInvokeTime).count();
+        uint64_t duration           = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(nowTime - record->lastInvokeTime).count());
         bool     zeroLastInvokeTime = record->lastInvokeTime.time_since_epoch() == std::chrono::system_clock::duration::zero();
         if(duration > record->interval || zeroLastInvokeTime) {
             if(!zeroLastInvokeTime) {
@@ -142,7 +142,7 @@ void log_intvl(std::shared_ptr<ObLogIntvlRecord> record, uint64_t minIntvlMsec, 
             LOG_WARN("logIntvlRecordMap size {} > {}, clear it!", logIntvlRecordMap.size(), LOG_RECORD_MAP_SIZE_LIMIT);                                     \
             auto nowTime = std::chrono::system_clock::now();                                                                                                \
             for(auto logIntvlRecordMapIter = logIntvlRecordMap.begin(); logIntvlRecordMapIter != logIntvlRecordMap.end();) {                                \
-                uint64_t duration = std::chrono::duration_cast<std::chrono::milliseconds>(nowTime - logIntvlRecordMapIter->second->lastInvokeTime).count(); \
+                uint64_t duration = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(nowTime - logIntvlRecordMapIter->second->lastInvokeTime).count()); \
                 if(logIntvlRecordMapIter->second->count == 0 && duration > logIntvlRecordMapIter->second->interval) {                                       \
                     logIntvlRecordMapIter = logIntvlRecordMap.erase(logIntvlRecordMapIter);                                                                 \
                 }                                                                                                                                           \

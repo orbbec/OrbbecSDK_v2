@@ -13,7 +13,7 @@ namespace libobsensor {
 class G2XLDeviceBase : public DeviceBase {
 public:
     G2XLDeviceBase(const std::shared_ptr<const IDeviceEnumInfo> &info);
-    virtual ~G2XLDeviceBase() noexcept;
+    virtual ~G2XLDeviceBase() noexcept override;
 
     void init() override;
 
@@ -29,7 +29,7 @@ protected:
 class G2XLUSBDevice : public G2XLDeviceBase {
 public:
     G2XLUSBDevice(const std::shared_ptr<const IDeviceEnumInfo> &info);
-    virtual ~G2XLUSBDevice() noexcept;
+    virtual ~G2XLUSBDevice() noexcept override;
 
 private:
     void init() override;
@@ -43,7 +43,7 @@ private:
 class G2XLNetDevice : public G2XLDeviceBase {
 public:
     G2XLNetDevice(const std::shared_ptr<const IDeviceEnumInfo> &info);
-    virtual ~G2XLNetDevice() noexcept;
+    virtual ~G2XLNetDevice() noexcept override;
 
 private:
     void init() override;

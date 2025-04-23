@@ -13,7 +13,7 @@ class GlobalTimestampCalculator : public IFrameTimestampCalculator, public Devic
 public:
     GlobalTimestampCalculator(IDevice *device, uint64_t deviceTimeFreq, uint64_t frameTimeFreq);
 
-    virtual ~GlobalTimestampCalculator() = default;
+    virtual ~GlobalTimestampCalculator() noexcept override = default;
 
     void calculate(std::shared_ptr<Frame> frame) override;
     void clear() override;
@@ -28,7 +28,7 @@ class FrameTimestampCalculatorDirectly : public IFrameTimestampCalculator, publi
 public:
     FrameTimestampCalculatorDirectly(IDevice *device, uint64_t clockFreq);
 
-    virtual ~FrameTimestampCalculatorDirectly() = default;
+    virtual ~FrameTimestampCalculatorDirectly() noexcept override = default;
 
     void calculate(std::shared_ptr<Frame> frame) override;
     void clear() override {}
@@ -41,7 +41,7 @@ class FrameTimestampCalculatorBaseDeviceTime : public IFrameTimestampCalculator,
 public:
     FrameTimestampCalculatorBaseDeviceTime(IDevice *device, uint64_t deviceTimeFreq, uint64_t frameTimeFreq);
 
-    virtual ~FrameTimestampCalculatorBaseDeviceTime() = default;
+    virtual ~FrameTimestampCalculatorBaseDeviceTime() noexcept override = default;
 
     void calculate(std::shared_ptr<Frame> frame) override;
     void clear() override;
@@ -61,7 +61,7 @@ class FrameTimestampCalculatorOverMetadata : public IFrameTimestampCalculator, p
 public:
     FrameTimestampCalculatorOverMetadata(IDevice *device, OBFrameMetadataType metadataType, uint64_t clockFreq);
 
-    virtual ~FrameTimestampCalculatorOverMetadata() = default;
+    virtual ~FrameTimestampCalculatorOverMetadata() noexcept override = default;
 
     void calculate(std::shared_ptr<Frame> frame) override;
     void clear() override;
@@ -75,7 +75,7 @@ class FrameTimestampCalculatorOverUvcSCR : public IFrameTimestampCalculator, pub
 public:
     FrameTimestampCalculatorOverUvcSCR(IDevice *device, uint64_t clockFreq);
 
-    virtual ~FrameTimestampCalculatorOverUvcSCR() = default;
+    virtual ~FrameTimestampCalculatorOverUvcSCR() noexcept override = default;
 
     void calculate(std::shared_ptr<Frame> frame) override;
     void clear() override;

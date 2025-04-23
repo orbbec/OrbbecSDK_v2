@@ -13,7 +13,7 @@ namespace libobsensor {
 class FemtoMegaUsbDevice : public DeviceBase {
 public:
     FemtoMegaUsbDevice(const std::shared_ptr<const IDeviceEnumInfo> &info);
-    virtual ~FemtoMegaUsbDevice() noexcept;
+    virtual ~FemtoMegaUsbDevice() noexcept override;
 
 private:
     void init() override;
@@ -29,7 +29,7 @@ private:
 class FemtoMegaNetDevice : public DeviceBase {
 public:
     FemtoMegaNetDevice(const std::shared_ptr<const IDeviceEnumInfo> &info);
-    virtual ~FemtoMegaNetDevice() noexcept;
+    virtual ~FemtoMegaNetDevice() noexcept override;
 
 private:
     void init() override;

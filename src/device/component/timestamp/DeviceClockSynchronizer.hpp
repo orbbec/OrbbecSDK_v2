@@ -10,7 +10,7 @@ namespace libobsensor {
 class DeviceClockSynchronizer : public IDeviceClockSynchronizer, public DeviceComponentBase {
 public:
     DeviceClockSynchronizer(IDevice *owner, uint64_t deviceClockFreqIn = 1000, uint64_t deviceClockFreqOut = 1000);
-    virtual ~DeviceClockSynchronizer() = default;
+    virtual ~DeviceClockSynchronizer() noexcept override = default;
 
     void                         setTimestampResetConfig(const OBDeviceTimestampResetConfig &timestampResetConfig) override;
     OBDeviceTimestampResetConfig getTimestampResetConfig() override;

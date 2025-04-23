@@ -14,7 +14,7 @@ namespace libobsensor {
 class G2DeviceInfo : public DeviceEnumInfoBase, public std::enable_shared_from_this<G2DeviceInfo> {
 public:
     G2DeviceInfo(const SourcePortInfoList groupedInfoList);
-    ~G2DeviceInfo() noexcept;
+    ~G2DeviceInfo() noexcept override;
 
     std::shared_ptr<IDevice> createDevice() const override;
 

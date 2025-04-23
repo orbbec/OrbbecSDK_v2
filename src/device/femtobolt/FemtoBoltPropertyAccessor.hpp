@@ -9,7 +9,7 @@ namespace libobsensor {
 class FemtoBoltIrModePropertyAccessor : public IBasicPropertyAccessor {
 public:
     explicit FemtoBoltIrModePropertyAccessor(IDevice *owner);
-    virtual ~FemtoBoltIrModePropertyAccessor() noexcept = default;
+    virtual ~FemtoBoltIrModePropertyAccessor() noexcept override = default;
 
     virtual void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
     virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
@@ -22,7 +22,7 @@ private:
 class FemtoBoltTempPropertyAccessor : public IStructureDataAccessor {
 public:
     explicit FemtoBoltTempPropertyAccessor(IDevice *owner);
-    virtual ~FemtoBoltTempPropertyAccessor() noexcept = default;
+    virtual ~FemtoBoltTempPropertyAccessor() noexcept override = default;
 
     virtual void                        setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) override;
     virtual const std::vector<uint8_t> &getStructureData(uint32_t propertyId) override;

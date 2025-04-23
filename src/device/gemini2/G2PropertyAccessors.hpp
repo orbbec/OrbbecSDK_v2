@@ -9,7 +9,7 @@ namespace libobsensor {
 class G2Disp2DepthPropertyAccessor : public IBasicPropertyAccessor, public IStructureDataAccessor {
 public:
     explicit G2Disp2DepthPropertyAccessor(IDevice *owner);
-    virtual ~G2Disp2DepthPropertyAccessor() noexcept = default;
+    virtual ~G2Disp2DepthPropertyAccessor() noexcept override = default;
 
     IDevice *getOwner();
 

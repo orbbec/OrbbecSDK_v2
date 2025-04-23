@@ -25,6 +25,11 @@ if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQU
     list(APPEND CLANG_ALL_WARNINGS "-Wno-covered-switch-default") # Allow default: in switch statements that cover all enum values
     list(APPEND CLANG_ALL_WARNINGS "-Wno-unreachable-code-break") # Allow break even if it is unreachable
     list(APPEND CLANG_ALL_WARNINGS "-Wno-double-promotion") # Allow floats to be promoted to doubles. Needed for isnan() on some systems
+    list(APPEND CLANG_ALL_WARNINGS "-Wno-inconsistent-missing-destructor-override") # Allow for android wrapper
+    list(APPEND CLANG_ALL_WARNINGS "-Wno-nested-anon-types") # Allow for android wrapper
+    list(APPEND CLANG_ALL_WARNINGS "-Wno-missing-braces") # Allow for android wrapper
+    list(APPEND CLANG_ALL_WARNINGS "-Wno-braced-scalar-init") # Allow for android wrapper
+
     if (NOT (${CMAKE_CXX_COMPILER_VERSION} VERSION_LESS "5.0.0"))
         # Added in clang 5
         list(APPEND CLANG_ALL_WARNINGS "-Wno-zero-as-null-pointer-constant") # Allow zero as nullptr
@@ -39,6 +44,44 @@ if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQU
     endif()
     add_compile_options(${CLANG_ALL_WARNINGS})
     add_compile_options(${CLANG_WARNINGS_AS_ERRORS})
+    add_compile_options(-Wno-documentation) # Disable warnings related to Doxygen comments
+    add_compile_options(-Wno-sign-conversion) # Disable warnings related to implicit sign conversions
+    add_compile_options(-Wno-implicit-float-conversion) # Disable warnings related to implicit float conversions
+    add_compile_options(-Wno-cast-qual) # TODO: should enable
+    add_compile_options(-Wno-cast-align) #TODD: should enable
+    add_compile_options(-Wno-implicit-int-conversion) # uint16_t -> int conversion
+    add_compile_options(-Wno-float-equal) # float comparison
+    add_compile_options(-Wno-undefined-func-template)
+    add_compile_options(-Wno-return-std-move-in-c++11)
+    add_compile_options(-Wno-comma)
+    add_compile_options(-Wno-missing-prototypes)
+    add_compile_options(-Wno-shadow-field-in-constructor) # TODO: should enable
+    add_compile_options(-Wno-shadow-uncaptured-local)
+    add_compile_options(-Wno-shadow-field)
+    add_compile_options(-Wno-missing-variable-declarations)
+    add_compile_options(-Wno-float-conversion)
+    add_compile_options(-Wno-implicit-exception-spec-mismatch)
+    add_compile_options(-Wno-format-nonliteral)
+    add_compile_options(-Wno-implicit-fallthrough)
+    add_compile_options(-Wno-unused-private-field)
+    add_compile_options(-Wno-unreachable-code-return)
+    add_compile_options(-Wno-deprecated)
+    add_compile_options(-Wno-error=deprecated)
+    add_compile_options(-Wno-shorten-64-to-32) # todo: should enable
+    add_compile_options(-Wno-error=shorten-64-to-32)# todo: should enable
+    add_compile_options(-Wno-unused-lambda-capture)
+    add_compile_options(-Wno-error=unused-lambda-capture)
+    add_compile_options(-Wno-unused-macros)
+    add_compile_options(-Wno-error=unused-macros)
+    add_compile_options(-Wno-unused-const-variable)
+    add_compile_options(-Wno-error=unused-const-variable)
+    add_compile_options(-Wno-over-aligned)
+    add_compile_options(-Wno-error=over-aligned)
+    add_compile_options(-Wno-unused-lambda-capture)
+    add_compile_options(-Wno-error=unused-lambda-capture)
+    add_compile_options(-Wno-constexpr-not-const)
+    add_compile_options(-Wno-error=unreachable-code) # Ignore unreachable-code warning: some code is platform-dependent (Windows/Linux)
+
 elseif ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
     set(GNU_ALL_WARNINGS "-Wall" "-Wextra")
     list(APPEND GNU_ALL_WARNINGS "-Wno-missing-field-initializers") # Allow c structs without all fields initialized

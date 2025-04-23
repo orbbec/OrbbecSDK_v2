@@ -20,7 +20,7 @@ namespace libobsensor {
 template <typename T, typename Field> class StructureMetadataParser : public IFrameMetadataParser {
 public:
     StructureMetadataParser(Field T::*field, FrameMetadataModifier mod) : field_(field), modifier_(mod){};
-    virtual ~StructureMetadataParser() = default;
+    virtual ~StructureMetadataParser() noexcept override = default;
 
     int64_t getValue(const uint8_t *metadata, size_t dataSize) override {
         if(!isSupported(metadata, dataSize)) {
@@ -51,7 +51,7 @@ std::shared_ptr<StructureMetadataParser<T, Field>> makeStructureMetadataParser(F
 template <typename T> class G330MetadataTimestampParser : public IFrameMetadataParser {
 public:
     G330MetadataTimestampParser(){};
-    virtual ~G330MetadataTimestampParser() = default;
+    virtual ~G330MetadataTimestampParser() noexcept override = default;
 
     int64_t getValue(const uint8_t *metadata, size_t dataSize) override {
         if(!isSupported(metadata, dataSize)) {
@@ -73,7 +73,7 @@ class G330MetadataSensorTimestampParser : public IFrameMetadataParser {
 public:
     G330MetadataSensorTimestampParser(){};
     explicit G330MetadataSensorTimestampParser(FrameMetadataModifier exp_to_usec) : exp_to_usec_(exp_to_usec){};
-    virtual ~G330MetadataSensorTimestampParser() = default;
+    virtual ~G330MetadataSensorTimestampParser() noexcept override = default;
 
     int64_t getValue(const uint8_t *metadata, size_t dataSize) override {
         if(!isSupported(metadata, dataSize)) {
@@ -98,7 +98,7 @@ class G330ColorMetadataSensorTimestampParser : public IFrameMetadataParser {
 public:
     G330ColorMetadataSensorTimestampParser(){};
     explicit G330ColorMetadataSensorTimestampParser(FrameMetadataModifier exp_to_usec) : exp_to_usec_(exp_to_usec){};
-    virtual ~G330ColorMetadataSensorTimestampParser() = default;
+    virtual ~G330ColorMetadataSensorTimestampParser() noexcept override = default;
 
     int64_t getValue(const uint8_t *metadata, size_t dataSize) override {
         if(!isSupported(metadata, dataSize)) {
@@ -122,7 +122,7 @@ private:
 class G330ScrMetadataParserBase : public IFrameMetadataParser {
 public:
     G330ScrMetadataParserBase(){};
-    virtual ~G330ScrMetadataParserBase() = default;
+    virtual ~G330ScrMetadataParserBase() noexcept override = default;
 
     bool isSupported(const uint8_t *metadata, size_t dataSize) override {
         utils::unusedVar(metadata);
@@ -136,7 +136,7 @@ public:
         : device_(device), deviceTimeFreq_(deviceTimeFreq), frameTimeFreq_(frameTimeFreq) {
         timestampCalculator_ = std::make_shared<G330FrameTimestampCalculatorBaseDeviceTime>(device, deviceTimeFreq_, frameTimeFreq_);
     }
-    virtual ~G330PayloadHeadMetadataTimestampParser() = default;
+    virtual ~G330PayloadHeadMetadataTimestampParser() noexcept override = default;
 
     int64_t getValue(const uint8_t *metadata, size_t dataSize) override {
         if(!isSupported(metadata, dataSize)) {
@@ -165,7 +165,7 @@ class G330PayloadHeadMetadataColorSensorTimestampParser : public G330PayloadHead
 public:
     G330PayloadHeadMetadataColorSensorTimestampParser(IDevice *device, uint64_t deviceTimeFreq, uint64_t frameTimeFreq)
         : G330PayloadHeadMetadataTimestampParser(device, deviceTimeFreq, frameTimeFreq) {}
-    virtual ~G330PayloadHeadMetadataColorSensorTimestampParser() = default;
+    virtual ~G330PayloadHeadMetadataColorSensorTimestampParser() noexcept override = default;
 
     int64_t getValue(const uint8_t *metadata, size_t dataSize) override {
         if(!isSupported(metadata, dataSize)) {
@@ -249,7 +249,7 @@ class G330PayloadHeadMetadataDepthSensorTimestampParser : public G330PayloadHead
 public:
     G330PayloadHeadMetadataDepthSensorTimestampParser(IDevice *device, uint64_t deviceTimeFreq, uint64_t frameTimeFreq)
         : G330PayloadHeadMetadataTimestampParser(device, deviceTimeFreq, frameTimeFreq) {}
-    virtual ~G330PayloadHeadMetadataDepthSensorTimestampParser() = default;
+    virtual ~G330PayloadHeadMetadataDepthSensorTimestampParser() noexcept override = default;
 
     int64_t getValue(const uint8_t *metadata, size_t dataSize) override {
         if(!isSupported(metadata, dataSize)) {
@@ -445,7 +445,7 @@ public:
         }
     }
 
-    virtual ~G330MetadataParserBase() = default;
+    virtual ~G330MetadataParserBase() noexcept override = default;
 
     int64_t getValue(const uint8_t *metadata, size_t dataSize) override {
         if(!isSupported(metadata, dataSize)) {
@@ -590,7 +590,7 @@ public:
         }
     }
 
-    virtual ~G330DepthMetadataHdrSequenceSizeParser() = default;
+    virtual ~G330DepthMetadataHdrSequenceSizeParser() noexcept override = default;
 
     int64_t getValue(const uint8_t *metadata, size_t dataSize) override {
         utils::unusedVar(metadata);

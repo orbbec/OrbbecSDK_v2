@@ -12,7 +12,7 @@ namespace libobsensor {
 class Astra2DepthWorkModeManager : public IDepthWorkModeManager, public DeviceComponentBase {
 public:
     Astra2DepthWorkModeManager(IDevice *owner);
-    virtual ~Astra2DepthWorkModeManager() = default;
+    virtual ~Astra2DepthWorkModeManager() noexcept override = default;
 
     std::vector<OBDepthWorkMode_Internal> getDepthWorkModeList() const override;
     const OBDepthWorkMode_Internal       &getCurrentDepthWorkMode() const override;

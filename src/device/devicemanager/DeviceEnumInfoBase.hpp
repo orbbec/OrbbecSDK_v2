@@ -28,7 +28,7 @@ public:
 
     DeviceEnumInfoBase() : pid_(0), vid_(0), context_(Context::getInstance()) {}
 
-    virtual ~DeviceEnumInfoBase() = default;
+    virtual ~DeviceEnumInfoBase() override = default;
 
     int getPid() const override {
         return pid_;

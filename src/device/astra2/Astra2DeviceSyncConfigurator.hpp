@@ -18,7 +18,7 @@ namespace libobsensor {
 class Astra2DeviceSyncConfigurator : public DeviceSyncConfiguratorOldProtocol {
 public:
     Astra2DeviceSyncConfigurator(IDevice *owner, const std::vector<OBMultiDeviceSyncMode> &supportedSyncModes);
-    virtual ~Astra2DeviceSyncConfigurator() = default;
+    virtual ~Astra2DeviceSyncConfigurator() noexcept override = default;
 
     OBMultiDeviceSyncConfig getSyncConfig() override;
     void                    setSyncConfig(const OBMultiDeviceSyncConfig &deviceSyncConfig) override;

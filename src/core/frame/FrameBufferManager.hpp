@@ -56,7 +56,7 @@ class FrameBufferManagerBase : public IFrameBufferManager {
 public:
     FrameBufferManagerBase(size_t frameDataBufferSize, size_t frameObjSize);
 
-    virtual ~FrameBufferManagerBase() noexcept;
+    virtual ~FrameBufferManagerBase() noexcept override;
     void   reclaimBuffer(void *buffer) override;
     void   releaseIdleBuffer() override;
     size_t getFrameDataBufferSize() override {
@@ -91,7 +91,7 @@ private:
     friend class FrameMemoryPool;
 
 public:
-    virtual ~FrameBufferManager() {
+    virtual ~FrameBufferManager() override {
         LOG_DEBUG("FrameBufferManager destroying...! frame type: {0},  obj addr:0x{1:x}", typeid(T).name(), uint64_t(this));
     }
 

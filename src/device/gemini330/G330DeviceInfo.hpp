@@ -17,7 +17,7 @@ constexpr uint32_t G335LE_1000M_NET_BAND_WIDTH = 1000;
 class G330DeviceInfo : public DeviceEnumInfoBase, public std::enable_shared_from_this<G330DeviceInfo> {
 public:
     G330DeviceInfo(const SourcePortInfoList groupedInfoList);
-    ~G330DeviceInfo() noexcept;
+    ~G330DeviceInfo() noexcept override;
 
     std::shared_ptr<IDevice> createDevice() const override;
 

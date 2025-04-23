@@ -18,7 +18,7 @@ namespace libobsensor {
 class G330Device : public DeviceBase {
 public:
     G330Device(const std::shared_ptr<const IDeviceEnumInfo> &info);
-    virtual ~G330Device() noexcept;
+    virtual ~G330Device() noexcept override;
 
     std::vector<std::shared_ptr<IFilter>> createRecommendedPostProcessingFilters(OBSensorType type) override;
 
