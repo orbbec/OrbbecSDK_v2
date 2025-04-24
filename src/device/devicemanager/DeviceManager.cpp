@@ -53,14 +53,12 @@ DeviceManager::DeviceManager() : destroy_(false), multiDeviceSyncIntervalMs_(0) 
     deviceEnumerators_.emplace_back(usbDeviceEnumerator);
 #endif
 
-    // don't create net pal here, enable it by enableNetDeviceEnumeration
-    // #if defined(BUILD_NET_PAL)
-    //     LOG_DEBUG("Enable Net Device Enumerator ...");
-    //     auto netDeviceEnumerator =
-    //         std::make_shared<NetDeviceEnumerator>([&](const DeviceEnumInfoList &removed, const DeviceEnumInfoList &added) { onDeviceChanged(removed, added);
-    //         });
-    //     deviceEnumerators_.emplace_back(netDeviceEnumerator);
-    // #endif
+// #if defined(BUILD_NET_PAL)
+//     LOG_DEBUG("Enable Net Device Enumerator ...");
+//     auto netDeviceEnumerator =
+//         std::make_shared<NetDeviceEnumerator>([&](const DeviceEnumInfoList &removed, const DeviceEnumInfoList &added) { onDeviceChanged(removed, added); });
+//     deviceEnumerators_.emplace_back(netDeviceEnumerator);
+// #endif
 
     auto deviceInfoList = getDeviceInfoList();
     printDeviceList("Current found device(s)", deviceInfoList);

@@ -70,6 +70,7 @@ const std::vector<uint16_t> DaBaiADevPids = {
     0x0813,  // Gemini 345Lg
 };
 
+const uint16_t OB_DEVICE_G435LE_PID = 0x0815;
 const std::vector<uint16_t> Gemini2DevPids = {
     0x0670,  // Gemini2
     0x0673,  // Gemini2L

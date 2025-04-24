@@ -228,7 +228,7 @@ void VendorTCPClient::socketConnect() {
     }
 #else
     // check if the socket is ready
-    rst = select(static_cast<int>(socketFd_) + 1, NULL, &write, &err, &connTimeout);
+    rst = select(0, NULL, &write, &err, &connTimeout);
     if(!FD_ISSET(socketFd_, &write)) {
         socketClose();
         throw libobsensor::invalid_value_exception(utils::string::to_string() << "VendorTCPClient: Connect to server failed! addr=" << address_

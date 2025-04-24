@@ -147,7 +147,7 @@ void NetDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType
             for(auto &&item: rmDevs) {
                 auto firstPortInfo = item->getSourcePortInfoList().front();
                 auto info          = std::dynamic_pointer_cast<const NetSourcePortInfo>(firstPortInfo);
-                if(info->pid == OB_DEVICE_G335LE_PID || info->pid == OB_FEMTO_MEGA_PID || IS_OB_FEMTO_MEGA_I_PID(info->pid)) {
+                if(info->pid == OB_DEVICE_G335LE_PID || info->pid == OB_FEMTO_MEGA_PID || IS_OB_FEMTO_MEGA_I_PID(info->pid) || info->pid == OB_DEVICE_G435LE_PID) {
                     bool    disconnected = true;
                     BEGIN_TRY_EXECUTE({
                         auto            sourcePort         = Platform::getInstance()->getNetSourcePort(info);

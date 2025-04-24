@@ -129,8 +129,7 @@ void AlgParamManagerBase::bindIntrinsic(std::vector<std::shared_ptr<const Stream
             auto               vsp = sp->as<VideoStreamProfile>();
 
             if(!findBestMatchedD2CProfile(d2cProfileList_, vsp, d2cProfile)) {
-                return;
-                //throw libobsensor::unsupported_operation_exception("Can not find matched camera param!");
+                throw libobsensor::unsupported_operation_exception("Can not find matched camera param!");
             }
 
             auto param            = calibrationCameraParamList_.at(d2cProfile.paramIndex);
