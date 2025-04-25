@@ -24,9 +24,11 @@ Pipeline::Pipeline(std::shared_ptr<IDevice> dev) : device_(dev), config_(nullptr
     }
 
     loadFrameQueueSizeConfig();
+    loadMaxFrameDelayConfig();
 
     outputFrameQueue_ = std::make_shared<FrameQueue<const Frame>>(maxFrameQueueSize_);
-    frameAggregator_  = std::make_shared<FrameAggregator>();
+
+    frameAggregator_  = std::make_shared<FrameAggregator>(maxFrameDelay_);
     frameAggregator_->setCallback([&](std::shared_ptr<const Frame> frame) { outputFrame(frame); });
 
     TRY_EXECUTE(enableFrameSync());
@@ -130,6 +132,15 @@ void Pipeline::loadFrameQueueSizeConfig() {
     }
 
     LOG_DEBUG("loadFrameQueueSizeConfig() config queue size: {}", maxFrameQueueSize_);
+}
+
+void Pipeline::loadMaxFrameDelayConfig() {
+    auto envConfig = EnvConfig::getInstance();
+
+    std::string nodePath                    = "Device." + device_->getInfo()->name_;
+    nodePath                                = utils::string::removeSpace(nodePath);
+    envConfig->getFloatValue(nodePath + ".MaxFrameDelay", maxFrameDelay_);
+    LOG_DEBUG("loadMaxFrameDelayConfig() config max frame delay: {}", maxFrameDelay_);
 }
 
 StreamProfileList Pipeline::getEnabledStreamProfileList() {

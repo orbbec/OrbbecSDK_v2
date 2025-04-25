@@ -29,7 +29,7 @@ enum FrameSyncMode {
 class FrameAggregator {
 public:
 public:
-    FrameAggregator();
+    FrameAggregator(float maxFrameDelay = 0.0f);
     ~FrameAggregator() noexcept;
 
     void updateConfig(std::shared_ptr<const Config> config, const bool matchingRateFirst);
@@ -60,5 +60,6 @@ private:
     bool                                    withColorFrame_;
     bool                                    matchingRateFirst_;
     uint32_t                                maxNormalModeQueueSize_;
+    float                                   maxFrameDelay_;
 };
 }  // namespace libobsensor

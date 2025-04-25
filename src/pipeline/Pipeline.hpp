@@ -43,6 +43,7 @@ private:
 
     void loadDefaultConfig();
     void loadFrameQueueSizeConfig();
+    void loadMaxFrameDelayConfig();
 
     void configAlignMode();
     void resetAlignMode();
@@ -67,6 +68,7 @@ private:
     std::shared_ptr<FrameAggregator> frameAggregator_;
 
     int maxFrameQueueSize_ = 10;
+    float maxFrameDelay_ = 0.0f;
 };
 
 }  // namespace libobsensor

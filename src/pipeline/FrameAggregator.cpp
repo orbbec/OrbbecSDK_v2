@@ -11,7 +11,7 @@
 
 namespace libobsensor {
 
-#define MAX_FRAME_DELAY 1.2f  // 0.3s max delay diff + 0.1s max frame gap
+#define MAX_FRAME_DELAY 0.5f  // 0.3s max delay diff + 0.1s max frame gap
 #define MAX_NORMAL_MODE_QUEUE_SIZE 3
 
 typedef std::map<OBFrameType, SourceFrameQueue>::iterator FrameQueuePair;
@@ -29,14 +29,20 @@ uint64_t getFrameTimestampMsec(const std::shared_ptr<const Frame> &frame, FrameS
     return frame->getTimeStampUsec() / 1000;
 }
 
-FrameAggregator::FrameAggregator()
+FrameAggregator::FrameAggregator(float maxFrameDelay)
     : frameSyncMode_(FrameSyncModeDisable),
       miniTimeStamp_(0),
       frameAggregateOutputMode_(OB_FRAME_AGGREGATE_OUTPUT_ANY_SITUATION),
       frameCnt_(0),
       withColorFrame_(false),
       matchingRateFirst_(true),
-      maxNormalModeQueueSize_(MAX_NORMAL_MODE_QUEUE_SIZE) {}
+      maxNormalModeQueueSize_(MAX_NORMAL_MODE_QUEUE_SIZE) {
+        if(maxFrameDelay > 0) {
+            maxFrameDelay_ = maxFrameDelay;
+        } else {
+            maxFrameDelay_ = MAX_FRAME_DELAY;
+        }
+      }
 
 FrameAggregator::~FrameAggregator() noexcept {
     reset();
@@ -63,7 +69,7 @@ void FrameAggregator::updateConfig(std::shared_ptr<const Config> config, const b
             fps                    = utils::mapIMUSampleRateToValue(gyroStreamProfile->getSampleRate());
         }
 
-        float maxSyncQueueSize = fps * MAX_FRAME_DELAY + 1;
+        float maxSyncQueueSize = fps * maxFrameDelay_ + 1;
         maxSyncQueueSize += ((maxSyncQueueSize - (int)maxSyncQueueSize) > 0 ? 1 : 0);
         if(frameAggregateOutputMode_ == OB_FRAME_AGGREGATE_OUTPUT_DISABLE) {
             maxSyncQueueSize        = 1;
