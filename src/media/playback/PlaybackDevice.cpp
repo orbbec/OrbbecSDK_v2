@@ -5,6 +5,7 @@
 #include "PlaybackPropertyAccessor.hpp"
 #include "PlaybackDeviceParamManager.hpp"
 #include "PlaybackFilterCreationStrategy.hpp"
+#include "PlaybackDepthWorkModeManager.hpp"
 #include "exception/ObException.hpp"
 #include "DevicePids.hpp"
 #include "component/frameprocessor/FrameProcessor.hpp"
@@ -60,6 +61,10 @@ void PlaybackDevice::init() {
 
     auto algParamManager = std::make_shared<PlaybackDeviceParamManager>(this, port_);
     registerComponent(OB_DEV_COMPONENT_ALG_PARAM_MANAGER, algParamManager);
+
+    // Note: LiDAR not supported this component 
+    auto depthWorkModeManager = std::make_shared<PlaybackDepthWorkModeManager>(this, port_);
+    registerComponent(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER, depthWorkModeManager);
 }
 
 void PlaybackDevice::fetchDeviceInfo() {

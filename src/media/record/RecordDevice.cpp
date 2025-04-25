@@ -152,15 +152,26 @@ void RecordDevice::writeAllProperties() {
 
     // d2c profile list
     auto algParamManager = device_->getComponentT<IAlgParamManager>(OB_DEV_COMPONENT_ALG_PARAM_MANAGER, false);
-    auto d2cProfileList  = algParamManager->getD2CProfileList();
-    writer_->writeProperty(OB_RAW_DATA_D2C_ALIGN_SUPPORT_PROFILE_LIST, reinterpret_cast<uint8_t *>(d2cProfileList.data()),static_cast<uint32_t>(d2cProfileList.size() * sizeof(OBD2CProfile)));
+    if(algParamManager) {
+        auto d2cProfileList = algParamManager->getD2CProfileList();
+        writer_->writeProperty(OB_RAW_DATA_D2C_ALIGN_SUPPORT_PROFILE_LIST, reinterpret_cast<uint8_t *>(d2cProfileList.data()),
+                               static_cast<uint32_t>(d2cProfileList.size() * sizeof(OBD2CProfile)));
 
-    //calibration param list
-    auto calibrationList = algParamManager->getCalibrationCameraParamList();
-    writer_->writeProperty(OB_RAW_DATA_ALIGN_CALIB_PARAM,reinterpret_cast<uint8_t *>(calibrationList.data()),static_cast<uint32_t>(calibrationList.size() * sizeof(OBCameraParam)));
+        // calibration param list
+        auto calibrationList = algParamManager->getCalibrationCameraParamList();
+        writer_->writeProperty(OB_RAW_DATA_ALIGN_CALIB_PARAM, reinterpret_cast<uint8_t *>(calibrationList.data()),
+                               static_cast<uint32_t>(calibrationList.size() * sizeof(OBCameraParam)));
 
-    auto imuCalibrationParam = algParamManager->getIMUCalibrationParam();
-    writer_->writeProperty(OB_RAW_DATA_IMU_CALIB_PARAM, reinterpret_cast<uint8_t *>(&imuCalibrationParam), sizeof(OBIMUCalibrateParams));
+        auto imuCalibrationParam = algParamManager->getIMUCalibrationParam();
+        writer_->writeProperty(OB_RAW_DATA_IMU_CALIB_PARAM, reinterpret_cast<uint8_t *>(&imuCalibrationParam), sizeof(OBIMUCalibrateParams));
+    }
+
+    // depth work mode
+    auto propertyServer = device_->getComponentT<IPropertyServer>(OB_DEV_COMPONENT_PROPERTY_SERVER, false);
+    if(propertyServer && propertyServer->isPropertySupported(OB_STRUCT_CURRENT_DEPTH_ALG_MODE, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
+        auto depthMode = propertyServer->getStructureDataProtoV1_1_T<OBDepthWorkMode_Internal, 0>(OB_STRUCT_CURRENT_DEPTH_ALG_MODE);
+        writer_->writeProperty(OB_STRUCT_CURRENT_DEPTH_ALG_MODE, reinterpret_cast<uint8_t *>(&depthMode), sizeof(OBDepthWorkMode_Internal));
+    }
 }
 
 void RecordDevice::stopRecord() {
