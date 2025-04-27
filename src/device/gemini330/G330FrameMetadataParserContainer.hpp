@@ -145,6 +145,8 @@ public:
                        std::make_shared<G330DepthScrMetadataLaserPowerLevelParser>([](const int64_t &param) { return param * 80; }));
         registerParser(OB_FRAME_METADATA_TYPE_LASER_POWER_LEVEL, std::make_shared<G330DepthScrMetadataLaserPowerLevelParser>());
         registerParser(OB_FRAME_METADATA_TYPE_LASER_STATUS, std::make_shared<G330DepthScrMetadataLaserStatusParser>());
+        registerParser(OB_FRAME_METADATA_TYPE_DISPARITY_SEARCH_RANGE,
+                       std::make_shared<G330DepthMetadataParser>(device, OB_FRAME_METADATA_TYPE_DISPARITY_SEARCH_RANGE));
         {
             if(propServer->isPropertySupported(OB_STRUCT_DEPTH_HDR_CONFIG, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
                 registerParser(OB_FRAME_METADATA_TYPE_FRAME_NUMBER,
