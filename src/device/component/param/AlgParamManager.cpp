@@ -9,6 +9,7 @@
 #include "stream/StreamProfileFactory.hpp"
 #include "exception/ObException.hpp"
 #include "publicfilters/IMUCorrector.hpp"
+#include "DevicePids.hpp"
 
 #include <vector>
 #include <sstream>
@@ -129,6 +130,9 @@ void AlgParamManagerBase::bindIntrinsic(std::vector<std::shared_ptr<const Stream
             auto               vsp = sp->as<VideoStreamProfile>();
 
             if(!findBestMatchedD2CProfile(d2cProfileList_, vsp, d2cProfile)) {
+                if(getOwner()->getInfo()->pid_ == OB_DEVICE_G435LE_PID) {
+                    break;
+                };
                 throw libobsensor::unsupported_operation_exception("Can not find matched camera param!");
             }
 
