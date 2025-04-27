@@ -86,6 +86,9 @@ void Astra2Device::init() {
         TRY_EXECUTE({ firmwareUpdater = std::make_shared<FirmwareUpdater>(this); })
         return firmwareUpdater;
     });
+
+    // fix sensor list according to depth alg work mode
+    fixSensorList();
 }
 
 void Astra2Device::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
@@ -116,6 +119,17 @@ void Astra2Device::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
     LOG_INFO("Sensor {} created! Found {} stream profiles.", sensorType, profiles.size());
     for(auto &profile: profiles) {
         LOG_INFO(" - {}", profile);
+    }
+}
+
+void Astra2Device::fixSensorList() {
+    auto depthWorkModeManager = getComponentT<IDepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
+    auto currentMode          = depthWorkModeManager->getCurrentDepthWorkMode();
+
+    // deregister unsupported sensors according to depth work mode option code
+    if(currentMode.optionCode == OBDepthModeOptionCode::MX6600_SINGLE_CAMERA_CALIBRATION_MODE) {
+        // no depth sensor
+        deregisterSensor(OB_SENSOR_DEPTH);
     }
 }
 
