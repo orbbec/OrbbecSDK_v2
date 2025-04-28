@@ -5,8 +5,7 @@
 #include "environment/EnvConfig.hpp"
 #include "exception/ObException.hpp"
 #include "logger/Logger.hpp"
-#include "IDeviceComponent.hpp"
-#include "firmwareupdateguard/FirmwareUpdateGuard.hpp"
+#include "firmwareupdateguard/FirmwareUpdateGuards.hpp"
 
 namespace libobsensor {
 FirmwareUpdater::FirmwareUpdater(IDevice *owner) : DeviceComponentBase(owner) {
@@ -64,8 +63,9 @@ void FirmwareUpdater::updateFirmwareExt(const std::string &path, DeviceFwUpdateC
         device->device   = getOwner()->shared_from_this();
 
         std::shared_ptr<IFirmwareUpdateGuard> guard;
-        if (device->device->isComponentExists(OB_DEV_COMPONENT_FIRMWARE_UPDATE_GUARD)) {
-            guard = device->device->getComponentT<IFirmwareUpdateGuard>(OB_DEV_COMPONENT_FIRMWARE_UPDATE_GUARD).get();
+        auto factory = device->device->getComponentT<FirmwareUpdateGuardFactory>(OB_DEV_COMPONENT_FIRMWARE_UPDATE_GUARD_FACTORY, false);
+        if (factory) {
+            guard = factory->create();
         }
 
         ctx_->update_firmware_ext(device.get(), path.c_str(), onDeviceFwUpdateCallback, async, this, &error);
@@ -95,8 +95,9 @@ void FirmwareUpdater::updateFirmwareFromRawDataExt(const uint8_t *firmwareData, 
         device->device   = getOwner()->shared_from_this();
 
         std::shared_ptr<IFirmwareUpdateGuard> guard;
-        if (device->device->isComponentExists(OB_DEV_COMPONENT_FIRMWARE_UPDATE_GUARD)) {
-            guard = device->device->getComponentT<IFirmwareUpdateGuard>(OB_DEV_COMPONENT_FIRMWARE_UPDATE_GUARD).get();
+        auto factory = device->device->getComponentT<FirmwareUpdateGuardFactory>(OB_DEV_COMPONENT_FIRMWARE_UPDATE_GUARD_FACTORY, false);
+        if (factory) {
+            guard = factory->create();
         }
 
         ctx_->update_firmware_from_raw_data_ext(device.get(), data.data(), firmwareSize, onDeviceFwUpdateCallback, async, this, &error);

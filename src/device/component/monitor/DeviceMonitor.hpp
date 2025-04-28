@@ -1,6 +1,8 @@
 // Copyright (c) Orbbec Inc. All Rights Reserved.
 // Licensed under the MIT License.
 
+#pragma once
+
 #include "IDeviceMonitor.hpp"
 #include "ISourcePort.hpp"
 #include "DeviceComponentBase.hpp"

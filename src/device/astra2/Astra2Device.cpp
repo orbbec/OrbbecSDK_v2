@@ -30,6 +30,7 @@
 #include "property/PrivateFilterPropertyAccessors.hpp"
 #include "monitor/DeviceMonitor.hpp"
 #include "firmwareupdater/FirmwareUpdater.hpp"
+#include "firmwareupdater/firmwareupdateguard/FirmwareUpdateGuards.hpp"
 
 #include "Astra2AlgParamManager.hpp"
 #include "Astra2StreamProfileFilter.hpp"
@@ -85,6 +86,12 @@ void Astra2Device::init() {
         std::shared_ptr<FirmwareUpdater> firmwareUpdater;
         TRY_EXECUTE({ firmwareUpdater = std::make_shared<FirmwareUpdater>(this); })
         return firmwareUpdater;
+    });
+
+    registerComponent(OB_DEV_COMPONENT_FIRMWARE_UPDATE_GUARD_FACTORY, [this]() {
+        std::shared_ptr<FirmwareUpdateGuardFactory> factory;
+        TRY_EXECUTE({ factory = std::make_shared<FirmwareUpdateGuardFactory>(this); })
+        return factory;
     });
 
     // fix sensor list according to depth alg work mode

@@ -31,7 +31,7 @@
 #include "monitor/DeviceMonitor.hpp"
 #include "syncconfig/DeviceSyncConfigurator.hpp"
 #include "firmwareupdater/FirmwareUpdater.hpp"
-#include "firmwareupdater/firmwareupdateguard/FirmwareUpdateGuard.hpp"
+#include "firmwareupdater/firmwareupdateguard/FirmwareUpdateGuards.hpp"
 
 #include "G2AlgParamManager.hpp"
 #include "G2StreamProfileFilter.hpp"
@@ -608,10 +608,10 @@ void G2XLNetDevice::init() {
         return firmwareUpdater;
     });
 
-    registerComponent(OB_DEV_COMPONENT_FIRMWARE_UPDATE_GUARD, [this] {
-        std::shared_ptr<G2XLNetFirmwareUpdateGuard> guard;
-        TRY_EXECUTE({ guard = std::make_shared<G2XLNetFirmwareUpdateGuard>(this); })
-        return guard;
+    registerComponent(OB_DEV_COMPONENT_FIRMWARE_UPDATE_GUARD_FACTORY, [this] {
+        std::shared_ptr<FirmwareUpdateGuardFactory> factory;
+        TRY_EXECUTE({ factory = std::make_shared<FirmwareUpdateGuardFactory>(this); })
+        return factory;
     });
 }
 

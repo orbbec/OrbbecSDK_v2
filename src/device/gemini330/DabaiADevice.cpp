@@ -33,6 +33,7 @@
 #include "syncconfig/DeviceSyncConfigurator.hpp"
 #include "firmwareupdater/FirmwareUpdater.hpp"
 #include "frameprocessor/FrameProcessor.hpp"
+#include "firmwareupdater/firmwareupdateguard/FirmwareUpdateGuards.hpp"
 
 #include "G330MetadataParser.hpp"
 #include "G330MetadataTypes.hpp"
@@ -114,6 +115,12 @@ void DabaiADevice::init() {
         std::shared_ptr<FirmwareUpdater> firmwareUpdater;
         TRY_EXECUTE({ firmwareUpdater = std::make_shared<FirmwareUpdater>(this); })
         return firmwareUpdater;
+    });
+
+    registerComponent(OB_DEV_COMPONENT_FIRMWARE_UPDATE_GUARD_FACTORY, [this]() {
+        std::shared_ptr<FirmwareUpdateGuardFactory> factory;
+        TRY_EXECUTE({ factory = std::make_shared<FirmwareUpdateGuardFactory>(this); })
+        return factory;
     });
 
     registerComponent(OB_DEV_COMPONENT_COLOR_FRAME_METADATA_CONTAINER, [this]() {
