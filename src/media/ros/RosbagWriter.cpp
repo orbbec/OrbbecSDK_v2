@@ -108,8 +108,8 @@ void RosWriter::writeVideoFrame(const OBSensorType &sensorType, std::shared_ptr<
         imageMsg->metadatasize         = static_cast<uint32_t>(curFrame->getMetadataSize());
         imageMsg->data.clear();
         imageMsg->encoding = convertFormatToString(curFrame->getFormat());
-        imageMsg->data.insert(imageMsg->data.begin(), curFrame->getMetadata(), curFrame->getMetadata() + curFrame->getMetadataSize());
-        imageMsg->data.insert(imageMsg->data.begin() + curFrame->getMetadataSize(), curFrame->getData(), curFrame->getData() + curFrame->getDataSize());
+        imageMsg->metadata.insert(imageMsg->metadata.begin(), curFrame->getMetadata(), curFrame->getMetadata() + curFrame->getMetadataSize());
+        imageMsg->data.insert(imageMsg->data.begin(), curFrame->getData(), curFrame->getData() + curFrame->getDataSize());
         file_->write(imageTopic, imageMsg->header.stamp, imageMsg);
     }
     catch(const std::exception &e) {

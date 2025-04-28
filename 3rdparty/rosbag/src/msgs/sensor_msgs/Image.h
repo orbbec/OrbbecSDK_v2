@@ -28,12 +28,13 @@ template <class ContainerAllocator> struct Image_ {
           encoding(),
           is_bigendian(0),
           step(0),
-          depth_units(0),
           data(),
+          depth_units(0),
           number(0),
           timestamp_usec(0),
           timestamp_systemusec(0),
           timestamp_globalusec(0),
+          metadata(0),
           metadatasize(0) {}
     Image_(const ContainerAllocator &_alloc)
         : header(_alloc),
@@ -42,12 +43,13 @@ template <class ContainerAllocator> struct Image_ {
           encoding(_alloc),
           is_bigendian(0),
           step(0),
-          depth_units(0),
           data(_alloc),
+          depth_units(0),
           number(0),
           timestamp_usec(0),
           timestamp_systemusec(0),
           timestamp_globalusec(0),
+          metadata(_alloc),
           metadatasize(0) {
         (void)_alloc;
     }
@@ -70,11 +72,11 @@ template <class ContainerAllocator> struct Image_ {
     typedef uint32_t _step_type;
     _step_type       step;
 
-    typedef float     _depth_units_type;
-    _depth_units_type depth_units;
-
     typedef std::vector<uint8_t, typename ContainerAllocator::template rebind<uint8_t>::other> _data_type;
     _data_type                                                                                 data;
+
+    typedef float     _depth_units_type;
+    _depth_units_type depth_units;
 
     typedef uint64_t _number_type;
     _number_type     number;
@@ -87,6 +89,8 @@ template <class ContainerAllocator> struct Image_ {
 
     typedef uint64_t      _timestamp_globalusec;
     _timestamp_globalusec timestamp_globalusec;
+
+    _data_type                                                                                 metadata;
 
     typedef uint32_t   _metadatasize_type;
     _metadatasize_type metadatasize;
@@ -173,9 +177,6 @@ Header header        # Header timestamp should be acquisition time of image\n\
 \n\
 uint32 height         # image height, that is, number of rows\n\
 uint32 width          # image width, that is, number of columns\n\
-uint64 timestamp_usec # image timestamp_usec, that is timestamp when image captured\n\
-uint64 timestamp_systemusec # image timestamp_systemusec, that is timestamp when image captured\n\
-uint64 timestamp_globalusec # image timestamp_globalusec, that is timestamp when image captured\n\
 \n\
 # The legal values for encoding are in file src/image_encodings.cpp\n\
 # If you want to standardize a new string format, join\n\
@@ -186,9 +187,13 @@ string encoding       # Encoding of pixels -- channel meaning, ordering, size\n\
 \n\
 uint8 is_bigendian    # is this data bigendian?\n\
 uint32 step           # Full row length in bytes\n\
-uint32 metadatasize   # metadatasize\n\
 uint8[] data          # actual matrix data, size is (step * rows)\n\
-uint64 number         \n\
+uint64 number         # frame number\n\
+uint64 timestamp_usec # image timestamp_usec, that is timestamp when image captured\n\
+uint64 timestamp_systemusec # image timestamp_systemusec, that is timestamp when image captured\n\
+uint64 timestamp_globalusec # image timestamp_globalusec, that is timestamp when image captured\n\
+uint8[] metadata      # metadata\n\
+uint32 metadatasize   # metadatasize\n\
 \n\
 ================================================================================\n\
 MSG: std_msgs/Header\n\
@@ -229,12 +234,14 @@ template <class ContainerAllocator> struct Serializer<::sensor_msgs::Image_<Cont
         stream.next(m.encoding);
         stream.next(m.is_bigendian);
         stream.next(m.step);
-        stream.next(m.metadatasize);
         stream.next(m.data);
+        stream.next(m.depth_units);
         stream.next(m.number);
         stream.next(m.timestamp_usec);
         stream.next(m.timestamp_systemusec);
         stream.next(m.timestamp_globalusec);
+        stream.next(m.metadata);
+        stream.next(m.metadatasize);
         if(!m.header.version.compare("1"))
             stream.next(m.depth_units);
     }

@@ -356,9 +356,9 @@ std::shared_ptr<Frame> RosReader::createVideoFrame(const rosbag::MessageInstance
     sensor_msgs::Image::ConstPtr imagePtr      = msg.instantiate<sensor_msgs::Image>();
     auto                         frame         = libobsensor::FrameFactory::createVideoFrameFromUserBuffer(
         RosTopic::getFrameTypeIdentifier(videoMsgTopic), convertStringToFormat(imagePtr->encoding), imagePtr->width, imagePtr->height,
-        (uint8_t *)imagePtr->data.data() + imagePtr->metadatasize, imagePtr->data.size() - imagePtr->metadatasize);
+        (uint8_t *)imagePtr->data.data(), imagePtr->data.size());
 
-    frame->updateMetadata(imagePtr->data.data(), imagePtr->metadatasize);
+    frame->updateMetadata(imagePtr->metadata.data(), imagePtr->metadatasize);
     frame->setNumber(imagePtr->number);
     frame->setTimeStampUsec(imagePtr->timestamp_usec);
     frame->setSystemTimeStampUsec(imagePtr->timestamp_systemusec);
