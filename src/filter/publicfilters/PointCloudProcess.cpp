@@ -17,6 +17,7 @@ PointCloudFilter::PointCloudFilter()
       positionDataScale_(1.0f),
       coordinateSystemType_(OB_RIGHT_HAND_COORDINATE_SYSTEM),
       isColorDataNormalization_(false),
+      isOutputZeroPoint_(true),
       depthTablesDataSize_(0),
       rgbdTablesDataSize_(0),
       depthTablesData_(nullptr),
@@ -60,7 +61,7 @@ void PointCloudFilter::reset() {
 }
 
 void PointCloudFilter::updateConfig(std::vector<std::string> &params) {
-    if(params.size() != 4) {
+    if(params.size() != 5) {
         throw invalid_value_exception("PointCloudFilter config error: params size not match");
     }
     try {
@@ -82,6 +83,9 @@ void PointCloudFilter::updateConfig(std::vector<std::string> &params) {
 
         int csType            = std::stoi(params[3]);
         coordinateSystemType_ = static_cast<OBCoordinateSystemType>(csType);
+
+        int outputZeroPointState = std::stoi(params[4]);
+        isOutputZeroPoint_       = outputZeroPointState == 0 ? false : true;
     }
     catch(const std::exception &e) {
         throw invalid_value_exception("PointCloudFilter config error: " + std::string(e.what()));
@@ -93,7 +97,8 @@ const std::string &PointCloudFilter::getConfigSchema() const {
     static const std::string schema = "pointFormat, integer, 19, 20, 1, 19, create point type: 19 is OB_FORMAT_POINT; 20 is OB_FORMAT_RGB_POINT\n"
                                       "coordinateDataScale, float, 0.00000001, 100, 0.00001, 1.0, coordinate data scale\n"
                                       "colorDataNormalization, integer, 0, 1, 1, 0, color data normal state\n"
-                                      "coordinateSystemType, integer, 0, 1, 1, 1, Coordinate system representation type: 0 is left hand; 1 is right hand\n";
+                                      "coordinateSystemType, integer, 0, 1, 1, 1, Coordinate system representation type: 0 is left hand; 1 is right hand\n"
+                                      "outputZeroPoint, integer, 0, 1, 1, 1, output zero point\n";
     return schema;
 }
 
@@ -143,9 +148,12 @@ std::shared_ptr<Frame> PointCloudFilter::createDepthPointCloud(std::shared_ptr<c
         }
     }
 
-    CoordinateUtil::transformationDepthToPointCloud(&depthXyTables_, depthFrame->getData(), (void *)pointFrame->getData(), positionDataScale_,
+    uint32_t validPointCount = 0;
+    CoordinateUtil::transformationDepthToPointCloud(&depthXyTables_, depthFrame->getData(), (void *)pointFrame->getData(), isOutputZeroPoint_, &validPointCount,
+                                                    positionDataScale_,
                                                     coordinateSystemType_);
 
+    pointFrame->setDataSize(validPointCount * sizeof(OBPoint));
     float depthValueScale = depthFrame->as<DepthFrame>()->getValueScale();
     pointFrame->copyInfoFromOther(depthFrame);
     // Actual coordinate scaling = Depth scaling factor / Set coordinate scaling factor.
@@ -281,17 +289,20 @@ std::shared_ptr<Frame> PointCloudFilter::createRGBDPointCloud(std::shared_ptr<co
         }
     }
 
+    uint32_t validPointCount = 0;
     if(distortionType == OBPointCloudDistortionType::OB_POINT_CLOUD_ADD_DISTORTION_TYPE) {
         CoordinateUtil::transformationDepthToRGBDPointCloudByUVTables(dstIntrinsic, &rgbdXyTables_, depthFrame->getData(), colorData,
-                                                                      (void *)pointFrame->getData(), positionDataScale_, coordinateSystemType_,
-                                                                      isColorDataNormalization_);
+                                                                      (void *)pointFrame->getData(), isOutputZeroPoint_, &validPointCount, 
+                                                                      positionDataScale_,coordinateSystemType_,isColorDataNormalization_);
     }
     else {
-        CoordinateUtil::transformationDepthToRGBDPointCloud(&rgbdXyTables_, depthFrame->getData(), colorData, (void *)pointFrame->getData(), positionDataScale_,
+        CoordinateUtil::transformationDepthToRGBDPointCloud(&rgbdXyTables_, depthFrame->getData(), colorData, (void *)pointFrame->getData(), 
+                                                            isOutputZeroPoint_,&validPointCount,positionDataScale_,
                                                             coordinateSystemType_, isColorDataNormalization_, colorVideoFrame->getWidth(),
                                                             colorVideoFrame->getHeight());
     }
 
+    pointFrame->setDataSize(validPointCount * sizeof(OBColorPoint));
     float depthValueScale = depthVideoFrame->as<DepthFrame>()->getValueScale();
     pointFrame->copyInfoFromOther(depthFrame);
     // Actual coordinate scaling = Depth scaling factor / Set coordinate scaling factor.

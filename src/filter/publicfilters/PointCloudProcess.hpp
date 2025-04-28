@@ -46,6 +46,7 @@ protected:
     float                  positionDataScale_;
     OBCoordinateSystemType coordinateSystemType_;
     bool                   isColorDataNormalization_;
+    bool                   isOutputZeroPoint_;
 
     std::shared_ptr<FormatConverter> formatConverter_;
 

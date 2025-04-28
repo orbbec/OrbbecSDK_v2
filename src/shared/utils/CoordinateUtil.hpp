@@ -45,17 +45,19 @@ public:
     static bool transformationInitAddDistortionUVTables(const OBCameraIntrinsic intrinsic, const OBCameraDistortion distortion, float *data, uint32_t *dataSize,
                                                         OBXYTables *uvTables);
 
-    static void transformationDepthToPointCloud(OBXYTables *xyTables, const void *depthImageData, void *pointCloudData, float positionDataScale = 1.0f,
+    static void transformationDepthToPointCloud(OBXYTables *xyTables, const void *depthImageData, void *pointCloudData,bool outputZeroPoint = false,uint32_t *validPointCount = nullptr, float positionDataScale = 1.0f,
                                                 OBCoordinateSystemType type = OB_RIGHT_HAND_COORDINATE_SYSTEM);
 
     // colorResolution = colorScale * depthResolution
     static void transformationDepthToRGBDPointCloud(OBXYTables *xyTables, const void *depthImageData, const void *colorImageData, void *pointCloudData,
+                                                    bool outputZeroPoint = false,uint32_t *validPointCount = nullptr,
                                                     float positionDataScale = 1.0f, OBCoordinateSystemType type = OB_RIGHT_HAND_COORDINATE_SYSTEM,
                                                     bool colorDataNormalization = false, uint32_t colorWidth = 0, uint32_t colorHeight = 0);
 
     // colorResolution = colorScale * depthResolution
     static void transformationDepthToRGBDPointCloudByUVTables(const OBCameraIntrinsic rgbIntrinsic, OBXYTables *uvTables, const void *depthImageData,
-                                                              const void *colorImageData, void *pointCloudData, float positionDataScale = 1.0f,
+                                                              const void *colorImageData, void *pointCloudData,bool outputZeroPoint = false,
+                                                              uint32_t *validPointCount = nullptr,float positionDataScale = 1.0f,
                                                               OBCoordinateSystemType type = OB_RIGHT_HAND_COORDINATE_SYSTEM, bool colorDataNormalization = false);
 };
 }  // namespace libobsensor
