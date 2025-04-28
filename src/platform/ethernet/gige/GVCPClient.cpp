@@ -12,7 +12,11 @@
 #include <ifaddrs.h>
 #include <net/if.h>
 #include <sys/time.h>
+
+#if defined(__APPLE__)
 #include <net/if_dl.h>
+#endif
+
 #endif
 
 #include <thread>
