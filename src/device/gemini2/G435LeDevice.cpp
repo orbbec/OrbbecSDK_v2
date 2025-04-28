@@ -466,7 +466,7 @@ void G435LeDevice::initSensorList() {
             auto port               = getSourcePort(imuPortInfo);
             auto imuCorrectorFilter = getSensorFrameFilter("IMUCorrector", OB_SENSOR_ACCEL, true);
 
-            imuCorrectorFilter->enable(false);
+            imuCorrectorFilter->enable(true);
             auto dataStreamPort = std::dynamic_pointer_cast<IDataStreamPort>(port);
             auto imuStreamer    = std::make_shared<ImuStreamer>(this, dataStreamPort, imuCorrectorFilter);
             return imuStreamer;
