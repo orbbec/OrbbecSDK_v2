@@ -127,7 +127,7 @@ public:
     /**
      * @brief Activates device clock synchronization to synchronize the clock of the host and all created devices (if supported).
      *
-     * @param repeatInterval The interval for auto-repeated synchronization, in milliseconds. If the value is 0, synchronization is performed only once.
+     * @param repeatIntervalMsec The interval for auto-repeated synchronization, in milliseconds. If the value is 0, synchronization is performed only once.
      */
     void enableDeviceClockSync(uint64_t repeatIntervalMsec) const {
         ob_error *error = nullptr;
@@ -151,7 +151,7 @@ public:
      *
      * @attention This interface is only available for Linux.
      *
-     * @param[in] backend_type The backend type to be used.
+     * @param[in] type The backend type to be used.
      */
     void setUvcBackendType(OBUvcBackendType type) const {
         ob_error *error = nullptr;

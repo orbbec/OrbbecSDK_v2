@@ -133,6 +133,10 @@ private:
     void   sendGVCPDiscovery(GVCPSocketInfo socketInfo);
     void   sendGVCPForceIP(GVCPSocketInfo socketInfo, std::string mac, const OBNetIpConfig &config);
 
+#if defined(__APPLE__)
+    const uint8_t *getMACAddress(struct ifaddrs *ifap, const char *interface_name);
+#endif
+
     //
     void checkAndUpdateSockets();
 

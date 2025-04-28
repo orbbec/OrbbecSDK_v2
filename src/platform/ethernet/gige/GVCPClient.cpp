@@ -12,6 +12,7 @@
 #include <ifaddrs.h>
 #include <net/if.h>
 #include <sys/time.h>
+#include <net/if_dl.h>
 #endif
 
 #include <thread>
@@ -112,6 +113,23 @@ bool GVCPClient::changeNetDeviceIpConfig(std::string mac, const OBNetIpConfig &c
     return true;
 }
 
+#if defined(__APPLE__)
+const uint8_t *GVCPClient::getMACAddress(struct ifaddrs *ifap, const char *interface_name) {
+    struct ifaddrs *p = ifap;
+
+    while(p != NULL) {
+        if(p->ifa_addr && p->ifa_addr->sa_family == AF_LINK && strcmp(p->ifa_name, interface_name) == 0) {
+            struct sockaddr_dl *sdl = (struct sockaddr_dl *)p->ifa_addr;
+            if(sdl->sdl_alen == 6) {
+                return (uint8_t *)LLADDR(sdl);
+            }
+            return nullptr;
+        }
+        p = p->ifa_next;
+    }
+}
+#endif  // __APPLE__
+
 int GVCPClient::openClientSockets() {
 #if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
     DWORD                                                                   ret, size;
@@ -202,12 +220,17 @@ int GVCPClient::openClientSockets() {
             socketInfos_[curIndex].sock = socket;
 
             LOG_DEBUG("getnameinfo-name: {}", ifa->ifa_name);
+#if defined(__APPLE__)
+            auto mac = getMACAddress(ifaddr, ifa->ifa_name);
+            if(mac != nullptr) {
+#else
             struct ifreq ifr;
             std::memset(&ifr, 0, sizeof(ifr));
             std::strncpy(ifr.ifr_name, ifa->ifa_name, IFNAMSIZ - 1);
 
             if(ioctl(socket, SIOCGIFHWADDR, &ifr) >= 0) {
                 unsigned char     *mac = reinterpret_cast<unsigned char *>(ifr.ifr_hwaddr.sa_data);
+#endif
                 std::ostringstream macAddressStream;
                 for(int i = 0; i < 6; ++i) {
                     macAddressStream << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(mac[i]);
@@ -638,12 +661,17 @@ void GVCPClient::checkAndUpdateSockets() {
                 socketInfos_[curIndex].sock = sock;
 
                 LOG_DEBUG("getnameinfo-name: {}", ifa->ifa_name);
+#if defined(__APPLE__)
+                auto mac = getMACAddress(ifaddr, ifa->ifa_name);
+                if(mac != nullptr) {
+#else
                 struct ifreq ifr;
                 std::memset(&ifr, 0, sizeof(ifr));
                 std::strncpy(ifr.ifr_name, ifa->ifa_name, IFNAMSIZ - 1);
 
                 if(ioctl(sock, SIOCGIFHWADDR, &ifr) >= 0) {
                     unsigned char     *mac = reinterpret_cast<unsigned char *>(ifr.ifr_hwaddr.sa_data);
+#endif
                     std::ostringstream macAddressStream;
                     for(int i = 0; i < 6; ++i) {
                         macAddressStream << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(mac[i]);

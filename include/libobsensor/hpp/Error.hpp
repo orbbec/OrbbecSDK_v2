@@ -22,7 +22,7 @@ private:
      *
      * @attention This constructor should not be called directly, use the handle() function instead.
      *
-     * @param error
+     * @param error The ob_error object
      */
     explicit Error(ob_error *error) : impl_(error) {};
 

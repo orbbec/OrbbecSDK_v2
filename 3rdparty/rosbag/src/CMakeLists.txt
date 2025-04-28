@@ -3,7 +3,7 @@ project(rosbag LANGUAGES CXX C)
 
 include(${CMAKE_CURRENT_LIST_DIR}/config.cmake)
 
-add_definitions(-DNO_OPENSSL)
+add_definitions(-DNO_OPENSSL -DXXH_NAMESPACE=OB_)
 if (WIN32)
     add_definitions(-DNO_GETIFADDRS)
 endif()

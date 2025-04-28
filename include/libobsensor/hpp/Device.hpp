@@ -779,7 +779,7 @@ public:
      * @param[in] sendData The data to be sent to the device.
      * @param[in] sendDataSize The size of the data to be sent to the device.
      * @param[out] receiveData The data received from the device.
-     * @param[in out] receiveDataSize The requeseted size of the data received from the device, and the actual size of the data received from the device.
+     * @param[in,out] receiveDataSize The requeseted size of the data received from the device, and the actual size of the data received from the device.
      */
     void sendAndReceiveData(const uint8_t *sendData, uint32_t sendDataSize, uint8_t *receiveData, uint32_t *receiveDataSize) const {
         ob_error *error = nullptr;

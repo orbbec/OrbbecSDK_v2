@@ -192,7 +192,7 @@ typedef enum {
  * @brief Enumeration value describing the pixel format
  */
 typedef enum {
-    OB_FORMAT_UNKNOWN    = -1, /*< unknown format */
+    OB_FORMAT_UNKNOWN    = -1, /**< unknown format */
     OB_FORMAT_YUYV       = 0,  /**< YUYV format */
     OB_FORMAT_YUY2       = 1,  /**< YUY2 format (the actual format is the same as YUYV) */
     OB_FORMAT_UYVY       = 2,  /**< UYVY format */
