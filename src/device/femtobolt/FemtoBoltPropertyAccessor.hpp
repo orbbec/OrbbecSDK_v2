@@ -32,4 +32,16 @@ private:
     std::vector<uint8_t> tempData_;
 };
 
+class FemtoBoltFrameTransformPropertyAccessor : public IBasicPropertyAccessor {
+public:
+    explicit FemtoBoltFrameTransformPropertyAccessor(IDevice *owner);
+    virtual ~FemtoBoltFrameTransformPropertyAccessor() noexcept = default;
+
+    virtual void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
+    virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
+    virtual void getPropertyRange(uint32_t propertyId, OBPropertyRange *range) override;
+
+private:
+    IDevice *owner_;
+};
 }  // namespace libobsensor

@@ -44,4 +44,17 @@ private:
     IDevice             *owner_;
     std::vector<uint8_t> tempData_;
 };
+
+class Astra2FrameTransformPropertyAccessor : public IBasicPropertyAccessor {
+public:
+    explicit Astra2FrameTransformPropertyAccessor(IDevice *owner);
+    virtual ~Astra2FrameTransformPropertyAccessor() noexcept = default;
+
+    virtual void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
+    virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
+    virtual void getPropertyRange(uint32_t propertyId, OBPropertyRange *range) override;
+
+private:
+    IDevice *owner_;
+};
 }  // namespace libobsensor

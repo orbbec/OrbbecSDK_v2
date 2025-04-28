@@ -42,23 +42,19 @@ private:
 
 class FrameProcessor : public FilterExtension, public IBasicPropertyAccessor, public DeviceComponentBase {
 public:
-    FrameProcessor(IDevice *owner, std::shared_ptr<FrameProcessorContext> context, OBSensorType sensorType);
+    using IBasicPropertyAccessor::getPropertyRange;
 
-    virtual ~FrameProcessor() noexcept override;
+    FrameProcessor(IDevice *owner, std::shared_ptr<FrameProcessorContext> context, OBSensorType sensorType);
+    virtual ~FrameProcessor() noexcept;
 
     const std::string &getConfigSchema() const override;
-
     void updateConfig(std::vector<std::string> &params) override;
 
     OBSensorType getSensorType() {
         return sensorType_;
     }
 
-    void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
-
-    void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
-
-    void getPropertyRange(uint32_t propertyId, OBPropertyRange *range) override;
+    virtual void getPropertyRange(const std::string &configName, OBPropertyRange *range);
 
     std::shared_ptr<Frame> process(std::shared_ptr<const Frame> frame) override;
 
@@ -85,6 +81,38 @@ public:
 private:
     OBD2CProfile  currentD2CProfile_ = {};
 
+    virtual void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
+    virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
+    virtual void getPropertyRange(uint32_t propertyId, OBPropertyRange *range) override;
 };
 
+class ColorFrameProcessor : public FrameProcessor {
+public:
+    ColorFrameProcessor(IDevice *owner, std::shared_ptr<FrameProcessorContext> context);
+    virtual ~ColorFrameProcessor() noexcept = default;
+
+    virtual void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
+    virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
+    virtual void getPropertyRange(uint32_t propertyId, OBPropertyRange *range) override;
+};
+
+class IRFrameProcessor : public FrameProcessor {
+public:
+    IRFrameProcessor(IDevice *owner, std::shared_ptr<FrameProcessorContext> context, OBSensorType sensorType = OB_SENSOR_IR);
+    virtual ~IRFrameProcessor() noexcept = default;
+
+    virtual void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
+    virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
+    virtual void getPropertyRange(uint32_t propertyId, OBPropertyRange *range) override;
+};
+
+class IRRightFrameProcessor : public FrameProcessor {
+public:
+    IRRightFrameProcessor(IDevice *owner, std::shared_ptr<FrameProcessorContext> context);
+    virtual ~IRRightFrameProcessor() noexcept = default;
+
+    virtual void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
+    virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
+    virtual void getPropertyRange(uint32_t propertyId, OBPropertyRange *range) override;
+};
 }  // namespace libobsensor

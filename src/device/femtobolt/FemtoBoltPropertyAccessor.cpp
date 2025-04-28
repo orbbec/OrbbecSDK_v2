@@ -73,4 +73,95 @@ const std::vector<uint8_t> &FemtoBoltTempPropertyAccessor::getStructureData(uint
     return tempData_;
 }
 
+FemtoBoltFrameTransformPropertyAccessor::FemtoBoltFrameTransformPropertyAccessor(IDevice *owner) : owner_(owner) {}
+
+void FemtoBoltFrameTransformPropertyAccessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
+    switch(propertyId) {
+    case OB_PROP_DEPTH_MIRROR_BOOL:
+    case OB_PROP_DEPTH_FLIP_BOOL:
+    case OB_PROP_DEPTH_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR);
+        processor->setPropertyValue(propertyId, value);
+    } break;
+    case OB_PROP_COLOR_MIRROR_BOOL:
+    case OB_PROP_COLOR_FLIP_BOOL:
+    case OB_PROP_COLOR_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR);
+        processor->setPropertyValue(propertyId, value);
+    } break;
+    case OB_PROP_IR_MIRROR_BOOL:
+    case OB_PROP_IR_FLIP_BOOL:
+    case OB_PROP_IR_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_IR_FRAME_PROCESSOR);
+        processor->setPropertyValue(propertyId, value);
+    } break;
+    default: {
+        throw invalid_value_exception("Invalid property id");
+    }
+    }
+}
+
+void FemtoBoltFrameTransformPropertyAccessor::getPropertyValue(uint32_t propertyId, OBPropertyValue *value) {
+    if(!value) {
+        LOG_DEBUG("Null value pointer, abort property access");
+        return;
+    }
+    memset(value, 0, sizeof(OBPropertyValue));
+
+    switch(propertyId) {
+    case OB_PROP_DEPTH_MIRROR_BOOL:
+    case OB_PROP_DEPTH_FLIP_BOOL:
+    case OB_PROP_DEPTH_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR);
+        processor->getPropertyValue(propertyId, value);
+    } break;
+    case OB_PROP_COLOR_MIRROR_BOOL:
+    case OB_PROP_COLOR_FLIP_BOOL:
+    case OB_PROP_COLOR_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR);
+        processor->getPropertyValue(propertyId, value);
+    } break;
+    case OB_PROP_IR_MIRROR_BOOL:
+    case OB_PROP_IR_FLIP_BOOL:
+    case OB_PROP_IR_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_IR_FRAME_PROCESSOR);
+        processor->getPropertyValue(propertyId, value);
+    } break;
+    default: {
+        throw invalid_value_exception("Invalid property id");
+    }
+    }
+}
+
+void FemtoBoltFrameTransformPropertyAccessor::getPropertyRange(uint32_t propertyId, OBPropertyRange *range) {
+    if(range == nullptr) {
+        LOG_DEBUG("Null range pointer, abort property access");
+        return;
+    }
+    memset(range, 0, sizeof(OBPropertyRange));
+
+    switch(propertyId) {
+    case OB_PROP_DEPTH_MIRROR_BOOL:
+    case OB_PROP_DEPTH_FLIP_BOOL:
+    case OB_PROP_DEPTH_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR);
+        processor->getPropertyRange(propertyId, range);
+    } break;
+    case OB_PROP_COLOR_MIRROR_BOOL:
+    case OB_PROP_COLOR_FLIP_BOOL:
+    case OB_PROP_COLOR_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR);
+        processor->getPropertyRange(propertyId, range);
+    } break;
+    case OB_PROP_IR_MIRROR_BOOL:
+    case OB_PROP_IR_FLIP_BOOL:
+    case OB_PROP_IR_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_IR_FRAME_PROCESSOR);
+        processor->getPropertyRange(propertyId, range);
+    } break;
+    default: {
+        throw invalid_value_exception("Invalid property id");
+    }
+    }
+}
 }  // namespace libobsensor

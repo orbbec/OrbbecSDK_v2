@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 #include "G330PropertyAccessors.hpp"
-#include "frameprocessor/FrameProcessor.hpp"
+#include "component/frameprocessor/FrameProcessor.hpp"
 #include "sensor/video/DisparityBasedSensor.hpp"
 #include "IDeviceComponent.hpp"
 #include "G330NetStreamProfileFilter.hpp"
@@ -45,7 +45,7 @@ void G330Disp2DepthPropertyAccessor::setPropertyValue(uint32_t propertyId, const
     } break;
     case OB_PROP_DISP_SEARCH_OFFSET_INT: {
         auto sensor = owner_->getComponentT<ISensor>(OB_DEV_COMPONENT_DEPTH_SENSOR).get();
-        if (!sensor->isStreamActivated()) {
+        if(!sensor->isStreamActivated()) {
             throw libobsensor::wrong_api_call_sequence_exception("disp search offset can only be set when depth sensor is activated");
         }
 
@@ -140,8 +140,6 @@ void G330Disp2DepthPropertyAccessor::markOutputDisparityFrame(bool enable) {
         disparitySensor->markOutputDisparityFrame(enable);
     }
 }
-
-
 
 G330NetPerformanceModePropertyAccessor::G330NetPerformanceModePropertyAccessor(IDevice *owner) : owner_(owner) {}
 
@@ -252,4 +250,98 @@ void G330HWNoiseRemovePropertyAccessor::getPropertyRange(uint32_t propertyId, OB
     }
 }
 
+G330FrameTransformPropertyAccessor::G330FrameTransformPropertyAccessor(IDevice *owner) : owner_(owner) {}
+
+void G330FrameTransformPropertyAccessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
+    switch(propertyId) {
+    case OB_PROP_DEPTH_MIRROR_BOOL:
+    case OB_PROP_DEPTH_FLIP_BOOL:
+    case OB_PROP_DEPTH_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR);
+        processor->setPropertyValue(propertyId, value);
+    } break;
+    case OB_PROP_COLOR_MIRROR_BOOL:
+    case OB_PROP_COLOR_FLIP_BOOL:
+    case OB_PROP_COLOR_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR);
+        processor->setPropertyValue(propertyId, value);
+    } break;
+    case OB_PROP_IR_MIRROR_BOOL:
+    case OB_PROP_IR_FLIP_BOOL:
+    case OB_PROP_IR_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_LEFT_IR_FRAME_PROCESSOR);
+        processor->setPropertyValue(propertyId, value);
+    } break;
+    case OB_PROP_IR_RIGHT_MIRROR_BOOL:
+    case OB_PROP_IR_RIGHT_FLIP_BOOL:
+    case OB_PROP_IR_RIGHT_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_RIGHT_IR_FRAME_PROCESSOR);
+        processor->setPropertyValue(propertyId, value);
+    } break;
+    default:
+        throw invalid_value_exception("Invalid property id");
+    }
+}
+
+void G330FrameTransformPropertyAccessor::getPropertyValue(uint32_t propertyId, OBPropertyValue *value) {
+    switch(propertyId) {
+    case OB_PROP_DEPTH_MIRROR_BOOL:
+    case OB_PROP_DEPTH_FLIP_BOOL:
+    case OB_PROP_DEPTH_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR);
+        processor->getPropertyValue(propertyId, value);
+    } break;
+    case OB_PROP_COLOR_MIRROR_BOOL:
+    case OB_PROP_COLOR_FLIP_BOOL:
+    case OB_PROP_COLOR_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR);
+        processor->getPropertyValue(propertyId, value);
+    } break;
+    case OB_PROP_IR_MIRROR_BOOL:
+    case OB_PROP_IR_FLIP_BOOL:
+    case OB_PROP_IR_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_LEFT_IR_FRAME_PROCESSOR);
+        processor->getPropertyValue(propertyId, value);
+    } break;
+    case OB_PROP_IR_RIGHT_MIRROR_BOOL:
+    case OB_PROP_IR_RIGHT_FLIP_BOOL:
+    case OB_PROP_IR_RIGHT_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_RIGHT_IR_FRAME_PROCESSOR);
+        processor->getPropertyValue(propertyId, value);
+    } break;
+    default:
+        throw invalid_value_exception("Invalid property id");
+    }
+}
+
+void G330FrameTransformPropertyAccessor::getPropertyRange(uint32_t propertyId, OBPropertyRange *range) {
+    switch(propertyId) {
+    case OB_PROP_DEPTH_MIRROR_BOOL:
+    case OB_PROP_DEPTH_FLIP_BOOL:
+    case OB_PROP_DEPTH_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR);
+        processor->getPropertyRange(propertyId, range);
+    } break;
+    case OB_PROP_COLOR_MIRROR_BOOL:
+    case OB_PROP_COLOR_FLIP_BOOL:
+    case OB_PROP_COLOR_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR);
+        processor->getPropertyRange(propertyId, range);
+    } break;
+    case OB_PROP_IR_MIRROR_BOOL:
+    case OB_PROP_IR_FLIP_BOOL:
+    case OB_PROP_IR_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_LEFT_IR_FRAME_PROCESSOR);
+        processor->getPropertyRange(propertyId, range);
+    } break;
+    case OB_PROP_IR_RIGHT_MIRROR_BOOL:
+    case OB_PROP_IR_RIGHT_FLIP_BOOL:
+    case OB_PROP_IR_RIGHT_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_RIGHT_IR_FRAME_PROCESSOR);
+        processor->getPropertyRange(propertyId, range);
+    } break;
+    default:
+        throw invalid_value_exception("Invalid property id");
+    }
+}
 }  // namespace libobsensor

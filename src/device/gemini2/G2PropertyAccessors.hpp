@@ -40,6 +40,23 @@ public:
     void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
 };
 
+class G2FrameTransformPropertyAccessor : public IBasicPropertyAccessor {
+public:
+    explicit G2FrameTransformPropertyAccessor(IDevice *owner);
+    virtual ~G2FrameTransformPropertyAccessor() noexcept = default;
+
+    virtual void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
+    virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
+    virtual void getPropertyRange(uint32_t propertyId, OBPropertyRange *range) override;
+
+private:
+    OBDepthModeOptionCode getOptionCode();
+
+private:
+    IDevice              *owner_;
+    OBDepthModeOptionCode optionCode_;
+};
+
 class G435LeDisp2DepthPropertyAccessor : public G2Disp2DepthPropertyAccessor {
 public:
     explicit G435LeDisp2DepthPropertyAccessor(IDevice *owner);
@@ -48,4 +65,16 @@ public:
     const std::vector<uint8_t> &getStructureData(uint32_t propertyId) override;    
 };
 
+class G210FrameTransformPropertyAccessor : public IBasicPropertyAccessor {
+public:
+    explicit G210FrameTransformPropertyAccessor(IDevice *owner);
+    virtual ~G210FrameTransformPropertyAccessor() noexcept = default;
+
+    virtual void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
+    virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
+    virtual void getPropertyRange(uint32_t propertyId, OBPropertyRange *range) override;
+
+private:
+    IDevice *owner_;
+};
 }  // namespace libobsensor

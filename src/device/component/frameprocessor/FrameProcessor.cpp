@@ -30,9 +30,8 @@ FrameProcessorFactory::FrameProcessorFactory(IDevice *owner) : DeviceComponentBa
         context_->process_frame     = dylib_->get_function<ob_frame *(ob_frame_processor *, ob_frame *, ob_error **)>("ob_frame_processor_process_frame");
         context_->destroy_processor = dylib_->get_function<void(ob_frame_processor *, ob_error **)>("ob_destroy_frame_processor");
         context_->destroy_context   = dylib_->get_function<void(ob_frame_processor_context *, ob_error **)>("ob_destroy_frame_processor_context");
-        context_->set_hardware_d2c_params =
-            dylib->get_function<void(ob_frame_processor *, ob_camera_intrinsic, uint8_t, float, int16_t, int16_t, int16_t, int16_t, bool,bool, ob_error **error)>(
-                "ob_frame_processor_set_hardware_d2c_params");
+        context_->set_hardware_d2c_params = dylib->get_function<void(ob_frame_processor *, ob_camera_intrinsic, uint8_t, float, int16_t, int16_t, int16_t,
+                                                                     int16_t, bool, bool, ob_error **error)>("ob_frame_processor_set_hardware_d2c_params");
     }
 
     if(context_->create_context && !context_->context) {
@@ -71,10 +70,19 @@ std::shared_ptr<FrameProcessor> FrameProcessorFactory::createFrameProcessor(OBSe
         case OB_SENSOR_DEPTH: {
             processor = std::make_shared<DepthFrameProcessor>(owner, context_);
         } break;
-
-        default:
-            processor = std::make_shared<FrameProcessor>(owner, context_, sensorType);
-            break;
+        case OB_SENSOR_COLOR: {
+            processor = std::make_shared<ColorFrameProcessor>(owner, context_);
+        } break;
+        case OB_SENSOR_IR:
+        case OB_SENSOR_IR_LEFT: {
+            processor = std::make_shared<IRFrameProcessor>(owner, context_, sensorType);
+        } break;
+        case OB_SENSOR_IR_RIGHT: {
+            processor = std::make_shared<IRRightFrameProcessor>(owner, context_);
+        } break;
+        default: {
+            throw std::runtime_error("unsupported sensor type");
+        }
         }
     })
     frameProcessors_.insert({ sensorType, processor });
@@ -158,7 +166,98 @@ void FrameProcessor::updateConfig(std::vector<std::string> &params) {
     }
 }
 
-void FrameProcessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
+void FrameProcessor::getPropertyRange(const std::string &configName, OBPropertyRange *range) {
+    double                   value = getConfigValue(configName);
+    OBFilterConfigSchemaItem item  = getConfigSchemaItem(configName);
+
+    if(item.type == OB_FILTER_CONFIG_VALUE_TYPE_FLOAT) {
+        range->cur.floatValue  = static_cast<float>(value);
+        range->def.floatValue  = static_cast<float>(item.def);
+        range->max.floatValue  = static_cast<float>(item.max);
+        range->min.floatValue  = static_cast<float>(item.min);
+        range->step.floatValue = static_cast<float>(item.step);
+    }
+    else {
+        range->cur.intValue  = static_cast<int32_t>(value);
+        range->def.intValue  = static_cast<int32_t>(item.def);
+        range->max.intValue  = static_cast<int32_t>(item.max);
+        range->min.intValue  = static_cast<int32_t>(item.min);
+        range->step.intValue = static_cast<int32_t>(item.step);
+    }
+}
+
+// Depth frame processor
+DepthFrameProcessor::DepthFrameProcessor(IDevice *owner, std::shared_ptr<FrameProcessorContext> context) : FrameProcessor(owner, context, OB_SENSOR_DEPTH) {}
+
+DepthFrameProcessor::~DepthFrameProcessor() noexcept {}
+
+void DepthFrameProcessor::setHardwareD2CProcessParams(std::shared_ptr<const VideoStreamProfile> colorVideoStreamProfile,
+                                                      std::shared_ptr<const VideoStreamProfile> depthVideoStreamProfile,
+                                                      std::vector<OBCameraParam> calibrationCameraParams, std::vector<OBD2CProfile> d2cProfiles,
+                                                      bool matchTargetResolution) {
+    uint32_t colorWidth  = colorVideoStreamProfile->getWidth();
+    uint32_t colorHeight = colorVideoStreamProfile->getHeight();
+    uint32_t depthWidth  = depthVideoStreamProfile->getWidth();
+    uint32_t depthHeight = depthVideoStreamProfile->getHeight();
+
+    OBCameraParam currentCameraParam = {};
+    OBD2CProfile  d2cProfile         = {};
+    for(const auto &profile: d2cProfiles) {
+        if(profile.colorWidth == colorWidth && profile.colorHeight == colorHeight && profile.depthWidth == depthWidth && profile.depthHeight == depthHeight
+           && (profile.alignType & ALIGN_D2C_HW)) {
+            d2cProfile = profile;
+            break;
+        }
+    }
+
+    bool valid = d2cProfile.colorWidth != 0 && d2cProfile.colorHeight != 0 && d2cProfile.depthWidth != 0 && d2cProfile.depthHeight != 0;
+    if(!valid || static_cast<size_t>(d2cProfile.paramIndex) + 1 > calibrationCameraParams.size()) {
+        throw invalid_value_exception("Current stream profile is not support hardware d2c process");
+    }
+
+    currentCameraParam = calibrationCameraParams.at(d2cProfile.paramIndex);
+    currentD2CProfile_ = d2cProfile;
+    if(context_->set_hardware_d2c_params) {
+        // get module mirror status
+        bool moduleMirrorStatus = false;
+        auto owner              = getOwner();
+        auto propertyServer     = owner->getPropertyServer();
+        auto isSupported        = propertyServer->isPropertySupported(OB_PROP_DEPTH_MIRROR_MODULE_STATUS_BOOL, PROP_OP_READ, PROP_ACCESS_INTERNAL);
+        if(isSupported) {
+            moduleMirrorStatus = propertyServer->getPropertyValueT<bool>(OB_PROP_DEPTH_MIRROR_MODULE_STATUS_BOOL);
+        }
+
+        // get target intrinsic
+        auto targetIntrinsic = colorVideoStreamProfile->getIntrinsic();
+
+        ob_error *error = nullptr;
+        context_->set_hardware_d2c_params(privateProcessor_, targetIntrinsic, d2cProfile.paramIndex, d2cProfile.postProcessParam.depthScale,
+                                          d2cProfile.postProcessParam.alignLeft, d2cProfile.postProcessParam.alignTop, d2cProfile.postProcessParam.alignRight,
+                                          d2cProfile.postProcessParam.alignBottom, matchTargetResolution, moduleMirrorStatus, &error);
+        if(error) {
+            LOG_ERROR("set hardware d2c params failed");
+            delete error;
+        }
+    }
+}
+
+void DepthFrameProcessor::enableHardwareD2CProcess(bool enable) {
+    auto owner          = getOwner();
+    auto propertyServer = owner->getPropertyServer();
+    bool isSupported    = propertyServer->isPropertySupported(OB_PROP_DEPTH_ALIGN_HARDWARE_MODE_INT, PROP_OP_WRITE, PROP_ACCESS_INTERNAL);
+    if(isSupported && enable) {
+        propertyServer->setPropertyValueT(OB_PROP_DEPTH_ALIGN_HARDWARE_MODE_INT, currentD2CProfile_.paramIndex);
+    }
+
+    isSupported = propertyServer->isPropertySupported(OB_PROP_DEPTH_ALIGN_HARDWARE_BOOL, PROP_OP_WRITE, PROP_ACCESS_INTERNAL);
+    if(isSupported) {
+        propertyServer->setPropertyValueT(OB_PROP_DEPTH_ALIGN_HARDWARE_BOOL, enable);
+    }
+
+    TRY_EXECUTE(setConfigValueSync("HardwareD2CProcessor#255", static_cast<double>(enable)));
+}
+
+void DepthFrameProcessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
     std::string configSchemaName = "";
     double      configValue      = 0.0;
     switch(propertyId) {
@@ -192,6 +291,18 @@ void FrameProcessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue
         configSchemaName = "HardwareD2DCorrectionFilter#255";
         configValue      = static_cast<double>(value.intValue);
     } break;
+    case OB_PROP_DEPTH_MIRROR_BOOL: {
+        configSchemaName = "FrameMirror#255";
+        configValue      = static_cast<double>(value.intValue);
+    } break;
+    case OB_PROP_DEPTH_FLIP_BOOL: {
+        configSchemaName = "FrameFlip#255";
+        configValue      = static_cast<double>(value.intValue);
+    } break;
+    case OB_PROP_DEPTH_ROTATE_INT: {
+        configSchemaName = "FrameRotate#0";
+        configValue      = static_cast<double>(value.intValue);
+    } break;
     default: {
         throw invalid_value_exception("Invalid property id");
     }
@@ -208,7 +319,7 @@ void FrameProcessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue
     setConfigValue(configSchemaName, configValue);
 }
 
-void FrameProcessor::getPropertyValue(uint32_t propertyId, OBPropertyValue *value) {
+void DepthFrameProcessor::getPropertyValue(uint32_t propertyId, OBPropertyValue *value) {
     switch(propertyId) {
     case OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL: {
         auto getValue   = getConfigValue("DisparityTransform#255");
@@ -235,12 +346,28 @@ void FrameProcessor::getPropertyValue(uint32_t propertyId, OBPropertyValue *valu
         auto getValue   = getConfigValue("NoiseRemovalFilter#1");
         value->intValue = static_cast<int32_t>(getValue);
     } break;
+    case OB_PROP_DEPTH_MIRROR_BOOL: {
+        auto getValue   = getConfigValue("FrameMirror#255");
+        value->intValue = static_cast<int32_t>(getValue);
+    } break;
+    case OB_PROP_DEPTH_FLIP_BOOL: {
+        auto getValue   = getConfigValue("FrameFlip#255");
+        value->intValue = static_cast<int32_t>(getValue);
+    } break;
+    case OB_PROP_DEPTH_ROTATE_INT: {
+        auto getValue   = getConfigValue("FrameRotate#0");
+        value->intValue = static_cast<int32_t>(getValue);
+    } break;
     default:
         throw invalid_value_exception("Invalid property id");
     }
 }
 
-void FrameProcessor::getPropertyRange(uint32_t propertyId, OBPropertyRange *range) {
+void DepthFrameProcessor::getPropertyRange(uint32_t propertyId, OBPropertyRange *range) {
+    if(!range) {
+        throw invalid_value_exception("Range point is null");
+    }
+
     std::string configName = "";
 
     switch(propertyId) {
@@ -259,6 +386,15 @@ void FrameProcessor::getPropertyRange(uint32_t propertyId, OBPropertyRange *rang
     case OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT:
         configName = "NoiseRemovalFilter#1";
         break;
+    case OB_PROP_DEPTH_ROTATE_INT:
+        configName = "FrameRotate#0";
+        break;
+    case OB_PROP_DEPTH_FLIP_BOOL:
+        configName = "FrameFlip#255";
+        break;
+    case OB_PROP_DEPTH_MIRROR_BOOL:
+        configName = "FrameMirror#255";
+        break;
     case OB_PROP_DEPTH_PRECISION_LEVEL_INT:
         OBPropertyValue cur;
         getPropertyValue(OB_PROP_DEPTH_PRECISION_LEVEL_INT, &cur);
@@ -273,93 +409,236 @@ void FrameProcessor::getPropertyRange(uint32_t propertyId, OBPropertyRange *rang
         throw invalid_value_exception("Invalid property id");
     }
 
-    double                   value = getConfigValue(configName);
-    OBFilterConfigSchemaItem item  = getConfigSchemaItem(configName);
-
-    if(item.type == OB_FILTER_CONFIG_VALUE_TYPE_FLOAT) {
-        range->cur.floatValue  = static_cast<float>(value);
-        range->def.floatValue  = static_cast<float>(item.def);
-        range->max.floatValue  = static_cast<float>(item.max);
-        range->min.floatValue  = static_cast<float>(item.min);
-        range->step.floatValue = static_cast<float>(item.step);
-    }
-    else {
-        range->cur.intValue  = static_cast<int32_t>(value);
-        range->def.intValue  = static_cast<int32_t>(item.def);
-        range->max.intValue  = static_cast<int32_t>(item.max);
-        range->min.intValue  = static_cast<int32_t>(item.min);
-        range->step.intValue = static_cast<int32_t>(item.step);
-    }
+    FrameProcessor::getPropertyRange(configName, range);
 }
-// Depth frame processor
-DepthFrameProcessor::DepthFrameProcessor(IDevice *owner, std::shared_ptr<FrameProcessorContext> context) : FrameProcessor(owner, context, OB_SENSOR_DEPTH) {}
 
-DepthFrameProcessor::~DepthFrameProcessor() noexcept {}
+ColorFrameProcessor::ColorFrameProcessor(IDevice *owner, std::shared_ptr<FrameProcessorContext> context) : FrameProcessor(owner, context, OB_SENSOR_COLOR) {}
 
-void DepthFrameProcessor::setHardwareD2CProcessParams(std::shared_ptr<const VideoStreamProfile> colorVideoStreamProfile,std::shared_ptr<const VideoStreamProfile> depthVideoStreamProfile,
-                                                      std::vector<OBCameraParam> calibrationCameraParams, std::vector<OBD2CProfile> d2cProfiles,
-                                                      bool matchTargetResolution) {
-    uint32_t colorWidth  = colorVideoStreamProfile->getWidth();
-    uint32_t colorHeight = colorVideoStreamProfile->getHeight();
-    uint32_t depthWidth  = depthVideoStreamProfile->getWidth();
-    uint32_t depthHeight = depthVideoStreamProfile->getHeight();
+void ColorFrameProcessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
+    std::string configSchemaName = "";
+    double      configValue      = 0.0;
 
-    OBCameraParam currentCameraParam = {};
-    OBD2CProfile  d2cProfile  = {};
-    for(const auto &profile: d2cProfiles) {
-        if(profile.colorWidth == colorWidth && profile.colorHeight == colorHeight && profile.depthWidth == depthWidth
-           && profile.depthHeight == depthHeight && (profile.alignType & ALIGN_D2C_HW)) {
-            d2cProfile = profile;
-            break;
-        }
+    switch(propertyId) {
+    case OB_PROP_COLOR_MIRROR_BOOL: {
+        configSchemaName = "FrameMirror#255";
+        configValue      = static_cast<double>(value.intValue);
+    } break;
+    case OB_PROP_COLOR_FLIP_BOOL: {
+        configSchemaName = "FrameFlip#255";
+        configValue      = static_cast<double>(value.intValue);
+    } break;
+    case OB_PROP_COLOR_ROTATE_INT: {
+        configSchemaName = "FrameRotate#0";
+        configValue      = static_cast<double>(value.intValue);
+    } break;
+    default:
+        throw invalid_value_exception("Invalid property id");
     }
 
-    bool valid = d2cProfile.colorWidth != 0 && d2cProfile.colorHeight != 0 && d2cProfile.depthWidth != 0 && d2cProfile.depthHeight != 0;
-    if(!valid || static_cast<size_t>(d2cProfile.paramIndex) + 1 > calibrationCameraParams.size()) {
-        throw invalid_value_exception("Current stream profile is not support hardware d2c process");
+    try {
+        getConfigValue(configSchemaName);
+    }
+    catch(...) {
+        return;
     }
 
-    currentCameraParam = calibrationCameraParams.at(d2cProfile.paramIndex);
-    currentD2CProfile_ = d2cProfile;
-    if(context_->set_hardware_d2c_params) {
-        //get module mirror status
-        bool moduleMirrorStatus = false;
-        auto owner = getOwner();
-        auto propertyServer = owner->getPropertyServer();
-        auto isSupported = propertyServer->isPropertySupported(OB_PROP_DEPTH_MIRROR_MODULE_STATUS_BOOL,PROP_OP_READ,PROP_ACCESS_INTERNAL);
-        if(isSupported) {
-            moduleMirrorStatus = propertyServer->getPropertyValueT<bool>(OB_PROP_DEPTH_MIRROR_MODULE_STATUS_BOOL);
-        }
+    setConfigValue(configSchemaName, configValue);
+}
 
-        //get target intrinsic
-        auto targetIntrinsic = colorVideoStreamProfile->getIntrinsic();
-
-        ob_error *error = nullptr;
-        context_->set_hardware_d2c_params(privateProcessor_,targetIntrinsic , d2cProfile.paramIndex, d2cProfile.postProcessParam.depthScale,
-            d2cProfile.postProcessParam.alignLeft, d2cProfile.postProcessParam.alignTop,
-            d2cProfile.postProcessParam.alignRight, d2cProfile.postProcessParam.alignBottom, matchTargetResolution,moduleMirrorStatus,
-                                          &error);
-        if(error) {
-            LOG_ERROR("set hardware d2c params failed");
-            delete error;
-        }
+void ColorFrameProcessor::getPropertyValue(uint32_t propertyId, OBPropertyValue *value) {
+    switch(propertyId) {
+    case OB_PROP_COLOR_MIRROR_BOOL: {
+        auto getValue   = getConfigValue("FrameMirror#255");
+        value->intValue = static_cast<int32_t>(getValue);
+    } break;
+    case OB_PROP_COLOR_FLIP_BOOL: {
+        auto getValue   = getConfigValue("FrameFlip#255");
+        value->intValue = static_cast<int32_t>(getValue);
+    } break;
+    case OB_PROP_COLOR_ROTATE_INT: {
+        auto getValue   = getConfigValue("FrameRotate#0");
+        value->intValue = static_cast<int32_t>(getValue);
+    } break;
+    default:
+        throw invalid_value_exception("Invalid property id");
     }
 }
 
-void DepthFrameProcessor::enableHardwareD2CProcess(bool enable) {
-    auto owner = getOwner();
-    auto propertyServer = owner->getPropertyServer();
-    bool isSupported = propertyServer->isPropertySupported(OB_PROP_DEPTH_ALIGN_HARDWARE_MODE_INT,PROP_OP_WRITE,PROP_ACCESS_INTERNAL);
-    if(isSupported && enable) {
-        propertyServer->setPropertyValueT(OB_PROP_DEPTH_ALIGN_HARDWARE_MODE_INT, currentD2CProfile_.paramIndex);
+void ColorFrameProcessor::getPropertyRange(uint32_t propertyId, OBPropertyRange *range) {
+    if(!range) {
+        throw invalid_value_exception("Range point is null");
     }
 
-    isSupported = propertyServer->isPropertySupported(OB_PROP_DEPTH_ALIGN_HARDWARE_BOOL, PROP_OP_WRITE,PROP_ACCESS_INTERNAL);
-    if(isSupported) {
-        propertyServer->setPropertyValueT(OB_PROP_DEPTH_ALIGN_HARDWARE_BOOL, enable);
+    std::string configName = "";
+    switch(propertyId) {
+    case OB_PROP_COLOR_ROTATE_INT: {
+        configName = "FrameRotate#0";
+    } break;
+    case OB_PROP_COLOR_FLIP_BOOL: {
+        configName = "FrameFlip#255";
+    } break;
+    case OB_PROP_COLOR_MIRROR_BOOL: {
+        configName = "FrameMirror#255";
+    } break;
+    default:
+        throw invalid_value_exception("Invalid property id");
     }
 
-    TRY_EXECUTE(setConfigValueSync("HardwareD2CProcessor#255", static_cast<double>(enable)));
+    FrameProcessor::getPropertyRange(configName, range);
 }
 
+IRFrameProcessor::IRFrameProcessor(IDevice *owner, std::shared_ptr<FrameProcessorContext> context, OBSensorType sensorType)
+    : FrameProcessor(owner, context, sensorType) {}
+
+void IRFrameProcessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
+    std::string configSchemaName = "";
+    double      configValue      = 0.0;
+
+    switch(propertyId) {
+    case OB_PROP_IR_MIRROR_BOOL: {
+        configSchemaName = "FrameMirror#255";
+        configValue      = static_cast<double>(value.intValue);
+    } break;
+    case OB_PROP_IR_FLIP_BOOL: {
+        configSchemaName = "FrameFlip#255";
+        configValue      = static_cast<double>(value.intValue);
+    } break;
+    case OB_PROP_IR_ROTATE_INT: {
+        configSchemaName = "FrameRotate#0";
+        configValue      = static_cast<double>(value.intValue);
+    } break;
+    default: {
+        throw invalid_value_exception("Invalid property id");
+    }
+    }
+
+    try {
+        getConfigValue(configSchemaName);
+    }
+    catch(...) {
+        return;
+    }
+
+    setConfigValue(configSchemaName, configValue);
+}
+
+void IRFrameProcessor::getPropertyValue(uint32_t propertyId, OBPropertyValue *value) {
+    switch(propertyId) {
+    case OB_PROP_IR_MIRROR_BOOL: {
+        auto getValue   = getConfigValue("FrameMirror#255");
+        value->intValue = static_cast<int32_t>(getValue);
+    } break;
+    case OB_PROP_IR_FLIP_BOOL: {
+        auto getValue   = getConfigValue("FrameFlip#255");
+        value->intValue = static_cast<int32_t>(getValue);
+    } break;
+    case OB_PROP_IR_ROTATE_INT: {
+        auto getValue   = getConfigValue("FrameRotate#0");
+        value->intValue = static_cast<int32_t>(getValue);
+    } break;
+    default:
+        throw invalid_value_exception("Invalid property id");
+    }
+}
+
+void IRFrameProcessor::getPropertyRange(uint32_t propertyId, OBPropertyRange *range) {
+    if(!range) {
+        throw invalid_value_exception("Range point is null");
+    }
+
+    std::string configName = "";
+    switch(propertyId) {
+    case OB_PROP_IR_ROTATE_INT: {
+        configName = "FrameRotate#0";
+    } break;
+    case OB_PROP_IR_FLIP_BOOL: {
+        configName = "FrameFlip#255";
+    } break;
+    case OB_PROP_IR_MIRROR_BOOL: {
+        configName = "FrameMirror#255";
+    } break;
+    default:
+        throw invalid_value_exception("Invalid property id");
+    }
+
+    FrameProcessor::getPropertyRange(configName, range);
+}
+
+IRRightFrameProcessor::IRRightFrameProcessor(IDevice *owner, std::shared_ptr<FrameProcessorContext> context)
+    : FrameProcessor(owner, context, OB_SENSOR_IR_RIGHT) {}
+
+void IRRightFrameProcessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
+    std::string configSchemaName = "";
+    double      configValue      = 0.0;
+
+    switch(propertyId) {
+    case OB_PROP_IR_RIGHT_MIRROR_BOOL: {
+        configSchemaName = "FrameMirror#255";
+        configValue      = static_cast<double>(value.intValue);
+    } break;
+    case OB_PROP_IR_RIGHT_FLIP_BOOL: {
+        configSchemaName = "FrameFlip#255";
+        configValue      = static_cast<double>(value.intValue);
+    } break;
+    case OB_PROP_IR_RIGHT_ROTATE_INT: {
+        configSchemaName = "FrameRotate#0";
+        configValue      = static_cast<double>(value.intValue);
+    } break;
+    default: {
+        throw invalid_value_exception("Invalid property id");
+    }
+    }
+
+    try {
+        getConfigValue(configSchemaName);
+    }
+    catch(...) {
+        return;
+    }
+
+    setConfigValue(configSchemaName, configValue);
+}
+
+void IRRightFrameProcessor::getPropertyValue(uint32_t propertyId, OBPropertyValue *value) {
+    switch(propertyId) {
+    case OB_PROP_IR_RIGHT_MIRROR_BOOL: {
+        auto getValue   = getConfigValue("FrameMirror#255");
+        value->intValue = static_cast<int32_t>(getValue);
+    } break;
+    case OB_PROP_IR_RIGHT_FLIP_BOOL: {
+        auto getValue   = getConfigValue("FrameFlip#255");
+        value->intValue = static_cast<int32_t>(getValue);
+    } break;
+    case OB_PROP_IR_RIGHT_ROTATE_INT: {
+        auto getValue   = getConfigValue("FrameRotate#0");
+        value->intValue = static_cast<int32_t>(getValue);
+    } break;
+    default: {
+        throw invalid_value_exception("Invalid property id");
+    }
+    }
+}
+
+void IRRightFrameProcessor::getPropertyRange(uint32_t propertyId, OBPropertyRange *range) {
+    if(!range) {
+        throw invalid_value_exception("Range point is null");
+    }
+
+    std::string configName = "";
+    switch(propertyId) {
+    case OB_PROP_IR_RIGHT_ROTATE_INT: {
+        configName = "FrameRotate#0";
+    } break;
+    case OB_PROP_IR_RIGHT_FLIP_BOOL: {
+        configName = "FrameFlip#255";
+    } break;
+    case OB_PROP_IR_RIGHT_MIRROR_BOOL: {
+        configName = "FrameMirror#255";
+    } break;
+    default:
+        throw invalid_value_exception("Invalid property id");
+    }
+
+    FrameProcessor::getPropertyRange(configName, range);
+}
 }  // namespace libobsensor
