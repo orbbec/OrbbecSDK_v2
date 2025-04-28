@@ -2057,6 +2057,9 @@
             <!-- Whether to enable heartbeat by default -->
             <DefaulHeartBeat>0</DefaulHeartBeat>
 
+            <!--Max frame delay-->
+            <MaxFrameDelay>1.2</MaxFrameDelay>
+
             <Depth>
                 <!-- Number of retries for open stream failures, 0 means no retries -->
                 <StreamFailedRetry>15</StreamFailedRetry>
