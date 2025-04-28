@@ -509,6 +509,12 @@ typedef enum {
      * @brief soft trigger auto capture interval time, use in OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_TRIGGERING mode
      */
     OB_DEVICE_AUTO_CAPTURE_INTERVAL_TIME_INT = 217,
+
+    /**
+     * @brief PTP time synchronization enable
+     */
+    OB_DEVICE_PTP_CLOCK_SYNC_ENABLE_BOOL = 223,
+
     /**
      * @brief Baseline calibration parameters
      */

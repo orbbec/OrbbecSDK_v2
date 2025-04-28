@@ -1340,6 +1340,13 @@ void G330NetDevice::init() {
         auto frameInterleaveManager = std::make_shared<G330FrameInterleaveManager>(this);
         registerComponent(OB_DEV_COMPONENT_FRAME_INTERLEAVE_MANAGER, frameInterleaveManager);
     }
+
+#if defined(__linux__) || defined(__aarch64__)
+    if(getFirmwareVersionInt() >= 10533) {
+        auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        propertyServer->registerProperty(OB_DEVICE_PTP_CLOCK_SYNC_ENABLE_BOOL, "rw", "rw", vendorPropertyAccessor.get());
+    }
+#endif
 }
 
 void G330NetDevice::fetchDeviceInfo() {
