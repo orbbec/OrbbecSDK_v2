@@ -17,22 +17,22 @@
 #include <cmath>
 
 pcl::PointCloud<pcl::PointXYZ>::Ptr frameToPCL(std::shared_ptr<ob::Frame> frame) {
-   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
 
-   uint32_t pointsSize = frame->dataSize() / sizeof(OBPoint);
-   OBPoint *point      = (OBPoint *)frame->data();
+    uint32_t pointsSize = frame->dataSize() / sizeof(OBPoint);
+    OBPoint *point      = (OBPoint *)frame->data();
 
-   cloud->points.resize(pointsSize);
+    cloud->points.resize(pointsSize);
 
-   for(uint32_t i = 0; i < pointsSize; i++) {
-       cloud->points[i].x = point->x;
-       cloud->points[i].y = point->y;
-       cloud->points[i].z = point->z;
+    for(uint32_t i = 0; i < pointsSize; i++) {
+        cloud->points[i].x = point->x;
+        cloud->points[i].y = point->y;
+        cloud->points[i].z = point->z;
 
-       point++;
-   }
+        point++;
+    }
 
-   return cloud;
+    return cloud;
 }
 
 int main(void) try {
@@ -49,7 +49,7 @@ int main(void) try {
 
     // Wait for frames to be available
     std::cout << "Waiting for frames arrive..." << std::endl;
-    auto frameset    = pipeline->waitForFrames();
+    auto frameset = pipeline->waitForFrameset();
     std::cout << "Frames arrive!" << std::endl;
 
     auto depthFrame = frameset->getFrame(OB_FRAME_DEPTH);
@@ -74,8 +74,8 @@ int main(void) try {
     exit(EXIT_SUCCESS);
 }
 catch(ob::Error &e) {
-   std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\ntype:" << e.getExceptionType() << std::endl;
-   std::cout << "\nPress any key to exit.";
-   ob_smpl::waitForKeyPressed();
-   exit(EXIT_FAILURE);
+    std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\ntype:" << e.getExceptionType() << std::endl;
+    std::cout << "\nPress any key to exit.";
+    ob_smpl::waitForKeyPressed();
+    exit(EXIT_FAILURE);
 }

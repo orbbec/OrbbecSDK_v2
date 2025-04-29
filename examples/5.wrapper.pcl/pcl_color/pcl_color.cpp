@@ -84,12 +84,12 @@ int main(void) try {
 
     // Drop several frames for auto-exposure
     for(int i = 0; i < 10; ++i) {
-        auto lost = pipeline->waitForFrames();
+        auto lost = pipeline->waitForFrameset();
     }
 
     // Wait for frames to arrive
     std::cout << "Waiting for frames..." << std::endl;
-    auto frameset   = pipeline->waitForFrames();
+    auto frameset = pipeline->waitForFrameset();
     std::cout << "Frames arrive!" << std::endl << std::endl;
     auto colorFrame = frameset->getFrame(OB_FRAME_COLOR);
 
@@ -99,7 +99,7 @@ int main(void) try {
     // Create a point cloud Filter, which will be used to generate pointcloud frame from depth and color frames.
     auto pointCloudFilter = std::make_shared<ob::PointCloudFilter>();
     // Create a align filter, which will be used to align depth frame to color frame.
-    auto alignFilter      = std::make_shared<ob::Align>(OB_STREAM_COLOR);
+    auto alignFilter = std::make_shared<ob::Align>(OB_STREAM_COLOR);
 
     // Align depth frame to color frame.
     auto aliggnFrameset = alignFilter->process(frameset);
@@ -119,9 +119,9 @@ int main(void) try {
     loadPCDFile();
 
     // 3D Point Cloud Visualization using PCLVisualizer
-    //pcl::visualization::PCLVisualizer vis2("Color Point Cloud");
-    //vis2.addPointCloud(pclPoints);
-    //vis2.spin();
+    // pcl::visualization::PCLVisualizer vis2("Color Point Cloud");
+    // vis2.addPointCloud(pclPoints);
+    // vis2.spin();
 
     exit(EXIT_SUCCESS);
 }
