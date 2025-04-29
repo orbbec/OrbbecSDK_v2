@@ -1278,6 +1278,14 @@ void G330NetDevice::init() {
         return std::make_shared<FrameTimestampCalculatorOverMetadata>(this, metadataType, frameTimeFreq_);
     };
 
+    auto propertyServer = getPropertyServer();
+#if defined(__linux__) || defined(__aarch64__)
+    if(getFirmwareVersionInt() >= 10533) {
+        auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        propertyServer->registerProperty(OB_DEVICE_PTP_CLOCK_SYNC_ENABLE_BOOL, "rw", "rw", vendorPropertyAccessor.get());
+    }
+#endif
+
     auto globalTimestampFilter = std::make_shared<GlobalTimestampFitter>(this);
     registerComponent(OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER, globalTimestampFilter);
 
@@ -1333,7 +1341,6 @@ void G330NetDevice::init() {
         return factory;
     });
 
-    auto propertyServer = getPropertyServer();
     if(getFirmwareVersionInt() >= 373) {
         auto hwNoiseRemovePropertyAccessor = std::make_shared<G330HWNoiseRemovePropertyAccessor>(this);
         propertyServer->registerProperty(OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL, "rw", "rw", hwNoiseRemovePropertyAccessor);
@@ -1354,13 +1361,6 @@ void G330NetDevice::init() {
         auto frameInterleaveManager = std::make_shared<G330FrameInterleaveManager>(this);
         registerComponent(OB_DEV_COMPONENT_FRAME_INTERLEAVE_MANAGER, frameInterleaveManager);
     }
-
-#if defined(__linux__) || defined(__aarch64__)
-    if(getFirmwareVersionInt() >= 10533) {
-        auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
-        propertyServer->registerProperty(OB_DEVICE_PTP_CLOCK_SYNC_ENABLE_BOOL, "rw", "rw", vendorPropertyAccessor.get());
-    }
-#endif
 }
 
 void G330NetDevice::fetchDeviceInfo() {
