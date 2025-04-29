@@ -57,6 +57,19 @@ private:
     IDevice *owner_;
 };
 
+class G330NetPTPClockSyncPropertyAccessor : public IBasicPropertyAccessor {
+public:
+    explicit G330NetPTPClockSyncPropertyAccessor(IDevice *owner);
+    virtual ~G330NetPTPClockSyncPropertyAccessor() noexcept = default;
+
+    virtual void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
+    virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
+    virtual void getPropertyRange(uint32_t propertyId, OBPropertyRange *range) override;
+
+private:
+    IDevice *owner_;
+};
+
 class G330FrameTransformPropertyAccessor : public IBasicPropertyAccessor {
 public:
     explicit G330FrameTransformPropertyAccessor(IDevice *owner);

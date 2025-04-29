@@ -6,6 +6,7 @@
 #include "sensor/video/DisparityBasedSensor.hpp"
 #include "IDeviceComponent.hpp"
 #include "G330NetStreamProfileFilter.hpp"
+#include "IDeviceClockSynchronizer.hpp"
 
 namespace libobsensor {
 
@@ -248,6 +249,40 @@ void G330HWNoiseRemovePropertyAccessor::getPropertyRange(uint32_t propertyId, OB
         commandPort->getPropertyRange(propertyId, range);
     } break;
     }
+}
+
+
+G330NetPTPClockSyncPropertyAccessor::G330NetPTPClockSyncPropertyAccessor(IDevice *owner) : owner_(owner) {}
+
+void G330NetPTPClockSyncPropertyAccessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
+    switch(propertyId) {
+    case OB_DEVICE_PTP_CLOCK_SYNC_ENABLE_BOOL: {
+        if(value.intValue == 0) {
+            auto processor = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+            processor->setPropertyValue(propertyId, value);
+        }
+        else {
+            auto deviceClockSync = owner_->getComponentT<IDeviceClockSynchronizer>(OB_DEV_COMPONENT_DEVICE_CLOCK_SYNCHRONIZER);
+            deviceClockSync->timerSyncWithHost();
+            auto processor = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+            processor->setPropertyValue(propertyId, value);
+        }
+    } break;
+    default: {
+        auto commandPort = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        commandPort->setPropertyValue(propertyId, value);
+    } break;
+    }
+}
+
+void G330NetPTPClockSyncPropertyAccessor::getPropertyValue(uint32_t propertyId, OBPropertyValue *value) {
+    auto commandPort = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+    commandPort->getPropertyValue(propertyId, value);
+}
+
+void G330NetPTPClockSyncPropertyAccessor::getPropertyRange(uint32_t propertyId, OBPropertyRange *range) {
+    auto commandPort = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+    commandPort->getPropertyRange(propertyId, range);
 }
 
 G330FrameTransformPropertyAccessor::G330FrameTransformPropertyAccessor(IDevice *owner) : owner_(owner) {}

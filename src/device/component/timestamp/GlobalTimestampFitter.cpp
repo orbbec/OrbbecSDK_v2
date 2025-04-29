@@ -39,9 +39,6 @@ GlobalTimestampFitter::GlobalTimestampFitter(IDevice *owner)
     if(propServer->isPropertySupported(OB_STRUCT_DEVICE_TIME, PROP_OP_WRITE, PROP_ACCESS_INTERNAL)) {
         supportedProps.push_back(OB_STRUCT_DEVICE_TIME);
     }
-    if(propServer->isPropertySupported(OB_DEVICE_PTP_CLOCK_SYNC_ENABLE_BOOL, PROP_OP_WRITE, PROP_ACCESS_INTERNAL)) {
-        supportedProps.push_back(OB_DEVICE_PTP_CLOCK_SYNC_ENABLE_BOOL);
-    }
     if(!supportedProps.empty()) {
         propServer->registerAccessCallback(supportedProps, [&](uint32_t, const uint8_t *, size_t, PropertyOperationType operationType) {
             if(operationType == PROP_OP_WRITE) {
