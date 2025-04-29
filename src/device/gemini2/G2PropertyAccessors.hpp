@@ -77,4 +77,18 @@ public:
 private:
     IDevice *owner_;
 };
+
+class G435LeFrameTransformPropertyAccessor : public IBasicPropertyAccessor {
+    public:
+        explicit G435LeFrameTransformPropertyAccessor(IDevice *owner);
+        virtual ~G435LeFrameTransformPropertyAccessor() noexcept = default;
+
+        virtual void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
+        virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
+        virtual void getPropertyRange(uint32_t propertyId, OBPropertyRange *range) override;
+
+    private:
+        IDevice* owner_;
+};
+
 }  // namespace libobsensor
