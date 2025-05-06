@@ -52,7 +52,9 @@ if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQU
     add_compile_options(-Wno-implicit-int-conversion) # uint16_t -> int conversion
     add_compile_options(-Wno-float-equal) # float comparison
     add_compile_options(-Wno-undefined-func-template)
-    add_compile_options(-Wno-return-std-move-in-c++11)
+    if(NOT "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang")
+        add_compile_options(-Wno-return-std-move-in-c++11)
+    endif()
     add_compile_options(-Wno-comma)
     add_compile_options(-Wno-missing-prototypes)
     add_compile_options(-Wno-shadow-field-in-constructor) # TODO: should enable
