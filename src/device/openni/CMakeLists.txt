@@ -17,10 +17,10 @@ target_sources(
 	${CMAKE_CURRENT_LIST_DIR}/OpenNIFrameTimestampCalculator.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OpenNIDisparitySensor.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OpenNIDisparitySensor.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/MaxProDevice.cpp
-	${CMAKE_CURRENT_LIST_DIR}/MaxProDevice.hpp
-	${CMAKE_CURRENT_LIST_DIR}/MaxProStreamProfileFilter.cpp
-	${CMAKE_CURRENT_LIST_DIR}/MaxProStreamProfileFilter.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/MaxDevice.cpp
+	${CMAKE_CURRENT_LIST_DIR}/MaxDevice.hpp
+	${CMAKE_CURRENT_LIST_DIR}/MaxStreamProfileFilter.cpp
+	${CMAKE_CURRENT_LIST_DIR}/MaxStreamProfileFilter.hpp
 	${CMAKE_CURRENT_LIST_DIR}/MaxProDisparitySensor.cpp
 	${CMAKE_CURRENT_LIST_DIR}/MaxProDisparitySensor.hpp
 )
