@@ -1,7 +1,7 @@
 // Copyright (c) Orbbec Inc. All Rights Reserved.
 // Licensed under the MIT License.
 
-#include "MaxProDevice.hpp"
+#include "MaxDevice.hpp"
 #include "DevicePids.hpp"
 #include "InternalTypes.hpp"
 #include "utils/Utils.hpp"
@@ -11,7 +11,7 @@
 #include "FilterFactory.hpp"
 #include "OpenNIPropertyAccessors.hpp"
 #include "OpenNIAlgParamManager.hpp"
-#include "MaxProStreamProfileFilter.hpp"
+#include "MaxStreamProfileFilter.hpp"
 #include "MaxProDisparitySensor.hpp"
 #include "publicfilters/FormatConverterProcess.hpp"
 #include "sensor/video/VideoSensor.hpp"
@@ -34,23 +34,23 @@ constexpr uint8_t  INTERFACE_DEPTH   = 0;
 constexpr uint16_t MAX_PRO_COLOR_PID = 0x0560;
 constexpr uint16_t MAX_PRO_DEPTH_PID = 0x069e;
 
-MaxProDevice::MaxProDevice(const std::shared_ptr<const IDeviceEnumInfo> &info) : OpenNIDeviceBase(info) {
+MaxDevice::MaxDevice(const std::shared_ptr<const IDeviceEnumInfo> &info) : OpenNIDeviceBase(info) {
     LOG_INFO("Create {} device.", info->getName());
     init();
 }
 
-MaxProDevice::~MaxProDevice() noexcept {
+MaxDevice::~MaxDevice() noexcept {
     LOG_INFO("Destroy {} device.", deviceInfo_->name_);
 }
 
-void MaxProDevice::init() {
+void MaxDevice::init() {
     OpenNIDeviceBase::init();
 }
 
-void MaxProDevice::initSensorList() {
+void MaxDevice::initSensorList() {
     OpenNIDeviceBase::initSensorList();
 
-    registerComponent(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER, [this]() { return std::make_shared<MaxProStreamProfileFilter>(this); });
+    registerComponent(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER, [this]() { return std::make_shared<MaxStreamProfileFilter>(this); });
 
     const auto &sourcePortInfoList = enumInfo_->getSourcePortInfoList();
     auto depthPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(), [](const std::shared_ptr<const SourcePortInfo> &portInfo) {
@@ -164,7 +164,7 @@ void MaxProDevice::initSensorList() {
 
 }
 
-void MaxProDevice::initProperties() {
+void MaxDevice::initProperties() {
     OpenNIDeviceBase::initProperties();
 
     auto propertyServer = getPropertyServer();

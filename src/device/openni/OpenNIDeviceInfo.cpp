@@ -6,7 +6,7 @@
 #include "DevicePids.hpp"
 #include "utils/Utils.hpp"
 #include "OpenNIDeviceBase.hpp"
-#include "MaxProDevice.hpp"
+#include "MaxDevice.hpp"
 #include "exception/ObException.hpp"
 #include "ethernet/NetPortGroup.hpp"
 #include "ethernet/RTSPStreamPort.hpp"
@@ -56,7 +56,7 @@ OpenNIDeviceInfo::~OpenNIDeviceInfo() noexcept {}
 
 std::shared_ptr<IDevice> OpenNIDeviceInfo::createDevice() const {
     if(pid_ == OB_DEVICE_MAX_PRO_PID) {
-        return std::make_shared<MaxProDevice>(shared_from_this());
+        return std::make_shared<MaxDevice>(shared_from_this());
     }
     return std::make_shared<OpenNIDeviceBase>(shared_from_this());
 }
