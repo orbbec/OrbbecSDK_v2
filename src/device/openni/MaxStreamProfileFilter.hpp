@@ -8,10 +8,10 @@
 #include "InternalTypes.hpp"
 
 namespace libobsensor {
-class MaxProStreamProfileFilter : public DeviceComponentBase, public IStreamProfileFilter {
+class MaxStreamProfileFilter : public DeviceComponentBase, public IStreamProfileFilter {
 public:
-    MaxProStreamProfileFilter(IDevice *owner);
-    virtual ~MaxProStreamProfileFilter() noexcept = default;
+    MaxStreamProfileFilter(IDevice *owner);
+    virtual ~MaxStreamProfileFilter() noexcept = default;
 
     StreamProfileList filter(const StreamProfileList &profiles) const override;
 

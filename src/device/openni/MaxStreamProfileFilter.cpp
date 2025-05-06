@@ -1,7 +1,7 @@
 // Copyright (c) Orbbec Inc. All Rights Reserved.
 // Licensed under the MIT License.
 
-#include "MaxProStreamProfileFilter.hpp"
+#include "MaxStreamProfileFilter.hpp"
 #include "utils/Utils.hpp"
 #include "stream/StreamProfile.hpp"
 #include "stream/StreamProfileFactory.hpp"
@@ -9,7 +9,7 @@
 #include "property/InternalProperty.hpp"
 
 namespace libobsensor {
-MaxProStreamProfileFilter::MaxProStreamProfileFilter(IDevice *owner) : DeviceComponentBase(owner) {
+MaxStreamProfileFilter::MaxStreamProfileFilter(IDevice *owner) : DeviceComponentBase(owner) {
     fetchEffectiveStreamProfiles();
 }
 
@@ -21,7 +21,7 @@ static bool isMatch(OBSensorType sensorType, std::shared_ptr<const VideoStreamPr
     return false;
 }
 
-StreamProfileList MaxProStreamProfileFilter::filter(const StreamProfileList &profiles) const {
+StreamProfileList MaxStreamProfileFilter::filter(const StreamProfileList &profiles) const {
     StreamProfileList filteredProfiles;
 
     for(const auto &profile: profiles) {
@@ -53,7 +53,7 @@ StreamProfileList MaxProStreamProfileFilter::filter(const StreamProfileList &pro
     return filteredProfiles;
 }
 
-void MaxProStreamProfileFilter::fetchEffectiveStreamProfiles() {
+void MaxStreamProfileFilter::fetchEffectiveStreamProfiles() {
     /*auto owner      = getOwner();
     auto propServer = owner->getPropertyServer();*/
     effectiveStreamProfiles_.push_back({ OB_SENSOR_COLOR, OB_FORMAT_MJPG, 640, 480, 5 });
