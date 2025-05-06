@@ -604,7 +604,7 @@ void CoordinateUtil::transformationDepthToPointCloud(OBXYTables *xyTables, const
         validCount++;
     }
 
-    if(!outputZeroPoint && validPointCount != nullptr) {
+    if(validPointCount != nullptr) {
         *validPointCount = validCount;
     }
 }
@@ -676,7 +676,7 @@ void CoordinateUtil::transformationDepthToRGBDPointCloud(OBXYTables *xyTables, c
         }
     }
 
-    if(!outputZeroPoint && validPointCount != nullptr) {
+    if(validPointCount != nullptr) {
         *validPointCount = validCount;
     }
 }
@@ -748,7 +748,7 @@ void CoordinateUtil::transformationDepthToRGBDPointCloudByUVTables(const OBCamer
         validCount++;
     }
 
-    if(!outputZeroPoint && validPointCount != nullptr) {
+    if(validPointCount != nullptr) {
         *validPointCount = validCount;
     }
 }
