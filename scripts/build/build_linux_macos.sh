@@ -53,9 +53,6 @@ mkdir -p $INSTALL_DIR
 
 # Build and install OrbbecSDK
 cmake_script="cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$INSTALL_DIR -DOB_BUILD_EXAMPLES=OFF"
-if [ "$system" = "macos" ]; then
-    cmake_script="${cmake_script} -DOB_BUILD_SOVERSION=OFF"
-fi
 
 $cmake_script || { echo 'Failed to run cmake'; exit 1; }
 
