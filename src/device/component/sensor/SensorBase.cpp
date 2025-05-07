@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 #include "SensorBase.hpp"
+#include "IDeviceSyncConfigurator.hpp"
 #include "utils/PublicTypeHelper.hpp"
 #include "frame/Frame.hpp"
 #include "stream/StreamProfile.hpp"
@@ -234,6 +235,18 @@ void SensorBase::disableStreamRecovery() {
 void SensorBase::watchStreamState() {
     recoveryCount_ = 0;
     while(recoveryEnabled_) {
+        bool isTriggeringMode = false;
+        if((streamState_ == STREAM_STATE_STARTING && noStreamTimeoutMs_ > 0) || (streamState_ == STREAM_STATE_STREAMING && streamInterruptTimeoutMs_ > 0)) {
+            TRY_EXECUTE(auto configurator =
+                            getOwner()->getComponentT<libobsensor::IDeviceSyncConfigurator>(libobsensor::OB_DEV_COMPONENT_DEVICE_SYNC_CONFIGURATOR);
+                        auto oBMultiDeviceSyncConfig = configurator->getSyncConfig();
+                        if(oBMultiDeviceSyncConfig.syncMode == OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_TRIGGERING
+                           || oBMultiDeviceSyncConfig.syncMode == OB_MULTI_DEVICE_SYNC_MODE_HARDWARE_TRIGGERING) {
+                            isTriggeringMode = true;
+                            LOG_DEBUG("Curent mode is not supported stream recovery");
+                        })
+        }
+
         if(streamState_ == STREAM_STATE_STOPPED || streamState_ == STREAM_STATE_STOPPING || streamState_ == STREAM_STATE_ERROR) {
             std::unique_lock<std::mutex> lock(streamStateMutex_);
             streamStateCv_.wait(lock);
@@ -243,7 +256,7 @@ void SensorBase::watchStreamState() {
             {
                 std::unique_lock<std::mutex> lock(streamStateMutex_);
                 streamStateCv_.wait_for(lock, std::chrono::milliseconds(noStreamTimeoutMs_));
-                if(streamState_ != STREAM_STATE_STARTING || recoveryEnabled_ == false) {
+                if(streamState_ != STREAM_STATE_STARTING || recoveryEnabled_ == false || isTriggeringMode) {
                     recoveryCount_ = 0;
                     continue;
                 }
@@ -262,7 +275,7 @@ void SensorBase::watchStreamState() {
             {
                 std::unique_lock<std::mutex> lock(streamStateMutex_);
                 auto                         sts = streamStateCv_.wait_for(lock, std::chrono::milliseconds(streamInterruptTimeoutMs_));
-                if(sts != std::cv_status::timeout || streamState_ != STREAM_STATE_STREAMING || recoveryEnabled_ == false) {
+                if(sts != std::cv_status::timeout || streamState_ != STREAM_STATE_STREAMING || recoveryEnabled_ == false || isTriggeringMode) {
                     recoveryCount_ = 0;
                     continue;
                 }
