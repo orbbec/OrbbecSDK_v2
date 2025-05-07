@@ -47,7 +47,7 @@ void Astra2AlgParamManager::fetchParamFromDevice() {
             OBCameraParam param;
             param.depthIntrinsic = cameraParam.depthIntrinsic;
             param.rgbIntrinsic   = cameraParam.rgbIntrinsic;
-            memcpy(&param.depthDistortion, &cameraParam.depthDistortion, sizeof(param.depthDistortion));
+            memset(&param.depthDistortion, 0, sizeof(param.depthDistortion));
             param.depthDistortion.model = OB_DISTORTION_BROWN_CONRADY_K6;
             memcpy(&param.rgbDistortion, &cameraParam.rgbDistortion, sizeof(param.rgbDistortion));
             param.rgbDistortion.model = OB_DISTORTION_BROWN_CONRADY_K6;
