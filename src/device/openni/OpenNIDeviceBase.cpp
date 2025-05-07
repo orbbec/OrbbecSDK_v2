@@ -120,7 +120,7 @@ void OpenNIDeviceBase::initProperties() {
     auto propertyServer = std::make_shared<PropertyServer>(this);
 
     auto d2dPropertyAccessor = std::make_shared<OpenNIDisp2DepthPropertyAccessor>(this);
-    propertyServer->registerProperty(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL, "rw", "rw", d2dPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL, "", "rw", d2dPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_DEPTH_PRECISION_LEVEL_INT, "rw", "rw", d2dPropertyAccessor);
     propertyServer->registerProperty(OB_STRUCT_DEPTH_PRECISION_SUPPORT_LIST, "r", "r", d2dPropertyAccessor);
 
