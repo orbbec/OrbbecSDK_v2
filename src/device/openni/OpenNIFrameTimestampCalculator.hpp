@@ -4,6 +4,7 @@
 #pragma once
 #include "IFrame.hpp"
 #include "IDevice.hpp"
+#include "IFrameTimestamp.hpp"
 
 namespace libobsensor {
 
