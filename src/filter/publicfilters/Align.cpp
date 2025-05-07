@@ -130,6 +130,12 @@ std::shared_ptr<Frame> Align::process(std::shared_ptr<const Frame> frame) {
             auto alignToFrame   = FrameFactory::createFrameFromStreamProfile(alignToProfile);
             alignToFrame->copyInfoFromOther(from);
             alignFrames(from, alignToFrame, depth);
+            OBCameraDistortion alignDistortion = { 0 };
+            auto               distortion      = toProfile->getDistortion();
+            memcpy(&alignDistortion, &distortion, sizeof(OBCameraDistortion));
+            auto model            = fromProfile->getDistortion().model;
+            alignDistortion.model = model;
+            alignToProfile->bindDistortion(alignDistortion);
 
             auto outFrameSet = outFrame->as<FrameSet>();
             outFrameSet->pushFrame(std::move(alignToFrame));
