@@ -30,4 +30,19 @@ private:
     const std::vector<uint16_t> swD2DSupportList_ = { OB_PRECISION_1MM, OB_PRECISION_0MM8, OB_PRECISION_0MM4, OB_PRECISION_0MM2, OB_PRECISION_0MM1 };
 };
 
+
+
+class OpenNIFrameTransformPropertyAccessor : public IBasicPropertyAccessor {
+public:
+    explicit OpenNIFrameTransformPropertyAccessor(IDevice *owner);
+    virtual ~OpenNIFrameTransformPropertyAccessor() noexcept = default;
+
+    virtual void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
+    virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
+    virtual void getPropertyRange(uint32_t propertyId, OBPropertyRange *range) override;
+
+private:
+    IDevice *owner_;
+};
+
 }  // namespace libobsensor
