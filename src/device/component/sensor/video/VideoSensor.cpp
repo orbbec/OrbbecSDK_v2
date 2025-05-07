@@ -353,15 +353,7 @@ void VideoSensor::setStreamProfileList(const StreamProfileList &profileList) {
 }
 
 void VideoSensor::setFrameProcessor(std::shared_ptr<FrameProcessor> frameProcessor) {
-    if(isStreamActivated()) {
-        throw wrong_api_call_sequence_exception("Can not update frame processor while streaming");
-    }
-    frameProcessor_ = frameProcessor;
-    frameProcessor_->setCallback([this](std::shared_ptr<Frame> frame) {
-        auto deviceInfo = owner_->getInfo();
-        LOG_FREQ_CALC(DEBUG, 5000, "{}({}): {} frameProcessor_ callback frameRate={freq}fps", deviceInfo->name_, deviceInfo->deviceSn_, sensorType_);
-        SensorBase::outputFrame(frame);
-    });
+    SensorBase::setFrameProcessor(frameProcessor);
 }
 void VideoSensor::setFrameMetadataModifer(std::shared_ptr<IFrameMetadataModifier> modifier) {
     if(isStreamActivated()) {
