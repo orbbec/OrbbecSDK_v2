@@ -120,4 +120,83 @@ const std::vector<uint8_t> &OpenNIDisp2DepthPropertyAccessor::getStructureData(u
     throw invalid_value_exception(utils::string::to_string() << "unsupported property id:" << propertyId);
 }
 
+
+
+OpenNIFrameTransformPropertyAccessor::OpenNIFrameTransformPropertyAccessor(IDevice *owner) : owner_(owner) {}
+
+void OpenNIFrameTransformPropertyAccessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
+    switch(propertyId) {
+    case OB_PROP_DEPTH_MIRROR_BOOL:
+    case OB_PROP_DEPTH_FLIP_BOOL:
+    case OB_PROP_DEPTH_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR);
+        processor->setPropertyValue(propertyId, value);
+    } break;
+    case OB_PROP_COLOR_MIRROR_BOOL:
+    case OB_PROP_COLOR_FLIP_BOOL:
+    case OB_PROP_COLOR_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR);
+        processor->setPropertyValue(propertyId, value);
+    } break;
+    case OB_PROP_IR_MIRROR_BOOL:
+    case OB_PROP_IR_FLIP_BOOL:
+    case OB_PROP_IR_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_IR_FRAME_PROCESSOR);
+        processor->setPropertyValue(propertyId, value);
+    } break;
+    default:
+        throw invalid_value_exception("Invalid property id");
+    }
+}
+
+void OpenNIFrameTransformPropertyAccessor::getPropertyValue(uint32_t propertyId, OBPropertyValue *value) {
+    switch(propertyId) {
+    case OB_PROP_DEPTH_MIRROR_BOOL:
+    case OB_PROP_DEPTH_FLIP_BOOL:
+    case OB_PROP_DEPTH_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR);
+        processor->getPropertyValue(propertyId, value);
+    } break;
+    case OB_PROP_COLOR_MIRROR_BOOL:
+    case OB_PROP_COLOR_FLIP_BOOL:
+    case OB_PROP_COLOR_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR);
+        processor->getPropertyValue(propertyId, value);
+    } break;
+    case OB_PROP_IR_MIRROR_BOOL:
+    case OB_PROP_IR_FLIP_BOOL:
+    case OB_PROP_IR_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_IR_FRAME_PROCESSOR);
+        processor->getPropertyValue(propertyId, value);
+    } break;
+    default:
+        throw invalid_value_exception("Invalid property id");
+    }
+}
+
+void OpenNIFrameTransformPropertyAccessor::getPropertyRange(uint32_t propertyId, OBPropertyRange *range) {
+    switch(propertyId) {
+    case OB_PROP_DEPTH_MIRROR_BOOL:
+    case OB_PROP_DEPTH_FLIP_BOOL:
+    case OB_PROP_DEPTH_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR);
+        processor->getPropertyRange(propertyId, range);
+    } break;
+    case OB_PROP_COLOR_MIRROR_BOOL:
+    case OB_PROP_COLOR_FLIP_BOOL:
+    case OB_PROP_COLOR_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR);
+        processor->getPropertyRange(propertyId, range);
+    } break;
+    case OB_PROP_IR_MIRROR_BOOL:
+    case OB_PROP_IR_FLIP_BOOL:
+    case OB_PROP_IR_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_IR_FRAME_PROCESSOR);
+        processor->getPropertyRange(propertyId, range);
+    } break;
+    default:
+        throw invalid_value_exception("Invalid property id");
+    }
+}
+
 }  // namespace libobsensor

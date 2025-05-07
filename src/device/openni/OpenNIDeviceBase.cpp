@@ -129,6 +129,19 @@ void OpenNIDeviceBase::initProperties() {
     propertyServer->registerProperty(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT, "rw", "rw", privatePropertyAccessor);
     propertyServer->registerProperty(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_SPECKLE_SIZE_INT, "rw", "rw", privatePropertyAccessor);
 
+    auto frameTransformPropertyAccessor = std::make_shared<OpenNIFrameTransformPropertyAccessor>(this);
+    propertyServer->registerProperty(OB_PROP_DEPTH_MIRROR_BOOL, "rw", "rw", frameTransformPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_DEPTH_FLIP_BOOL, "rw", "rw", frameTransformPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_DEPTH_ROTATE_INT, "rw", "rw", frameTransformPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_IR_MIRROR_BOOL, "rw", "rw", frameTransformPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_IR_FLIP_BOOL, "rw", "rw", frameTransformPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_IR_ROTATE_INT, "rw", "rw", frameTransformPropertyAccessor);
+    if(isComponentExists(OB_DEV_COMPONENT_COLOR_SENSOR)) {
+        propertyServer->registerProperty(OB_PROP_COLOR_MIRROR_BOOL, "rw", "rw", frameTransformPropertyAccessor);
+        propertyServer->registerProperty(OB_PROP_COLOR_FLIP_BOOL, "rw", "rw", frameTransformPropertyAccessor);
+        propertyServer->registerProperty(OB_PROP_COLOR_ROTATE_INT, "rw", "rw", frameTransformPropertyAccessor);
+    }
+
     auto sensors = getSensorTypeList();
     for(auto &sensor: sensors) {
         auto &sourcePortInfo = getSensorPortInfo(sensor);
@@ -139,8 +152,6 @@ void OpenNIDeviceBase::initProperties() {
                 return vendorPropertyAccessor;
             });
 
-            propertyServer->registerProperty(OB_PROP_DEPTH_MIRROR_BOOL, "rw", "rw", vendorPropertyAccessor_);
-            propertyServer->registerProperty(OB_PROP_IR_MIRROR_BOOL, "rw", "rw", vendorPropertyAccessor_);
             propertyServer->registerProperty(OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL, "rw", "rw", vendorPropertyAccessor_);
             propertyServer->registerProperty(OB_PROP_DEPTH_EXPOSURE_INT, "rw", "rw", vendorPropertyAccessor_);
             propertyServer->registerProperty(OB_PROP_DEPTH_GAIN_INT, "rw", "rw", vendorPropertyAccessor_);
