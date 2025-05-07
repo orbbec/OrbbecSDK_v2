@@ -7,6 +7,7 @@
 #include "frameprocessor/FrameProcessor.hpp"
 #include "property/PropertyServer.hpp"
 #include "property/CommonPropertyAccessors.hpp"
+#include "IFrameTimestamp.hpp"
 
 #include <map>
 #include <memory>
