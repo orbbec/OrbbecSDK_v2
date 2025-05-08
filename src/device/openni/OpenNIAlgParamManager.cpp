@@ -106,15 +106,18 @@ void OpenNIAlgParamManager::fetchParamFromDevice() {
                     OBCameraParam realParam       = {};
                     int16_t       paramScaleValue = (int16_t)pow(2, i);
                     memcpy(&realParam, &param, sizeof(param));
-                    realParam.depthIntrinsic.fx      = realParam.depthIntrinsic.fx / paramScaleValue;
-                    realParam.depthIntrinsic.fy      = realParam.depthIntrinsic.fy / paramScaleValue;
-                    realParam.depthIntrinsic.cx      = realParam.depthIntrinsic.cx / paramScaleValue;
-                    realParam.depthIntrinsic.cy      = realParam.depthIntrinsic.cy / paramScaleValue;
-                    realParam.rgbIntrinsic.cy        = realParam.rgbIntrinsic.cy + 40;
-                    realParam.depthIntrinsic.width   = depthWidth / paramScaleValue;
-                    realParam.depthIntrinsic.height  = depthHeight / paramScaleValue;
-                    realParam.rgbIntrinsic.width     = colorWidth;
-                    realParam.rgbIntrinsic.height    = colorHeight;
+                    realParam.depthIntrinsic.fx     = static_cast<float>(realParam.depthIntrinsic.fx * 1.1204);
+                    realParam.depthIntrinsic.fy     = static_cast<float>(realParam.depthIntrinsic.fy * 1.1204);
+
+                    realParam.depthIntrinsic.fx     = realParam.depthIntrinsic.fx / paramScaleValue;
+                    realParam.depthIntrinsic.fy     = realParam.depthIntrinsic.fy / paramScaleValue;
+                    realParam.depthIntrinsic.cx     = realParam.depthIntrinsic.cx / paramScaleValue;
+                    realParam.depthIntrinsic.cy     = realParam.depthIntrinsic.cy / paramScaleValue;
+                    realParam.rgbIntrinsic.cy       = realParam.rgbIntrinsic.cy + 40;
+                    realParam.depthIntrinsic.width  = depthWidth / paramScaleValue;
+                    realParam.depthIntrinsic.height = depthHeight / paramScaleValue;
+                    realParam.rgbIntrinsic.width    = colorWidth;
+                    realParam.rgbIntrinsic.height   = colorHeight;
                     calibrationCameraParamList_.push_back(realParam);
                 }
 
@@ -133,7 +136,9 @@ void OpenNIAlgParamManager::fetchParamFromDevice() {
                     realParam.depthIntrinsic.fy     = realParam.depthIntrinsic.fy / paramScaleValue;
                     realParam.depthIntrinsic.cx     = realParam.depthIntrinsic.cx / paramScaleValue;
                     realParam.depthIntrinsic.cy     = realParam.depthIntrinsic.cy / paramScaleValue;
-                    realParam.rgbIntrinsic.cy       = realParam.rgbIntrinsic.cy + 40;
+
+                    memcpy(&realParam.rgbIntrinsic, &realParam.depthIntrinsic, 4 * sizeof(float));
+
                     realParam.depthIntrinsic.width  = depthWidth / paramScaleValue;
                     realParam.depthIntrinsic.height = depthHeight / paramScaleValue;
                     realParam.rgbIntrinsic.width    = colorWidth;
@@ -150,6 +155,9 @@ void OpenNIAlgParamManager::fetchParamFromDevice() {
                     OBCameraParam realParam       = {};
                     int16_t       paramScaleValue = (int16_t)pow(2, i);
                     memcpy(&realParam, &param, sizeof(param));
+                    realParam.depthIntrinsic.fx = static_cast<float>(realParam.depthIntrinsic.fx * 1.1204);
+                    realParam.depthIntrinsic.fy = static_cast<float>(realParam.depthIntrinsic.fy * 1.1204);
+
                     realParam.depthIntrinsic.fx = realParam.depthIntrinsic.fx / paramScaleValue;
                     realParam.depthIntrinsic.fy = realParam.depthIntrinsic.fy / paramScaleValue;
                     realParam.depthIntrinsic.cx = realParam.depthIntrinsic.cx / paramScaleValue;
@@ -175,6 +183,9 @@ void OpenNIAlgParamManager::fetchParamFromDevice() {
                     OBCameraParam realParam       = {};
                     int16_t       paramScaleValue = (int16_t)pow(2, i);
                     memcpy(&realParam, &param, sizeof(param));
+                    realParam.depthIntrinsic.fx = static_cast<float>(realParam.depthIntrinsic.fx * 1.1204);
+                    realParam.depthIntrinsic.fy = static_cast<float>(realParam.depthIntrinsic.fy * 1.1204);
+
                     realParam.depthIntrinsic.fx = realParam.depthIntrinsic.fx / paramScaleValue;
                     realParam.depthIntrinsic.fy = realParam.depthIntrinsic.fy / paramScaleValue;
                     realParam.depthIntrinsic.cx = realParam.depthIntrinsic.cx / paramScaleValue;
@@ -193,8 +204,8 @@ void OpenNIAlgParamManager::fetchParamFromDevice() {
 
                 d2cProfileList_ = {
                     { 640, 480, 640, 400, ALIGN_D2C_HW, 0, { 1.0f, 0, 40, 0, 40 } }, { 640, 480, 640, 400, ALIGN_D2C_SW, 0, { 1.0f, 0, 0, 0, 0 } },
-                    { 640, 480, 320, 200, ALIGN_D2C_SW, 1, { 1.0f, 0, 0, 0, 0 } },   { 640, 480, 640, 320, ALIGN_D2C_SW, 2, { 1.0f, 0, 0, 0, 0 } },
-                    { 640, 480, 320, 160, ALIGN_D2C_SW, 3, { 1.0f, 0, 0, 0, 0 } },   { 1280, 960, 640, 400, ALIGN_D2C_SW, 4, { 1.0f, 0, 0, 0, 0 } },
+                    { 640, 480, 320, 200, ALIGN_D2C_SW, 1, { 1.0f, 0, 0, 0, 0 } },   { 640, 480, 640, 320, ALIGN_UNSUPPORTED, 2, { 1.0f, 0, 0, 0, 0 } },
+                    { 640, 480, 320, 160, ALIGN_UNSUPPORTED, 3, { 1.0f, 0, 0, 0, 0 } }, { 1280, 960, 640, 400, ALIGN_D2C_SW, 4, { 1.0f, 0, 0, 0, 0 } },
                     { 1280, 960, 320, 200, ALIGN_D2C_SW, 5, { 1.0f, 0, 0, 0, 0 } },  { 1600, 1200, 640, 400, ALIGN_D2C_SW, 6, { 1.0f, 0, 0, 0, 0 } },
                     { 1600, 1200, 320, 200, ALIGN_D2C_SW, 7, { 1.0f, 0, 0, 0, 0 } },
                 };

@@ -66,6 +66,44 @@ bool findBestMatchedD2CProfile(const std::vector<OBD2CProfile> &d2cProfileList, 
         }
     }
 
+    if(!found) {
+        for(auto &d2cProfile: d2cProfileList) {
+            auto streamType = profile->getType();
+            if((streamType == OB_STREAM_DEPTH || streamType == OB_STREAM_IR || streamType == OB_STREAM_IR_LEFT || streamType == OB_STREAM_IR_RIGHT)
+               && static_cast<uint32_t>(d2cProfile.depthWidth) == profile->getWidth()
+               && static_cast<uint32_t>(d2cProfile.depthHeight) == profile->getHeight()) {
+                found  = true;
+                result = d2cProfile;
+                break;
+            }
+            else if(streamType == OB_STREAM_COLOR && static_cast<uint32_t>(d2cProfile.colorWidth) == profile->getWidth()
+                    && static_cast<uint32_t>(d2cProfile.colorHeight) == profile->getHeight()) {
+                found  = true;
+                result = d2cProfile;
+                break;
+            }
+        }
+    }
+
+    if(!found) {
+        // match same ratio
+        float ratio = (float)profile->getWidth() / profile->getHeight();
+        for(auto &d2cProfile: d2cProfileList) {
+            auto streamType = profile->getType();
+            if((streamType == OB_STREAM_DEPTH || streamType == OB_STREAM_IR || streamType == OB_STREAM_IR_LEFT || streamType == OB_STREAM_IR_RIGHT)
+               && (float)d2cProfile.depthWidth / d2cProfile.depthHeight == ratio) {
+                found  = true;
+                result = d2cProfile;
+                break;
+            }
+            else if(streamType == OB_STREAM_COLOR && (float)d2cProfile.colorWidth / d2cProfile.colorHeight == ratio) {
+                found  = true;
+                result = d2cProfile;
+                break;
+            }
+        }
+    }
+
     return found;
 }
 
