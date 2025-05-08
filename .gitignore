@@ -38,7 +38,11 @@ build_linux_arm/
 build_android_aarch64/
 build_android_arm/
 build_macos_arm64/
-build_macos_x64
+build_macos_x64/
+build_macOS_arm64/
+build_macOS_x64/
+build_macOS/
+!**/*build*.sh
 cmake_build
 install/
 version.txt
