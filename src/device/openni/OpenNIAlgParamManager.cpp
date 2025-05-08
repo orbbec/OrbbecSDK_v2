@@ -32,7 +32,7 @@ void OpenNIAlgParamManager::fetchParamFromDevice() {
             }
 
             if(pid == OB_DEVICE_MAX_PRO_PID || pid == OB_DEVICE_GEMINI_UW_PID) {
-                groupIndex = OB_RAW_DATA_DUAL_CAMERA_PARAMS_1;
+                groupIndex                   = OB_RAW_DATA_DUAL_CAMERA_PARAMS_2;
                 disparityParam_.minDisparity = 80.0f;
             }
 
@@ -42,7 +42,7 @@ void OpenNIAlgParamManager::fetchParamFromDevice() {
             uint32_t             size       = 0;
             auto                 propServer = owner->getPropertyServer();
             propServer->getRawData(
-                OB_RAW_DATA_DUAL_CAMERA_PARAMS_0,
+                groupIndex,
                 [&](OBDataTranState state, OBDataChunk *dataChunk) {
                     if(state == DATA_TRAN_STAT_TRANSFERRING) {
                         if(size == 0) {
@@ -53,7 +53,6 @@ void OpenNIAlgParamManager::fetchParamFromDevice() {
                     }
                 },
                 PROP_ACCESS_INTERNAL);
-
             if(size > 0) {
                 memcpy(&content, data.data(), size);
             }
