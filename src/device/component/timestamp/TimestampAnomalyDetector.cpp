@@ -12,7 +12,7 @@ void TimestampAnomalyDetector::setCurrentFps(uint32_t fps){
         maxValidTimestampDiff_ = 0;
     }
     else {
-        maxValidTimestampDiff_ = static_cast<uint32_t>((1000000 / fps) * 1.5); // 1/2 of the frame interval
+        maxValidTimestampDiff_ = static_cast<uint32_t>((1000000 / fps) * 2); // 2 frames tolerance
     }
 }
 
@@ -31,6 +31,7 @@ void TimestampAnomalyDetector::calculate(std::shared_ptr<Frame> frame) {
         return;
     }
 
+    // only consider the abnormal timestamp is larger than the last timestamp
     if(timestamp - cacheTimestamp_ > maxValidTimestampDiff_) {
         cacheTimestamp_ = timestamp;
         throw libobsensor::invalid_value_exception("Timestamp anomaly detected, timestamp: " + std::to_string(timestamp) +

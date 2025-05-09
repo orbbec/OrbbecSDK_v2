@@ -166,7 +166,17 @@ void SensorBase::updateStreamState(OBStreamState state) {
             }
 
             timestampAnomalyDetector_->clear();
-            timestampAnomalyDetector_->setCurrentFps(activatedStreamProfile_->as<VideoStreamProfile>()->getFps());
+            uint32_t fps = 0;
+            if(activatedStreamProfile_->is<VideoStreamProfile>()) {
+                fps = activatedStreamProfile_->as<VideoStreamProfile>()->getFps();
+            }
+            else if(activatedStreamProfile_->is<AccelStreamProfile>()) {
+                fps = static_cast<uint32_t>(utils::mapIMUSampleRateToValue(activatedStreamProfile_->as<AccelStreamProfile>()->getSampleRate()));
+            }
+            else if(activatedStreamProfile_->is<GyroStreamProfile>()) {
+                fps = static_cast<uint32_t>(utils::mapIMUSampleRateToValue(activatedStreamProfile_->as<GyroStreamProfile>()->getSampleRate()));
+            }
+            timestampAnomalyDetector_->setCurrentFps(fps);
         }
     }
     if(oldState != state) {
