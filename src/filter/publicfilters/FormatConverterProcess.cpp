@@ -31,7 +31,7 @@ void FormatConverter::updateConfig(std::vector<std::string> &params) {
 
 const std::string &FormatConverter::getConfigSchema() const {
     // csv format: name，type， min，max，step，default，description
-    static const std::string schema = "convertType, int, 0, 17, 1, 0, frame data converter type";
+    static const std::string schema = "convertType, int, 0, 19, 1, 0, frame data converter type";
     return schema;
 }
 
@@ -50,6 +50,7 @@ const std::map<OBConvertFormat, std::pair<OBFormat, OBFormat>> FORMAT_CONVERT_MA
     { FORMAT_MJPG_TO_NV12, { OB_FORMAT_MJPG, OB_FORMAT_NV12 } }, { FORMAT_YUYV_TO_BGR, { OB_FORMAT_YUYV, OB_FORMAT_BGR } },
     { FORMAT_YUYV_TO_RGBA, { OB_FORMAT_YUYV, OB_FORMAT_RGBA } }, { FORMAT_YUYV_TO_BGRA, { OB_FORMAT_YUYV, OB_FORMAT_BGRA } },
     { FORMAT_YUYV_TO_Y16, { OB_FORMAT_YUYV, OB_FORMAT_Y16 } },   { FORMAT_YUYV_TO_Y8, { OB_FORMAT_YUYV, OB_FORMAT_Y8 } },
+    { FORMAT_RGBA_TO_RGB, { OB_FORMAT_RGBA, OB_FORMAT_RGB } },   { FORMAT_BGRA_TO_BGR, { OB_FORMAT_BGRA, OB_FORMAT_BGR } },
 };
 
 void FormatConverter::setConversion(OBFormat srcFormat, OBFormat dstFormat) {
@@ -155,6 +156,12 @@ std::shared_ptr<Frame> FormatConverter::process(std::shared_ptr<const Frame> fra
         break;
     case FORMAT_MJPG_TO_NV12:
         mjpgToNv12((uint8_t *)frame->getData(), (uint32_t)frame->getDataSize(), (uint8_t *)tarFrame->getData(), w, h);
+        break;
+    case FORMAT_RGBA_TO_RGB:
+        rgbaToRgb((uint8_t *)frame->getData(), (uint32_t)frame->getDataSize(), (uint8_t *)tarFrame->getData(), w, h);
+        break;
+    case FORMAT_BGRA_TO_BGR:
+        bgraToBgr((uint8_t *)frame->getData(), (uint32_t)frame->getDataSize(), (uint8_t *)tarFrame->getData(), w, h);
         break;
     default:
         LOG_WARN_INTVL("Unsupported data format conversion.");
@@ -391,6 +398,36 @@ void FormatConverter::mjpegToBgra(uint8_t *src, uint32_t src_len, uint8_t *targe
         LOG_WARN_INTVL("Failed to decompress color frame");
     }
     tjDestroy(tjHandle);
+}
+
+void FormatConverter::rgbaToRgb(uint8_t *src, uint32_t src_len, uint8_t *target, uint32_t width, uint32_t height) {
+    if(src == nullptr || target == nullptr)
+        return;
+
+    uint32_t expected_rgba_len = width * height * 4;
+    if(src_len < expected_rgba_len)
+        return;
+
+    for(uint32_t i = 0; i < width * height; ++i) {
+        target[i * 3]     = src[i * 4];      // R
+        target[i * 3 + 1] = src[i * 4 + 1];  // G
+        target[i * 3 + 2] = src[i * 4 + 2];  // B
+    }
+}
+
+void FormatConverter::bgraToBgr(uint8_t *src, uint32_t src_len, uint8_t *target, uint32_t width, uint32_t height){
+    if(src == nullptr || target == nullptr)
+        return;
+
+    uint32_t expected_bgra_len = width * height * 4;
+    if(src_len < expected_bgra_len)
+        return;
+
+    for(uint32_t i = 0; i < width * height; ++i) {
+        target[i * 3]     = src[i * 4];      // B
+        target[i * 3 + 1] = src[i * 4 + 1];  // G
+        target[i * 3 + 2] = src[i * 4 + 2];  // R
+    }
 }
 
 }  // namespace libobsensor

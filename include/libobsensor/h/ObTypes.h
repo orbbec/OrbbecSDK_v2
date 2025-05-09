@@ -538,6 +538,8 @@ typedef enum {
     FORMAT_YUYV_TO_BGRA,    /**< YUYV to BGRA */
     FORMAT_YUYV_TO_Y16,     /**< YUYV to Y16 */
     FORMAT_YUYV_TO_Y8,      /**< YUYV to Y8 */
+    FORMAT_RGBA_TO_RGB,     /**< RGBA to RGB */
+    FORMAT_BGRA_TO_BGR,     /**< BGRA to BGR */
 } OBConvertFormat,
     ob_convert_format;
 

@@ -37,6 +37,8 @@ private:
     void exchangeRAndB(uint8_t *pucRgb, uint8_t *target, uint32_t width, uint32_t height, uint32_t pixelSize = 3);
     void mjpegToBgra(uint8_t *src, uint32_t src_len, uint8_t *target, uint32_t width, uint32_t height);
     void mjpgToNv12(uint8_t *src, uint32_t src_len, uint8_t *target, uint32_t width, uint32_t height);
+    void rgbaToRgb(uint8_t *src, uint32_t src_len, uint8_t *target, uint32_t width, uint32_t height);
+    void bgraToBgr(uint8_t *src, uint32_t src_len, uint8_t *target, uint32_t width, uint32_t height);
 
 protected:
     std::shared_ptr<const StreamProfile> currentStreamProfile_;

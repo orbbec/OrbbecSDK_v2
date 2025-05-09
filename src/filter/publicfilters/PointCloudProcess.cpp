@@ -240,7 +240,18 @@ std::shared_ptr<Frame> PointCloudFilter::createRGBDPointCloud(std::shared_ptr<co
         params.push_back("3");
         formatConverter_->updateConfig(params);
         break;
+    case OB_FORMAT_RGBA:
+        // FORMAT_RGBA_TO_RGB
+        params.push_back("18");
+        formatConverter_->updateConfig(params);
+        break;
+    case OB_FORMAT_BGRA:
+        // FORMAT_BGRA_TO_RGB
+        params.push_back("19");
+        formatConverter_->updateConfig(params);
+        break;
     case OB_FORMAT_RGB:
+    case OB_FORMAT_BGR:
         tarFrame = colorFrame;
         break;
     default:
@@ -248,7 +259,7 @@ std::shared_ptr<Frame> PointCloudFilter::createRGBDPointCloud(std::shared_ptr<co
     }
 
     uint8_t *colorData = nullptr;
-    if(colorFrame->getFormat() != OB_FORMAT_RGB) {
+    if(colorFrame->getFormat() != OB_FORMAT_RGB && colorFrame->getFormat() != OB_FORMAT_BGR) {
         tarFrame = formatConverter_->process(colorFrame);
     }
 
