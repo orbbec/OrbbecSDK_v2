@@ -172,6 +172,12 @@ void DabaiADevice::init() {
                 std::string name(currentWorkMode.name);
                 auto        algParamManager = getComponentT<DaBaiAAlgParamManager>(OB_DEV_COMPONENT_ALG_PARAM_MANAGER);
                 algParamManager->updateD2CProfileList(name);
+                // update preset version after switch depth algorithm mode
+                if(getFirmwareVersionInt() >= 10700) {
+                    // support custom presets upgrade
+                    // fetch preset version info via fetchExtensionInfo
+                    fetchExtensionInfo();
+                }
             }
         });
 }

@@ -1287,6 +1287,21 @@ void G330NetDevice::init() {
     auto depthWorkModeManager = std::make_shared<G330DepthWorkModeManager>(this);
     registerComponent(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER, depthWorkModeManager);
 
+    if(getFirmwareVersionInt() >= 10500) {
+        // support custom presets upgrade
+        auto propertyServer = getPropertyServer();
+        propertyServer->registerAccessCallback(
+            {
+                OB_STRUCT_CURRENT_DEPTH_ALG_MODE,
+            },
+            [&](uint32_t propertyId, const uint8_t *, size_t, PropertyOperationType operationType) {
+                if(operationType == PROP_OP_WRITE && propertyId == OB_STRUCT_CURRENT_DEPTH_ALG_MODE) {
+                    // fetch preset version info via fetchExtensionInfo
+                    fetchExtensionInfo();
+                }
+            });
+    }
+
     auto presetManager = std::make_shared<G330PresetManager>(this);
     registerComponent(OB_DEV_COMPONENT_PRESET_MANAGER, presetManager);
 
