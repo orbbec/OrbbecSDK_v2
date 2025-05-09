@@ -22,6 +22,8 @@
 #include "property/CommonPropertyAccessors.hpp"
 #include "property/FilterPropertyAccessors.hpp"
 #include "property/PrivateFilterPropertyAccessors.hpp"
+#include "firmwareupdater/FirmwareUpdater.hpp"
+#include "firmwareupdater/firmwareupdateguard/FirmwareUpdateGuards.hpp"
 #include <algorithm>
 
 
@@ -46,6 +48,12 @@ void OpenNIDeviceBase::init() {
 
     auto algParamManager = std::make_shared<OpenNIAlgParamManager>(this);
     registerComponent(OB_DEV_COMPONENT_ALG_PARAM_MANAGER, algParamManager);
+
+    registerComponent(OB_DEV_COMPONENT_FIRMWARE_UPDATER, [this]() {
+        std::shared_ptr<FirmwareUpdater> firmwareUpdater;
+        TRY_EXECUTE({ firmwareUpdater = std::make_shared<FirmwareUpdater>(this); })
+        return firmwareUpdater;
+    });
 }
 
 void OpenNIDeviceBase::initSensorList() {
