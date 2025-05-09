@@ -262,6 +262,8 @@ void G330NetPTPClockSyncPropertyAccessor::setPropertyValue(uint32_t propertyId, 
             processor->setPropertyValue(propertyId, value);
         }
         else {
+            auto deviceClockSync = owner_->getComponentT<IDeviceClockSynchronizer>(OB_DEV_COMPONENT_DEVICE_CLOCK_SYNCHRONIZER);
+            deviceClockSync->timerSyncWithHost();
             auto processor = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
             processor->setPropertyValue(propertyId, value);
         }
