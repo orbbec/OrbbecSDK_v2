@@ -39,6 +39,8 @@ private:
     void mjpgToNv12(uint8_t *src, uint32_t src_len, uint8_t *target, uint32_t width, uint32_t height);
     void rgbaToRgb(uint8_t *src, uint32_t src_len, uint8_t *target, uint32_t width, uint32_t height);
     void bgraToBgr(uint8_t *src, uint32_t src_len, uint8_t *target, uint32_t width, uint32_t height);
+    void y16ToRgb(uint8_t *src, uint32_t src_len, uint8_t *target, uint32_t width, uint32_t height);
+    void y8ToRgb(uint8_t *src, uint32_t src_len, uint8_t *target, uint32_t width, uint32_t height);
 
 protected:
     std::shared_ptr<const StreamProfile> currentStreamProfile_;

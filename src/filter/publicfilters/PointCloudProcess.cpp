@@ -250,6 +250,16 @@ std::shared_ptr<Frame> PointCloudFilter::createRGBDPointCloud(std::shared_ptr<co
         params.push_back("19");
         formatConverter_->updateConfig(params);
         break;
+    case OB_FORMAT_Y16:
+        // FORMAT_Y16_TO_RGB
+        params.push_back("20");
+        formatConverter_->updateConfig(params);
+        break;
+    case OB_FORMAT_Y8:
+        // FORMAT_Y8_TO_RGB
+        params.push_back("21");
+        formatConverter_->updateConfig(params);
+        break;
     case OB_FORMAT_RGB:
     case OB_FORMAT_BGR:
         tarFrame = colorFrame;
