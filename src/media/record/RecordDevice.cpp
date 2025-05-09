@@ -97,7 +97,6 @@ void RecordDevice::writeAllProperties() {
         // depth sensor property
         writePropertyT<bool>(OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL);
         writePropertyT<int>(OB_PROP_DEPTH_AUTO_EXPOSURE_PRIORITY_INT);
-        writePropertyT<bool>(OB_PROP_DEPTH_ALIGN_HARDWARE_BOOL);
 
         // depth & color struct property
         auto server         = device_->getPropertyServer();
@@ -126,6 +125,7 @@ void RecordDevice::writeAllProperties() {
     writePropertyT<bool>(OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL);
     writePropertyT<int>(OB_PROP_DEPTH_EXPOSURE_INT);
     writePropertyT<int>(OB_PROP_DEPTH_GAIN_INT);
+    writePropertyT<bool>(OB_PROP_DEPTH_ALIGN_HARDWARE_BOOL);
 
     // color property
     writePropertyT<bool>(OB_PROP_COLOR_AUTO_EXPOSURE_BOOL);
