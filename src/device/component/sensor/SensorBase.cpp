@@ -20,7 +20,8 @@ SensorBase::SensorBase(IDevice *owner, OBSensorType sensorType, const std::share
       maxRecoveryCount_(DefaultMaxRecoveryCount),
       recoveryCount_(0),
       noStreamTimeoutMs_(DefaultNoStreamTimeoutMs),
-      streamInterruptTimeoutMs_(DefaultStreamInterruptTimeoutMs) {
+      streamInterruptTimeoutMs_(DefaultStreamInterruptTimeoutMs),
+      timestampAnomalyDetector_(std::make_shared<TimestampAnomalyDetector>(owner)) {
         startStreamRecovery();
       }
 
@@ -152,7 +153,7 @@ void SensorBase::updateStreamState(OBStreamState state) {
     }
 
     streamState_.store(state);
-    if(oldState != state && !streamStateChangedCallbacks_.empty()) {
+    if(oldState != state) {
         for(auto &callback: streamStateChangedCallbacks_) {
             callback.second(state, activatedStreamProfile_);  // call the callback function
         }
@@ -163,6 +164,9 @@ void SensorBase::updateStreamState(OBStreamState state) {
             if(globalTimestampCalculator_) {
                 globalTimestampCalculator_->clear();
             }
+
+            timestampAnomalyDetector_->clear();
+            timestampAnomalyDetector_->setCurrentFps(activatedStreamProfile_->as<VideoStreamProfile>()->getFps());
         }
     }
     if(oldState != state) {
@@ -315,6 +319,13 @@ void SensorBase::outputFrame(std::shared_ptr<Frame> frame) {
     if(globalTimestampCalculator_) {
         TRY_EXECUTE(globalTimestampCalculator_->calculate(frame));
     }
+
+    BEGIN_TRY_EXECUTE({
+        timestampAnomalyDetector_->calculate(frame);
+    })CATCH_EXCEPTION_AND_EXECUTE({
+        LOG_ERROR("Timestamp anomaly detected, frame: {}, sensor: {}", frame->getTimeStampUsec(), utils::obSensorToStr(sensorType_));
+        return;
+    });
 
     if (frameRecordingCallback_) {
         frameRecordingCallback_(frame);

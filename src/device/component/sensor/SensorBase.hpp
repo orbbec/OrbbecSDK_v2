@@ -8,6 +8,7 @@
 #include "ISourcePort.hpp"
 #include "IFrameTimestamp.hpp"
 #include "frameprocessor/FrameProcessor.hpp"
+#include "timestamp/TimestampAnomalyDetector.hpp"
 
 #include <map>
 #include <mutex>
@@ -95,6 +96,7 @@ protected:
     std::shared_ptr<IFrameTimestampCalculator>     frameTimestampCalculator_;
     std::shared_ptr<IFrameTimestampCalculator>     globalTimestampCalculator_;
     std::shared_ptr<FrameProcessor>                frameProcessor_;
+    std::shared_ptr<TimestampAnomalyDetector>      timestampAnomalyDetector_;
 };
 
 }  // namespace libobsensor
