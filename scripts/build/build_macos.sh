@@ -11,7 +11,7 @@ cd $SCRIPT_DIR/../../
 PROJECT_ROOT=$(pwd)
 
 # current os
-SYSTEM=$(uname -o)
+SYSTEM=$(uname -s)
 if [ "${SYSTEM}" != "Darwin" ]; then
     echo "Invalid os. The current os should be macOS"
     exit 1
