@@ -7,7 +7,11 @@
 #include "PlaybackDevicePort.hpp"
 #include "IDeviceComponent.hpp"
 #include "logger/Logger.hpp"
+#include "DevicePids.hpp"
 
+#include "component/property/CommonPropertyAccessors.hpp"
+#include "gemini2/G2PropertyAccessors.hpp"
+#include "astra2/Astra2PropertyAccessors.hpp"
 namespace libobsensor {
 
 #pragma pack(1)
@@ -118,8 +122,7 @@ const std::vector<uint8_t> &PlaybackVendorPropertyAccessor::getStructureData(uin
     return data_;
 }
 
-PlaybackFilterPropertyAccessor::PlaybackFilterPropertyAccessor(const std::shared_ptr<ISourcePort> &backend, IDevice *owner)
-    : port_(backend), owner_(owner)  {}
+PlaybackFilterPropertyAccessor::PlaybackFilterPropertyAccessor(const std::shared_ptr<ISourcePort> &backend, IDevice *owner) : port_(backend), owner_(owner) {}
 
 void PlaybackFilterPropertyAccessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
     switch(propertyId) {
@@ -169,6 +172,68 @@ void PlaybackFilterPropertyAccessor::getPropertyRange(uint32_t propertyId, OBPro
     default: {
         LOG_WARN("unsupported get property value for playback device, propertyId: {}", propertyId);
     } break;
+    }
+}
+
+// PlaybackFrameTransformPropertyAccessor
+PlaybackFrameTransformPropertyAccessor::PlaybackFrameTransformPropertyAccessor(const std::shared_ptr<ISourcePort> &backend, IDevice *owner)
+    : port_(backend), owner_(owner) {
+    auto pid = owner_->getInfo()->pid_;
+    if(std::find(G330DevPids.begin(), G330DevPids.end(), pid) != G330DevPids.end()
+       || std::find(DaBaiADevPids.begin(), DaBaiADevPids.end(), pid) != DaBaiADevPids.end() || pid == 0x0815) {
+        accessor_ = std::make_shared<StereoFrameTransformPropertyAccessor>(owner_); // Gemini330, Gemini435Led, DaBaiA
+    }
+    else if(pid == 0x0808 || pid == 0x0809) {
+        accessor_ = std::make_shared<G210FrameTransformPropertyAccessor>(owner_);  // Gemini210
+    }
+    else if(pid == 0x0670 || pid == 0x0673) {
+        accessor_ = std::make_shared<G2FrameTransformPropertyAccessor>(owner_);  // Gemini2
+    }
+    else if(std::find(Astra2DevPids.begin(), Astra2DevPids.end(), pid) != Astra2DevPids.end()) {
+        accessor_ = std::make_shared<Astra2FrameTransformPropertyAccessor>(owner_); // Astar2
+    }
+    else if(std::find(FemtoBoltDevPids.begin(), FemtoBoltDevPids.end(), pid) != FemtoBoltDevPids.end()
+            || std::find(FemtoMegaDevPids.begin(), FemtoMegaDevPids.end(), pid) != FemtoMegaDevPids.end()) {
+        accessor_ = std::make_shared<MonocularFrameTransformPropertyAccessor>(owner_); // Femto
+    }
+    else {
+        LOG_ERROR("Unsupport PlaybackFrameTransformPropertyAccessor, pid: {}", pid);
+    }
+}
+
+void PlaybackFrameTransformPropertyAccessor::initFrameTransformProperty() {
+    if(!accessor_) {
+        return;
+    }
+
+    auto                  playPort_ = std::dynamic_pointer_cast<PlaybackDevicePort>(port_);
+    std::vector<uint32_t> list      = { OB_PROP_COLOR_MIRROR_BOOL, OB_PROP_COLOR_FLIP_BOOL,    OB_PROP_COLOR_ROTATE_INT,     OB_PROP_DEPTH_FLIP_BOOL,
+                                        OB_PROP_DEPTH_MIRROR_BOOL, OB_PROP_DEPTH_ROTATE_INT,   OB_PROP_IR_FLIP_BOOL,         OB_PROP_IR_MIRROR_BOOL,
+                                        OB_PROP_IR_ROTATE_INT,     OB_PROP_IR_RIGHT_FLIP_BOOL, OB_PROP_IR_RIGHT_MIRROR_BOOL, OB_PROP_IR_RIGHT_ROTATE_INT };
+
+    for(auto propertyId: list) {
+        OBPropertyValue value;
+        if(playPort_->getRecordedPropertyValue(propertyId, &value)) {
+            accessor_->setPropertyValue(propertyId, value);
+        }
+    }
+}
+
+void PlaybackFrameTransformPropertyAccessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
+    if(accessor_) {
+        accessor_->setPropertyValue(propertyId, value);
+    }
+}
+
+void PlaybackFrameTransformPropertyAccessor::getPropertyValue(uint32_t propertyId, OBPropertyValue *value) {
+    if(accessor_) {
+        accessor_->getPropertyValue(propertyId, value);
+    }
+}
+
+void PlaybackFrameTransformPropertyAccessor::getPropertyRange(uint32_t propertyId, OBPropertyRange *range) {
+    if(accessor_) {
+        accessor_->getPropertyRange(propertyId, range);
     }
 }
 

@@ -5,6 +5,7 @@
 
 #include "DeviceBase.hpp"
 #include "PlaybackDevicePort.hpp"
+#include "PlaybackPropertyAccessor.hpp"
 #include "component/property/PropertyServer.hpp"
 
 #include <string>
@@ -29,6 +30,8 @@ public:
     void             setPlaybackStatusCallback(const PlaybackStatusCallback callback);
     OBPlaybackStatus getCurrentPlaybackStatus() const;
 
+    void fetchProperties();
+
 public:
     virtual void              fetchDeviceInfo() override;
     virtual void              fetchExtensionInfo() override;
@@ -50,6 +53,8 @@ private:
     const std::string                   filePath_;
     std::shared_ptr<PlaybackDevicePort> port_;
     std::vector<OBSensorType>           sensorTypeList_;
+
+    std::shared_ptr<PlaybackFrameTransformPropertyAccessor> frameTransformAccessor_;
 
     const uint32_t G330DeviceTimeFreq_ = 1000;     // in ms
     const uint32_t G330FrameTimeFreq_  = 1000000;  // in us

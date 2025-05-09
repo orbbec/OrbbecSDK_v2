@@ -964,7 +964,7 @@ void G330Device::initProperties() {
     propertyServer->registerProperty(OB_PROP_DEPTH_MAX_DIFF_INT, "rw", "rw", privatePropertyAccessor);
     propertyServer->registerProperty(OB_PROP_DEPTH_MAX_SPECKLE_SIZE_INT, "rw", "rw", privatePropertyAccessor);
 
-    auto frameTransformPropertyAccessor = std::make_shared<G330FrameTransformPropertyAccessor>(this);
+    auto frameTransformPropertyAccessor = std::make_shared<StereoFrameTransformPropertyAccessor>(this);
     propertyServer->registerProperty(OB_PROP_DEPTH_MIRROR_BOOL, "rw", "rw", frameTransformPropertyAccessor); // depth
     propertyServer->registerProperty(OB_PROP_DEPTH_FLIP_BOOL, "rw", "rw", frameTransformPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_DEPTH_ROTATE_INT, "rw", "rw", frameTransformPropertyAccessor);
@@ -1786,7 +1786,7 @@ void G330NetDevice::initProperties() {
     propertyServer->registerProperty(OB_PROP_DEPTH_MAX_DIFF_INT, "rw", "rw", privatePropertyAccessor);
     propertyServer->registerProperty(OB_PROP_DEPTH_MAX_SPECKLE_SIZE_INT, "rw", "rw", privatePropertyAccessor);
 
-    auto frameTransformPropertyAccessor = std::make_shared<G330FrameTransformPropertyAccessor>(this);
+    auto frameTransformPropertyAccessor = std::make_shared<StereoFrameTransformPropertyAccessor>(this);
     propertyServer->registerProperty(OB_PROP_DEPTH_MIRROR_BOOL, "rw", "rw", frameTransformPropertyAccessor); // depth
     propertyServer->registerProperty(OB_PROP_DEPTH_FLIP_BOOL, "rw", "rw", frameTransformPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_DEPTH_ROTATE_INT, "rw", "rw", frameTransformPropertyAccessor);

@@ -18,13 +18,12 @@
 #include <bitset>
 
 namespace std {
-template<>
-struct hash<ob_playback_status> {
-    size_t operator()(const ob_playback_status& s) const noexcept {
+template <> struct hash<ob_playback_status> {
+    size_t operator()(const ob_playback_status &s) const noexcept {
         return static_cast<size_t>(s);
     }
 };
-}
+}  // namespace std
 
 namespace libobsensor {
 
@@ -76,26 +75,25 @@ public:
         return static_cast<uint64_t>(us);
     }
 
-    void getRecordedPropertyValue(uint32_t propertyId, OBPropertyValue *value);
-    void getRecordedPropertyRange(uint32_t propertyId, OBPropertyRange *range);
+    bool                 getRecordedPropertyValue(uint32_t propertyId, OBPropertyValue *value);
+    bool                 getRecordedPropertyRange(uint32_t propertyId, OBPropertyRange *range);
     std::vector<uint8_t> getRecordedStructData(uint32_t propertyId);
 
 private:
-
     void     playbackLoop();
     uint64_t calculateSleepTime(uint64_t timestamp);
 
-    void     startAsyncThread();
-    void     stopAsyncThread();
+    void startAsyncThread();
+    void stopAsyncThread();
 
     std::shared_ptr<FrameQueue<Frame>> &getFrameQueue(OBSensorType sensorType);
 
 private:
     std::map<OBSensorType, std::shared_ptr<FrameQueue<Frame>>> frameQueues_;
-    std::bitset<OB_SENSOR_TYPE_COUNT - 1>                      activeSensors_;  // exclude OB_SENSOR_UNKNOWN
+    std::bitset<OB_SENSOR_TYPE_COUNT>                          activeSensors_;
 
-    StreamProfileList          streamProfileList_;
-    std::shared_ptr<IReader>   reader_;
+    StreamProfileList        streamProfileList_;
+    std::shared_ptr<IReader> reader_;
 
     bool                    needUpdateBaseTime_;
     bool                    isLooping_;
@@ -114,7 +112,8 @@ private:
     float    rate_;
 
     const uint32_t maxFrameQueueSize_ = 10;
-    const uint32_t playbackTimeFreq_  = 1000000;  // for converting ns to ms
-    const uint32_t rangeOffset_       = UINT16_MAX;
+    const uint32_t playbackTimeFreq_  = 1000000;     // for converting ns to ms
+    const uint32_t rangeOffset_       = UINT16_MAX;  // used to get property range from recording file
+    const uint32_t versionPropertyId_ = 0;           // used to get version number of recording file
 };
 }  // namespace libobsensor

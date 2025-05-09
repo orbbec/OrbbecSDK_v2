@@ -317,7 +317,7 @@ void FemtoBoltDevice::initProperties() {
     auto tempPropertyAccessor = std::make_shared<FemtoBoltTempPropertyAccessor>(this);
     propertyServer->registerProperty(OB_STRUCT_DEVICE_TEMPERATURE, "r", "r", tempPropertyAccessor);
 
-    auto frameTransformPropertyAccessor = std::make_shared<FemtoBoltFrameTransformPropertyAccessor>(this);
+    auto frameTransformPropertyAccessor = std::make_shared<MonocularFrameTransformPropertyAccessor>(this);
     propertyServer->registerProperty(OB_PROP_DEPTH_MIRROR_BOOL, "rw", "rw", frameTransformPropertyAccessor);  // depth
     propertyServer->registerProperty(OB_PROP_DEPTH_FLIP_BOOL, "rw", "rw", frameTransformPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_DEPTH_ROTATE_INT, "rw", "rw", frameTransformPropertyAccessor);

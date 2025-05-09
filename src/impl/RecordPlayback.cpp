@@ -47,6 +47,7 @@ ob_device *ob_create_playback_device(const char *file_path, ob_error **error) BE
     VALIDATE_NOT_NULL(file_path);
     auto device = std::make_shared<libobsensor::PlaybackDevice>(file_path);
     device->activateDeviceAccessor();
+    device->fetchProperties();
 
     auto impl    = new ob_device();
     impl->device = device;

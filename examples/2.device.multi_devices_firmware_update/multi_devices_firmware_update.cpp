@@ -110,7 +110,11 @@ int main(int argc, char *argv[]) try {
         std::cout << "  - Name: " << device->getDeviceInfo()->getName() << std::endl;
     }
 
-    std::cout << "\nUpgrade process completed. Please reboot devices manually." << std::endl;
+    std::cout << "\nUpgrade process completed. Try to reboot all successfully upgraded devices." << std::endl;
+    for (auto &device : successDevices) {
+        device->reboot();
+    }
+
     std::cout << "Press any key to exit..." << std::endl;
     ob_smpl::waitForKeyPressed();
     return 0;

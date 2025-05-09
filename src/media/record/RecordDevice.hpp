@@ -27,46 +27,52 @@ public:
     void resume();
 
 private:
-    template<typename T>
-    void writePropertyT(uint32_t id) {
+    template <typename T> void writePropertyT(uint32_t id) {
         auto server = device_->getPropertyServer();
-        if (!server->isPropertySupported(id, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
+        if(!server->isPropertySupported(id, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
             LOG_DEBUG("Property {} is not supported by device, skipping recording value", id);
             return;
         }
 
         try {
-            T value = server->getPropertyValueT<T>(id);
+            T                    value = server->getPropertyValueT<T>(id);
             std::vector<uint8_t> data(sizeof(T));
             data.assign(reinterpret_cast<uint8_t *>(&value), reinterpret_cast<uint8_t *>(&value) + sizeof(T));
             writer_->writeProperty(id, data.data(), static_cast<uint32_t>(data.size()));
             writeProperyRangeT<T>(id);
         }
-        catch (const std::exception& e) {
+        catch(const std::exception &e) {
             LOG_WARN("Failed to record property: {}, message: {}", id, e.what());
         }
     }
 
-    template<typename T>
-    void writeProperyRangeT(uint32_t id) {
+    template <typename T> void writeProperyRangeT(uint32_t id) {
         auto server = device_->getPropertyServer();
-        if (!server->isPropertySupported(id, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
+        if(!server->isPropertySupported(id, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
             LOG_DEBUG("Property {} is not supported by device, skipping recording range", id);
             return;
         }
 
         try {
-            auto range = server->getPropertyRangeT<T>(id);
+            auto                 range = server->getPropertyRangeT<T>(id);
             std::vector<uint8_t> data(sizeof(range));
             data.assign(reinterpret_cast<uint8_t *>(&range), reinterpret_cast<uint8_t *>(&range) + sizeof(range));
             writer_->writeProperty(id + rangeOffset_, data.data(), static_cast<uint32_t>(data.size()));
         }
-        catch (const std::exception& e) {
+        catch(const std::exception &e) {
             LOG_WARN("Failed to record property range: {}, message: {}", id, e.what());
         }
     }
 
+    void writeVersionProperty();
+    void writeFilterProperty();
+    void writeFrameGeometryProperty();
+    void writeV4l2MetadataProperty();
+    void writeExposureAndGainProperty();
+    void writeCalibrationParamProperty();
+    void writeDepthWorkModeProperty();
     void writeAllProperties();
+
     void onFrameRecordingCallback(std::shared_ptr<const Frame>);
 
     void initializeSensorOnce(OBSensorType sensorType);
@@ -74,19 +80,20 @@ private:
 
     void stopRecord();
 private:
-    std::shared_ptr<IDevice>   device_;
-    std::string                filePath_;
-    bool                       isCompressionsEnabled_;
-    size_t                     maxFrameQueueSize_;
-    std::atomic<bool>          isPaused_;
-    std::shared_ptr<IWriter>   writer_;
-    std::mutex                 frameCallbackMutex_;
-    std::mutex                 frameQueueInitMutex_;
+    std::shared_ptr<IDevice> device_;
+    std::string              filePath_;
+    bool                     isCompressionsEnabled_;
+    size_t                   maxFrameQueueSize_;
+    std::atomic<bool>        isPaused_;
+    std::shared_ptr<IWriter> writer_;
+    std::mutex               frameCallbackMutex_;
+    std::mutex               frameQueueInitMutex_;
 
     std::map<OBSensorType, std::shared_ptr<FrameQueue<const Frame>>> frameQueueMap_;
     std::map<OBSensorType, std::unique_ptr<std::once_flag>>          sensorOnceFlags_;
 
-    const uint32_t rangeOffset_ = UINT16_MAX; // used to record property range
+    const uint32_t rangeOffset_       = UINT16_MAX;  // used to record property range
+    const uint32_t versionPropertyId_ = 0;           // used to record version of recording file
 };
 }  // namespace libobsensor
 

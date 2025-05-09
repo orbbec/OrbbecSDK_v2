@@ -648,7 +648,7 @@ void G435LeDevice::initProperties() {
     propertyServer->registerProperty(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_SPECKLE_SIZE_INT, "rw", "rw", privatePropertyAccessor);
     registerComponent(OB_DEV_COMPONENT_PROPERTY_SERVER, propertyServer, true);
 
-    auto frameTransformPropertyAccessor = std::make_shared<G435LeFrameTransformPropertyAccessor>(this);
+    auto frameTransformPropertyAccessor = std::make_shared<StereoFrameTransformPropertyAccessor>(this);
     propertyServer->registerProperty(OB_PROP_DEPTH_MIRROR_BOOL, "rw", "rw", frameTransformPropertyAccessor); // depth
     propertyServer->registerProperty(OB_PROP_DEPTH_FLIP_BOOL, "rw", "rw", frameTransformPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_DEPTH_ROTATE_INT, "rw", "rw", frameTransformPropertyAccessor);

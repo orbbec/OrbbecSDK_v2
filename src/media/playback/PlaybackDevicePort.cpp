@@ -4,6 +4,8 @@
 #include "PlaybackDevicePort.hpp"
 #include "stream/StreamProfile.hpp"
 #include "utils/PublicTypeHelper.hpp"
+#include "utils/MediaUtils.hpp"
+#include "exception/ObException.hpp"
 #include "component/property/PropertyHelper.hpp"
 
 namespace libobsensor {
@@ -14,12 +16,29 @@ PlaybackDevicePort::PlaybackDevicePort(const std::string &filePath)
     : reader_(std::make_shared<RosReader>(filePath)),
       needUpdateBaseTime_(true),
       isLooping_(true),
-      playbackThread_(&PlaybackDevicePort::playbackLoop, this),
       playbackStatus_(OB_PLAYBACK_STOPPED),
       duration_(0),
       baseFrameTimestamp_(0),
       baseSystemTimestamp_(0),
       rate_(1.0) {
+
+    // check bag file version is valid
+    {
+        double version = 1.0;
+        auto data = reader_->getPropertyData(versionPropertyId_);
+        if (!data.empty()) {
+            version = *reinterpret_cast<double*>(data.data());
+        }
+
+        if (utils::validateBagFileVersion(version)) {
+            LOG_DEBUG("Bag file version: {}", version);
+        }
+        else {
+            // todo: print the sdk version and the bag file version
+            throw unsupported_operation_exception(utils::createUnsupportedBagFileVersionMessage(version));
+        }
+    }
+
     duration_ = std::chrono::duration_cast<std::chrono::nanoseconds>(reader_->getDuration()).count() / playbackTimeFreq_;
 
     // Note:
@@ -34,6 +53,8 @@ PlaybackDevicePort::PlaybackDevicePort(const std::string &filePath)
             playbackCv_.notify_all();
         },
         true);
+
+    playbackThread_ = std::thread(&PlaybackDevicePort::playbackLoop, this);
 }
 
 PlaybackDevicePort::~PlaybackDevicePort() {
@@ -234,17 +255,17 @@ void PlaybackDevicePort::updateFrameBaseTimestamp(uint64_t frameTimestamp, uint6
     LOG_DEBUG("update basetime, systime:{}, frametime:{}", baseSystemTimestamp_, baseFrameTimestamp_);
 }
 
-void PlaybackDevicePort::getRecordedPropertyValue(uint32_t propertyId, OBPropertyValue *value) {
+bool PlaybackDevicePort::getRecordedPropertyValue(uint32_t propertyId, OBPropertyValue *value) {
     if(!value) {
         LOG_ERROR("Output value pointer is null for property {}", propertyId);
-        return;
+        return false;
     }
 
     memset(value, 0, sizeof(OBPropertyValue));
     auto it = OBPropertyBaseInfoMap.find(propertyId);
     if (it == OBPropertyBaseInfoMap.end()) {
         LOG_WARN("Unsupported property id for current playback device: {}", propertyId);
-        return;
+        return false;
     }
 
     std::vector<uint8_t> data    = reader_->getPropertyData(propertyId);
@@ -257,12 +278,13 @@ void PlaybackDevicePort::getRecordedPropertyValue(uint32_t propertyId, OBPropert
     else if(proType == OB_FLOAT_PROPERTY) {
         memcpy(&value->floatValue, data.data(), data.size());
     }
+    return true;
 }
 
-void PlaybackDevicePort::getRecordedPropertyRange(uint32_t propertyId, OBPropertyRange *range) {
+bool PlaybackDevicePort::getRecordedPropertyRange(uint32_t propertyId, OBPropertyRange *range) {
     if(!range) {
         LOG_ERROR("Output range pointer is null for property {}", propertyId);
-        return;
+        return false;
     }
 
     memset(range, 0, sizeof(OBPropertyRange));
@@ -270,10 +292,11 @@ void PlaybackDevicePort::getRecordedPropertyRange(uint32_t propertyId, OBPropert
     std::vector<uint8_t> data = reader_->getPropertyData(propertyId + rangeOffset_);
     if (data.size() != sizeof(OBPropertyRange)) {
         LOG_WARN("Failed to get recorded property range for property id: {}, excepted size: {}, actual size: {}", propertyId, sizeof(OBPropertyRange), data.size());
-        return;
+        return false;
     }
 
     memcpy(range, data.data(), data.size());
+    return true;
 }
 
 std::vector<uint8_t> PlaybackDevicePort::getRecordedStructData(uint32_t propertyId) {

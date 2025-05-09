@@ -7,6 +7,7 @@
 #include "DeviceBase.hpp"
 #include "IAlgParamManager.hpp"
 #include "property/InternalProperty.hpp"
+#include "utils/MediaUtils.hpp"
 
 namespace libobsensor {
 
@@ -78,6 +79,59 @@ void RecordDevice::initializeFrameQueueOnce(OBSensorType sensorType, std::shared
 }
 
 void RecordDevice::writeAllProperties() {
+    writeVersionProperty();
+    writeFilterProperty();
+    writeFrameGeometryProperty();
+    writeV4l2MetadataProperty();
+    writeExposureAndGainProperty();
+    writeCalibrationParamProperty();
+    writeDepthWorkModeProperty();
+}
+
+void RecordDevice::stopRecord() {
+    writer_->writeDeviceInfo(std::dynamic_pointer_cast<DeviceBase>(device_)->getInfo());
+    writer_->writeStreamProfiles();
+}
+
+void RecordDevice::writeVersionProperty() {
+    double               version = utils::getBagFileVersion();
+    std::vector<uint8_t> data(sizeof(version));
+    data.assign(reinterpret_cast<uint8_t *>(&version), reinterpret_cast<uint8_t *>(&version) + sizeof(version));
+    writer_->writeProperty(versionPropertyId_, data.data(), static_cast<uint32_t>(data.size()));
+}
+
+void RecordDevice::writeFilterProperty() {
+    if(std::find(FemtoBoltDevPids.begin(), FemtoBoltDevPids.end(), device_->getInfo()->pid_) == FemtoBoltDevPids.end()
+       && std::find(FemtoMegaDevPids.begin(), FemtoMegaDevPids.end(), device_->getInfo()->pid_) == FemtoMegaDevPids.end()) {
+        // filter property
+        writePropertyT<bool>(OB_PROP_DISPARITY_TO_DEPTH_BOOL);
+        writePropertyT<bool>(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL);
+        writePropertyT<bool>(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL);
+        writePropertyT<int>(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_SPECKLE_SIZE_INT);
+        writePropertyT<int>(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT);
+    }
+    writePropertyT<bool>(OB_PROP_DEPTH_ALIGN_HARDWARE_BOOL);
+}
+
+void RecordDevice::writeFrameGeometryProperty() {
+    writePropertyT<bool>(OB_PROP_COLOR_FLIP_BOOL);
+    writePropertyT<bool>(OB_PROP_COLOR_MIRROR_BOOL);
+    writePropertyT<int>(OB_PROP_COLOR_ROTATE_INT);
+
+    writePropertyT<bool>(OB_PROP_DEPTH_FLIP_BOOL);
+    writePropertyT<bool>(OB_PROP_DEPTH_MIRROR_BOOL);
+    writePropertyT<int>(OB_PROP_DEPTH_ROTATE_INT);
+
+    writePropertyT<bool>(OB_PROP_IR_FLIP_BOOL);
+    writePropertyT<bool>(OB_PROP_IR_MIRROR_BOOL);
+    writePropertyT<int>(OB_PROP_IR_ROTATE_INT);
+
+    writePropertyT<bool>(OB_PROP_IR_RIGHT_FLIP_BOOL);
+    writePropertyT<bool>(OB_PROP_IR_RIGHT_MIRROR_BOOL);
+    writePropertyT<int>(OB_PROP_IR_RIGHT_ROTATE_INT);
+}
+
+void RecordDevice::writeV4l2MetadataProperty() {
     if(device_->getInfo()->backendType_ == OB_UVC_BACKEND_TYPE_V4L2
        && std::find(G330DevPids.begin(), G330DevPids.end(), device_->getInfo()->pid_) != G330DevPids.end()) {
         // color sensor property
@@ -110,22 +164,13 @@ void RecordDevice::writeAllProperties() {
         writer_->writeProperty(OB_STRUCT_DEPTH_HDR_CONFIG, depthHdrConfig.data(), static_cast<uint32_t>(depthHdrConfig.size()));
         writer_->writeProperty(OB_STRUCT_DEVICE_TIME, deviceTime.data(), static_cast<uint32_t>(deviceTime.size()));
     }
+}
 
-    if(std::find(FemtoBoltDevPids.begin(), FemtoBoltDevPids.end(), device_->getInfo()->pid_) == FemtoBoltDevPids.end()
-       && std::find(FemtoMegaDevPids.begin(), FemtoMegaDevPids.end(), device_->getInfo()->pid_) == FemtoMegaDevPids.end()) {
-        // filter property
-        writePropertyT<bool>(OB_PROP_DISPARITY_TO_DEPTH_BOOL);
-        writePropertyT<bool>(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL);
-        writePropertyT<bool>(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL);
-        writePropertyT<int>(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_SPECKLE_SIZE_INT);
-        writePropertyT<int>(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT);
-    }
-
+void RecordDevice::writeExposureAndGainProperty() {
     // depth property
     writePropertyT<bool>(OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL);
     writePropertyT<int>(OB_PROP_DEPTH_EXPOSURE_INT);
     writePropertyT<int>(OB_PROP_DEPTH_GAIN_INT);
-    writePropertyT<bool>(OB_PROP_DEPTH_ALIGN_HARDWARE_BOOL);
 
     // color property
     writePropertyT<bool>(OB_PROP_COLOR_AUTO_EXPOSURE_BOOL);
@@ -149,7 +194,9 @@ void RecordDevice::writeAllProperties() {
     writePropertyT<int>(OB_PROP_IR_BRIGHTNESS_INT);
     writePropertyT<int>(OB_PROP_IR_EXPOSURE_INT);
     writePropertyT<int>(OB_PROP_IR_GAIN_INT);
+}
 
+void RecordDevice::writeCalibrationParamProperty() {
     // d2c profile list
     auto algParamManager = device_->getComponentT<IAlgParamManager>(OB_DEV_COMPONENT_ALG_PARAM_MANAGER, false);
     if(algParamManager) {
@@ -165,18 +212,15 @@ void RecordDevice::writeAllProperties() {
         auto imuCalibrationParam = algParamManager->getIMUCalibrationParam();
         writer_->writeProperty(OB_RAW_DATA_IMU_CALIB_PARAM, reinterpret_cast<uint8_t *>(&imuCalibrationParam), sizeof(OBIMUCalibrateParams));
     }
+}
 
+void RecordDevice::writeDepthWorkModeProperty() {
     // depth work mode
     auto propertyServer = device_->getComponentT<IPropertyServer>(OB_DEV_COMPONENT_PROPERTY_SERVER, false);
     if(propertyServer && propertyServer->isPropertySupported(OB_STRUCT_CURRENT_DEPTH_ALG_MODE, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
         auto depthMode = propertyServer->getStructureDataProtoV1_1_T<OBDepthWorkMode_Internal, 0>(OB_STRUCT_CURRENT_DEPTH_ALG_MODE);
         writer_->writeProperty(OB_STRUCT_CURRENT_DEPTH_ALG_MODE, reinterpret_cast<uint8_t *>(&depthMode), sizeof(OBDepthWorkMode_Internal));
     }
-}
-
-void RecordDevice::stopRecord() {
-    writer_->writeDeviceInfo(std::dynamic_pointer_cast<DeviceBase>(device_)->getInfo());
-    writer_->writeStreamProfiles();
 }
 
 }  // namespace libobsensor

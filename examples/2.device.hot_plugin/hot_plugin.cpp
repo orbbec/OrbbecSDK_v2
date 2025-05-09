@@ -20,7 +20,7 @@ void printDeviceList(const std::string &prompt, std::shared_ptr<ob::DeviceList> 
         auto pid          = deviceList->getPid(i);
         auto serialNumber = deviceList->getSerialNumber(i);
         auto connection   = deviceList->getConnectionType(i);
-        std::cout << " - uid: " << uid << ", vid: 0x" << std::hex << std::setfill('0') << std::setw(4) << vid << ", pid: 0x" << pid
+        std::cout << " - uid: " << uid << ", vid: 0x" << std::hex << std::setfill('0') << std::setw(4) << vid << ", pid: 0x" << std::setw(4) << pid
                   << ", serial number: " << serialNumber << ", connection: " << connection << std::endl;
     }
     std::cout << std::endl;

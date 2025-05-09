@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 #include "PlaybackDevice.hpp"
-#include "PlaybackPropertyAccessor.hpp"
 #include "PlaybackDeviceParamManager.hpp"
 #include "PlaybackFilterCreationStrategy.hpp"
 #include "PlaybackDepthWorkModeManager.hpp"
@@ -62,7 +61,7 @@ void PlaybackDevice::init() {
     auto algParamManager = std::make_shared<PlaybackDeviceParamManager>(this, port_);
     registerComponent(OB_DEV_COMPONENT_ALG_PARAM_MANAGER, algParamManager);
 
-    // Note: LiDAR not supported this component 
+    // Note: LiDAR not supported this component
     auto depthWorkModeManager = std::make_shared<PlaybackDepthWorkModeManager>(this, port_);
     registerComponent(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER, depthWorkModeManager);
 }
@@ -253,9 +252,10 @@ void PlaybackDevice::initSensorList() {
 }
 
 void PlaybackDevice::initProperties() {
-    auto propertyServer = std::make_shared<PropertyServer>(this);
-    auto filterAccessor = std::make_shared<PlaybackFilterPropertyAccessor>(port_, this);
-    auto vendorAccessor = getComponentT<PlaybackVendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR).get();
+    frameTransformAccessor_ = std::make_shared<PlaybackFrameTransformPropertyAccessor>(port_, this);
+    auto propertyServer     = std::make_shared<PropertyServer>(this);
+    auto filterAccessor     = std::make_shared<PlaybackFilterPropertyAccessor>(port_, this);
+    auto vendorAccessor     = getComponentT<PlaybackVendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR).get();
 
     registerComponent(OB_DEV_COMPONENT_PROPERTY_SERVER, propertyServer, true);
 
@@ -339,6 +339,20 @@ void PlaybackDevice::initProperties() {
     registerPropertyCondition(propertyServer, OB_STRUCT_DEPTH_HDR_CONFIG, "r", "r", vendorAccessor, isG330V4L2Backend);
     registerPropertyCondition(propertyServer, OB_STRUCT_DEPTH_AE_ROI, "r", "r", vendorAccessor, isG330V4L2Backend);
     registerPropertyCondition(propertyServer, OB_STRUCT_DEVICE_TIME, "r", "r", vendorAccessor, isG330V4L2Backend);
+
+    // Mirror, Flip, Rotation properties
+    registerPropertyCondition(propertyServer, OB_PROP_COLOR_MIRROR_BOOL, "rw", "rw", frameTransformAccessor_);
+    registerPropertyCondition(propertyServer, OB_PROP_COLOR_FLIP_BOOL, "rw", "rw", frameTransformAccessor_);
+    registerPropertyCondition(propertyServer, OB_PROP_COLOR_ROTATE_INT, "rw", "rw", frameTransformAccessor_);
+    registerPropertyCondition(propertyServer, OB_PROP_DEPTH_MIRROR_BOOL, "rw", "rw", frameTransformAccessor_);
+    registerPropertyCondition(propertyServer, OB_PROP_DEPTH_FLIP_BOOL, "rw", "rw", frameTransformAccessor_);
+    registerPropertyCondition(propertyServer, OB_PROP_DEPTH_ROTATE_INT, "rw", "rw", frameTransformAccessor_);
+    registerPropertyCondition(propertyServer, OB_PROP_IR_MIRROR_BOOL, "rw", "rw", frameTransformAccessor_);
+    registerPropertyCondition(propertyServer, OB_PROP_IR_FLIP_BOOL, "rw", "rw", frameTransformAccessor_);
+    registerPropertyCondition(propertyServer, OB_PROP_IR_ROTATE_INT, "rw", "rw", frameTransformAccessor_);
+    registerPropertyCondition(propertyServer, OB_PROP_IR_RIGHT_MIRROR_BOOL, "rw", "rw", frameTransformAccessor_);
+    registerPropertyCondition(propertyServer, OB_PROP_IR_RIGHT_FLIP_BOOL, "rw", "rw", frameTransformAccessor_);
+    registerPropertyCondition(propertyServer, OB_PROP_IR_RIGHT_ROTATE_INT, "rw", "rw", frameTransformAccessor_);
 }
 
 std::vector<std::shared_ptr<IFilter>> PlaybackDevice::createRecommendedPostProcessingFilters(OBSensorType type) {
@@ -397,6 +411,10 @@ void PlaybackDevice::setPlaybackStatusCallback(const PlaybackStatusCallback call
 
 OBPlaybackStatus PlaybackDevice::getCurrentPlaybackStatus() const {
     return port_->getCurrentPlaybackStatus();
+}
+
+void PlaybackDevice::fetchProperties() {
+    frameTransformAccessor_->initFrameTransformProperty();
 }
 
 }  // namespace libobsensor

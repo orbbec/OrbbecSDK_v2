@@ -16,7 +16,9 @@ namespace libobsensor {
 class TaskQueue {
 public:
     TaskQueue() : running_(false) {}
-    virtual ~TaskQueue() = default;
+    virtual ~TaskQueue() {
+        stop();
+    }
 
     void start() {
         running_ = true;
@@ -60,9 +62,14 @@ public:
         cv_.notify_one();
     }
 
+    bool isRunning() const {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return running_;
+    }
+
 private:
-    bool                              running_;
-    std::mutex                        mutex_;
+    std::atomic<bool>                 running_;
+    mutable std::mutex                mutex_;
     std::condition_variable           cv_;
     std::queue<std::function<void()>> tasks_;
     std::thread                       worker_;
@@ -72,13 +79,13 @@ template <typename State> class StateMachineBase {
 public:
     using Callback = std::function<void()>;
 
-    explicit StateMachineBase(State initialState) : currentState_(initialState) {
+    explicit StateMachineBase(State initialState) : started_(false), shutdown_(false), currentState_(initialState) {
         LOG_DEBUG("StateMachine init");
-        taskQueue_.start();
     }
+
     virtual ~StateMachineBase() {
         LOG_DEBUG("StateMachine destory");
-        taskQueue_.stop();
+        shutdown();
     }
 
     // todo: return a token to unregister the callback
@@ -89,6 +96,7 @@ public:
         }
         else {
             enterAsyncCallbacks_[state].emplace_back(std::move(callback));
+            startIfNeed();
         }
     }
 
@@ -99,6 +107,7 @@ public:
         }
         else {
             exitAsyncCallbacks_[state].emplace_back(std::move(callback));
+            startIfNeed();
         }
     }
 
@@ -109,6 +118,7 @@ public:
         }
         else {
             globalAsyncCallbacks_.emplace_back(std::move(callback));
+            startIfNeed();
         }
     }
 
@@ -213,6 +223,24 @@ protected:
     }
 
 protected:
+    void startIfNeed() {
+        if (!started_.exchange(true)) {
+            taskQueue_.start();
+            LOG_DEBUG("TaskQueue started by async callback registration");
+        }
+    }
+
+    void shutdown() {
+        if (!shutdown_.exchange(true)) {
+            clearAllCallbacks();
+            taskQueue_.stop();
+        }
+    }
+
+protected:
+    std::atomic<bool> started_;
+    std::atomic<bool> shutdown_;
+
     mutable std::mutex mutex_;
     State              currentState_;
 

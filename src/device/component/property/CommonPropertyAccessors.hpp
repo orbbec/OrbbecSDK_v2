@@ -114,4 +114,30 @@ private:
     std::vector<uint8_t> baselineData_;
 };
 
+class StereoFrameTransformPropertyAccessor : public IBasicPropertyAccessor {
+public:
+    StereoFrameTransformPropertyAccessor(IDevice *owner);
+    virtual ~StereoFrameTransformPropertyAccessor() noexcept override = default;
+
+    void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
+    void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
+    void getPropertyRange(uint32_t propertyId, OBPropertyRange *range) override;
+
+private:
+    IDevice *owner_;
+};
+
+class MonocularFrameTransformPropertyAccessor : public IBasicPropertyAccessor {
+public:
+    MonocularFrameTransformPropertyAccessor(IDevice *owner);
+    virtual ~MonocularFrameTransformPropertyAccessor() noexcept override = default;
+
+    void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
+    void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
+    void getPropertyRange(uint32_t propertyId, OBPropertyRange *range) override;
+
+private:
+    IDevice *owner_;
+};
+
 }  // namespace libobsensor

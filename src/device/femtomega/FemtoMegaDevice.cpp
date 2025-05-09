@@ -323,7 +323,7 @@ void FemtoMegaUsbDevice::initProperties() {
     auto femtoMegaTempPropertyAccessor = std::make_shared<FemtoMegaTempPropertyAccessor>(this);
     propertyServer->registerProperty(OB_STRUCT_DEVICE_TEMPERATURE, "r", "r", femtoMegaTempPropertyAccessor);
 
-    auto frameTransformPropertyAccessor = std::make_shared<FemtoMegaFrameTransformPropertyAccessor>(this);
+    auto frameTransformPropertyAccessor = std::make_shared<MonocularFrameTransformPropertyAccessor>(this);
     propertyServer->registerProperty(OB_PROP_DEPTH_MIRROR_BOOL, "rw", "rw", frameTransformPropertyAccessor);  // depth
     propertyServer->registerProperty(OB_PROP_DEPTH_FLIP_BOOL, "rw", "rw", frameTransformPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_DEPTH_ROTATE_INT, "rw", "rw", frameTransformPropertyAccessor);
@@ -916,7 +916,7 @@ void FemtoMegaNetDevice::initProperties() {
     propertyServer->registerProperty(OB_STRUCT_DEVICE_TEMPERATURE, "r", "r", femtoMegaTempPropertyAccessor);
     registerComponent(OB_DEV_COMPONENT_PROPERTY_SERVER, propertyServer, true);
 
-    auto frameTransformPropertyAccessor = std::make_shared<FemtoMegaFrameTransformPropertyAccessor>(this);
+    auto frameTransformPropertyAccessor = std::make_shared<MonocularFrameTransformPropertyAccessor>(this);
     propertyServer->registerProperty(OB_PROP_DEPTH_MIRROR_BOOL, "rw", "rw", frameTransformPropertyAccessor);  // depth
     propertyServer->registerProperty(OB_PROP_DEPTH_FLIP_BOOL, "rw", "rw", frameTransformPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_DEPTH_ROTATE_INT, "rw", "rw", frameTransformPropertyAccessor);

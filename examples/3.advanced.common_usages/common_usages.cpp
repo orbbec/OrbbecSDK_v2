@@ -538,6 +538,20 @@ void switchIRMirror() {
                     }
                 }
             }
+
+            if(device->isPropertySupported(OB_PROP_IR_RIGHT_MIRROR_BOOL, OB_PERMISSION_READ)) {
+                bool value = device->getBoolProperty(OB_PROP_IR_RIGHT_MIRROR_BOOL);
+                if(device->isPropertySupported(OB_PROP_IR_RIGHT_MIRROR_BOOL, OB_PERMISSION_WRITE)) {
+                    device->setBoolProperty(OB_PROP_IR_RIGHT_MIRROR_BOOL, !value);
+                    if(!value) {
+                        std::cout << "IR Right mirror on!" << std::endl;
+                    }
+                    else {
+                        std::cout << "IR Right mirror off!" << std::endl;
+                    }
+                }
+            }
+
             else {
                 std::cerr << "IR  mirror switch property is not supported." << std::endl;
             }

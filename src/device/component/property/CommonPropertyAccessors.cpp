@@ -5,6 +5,7 @@
 
 #include "IDeviceMonitor.hpp"
 #include "IAlgParamManager.hpp"
+#include "component/frameprocessor/FrameProcessor.hpp"
 
 #include "libobsensor/h/ObTypes.h"
 #include "utils/Utils.hpp"
@@ -196,5 +197,193 @@ const std::vector<uint8_t> &BaselinePropertyAccessor::getStructureData(uint32_t 
     param->baseline      = disparityParam.baseline * disparityParam.unit;
     param->zpd           = static_cast<float>(disparityParam.zpd);
     return baselineData_;
+}
+
+StereoFrameTransformPropertyAccessor::StereoFrameTransformPropertyAccessor(IDevice *owner) : owner_(owner) {}
+
+void StereoFrameTransformPropertyAccessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
+    switch(propertyId) {
+    case OB_PROP_DEPTH_MIRROR_BOOL:
+    case OB_PROP_DEPTH_FLIP_BOOL:
+    case OB_PROP_DEPTH_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR);
+        processor->setPropertyValue(propertyId, value);
+    } break;
+    case OB_PROP_COLOR_MIRROR_BOOL:
+    case OB_PROP_COLOR_FLIP_BOOL:
+    case OB_PROP_COLOR_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR);
+        processor->setPropertyValue(propertyId, value);
+    } break;
+    case OB_PROP_IR_MIRROR_BOOL:
+    case OB_PROP_IR_FLIP_BOOL:
+    case OB_PROP_IR_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_LEFT_IR_FRAME_PROCESSOR);
+        processor->setPropertyValue(propertyId, value);
+    } break;
+    case OB_PROP_IR_RIGHT_MIRROR_BOOL:
+    case OB_PROP_IR_RIGHT_FLIP_BOOL:
+    case OB_PROP_IR_RIGHT_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_RIGHT_IR_FRAME_PROCESSOR);
+        processor->setPropertyValue(propertyId, value);
+    } break;
+    default:
+        throw invalid_value_exception("Invalid property id");
+    }
+}
+
+void StereoFrameTransformPropertyAccessor::getPropertyValue(uint32_t propertyId, OBPropertyValue *value) {
+    switch(propertyId) {
+    case OB_PROP_DEPTH_MIRROR_BOOL:
+    case OB_PROP_DEPTH_FLIP_BOOL:
+    case OB_PROP_DEPTH_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR);
+        processor->getPropertyValue(propertyId, value);
+    } break;
+    case OB_PROP_COLOR_MIRROR_BOOL:
+    case OB_PROP_COLOR_FLIP_BOOL:
+    case OB_PROP_COLOR_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR);
+        processor->getPropertyValue(propertyId, value);
+    } break;
+    case OB_PROP_IR_MIRROR_BOOL:
+    case OB_PROP_IR_FLIP_BOOL:
+    case OB_PROP_IR_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_LEFT_IR_FRAME_PROCESSOR);
+        processor->getPropertyValue(propertyId, value);
+    } break;
+    case OB_PROP_IR_RIGHT_MIRROR_BOOL:
+    case OB_PROP_IR_RIGHT_FLIP_BOOL:
+    case OB_PROP_IR_RIGHT_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_RIGHT_IR_FRAME_PROCESSOR);
+        processor->getPropertyValue(propertyId, value);
+    } break;
+    default:
+        throw invalid_value_exception("Invalid property id");
+    }
+}
+
+void StereoFrameTransformPropertyAccessor::getPropertyRange(uint32_t propertyId, OBPropertyRange *range) {
+    switch(propertyId) {
+    case OB_PROP_DEPTH_MIRROR_BOOL:
+    case OB_PROP_DEPTH_FLIP_BOOL:
+    case OB_PROP_DEPTH_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR);
+        processor->getPropertyRange(propertyId, range);
+    } break;
+    case OB_PROP_COLOR_MIRROR_BOOL:
+    case OB_PROP_COLOR_FLIP_BOOL:
+    case OB_PROP_COLOR_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR);
+        processor->getPropertyRange(propertyId, range);
+    } break;
+    case OB_PROP_IR_MIRROR_BOOL:
+    case OB_PROP_IR_FLIP_BOOL:
+    case OB_PROP_IR_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_LEFT_IR_FRAME_PROCESSOR);
+        processor->getPropertyRange(propertyId, range);
+    } break;
+    case OB_PROP_IR_RIGHT_MIRROR_BOOL:
+    case OB_PROP_IR_RIGHT_FLIP_BOOL:
+    case OB_PROP_IR_RIGHT_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_RIGHT_IR_FRAME_PROCESSOR);
+        processor->getPropertyRange(propertyId, range);
+    } break;
+    default:
+        throw invalid_value_exception("Invalid property id");
+    }
+}
+
+
+MonocularFrameTransformPropertyAccessor::MonocularFrameTransformPropertyAccessor(IDevice *owner) : owner_(owner) {}
+
+void MonocularFrameTransformPropertyAccessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
+    switch(propertyId) {
+    case OB_PROP_DEPTH_MIRROR_BOOL:
+    case OB_PROP_DEPTH_FLIP_BOOL:
+    case OB_PROP_DEPTH_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR);
+        processor->setPropertyValue(propertyId, value);
+    } break;
+    case OB_PROP_COLOR_MIRROR_BOOL:
+    case OB_PROP_COLOR_FLIP_BOOL:
+    case OB_PROP_COLOR_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR);
+        processor->setPropertyValue(propertyId, value);
+    } break;
+    case OB_PROP_IR_MIRROR_BOOL:
+    case OB_PROP_IR_FLIP_BOOL:
+    case OB_PROP_IR_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_IR_FRAME_PROCESSOR);
+        processor->setPropertyValue(propertyId, value);
+    } break;
+    default: {
+        throw invalid_value_exception("Invalid property id");
+    }
+    }
+}
+
+void MonocularFrameTransformPropertyAccessor::getPropertyValue(uint32_t propertyId, OBPropertyValue *value) {
+    if(!value) {
+        LOG_DEBUG("Null value pointer, abort property access");
+        return;
+    }
+    memset(value, 0, sizeof(OBPropertyValue));
+
+    switch(propertyId) {
+    case OB_PROP_DEPTH_MIRROR_BOOL:
+    case OB_PROP_DEPTH_FLIP_BOOL:
+    case OB_PROP_DEPTH_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR);
+        processor->getPropertyValue(propertyId, value);
+    } break;
+    case OB_PROP_COLOR_MIRROR_BOOL:
+    case OB_PROP_COLOR_FLIP_BOOL:
+    case OB_PROP_COLOR_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR);
+        processor->getPropertyValue(propertyId, value);
+    } break;
+    case OB_PROP_IR_MIRROR_BOOL:
+    case OB_PROP_IR_FLIP_BOOL:
+    case OB_PROP_IR_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_IR_FRAME_PROCESSOR);
+        processor->getPropertyValue(propertyId, value);
+    } break;
+    default: {
+        throw invalid_value_exception("Invalid property id");
+    }
+    }
+}
+
+void MonocularFrameTransformPropertyAccessor::getPropertyRange(uint32_t propertyId, OBPropertyRange *range) {
+    if(range == nullptr) {
+        LOG_DEBUG("Null range pointer, abort property access");
+        return;
+    }
+    memset(range, 0, sizeof(OBPropertyRange));
+
+    switch(propertyId) {
+    case OB_PROP_DEPTH_MIRROR_BOOL:
+    case OB_PROP_DEPTH_FLIP_BOOL:
+    case OB_PROP_DEPTH_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR);
+        processor->getPropertyRange(propertyId, range);
+    } break;
+    case OB_PROP_COLOR_MIRROR_BOOL:
+    case OB_PROP_COLOR_FLIP_BOOL:
+    case OB_PROP_COLOR_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR);
+        processor->getPropertyRange(propertyId, range);
+    } break;
+    case OB_PROP_IR_MIRROR_BOOL:
+    case OB_PROP_IR_FLIP_BOOL:
+    case OB_PROP_IR_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_IR_FRAME_PROCESSOR);
+        processor->getPropertyRange(propertyId, range);
+    } break;
+    default: {
+        throw invalid_value_exception("Invalid property id");
+    }
+    }
 }
 }  // namespace libobsensor
