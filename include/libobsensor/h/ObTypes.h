@@ -185,6 +185,7 @@ typedef enum {
     OB_PIXEL_DEPTH     = 0,   // Depth pixel type, the value of the pixel is the distance from the camera to the object
     OB_PIXEL_DISPARITY = 2,   // Disparity for structured light camera
     OB_PIXEL_RAW_PHASE = 3,   // Raw phase for tof camera
+    OB_PIXEL_TOF_DEPTH = 4,   // Depth for tof camera
 } OBPixelType,
     ob_pixel_type;
 
@@ -1701,17 +1702,17 @@ typedef enum {
 } ob_uvc_backend_type,
     OBUvcBackendType;
 
-
 /**
  * @brief The playback status of the media
  */
 typedef enum {
-    OB_PLAYBACK_UNKNOWN ,
-    OB_PLAYBACK_PLAYING,  /**< The media is playing */
-    OB_PLAYBACK_PAUSED, /**< The media is paused */
+    OB_PLAYBACK_UNKNOWN,
+    OB_PLAYBACK_PLAYING, /**< The media is playing */
+    OB_PLAYBACK_PAUSED,  /**< The media is paused */
     OB_PLAYBACK_STOPPED, /**< The media is stopped */
     OB_PLAYBACK_COUNT,
-} ob_playback_status, OBPlaybackStatus;
+} ob_playback_status,
+    OBPlaybackStatus;
 
 // For compatibility
 #define OB_FRAME_METADATA_TYPE_LASER_POWER_MODE OB_FRAME_METADATA_TYPE_LASER_POWER_LEVEL
@@ -1819,7 +1820,7 @@ typedef void(ob_frame_destroy_callback)(uint8_t *buffer, void *user_data);
  */
 typedef void(ob_log_callback)(ob_log_severity severity, const char *message, void *user_data);
 
-typedef void(*ob_playback_status_changed_callback)(ob_playback_status status, void *user_data);
+typedef void (*ob_playback_status_changed_callback)(ob_playback_status status, void *user_data);
 /**
  * @brief Check if the sensor_type is a video sensor
  *

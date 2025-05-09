@@ -14,6 +14,7 @@ class FemtoMegaUsbDevice : public DeviceBase {
 public:
     FemtoMegaUsbDevice(const std::shared_ptr<const IDeviceEnumInfo> &info);
     virtual ~FemtoMegaUsbDevice() noexcept override;
+    std::vector<std::shared_ptr<IFilter>> createRecommendedPostProcessingFilters(OBSensorType type);
 
 private:
     void init() override;
@@ -30,6 +31,7 @@ class FemtoMegaNetDevice : public DeviceBase {
 public:
     FemtoMegaNetDevice(const std::shared_ptr<const IDeviceEnumInfo> &info);
     virtual ~FemtoMegaNetDevice() noexcept override;
+    std::vector<std::shared_ptr<IFilter>> createRecommendedPostProcessingFilters(OBSensorType type);
 
 private:
     void init() override;
@@ -46,7 +48,7 @@ private:
     uint64_t colorFrameTimeFreq_ = 90000;
 
     StreamProfileList allVideoStreamProfileList_;  // fetch from device via vendor-specific protocol for all types of video stream
-    bool              inRecoveryMode_ = false; // whether the device is in recovery mode
+    bool              inRecoveryMode_ = false;     // whether the device is in recovery mode
 };
 
 }  // namespace libobsensor

@@ -15,6 +15,7 @@ class FemtoMegaINetDevice : public DeviceBase {
 public:
     FemtoMegaINetDevice(const std::shared_ptr<const IDeviceEnumInfo> &info);
     virtual ~FemtoMegaINetDevice() noexcept;
+    std::vector<std::shared_ptr<IFilter>> createRecommendedPostProcessingFilters(OBSensorType type);
 
 private:
     void init() override;
@@ -26,9 +27,9 @@ private:
     void fetchDeviceInfo() override;
 
 private:
-    uint64_t          deviceTimeFreq_     = 1000;
-    uint64_t          depthFrameTimeFreq_ = 1000;
-    uint64_t          colorFrameTimeFreq_ = 90000;
+    uint64_t deviceTimeFreq_     = 1000;
+    uint64_t depthFrameTimeFreq_ = 1000;
+    uint64_t colorFrameTimeFreq_ = 90000;
 
     StreamProfileList allVideoStreamProfileList_;  // fetch from device via vendor-specific protocol for all types of video stream
     bool              inRecoveryMode_ = false;     // whether the device is in recovery mode
