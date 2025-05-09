@@ -24,6 +24,7 @@
 #include "property/CommonPropertyAccessors.hpp"
 #include "property/FilterPropertyAccessors.hpp"
 #include "property/PrivateFilterPropertyAccessors.hpp"
+#include "monitor/DeviceMonitor.hpp"
 #include <algorithm>
 
 
@@ -109,6 +110,13 @@ void MaxDevice::initSensorList() {
             auto port     = getSourcePort(depthPortInfo);
             auto accessor = std::make_shared<VendorPropertyAccessor>(this, port);
             return accessor;
+        });
+
+        // The device monitor is using the depth port(uvc xu)
+        registerComponent(OB_DEV_COMPONENT_DEVICE_MONITOR, [this, depthPortInfo]() {
+            auto port       = getSourcePort(depthPortInfo);
+            auto devMonitor = std::make_shared<DeviceMonitor>(this, port);
+            return devMonitor;
         });
     }
 

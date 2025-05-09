@@ -110,6 +110,7 @@ const uint16_t OB_DEVICE_GEMINI_UW_PID      = 0x06aa;
 
 const std::vector<uint16_t> OpenNIDevPids = {
     0x060e,  // Dabai
+    0x0614,  // Gemini
     0x0659,  // Dabai DCW
     0x065a,  // Dabai DW
     0x065b,  // Astra Mini Pro
