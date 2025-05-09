@@ -20,8 +20,8 @@ SensorBase::SensorBase(IDevice *owner, OBSensorType sensorType, const std::share
       maxRecoveryCount_(DefaultMaxRecoveryCount),
       recoveryCount_(0),
       noStreamTimeoutMs_(DefaultNoStreamTimeoutMs),
-      streamInterruptTimeoutMs_(DefaultStreamInterruptTimeoutMs),
-      timestampAnomalyDetector_(std::make_shared<TimestampAnomalyDetector>(owner)) {
+      streamInterruptTimeoutMs_(DefaultStreamInterruptTimeoutMs) {
+    TRY_EXECUTE({ timestampAnomalyDetector_ = std::make_shared<TimestampAnomalyDetector>(owner); });
         startStreamRecovery();
       }
 
@@ -165,18 +165,20 @@ void SensorBase::updateStreamState(OBStreamState state) {
                 globalTimestampCalculator_->clear();
             }
 
-            timestampAnomalyDetector_->clear();
-            uint32_t fps = 0;
-            if(activatedStreamProfile_->is<VideoStreamProfile>()) {
-                fps = activatedStreamProfile_->as<VideoStreamProfile>()->getFps();
+            if(timestampAnomalyDetector_) {
+                timestampAnomalyDetector_->clear();
+                uint32_t fps = 0;
+                if(activatedStreamProfile_->is<VideoStreamProfile>()) {
+                    fps = activatedStreamProfile_->as<VideoStreamProfile>()->getFps();
+                }
+                else if(activatedStreamProfile_->is<AccelStreamProfile>()) {
+                    fps = static_cast<uint32_t>(utils::mapIMUSampleRateToValue(activatedStreamProfile_->as<AccelStreamProfile>()->getSampleRate()));
+                }
+                else if(activatedStreamProfile_->is<GyroStreamProfile>()) {
+                    fps = static_cast<uint32_t>(utils::mapIMUSampleRateToValue(activatedStreamProfile_->as<GyroStreamProfile>()->getSampleRate()));
+                }
+                timestampAnomalyDetector_->setCurrentFps(fps);
             }
-            else if(activatedStreamProfile_->is<AccelStreamProfile>()) {
-                fps = static_cast<uint32_t>(utils::mapIMUSampleRateToValue(activatedStreamProfile_->as<AccelStreamProfile>()->getSampleRate()));
-            }
-            else if(activatedStreamProfile_->is<GyroStreamProfile>()) {
-                fps = static_cast<uint32_t>(utils::mapIMUSampleRateToValue(activatedStreamProfile_->as<GyroStreamProfile>()->getSampleRate()));
-            }
-            timestampAnomalyDetector_->setCurrentFps(fps);
         }
     }
     if(oldState != state) {
@@ -330,12 +332,13 @@ void SensorBase::outputFrame(std::shared_ptr<Frame> frame) {
         TRY_EXECUTE(globalTimestampCalculator_->calculate(frame));
     }
 
-    BEGIN_TRY_EXECUTE({
-        timestampAnomalyDetector_->calculate(frame);
-    })CATCH_EXCEPTION_AND_EXECUTE({
-        LOG_ERROR("Timestamp anomaly detected, frame: {}, sensor: {}", frame->getTimeStampUsec(), utils::obSensorToStr(sensorType_));
-        return;
-    });
+    if(timestampAnomalyDetector_) {
+        BEGIN_TRY_EXECUTE({ timestampAnomalyDetector_->calculate(frame); })
+        CATCH_EXCEPTION_AND_EXECUTE({
+            LOG_ERROR("Timestamp anomaly detected, frame: {}, sensor: {}", frame->getTimeStampUsec(), utils::obSensorToStr(sensorType_));
+            return;
+        });
+    }
 
     if (frameRecordingCallback_) {
         frameRecordingCallback_(frame);
