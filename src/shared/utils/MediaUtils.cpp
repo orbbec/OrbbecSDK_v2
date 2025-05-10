@@ -17,7 +17,7 @@ double getBagFileVersion() {
     // The entries in versionMap must be sorted from highest to lowest version number
     // so that the loop matches the highest applicable version first.
     // When introducing a new version, insert it in the correct position to maintain this order.
-    static constexpr std::pair<int, double> versionMap[] = {
+    static const std::pair<int, double> versionMap[] = {
         { 20400, 2.0 },  // ver >= 2.4.0 -> 2.0
         { 0, 1.0 }       // ver < 2.4.0 -> 1.0
     };
