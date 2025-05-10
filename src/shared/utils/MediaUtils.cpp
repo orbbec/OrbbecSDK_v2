@@ -45,7 +45,7 @@ std::string createUnsupportedBagFileVersionMessage(double recordedVersion) {
 
     std::string message = "Unsupported bag file version: ";
     if (recordMajor < 2) {
-        message += "Please use OrbbecSDK version v2.3.5, or re-record the bag file using a newer version of the SDK.";
+        message += "Please use lower version of OrbbecSDK, or re-record the bag file using a newer version of the SDK.";
     }
     else {
         message += "unknown error.";
