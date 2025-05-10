@@ -115,5 +115,5 @@ void saveColorFrame(const std::shared_ptr<ob::ColorFrame> colorFrame, const uint
                             + std::to_string(colorFrame->timeStamp()) + "ms.png";
     cv::Mat depthMat(colorFrame->height(), colorFrame->width(), CV_8UC3, colorFrame->data());
     cv::imwrite(colorName, depthMat, params);
-    std::cout << "Depth saved:" << colorName << std::endl;
+    std::cout << "Color saved:" << colorName << std::endl;
 }
