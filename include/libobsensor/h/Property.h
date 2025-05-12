@@ -516,6 +516,21 @@ typedef enum {
     OB_DEVICE_PTP_CLOCK_SYNC_ENABLE_BOOL = 223,
 
     /**
+     * @brief Depth with confidence stream enable
+     */
+    OB_PROP_DEPTH_WITH_CONFIDENCE_STREAM_ENABLE_BOOL = 224,
+
+    /**
+     * @brief Enable or disable confidence stream filter
+     */
+    OB_PROP_CONFIDENCE_STREAM_FILTER_BOOL = 226,
+
+    /**
+     * @brief Confidence stream filter threshold, range [0, 255]
+     */
+    OB_PROP_CONFIDENCE_STREAM_FILTER_THRESHOLD_INT = 227,
+
+    /**
      * @brief Baseline calibration parameters
      */
     OB_STRUCT_BASELINE_CALIBRATION_PARAM = 1002,
