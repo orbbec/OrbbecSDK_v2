@@ -124,6 +124,10 @@ int  main(void) try {
         }
     }
 
+    postDepthFilter.reset();
+    postLeftInfraredFilter.reset();
+    postRightInfraredFilter.reset();
+
     // Stop the Pipeline, no frame data will be generated
     pipe.stop();
 
