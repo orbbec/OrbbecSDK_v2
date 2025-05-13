@@ -4,6 +4,9 @@
 #pragma once
 #include "IProperty.hpp"
 #include "IDevice.hpp"
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 
 namespace libobsensor {
 class OpenNIDisp2DepthPropertyAccessor : public IBasicPropertyAccessor, public IStructureDataAccessor {
@@ -43,6 +46,34 @@ public:
 
 private:
     IDevice *owner_;
+};
+
+
+
+class OpenNIHeartBeatPropertyAccessor : public IBasicPropertyAccessor {
+public:
+    explicit OpenNIHeartBeatPropertyAccessor(IDevice *owner);
+    virtual ~OpenNIHeartBeatPropertyAccessor() noexcept;
+
+    virtual void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
+    virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
+    virtual void getPropertyRange(uint32_t propertyId, OBPropertyRange *range) override;
+
+private:
+    void startFeedingWatchDog();
+    void stopFeedingWatchDog();
+
+private:
+    uint32_t OB_DEFAULT_HEARTBEAT_TIMEOUT = 3000;
+
+    IDevice *owner_;
+
+    bool heartBeatStatus_;
+
+    std::mutex              heartBeatMutex_;
+    bool                    heartBeatRunning_;
+    std::thread             heartBeatThread_;
+    std::condition_variable heartBeatCV_;
 };
 
 }  // namespace libobsensor

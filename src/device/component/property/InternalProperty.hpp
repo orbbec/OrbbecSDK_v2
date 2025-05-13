@@ -31,6 +31,7 @@ typedef enum {
     OB_PROP_START_IR_RIGHT_STREAM_BOOL = 201,  /**< Start or stop right ir stream */
 
 	OB_PROP_DEPTH_LOAD_ENGINE_GROUP_PARAM_INT = 172, /**< Load depth engine group parameters*/
+    OB_PROP_DEVICE_KEEP_ALIVE_INT             = 225, /**< OpenNI device heartbeat keep-alive command*/
 
     OB_PROP_GYRO_SWITCH_BOOL     = 2019, /**< Gyroscope switch*/
     OB_PROP_ACCEL_SWITCH_BOOL    = 2020, /**< Accelerometer switch*/

@@ -5,6 +5,7 @@
 #include "frameprocessor/FrameProcessor.hpp"
 #include "OpenNIDisparitySensor.hpp"
 #include "IDeviceComponent.hpp"
+#include "component/property/InternalProperty.hpp"
 
 namespace libobsensor {
 
@@ -196,6 +197,109 @@ void OpenNIFrameTransformPropertyAccessor::getPropertyRange(uint32_t propertyId,
     } break;
     default:
         throw invalid_value_exception("Invalid property id");
+    }
+}
+
+
+OpenNIHeartBeatPropertyAccessor::OpenNIHeartBeatPropertyAccessor(IDevice *owner)
+    : owner_(owner),
+      heartBeatStatus_(false),
+      heartBeatRunning_(false){
+    BEGIN_TRY_EXECUTE({
+          OBPropertyValue value;
+          auto            commandPort = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+          commandPort->getPropertyValue(OB_PROP_WATCHDOG_BOOL, &value);
+          if(value.intValue == 1) {
+              heartBeatStatus_ = true;
+              // start watch dog
+              startFeedingWatchDog();
+          }
+    })
+    CATCH_EXCEPTION_AND_EXECUTE({
+        LOG_ERROR("Get watch dog status failed!");
+    })
+}
+
+OpenNIHeartBeatPropertyAccessor::~OpenNIHeartBeatPropertyAccessor() noexcept {
+    stopFeedingWatchDog();
+    BEGIN_TRY_EXECUTE({
+        if(heartBeatStatus_) {
+            OBPropertyValue value;
+            value.intValue   = 0;
+            auto commandPort = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+            commandPort->setPropertyValue(OB_PROP_WATCHDOG_BOOL, value);
+        }
+    })
+    CATCH_EXCEPTION_AND_EXECUTE({ 
+        LOG_WARN("Set watch dog status failed!");
+    })
+}
+
+void OpenNIHeartBeatPropertyAccessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
+    switch(propertyId) {
+    case OB_PROP_HEARTBEAT_BOOL: {
+        auto commandPort = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        commandPort->setPropertyValue(OB_PROP_WATCHDOG_BOOL, value);
+        heartBeatStatus_ = value.intValue == 1 ? true : false;
+        if(value.intValue == 1) {
+            startFeedingWatchDog();
+        }
+        else {
+            stopFeedingWatchDog();
+        }
+    } break;
+    default:
+        throw invalid_value_exception("Invalid property id");
+    }
+}
+
+void OpenNIHeartBeatPropertyAccessor::getPropertyValue(uint32_t propertyId, OBPropertyValue *value) {
+    switch(propertyId) {
+    case OB_PROP_HEARTBEAT_BOOL: {
+        value->intValue = heartBeatStatus_ ? 1 : 0;
+    } break;
+    default:
+        throw invalid_value_exception("Invalid property id");
+    }
+}
+
+void OpenNIHeartBeatPropertyAccessor::getPropertyRange(uint32_t propertyId, OBPropertyRange *range) {
+    switch(propertyId) {
+    case OB_PROP_HEARTBEAT_BOOL: {
+        range->cur.intValue  = heartBeatStatus_ ? 1 : 0;
+        range->def.intValue  = 0;
+        range->min.intValue  = 0;
+        range->max.intValue  = 1;
+        range->step.intValue = 1;
+    } break;
+    default:
+        throw invalid_value_exception("Invalid property id");
+    }
+}
+
+void OpenNIHeartBeatPropertyAccessor::startFeedingWatchDog() {
+    heartBeatRunning_ = true;
+    heartBeatThread_  = std::thread([&]() {
+        LOG_INFO("Start feading watchdog.");
+        while(heartBeatRunning_) {
+            std::unique_lock<std::mutex> lock(heartBeatMutex_);
+            OBPropertyValue              value;
+            value.intValue = 1;
+            auto commandPort = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+            commandPort->setPropertyValue(OB_PROP_DEVICE_KEEP_ALIVE_INT, value);
+            heartBeatCV_.wait_for(lock, std::chrono::milliseconds(OB_DEFAULT_HEARTBEAT_TIMEOUT));
+        }
+
+        LOG_INFO("Exit feading watchdog.");
+    });
+}
+
+void OpenNIHeartBeatPropertyAccessor::stopFeedingWatchDog() {
+    if(heartBeatRunning_) {
+        LOG_INFO("Stop feading watchdog.");
+        heartBeatRunning_ = false;
+        heartBeatCV_.notify_all();
+        heartBeatThread_.join();
     }
 }
 
