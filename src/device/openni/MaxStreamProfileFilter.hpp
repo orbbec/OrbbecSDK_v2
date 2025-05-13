@@ -19,6 +19,7 @@ private:
     void fetchEffectiveStreamProfiles();
 
 private:
-    std::vector<OBEffectiveStreamProfile> effectiveStreamProfiles_;
+    std::vector<OBEffectiveStreamProfile> colorEffectiveStreamProfiles_;
+    std::vector<OBEffectiveStreamProfile> depthEffectiveStreamProfiles_;
 };
 }  // namespace libobsensor

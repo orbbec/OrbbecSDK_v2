@@ -25,6 +25,8 @@
 #include "property/FilterPropertyAccessors.hpp"
 #include "property/PrivateFilterPropertyAccessors.hpp"
 #include "monitor/DeviceMonitor.hpp"
+#include "OpenNIDeviceSyncConfigurator.hpp"
+#include "DevicePids.hpp"
 #include <algorithm>
 
 
@@ -33,7 +35,6 @@ namespace libobsensor {
 constexpr uint8_t  INTERFACE_COLOR   = 0;
 constexpr uint8_t  INTERFACE_DEPTH   = 0;
 constexpr uint16_t MAX_PRO_COLOR_PID = 0x0560;
-constexpr uint16_t MAX_PRO_DEPTH_PID = 0x069e;
 
 MaxDevice::MaxDevice(const std::shared_ptr<const IDeviceEnumInfo> &info) : OpenNIDeviceBase(info) {
     LOG_INFO("Create {} device.", info->getName());
@@ -46,6 +47,12 @@ MaxDevice::~MaxDevice() noexcept {
 
 void MaxDevice::init() {
     OpenNIDeviceBase::init();
+    static const std::vector<OBMultiDeviceSyncMode> supportedSyncModes = { OB_MULTI_DEVICE_SYNC_MODE_FREE_RUN,
+                                                                           OB_MULTI_DEVICE_SYNC_MODE_PRIMARY,
+                                                                           OB_MULTI_DEVICE_SYNC_MODE_SECONDARY_SYNCED,
+    };
+    auto deviceSyncConfigurator = std::make_shared<OpenNIDeviceSyncConfigurator>(this, supportedSyncModes);
+    registerComponent(OB_DEV_COMPONENT_DEVICE_SYNC_CONFIGURATOR, deviceSyncConfigurator);
 }
 
 void MaxDevice::initSensorList() {
@@ -56,7 +63,8 @@ void MaxDevice::initSensorList() {
     const auto &sourcePortInfoList = enumInfo_->getSourcePortInfoList();
     auto depthPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(), [](const std::shared_ptr<const SourcePortInfo> &portInfo) {
         return portInfo->portType == SOURCE_PORT_USB_UVC && std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->infIndex == INTERFACE_DEPTH
-               && std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->pid == MAX_PRO_DEPTH_PID;
+               && (std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->pid == OB_DEVICE_MAX_PRO_PID
+                   || std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->pid == OB_DEVICE_DABAI_MAX_PID);
     });
 
     if(depthPortInfoIter != sourcePortInfoList.end()) {
@@ -90,9 +98,14 @@ void MaxDevice::initSensorList() {
                 propServer->setPropertyValueT(OB_PROP_DEPTH_PRECISION_LEVEL_INT, OB_PRECISION_1MM);
                 sensor->setDepthUnit(1.0f);
 
-                initSensorStreamProfile(sensor);
                 sensor->markOutputDisparityFrame(true);
                 sensor->initProfileVirtualRealMap();
+
+                initSensorStreamProfile(sensor);
+
+                auto streamProfileFilter = getComponentT<IStreamProfileFilter>(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER);
+                sensor->setStreamProfileFilter(streamProfileFilter.get());
+
                 return sensor;
             },
             true);
@@ -206,8 +219,9 @@ void MaxDevice::initProperties() {
             propertyServer->registerProperty(OB_PROP_IR_CHANNEL_DATA_SOURCE_INT, "rw", "rw", vendorPropertyAccessor_);
             propertyServer->registerProperty(OB_PROP_IR_LONG_EXPOSURE_BOOL, "rw", "rw", vendorPropertyAccessor_);
             propertyServer->registerProperty(OB_PROP_DEPTH_LOAD_ENGINE_GROUP_PARAM_INT, "", "w", vendorPropertyAccessor_);
-            // propertyServer->registerProperty(OB_PROP_WATCHDOG_BOOL, "w", "w", vendorPropertyAccessor_);
-            // propertyServer->registerProperty(OB_PROP_HEARTBEAT_BOOL, "w", "w", vendorPropertyAccessor_);
+            propertyServer->registerProperty(OB_STRUCT_MULTI_DEVICE_SYNC_CONFIG, "rw", "rw", vendorPropertyAccessor_);
+            auto heartBeatPropertyAccessor = std::make_shared<OpenNIHeartBeatPropertyAccessor>(this);
+            propertyServer->registerProperty(OB_PROP_HEARTBEAT_BOOL, "rw", "rw", heartBeatPropertyAccessor);
             // propertyServer->registerProperty(OB_STRUCT_CUSTOMER_DATA, "w", "w", vendorPropertyAccessor_);
         }
     }
