@@ -23,5 +23,7 @@ target_sources(
 	${CMAKE_CURRENT_LIST_DIR}/MaxStreamProfileFilter.hpp
 	${CMAKE_CURRENT_LIST_DIR}/MaxProDisparitySensor.cpp
 	${CMAKE_CURRENT_LIST_DIR}/MaxProDisparitySensor.hpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenNIDeviceSyncConfigurator.cpp
+	${CMAKE_CURRENT_LIST_DIR}/OpenNIDeviceSyncConfigurator.hpp
 )
 
