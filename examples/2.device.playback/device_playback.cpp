@@ -46,7 +46,7 @@ int main(void) try {
 
     ob_smpl::CVWindow win("Playback", 1280, 720, ob_smpl::ARRANGE_GRID);
     while(win.run()) {
-        auto frameSet = pipe->waitForFrames(1000);
+        auto frameSet = pipe->waitForFrameset();
         if(frameSet == nullptr) {
             continue;
         }

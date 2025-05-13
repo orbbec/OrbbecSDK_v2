@@ -282,7 +282,12 @@ void PlaybackDevice::initProperties() {
     ConditionCheckHandler isG330V4L2Backend = [this]() -> bool {
         return deviceInfo_->backendType_ == OB_UVC_BACKEND_TYPE_V4L2 && isDeviceInSeries(G330DevPids, deviceInfo_->pid_);
     };
-    ConditionCheckHandler isG330Device = [this]() -> bool { return isDeviceInSeries(G330DevPids, deviceInfo_->pid_); };
+    ConditionCheckHandler isG330Device       = [this]() -> bool { return isDeviceInSeries(G330DevPids, deviceInfo_->pid_); };
+    ConditionCheckHandler isHWNoiseSupported = [this]() -> bool {
+        OBPropertyValue value;
+        bool            isSupported = port_->getRecordedPropertyValue(OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL, &value);
+        return isSupported && isDeviceInSeries(G330DevPids, deviceInfo_->pid_);
+    };
 
     // filter properties
     registerPropertyCondition(propertyServer, OB_PROP_DISPARITY_TO_DEPTH_BOOL, "r", "r", filterAccessor, isNonFemtoDevice);
@@ -290,6 +295,8 @@ void PlaybackDevice::initProperties() {
     registerPropertyCondition(propertyServer, OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL, "rw", "rw", filterAccessor, isNonFemtoAndNonG210Device);
     registerPropertyCondition(propertyServer, OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_SPECKLE_SIZE_INT, "rw", "rw", filterAccessor, isNonFemtoAndNonG210Device);
     registerPropertyCondition(propertyServer, OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT, "rw", "rw", filterAccessor, isNonFemtoAndNonG210Device);
+    registerPropertyCondition(propertyServer, OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL, "r", "r", vendorAccessor, isHWNoiseSupported);
+    registerPropertyCondition(propertyServer, OB_PROP_HW_NOISE_REMOVE_FILTER_THRESHOLD_FLOAT, "r", "r", vendorAccessor, isHWNoiseSupported);
 
     // Exposure properties
     // Depth sensor properties

@@ -68,22 +68,20 @@ void addProperty(std::vector<OBPropertyItem> &vec, int propertyId, const char *p
 }
 
 void PropertyServer::appendToPropertyMap(uint32_t propertyId, OBPermissionType userPerms, OBPermissionType intPerms) {
-    for(auto &item: OBPropertyBaseInfoMap) {
-        auto infoIter = OBPropertyBaseInfoMap.find(item.first);
-        if(infoIter == OBPropertyBaseInfoMap.end()) {
-            std::string msg = ", id=";
-            msg += std::to_string(item.first);
-            throw not_implemented_exception(msg);
+    auto infoIter = OBPropertyBaseInfoMap.find(propertyId);
+    if(infoIter == OBPropertyBaseInfoMap.end()) {
+        std::string msg = "Not added to property map, property not found in OBPropertyBaseInfoMap, id=";
+        msg += std::to_string(propertyId);
+        LOG_WARN("{}", msg);
+        // throw not_implemented_exception(msg);
+    }
+    else {
+        if(userPerms & 0x3) {
+            addProperty(userPropertiesVec_, propertyId, infoIter->second.name, infoIter->second.type, userPerms);
         }
-        if(propertyId == item.first) {
-            if(userPerms & 0x3) {
-                addProperty(userPropertiesVec_, propertyId, infoIter->second.name, infoIter->second.type, userPerms);
-            }
 
-            if(intPerms & 0x3) {
-                addProperty(innerPropertiesVec_, propertyId, infoIter->second.name, infoIter->second.type, intPerms);
-            }
-            break;
+        if(intPerms & 0x3) {
+            addProperty(innerPropertiesVec_, propertyId, infoIter->second.name, infoIter->second.type, intPerms);
         }
     }
 }
