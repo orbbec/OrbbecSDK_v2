@@ -33,9 +33,10 @@ void TimestampAnomalyDetector::calculate(std::shared_ptr<Frame> frame) {
 
     // only consider the abnormal timestamp is larger than the last timestamp
     if(timestamp - cacheTimestamp_ > maxValidTimestampDiff_) {
+        auto originalCacheTimestamp = cacheTimestamp_;
         cacheTimestamp_ = timestamp;
         throw libobsensor::invalid_value_exception("Timestamp anomaly detected, timestamp: " + std::to_string(timestamp) +
-            ", cacheTimestamp: " + std::to_string(cacheTimestamp_) + ", maxValidTimestampDiff: " + std::to_string(maxValidTimestampDiff_));
+            ", cacheTimestamp: " + std::to_string(originalCacheTimestamp) + ", maxValidTimestampDiff: " + std::to_string(maxValidTimestampDiff_));
     }
     cacheTimestamp_ = timestamp;
 }
