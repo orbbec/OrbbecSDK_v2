@@ -47,12 +47,15 @@ MaxDevice::~MaxDevice() noexcept {
 
 void MaxDevice::init() {
     OpenNIDeviceBase::init();
-    static const std::vector<OBMultiDeviceSyncMode> supportedSyncModes = { OB_MULTI_DEVICE_SYNC_MODE_FREE_RUN,
-                                                                           OB_MULTI_DEVICE_SYNC_MODE_PRIMARY,
-                                                                           OB_MULTI_DEVICE_SYNC_MODE_SECONDARY_SYNCED,
-    };
-    auto deviceSyncConfigurator = std::make_shared<OpenNIDeviceSyncConfigurator>(this, supportedSyncModes);
-    registerComponent(OB_DEV_COMPONENT_DEVICE_SYNC_CONFIGURATOR, deviceSyncConfigurator);
+    if(deviceInfo_->pid_ == OB_DEVICE_MAX_PRO_PID) {
+        static const std::vector<OBMultiDeviceSyncMode> supportedSyncModes = {
+            OB_MULTI_DEVICE_SYNC_MODE_FREE_RUN,
+            OB_MULTI_DEVICE_SYNC_MODE_PRIMARY,
+            OB_MULTI_DEVICE_SYNC_MODE_SECONDARY_SYNCED,
+        };
+        auto deviceSyncConfigurator = std::make_shared<OpenNIDeviceSyncConfigurator>(this, supportedSyncModes);
+        registerComponent(OB_DEV_COMPONENT_DEVICE_SYNC_CONFIGURATOR, deviceSyncConfigurator);
+    }
 }
 
 void MaxDevice::initSensorList() {
