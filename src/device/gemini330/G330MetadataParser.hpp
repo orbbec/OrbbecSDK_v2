@@ -473,6 +473,7 @@ public:
                 }
                 data_ = parsePropertyValue(static_cast<uint32_t>(propertyId_), (const uint8_t *)valueData);
             }
+            registerSensorStateCallback();
             initPropertyValue_ = false;
         }
 
@@ -532,6 +533,32 @@ private:
         }
 
         return parsedData;
+    }
+
+    void registerSensorStateCallback() {
+        std::vector<DeviceComponentId> compentIds;
+        if(propertyId_ == OB_STRUCT_COLOR_AE_ROI && metadataType_ == OB_FRAME_METADATA_TYPE_AE_ROI_LEFT) {
+            compentIds.push_back(OB_DEV_COMPONENT_COLOR_SENSOR);
+        }
+        else if(propertyId_ == OB_STRUCT_DEPTH_AE_ROI && metadataType_ == OB_FRAME_METADATA_TYPE_AE_ROI_LEFT) {
+            compentIds.push_back(OB_DEV_COMPONENT_DEPTH_SENSOR);
+            compentIds.push_back(OB_DEV_COMPONENT_LEFT_IR_SENSOR);
+            compentIds.push_back(OB_DEV_COMPONENT_RIGHT_IR_SENSOR);
+        }
+
+        if(compentIds.empty()) {
+            return;
+        }
+        for(auto componentId: compentIds) {
+            auto sensor = device_->getComponentT<VideoSensor>(componentId);
+            sensor->registerStreamStateChangedCallback([&](OBStreamState state, const std::shared_ptr<const StreamProfile> &profile) {
+                utils::unusedVar(profile);
+                if(state == STREAM_STATE_STREAMING) {
+                    auto propertyServer = device_->getPropertyServer();
+                    propertyServer->getStructureDataT<OBRegionOfInterest>(propertyId_);
+                }
+            });
+        }
     }
 
 private:
