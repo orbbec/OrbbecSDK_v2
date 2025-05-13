@@ -1483,6 +1483,8 @@ void G330NetDevice::initSensorList() {
                 auto port   = getSourcePort(depthPortInfo);
                 auto sensor = std::make_shared<G330NetDisparitySensor>(this, OB_SENSOR_DEPTH, port, linkSpeed_);
 
+                sensor->enableTimestampAnomalyDetection(false);
+
                 initSensorStreamProfileList(sensor);
                 sensor->updateFormatFilterConfig({ { FormatFilterPolicy::REMOVE, OB_FORMAT_Y8, OB_FORMAT_ANY, nullptr },
                                                    { FormatFilterPolicy::REMOVE, OB_FORMAT_NV12, OB_FORMAT_ANY, nullptr },
@@ -1559,6 +1561,8 @@ void G330NetDevice::initSensorList() {
                     formatFilterConfigs.push_back({ FormatFilterPolicy::REPLACE, OB_FORMAT_NV12, OB_FORMAT_Y16, formatConverter });
                 }
 
+                sensor->enableTimestampAnomalyDetection(false);
+
                 initSensorStreamProfileList(sensor);
                 sensor->updateFormatFilterConfig(formatFilterConfigs);
                 auto depthMdParserContainer_ = getComponentT<IFrameMetadataParserContainer>(OB_DEV_COMPONENT_DEPTH_FRAME_METADATA_CONTAINER);
@@ -1612,6 +1616,8 @@ void G330NetDevice::initSensorList() {
                 if(formatConverter) {
                     formatFilterConfigs.push_back({ FormatFilterPolicy::REPLACE, OB_FORMAT_YV12, OB_FORMAT_Y16, formatConverter });
                 }
+
+                sensor->enableTimestampAnomalyDetection(false);
 
                 initSensorStreamProfileList(sensor);
                 sensor->updateFormatFilterConfig(formatFilterConfigs);
@@ -1684,6 +1690,8 @@ void G330NetDevice::initSensorList() {
                     formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_YUYV, OB_FORMAT_Y8, formatConverter });
                 }
 
+                sensor->enableTimestampAnomalyDetection(false);
+
                 initSensorStreamProfileList(sensor);
                 sensor->updateFormatFilterConfig(formatFilterConfigs);
 
@@ -1739,6 +1747,7 @@ void G330NetDevice::initSensorList() {
                 auto imuStreamer          = getComponentT<ImuStreamer>(OB_DEV_COMPONENT_IMU_STREAMER);
                 auto imuStreamerSharedPtr = imuStreamer.get();
                 auto sensor               = std::make_shared<G330NetAccelSensor>(this, port, imuStreamerSharedPtr);
+                sensor->enableTimestampAnomalyDetection(false);
 
                 auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
                 sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
@@ -1757,6 +1766,7 @@ void G330NetDevice::initSensorList() {
                 auto imuStreamer          = getComponentT<ImuStreamer>(OB_DEV_COMPONENT_IMU_STREAMER);
                 auto imuStreamerSharedPtr = imuStreamer.get();
                 auto sensor               = std::make_shared<G330NetGyroSensor>(this, port, imuStreamerSharedPtr);
+                sensor->enableTimestampAnomalyDetection(false);
 
                 auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
                 sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
@@ -2015,15 +2025,15 @@ std::vector<std::shared_ptr<IFilter>> G330NetDevice::createRecommendedPostProces
 void libobsensor::G330NetDevice::initSensorStreamProfileList(std::shared_ptr<ISensor> sensor) {
     auto              sensorType = sensor->getSensorType();
     OBStreamType      streamType = utils::mapSensorTypeToStreamType(sensorType);
-    StreamProfileList ProfileList;
+    StreamProfileList profileList;
     for(const auto &profile: allNetProfileList_) {
         if(streamType == profile->getType()) {
-            ProfileList.push_back(profile);
+            profileList.push_back(profile);
         }
     }
 
-    if(ProfileList.size() != 0) {
-        sensor->setStreamProfileList(ProfileList);
+    if(profileList.size() != 0) {
+        sensor->setStreamProfileList(profileList);
     }
 }
 

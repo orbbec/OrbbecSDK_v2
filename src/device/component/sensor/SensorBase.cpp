@@ -21,7 +21,7 @@ SensorBase::SensorBase(IDevice *owner, OBSensorType sensorType, const std::share
       recoveryCount_(0),
       noStreamTimeoutMs_(DefaultNoStreamTimeoutMs),
       streamInterruptTimeoutMs_(DefaultStreamInterruptTimeoutMs) {
-    TRY_EXECUTE({ timestampAnomalyDetector_ = std::make_shared<TimestampAnomalyDetector>(owner); });
+        enableTimestampAnomalyDetection(true);
         startStreamRecovery();
       }
 
@@ -311,6 +311,17 @@ void SensorBase::setFrameProcessor(std::shared_ptr<FrameProcessor> frameProcesso
         
         LOG_FREQ_CALC(INFO, 5000, "{}({}): {} Streaming... frameRate={freq}fps", deviceInfo->name_, deviceInfo->deviceSn_, sensorType_);
     });
+}
+
+void SensorBase::enableTimestampAnomalyDetection(bool enable){
+    if(enable) {
+        if(!timestampAnomalyDetector_) {
+            TRY_EXECUTE({ timestampAnomalyDetector_ = std::make_shared<TimestampAnomalyDetector>(owner_); });
+        }
+    }
+    else {
+        timestampAnomalyDetector_.reset();
+    }
 }
 
 void SensorBase::outputFrame(std::shared_ptr<Frame> frame) {

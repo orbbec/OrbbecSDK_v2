@@ -54,6 +54,7 @@ public:
     void setFrameTimestampCalculator(std::shared_ptr<IFrameTimestampCalculator> calculator);
     void setGlobalTimestampCalculator(std::shared_ptr<IFrameTimestampCalculator> calculator);
     void setFrameProcessor(std::shared_ptr<FrameProcessor> frameProcessor);
+    void enableTimestampAnomalyDetection(bool enable);
 
     void setFrameRecordingCallback(FrameCallback callback) override;
 
