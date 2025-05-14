@@ -55,7 +55,7 @@ OpenNIDeviceInfo::OpenNIDeviceInfo(const SourcePortInfoList groupedInfoList) {
 OpenNIDeviceInfo::~OpenNIDeviceInfo() noexcept {}
 
 std::shared_ptr<IDevice> OpenNIDeviceInfo::createDevice() const {
-    if(pid_ == OB_DEVICE_MAX_PRO_PID) {
+    if(pid_ == OB_DEVICE_MAX_PRO_PID || pid_ == OB_DEVICE_DABAI_MAX_PID) {
         return std::make_shared<MaxDevice>(shared_from_this());
     }
     return std::make_shared<OpenNIDeviceBase>(shared_from_this());
