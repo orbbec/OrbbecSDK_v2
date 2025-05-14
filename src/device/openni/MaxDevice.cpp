@@ -12,7 +12,7 @@
 #include "OpenNIPropertyAccessors.hpp"
 #include "OpenNIAlgParamManager.hpp"
 #include "MaxStreamProfileFilter.hpp"
-#include "MaxProDisparitySensor.hpp"
+#include "MaxDisparitySensor.hpp"
 #include "publicfilters/FormatConverterProcess.hpp"
 #include "sensor/video/VideoSensor.hpp"
 #include "sensor/video/DisparityBasedSensor.hpp"
@@ -76,7 +76,7 @@ void MaxDevice::initSensorList() {
             OB_DEV_COMPONENT_DEPTH_SENSOR,
             [this, depthPortInfo]() {
                 auto port   = getSourcePort(depthPortInfo);
-                auto sensor = std::make_shared<MaxProDisparitySensor>(this, OB_SENSOR_DEPTH, port);
+                auto sensor = std::make_shared<MaxDisparitySensor>(this, OB_SENSOR_DEPTH, port);
 
                 /*std::vector<FormatFilterConfig> formatFilterConfigs = {
                     { FormatFilterPolicy::REMOVE, OB_FORMAT_Z16, OB_FORMAT_ANY, nullptr },
@@ -225,7 +225,6 @@ void MaxDevice::initProperties() {
             propertyServer->registerProperty(OB_STRUCT_MULTI_DEVICE_SYNC_CONFIG, "rw", "rw", vendorPropertyAccessor_);
             auto heartBeatPropertyAccessor = std::make_shared<OpenNIHeartBeatPropertyAccessor>(this);
             propertyServer->registerProperty(OB_PROP_HEARTBEAT_BOOL, "rw", "rw", heartBeatPropertyAccessor);
-            // propertyServer->registerProperty(OB_STRUCT_CUSTOMER_DATA, "w", "w", vendorPropertyAccessor_);
         }
     }
 }

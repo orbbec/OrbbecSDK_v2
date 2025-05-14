@@ -13,10 +13,10 @@ typedef struct OpenNIFrameProcessParam {
     int   dstHeight;
 } OpenNIFrameProcessParam;
 
-class MaxProDisparitySensor : public OpenNIDisparitySensor {
+class MaxDisparitySensor : public OpenNIDisparitySensor {
 public:
-    MaxProDisparitySensor(IDevice *owner, OBSensorType sensorType, const std::shared_ptr<ISourcePort> &backend);
-    ~MaxProDisparitySensor() noexcept;
+    MaxDisparitySensor(IDevice *owner, OBSensorType sensorType, const std::shared_ptr<ISourcePort> &backend);
+    ~MaxDisparitySensor() noexcept;
 
     void start(std::shared_ptr<const StreamProfile> sp, FrameCallback callback) override;
 
