@@ -71,6 +71,8 @@ private:
 
 class DepthFrameProcessor : public FrameProcessor {
 public:
+    using FrameProcessor::getPropertyRange;
+
     DepthFrameProcessor(IDevice *owner, std::shared_ptr<FrameProcessorContext> context);
     virtual ~DepthFrameProcessor() noexcept;
 
@@ -88,6 +90,8 @@ private:
 
 class ColorFrameProcessor : public FrameProcessor {
 public:
+    using FrameProcessor::getPropertyRange;
+
     ColorFrameProcessor(IDevice *owner, std::shared_ptr<FrameProcessorContext> context);
     virtual ~ColorFrameProcessor() noexcept = default;
 
@@ -98,6 +102,8 @@ public:
 
 class IRFrameProcessor : public FrameProcessor {
 public:
+    using FrameProcessor::getPropertyRange;
+
     IRFrameProcessor(IDevice *owner, std::shared_ptr<FrameProcessorContext> context, OBSensorType sensorType = OB_SENSOR_IR);
     virtual ~IRFrameProcessor() noexcept = default;
 
@@ -108,6 +114,8 @@ public:
 
 class IRRightFrameProcessor : public FrameProcessor {
 public:
+    using FrameProcessor::getPropertyRange;
+
     IRRightFrameProcessor(IDevice *owner, std::shared_ptr<FrameProcessorContext> context);
     virtual ~IRRightFrameProcessor() noexcept = default;
 

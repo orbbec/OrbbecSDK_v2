@@ -15,7 +15,7 @@ class FemtoMegaINetDevice : public DeviceBase {
 public:
     FemtoMegaINetDevice(const std::shared_ptr<const IDeviceEnumInfo> &info);
     virtual ~FemtoMegaINetDevice() noexcept;
-    std::vector<std::shared_ptr<IFilter>> createRecommendedPostProcessingFilters(OBSensorType type);
+    std::vector<std::shared_ptr<IFilter>> createRecommendedPostProcessingFilters(OBSensorType type) override;
 
 private:
     void init() override;
