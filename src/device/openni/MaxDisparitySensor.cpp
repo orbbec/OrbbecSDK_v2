@@ -1,7 +1,7 @@
 // Copyright (c) Orbbec Inc. All Rights Reserved.
 // Licensed under the MIT License.
 
-#include "MaxProDisparitySensor.hpp"
+#include "MaxDisparitySensor.hpp"
 #include "stream/StreamProfileFactory.hpp"
 #include "component/property/InternalProperty.hpp"
 #include "logger/LoggerInterval.hpp"
@@ -22,12 +22,12 @@ constexpr uint16_t VIRTUAL_PROFILE_HEIGHT_400 = 400;
 constexpr uint16_t VIRTUAL_PROFILE_WIDTH_320  = 320;
 constexpr uint16_t VIRTUAL_PROFILE_HEIGHT_200 = 200;
 
-MaxProDisparitySensor::MaxProDisparitySensor(IDevice *owner, OBSensorType sensorType, const std::shared_ptr<ISourcePort> &backend)
+MaxDisparitySensor::MaxDisparitySensor(IDevice *owner, OBSensorType sensorType, const std::shared_ptr<ISourcePort> &backend)
     : OpenNIDisparitySensor(owner, sensorType, backend), isCropStreamProfile_(false) {}
 
-MaxProDisparitySensor::~MaxProDisparitySensor() noexcept {}
+MaxDisparitySensor::~MaxDisparitySensor() noexcept {}
 
-void MaxProDisparitySensor::start(std::shared_ptr<const StreamProfile> sp, FrameCallback callback) {
+void MaxDisparitySensor::start(std::shared_ptr<const StreamProfile> sp, FrameCallback callback) {
     auto                                 owner          = getOwner();
     auto                                 propertyServer = owner->getPropertyServer();
     std::shared_ptr<const StreamProfile> playStreamProfile = sp;
@@ -93,7 +93,7 @@ void MaxProDisparitySensor::start(std::shared_ptr<const StreamProfile> sp, Frame
     VideoSensor::start(playStreamProfile, callback);
 }
 
-void MaxProDisparitySensor::initProfileVirtualRealMap() {
+void MaxDisparitySensor::initProfileVirtualRealMap() {
     StreamProfileList profileList = getStreamProfileList();
 
     StreamProfileList realProfileList;
@@ -135,7 +135,7 @@ void MaxProDisparitySensor::initProfileVirtualRealMap() {
     }
 }
 
-void MaxProDisparitySensor::setFrameProcessor(std::shared_ptr<FrameProcessor> frameProcessor) {
+void MaxDisparitySensor::setFrameProcessor(std::shared_ptr<FrameProcessor> frameProcessor) {
     if(isStreamActivated()) {
         throw wrong_api_call_sequence_exception("Can not update frame processor while streaming");
     }

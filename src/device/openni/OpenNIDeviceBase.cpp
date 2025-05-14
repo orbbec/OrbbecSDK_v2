@@ -184,13 +184,6 @@ void OpenNIDeviceBase::initProperties() {
     propertyServer->aliasProperty(OB_PROP_IR_EXPOSURE_INT, OB_PROP_DEPTH_EXPOSURE_INT);
     propertyServer->aliasProperty(OB_PROP_IR_GAIN_INT, OB_PROP_DEPTH_GAIN_INT);
 
-    /*
-    auto heartbeatPropertyAccessor = std::make_shared<HeartbeatPropertyAccessor>(this);
-    propertyServer->registerProperty(OB_PROP_HEARTBEAT_BOOL, "rw", "rw", heartbeatPropertyAccessor);
-
-    auto baseLinePropertyAccessor = std::make_shared<BaselinePropertyAccessor>(this);
-    propertyServer->registerProperty(OB_STRUCT_BASELINE_CALIBRATION_PARAM, "r", "r", baseLinePropertyAccessor);*/
-
     registerComponent(OB_DEV_COMPONENT_PROPERTY_SERVER, propertyServer, true);
 }
 
