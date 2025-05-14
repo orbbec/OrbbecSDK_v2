@@ -22,15 +22,10 @@ public:
 
     void initProfileVirtualRealMap();
 
-    void setFrameProcessor(std::shared_ptr<FrameProcessor> frameProcessor);
-
 private:
-    bool isCropStreamProfile_ = false;
-
     std::map<std::shared_ptr<const StreamProfile>, std::shared_ptr<const StreamProfile>> profileVirtualRealMap_;
     std::map<std::shared_ptr<const StreamProfile>, OpenNIFrameProcessParam>              profileProcessParamMap_;
 
-    std::shared_ptr<const StreamProfile> realActivatedStreamProfile_;
 };
 }  // namespace libobs
 

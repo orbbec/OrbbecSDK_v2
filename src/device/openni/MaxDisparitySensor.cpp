@@ -23,7 +23,7 @@ constexpr uint16_t VIRTUAL_PROFILE_WIDTH_320  = 320;
 constexpr uint16_t VIRTUAL_PROFILE_HEIGHT_200 = 200;
 
 MaxDisparitySensor::MaxDisparitySensor(IDevice *owner, OBSensorType sensorType, const std::shared_ptr<ISourcePort> &backend)
-    : OpenNIDisparitySensor(owner, sensorType, backend), isCropStreamProfile_(false) {}
+    : OpenNIDisparitySensor(owner, sensorType, backend) {}
 
 MaxDisparitySensor::~MaxDisparitySensor() noexcept {}
 
@@ -34,16 +34,12 @@ void MaxDisparitySensor::start(std::shared_ptr<const StreamProfile> sp, FrameCal
     OBPropertyValue                      value;
     value.intValue = 1;
 
-    isCropStreamProfile_        = false;
-    realActivatedStreamProfile_ = sp;
     auto inVsp            = sp->as<const VideoStreamProfile>();
     for(const auto &entry: profileVirtualRealMap_) {
         auto virtualSp  = entry.first;
         auto virtualVsp = virtualSp->as<const VideoStreamProfile>();
         if(virtualVsp->getHeight() == inVsp->getHeight() && virtualVsp->getFps() == inVsp->getFps() && virtualVsp->getFormat() == inVsp->getFormat()) {
             playStreamProfile           = entry.second;
-            realActivatedStreamProfile_ = virtualSp;
-            isCropStreamProfile_        = true;
             value.intValue              = 0;
             break;
         }
@@ -133,37 +129,6 @@ void MaxDisparitySensor::initProfileVirtualRealMap() {
             }
         }
     }
-}
-
-void MaxDisparitySensor::setFrameProcessor(std::shared_ptr<FrameProcessor> frameProcessor) {
-    if(isStreamActivated()) {
-        throw wrong_api_call_sequence_exception("Can not update frame processor while streaming");
-    }
-    frameProcessor_ = frameProcessor;
-    frameProcessor_->setCallback([this](std::shared_ptr<Frame> frame) {
-        auto depthFrame = frame->as<DepthFrame>();
-        uint32_t dataSize = (uint32_t)depthFrame->getDataSize();
-        uint32_t w        = depthFrame->getWidth();
-        uint32_t h        = depthFrame->getHeight();
-        LOG_DEBUG("{},{},{}", dataSize, w, h);
-
-        auto              streamProfile     = depthFrame->getStreamProfile();
-        auto              vdStreamProfile   = streamProfile->as<VideoStreamProfile>();
-        OBCameraIntrinsic obCameraIntrinsic = vdStreamProfile->getIntrinsic();
-        LOG_DEBUG("{}", obCameraIntrinsic.cx);
-        OBCameraDistortion obCameraDistortion = vdStreamProfile->getDistortion();
-        LOG_DEBUG("{}", obCameraDistortion.k1);
-        OBExtrinsic obExtrinsic = vdStreamProfile->getExtrinsicTo(streamProfile);
-        LOG_DEBUG("{}", obExtrinsic.rot[0]);
-
-        auto deviceInfo = owner_->getInfo();
-        LOG_FREQ_CALC(DEBUG, 5000, "{}({}): {} frameProcessor_ callback frameRate={freq}fps", deviceInfo->name_, deviceInfo->deviceSn_, sensorType_);
-        if(frameCallback_) {
-            frameCallback_(frame);
-        }
-
-        LOG_FREQ_CALC(INFO, 5000, "{}({}): {} Streaming... frameRate={freq}fps", deviceInfo->name_, deviceInfo->deviceSn_, sensorType_);
-    });
 }
 
 }  // namespace libobsensor
