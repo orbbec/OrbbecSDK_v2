@@ -75,7 +75,8 @@ void G330FrameInterleaveManager::loadFrameInterleave(const std::string &frameInt
     if(std::find(availableFrameInterleaves_.begin(), availableFrameInterleaves_.end(), frameInterleaveName) == availableFrameInterleaves_.end()) {
         throw std::invalid_argument("Invalid frame interleave name: " + frameInterleaveName);
     }
-    auto owner = getOwner();
+    currentFrameInterleave_ = frameInterleaveName;
+    auto owner              = getOwner();
     for(int i = 1; i >= 0; i--) {
         setPropertyValue(owner, OB_PROP_FRAME_INTERLEAVE_CONFIG_INDEX_INT, i);
 
@@ -95,8 +96,6 @@ void G330FrameInterleaveManager::loadFrameInterleave(const std::string &frameInt
             setProperties(laserInterleave_, i);
         }
     }
-
-    currentFrameInterleave_ = frameInterleaveName;
 }
 
 const std::vector<std::string> &G330FrameInterleaveManager::getAvailableFrameInterleaveList() const {
