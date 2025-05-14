@@ -503,6 +503,7 @@ void switchDepthMirror() {
                 if(device->isPropertySupported(OB_PROP_DEPTH_MIRROR_BOOL, OB_PERMISSION_WRITE)) {
                     device->setBoolProperty(OB_PROP_DEPTH_MIRROR_BOOL, !value);
                     if(!value) {
+                        std::cout << "Note: Currently with the D2C(SW) turned on, Depth Mirror will not work!" << std::endl;
                         std::cout << "Depth mirror on!" << std::endl;
                     }
                     else {
@@ -863,6 +864,7 @@ void commandProcess(std::string cmd) {
         switchColorMirror();
     }
     else if(cmd == "depth mirror" || cmd == "dm") {
+
         switchDepthMirror();
     }
     else if(cmd == "ir mirror" || cmd == "im") {
