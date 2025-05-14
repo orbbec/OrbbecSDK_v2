@@ -130,8 +130,9 @@ void PlaybackDevice::initSensorList() {
                                                                   OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT };
             for(auto property: depthProperties) {
                 OBPropertyValue value{};
-                port_->getRecordedPropertyValue(property, &value);
-                frameProcessor->setPropertyValue(property, value);
+                if(port_->getRecordedPropertyValue(property, &value)) {
+                    frameProcessor->setPropertyValue(property, value);
+                }
             }
         }
         else {
@@ -286,7 +287,7 @@ void PlaybackDevice::initProperties() {
     ConditionCheckHandler isHWNoiseSupported = [this]() -> bool {
         OBPropertyValue value;
         bool            isSupported = port_->getRecordedPropertyValue(OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL, &value);
-        return isSupported && isDeviceInSeries(G330DevPids, deviceInfo_->pid_);
+        return isSupported;
     };
 
     // filter properties
@@ -346,6 +347,7 @@ void PlaybackDevice::initProperties() {
     registerPropertyCondition(propertyServer, OB_STRUCT_DEPTH_HDR_CONFIG, "r", "r", vendorAccessor, isG330V4L2Backend);
     registerPropertyCondition(propertyServer, OB_STRUCT_DEPTH_AE_ROI, "r", "r", vendorAccessor, isG330V4L2Backend);
     registerPropertyCondition(propertyServer, OB_STRUCT_DEVICE_TIME, "r", "r", vendorAccessor, isG330V4L2Backend);
+    registerPropertyCondition(propertyServer, OB_PROP_DISP_SEARCH_RANGE_MODE_INT, "r", "r", vendorAccessor, isG330Device);
 
     // Mirror, Flip, Rotation properties
     registerPropertyCondition(propertyServer, OB_PROP_COLOR_MIRROR_BOOL, "rw", "rw", frameTransformAccessor_);

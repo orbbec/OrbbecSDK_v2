@@ -67,7 +67,7 @@ private:
     void writeVersionProperty();
     void writeFilterProperty();
     void writeFrameGeometryProperty();
-    void writeV4l2MetadataProperty();
+    void writeMetadataProperty();
     void writeExposureAndGainProperty();
     void writeCalibrationParamProperty();
     void writeDepthWorkModeProperty();

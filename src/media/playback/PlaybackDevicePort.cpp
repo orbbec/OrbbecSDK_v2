@@ -25,12 +25,12 @@ PlaybackDevicePort::PlaybackDevicePort(const std::string &filePath)
     // check bag file version is valid
     {
         double version = 1.0;
-        auto data = reader_->getPropertyData(versionPropertyId_);
-        if (!data.empty()) {
-            version = *reinterpret_cast<double*>(data.data());
+        auto   data    = reader_->getPropertyData(versionPropertyId_);
+        if(!data.empty()) {
+            version = *reinterpret_cast<double *>(data.data());
         }
 
-        if (utils::validateBagFileVersion(version)) {
+        if(utils::validateBagFileVersion(version)) {
             LOG_DEBUG("Bag file version: {}", version);
         }
         else {
@@ -257,23 +257,26 @@ void PlaybackDevicePort::updateFrameBaseTimestamp(uint64_t frameTimestamp, uint6
 
 bool PlaybackDevicePort::getRecordedPropertyValue(uint32_t propertyId, OBPropertyValue *value) {
     if(!value) {
-        LOG_ERROR("Output value pointer is null for property {}", propertyId);
+        LOG_DEBUG("Value pointer is null for property {}", propertyId);
         return false;
     }
 
     memset(value, 0, sizeof(OBPropertyValue));
     auto it = OBPropertyBaseInfoMap.find(propertyId);
-    if (it == OBPropertyBaseInfoMap.end()) {
-        LOG_WARN("Unsupported property id for current playback device: {}", propertyId);
+    if(it == OBPropertyBaseInfoMap.end()) {
+        LOG_DEBUG("Property {} not found in OBPropertyBaseInfoMap", propertyId);
         return false;
     }
 
-    std::vector<uint8_t> data    = reader_->getPropertyData(propertyId);
-    auto                 proType = it->second.type;
+    std::vector<uint8_t> data = reader_->getPropertyData(propertyId);
+    if(data.empty()) {
+        LOG_DEBUG("No data recorded for property {}", propertyId);
+        return false;
+    }
 
+    auto proType = it->second.type;
     if(proType == OB_BOOL_PROPERTY || proType == OB_INT_PROPERTY) {
         memcpy(&value->intValue, data.data(), data.size());
-        // LOG_DEBUG("Get recorded property value for property id: {}, get as: {}|{}", propertyId, value->intValue, value->floatValue);
     }
     else if(proType == OB_FLOAT_PROPERTY) {
         memcpy(&value->floatValue, data.data(), data.size());
@@ -290,8 +293,9 @@ bool PlaybackDevicePort::getRecordedPropertyRange(uint32_t propertyId, OBPropert
     memset(range, 0, sizeof(OBPropertyRange));
 
     std::vector<uint8_t> data = reader_->getPropertyData(propertyId + rangeOffset_);
-    if (data.size() != sizeof(OBPropertyRange)) {
-        LOG_WARN("Failed to get recorded property range for property id: {}, excepted size: {}, actual size: {}", propertyId, sizeof(OBPropertyRange), data.size());
+    if(data.size() != sizeof(OBPropertyRange)) {
+        LOG_WARN("Failed to get recorded property range for property id: {}, excepted size: {}, actual size: {}", propertyId, sizeof(OBPropertyRange),
+                 data.size());
         return false;
     }
 
@@ -327,7 +331,7 @@ void PlaybackDevicePort::setPlaybackStatusCallback(const PlaybackStatusCallback 
     playbackStatus_.clearGlobalCallbacks();
     playbackStatusCallback_ = callback;
 
-    if (playbackStatusCallback_) {
+    if(playbackStatusCallback_) {
         playbackStatus_.registerGlobalCallback([this]() {
             LOG_DEBUG("Playback status change to {}", static_cast<int>(playbackStatus_.getCurrentState()));
             playbackStatusCallback_(playbackStatus_.getCurrentState());

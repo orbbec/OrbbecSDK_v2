@@ -82,7 +82,7 @@ void RecordDevice::writeAllProperties() {
     writeVersionProperty();
     writeFilterProperty();
     writeFrameGeometryProperty();
-    writeV4l2MetadataProperty();
+    writeMetadataProperty();
     writeExposureAndGainProperty();
     writeCalibrationParamProperty();
     writeDepthWorkModeProperty();
@@ -134,25 +134,25 @@ void RecordDevice::writeFrameGeometryProperty() {
     writePropertyT<int>(OB_PROP_IR_RIGHT_ROTATE_INT);
 }
 
-void RecordDevice::writeV4l2MetadataProperty() {
+void RecordDevice::writeMetadataProperty() {
     if(device_->getInfo()->backendType_ == OB_UVC_BACKEND_TYPE_V4L2
        && std::find(G330DevPids.begin(), G330DevPids.end(), device_->getInfo()->pid_) != G330DevPids.end()) {
         // color sensor property
-        writePropertyT<bool>(OB_PROP_COLOR_AUTO_EXPOSURE_BOOL);
-        writePropertyT<int>(OB_PROP_COLOR_AUTO_EXPOSURE_PRIORITY_INT);
-        writePropertyT<bool>(OB_PROP_COLOR_AUTO_WHITE_BALANCE_BOOL);
-        writePropertyT<int>(OB_PROP_COLOR_WHITE_BALANCE_INT);
-        writePropertyT<int>(OB_PROP_COLOR_BRIGHTNESS_INT);
-        writePropertyT<int>(OB_PROP_COLOR_CONTRAST_INT);
-        writePropertyT<int>(OB_PROP_COLOR_SATURATION_INT);
-        writePropertyT<int>(OB_PROP_COLOR_SHARPNESS_INT);
+        // writePropertyT<bool>(OB_PROP_COLOR_AUTO_EXPOSURE_BOOL);
+        // writePropertyT<int>(OB_PROP_COLOR_AUTO_EXPOSURE_PRIORITY_INT);
+        // writePropertyT<bool>(OB_PROP_COLOR_AUTO_WHITE_BALANCE_BOOL);
+        // writePropertyT<int>(OB_PROP_COLOR_WHITE_BALANCE_INT);
+        // writePropertyT<int>(OB_PROP_COLOR_BRIGHTNESS_INT);
+        // writePropertyT<int>(OB_PROP_COLOR_CONTRAST_INT);
+        // writePropertyT<int>(OB_PROP_COLOR_SATURATION_INT);
+        // writePropertyT<int>(OB_PROP_COLOR_SHARPNESS_INT);
         writePropertyT<int>(OB_PROP_COLOR_BACKLIGHT_COMPENSATION_INT);
-        writePropertyT<int>(OB_PROP_COLOR_HUE_INT);
-        writePropertyT<int>(OB_PROP_COLOR_GAMMA_INT);
-        writePropertyT<int>(OB_PROP_COLOR_POWER_LINE_FREQUENCY_INT);
+        // writePropertyT<int>(OB_PROP_COLOR_HUE_INT);
+        // writePropertyT<int>(OB_PROP_COLOR_GAMMA_INT);
+        // writePropertyT<int>(OB_PROP_COLOR_POWER_LINE_FREQUENCY_INT);
 
         // depth sensor property
-        writePropertyT<bool>(OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL);
+        // writePropertyT<bool>(OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL);
         writePropertyT<int>(OB_PROP_DEPTH_AUTO_EXPOSURE_PRIORITY_INT);
 
         // depth & color struct property
@@ -167,6 +167,7 @@ void RecordDevice::writeV4l2MetadataProperty() {
         writer_->writeProperty(OB_STRUCT_DEPTH_HDR_CONFIG, depthHdrConfig.data(), static_cast<uint32_t>(depthHdrConfig.size()));
         writer_->writeProperty(OB_STRUCT_DEVICE_TIME, deviceTime.data(), static_cast<uint32_t>(deviceTime.size()));
     }
+    writePropertyT<int>(OB_PROP_DISP_SEARCH_RANGE_MODE_INT);
 }
 
 void RecordDevice::writeExposureAndGainProperty() {
