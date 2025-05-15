@@ -281,7 +281,107 @@ void OpenNIAlgParamManager::fetchParamFromDevice() {
 
         }
         else {
-            
+            auto propServer              = owner->getPropertyServer();
+            auto extParam                = propServer->getStructureDataT<OBExtensionParam>(OB_STRUCT_EXTENSION_PARAM);
+            disparityParam_.baseline     = extParam.fDCmosEmitterDistance;
+            disparityParam_.zpd          = extParam.fReferenceDistance;
+            disparityParam_.fx           = extParam.fReferenceDistance / extParam.fReferencePixelSize;
+            disparityParam_.zpps         = extParam.fReferencePixelSize;
+            disparityParam_.bitSize      = 12;
+            disparityParam_.dispIntPlace = 8;
+            disparityParam_.unit         = 10;
+            disparityParam_.dispOffset   = 0;
+            disparityParam_.invalidDisp  = 0;
+            disparityParam_.packMode     = OB_DISP_PACK_OPENNI;
+            disparityParam_.isDualCamera = false;
+            disparityParam_.minDisparity = 0.0f;
+
+            OBCameraParam param    = {};
+            auto          camParam = propServer->getStructureDataT<OBInternalCameraParam>(OB_STRUCT_INTERNAL_CAMERA_PARAM);
+            memcpy(&param.depthIntrinsic, camParam.d_intr_p, sizeof(camParam.d_intr_p));
+            param.depthIntrinsic.width  = 640;
+            param.depthIntrinsic.height = 480;
+            param.depthDistortion.k1    = camParam.d_k[0];
+            param.depthDistortion.k2    = camParam.d_k[1];
+            param.depthDistortion.k3    = camParam.d_k[2];
+            param.depthDistortion.p1    = camParam.d_k[3];
+            param.depthDistortion.p2    = camParam.d_k[4];
+            param.depthDistortion.model = OB_DISTORTION_KANNALA_BRANDT4;
+
+            memcpy(&param.rgbIntrinsic, camParam.c_intr_p, sizeof(camParam.c_intr_p));
+            param.rgbIntrinsic.width  = 640;
+            param.rgbIntrinsic.height = 480;
+            param.rgbDistortion.k1    = camParam.c_k[0];
+            param.rgbDistortion.k2    = camParam.c_k[1];
+            param.rgbDistortion.k3    = camParam.c_k[2];
+            param.rgbDistortion.p1    = camParam.c_k[3];
+            param.rgbDistortion.p2    = camParam.c_k[4];
+            param.rgbDistortion.model = OB_DISTORTION_KANNALA_BRANDT4;
+            memcpy(&param.transform.rot, camParam.d2c_r, sizeof(camParam.d2c_r));
+            memcpy(&param.transform.trans, camParam.d2c_t, sizeof(camParam.d2c_t));
+            param.isMirrored = false;
+
+            for(int i = 0; i < 3; i++) {
+                OBCameraParam realParam       = {};
+                int16_t       paramScaleValue = (int16_t)pow(2, i);
+                memcpy(&realParam, &param, sizeof(param));
+
+                realParam.depthIntrinsic.fx     = realParam.depthIntrinsic.fx / paramScaleValue;
+                realParam.depthIntrinsic.fy     = realParam.depthIntrinsic.fy / paramScaleValue;
+                realParam.depthIntrinsic.cx     = realParam.depthIntrinsic.cx / paramScaleValue;
+                realParam.depthIntrinsic.cy     = realParam.depthIntrinsic.cy / paramScaleValue;
+                realParam.depthIntrinsic.width  = realParam.depthIntrinsic.width / paramScaleValue;
+                realParam.depthIntrinsic.height = realParam.depthIntrinsic.height / paramScaleValue;
+
+                realParam.rgbIntrinsic.fx       = realParam.rgbIntrinsic.fx;
+                realParam.rgbIntrinsic.fy       = realParam.rgbIntrinsic.fy;
+                realParam.rgbIntrinsic.cx       = realParam.rgbIntrinsic.cx;
+                realParam.rgbIntrinsic.cy       = realParam.rgbIntrinsic.cy;
+                realParam.rgbIntrinsic.width    = realParam.rgbIntrinsic.width;
+                realParam.rgbIntrinsic.height   = realParam.rgbIntrinsic.height;
+                calibrationCameraParamList_.push_back(realParam);
+            }
+
+            OBCameraParam realParam2       = {};
+            memcpy(&realParam2, &param, sizeof(param));
+            realParam2.depthIntrinsic.fx     = realParam2.depthIntrinsic.fx * 2;
+            realParam2.depthIntrinsic.fy     = realParam2.depthIntrinsic.fy * 2;
+            realParam2.depthIntrinsic.cx     = realParam2.depthIntrinsic.cx * 2;
+            realParam2.depthIntrinsic.cy     = realParam2.depthIntrinsic.cy * 2;
+            realParam2.depthIntrinsic.width  = realParam2.depthIntrinsic.width * 2;
+            realParam2.depthIntrinsic.height = realParam2.depthIntrinsic.height * 2;
+
+            realParam2.rgbIntrinsic.fx     = realParam2.rgbIntrinsic.fx;
+            realParam2.rgbIntrinsic.fy     = realParam2.rgbIntrinsic.fy;
+            realParam2.rgbIntrinsic.cx     = realParam2.rgbIntrinsic.cx;
+            realParam2.rgbIntrinsic.cy     = realParam2.rgbIntrinsic.cy;
+            realParam2.rgbIntrinsic.width  = realParam2.rgbIntrinsic.width;
+            realParam2.rgbIntrinsic.height = realParam2.rgbIntrinsic.height;
+            calibrationCameraParamList_.push_back(realParam2);
+
+            OBCameraParam realParam = {};
+            memcpy(&realParam, &param, sizeof(param));
+            realParam.depthIntrinsic.fx     = realParam.depthIntrinsic.fx * 2;
+            realParam.depthIntrinsic.fy     = realParam.depthIntrinsic.fy * 2;
+            realParam.depthIntrinsic.cx     = realParam.depthIntrinsic.cx * 2;
+            realParam.depthIntrinsic.cy     = realParam.depthIntrinsic.cy * 2 + 32;
+            realParam.depthIntrinsic.width  = 1280;
+            realParam.depthIntrinsic.height = 1024;
+
+            realParam.rgbIntrinsic.fx     = realParam.rgbIntrinsic.fx;
+            realParam.rgbIntrinsic.fy     = realParam.rgbIntrinsic.fy;
+            realParam.rgbIntrinsic.cx     = realParam.rgbIntrinsic.cx;
+            realParam.rgbIntrinsic.cy     = realParam.rgbIntrinsic.cy;
+            realParam.rgbIntrinsic.width  = realParam.rgbIntrinsic.width;
+            realParam.rgbIntrinsic.height = realParam.rgbIntrinsic.height;
+            calibrationCameraParamList_.push_back(realParam);
+
+            d2cProfileList_ = {
+                { 640, 480, 640, 480, ALIGN_D2C_HW, 0, { 1.0f, 0, 0, 0, 0 } },  { 640, 480, 640, 480, ALIGN_D2C_SW, 0, { 1.0f, 0, 0, 0, 0 } },
+                { 640, 480, 320, 240, ALIGN_D2C_HW, 1, { 2.0f, 0, 0, 0, 0 } },  { 640, 480, 320, 240, ALIGN_D2C_SW, 1, { 2.0f, 0, 0, 0, 0 } },
+                { 640, 480, 160, 120, ALIGN_D2C_HW, 2, { 4.0f, 0, 0, 0, 0 } },  { 640, 480, 160, 120, ALIGN_D2C_SW, 2, { 4.0f, 0, 0, 0, 0 } },
+                { 640, 480, 1280, 960, ALIGN_D2C_SW, 3, { 1.0f, 0, 0, 0, 0 } }, { 640, 480, 1280, 1024, ALIGN_UNSUPPORTED, 4, { 1.0f, 0, 0, 0, 0 } },
+            };
         }
     }
     catch(const std::exception &e) {
@@ -310,12 +410,33 @@ void OpenNIAlgParamManager::registerBasicExtrinsics() {
         basicStreamProfileList_.emplace_back(irBasicStreamProfile);
     }
     else {
-        auto extrinsicMgr            = StreamExtrinsicsManager::getInstance();
-        auto depthBasicStreamProfile = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_DEPTH, OB_FORMAT_ANY, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY);
-        auto irBasicStreamProfile    = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_IR, OB_FORMAT_ANY, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY);
-        extrinsicMgr->registerSameExtrinsics(irBasicStreamProfile, depthBasicStreamProfile);
-        basicStreamProfileList_.emplace_back(depthBasicStreamProfile);
-        basicStreamProfileList_.emplace_back(irBasicStreamProfile);
+        auto monIter = std::find(OpenniMonocularPids.begin(), OpenniMonocularPids.end(), pid);
+        if(monIter != OpenniMonocularPids.end()) {
+            auto extrinsicMgr = StreamExtrinsicsManager::getInstance();
+            auto depthBasicStreamProfile =
+                StreamProfileFactory::createVideoStreamProfile(OB_STREAM_DEPTH, OB_FORMAT_ANY, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY);
+            auto colorBasicStreamProfile =
+                StreamProfileFactory::createVideoStreamProfile(OB_STREAM_COLOR, OB_FORMAT_ANY, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY);
+            auto irBasicStreamProfile = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_IR, OB_FORMAT_ANY, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY);
+
+            if(!calibrationCameraParamList_.empty()) {
+                auto d2cExtrinsic = calibrationCameraParamList_.front().transform;
+                extrinsicMgr->registerExtrinsics(depthBasicStreamProfile, colorBasicStreamProfile, d2cExtrinsic);
+            }
+            extrinsicMgr->registerSameExtrinsics(irBasicStreamProfile, depthBasicStreamProfile);
+            basicStreamProfileList_.emplace_back(depthBasicStreamProfile);
+            basicStreamProfileList_.emplace_back(colorBasicStreamProfile);
+            basicStreamProfileList_.emplace_back(irBasicStreamProfile);
+        }
+        else {
+            auto extrinsicMgr = StreamExtrinsicsManager::getInstance();
+            auto depthBasicStreamProfile =
+                StreamProfileFactory::createVideoStreamProfile(OB_STREAM_DEPTH, OB_FORMAT_ANY, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY);
+            auto irBasicStreamProfile = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_IR, OB_FORMAT_ANY, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY);
+            extrinsicMgr->registerSameExtrinsics(irBasicStreamProfile, depthBasicStreamProfile);
+            basicStreamProfileList_.emplace_back(depthBasicStreamProfile);
+            basicStreamProfileList_.emplace_back(irBasicStreamProfile);
+        }
     }
 }
 

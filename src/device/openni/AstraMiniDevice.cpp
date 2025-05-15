@@ -1,7 +1,7 @@
 // Copyright (c) Orbbec Inc. All Rights Reserved.
 // Licensed under the MIT License.
 
-#include "MaxDevice.hpp"
+#include "AstraMiniDevice.hpp"
 #include "DevicePids.hpp"
 #include "InternalTypes.hpp"
 #include "utils/Utils.hpp"
@@ -11,13 +11,10 @@
 #include "FilterFactory.hpp"
 #include "OpenNIPropertyAccessors.hpp"
 #include "OpenNIAlgParamManager.hpp"
-#include "MaxStreamProfileFilter.hpp"
-#include "MaxDisparitySensor.hpp"
 #include "publicfilters/FormatConverterProcess.hpp"
 #include "sensor/video/VideoSensor.hpp"
 #include "sensor/video/DisparityBasedSensor.hpp"
 #include "timestamp/GlobalTimestampFitter.hpp"
-#include "timestamp/DeviceClockSynchronizer.hpp"
 #include "property/VendorPropertyAccessor.hpp"
 #include "property/UvcPropertyAccessor.hpp"
 #include "property/PropertyServer.hpp"
@@ -25,49 +22,35 @@
 #include "property/FilterPropertyAccessors.hpp"
 #include "property/PrivateFilterPropertyAccessors.hpp"
 #include "monitor/DeviceMonitor.hpp"
-#include "OpenNIDeviceSyncConfigurator.hpp"
+#include "OpenNIDisparitySensor.hpp"
 #include "DevicePids.hpp"
 #include <algorithm>
 
 
 namespace libobsensor {
 
-constexpr uint8_t  INTERFACE_COLOR   = 0;
-constexpr uint8_t  INTERFACE_DEPTH   = 0;
-constexpr uint16_t MAX_PRO_COLOR_PID = 0x0560;
+constexpr uint8_t INTERFACE_DEPTH = 0;
+constexpr uint8_t INTERFACE_COLOR = 4;
 
-MaxDevice::MaxDevice(const std::shared_ptr<const IDeviceEnumInfo> &info) : OpenNIDeviceBase(info) {
+AstraMiniDevice::AstraMiniDevice(const std::shared_ptr<const IDeviceEnumInfo> &info) : OpenNIDeviceBase(info) {
     LOG_INFO("Create {} device.", info->getName());
     init();
 }
 
-MaxDevice::~MaxDevice() noexcept {
+AstraMiniDevice::~AstraMiniDevice() noexcept {
     LOG_INFO("Destroy {} device.", deviceInfo_->name_);
 }
 
-void MaxDevice::init() {
+void AstraMiniDevice::init() {
     OpenNIDeviceBase::init();
-    if(deviceInfo_->pid_ == OB_DEVICE_MAX_PRO_PID) {
-        static const std::vector<OBMultiDeviceSyncMode> supportedSyncModes = {
-            OB_MULTI_DEVICE_SYNC_MODE_FREE_RUN,
-            OB_MULTI_DEVICE_SYNC_MODE_PRIMARY,
-            OB_MULTI_DEVICE_SYNC_MODE_SECONDARY_SYNCED,
-        };
-        auto deviceSyncConfigurator = std::make_shared<OpenNIDeviceSyncConfigurator>(this, supportedSyncModes);
-        registerComponent(OB_DEV_COMPONENT_DEVICE_SYNC_CONFIGURATOR, deviceSyncConfigurator);
-    }
 }
 
-void MaxDevice::initSensorList() {
+void AstraMiniDevice::initSensorList() {
     OpenNIDeviceBase::initSensorList();
-
-    registerComponent(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER, [this]() { return std::make_shared<MaxStreamProfileFilter>(this); });
 
     const auto &sourcePortInfoList = enumInfo_->getSourcePortInfoList();
     auto depthPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(), [](const std::shared_ptr<const SourcePortInfo> &portInfo) {
-        return portInfo->portType == SOURCE_PORT_USB_UVC && std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->infIndex == INTERFACE_DEPTH
-               && (std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->pid == OB_DEVICE_MAX_PRO_PID
-                   || std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->pid == OB_DEVICE_DABAI_MAX_PID);
+        return portInfo->portType == SOURCE_PORT_USB_UVC && std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->infIndex == INTERFACE_DEPTH;
     });
 
     if(depthPortInfoIter != sourcePortInfoList.end()) {
@@ -76,16 +59,7 @@ void MaxDevice::initSensorList() {
             OB_DEV_COMPONENT_DEPTH_SENSOR,
             [this, depthPortInfo]() {
                 auto port   = getSourcePort(depthPortInfo);
-                auto sensor = std::make_shared<MaxDisparitySensor>(this, OB_SENSOR_DEPTH, port);
-
-                /*std::vector<FormatFilterConfig> formatFilterConfigs = {
-                    { FormatFilterPolicy::REMOVE, OB_FORMAT_Z16, OB_FORMAT_ANY, nullptr },
-                };
-                auto formatConverter = getSensorFrameFilter("FrameUnpacker", OB_SENSOR_DEPTH, false);
-                if(formatConverter) {
-                    formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_Y12, OB_FORMAT_Y16, formatConverter });
-                }
-                sensor->updateFormatFilterConfig(formatFilterConfigs);*/
+                auto sensor = std::make_shared<OpenNIDisparitySensor>(this, OB_SENSOR_DEPTH, port);
 
                 auto frameTimestampCalculator = videoFrameTimestampCalculatorCreator_();
                 sensor->setFrameTimestampCalculator(frameTimestampCalculator);
@@ -102,13 +76,8 @@ void MaxDevice::initSensorList() {
                 sensor->setDepthUnit(1.0f);
 
                 sensor->markOutputDisparityFrame(true);
-                sensor->initProfileVirtualRealMap();
 
                 initSensorStreamProfile(sensor);
-
-                auto streamProfileFilter = getComponentT<IStreamProfileFilter>(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER);
-                sensor->setStreamProfileFilter(streamProfileFilter.get());
-
                 return sensor;
             },
             true);
@@ -137,8 +106,7 @@ void MaxDevice::initSensorList() {
     }
 
     auto colorPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(), [](const std::shared_ptr<const SourcePortInfo> &portInfo) {
-        return portInfo->portType == SOURCE_PORT_USB_UVC && std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->infIndex == INTERFACE_COLOR
-               && std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->pid == MAX_PRO_COLOR_PID;
+        return portInfo->portType == SOURCE_PORT_USB_UVC && std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->infIndex == INTERFACE_COLOR;
     });
 
     if(colorPortInfoIter != sourcePortInfoList.end()) {
@@ -156,9 +124,7 @@ void MaxDevice::initSensorList() {
 
                 auto formatConverter = getSensorFrameFilter("FormatConverter", OB_SENSOR_COLOR, false);
                 if(formatConverter) {
-                    formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_YUYV, OB_FORMAT_RGB, formatConverter });
-                    formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_YUYV, OB_FORMAT_Y16, formatConverter });
-                    formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_YUYV, OB_FORMAT_Y8, formatConverter });
+                    formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_UYVY, OB_FORMAT_RGB, formatConverter });
                 }
                 sensor->updateFormatFilterConfig(formatFilterConfigs);
 
@@ -169,9 +135,6 @@ void MaxDevice::initSensorList() {
                 if(frameProcessor) {
                     sensor->setFrameProcessor(frameProcessor.get());
                 }
-
-                auto streamProfileFilter = getComponentT<IStreamProfileFilter>(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER);
-                sensor->setStreamProfileFilter(streamProfileFilter.get());
 
                 initSensorStreamProfile(sensor);
                 return sensor;
@@ -188,7 +151,7 @@ void MaxDevice::initSensorList() {
 
 }
 
-void MaxDevice::initProperties() {
+void AstraMiniDevice::initProperties() {
     OpenNIDeviceBase::initProperties();
 
     auto propertyServer = getPropertyServer();
@@ -218,15 +181,12 @@ void MaxDevice::initProperties() {
         }
 
         if(sensor == OB_SENSOR_DEPTH) {
-            propertyServer->registerProperty(OB_PROP_TEMPERATURE_COMPENSATION_BOOL, "rw", "rw", vendorPropertyAccessor_);
-            propertyServer->registerProperty(OB_PROP_IR_CHANNEL_DATA_SOURCE_INT, "rw", "rw", vendorPropertyAccessor_);
-            propertyServer->registerProperty(OB_PROP_IR_LONG_EXPOSURE_BOOL, "rw", "rw", vendorPropertyAccessor_);
-            propertyServer->registerProperty(OB_PROP_DEPTH_LOAD_ENGINE_GROUP_PARAM_INT, "", "w", vendorPropertyAccessor_);
-            if(deviceInfo_->pid_ == OB_DEVICE_MAX_PRO_PID) {
-                propertyServer->registerProperty(OB_STRUCT_MULTI_DEVICE_SYNC_CONFIG, "rw", "rw", vendorPropertyAccessor_);
-            }
-            auto heartBeatPropertyAccessor = std::make_shared<OpenNIHeartBeatPropertyAccessor>(this);
-            propertyServer->registerProperty(OB_PROP_HEARTBEAT_BOOL, "rw", "rw", heartBeatPropertyAccessor);
+            propertyServer->registerProperty(OB_STRUCT_EXTENSION_PARAM, "", "r", vendorPropertyAccessor_);
+            propertyServer->registerProperty(OB_STRUCT_INTERNAL_CAMERA_PARAM, "", "r", vendorPropertyAccessor_);
+            //propertyServer->registerProperty(OB_PROP_TEMPERATURE_COMPENSATION_BOOL, "rw", "rw", vendorPropertyAccessor_);
+            //propertyServer->registerProperty(OB_PROP_IR_LONG_EXPOSURE_BOOL, "rw", "rw", vendorPropertyAccessor_);
+            //auto heartBeatPropertyAccessor = std::make_shared<OpenNIHeartBeatPropertyAccessor>(this);
+            //propertyServer->registerProperty(OB_PROP_HEARTBEAT_BOOL, "rw", "rw", heartBeatPropertyAccessor);
         }
     }
 }
