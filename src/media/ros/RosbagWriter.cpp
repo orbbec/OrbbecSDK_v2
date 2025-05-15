@@ -30,13 +30,18 @@ RosWriter::~RosWriter() {
 
 void RosWriter::writeFrame(const OBSensorType &sensorType, std::shared_ptr<const Frame> curFrame) {
     std::lock_guard<std::mutex> lock(writeMutex_);
+    auto curTime = curFrame->getTimeStampUsec();
+    if (curTime == 0) {
+        LOG_WARN("Invalid timestamp frame! curFrame device timestamp: {}", curFrame->getTimeStampUsec());
+        return;
+    }
+
     if (minFrameTime_ == 0 && maxFrameTime_ == 0) {
-        minFrameTime_ = curFrame->getTimeStampUsec();
-        maxFrameTime_ = curFrame->getTimeStampUsec();
+        minFrameTime_ = maxFrameTime_ = curTime;
     }
     else {
-        minFrameTime_ = std::min(minFrameTime_, curFrame->getTimeStampUsec());
-        maxFrameTime_ = std::max(maxFrameTime_, curFrame->getTimeStampUsec());
+        minFrameTime_ = std::min(minFrameTime_, curTime);
+        maxFrameTime_ = std::max(maxFrameTime_, curTime);
     }
 
     if(sensorType == OB_SENSOR_GYRO || sensorType == OB_SENSOR_ACCEL) {
