@@ -314,10 +314,10 @@ template <typename T> void fillPixelGap(const int *u, const int *v, const int wi
         }
     }
     else {
-        int v0 = v[0] < 0 ? 0 : v[0];
-        int u0 = u[0] < 0 ? 0 : u[0];
-        int v1 = v[1] < (height - 1) ? v[1] : (height - 1);
-        int u1 = u[1] < (width - 1) ? u[1] : (width - 1);
+        int u0 = std::max(0, std::min(u[0], u[1]));
+        int v0 = std::max(0, std::min(v[0], v[1]));
+        int u1 = std::min(std::max(u[0], u[1]), width - 1);
+        int v1 = std::min(std::max(v[0], v[1]), height - 1);
         for(int vr = v0; vr <= v1; vr++) {
             for(int ur = u0; ur <= u1; ur++) {
                 int pos = vr * width + ur;
@@ -884,10 +884,10 @@ void AlignImpl::FillMultiChannelWithoutSSE(const float *pixelx_f, const float *p
     if(out_depth) {
         int u_rgb1 = static_cast<int>(pixelx_f[1] + 0.5f);
         int v_rgb1 = static_cast<int>(pixely_f[1] + 0.5f);
-        int u0     = std::max(0, u_rgb0);
-        int v0     = std::max(0, v_rgb0);
-        int u1     = std::min(u_rgb1, width - 1);
-        int v1     = std::min(v_rgb1, height - 1);
+        int u0  = std::max(0, std::min(u_rgb0, u_rgb1));
+        int v0     = std::max(0, std::min(v_rgb0, v_rgb1));
+        int u1     = std::min(std::max(u_rgb0, u_rgb1), width - 1);
+        int v1     = std::min(std::max(v_rgb0, v_rgb1), height - 1);
 
         uint16_t cur_depth = static_cast<uint16_t>(std::min(dst[0], dst[1]));
 
@@ -1293,10 +1293,10 @@ inline void AlignImpl::FillMultiChannelWithSSE(const float *x, const float *y, c
             continue;
 
         if(out_depth) {
-            int v0 = std::max(0, v_rgb[0]);
-            int u0 = std::max(0, u_rgb[0]);
-            int v1 = std::min(v_rgb[1], height - 1);
-            int u1 = std::min(u_rgb[1], width - 1);
+            int u0 = std::max(0, std::min(u_rgb[0], u_rgb[1]));
+            int v0 = std::max(0, std::min(v_rgb[0], v_rgb[1]));
+            int u1 = std::min(std::max(u_rgb[0], u_rgb[1]), width - 1);
+            int v1 = std::min(std::max(v_rgb[0], v_rgb[1]), height - 1);
 
             for(int vr = v0; vr <= v1; vr++) {
                 int row_start = vr * width;
