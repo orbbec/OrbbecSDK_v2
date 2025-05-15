@@ -95,10 +95,8 @@ const std::vector<uint16_t> FemtoBoltDevPids = {
 // OpenNI Devices
 const uint16_t OB_DEVICE_DCW_PID            = 0x0659;
 const uint16_t OB_DEVICE_DW_PID             = 0x065a;
-const uint16_t OB_DEVICE_ASTRA_MINI_PRO_PID = 0x065b;
-const uint16_t OB_DEVICE_GEMINI_E_PID       = 0x065b;
+const uint16_t OB_DEVICE_GEMINI_E_PID       = 0x065c;
 const uint16_t OB_DEVICE_GEMINI_E_LITE_PID  = 0x065d;
-const uint16_t OB_DEVICE_MINI_S_PRO_PID     = 0x065e;
 const uint16_t OB_DEVICE_DABAI_MAX_PID      = 0x069a;
 const uint16_t OB_DEVICE_DABAI_DW2_PID      = 0x069f;
 const uint16_t OB_DEVICE_GEMINI_EW_LITE_PID = 0x06a7;
@@ -106,6 +104,8 @@ const uint16_t OB_DEVICE_DABAI_DCW2_PID     = 0x06a0;
 const uint16_t OB_DEVICE_GEMINI_EW_PID      = 0x06a6;
 const uint16_t OB_DEVICE_MAX_PRO_PID        = 0x069e;
 const uint16_t OB_DEVICE_GEMINI_UW_PID      = 0x06aa;
+const uint16_t OB_DEVICE_MINI_PRO_PID       = 0x065b;
+const uint16_t OB_DEVICE_MINI_S_PRO_PID     = 0x065e;
 
 
 const std::vector<uint16_t> OpenNIDevPids = {
@@ -165,6 +165,13 @@ const std::vector<uint16_t> OpenNIDualPids = {
     0x06a6,  // Gemini EW
     0x069e,  // Dabai Max Pro
     0x06aa,  // Gemini UW
+};
+
+//monocular
+const std::vector<uint16_t> OpenniMonocularPids = {
+    0x0407,  // Astra mini S
+    0x065b,  // Astra Mini Pro
+    0x065e,  // Astra mini s pro
 };
 
 }  // namespace libobsensor

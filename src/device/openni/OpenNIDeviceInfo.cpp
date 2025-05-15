@@ -7,6 +7,7 @@
 #include "utils/Utils.hpp"
 #include "OpenNIDeviceBase.hpp"
 #include "MaxDevice.hpp"
+#include "AstraMiniDevice.hpp"
 #include "exception/ObException.hpp"
 #include "ethernet/NetPortGroup.hpp"
 #include "ethernet/RTSPStreamPort.hpp"
@@ -18,7 +19,7 @@ namespace libobsensor {
 
 const std::map<int, std::string> OpenNIDeviceNameMap = { { 0x060e, "DaBai" },          { 0x0655, "DaBai Pro" },      { 0x0659, "DaBai DCW" },
                                                          { 0x065a, "DaBai DW" },       { 0x065c, "Gemini E" },       { 0x065d, "Gemini E Lite" },
-                                                         { 0x065e, "AstraMiniSPro" },  { 0x065b, "Astra Mini Pro" }, { 0x069a, "DaBai Max" },
+                                                         { 0x065e, "Astra Mini S Pro" },  { 0x065b, "Astra Mini Pro" }, { 0x069a, "DaBai Max" },
                                                          { 0x069e, "DaBai Max Pro" },  { 0x06aa, "Gemini UW" },      { 0x069f, "DaBai DW2" },
                                                          { 0x06a7, "Gemini EW Lite" }, { 0x06a0, "DaBai DCW2" },     { 0x06a6, "Gemini EW" } };
 
@@ -58,6 +59,11 @@ std::shared_ptr<IDevice> OpenNIDeviceInfo::createDevice() const {
     if(pid_ == OB_DEVICE_MAX_PRO_PID || pid_ == OB_DEVICE_DABAI_MAX_PID) {
         return std::make_shared<MaxDevice>(shared_from_this());
     }
+
+    if(pid_ == OB_DEVICE_MINI_PRO_PID || pid_ == OB_DEVICE_MINI_S_PRO_PID) {
+        return std::make_shared<AstraMiniDevice>(shared_from_this());
+    }
+
     return std::make_shared<OpenNIDeviceBase>(shared_from_this());
 }
 
@@ -69,7 +75,7 @@ std::vector<std::shared_ptr<IDeviceEnumInfo>> OpenNIDeviceInfo::pickDevices(cons
     auto groups = utils::groupVector<std::shared_ptr<const SourcePortInfo>>(depthRemainder, GroupUSBSourcePortByUrl);
     auto iter   = groups.begin();
     while(iter != groups.end()) {
-        if(iter->size() == 2) {
+        if(iter->size() >= 2) {
             auto item = iter->begin();
             auto depthPortInfo = std::dynamic_pointer_cast<const USBSourcePortInfo>(*item);
             if(utils::isMatchDeviceByPid(depthPortInfo->pid, OpenniAstraPids)) {

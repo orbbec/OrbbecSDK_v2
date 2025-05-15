@@ -412,4 +412,25 @@ typedef struct {
     uint64_t errorCode;  // Same with heartbeat state. See OBDeviceErrorCode for details
 } OBDeviceErrorState;
 
+/**
+ * @brief Camera extension parameters (mainly used for disparity to depth conversion)
+ */
+typedef struct {
+    float fDCmosEmitterDistance;  //baseline
+    float fDCmosRCmosDistance;    //dual baseline
+    float fReferenceDistance;     //zpd baseline
+    float fReferencePixelSize;    //zpps baseline
+} OBExtensionParam;
+
+typedef struct {
+    float    d_intr_p[4];    // Depth camera intrinsic parameters: [fx, fy, cx, cy]
+    float    c_intr_p[4];    // Color camera intrinsic parameters: [fx, fy, cx, cy]
+    float    d2c_r[9];       // Rotation matrix from depth camera to color camera: [r00, r01, r02; r10, r11, r12; r20, r21, r22]
+    float    d2c_t[3];       // Translation matrix from depth camera to color camera: [t1, t2, t3]
+    float    d_k[5];         // Depth camera distortion parameters: [k1, k2, p1, p2, k3]
+    float    c_k[5];         // Color camera distortion parameters: [k1, k2, p1, p2, k3]
+    //uint32_t c_img_size[2];  // Color calibration resolution: [color_width, color_height]
+    //uint32_t d_img_size[2];  // Depth calibration resolution: [ir_width, ir_height]
+} OBInternalCameraParam;
+
 #pragma pack(pop)
