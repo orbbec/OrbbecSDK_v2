@@ -29,6 +29,7 @@ RosWriter::~RosWriter() {
 }
 
 void RosWriter::writeFrame(const OBSensorType &sensorType, std::shared_ptr<const Frame> curFrame) {
+    std::lock_guard<std::mutex> lock(writeMutex_);
     if (minFrameTime_ == 0 && maxFrameTime_ == 0) {
         minFrameTime_ = curFrame->getTimeStampUsec();
         maxFrameTime_ = curFrame->getTimeStampUsec();
@@ -46,7 +47,6 @@ void RosWriter::writeFrame(const OBSensorType &sensorType, std::shared_ptr<const
     }
 }
 void RosWriter::writeImuFrame(const OBSensorType &sensorType, std::shared_ptr<const Frame> curFrame) {
-    std::lock_guard<std::mutex> lock(writeMutex_);
     if(startTime_ == 0) {
         startTime_ = curFrame->getTimeStampUsec();
     }
@@ -87,7 +87,6 @@ void RosWriter::writeImuFrame(const OBSensorType &sensorType, std::shared_ptr<co
 }
 
 void RosWriter::writeVideoFrame(const OBSensorType &sensorType, std::shared_ptr<const Frame> curFrame) {
-    std::lock_guard<std::mutex> lock(writeMutex_);
     if(startTime_ == 0) {
         startTime_ = curFrame->getTimeStampUsec();
     }
