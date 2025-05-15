@@ -77,6 +77,7 @@ public:
 
     bool                 getRecordedPropertyValue(uint32_t propertyId, OBPropertyValue *value);
     bool                 getRecordedPropertyRange(uint32_t propertyId, OBPropertyRange *range);
+    bool                 isPropertySupported(uint32_t propertyId) const;
     std::vector<uint8_t> getRecordedStructData(uint32_t propertyId);
 
 private:

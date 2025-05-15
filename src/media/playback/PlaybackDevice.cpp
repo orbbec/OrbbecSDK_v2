@@ -261,57 +261,40 @@ void PlaybackDevice::initProperties() {
     registerComponent(OB_DEV_COMPONENT_PROPERTY_SERVER, propertyServer, true);
 
     // common imu properties
-    registerPropertyCondition(propertyServer, OB_STRUCT_GET_ACCEL_PRESETS_ODR_LIST, "", "r", vendorAccessor);
-    registerPropertyCondition(propertyServer, OB_STRUCT_GET_ACCEL_PRESETS_FULL_SCALE_LIST, "", "r", vendorAccessor);
-    registerPropertyCondition(propertyServer, OB_STRUCT_GET_GYRO_PRESETS_ODR_LIST, "", "r", vendorAccessor);
-    registerPropertyCondition(propertyServer, OB_STRUCT_GET_GYRO_PRESETS_FULL_SCALE_LIST, "", "r", vendorAccessor);
+    registerPropertyCondition(propertyServer, OB_STRUCT_GET_ACCEL_PRESETS_ODR_LIST, "", "r", vendorAccessor, nullptr, true);
+    registerPropertyCondition(propertyServer, OB_STRUCT_GET_ACCEL_PRESETS_FULL_SCALE_LIST, "", "r", vendorAccessor, nullptr, true);
+    registerPropertyCondition(propertyServer, OB_STRUCT_GET_GYRO_PRESETS_ODR_LIST, "", "r", vendorAccessor, nullptr, true);
+    registerPropertyCondition(propertyServer, OB_STRUCT_GET_GYRO_PRESETS_FULL_SCALE_LIST, "", "r", vendorAccessor, nullptr, true);
     // These properties are set as writable only to ensure compatibility with the IMU sensor startup.
-    registerPropertyCondition(propertyServer, OB_PROP_ACCEL_ODR_INT, "rw", "rw", vendorAccessor);
-    registerPropertyCondition(propertyServer, OB_PROP_ACCEL_FULL_SCALE_INT, "rw", "rw", vendorAccessor);
-    registerPropertyCondition(propertyServer, OB_PROP_ACCEL_SWITCH_BOOL, "rw", "rw", vendorAccessor);
-    registerPropertyCondition(propertyServer, OB_PROP_GYRO_ODR_INT, "rw", "rw", vendorAccessor);
-    registerPropertyCondition(propertyServer, OB_PROP_GYRO_FULL_SCALE_INT, "rw", "rw", vendorAccessor);
-    registerPropertyCondition(propertyServer, OB_PROP_GYRO_SWITCH_BOOL, "rw", "rw", vendorAccessor);
-
-    ConditionCheckHandler isNonFemtoDevice = [this]() -> bool {
-        return !isDeviceInSeries(FemtoBoltDevPids, deviceInfo_->pid_) && !isDeviceInSeries(FemtoMegaDevPids, deviceInfo_->pid_);
-    };
-    ConditionCheckHandler isNonFemtoAndNonG210Device = [this]() -> bool {
-        return !isDeviceInSeries(FemtoBoltDevPids, deviceInfo_->pid_) && !isDeviceInSeries(FemtoMegaDevPids, deviceInfo_->pid_)
-               && !isDeviceInSeries({ 0x0808, 0x0809 }, deviceInfo_->pid_);
-    };
-    ConditionCheckHandler isG330V4L2Backend = [this]() -> bool {
-        return deviceInfo_->backendType_ == OB_UVC_BACKEND_TYPE_V4L2 && isDeviceInSeries(G330DevPids, deviceInfo_->pid_);
-    };
-    ConditionCheckHandler isG330Device       = [this]() -> bool { return isDeviceInSeries(G330DevPids, deviceInfo_->pid_); };
-    ConditionCheckHandler isHWNoiseSupported = [this]() -> bool {
-        OBPropertyValue value;
-        bool            isSupported = port_->getRecordedPropertyValue(OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL, &value);
-        return isSupported;
-    };
+    registerPropertyCondition(propertyServer, OB_PROP_ACCEL_ODR_INT, "rw", "rw", vendorAccessor, nullptr, true);
+    registerPropertyCondition(propertyServer, OB_PROP_ACCEL_FULL_SCALE_INT, "rw", "rw", vendorAccessor, nullptr, true);
+    registerPropertyCondition(propertyServer, OB_PROP_ACCEL_SWITCH_BOOL, "rw", "rw", vendorAccessor, nullptr, true);
+    registerPropertyCondition(propertyServer, OB_PROP_GYRO_ODR_INT, "rw", "rw", vendorAccessor, nullptr, true);
+    registerPropertyCondition(propertyServer, OB_PROP_GYRO_FULL_SCALE_INT, "rw", "rw", vendorAccessor, nullptr, true);
+    registerPropertyCondition(propertyServer, OB_PROP_GYRO_SWITCH_BOOL, "rw", "rw", vendorAccessor, nullptr, true);
 
     // filter properties
-    registerPropertyCondition(propertyServer, OB_PROP_DISPARITY_TO_DEPTH_BOOL, "r", "r", filterAccessor, isNonFemtoDevice);
-    registerPropertyCondition(propertyServer, OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL, "rw", "rw", filterAccessor, isNonFemtoDevice);
-    registerPropertyCondition(propertyServer, OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL, "rw", "rw", filterAccessor, isNonFemtoAndNonG210Device);
-    registerPropertyCondition(propertyServer, OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_SPECKLE_SIZE_INT, "rw", "rw", filterAccessor, isNonFemtoAndNonG210Device);
-    registerPropertyCondition(propertyServer, OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT, "rw", "rw", filterAccessor, isNonFemtoAndNonG210Device);
-    registerPropertyCondition(propertyServer, OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL, "r", "r", vendorAccessor, isHWNoiseSupported);
-    registerPropertyCondition(propertyServer, OB_PROP_HW_NOISE_REMOVE_FILTER_THRESHOLD_FLOAT, "r", "r", vendorAccessor, isHWNoiseSupported);
+    registerPropertyCondition(propertyServer, OB_PROP_DISPARITY_TO_DEPTH_BOOL, "r", "r", filterAccessor);
+    registerPropertyCondition(propertyServer, OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL, "rw", "rw", filterAccessor);
+    registerPropertyCondition(propertyServer, OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL, "rw", "rw", filterAccessor);
+    registerPropertyCondition(propertyServer, OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_SPECKLE_SIZE_INT, "rw", "rw", filterAccessor);
+    registerPropertyCondition(propertyServer, OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT, "rw", "rw", filterAccessor);
+    registerPropertyCondition(propertyServer, OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL, "r", "r", vendorAccessor);
+    registerPropertyCondition(propertyServer, OB_PROP_HW_NOISE_REMOVE_FILTER_THRESHOLD_FLOAT, "r", "r", vendorAccessor);
 
     // Exposure properties
     // Depth sensor properties
-    registerPropertyCondition(propertyServer, OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL, "r", "r", vendorAccessor, isNonFemtoDevice);
+    registerPropertyCondition(propertyServer, OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL, "r", "r", vendorAccessor);
     registerPropertyCondition(propertyServer, OB_PROP_DEPTH_EXPOSURE_INT, "r", "r", vendorAccessor);
-    registerPropertyCondition(propertyServer, OB_PROP_DEPTH_GAIN_INT, "r", "r", vendorAccessor, isNonFemtoDevice);
-    registerPropertyCondition(propertyServer, OB_PROP_DEPTH_AUTO_EXPOSURE_PRIORITY_INT, "r", "r", vendorAccessor, isG330Device);
+    registerPropertyCondition(propertyServer, OB_PROP_DEPTH_GAIN_INT, "r", "r", vendorAccessor);
+    registerPropertyCondition(propertyServer, OB_PROP_DEPTH_AUTO_EXPOSURE_PRIORITY_INT, "r", "r", vendorAccessor);
     registerPropertyCondition(propertyServer, OB_PROP_DEPTH_ALIGN_HARDWARE_BOOL, "r", "r", vendorAccessor);
     // Color sensor properties
     registerPropertyCondition(propertyServer, OB_PROP_COLOR_POWER_LINE_FREQUENCY_INT, "r", "r", vendorAccessor);
     registerPropertyCondition(propertyServer, OB_PROP_COLOR_AUTO_EXPOSURE_BOOL, "r", "r", vendorAccessor);
     registerPropertyCondition(propertyServer, OB_PROP_COLOR_AUTO_WHITE_BALANCE_BOOL, "r", "r", vendorAccessor);
-    registerPropertyCondition(propertyServer, OB_PROP_COLOR_AE_MAX_EXPOSURE_INT, "r", "r", vendorAccessor, isG330Device);
-    registerPropertyCondition(propertyServer, OB_PROP_COLOR_AUTO_EXPOSURE_PRIORITY_INT, "r", "r", vendorAccessor, isG330Device);
+    registerPropertyCondition(propertyServer, OB_PROP_COLOR_AE_MAX_EXPOSURE_INT, "r", "r", vendorAccessor);
+    registerPropertyCondition(propertyServer, OB_PROP_COLOR_AUTO_EXPOSURE_PRIORITY_INT, "r", "r", vendorAccessor);
     registerPropertyCondition(propertyServer, OB_PROP_COLOR_EXPOSURE_INT, "r", "r", vendorAccessor);
     registerPropertyCondition(propertyServer, OB_PROP_COLOR_GAIN_INT, "r", "r", vendorAccessor);
     registerPropertyCondition(propertyServer, OB_PROP_COLOR_WHITE_BALANCE_INT, "r", "r", vendorAccessor);
@@ -319,35 +302,24 @@ void PlaybackDevice::initProperties() {
     registerPropertyCondition(propertyServer, OB_PROP_COLOR_SHARPNESS_INT, "r", "r", vendorAccessor);
     registerPropertyCondition(propertyServer, OB_PROP_COLOR_SATURATION_INT, "r", "r", vendorAccessor);
     registerPropertyCondition(propertyServer, OB_PROP_COLOR_CONTRAST_INT, "r", "r", vendorAccessor);
-    registerPropertyCondition(propertyServer, OB_PROP_COLOR_GAMMA_INT, "r", "r", vendorAccessor, isG330Device);
-    registerPropertyCondition(propertyServer, OB_PROP_COLOR_HUE_INT, "r", "r", vendorAccessor, isG330Device);
+    registerPropertyCondition(propertyServer, OB_PROP_COLOR_GAMMA_INT, "r", "r", vendorAccessor);
+    registerPropertyCondition(propertyServer, OB_PROP_COLOR_HUE_INT, "r", "r", vendorAccessor);
     // IR sensor properties
-    registerPropertyCondition(propertyServer, OB_PROP_IR_AUTO_EXPOSURE_BOOL, "r", "r", vendorAccessor, isNonFemtoDevice);
-    registerPropertyCondition(propertyServer, OB_PROP_IR_AE_MAX_EXPOSURE_INT, "r", "r", vendorAccessor, isG330Device);
-    registerPropertyCondition(propertyServer, OB_PROP_IR_BRIGHTNESS_INT, "r", "r", vendorAccessor, isG330Device);
+    registerPropertyCondition(propertyServer, OB_PROP_IR_AUTO_EXPOSURE_BOOL, "r", "r", vendorAccessor);
+    registerPropertyCondition(propertyServer, OB_PROP_IR_AE_MAX_EXPOSURE_INT, "r", "r", vendorAccessor);
+    registerPropertyCondition(propertyServer, OB_PROP_IR_BRIGHTNESS_INT, "r", "r", vendorAccessor);
     registerPropertyCondition(propertyServer, OB_PROP_IR_EXPOSURE_INT, "r", "r", vendorAccessor);
-    registerPropertyCondition(propertyServer, OB_PROP_IR_GAIN_INT, "r", "r", vendorAccessor, isNonFemtoDevice);
+    registerPropertyCondition(propertyServer, OB_PROP_IR_GAIN_INT, "r", "r", vendorAccessor);
 
     // G330 metadata properties(v4l2 backend only)
     // Color sensor properties
-    registerPropertyCondition(propertyServer, OB_PROP_COLOR_AUTO_EXPOSURE_BOOL, "r", "r", vendorAccessor, isG330V4L2Backend);
-    registerPropertyCondition(propertyServer, OB_PROP_COLOR_AUTO_WHITE_BALANCE_BOOL, "r", "r", vendorAccessor, isG330V4L2Backend);
-    registerPropertyCondition(propertyServer, OB_PROP_COLOR_WHITE_BALANCE_INT, "r", "r", vendorAccessor, isG330V4L2Backend);
-    registerPropertyCondition(propertyServer, OB_PROP_COLOR_BRIGHTNESS_INT, "r", "r", vendorAccessor, isG330V4L2Backend);
-    registerPropertyCondition(propertyServer, OB_PROP_COLOR_CONTRAST_INT, "r", "r", vendorAccessor, isG330V4L2Backend);
-    registerPropertyCondition(propertyServer, OB_PROP_COLOR_SATURATION_INT, "r", "r", vendorAccessor, isG330V4L2Backend);
-    registerPropertyCondition(propertyServer, OB_PROP_COLOR_SHARPNESS_INT, "r", "r", vendorAccessor, isG330V4L2Backend);
-    registerPropertyCondition(propertyServer, OB_PROP_COLOR_BACKLIGHT_COMPENSATION_INT, "r", "r", vendorAccessor, isG330V4L2Backend);
-    registerPropertyCondition(propertyServer, OB_PROP_COLOR_HUE_INT, "r", "r", vendorAccessor, isG330V4L2Backend);
-    registerPropertyCondition(propertyServer, OB_PROP_COLOR_GAMMA_INT, "r", "r", vendorAccessor, isG330V4L2Backend);
-    registerPropertyCondition(propertyServer, OB_PROP_COLOR_POWER_LINE_FREQUENCY_INT, "r", "r", vendorAccessor, isG330V4L2Backend);
-    registerPropertyCondition(propertyServer, OB_STRUCT_COLOR_AE_ROI, "r", "r", vendorAccessor, isG330V4L2Backend);
+    registerPropertyCondition(propertyServer, OB_PROP_COLOR_BACKLIGHT_COMPENSATION_INT, "r", "r", vendorAccessor);
+    registerPropertyCondition(propertyServer, OB_STRUCT_COLOR_AE_ROI, "r", "r", vendorAccessor);
     // Depth sensor properties
-    registerPropertyCondition(propertyServer, OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL, "r", "r", vendorAccessor, isG330V4L2Backend);
-    registerPropertyCondition(propertyServer, OB_STRUCT_DEPTH_HDR_CONFIG, "r", "r", vendorAccessor, isG330V4L2Backend);
-    registerPropertyCondition(propertyServer, OB_STRUCT_DEPTH_AE_ROI, "r", "r", vendorAccessor, isG330V4L2Backend);
-    registerPropertyCondition(propertyServer, OB_STRUCT_DEVICE_TIME, "r", "r", vendorAccessor, isG330V4L2Backend);
-    registerPropertyCondition(propertyServer, OB_PROP_DISP_SEARCH_RANGE_MODE_INT, "r", "r", vendorAccessor, isG330Device);
+    registerPropertyCondition(propertyServer, OB_STRUCT_DEPTH_HDR_CONFIG, "r", "r", vendorAccessor);
+    registerPropertyCondition(propertyServer, OB_STRUCT_DEPTH_AE_ROI, "r", "r", vendorAccessor);
+    registerPropertyCondition(propertyServer, OB_STRUCT_DEVICE_TIME, "r", "r", vendorAccessor);
+    registerPropertyCondition(propertyServer, OB_PROP_DISP_SEARCH_RANGE_MODE_INT, "r", "r", vendorAccessor);
 
     // Mirror, Flip, Rotation properties
     registerPropertyCondition(propertyServer, OB_PROP_COLOR_MIRROR_BOOL, "rw", "rw", frameTransformAccessor_);
@@ -374,8 +346,13 @@ std::vector<std::shared_ptr<IFilter>> PlaybackDevice::createRecommendedPostProce
 }
 
 void PlaybackDevice::registerPropertyCondition(std::shared_ptr<PropertyServer> server, uint32_t propertyId, const std::string &userPermsStr,
-                                               const std::string &intPermsStr, std::shared_ptr<IPropertyAccessor> accessor, ConditionCheckHandler condition) {
+                                               const std::string &intPermsStr, std::shared_ptr<IPropertyAccessor> accessor, ConditionCheckHandler condition,
+                                               bool skipSupportCheck) {
     if(condition && !condition()) {
+        return;
+    }
+
+    if(!skipSupportCheck && !port_->isPropertySupported(propertyId)) {
         return;
     }
 

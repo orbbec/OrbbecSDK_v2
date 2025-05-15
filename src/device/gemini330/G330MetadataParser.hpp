@@ -424,17 +424,19 @@ public:
             }
         }
 
-        auto propertyServer = device->getPropertyServer();
-        if(propertyServer->isPropertySupported(propertyId_, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
-            propertyServer->registerAccessCallback(
+        auto propertyServer = device_->getPropertyServer();
+        if (propertyServer) {
+            propertyServer_ = propertyServer.get();
+        }
+        if(propertyServer_ && propertyServer_->isPropertySupported(propertyId_, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
+            propertyServer_->registerAccessCallback(
                 propertyId_, [this, type](uint32_t propertyId, const uint8_t *data, size_t dataSize, PropertyOperationType operationType) {
                     utils::unusedVar(dataSize);
                     utils::unusedVar(operationType);
                     if(propertyId != static_cast<uint32_t>(propertyId_)) {
                         return;
                     }
-                    auto propertyServer = device_->getPropertyServer();
-                    auto propertyItem   = propertyServer->getPropertyItem(propertyId_, PROP_ACCESS_USER);
+                    auto propertyItem   = propertyServer_->getPropertyItem(propertyId_, PROP_ACCESS_USER);
                     if(propertyItem.type == OB_STRUCT_PROPERTY) {
                         data_ = parseStructurePropertyValue(type, propertyId, data);
                     }
@@ -486,7 +488,7 @@ public:
     bool isSupported(const uint8_t *metadata, size_t dataSize) override {
         utils::unusedVar(metadata);
         utils::unusedVar(dataSize);
-        return true;
+        return propertyServer_->isPropertySupported(propertyId_, PROP_OP_READ, PROP_ACCESS_USER);
     }
 
 private:
@@ -573,6 +575,7 @@ private:
     FrameMetadataModifier modifier_;
 
     std::atomic<bool> initPropertyValue_;
+    std::shared_ptr<IPropertyServer> propertyServer_;
 };
 
 class G330ColorMetadataParser : public G330MetadataParserBase {

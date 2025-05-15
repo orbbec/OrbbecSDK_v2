@@ -161,7 +161,10 @@ void PlaybackFilterPropertyAccessor::getPropertyValue(uint32_t propertyId, OBPro
 
 void PlaybackFilterPropertyAccessor::getPropertyRange(uint32_t propertyId, OBPropertyRange *range) {
     switch(propertyId) {
-    case OB_PROP_DISPARITY_TO_DEPTH_BOOL:
+    case OB_PROP_DISPARITY_TO_DEPTH_BOOL: {
+        auto playPort = std::dynamic_pointer_cast<PlaybackDevicePort>(port_);
+        playPort->getRecordedPropertyRange(OB_PROP_DISPARITY_TO_DEPTH_BOOL, range);
+    } break;
     case OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL:
     case OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL:
     case OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_SPECKLE_SIZE_INT:

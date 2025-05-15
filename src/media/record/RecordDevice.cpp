@@ -156,16 +156,18 @@ void RecordDevice::writeMetadataProperty() {
         writePropertyT<int>(OB_PROP_DEPTH_AUTO_EXPOSURE_PRIORITY_INT);
 
         // depth & color struct property
-        auto server         = device_->getPropertyServer();
-        auto depthAeRoi     = server->getStructureData(OB_STRUCT_DEPTH_AE_ROI, PROP_ACCESS_USER);
-        auto colorAeRoi     = server->getStructureData(OB_STRUCT_COLOR_AE_ROI, PROP_ACCESS_USER);
-        auto depthHdrConfig = server->getStructureData(OB_STRUCT_DEPTH_HDR_CONFIG, PROP_ACCESS_USER);
-        auto deviceTime     = server->getStructureData(OB_STRUCT_DEVICE_TIME, PROP_ACCESS_INTERNAL);
+        std::vector<std::pair<OBPropertyID, PropertyAccessType>> propertyList = { { OB_STRUCT_DEPTH_AE_ROI, PROP_ACCESS_USER },
+                                                                                  { OB_STRUCT_COLOR_AE_ROI, PROP_ACCESS_USER },
+                                                                                  { OB_STRUCT_DEPTH_HDR_CONFIG, PROP_ACCESS_USER },
+                                                                                  { OB_STRUCT_DEVICE_TIME, PROP_ACCESS_INTERNAL } };
 
-        writer_->writeProperty(OB_STRUCT_DEPTH_AE_ROI, depthAeRoi.data(), static_cast<uint32_t>(depthAeRoi.size()));
-        writer_->writeProperty(OB_STRUCT_COLOR_AE_ROI, colorAeRoi.data(), static_cast<uint32_t>(colorAeRoi.size()));
-        writer_->writeProperty(OB_STRUCT_DEPTH_HDR_CONFIG, depthHdrConfig.data(), static_cast<uint32_t>(depthHdrConfig.size()));
-        writer_->writeProperty(OB_STRUCT_DEVICE_TIME, deviceTime.data(), static_cast<uint32_t>(deviceTime.size()));
+        auto server = device_->getPropertyServer();
+        for(const auto &property: propertyList) {
+            if(server->isPropertySupported(property.first, PROP_OP_READ, property.second)) {
+                auto data = server->getStructureData(property.first, property.second);
+                writer_->writeProperty(property.first, data.data(), static_cast<uint32_t>(data.size()));
+            }
+        }
     }
     writePropertyT<int>(OB_PROP_DISP_SEARCH_RANGE_MODE_INT);
 }

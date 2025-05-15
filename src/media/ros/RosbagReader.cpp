@@ -377,4 +377,8 @@ std::chrono::nanoseconds RosReader::getCurTime() {
     return static_cast<std::chrono::nanoseconds>(sensorIterator_->getTime().toNSec() - startTime_.toNSec());
 }
 
+bool RosReader::isPropertySupported(uint32_t propertyId) const {
+    return propertyList_.count(propertyId);
+}
+
 }  // namespace libobsensor

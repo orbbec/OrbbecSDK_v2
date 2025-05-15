@@ -46,6 +46,7 @@ public:
     virtual std::vector<OBSensorType>      getSensorTypeList() const override;
     virtual std::chrono::nanoseconds       getCurTime() override;
     virtual std::vector<uint8_t>           getPropertyData(uint32_t propertyId) override;
+    virtual bool                           isPropertySupported(uint32_t propertyId) const override;
 
     virtual std::shared_ptr<Frame> readNextData() override;
     virtual void                   seekToTime(const std::chrono::nanoseconds &seekTime) override;

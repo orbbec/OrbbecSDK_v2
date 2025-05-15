@@ -343,6 +343,10 @@ OBPlaybackStatus PlaybackDevicePort::getCurrentPlaybackStatus() const {
     return playbackStatus_.getCurrentState();
 }
 
+bool PlaybackDevicePort::isPropertySupported(uint32_t propertyId) const {
+    return reader_->isPropertySupported(propertyId);
+}
+
 // For override virtual function, the following code is not implemented
 void PlaybackDevicePort::startStream(MutableFrameCallback callback) {
     (void)callback;

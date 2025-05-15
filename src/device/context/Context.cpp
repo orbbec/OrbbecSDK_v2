@@ -80,6 +80,9 @@ void Context::logExtensionsCommitHashes() {
         { "firmwareupdater", { "/firmwareupdater/", "firmwareupdater" } },
     };
 
+    auto cwd = utils::getCurrentWorkDirectory();
+    LOG_DEBUG("Current working directory: {}", cwd);
+
     for(const auto &libInfo: extensionsMap) {
         try {
             std::string              moduleLoadPath     = EnvConfig::getExtensionsDirectory() + libInfo.second.first;
