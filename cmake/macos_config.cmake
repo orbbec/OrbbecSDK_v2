@@ -50,5 +50,6 @@ execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpmachine
                 OUTPUT_VARIABLE MACHINE)
 
 set(OB_BUILD_MACOS ON)
-set(CMAKE_INSTALL_NAME_DIR "@loader_path")
+set(CMAKE_MACOSX_RPATH ON)
+set(CMAKE_INSTALL_NAME_DIR "@rpath")
 
