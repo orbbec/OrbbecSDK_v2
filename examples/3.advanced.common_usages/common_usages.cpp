@@ -41,6 +41,7 @@ std::recursive_mutex          deviceMutex;
 std::thread inputWatchThread;
 
 bool streamStarted = false;
+bool irRightMirrorSupport = false;
 
 std::map<OBSensorType, std::shared_ptr<ob::VideoStreamProfile>> profilesMap;
 std::shared_ptr<ob::VideoStreamProfile>                         depthProfile = nullptr;
@@ -95,6 +96,7 @@ int main(void) try {
         }
     }
 
+    irRightMirrorSupport = device->isPropertySupported(OB_PROP_IR_RIGHT_MIRROR_BOOL, OB_PERMISSION_READ_WRITE);
     printUsage();
 
     inputWatchThread = std::thread(inputWatcher);
@@ -539,7 +541,22 @@ void switchIRMirror() {
                     }
                 }
             }
+            else {
+                std::cerr << "IR  mirror switch property is not supported." << std::endl;
+            }
+        }
+        catch(ob::Error &e) {
+            std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\ntype:" << e.getExceptionType()
+                      << std::endl;
+            exit(EXIT_FAILURE);
+        }
+    }
+}
 
+void switchIRRightMirror() {
+    std::unique_lock<std::recursive_mutex> lk(deviceMutex);
+    if(device) {
+        try {
             if(device->isPropertySupported(OB_PROP_IR_RIGHT_MIRROR_BOOL, OB_PERMISSION_READ)) {
                 bool value = device->getBoolProperty(OB_PROP_IR_RIGHT_MIRROR_BOOL);
                 if(device->isPropertySupported(OB_PROP_IR_RIGHT_MIRROR_BOOL, OB_PERMISSION_WRITE)) {
@@ -552,7 +569,6 @@ void switchIRMirror() {
                     }
                 }
             }
-
             else {
                 std::cerr << "IR  mirror switch property is not supported." << std::endl;
             }
@@ -808,6 +824,9 @@ void printUsage() {
     std::cout << "    inc depth gain / dgi - increase Depth/IR gain value" << std::endl;
     std::cout << "    dec depth gain / dgd - decrease Depth/IR gain value" << std::endl;
     std::cout << "    ir mirror / im - on/off Ir mirror" << std::endl;
+    if(irRightMirrorSupport) {
+        std::cout << "    ir right mirror / irm - on/off Ir right mirror" << std::endl;
+    }
 
     std::cout << "--------------------------------" << std::endl;
     std::cout << "    help / ? - print usage" << std::endl;
@@ -869,6 +888,9 @@ void commandProcess(std::string cmd) {
     }
     else if(cmd == "ir mirror" || cmd == "im") {
         switchIRMirror();
+    }
+    else if(cmd == " ir right mirror" || cmd == "irm") {
+        switchIRRightMirror();
     }
     else if(cmd == "help" || cmd == "?") {
         printUsage();
