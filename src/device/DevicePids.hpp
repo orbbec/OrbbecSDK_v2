@@ -106,6 +106,7 @@ const uint16_t OB_DEVICE_MAX_PRO_PID        = 0x069e;
 const uint16_t OB_DEVICE_GEMINI_UW_PID      = 0x06aa;
 const uint16_t OB_DEVICE_MINI_PRO_PID       = 0x065b;
 const uint16_t OB_DEVICE_MINI_S_PRO_PID     = 0x065e;
+const uint16_t OB_DEVICE_ASTRA_PRO2_PID     = 0x069d;
 
 
 const std::vector<uint16_t> OpenNIDevPids = {
@@ -124,6 +125,7 @@ const std::vector<uint16_t> OpenNIDevPids = {
     0x06a6,  // Gemini EW
     0x069e,  // Dabai Max Pro
     0x06aa,  // Gemini UW
+    0x069d,  // Astra Pro2
 };
 
 const std::vector<uint16_t> OpenniAstraPids = {
@@ -134,6 +136,7 @@ const std::vector<uint16_t> OpenniAstraPids = {
     0x065e,  // Astra mini s pro
     0x069a,  // Dabai Max
     0x069f,  // Dabai DW2
+    0x069d,  // Astra Pro2
     0x06a7,   // Gemini EW Lite
 };
 
@@ -172,6 +175,7 @@ const std::vector<uint16_t> OpenniMonocularPids = {
     0x0407,  // Astra mini S
     0x065b,  // Astra Mini Pro
     0x065e,  // Astra mini s pro
+    0x069d,  // Astra Pro2
 };
 
 }  // namespace libobsensor
