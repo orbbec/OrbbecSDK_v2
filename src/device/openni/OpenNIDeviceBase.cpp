@@ -177,6 +177,8 @@ void OpenNIDeviceBase::initProperties() {
             propertyServer->registerProperty(OB_RAW_DATA_DUAL_CAMERA_PARAMS_0, "", "r", vendorPropertyAccessor_);
             propertyServer->registerProperty(OB_RAW_DATA_DUAL_CAMERA_PARAMS_1, "", "r", vendorPropertyAccessor_);
             propertyServer->registerProperty(OB_RAW_DATA_DUAL_CAMERA_PARAMS_2, "", "r", vendorPropertyAccessor_);
+            propertyServer->registerProperty(OB_STRUCT_EXTENSION_PARAM, "", "r", vendorPropertyAccessor_);
+            propertyServer->registerProperty(OB_STRUCT_INTERNAL_CAMERA_PARAM, "", "r", vendorPropertyAccessor_);
         }
     }
 
