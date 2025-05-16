@@ -23,6 +23,7 @@
 #include "property/PrivateFilterPropertyAccessors.hpp"
 #include "monitor/DeviceMonitor.hpp"
 #include "OpenNIDisparitySensor.hpp"
+#include "AstraMiniSensorStreamStrategy.hpp"
 #include "DevicePids.hpp"
 #include <algorithm>
 
@@ -147,6 +148,8 @@ void AstraMiniDevice::initSensorList() {
         });
     }
 
+    auto sensorStreamStrategy = std::make_shared<AstraMiniSensorStreamStrategy>(this);
+    registerComponent(OB_DEV_COMPONENT_SENSOR_STREAM_STRATEGY, sensorStreamStrategy);
 }
 
 void AstraMiniDevice::initProperties() {

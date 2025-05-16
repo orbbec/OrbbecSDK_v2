@@ -440,4 +440,24 @@ void OpenNIAlgParamManager::registerBasicExtrinsics() {
     }
 }
 
+void OpenNIAlgParamManager::bindDisparityParam(std::vector<std::shared_ptr<const StreamProfile>> streamProfileList) {
+    auto dispParam    = getDisparityParam();
+    auto intrinsicMgr = StreamIntrinsicsManager::getInstance();
+    for(const auto &sp: streamProfileList) {
+        if(!sp->is<DisparityBasedStreamProfile>()) {
+            continue;
+        }
+
+        OBDisparityParam disparityParam = {0};
+        memcpy(&disparityParam, &dispParam, sizeof(OBDisparityParam));
+        auto vsp = sp->as<VideoStreamProfile>();
+        if(vsp->getType() == OB_STREAM_DEPTH) {
+            if(vsp->getFormat() == OB_FORMAT_Y11) {
+                disparityParam.bitSize = 11;
+            }
+        }
+        intrinsicMgr->registerDisparityBasedStreamDisparityParam(sp, disparityParam);
+    }
+}
+
 }  // namespace libobsensor
