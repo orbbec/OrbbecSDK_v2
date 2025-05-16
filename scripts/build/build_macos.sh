@@ -131,7 +131,7 @@ if [ "${MERGE_LIB}" != "0" ]; then
     OLD_PATH_X64=${INSTALL_DIR_X64}/lib/${SDK_LIB_NAME}
     NEW_PATH=${INSTALL_DIR_UNIVERSAL}/lib/${SDK_LIB_NAME}
     lipo -create "${OLD_PATH_ARM64}" "${OLD_PATH_X64}" -output "${NEW_PATH}" || { echo 'Failed to merge arm64 and x86_64 libraries to one'; exit 1; }
-    cp -fr "${NEW_PATH}" "$INSTALL_DIR_UNIVERSAL/bin/$SDK_LIB_NAME"
+    
     # merge other files, such as ob_benchmark
     lipo -create "${INSTALL_DIR_ARM64}/bin/ob_benchmark" "${INSTALL_DIR_X64}/bin/ob_benchmark" -output "${INSTALL_DIR_UNIVERSAL}/bin/ob_benchmark" || { echo 'Failed to merge arm64 and x86_64 libraries to one'; exit 1; }
 
