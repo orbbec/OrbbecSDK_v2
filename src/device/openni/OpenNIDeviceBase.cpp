@@ -24,6 +24,7 @@
 #include "property/PrivateFilterPropertyAccessors.hpp"
 #include "firmwareupdater/FirmwareUpdater.hpp"
 #include "firmwareupdater/firmwareupdateguard/FirmwareUpdateGuards.hpp"
+#include "DevicePids.hpp"
 #include <algorithm>
 
 
@@ -160,7 +161,9 @@ void OpenNIDeviceBase::initProperties() {
                 return vendorPropertyAccessor;
             });
 
-            propertyServer->registerProperty(OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL, "rw", "rw", vendorPropertyAccessor_);
+            if(deviceInfo_->pid_ != OB_DEVICE_MINI_PRO_PID && deviceInfo_->pid_ != OB_DEVICE_ASTRA_PRO2_PID) {
+                propertyServer->registerProperty(OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL, "rw", "rw", vendorPropertyAccessor_);
+            }
             propertyServer->registerProperty(OB_PROP_DEPTH_EXPOSURE_INT, "rw", "rw", vendorPropertyAccessor_);
             propertyServer->registerProperty(OB_PROP_DEPTH_GAIN_INT, "rw", "rw", vendorPropertyAccessor_);
             propertyServer->registerProperty(OB_PROP_LASER_BOOL, "rw", "rw", vendorPropertyAccessor_);
@@ -182,7 +185,9 @@ void OpenNIDeviceBase::initProperties() {
         }
     }
 
-    propertyServer->aliasProperty(OB_PROP_IR_AUTO_EXPOSURE_BOOL, OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL);
+    if(deviceInfo_->pid_ != OB_DEVICE_MINI_PRO_PID && deviceInfo_->pid_ != OB_DEVICE_ASTRA_PRO2_PID) {
+        propertyServer->aliasProperty(OB_PROP_IR_AUTO_EXPOSURE_BOOL, OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL);
+    }
     propertyServer->aliasProperty(OB_PROP_IR_EXPOSURE_INT, OB_PROP_DEPTH_EXPOSURE_INT);
     propertyServer->aliasProperty(OB_PROP_IR_GAIN_INT, OB_PROP_DEPTH_GAIN_INT);
 
