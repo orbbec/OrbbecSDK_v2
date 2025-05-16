@@ -27,5 +27,7 @@ target_sources(
 	${CMAKE_CURRENT_LIST_DIR}/AstraMiniDevice.hpp
 	${CMAKE_CURRENT_LIST_DIR}/OpenNIDeviceSyncConfigurator.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OpenNIDeviceSyncConfigurator.hpp
+	${CMAKE_CURRENT_LIST_DIR}/AstraMiniSensorStreamStrategy.cpp
+	${CMAKE_CURRENT_LIST_DIR}/AstraMiniSensorStreamStrategy.hpp
 )
 
