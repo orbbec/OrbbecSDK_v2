@@ -107,15 +107,22 @@ bool EnvConfig::getStringValue(const std::string &nodePathName, std::string &t) 
 std::string EnvConfig::extensionsDir_ = "extensions";
 std::string EnvConfig::currentWorkDir_ = "./";
 
-const std::string &EnvConfig::getExtensionsDirectory() {
-    if(currentWorkDir_ == "./") {
-        auto currentWorkDir = utils::getCurrentWorkDirectory();
-        if(currentWorkDir != "") {
-            currentWorkDir_ = currentWorkDir;
+const std::string& EnvConfig::getExtensionsDirectory() {
+    static std::string cachedPath = []() {
+        auto extensionPath = currentWorkDir_ + extensionsDir_;
+        // when the extension path is empty, use the current working directory
+        if (extensionPath == "./extensions" || extensionPath == "./") {
+            auto currentWorkDir = utils::getCurrentWorkDirectory();
+            if (!currentWorkDir.empty()) {
+                extensionsDir_ = extensionsDir_.empty() ? "extensions" : extensionsDir_;
+                return utils::joinPaths(currentWorkDir, extensionsDir_);
+            }
         }
-        currentWorkDir_ = utils::joinPaths(currentWorkDir_, extensionsDir_);
-    }
-    return currentWorkDir_;
+        
+        return extensionsDir_;
+    }();
+    
+    return cachedPath;
 }
 
 void EnvConfig::setExtensionsDirectory(const std::string &dir) {
