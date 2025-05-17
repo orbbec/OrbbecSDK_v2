@@ -131,11 +131,12 @@ void CVWindow::close() {
 }
 
 void CVWindow::destroyWindow() {
-    if(!isWindowDestroyed_){
+    if(!isWindowDestroyed_) {
         cv::destroyWindow(name_);
         cv::waitKey(1);
         isWindowDestroyed_ = true;
-    }else{
+    }
+    else {
         std::cout << "CVWindows has been destroyed!" << std::endl;
     }
 }
@@ -266,7 +267,7 @@ void CVWindow::arrangeFrames() {
         }
         else if(arrangeMode_ == ARRANGE_ONE_ROW) {
             for(auto &item: matGroups_) {
-                auto &  mat       = item.second.second;
+                auto   &mat       = item.second.second;
                 cv::Mat resizeMat = resizeMatKeepAspectRatio(mat, static_cast<int>(width_ / matGroups_.size()), height_);
                 if(renderMat.dims > 0 && renderMat.cols > 0 && renderMat.rows > 0) {
                     cv::hconcat(renderMat, resizeMat, renderMat);
@@ -278,7 +279,7 @@ void CVWindow::arrangeFrames() {
         }
         else if(arrangeMode_ == ARRANGE_ONE_COLUMN) {
             for(auto &item: matGroups_) {
-                auto &  mat       = item.second.second;
+                auto   &mat       = item.second.second;
                 cv::Mat resizeMat = resizeMatKeepAspectRatio(mat, width_, static_cast<int>(height_ / matGroups_.size()));
                 if(renderMat.dims > 0 && renderMat.cols > 0 && renderMat.rows > 0) {
                     cv::vconcat(renderMat, resizeMat, renderMat);
@@ -386,6 +387,9 @@ cv::Mat CVWindow::visualize(std::shared_ptr<const ob::Frame> frame) {
             cv::Mat rawMat(videoFrame->getHeight(), videoFrame->getWidth(), CV_8UC2, videoFrame->getData());
             cv::cvtColor(rawMat, rstMat, cv::COLOR_YUV2BGR_YUY2);
         } break;
+        case OB_FORMAT_BGR: {
+            rstMat = cv::Mat(videoFrame->getHeight(), videoFrame->getWidth(), CV_8UC3, videoFrame->getData()).clone();
+        } break;
         case OB_FORMAT_RGB: {
             cv::Mat rawMat(videoFrame->getHeight(), videoFrame->getWidth(), CV_8UC3, videoFrame->getData());
             cv::cvtColor(rawMat, rstMat, cv::COLOR_RGB2BGR);
@@ -405,6 +409,16 @@ cv::Mat CVWindow::visualize(std::shared_ptr<const ob::Frame> frame) {
         case OB_FORMAT_I420: {
             cv::Mat rawMat(videoFrame->getHeight() * 3 / 2, videoFrame->getWidth(), CV_8UC1, videoFrame->getData());
             cv::cvtColor(rawMat, rstMat, cv::COLOR_YUV2BGR_I420);
+        } break;
+        case OB_FORMAT_Y8: {
+            cv::Mat gray(videoFrame->getHeight(), videoFrame->getWidth(), CV_8UC1, videoFrame->getData());
+            cv::cvtColor(gray, rstMat, cv::COLOR_GRAY2BGR);
+        } break;
+        case OB_FORMAT_Y16: {
+            cv::Mat gray16(videoFrame->getHeight(), videoFrame->getWidth(), CV_16UC1, videoFrame->getData());
+            cv::Mat gray8;
+            gray16.convertTo(gray8, CV_8UC1, 255.0 / 65535.0);
+            cv::cvtColor(gray8, rstMat, cv::COLOR_GRAY2BGR);
         } break;
         default:
             break;
