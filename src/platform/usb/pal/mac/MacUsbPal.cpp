@@ -85,9 +85,27 @@ std::string parseDevicePath(libusb_device *usbDevice) {
     return usb_bus + "-" + port_path.str() + "-" + usb_dev;
 }
 
+bool checkDevice(libusb_device *device) {
+    struct libusb_device_descriptor desc;
+    auto res = libusb_get_device_descriptor(device, &desc);
+    if (res==0) {
+        if (desc.idProduct==0x066B) {
+            LOG_WARN("Femto Bolt is unavailable on macOS duo to Depth Engine");
+            return false;
+        }
+    }
+    // other: default is available
+    return true;
+}
+
 int deviceArrivalCallback(libusb_context *ctx, libusb_device *device, libusb_hotplug_event event, void *user_data) {
     (void)ctx;
     (void)event;
+    
+    if (!checkDevice(device)) {
+        return 0;
+    }
+    
     auto watcher = (LibusbDeviceWatcher *)user_data;
     LOG_DEBUG("Device arrival event occurred");
     watcher->callback_(OB_DEVICE_ARRIVAL, parseDevicePath(device));
@@ -97,6 +115,11 @@ int deviceArrivalCallback(libusb_context *ctx, libusb_device *device, libusb_hot
 int deviceRemovedCallback(libusb_context *ctx, libusb_device *device, libusb_hotplug_event event, void *user_data) {
     (void)ctx;
     (void)event;
+    
+    if (!checkDevice(device)) {
+        return 0;
+    }
+    
     auto watcher = (LibusbDeviceWatcher *)user_data;
     LOG_DEBUG("Device removed event occurred");
     watcher->callback_(OB_DEVICE_REMOVED, parseDevicePath(device));

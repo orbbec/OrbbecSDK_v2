@@ -361,6 +361,13 @@ const std::vector<UsbInterfaceInfo> &UsbEnumeratorLibusb::queryUsbInterfaces() {
             continue;
         }
 
+#if defined(OS_MACOS)
+        // filter out Femto Bolt device
+        if(desc.idProduct == 0x066B) {
+            LOG_WARN("Femto Bolt is unavailable on macOS duo to Depth Engine");
+            continue;
+        }
+#endif
         // todo: remove interface info from devInterfaceList_ when device is removed
         auto path  = getDevicePath(device);
         bool found = false;
