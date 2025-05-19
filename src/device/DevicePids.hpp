@@ -98,6 +98,7 @@ const uint16_t OB_DEVICE_DW_PID             = 0x065a;
 const uint16_t OB_DEVICE_GEMINI_E_PID       = 0x065c;
 const uint16_t OB_DEVICE_GEMINI_E_LITE_PID  = 0x065d;
 const uint16_t OB_DEVICE_DABAI_MAX_PID      = 0x069a;
+const uint16_t OB_DEVICE_DABAI_DC1_PID      = 0x0657;
 const uint16_t OB_DEVICE_DABAI_DW2_PID      = 0x069f;
 const uint16_t OB_DEVICE_GEMINI_EW_LITE_PID = 0x06a7;
 const uint16_t OB_DEVICE_DABAI_DCW2_PID     = 0x06a0;
@@ -112,6 +113,7 @@ const uint16_t OB_DEVICE_ASTRA_PRO2_PID     = 0x069d;
 const std::vector<uint16_t> OpenNIDevPids = {
     0x060e,  // Dabai
     0x0614,  // Gemini
+    0x0657,  // Dabai DC1
     0x0659,  // Dabai DCW
     0x065a,  // Dabai DW
     0x065b,  // Astra Mini Pro
@@ -157,6 +159,7 @@ const std::vector<uint16_t> OpenniRgbPids = {
 
 const std::vector<uint16_t> OpenNIDualPids = {
     0x060e,  // Dabai
+    0x0657,  // Dabai DC1
     0x0659,  // Dabai DCW
     0x065a,  // Dabai DW
     0x065c,  // Gemini E
