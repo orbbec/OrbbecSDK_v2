@@ -372,7 +372,7 @@ const std::vector<UsbInterfaceInfo> &UsbEnumeratorLibusb::queryUsbInterfaces() {
         auto path  = getDevicePath(device);
         bool found = false;
         for(auto devInfoIter = devInterfaceList_.begin(); devInfoIter != devInterfaceList_.end();) {
-            if(devInfoIter->url == path) {
+            if(devInfoIter->url == path && devInfoIter->pid == desc.idProduct) {
                 tempInfoList.push_back(*devInfoIter);
                 found = true;
             }
