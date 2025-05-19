@@ -6,6 +6,7 @@
 #include "DevicePids.hpp"
 #include "utils/Utils.hpp"
 #include "OpenNIDeviceBase.hpp"
+#include "DaBaiDevice.hpp"
 #include "MaxDevice.hpp"
 #include "AstraMiniDevice.hpp"
 #include "exception/ObException.hpp"
@@ -18,10 +19,10 @@
 namespace libobsensor {
 
 const std::map<int, std::string> OpenNIDeviceNameMap = {
-    { 0x060e, "DaBai" },          { 0x0655, "DaBai Pro" },     { 0x0659, "DaBai DCW" },        { 0x065a, "DaBai DW" },
-    { 0x065c, "Gemini E" },       { 0x065d, "Gemini E Lite" }, { 0x065e, "Astra Mini S Pro" }, { 0x065b, "Astra Mini Pro" },
-    { 0x069a, "DaBai Max" },      { 0x069e, "DaBai Max Pro" }, { 0x06aa, "Gemini UW" },        { 0x069f, "DaBai DW2" },
-    { 0x06a7, "Gemini EW Lite" }, { 0x06a0, "DaBai DCW2" },    { 0x06a6, "Gemini EW" },        { 0x069d, "Astra Pro2" }
+    { 0x060e, "DaBai" },         { 0x0655, "DaBai Pro" },        { 0x0659, "DaBai DCW" },      { 0x065a, "DaBai DW" },   { 0x065c, "Gemini E" },
+    { 0x065d, "Gemini E Lite" }, { 0x065e, "Astra Mini S Pro" }, { 0x065b, "Astra Mini Pro" }, { 0x069a, "DaBai Max" },  { 0x069e, "DaBai Max Pro" },
+    { 0x06aa, "Gemini UW" },     { 0x069f, "DaBai DW2" },        { 0x06a7, "Gemini EW Lite" }, { 0x06a0, "DaBai DCW2" }, { 0x06a6, "Gemini EW" },
+    { 0x069d, "Astra Pro2" },    { 0x0657, "DaBai DC1" },
 };
 
 const std::map<int, int> depthRgbPidMaps = {
@@ -57,6 +58,10 @@ OpenNIDeviceInfo::OpenNIDeviceInfo(const SourcePortInfoList groupedInfoList) {
 OpenNIDeviceInfo::~OpenNIDeviceInfo() noexcept {}
 
 std::shared_ptr<IDevice> OpenNIDeviceInfo::createDevice() const {
+    if(pid_ == OB_DEVICE_DABAI_DC1_PID) {
+        return std::make_shared<DaBaiDevice>(shared_from_this());
+    }
+
     if(pid_ == OB_DEVICE_MAX_PRO_PID || pid_ == OB_DEVICE_DABAI_MAX_PID) {
         return std::make_shared<MaxDevice>(shared_from_this());
     }

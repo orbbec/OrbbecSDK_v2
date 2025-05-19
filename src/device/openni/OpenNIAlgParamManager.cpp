@@ -275,6 +275,63 @@ void OpenNIAlgParamManager::fetchParamFromDevice() {
                     { 320, 200, 320, 200, ALIGN_UNSUPPORTED, 3, { 2.0f, 0, 0, 0, 0 } },
                 };
             } break;
+            case OB_DEVICE_DABAI_DC1_PID:{
+                int16_t colorWidth  = 640;
+                int16_t colorHeight = 480;
+                int16_t depthWidth  = 640;
+                int16_t depthHeight = 400;
+                for(int i = 0; i < 3; i++) {
+                    OBCameraParam realParam       = {};
+                    int16_t       paramScaleValue = (int16_t)pow(2, i);
+                    memcpy(&realParam, &param, sizeof(param));
+
+                    realParam.depthIntrinsic.fx     = realParam.depthIntrinsic.fx / paramScaleValue;
+                    realParam.depthIntrinsic.fy     = realParam.depthIntrinsic.fy / paramScaleValue;
+                    realParam.depthIntrinsic.cx     = realParam.depthIntrinsic.cx / paramScaleValue;
+                    realParam.depthIntrinsic.cy     = realParam.depthIntrinsic.cy / paramScaleValue;
+                    realParam.depthIntrinsic.width  = depthWidth / paramScaleValue;
+                    realParam.depthIntrinsic.height = depthHeight / paramScaleValue;
+                    realParam.rgbIntrinsic.width    = colorWidth;
+                    realParam.rgbIntrinsic.height   = colorHeight;
+                    calibrationCameraParamList_.push_back(realParam);
+                }
+
+                OBCameraParam realParam = {};
+                memcpy(&realParam, &param, sizeof(param));
+                realParam.depthIntrinsic.fx     = realParam.depthIntrinsic.fx * 2;
+                realParam.depthIntrinsic.fy     = realParam.depthIntrinsic.fy * 2;
+                realParam.depthIntrinsic.cx     = realParam.depthIntrinsic.cx * 2;
+                realParam.depthIntrinsic.cy     = realParam.depthIntrinsic.cy * 2;
+                realParam.depthIntrinsic.width  = depthWidth * 2;
+                realParam.depthIntrinsic.height = depthHeight * 2;
+                realParam.rgbIntrinsic.width    = colorWidth;
+                realParam.rgbIntrinsic.height   = colorHeight;
+                calibrationCameraParamList_.push_back(realParam);
+
+                OBCameraParam realParam2 = {};
+                memcpy(&realParam2, &param, sizeof(param));
+                realParam2.depthIntrinsic.fx     = realParam2.depthIntrinsic.fx;
+                realParam2.depthIntrinsic.fy     = realParam2.depthIntrinsic.fy;
+                realParam2.depthIntrinsic.cx     = realParam2.depthIntrinsic.cx;
+                realParam2.depthIntrinsic.cy     = realParam2.depthIntrinsic.cy;
+                realParam2.rgbIntrinsic.fx       = static_cast<float>(realParam2.rgbIntrinsic.fx * 2.125);
+                realParam2.rgbIntrinsic.fy       = static_cast<float>(realParam2.rgbIntrinsic.fy * 2.125);
+                realParam2.rgbIntrinsic.cx       = static_cast<float>(realParam2.rgbIntrinsic.cx * 2.125) - 35;
+                realParam2.rgbIntrinsic.cy       = static_cast<float>(realParam2.rgbIntrinsic.cy * 2.125) - 150;
+                realParam2.depthIntrinsic.width  = depthWidth;
+                realParam2.depthIntrinsic.height = depthHeight;
+                realParam2.rgbIntrinsic.width    = 1280;
+                realParam2.rgbIntrinsic.height   = 720;
+                calibrationCameraParamList_.push_back(realParam2);
+
+                d2cProfileList_ = {
+                    { 640, 480, 640, 400, ALIGN_D2C_HW, 0, { 1.0f, 0, 0, 0, 80 } }, { 640, 480, 640, 400, ALIGN_D2C_SW, 0, { 1.0f, 0, 0, 0, 0 } },
+                    { 640, 480, 320, 200, ALIGN_D2C_HW, 1, { 2.0f, 0, 0, 0, 80 } }, { 640, 480, 320, 200, ALIGN_D2C_SW, 1, { 1.0f, 0, 0, 0, 0 } },
+                    { 640, 480, 160, 100, ALIGN_D2C_HW, 2, { 4.0f, 0, 0, 0, 80 } }, { 640, 480, 160, 100, ALIGN_D2C_SW, 2, { 1.0f, 0, 0, 0, 0 } },
+                    { 1280, 960, 640, 480, ALIGN_D2C_SW, 3, { 1.0f, 0, 0, 0, 0 } }, { 1280, 720, 640, 400, ALIGN_D2C_SW, 4, { 1.0f, 0, 0, 0, 0 } },
+                };
+            
+            } break;
             default:
                 break;
             }
