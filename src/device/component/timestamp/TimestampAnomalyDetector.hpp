@@ -19,8 +19,9 @@ public:
 private:
     std::shared_ptr<IDeviceSyncConfigurator> deviceSyncConfigurator_;
     OBMultiDeviceSyncMode                    currentDeviceSyncMode_;
-    uint64_t cacheTimestamp_;
-    uint32_t maxValidTimestampDiff_;
-    std::atomic<bool> needDetect_;
+    uint64_t                                 cacheTimestamp_;
+    uint32_t                                 maxValidTimestampDiff_;
+    uint32_t                                 cacheFps_;
+    std::atomic<bool>                        needDetect_;
 };
 } // namespace libobsensor
