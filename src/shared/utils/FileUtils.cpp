@@ -115,11 +115,9 @@ std::string getCurrentWorkDirectory() {
         wpathStr = wpathStr.substr(0, last_slash);
     }
 
-    int sizeNeeded = WideCharToMultiByte(CP_UTF8, 0, wpathStr.c_str(), (int)wpathStr.length(),
-                                        nullptr, 0, nullptr, nullptr);
+    int         sizeNeeded = WideCharToMultiByte(CP_ACP, 0, wpathStr.c_str(), (int)wpathStr.length(), nullptr, 0, nullptr, nullptr);
     std::string pathStr(sizeNeeded, 0);
-    WideCharToMultiByte(CP_UTF8, 0, wpathStr.c_str(), (int)wpathStr.length(),
-                       &pathStr[0], sizeNeeded, nullptr, nullptr);
+    WideCharToMultiByte(CP_ACP, 0, wpathStr.c_str(), (int)wpathStr.length(), &pathStr[0], sizeNeeded, nullptr, nullptr);
 
     return pathStr;
 #else
@@ -184,10 +182,8 @@ std::vector<uint8_t> readFile(const std::string &filePath) {
 
 void forEachFileInDirectory(const std::string &directory, const std::function<void(const std::string &)> &callback) {
 #ifdef WIN32
-    std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
-    std::wstring                                     wdir = converter.from_bytes(directory);
-    WIN32_FIND_DATAW                                 findData;
-    HANDLE                                           hFind = FindFirstFileW((wdir + L"\\*").c_str(), &findData);
+    WIN32_FIND_DATAA findData;
+    HANDLE           hFind = FindFirstFileA((directory + "\\*").c_str(), &findData);
     if(hFind == INVALID_HANDLE_VALUE) {
         return;
     }
@@ -196,10 +192,9 @@ void forEachFileInDirectory(const std::string &directory, const std::function<vo
             continue;
         }
         else {
-            std::string fileName = converter.to_bytes(findData.cFileName);
-            callback(fileName);
+            callback(findData.cFileName);
         }
-    } while(FindNextFileW(hFind, &findData));
+    } while(FindNextFileA(hFind, &findData));
     FindClose(hFind);
 #else
     DIR           *dir;
@@ -218,21 +213,18 @@ void forEachFileInDirectory(const std::string &directory, const std::function<vo
 
 void forEachSubDirInDirectory(const std::string &directory, const std::function<void(const std::string &)> &callback) {
 #ifdef WIN32
-    std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
-    std::wstring                                     wdir = converter.from_bytes(directory);
-    WIN32_FIND_DATAW                                 findData;
-    HANDLE                                           hFind = FindFirstFileW((wdir + L"\\*").c_str(), &findData);
+    WIN32_FIND_DATAA findData;
+    HANDLE           hFind = FindFirstFileA((directory + "\\*").c_str(), &findData);
     if(hFind == INVALID_HANDLE_VALUE) {
         return;
     }
     do {
         if(findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-            if(wcscmp(findData.cFileName, L".") != 0 && wcscmp(findData.cFileName, L"..") != 0) {
-                std::string subDir = converter.to_bytes(findData.cFileName);
-                callback(subDir);
+            if(strcmp(findData.cFileName, ".") != 0 && strcmp(findData.cFileName, "..") != 0) {
+                callback(findData.cFileName);
             }
         }
-    } while(FindNextFileW(hFind, &findData));
+    } while(FindNextFileA(hFind, &findData));
     FindClose(hFind);
 #else
     DIR           *dir;
