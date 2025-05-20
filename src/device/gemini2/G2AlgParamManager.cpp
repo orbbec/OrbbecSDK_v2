@@ -108,6 +108,7 @@ void G2AlgParamManager::registerBasicExtrinsics() {
     auto irBasicStreamProfile      = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_IR, OB_FORMAT_ANY, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY);
     auto leftIrBasicStreamProfile  = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_IR_LEFT, OB_FORMAT_ANY, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY);
     auto rightIrBasicStreamProfile = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_IR_RIGHT, OB_FORMAT_ANY, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY);
+    auto confidenceBasicStreamProfile = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_CONFIDENCE, OB_FORMAT_ANY, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY);
     auto accelBasicStreamProfile   = StreamProfileFactory::createAccelStreamProfile(OB_ACCEL_FS_2g, OB_SAMPLE_RATE_1_5625_HZ);
     auto gyroBasicStreamProfile    = StreamProfileFactory::createGyroStreamProfile(OB_GYRO_FS_16dps, OB_SAMPLE_RATE_1_5625_HZ);
 
@@ -133,6 +134,7 @@ void G2AlgParamManager::registerBasicExtrinsics() {
 
     extrinsicMgr->registerSameExtrinsics(irBasicStreamProfile, depthBasicStreamProfile);
     extrinsicMgr->registerSameExtrinsics(leftIrBasicStreamProfile, depthBasicStreamProfile);
+    extrinsicMgr->registerSameExtrinsics(confidenceBasicStreamProfile, depthBasicStreamProfile);
 
     if(!depthCalibParamList_.empty()) {
         auto left_to_right     = IdentityExtrinsics;
@@ -165,6 +167,7 @@ void G2AlgParamManager::registerBasicExtrinsics() {
     basicStreamProfileList_.emplace_back(irBasicStreamProfile);
     basicStreamProfileList_.emplace_back(leftIrBasicStreamProfile);
     basicStreamProfileList_.emplace_back(rightIrBasicStreamProfile);
+    basicStreamProfileList_.emplace_back(confidenceBasicStreamProfile);
     basicStreamProfileList_.emplace_back(accelBasicStreamProfile);
     basicStreamProfileList_.emplace_back(gyroBasicStreamProfile);
 }

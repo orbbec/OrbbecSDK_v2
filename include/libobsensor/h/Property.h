@@ -531,6 +531,21 @@ typedef enum {
     OB_PROP_CONFIDENCE_STREAM_FILTER_THRESHOLD_INT = 227,
 
     /**
+     * @brief Confidence stream mirror enable
+     */
+    OB_PROP_CONFIDENCE_MIRROR_BOOL = 229,
+
+    /**
+     * @brief Confidence stream flip enable
+     */
+    OB_PROP_CONFIDENCE_FLIP_BOOL   = 230,
+
+    /**
+     * @brief Confidence stream rotate angle{0, 90, 180, 270}
+     */
+    OB_PROP_CONFIDENCE_ROTATE_INT  = 231,
+
+    /**
      * @brief Baseline calibration parameters
      */
     OB_STRUCT_BASELINE_CALIBRATION_PARAM = 1002,

@@ -28,6 +28,7 @@ std::shared_ptr<StreamProfile> createStreamProfile(OBStreamType streamType, OBFo
     case OB_STREAM_IR_LEFT:
     case OB_STREAM_IR_RIGHT:
     case OB_STREAM_RAW_PHASE:
+    case OB_STREAM_CONFIDENCE:
         return createVideoStreamProfile(streamType, frameFormat, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY);
 
     default:

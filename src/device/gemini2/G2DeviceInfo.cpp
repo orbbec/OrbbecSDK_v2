@@ -127,6 +127,9 @@ std::vector<std::shared_ptr<IDeviceEnumInfo>> G2DeviceInfo::pickNetDevices(const
             iter->emplace_back(std::make_shared<NetDataStreamPortInfo>(portInfo->netInterfaceName, portInfo->localMac, portInfo->localAddress,
                                                                        portInfo->address, static_cast<uint16_t>(8900), portInfo->port, portInfo->mac,
                                                                        portInfo->serialNumber, portInfo->pid));
+            iter->emplace_back(std::make_shared<RTSPStreamPortInfo>(portInfo->netInterfaceName, portInfo->localMac, portInfo->localAddress, portInfo->address,
+                                                                    static_cast<uint16_t>(8557), portInfo->port, OB_STREAM_CONFIDENCE, portInfo->mac,
+                                                                    portInfo->serialNumber, portInfo->pid));
 
             auto deviceEnumInfo = std::make_shared<G2DeviceInfo>(*iter);
             gemini2DeviceInfos.push_back(deviceEnumInfo);

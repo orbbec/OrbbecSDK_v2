@@ -472,6 +472,19 @@ cv::Mat CVWindow::visualize(std::shared_ptr<const ob::Frame> frame) {
             drawInfo(rstMat, videoFrame);
         }
     }
+    else if(frame->getType() == OB_FRAME_CONFIDENCE) {
+        auto videoFrame = frame->as<const ob::VideoFrame>();
+        if(videoFrame->getFormat() == OB_FORMAT_Y16) {
+            cv::Mat cvtMat;
+            cv::Mat rawMat = cv::Mat(videoFrame->getHeight(), videoFrame->getWidth(), CV_16UC1, videoFrame->getData());
+            rawMat.convertTo(cvtMat, CV_8UC1, 1.0 / 16.0f);
+            cv::cvtColor(cvtMat, rstMat, cv::COLOR_GRAY2RGB);
+        }
+        else if(videoFrame->getFormat() == OB_FORMAT_Y8) {
+            cv::Mat rawMat = cv::Mat(videoFrame->getHeight(), videoFrame->getWidth(), CV_8UC1, videoFrame->getData());
+            cv::cvtColor(rawMat, rstMat, cv::COLOR_GRAY2RGB);
+        }
+    }
     else if(frame->getType() == OB_FRAME_ACCEL) {
         rstMat                 = cv::Mat::zeros(320, 240, CV_8UC3);
         auto        accelFrame = frame->as<ob::AccelFrame>();

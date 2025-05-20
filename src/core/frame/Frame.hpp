@@ -169,6 +169,11 @@ private:
     float valueScale_;
 };
 
+class ConfidenceFrame : public VideoFrame {
+public:
+    ConfidenceFrame(uint8_t *data, size_t dataBufSize, FrameBufferReclaimFunc bufferReclaimFunc = nullptr);
+};
+
 class IRFrame : public VideoFrame {
 public:
     IRFrame(uint8_t *data, size_t dataBufSize, FrameBufferReclaimFunc bufferReclaimFunc = nullptr, OBFrameType frameType = OB_FRAME_IR);

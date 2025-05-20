@@ -69,6 +69,10 @@ std::shared_ptr<IFrameBufferManager> FrameMemoryPool::createFrameBufferManager(O
         frameBufMgr = std::shared_ptr<FrameBufferManager<ColorFrame>>(new FrameBufferManager<ColorFrame>(frameBufferSize));
         LOG_DEBUG("ColorFrame bufferManager created!");
         break;
+    case OB_FRAME_CONFIDENCE:
+        frameBufMgr = std::shared_ptr<FrameBufferManager<ConfidenceFrame>>(new FrameBufferManager<ConfidenceFrame>(frameBufferSize));
+        LOG_DEBUG("ConfidenceFrame bufferManager created!");
+        break;
     case OB_FRAME_GYRO:
         frameBufMgr = std::shared_ptr<FrameBufferManager<GyroFrame>>(new FrameBufferManager<GyroFrame>(frameBufferSize));
         LOG_DEBUG("GyroFrame bufferManager created!");

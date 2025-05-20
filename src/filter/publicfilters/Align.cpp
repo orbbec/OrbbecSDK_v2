@@ -17,7 +17,8 @@ const std::map<OBStreamType, OBFrameType> streamTypeToFrameType = { { OB_STREAM_
                                                                     { OB_STREAM_DEPTH, OB_FRAME_DEPTH },
                                                                     { OB_STREAM_IR, OB_FRAME_IR },
                                                                     { OB_STREAM_IR_LEFT, OB_FRAME_IR_LEFT },
-                                                                    { OB_STREAM_IR_RIGHT, OB_FRAME_IR_RIGHT } };
+                                                                    { OB_STREAM_IR_RIGHT, OB_FRAME_IR_RIGHT },
+                                                                    { OB_STREAM_CONFIDENCE, OB_FRAME_CONFIDENCE } };
 
 Align::Align()
     : impl_(new AlignImpl()),  //

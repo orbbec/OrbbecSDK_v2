@@ -80,6 +80,9 @@ std::shared_ptr<FrameProcessor> FrameProcessorFactory::createFrameProcessor(OBSe
         case OB_SENSOR_IR_RIGHT: {
             processor = std::make_shared<IRRightFrameProcessor>(owner, context_);
         } break;
+        case OB_SENSOR_CONFIDENCE: {
+            processor = std::make_shared<ConfidenceFrameProcessor>(owner, context_);
+        } break;
         default: {
             throw std::runtime_error("unsupported sensor type");
         }
@@ -641,4 +644,81 @@ void IRRightFrameProcessor::getPropertyRange(uint32_t propertyId, OBPropertyRang
 
     FrameProcessor::getPropertyRange(configName, range);
 }
+
+ConfidenceFrameProcessor::ConfidenceFrameProcessor(IDevice *owner, std::shared_ptr<FrameProcessorContext> context)
+    : FrameProcessor(owner, context, OB_SENSOR_CONFIDENCE) {}
+
+void ConfidenceFrameProcessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
+    std::string configSchemaName = "";
+    double      configValue      = 0.0;
+
+    switch(propertyId) {
+    case OB_PROP_CONFIDENCE_MIRROR_BOOL: {
+        configSchemaName = "FrameMirror#255";
+        configValue      = static_cast<double>(value.intValue);
+    } break;
+    case OB_PROP_CONFIDENCE_FLIP_BOOL: {
+        configSchemaName = "FrameFlip#255";
+        configValue      = static_cast<double>(value.intValue);
+    } break;
+    case OB_PROP_CONFIDENCE_ROTATE_INT: {
+        configSchemaName = "FrameRotate#0";
+        configValue      = static_cast<double>(value.intValue);
+    } break;
+    default:
+        throw invalid_value_exception("Invalid property id");
+    }
+
+    try {
+        getConfigValue(configSchemaName);
+    }
+    catch(...) {
+        return;
+    }
+
+    setConfigValue(configSchemaName, configValue);
+}
+
+void ConfidenceFrameProcessor::getPropertyValue(uint32_t propertyId, OBPropertyValue *value) {
+    switch(propertyId) {
+    case OB_PROP_CONFIDENCE_MIRROR_BOOL: {
+        auto getValue   = getConfigValue("FrameMirror#255");
+        value->intValue = static_cast<int32_t>(getValue);
+    } break;
+    case OB_PROP_CONFIDENCE_FLIP_BOOL: {
+        auto getValue   = getConfigValue("FrameFlip#255");
+        value->intValue = static_cast<int32_t>(getValue);
+    } break;
+    case OB_PROP_CONFIDENCE_ROTATE_INT: {
+        auto getValue   = getConfigValue("FrameRotate#0");
+        value->intValue = static_cast<int32_t>(getValue);
+    } break;
+    default:
+        throw invalid_value_exception("Invalid property id");
+    }
+}
+
+void ConfidenceFrameProcessor::getPropertyRange(uint32_t propertyId, OBPropertyRange *range) {
+    if(!range) {
+        throw invalid_value_exception("Range point is null");
+    }
+
+    std::string configName = "";
+    switch(propertyId) {
+    case OB_PROP_CONFIDENCE_MIRROR_BOOL: {
+        configName = "FrameRotate#0";
+    } break;
+    case OB_PROP_CONFIDENCE_FLIP_BOOL: {
+        configName = "FrameFlip#255";
+    } break;
+    case OB_PROP_CONFIDENCE_ROTATE_INT: {
+        configName = "FrameMirror#255";
+    } break;
+    default:
+        throw invalid_value_exception("Invalid property id");
+    }
+
+    FrameProcessor::getPropertyRange(configName, range);
+}
+
 }  // namespace libobsensor

@@ -227,6 +227,12 @@ void StereoFrameTransformPropertyAccessor::setPropertyValue(uint32_t propertyId,
         auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_RIGHT_IR_FRAME_PROCESSOR);
         processor->setPropertyValue(propertyId, value);
     } break;
+    case OB_PROP_CONFIDENCE_MIRROR_BOOL:
+    case OB_PROP_CONFIDENCE_FLIP_BOOL:
+    case OB_PROP_CONFIDENCE_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_CONFIDENCE_FRAME_PROCESSOR);
+        processor->setPropertyValue(propertyId, value);
+    } break;
     default:
         throw invalid_value_exception("Invalid property id");
     }
@@ -258,6 +264,12 @@ void StereoFrameTransformPropertyAccessor::getPropertyValue(uint32_t propertyId,
         auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_RIGHT_IR_FRAME_PROCESSOR);
         processor->getPropertyValue(propertyId, value);
     } break;
+    case OB_PROP_CONFIDENCE_MIRROR_BOOL:
+    case OB_PROP_CONFIDENCE_FLIP_BOOL:
+    case OB_PROP_CONFIDENCE_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_CONFIDENCE_FRAME_PROCESSOR);
+        processor->getPropertyValue(propertyId, value);
+    } break;
     default:
         throw invalid_value_exception("Invalid property id");
     }
@@ -287,6 +299,12 @@ void StereoFrameTransformPropertyAccessor::getPropertyRange(uint32_t propertyId,
     case OB_PROP_IR_RIGHT_FLIP_BOOL:
     case OB_PROP_IR_RIGHT_ROTATE_INT: {
         auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_RIGHT_IR_FRAME_PROCESSOR);
+        processor->getPropertyRange(propertyId, range);
+    } break;
+    case OB_PROP_CONFIDENCE_MIRROR_BOOL:
+    case OB_PROP_CONFIDENCE_FLIP_BOOL:
+    case OB_PROP_CONFIDENCE_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_CONFIDENCE_FRAME_PROCESSOR);
         processor->getPropertyRange(propertyId, range);
     } break;
     default:

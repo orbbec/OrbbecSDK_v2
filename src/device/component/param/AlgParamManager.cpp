@@ -28,7 +28,7 @@ bool findBestMatchedD2CProfile(const std::vector<OBD2CProfile> &d2cProfileList, 
         }
 
         auto streamType = profile->getType();
-        if((streamType == OB_STREAM_DEPTH || streamType == OB_STREAM_IR || streamType == OB_STREAM_IR_LEFT || streamType == OB_STREAM_IR_RIGHT)
+        if((streamType == OB_STREAM_DEPTH || streamType == OB_STREAM_IR || streamType == OB_STREAM_IR_LEFT || streamType == OB_STREAM_IR_RIGHT || streamType == OB_STREAM_CONFIDENCE)
            && static_cast<uint32_t>(d2cProfile.depthWidth) == profile->getWidth() && static_cast<uint32_t>(d2cProfile.depthHeight) == profile->getHeight()) {
             found  = true;
             result = d2cProfile;
@@ -52,7 +52,7 @@ bool findBestMatchedD2CProfile(const std::vector<OBD2CProfile> &d2cProfileList, 
             }
 
             auto streamType = profile->getType();
-            if((streamType == OB_STREAM_DEPTH || streamType == OB_STREAM_IR || streamType == OB_STREAM_IR_LEFT || streamType == OB_STREAM_IR_RIGHT)
+            if((streamType == OB_STREAM_DEPTH || streamType == OB_STREAM_IR || streamType == OB_STREAM_IR_LEFT || streamType == OB_STREAM_IR_RIGHT || streamType == OB_STREAM_CONFIDENCE)
                && (float)d2cProfile.depthWidth / d2cProfile.depthHeight == ratio) {
                 found  = true;
                 result = d2cProfile;

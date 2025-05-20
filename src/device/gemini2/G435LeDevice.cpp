@@ -508,6 +508,47 @@ void G435LeDevice::initSensorList() {
             true);
         registerSensorPortInfo(OB_SENSOR_GYRO, imuPortInfo);
     }
+
+    auto confidencePortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(), [](const std::shared_ptr<const SourcePortInfo> &portInfo) {
+        return portInfo->portType == SOURCE_PORT_NET_RTSP && std::dynamic_pointer_cast<const RTSPStreamPortInfo>(portInfo)->streamType == OB_STREAM_CONFIDENCE;
+    });
+    if(confidencePortInfoIter != sourcePortInfoList.end()) {
+        auto confidencePortInfo = *confidencePortInfoIter;
+        auto port               = getSourcePort(confidencePortInfo);
+
+        registerComponent(
+            OB_DEV_COMPONENT_CONFIDENCE_SENSOR,
+            [this, confidencePortInfo]() {
+                auto port   = getSourcePort(confidencePortInfo);
+                auto sensor = std::make_shared<VideoSensor>(this, OB_SENSOR_CONFIDENCE, port);
+
+                auto depthMdParserContainer = getComponentT<IFrameMetadataParserContainer>(OB_DEV_COMPONENT_DEPTH_FRAME_METADATA_CONTAINER);
+                sensor->setFrameMetadataParserContainer(depthMdParserContainer.get());
+
+                auto frameTimestampCalculator = std::make_shared<FrameTimestampCalculatorDirectly>(this, frameTimeFreq_);
+                sensor->setFrameTimestampCalculator(frameTimestampCalculator);
+
+                auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
+                sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
+
+                auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_CONFIDENCE_FRAME_PROCESSOR, false);
+                if(frameProcessor) {
+                    sensor->setFrameProcessor(frameProcessor.get());
+                }
+                initSensorStreamProfile(sensor);
+
+                return sensor;
+            },
+            true);
+
+        registerSensorPortInfo(OB_SENSOR_CONFIDENCE, confidencePortInfo);
+
+        registerComponent(OB_DEV_COMPONENT_CONFIDENCE_FRAME_PROCESSOR, [this]() {
+            auto factory        = getComponentT<FrameProcessorFactory>(OB_DEV_COMPONENT_FRAME_PROCESSOR_FACTORY);
+            auto frameProcessor = factory->createFrameProcessor(OB_SENSOR_CONFIDENCE);
+            return frameProcessor;
+        });
+    }
 }
 
 void G435LeDevice::initProperties() {
@@ -665,6 +706,9 @@ void G435LeDevice::initProperties() {
     propertyServer->registerProperty(OB_PROP_IR_RIGHT_MIRROR_BOOL, "rw", "rw", frameTransformPropertyAccessor); // right ir
     propertyServer->registerProperty(OB_PROP_IR_RIGHT_FLIP_BOOL, "rw", "rw", frameTransformPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_IR_RIGHT_ROTATE_INT, "rw", "rw", frameTransformPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_CONFIDENCE_MIRROR_BOOL, "rw", "rw", frameTransformPropertyAccessor); //confidence
+    propertyServer->registerProperty(OB_PROP_CONFIDENCE_FLIP_BOOL, "rw", "rw", frameTransformPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_CONFIDENCE_ROTATE_INT, "rw", "rw", frameTransformPropertyAccessor);
 
     BEGIN_TRY_EXECUTE({ propertyServer->setPropertyValueT(OB_PROP_DEVICE_COMMUNICATION_TYPE_INT, OB_COMM_NET); })
     CATCH_EXCEPTION_AND_EXECUTE({ LOG_ERROR("Set device communication type to ethernet mode failed!"); })
@@ -796,6 +840,17 @@ void G435LeDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
         streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y10, 1280, 800, 5));
         streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y10, 1280, 800, 10));
     }
+    else if(streamType == OB_STREAM_CONFIDENCE) {
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y8, 1280, 800, 5));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y8, 1280, 800, 10));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y8, 1280, 800, 15));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y8, 1280, 800, 20));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y8, 640, 400, 5));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y8, 640, 400, 10));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y8, 640, 400, 15));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y8, 640, 400, 20));
+    }
+
     if(!streamProfileList.empty()) {
         sensor->setStreamProfileList(streamProfileList);
     }

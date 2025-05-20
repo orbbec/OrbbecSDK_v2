@@ -304,6 +304,9 @@ void DepthFrame::copyInfoFromOther(std::shared_ptr<const Frame> sourceFrame) {
     }
 }
 
+ConfidenceFrame::ConfidenceFrame(uint8_t *data, size_t dataBufSize, FrameBufferReclaimFunc bufferReclaimFunc)
+    : VideoFrame(data, dataBufSize, OB_FRAME_CONFIDENCE, bufferReclaimFunc) {}
+
 IRFrame::IRFrame(uint8_t *data, size_t dataBufSize, FrameBufferReclaimFunc bufferReclaimFunc, OBFrameType frameType)
     : VideoFrame(data, dataBufSize, frameType, bufferReclaimFunc) {}
 

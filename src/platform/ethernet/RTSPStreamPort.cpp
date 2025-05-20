@@ -23,7 +23,7 @@ std::string mapFormatToString(OBFormat format) {
 std::string mapStreamTypeToString(OBStreamType streamType) {
     static std::map<OBStreamType, std::string> streamTypeToStringMap = {
         { OB_STREAM_IR, "ir" },           { OB_STREAM_DEPTH, "depth" },       { OB_STREAM_COLOR, "color" },
-        { OB_STREAM_IR_LEFT, "ir_left" }, { OB_STREAM_IR_RIGHT, "ir_right" },
+        { OB_STREAM_IR_LEFT, "ir_left" }, { OB_STREAM_IR_RIGHT, "ir_right" }, { OB_STREAM_CONFIDENCE, "confidence" },
     };
     return streamTypeToStringMap[streamType];
 }
@@ -130,4 +130,3 @@ std::shared_ptr<const SourcePortInfo> RTSPStreamPort::getSourcePortInfo() const 
 }
 
 }  // namespace libobsensor
-

@@ -241,6 +241,9 @@ void VideoSensor::trySendStopStreamVendorCmd() {
         case OB_SENSOR_DEPTH:
             propertyId = OB_PROP_STOP_DEPTH_STREAM_BOOL;
             break;
+        case OB_SENSOR_CONFIDENCE:
+            propertyId = OB_PROP_STOP_CONFIDENCE_STREAM_BOOL;
+            break;
         default:
             return;
         }

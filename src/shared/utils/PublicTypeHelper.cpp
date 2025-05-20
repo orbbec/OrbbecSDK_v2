@@ -130,6 +130,8 @@ OBFrameType mapStreamTypeToFrameType(OBStreamType type) {
         return OB_FRAME_IR_RIGHT;
     case OB_STREAM_RAW_PHASE:
         return OB_FRAME_RAW_PHASE;
+    case OB_STREAM_CONFIDENCE:
+        return OB_FRAME_CONFIDENCE;
     default:
         break;
     }
@@ -156,6 +158,8 @@ OBStreamType mapFrameTypeToStreamType(OBFrameType type) {
         return OB_STREAM_IR_RIGHT;
     case OB_FRAME_RAW_PHASE:
         return OB_STREAM_RAW_PHASE;
+    case OB_FRAME_CONFIDENCE:
+        return OB_STREAM_CONFIDENCE;
     default:
         break;
     }
@@ -180,6 +184,8 @@ OBStreamType mapSensorTypeToStreamType(OBSensorType type) {
         return OB_STREAM_IR_RIGHT;
     case OB_SENSOR_RAW_PHASE:
         return OB_STREAM_RAW_PHASE;
+    case OB_SENSOR_CONFIDENCE:
+        return OB_STREAM_CONFIDENCE;
     default:
         break;
     }
@@ -204,6 +210,8 @@ OBSensorType mapStreamTypeToSensorType(OBStreamType type) {
         return OB_SENSOR_IR_RIGHT;
     case OB_STREAM_RAW_PHASE:
         return OB_SENSOR_RAW_PHASE;
+    case OB_STREAM_CONFIDENCE:
+        return OB_SENSOR_CONFIDENCE;
     default:
         break;
     }
@@ -226,6 +234,8 @@ OBSensorType mapFrameTypeToSensorType(OBFrameType type) {
         return OB_SENSOR_IR_LEFT;
     case OB_FRAME_IR_RIGHT:
         return OB_SENSOR_IR_RIGHT;
+    case OB_FRAME_CONFIDENCE:
+        return OB_SENSOR_CONFIDENCE;
     }
     return OB_SENSOR_UNKNOWN;
 }
@@ -302,7 +312,7 @@ float mapIMUSampleRateToValue(OBIMUSampleRate rate) {
 const std::map<OBSensorType, std::string> Sensor_Str_Map = {
     { OB_SENSOR_IR, "IR" },           { OB_SENSOR_COLOR, "Color" },    { OB_SENSOR_DEPTH, "Depth" },      { OB_SENSOR_ACCEL, "Accel" },
     { OB_SENSOR_GYRO, "Gyro" },       { OB_SENSOR_IR_LEFT, "LeftIR" }, { OB_SENSOR_IR_RIGHT, "RightIR" }, { OB_SENSOR_RAW_PHASE, "RawPhase" },
-    { OB_SENSOR_UNKNOWN, "Unknown" },
+    { OB_SENSOR_CONFIDENCE, "Confidence" },{ OB_SENSOR_UNKNOWN, "Unknown" },
 };
 
 const std::map<OBFrameType, std::string> Frame_Str_Map = { { OB_FRAME_UNKNOWN, "Unknown frame type" },
@@ -316,12 +326,13 @@ const std::map<OBFrameType, std::string> Frame_Str_Map = { { OB_FRAME_UNKNOWN, "
                                                            { OB_FRAME_GYRO, "Gyro" },
                                                            { OB_FRAME_IR_LEFT, "Left IR" },
                                                            { OB_FRAME_IR_RIGHT, "Right IR" },
-                                                           { OB_FRAME_RAW_PHASE, "RawPhase" } };
+                                                           { OB_FRAME_RAW_PHASE, "RawPhase" },
+                                                           { OB_FRAME_CONFIDENCE, "Confidence" } };
 
 const std::map<OBStreamType, std::string> Stream_Str_Map = {
     { OB_STREAM_UNKNOWN, "Unknown" },   { OB_STREAM_VIDEO, "Video" },       { OB_STREAM_IR, "IR" },     { OB_STREAM_COLOR, "Color" },
     { OB_STREAM_DEPTH, "Depth" },       { OB_STREAM_ACCEL, "Accel" },       { OB_STREAM_GYRO, "Gyro" }, { OB_STREAM_IR_LEFT, "Left IR" },
-    { OB_STREAM_IR_RIGHT, "Right IR" }, { OB_STREAM_RAW_PHASE, "RawPhase" }
+    { OB_STREAM_IR_RIGHT, "Right IR" }, { OB_STREAM_RAW_PHASE, "RawPhase" }, { OB_STREAM_CONFIDENCE, "Confidence" }
 };
 
 const std::map<OBIMUSampleRate, std::string> ImuRate_Str_Map = {

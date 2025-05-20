@@ -123,4 +123,14 @@ public:
     virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
     virtual void getPropertyRange(uint32_t propertyId, OBPropertyRange *range) override;
 };
+
+class ConfidenceFrameProcessor : public FrameProcessor {
+public:
+    ConfidenceFrameProcessor(IDevice *owner, std::shared_ptr<FrameProcessorContext> context);
+    virtual ~ConfidenceFrameProcessor() noexcept = default;
+
+    virtual void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
+    virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
+    virtual void getPropertyRange(uint32_t propertyId, OBPropertyRange *range) override;
+};
 }  // namespace libobsensor

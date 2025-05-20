@@ -28,6 +28,7 @@ const std::map<OBSensorType, DeviceComponentId> SensorTypeToComponentIdMap = {
     { OB_SENSOR_IR_RIGHT, OB_DEV_COMPONENT_RIGHT_IR_SENSOR },
     { OB_SENSOR_GYRO, OB_DEV_COMPONENT_GYRO_SENSOR },
     { OB_SENSOR_ACCEL, OB_DEV_COMPONENT_ACCEL_SENSOR },
+    { OB_SENSOR_CONFIDENCE, OB_DEV_COMPONENT_CONFIDENCE_SENSOR },
 };
 
 DeviceBase::DeviceBase() : ctx_(Context::getInstance()), isDeactivated_(false), isFirmwareUpdating_(false) {}
@@ -570,6 +571,9 @@ void DeviceBase::activateDeviceAccessor() {
             break;
         case OB_SENSOR_IR_RIGHT:
             getComponentT<FrameProcessor>(OB_DEV_COMPONENT_RIGHT_IR_FRAME_PROCESSOR, false);
+            break;
+        case OB_SENSOR_CONFIDENCE:
+            getComponentT<FrameProcessor>(OB_DEV_COMPONENT_CONFIDENCE_FRAME_PROCESSOR, false);
             break;
         default:
             break;
