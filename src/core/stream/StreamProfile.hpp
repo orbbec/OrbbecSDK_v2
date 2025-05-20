@@ -5,6 +5,7 @@
 #include "IStreamProfile.hpp"
 #include "libobsensor/h/ObTypes.h"
 #include "exception/ObException.hpp"
+#include "InternalTypes.hpp"
 #include <memory>
 #include <vector>
 
@@ -163,6 +164,7 @@ public:
     LiDARStreamProfile(std::shared_ptr<LazySensor> owner, OBLiDARScanRate scanRate, OBFormat format);
     ~LiDARStreamProfile() noexcept override = default;
 
+    LiDARProfileInfo               getInfo() const;
     OBLiDARScanRate                getScanRate() const;
     std::shared_ptr<StreamProfile> clone() const override;
     std::ostream &                 operator<<(std::ostream &os) const override;

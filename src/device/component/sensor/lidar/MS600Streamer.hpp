@@ -3,11 +3,11 @@
 
 #pragma once
 
-#include "ILiDARStreamer.hpp"
 #include "IFilter.hpp"
 #include "ISourcePort.hpp"
 #include "IDeviceComponent.hpp"
-
+#include "ILiDARStreamer.hpp"
+#include "InternalTypes.hpp"
 #include <atomic>
 #include <map>
 #include <mutex>
@@ -22,10 +22,9 @@ public:
     MS600Streamer(IDevice *owner, const std::shared_ptr<IDataStreamPort> &backend);
     virtual ~MS600Streamer() noexcept;
 
-    void start(std::shared_ptr<const StreamProfile> sp, MutableFrameCallback callback) override;
-    void stop() override;
-
-    IDevice *getOwner() const override;
+    virtual void     startStream(std::shared_ptr<const StreamProfile> profile, MutableFrameCallback callback) override;
+    virtual void     stopStream(std::shared_ptr<const StreamProfile> profile) override;
+    virtual IDevice *getOwner() const override;
 
 private:
     void trySendStopStreamVendorCmd();
@@ -38,7 +37,7 @@ private:
     std::shared_ptr<IDataStreamPort>     backend_;
     std::mutex                           mutex_;
     std::shared_ptr<const StreamProfile> profile_;
-    LiDARScanProfile                     scanProfile_;
+    LiDARProfileInfo                     profileInfo_;
     MutableFrameCallback                 callback_;
     std::atomic_bool                     running_;
     uint64_t                             frameIndex_;

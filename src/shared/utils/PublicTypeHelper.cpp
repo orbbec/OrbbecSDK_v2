@@ -255,6 +255,8 @@ OBSensorType mapFrameTypeToSensorType(OBFrameType type) {
         return OB_SENSOR_CONFIDENCE;
     case OB_FRAME_RAW_PHASE:
         return OB_SENSOR_RAW_PHASE;
+    case OB_FRAME_LIDAR_POINTS:
+        return OB_SENSOR_LIDAR;
     default:
         break;
     }

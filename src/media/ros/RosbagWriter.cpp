@@ -67,6 +67,9 @@ void RosWriter::writeFrame(const OBSensorType &sensorType, std::shared_ptr<const
     if(sensorType == OB_SENSOR_GYRO || sensorType == OB_SENSOR_ACCEL) {
         writeImuFrame(sensorType, curFrame);
     }
+    else if(sensorType == OB_SENSOR_LIDAR) {
+        writeLiDARFrame(curFrame);
+    }
     else {
         writeVideoFrame(sensorType, curFrame);
     }
@@ -108,6 +111,35 @@ void RosWriter::writeImuFrame(const OBSensorType &sensorType, std::shared_ptr<co
         imuMsg->timestamp_systemusec = gyroFrame->getSystemTimeStampUsec();
         imuMsg->timestamp_globalusec = gyroFrame->getGlobalTimeStampUsec();
         file_->write(imuTopic, imuMsg->header.stamp, imuMsg);
+    }
+}
+
+void RosWriter::writeLiDARFrame(std::shared_ptr<const Frame> curFrame) {
+    std::lock_guard<std::mutex> lock(writeMutex_);
+    if(startTime_ == 0) {
+        startTime_ = curFrame->getTimeStampUsec();
+    }
+    auto                                      sensorType = OB_SENSOR_LIDAR;
+    std::chrono::duration<double, std::micro> timestampUs(curFrame->getTimeStampUsec());
+    auto                                      topic = RosTopic::frameDataTopic((uint8_t)sensorType, (uint8_t)curFrame->getType());
+    streamProfileMap_.insert({ sensorType, curFrame->getStreamProfile() });
+    try {
+        sensor_msgs::LiDARFramePtr frameMsg(new sensor_msgs::LiDARFrame());
+        frameMsg->header.stamp = orbbecRosbag::Time(std::chrono::duration<double>(timestampUs).count());
+
+        frameMsg->format               = convertFormatToString(curFrame->getFormat());
+        frameMsg->number               = curFrame->getNumber();
+        frameMsg->timestamp_usec       = curFrame->getTimeStampUsec();
+        frameMsg->timestamp_systemusec = curFrame->getSystemTimeStampUsec();
+        frameMsg->timestamp_globalusec = curFrame->getGlobalTimeStampUsec();
+        frameMsg->metadatasize         = static_cast<uint32_t>(curFrame->getMetadataSize());
+        frameMsg->data.clear();
+        frameMsg->data.insert(frameMsg->data.begin(), curFrame->getMetadata(), curFrame->getMetadata() + curFrame->getMetadataSize());
+        frameMsg->data.insert(frameMsg->data.begin() + curFrame->getMetadataSize(), curFrame->getData(), curFrame->getData() + curFrame->getDataSize());
+        file_->write(topic, frameMsg->header.stamp, frameMsg);
+    }
+    catch(const std::exception &e) {
+        LOG_WARN("Write LiDAR frame data exception! Message: {}", e.what());
     }
 }
 
@@ -201,6 +233,9 @@ void RosWriter::writeStreamProfiles() {
         }
         else if(it.first == OB_SENSOR_ACCEL) {
             writeAccelStreamProfile(it.second);
+        }
+        else if(it.first == OB_SENSOR_LIDAR) {
+            writeLiDARStreamProfile(it.second);
         }
         else {
             writeVideoStreamProfile(it.first, it.second);
@@ -336,6 +371,19 @@ void RosWriter::writeGyroStreamProfile(const std::shared_ptr<const StreamProfile
         gyroStreamInfoMsg->tempSlope[i] = gyroStreamProfile->getIntrinsic().tempSlope[i];
     }
     file_->write(strStreamProfile, gyroStreamInfoMsg->header.stamp, gyroStreamInfoMsg);
+}
+
+void RosWriter::writeLiDARStreamProfile(const std::shared_ptr<const StreamProfile> &streamProfile) {
+    custom_msg::LiDARStreamProfileInfoPtr     streamInfoMsg(new custom_msg::LiDARStreamProfileInfo());
+    std::chrono::duration<double, std::micro> timestampUs(startTime_);
+    streamInfoMsg->header.stamp = orbbecRosbag::Time(std::chrono::duration<double>(timestampUs).count());
+    auto strStreamProfile       = RosTopic::streamProfileTopic((uint8_t)streamProfile->getType());
+    auto lidarProfile           = streamProfile->as<LiDARStreamProfile>();
+
+    streamInfoMsg->format     = static_cast<OBFormat>(lidarProfile->getFormat());
+    streamInfoMsg->streamType = static_cast<OBStreamType>(lidarProfile->getType());
+    streamInfoMsg->scanRate   = static_cast<OBLiDARScanRate>(lidarProfile->getScanRate());
+    file_->write(strStreamProfile, streamInfoMsg->header.stamp, streamInfoMsg);
 }
 
 }  // namespace libobsensor

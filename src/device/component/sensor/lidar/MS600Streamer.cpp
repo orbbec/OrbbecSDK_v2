@@ -95,15 +95,15 @@ MS600Streamer::MS600Streamer(IDevice *owner, const std::shared_ptr<IDataStreamPo
 
 MS600Streamer::~MS600Streamer() noexcept {
     try {
-        stop();
+        stopStream(profile_);
     }
     catch(const std::exception &e) {
         LOG_ERROR("Exception occurred while destroying MS600Streamer: {}", e.what());
     }
 }
 
-void MS600Streamer::start(std::shared_ptr<const StreamProfile> sp, MutableFrameCallback callback) {
-    LOG_INFO("Try to start stream: {}", sp);
+void MS600Streamer::startStream(std::shared_ptr<const StreamProfile> profile, MutableFrameCallback callback) {
+    LOG_INFO("Try to start stream: {}", profile);
 
     // check if stream is already running
     {
@@ -113,8 +113,8 @@ void MS600Streamer::start(std::shared_ptr<const StreamProfile> sp, MutableFrameC
             return;
         }
         // check stream profile and convert to scan profile
-        checkAndConvertProfile(sp);
-        profile_            = sp;
+        checkAndConvertProfile(profile);
+        profile_            = profile;
         callback_           = callback;
         running_            = true;
         expectedDataNumber_ = 1;  // the first data block
@@ -148,8 +148,9 @@ void MS600Streamer::start(std::shared_ptr<const StreamProfile> sp, MutableFrameC
     })
 }
 
-void MS600Streamer::stop() {
+void MS600Streamer::stopStream(std::shared_ptr<const StreamProfile> profile) {
     LOG_DEBUG("MS600Streamer stop...");
+    utils::unusedVar(profile);
     {
         std::lock_guard<std::mutex> lock(mutex_);
         if(!running_) {
@@ -167,7 +168,8 @@ void MS600Streamer::stop() {
 
     LOG_DEBUG("MS600Streamer stop backend...");
     backend_->stopStream();
-    scanProfile_.clear();
+    profile_.reset();
+    profileInfo_.clear();
     frameIndex_ = 0;
     frame_.reset();
     frameDataOffset_    = 0;
@@ -189,14 +191,14 @@ void MS600Streamer::trySendStartStreamVendorCmd() {
     OBPropertyValue value;
 
     // format
-    if(scanProfile_.format != OB_FORMAT_LIDAR_SCAN) {
+    if(profileInfo_.format != OB_FORMAT_LIDAR_SCAN) {
         throw invalid_value_exception("Invalid LiDAR format");
     }
 
     // speed
     value.intValue = propServer->getPropertyValueT<int32_t>(OB_PROP_LIDAR_SCAN_SPEED_INT);
-    if(value.intValue != scanProfile_.scanSpeed) {
-        value.intValue = scanProfile_.scanSpeed;
+    if(value.intValue != profileInfo_.scanSpeed) {
+        value.intValue = profileInfo_.scanSpeed;
         propServer->setPropertyValueT<int32_t>(OB_PROP_LIDAR_SCAN_SPEED_INT, value.intValue);
     }
 
@@ -208,53 +210,14 @@ void MS600Streamer::trySendStartStreamVendorCmd() {
 void MS600Streamer::checkAndConvertProfile(std::shared_ptr<const StreamProfile> profile) {
     auto lidarProfile = profile->as<LiDARStreamProfile>();
 
-    // frame type
-    scanProfile_.frameType = utils::mapStreamTypeToFrameType(lidarProfile->getType());
-    // format
-    scanProfile_.format = lidarProfile->getFormat();
-    if(scanProfile_.format != OB_FORMAT_LIDAR_SCAN) {
-        scanProfile_.clear();
-        throw invalid_value_exception("Invalid LiDAR format");
-    }
-
-    switch(lidarProfile->getScanRate()) {
-    case OB_LIDAR_SCAN_15HZ: {
-        scanProfile_.scanSpeed       = 900;
-        scanProfile_.maxDataBlockNum = 18;
-        scanProfile_.pointsNum       = 200;
-        scanProfile_.dataBlockSize   = 844;
-    } break;
-    case OB_LIDAR_SCAN_20HZ: {
-        scanProfile_.scanSpeed       = 1200;
-        scanProfile_.maxDataBlockNum = 18;
-        scanProfile_.pointsNum       = 150;
-        scanProfile_.dataBlockSize   = 644;
-    } break;
-    case OB_LIDAR_SCAN_25HZ: {
-        scanProfile_.scanSpeed       = 1500;
-        scanProfile_.maxDataBlockNum = 18;
-        scanProfile_.pointsNum       = 120;
-        scanProfile_.dataBlockSize   = 524;
-    } break;
-    case OB_LIDAR_SCAN_30HZ: {
-        scanProfile_.scanSpeed       = 1800;
-        scanProfile_.maxDataBlockNum = 18;
-        scanProfile_.pointsNum       = 100;
-        scanProfile_.dataBlockSize   = 444;
-    } break;
-    default:
-        throw invalid_value_exception("Invalid LiDAR scan rate");
-        break;
-    }
-    scanProfile_.frameSize = scanProfile_.pointsNum * scanProfile_.maxDataBlockNum * sizeof(OBLiDARScanPoint);
-    return;
+    profileInfo_ = lidarProfile->getInfo();
 }
 
 void MS600Streamer::parseLiDARData(std::shared_ptr<Frame> frame) {
-    const uint16_t   dataBlockSize   = scanProfile_.dataBlockSize;
-    const uint32_t   maxDataBlockNum = scanProfile_.maxDataBlockNum;
-    const uint16_t   pointsNum       = scanProfile_.pointsNum;
-    const uint32_t   frameSize       = scanProfile_.frameSize;
+    const uint16_t   dataBlockSize   = profileInfo_.dataBlockSize;
+    const uint32_t   maxDataBlockNum = profileInfo_.maxDataBlockNum;
+    const uint16_t   pointsNum       = profileInfo_.pointsNum;
+    const uint32_t   frameSize       = profileInfo_.frameSize;
     auto             data            = frame->getData();
     auto             dataSize        = frame->getDataSize();
     MS600DataHeader *header          = (MS600DataHeader *)data;
@@ -342,8 +305,10 @@ void MS600Streamer::parseLiDARData(std::shared_ptr<Frame> frame) {
     }
 
     // timestamp
-    frame_->setTimeStampUsec(header->timestamp);
-    frame_->setSystemTimeStampUsec(utils::getNowTimesUs());
+    // Tips: timestamp in header cycles every 0 to 1 hour, use system time
+    auto timestamp = utils::getNowTimesUs();
+    frame_->setTimeStampUsec(timestamp);
+    frame_->setSystemTimeStampUsec(timestamp);
 
     if(header->dataBlockNum >= maxDataBlockNum) {
         // reach the max data block num - all data for a circle

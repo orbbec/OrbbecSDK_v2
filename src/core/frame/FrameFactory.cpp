@@ -134,6 +134,9 @@ std::shared_ptr<Frame> FrameFactory::createFrameFromUserBuffer(OBFrameType frame
     case OB_FRAME_GYRO:
         sp = StreamProfileFactory::createGyroStreamProfile(OB_GYRO_FS_16dps, OB_SAMPLE_RATE_1_5625_HZ);
         break;
+    case OB_FRAME_LIDAR_POINTS:
+        sp = StreamProfileFactory::createLiDARStreamProfile(OB_LIDAR_SCAN_ANY, format);
+        break;
     default:
         throw libobsensor::invalid_value_exception("Invalid frame type for user frame.");
         break;

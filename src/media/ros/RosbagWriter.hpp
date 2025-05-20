@@ -18,9 +18,11 @@
 #include "sensor_msgs/CompressedImage.h"
 #include "sensor_msgs/image_encodings.h"
 #include "sensor_msgs/Imu.h"
+#include "sensor_msgs/LiDARFrame.h"
 #include "custom_msg/OBDeviceInfo.h"
 #include "custom_msg/OBStreamProfile.h"
 #include "custom_msg/OBImuStreamProfile.h"
+#include "custom_msg/OBLiDARStreamProfile.h"
 #include "custom_msg/OBDisparityParam.h"
 #include "custom_msg/OBProperty.h"
 
@@ -47,8 +49,10 @@ private:
     void writeVideoFrame(const OBSensorType &sensorType, std::shared_ptr<const Frame> curFrame);
     void writeImuFrame(const OBSensorType &sensorType, std::shared_ptr<const Frame> curFrame);
     void writeVideoStreamProfile(const OBSensorType sensorType, const std::shared_ptr<const StreamProfile> &streamProfile);
+    void writeLiDARFrame(std::shared_ptr<const Frame> curFrame);
     void writeAccelStreamProfile(const std::shared_ptr<const StreamProfile> &streamProfile);
     void writeGyroStreamProfile(const std::shared_ptr<const StreamProfile> &streamProfile);
+    void writeLiDARStreamProfile(const std::shared_ptr<const StreamProfile> &streamProfile);
     void writeDisparityParam(std::shared_ptr<const DisparityBasedStreamProfile> disparityParam);
 
 private:

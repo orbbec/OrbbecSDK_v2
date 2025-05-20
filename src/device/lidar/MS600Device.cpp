@@ -60,25 +60,9 @@ void MS600Device::fetchDeviceInfo() {
 
     BEGIN_TRY_EXECUTE({
         auto propertyServer = getPropertyServer();
-        // get mac address as ui
-        auto data = propertyServer->getStructureData(OB_RAW_DATA_LIDAR_MAC_ADDRESS, PROP_ACCESS_INTERNAL);
 
-        if(data.empty()) {
-            deviceInfo_->uid_ = enumInfo_->getUid();
-        }
-        else {
-            std::ostringstream ss;
-            auto               size = data.size();
-
-            ss << std::hex << std::setfill('0');
-            ss << std::setw(2) << static_cast<uint16_t>(data[0]);
-            for(size_t i = 1; i < size; ++i) {
-                ss << ":" << std::setw(2) << static_cast<int>(data[i]);
-            }
-            deviceInfo_->uid_ = ss.str();
-        }
         // firmware version
-        data                    = propertyServer->getStructureData(OB_RAW_DATA_LIDAR_FIRMWARE_VERSION, PROP_ACCESS_INTERNAL);
+        auto data               = propertyServer->getStructureData(OB_RAW_DATA_LIDAR_FIRMWARE_VERSION, PROP_ACCESS_INTERNAL);
         deviceInfo_->fwVersion_ = Uint8toString(data, "unknown");
         // sn
         data                   = propertyServer->getStructureData(OB_RAW_DATA_LIDAR_SERIAL_NUMBER, PROP_ACCESS_INTERNAL);
@@ -86,7 +70,6 @@ void MS600Device::fetchDeviceInfo() {
     })
     CATCH_EXCEPTION_AND_EXECUTE({
         LOG_ERROR("fetch LiDAR deviceInfo error!");
-        deviceInfo_->uid_       = enumInfo_->getUid();
         deviceInfo_->fwVersion_ = "unknown";
         deviceInfo_->deviceSn_  = enumInfo_->getDeviceSn();
     })
@@ -206,7 +189,7 @@ void MS600Device::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
     // TODO hardcoded here
     if(streamType == OB_STREAM_LIDAR) {
         // LiDAR
-        const std::vector<OBLiDARScanRate> scanRates = { OB_LIDAR_SCAN_15HZ, OB_LIDAR_SCAN_20HZ, OB_LIDAR_SCAN_25HZ, OB_LIDAR_SCAN_30HZ };
+        const std::vector<OBLiDARScanRate> scanRates = { OB_LIDAR_SCAN_30HZ, OB_LIDAR_SCAN_25HZ, OB_LIDAR_SCAN_20HZ, OB_LIDAR_SCAN_15HZ };
         const std::vector<OBFormat>        formats   = { OB_FORMAT_LIDAR_SCAN };
         StreamProfileList                  profileList;
 

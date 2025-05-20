@@ -15,6 +15,8 @@
 #include "component/timestamp/GlobalTimestampFitter.hpp"
 #include "component/sensor/imu/GyroSensor.hpp"
 #include "component/sensor/imu/AccelSensor.hpp"
+#include "component/sensor/lidar/LiDARStreamer.hpp"
+#include "component/sensor/lidar/LiDARSensor.hpp"
 #include "gemini330/G330FrameMetadataParserContainer.hpp"
 #include "gemini2/G435LeFrameMetadataParserContainer.hpp"
 #include "openni/OpenNIDisparitySensor.hpp"
@@ -84,12 +86,14 @@ void PlaybackDevice::init() {
         });
     }
 
-    auto algParamManager = std::make_shared<PlaybackDeviceParamManager>(this, port_);
-    registerComponent(OB_DEV_COMPONENT_ALG_PARAM_MANAGER, algParamManager);
+    if(!isDeviceInOrbbecSeries(LiDARDevPids, vid, pid)) {
+        auto algParamManager = std::make_shared<PlaybackDeviceParamManager>(this, port_);
+        registerComponent(OB_DEV_COMPONENT_ALG_PARAM_MANAGER, algParamManager);
 
-    // Note: LiDAR not supported this component
-    auto depthWorkModeManager = std::make_shared<PlaybackDepthWorkModeManager>(this, port_);
-    registerComponent(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER, depthWorkModeManager);
+        // Note: LiDAR not supported this component
+        auto depthWorkModeManager = std::make_shared<PlaybackDepthWorkModeManager>(this, port_);
+        registerComponent(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER, depthWorkModeManager);
+    }
 
     if(isDeviceInContainer(G330DevPids, vid, pid) || isDeviceInOrbbecSeries(FemtoMegaDevPids, vid, pid)
        || isDeviceInOrbbecSeries(FemtoBoltDevPids, vid, pid)) {
@@ -129,6 +133,19 @@ void PlaybackDevice::fetchExtensionInfo() {
 void PlaybackDevice::initSensorList() {
     auto vid = deviceInfo_->vid_;
     auto pid = deviceInfo_->pid_;
+
+    if(isDeviceInOrbbecSeries(LiDARDevPids, vid, pid)) {
+        // LiDAR: only register lidar sensor
+        registerComponent(
+            OB_DEV_COMPONENT_LIDAR_SENSOR,
+            [this]() {
+                auto sensor = std::make_shared<LiDARSensor>(this, port_, port_);
+                sensor->setStreamProfileList(port_->getStreamProfileList(OB_SENSOR_LIDAR));
+                return sensor;
+            },
+            true);
+        return;
+    }
 
     registerComponent(OB_DEV_COMPONENT_FRAME_PROCESSOR_FACTORY, [this]() {
         std::shared_ptr<FrameProcessorFactory> factory;
@@ -445,12 +462,17 @@ void PlaybackDevice::initSensorList() {
 }
 
 void PlaybackDevice::initProperties() {
+    auto propertyServer = std::make_shared<PropertyServer>(this);
+    registerComponent(OB_DEV_COMPONENT_PROPERTY_SERVER, propertyServer, true);
+
+    if(isDeviceInOrbbecSeries(LiDARDevPids, deviceInfo_->vid_, deviceInfo_->pid_)) {
+        // LiDAR: no any property for playback device
+        return;
+    }
+
     frameTransformAccessor_ = std::make_shared<PlaybackFrameTransformPropertyAccessor>(port_, this);
-    auto propertyServer     = std::make_shared<PropertyServer>(this);
     auto filterAccessor     = std::make_shared<PlaybackFilterPropertyAccessor>(port_, this);
     auto vendorAccessor     = getComponentT<PlaybackVendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR).get();
-
-    registerComponent(OB_DEV_COMPONENT_PROPERTY_SERVER, propertyServer, true);
 
     // common imu properties
     registerPropertyCondition(propertyServer, OB_STRUCT_GET_ACCEL_PRESETS_ODR_LIST, "", "r", vendorAccessor, nullptr, true);

@@ -137,6 +137,12 @@ void RosReader::querySreamProfileList() {
             gyroStreamProfile->bindIntrinsic(gyroIntrinsicIntrinsic);
             streamProfileList_.insert({ static_cast<OBStreamType>(gyroStreamProfileInfoPtr->streamType), gyroStreamProfile });
         }
+        else if(RosTopic::getStreamProfilePrefix(msg.getTopic()) == OB_STREAM_LIDAR) {
+            custom_msg::LiDARStreamProfileInfoPtr streamProfileInfoPtr = msg.instantiate<custom_msg::LiDARStreamProfileInfo>();
+            auto streamProfile = std::make_shared<LiDARStreamProfile>(nullptr, static_cast<OBLiDARScanRate>(streamProfileInfoPtr->scanRate),
+                                                                      static_cast<OBFormat>(streamProfileInfoPtr->format));
+            streamProfileList_.insert({ static_cast<OBStreamType>(streamProfileInfoPtr->streamType), streamProfile });
+        }
         else if(RosTopic::getStreamProfilePrefix(msg.getTopic()) == OB_STREAM_DEPTH) {
             custom_msg::StreamProfileInfoPtr             streamProfileInfoPtr = msg.instantiate<custom_msg::StreamProfileInfo>();
             std::shared_ptr<DisparityBasedStreamProfile> depthStreamProfile   = std::make_shared<DisparityBasedStreamProfile>(
@@ -325,6 +331,9 @@ std::shared_ptr<Frame> RosReader::readNextData() {
     else if(nextMsg.isType<sensor_msgs::Imu>()) {
         return createImuFrame(nextMsg);
     }
+    else if(nextMsg.isType < sensor_msgs::LiDARFrame>()) {
+        return createLiDARFrame(nextMsg);
+    }
 
     return nullptr;
 }
@@ -367,6 +376,32 @@ std::shared_ptr<Frame> RosReader::createVideoFrame(const rosbag::MessageInstance
     if(streamProfileList_.count(utils::mapFrameTypeToStreamType(RosTopic::getFrameTypeIdentifier(videoMsgTopic)))) {
         frame->setStreamProfile(streamProfileList_[utils::mapFrameTypeToStreamType(RosTopic::getFrameTypeIdentifier(videoMsgTopic))]);
     }
+    return frame;
+}
+
+std::shared_ptr<Frame> RosReader::createLiDARFrame(const rosbag::MessageInstance &msg) {
+    auto                              msgTopic = msg.getTopic();
+    sensor_msgs::LiDARFrame::ConstPtr framePtr = msg.instantiate<sensor_msgs::LiDARFrame>();
+    auto                              streamType = utils::mapFrameTypeToStreamType(RosTopic::getFrameTypeIdentifier(msgTopic));
+    auto                              format    = convertStringToFormat(framePtr->format);
+
+    if(streamType != OB_STREAM_LIDAR) {
+        throw invalid_value_exception("Invalid stream type, must be LiDAR stream here");
+    }
+    if(streamProfileList_.count(streamType) == 0) {
+        throw invalid_value_exception("Can't get profile");
+    }
+    auto sp = streamProfileList_[streamType];
+    if(sp->getFormat() != format) {
+        throw invalid_value_exception(utils::string::to_string() << "Invalid frame format, expected is " << sp->getFormat() << " but got "<< format << " from frame data");
+    }
+    auto frame = FrameFactory::createFrameFromStreamProfile(sp);
+    frame->updateData(framePtr->data.data() + framePtr->metadatasize, framePtr->data.size() - framePtr->metadatasize);
+    frame->updateMetadata(framePtr->data.data(), framePtr->metadatasize);
+    frame->setNumber(framePtr->number);
+    frame->setTimeStampUsec(framePtr->timestamp_usec);
+    frame->setSystemTimeStampUsec(framePtr->timestamp_systemusec);
+    frame->setGlobalTimeStampUsec(framePtr->timestamp_globalusec);
     return frame;
 }
 

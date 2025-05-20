@@ -268,6 +268,110 @@ std::ostream &GyroStreamProfile::operator<<(std::ostream &os) const {
 LiDARStreamProfile::LiDARStreamProfile(std::shared_ptr<LazySensor> owner, OBLiDARScanRate scanRate, OBFormat format)
     : StreamProfile{ owner, OB_STREAM_LIDAR, format }, scanRate_(scanRate) {}
 
+LiDARProfileInfo LiDARStreamProfile::getInfo() const {
+    LiDARProfileInfo info;
+
+    // TODO hard-coded for LiDAR device
+    // frame type
+    info.frameType = utils::mapStreamTypeToFrameType(getType());
+    // format
+    info.format = getFormat();
+    if(info.format == OB_FORMAT_LIDAR_SCAN) {
+        // For single-lines LiDAR device
+        switch(getScanRate()) {
+        case OB_LIDAR_SCAN_15HZ: {
+            info.scanSpeed       = 900;
+            info.maxDataBlockNum = 18;
+            info.pointsNum       = 200;
+            info.dataBlockSize   = 844;
+        } break;
+        case OB_LIDAR_SCAN_20HZ: {
+            info.scanSpeed       = 1200;
+            info.maxDataBlockNum = 18;
+            info.pointsNum       = 150;
+            info.dataBlockSize   = 644;
+        } break;
+        case OB_LIDAR_SCAN_25HZ: {
+            info.scanSpeed       = 1500;
+            info.maxDataBlockNum = 18;
+            info.pointsNum       = 120;
+            info.dataBlockSize   = 524;
+        } break;
+        case OB_LIDAR_SCAN_30HZ: {
+            info.scanSpeed       = 1800;
+            info.maxDataBlockNum = 18;
+            info.pointsNum       = 100;
+            info.dataBlockSize   = 444;
+        } break;
+        default:
+            throw invalid_value_exception("Invalid LiDAR scan rate");
+            break;
+        }
+        info.frameSize = info.pointsNum * info.maxDataBlockNum * sizeof(OBLiDARScanPoint);
+    }
+    else {
+        // For multi-lines LiDAR device
+
+        // speed and max data block number
+        using LiDARInfoMap = std::unordered_map<OBLiDARScanRate, std::pair<uint32_t, uint32_t>>;
+        // std::pair: first scan speed; second: data block num for a circle
+        static LiDARInfoMap mapScanRate = {
+            { OB_LIDAR_SCAN_5HZ, { 300, 240 } },
+            { OB_LIDAR_SCAN_10HZ, { 600, 120 } },
+            { OB_LIDAR_SCAN_15HZ, { 900, 80 } },
+            { OB_LIDAR_SCAN_20HZ, { 1200, 60 } },
+        };
+        // std::pair: first scan speed; second: data block num for a circle
+        static LiDARInfoMap mapScanRateCalibration = {
+            { OB_LIDAR_SCAN_5HZ, { 300, 1200 } },
+            { OB_LIDAR_SCAN_10HZ, { 600, 600 } },
+            { OB_LIDAR_SCAN_15HZ, { 900, 400 } },
+            { OB_LIDAR_SCAN_20HZ, { 1200, 300 } },
+        };
+
+        uint32_t      dataSizePerBlock = 0;
+        LiDARInfoMap *infoMap          = nullptr;
+        if(info.format == OB_FORMAT_LIDAR_CALIBRATION) {
+            // calibration data
+            info.dataBlockSize = 944;
+            info.pointsNum     = 25;
+            // Point data in the block was copied directly to the frame without any conversion
+            dataSizePerBlock = info.dataBlockSize - 40 - 4;  // header and tai magic
+            infoMap          = &mapScanRateCalibration;
+        }
+        else if(info.format == OB_FORMAT_LIDAR_POINT) {
+            // LiDAR point
+            info.pointsNum     = 125;
+            info.dataBlockSize = 1044;
+            // Point data in the block was converted to OBLiDARPoint and then save to the frame
+            dataSizePerBlock = info.pointsNum * sizeof(OBLiDARPoint);
+            infoMap          = &mapScanRate;
+        }
+        else if(info.format == OB_FORMAT_LIDAR_SPHERE_POINT) {
+            // LiDAR sphere point
+            info.pointsNum     = 125;
+            info.dataBlockSize = 1044;
+            // Point data in the block was converted to OBLiDARSpherePoint and then save to the frame
+            dataSizePerBlock = info.pointsNum * sizeof(OBLiDARSpherePoint);
+            infoMap          = &mapScanRate;
+        }
+        else {
+            info.clear();
+            throw invalid_value_exception("Invalid LiDAR format");
+        }
+
+        auto iter = infoMap->find(scanRate_);
+        if(iter == infoMap->end()) {
+            throw invalid_value_exception("Invalid LiDAR scan rate");
+        }
+        info.scanSpeed       = (*iter).second.first;
+        info.maxDataBlockNum = (*iter).second.second;
+        info.frameSize       = dataSizePerBlock * info.maxDataBlockNum;
+    }
+
+    return info;
+}
+
 OBLiDARScanRate LiDARStreamProfile::getScanRate() const {
     return scanRate_;
 }

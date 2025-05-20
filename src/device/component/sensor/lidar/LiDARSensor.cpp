@@ -8,7 +8,7 @@
 
 namespace libobsensor {
 
-LiDARSensor::LiDARSensor(IDevice *owner, const std::shared_ptr<ISourcePort> &backend, const std::shared_ptr<ILiDARStreamer> &streamer)
+LiDARSensor::LiDARSensor(IDevice *owner, const std::shared_ptr<ISourcePort> &backend, const std::shared_ptr<IStreamer> &streamer)
     : SensorBase(owner, OB_SENSOR_LIDAR, backend), streamer_(streamer) {
     auto port = std::dynamic_pointer_cast<IDataStreamPort>(backend_);
     if(!port) {
@@ -34,7 +34,7 @@ void LiDARSensor::start(std::shared_ptr<const StreamProfile> sp, FrameCallback c
     updateStreamState(STREAM_STATE_STARTING);
 
     BEGIN_TRY_EXECUTE({
-        streamer_->start(sp, [this](std::shared_ptr<Frame> frame) {
+        streamer_->startStream(sp, [this](std::shared_ptr<Frame> frame) {
             if(streamState_ != STREAM_STATE_STREAMING && streamState_ != STREAM_STATE_STARTING) {
                 return;
             }
@@ -52,7 +52,7 @@ void LiDARSensor::start(std::shared_ptr<const StreamProfile> sp, FrameCallback c
 
 void LiDARSensor::stop() {
     updateStreamState(STREAM_STATE_STOPPING);
-    streamer_->stop();
+    streamer_->stopStream(activatedStreamProfile_);
     updateStreamState(STREAM_STATE_STOPPED);
 }
 

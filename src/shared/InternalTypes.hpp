@@ -274,8 +274,6 @@ typedef struct Distortion {
     float k4;
 } Distortion;
 
-
-
 // Mx6000 dual camera struct
 struct ObIntrinsicRefinement {
     uint8_t refinement_[2016];
@@ -416,19 +414,19 @@ typedef struct {
  * @brief Camera extension parameters (mainly used for disparity to depth conversion)
  */
 typedef struct {
-    float fDCmosEmitterDistance;  //baseline
-    float fDCmosRCmosDistance;    //dual baseline
-    float fReferenceDistance;     //zpd baseline
-    float fReferencePixelSize;    //zpps baseline
+    float fDCmosEmitterDistance;  // baseline
+    float fDCmosRCmosDistance;    // dual baseline
+    float fReferenceDistance;     // zpd baseline
+    float fReferencePixelSize;    // zpps baseline
 } OBExtensionParam;
 
 typedef struct {
-    float    d_intr_p[4];    // Depth camera intrinsic parameters: [fx, fy, cx, cy]
-    float    c_intr_p[4];    // Color camera intrinsic parameters: [fx, fy, cx, cy]
-    float    d2c_r[9];       // Rotation matrix from depth camera to color camera: [r00, r01, r02; r10, r11, r12; r20, r21, r22]
-    float    d2c_t[3];       // Translation matrix from depth camera to color camera: [t1, t2, t3]
-    float    d_k[5];         // Depth camera distortion parameters: [k1, k2, p1, p2, k3]
-    float    c_k[5];         // Color camera distortion parameters: [k1, k2, p1, p2, k3]
+    float d_intr_p[4];  // Depth camera intrinsic parameters: [fx, fy, cx, cy]
+    float c_intr_p[4];  // Color camera intrinsic parameters: [fx, fy, cx, cy]
+    float d2c_r[9];     // Rotation matrix from depth camera to color camera: [r00, r01, r02; r10, r11, r12; r20, r21, r22]
+    float d2c_t[3];     // Translation matrix from depth camera to color camera: [t1, t2, t3]
+    float d_k[5];       // Depth camera distortion parameters: [k1, k2, p1, p2, k3]
+    float c_k[5];       // Color camera distortion parameters: [k1, k2, p1, p2, k3]
 } OBInternalCameraParam;
 
 typedef struct OpenNIFrameProcessParam {
@@ -448,5 +446,31 @@ typedef struct FrameInterleaveParam {
     int depthMaxExposure;   // max exposure
     int laserSwitch;        // laser on/off switch
 } FrameInterleaveParam;
+
+/**
+ * @brief LiDAR profile info
+ */
+typedef struct LiDARProfileInfo {
+    OBFrameType frameType;        // frame type
+    OBFormat    format;           // frame data format
+    int32_t     scanSpeed;        // related to OBLiDARScanRate
+    uint32_t    maxDataBlockNum;  // data block num per frame, related to scan speed
+    uint16_t    pointsNum;        // points num per block
+    uint16_t    dataBlockSize;    // data block size per block
+    uint32_t    frameSize;        // frame data size
+
+    LiDARProfileInfo()
+        : frameType(OB_FRAME_UNKNOWN), format(OB_FORMAT_UNKNOWN), scanSpeed(0), maxDataBlockNum(0), pointsNum(0), dataBlockSize(0), frameSize(0) {}
+
+    void clear() {
+        frameType       = OB_FRAME_UNKNOWN;
+        format          = OB_FORMAT_UNKNOWN;
+        scanSpeed       = 0;
+        maxDataBlockNum = 0;
+        pointsNum       = 0;
+        dataBlockSize   = 0;
+        frameSize       = 0;
+    }
+} LiDARProfileInfo;
 
 #pragma pack(pop)

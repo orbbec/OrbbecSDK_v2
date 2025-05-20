@@ -9,7 +9,7 @@
 namespace libobsensor {
 class LiDARSensor : public SensorBase {
 public:
-    LiDARSensor(IDevice *owner, const std::shared_ptr<ISourcePort> &backend, const std::shared_ptr<ILiDARStreamer> &streamer);
+    LiDARSensor(IDevice *owner, const std::shared_ptr<ISourcePort> &backend, const std::shared_ptr<IStreamer> &streamer);
     ~LiDARSensor() noexcept override;
 
     void start(std::shared_ptr<const StreamProfile> sp, FrameCallback callback) override;
@@ -18,6 +18,6 @@ public:
 private:
 
 private:
-    std::shared_ptr<ILiDARStreamer> streamer_;
+    std::shared_ptr<IStreamer> streamer_;
 };
 }  // namespace libobsensor

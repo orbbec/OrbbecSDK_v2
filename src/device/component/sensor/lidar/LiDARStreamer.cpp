@@ -90,7 +90,7 @@ static inline void copyToOBLiDARSpherePoint(const LiDARSpherePoint *point, OBLiD
     // to host order and to unit mm / degrees
     obPoint->distance     = ntohs(point->distance) * 2.0f;
     obPoint->theta        = ntohs(point->theta) * 0.01f;
-    obPoint->phi          = ntohs(point->phi) * 0.001f;
+    obPoint->phi          = ntohs(point->phi) * 0.01f;
     obPoint->reflectivity = point->reflectivity;
     obPoint->tag          = point->tag;
 }
@@ -105,7 +105,7 @@ static inline void convertToCartesianCoordinate(const LiDARSpherePoint *sphere, 
 
     distance *= 2;                    // to unit mm
     theta *= 0.01f * MY_PI / 180.0f;  // unit 0.01 degrees to unit rad
-    phi *= 0.001f * MY_PI / 180.0f;   // unit 0.01 degrees to unit rad
+    phi *= 0.01f * MY_PI / 180.0f;    // unit 0.01 degrees to unit rad
 
     point->x            = distance * cos(theta) * cos(phi);
     point->y            = distance * sin(theta) * cos(phi);
@@ -129,15 +129,15 @@ LiDARStreamer::LiDARStreamer(IDevice *owner, const std::shared_ptr<IDataStreamPo
 
 LiDARStreamer::~LiDARStreamer() noexcept {
     try {
-        stop();
+        stopStream(profile_);
     }
     catch(const std::exception &e) {
         LOG_ERROR("Exception occurred while destroying LiDARStreamer: {}", e.what());
     }
 }
 
-void LiDARStreamer::start(std::shared_ptr<const StreamProfile> sp, MutableFrameCallback callback) {
-    LOG_INFO("Try to start stream: {}", sp);
+void LiDARStreamer::startStream(std::shared_ptr<const StreamProfile> profile, MutableFrameCallback callback) {
+    LOG_INFO("Try to start stream: {}", profile);
 
     // check if stream is already running
     {
@@ -147,8 +147,8 @@ void LiDARStreamer::start(std::shared_ptr<const StreamProfile> sp, MutableFrameC
             return;
         }
         // check stream profile and convert to scan profile
-        checkAndConvertProfile(sp);
-        profile_            = sp;
+        checkAndConvertProfile(profile);
+        profile_            = profile;
         callback_           = callback;
         running_            = true;
         expectedDataNumber_ = 1;  // the first data block
@@ -182,8 +182,9 @@ void LiDARStreamer::start(std::shared_ptr<const StreamProfile> sp, MutableFrameC
     })
 }
 
-void LiDARStreamer::stop() {
+void LiDARStreamer::stopStream(std::shared_ptr<const StreamProfile> profile) {
     LOG_DEBUG("LiDARStreamer stop...");
+    utils::unusedVar(profile);
     {
         std::lock_guard<std::mutex> lock(mutex_);
         if(!running_) {
@@ -201,7 +202,8 @@ void LiDARStreamer::stop() {
 
     LOG_DEBUG("LiDARStreamer stop backend...");
     backend_->stopStream();
-    scanProfile_.clear();
+    profile.reset();
+    profileInfo_.clear();
     frameIndex_ = 0;
     frame_.reset();
     frameDataOffset_    = 0;
@@ -233,7 +235,7 @@ void LiDARStreamer::trySendStartStreamVendorCmd() {
         isCalibrationMode = false;  // default is normal mode
     }
     // format
-    switch(scanProfile_.format) {
+    switch(profileInfo_.format) {
     case OB_FORMAT_LIDAR_POINT:
     case OB_FORMAT_LIDAR_SPHERE_POINT:
         // support by multi-lines LiDAR
@@ -254,7 +256,7 @@ void LiDARStreamer::trySendStartStreamVendorCmd() {
     }
 
     // speed
-    value.intValue = scanProfile_.scanSpeed;
+    value.intValue = profileInfo_.scanSpeed;
     propServer->setPropertyValue(OB_PROP_LIDAR_SCAN_SPEED_INT, value, PROP_ACCESS_INTERNAL);
 
     // set streaming on
@@ -263,88 +265,16 @@ void LiDARStreamer::trySendStartStreamVendorCmd() {
 }
 
 void LiDARStreamer::checkAndConvertProfile(std::shared_ptr<const StreamProfile> profile) {
-    auto     lidarProfile     = profile->as<LiDARStreamProfile>();
-    uint32_t dataSizePerBlock = 0;
+    auto lidarProfile = profile->as<LiDARStreamProfile>();
 
-    // frame type
-    scanProfile_.frameType = utils::mapStreamTypeToFrameType(lidarProfile->getType());
-    // format
-    scanProfile_.format = lidarProfile->getFormat();
-    if(scanProfile_.format == OB_FORMAT_LIDAR_CALIBRATION) {
-        // calibration data
-        scanProfile_.dataBlockSize = 944;
-        scanProfile_.pointsNum     = 25;
-        // Point data in the block was copied directly to the frame without any conversion
-        dataSizePerBlock = scanProfile_.dataBlockSize - sizeof(LiDARDataHeader) - TAIL_MAGIC_LEN;
-    }
-    else if(scanProfile_.format == OB_FORMAT_LIDAR_POINT) {
-        // LiDAR point
-        scanProfile_.pointsNum     = 125;
-        scanProfile_.dataBlockSize = 1044;
-        // Point data in the block was converted to OBLiDARPoint and then save to the frame
-        dataSizePerBlock = scanProfile_.pointsNum * sizeof(OBLiDARPoint);
-    }
-    else if(scanProfile_.format == OB_FORMAT_LIDAR_SPHERE_POINT) {
-        // LiDAR sphere point
-        scanProfile_.pointsNum     = 125;
-        scanProfile_.dataBlockSize = 1044;
-        // Point data in the block was converted to OBLiDARSpherePoint and then save to the frame
-        dataSizePerBlock = scanProfile_.pointsNum * sizeof(OBLiDARSpherePoint);
-    }
-    else {
-        scanProfile_.clear();
-        throw invalid_value_exception("Invalid LiDAR format");
-    }
-
-    // speed and max data block number
-    // TODO hard-coded here, should be re-factored.
-
-    // std::pair: first scan speed; second: data block num for a circle
-    static std::unordered_map<OBLiDARScanRate, std::pair<uint32_t, uint32_t>> mapScanRate = {
-        { OB_LIDAR_SCAN_5HZ, { 300, 240 } },
-        { OB_LIDAR_SCAN_10HZ, { 600, 120 } },
-        { OB_LIDAR_SCAN_15HZ, { 900, 80 } },
-        { OB_LIDAR_SCAN_20HZ, { 1200, 60 } },
-    };
-    // std::pair: first scan speed; second: data block num for a circle
-    static std::unordered_map<OBLiDARScanRate, std::pair<uint32_t, uint32_t>> mapScanRateCalibration = {
-        { OB_LIDAR_SCAN_5HZ, { 300, 1200 } },
-        { OB_LIDAR_SCAN_10HZ, { 600, 600 } },
-        { OB_LIDAR_SCAN_15HZ, { 900, 400 } },
-        { OB_LIDAR_SCAN_20HZ, { 1200, 300 } },
-    };
-
-    bool found = false;
-    if(scanProfile_.format == OB_FORMAT_LIDAR_CALIBRATION) {
-        auto iter = mapScanRateCalibration.find(lidarProfile->getScanRate());
-        if(iter != mapScanRateCalibration.end()) {
-            scanProfile_.scanSpeed       = (*iter).second.first;
-            scanProfile_.maxDataBlockNum = (*iter).second.second;
-            found                        = true;
-        }
-    }
-    else {
-        auto iter = mapScanRate.find(lidarProfile->getScanRate());
-        if(iter != mapScanRate.end()) {
-            scanProfile_.scanSpeed       = (*iter).second.first;
-            scanProfile_.maxDataBlockNum = (*iter).second.second;
-            found                        = true;
-        }
-    }
-    if(!found) {
-        scanProfile_.clear();
-        throw invalid_value_exception("Invalid LiDAR scan rate");
-    }
-
-    scanProfile_.frameSize = dataSizePerBlock * scanProfile_.maxDataBlockNum;
-    return;
+    profileInfo_ = lidarProfile->getInfo();
 }
 
 void LiDARStreamer::parseLiDARData(std::shared_ptr<Frame> frame) {
-    const uint16_t   dataBlockSize   = scanProfile_.dataBlockSize;
-    const uint32_t   maxDataBlockNum = scanProfile_.maxDataBlockNum;
-    const uint16_t   pointsNum       = scanProfile_.pointsNum;
-    const uint32_t   frameSize       = scanProfile_.frameSize;
+    const uint16_t   dataBlockSize   = profileInfo_.dataBlockSize;
+    const uint32_t   maxDataBlockNum = profileInfo_.maxDataBlockNum;
+    const uint16_t   pointsNum       = profileInfo_.pointsNum;
+    const uint32_t   frameSize       = profileInfo_.frameSize;
     auto             data            = frame->getData();
     auto             dataSize        = frame->getDataSize();
     LiDARDataHeader *header          = (LiDARDataHeader *)data;
@@ -386,7 +316,7 @@ void LiDARStreamer::parseLiDARData(std::shared_ptr<Frame> frame) {
     switch(header->dataFormat) {
     case 2:
         // Sphere point -> OB_FORMAT_LIDAR_SPHERE_POINT
-        if((scanProfile_.format != OB_FORMAT_LIDAR_POINT) && (scanProfile_.format != OB_FORMAT_LIDAR_SPHERE_POINT)) {
+        if((profileInfo_.format != OB_FORMAT_LIDAR_POINT) && (profileInfo_.format != OB_FORMAT_LIDAR_SPHERE_POINT)) {
             break;
         }
         format       = OB_FORMAT_LIDAR_SPHERE_POINT;
@@ -394,7 +324,7 @@ void LiDARStreamer::parseLiDARData(std::shared_ptr<Frame> frame) {
         break;
     case 5:
         // Point in calibration mode
-        if(scanProfile_.format != OB_FORMAT_LIDAR_CALIBRATION) {
+        if(profileInfo_.format != OB_FORMAT_LIDAR_CALIBRATION) {
             break;
         }
         format       = OB_FORMAT_LIDAR_CALIBRATION;
@@ -406,7 +336,7 @@ void LiDARStreamer::parseLiDARData(std::shared_ptr<Frame> frame) {
     }
     if(format == OB_FORMAT_UNKNOWN) {
         LOG_WARN("This LiDAR block data will be dropped because data format is unknown! format: {}, profile format: {}", header->dataFormat,
-                 scanProfile_.format);
+                 profileInfo_.format);
         return;
     }
     if(curPointsNum != pointsNum) {
@@ -442,7 +372,7 @@ void LiDARStreamer::parseLiDARData(std::shared_ptr<Frame> frame) {
     auto frameData = frame_->getDataMutable() + frameDataOffset_;
     // convert coordinate system
     if(format == OB_FORMAT_LIDAR_SPHERE_POINT) {
-        if(scanProfile_.format == OB_FORMAT_LIDAR_POINT) {
+        if(profileInfo_.format == OB_FORMAT_LIDAR_POINT) {
             // update data offset
             frameDataOffset_ += curPointsNum * sizeof(OBLiDARPoint);
             if(frameDataOffset_ <= frameSize) {
@@ -482,9 +412,12 @@ void LiDARStreamer::parseLiDARData(std::shared_ptr<Frame> frame) {
         // update data offset
         frameDataOffset_ += pointDataSize;
     }
+
     // timestamp
-    frame_->setTimeStampUsec(header->timestamp / 1000);  // to us
-    frame_->setSystemTimeStampUsec(utils::getNowTimesUs());
+    // TODO 20250417: timestamp in header is invalid now, use system time
+    auto timestamp = utils::getNowTimesUs();
+    frame_->setTimeStampUsec(timestamp);
+    frame_->setSystemTimeStampUsec(timestamp);
 
     if(header->dataBlockNum >= maxDataBlockNum) {
         // reach the max data block num - all data for a circle

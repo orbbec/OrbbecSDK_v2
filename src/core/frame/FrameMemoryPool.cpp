@@ -122,6 +122,11 @@ std::shared_ptr<IFrameBufferManager> FrameMemoryPool::createFrameBufferManager(O
     else if(streamProfile->is<GyroStreamProfile>()) {
         return createFrameBufferManager(type, sizeof(GyroFrame::Data));
     }
+    else if(streamProfile->is<LiDARStreamProfile>()) {
+        auto sp   = streamProfile->as<LiDARStreamProfile>();
+        auto info = sp->getInfo();
+        return createFrameBufferManager(type, info.frameSize);
+    }
     LOG_WARN("unsupported streamProfile type");
     return nullptr;
 }
