@@ -28,6 +28,9 @@ add_subdirectory(3.advanced.point_cloud)
 add_subdirectory(3.advanced.preset)
 add_subdirectory(4.misc.logger)
 add_subdirectory(4.misc.metadata)
+if(OB_BUILD_LINUX)
+    add_subdirectory(3.advanced.multi_devices_sync_gmsltrigger)
+endif()
 
 if (OB_BUILD_PCL_EXAMPLES)
     add_subdirectory(5.wrapper.pcl)
@@ -59,11 +62,6 @@ if(${OpenCV_FOUND})
     add_subdirectory(3.advanced.multi_devices_sync)
     add_subdirectory(4.misc.save_to_disk)
     add_subdirectory(5.wrapper.opencv)
-
-    if(OB_BUILD_LINUX)
-        add_subdirectory(3.advanced.multi_devices_sync_gmsltrigger)
-    endif()
-
 endif()
 
 # InstallRequiredSystemLibraries
