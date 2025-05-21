@@ -15,6 +15,12 @@ Here is the device support list of OrbbecSDK V1 (v1.x) and Orbbec SDK v2 (v2.x):
     </tr>
   </thead>
   <tbody>
+      <tr>
+      <td style="text-align: center; font-weight: bold;">Gemini 435Le</td>
+      <td>Gemini 435Le</td>
+      <td>not supported</td>
+      <td>recommended for new designs</td>
+    </tr>
     <tr>
       <td rowspan="8" style="text-align: center; font-weight: bold;">Gemini 330</td>
       <td>Gemini 335Le</td>
@@ -164,6 +170,7 @@ If you prefer to continue with Orbbec SDK v1.x, you can still access the pre-com
 
 | **Products List** | **Minimal Firmware Version** |
 |-------------------|------------------------------|
+| Gemini 435Le        | 1.2.04                       |
 | Gemini 335Le        | 1.5.31                       |
 | Gemini 330        | 1.2.20                       |
 | Gemini 330L       | 1.2.20                       |
