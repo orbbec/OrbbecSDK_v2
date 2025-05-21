@@ -331,7 +331,7 @@ void MDNSDiscovery::sendAndRecvMDNSQuery(SOCKET sock) {
     }
 }
 
-std::string MDNSDiscovery::findTxtRecord(const std::vector<std::string> &txtList, const std::string &key, const std::string &default) {
+std::string MDNSDiscovery::findTxtRecord(const std::vector<std::string> &txtList, const std::string &key, const std::string &defValue) {
     // data format: "key:value,key:value,key:value"
     for(const auto &str: txtList) {
         std::istringstream iss(str);
@@ -343,7 +343,7 @@ std::string MDNSDiscovery::findTxtRecord(const std::vector<std::string> &txtList
             }
         }
     }
-    return default;  // not found
+    return defValue;  // not found
 }
 
 std::vector<MDNSDeviceInfo> MDNSDiscovery::queryDeviceList() {

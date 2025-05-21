@@ -25,7 +25,7 @@ private:
     void        initProperties();
     void        fetchDeviceInfo() override;
     void        initSensorStreamProfile(std::shared_ptr<ISensor> sensor);
-    std::string Uint8toString(const std::vector<uint8_t> &data, const std::string &default);
+    std::string Uint8toString(const std::vector<uint8_t> &data, const std::string &defValue);
 };
 
 }  // namespace libobsensor

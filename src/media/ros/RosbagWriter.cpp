@@ -115,7 +115,6 @@ void RosWriter::writeImuFrame(const OBSensorType &sensorType, std::shared_ptr<co
 }
 
 void RosWriter::writeLiDARFrame(std::shared_ptr<const Frame> curFrame) {
-    std::lock_guard<std::mutex> lock(writeMutex_);
     if(startTime_ == 0) {
         startTime_ = curFrame->getTimeStampUsec();
     }
@@ -123,19 +122,80 @@ void RosWriter::writeLiDARFrame(std::shared_ptr<const Frame> curFrame) {
     std::chrono::duration<double, std::micro> timestampUs(curFrame->getTimeStampUsec());
     auto                                      topic = RosTopic::frameDataTopic((uint8_t)sensorType, (uint8_t)curFrame->getType());
     streamProfileMap_.insert({ sensorType, curFrame->getStreamProfile() });
-    try {
-        sensor_msgs::LiDARFramePtr frameMsg(new sensor_msgs::LiDARFrame());
-        frameMsg->header.stamp = orbbecRosbag::Time(std::chrono::duration<double>(timestampUs).count());
 
-        frameMsg->format               = convertFormatToString(curFrame->getFormat());
+    auto makeFiled = [](sensor_msgs::PointCloud2::_fields_type &fields, const std::string &name, uint32_t offset, uint8_t dataType, uint32_t dataSize) {
+        sensor_msgs::PointField field;
+
+        field.name     = name;
+        field.offset   = offset;
+        field.datatype = dataType;
+        field.count    = 1;
+        fields.emplace_back(field);
+
+        return dataSize + offset;
+    };
+
+    try {
+        sensor_msgs::PointCloud2Ptr frameMsg(new sensor_msgs::PointCloud2());
+        frameMsg->header.stamp = orbbecRosbag::Time(std::chrono::duration<double>(timestampUs).count());
+        frameMsg->header.frame_id = "camera_link";  // for point cloud rendering
+
+        auto     dataSize  = curFrame->getDataSize();
+        auto     format    = curFrame->getFormat();
+        auto     formatStr = convertFormatToString(format);
+        uint32_t pointSize = 0;
+        switch(format) {
+        case OB_FORMAT_LIDAR_POINT: {
+            pointSize       = sizeof(OBLiDARPoint);
+            uint32_t offset = 0;
+            frameMsg->fields.reserve(5);
+            offset = makeFiled(frameMsg->fields, "x", offset, sensor_msgs::PointField::FLOAT32, 4);
+            offset = makeFiled(frameMsg->fields, "y", offset, sensor_msgs::PointField::FLOAT32, 4);
+            offset = makeFiled(frameMsg->fields, "z", offset, sensor_msgs::PointField::FLOAT32, 4);
+            offset = makeFiled(frameMsg->fields, "intensity", offset, sensor_msgs::PointField::UINT8, 1);
+            offset = makeFiled(frameMsg->fields, "tag", offset, sensor_msgs::PointField::UINT8, 1);
+        } break;
+        case OB_FORMAT_LIDAR_SPHERE_POINT: {
+            pointSize       = sizeof(OBLiDARSpherePoint);
+            uint32_t offset = 0;
+            frameMsg->fields.reserve(5);
+            offset = makeFiled(frameMsg->fields, "distance", offset, sensor_msgs::PointField::FLOAT32, 4);
+            offset = makeFiled(frameMsg->fields, "theta", offset, sensor_msgs::PointField::FLOAT32, 4);
+            offset = makeFiled(frameMsg->fields, "phi", offset, sensor_msgs::PointField::FLOAT32, 4);
+            offset = makeFiled(frameMsg->fields, "intensity", offset, sensor_msgs::PointField::UINT8, 1);
+            offset = makeFiled(frameMsg->fields, "tag", offset, sensor_msgs::PointField::UINT8, 1);
+        } break;
+        case OB_FORMAT_LIDAR_SCAN: {
+            pointSize       = sizeof(OBLiDARScanPoint);
+            uint32_t offset = 0;
+            frameMsg->fields.reserve(3);
+            offset = makeFiled(frameMsg->fields, "angle", offset, sensor_msgs::PointField::FLOAT32, 4);
+            offset = makeFiled(frameMsg->fields, "distance", offset, sensor_msgs::PointField::FLOAT32, 4);
+            offset = makeFiled(frameMsg->fields, "intensity", offset, sensor_msgs::PointField::UINT16, 2);
+        } break;
+        default:
+            LOG_ERROR("Write LiDAR frame data error! Unsupported format: {}", formatStr.c_str());
+            return;
+        }
+
+        frameMsg->height       = 1;  // cloud is unordered
+        frameMsg->width        = static_cast<uint32_t>(dataSize / pointSize);
+        frameMsg->is_bigendian = false;
+        frameMsg->point_step   = pointSize;
+        frameMsg->row_step     = static_cast<uint32_t>(dataSize);
+        frameMsg->data.resize(dataSize);
+        std::copy(curFrame->getData(), curFrame->getData() + dataSize, frameMsg->data.begin());
+        frameMsg->is_dense = false;
+        // extend info
+        frameMsg->format               = formatStr;
         frameMsg->number               = curFrame->getNumber();
         frameMsg->timestamp_usec       = curFrame->getTimeStampUsec();
         frameMsg->timestamp_systemusec = curFrame->getSystemTimeStampUsec();
         frameMsg->timestamp_globalusec = curFrame->getGlobalTimeStampUsec();
-        frameMsg->metadatasize         = static_cast<uint32_t>(curFrame->getMetadataSize());
-        frameMsg->data.clear();
-        frameMsg->data.insert(frameMsg->data.begin(), curFrame->getMetadata(), curFrame->getMetadata() + curFrame->getMetadataSize());
-        frameMsg->data.insert(frameMsg->data.begin() + curFrame->getMetadataSize(), curFrame->getData(), curFrame->getData() + curFrame->getDataSize());
+
+        frameMsg->metadata.resize(curFrame->getMetadataSize());
+        std::copy(curFrame->getMetadata(), curFrame->getMetadata() + curFrame->getMetadataSize(), frameMsg->metadata.begin());
+        // ok, write now
         file_->write(topic, frameMsg->header.stamp, frameMsg);
     }
     catch(const std::exception &e) {

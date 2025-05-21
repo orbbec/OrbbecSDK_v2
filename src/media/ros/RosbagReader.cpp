@@ -331,8 +331,9 @@ std::shared_ptr<Frame> RosReader::readNextData() {
     else if(nextMsg.isType<sensor_msgs::Imu>()) {
         return createImuFrame(nextMsg);
     }
-    else if(nextMsg.isType < sensor_msgs::LiDARFrame>()) {
-        return createLiDARFrame(nextMsg);
+    else if(nextMsg.isType<sensor_msgs::PointCloud2>()) {
+        // TODO: if there is other point cloud frame, we need to add it
+        return createLiDARPointCloud(nextMsg);
     }
 
     return nullptr;
@@ -379,25 +380,28 @@ std::shared_ptr<Frame> RosReader::createVideoFrame(const rosbag::MessageInstance
     return frame;
 }
 
-std::shared_ptr<Frame> RosReader::createLiDARFrame(const rosbag::MessageInstance &msg) {
-    auto                              msgTopic = msg.getTopic();
-    sensor_msgs::LiDARFrame::ConstPtr framePtr = msg.instantiate<sensor_msgs::LiDARFrame>();
-    auto                              streamType = utils::mapFrameTypeToStreamType(RosTopic::getFrameTypeIdentifier(msgTopic));
-    auto                              format    = convertStringToFormat(framePtr->format);
+std::shared_ptr<Frame> RosReader::createLiDARPointCloud(const rosbag::MessageInstance &msg) {
+    auto                               msgTopic   = msg.getTopic();
+    sensor_msgs::PointCloud2::ConstPtr framePtr   = msg.instantiate<sensor_msgs::PointCloud2>();
+    auto                               streamType = utils::mapFrameTypeToStreamType(RosTopic::getFrameTypeIdentifier(msgTopic));
+    auto                               format     = convertStringToFormat(framePtr->format);
 
     if(streamType != OB_STREAM_LIDAR) {
-        throw invalid_value_exception("Invalid stream type, must be LiDAR stream here");
+        LOG_WARN("Invalid stream type, must be LiDAR stream here");
+        return nullptr;
     }
     if(streamProfileList_.count(streamType) == 0) {
-        throw invalid_value_exception("Can't get profile");
+        LOG_WARN("Can't get profile");
+        return nullptr;
     }
     auto sp = streamProfileList_[streamType];
     if(sp->getFormat() != format) {
-        throw invalid_value_exception(utils::string::to_string() << "Invalid frame format, expected is " << sp->getFormat() << " but got "<< format << " from frame data");
+        LOG_WARN("Invalid frame format, expected is {}, but got from frame data", sp->getFormat(), format);
+        return nullptr;
     }
     auto frame = FrameFactory::createFrameFromStreamProfile(sp);
-    frame->updateData(framePtr->data.data() + framePtr->metadatasize, framePtr->data.size() - framePtr->metadatasize);
-    frame->updateMetadata(framePtr->data.data(), framePtr->metadatasize);
+    frame->updateData(framePtr->data.data(), framePtr->data.size());
+    frame->updateMetadata(framePtr->metadata.data(), framePtr->metadata.size());
     frame->setNumber(framePtr->number);
     frame->setTimeStampUsec(framePtr->timestamp_usec);
     frame->setSystemTimeStampUsec(framePtr->timestamp_systemusec);

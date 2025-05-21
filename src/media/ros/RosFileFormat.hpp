@@ -5,7 +5,6 @@
 
 #include "libobsensor/h/ObTypes.h"
 #include "sensor_msgs/image_encodings.h"
-#include "sensor_msgs/LiDARFrame.h"
 #include "rosbag/view.h"
 #include "sensor_msgs/Image.h"
 
@@ -148,6 +147,9 @@ public:
     };
 };
 
+const std::string  LiDARPoint3D       = "LiDARPoint3D";
+const std::string  LiDARSpherePoint3D = "LiDARSPoint3D";
+const std::string  LiDARScanPoint     = "LiDARScanPoint";
 inline std::string convertFormatToString(OBFormat format) {
     if(format == OB_FORMAT_RGB)
         return sensor_msgs::image_encodings::RGB8;
@@ -210,13 +212,11 @@ inline std::string convertFormatToString(OBFormat format) {
     else if(format == OB_FORMAT_RW16)
         return sensor_msgs::image_encodings::RW16;
     else if(format == OB_FORMAT_LIDAR_POINT)
-        return sensor_msgs::lidar_formats::Point3D;
+        return LiDARPoint3D;
     else if(format == OB_FORMAT_LIDAR_SPHERE_POINT)
-        return sensor_msgs::lidar_formats::SpherePoint3D;
+        return LiDARSpherePoint3D;
     else if(format == OB_FORMAT_LIDAR_SCAN)
-        return sensor_msgs::lidar_formats::Scan;
-    else if(format == OB_FORMAT_LIDAR_CALIBRATION)
-        return sensor_msgs::lidar_formats::Calibration;
+        return LiDARScanPoint;
     else
         return "";
 }
@@ -281,14 +281,12 @@ inline OBFormat convertStringToFormat(const std::string &encoding) {
         return OB_FORMAT_BYR2;
     else if(encoding == sensor_msgs::image_encodings::RW16)
         return OB_FORMAT_RW16;
-    else if(encoding == sensor_msgs::lidar_formats::Point3D)
+    else if(encoding == LiDARPoint3D)
         return OB_FORMAT_LIDAR_POINT;
-    else if(encoding == sensor_msgs::lidar_formats::SpherePoint3D)
+    else if(encoding == LiDARSpherePoint3D)
         return OB_FORMAT_LIDAR_SPHERE_POINT;
-    else if(encoding == sensor_msgs::lidar_formats::Scan)
+    else if(encoding == LiDARScanPoint)
         return OB_FORMAT_LIDAR_SCAN;
-    else if(encoding == sensor_msgs::lidar_formats::Calibration)
-        return OB_FORMAT_LIDAR_CALIBRATION;
     else
         return OB_FORMAT_UNKNOWN;
 }

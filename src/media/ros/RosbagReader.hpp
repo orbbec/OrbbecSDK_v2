@@ -20,7 +20,7 @@
 #include "sensor_msgs/CompressedImage.h"
 #include "sensor_msgs/image_encodings.h"
 #include "sensor_msgs/Imu.h"
-#include "sensor_msgs/LiDARFrame.h"
+#include "sensor_msgs/PointCloud2.h"
 #include "custom_msg/OBDeviceInfo.h"
 #include "custom_msg/OBStreamProfile.h"
 #include "custom_msg/OBImuStreamProfile.h"
@@ -59,7 +59,7 @@ private:
     void                   initView();
     std::shared_ptr<Frame> createVideoFrame(const rosbag::MessageInstance &msg);
     std::shared_ptr<Frame> createImuFrame(const rosbag::MessageInstance &msg);
-    std::shared_ptr<Frame> createLiDARFrame(const rosbag::MessageInstance &msg);
+    std::shared_ptr<Frame> createLiDARPointCloud(const rosbag::MessageInstance &msg);
     void                   queryDeviceInfo();
     void                   querySreamProfileList();
     void                   queryProperty();

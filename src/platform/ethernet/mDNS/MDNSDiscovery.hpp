@@ -7,6 +7,7 @@
 #include <string>
 #include <mutex>
 #include <set>
+#include <memory>
 #include "ethernet/socket/SocketTypes.hpp"
 
 namespace libobsensor {
@@ -45,7 +46,7 @@ private:
     std::vector<SOCKET> openClientSockets();
     void                closeClientSockets(std::vector<SOCKET> &socks);
     void                sendAndRecvMDNSQuery(SOCKET sock);
-    std::string         findTxtRecord(const std::vector<std::string> &txtList, const std::string &key, const std::string &default);
+    std::string         findTxtRecord(const std::vector<std::string> &txtList, const std::string &key, const std::string &defValue);
 
 private:
     std::vector<MDNSDeviceInfo>         devInfoList_;

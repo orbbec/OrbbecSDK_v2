@@ -637,7 +637,9 @@ OBPlaybackStatus PlaybackDevice::getCurrentPlaybackStatus() const {
 }
 
 void PlaybackDevice::fetchProperties() {
-    frameTransformAccessor_->initFrameTransformProperty();
+    if (frameTransformAccessor_) {
+        frameTransformAccessor_->initFrameTransformProperty();
+    }
 }
 
 }  // namespace libobsensor

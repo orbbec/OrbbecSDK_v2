@@ -37,9 +37,9 @@ void LiDARDevice::init() {
     fetchDeviceInfo();
 }
 
-std::string LiDARDevice::Uint8toString(const std::vector<uint8_t> &data, const std::string &default) {
+std::string LiDARDevice::Uint8toString(const std::vector<uint8_t> &data, const std::string &defValue) {
     if(data.empty()) {
-        return default;
+        return defValue;
     }
     size_t len = strnlen(reinterpret_cast<const char *>(data.data()), data.size());
     return std::string(data.begin(), data.begin() + len);
