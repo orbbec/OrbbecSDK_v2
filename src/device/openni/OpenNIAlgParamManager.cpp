@@ -29,7 +29,7 @@ void OpenNIAlgParamManager::fetchParamFromDevice() {
             OBInternalPropertyID groupIndex = OB_RAW_DATA_DUAL_CAMERA_PARAMS_0;
             if(pid == OB_DEVICE_DABAI_DW2_PID || pid == OB_DEVICE_DABAI_DCW2_PID || pid == OB_DEVICE_GEMINI_EW_PID || pid == OB_DEVICE_GEMINI_EW_LITE_PID) {
                 groupIndex                   = OB_RAW_DATA_DUAL_CAMERA_PARAMS_0;
-                disparityParam_.minDisparity = 80.0f;
+                disparityParam_.minDisparity = 48.0f;
             }
 
             if(pid == OB_DEVICE_MAX_PRO_PID || pid == OB_DEVICE_GEMINI_UW_PID) {

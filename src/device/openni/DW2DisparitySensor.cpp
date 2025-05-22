@@ -31,8 +31,6 @@ void DW2DisparitySensor::start(std::shared_ptr<const StreamProfile> sp, FrameCal
     auto                                 owner          = getOwner();
     auto                                 propertyServer = owner->getPropertyServer();
     std::shared_ptr<const StreamProfile> playStreamProfile = sp;
-    OBPropertyValue                      value;
-    value.intValue = 1;
 
     auto inVsp            = sp->as<const VideoStreamProfile>();
     for(const auto &entry: profileVirtualRealMap_) {
@@ -40,16 +38,9 @@ void DW2DisparitySensor::start(std::shared_ptr<const StreamProfile> sp, FrameCal
         auto virtualVsp = virtualSp->as<const VideoStreamProfile>();
         if(virtualVsp->getHeight() == inVsp->getHeight() && virtualVsp->getFps() == inVsp->getFps() && virtualVsp->getFormat() == inVsp->getFormat()) {
             playStreamProfile           = entry.second;
-            value.intValue              = 0;
             break;
         }
     }
-
-    BEGIN_TRY_EXECUTE({ propertyServer->setPropertyValue(OB_PROP_DEPTH_LOAD_ENGINE_GROUP_PARAM_INT, value, PROP_ACCESS_INTERNAL); })
-    CATCH_EXCEPTION_AND_EXECUTE({
-        LOG_ERROR("Max Pro depth sensor start failed!");
-        throw; 
-    })
 
     OpenNIFrameProcessParam processParam = { 1, 0, 0, 0, 0, 0, 0 };
     auto it = profileProcessParamMap_.find(sp);
@@ -71,11 +62,11 @@ void DW2DisparitySensor::start(std::shared_ptr<const StreamProfile> sp, FrameCal
     processor->setConfigValue(configSchemaName, configValue);
 
     configSchemaName = "DisparityTransform#6";
-    configValue      = static_cast<double>(processParam.yCut);
+    configValue      = static_cast<double>(processParam.xCut);
     processor->setConfigValue(configSchemaName, configValue);
 
     configSchemaName = "DisparityTransform#7";
-    configValue      = static_cast<double>(processParam.xCut);
+    configValue      = static_cast<double>(processParam.yCut);
     processor->setConfigValue(configSchemaName, configValue);
 
     configSchemaName = "DisparityTransform#8";
