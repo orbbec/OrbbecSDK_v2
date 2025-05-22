@@ -8,6 +8,7 @@
 #include "OpenNIDeviceBase.hpp"
 #include "DaBaiDevice.hpp"
 #include "MaxDevice.hpp"
+#include "DW2Device.hpp"
 #include "AstraMiniDevice.hpp"
 #include "exception/ObException.hpp"
 #include "ethernet/NetPortGroup.hpp"
@@ -68,6 +69,10 @@ std::shared_ptr<IDevice> OpenNIDeviceInfo::createDevice() const {
 
     if(pid_ == OB_DEVICE_MINI_PRO_PID || pid_ == OB_DEVICE_MINI_S_PRO_PID || pid_ == OB_DEVICE_ASTRA_PRO2_PID) {
         return std::make_shared<AstraMiniDevice>(shared_from_this());
+    }
+
+    if(pid_ == OB_DEVICE_DABAI_DW2_PID || pid_ == OB_DEVICE_DABAI_DCW2_PID || pid_ == OB_DEVICE_GEMINI_EW_PID || pid_ == OB_DEVICE_GEMINI_EW_LITE_PID) {
+        return std::make_shared<DW2Device>(shared_from_this());
     }
 
     return std::make_shared<OpenNIDeviceBase>(shared_from_this());
