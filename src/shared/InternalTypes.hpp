@@ -429,8 +429,16 @@ typedef struct {
     float    d2c_t[3];       // Translation matrix from depth camera to color camera: [t1, t2, t3]
     float    d_k[5];         // Depth camera distortion parameters: [k1, k2, p1, p2, k3]
     float    c_k[5];         // Color camera distortion parameters: [k1, k2, p1, p2, k3]
-    //uint32_t c_img_size[2];  // Color calibration resolution: [color_width, color_height]
-    //uint32_t d_img_size[2];  // Depth calibration resolution: [ir_width, ir_height]
 } OBInternalCameraParam;
+
+typedef struct OpenNIFrameProcessParam {
+    float scale;
+    int   xCut;
+    int   yCut;
+    int   xSet;
+    int   ySet;
+    int   dstWidth;
+    int   dstHeight;
+} OpenNIFrameProcessParam;
 
 #pragma pack(pop)

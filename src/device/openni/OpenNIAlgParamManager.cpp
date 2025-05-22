@@ -27,8 +27,9 @@ void OpenNIAlgParamManager::fetchParamFromDevice() {
         auto iter       = std::find(OpenNIDualPids.begin(), OpenNIDualPids.end(), pid);
         if(iter != OpenNIDualPids.end()) {
             OBInternalPropertyID groupIndex = OB_RAW_DATA_DUAL_CAMERA_PARAMS_0;
-            if(pid == OB_DEVICE_DW_PID || pid == OB_DEVICE_DCW_PID || pid == OB_DEVICE_GEMINI_E_PID || pid == OB_DEVICE_GEMINI_E_LITE_PID) {
-                groupIndex = OB_RAW_DATA_DUAL_CAMERA_PARAMS_2;
+            if(pid == OB_DEVICE_DABAI_DW2_PID || pid == OB_DEVICE_DABAI_DCW2_PID || pid == OB_DEVICE_GEMINI_EW_PID || pid == OB_DEVICE_GEMINI_EW_LITE_PID) {
+                groupIndex                   = OB_RAW_DATA_DUAL_CAMERA_PARAMS_0;
+                disparityParam_.minDisparity = 80.0f;
             }
 
             if(pid == OB_DEVICE_MAX_PRO_PID || pid == OB_DEVICE_GEMINI_UW_PID) {
@@ -331,6 +332,159 @@ void OpenNIAlgParamManager::fetchParamFromDevice() {
                     { 1280, 960, 640, 480, ALIGN_D2C_SW, 3, { 1.0f, 0, 0, 0, 0 } }, { 1280, 720, 640, 400, ALIGN_D2C_SW, 4, { 1.0f, 0, 0, 0, 0 } },
                 };
             
+            } break;
+            case OB_DEVICE_DABAI_DW2_PID:
+            case OB_DEVICE_DABAI_DCW2_PID:
+            case OB_DEVICE_GEMINI_EW_PID:
+            case OB_DEVICE_GEMINI_EW_LITE_PID: {
+                //16:9
+                int16_t colorWidth  = 640;
+                int16_t colorHeight = 360;
+                int16_t depthWidth  = 640;
+                int16_t depthHeight = 400;
+                for(int i = 0; i < 3; i++) {
+                    OBCameraParam realParam       = {};
+                    int16_t       paramScaleValue = (int16_t)pow(2, i);
+                    memcpy(&realParam, &param, sizeof(param));
+
+                    realParam.depthIntrinsic.fx     = realParam.depthIntrinsic.fx / paramScaleValue;
+                    realParam.depthIntrinsic.fy     = realParam.depthIntrinsic.fy / paramScaleValue;
+                    realParam.depthIntrinsic.cx     = realParam.depthIntrinsic.cx / paramScaleValue;
+                    realParam.depthIntrinsic.cy     = realParam.depthIntrinsic.cy / paramScaleValue;
+                    realParam.depthIntrinsic.width  = depthWidth / paramScaleValue;
+                    realParam.depthIntrinsic.height = depthHeight / paramScaleValue;
+                    realParam.rgbIntrinsic.width    = colorWidth;
+                    realParam.rgbIntrinsic.height   = colorHeight;
+                    calibrationCameraParamList_.push_back(realParam);
+                }
+
+                colorWidth  = 640;
+                colorHeight = 480;
+                depthWidth  = 640;
+                depthHeight = 400;
+                for(int i = 0; i < 3; i++) {
+                    OBCameraParam realParam       = {};
+                    int16_t       paramScaleValue = (int16_t)pow(2, i);
+                    memcpy(&realParam, &param, sizeof(param));
+
+                    realParam.depthIntrinsic.fx = realParam.depthIntrinsic.fx / paramScaleValue;
+                    realParam.depthIntrinsic.fy = realParam.depthIntrinsic.fy / paramScaleValue;
+                    realParam.depthIntrinsic.cx = realParam.depthIntrinsic.cx / paramScaleValue;
+                    realParam.depthIntrinsic.cy = realParam.depthIntrinsic.cy / paramScaleValue;
+                    realParam.rgbIntrinsic.fx   = static_cast<float>(realParam.rgbIntrinsic.fx * 3 / 2.25);
+                    realParam.rgbIntrinsic.fy   = static_cast<float>(realParam.rgbIntrinsic.fy * 3 / 2.25);
+                    realParam.rgbIntrinsic.cx   = static_cast<float>((realParam.rgbIntrinsic.cx * 3 - 240) / 2.25);
+                    realParam.rgbIntrinsic.cy   = static_cast<float>(realParam.rgbIntrinsic.cy * 3 / 2.25);
+
+                    realParam.depthIntrinsic.width  = depthWidth / paramScaleValue;
+                    realParam.depthIntrinsic.height = depthHeight / paramScaleValue;
+                    realParam.rgbIntrinsic.width    = colorWidth;
+                    realParam.rgbIntrinsic.height   = colorHeight;
+                    calibrationCameraParamList_.push_back(realParam);
+                }
+
+                //16:9
+                colorWidth  = 640;
+                colorHeight = 360;
+                depthWidth  = 540;
+                depthHeight = 400;
+                for(int i = 0; i < 2; i++) {
+                    OBCameraParam realParam       = {};
+                    int16_t       paramScaleValue = (int16_t)pow(2, i);
+                    memcpy(&realParam, &param, sizeof(param));
+
+                    realParam.depthIntrinsic.fx = realParam.depthIntrinsic.fx / paramScaleValue;
+                    realParam.depthIntrinsic.fy = realParam.depthIntrinsic.fy / paramScaleValue;
+                    realParam.depthIntrinsic.cx = realParam.depthIntrinsic.cx / paramScaleValue;
+                    realParam.depthIntrinsic.cx = realParam.depthIntrinsic.cx - (50 / paramScaleValue);
+                    realParam.depthIntrinsic.cy = realParam.depthIntrinsic.cy / paramScaleValue;
+
+                    realParam.depthIntrinsic.width  = depthWidth / paramScaleValue;
+                    realParam.depthIntrinsic.height = depthHeight / paramScaleValue;
+                    realParam.rgbIntrinsic.width    = colorWidth;
+                    realParam.rgbIntrinsic.height   = colorHeight;
+                    calibrationCameraParamList_.push_back(realParam);
+                }
+
+                // 4:3
+                colorWidth  = 640;
+                colorHeight = 480;
+                depthWidth  = 540;
+                depthHeight = 400;
+                for(int i = 0; i < 2; i++) {
+                    OBCameraParam realParam       = {};
+                    int16_t       paramScaleValue = (int16_t)pow(2, i);
+                    memcpy(&realParam, &param, sizeof(param));
+
+                    realParam.depthIntrinsic.fx = realParam.depthIntrinsic.fx / paramScaleValue;
+                    realParam.depthIntrinsic.fy = realParam.depthIntrinsic.fy / paramScaleValue;
+                    realParam.depthIntrinsic.cx = realParam.depthIntrinsic.cx / paramScaleValue;
+                    realParam.depthIntrinsic.cx = realParam.depthIntrinsic.cx - (50 / paramScaleValue);
+                    realParam.depthIntrinsic.cy = realParam.depthIntrinsic.cy / paramScaleValue;
+                    realParam.rgbIntrinsic.fx   = static_cast<float>(realParam.rgbIntrinsic.fx * 3 / 2.25);
+                    realParam.rgbIntrinsic.fy   = static_cast<float>(realParam.rgbIntrinsic.fy * 3 / 2.25);
+                    realParam.rgbIntrinsic.cx   = static_cast<float>((realParam.rgbIntrinsic.cx * 3 - 240) / 2.25);
+                    realParam.rgbIntrinsic.cy   = static_cast<float>(realParam.rgbIntrinsic.cy * 3 / 2.25);
+
+                    realParam.depthIntrinsic.width  = depthWidth / paramScaleValue;
+                    realParam.depthIntrinsic.height = depthHeight / paramScaleValue;
+                    realParam.rgbIntrinsic.width    = colorWidth;
+                    realParam.rgbIntrinsic.height   = colorHeight;
+                    calibrationCameraParamList_.push_back(realParam);
+                }
+
+                colorWidth  = 1280;
+                colorHeight = 720;
+                depthWidth  = 640;
+                depthHeight = 400;
+                for(int i = 0; i < 2; i++) {
+                    OBCameraParam realParam       = {};
+                    int16_t       paramScaleValue = (int16_t)pow(2, i);
+                    memcpy(&realParam, &param, sizeof(param));
+
+                    realParam.depthIntrinsic.fx = realParam.depthIntrinsic.fx / paramScaleValue;
+                    realParam.depthIntrinsic.fy = realParam.depthIntrinsic.fy / paramScaleValue;
+                    realParam.depthIntrinsic.cx = realParam.depthIntrinsic.cx / paramScaleValue;
+                    realParam.depthIntrinsic.cy = realParam.depthIntrinsic.cy / paramScaleValue;
+                    realParam.rgbIntrinsic.fx   = realParam.rgbIntrinsic.fx * 2;
+                    realParam.rgbIntrinsic.fy   = realParam.rgbIntrinsic.fy * 2;
+                    realParam.rgbIntrinsic.cx   = realParam.rgbIntrinsic.cx * 2;
+                    realParam.rgbIntrinsic.cy   = realParam.rgbIntrinsic.cy * 2;
+
+                    realParam.depthIntrinsic.width  = depthWidth / paramScaleValue;
+                    realParam.depthIntrinsic.height = depthHeight / paramScaleValue;
+                    realParam.rgbIntrinsic.width    = colorWidth;
+                    realParam.rgbIntrinsic.height   = colorHeight;
+                    calibrationCameraParamList_.push_back(realParam);
+                }
+
+                d2cProfileList_ = {
+                    { 640, 360, 640, 400, ALIGN_D2C_HW, 0, { 1.0f, 0, 0, 0, -40 } },   { 640, 360, 640, 400, ALIGN_D2C_SW, 0, { 1.0f, 0, 0, 0, -40 } },
+                    { 640, 360, 320, 200, ALIGN_D2C_HW, 1, { 2.0f, 0, 0, 0, -40 } },   { 640, 360, 320, 200, ALIGN_D2C_SW, 1, { 2.0f, 0, 0, 0, -40 } },
+                    { 640, 360, 160, 100, ALIGN_D2C_HW, 2, { 4.0f, 0, -20, 0, -40 } }, { 640, 360, 160, 100, ALIGN_D2C_SW, 2, { 4.0f, 0, -20, 0, -40 } },
+
+                    { 640, 360, 540, 400, ALIGN_D2C_HW, 6, { 1.0f, 50, 0, 50, -40 } }, { 320, 240, 270, 200, ALIGN_D2C_HW, 4, { 1.0f, -20, 0, -20, -26 } },
+                    { 640, 360, 270, 200, ALIGN_D2C_HW, 7, { 1.0f, 50, 0, 50, -40 } }, { 320, 240, 270, 200, ALIGN_D2C_HW, 4, { 1.0f, -20, 0, -20, -26 } },
+
+                    { 1280, 720, 640, 400, ALIGN_D2C_SW, 10, { 1.0f, 0, 0, 0, 0 } },   { 1280, 720, 320, 200, ALIGN_D2C_SW, 11, { 1.0f, 0, 0, 0, 0 } },
+                };
+
+                /*d2cProfileList_ = {
+                    { 640, 360, 640, 400, ALIGN_D2C_HW, 0, { 1.0f, 0, 0, 0, -40 } },
+                    { 640, 360, 640, 400, ALIGN_D2C_SW, 0, { 1.0f, 0, 0, 0, 0 } },
+
+                    { 640, 480, 640, 400, ALIGN_D2C_HW, 3, { 1.333f, -107, 0, -106, -53 } },
+                    { 320, 240, 320, 200, ALIGN_D2C_HW, 4, { 1.333f, -53, 0, -53, -26 } },
+                    { 640, 480, 640, 400, ALIGN_D2C_SW, 3, { 1.0f, 0, 0, 0, 0 } },
+
+                    { 640, 360, 540, 400, ALIGN_D2C_HW, 6, { 1.0f, 50, 0, 50, -40 } },
+                    { 640, 480, 540, 400, ALIGN_D2C_HW, 8, { 1.333f, -40, 0, -39, -53 } },
+                    { 640, 480, 540, 400, ALIGN_D2C_SW, 8, { 1.0f, 0, 0, 0, 0 } },
+                    { 320, 240, 270, 200, ALIGN_D2C_HW, 9, { 1.333f, -20, 0, -19, -26 } },
+
+                    { 1280, 720, 640, 400, ALIGN_D2C_SW, 10, { 1.0f, 0, 0, 0, 0 } },
+                    { 1280, 720, 320, 200, ALIGN_D2C_SW, 11, { 1.0f, 0, 0, 0, 0 } },
+                };*/
             } break;
             default:
                 break;

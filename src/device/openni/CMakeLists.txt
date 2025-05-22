@@ -21,10 +21,14 @@ target_sources(
 	${CMAKE_CURRENT_LIST_DIR}/DaBaiDevice.hpp
     ${CMAKE_CURRENT_LIST_DIR}/MaxDevice.cpp
 	${CMAKE_CURRENT_LIST_DIR}/MaxDevice.hpp
+	${CMAKE_CURRENT_LIST_DIR}/DW2Device.cpp
+	${CMAKE_CURRENT_LIST_DIR}/DW2Device.hpp
 	${CMAKE_CURRENT_LIST_DIR}/OpenNIStreamProfileFilter.cpp
 	${CMAKE_CURRENT_LIST_DIR}/OpenNIStreamProfileFilter.hpp
 	${CMAKE_CURRENT_LIST_DIR}/MaxDisparitySensor.cpp
 	${CMAKE_CURRENT_LIST_DIR}/MaxDisparitySensor.hpp
+	${CMAKE_CURRENT_LIST_DIR}/DW2DisparitySensor.cpp
+	${CMAKE_CURRENT_LIST_DIR}/DW2DisparitySensor.hpp
 	${CMAKE_CURRENT_LIST_DIR}/AstraMiniDevice.cpp
 	${CMAKE_CURRENT_LIST_DIR}/AstraMiniDevice.hpp
 	${CMAKE_CURRENT_LIST_DIR}/OpenNIDeviceSyncConfigurator.cpp

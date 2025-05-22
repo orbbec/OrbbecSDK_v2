@@ -1,3 +1,4 @@
+
 #pragma once
 
 #include "OpenNIDisparitySensor.hpp"
@@ -5,10 +6,10 @@
 
 namespace libobsensor {
 
-class MaxDisparitySensor : public OpenNIDisparitySensor {
+class DW2DisparitySensor : public OpenNIDisparitySensor {
 public:
-    MaxDisparitySensor(IDevice *owner, OBSensorType sensorType, const std::shared_ptr<ISourcePort> &backend);
-    ~MaxDisparitySensor() noexcept;
+    DW2DisparitySensor(IDevice *owner, OBSensorType sensorType, const std::shared_ptr<ISourcePort> &backend);
+    ~DW2DisparitySensor() noexcept;
 
     void start(std::shared_ptr<const StreamProfile> sp, FrameCallback callback) override;
 
@@ -19,5 +20,4 @@ private:
     std::map<std::shared_ptr<const StreamProfile>, OpenNIFrameProcessParam>              profileProcessParamMap_;
 
 };
-}  // namespace libobs
-
+}  // namespace libobsensor
