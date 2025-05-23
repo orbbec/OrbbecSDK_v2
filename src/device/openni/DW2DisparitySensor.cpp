@@ -95,7 +95,7 @@ void DW2DisparitySensor::initProfileVirtualRealMap() {
             realProfileList.push_back(vsp);
         }
 
-        if(vsp->getWidth() == VIRTUAL_PROFILE_WIDTH_640 || vsp->getHeight() == VIRTUAL_PROFILE_WIDTH_320) {
+        if(vsp->getWidth() == VIRTUAL_PROFILE_WIDTH_640 || vsp->getWidth() == VIRTUAL_PROFILE_WIDTH_320) {
             virtualProfileList.push_back(vsp);
         }
         profileProcessParamMap_[streamProfile] = processParam;
