@@ -207,7 +207,6 @@ void DW2Device::initProperties() {
             propertyServer->registerProperty(OB_PROP_LASER_ENERGY_LEVEL_INT, "rw", "rw", vendorPropertyAccessor_);
             propertyServer->registerProperty(OB_PROP_LASER_OVERCURRENT_PROTECTION_STATUS_BOOL, "r", "r", vendorPropertyAccessor_);
             propertyServer->registerProperty(OB_PROP_LASER_PULSE_WIDTH_PROTECTION_STATUS_BOOL, "rw", "rw", vendorPropertyAccessor_);
-            propertyServer->registerProperty(OB_PROP_STREAM_PACK_UNIT_INT, "rw", "rw", vendorPropertyAccessor_);
             propertyServer->registerProperty(OB_PROP_DEPTH_INDUSTRY_MODE_INT, "rw", "rw", vendorPropertyAccessor_);
             /*auto heartBeatPropertyAccessor = std::make_shared<OpenNIHeartBeatPropertyAccessor>(this);
             propertyServer->registerProperty(OB_PROP_HEARTBEAT_BOOL, "rw", "rw", heartBeatPropertyAccessor);*/
