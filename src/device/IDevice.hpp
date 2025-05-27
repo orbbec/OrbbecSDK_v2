@@ -48,7 +48,7 @@ public:
 
     // device info
     virtual std::shared_ptr<const DeviceInfo> getInfo() const                                         = 0;
-    virtual bool isDeactivated() const                                                                = 0;
+    virtual bool                              isDeactivated() const                                   = 0;
     virtual const std::string                &getExtensionInfo(const std::string &infoKey) const      = 0;
     virtual bool                              isExtensionInfoExists(const std::string &infoKey) const = 0;
 
@@ -77,6 +77,8 @@ public:
 
     // activate device accessor
     virtual void activateDeviceAccessor() = 0;
+
+    virtual int getFirmwareVersionInt() = 0;
 
 public:
     // templated functions

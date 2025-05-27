@@ -46,7 +46,10 @@ void G330SensorStreamStrategy::validateStream(const std::shared_ptr<const Stream
 }
 
 void G330SensorStreamStrategy::validateStream(const std::vector<std::shared_ptr<const StreamProfile>> &profiles) {
-    validateISPFirmwareVersion();
+    if(getOwner()->getFirmwareVersionInt() >= 10325) {
+        validateISPFirmwareVersion();
+    }
+
     {
         std::lock_guard<std::mutex> lock(startedStreamListMutex_);
         for(auto profile: profiles) {
@@ -63,7 +66,7 @@ void G330SensorStreamStrategy::validateStream(const std::vector<std::shared_ptr<
 }
 
 void G330SensorStreamStrategy::validateISPFirmwareVersion() {
-    bool needUpgrade = false;
+    bool        needUpgrade = false;
     std::string ispFwVer    = getOwner()->getExtensionInfo(ISP_FW_VER_KEY);
     std::string ispNeedVer  = getOwner()->getExtensionInfo(ISP_NEED_VER_KEY);
     if(!ispFwVer.empty() && !ispNeedVer.empty()) {
@@ -104,7 +107,7 @@ void G330SensorStreamStrategy::validatePreset(const std::vector<std::shared_ptr<
     OBDepthWorkMode_Internal currentDepthMode;
 
     {
-        auto owner               = getOwner();
+        auto owner                = getOwner();
         auto depthWorkModeManager = owner->getComponentT<G330DepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
         currentDepthMode          = depthWorkModeManager->getCurrentDepthWorkMode();
     }

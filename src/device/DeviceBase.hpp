@@ -25,7 +25,7 @@ private:
 
 public:
     DeviceBase(const std::shared_ptr<const IDeviceEnumInfo> &info);
-    DeviceBase(); // declared for playback device
+    DeviceBase();  // declared for playback device
 
     virtual ~DeviceBase() noexcept;
 
@@ -64,13 +64,14 @@ public:
     static std::map<std::string, std::string> parseExtensionInfo(std::string extensionInfo);
 
     void activateDeviceAccessor() override;
+    int  getFirmwareVersionInt() override;
 
 protected:
     // implement on subclass, and must be called to initialize the device info on construction
-    virtual void                 fetchDeviceInfo();
-    virtual void                 fetchExtensionInfo();
-    DeviceComponentLock          tryLockResource();
-    int                          getFirmwareVersionInt();
+    virtual void        fetchDeviceInfo();
+    virtual void        fetchExtensionInfo();
+    DeviceComponentLock tryLockResource();
+
     std::shared_ptr<ISourcePort> getSourcePort(std::shared_ptr<const SourcePortInfo> sourcePortInfo) const;
 
 protected:
