@@ -662,6 +662,14 @@ void G435LeDevice::initProperties() {
     propertyServer->registerProperty(OB_PROP_CONFIDENCE_STREAM_FILTER_THRESHOLD_INT, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_CONFIDENCE_STREAM_FILTER_BOOL, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_DEPTH_AUTO_EXPOSURE_PRIORITY_INT, "rw", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_RAW_PRESET_RESOLUTION_CONFIG_LIST, "", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_STRUCT_PRESET_RESOLUTION_CONFIG, "rw", "rw", vendorPropertyAccessor);
+    propertyServer->registerAccessCallback(OB_STRUCT_PRESET_RESOLUTION_CONFIG,
+                                           [&](uint32_t propertyId, const uint8_t *, size_t, PropertyOperationType operationType) {
+                                               if(operationType == PROP_OP_WRITE && propertyId == OB_STRUCT_PRESET_RESOLUTION_CONFIG) {
+                                                   updateSensorStreamProfile();
+                                               }
+                                           });
 
     auto imuCorrectorFilter = getSensorFrameFilter("IMUCorrector", OB_SENSOR_ACCEL);
     if(imuCorrectorFilter) {
@@ -841,20 +849,33 @@ void G435LeDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
         streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y10, 1280, 800, 10));
     }
     else if(streamType == OB_STREAM_CONFIDENCE) {
-        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y8, 1280, 800, 5));
-        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y8, 1280, 800, 10));
-        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y8, 1280, 800, 15));
-        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y8, 1280, 800, 20));
         streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y8, 640, 400, 5));
         streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y8, 640, 400, 10));
         streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y8, 640, 400, 15));
         streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y8, 640, 400, 20));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y8, 640, 480, 5));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y8, 640, 480, 10));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y8, 640, 480, 15));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y8, 640, 480, 20));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y8, 1280, 800, 5));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y8, 1280, 800, 10));
     }
 
     if(!streamProfileList.empty()) {
         sensor->setStreamProfileList(streamProfileList);
     }
     G435LeDeviceBase::initSensorStreamProfile(sensor);
+}
+
+void G435LeDevice::updateSensorStreamProfile() {
+    auto streamProfileFilter   = getComponentT<IStreamProfileFilter>(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER);
+    auto g2StreamProfileFilter = streamProfileFilter.as<G2StreamProfileFilter>();
+    g2StreamProfileFilter->fetchEffectiveStreamProfiles();
+    auto sensorTypeList = getSensorTypeList();
+    for(auto streamType: sensorTypeList) {
+        auto sensor = getSensor(streamType);
+        G435LeDeviceBase::initSensorStreamProfile(sensor.get());
+    }
 }
 
 void G435LeDevice::fetchDeviceInfo() {

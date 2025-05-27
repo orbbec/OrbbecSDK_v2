@@ -15,7 +15,6 @@ public:
 
     StreamProfileList filter(const StreamProfileList &profiles) const override;
 
-private:
     void fetchEffectiveStreamProfiles();
 
 private:

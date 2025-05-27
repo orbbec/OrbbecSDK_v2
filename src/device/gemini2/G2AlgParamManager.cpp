@@ -178,4 +178,15 @@ G435LeAlgParamManager::G435LeAlgParamManager(IDevice *owner) : G2AlgParamManager
     disparityParam_.packMode = OB_DISP_PACK_GEMINI2XL;
 }
 
+void G435LeAlgParamManager::fetchParamFromDevice() {
+    G2AlgParamManager::fetchParamFromDevice();
+    try {
+        auto owner                 = getOwner();
+        auto propServer            = owner->getPropertyServer();
+        presetResolutionRatioList_ = propServer->getStructureDataListProtoV1_1_T<OBPresetResolutionConfig, 0>(OB_RAW_PRESET_RESOLUTION_CONFIG_LIST);
+    }
+    catch(const std::exception &e) {
+        LOG_ERROR("Get depth calibration params failed! {}", e.what());
+    }
+}
 }  // namespace libobsensor

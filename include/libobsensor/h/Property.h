@@ -635,6 +635,11 @@ typedef enum {
     OB_STRUCT_DISP_OFFSET_CONFIG = 1064,
 
     /**
+     * @brief Preset resolution ratio configuration
+     */
+    OB_STRUCT_PRESET_RESOLUTION_CONFIG = 1069,
+
+    /**
      * @brief Color camera auto exposure
      */
     OB_PROP_COLOR_AUTO_EXPOSURE_BOOL = 2000,

@@ -10,6 +10,7 @@
 #include "IDevice.hpp"
 #include "IDeviceComponent.hpp"
 #include "IFrameInterleaveManager.hpp"
+#include "IPresetResolutionConfige.hpp"
 
 #ifdef __cplusplus
 extern "C" {
@@ -257,6 +258,47 @@ bool ob_device_frame_interleave_list_has_frame_interleave(ob_device_frame_interl
     return false;
 }
 HANDLE_EXCEPTIONS_AND_RETURN(false, frame_interleave_list, frame_interleave_name)
+
+ob_preset_resolution_config_list *ob_device_get_available_preset_resolution_config_list(ob_device *device, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(device);
+    auto impl = new ob_preset_resolution_config_list();
+
+    auto presetResolutionListManager =
+        device->device->getComponentT<libobsensor::IPresetResolutionConfigeListManager>(libobsensor::OB_DEV_COMPONENT_ALG_PARAM_MANAGER, false);
+    if(presetResolutionListManager) {
+        auto configList  = presetResolutionListManager->getPresetResolutionConfigeList();
+        impl->configList = configList;
+    }
+
+    return impl;
+}
+HANDLE_EXCEPTIONS_AND_RETURN(nullptr, device)
+
+uint32_t ob_device_preset_resolution_config_get_count(ob_preset_resolution_config_list *ob_preset_resolution_config_list, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(ob_preset_resolution_config_list);
+    return static_cast<uint32_t>(ob_preset_resolution_config_list->configList.size());
+}
+HANDLE_EXCEPTIONS_AND_RETURN(0, ob_preset_resolution_config_list)
+
+ob_preset_resolution_ratio_config ob_device_preset_resolution_config_list_get_item(const ob_preset_resolution_config_list *ob_preset_resolution_config_lis,
+                                                                                   uint32_t index, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(ob_preset_resolution_config_lis);
+    VALIDATE_UNSIGNED_INDEX(index, ob_preset_resolution_config_lis->configList.size());
+    auto                              config = ob_preset_resolution_config_lis->configList.at(index);
+    ob_preset_resolution_ratio_config impl;
+    impl.width                 = config.width;
+    impl.height                = config.height;
+    impl.depthDecimationFactor = config.depthDecimationFactor;
+    impl.irDecimationFactor    = config.irDecimationFactor;
+    return impl;
+}
+HANDLE_EXCEPTIONS_AND_RETURN({}, ob_preset_resolution_config_lis, index)
+
+void ob_delete_preset_resolution_config_list(ob_preset_resolution_config_list *ob_preset_resolution_config_list, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(ob_preset_resolution_config_list);
+    delete ob_preset_resolution_config_list;
+}
+HANDLE_EXCEPTIONS_NO_RETURN(ob_preset_resolution_config_list)
 
 #ifdef __cplusplus
 }

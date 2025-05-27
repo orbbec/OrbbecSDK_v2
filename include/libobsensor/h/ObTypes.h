@@ -39,6 +39,7 @@ typedef struct ob_depth_work_mode_list_t         ob_depth_work_mode_list;
 typedef struct ob_device_preset_list_t           ob_device_preset_list;
 typedef struct ob_filter_config_schema_list_t    ob_filter_config_schema_list;
 typedef struct ob_device_frame_interleave_list_t ob_device_frame_interleave_list;
+typedef struct ob_preset_resolution_config_list_t ob_preset_resolution_config_list;
 
 #define OB_WIDTH_ANY 0
 #define OB_HEIGHT_ANY 0
@@ -451,6 +452,13 @@ typedef struct {
     OBD2CTransform     transform;        ///< Rotation/transformation matrix
     bool               isMirrored;       ///< Whether the image frame corresponding to this group of parameters is mirrored
 } OBCameraParam, ob_camera_param;
+
+typedef struct {
+    int16_t width;                  ///< width
+    int16_t height;                 ///< height
+    int     irDecimationFactor;     ///< ir decimation factor
+    int     depthDecimationFactor;  ///< depth decimation factor
+} OBPresetResolutionConfig, ob_preset_resolution_ratio_config;
 
 /**
  * @brief calibration parameters
