@@ -58,6 +58,22 @@ void mirrorYUYVImage(uint8_t *src, uint8_t *dst, int width, int height) {
     }
 }
 
+void mirrorUYVYImage(uint8_t *src, uint8_t *dst, int width, int height) {
+    uint8_t *dstPixel = dst;
+    for(int h = 0; h < height; h++) {
+        uint8_t *srcPixel = src + width * 2 * (h + 1) - 4;
+        for(int w = 0; w < width / 2; w++) {
+            dstPixel[0] = srcPixel[0];  // U
+            dstPixel[1] = srcPixel[3];  // Y1
+            dstPixel[2] = srcPixel[2];  // V
+            dstPixel[3] = srcPixel[1];  // Y0
+
+            srcPixel -= 4;
+            dstPixel += 4;
+        }
+    }
+}
+
 void flipRGBImage(int pixelSize, const uint8_t *src, uint8_t *dst, uint32_t width, uint32_t height) {
     // const uint32_t pixelSize = 3;  // RGB888 format occupies 3 bytes per pixel
     const uint32_t rowSize = width * static_cast<uint32_t>(pixelSize);
@@ -133,6 +149,70 @@ void yuyvImageRotate(uint8_t *src, uint8_t *dst, uint32_t width, uint32_t height
     libyuv::I420ToYUY2(src_y, src_stride_y, src_u, src_stride_u, src_v, src_stride_v, dst_yuy2, dst_stride_yuy2, dst_width, dst_height);
 }
 
+void uyvyImageRotate(uint8_t * src, uint8_t * dst, uint32_t width, uint32_t height, uint32_t rotateDegree) {
+    libyuv::RotationMode rotationMode;
+    switch(rotateDegree) {
+    case 90:
+        rotationMode = libyuv::kRotate90;
+        break;
+    case 180:
+        rotationMode = libyuv::kRotate180;
+        break;
+    case 270:
+        rotationMode = libyuv::kRotate270;
+        break;
+    default:
+        LOG_WARN_INTVL_THREAD("Unsupported rotate degree!");
+        return;
+    }
+
+    // 1. uyvy to I420, since uyvy is a packed format, only plane format can be rotated; there will be data loss when rotating to plane.
+    uint32_t dst_width    = width;
+    uint32_t dst_height   = height;
+    uint8_t *dst_y        = dst;
+    uint32_t dst_stride_y = dst_width;
+    uint8_t *dst_u        = dst + dst_width * dst_height;
+    uint32_t dst_stride_u = dst_width / 2;
+    uint8_t *dst_v        = dst + dst_width * dst_height + (dst_width * dst_height) / 4;
+    uint32_t dst_stride_v = dst_width / 2;
+    libyuv::UYVYToI420(src, static_cast<int>(width * 2), dst_y, static_cast<int>(dst_stride_y), dst_u, static_cast<int>(dst_stride_u), dst_v,
+                       static_cast<int>(dst_stride_v), static_cast<int>(dst_width), static_cast<int>(dst_height));
+
+    // 2. rotate
+    uint8_t *src_y        = dst_y;
+    uint32_t src_stride_y = dst_stride_y;
+    uint8_t *src_u        = dst_u;
+    uint32_t src_stride_u = dst_stride_u;
+    uint8_t *src_v        = dst_v;
+    uint32_t src_stride_v = dst_stride_v;
+    if(rotationMode != libyuv::kRotate180) {
+        dst_width  = height;
+        dst_height = width;
+    }
+    std::swap(src, dst);
+    dst_y        = dst;
+    dst_stride_y = dst_width;
+    dst_u        = dst + dst_width * dst_height;
+    dst_stride_u = dst_width / 2;
+    dst_v        = dst + dst_width * dst_height + (dst_width * dst_height) / 4;
+    dst_stride_v = dst_width / 2;
+    libyuv::I420Rotate(src_y, static_cast<int>(src_stride_y), src_u, static_cast<int>(src_stride_u), src_v, static_cast<int>(src_stride_v), dst_y,
+                       static_cast<int>(dst_stride_y), dst_u, static_cast<int>(dst_stride_u), dst_v, static_cast<int>(dst_stride_v), static_cast<int>(width),
+                       static_cast<int>(height), rotationMode);
+
+    // 3. I420 to uyvy
+    src_y        = dst_y;
+    src_stride_y = dst_stride_y;
+    src_u        = dst_u;
+    src_stride_u = dst_stride_u;
+    src_v        = dst_v;
+    src_stride_v = dst_stride_v;
+    std::swap(src, dst);
+    uint8_t *dst_uyvy        = dst;
+    uint32_t dst_stride_uyvy = dst_width * 2;
+    libyuv::I420ToUYVY(src_y, src_stride_y, src_u, src_stride_u, src_v, src_stride_v, dst_uyvy, dst_stride_uyvy, dst_width, dst_height);
+}
+
 FrameMirror::FrameMirror() {}
 FrameMirror::~FrameMirror() noexcept {}
 
@@ -158,7 +238,7 @@ std::shared_ptr<Frame> FrameMirror::process(std::shared_ptr<const Frame> frame) 
     }
 
     if(frame->getFormat() != OB_FORMAT_Y16 && frame->getFormat() != OB_FORMAT_Y8 && frame->getFormat() != OB_FORMAT_YUYV && frame->getFormat() != OB_FORMAT_RGB
-       && frame->getFormat() != OB_FORMAT_BGR && frame->getFormat() != OB_FORMAT_RGBA && frame->getFormat() != OB_FORMAT_BGRA && frame->getFormat() != OB_FORMAT_Y12C4) {
+       && frame->getFormat() != OB_FORMAT_BGR && frame->getFormat() != OB_FORMAT_RGBA && frame->getFormat() != OB_FORMAT_BGRA && frame->getFormat() != OB_FORMAT_Y12C4 && frame->getFormat() != OB_FORMAT_UYVY) {
         LOG_WARN_INTVL("FrameMirror unsupported to process this format: {}", frame->getFormat());
         return std::const_pointer_cast<Frame>(frame);
     }
@@ -185,6 +265,11 @@ std::shared_ptr<Frame> FrameMirror::process(std::shared_ptr<const Frame> frame) 
         }
         else {
             imageMirror<uint32_t>((uint32_t *)videoFrame->getData(), (uint32_t *)outFrame->getData(), videoFrame->getWidth() / 2, videoFrame->getHeight());
+        }
+        break;
+    case OB_FORMAT_UYVY:
+        if(frame->getType() == OB_FRAME_COLOR) {
+            mirrorUYVYImage((uint8_t *)videoFrame->getData(), (uint8_t *)outFrame->getData(), videoFrame->getWidth(), videoFrame->getHeight());
         }
         break;
     case OB_FORMAT_RGB:
@@ -275,7 +360,7 @@ std::shared_ptr<Frame> FrameFlip::process(std::shared_ptr<const Frame> frame) {
     }
 
     if(frame->getFormat() != OB_FORMAT_Y16 && frame->getFormat() != OB_FORMAT_Y8 && frame->getFormat() != OB_FORMAT_YUYV && frame->getFormat() != OB_FORMAT_BGR
-       && frame->getFormat() != OB_FORMAT_RGB && frame->getFormat() != OB_FORMAT_RGBA && frame->getFormat() != OB_FORMAT_BGRA && frame->getFormat() != OB_FORMAT_Y12C4) {
+       && frame->getFormat() != OB_FORMAT_RGB && frame->getFormat() != OB_FORMAT_RGBA && frame->getFormat() != OB_FORMAT_BGRA && frame->getFormat() != OB_FORMAT_Y12C4 && frame->getFormat() != OB_FORMAT_UYVY) {
         LOG_WARN_INTVL("FrameFlip unsupported to process this format:{}", frame->getFormat());
         return std::const_pointer_cast<Frame>(frame);
     }
@@ -295,6 +380,7 @@ std::shared_ptr<Frame> FrameFlip::process(std::shared_ptr<const Frame> frame) {
         break;
     case OB_FORMAT_YUYV:
     case OB_FORMAT_Y12C4:
+    case OB_FORMAT_UYVY:
     case OB_FORMAT_Y16:
         imageFlip<uint16_t>((uint16_t *)videoFrame->getData(), (uint16_t *)outFrame->getData(), videoFrame->getWidth(), videoFrame->getHeight());
         break;
@@ -397,7 +483,7 @@ std::shared_ptr<Frame> FrameRotate::process(std::shared_ptr<const Frame> frame) 
     }
 
     if(frame->getFormat() != OB_FORMAT_Y16 && frame->getFormat() != OB_FORMAT_Y8 && frame->getFormat() != OB_FORMAT_YUYV && frame->getFormat() != OB_FORMAT_RGB
-       && frame->getFormat() != OB_FORMAT_BGR && frame->getFormat() != OB_FORMAT_RGBA && frame->getFormat() != OB_FORMAT_BGRA && frame->getFormat() != OB_FORMAT_Y12C4) {
+       && frame->getFormat() != OB_FORMAT_BGR && frame->getFormat() != OB_FORMAT_RGBA && frame->getFormat() != OB_FORMAT_BGRA && frame->getFormat() != OB_FORMAT_Y12C4 && frame->getFormat() != OB_FORMAT_UYVY) {
         LOG_WARN_INTVL("FrameRotate unsupported to process this format: {}", frame->getFormat());
         return std::const_pointer_cast<Frame>(frame);
     }
@@ -419,6 +505,9 @@ std::shared_ptr<Frame> FrameRotate::process(std::shared_ptr<const Frame> frame) 
     case OB_FORMAT_YUYV:
         // Note: This operation will also modify the data content of the original data frame.
         yuyvImageRotate((uint8_t *)videoFrame->getData(), (uint8_t *)outFrame->getData(), videoFrame->getWidth(), videoFrame->getHeight(), rotateDegree_);
+        break;
+    case OB_FORMAT_UYVY:
+        uyvyImageRotate((uint8_t *)videoFrame->getData(), (uint8_t *)outFrame->getData(), videoFrame->getWidth(), videoFrame->getHeight(), rotateDegree_);
         break;
     case OB_FORMAT_RGB:
     case OB_FORMAT_BGR:
