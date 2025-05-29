@@ -14,11 +14,11 @@ G2DepthWorkModeManager::G2DepthWorkModeManager(IDevice *owner) : DeviceComponent
 
     depthWorkModeList_ = propServer->getStructureDataListProtoV1_1_T<OBDepthWorkMode_Internal, 0>(OB_RAW_DATA_DEPTH_ALG_MODE_LIST);
 
-    auto        envConfig                   = EnvConfig::getInstance();
-    std::string nodePath                    = "Device." + getOwner()->getInfo()->name_;
-    nodePath                                = utils::string::removeSpace(nodePath);
-    bool        isSupportFactoryCalibration = false;
-    envConfig->getBooleanValue(nodePath + ".SupportFactoryCalibration", isSupportFactoryCalibration);  
+    auto        envConfig            = EnvConfig::getInstance();
+    std::string nodePath             = "Device." + getOwner()->getInfo()->name_;
+    nodePath                         = utils::string::removeSpace(nodePath);
+    bool isSupportFactoryCalibration = false;
+    envConfig->getBooleanValue(nodePath + ".SupportFactoryCalibration", isSupportFactoryCalibration);
     if(!isSupportFactoryCalibration) {
         // remove factory Calibration mode
         depthWorkModeList_.erase(std::remove_if(depthWorkModeList_.begin(), depthWorkModeList_.end(),
@@ -69,7 +69,7 @@ void G2DepthWorkModeManager::switchDepthWorkMode(const OBDepthWorkMode_Internal 
         }
 
         if(strncmp(currentWorkMode_.name, targetDepthMode.name, sizeof(targetDepthMode.name)) == 0) {
-            LOG_DEBUG("switchDepthWorkMode done with same mode: {1}", currentWorkMode_.name, targetDepthMode.name);
+            LOG_DEBUG("switchDepthWorkMode done with same mode: {}", currentWorkMode_.name, targetDepthMode.name);
             return;
         }
 
@@ -77,7 +77,7 @@ void G2DepthWorkModeManager::switchDepthWorkMode(const OBDepthWorkMode_Internal 
         currentWorkMode_ = targetDepthMode;
     }
 
-    LOG_INFO("Device depth work mode have been switch to: {1}, device will be reinitialize to apply the new mode.", targetDepthMode.name);
+    LOG_INFO("Device depth work mode have been switch to: {}, device will be reinitialize to apply the new mode.", targetDepthMode.name);
     owner->reset();
 }
 
