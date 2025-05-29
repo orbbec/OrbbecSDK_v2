@@ -242,8 +242,6 @@ template <class ContainerAllocator> struct Serializer<::sensor_msgs::Image_<Cont
         stream.next(m.timestamp_globalusec);
         stream.next(m.metadata);
         stream.next(m.metadatasize);
-        if(!m.header.version.compare("1"))
-            stream.next(m.depth_units);
     }
 
     ROS_DECLARE_ALLINONE_SERIALIZER

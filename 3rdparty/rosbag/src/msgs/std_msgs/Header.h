@@ -23,19 +23,10 @@ struct Header_
 {
   typedef Header_<ContainerAllocator> Type;
 
-  Header_()
-    : seq(0)
-    , stamp()
-    , version()  {
-    }
-  Header_(const ContainerAllocator& _alloc)
-    : seq(0)
-    , stamp()
-    , version(_alloc)  {
-  (void)_alloc;
-    }
-
-
+  Header_() : seq(0), stamp(), frame_id() {}
+  Header_(const ContainerAllocator &_alloc) : seq(0), stamp(), frame_id(_alloc) {
+      (void)_alloc;
+  }
 
    typedef uint32_t _seq_type;
   _seq_type seq;
@@ -44,13 +35,10 @@ struct Header_
   _stamp_type stamp;
 
    typedef std::basic_string<char, std::char_traits<char>, typename ContainerAllocator::template rebind<char>::other >  _frame_id_type;
-  _frame_id_type version; // the field is used for ROSbag versions control
+   _frame_id_type                                                                                                       frame_id;
 
-
-
-
-  typedef std::shared_ptr< ::std_msgs::Header_<ContainerAllocator> > Ptr;
-  typedef std::shared_ptr< ::std_msgs::Header_<ContainerAllocator> const> ConstPtr;
+   typedef std::shared_ptr<::std_msgs::Header_<ContainerAllocator>>       Ptr;
+   typedef std::shared_ptr<::std_msgs::Header_<ContainerAllocator> const> ConstPtr;
 
 }; // struct Header_
 
@@ -182,7 +170,7 @@ namespace serialization
     {
       stream.next(m.seq);
       stream.next(m.stamp);
-      stream.next(m.version);
+      stream.next(m.frame_id);
     }
 
     ROS_DECLARE_ALLINONE_SERIALIZER
@@ -205,8 +193,8 @@ struct Printer< ::std_msgs::Header_<ContainerAllocator> >
     Printer<uint32_t>::stream(s, indent + "  ", v.seq);
     s << indent << "stamp: ";
     Printer<orbbecRosbag::Time>::stream(s, indent + "  ", v.stamp);
-    s << indent << "version: ";
-    Printer<std::basic_string<char, std::char_traits<char>, typename ContainerAllocator::template rebind<char>::other > >::stream(s, indent + "  ", v.version);
+    s << indent << "frame_id: ";
+    Printer<std::basic_string<char, std::char_traits<char>, typename ContainerAllocator::template rebind<char>::other>>::stream(s, indent + "  ", v.frame_id);
   }
 };
 
