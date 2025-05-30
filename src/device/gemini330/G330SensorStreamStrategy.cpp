@@ -50,6 +50,9 @@ void G330SensorStreamStrategy::validateStream(const std::vector<std::shared_ptr<
         validateISPFirmwareVersion();
     }
 
+    // check device state
+    validateDeviceState();
+
     {
         std::lock_guard<std::mutex> lock(startedStreamListMutex_);
         for(auto profile: profiles) {
@@ -135,6 +138,14 @@ void G330SensorStreamStrategy::validatePreset(const std::vector<std::shared_ptr<
                 break;
             }
         }
+    }
+}
+
+void G330SensorStreamStrategy::validateDeviceState() {
+    auto     errorState = getOwner()->getDeviceErrorState();
+    uint64_t flag       = OB_ERROR_RGB_SENSOR | OB_ERROR_IRL_SENSOR | OB_ERROR_IRR_SENSOR | OB_ERROR_IMU_SENSOR | OB_ERROR_CFG_PARAM;
+    if((errorState & flag) != 0) {
+        throw unsupported_operation_exception("unexpected device state, please update your camera firmware before streaming data.");
     }
 }
 

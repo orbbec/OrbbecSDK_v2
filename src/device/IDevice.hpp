@@ -51,6 +51,7 @@ public:
     virtual bool                              isDeactivated() const                                   = 0;
     virtual const std::string                &getExtensionInfo(const std::string &infoKey) const      = 0;
     virtual bool                              isExtensionInfoExists(const std::string &infoKey) const = 0;
+    virtual uint64_t                          getDeviceErrorState() const                             = 0;
 
     // device components management
     virtual bool                                 isComponentExists(DeviceComponentId compId) const                     = 0;

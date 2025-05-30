@@ -32,7 +32,8 @@ const std::map<OBSensorType, DeviceComponentId> SensorTypeToComponentIdMap = {
 
 DeviceBase::DeviceBase() : ctx_(Context::getInstance()), isDeactivated_(false) {}
 
-DeviceBase::DeviceBase(const std::shared_ptr<const IDeviceEnumInfo> &info) : enumInfo_(info), ctx_(Context::getInstance()), isDeactivated_(false) {
+DeviceBase::DeviceBase(const std::shared_ptr<const IDeviceEnumInfo> &info)
+    : enumInfo_(info), deviceErrorState_(0), ctx_(Context::getInstance()), isDeactivated_(false) {
     deviceInfo_                  = std::make_shared<DeviceInfo>();
     deviceInfo_->name_           = enumInfo_->getName();
     deviceInfo_->pid_            = enumInfo_->getPid();
@@ -122,6 +123,18 @@ void DeviceBase::fetchExtensionInfo() {
     extensionInfo_["AllSensorsUsingSameClock"] = "true";
 }
 
+void DeviceBase::fetchDeviceErrorState() {
+    auto propServer = getPropertyServer();
+    if(propServer->isPropertySupported(OB_STRUCT_DEVICE_ERROR_STATE, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
+        auto state        = propServer->getStructureDataProtoV1_1_T<OBDeviceErrorState, 1>(OB_STRUCT_DEVICE_ERROR_STATE, PROP_ACCESS_INTERNAL);
+        deviceErrorState_ = state.errorCode;
+    }
+    else {
+        // Unsupported
+        deviceErrorState_ = 0;
+    }
+}
+
 bool DeviceBase::isExtensionInfoExists(const std::string &infoKey) const {
     return extensionInfo_.find(infoKey) != extensionInfo_.end();
 }
@@ -133,6 +146,10 @@ const std::string &DeviceBase::getExtensionInfo(const std::string &infoKey) cons
     }
     throw invalid_value_exception(utils::string::to_string() << "Extension info " << infoKey << " not found!");
 }
+
+uint64_t DeviceBase::getDeviceErrorState() const {
+    return deviceErrorState_;
+};
 
 DeviceBase::~DeviceBase() noexcept {
     deactivate();  // deactivate() will clear all components

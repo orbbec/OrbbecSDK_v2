@@ -61,6 +61,8 @@ typedef enum {
     OB_RAW_DATA_D2C_ALIGN_COLOR_PRE_PROCESS_PROFILE_LIST = 4046, /**< D2C Alignment Resolution List*/
     OB_RAW_DATA_DE_IR_TRANSFORM_PARAMS                   = 4059, /**< DE-IR transform parameters*/
     OB_PROP_DEVICE_LOG_SEVERITY_LEVEL_INT                = 5003, /**< Device log level*/
+
+    OB_STRUCT_DEVICE_ERROR_STATE = 5524, /**< Device error state*/
 } OBInternalPropertyID;
 
 }  // namespace libobsensor

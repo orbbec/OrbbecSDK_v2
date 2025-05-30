@@ -37,6 +37,7 @@ public:
     bool                              isDeactivated() const override;
     const std::string                &getExtensionInfo(const std::string &infoKey) const override;
     bool                              isExtensionInfoExists(const std::string &infoKey) const override;
+    uint64_t                          getDeviceErrorState() const override;
 
     void registerComponent(DeviceComponentId compId, std::function<std::shared_ptr<IDeviceComponent>()> creator, bool lockRequired = false);
     void registerComponent(DeviceComponentId compId, std::shared_ptr<IDeviceComponent> component, bool lockRequired = false);
@@ -70,6 +71,7 @@ protected:
     // implement on subclass, and must be called to initialize the device info on construction
     virtual void        fetchDeviceInfo();
     virtual void        fetchExtensionInfo();
+    virtual void        fetchDeviceErrorState();
     DeviceComponentLock tryLockResource();
 
     std::shared_ptr<ISourcePort> getSourcePort(std::shared_ptr<const SourcePortInfo> sourcePortInfo) const;
@@ -78,6 +80,7 @@ protected:
     const std::shared_ptr<const IDeviceEnumInfo> enumInfo_;
     std::shared_ptr<DeviceInfo>                  deviceInfo_;
     std::map<std::string, std::string>           extensionInfo_;
+    uint64_t                                     deviceErrorState_;
 
 private:
     std::shared_ptr<Context> ctx_;  // handle the lifespan of the context

@@ -241,4 +241,40 @@ typedef struct {
     uint16_t port;
 } OBInternalVideoStreamProfile;
 
+enum OBDeviceErrorCode : uint64_t {
+    // bit 0~31: error code
+    OB_ERROR_RGB_SENSOR    = 1 << 0,   // RGB sensor error
+    OB_ERROR_IRL_SENSOR    = 1 << 1,   // IR left sensor error
+    OB_ERROR_IRR_SENSOR    = 1 << 2,   // IR right sensor error
+    OB_ERROR_IMU_SENSOR    = 1 << 3,   // IMU sensor error
+    OB_ERROR_LASER_MODULE  = 1 << 4,   // Laser module error
+    OB_ERROR_FLOOD_MODULE  = 1 << 5,   // Flood module error
+    OB_ERROR_LDP_SENSOR    = 1 << 6,   // LDP sensor error
+    OB_ERROR_M_ADC_CHIP    = 1 << 7,   // M_ADC chip error
+    OB_ERROR_S_ADC_CHIP    = 1 << 8,   // S_ADC chip error
+    OB_ERROR_EEPROM_SENSOR = 1 << 9,   // EEPROM sensor error
+    OB_ERROR_CFG_PARAM     = 1 << 10,  // Configuration parameter error
+    OB_ERROR_CALIB_PARAM   = 1 << 11,  // Calibration parameter error
+    OB_ERROR_TEC_FUN       = 1 << 12,  // TEC function error
+    OB_ERROR_MCU_FUN       = 1 << 13,  // MCU function error
+    OB_ERROR_DSP_MODULE    = 1 << 14,  // DSP module error
+    OB_ERROR_OVER_LOAD     = 1 << 15,  // Overload error
+    // bit 32~63: warning
+    OB_WARNING_PERMISSION        = 1ULL << 32,  // Permission warning
+    OB_WARNING_IR_TEMPERATURE    = 1ULL << 33,  // IR temperature warning
+    OB_WARNING_RGB_TEMPERATURE   = 1ULL << 34,  // RGB temperature warning
+    OB_WARNING_LASER_TEMPERATURE = 1ULL << 35,  // Laser temperature warning
+    OB_WARNING_CPU_TEMPERATURE   = 1ULL << 36,  // CPU temperature warning
+    OB_WARNING_RES_MISMATCH      = 1ULL << 37,  // Resolution mismatch warning
+    OB_WARNING_FPS_MISMATCH      = 1ULL << 38,  // FPS mismatch warning
+    OB_WARNING_D2C_UNSPPOURT     = 1ULL << 39,  // D2C unsupported warning
+
+    OB_WARNING_USB_LOG      = 1ULL << 62,  // USB log warning
+    OB_WARNING_LOG_OVERFLOW = 1ULL << 63,  // State info cache flag
+};
+
+typedef struct {
+    uint64_t errorCode;  // Same with heartbeat state. See OBDeviceErrorCode for details
+} OBDeviceErrorState;
+
 #pragma pack(pop)

@@ -117,7 +117,8 @@ void G330Device::init() {
     auto presetManager = std::make_shared<G330PresetManager>(this);
     registerComponent(OB_DEV_COMPONENT_PRESET_MANAGER, presetManager);
 
-    if(getFirmwareVersionInt() > 10370) {
+    auto fwVersion = getFirmwareVersionInt();
+    if(fwVersion > 10370) {
         auto propertyServer         = getPropertyServer();
         auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
         propertyServer->registerProperty(OB_PROP_FRAME_INTERLEAVE_CONFIG_INDEX_INT, "rw", "rw", vendorPropertyAccessor.get());
@@ -128,18 +129,24 @@ void G330Device::init() {
         registerComponent(OB_DEV_COMPONENT_FRAME_INTERLEAVE_MANAGER, frameInterleaveManager);
     }
 
-    if(getFirmwareVersionInt() >= 10401) {
+    if(fwVersion >= 10401) {
         auto propertyServer                = getPropertyServer();
         auto hwNoiseRemovePropertyAccessor = std::make_shared<G330HWNoiseRemovePropertyAccessor>(this);
         propertyServer->registerProperty(OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL, "rw", "rw", hwNoiseRemovePropertyAccessor);
         propertyServer->registerProperty(OB_PROP_HW_NOISE_REMOVE_FILTER_THRESHOLD_FLOAT, "rw", "rw", hwNoiseRemovePropertyAccessor);
     }
 
-    if(getFirmwareVersionInt() >= 10510) {
+    if(fwVersion >= 10510) {
         auto propertyServer         = getPropertyServer();
         auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
         propertyServer->registerProperty(OB_DEVICE_AUTO_CAPTURE_ENABLE_BOOL, "rw", "rw", vendorPropertyAccessor.get());
         propertyServer->registerProperty(OB_DEVICE_AUTO_CAPTURE_INTERVAL_TIME_INT, "rw", "rw", vendorPropertyAccessor.get());
+    }
+
+    if(fwVersion >= 10540) {
+        auto propertyServer         = getPropertyServer();
+        auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        propertyServer->registerProperty(OB_STRUCT_DEVICE_ERROR_STATE, "", "r", vendorPropertyAccessor.get());
     }
 
     auto sensorStreamStrategy = std::make_shared<G330SensorStreamStrategy>(this);
@@ -208,6 +215,8 @@ void G330Device::init() {
         container = std::make_shared<G330DepthFrameMetadataParserContainer>(this);
         return container;
     });
+
+    fetchDeviceErrorState();
 }
 
 std::shared_ptr<const StreamProfile> G330Device::loadDefaultStreamProfile(OBSensorType sensorType) {
@@ -1349,19 +1358,20 @@ void G330NetDevice::init() {
     });
 
     auto propertyServer = getPropertyServer();
-    if(getFirmwareVersionInt() >= 373) {
+    auto fwVersion      = getFirmwareVersionInt();
+    if(fwVersion >= 373) {
         auto hwNoiseRemovePropertyAccessor = std::make_shared<G330HWNoiseRemovePropertyAccessor>(this);
         propertyServer->registerProperty(OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL, "rw", "rw", hwNoiseRemovePropertyAccessor);
         propertyServer->registerProperty(OB_PROP_HW_NOISE_REMOVE_FILTER_THRESHOLD_FLOAT, "rw", "rw", hwNoiseRemovePropertyAccessor);
     }
 
-    if(getFirmwareVersionInt() >= 10510) {
+    if(fwVersion >= 10510) {
         auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
         propertyServer->registerProperty(OB_DEVICE_AUTO_CAPTURE_ENABLE_BOOL, "rw", "rw", vendorPropertyAccessor.get());
         propertyServer->registerProperty(OB_DEVICE_AUTO_CAPTURE_INTERVAL_TIME_INT, "rw", "rw", vendorPropertyAccessor.get());
     }
 
-    if(getFirmwareVersionInt() >= 10533) {
+    if(fwVersion >= 10533) {
         auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
         propertyServer->registerProperty(OB_PROP_FRAME_INTERLEAVE_CONFIG_INDEX_INT, "rw", "rw", vendorPropertyAccessor.get());
         propertyServer->registerProperty(OB_PROP_FRAME_INTERLEAVE_ENABLE_BOOL, "rw", "rw", vendorPropertyAccessor.get());
@@ -1370,12 +1380,19 @@ void G330NetDevice::init() {
         registerComponent(OB_DEV_COMPONENT_FRAME_INTERLEAVE_MANAGER, frameInterleaveManager);
     }
 
+    if(fwVersion >= 10540) {
+        auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        propertyServer->registerProperty(OB_STRUCT_DEVICE_ERROR_STATE, "", "r", vendorPropertyAccessor.get());
+    }
+
 #if defined(__linux__) || defined(__aarch64__)
     if(getFirmwareVersionInt() >= 10533) {
         auto ptpClockSyncPropertyAccessor = std::make_shared<G330NetPTPClockSyncPropertyAccessor>(this);
         propertyServer->registerProperty(OB_DEVICE_PTP_CLOCK_SYNC_ENABLE_BOOL, "rw", "rw", ptpClockSyncPropertyAccessor);
     }
 #endif
+
+    fetchDeviceErrorState();
 }
 
 void G330NetDevice::fetchDeviceInfo() {
