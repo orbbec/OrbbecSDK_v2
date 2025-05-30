@@ -298,15 +298,17 @@ void MDNSDiscovery::sendAndRecvMDNSQuery(SOCKET sock) {
                 info.sn    = findTxtRecord(ack.txtList, "SN", "unknown");
                 info.model = findTxtRecord(ack.txtList, "MODEL", "");
                 auto pid   = findTxtRecord(ack.txtList, "PID", "");
-                try {
-                    uint32_t uintPid = std::stoul(pid, nullptr, 16);
-                    info.pid = static_cast<uint16_t>(uintPid);
-                }
-                catch(const std::exception &e) {
-                    (void)e;
-                    info.pid = 0;
-                    LOG_INTVL(LOG_INTVL_OBJECT_TAG + "sendAndRecvMDNSQuery", MAX_LOG_INTERVAL, spdlog::level::debug,
-                              "Parse PID failed. pid: {}, ip: {}, port, {}", pid, ack.ip, ack.port);
+                if(!pid.empty()) {
+                    try {
+                        uint32_t uintPid = std::stoul(pid, nullptr, 16);
+                        info.pid         = static_cast<uint16_t>(uintPid);
+                    }
+                    catch(const std::exception &e) {
+                        (void)e;
+                        info.pid = 0;
+                        LOG_INTVL(LOG_INTVL_OBJECT_TAG + "sendAndRecvMDNSQuery", MAX_LOG_INTERVAL, spdlog::level::debug,
+                                  "Parse PID failed. pid: {}, ip: {}, port, {}", pid, ack.ip, ack.port);
+                    }
                 }
 
                 std::lock_guard<std::mutex> lock(devInfoListMtx_);
@@ -319,8 +321,11 @@ void MDNSDiscovery::sendAndRecvMDNSQuery(SOCKET sock) {
                         if(info.model == "TL2401") {
                             info.pid = 0x5555;  // multi-lines
                         }
-                        else if(info.model == "MS600" || info.model == "SL450") {
-                            info.pid = 0x1234;  // single-line
+                        else if(info.model == "MS600") {
+                            info.pid = 0x1600;  // single-line
+                        }
+                        else if(info.model == "SL450") {
+                            info.pid = 0x1450;  // single-line
                         }
                     }
                     devInfoList_.emplace_back(info);

@@ -147,20 +147,21 @@ const std::vector<uint16_t> OpenniMaxPids = {
 
 // TODO need to change pid
 #define LIDAR_PID_TL2401 0x5555
-#define LIDAR_PID_MS600 0x1234
-
+#define LIDAR_PID_MS600 0x1600
+#define LIDAR_PID_SL450 0x1450
 const std::vector<uint16_t> LiDARDevPids = {
     LIDAR_PID_MS600,   // Single-line LiDAR MS600
+    LIDAR_PID_SL450,   // Single-line LiDAR SL450
     LIDAR_PID_TL2401,  // Multi-lines LiDAR TL2401
 };
 
 const std::map<std::string, uint32_t> LiDARDeviceNameMap = {
     { "MS600", LIDAR_PID_MS600 },    // Single-line LiDAR MS600
-    { "SL450", LIDAR_PID_MS600 },    // Single-line LiDAR international Version of MS600
+    { "SL450", LIDAR_PID_SL450 },    // Single-line LiDAR international Version of MS600
     { "TL2401", LIDAR_PID_TL2401 },  // Multi-lines LiDAR TL2401
 };
 
-#define IS_OB_LIDAR_MS600(pid) (((pid) == LIDAR_PID_MS600))
-#define IS_OB_LIDAR_TL2401(pid) (((pid) == LIDAR_PID_TL2401))
+#define IS_OB_LIDAR_SINGLE_LINE(pid) (((pid) == LIDAR_PID_MS600) || ((pid) == LIDAR_PID_SL450))
+#define IS_OB_LIDAR_MULTI_LINE(pid) (((pid) == LIDAR_PID_TL2401))
 
 }  // namespace libobsensor

@@ -25,12 +25,12 @@ LiDARDeviceInfo::LiDARDeviceInfo(const SourcePortInfoList groupedInfoList) {
         auto iter = std::find_if(LiDARDeviceNameMap.begin(), LiDARDeviceNameMap.end(),
                                  [portInfo](const std::pair<std::string, uint32_t> &pair) { return portInfo->pid == pair.second; });
         if(iter != LiDARDeviceNameMap.end()) {
-            name_ = "LiDAR " + iter->first;
+            name_ = "LiDAR_" + iter->first;
         }
         else {
-            name_ = "LiDAR series device";
+            name_ = "LiDAR_series_device";
         }
-        fullName_           = "Orbbec " + name_;
+        fullName_           = "Orbbec_" + name_;
         pid_                = portInfo->pid;
         vid_                = 0x2BC5;
         uid_                = portInfo->mac;
@@ -48,10 +48,10 @@ LiDARDeviceInfo::~LiDARDeviceInfo() noexcept {}
 std::shared_ptr<IDevice> LiDARDeviceInfo::createDevice() const {
     std::shared_ptr<IDevice> device;
     if(connectionType_ == "Ethernet") {
-        if ( IS_OB_LIDAR_TL2401(pid_) ) {
+        if(IS_OB_LIDAR_MULTI_LINE(pid_)) {
             return std::make_shared<LiDARDevice>(shared_from_this());
         }
-        else if(IS_OB_LIDAR_MS600(pid_)) {
+        else if(IS_OB_LIDAR_SINGLE_LINE(pid_)) {
             return std::make_shared<MS600Device>(shared_from_this());
         }
     }

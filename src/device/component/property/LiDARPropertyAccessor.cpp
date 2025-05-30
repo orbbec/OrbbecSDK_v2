@@ -36,7 +36,7 @@ const std::unordered_map<uint32_t, LiDAROpCode> LiDAROperationInfomap = {
     { OB_PROP_LIDAR_ECHO_MODE_INT, { HpOpCode::OPCODE_SET_ECHO_MODE, HpOpCode::OPCODE_GET_ECHO_MODE, OB_INT_PROPERTY } },          // set/get echo mode
     { OB_PROP_LIDAR_APPLY_CONFIGS_INT, { HpOpCode::OPCODE_APPLY_CONFIGS, HpOpCode::OPCODE_UNSUPPORTED, OB_INT_PROPERTY } },        // apply configs
     { OB_PROP_LIDAR_STREAMING_ON_OFF_INT, { HpOpCode::OPCODE_STREAMING_ON_OFF, HpOpCode::OPCODE_UNSUPPORTED, OB_INT_PROPERTY } },  // streaming on/off
-    { OB_PROP_LIDAR_SPECIFIC_MODE, { HpOpCode::OPCODE_SET_SPECIFIC_MODE, HpOpCode::OPCODE_GET_SPECIFIC_MODE, OB_INT_PROPERTY } },  // specific mode
+    { OB_PROP_LIDAR_SPECIFIC_MODE_INT, { HpOpCode::OPCODE_SET_SPECIFIC_MODE, HpOpCode::OPCODE_GET_SPECIFIC_MODE, OB_INT_PROPERTY } },  // specific mode
     { OB_PROP_LIDAR_TAIL_FILTER_LEVEL_INT,
       { HpOpCode::OPCODE_SET_TAIL_FILTER_LEVEL, HpOpCode::OPCODE_GET_TAIL_FILTER_LEVEL, OB_INT_PROPERTY } },  // set/set tail filter level
     { OB_PROP_LIDAR_MEMS_FOV_SIZE_FLOAT,
@@ -116,7 +116,7 @@ uint32_t LiDARPropertyAccessor::getLiDARPid() {
     // check if ms600
     TRY_EXECUTE({
         OBPropertyValue value;
-        getPropertyValue(OB_PROP_LIDAR_SPECIFIC_MODE, &value);
+        getPropertyValue(OB_PROP_LIDAR_SPECIFIC_MODE_INT, &value);
         // ok, we can assume that this is a ms600 lidar device
     });
 
@@ -229,7 +229,7 @@ void LiDARPropertyAccessor::getPropertyRange(uint32_t propertyId, OBPropertyRang
         range->def.intValue  = 0;
         break;
     }
-    case OB_PROP_LIDAR_SPECIFIC_MODE: {
+    case OB_PROP_LIDAR_SPECIFIC_MODE_INT: {
         range->min.intValue  = 0;  // normal mode
         range->max.intValue  = 1;  // fog mode
         range->step.intValue = 1;
@@ -287,6 +287,7 @@ void LiDARPropertyAccessor::getPropertyRange(uint32_t propertyId, OBPropertyRang
         range->def.floatValue  = 0.0f;
         break;
     }
+    case OB_PROP_LIDAR_APD_HIGH_VOLTAGE_FLOAT:
     case OB_PROP_LIDAR_TX_HIGH_POWER_VOLTAGE_FLOAT:
     case OB_PROP_LIDAR_TX_LOWER_POWER_VOLTAGE_FLOAT:
     default: {
