@@ -149,7 +149,7 @@ const std::string &DeviceBase::getExtensionInfo(const std::string &infoKey) cons
 
 uint64_t DeviceBase::getDeviceErrorState() const {
     return deviceErrorState_;
-};
+}
 
 DeviceBase::~DeviceBase() noexcept {
     deactivate();  // deactivate() will clear all components
