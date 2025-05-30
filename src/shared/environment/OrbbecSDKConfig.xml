@@ -2433,7 +2433,7 @@
                 <Height>480</Height>
                 <!-- The frame rate of the resolution enabled by default, int type -->
                 <FPS>30</FPS>
-                <Format>Y11</Format>
+                <Format>Y12</Format>
             </Depth>
             <IR>
                 <!-- The resolution width is enabled by default, int type -->
@@ -2475,7 +2475,7 @@
                 <Height>480</Height>
                 <!-- The frame rate of the resolution enabled by default, int type -->
                 <FPS>30</FPS>
-                <Format>Y11</Format>
+                <Format>Y12</Format>
             </Depth>
             <IR>
                 <!-- The resolution width is enabled by default, int type -->
@@ -2517,7 +2517,7 @@
                 <Height>480</Height>
                 <!-- The frame rate of the resolution enabled by default, int type -->
                 <FPS>30</FPS>
-                <Format>Y11</Format>
+                <Format>Y12</Format>
             </Depth>
             <IR>
                 <!-- The resolution width is enabled by default, int type -->
