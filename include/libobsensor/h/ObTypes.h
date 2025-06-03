@@ -157,7 +157,7 @@ typedef enum {
     OB_STREAM_IR_RIGHT   = 7,  /**< Right IR stream for stereo camera */
     OB_STREAM_RAW_PHASE  = 8,  /**< RawPhase Stream */
     OB_STREAM_CONFIDENCE = 9,  /**< Confidence Stream*/
-    OB_STREAM_LIDAR      = 10,  /**< LiDAR Stream for LiDAR device*/
+    OB_STREAM_LIDAR      = 10, /**< LiDAR Stream for LiDAR device*/
     OB_STREAM_TYPE_COUNT,      /**< The total number of stream type,is not a valid stream type */
 } OBStreamType,
     ob_stream_type;
@@ -1522,13 +1522,13 @@ typedef enum {
  * @brief  Configuration Item for the filter
  */
 typedef struct {
-    const char             *name;  ///< Name of the configuration item
+    const char *            name;  ///< Name of the configuration item
     OBFilterConfigValueType type;  ///< Value type of the configuration item
     double                  min;   ///< Minimum value casted to double
     double                  max;   ///< Maximum value casted to double
     double                  step;  ///< Step value casted to double
     double                  def;   ///< Default value casted to double
-    const char             *desc;  ///< Description of the configuration item
+    const char *            desc;  ///< Description of the configuration item
 } OBFilterConfigSchemaItem, ob_filter_config_schema_item;
 
 /**

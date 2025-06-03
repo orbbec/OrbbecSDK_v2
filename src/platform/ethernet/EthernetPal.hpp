@@ -18,7 +18,6 @@
 #include <atomic>
 
 namespace libobsensor {
-
 class EthernetPal : virtual public IPal, virtual public IDeviceWatcher, public std::enable_shared_from_this<EthernetPal> {
 public:
     EthernetPal();
@@ -56,6 +55,8 @@ private:
     // mDNS
     std::vector<MDNSDeviceInfo>    mdnsDevInfoList_;
     std::shared_ptr<MDNSDiscovery> mdnsDiscovery_;
+    std::thread                    mdnsWatchThread_;
+    std::condition_variable        mdnsCondVar_;
 };
 
 }  // namespace libobsensor

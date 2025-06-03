@@ -62,17 +62,12 @@ DeviceEnumInfoList NetDeviceEnumerator::queryDeviceList() {
         }
 
         // try fetch pid from device via vendor property
-        BEGIN_TRY_EXECUTE({
-            auto            port               = platform_->getSourcePort(info);
-            auto            vendorPropAccessor = std::make_shared<VendorPropertyAccessor>(nullptr, port);
-            OBPropertyValue value;
-            value.intValue = 0;
-            vendorPropAccessor->getPropertyValue(OB_PROP_DEVICE_PID_INT, &value);
+        auto pid = NetDeviceEnumerator::getDevicePid(info, OB_FEMTO_MEGA_PID);
+        if(pid != 0) {
             auto newInfo = std::make_shared<NetSourcePortInfo>(info->portType, info->netInterfaceName, info->localMac, info->localAddress, info->address,
-                                                               info->port, info->mac, info->serialNumber, info->vid, value.intValue);
+                                                               info->port, info->mac, info->serialNumber, info->vid, pid);
             sourcePortInfoList.push_back(newInfo);
-        })
-        CATCH_EXCEPTION_AND_LOG(DEBUG, "Get device pid failed! address:{}, port:{}", info->address, info->port);
+        }
     }
 
     LOG_DEBUG("Current net source port list:");
@@ -83,37 +78,43 @@ DeviceEnumInfoList NetDeviceEnumerator::queryDeviceList() {
     return deviceInfoMatch(sourcePortInfoList);
 }
 
-uint16_t NetDeviceEnumerator::getDevicePid(std::shared_ptr<const NetSourcePortInfo> info) {
+uint16_t NetDeviceEnumerator::getDevicePid(std::shared_ptr<const NetSourcePortInfo> info, uint16_t defaultPid, bool tryCamera, bool tryLiDAR) {
     if(info == nullptr) {
         return 0;
     }
 
     // check if camera device
-    BEGIN_TRY_EXECUTE({
-        OBPropertyValue value;
-        value.intValue = 0;
+    if(tryCamera) {
+        BEGIN_TRY_EXECUTE({
+            OBPropertyValue value;
+            value.intValue = 0;
 
-        auto port         = Platform::getInstance()->getSourcePort(info);
-        auto propAccessor = std::make_shared<VendorPropertyAccessor>(nullptr, port);
-        propAccessor->getPropertyValue(OB_PROP_DEVICE_PID_INT, &value);
-        return static_cast<uint16_t>(value.intValue);
-    })
-    CATCH_EXCEPTION_AND_EXECUTE({ LOG_WARN("Get device pid failed with VendorPropertyAccessor! address:{}, port:{}", info->address, info->port); });
+            auto port         = Platform::getInstance()->getSourcePort(info);
+            auto propAccessor = std::make_shared<VendorPropertyAccessor>(nullptr, port);
+            propAccessor->getPropertyValue(OB_PROP_DEVICE_PID_INT, &value);
+            return static_cast<uint16_t>(value.intValue);
+        })
+        CATCH_EXCEPTION_AND_EXECUTE({ LOG_WARN("Get device pid failed with VendorPropertyAccessor! address:{}, port:{}", info->address, info->port); });
+    }
 
     // check if is LiDAR device
-    BEGIN_TRY_EXECUTE({
-        OBPropertyValue value;
-        value.intValue = 0;
+    if (tryLiDAR) {
+        BEGIN_TRY_EXECUTE({
+            OBPropertyValue value;
+            value.intValue = 0;
 
-        auto port         = Platform::getInstance()->getSourcePort(info);
-        auto propAccessor = std::make_shared<LiDARPropertyAccessor>(nullptr, port);
-        propAccessor->getPropertyValue(OB_PROP_DEVICE_PID_INT, &value);
-        return static_cast<uint16_t>(value.intValue);
-    })
-    CATCH_EXCEPTION_AND_EXECUTE({ LOG_WARN("Get device pid failed with LiDARPropertyAccessor! address:{}, port:{}", info->address, info->port); });
+            auto port         = Platform::getInstance()->getSourcePort(info);
+            auto propAccessor = std::make_shared<LiDARPropertyAccessor>(nullptr, port);
+            propAccessor->getPropertyValue(OB_PROP_DEVICE_PID_INT, &value);
+            return static_cast<uint16_t>(value.intValue);
+        })
+        CATCH_EXCEPTION_AND_EXECUTE({ LOG_WARN("Get device pid failed with LiDARPropertyAccessor! address:{}, port:{}", info->address, info->port); });
+    }
 
-    LOG_WARN("Use default pid({}) of Femto Mega Device! address:{}, port:{}", OB_FEMTO_MEGA_PID, info->address, info->port);
-    return OB_FEMTO_MEGA_PID;
+    if(defaultPid != 0) {
+        LOG_WARN("Use default pid({}) for Net Device! address:{}, port:{}", defaultPid, info->address, info->port);
+    }
+    return defaultPid;
 }
 
 DeviceEnumInfoList NetDeviceEnumerator::getDeviceInfoList() {
@@ -305,11 +306,12 @@ bool NetDeviceEnumerator::handleDeviceArrival(std::string devUid) {
             LOG_DEBUG("  - Name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", item->getName(), item->getPid(), item->getDeviceSn(), info->mac, info->address);
         }
     }
+
     // printf current device list
     {
         std::unique_lock<std::recursive_mutex> lock(deviceInfoListMutex_);
         LOG_DEBUG("Current net device list: ({})", deviceInfoList_.size());
-        for(auto &&item: deviceInfoList_) {
+        for(auto &&item: deviceInfoList_) { 
             auto firstPortInfo = item->getSourcePortInfoList().front();
             auto info          = std::dynamic_pointer_cast<const NetSourcePortInfo>(firstPortInfo);
             LOG_DEBUG("  - Name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", item->getName(), item->getPid(), item->getDeviceSn(), info->mac, info->address);
@@ -341,10 +343,11 @@ bool NetDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType
 }
 
 std::shared_ptr<const IDeviceEnumInfo> NetDeviceEnumerator::queryNetDevice(std::string address, uint16_t port) {
-    auto info = std::make_shared<NetSourcePortInfo>(SOURCE_PORT_NET_VENDOR,  //
-                                                    "Unknown", "Unknown", "Unknown", address, port, address + ":" + std::to_string(port), "Unknown",
-                                                    ORBBEC_DEVICE_VID, 0);
-    info->pid = getDevicePid(info);
+    auto info = std::make_shared<NetSourcePortInfo>(SOURCE_PORT_NET_VENDOR, "Unknown", "Unknown", "Unknown", address, port,
+                                                    address + ":" + std::to_string(port), "Unknown", ORBBEC_DEVICE_VID, 0);
+
+    info->pid = NetDeviceEnumerator::getDevicePid(info, OB_FEMTO_MEGA_PID);
+
 
     if(isDeviceInContainer(G335LeDevPids, info->vid, info->pid)) {
         throw invalid_value_exception("No supported G335Le found for address: " + address + ":" + std::to_string(port));

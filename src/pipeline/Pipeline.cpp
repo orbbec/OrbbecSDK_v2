@@ -159,7 +159,7 @@ std::shared_ptr<Config> Pipeline::checkAndSetConfig(std::shared_ptr<const Config
     LOG_DEBUG("Check and set config start!");
     std::shared_ptr<Config> config = cfg->clone();
     config->disableAllStream();
-    const auto enabledStreamProfiles = cfg->getEnabledStreamProfileList();
+    auto enabledStreamProfiles = cfg->getEnabledStreamProfileList();
     for(auto sp: enabledStreamProfiles) {
         auto streamType = sp->getType();
         auto sensorType = utils::mapStreamTypeToSensorType(streamType);
@@ -200,6 +200,10 @@ std::shared_ptr<Config> Pipeline::checkAndSetConfig(std::shared_ptr<const Config
             }
             config->enableStream(matchedProfileList.front());
         }
+    }
+    enabledStreamProfiles = config->getEnabledStreamProfileList();
+    if(enabledStreamProfiles.empty()) {
+        throw invalid_value_exception("No any enabled stream profile");
     }
     LOG_INFO("Check and set config done!");
     return config;

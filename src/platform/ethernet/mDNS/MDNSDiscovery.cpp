@@ -35,10 +35,10 @@ namespace libobsensor {
  * @brief mDNS query replies
  */
 typedef struct MDNSAckData {
-    std::string              ip;
-    uint16_t                 port;
-    std::string              pid;
-    std::string              name;     // port srv name
+    std::string              ip = "";
+    uint16_t                 port = 0;
+    std::string              pid = "";
+    std::string              name = "";     // port srv name
     std::vector<std::string> txtList;  // data of record TXT
 } MDNSAckData;
 
@@ -277,6 +277,7 @@ void MDNSDiscovery::sendAndRecvMDNSQuery(SOCKET sock) {
             do {
                 // for udp, read one packet at a time
                 MDNSAckData ack;
+                memset(buffer, 0, capacity);
                 size_t      rec = mdns_query_recv(static_cast<int>(sock), buffer, capacity, query_callback, &ack, id);
                 if(rec <= 0) {
                     LOG_INTVL(LOG_INTVL_OBJECT_TAG + "sendAndRecvMDNSQuery", MAX_LOG_INTERVAL, spdlog::level::debug,
@@ -330,7 +331,7 @@ void MDNSDiscovery::sendAndRecvMDNSQuery(SOCKET sock) {
                     }
                     devInfoList_.emplace_back(info);
                 }
-            } while(1);
+            } while(0);
         }
         FD_SET(sock, &readfs);
     }
@@ -353,6 +354,7 @@ std::string MDNSDiscovery::findTxtRecord(const std::vector<std::string> &txtList
 
 std::vector<MDNSDeviceInfo> MDNSDiscovery::queryDeviceList() {
     std::lock_guard<std::mutex> lck(queryMtx_);
+    auto lastDevList = devInfoList_;
     devInfoList_.clear();
 
     std::vector<SOCKET> socks = openClientSockets();
@@ -377,10 +379,11 @@ std::vector<MDNSDeviceInfo> MDNSDiscovery::queryDeviceList() {
 
     closeClientSockets(socks);
 
-    LOG_TRACE("queryMDNSDevice completed ({}):", devInfoList_.size());
-    for(auto &&info: devInfoList_) {
-        LOG_INTVL(LOG_INTVL_OBJECT_TAG + "queryMDNSDevice", DEF_MIN_LOG_INTVL, spdlog::level::debug, "\t- ip:{}, port:{}, model:{}, sn:{}, pid:0x{:04x}",
-                  info.ip, info.port, info.model, info.sn, info.pid);
+    if (lastDevList != devInfoList_) {
+        LOG_DEBUG("queryMDNSDevice completed ({}):", devInfoList_.size());
+        for(auto &&info: devInfoList_) {
+            LOG_DEBUG("\t- ip:{}, port:{}, model:{}, sn:{}, pid:0x{:04x}", info.ip, info.port, info.model, info.sn, info.pid);
+        }
     }
     return devInfoList_;
 }

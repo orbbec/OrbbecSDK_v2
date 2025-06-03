@@ -76,7 +76,7 @@ typedef struct {
 #define TAIL_MAGIC "\xFE\xFE\xFE\xFE"
 #define TAIL_MAGIC_LEN (4)
 
-#if !defined(_WIN32)
+#if !(defined(_WIN32) || defined(__APPLE__))
 static inline uint64_t ntohll(uint64_t val) {
 #if __BYTE_ORDER == __LITTLE_ENDIAN
     return (((uint64_t)ntohl(val & 0xFFFFFFFFULL)) << 32) | ntohl(val >> 32);

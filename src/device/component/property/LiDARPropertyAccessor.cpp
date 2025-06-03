@@ -118,6 +118,7 @@ uint32_t LiDARPropertyAccessor::getLiDARPid() {
         OBPropertyValue value;
         getPropertyValue(OB_PROP_LIDAR_SPECIFIC_MODE_INT, &value);
         // ok, we can assume that this is a ms600 lidar device
+        return LIDAR_PID_MS600;
     });
 
     throw invalid_value_exception("Unable to get pid from LiDAR");

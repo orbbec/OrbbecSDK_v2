@@ -27,7 +27,7 @@ private:
     bool               handleDeviceArrival(std::string devUid);
     DeviceEnumInfoList queryDeviceList();
 
-    static uint16_t getDevicePid(std::shared_ptr<const NetSourcePortInfo> info);
+    static uint16_t getDevicePid(std::shared_ptr<const NetSourcePortInfo> info, uint16_t defaultPid, bool tryCamera = true, bool tryLiDAR = true);
 
 private:
     std::shared_ptr<Platform> platform_;
