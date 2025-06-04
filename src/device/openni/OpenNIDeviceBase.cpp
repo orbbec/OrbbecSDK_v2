@@ -81,7 +81,7 @@ void OpenNIDeviceBase::initSensorList() {
                     { FormatFilterPolicy::REMOVE, OB_FORMAT_Z16, OB_FORMAT_ANY, nullptr },
                 };
                 sensor->updateFormatFilterConfig(formatFilterConfigs);
-
+                sensor->enableTimestampAnomalyDetection(false);
                 auto frameTimestampCalculator = videoFrameTimestampCalculatorCreator_();
                 sensor->setFrameTimestampCalculator(frameTimestampCalculator);
 

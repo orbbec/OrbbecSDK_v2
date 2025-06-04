@@ -19,8 +19,15 @@ void startStream(std::map<int, std::shared_ptr<ob::Pipeline>> &pipes) {
 
         // config to enable depth and color streams
         std::shared_ptr<ob::Config> config = std::make_shared<ob::Config>();
-        config->enableVideoStream(OB_STREAM_COLOR);
         config->enableVideoStream(OB_STREAM_DEPTH);
+
+        auto sensorList = pipe->getDevice()->getSensorList();
+        for(uint32_t index = 0; index < sensorList->getCount(); index++) {
+            OBSensorType sensorType = sensorList->getSensorType(index);
+            if(sensorType == OB_SENSOR_COLOR) {
+                config->enableVideoStream(OB_STREAM_COLOR);
+            }
+        }
 
         // start pipeline and pass the callback function to receive the frames
         pipe->start(config, [deviceIndex](std::shared_ptr<ob::FrameSet> frameSet) {

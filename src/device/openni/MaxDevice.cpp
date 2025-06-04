@@ -87,7 +87,7 @@ void MaxDevice::initSensorList() {
                     formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_Y12, OB_FORMAT_Y16, formatConverter });
                 }
                 sensor->updateFormatFilterConfig(formatFilterConfigs);*/
-
+                sensor->enableTimestampAnomalyDetection(false);
                 auto frameTimestampCalculator = videoFrameTimestampCalculatorCreator_();
                 sensor->setFrameTimestampCalculator(frameTimestampCalculator);
 
@@ -164,6 +164,7 @@ void MaxDevice::initSensorList() {
                 }
                 sensor->updateFormatFilterConfig(formatFilterConfigs);
 
+                sensor->enableTimestampAnomalyDetection(false);
                 auto frameTimestampCalculator = videoFrameTimestampCalculatorCreator_();
                 sensor->setFrameTimestampCalculator(frameTimestampCalculator);
 

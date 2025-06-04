@@ -6,6 +6,8 @@
 #include "utils.hpp"
 #include "utils_opencv.hpp"
 
+#define IS_ASTRA_MINI_DEVICE(pid) (pid == 0x069d || pid == 0x065b || pid == 0x065e)
+
 int main(void) try {
 
     // Create a pipeline.
@@ -29,6 +31,12 @@ int main(void) try {
         // exclude non-video sensor type
         if(!ob::TypeHelper::isVideoSensorType(sensorType)) {
             continue;
+        }
+
+        if(IS_ASTRA_MINI_DEVICE(device->getDeviceInfo()->getPid())) {
+            if(sensorType == OB_SENSOR_COLOR) {
+                continue;
+            }
         }
 
         // Enable the stream for the sensor type.
