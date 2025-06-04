@@ -1,4 +1,4 @@
-if(OB_BUILD_PCL)
+if(OB_BUILD_PCL_EXAMPLES)
     # set(PCL_DIR "user/lib/PCL 1.12.1/cmake")
     message(STATUS "- Building PCL examples")
     add_subdirectory(pcl)
