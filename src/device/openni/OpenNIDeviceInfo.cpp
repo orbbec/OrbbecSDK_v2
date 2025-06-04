@@ -63,7 +63,7 @@ std::shared_ptr<IDevice> OpenNIDeviceInfo::createDevice() const {
         return std::make_shared<DaBaiDevice>(shared_from_this());
     }
 
-    if(pid_ == OB_DEVICE_MAX_PRO_PID || pid_ == OB_DEVICE_DABAI_MAX_PID) {
+    if(pid_ == OB_DEVICE_MAX_PRO_PID || pid_ == OB_DEVICE_GEMINI_UW_PID || pid_ == OB_DEVICE_DABAI_MAX_PID) {
         return std::make_shared<MaxDevice>(shared_from_this());
     }
 
