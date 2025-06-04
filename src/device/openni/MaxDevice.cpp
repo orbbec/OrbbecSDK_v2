@@ -32,9 +32,10 @@
 
 namespace libobsensor {
 
-constexpr uint8_t  INTERFACE_COLOR   = 0;
-constexpr uint8_t  INTERFACE_DEPTH   = 0;
-constexpr uint16_t MAX_PRO_COLOR_PID = 0x0560;
+constexpr uint8_t  INTERFACE_COLOR     = 0;
+constexpr uint8_t  INTERFACE_DEPTH     = 0;
+constexpr uint16_t MAX_PRO_COLOR_PID   = 0x0560;
+constexpr uint16_t GEMINI_UW_COLOR_PID = 0x05aa;
 
 MaxDevice::MaxDevice(const std::shared_ptr<const IDeviceEnumInfo> &info) : OpenNIDeviceBase(info) {
     LOG_INFO("Create {} device.", info->getName());
@@ -138,7 +139,8 @@ void MaxDevice::initSensorList() {
 
     auto colorPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(), [](const std::shared_ptr<const SourcePortInfo> &portInfo) {
         return portInfo->portType == SOURCE_PORT_USB_UVC && std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->infIndex == INTERFACE_COLOR
-               && std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->pid == MAX_PRO_COLOR_PID;
+               && (std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->pid == MAX_PRO_COLOR_PID
+                   || std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->pid == GEMINI_UW_COLOR_PID);
     });
 
     if(colorPortInfoIter != sourcePortInfoList.end()) {
