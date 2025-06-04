@@ -245,6 +245,26 @@ void PlaybackDevice::initSensorList() {
         return sensor;
     });
 
+    if(deviceInfo_->pid_ == OB_DEVICE_G435LE_PID) {
+        registerComponent(OB_DEV_COMPONENT_CONFIDENCE_SENSOR, [this]() {
+            auto sensor = std::make_shared<VideoSensor>(this, OB_SENSOR_CONFIDENCE, port_);
+            sensor->setStreamProfileList(port_->getStreamProfileList(OB_SENSOR_CONFIDENCE));
+
+            auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_CONFIDENCE_FRAME_PROCESSOR, false);
+            if(frameProcessor) {
+                sensor->setFrameProcessor(frameProcessor.get());
+            }
+
+            return sensor;
+        });
+
+        registerComponent(OB_DEV_COMPONENT_CONFIDENCE_FRAME_PROCESSOR, [this]() {
+            auto factory        = getComponentT<FrameProcessorFactory>(OB_DEV_COMPONENT_FRAME_PROCESSOR_FACTORY);
+            auto frameProcessor = factory->createFrameProcessor(OB_SENSOR_CONFIDENCE);
+            return frameProcessor;
+        });
+    }
+
     registerComponent(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR, [this]() {
         auto propertyAccessor = std::make_shared<PlaybackVendorPropertyAccessor>(port_, this);
 
