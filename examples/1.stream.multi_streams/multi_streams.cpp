@@ -9,6 +9,8 @@
 #include <mutex>
 #include <thread>
 
+#define IS_ASTRA_MINI_DEVICE(pid) (pid == 0x069d || pid == 0x065b || pid == 0x065e)
+
 int main(void) try {
 
     // Create a pipeline with default device.
@@ -23,13 +25,21 @@ int main(void) try {
     // Get sensor list from device.
     auto sensorList = device->getSensorList();
 
+    bool supportIMU = false;
     for(uint32_t i = 0; i < sensorList->getCount(); i++) {
         // Get sensor type.
         auto sensorType = sensorList->getSensorType(i);
 
         // exclude gyro and accel sensors.
         if(sensorType == OB_SENSOR_GYRO || sensorType == OB_SENSOR_ACCEL) {
+            supportIMU = true;
             continue;
+        }
+
+        if(IS_ASTRA_MINI_DEVICE(device->getDeviceInfo()->getPid())) {
+            if(sensorType == OB_SENSOR_COLOR) {
+                continue;
+            }
         }
 
         // enable the stream.
@@ -44,41 +54,61 @@ int main(void) try {
         renderFrameSet = frameSet;
     });
 
-    // The IMU frame rate is much faster than the video, so it is advisable to use a separate pipeline to obtain IMU data.
-    auto                                dev         = pipe.getDevice();
-    auto                                imuPipeline = std::make_shared<ob::Pipeline>(dev);
-    std::mutex                          imuFrameMutex;
-    std::shared_ptr<const ob::FrameSet> renderImuFrameSet;
+    if(supportIMU) {
+        // The IMU frame rate is much faster than the video, so it is advisable to use a separate pipeline to obtain IMU data.
+        auto                                dev         = pipe.getDevice();
+        auto                                imuPipeline = std::make_shared<ob::Pipeline>(dev);
+        std::mutex                          imuFrameMutex;
+        std::shared_ptr<const ob::FrameSet> renderImuFrameSet;
 
-    std::shared_ptr<ob::Config> imuConfig = std::make_shared<ob::Config>();
-    // enable gyro stream.
-    imuConfig->enableGyroStream();
-    // enable accel stream.
-    imuConfig->enableAccelStream();
-    // start the imu pipeline.
-    imuPipeline->start(imuConfig, [&](std::shared_ptr<ob::FrameSet> frameSet) {
-        std::lock_guard<std::mutex> lockImu(imuFrameMutex);
-        renderImuFrameSet = frameSet;
-    });
+        std::shared_ptr<ob::Config> imuConfig = std::make_shared<ob::Config>();
+        // enable gyro stream.
+        imuConfig->enableGyroStream();
+        // enable accel stream.
+        imuConfig->enableAccelStream();
+        // start the imu pipeline.
+        imuPipeline->start(imuConfig, [&](std::shared_ptr<ob::FrameSet> frameSet) {
+            std::lock_guard<std::mutex> lockImu(imuFrameMutex);
+            renderImuFrameSet = frameSet;
+        });
 
-    // Create a window for rendering and set the resolution of the window
-    ob_smpl::CVWindow win("MultiStream", 1280, 720, ob_smpl::ARRANGE_GRID);
-    while(win.run()) {
-        std::lock_guard<std::mutex> lockImu(imuFrameMutex);
-        std::lock_guard<std::mutex> lock(frameMutex);
+        // Create a window for rendering and set the resolution of the window
+        ob_smpl::CVWindow win("MultiStream", 1280, 720, ob_smpl::ARRANGE_GRID);
+        while(win.run()) {
+            std::lock_guard<std::mutex> lockImu(imuFrameMutex);
+            std::lock_guard<std::mutex> lock(frameMutex);
 
-        if(renderFrameSet == nullptr || renderImuFrameSet == nullptr) {
-            continue;
+            if(renderFrameSet == nullptr || renderImuFrameSet == nullptr) {
+                continue;
+            }
+            // Render camera and imu frameset.
+            win.pushFramesToView({ renderFrameSet, renderImuFrameSet });
         }
-        // Render camera and imu frameset.
-        win.pushFramesToView({ renderFrameSet, renderImuFrameSet });
+
+        // Stop the Pipeline, no frame data will be generated.
+        pipe.stop();
+
+        if(supportIMU) {
+            // Stop the IMU Pipeline, no frame data will be generated.
+            imuPipeline->stop();
+        }
     }
+    else {
+        // Create a window for rendering and set the resolution of the window
+        ob_smpl::CVWindow win("MultiStream", 1280, 720, ob_smpl::ARRANGE_GRID);
+        while(win.run()) {
+            std::lock_guard<std::mutex> lock(frameMutex);
 
-    // Stop the Pipeline, no frame data will be generated.
-    pipe.stop();
+            if(renderFrameSet == nullptr) {
+                continue;
+            }
+            // Render camera and imu frameset.
+            win.pushFramesToView(renderFrameSet);
+        }
 
-    // Stop the IMU Pipeline, no frame data will be generated.
-    imuPipeline->stop();
+        // Stop the Pipeline, no frame data will be generated.
+        pipe.stop();
+    }
 
     return 0;
 }
