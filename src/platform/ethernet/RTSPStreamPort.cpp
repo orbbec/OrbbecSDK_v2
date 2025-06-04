@@ -16,6 +16,7 @@ std::string mapFormatToString(OBFormat format) {
         { OB_FORMAT_Y10, "y10" },   { OB_FORMAT_Y11, "y11" },   { OB_FORMAT_Y12, "y12" },   { OB_FORMAT_GRAY, "y8" },   { OB_FORMAT_HEVC, "h265" },
         { OB_FORMAT_I420, "i420" }, { OB_FORMAT_RLE, "rle" },   { OB_FORMAT_RGB, "rgb" },   { OB_FORMAT_BGR, "bgr" },   { OB_FORMAT_Y14, "y14" },
         { OB_FORMAT_BGRA, "bgra" }, { OB_FORMAT_RGBA, "rgba" }, { OB_FORMAT_RVL, "rvl" },   { OB_FORMAT_BYR2, "byr2" }, { OB_FORMAT_RW16, "rw16" },
+        { OB_FORMAT_Y12C4, "y12c4" },
     };
     return formatToStringMap[format];
 }

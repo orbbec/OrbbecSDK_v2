@@ -36,6 +36,7 @@ float getBytesPerPixel(OBFormat format) {
         bytesPerPixel = 1.5f;
         break;
     case OB_FORMAT_Y16:
+    case OB_FORMAT_Y12C4:
     case OB_FORMAT_Z16:
     case OB_FORMAT_YUYV:
     case OB_FORMAT_UYVY:
@@ -248,7 +249,7 @@ const std::map<uint32_t, OBFormat> fourccToOBFormat = {
     { fourCc2Int('Y', '8', ' ', ' '), OB_FORMAT_Y8 },   { fourCc2Int('Y', '1', '0', ' '), OB_FORMAT_Y10 },  { fourCc2Int('H', 'E', 'V', 'C'), OB_FORMAT_HEVC },
     { fourCc2Int('Y', '1', '4', ' '), OB_FORMAT_Y14 },  { fourCc2Int('I', '4', '2', '0'), OB_FORMAT_I420 }, { fourCc2Int('Z', '1', '6', ' '), OB_FORMAT_Z16 },
     { fourCc2Int('Y', 'V', '1', '2'), OB_FORMAT_YV12 }, { fourCc2Int('B', 'A', '8', '1'), OB_FORMAT_BA81 }, { fourCc2Int('B', 'Y', 'R', '2'), OB_FORMAT_BYR2 },
-    { fourCc2Int('R', 'W', '1', '6'), OB_FORMAT_RW16 },
+    { fourCc2Int('R', 'W', '1', '6'), OB_FORMAT_RW16 }, { fourCc2Int('Y', 'C', 'C', '4'), OB_FORMAT_Y12C4 },
 };
 
 OBFormat uvcFourccToOBFormat(uint32_t fourcc) {
@@ -373,6 +374,7 @@ const std::map<OBFormat, std::string> Format_Str_Map = {
     { OB_FORMAT_YV12, "YV12" },   { OB_FORMAT_BA81, "BA81" },
     { OB_FORMAT_RGBA, "RGBA" },   { OB_FORMAT_BYR2, "BYR2" },
     { OB_FORMAT_RW16, "RW16" },   { OB_FORMAT_UNKNOWN, "UNKNOWN" },
+    { OB_FORMAT_Y12C4, "Y12C4" },
 };
 
 std::map<OBFrameMetadataType, std::string> Metadata_Str_Map = { { OB_FRAME_METADATA_TYPE_TIMESTAMP, "Timestamp" },

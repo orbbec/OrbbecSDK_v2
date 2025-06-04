@@ -1655,12 +1655,13 @@ Boolean MediaSubsession::createSourceObjects(int useSpecialRTPoffset) {
                     || strcmp(fCodecName, "OB_FMT_RVL") == 0          // orbbec stream
                     || strcmp(fCodecName, "OB_FMT_MJPEG") == 0        // orbbec stream
                     || strcmp(fCodecName, "YUYV") == 0
-                    || strcmp(fCodecName, "I420") == 0) {
+                    || strcmp(fCodecName, "I420") == 0
+                    || strcmp(fCodecName, "Y12C4") == 0) {
                 createSimpleRTPSource = True;
                 useSpecialRTPoffset   = 0;
                 if(strcmp(fCodecName, "VND.ONVIF.METADATA") == 0 || strcmp(fCodecName, "OB_FMT_Y16") == 0 || strcmp(fCodecName, "OB_FMT_Y8") == 0
                    || strcmp(fCodecName, "YUYV") == 0 || strcmp(fCodecName, "I420") == 0 || strcmp(fCodecName, "OB_FMT_Y10") == 0 || strcmp(fCodecName, "OB_FMT_RVL") == 0
-                   || strcmp(fCodecName, "OB_FMT_MJPEG") == 0) {
+                   || strcmp(fCodecName, "OB_FMT_MJPEG") == 0 || strcmp(fCodecName, "Y12C4") == 0) {
                     // This RTP payload format uses the RTP "M" bit to indicate the end of the content (a XML document):
                     doNormalMBitRule = True;
                 }

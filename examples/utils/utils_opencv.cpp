@@ -429,7 +429,7 @@ cv::Mat CVWindow::visualize(std::shared_ptr<const ob::Frame> frame) {
     }
     else if(frame->getType() == OB_FRAME_DEPTH) {
         auto videoFrame = frame->as<const ob::VideoFrame>();
-        if(videoFrame->getFormat() == OB_FORMAT_Y16 || videoFrame->getFormat() == OB_FORMAT_Z16) {
+        if(videoFrame->getFormat() == OB_FORMAT_Y16 || videoFrame->getFormat() == OB_FORMAT_Z16 || videoFrame->getFormat() == OB_FORMAT_Y12C4) {
             cv::Mat rawMat = cv::Mat(videoFrame->getHeight(), videoFrame->getWidth(), CV_16UC1, videoFrame->getData());
             // depth frame pixel value multiply scale to get distance in millimeter
             float scale = videoFrame->as<ob::DepthFrame>()->getValueScale();

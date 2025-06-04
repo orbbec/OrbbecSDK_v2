@@ -156,6 +156,8 @@ inline std::string convertFormatToString(OBFormat format) {
         return sensor_msgs::image_encodings::BGRA8;
     else if(format == OB_FORMAT_RGBA)
         return sensor_msgs::image_encodings::RGBA8;
+    else if(format == OB_FORMAT_Y12C4)
+        return sensor_msgs::image_encodings::Y12C4;
     else if(format == OB_FORMAT_Y16)
         return sensor_msgs::image_encodings::MONO16;
     else if(format == OB_FORMAT_Z16)
@@ -220,6 +222,8 @@ inline OBFormat convertStringToFormat(const std::string &encoding) {
         return OB_FORMAT_BGRA;
     else if(encoding == sensor_msgs::image_encodings::MONO16)
         return OB_FORMAT_Y16;
+    else if(encoding == sensor_msgs::image_encodings::Y12C4)
+        return OB_FORMAT_Y12C4;
     else if(encoding == sensor_msgs::image_encodings::MONO8)
         return OB_FORMAT_Y8;
     else if(encoding == sensor_msgs::image_encodings::YUV422)

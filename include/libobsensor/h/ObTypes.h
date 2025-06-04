@@ -231,6 +231,7 @@ typedef enum {
     OB_FORMAT_RGBA       = 31, /**< RGBA format */
     OB_FORMAT_BYR2       = 32, /**< byr2 format */
     OB_FORMAT_RW16       = 33, /**< RAW16 format */
+    OB_FORMAT_Y12C4      = 34, /**<  Y12C4 format */
 } OBFormat,
     ob_format;
 

@@ -51,6 +51,7 @@ const std::string BGR16  = "bgr16";
 const std::string BGRA16 = "bgra16";
 const std::string MONO8  = "mono8";
 const std::string MONO16 = "mono16";
+const std::string Y12C4  = "y12c4";
 
 const std::string MJPG       = "mjpg";
 const std::string H264       = "h264";

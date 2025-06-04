@@ -237,7 +237,7 @@ void SensorBase::watchStreamState() {
     while(recoveryEnabled_) {
         bool isTriggeringMode = false;
         if((streamState_ == STREAM_STATE_STARTING && noStreamTimeoutMs_ > 0) || (streamState_ == STREAM_STATE_STREAMING && streamInterruptTimeoutMs_ > 0)) {
-            TRY_EXECUTE(auto configurator =
+            BEGIN_TRY_EXECUTE(auto configurator =
                             getOwner()->getComponentT<libobsensor::IDeviceSyncConfigurator>(libobsensor::OB_DEV_COMPONENT_DEVICE_SYNC_CONFIGURATOR);
                         auto oBMultiDeviceSyncConfig = configurator->getSyncConfig();
                         if(oBMultiDeviceSyncConfig.syncMode == OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_TRIGGERING
@@ -245,6 +245,10 @@ void SensorBase::watchStreamState() {
                             isTriggeringMode = true;
                             LOG_DEBUG("Curent mode is not supported stream recovery");
                         })
+            CATCH_EXCEPTION_AND_EXECUTE(
+                recoveryEnabled_ = false;
+                streamStateCv_.notify_all();
+            )
         }
 
         if(streamState_ == STREAM_STATE_STOPPED || streamState_ == STREAM_STATE_STOPPING || streamState_ == STREAM_STATE_ERROR) {

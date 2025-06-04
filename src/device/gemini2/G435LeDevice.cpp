@@ -652,13 +652,13 @@ void G435LeDevice::initProperties() {
     propertyServer->registerProperty(OB_PROP_DEVICE_COMMUNICATION_TYPE_INT, "", "w", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_STRUCT_DEVICE_IP_ADDR_CONFIG, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_RAW_DATA_DEVICE_EXTENSION_INFORMATION, "", "r", vendorPropertyAccessor);
-    propertyServer->registerProperty(OB_PROP_DEBUG_ESGM_CONFIDENCE_FLOAT, "rw", "rw", vendorPropertyAccessor);
+    //propertyServer->registerProperty(OB_PROP_DEBUG_ESGM_CONFIDENCE_FLOAT, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_STRUCT_COLOR_AE_ROI, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_STRUCT_DEPTH_AE_ROI, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_IR_BRIGHTNESS_INT, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_IR_AE_MAX_EXPOSURE_INT, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_TEMPERATURE_COMPENSATION_BOOL, "rw", "rw", vendorPropertyAccessor);
-    propertyServer->registerProperty(OB_PROP_DEPTH_WITH_CONFIDENCE_STREAM_ENABLE_BOOL, "rw", "rw", vendorPropertyAccessor);
+    //ropertyServer->registerProperty(OB_PROP_DEPTH_WITH_CONFIDENCE_STREAM_ENABLE_BOOL, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_CONFIDENCE_STREAM_FILTER_THRESHOLD_INT, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_CONFIDENCE_STREAM_FILTER_BOOL, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_DEPTH_AUTO_EXPOSURE_PRIORITY_INT, "rw", "rw", vendorPropertyAccessor);
@@ -747,6 +747,18 @@ void G435LeDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
         streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_RVL, 640, 480, 20));
         streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_RVL, 1280, 800, 5));
         streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_RVL, 1280, 800, 10));
+
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y12C4, 640, 400, 5));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y12C4, 640, 400, 10));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y12C4, 640, 400, 15));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y12C4, 640, 400, 20));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y12C4, 640, 480, 5));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y12C4, 640, 480, 10));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y12C4, 640, 480, 15));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y12C4, 640, 480, 20));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y12C4, 1280, 800, 5));
+        streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y12C4, 1280, 800, 10));
+
     }
     else if(streamType == OB_STREAM_COLOR) {
         streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_MJPG, 1280, 800, 5));
