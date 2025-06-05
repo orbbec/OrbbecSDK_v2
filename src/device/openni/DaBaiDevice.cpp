@@ -75,6 +75,8 @@ void DaBaiDevice::initSensorList() {
                     sensor->setFrameProcessor(frameProcessor.get());
                 }
 
+                sensor->enableTimestampAnomalyDetection(false);
+
                 auto propServer = getPropertyServer();
                 propServer->setPropertyValueT<bool>(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL, true);
 
@@ -146,6 +148,8 @@ void DaBaiDevice::initSensorList() {
                 if(frameProcessor) {
                     sensor->setFrameProcessor(frameProcessor.get());
                 }
+
+                sensor->enableTimestampAnomalyDetection(false);
 
                 auto streamProfileFilter = getComponentT<IStreamProfileFilter>(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER);
                 sensor->setStreamProfileFilter(streamProfileFilter.get());

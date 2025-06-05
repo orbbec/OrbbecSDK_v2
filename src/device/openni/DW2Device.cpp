@@ -79,6 +79,8 @@ void DW2Device::initSensorList() {
                     sensor->setFrameProcessor(frameProcessor.get());
                 }
 
+                sensor->enableTimestampAnomalyDetection(false);
+
                 auto propServer = getPropertyServer();
                 propServer->setPropertyValueT<bool>(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL, true);
 
@@ -146,6 +148,8 @@ void DW2Device::initSensorList() {
 
                 auto frameTimestampCalculator = videoFrameTimestampCalculatorCreator_();
                 sensor->setFrameTimestampCalculator(frameTimestampCalculator);
+
+                sensor->enableTimestampAnomalyDetection(false);
 
                 auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR, false);
                 if(frameProcessor) {
