@@ -70,6 +70,8 @@ void AstraMiniDevice::initSensorList() {
                     sensor->setFrameProcessor(frameProcessor.get());
                 }
 
+                sensor->enableTimestampAnomalyDetection(false);
+
                 auto propServer = getPropertyServer();
                 propServer->setPropertyValueT<bool>(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL, true);
 
@@ -135,6 +137,9 @@ void AstraMiniDevice::initSensorList() {
                 if(frameProcessor) {
                     sensor->setFrameProcessor(frameProcessor.get());
                 }
+
+                sensor->enableTimestampAnomalyDetection(false);
+
                 initSensorStreamProfile(sensor);
                 return sensor;
             },
