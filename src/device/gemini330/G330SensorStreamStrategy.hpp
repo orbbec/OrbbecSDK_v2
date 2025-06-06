@@ -26,7 +26,7 @@ private:
     void validateISPFirmwareVersion();
     void validateDepthAndIrStream(const std::vector<std::shared_ptr<const StreamProfile>> &profiles);
     void validatePreset(const std::vector<std::shared_ptr<const StreamProfile>> &profiles);
-    void validateDeviceState();
+    void validateDeviceState(const std::vector<std::shared_ptr<const StreamProfile>> &profiles);
 
 private:
     std::mutex                                        startedStreamListMutex_;
