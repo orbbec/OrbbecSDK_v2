@@ -289,6 +289,10 @@ float mapIMUSampleRateToValue(OBIMUSampleRate rate) {
         return 16000.f;
     case OB_SAMPLE_RATE_32_KHZ:
         return 32000.f;
+    case OB_SAMPLE_RATE_400_HZ:
+        return 400.f;
+    case OB_SAMPLE_RATE_800_HZ:
+        return 800.f;
     default:
         return 0.f;
     }
