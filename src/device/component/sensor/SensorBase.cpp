@@ -140,7 +140,13 @@ void SensorBase::restartStream() {
     auto curSp    = activatedStreamProfile_;
     auto callback = frameCallback_;
     stop();
-    start(curSp, callback);
+    BEGIN_TRY_EXECUTE(start(curSp, callback);)
+    CATCH_EXCEPTION_AND_EXECUTE({
+        activatedStreamProfile_ = curSp;
+        frameCallback_          = callback;
+        LOG_ERROR("Failed to restart stream");
+        throw;
+    });
 }
 
 void SensorBase::updateStreamState(OBStreamState state) {
