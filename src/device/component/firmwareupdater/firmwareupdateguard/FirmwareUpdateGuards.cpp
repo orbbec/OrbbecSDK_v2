@@ -14,6 +14,7 @@ std::shared_ptr<IFirmwareUpdateGuard> FirmwareUpdateGuardFactory::create() {
     auto pid   = getOwner()->getInfo()->pid_;
     auto guard = std::make_shared<CompositeGuard>();
 
+    guard->addGuard(std::make_shared<FirmwareUpgradeStateGuard>(getOwner()));
     if(std::find(G330DevPids.begin(), G330DevPids.end(), pid) != G330DevPids.end()) {
         guard->addGuard(std::make_shared<GlobalTimestampGuard>(getOwner()));
         guard->addGuard(std::make_shared<HeardbeatGuard>(getOwner()));
@@ -88,6 +89,32 @@ NullGuard::NullGuard(IDevice *owner) {
 void NullGuard::preUpdate() {}
 
 void NullGuard::postUpdate() {}
+
+// GlobalTimestampGuard
+FirmwareUpgradeStateGuard::FirmwareUpgradeStateGuard(IDevice *owner) : owner_(owner) {}
+
+FirmwareUpgradeStateGuard::FirmwareUpgradeStateGuard(FirmwareUpgradeStateGuard &&other) noexcept {
+    owner_ = other.owner_;
+}
+
+FirmwareUpgradeStateGuard &FirmwareUpgradeStateGuard::operator=(FirmwareUpgradeStateGuard &&other) noexcept {
+    if(this != &other) {
+        owner_ = other.owner_;
+    }
+    return *this;
+}
+
+void FirmwareUpgradeStateGuard::preUpdate() {
+    if(owner_) {
+        owner_->setFirmwareUpdateState(true);
+    }
+}
+
+void FirmwareUpgradeStateGuard::postUpdate() {
+    if(owner_) {
+        owner_->setFirmwareUpdateState(false);
+    }
+}
 
 // GlobalTimestampGuard
 GlobalTimestampGuard::GlobalTimestampGuard(IDevice *owner) : owner_(owner), isGlobalTimestampEnabled_(false) {

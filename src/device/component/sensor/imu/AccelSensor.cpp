@@ -60,6 +60,9 @@ AccelSensor::~AccelSensor() noexcept {
 }
 
 void AccelSensor::start(std::shared_ptr<const StreamProfile> sp, FrameCallback callback) {
+    // validate device state
+    validateDeviceState(sp);
+
     activatedStreamProfile_ = sp;
     frameCallback_          = callback;
     updateStreamState(STREAM_STATE_STARTING);

@@ -65,6 +65,8 @@ protected:
 
     virtual void outputFrame(std::shared_ptr<Frame> frame);
 
+    virtual void validateDeviceState(const std::shared_ptr<const StreamProfile> &profile);
+
 protected:
     IDevice                     *owner_;
     const OBSensorType           sensorType_;

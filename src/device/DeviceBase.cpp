@@ -30,10 +30,10 @@ const std::map<OBSensorType, DeviceComponentId> SensorTypeToComponentIdMap = {
     { OB_SENSOR_ACCEL, OB_DEV_COMPONENT_ACCEL_SENSOR },
 };
 
-DeviceBase::DeviceBase() : ctx_(Context::getInstance()), isDeactivated_(false) {}
+DeviceBase::DeviceBase() : ctx_(Context::getInstance()), isDeactivated_(false), isFirmwareUpdating_(false) {}
 
 DeviceBase::DeviceBase(const std::shared_ptr<const IDeviceEnumInfo> &info)
-    : enumInfo_(info), deviceErrorState_(0), ctx_(Context::getInstance()), isDeactivated_(false) {
+    : enumInfo_(info), deviceErrorState_(0), ctx_(Context::getInstance()), isDeactivated_(false), isFirmwareUpdating_(false) {
     deviceInfo_                  = std::make_shared<DeviceInfo>();
     deviceInfo_->name_           = enumInfo_->getName();
     deviceInfo_->pid_            = enumInfo_->getPid();
@@ -497,6 +497,14 @@ void DeviceBase::updateFirmware(const std::vector<uint8_t> &firmware, DeviceFwUp
 
     auto updater = getComponentT<FirmwareUpdater>(OB_DEV_COMPONENT_FIRMWARE_UPDATER, true);
     updater->updateFirmwareFromRawDataExt(firmware.data(), static_cast<uint32_t>(firmware.size()), updateCallback, async);
+}
+
+void DeviceBase::setFirmwareUpdateState(bool isUpdating) {
+    isFirmwareUpdating_.store(isUpdating);
+}
+
+bool DeviceBase::isFirmwareUpdating() const {
+    return isFirmwareUpdating_.load();
 }
 
 void DeviceBase::updateOptionalDepthPresets(const char filePathList[][OB_PATH_MAX], uint8_t pathCount, DeviceFwUpdateCallback updateCallback) {

@@ -61,6 +61,24 @@ public:
     virtual void postUpdate() override;
 };
 
+class FirmwareUpgradeStateGuard : public IFirmwareUpdateGuard {
+public:
+    explicit FirmwareUpgradeStateGuard(IDevice *owner);
+    virtual ~FirmwareUpgradeStateGuard() noexcept override = default;
+
+    FirmwareUpgradeStateGuard(FirmwareUpgradeStateGuard &&other) noexcept;
+    FirmwareUpgradeStateGuard &operator=(FirmwareUpgradeStateGuard &&other) noexcept;
+
+    FirmwareUpgradeStateGuard(const FirmwareUpgradeStateGuard &other)            = delete;
+    FirmwareUpgradeStateGuard &operator=(const FirmwareUpgradeStateGuard &other) = delete;
+
+    virtual void preUpdate() override;
+    virtual void postUpdate() override;
+
+protected:
+    IDevice *owner_;
+};
+
 class GlobalTimestampGuard : public IFirmwareUpdateGuard {
 public:
     explicit GlobalTimestampGuard(IDevice *owner);

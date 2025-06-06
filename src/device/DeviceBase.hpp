@@ -8,6 +8,7 @@
 
 #include <memory>
 #include <map>
+#include <atomic>
 
 namespace libobsensor {
 
@@ -61,6 +62,8 @@ public:
     DeviceComponentPtr<IPropertyServer> getPropertyServer() override;
 
     void updateFirmware(const std::vector<uint8_t> &firmware, DeviceFwUpdateCallback updateCallback, bool async) override;
+    void setFirmwareUpdateState(bool isUpdating) override;
+    bool isFirmwareUpdating() const override;
     void updateOptionalDepthPresets(const char filePathList[][OB_PATH_MAX], uint8_t pathCount, DeviceFwUpdateCallback updateCallback) override;
     static std::map<std::string, std::string> parseExtensionInfo(std::string extensionInfo);
 
@@ -93,6 +96,8 @@ private:
 
     std::map<OBSensorType, std::shared_ptr<const SourcePortInfo>> sensorPortInfos_;
     std::map<OBSensorType, std::shared_ptr<IFilter>>              sensorFrameFilters_;
+
+    std::atomic<bool> isFirmwareUpdating_;
 };
 
 }  // namespace libobsensor

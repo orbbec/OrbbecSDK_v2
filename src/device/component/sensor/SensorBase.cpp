@@ -368,4 +368,43 @@ void SensorBase::outputFrame(std::shared_ptr<Frame> frame) {
     }
 }
 
+void SensorBase::validateDeviceState(const std::shared_ptr<const StreamProfile> &profile) {
+    auto device = getOwner();
+
+    // check if device firmware upgrade is in progress
+    if(device->isFirmwareUpdating()) {
+        throw libobsensor::wrong_api_call_sequence_exception("Device firmware is currently upgrading, stream cannot be started now!");
+    }
+
+    // check device error state
+    {
+        auto     errorState = device->getDeviceErrorState();
+        uint64_t flag       = 0;
+
+        // add flag to be checked
+        auto streamType = profile->getType();
+        switch(streamType) {
+        case OB_STREAM_COLOR:
+            flag |= OB_ERROR_RGB_SENSOR;
+            break;
+        case OB_STREAM_ACCEL:
+        case OB_STREAM_GYRO:
+            flag |= OB_ERROR_IMU_SENSOR;
+            break;
+        case OB_STREAM_DEPTH:
+        case OB_STREAM_IR:
+        case OB_STREAM_IR_LEFT:
+        case OB_STREAM_IR_RIGHT:
+            flag |= OB_ERROR_IRL_SENSOR | OB_ERROR_IRR_SENSOR | OB_ERROR_CFG_PARAM;
+            break;
+        default:
+            break;
+        }
+
+        if((errorState & flag) != 0) {
+            throw unsupported_operation_exception("Unexpected device state, please update your camera firmware before streaming data.");
+        }
+    }
+}
+
 }  // namespace libobsensor

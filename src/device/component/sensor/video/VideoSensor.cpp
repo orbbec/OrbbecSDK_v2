@@ -52,6 +52,10 @@ VideoSensor::~VideoSensor() noexcept {
 #define MIN_VIDEO_FRAME_DATA_SIZE 1024
 void VideoSensor::start(std::shared_ptr<const StreamProfile> sp, FrameCallback callback) {
     LOG_INFO("Try to start stream: {}", sp);
+
+    // validate device state
+    validateDeviceState(sp);
+
     // validate stream profile
     {
         auto owner    = getOwner();
