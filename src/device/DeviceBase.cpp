@@ -33,7 +33,7 @@ const std::map<OBSensorType, DeviceComponentId> SensorTypeToComponentIdMap = {
 DeviceBase::DeviceBase() : ctx_(Context::getInstance()), isDeactivated_(false), isFirmwareUpdating_(false) {}
 
 DeviceBase::DeviceBase(const std::shared_ptr<const IDeviceEnumInfo> &info)
-    : enumInfo_(info), deviceErrorState_(0), ctx_(Context::getInstance()), isDeactivated_(false), isFirmwareUpdating_(false) {
+    : enumInfo_(info), ctx_(Context::getInstance()), isDeactivated_(false), isFirmwareUpdating_(false) {
     deviceInfo_                  = std::make_shared<DeviceInfo>();
     deviceInfo_->name_           = enumInfo_->getName();
     deviceInfo_->pid_            = enumInfo_->getPid();

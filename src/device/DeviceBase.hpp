@@ -83,7 +83,7 @@ protected:
     const std::shared_ptr<const IDeviceEnumInfo> enumInfo_;
     std::shared_ptr<DeviceInfo>                  deviceInfo_;
     std::map<std::string, std::string>           extensionInfo_;
-    uint64_t                                     deviceErrorState_;
+    uint64_t                                     deviceErrorState_ = 0;
 
 private:
     std::shared_ptr<Context> ctx_;  // handle the lifespan of the context
