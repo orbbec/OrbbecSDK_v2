@@ -1040,12 +1040,14 @@ STDMETHODIMP WmfUvcDevicePort::OnReadSample(HRESULT hrStatus, DWORD streamIndex,
         if(sample) {
             CComPtr<IMFMediaBuffer> buffer = nullptr;
             if(SUCCEEDED(sample->GetBufferByIndex(0, &buffer))) {
-                byte *byte_buffer = nullptr;
-                DWORD max_length{}, current_length{};
+                byte                       *byte_buffer = nullptr;
+                DWORD                       max_length{}, current_length{};
+                std::shared_ptr<VideoFrame> videoFrame;
+                MutableFrameCallback        callback = nullptr;
+
                 if(SUCCEEDED(buffer->Lock(&byte_buffer, &max_length, &current_length))) {
                     std::lock_guard<std::mutex> lock(streamsMutex_);
                     auto                       &stream = streams_[streamIndex];
-                    std::shared_ptr<VideoFrame> videoFrame;
                     TRY_EXECUTE({
                         auto frame = FrameFactory::createFrameFromStreamProfile(stream.profile);
                         videoFrame = frame->as<VideoFrame>();
@@ -1078,8 +1080,11 @@ STDMETHODIMP WmfUvcDevicePort::OnReadSample(HRESULT hrStatus, DWORD streamIndex,
                     });
 #endif
 
-                    TRY_EXECUTE({ stream.callback(videoFrame); });
+                    callback = stream.callback;
                     buffer->Unlock();
+                }
+                if (callback) {
+                    TRY_EXECUTE({ callback(videoFrame); });
                 }
             }
         }
