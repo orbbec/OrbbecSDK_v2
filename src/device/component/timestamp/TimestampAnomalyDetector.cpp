@@ -3,8 +3,10 @@
 
 namespace libobsensor {
 TimestampAnomalyDetector::TimestampAnomalyDetector(IDevice *device) : cacheTimestamp_(0), maxValidTimestampDiff_(0), cacheFps_(0) {
-    auto propertyServer = device->getPropertyServer();
     deviceSyncConfigurator_ = device->getComponentT<IDeviceSyncConfigurator>(OB_DEV_COMPONENT_DEVICE_SYNC_CONFIGURATOR).get();
+    // cache sync config here
+    // TODO: Update config if changed during stream stop
+    currentMultiDevSyncConfig_ = deviceSyncConfigurator_->getSyncConfig();
 }
 
 void TimestampAnomalyDetector::setCurrentFps(uint32_t fps){
@@ -18,7 +20,7 @@ void TimestampAnomalyDetector::setCurrentFps(uint32_t fps){
 }
 
 void TimestampAnomalyDetector::calculate(std::shared_ptr<Frame> frame) {
-    auto syncConfig = deviceSyncConfigurator_->getSyncConfig();
+    auto syncConfig = currentMultiDevSyncConfig_;
     if(syncConfig.syncMode == OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_TRIGGERING || syncConfig.syncMode == OB_MULTI_DEVICE_SYNC_MODE_HARDWARE_TRIGGERING) {
         return;
     }

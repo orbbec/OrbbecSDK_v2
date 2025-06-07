@@ -23,5 +23,6 @@ private:
     uint32_t                                 maxValidTimestampDiff_;
     uint32_t                                 cacheFps_;
     std::atomic<bool>                        needDetect_;
+    OBMultiDeviceSyncConfig                  currentMultiDevSyncConfig_;
 };
 } // namespace libobsensor
