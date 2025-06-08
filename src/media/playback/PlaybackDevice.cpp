@@ -354,6 +354,9 @@ void PlaybackDevice::initProperties() {
     registerPropertyCondition(propertyServer, OB_PROP_IR_RIGHT_MIRROR_BOOL, "rw", "rw", frameTransformAccessor_);
     registerPropertyCondition(propertyServer, OB_PROP_IR_RIGHT_FLIP_BOOL, "rw", "rw", frameTransformAccessor_);
     registerPropertyCondition(propertyServer, OB_PROP_IR_RIGHT_ROTATE_INT, "rw", "rw", frameTransformAccessor_);
+    registerPropertyCondition(propertyServer, OB_PROP_CONFIDENCE_MIRROR_BOOL, "rw", "rw", frameTransformAccessor_);
+    registerPropertyCondition(propertyServer, OB_PROP_CONFIDENCE_FLIP_BOOL, "rw", "rw", frameTransformAccessor_);
+    registerPropertyCondition(propertyServer, OB_PROP_CONFIDENCE_ROTATE_INT, "rw", "rw", frameTransformAccessor_);
 }
 
 std::vector<std::shared_ptr<IFilter>> PlaybackDevice::createRecommendedPostProcessingFilters(OBSensorType type) {

@@ -132,6 +132,10 @@ void RecordDevice::writeFrameGeometryProperty() {
     writePropertyT<bool>(OB_PROP_IR_RIGHT_FLIP_BOOL);
     writePropertyT<bool>(OB_PROP_IR_RIGHT_MIRROR_BOOL);
     writePropertyT<int>(OB_PROP_IR_RIGHT_ROTATE_INT);
+
+    writePropertyT<bool>(OB_PROP_CONFIDENCE_FLIP_BOOL);
+    writePropertyT<bool>(OB_PROP_CONFIDENCE_MIRROR_BOOL);
+    writePropertyT<int>(OB_PROP_CONFIDENCE_ROTATE_INT);
 }
 
 void RecordDevice::writeMetadataProperty() {

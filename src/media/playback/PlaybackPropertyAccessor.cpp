@@ -212,7 +212,8 @@ void PlaybackFrameTransformPropertyAccessor::initFrameTransformProperty() {
     auto                  playPort_ = std::dynamic_pointer_cast<PlaybackDevicePort>(port_);
     std::vector<uint32_t> list      = { OB_PROP_COLOR_MIRROR_BOOL, OB_PROP_COLOR_FLIP_BOOL,    OB_PROP_COLOR_ROTATE_INT,     OB_PROP_DEPTH_FLIP_BOOL,
                                         OB_PROP_DEPTH_MIRROR_BOOL, OB_PROP_DEPTH_ROTATE_INT,   OB_PROP_IR_FLIP_BOOL,         OB_PROP_IR_MIRROR_BOOL,
-                                        OB_PROP_IR_ROTATE_INT,     OB_PROP_IR_RIGHT_FLIP_BOOL, OB_PROP_IR_RIGHT_MIRROR_BOOL, OB_PROP_IR_RIGHT_ROTATE_INT };
+                                        OB_PROP_IR_ROTATE_INT,     OB_PROP_IR_RIGHT_FLIP_BOOL, OB_PROP_IR_RIGHT_MIRROR_BOOL, OB_PROP_IR_RIGHT_ROTATE_INT,
+                                        OB_PROP_CONFIDENCE_FLIP_BOOL, OB_PROP_CONFIDENCE_MIRROR_BOOL, OB_PROP_CONFIDENCE_ROTATE_INT };
 
     for(auto propertyId: list) {
         OBPropertyValue value;
