@@ -85,7 +85,7 @@ private:
 };
 
 class G435LeFrameTimestampCalculatorDeviceTime : public IFrameTimestampCalculator, public DeviceComponentBase{
-    public:
+public:
     G435LeFrameTimestampCalculatorDeviceTime(IDevice *device, uint64_t deviceTimeFreq, uint64_t frameTimeFreq, uint64_t clockFreq);
 
     virtual ~G435LeFrameTimestampCalculatorDeviceTime() override = default;
