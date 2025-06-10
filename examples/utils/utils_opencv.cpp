@@ -388,7 +388,8 @@ cv::Mat CVWindow::visualize(std::shared_ptr<const ob::Frame> frame) {
             cv::cvtColor(rawMat, rstMat, cv::COLOR_YUV2BGR_YUY2);
         } break;
         case OB_FORMAT_BGR: {
-            rstMat = cv::Mat(videoFrame->getHeight(), videoFrame->getWidth(), CV_8UC3, videoFrame->getData()).clone();
+            cv::Mat rawMat(videoFrame->getHeight(), videoFrame->getWidth(), CV_8UC3, videoFrame->getData());
+            cv::cvtColor(rawMat, rstMat, cv::COLOR_BGR2RGB);
         } break;
         case OB_FORMAT_RGB: {
             cv::Mat rawMat(videoFrame->getHeight(), videoFrame->getWidth(), CV_8UC3, videoFrame->getData());
@@ -411,13 +412,13 @@ cv::Mat CVWindow::visualize(std::shared_ptr<const ob::Frame> frame) {
             cv::cvtColor(rawMat, rstMat, cv::COLOR_YUV2BGR_I420);
         } break;
         case OB_FORMAT_Y8: {
-            cv::Mat gray(videoFrame->getHeight(), videoFrame->getWidth(), CV_8UC1, videoFrame->getData());
-            cv::cvtColor(gray, rstMat, cv::COLOR_GRAY2BGR);
+            cv::Mat rawMat(videoFrame->getHeight(), videoFrame->getWidth(), CV_8UC1, videoFrame->getData());
+            cv::cvtColor(rawMat, rstMat, cv::COLOR_GRAY2BGR);
         } break;
         case OB_FORMAT_Y16: {
-            cv::Mat gray16(videoFrame->getHeight(), videoFrame->getWidth(), CV_16UC1, videoFrame->getData());
+            cv::Mat rawMat(videoFrame->getHeight(), videoFrame->getWidth(), CV_16UC1, videoFrame->getData());
             cv::Mat gray8;
-            gray16.convertTo(gray8, CV_8UC1, 255.0 / 65535.0);
+            rawMat.convertTo(gray8, CV_8UC1, 255.0 / 65535.0);
             cv::cvtColor(gray8, rstMat, cv::COLOR_GRAY2BGR);
         } break;
         default:
@@ -486,34 +487,34 @@ cv::Mat CVWindow::visualize(std::shared_ptr<const ob::Frame> frame) {
         }
     }
     else if(frame->getType() == OB_FRAME_ACCEL) {
-        rstMat                 = cv::Mat::zeros(320, 240, CV_8UC3);
+        rstMat                 = cv::Mat::zeros(320, 300, CV_8UC3);
         auto        accelFrame = frame->as<ob::AccelFrame>();
         auto        value      = accelFrame->getValue();
         std::string str        = "Accel:";
-        cv::putText(rstMat, str.c_str(), cv::Point(8, 60), cv::FONT_HERSHEY_DUPLEX, 0.6, cv::Scalar(255, 255, 255), 1, cv::LINE_AA);
+        cv::putText(rstMat, str.c_str(), cv::Point(8, 60), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255), 1, cv::LINE_AA);
         str = std::string(" timestamp=") + std::to_string(accelFrame->getTimeStampUs()) + "us";
-        cv::putText(rstMat, str.c_str(), cv::Point(8, 100), cv::FONT_HERSHEY_DUPLEX, 0.6, cv::Scalar(255, 255, 255), 1, cv::LINE_AA);
+        cv::putText(rstMat, str.c_str(), cv::Point(8, 100), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255), 1, cv::LINE_AA);
         str = std::string(" x=") + std::to_string(value.x) + "m/s^2";
-        cv::putText(rstMat, str.c_str(), cv::Point(8, 140), cv::FONT_HERSHEY_DUPLEX, 0.6, cv::Scalar(255, 255, 255), 1, cv::LINE_AA);
+        cv::putText(rstMat, str.c_str(), cv::Point(8, 140), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255), 1, cv::LINE_AA);
         str = std::string(" y=") + std::to_string(value.y) + "m/s^2";
-        cv::putText(rstMat, str.c_str(), cv::Point(8, 180), cv::FONT_HERSHEY_DUPLEX, 0.6, cv::Scalar(255, 255, 255), 1, cv::LINE_AA);
+        cv::putText(rstMat, str.c_str(), cv::Point(8, 180), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255), 1, cv::LINE_AA);
         str = std::string(" z=") + std::to_string(value.z) + "m/s^2";
-        cv::putText(rstMat, str.c_str(), cv::Point(8, 220), cv::FONT_HERSHEY_DUPLEX, 0.6, cv::Scalar(255, 255, 255), 1, cv::LINE_AA);
+        cv::putText(rstMat, str.c_str(), cv::Point(8, 220), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255), 1, cv::LINE_AA);
     }
     else if(frame->getType() == OB_FRAME_GYRO) {
-        rstMat                = cv::Mat::zeros(320, 240, CV_8UC3);
+        rstMat                = cv::Mat::zeros(320, 300, CV_8UC3);
         auto        gyroFrame = frame->as<ob::GyroFrame>();
         auto        value     = gyroFrame->getValue();
         std::string str       = "Gyro:";
-        cv::putText(rstMat, str.c_str(), cv::Point(8, 60), cv::FONT_HERSHEY_DUPLEX, 0.6, cv::Scalar(255, 255, 255), 1, cv::LINE_AA);
+        cv::putText(rstMat, str.c_str(), cv::Point(8, 60), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255), 1, cv::LINE_AA);
         str = std::string(" timestamp=") + std::to_string(gyroFrame->getTimeStampUs()) + "us";
-        cv::putText(rstMat, str.c_str(), cv::Point(8, 100), cv::FONT_HERSHEY_DUPLEX, 0.6, cv::Scalar(255, 255, 255), 1, cv::LINE_AA);
+        cv::putText(rstMat, str.c_str(), cv::Point(8, 100), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255), 1, cv::LINE_AA);
         str = std::string(" x=") + std::to_string(value.x) + "rad/s";
-        cv::putText(rstMat, str.c_str(), cv::Point(8, 140), cv::FONT_HERSHEY_DUPLEX, 0.6, cv::Scalar(255, 255, 255), 1, cv::LINE_AA);
+        cv::putText(rstMat, str.c_str(), cv::Point(8, 140), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255), 1, cv::LINE_AA);
         str = std::string(" y=") + std::to_string(value.y) + "rad/s";
-        cv::putText(rstMat, str.c_str(), cv::Point(8, 180), cv::FONT_HERSHEY_DUPLEX, 0.6, cv::Scalar(255, 255, 255), 1, cv::LINE_AA);
+        cv::putText(rstMat, str.c_str(), cv::Point(8, 180), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255), 1, cv::LINE_AA);
         str = std::string(" z=") + std::to_string(value.z) + "rad/s";
-        cv::putText(rstMat, str.c_str(), cv::Point(8, 220), cv::FONT_HERSHEY_DUPLEX, 0.6, cv::Scalar(255, 255, 255), 1, cv::LINE_AA);
+        cv::putText(rstMat, str.c_str(), cv::Point(8, 220), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255), 1, cv::LINE_AA);
     }
     return rstMat;
 }
