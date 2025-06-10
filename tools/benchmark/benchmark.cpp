@@ -4,7 +4,6 @@
 #include "src/PerformanceTester.hpp"
 
 int main() try {
-    ob::Context::setLoggerSeverity(OB_LOG_SEVERITY_INFO);
     auto ctx      = std::make_shared<ob::Context>();
     auto devList  = ctx->queryDeviceList();
     int  devCount = devList->getCount();

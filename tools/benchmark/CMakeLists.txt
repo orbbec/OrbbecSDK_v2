@@ -15,5 +15,8 @@ find_package(Threads REQUIRED)
 target_link_libraries(ob_benchmark ob::OrbbecSDK Threads::Threads)
 
 target_include_directories(ob_benchmark PUBLIC ${CMAKE_CURRENT_LIST_DIR})
+if(MSVC)
+    set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+endif()
 
 install(TARGETS ob_benchmark RUNTIME DESTINATION bin)
