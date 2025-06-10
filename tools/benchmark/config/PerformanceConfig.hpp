@@ -8,9 +8,26 @@
 // The start time of each Config, default is 5 minutes
 #define RECONDING_TIME_SECONDS 60 * 5  // 5 minutes
 
-std::vector<std::function<std::string(std::shared_ptr<DeviceResource>&)>> updateConfigHandlers_ = {
+std::vector<std::function<std::string(std::shared_ptr<DeviceResource> &)>> updateConfigHandlers_ = {
+    // get timestamp diff for depth and color
+    [](std::shared_ptr<DeviceResource> &deviceResource) -> std::string {
+        std::string msg = "Save time stamp difference for depth and color";
+        std::cout << msg << std::endl;
+
+        // sync time
+        deviceResource->syncTimeWithHost();
+
+        auto config = std::make_shared<ob::Config>();
+        config->enableVideoStream(OB_SENSOR_DEPTH, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY, OB_FORMAT_ANY);
+        config->enableVideoStream(OB_SENSOR_COLOR, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY, OB_FORMAT_ANY);
+        config->setFrameAggregateOutputMode(OB_FRAME_AGGREGATE_OUTPUT_DISABLE);
+
+        deviceResource->startStream(config, true);
+
+        return msg;
+    },
     // depth, color, ir
-    [](std::shared_ptr<DeviceResource>& deviceResource) -> std::string {
+    [](std::shared_ptr<DeviceResource> &deviceResource) -> std::string {
         std::string msg = "Enable depth, color, ir";
         std::cout << msg << std::endl;
 
@@ -24,7 +41,7 @@ std::vector<std::function<std::string(std::shared_ptr<DeviceResource>&)>> update
         return msg;
     },
     // software d2c
-    [](std::shared_ptr<DeviceResource>& deviceResource) -> std::string {
+    [](std::shared_ptr<DeviceResource> &deviceResource) -> std::string {
         std::string msg = "Enable software d2c";
         std::cout << msg << std::endl;
 
@@ -42,7 +59,7 @@ std::vector<std::function<std::string(std::shared_ptr<DeviceResource>&)>> update
         return msg;
     },
     // point cloud
-    [](std::shared_ptr<DeviceResource>& deviceResource) -> std::string {
+    [](std::shared_ptr<DeviceResource> &deviceResource) -> std::string {
         std::string msg = "Enable point cloud";
         std::cout << msg << std::endl;
 
@@ -58,10 +75,10 @@ std::vector<std::function<std::string(std::shared_ptr<DeviceResource>&)>> update
         return msg;
     },
     // rgb point cloud
-    [](std::shared_ptr<DeviceResource>& deviceResource) -> std::string {
+    [](std::shared_ptr<DeviceResource> &deviceResource) -> std::string {
         std::string msg = "Enable rgb point cloud";
         std::cout << msg << std::endl;
-        
+
         deviceResource->enableHwNoiseRemoveFilter(true);
         deviceResource->enableRGBPointCloudFilter(true);
 

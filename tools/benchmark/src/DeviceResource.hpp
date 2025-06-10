@@ -8,13 +8,15 @@
 #include <string>
 #include <vector>
 #include <mutex>
+#include <condition_variable>
+#include <queue>
 
 class DeviceResource {
 public:
     DeviceResource(std::shared_ptr<ob::Device> device);
     ~DeviceResource() = default;
 
-    void startStream(std::shared_ptr<ob::Config> config);
+    void startStream(std::shared_ptr<ob::Config> config, bool enableTimestampDiffSaver = false);
     void stopStream();
 
 public:
@@ -49,26 +51,42 @@ public:
      */
     void enableRGBPointCloudFilter(bool enable);
 
+    /**
+     * @brief Synchronizes the host time with the device time.
+     */
+    void syncTimeWithHost();
+
 private:
     /**
      * @brief Resets the configuration to default values.
      */
     void resetConfig();
 
+    /**
+     * @brief Save timestamp diffs.
+     */
+    void timestampDiffSaver();
+
 private:
-    std::shared_ptr<ob::Device>   device_;
-    std::shared_ptr<ob::Pipeline> pipeline_;
-    std::shared_ptr<ob::Frame>    frames_;
+    std::shared_ptr<ob::Device>   device_   = nullptr;
+    std::shared_ptr<ob::Pipeline> pipeline_ = nullptr;
+    std::shared_ptr<ob::Frame>    frames_   = nullptr;
 
     std::mutex mutex_;
 
-    bool is_spatial_filter_enabled_;
-    bool is_align_filter_enabled_;
-    bool is_point_cloud_filter_enabled_;
+    std::queue<std::shared_ptr<ob::FrameSet>> frameQueue_;
+    std::condition_variable                   timestamp_diff_cv_;
+    std::thread                               timestamp_diff_saver_thread_;
+    std::atomic<bool>                         timestamp_diff_saver_running_{ false };
 
-    std::shared_ptr<ob::Align>            align_filter_;
-    std::shared_ptr<ob::PointCloudFilter> point_cloud_filter_;
+    bool is_spatial_filter_enabled_     = false;
+    bool is_align_filter_enabled_       = false;
+    bool is_point_cloud_filter_enabled_ = false;
+    bool is_timestamp_saver_enabled_    = false;
+
+    std::shared_ptr<ob::Align>            align_filter_       = nullptr;
+    std::shared_ptr<ob::PointCloudFilter> point_cloud_filter_ = nullptr;
 
     // Post-processing filters
-    std::shared_ptr<ob::SpatialAdvancedFilter> spatial_filter_;
+    std::shared_ptr<ob::SpatialAdvancedFilter> spatial_filter_ = nullptr;
 };
