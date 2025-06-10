@@ -548,8 +548,8 @@ void CVWindow::drawInfo(cv::Mat &imageMat, std::shared_ptr<const ob::VideoFrame>
     }
 
     // Timestamp information with background
-    putTextWithBackground("frame timestamp(ms):  " + std::to_string(frame->getTimeStampUs()), cv::Point(8, 40));
-    putTextWithBackground("system timestamp(ms): " + std::to_string(frame->getSystemTimeStampUs()), cv::Point(8, 64));
+    putTextWithBackground("frame timestamp(us):  " + std::to_string(frame->getTimeStampUs()), cv::Point(8, 40));
+    putTextWithBackground("system timestamp(us): " + std::to_string(frame->getSystemTimeStampUs()), cv::Point(8, 64));
 }
 
 cv::Mat CVWindow::resizeMatKeepAspectRatio(const cv::Mat &mat, int width, int height) {

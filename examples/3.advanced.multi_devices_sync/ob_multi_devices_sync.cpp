@@ -393,8 +393,10 @@ void stopStream(std::shared_ptr<PipelineHolder> holder) {
 
 void handleStream(uint8_t devIndex, std::shared_ptr<ob::Frame> frame, const char *frameType) {
     std::lock_guard<std::mutex> lock(frameMutex);
-    std::cout << "Device#" << static_cast<int>(devIndex) << ", " << frameType << " frame "
-              << ", frame timestamp=" << frame->timeStamp() << ", system timestamp=" << frame->systemTimeStamp() << std::endl;
+    std::cout << "Device#" << static_cast<int>(devIndex) << ", " << frameType << " frame(us) "
+              << ", frame timestamp=" << frame->timeStampUs() << ","
+              << "global timestamp = " << frame->globalTimeStampUs() << ","
+              << "system timestamp = " << frame->systemTimeStampUs() << std::endl;
 
     if(strcmp(frameType, "color") == 0) {
         colorFrames[devIndex] = frame;
