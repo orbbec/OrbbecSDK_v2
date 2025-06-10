@@ -18,7 +18,8 @@ double getBagFileVersion() {
     // so that the loop matches the highest applicable version first.
     // When introducing a new version, insert it in the correct position to maintain this order.
     static const std::pair<int, double> versionMap[] = {
-        { 20400, 2.0 },  // ver >= 2.4.0 -> 2.0
+        { 20405, 2.1 },  // ver >= 2.4.5 -> 2.1 [Add support for frame bitsize]
+        { 20400, 2.0 },  // ver >= 2.4.0 -> 2.0 [Add support for ros playback]
         { 0, 1.0 }       // ver < 2.4.0 -> 1.0
     };
 

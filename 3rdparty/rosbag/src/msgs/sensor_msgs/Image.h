@@ -35,7 +35,8 @@ template <class ContainerAllocator> struct Image_ {
           timestamp_systemusec(0),
           timestamp_globalusec(0),
           metadata(0),
-          metadatasize(0) {}
+          metadatasize(0),
+          pixel_bit_size(0) {}
     Image_(const ContainerAllocator &_alloc)
         : header(_alloc),
           height(0),
@@ -50,7 +51,8 @@ template <class ContainerAllocator> struct Image_ {
           timestamp_systemusec(0),
           timestamp_globalusec(0),
           metadata(_alloc),
-          metadatasize(0) {
+          metadatasize(0),
+          pixel_bit_size(0) {
         (void)_alloc;
     }
 
@@ -94,6 +96,9 @@ template <class ContainerAllocator> struct Image_ {
 
     typedef uint32_t   _metadatasize_type;
     _metadatasize_type metadatasize;
+
+    typedef uint8_t _pixel_bit_size_;
+    _pixel_bit_size_ pixel_bit_size;
 
     typedef std::shared_ptr<::sensor_msgs::Image_<ContainerAllocator>>       Ptr;
     typedef std::shared_ptr<::sensor_msgs::Image_<ContainerAllocator> const> ConstPtr;
@@ -227,7 +232,31 @@ namespace orbbecRosbag {
 namespace serialization {
 
 template <class ContainerAllocator> struct Serializer<::sensor_msgs::Image_<ContainerAllocator>> {
-    template <typename Stream, typename T> inline static void allInOne(Stream &stream, T m) {
+    template <typename Stream, typename Field> inline static void next_if_valid(Stream &stream, Field &field) {
+        if(stream.getLength() > 0)
+            stream.next(field);
+    }
+
+    template <typename Stream, typename T> inline static void allInOne(Stream &stream, T m) {\
+        next_if_valid(stream, m.header);
+        next_if_valid(stream, m.height);
+        next_if_valid(stream, m.width);
+        next_if_valid(stream, m.encoding);
+        next_if_valid(stream, m.is_bigendian);
+        next_if_valid(stream, m.step);
+        next_if_valid(stream, m.data);
+        next_if_valid(stream, m.depth_units);
+        next_if_valid(stream, m.number);
+        next_if_valid(stream, m.timestamp_usec);
+        next_if_valid(stream, m.timestamp_systemusec);
+        next_if_valid(stream, m.timestamp_globalusec);
+        next_if_valid(stream, m.metadata);
+        next_if_valid(stream, m.metadatasize);
+        next_if_valid(stream, m.pixel_bit_size);
+    }
+
+	// LStream
+	template <typename T> inline static void allInOne(LStream &stream, T m) {
         stream.next(m.header);
         stream.next(m.height);
         stream.next(m.width);
@@ -242,6 +271,7 @@ template <class ContainerAllocator> struct Serializer<::sensor_msgs::Image_<Cont
         stream.next(m.timestamp_globalusec);
         stream.next(m.metadata);
         stream.next(m.metadatasize);
+        stream.next(m.pixel_bit_size);
     }
 
     ROS_DECLARE_ALLINONE_SERIALIZER
@@ -288,6 +318,8 @@ template <class ContainerAllocator> struct Printer<::sensor_msgs::Image_<Contain
             s << indent << "depth_units: ";
             Printer<float>::stream(s, indent + "  ", v.depth_units);
         }
+        s << indent << "pixel_bit_size: ";
+        Printer<uint8_t>::stream(s, indent + "  ", v.pixel_bit_size);
     }
 };
 

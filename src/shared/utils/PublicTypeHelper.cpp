@@ -10,8 +10,8 @@
 namespace libobsensor {
 namespace utils {
 
-float getBytesPerPixel(OBFormat format) {
-    float bytesPerPixel = 0.f;
+bool getBytesPerPixelNoexcept(OBFormat format, float &bytesPerPixel) {
+    bytesPerPixel = 0.0f;
     switch(format) {
     case OB_FORMAT_Y8:
     case OB_FORMAT_BA81:
@@ -59,8 +59,16 @@ float getBytesPerPixel(OBFormat format) {
         bytesPerPixel = 24.f;
         break;
     default:
+        return false;
+    }
+
+    return true;
+}
+
+float getBytesPerPixel(OBFormat format) {
+    float bytesPerPixel = 0.0f;
+    if(!getBytesPerPixelNoexcept(format, bytesPerPixel)) {
         throw invalid_value_exception("Unsupported image format or invalid encoding detected. Unable to determine the byte-per-pixel value.");
-        break;
     }
 
     return bytesPerPixel;

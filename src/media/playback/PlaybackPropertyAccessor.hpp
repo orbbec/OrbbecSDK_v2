@@ -31,7 +31,7 @@ private:
     std::vector<uint8_t>               data_;
 };
 
-class PlaybackFilterPropertyAccessor : public IBasicPropertyAccessor {
+class PlaybackFilterPropertyAccessor : public IBasicPropertyAccessor, public IStructureDataAccessor {
 public:
     explicit PlaybackFilterPropertyAccessor(const std::shared_ptr<ISourcePort> &backend, IDevice *owner);
     virtual ~PlaybackFilterPropertyAccessor() noexcept = default;
@@ -40,11 +40,15 @@ public:
     virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
     virtual void getPropertyRange(uint32_t propertyId, OBPropertyRange *range) override;
 
+    virtual void                        setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) override;
+    virtual const std::vector<uint8_t> &getStructureData(uint32_t propertyId) override;
+
 private:
     void getRecordPropertyValue(uint32_t propertyId, OBPropertyValue *value);
 
     const std::shared_ptr<ISourcePort> port_;
     IDevice                           *owner_;
+    std::vector<uint8_t>               data_;
 };
 
 class PlaybackFrameTransformPropertyAccessor : public IBasicPropertyAccessor {

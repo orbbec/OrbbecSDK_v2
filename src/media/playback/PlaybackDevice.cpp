@@ -102,11 +102,31 @@ void PlaybackDevice::initSensorList() {
 
                 auto hwD2D = propServer->getPropertyValueT<bool>(OB_PROP_DISPARITY_TO_DEPTH_BOOL);
                 std::dynamic_pointer_cast<DisparityBasedSensor>(sensor)->markOutputDisparityFrame(!hwD2D);
-            }
 
-            if(isDeviceInSeries(G330DevPids, deviceInfo_->pid_)) {
-                auto depthMdParserContainer = getComponentT<IFrameMetadataParserContainer>(OB_DEV_COMPONENT_DEPTH_FRAME_METADATA_CONTAINER);
-                sensor->setFrameMetadataParserContainer(depthMdParserContainer.get());
+                if(isDeviceInSeries(G330DevPids, deviceInfo_->pid_)) {
+                    // metadata parser container
+                    auto depthMdParserContainer = getComponentT<IFrameMetadataParserContainer>(OB_DEV_COMPONENT_DEPTH_FRAME_METADATA_CONTAINER);
+                    sensor->setFrameMetadataParserContainer(depthMdParserContainer.get());
+
+                    // depth unit - G330 specific
+                    if(port_->isPropertySupported(OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT)) {
+                        OBPropertyValue value{};
+
+                        port_->getRecordedPropertyValue(OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT, &value);
+                        std::dynamic_pointer_cast<DisparityBasedSensor>(sensor)->setDepthUnit(value.floatValue);
+                        propServer->setPropertyValueT<float>(OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT, value.floatValue);
+                    }
+                }
+                else {
+                    // depth unit - non-G330 specific
+                    if(port_->isPropertySupported(OB_PROP_DEPTH_PRECISION_LEVEL_INT)) {
+                        OBPropertyValue value{};
+                        port_->getRecordedPropertyValue(OB_PROP_DEPTH_PRECISION_LEVEL_INT, &value);
+                        std::dynamic_pointer_cast<DisparityBasedSensor>(sensor)->setDepthUnit(
+                            utils::depthPrecisionLevelToUnit(static_cast<OBDepthPrecisionLevel>(value.intValue)));
+                        propServer->setPropertyValueT<int>(OB_PROP_DEPTH_PRECISION_LEVEL_INT, value.intValue);
+                    }
+                }
             }
 
             auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR, false);
@@ -299,6 +319,9 @@ void PlaybackDevice::initProperties() {
     registerPropertyCondition(propertyServer, OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL, "rw", "rw", filterAccessor);
     registerPropertyCondition(propertyServer, OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_SPECKLE_SIZE_INT, "rw", "rw", filterAccessor);
     registerPropertyCondition(propertyServer, OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT, "rw", "rw", filterAccessor);
+    registerPropertyCondition(propertyServer, OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT, "r", "rw", filterAccessor);  // G330 specific
+    registerPropertyCondition(propertyServer, OB_PROP_DEPTH_PRECISION_LEVEL_INT, "r", "rw", filterAccessor);             // Other devices
+    registerPropertyCondition(propertyServer, OB_STRUCT_DEPTH_PRECISION_SUPPORT_LIST, "r", "r", filterAccessor);
     registerPropertyCondition(propertyServer, OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL, "r", "r", vendorAccessor);
     registerPropertyCondition(propertyServer, OB_PROP_HW_NOISE_REMOVE_FILTER_THRESHOLD_FLOAT, "r", "r", vendorAccessor);
 

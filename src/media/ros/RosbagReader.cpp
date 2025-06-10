@@ -363,6 +363,7 @@ std::shared_ptr<Frame> RosReader::createVideoFrame(const rosbag::MessageInstance
     frame->setTimeStampUsec(imagePtr->timestamp_usec);
     frame->setSystemTimeStampUsec(imagePtr->timestamp_systemusec);
     frame->setGlobalTimeStampUsec(imagePtr->timestamp_globalusec);
+    frame->as<VideoFrame>()->setPixelAvailableBitSize(imagePtr->pixel_bit_size);
     if(streamProfileList_.count(utils::mapFrameTypeToStreamType(RosTopic::getFrameTypeIdentifier(videoMsgTopic)))) {
         frame->setStreamProfile(streamProfileList_[utils::mapFrameTypeToStreamType(RosTopic::getFrameTypeIdentifier(videoMsgTopic))]);
     }

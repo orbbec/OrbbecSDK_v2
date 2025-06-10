@@ -74,7 +74,7 @@ inline static void allInOne(Stream& stream, T t)
                                                                                                   \
     template <typename T> inline static uint32_t serializedLength(const T &t) {                   \
         LStream stream;                                                                           \
-        allInOne<LStream, const T &>(stream, t);                                                  \
+        allInOne(stream, t);                                                                      \
         return stream.getLength();                                                                \
     }
 

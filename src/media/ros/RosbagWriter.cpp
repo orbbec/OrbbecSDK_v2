@@ -21,7 +21,8 @@ RosWriter::~RosWriter() {
     file_ = nullptr;
 
     if(maxFrameTime_ - minFrameTime_ >= INVALID_DIFF) {
-        LOG_DEBUG("Error timestamp data frames during recording! maxFrametime: {}, minFrameTime: {}, diff: {}", maxFrameTime_, minFrameTime_, maxFrameTime_ - minFrameTime_);
+        LOG_DEBUG("Error timestamp data frames during recording! maxFrametime: {}, minFrameTime: {}, diff: {}", maxFrameTime_, minFrameTime_,
+                  maxFrameTime_ - minFrameTime_);
         LOG_WARN("Error when saving rosbag file! There are abnormal timestamp data frames during recording!");
         std::string errFilePath = filePath_ + "_error";
         std::rename(filePath_.c_str(), errFilePath.c_str());
@@ -30,13 +31,13 @@ RosWriter::~RosWriter() {
 
 void RosWriter::writeFrame(const OBSensorType &sensorType, std::shared_ptr<const Frame> curFrame) {
     std::lock_guard<std::mutex> lock(writeMutex_);
-    auto curTime = curFrame->getTimeStampUsec();
-    if (curTime == 0) {
+    auto                        curTime = curFrame->getTimeStampUsec();
+    if(curTime == 0) {
         LOG_WARN("Invalid timestamp frame! curFrame device timestamp: {}", curFrame->getTimeStampUsec());
         return;
     }
 
-    if (minFrameTime_ == 0 && maxFrameTime_ == 0) {
+    if(minFrameTime_ == 0 && maxFrameTime_ == 0) {
         minFrameTime_ = maxFrameTime_ = curTime;
     }
     else {
@@ -110,6 +111,11 @@ void RosWriter::writeVideoFrame(const OBSensorType &sensorType, std::shared_ptr<
         imageMsg->timestamp_globalusec = curFrame->getGlobalTimeStampUsec();
         imageMsg->step                 = curFrame->as<VideoFrame>()->getStride();
         imageMsg->metadatasize         = static_cast<uint32_t>(curFrame->getMetadataSize());
+        float bytesPerPixel            = 0.0f;
+        if(utils::getBytesPerPixelNoexcept(curFrame->getFormat(), bytesPerPixel)) {
+            imageMsg->pixel_bit_size = curFrame->as<VideoFrame>()->getPixelAvailableBitSize();
+        }
+
         imageMsg->data.clear();
         imageMsg->encoding = convertFormatToString(curFrame->getFormat());
         imageMsg->metadata.insert(imageMsg->metadata.begin(), curFrame->getMetadata(), curFrame->getMetadata() + curFrame->getMetadataSize());

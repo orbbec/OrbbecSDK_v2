@@ -68,7 +68,6 @@ void PlaybackVendorPropertyAccessor::getPropertyValue(uint32_t propertyId, OBPro
                                                                       : static_cast<int>(gyroStreamProfile->getFullScaleRange());
     } break;
     default:
-        // v4l2 metadata property
         playPort_->getRecordedPropertyValue(propertyId, value);
         break;
     }
@@ -129,7 +128,9 @@ void PlaybackFilterPropertyAccessor::setPropertyValue(uint32_t propertyId, const
     case OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL:
     case OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL:
     case OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_SPECKLE_SIZE_INT:
-    case OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT: {
+    case OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT:
+    case OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT:
+    case OB_PROP_DEPTH_PRECISION_LEVEL_INT: {
         auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR);
         processor->setPropertyValue(propertyId, value);
         LOG_DEBUG("Set property value for playback device, propertyId: {}, value: {}");
@@ -149,7 +150,9 @@ void PlaybackFilterPropertyAccessor::getPropertyValue(uint32_t propertyId, OBPro
     case OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL:
     case OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL:
     case OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_SPECKLE_SIZE_INT:
-    case OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT: {
+    case OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT:
+    case OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT:
+    case OB_PROP_DEPTH_PRECISION_LEVEL_INT: {
         auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR);
         processor->getPropertyValue(propertyId, value);
     } break;
@@ -168,7 +171,9 @@ void PlaybackFilterPropertyAccessor::getPropertyRange(uint32_t propertyId, OBPro
     case OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL:
     case OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL:
     case OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_SPECKLE_SIZE_INT:
-    case OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT: {
+    case OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT:
+    case OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT:
+    case OB_PROP_DEPTH_PRECISION_LEVEL_INT: {
         auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR);
         processor->getPropertyRange(propertyId, range);
     } break;
@@ -178,13 +183,34 @@ void PlaybackFilterPropertyAccessor::getPropertyRange(uint32_t propertyId, OBPro
     }
 }
 
+void PlaybackFilterPropertyAccessor::setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) {
+    utils::unusedVar(propertyId);
+    utils::unusedVar(data);
+    LOG_DEBUG("unsupported set structure data for playback device, propertyId: {}", propertyId);
+}
+
+const std::vector<uint8_t> &PlaybackFilterPropertyAccessor::getStructureData(uint32_t propertyId) {
+    switch(propertyId) {
+    case OB_STRUCT_DEPTH_PRECISION_SUPPORT_LIST: {
+        OBPropertyValue value{};
+        getPropertyValue(OB_PROP_DEPTH_PRECISION_LEVEL_INT, &value);
+        std::memcpy(data_.data(), &value.intValue, sizeof(value.intValue));
+    } break;
+    default: {
+        LOG_WARN("unsupported get property value for playback device, propertyId: {}", propertyId);
+    } break;
+    }
+
+    return data_;
+}
+
 // PlaybackFrameTransformPropertyAccessor
 PlaybackFrameTransformPropertyAccessor::PlaybackFrameTransformPropertyAccessor(const std::shared_ptr<ISourcePort> &backend, IDevice *owner)
     : port_(backend), owner_(owner) {
     auto pid = owner_->getInfo()->pid_;
     if(std::find(G330DevPids.begin(), G330DevPids.end(), pid) != G330DevPids.end()
        || std::find(DaBaiADevPids.begin(), DaBaiADevPids.end(), pid) != DaBaiADevPids.end() || pid == 0x0815) {
-        accessor_ = std::make_shared<StereoFrameTransformPropertyAccessor>(owner_); // Gemini330, Gemini435Led, DaBaiA
+        accessor_ = std::make_shared<StereoFrameTransformPropertyAccessor>(owner_);  // Gemini330, Gemini435Led, DaBaiA
     }
     else if(pid == 0x0808 || pid == 0x0809) {
         accessor_ = std::make_shared<G210FrameTransformPropertyAccessor>(owner_);  // Gemini210
@@ -193,11 +219,11 @@ PlaybackFrameTransformPropertyAccessor::PlaybackFrameTransformPropertyAccessor(c
         accessor_ = std::make_shared<G2FrameTransformPropertyAccessor>(owner_);  // Gemini2
     }
     else if(std::find(Astra2DevPids.begin(), Astra2DevPids.end(), pid) != Astra2DevPids.end()) {
-        accessor_ = std::make_shared<Astra2FrameTransformPropertyAccessor>(owner_); // Astar2
+        accessor_ = std::make_shared<Astra2FrameTransformPropertyAccessor>(owner_);  // Astar2
     }
     else if(std::find(FemtoBoltDevPids.begin(), FemtoBoltDevPids.end(), pid) != FemtoBoltDevPids.end()
             || std::find(FemtoMegaDevPids.begin(), FemtoMegaDevPids.end(), pid) != FemtoMegaDevPids.end()) {
-        accessor_ = std::make_shared<MonocularFrameTransformPropertyAccessor>(owner_); // Femto
+        accessor_ = std::make_shared<MonocularFrameTransformPropertyAccessor>(owner_);  // Femto
     }
     else {
         LOG_ERROR("Unsupport PlaybackFrameTransformPropertyAccessor, pid: {}", pid);

@@ -73,6 +73,10 @@ PlaybackDevicePort::~PlaybackDevicePort() {
 }
 
 void PlaybackDevicePort::startStream(std::shared_ptr<const StreamProfile> profile, MutableFrameCallback callback) {
+    if(!profile) {
+        throw invalid_value_exception("Invalid stream profile, current profile is nullptr");
+    }
+
     auto sensorType = utils::mapStreamTypeToSensorType(profile->getType());
     {
         std::unique_lock<std::mutex> lock(playbackMutex_);
@@ -91,6 +95,10 @@ void PlaybackDevicePort::startStream(std::shared_ptr<const StreamProfile> profil
 }
 
 void PlaybackDevicePort::stopStream(std::shared_ptr<const StreamProfile> profile) {
+    if(!profile) {
+        return;
+    }
+
     auto                         sensorType = utils::mapStreamTypeToSensorType(profile->getType());
     std::unique_lock<std::mutex> lock(playbackMutex_);
     activeSensors_.reset(sensorType);

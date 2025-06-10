@@ -111,6 +111,13 @@ void RecordDevice::writeFilterProperty() {
         writePropertyT<int>(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT);
     }
 
+    if(std::find(G330DevPids.begin(), G330DevPids.end(), device_->getInfo()->pid_) != G330DevPids.end()) {
+        writePropertyT<float>(OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT);
+    }
+    else {
+        writePropertyT<int>(OB_PROP_DEPTH_PRECISION_LEVEL_INT);
+    }
+
     writePropertyT<bool>(OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL);
     writePropertyT<float>(OB_PROP_HW_NOISE_REMOVE_FILTER_THRESHOLD_FLOAT);
     writePropertyT<bool>(OB_PROP_DEPTH_ALIGN_HARDWARE_BOOL);
