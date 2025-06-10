@@ -34,7 +34,7 @@ typedef std::function<void(OBStreamState, const std::shared_ptr<const StreamProf
 
 class ISensor : virtual public IDeviceComponent {
 public:
-    virtual ~ISensor() noexcept = default;
+    virtual ~ISensor() noexcept override = default;
 
     virtual OBSensorType getSensorType() const = 0;
 

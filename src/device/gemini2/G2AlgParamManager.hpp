@@ -27,7 +27,7 @@ public:
     std::vector<OBPresetResolutionConfig> getPresetResolutionConfigeList() const override {
         return presetResolutionRatioList_;
     }
-    virtual ~G435LeAlgParamManager() = default;
+    virtual ~G435LeAlgParamManager() override = default;
 
 private:
     std::vector<OBPresetResolutionConfig> presetResolutionRatioList_;

@@ -11,12 +11,9 @@ namespace libobsensor {
 class DabaiALGMSLMetadataModifier : public IFrameMetadataModifier, public DeviceComponentBase {
 public:
     DabaiALGMSLMetadataModifier(IDevice *owner);
-    virtual ~DabaiALGMSLMetadataModifier();
+    virtual ~DabaiALGMSLMetadataModifier() override;
 
     void modify(std::shared_ptr<Frame> frame) override;
-
-private:
-    IDevice *owner_;
 };
 
 }  // namespace libobsensor

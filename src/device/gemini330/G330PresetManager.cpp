@@ -117,7 +117,7 @@ void G330PresetManager::loadPresetFromJsonFile(const std::string &filePath) {
 }
 
 void G330PresetManager::loadPresetFromJsonValue(const std::string &presetName, const Json::Value &root) {
-    G330Preset preset;
+    G330Preset preset{};
     preset.depthWorkMode              = root["depth_alg_mode"].asString();
     preset.laserState                 = root["laser_state"].asInt();
     preset.laserPowerLevel            = root["laser_power_level"].asInt();
@@ -279,7 +279,7 @@ template <typename T> T getPropertyValue(IDevice *dev, uint32_t propertyId) {
 }
 
 void G330PresetManager::storeCurrentParamsAsCustomPreset(const std::string &presetName) {
-    G330Preset preset;
+    G330Preset preset{};
     auto       owner = getOwner();
 
     preset.laserState                 = getPropertyValue<int>(owner, OB_PROP_LASER_CONTROL_INT);

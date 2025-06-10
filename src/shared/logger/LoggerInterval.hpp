@@ -20,8 +20,8 @@
 #define LOG_INTVL_OBJECT_TAG std::string(__FILE__) + std::to_string(__LINE__) + std::to_string((uint64_t)this)
 
 struct ObLogIntvlRecord {
-    uint32_t                              count;
-    uint64_t                              interval;
+    uint32_t                              count    = 0;
+    uint64_t                              interval = 0;
     std::chrono::system_clock::time_point lastInvokeTime;
     std::chrono::system_clock::time_point lastLogTime;
     std::thread                           invokeThread;

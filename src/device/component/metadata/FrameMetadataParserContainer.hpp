@@ -15,7 +15,7 @@ namespace libobsensor {
 class FrameMetadataParserContainer : public IFrameMetadataParserContainer, public DeviceComponentBase {
 public:
     FrameMetadataParserContainer(IDevice *owner) : DeviceComponentBase(owner) {}
-    virtual ~FrameMetadataParserContainer() = default;
+    virtual ~FrameMetadataParserContainer() override = default;
 
     virtual void registerParser(OBFrameMetadataType type, std::shared_ptr<IFrameMetadataParser> phaser) override {
         parsers[type] = phaser;

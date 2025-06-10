@@ -114,7 +114,7 @@ void ImuStreamer::parseIMUData(std::shared_ptr<Frame> frame) {
         return;
     }
 
-    const auto computeDataSizeP = sizeof(OBImuHeader) + header->groupLen * header->groupCount;
+    const auto computeDataSizeP = sizeof(OBImuHeader) + static_cast<size_t>(header->groupLen) * header->groupCount;
     if(dataSize < computeDataSizeP) {
         LOG_WARN_INTVL("Imu header is invalid, drop imu package!, invalid data size. dataSize={}, computeDataSizeP={}, groupCount={}", dataSize,
                        computeDataSizeP, header->groupCount);

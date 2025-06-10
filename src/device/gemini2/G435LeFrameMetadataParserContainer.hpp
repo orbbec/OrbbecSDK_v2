@@ -43,7 +43,7 @@ public:
         registerParser(OB_FRAME_METADATA_TYPE_AE_ROI_BOTTOM, makeStructureMetadataParser(&G435LeColorUvcMetadata::exposure_roi_bottom));
     }
 
-    virtual ~G435LeColorFrameMetadataParserContainer() = default;
+    virtual ~G435LeColorFrameMetadataParserContainer() override = default;
 };
 
 class G435LeDepthFrameMetadataParserContainer : public FrameMetadataParserContainer {
@@ -75,7 +75,7 @@ public:
         registerParser(OB_FRAME_METADATA_TYPE_HDR_SEQUENCE_INDEX, makeStructureMetadataParser(&G435LeDepthUvcMetadata::sequence_id));
     }
 
-    virtual ~G435LeDepthFrameMetadataParserContainer() = default;
+    virtual ~G435LeDepthFrameMetadataParserContainer() override = default;
 };
 
 

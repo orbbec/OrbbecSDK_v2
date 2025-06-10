@@ -21,7 +21,7 @@ typedef struct {
 #pragma pack()
 
 DeviceSyncConfigurator::DeviceSyncConfigurator(IDevice *owner, const std::vector<OBMultiDeviceSyncMode> &supportedSyncModes)
-    : DeviceComponentBase(owner), supportedSyncModes_(supportedSyncModes), isSyncConfigInit_(false) {}
+    : DeviceComponentBase(owner), supportedSyncModes_(supportedSyncModes), isSyncConfigInit_(false), currentMultiDevSyncConfig_{} {}
 
 OBMultiDeviceSyncConfig DeviceSyncConfigurator::getSyncConfig() {
     if(isSyncConfigInit_) {
@@ -124,6 +124,7 @@ DeviceSyncConfiguratorOldProtocol::DeviceSyncConfiguratorOldProtocol(IDevice *ow
     : DeviceComponentBase(owner),
       supportedSyncModes_(supportedSyncModes),
       isSyncConfigInit_(false),
+      currentMultiDevSyncConfig_{},
       syncModeOldToNewMap_(DefaultSyncModeMapV1ToV2),
       syncModeNewToOldMap_(DefaultSyncModeMapV2ToV1),
       isDepthDelaySupported_(false) {}

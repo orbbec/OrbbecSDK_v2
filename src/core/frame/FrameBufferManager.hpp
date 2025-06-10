@@ -84,7 +84,7 @@ template <typename T> class FrameBufferManager : public FrameBufferManagerBase, 
 private:
     // Must be created through FrameMemoryPool to ensure that all FrameBufferManager objects are managed by FrameMemoryPool
     FrameBufferManager(size_t frameDataBufferSize) : FrameBufferManagerBase(frameDataBufferSize, sizeof(T)) {
-        LOG_DEBUG("FrameBufferManager created! frame type:{0}, obj addr:0x{1:x}, frame obj total size:{2:.3f}MB", typeid(T).name(), uint64_t(this),
+        LOG_DEBUG("FrameBufferManager created! frame type:{0}, obj addr:0x{1:x}, frame obj total size:{2:.3f}MB", typeid(T).name(), uintptr_t(this),
                   byteToMB(frameTotalSize_));
     }
 

@@ -26,6 +26,7 @@ Frame::Frame(uint8_t *data, size_t dataBufSize, OBFrameType type, FrameBufferRec
       systemTimeStampUsec_(0),
       globalTimeStampUsec_(0),
       metadataSize_(0),
+      metadata_{},
       metadataPhasers_(nullptr),
       streamProfile_(nullptr),
       type_(type),
@@ -317,7 +318,7 @@ IRRightFrame::IRRightFrame(uint8_t *data, size_t dataBufSize, FrameBufferReclaim
     : IRFrame(data, dataBufSize, bufferReclaimFunc, OB_FRAME_IR_RIGHT) {}
 
 PointsFrame::PointsFrame(uint8_t *data, size_t dataBufSize, FrameBufferReclaimFunc bufferReclaimFunc)
-    : Frame(data, dataBufSize, OB_FRAME_POINTS, bufferReclaimFunc) {}
+    : Frame(data, dataBufSize, OB_FRAME_POINTS, bufferReclaimFunc), coordValueScale_(0), width_(0), height_(0) {}
 
 void PointsFrame::setCoordinateValueScale(float valueScale) {
     coordValueScale_ = valueScale;
@@ -396,7 +397,7 @@ std::shared_ptr<const Frame> FrameSet::getFrame(OBFrameType frameType) const {
 
 std::shared_ptr<const Frame> FrameSet::getFrame(int index) const {
     std::shared_ptr<const Frame> frame;
-    uint32_t                     itemSize = sizeof(std::shared_ptr<const Frame>);
+    size_t                       itemSize = sizeof(std::shared_ptr<const Frame>);
     auto                         itemCnt  = getDataBufSize() / itemSize;
     if(index >= (int)itemCnt) {
         throw invalid_value_exception("FrameSet::getFrame() index out of range");

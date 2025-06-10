@@ -28,7 +28,7 @@ private:
 class G330NetPerformanceModePropertyAccessor : public IBasicPropertyAccessor {
 public:
     explicit G330NetPerformanceModePropertyAccessor(IDevice *owner);
-    virtual ~G330NetPerformanceModePropertyAccessor() noexcept = default;
+    virtual ~G330NetPerformanceModePropertyAccessor() noexcept override = default;
 
     virtual void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
     virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
@@ -47,7 +47,7 @@ private:
 class G330HWNoiseRemovePropertyAccessor : public IBasicPropertyAccessor {
 public:
     explicit G330HWNoiseRemovePropertyAccessor(IDevice *owner);
-    virtual ~G330HWNoiseRemovePropertyAccessor() noexcept = default;
+    virtual ~G330HWNoiseRemovePropertyAccessor() noexcept override = default;
 
     virtual void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
     virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
@@ -60,7 +60,7 @@ private:
 class G330NetPTPClockSyncPropertyAccessor : public IBasicPropertyAccessor {
 public:
     explicit G330NetPTPClockSyncPropertyAccessor(IDevice *owner);
-    virtual ~G330NetPTPClockSyncPropertyAccessor() noexcept = default;
+    virtual ~G330NetPTPClockSyncPropertyAccessor() noexcept override = default;
 
     virtual void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
     virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;

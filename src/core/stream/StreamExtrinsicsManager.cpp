@@ -180,7 +180,7 @@ void StreamExtrinsicsManager::registerExtrinsics(const std::shared_ptr<const Str
         for(auto iter : extrinsicsGraph_){
             auto extrinsicList = iter.second;
             if(iter.first == fromId){
-                for(auto extrinsicPair : extrinsicList){
+                for(const auto &extrinsicPair : extrinsicList){
                     toIds.push_back(extrinsicPair.first);
                 }
                 break;

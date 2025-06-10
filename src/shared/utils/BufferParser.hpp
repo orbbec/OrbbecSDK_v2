@@ -27,7 +27,7 @@ template <typename T> std::vector<T> parseBuffer(const uint8_t *data, const uint
     outputVec.reserve(itemNum);
     for(uint16_t i = 0; i < itemNum; i++) {
         T item;
-        memcpy(&item, data + 4 + i * itemSize, sizeof(T));
+        memcpy(&item, data + 4 + static_cast<size_t>(i) * itemSize, sizeof(T));
         outputVec.emplace_back(std::move(item));
     }
     return outputVec;

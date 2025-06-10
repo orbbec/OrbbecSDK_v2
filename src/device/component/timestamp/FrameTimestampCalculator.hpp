@@ -87,17 +87,16 @@ private:
 class G435LeFrameTimestampCalculatorDeviceTime : public IFrameTimestampCalculator, public DeviceComponentBase{
     public:
     G435LeFrameTimestampCalculatorDeviceTime(IDevice *device, uint64_t deviceTimeFreq, uint64_t frameTimeFreq, uint64_t clockFreq);
-    
-        virtual ~G435LeFrameTimestampCalculatorDeviceTime() = default;
-    
-        void calculate(std::shared_ptr<Frame> frame) override;
 
-        void clear() override;
-    
-    private:
-        std::shared_ptr<FrameTimestampCalculatorBaseDeviceTime> baseCalculator_;
-        std::shared_ptr<FrameTimestampCalculatorDirectly>      directCalculator_;
+    virtual ~G435LeFrameTimestampCalculatorDeviceTime() override = default;
 
+    void calculate(std::shared_ptr<Frame> frame) override;
+
+    void clear() override;
+
+private:
+    std::shared_ptr<FrameTimestampCalculatorBaseDeviceTime> baseCalculator_;
+    std::shared_ptr<FrameTimestampCalculatorDirectly>       directCalculator_;
 };
 
 }  // namespace libobsensor

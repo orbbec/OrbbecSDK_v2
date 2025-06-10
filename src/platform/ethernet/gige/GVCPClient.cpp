@@ -136,7 +136,8 @@ const uint8_t *GVCPClient::getMACAddress(struct ifaddrs *ifap, const char *inter
 
 int GVCPClient::openClientSockets() {
 #if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
-    DWORD                                                                   ret, size;
+    DWORD                                                                   ret;
+    DWORD                                                                   size = 0;
     std::unique_ptr<IP_ADAPTER_ADDRESSES, void (*)(IP_ADAPTER_ADDRESSES *)> adapterAddresses(nullptr, [](IP_ADAPTER_ADDRESSES *p) { free(p); });
 
     ret = GetAdaptersAddresses(AF_INET, GAA_FLAG_INCLUDE_PREFIX, NULL, NULL, &size);
@@ -570,7 +571,8 @@ void GVCPClient::sendGVCPForceIP(GVCPSocketInfo socketInfo, std::string mac, con
 
 void GVCPClient::checkAndUpdateSockets() {
 #if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
-    DWORD                                                                   ret, size;
+    DWORD                                                                   ret;
+    DWORD                                                                   size = 0;
     std::unique_ptr<IP_ADAPTER_ADDRESSES, void (*)(IP_ADAPTER_ADDRESSES *)> adapterAddresses(nullptr, [](IP_ADAPTER_ADDRESSES *p) { free(p); });
 
     ret = GetAdaptersAddresses(AF_INET, GAA_FLAG_INCLUDE_PREFIX, NULL, NULL, &size);

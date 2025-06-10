@@ -15,7 +15,7 @@ namespace libobsensor {
 class DaBaiAAlgParamManager : public DisparityAlgParamManagerBase {
 public:
     DaBaiAAlgParamManager(IDevice *owner);
-    virtual ~DaBaiAAlgParamManager() = default;
+    virtual ~DaBaiAAlgParamManager() override = default;
 
     void bindIntrinsic(std::vector<std::shared_ptr<const StreamProfile>> streamProfileList) override;
     void reFetchDisparityParams();

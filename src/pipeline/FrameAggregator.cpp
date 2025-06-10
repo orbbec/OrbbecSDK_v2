@@ -32,6 +32,10 @@ uint64_t getFrameTimestampMsec(const std::shared_ptr<const Frame> &frame, FrameS
 FrameAggregator::FrameAggregator(float maxFrameDelay)
     : frameSyncMode_(FrameSyncModeDisable),
       miniTimeStamp_(0),
+      miniTimeStampFrameType_(OB_FRAME_UNKNOWN),
+      withOverflowQueue_(false),
+      withOverflowQueueFrameType_(OB_FRAME_UNKNOWN),
+      withEmptyQueue_(false),
       frameAggregateOutputMode_(OB_FRAME_AGGREGATE_OUTPUT_ANY_SITUATION),
       frameCnt_(0),
       withColorFrame_(false),

@@ -69,7 +69,7 @@ bool findBestMatchedD2CProfile(const std::vector<OBD2CProfile> &d2cProfileList, 
     return found;
 }
 
-AlgParamManagerBase::AlgParamManagerBase(IDevice *owner) : DeviceComponentBase(owner) {}
+AlgParamManagerBase::AlgParamManagerBase(IDevice *owner) : DeviceComponentBase(owner), imuCalibParam_{} {}
 
 void AlgParamManagerBase::bindStreamProfileParams(std::vector<std::shared_ptr<const StreamProfile>> streamProfileList) {
     bindExtrinsic(streamProfileList);
@@ -199,7 +199,7 @@ void AlgParamManagerBase::bindIntrinsic(std::vector<std::shared_ptr<const Stream
     }
 }
 
-DisparityAlgParamManagerBase::DisparityAlgParamManagerBase(IDevice *device) : AlgParamManagerBase(device) {}
+DisparityAlgParamManagerBase::DisparityAlgParamManagerBase(IDevice *device) : AlgParamManagerBase(device), disparityParam_{} {}
 
 void DisparityAlgParamManagerBase::bindStreamProfileParams(std::vector<std::shared_ptr<const StreamProfile>> streamProfileList) {
     AlgParamManagerBase::bindStreamProfileParams(streamProfileList);
@@ -211,8 +211,8 @@ const OBDisparityParam &DisparityAlgParamManagerBase::getDisparityParam() const 
 }
 
 void DisparityAlgParamManagerBase::bindDisparityParam(std::vector<std::shared_ptr<const StreamProfile>> streamProfileList) {
-    auto dispParam    = getDisparityParam();
-    auto intrinsicMgr = StreamIntrinsicsManager::getInstance();
+    const auto &dispParam    = getDisparityParam();
+    auto        intrinsicMgr = StreamIntrinsicsManager::getInstance();
     for(const auto &sp: streamProfileList) {
         if(!sp->is<DisparityBasedStreamProfile>()) {
             continue;

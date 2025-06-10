@@ -114,7 +114,7 @@ void DaBaiAPresetManager::loadPresetFromJsonFile(const std::string &filePath) {
 }
 
 void DaBaiAPresetManager::loadPresetFromJsonValue(const std::string &presetName, const Json::Value &root) {
-    DaBaiAPreset preset;
+    DaBaiAPreset preset{};
     preset.depthWorkMode              = root["depth_alg_mode"].asString();
     preset.laserState                 = root["laser_state"].asInt();
     preset.laserPowerLevel            = root["laser_power_level"].asInt();
@@ -266,7 +266,7 @@ template <typename T> T getPropertyValue(IDevice *dev, uint32_t propertyId) {
 }
 
 void DaBaiAPresetManager::storeCurrentParamsAsCustomPreset(const std::string &presetName) {
-    DaBaiAPreset preset;
+    DaBaiAPreset preset{};
     auto         owner = getOwner();
 
     preset.laserState                 = getPropertyValue<int>(owner, OB_PROP_LASER_CONTROL_INT);

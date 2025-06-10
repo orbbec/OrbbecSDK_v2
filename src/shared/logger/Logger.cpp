@@ -327,7 +327,7 @@ void Logger::setFileLogConfig(OBLogSeverity severity, const std::string &directo
     config_.fileLogSeverity                  = severity;
     config_.loadFileLogPathFromEnvConfig     = false;
     config_.fileLogOutputDir                 = directory;
-    config_.fileLogMaxFileSize               = maxFileSize * 1024 * 1024;  // MB to Byte
+    config_.fileLogMaxFileSize               = static_cast<uint64_t>(maxFileSize) * 1024 * 1024;  // MB to Byte
     config_.fileLogMaxFileNum                = maxFileNum;
     if(directory.empty()) {
         config_.fileLogOutputDir = OB_DEFAULT_LOG_FILE_PATH;

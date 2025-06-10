@@ -21,7 +21,7 @@ namespace libobsensor {
 class HidDevicePortGmsl : public IDataStreamPort {
 public:
     HidDevicePortGmsl(std::shared_ptr<const USBSourcePortInfo> portInfo);
-    virtual ~HidDevicePortGmsl() noexcept;
+    virtual ~HidDevicePortGmsl() noexcept override;
 
     void startStream(MutableFrameCallback callback) override;
     void stopStream() override;

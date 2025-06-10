@@ -13,7 +13,7 @@ namespace libobsensor {
 class G330NetStreamProfileFilter : public DeviceComponentBase, public IStreamProfileFilter {
 public:
     G330NetStreamProfileFilter(IDevice *owner);
-    virtual ~G330NetStreamProfileFilter() noexcept = default;
+    virtual ~G330NetStreamProfileFilter() noexcept override = default;
 
     StreamProfileList filter(const StreamProfileList &profiles) const override;
 

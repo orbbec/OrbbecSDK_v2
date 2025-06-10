@@ -261,7 +261,7 @@ DeviceComponentPtr<IDeviceComponent> DeviceBase::getComponent(DeviceComponentId 
         throw libobsensor::wrong_api_call_sequence_exception("Device is deactivated/disconnected!");
     }
 
-    ComponentItem item = { OB_DEV_COMPONENT_UNKNOWN };
+    ComponentItem item{};
     {
         std::lock_guard<std::recursive_mutex> lock(componentsMutex_);
         auto it = std::find_if(components_.begin(), components_.end(), [compId](const ComponentItem &item) { return item.compId == compId; });

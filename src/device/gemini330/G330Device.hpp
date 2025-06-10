@@ -44,7 +44,7 @@ private:
 class G330NetDevice : public DeviceBase {
 public:
     G330NetDevice(const std::shared_ptr<const IDeviceEnumInfo> &info);
-    virtual ~G330NetDevice() noexcept;
+    virtual ~G330NetDevice() noexcept override;
 
     std::vector<std::shared_ptr<IFilter>> createRecommendedPostProcessingFilters(OBSensorType type) override;
 

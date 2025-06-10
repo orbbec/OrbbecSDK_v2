@@ -28,7 +28,7 @@ struct FrameProcessorContext {
 class FrameProcessorFactory : public DeviceComponentBase {
 public:
     explicit FrameProcessorFactory(IDevice *owner);
-    ~FrameProcessorFactory() noexcept;
+    ~FrameProcessorFactory() noexcept override;
 
     std::shared_ptr<FrameProcessor> createFrameProcessor(OBSensorType sensorType);
 
@@ -45,7 +45,7 @@ public:
     using IBasicPropertyAccessor::getPropertyRange;
 
     FrameProcessor(IDevice *owner, std::shared_ptr<FrameProcessorContext> context, OBSensorType sensorType);
-    virtual ~FrameProcessor() noexcept;
+    virtual ~FrameProcessor() noexcept override;
 
     const std::string &getConfigSchema() const override;
     void updateConfig(std::vector<std::string> &params) override;
@@ -74,7 +74,7 @@ public:
     using FrameProcessor::getPropertyRange;
 
     DepthFrameProcessor(IDevice *owner, std::shared_ptr<FrameProcessorContext> context);
-    virtual ~DepthFrameProcessor() noexcept;
+    virtual ~DepthFrameProcessor() noexcept override;
 
     void setHardwareD2CProcessParams(std::shared_ptr<const VideoStreamProfile> colorVideoStreamProfile,std::shared_ptr<const VideoStreamProfile> depthVideoStreamProfile,std::vector<OBCameraParam> calibrationCameraParams, std::vector<OBD2CProfile> d2cProfiles, bool matchTargetResolution);
 
@@ -93,7 +93,7 @@ public:
     using FrameProcessor::getPropertyRange;
 
     ColorFrameProcessor(IDevice *owner, std::shared_ptr<FrameProcessorContext> context);
-    virtual ~ColorFrameProcessor() noexcept = default;
+    virtual ~ColorFrameProcessor() noexcept override = default;
 
     virtual void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
     virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
@@ -105,7 +105,7 @@ public:
     using FrameProcessor::getPropertyRange;
 
     IRFrameProcessor(IDevice *owner, std::shared_ptr<FrameProcessorContext> context, OBSensorType sensorType = OB_SENSOR_IR);
-    virtual ~IRFrameProcessor() noexcept = default;
+    virtual ~IRFrameProcessor() noexcept override = default;
 
     virtual void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
     virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
@@ -117,7 +117,7 @@ public:
     using FrameProcessor::getPropertyRange;
 
     IRRightFrameProcessor(IDevice *owner, std::shared_ptr<FrameProcessorContext> context);
-    virtual ~IRRightFrameProcessor() noexcept = default;
+    virtual ~IRRightFrameProcessor() noexcept override = default;
 
     virtual void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
     virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;

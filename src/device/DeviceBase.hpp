@@ -17,18 +17,18 @@ class Context;
 class DeviceBase : public IDevice {
 private:
     struct ComponentItem {
-        DeviceComponentId                                  compId;
+        DeviceComponentId                                  compId = OB_DEV_COMPONENT_UNKNOWN;
         std::shared_ptr<IDeviceComponent>                  component;  // If is nullptr, try to create it
         std::function<std::shared_ptr<IDeviceComponent>()> creator;    // lazy creation
-        bool                                               initialized;
-        bool                                               lockRequired;
+        bool                                               initialized = false;
+        bool                                               lockRequired = false;
     };
 
 public:
     DeviceBase(const std::shared_ptr<const IDeviceEnumInfo> &info);
     DeviceBase();  // declared for playback device
 
-    virtual ~DeviceBase() noexcept;
+    virtual ~DeviceBase() noexcept override;
 
     void reset() override;
     void reboot() override;

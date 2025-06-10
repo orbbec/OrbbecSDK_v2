@@ -27,7 +27,7 @@ struct DeviceInfo {
     std::string asicName_;
     std::string deviceSn_;
 
-    OBUvcBackendType backendType_;
+    OBUvcBackendType backendType_ = OB_UVC_BACKEND_TYPE_AUTO;
 };
 
 struct NetDeviceInfo : public DeviceInfo {

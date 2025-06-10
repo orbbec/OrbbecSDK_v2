@@ -2274,6 +2274,8 @@ FORCE_INLINE void _mm_prefetch(char const *p, int i)
     case _MM_HINT_T2:
         __builtin_prefetch(p, 0, 1);
         break;
+    default:
+        break;
     }
 #endif
 }

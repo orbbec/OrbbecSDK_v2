@@ -66,7 +66,7 @@ std::shared_ptr<Frame> FrameFactory::createVideoFrame(OBFrameType frameType, OBF
     if(strideBytes == 0) {
         strideBytes = utils::calcDefaultStrideBytes(frameFormat, width);
     }
-    frameDataSize = height * strideBytes;
+    frameDataSize = static_cast<size_t>(height) * strideBytes;
     bufferManager = memoryPool->createFrameBufferManager(frameType, frameDataSize);
 
     auto frame = bufferManager->acquireFrame();
@@ -180,7 +180,7 @@ std::shared_ptr<Frame> FrameFactory::createVideoFrameFromUserBuffer(OBFrameType 
         strideBytes = utils::calcDefaultStrideBytes(format, width);
     }
     frame->as<VideoFrame>()->setStride(strideBytes);
-    if(strideBytes * height > bufferSize) {
+    if(static_cast<uint64_t>(strideBytes) * height > bufferSize) {
         LOG_WARN("The strideBytes * height is greater than to the bufferSize, it is dangerous to access the buffer!");
     }
     return frame;

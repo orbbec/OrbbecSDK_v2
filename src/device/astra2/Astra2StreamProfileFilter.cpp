@@ -46,7 +46,7 @@ static std::vector<OBEffectiveStreamProfile> effectiveStreamProfilesParse(const 
     std::vector<OBEffectiveStreamProfile> output;
     const uint32_t                        typeSize  = sizeof(OBEffectiveStreamProfile);
     auto                                  itemCount = data.size() / typeSize;
-    for(uint32_t i = 0; i < itemCount; i++) {
+    for(size_t i = 0; i < itemCount; i++) {
         auto profile = reinterpret_cast<const OBEffectiveStreamProfile *>(data.data() + i * typeSize);
         output.push_back(*profile);
     }

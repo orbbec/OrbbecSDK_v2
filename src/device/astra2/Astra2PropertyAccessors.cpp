@@ -8,7 +8,8 @@
 
 namespace libobsensor {
 
-Astra2Disp2DepthPropertyAccessor::Astra2Disp2DepthPropertyAccessor(IDevice *owner) : owner_(owner), hwDisparityToDepthEnabled_(true) {}
+Astra2Disp2DepthPropertyAccessor::Astra2Disp2DepthPropertyAccessor(IDevice *owner)
+    : owner_(owner), hwDisparityToDepthEnabled_(true), swDisparityToDepthEnabled_(false), currentDepthUnitLevel_(0) {}
 
 void Astra2Disp2DepthPropertyAccessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
     switch(propertyId) {

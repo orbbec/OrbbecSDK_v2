@@ -34,8 +34,8 @@ class RTPStreamPort : public IVideoStreamPort, public IDataStreamPort {
 
 public:
     RTPStreamPort(std::shared_ptr<const RTPStreamPortInfo> portInfo);
-    virtual ~RTPStreamPort() noexcept;
-    
+    virtual ~RTPStreamPort() noexcept override;
+
     uint16_t getStreamPort();
 
     virtual StreamProfileList                     getStreamProfileList() override;

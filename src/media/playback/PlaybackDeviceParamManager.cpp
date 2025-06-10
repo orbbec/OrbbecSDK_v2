@@ -44,8 +44,8 @@ const OBDisparityParam &PlaybackDeviceParamManager::getDisparityParam() const {
 }
 
 void PlaybackDeviceParamManager::bindDisparityParam(std::vector<std::shared_ptr<const StreamProfile>> streamProfileList) {
-    auto dispParam    = getDisparityParam();
-    auto intrinsicMgr = StreamIntrinsicsManager::getInstance();
+    const auto &dispParam    = getDisparityParam();
+    auto        intrinsicMgr = StreamIntrinsicsManager::getInstance();
     for(const auto &sp: streamProfileList) {
         if(!sp->is<DisparityBasedStreamProfile>()) {
             continue;

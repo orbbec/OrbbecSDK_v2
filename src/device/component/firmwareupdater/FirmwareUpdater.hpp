@@ -26,7 +26,7 @@ struct FirmwareUpdateContext {
 class FirmwareUpdater : public DeviceComponentBase {
 public:
     FirmwareUpdater(IDevice *owner);
-    virtual ~FirmwareUpdater();
+    virtual ~FirmwareUpdater() override;
 
     static void onDeviceFwUpdateCallback(ob_fw_update_state state, const char *message, uint8_t percent, void *user_data);
 

@@ -34,7 +34,7 @@ public:
     static ObRTSPClient *createNew(std::shared_ptr<const StreamProfile> profile, UsageEnvironment &env, char const *rtspURL, MutableFrameCallback callback, int verbosityLevel = 0,
                                    portNumBits tunnelOverHTTPPortNum = 0, int socketNumToServer = -1);
 
-    virtual ~ObRTSPClient() noexcept;
+    virtual ~ObRTSPClient() noexcept override;
 
 public:
     void startStream();
@@ -77,17 +77,17 @@ private:
     MutableFrameCallback frameCallback_;
 
     std::string                 errorMsg_;
-    CommandState                commandState_;
+    CommandState                commandState_ = CMD_DONE;
     std::recursive_mutex        commandMutex_;
     std::condition_variable_any commandCv_;
 
-    RTSPState RTSPState_;
+    RTSPState RTSPState_ = RTSP_DESCRIBE;
 
     MediaSession            *mediaSession_      = nullptr;
     MediaSubsession         *curSubsession_     = nullptr;
     MediaSubsessionIterator *curSubsessionIter_ = nullptr;
 
-    double    duration_;
+    double    duration_        = 0;
     TaskToken streamTimerTask_ = NULL;
 };
 

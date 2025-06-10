@@ -143,10 +143,10 @@ public:
             LOG_WARN_INTVL("Current metadata does not contain timestamp!");
             return -1;
         }
-        auto     standardUvcMetadata = *(reinterpret_cast<const StandardUvcFramePayloadHeader *>(metadata));
-        uint64_t transformedTimestamp =
-            ((standardUvcMetadata.dwPresentationTime >> 24) & 0xFF) * 1000000 + ((standardUvcMetadata.dwPresentationTime & 0xFFFFFF) << 8) / 1000;
-        auto calculatedTimestamp = timestampCalculator_->calculate(transformedTimestamp);
+        auto     standardUvcMetadata  = *(reinterpret_cast<const StandardUvcFramePayloadHeader *>(metadata));
+        uint64_t presentationTime     = standardUvcMetadata.dwPresentationTime;
+        uint64_t transformedTimestamp = ((presentationTime >> 24) & 0xFF) * 1000000 + ((presentationTime & 0xFFFFFF) << 8) / 1000;
+        auto     calculatedTimestamp  = timestampCalculator_->calculate(transformedTimestamp);
 
         return calculatedTimestamp;
     }
@@ -582,14 +582,14 @@ class G330ColorMetadataParser : public G330MetadataParserBase {
 public:
     G330ColorMetadataParser(IDevice *device, OBFrameMetadataType type, FrameMetadataModifier modifier = nullptr)
         : G330MetadataParserBase(device, type, modifier, initMetadataTypeIdMap(OB_SENSOR_COLOR)) {}
-    virtual ~G330ColorMetadataParser() = default;
+    virtual ~G330ColorMetadataParser() override = default;
 };
 
 class G330DepthMetadataParser : public G330MetadataParserBase {
 public:
     G330DepthMetadataParser(IDevice *device, OBFrameMetadataType type, FrameMetadataModifier modifier = nullptr)
         : G330MetadataParserBase(device, type, modifier, initMetadataTypeIdMap(OB_SENSOR_DEPTH)) {}
-    virtual ~G330DepthMetadataParser() = default;
+    virtual ~G330DepthMetadataParser() override = default;
 };
 
 class G330DepthMetadataHdrSequenceSizeParser : public IFrameMetadataParser {

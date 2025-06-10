@@ -14,7 +14,7 @@ namespace libobsensor {
 class PlaybackVendorPropertyAccessor : public IBasicPropertyAccessor, public IStructureDataAccessor, public DeviceComponentBase {
 public:
     explicit PlaybackVendorPropertyAccessor(const std::shared_ptr<ISourcePort> &backend, IDevice *owner);
-    virtual ~PlaybackVendorPropertyAccessor() noexcept = default;
+    virtual ~PlaybackVendorPropertyAccessor() noexcept override = default;
 
     virtual void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
     virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
@@ -34,7 +34,7 @@ private:
 class PlaybackFilterPropertyAccessor : public IBasicPropertyAccessor, public IStructureDataAccessor {
 public:
     explicit PlaybackFilterPropertyAccessor(const std::shared_ptr<ISourcePort> &backend, IDevice *owner);
-    virtual ~PlaybackFilterPropertyAccessor() noexcept = default;
+    virtual ~PlaybackFilterPropertyAccessor() noexcept override = default;
 
     virtual void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
     virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
@@ -54,7 +54,7 @@ private:
 class PlaybackFrameTransformPropertyAccessor : public IBasicPropertyAccessor {
 public:
     explicit PlaybackFrameTransformPropertyAccessor(const std::shared_ptr<ISourcePort> &backend, IDevice *owner);
-    virtual ~PlaybackFrameTransformPropertyAccessor() noexcept = default;
+    virtual ~PlaybackFrameTransformPropertyAccessor() noexcept override = default;
 
     virtual void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
     virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;

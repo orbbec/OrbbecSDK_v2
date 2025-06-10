@@ -19,7 +19,7 @@ namespace libobsensor {
 template <typename T, typename Field> class StructureMetadataParser : public IFrameMetadataParser {
 public:
     StructureMetadataParser(Field T::*field, FrameMetadataModifier mod) : field_(field), modifier_(mod) {};
-    virtual ~StructureMetadataParser() = default;
+    virtual ~StructureMetadataParser() override = default;
 
     int64_t getValue(const uint8_t *metadata, size_t dataSize) override {
         if(!isSupported(metadata, dataSize)) {
@@ -72,7 +72,7 @@ class G435LeMetadataSensorTimestampParser : public IFrameMetadataParser {
 public:
     G435LeMetadataSensorTimestampParser() {};
     explicit G435LeMetadataSensorTimestampParser(FrameMetadataModifier exp_to_usec) : exp_to_usec_(exp_to_usec) {};
-    virtual ~G435LeMetadataSensorTimestampParser() = default;
+    virtual ~G435LeMetadataSensorTimestampParser() override = default;
 
     int64_t getValue(const uint8_t *metadata, size_t dataSize) override {
         if(!isSupported(metadata, dataSize)) {
@@ -97,7 +97,7 @@ class G435LeColorMetadataSensorTimestampParser : public IFrameMetadataParser {
 public:
     G435LeColorMetadataSensorTimestampParser() {};
     explicit G435LeColorMetadataSensorTimestampParser(FrameMetadataModifier exp_to_usec) : exp_to_usec_(exp_to_usec) {};
-    virtual ~G435LeColorMetadataSensorTimestampParser() = default;
+    virtual ~G435LeColorMetadataSensorTimestampParser() override = default;
 
     int64_t getValue(const uint8_t *metadata, size_t dataSize) override {
         if(!isSupported(metadata, dataSize)) {
@@ -152,7 +152,7 @@ public:
         }
     }
 
-    virtual ~G435LeMetadataParserBase() = default;
+    virtual ~G435LeMetadataParserBase() override = default;
 
     int64_t getValue(const uint8_t *metadata, size_t dataSize) override {
         if(!isSupported(metadata, dataSize)) {
@@ -259,14 +259,14 @@ class G435LeColorMetadataParser : public G435LeMetadataParserBase {
 public:
     G435LeColorMetadataParser(IDevice *device, OBFrameMetadataType type, FrameMetadataModifier modifier = nullptr)
         : G435LeMetadataParserBase(device, type, modifier, initMetadataTypeIdMap(OB_SENSOR_COLOR)) {}
-    virtual ~G435LeColorMetadataParser() = default;
+    virtual ~G435LeColorMetadataParser() override = default;
 };
 
 class G435LeDepthMetadataParser : public G435LeMetadataParserBase {
 public:
     G435LeDepthMetadataParser(IDevice *device, OBFrameMetadataType type, FrameMetadataModifier modifier = nullptr)
         : G435LeMetadataParserBase(device, type, modifier, initMetadataTypeIdMap(OB_SENSOR_DEPTH)) {}
-    virtual ~G435LeDepthMetadataParser() = default;
+    virtual ~G435LeDepthMetadataParser() override = default;
 };
 
 class G435LeDepthMetadataHdrSequenceSizeParser : public IFrameMetadataParser {
@@ -298,7 +298,7 @@ public:
         }
     }
 
-    virtual ~G435LeDepthMetadataHdrSequenceSizeParser() = default;
+    virtual ~G435LeDepthMetadataHdrSequenceSizeParser() override = default;
 
     int64_t getValue(const uint8_t *metadata, size_t dataSize) override {
         utils::unusedVar(metadata);

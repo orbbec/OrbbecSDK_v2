@@ -8,7 +8,7 @@
 
 namespace libobsensor {
 G330FrameTimestampCalculatorBaseDeviceTime::G330FrameTimestampCalculatorBaseDeviceTime(IDevice *device, uint64_t deviceTimeFreq, uint64_t frameTimeFreq)
-    : device_(device), deviceTimeFreq_(deviceTimeFreq), frameTimeFreq_(frameTimeFreq) {
+    : device_(device), deviceTimeFreq_(deviceTimeFreq), frameTimeFreq_(frameTimeFreq), prevSrcTsp_(0), prevHostTsp_(0), baseDevTime_(0) {
     auto                  propServer = device->getPropertyServer();
     std::vector<uint32_t> supportedProps;
     if(propServer->isPropertySupported(OB_PROP_TIMER_RESET_SIGNAL_BOOL, PROP_OP_WRITE, PROP_ACCESS_INTERNAL)) {

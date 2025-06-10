@@ -19,7 +19,7 @@ extern "C" {
 ob_depth_work_mode ob_device_get_current_depth_work_mode(const ob_device *device, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(device);
     auto               workModeMgr = device->device->getComponentT<libobsensor::IDepthWorkModeManager>(libobsensor::OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
-    auto               checksum    = workModeMgr->getCurrentDepthWorkMode();
+    const auto &       checksum    = workModeMgr->getCurrentDepthWorkMode();
     ob_depth_work_mode work_mode;
     memcpy(work_mode.checksum, checksum.checksum, sizeof(checksum.checksum));
     memcpy(work_mode.name, checksum.name, sizeof(work_mode.name));
@@ -75,7 +75,7 @@ HANDLE_EXCEPTIONS_AND_RETURN(0, work_mode_list)
 ob_depth_work_mode ob_depth_work_mode_list_get_item(const ob_depth_work_mode_list *work_mode_list, uint32_t index, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(work_mode_list);
     VALIDATE_UNSIGNED_INDEX(index, work_mode_list->workModeList.size());
-    auto               workMode = work_mode_list->workModeList.at(index);
+    const auto &       workMode = work_mode_list->workModeList.at(index);
     ob_depth_work_mode impl;
     memcpy(impl.checksum, workMode.checksum, sizeof(workMode.checksum));
     memcpy(impl.name, workMode.name, sizeof(workMode.name));

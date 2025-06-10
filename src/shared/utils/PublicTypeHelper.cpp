@@ -245,6 +245,10 @@ OBSensorType mapFrameTypeToSensorType(OBFrameType type) {
         return OB_SENSOR_IR_RIGHT;
     case OB_FRAME_CONFIDENCE:
         return OB_SENSOR_CONFIDENCE;
+    case OB_FRAME_RAW_PHASE:
+        return OB_SENSOR_RAW_PHASE;
+    default:
+        break;
     }
     return OB_SENSOR_UNKNOWN;
 }

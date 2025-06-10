@@ -1004,7 +1004,7 @@ void FemtoMegaNetDevice::fetchAllVideoStreamProfileList() {
         uint16_t                             dataSize = static_cast<uint16_t>(data.size());
         outputProfiles                                = parseBuffer<OBInternalStreamProfile>(data.data(), dataSize);
         allVideoStreamProfileList_.clear();
-        for(auto item: outputProfiles) {
+        for(const auto &item: outputProfiles) {
             OBStreamType streamType = utils::mapSensorTypeToStreamType((OBSensorType)item.sensorType);
             OBFormat     format     = utils::uvcFourccToOBFormat(item.profile.video.formatFourcc);
             allVideoStreamProfileList_.push_back(StreamProfileFactory::createVideoStreamProfile(streamType, format, item.profile.video.width,

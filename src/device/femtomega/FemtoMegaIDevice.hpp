@@ -14,7 +14,7 @@ namespace libobsensor {
 class FemtoMegaINetDevice : public DeviceBase {
 public:
     FemtoMegaINetDevice(const std::shared_ptr<const IDeviceEnumInfo> &info);
-    virtual ~FemtoMegaINetDevice() noexcept;
+    virtual ~FemtoMegaINetDevice() noexcept override;
     std::vector<std::shared_ptr<IFilter>> createRecommendedPostProcessingFilters(OBSensorType type) override;
 
 private:

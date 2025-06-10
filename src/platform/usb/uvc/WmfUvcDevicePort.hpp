@@ -39,9 +39,9 @@ struct StreamObject {
     bool                                      streaming = false;
     manual_reset_event                        isFlushed;
     manual_reset_event                        hasStarted;
-    std::shared_ptr<const VideoStreamProfile> profile = nullptr;
-    uint32_t                                  frameCounter;
-    MutableFrameCallback                      callback = nullptr;
+    std::shared_ptr<const VideoStreamProfile> profile      = nullptr;
+    uint32_t                                  frameCounter = 0;
+    MutableFrameCallback                      callback     = nullptr;
 };
 
 typedef std::function<void(const UsbInterfaceInfo &, IMFActivate *)> USBDeviceInfoEnumCallback;

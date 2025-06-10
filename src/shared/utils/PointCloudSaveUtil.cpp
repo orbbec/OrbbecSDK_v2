@@ -34,7 +34,7 @@ struct Triangle {
 struct Vertex {
     float   x, y, z;
     uint8_t color[3];  // color info
-    Vertex(float _x = 0.0f, float _y = 0.0f, float _z = 0.0f) : x(_x), y(_y), z(_z) {}
+    Vertex(float _x = 0.0f, float _y = 0.0f, float _z = 0.0f) : x(_x), y(_y), z(_z), color{} {}
 };
 
 struct MeshData {
@@ -151,7 +151,7 @@ bool PointCloudSaveUtil::savePointCloudToPly(const char *fileName, std::shared_p
 
     std::map<PixelCoord, unsigned int> vertexIndexMap;
     std::vector<Vertex>                vertices;
-    vertices.reserve(width * height);
+    vertices.reserve(static_cast<size_t>(width) * height);
 
     auto data = pointCloudFrame->getData();
 

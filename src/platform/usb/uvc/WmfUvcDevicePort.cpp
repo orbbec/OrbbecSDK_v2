@@ -569,7 +569,7 @@ void WmfUvcDevicePort::foreachUvcDevice(const USBDeviceInfoEnumCallback &action)
     for(const auto &attributes_params_set: attributes_params) {
         CComPtr<IMFAttributes> pAttributes = nullptr;
         CHECK_HR(MFCreateAttributes(&pAttributes, 1));
-        for(auto attribute_params: attributes_params_set) {
+        for(const auto &attribute_params: attributes_params_set) {
             CHECK_HR(pAttributes->SetGUID(attribute_params.first, attribute_params.second));
         }
 

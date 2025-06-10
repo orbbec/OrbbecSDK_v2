@@ -16,7 +16,7 @@ struct NetDataStreamPortInfo : public NetSourcePortInfo {
         : NetSourcePortInfo(SOURCE_PORT_NET_VENDOR_STREAM, netInterfaceName, localMac, localAddress, address, port, mac, serialNumber, pid),
           vendorPort(vendorPort) {}
 
-    virtual bool equal(std::shared_ptr<const SourcePortInfo> cmpInfo) const {
+    virtual bool equal(std::shared_ptr<const SourcePortInfo> cmpInfo) const override {
         if(cmpInfo->portType != portType) {
             return false;
         }

@@ -10,7 +10,7 @@
 
 namespace libobsensor {
 
-G330Disp2DepthPropertyAccessor::G330Disp2DepthPropertyAccessor(IDevice *owner) : owner_(owner), hwDisparityToDepthEnabled_(true) {}
+G330Disp2DepthPropertyAccessor::G330Disp2DepthPropertyAccessor(IDevice *owner) : owner_(owner), hwDisparityToDepthEnabled_(true), swDisparityToDepthEnabled_(false) {}
 
 void G330Disp2DepthPropertyAccessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
     switch(propertyId) {
@@ -142,7 +142,7 @@ void G330Disp2DepthPropertyAccessor::markOutputDisparityFrame(bool enable) {
     }
 }
 
-G330NetPerformanceModePropertyAccessor::G330NetPerformanceModePropertyAccessor(IDevice *owner) : owner_(owner) {}
+G330NetPerformanceModePropertyAccessor::G330NetPerformanceModePropertyAccessor(IDevice *owner) : owner_(owner), performanceMode_(0) {}
 
 void G330NetPerformanceModePropertyAccessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
     switch(propertyId) {

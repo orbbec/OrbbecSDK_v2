@@ -149,7 +149,7 @@ void G2Device::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
     sensor->setStreamProfileFilter(streamProfileFilter.get());
 
     auto        depthWorkModeManager = getComponentT<IDepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
-    auto        workMode             = depthWorkModeManager->getCurrentDepthWorkMode();
+    const auto &workMode             = depthWorkModeManager->getCurrentDepthWorkMode();
     std::string workModeName         = workMode.name;
     auto        sensorType           = sensor->getSensorType();
     auto        streamProfile        = StreamProfileFactory::getDefaultStreamProfileFromEnvConfig(deviceInfo_->name_, sensorType, workModeName);
@@ -465,8 +465,8 @@ void G2Device::initSensorList() {
 }
 
 void G2Device::fixSensorList() {
-    auto depthWorkModeManager = getComponentT<G2DepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
-    auto currentMode          = depthWorkModeManager->getCurrentDepthWorkMode();
+    auto        depthWorkModeManager = getComponentT<G2DepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
+    const auto &currentMode          = depthWorkModeManager->getCurrentDepthWorkMode();
 
     // deregister unsupported sensors according to depth work mode option code
     if(currentMode.optionCode == OBDepthModeOptionCode::MX6600_RIGHT_IR_FROM_DEPTH_CHANNEL) {

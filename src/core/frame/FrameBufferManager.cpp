@@ -68,8 +68,9 @@ uint8_t *FrameMemoryAllocator::allocate(size_t size) {
     }
 
     void *ptr = malloc(size);
-    if(ptr == nullptr && reinterpret_cast<uintptr_t>(ptr) == 0xdddddddd) {
+    if(ptr == nullptr || reinterpret_cast<uintptr_t>(ptr) == 0xdddddddd) {
         LOG_ERROR("FrameMemoryAllocator malloc failed! ptr={0:x}", (uintptr_t)ptr);
+        return nullptr;
     }
 
     memset(ptr, 0, size);

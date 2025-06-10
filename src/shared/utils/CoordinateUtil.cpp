@@ -58,8 +58,8 @@ static bool undistortIterativeUnproject(const OBCameraIntrinsic intrinsic, const
             r4     = r2 * r2;
             r6     = r4 * r2;
             kr_inv = (1 + disto.k4 * r2 + disto.k5 * r4 + disto.k6 * r6) / (1 + disto.k1 * r2 + disto.k2 * r4 + disto.k3 * r6);
-            dx     = disto.p1 * 2 * x * y + disto.p2 * (r2 + 2 * x * x);
-            dy     = disto.p2 * 2 * x * y + disto.p1 * (r2 + 2 * y * y);
+            dx     = disto.p1 * 2.0 * x * y + disto.p2 * (r2 + 2 * x * x);
+            dy     = disto.p2 * 2.0 * x * y + disto.p1 * (r2 + 2 * y * y);
             x      = (xd - dx) * kr_inv;
             y      = (yd - dy) * kr_inv;
 
@@ -317,7 +317,8 @@ bool CoordinateUtil::transformationColor2dToDepth2d(const OBCameraIntrinsic colo
                                                     OBD2CTransform transColorToDepth, OBPoint2f *depthPixel) {
 
     float     depthRangeMm[2] = { 60.f, 16000.f };
-    OBPoint2f nearPixelDepth, farthestPixelDepth;
+    OBPoint2f nearPixelDepth{0, 0};
+    OBPoint2f farthestPixelDepth{0, 0};
     bool      nearValid = 0, farthestValid = 0;
 
     // color pixel to depth pixel when z= depthRangeMm[0]
@@ -453,7 +454,7 @@ bool CoordinateUtil::transformationInitXYTables(const OBCameraIntrinsic intrinsi
     int width  = intrinsic.width;
     int height = intrinsic.height;
 
-    size_t tableSize = (size_t)(width * height);
+    size_t tableSize = (size_t)(width) * height;
     if(data == NULL)  // If no external memory is requested, an error will be reported
     {
         (*dataSize) = 2 * (uint32_t)tableSize;
@@ -501,7 +502,7 @@ bool CoordinateUtil::transformationInitAddDistortionUVTables(const OBCameraIntri
     int width  = intrinsic.width;
     int height = intrinsic.height;
 
-    size_t tableSize = (size_t)(width * height);
+    size_t tableSize = (size_t)(width) * height;
     if(data == NULL)  // If no external memory is requested, an error will be reported
     {
         (*dataSize) = 2 * (uint32_t)tableSize;

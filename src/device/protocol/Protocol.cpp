@@ -402,6 +402,8 @@ GetPropertyReq *initGetRawDataLengthReq(uint8_t *dataBuf, uint32_t propertyId, u
     case 1:
         req->header.opcode = OPCODE_FINISH_READ_RAW_DATA;
         break;
+    default:
+        break;
     }
 
     req->header.requestId = generateRequestId();

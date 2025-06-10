@@ -1459,6 +1459,9 @@ int AlignImpl::D2C(const uint16_t *depth_buffer, int depth_width, int depth_heig
     if(use_scale_) {
         if(out_depth) {
             uint16_t *out_depth_dst = (uint16_t *)malloc(pixnum * sizeof(uint16_t));
+            if(out_depth_dst == nullptr) {
+                return -1;
+            }
             memcpy(out_depth_dst, out_depth, pixnum * sizeof(uint16_t));
             int pixnumutemp = rgb_temp_width * rgb_temp_height;
             memset(out_depth, 0xff, pixnumutemp * sizeof(uint16_t));

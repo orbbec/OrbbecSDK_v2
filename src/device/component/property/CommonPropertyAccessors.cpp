@@ -192,10 +192,10 @@ const std::vector<uint8_t> &BaselinePropertyAccessor::getStructureData(uint32_t 
     baselineData_.resize(sizeof(OBBaselineCalibrationParam));
     OBBaselineCalibrationParam *param = (OBBaselineCalibrationParam *)baselineData_.data();
 
-    auto algParamManager = owner_->getComponentT<IDisparityAlgParamManager>(OB_DEV_COMPONENT_ALG_PARAM_MANAGER);
-    auto disparityParam  = algParamManager->getDisparityParam();
-    param->baseline      = disparityParam.baseline * disparityParam.unit;
-    param->zpd           = static_cast<float>(disparityParam.zpd);
+    auto        algParamManager = owner_->getComponentT<IDisparityAlgParamManager>(OB_DEV_COMPONENT_ALG_PARAM_MANAGER);
+    const auto &disparityParam  = algParamManager->getDisparityParam();
+    param->baseline             = disparityParam.baseline * disparityParam.unit;
+    param->zpd                  = static_cast<float>(disparityParam.zpd);
     return baselineData_;
 }
 

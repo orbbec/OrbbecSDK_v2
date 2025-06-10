@@ -48,7 +48,7 @@ private:
 class Astra2FrameTransformPropertyAccessor : public IBasicPropertyAccessor {
 public:
     explicit Astra2FrameTransformPropertyAccessor(IDevice *owner);
-    virtual ~Astra2FrameTransformPropertyAccessor() noexcept = default;
+    virtual ~Astra2FrameTransformPropertyAccessor() noexcept override = default;
 
     virtual void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
     virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;

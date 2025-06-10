@@ -263,7 +263,7 @@ void RawPhaseStreamer::parseAndOutputFrame(std::shared_ptr<Frame> frame) {
     rawFrameSize = captureSize * inputInfo.nStreams;
 
     uint8_t *dstData = (uint8_t *)data + rawFrameSize;
-    uint8_t *srcData = (uint8_t *)data + rawFrameSize - (inputInfo.nRows * 2);
+    uint8_t *srcData = (uint8_t *)data + rawFrameSize - static_cast<size_t>(inputInfo.nRows) * 2;
     memcpy(dstData, srcData, mipiHeadSize);
 
     auto   global      = depthEngineLoader_->getGlobalContext();

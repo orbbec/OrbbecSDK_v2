@@ -40,7 +40,7 @@ public:
     bool process(RTPHeader *header, uint8_t *recvData, uint32_t length, uint32_t type);
 
     uint8_t *getFrameData() {
-        return rtpBuffer_ + (RTP_FIX_METADATA_OFFSET + RTP_FIX_METADATA_SIZE);
+        return rtpBuffer_ + static_cast<size_t>(RTP_FIX_METADATA_OFFSET) + RTP_FIX_METADATA_SIZE;
     }
 
     uint32_t getFrameDataSize() {

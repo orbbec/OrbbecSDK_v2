@@ -215,7 +215,7 @@ OBFilterConfigSchemaItem FilterExtension::getConfigSchemaItem(const std::string 
         return resultItem;
     }
 
-    for(auto item: schemaVec) {
+    for(const auto &item: schemaVec) {
         if(item.name == name) {
             resultItem = item;
         }

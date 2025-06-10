@@ -7,7 +7,7 @@
 namespace libobsensor {
 
 float ImuCalculatorICM42668P::calculateAccelGravity(int16_t accelValue, uint8_t accelFSR) {
-    float sensitivity = 0.f;
+    float sensitivity = 1.f;
 
     switch(accelFSR) {
     case OB_ACCEL_FS_2g: /*!< 2g*/
@@ -34,13 +34,15 @@ float ImuCalculatorICM42668P::calculateAccelGravity(int16_t accelValue, uint8_t 
     case OB_ACCEL_FS_24g:
         sensitivity = ACCEL_MAX / 24.0f;
         break;
+    default:
+        break;
     }
 
     return (accelValue / sensitivity);
 }
 
 float ImuCalculatorICM42668P::calculateGyroDPS(int16_t gyroValue, uint8_t gyroFSR) {
-    float sensitivity = 0.f;
+    float sensitivity = 1.f;
 
     switch(gyroFSR) {
     case OB_GYRO_FS_16dps: /*!< 16dps*/
@@ -72,6 +74,8 @@ float ImuCalculatorICM42668P::calculateGyroDPS(int16_t gyroValue, uint8_t gyroFS
         break;
     case OB_GYRO_FS_800dps:
         sensitivity = GYRO_MAX / 800.0f;
+        break;
+    default:
         break;
     }
 
@@ -111,6 +115,8 @@ float ImuCalculatorBMI088::calculateAccelGravity(int16_t accelValue, uint8_t acc
         break;
     case OB_ACCEL_FS_24g:
         sensitivity = 24.0f;
+        break;
+    default:
         break;
     }
 
@@ -153,6 +159,8 @@ float ImuCalculatorBMI088::calculateGyroDPS(int16_t gyroValue, uint8_t gyroFSR) 
         break;
     case OB_GYRO_FS_800dps:
         sensitivity = 800.0f;
+        break;
+    default:
         break;
     }
 

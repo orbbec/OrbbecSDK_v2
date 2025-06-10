@@ -16,7 +16,7 @@ namespace libobsensor {
 class GlobalTimestampFitter : public IGlobalTimestampFitter, public DeviceComponentBase {
 public:
     GlobalTimestampFitter(IDevice *owner);
-    virtual ~GlobalTimestampFitter();
+    virtual ~GlobalTimestampFitter() override;
 
     LinearFuncParam getLinearFuncParam() override;
     void            reFitting() override;

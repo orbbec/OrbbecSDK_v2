@@ -53,7 +53,7 @@ public:
 
 class IFilter : public IFilterBase, public IFilterExtension {
 public:
-    virtual ~IFilter() noexcept = default;
+    virtual ~IFilter() noexcept override = default;
 };
 
 class IFilterCreator {

@@ -125,7 +125,7 @@ public:
                                 MutableFrameCallback callback,
                                 char const          *streamId = NULL);  // identifies the stream itself (optional)
 
-    virtual ~ObRTPSink() noexcept;
+    virtual ~ObRTPSink() noexcept override;
 
 protected:
     ObRTPSink(std::shared_ptr<const StreamProfile> streamProfile, UsageEnvironment &env, MediaSubsession &subsession, MutableFrameCallback callback, char const *streamId = NULL);
@@ -137,7 +137,7 @@ private:
 
 private:
     // redefined virtual functions:
-    virtual Boolean continuePlaying();
+    virtual Boolean continuePlaying() override;
     void            outputFrameFunc();
 
 private:

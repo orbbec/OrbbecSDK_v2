@@ -35,7 +35,7 @@ void GlobalTimestampCalculator::calculate(std::shared_ptr<Frame> frame) {
     }
     while(true) {
         double value1 = (double)numOfOverflows * transformedTspOverflowValue + transformedTsp;
-        double value2 = (double)(numOfOverflows + 1) * transformedTspOverflowValue + transformedTsp;
+        double value2 = (double)(numOfOverflows + 1.0) * transformedTspOverflowValue + transformedTsp;
         if(value1 >= linearFuncParam.checkDataX) {
             break;
         }
@@ -63,7 +63,7 @@ void FrameTimestampCalculatorDirectly::calculate(std::shared_ptr<Frame> frame) {
 }
 
 FrameTimestampCalculatorBaseDeviceTime::FrameTimestampCalculatorBaseDeviceTime(IDevice *device, uint64_t deviceTimeFreq, uint64_t frameTimeFreq)
-    : DeviceComponentBase(device), deviceTimeFreq_(deviceTimeFreq), frameTimeFreq_(frameTimeFreq) {
+    : DeviceComponentBase(device), deviceTimeFreq_(deviceTimeFreq), frameTimeFreq_(frameTimeFreq), prevSrcTsp_(0), prevHostTsp_(0), baseDevTime_(0) {
     auto                  propServer = device->getPropertyServer();
     std::vector<uint32_t> supportedProps;
     if(propServer->isPropertySupported(OB_PROP_TIMER_RESET_SIGNAL_BOOL, PROP_OP_WRITE, PROP_ACCESS_INTERNAL)) {

@@ -39,7 +39,7 @@ protected:
 
 class FilterCreationStrategyBase : public IFilterCreationStrategy {
 public:
-    virtual ~FilterCreationStrategyBase() noexcept = default;
+    virtual ~FilterCreationStrategyBase() noexcept override = default;
 
     virtual std::vector<std::shared_ptr<IFilter>> createFilters(OBSensorType type) override;
 };

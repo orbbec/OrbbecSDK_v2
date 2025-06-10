@@ -123,7 +123,7 @@ std::shared_ptr<IPal> createUsbPal() {
 WinUsbPal::WinUsbPal() {
     LOG_DEBUG("WinUsbPal init ...");
     // when using COINIT_APARTMENTTHREADED, calling _pISensor->SetEventSink(NULL) to stop sensor can take several seconds
-    CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+    (void)CoInitializeEx(nullptr, COINIT_MULTITHREADED);
     MFStartup(MF_VERSION, MFSTARTUP_NOSOCKET);
 
     usbEnumerator_ = IUsbEnumerator::getInstance();
@@ -399,7 +399,6 @@ bool WinUsbDeviceWatcher::registerDeviceInterfaceToHwnd(HWND hWnd) {
 
     data->hDevNotifyHW = RegisterDeviceNotification(hWnd, &devBroadcastDeviceInterface, DEVICE_NOTIFY_WINDOW_HANDLE);
     if(data->hDevNotifyHW == nullptr) {
-        UnregisterDeviceNotification(data->hDevNotifyHW);
         LOG_WARN("Register HW events Failed!");
         return false;
     }
@@ -412,7 +411,6 @@ bool WinUsbDeviceWatcher::registerDeviceInterfaceToHwnd(HWND hWnd) {
 
     data->hDevNotifyUVC = RegisterDeviceNotification(hWnd, &di, DEVICE_NOTIFY_WINDOW_HANDLE);
     if(data->hDevNotifyUVC == nullptr) {
-        UnregisterDeviceNotification(data->hDevNotifyUVC);
         LOG_WARN("Register UVC events Failed!");
         return false;
     }
@@ -425,7 +423,6 @@ bool WinUsbDeviceWatcher::registerDeviceInterfaceToHwnd(HWND hWnd) {
 
     data->hDevNotifySensor = RegisterDeviceNotification(hWnd, &di_sensor, DEVICE_NOTIFY_WINDOW_HANDLE);
     if(data->hDevNotifySensor == nullptr) {
-        UnregisterDeviceNotification(data->hDevNotifySensor);
         LOG_WARN("Register UVC events Failed!");
         return false;
     }
@@ -440,7 +437,6 @@ bool WinUsbDeviceWatcher::registerDeviceInterfaceToHwnd(HWND hWnd) {
 
     data->hDevNotifyHID = RegisterDeviceNotification(hWnd, &hid_sensor, DEVICE_NOTIFY_WINDOW_HANDLE);
     if(data->hDevNotifyHID == nullptr) {
-        UnregisterDeviceNotification(data->hDevNotifyHID);
         LOG_WARN("Register hid events Failed!");
         return false;
     }
@@ -454,7 +450,6 @@ bool WinUsbDeviceWatcher::registerDeviceInterfaceToHwnd(HWND hWnd) {
 
     data->hDevNotifyUSB = RegisterDeviceNotification(hWnd, &devBroadcastUsbDeviceInterface, DEVICE_NOTIFY_WINDOW_HANDLE);
     if(data->hDevNotifyUSB == nullptr) {
-        UnregisterDeviceNotification(data->hDevNotifyUSB);
         LOG_WARN("Register HW events Failed!");
         return false;
     }

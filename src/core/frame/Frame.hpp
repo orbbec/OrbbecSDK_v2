@@ -245,7 +245,7 @@ class FrameSet : public Frame {
 
 public:
     FrameSet(uint8_t *data, size_t dataBufSize, FrameBufferReclaimFunc bufferReclaimFunc = nullptr);
-    ~FrameSet() noexcept;
+    ~FrameSet() noexcept override;
 
     uint32_t getCount() const;
 

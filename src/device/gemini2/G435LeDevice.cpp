@@ -207,7 +207,7 @@ void G435LeDeviceBase::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) 
     sensor->setStreamProfileFilter(streamProfileFilter.get());
 
     auto        depthWorkModeManager = getComponentT<IDepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
-    auto        workMode             = depthWorkModeManager->getCurrentDepthWorkMode();
+    const auto &workMode             = depthWorkModeManager->getCurrentDepthWorkMode();
     std::string workModeName         = workMode.name;
     auto        sensorType           = sensor->getSensorType();
     auto        streamProfile        = StreamProfileFactory::getDefaultStreamProfileFromEnvConfig(deviceInfo_->name_, sensorType, workModeName);

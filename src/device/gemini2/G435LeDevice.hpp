@@ -13,7 +13,7 @@ namespace libobsensor {
 class G435LeDeviceBase : public DeviceBase {
 public:
     G435LeDeviceBase(const std::shared_ptr<const IDeviceEnumInfo> &info);
-    virtual ~G435LeDeviceBase() noexcept;
+    virtual ~G435LeDeviceBase() noexcept override;
 
     void init() override;
 
@@ -29,7 +29,7 @@ protected:
 class G435LeDevice : public G435LeDeviceBase {
 public:
     G435LeDevice(const std::shared_ptr<const IDeviceEnumInfo> &info);
-    virtual ~G435LeDevice() noexcept;
+    virtual ~G435LeDevice() noexcept override;
 
 private:
     void init() override;

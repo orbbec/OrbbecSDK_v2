@@ -141,7 +141,7 @@ bool DaBaiAAlgParamManager::findBestMatchedCameraParam(const std::vector<OBCamer
 
 DaBaiAAlgParamManager::DaBaiAAlgParamManager(IDevice *owner) : DisparityAlgParamManagerBase(owner) {
     auto        depthWorkModeManager = owner->getComponentT<G330DepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
-    auto        currentWorkMode      = depthWorkModeManager->getCurrentDepthWorkMode();
+    const auto &currentWorkMode      = depthWorkModeManager->getCurrentDepthWorkMode();
     std::string name(currentWorkMode.name);
     currentDepthAlgMode_ = name;
     fetchParamFromDevice();

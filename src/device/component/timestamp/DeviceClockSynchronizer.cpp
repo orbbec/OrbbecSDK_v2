@@ -15,7 +15,11 @@ const std::vector<uint16_t> Mx6600DevPids = {
 namespace libobsensor {
 
 DeviceClockSynchronizer::DeviceClockSynchronizer(IDevice *owner, uint64_t deviceClockFreqIn, uint64_t deviceClockFreqOut)
-    : DeviceComponentBase(owner), deviceClockFreqIn_(deviceClockFreqIn), deviceClockFreqOut_(deviceClockFreqOut), isTimestampResetConfigInit_(false) {}
+    : DeviceComponentBase(owner),
+      deviceClockFreqIn_(deviceClockFreqIn),
+      deviceClockFreqOut_(deviceClockFreqOut),
+      isTimestampResetConfigInit_(false),
+      currentTimestampResetConfig_{} {}
 
 void DeviceClockSynchronizer::setTimestampResetConfig(const OBDeviceTimestampResetConfig &timestampResetConfig) {
     if(isTimestampResetConfigInit_ && 0 == memcmp(&currentTimestampResetConfig_, &timestampResetConfig, sizeof(OBDeviceTimestampResetConfig))) {

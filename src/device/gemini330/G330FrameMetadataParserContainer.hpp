@@ -43,7 +43,7 @@ public:
         registerParser(OB_FRAME_METADATA_TYPE_AE_ROI_BOTTOM, makeStructureMetadataParser(&G330ColorUvcMetadata::exposure_roi_bottom));
     }
 
-    virtual ~G330ColorFrameMetadataParserContainer() = default;
+    virtual ~G330ColorFrameMetadataParserContainer() override = default;
 };
 
 class G330DepthFrameMetadataParserContainer : public FrameMetadataParserContainer {
@@ -82,7 +82,7 @@ public:
         registerParser(OB_FRAME_METADATA_TYPE_DISPARITY_SEARCH_RANGE, makeStructureMetadataParser(&G330DepthUvcMetadata::disparity_search_range));
     }
 
-    virtual ~G330DepthFrameMetadataParserContainer() = default;
+    virtual ~G330DepthFrameMetadataParserContainer() override = default;
 };
 
 class G330ColorFrameMetadataParserContainerByScr : public FrameMetadataParserContainer {

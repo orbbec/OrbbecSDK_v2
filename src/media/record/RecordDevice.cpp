@@ -226,8 +226,8 @@ void RecordDevice::writeCalibrationParamProperty() {
         writer_->writeProperty(OB_RAW_DATA_ALIGN_CALIB_PARAM, reinterpret_cast<uint8_t *>(calibrationList.data()),
                                static_cast<uint32_t>(calibrationList.size() * sizeof(OBCameraParam)));
 
-        auto imuCalibrationParam = algParamManager->getIMUCalibrationParam();
-        writer_->writeProperty(OB_RAW_DATA_IMU_CALIB_PARAM, reinterpret_cast<uint8_t *>(&imuCalibrationParam), sizeof(OBIMUCalibrateParams));
+        const auto &imuCalibrationParam = algParamManager->getIMUCalibrationParam();
+        writer_->writeProperty(OB_RAW_DATA_IMU_CALIB_PARAM, reinterpret_cast<const uint8_t *>(&imuCalibrationParam), sizeof(OBIMUCalibrateParams));
     }
 }
 

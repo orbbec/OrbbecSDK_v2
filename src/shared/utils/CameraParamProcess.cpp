@@ -172,6 +172,8 @@ void CameraParamProcessor::rotateCameraParam(OBCameraParam *cameraParam, int rot
         CameraParamProcessor::distortionParamRotate270(&cameraParam->depthDistortion);
         CameraParamProcessor::d2cTransformParamsRotate270(&cameraParam->transform);
     } break;
+    default:
+        break;
     }
 }
 
