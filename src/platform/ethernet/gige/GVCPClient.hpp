@@ -109,6 +109,7 @@ struct GVCPSocketInfo {
     std::string address          = "unknown";
     std::string netInterfaceName = "unknown";
     SOCKET      sock             = 0;
+    SOCKET      sockRecv         = 0;
 };
 
 #define MAX_SOCKETS 32
@@ -130,6 +131,15 @@ private:
     int    openClientSockets();
     void   closeClientSockets();
     SOCKET openClientSocket(SOCKADDR_IN addr);
+    /**
+     * @brief receive parse gvcp response
+     *
+     * @param[in] socketInfo socket info
+     *
+     * @return < 0: error
+     *         other: device count
+     */
+    int    recvAndParseGVCPResponse(SOCKET sock, const GVCPSocketInfo &socketInfo);
     void   sendGVCPDiscovery(GVCPSocketInfo socketInfo);
     void   sendGVCPForceIP(GVCPSocketInfo socketInfo, std::string mac, const OBNetIpConfig &config);
 
@@ -139,6 +149,8 @@ private:
 
     //
     void checkAndUpdateSockets();
+
+    SOCKET openClientRecvSocket(SOCKET srcSock);
 
 private:
     SOCKET                     socks_[MAX_SOCKETS];
