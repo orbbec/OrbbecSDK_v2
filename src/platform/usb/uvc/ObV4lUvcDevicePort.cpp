@@ -397,17 +397,23 @@ void ObV4lUvcDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandle> devHandle)
         int max_fd = std::max({ devHandle->fd, devHandle->metadataFd, devHandle->stopPipeFd[0], devHandle->stopPipeFd[1] });
 
         if(devHandle->metadataFd >= 0) {
-            v4l2_buffer buf = {};
-            buf.type        = LOCAL_V4L2_BUF_TYPE_META_CAPTURE;
-            buf.memory      = V4L2_MEMORY_MMAP;
-            xioctl(devHandle->metadataFd, VIDIOC_QBUF, &buf);
+            for (uint32_t  i = 0; i < MAX_BUFFER_COUNT; i++) {
+                v4l2_buffer buf = {};
+                buf.type        = LOCAL_V4L2_BUF_TYPE_META_CAPTURE;
+                buf.memory      = V4L2_MEMORY_MMAP;
+                buf.index       = i;
+                xioctl(devHandle->metadataFd, VIDIOC_QBUF, &buf);
+            }
         }
 
         if(devHandle->fd >= 0) {
-            v4l2_buffer buf = {};
-            buf.type        = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-            buf.memory      = V4L2_MEMORY_MMAP;
-            xioctl(devHandle->fd, VIDIOC_QBUF, &buf);
+            for (uint32_t  i = 0; i < MAX_BUFFER_COUNT; i++) {
+                v4l2_buffer buf = {};
+                buf.type        = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+                buf.memory      = V4L2_MEMORY_MMAP;
+                buf.index       = i;
+                xioctl(devHandle->fd, VIDIOC_QBUF, &buf);
+            }
         }
 
         while(devHandle->isCapturing) {
@@ -461,9 +467,7 @@ void ObV4lUvcDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandle> devHandle)
                     metadataBufferIndex                                 = buf.index;
                 }
 
-                if(devHandle->isCapturing) {
-                    xioctl(devHandle->metadataFd, VIDIOC_QBUF, &buf);
-                }
+                xioctl(devHandle->metadataFd, VIDIOC_QBUF, &buf);
             }
 
             if(FD_ISSET(devHandle->fd, &fds)) {
@@ -504,9 +508,7 @@ void ObV4lUvcDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandle> devHandle)
                     })
                 }
 
-                if(devHandle->isCapturing) {
-                    xioctl(devHandle->fd, VIDIOC_QBUF, &buf);
-                }
+                xioctl(devHandle->fd, VIDIOC_QBUF, &buf);
             }
         }
     }
