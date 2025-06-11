@@ -151,9 +151,11 @@ void PlaybackDevicePort::playbackLoop() {
 
         bool isEndOfFile = reader_->getIsEndOfFile();
         if(!isEndOfFile) {
-            std::shared_ptr<Frame> frame;
+            std::shared_ptr<Frame>   frame;
+            std::chrono::nanoseconds lastTime;
             try {
-                frame = reader_->readNextData();
+                frame    = reader_->readNextData();
+                lastTime = reader_->getCurTime();
             }
             catch(const orbbecRosbag::Exception &e) {
                 LOG_ERROR("Error when reading data from .bag file: {}", e.what());
@@ -171,6 +173,12 @@ void PlaybackDevicePort::playbackLoop() {
             uint64_t sleepTime = calculateSleepTime(frame->getTimeStampUsec());  // in microseconds
             if(sleepTime > 0 && sleepTime < MAX_SLEEP_TIME_US) {
                 utils::sleepMs(sleepTime / 1000);  // in milliseconds
+            }
+
+            auto currentTime = reader_->getCurTime();
+            if(currentTime != lastTime) {
+                LOG_DEBUG("Playback progress changed, discard the current frame... index: {}", frame->getNumber());
+                continue;
             }
 
             auto sensorType = utils::mapFrameTypeToSensorType(frame->getType());
