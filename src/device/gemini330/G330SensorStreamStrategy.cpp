@@ -47,7 +47,7 @@ void G330SensorStreamStrategy::validateStream(const std::shared_ptr<const Stream
 
 void G330SensorStreamStrategy::validateStream(const std::vector<std::shared_ptr<const StreamProfile>> &profiles) {
     if(getOwner()->getFirmwareVersionInt() >= 10325) {
-        validateISPFirmwareVersion();
+        validateISPFirmwareVersion(profiles);
     }
 
     {
@@ -65,16 +65,27 @@ void G330SensorStreamStrategy::validateStream(const std::vector<std::shared_ptr<
     validatePreset(profiles);
 }
 
-void G330SensorStreamStrategy::validateISPFirmwareVersion() {
-    bool        needUpgrade = false;
-    std::string ispFwVer    = getOwner()->getExtensionInfo(ISP_FW_VER_KEY);
-    std::string ispNeedVer  = getOwner()->getExtensionInfo(ISP_NEED_VER_KEY);
-    if(!ispFwVer.empty() && !ispNeedVer.empty()) {
-        needUpgrade = ispNeedVer > ispFwVer;
-    }
+void G330SensorStreamStrategy::validateISPFirmwareVersion(const std::vector<std::shared_ptr<const StreamProfile>> &profiles) {
+    bool rgbEnable = false;
+    for(auto profile: profiles) {
+        auto streamType = profile->getType();
 
-    if(needUpgrade) {
-        throw unsupported_operation_exception("unexpected isp firmware version, please update your camera firmware before streaming data.");
+        if (streamType == OB_STREAM_COLOR) {
+            rgbEnable = true;
+            break;
+        }
+    }
+    if (rgbEnable) {
+        bool        needUpgrade = false;
+        std::string ispFwVer    = getOwner()->getExtensionInfo(ISP_FW_VER_KEY);
+        std::string ispNeedVer  = getOwner()->getExtensionInfo(ISP_NEED_VER_KEY);
+        if(!ispFwVer.empty() && !ispNeedVer.empty()) {
+            needUpgrade = ispNeedVer > ispFwVer;
+        }
+
+        if(needUpgrade) {
+            throw unsupported_operation_exception("unexpected isp firmware version, please update your camera firmware before streaming data.");
+        }
     }
 }
 

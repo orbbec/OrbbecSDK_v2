@@ -23,7 +23,7 @@ public:
     void markStreamDeactivated(const std::shared_ptr<const StreamProfile> &profile) override;
 
 private:
-    void validateISPFirmwareVersion();
+    void validateISPFirmwareVersion(const std::vector<std::shared_ptr<const StreamProfile>> &profiles);
     void validateDepthAndIrStream(const std::vector<std::shared_ptr<const StreamProfile>> &profiles);
     void validatePreset(const std::vector<std::shared_ptr<const StreamProfile>> &profiles);
 
