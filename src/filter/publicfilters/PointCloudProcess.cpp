@@ -151,7 +151,7 @@ std::shared_ptr<Frame> PointCloudFilter::createDepthPointCloud(std::shared_ptr<c
     uint32_t validPointCount = 0;
     CoordinateUtil::transformationDepthToPointCloud(&depthXyTables_, depthFrame->getData(), (void *)pointFrame->getData(), isOutputZeroPoint_, &validPointCount,
                                                     positionDataScale_,
-                                                    coordinateSystemType_);
+                                                    coordinateSystemType_, depthFrame->getFormat() == OB_FORMAT_Y12C4);
 
     pointFrame->setDataSize(validPointCount * sizeof(OBPoint));
     float depthValueScale = depthFrame->as<DepthFrame>()->getValueScale();
@@ -314,13 +314,13 @@ std::shared_ptr<Frame> PointCloudFilter::createRGBDPointCloud(std::shared_ptr<co
     if(distortionType == OBPointCloudDistortionType::OB_POINT_CLOUD_ADD_DISTORTION_TYPE) {
         CoordinateUtil::transformationDepthToRGBDPointCloudByUVTables(dstIntrinsic, &rgbdXyTables_, depthFrame->getData(), colorData,
                                                                       (void *)pointFrame->getData(), isOutputZeroPoint_, &validPointCount, 
-                                                                      positionDataScale_,coordinateSystemType_,isColorDataNormalization_);
+                                                                      positionDataScale_,coordinateSystemType_,isColorDataNormalization_, depthFrame->getFormat() == OB_FORMAT_Y12C4);
     }
     else {
         CoordinateUtil::transformationDepthToRGBDPointCloud(&rgbdXyTables_, depthFrame->getData(), colorData, (void *)pointFrame->getData(), 
                                                             isOutputZeroPoint_,&validPointCount,positionDataScale_,
                                                             coordinateSystemType_, isColorDataNormalization_, colorVideoFrame->getWidth(),
-                                                            colorVideoFrame->getHeight());
+                                                            colorVideoFrame->getHeight(), depthFrame->getFormat() == OB_FORMAT_Y12C4);
     }
 
     pointFrame->setDataSize(validPointCount * sizeof(OBColorPoint));

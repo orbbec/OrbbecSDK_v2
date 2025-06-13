@@ -569,7 +569,7 @@ bool CoordinateUtil::transformationInitAddDistortionUVTables(const OBCameraIntri
 
 void CoordinateUtil::transformationDepthToPointCloud(OBXYTables *xyTables, const void *depthImageData, void *pointCloudData, 
                                                     bool outputZeroPoint,uint32_t *validPointCount,float positionDataScale,
-                                                     OBCoordinateSystemType type) {
+                                                     OBCoordinateSystemType type, bool isDepthImageY12C4) {
     const uint16_t *imageData = (const uint16_t *)depthImageData;
     float *         xyzData   = (float *)pointCloudData;
     float           x, y, z;
@@ -580,6 +580,10 @@ void CoordinateUtil::transformationDepthToPointCloud(OBXYTables *xyTables, const
         float x_tab = xyTables->xTable[i];
 
         uint16_t depthValue = imageData[i];
+        if(isDepthImageY12C4) {
+            depthValue = depthValue & 0xFFF0;
+            depthValue = depthValue >> 4;
+        }
         if(!std::isnan(x_tab) && depthValue != 65535) {
             z = (float)depthValue;
             x = x_tab * (float)z;
@@ -611,8 +615,8 @@ void CoordinateUtil::transformationDepthToPointCloud(OBXYTables *xyTables, const
 }
 
 void CoordinateUtil::transformationDepthToRGBDPointCloud(OBXYTables *xyTables, const void *depthImageData, const void *colorImageData, void *pointCloudData,
-                                                         bool outputZeroPoint,uint32_t *validPointCount,float positionDataScale, OBCoordinateSystemType type, 
-                                                         bool colorDataNormalization, uint32_t colorWidth,uint32_t colorHeight) {
+                                                         bool outputZeroPoint,uint32_t *validPointCount,float positionDataScale, OBCoordinateSystemType type,
+                                                         bool colorDataNormalization, uint32_t colorWidth,uint32_t colorHeight, bool isDepthImageY12C4) {
     const uint16_t *dImageData = (const uint16_t *)depthImageData;
     const uint8_t * cImageData = (const uint8_t *)colorImageData;
     float *         xyzrgbData = (float *)pointCloudData;
@@ -640,6 +644,10 @@ void CoordinateUtil::transformationDepthToRGBDPointCloud(OBXYTables *xyTables, c
             float x_tab = xyTables->xTable[idc];
 
             uint16_t depthValue = dImageData[idc];
+            if(isDepthImageY12C4) {
+                depthValue = depthValue & 0xFFF0;
+                depthValue = depthValue >> 4;
+            }
             if(!std::isnan(x_tab) && depthValue != 65535) {
                 z = (float)depthValue;
                 x = x_tab * (float)z;
@@ -684,8 +692,8 @@ void CoordinateUtil::transformationDepthToRGBDPointCloud(OBXYTables *xyTables, c
 
 void CoordinateUtil::transformationDepthToRGBDPointCloudByUVTables(const OBCameraIntrinsic rgbIntrinsic, OBXYTables *uvTables, const void *depthImageData,
                                                                    const void *colorImageData, void *pointCloudData,bool outputZeroPoint,
-                                                                   uint32_t *validPointCount,float positionDataScale,OBCoordinateSystemType type, 
-                                                                   bool colorDataNormalization) {
+                                                                   uint32_t *validPointCount,float positionDataScale,OBCoordinateSystemType type,
+                                                                   bool colorDataNormalization, bool isDepthImageY12C4) {
     const uint16_t *dImageData = (const uint16_t *)depthImageData;
     const uint8_t * cImageData = (const uint8_t *)colorImageData;
     float *         xyzrgbData = (float *)pointCloudData;
@@ -709,6 +717,10 @@ void CoordinateUtil::transformationDepthToRGBDPointCloudByUVTables(const OBCamer
         int yValue = i / uvTables->width;
 
         uint16_t depthValue = dImageData[i];
+        if(isDepthImageY12C4) {
+            depthValue = depthValue & 0xFFF0;
+            depthValue = depthValue >> 4;
+        }
         if(!std::isnan(uvTables->xTable[i]) && depthValue != 65535) {
             z = (float)depthValue;
             x = ((xValue - rgbIntrinsic.cx) / rgbIntrinsic.fx) * (float)z;
