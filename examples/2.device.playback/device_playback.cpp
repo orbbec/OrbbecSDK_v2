@@ -24,12 +24,14 @@ int main(void) try {
     std::shared_ptr<ob::Pipeline> pipe = std::make_shared<ob::Pipeline>(playback);
     // Enable all recording streams from the playback device
     std::shared_ptr<ob::Config> config = std::make_shared<ob::Config>();
+    std::cout << "duration: " << playback->getDuration() << std::endl;
 
     // Set playback status change callback, when the playback stops, start the pipeline again with the same config
     playback->setPlaybackStatusChangeCallback([&](OBPlaybackStatus status) {
         if(status == OB_PLAYBACK_STOPPED && !exited) {
             pipe->stop();
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            std::cout << "Replay again" << std::endl;
             pipe->start(config);
         }
     });
@@ -42,15 +44,20 @@ int main(void) try {
     }
 
     // Start the pipeline with the config
-    pipe->start(config);
+    std::mutex                          frameMutex;
+    std::shared_ptr<const ob::FrameSet> renderFrameSet;
+    pipe->start(config, [&](std::shared_ptr<ob::FrameSet> frameSet) {
+        std::lock_guard<std::mutex> lock(frameMutex);
+        renderFrameSet = frameSet;
+    });
 
     ob_smpl::CVWindow win("Playback", 1280, 720, ob_smpl::ARRANGE_GRID);
-    while(win.run()) {
-        auto frameSet = pipe->waitForFrameset();
-        if(frameSet == nullptr) {
+    while(win.run() && !exited) {
+        std::lock_guard<std::mutex> lock(frameMutex);
+        if(renderFrameSet == nullptr) {
             continue;
         }
-        win.pushFramesToView(frameSet);
+        win.pushFramesToView(renderFrameSet);
     }
     exited = true;
 
