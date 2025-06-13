@@ -82,16 +82,22 @@ void DeviceResource::timestampDiffSaver() {
 }
 
 void DeviceResource::startStream(std::shared_ptr<ob::Config> config, bool enableTimestampDiffSaver) {
+    // check and stop timestamp save thread
+    if(timestamp_diff_saver_running_) {
+        timestamp_diff_saver_running_ = false;
+        timestamp_diff_cv_.notify_all();
+    }
+    if(timestamp_diff_saver_thread_.joinable()) {
+        timestamp_diff_saver_thread_.join();
+    }
+
+    // check if enable timestamp saver
     if(enableTimestampDiffSaver) {
-        if(timestamp_diff_saver_running_) {
-            timestamp_diff_saver_running_ = false;
-            timestamp_diff_cv_.notify_all();
-        }
-        if(timestamp_diff_saver_thread_.joinable()) {
-            timestamp_diff_saver_thread_.join();
-        }
         timestamp_diff_saver_thread_ = std::thread(&DeviceResource::timestampDiffSaver, this);
         is_timestamp_saver_enabled_  = true;
+    }
+    else {
+        is_timestamp_saver_enabled_ = false;
     }
 
     pipeline_->start(config, [this](std::shared_ptr<ob::FrameSet> frameset) {
@@ -102,7 +108,7 @@ void DeviceResource::startStream(std::shared_ptr<ob::Config> config, bool enable
         std::lock_guard<std::mutex> lock(mutex_);
         frames_ = frameset;
 
-        if(is_timestamp_saver_enabled_) {
+        if(is_timestamp_saver_enabled_ && timestamp_diff_saver_running_) {
             frameQueue_.push(frameset);
             timestamp_diff_cv_.notify_all();
         }
