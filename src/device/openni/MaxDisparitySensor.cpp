@@ -45,11 +45,7 @@ void MaxDisparitySensor::start(std::shared_ptr<const StreamProfile> sp, FrameCal
         }
     }
 
-    BEGIN_TRY_EXECUTE({ propertyServer->setPropertyValue(OB_PROP_DEPTH_LOAD_ENGINE_GROUP_PARAM_INT, value, PROP_ACCESS_INTERNAL); })
-    CATCH_EXCEPTION_AND_EXECUTE({
-        LOG_ERROR("Max Pro depth sensor start failed!");
-        throw; 
-    })
+    TRY_EXECUTE({ propertyServer->setPropertyValue(OB_PROP_DEPTH_LOAD_ENGINE_GROUP_PARAM_INT, value, PROP_ACCESS_INTERNAL); })
 
     OpenNIFrameProcessParam processParam = { 1, 0, 0, 0, 0, 0, 0 };
     auto it = profileProcessParamMap_.find(sp);

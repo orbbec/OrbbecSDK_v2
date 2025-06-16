@@ -181,4 +181,17 @@ const std::vector<uint16_t> OpenniMonocularPids = {
     0x069d,  // Astra Pro2
 };
 
+const std::vector<uint16_t> OpenniDW2Pids = {
+    0x069f,  // Dabai DW2
+    0x06a7,  // Gemini EW Lite
+    0x06a0,  // Dabai DCW2
+    0x06a6,  // Gemini EW
+};
+
+const std::vector<uint16_t> OpenniMaxPids = {
+    0x069a,  // Dabai Max
+    0x069e,  // Dabai Max Pro
+    0x06aa,  // Gemini UW
+};
+
 }  // namespace libobsensor
