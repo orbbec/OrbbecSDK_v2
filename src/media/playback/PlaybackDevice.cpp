@@ -15,6 +15,9 @@
 #include "component/sensor/imu/GyroSensor.hpp"
 #include "component/sensor/imu/AccelSensor.hpp"
 #include "gemini330/G330FrameMetadataParserContainer.hpp"
+#include "openni/OpenNIDisparitySensor.hpp"
+#include "openni/DW2DisparitySensor.hpp"
+#include "openni/MaxDisparitySensor.hpp"
 #include "FilterFactory.hpp"
 
 namespace libobsensor {
@@ -90,6 +93,70 @@ void PlaybackDevice::initSensorList() {
             if(isDeviceInSeries(FemtoMegaDevPids, deviceInfo_->pid_) || isDeviceInSeries(FemtoBoltDevPids, deviceInfo_->pid_)) {
                 sensor = std::make_shared<VideoSensor>(this, OB_SENSOR_DEPTH, port_);
                 sensor->setStreamProfileList(port_->getStreamProfileList(OB_SENSOR_DEPTH));
+            }
+            else if(isDeviceInSeries(OpenniMonocularPids, deviceInfo_->pid_)) {
+                sensor = std::make_shared<OpenNIDisparitySensor>(this, OB_SENSOR_DEPTH, port_);
+                sensor->setStreamProfileList(port_->getStreamProfileList(OB_SENSOR_DEPTH));
+                sensor->updateFormatFilterConfig({});  // for call convertProfileAsDisparityBasedProfile
+
+                auto algParamManager = getComponentT<PlaybackDeviceParamManager>(OB_DEV_COMPONENT_ALG_PARAM_MANAGER);
+                algParamManager->bindDisparityParam(sensor->getStreamProfileList());
+
+                auto propServer = getPropertyServer();
+                std::dynamic_pointer_cast<OpenNIDisparitySensor>(sensor)->markOutputDisparityFrame(true);
+
+                // depth unit - non-G330 specific
+                if(port_->isPropertySupported(OB_PROP_DEPTH_PRECISION_LEVEL_INT)) {
+                    OBPropertyValue value{};
+                    port_->getRecordedPropertyValue(OB_PROP_DEPTH_PRECISION_LEVEL_INT, &value);
+                    std::dynamic_pointer_cast<OpenNIDisparitySensor>(sensor)->setDepthUnit(
+                        utils::depthPrecisionLevelToUnit(static_cast<OBDepthPrecisionLevel>(value.intValue)));
+                    propServer->setPropertyValueT<int>(OB_PROP_DEPTH_PRECISION_LEVEL_INT, value.intValue);
+                }
+            }
+            else if(isDeviceInSeries(OpenniDW2Pids, deviceInfo_->pid_)) {
+                sensor = std::make_shared<DW2DisparitySensor>(this, OB_SENSOR_DEPTH, port_);
+                sensor->setStreamProfileList(port_->getStreamProfileList(OB_SENSOR_DEPTH));
+                sensor->updateFormatFilterConfig({});  // for call convertProfileAsDisparityBasedProfile
+
+                std::dynamic_pointer_cast<DW2DisparitySensor>(sensor)->initProfileVirtualRealMap();
+
+                auto algParamManager = getComponentT<PlaybackDeviceParamManager>(OB_DEV_COMPONENT_ALG_PARAM_MANAGER);
+                algParamManager->bindDisparityParam(sensor->getStreamProfileList());
+
+                auto propServer = getPropertyServer();
+                std::dynamic_pointer_cast<DW2DisparitySensor>(sensor)->markOutputDisparityFrame(true);
+
+                // depth unit - non-G330 specific
+                if(port_->isPropertySupported(OB_PROP_DEPTH_PRECISION_LEVEL_INT)) {
+                    OBPropertyValue value{};
+                    port_->getRecordedPropertyValue(OB_PROP_DEPTH_PRECISION_LEVEL_INT, &value);
+                    std::dynamic_pointer_cast<DW2DisparitySensor>(sensor)->setDepthUnit(
+                        utils::depthPrecisionLevelToUnit(static_cast<OBDepthPrecisionLevel>(value.intValue)));
+                    propServer->setPropertyValueT<int>(OB_PROP_DEPTH_PRECISION_LEVEL_INT, value.intValue);
+                }
+            }
+            else if(isDeviceInSeries(OpenniMaxPids, deviceInfo_->pid_)) {
+                sensor = std::make_shared<MaxDisparitySensor>(this, OB_SENSOR_DEPTH, port_);
+                sensor->setStreamProfileList(port_->getStreamProfileList(OB_SENSOR_DEPTH));
+                sensor->updateFormatFilterConfig({});  // for call convertProfileAsDisparityBasedProfile
+
+                std::dynamic_pointer_cast<MaxDisparitySensor>(sensor)->initProfileVirtualRealMap();
+
+                auto algParamManager = getComponentT<PlaybackDeviceParamManager>(OB_DEV_COMPONENT_ALG_PARAM_MANAGER);
+                algParamManager->bindDisparityParam(sensor->getStreamProfileList());
+
+                auto propServer = getPropertyServer();
+                std::dynamic_pointer_cast<MaxDisparitySensor>(sensor)->markOutputDisparityFrame(true);
+
+                // depth unit - non-G330 specific
+                if(port_->isPropertySupported(OB_PROP_DEPTH_PRECISION_LEVEL_INT)) {
+                    OBPropertyValue value{};
+                    port_->getRecordedPropertyValue(OB_PROP_DEPTH_PRECISION_LEVEL_INT, &value);
+                    std::dynamic_pointer_cast<MaxDisparitySensor>(sensor)->setDepthUnit(
+                        utils::depthPrecisionLevelToUnit(static_cast<OBDepthPrecisionLevel>(value.intValue)));
+                    propServer->setPropertyValueT<int>(OB_PROP_DEPTH_PRECISION_LEVEL_INT, value.intValue);
+                }
             }
             else {
                 sensor = std::make_shared<DisparityBasedSensor>(this, OB_SENSOR_DEPTH, port_);
