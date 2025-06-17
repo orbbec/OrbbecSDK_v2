@@ -24,6 +24,7 @@
 #include "property/PrivateFilterPropertyAccessors.hpp"
 #include "firmwareupdater/FirmwareUpdater.hpp"
 #include "firmwareupdater/firmwareupdateguard/FirmwareUpdateGuards.hpp"
+#include "OpenNIDisparitySensor.hpp"
 #include "DevicePids.hpp"
 #include <algorithm>
 
@@ -238,6 +239,12 @@ std::vector<std::shared_ptr<IFilter>> OpenNIDeviceBase::createRecommendedPostPro
     }
 
     return depthFilterList;
+}
+
+OpenNIFrameProcessParam libobsensor::OpenNIDeviceBase::getFrameProcessParam() {
+    auto                    depthSensor = getComponentT<OpenNIDisparitySensor>(OB_DEV_COMPONENT_DEPTH_SENSOR);
+    OpenNIFrameProcessParam param       = depthSensor->getCurrentFrameProcessParam();
+    return param;
 }
 
 }  // namespace libobsensor

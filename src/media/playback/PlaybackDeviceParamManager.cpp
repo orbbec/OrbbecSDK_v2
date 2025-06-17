@@ -43,6 +43,10 @@ const OBDisparityParam &PlaybackDeviceParamManager::getDisparityParam() const {
     return disparityParam_;
 }
 
+const OpenNIFrameProcessParam &PlaybackDeviceParamManager::getOpenNIFrameProcessParam() const {
+    return frameProcessParam_;
+}
+
 void PlaybackDeviceParamManager::bindDisparityParam(std::vector<std::shared_ptr<const StreamProfile>> streamProfileList) {
     const auto &dispParam    = getDisparityParam();
     auto        intrinsicMgr = StreamIntrinsicsManager::getInstance();
@@ -74,6 +78,12 @@ void PlaybackDeviceParamManager::initDeviceParams() {
     rawData = port_->getRecordedStructData(OB_RAW_DATA_IMU_CALIB_PARAM);
     if(!rawData.empty()) {
         imuCalibrationParam_ = *(reinterpret_cast<OBIMUCalibrateParams *>(rawData.data()));
+    }
+
+    rawData.clear();
+    rawData = port_->getRecordedStructData(OB_OPENNI_DEPTH_PROCESSOR_PARAM);
+    if(!rawData.empty()) {
+        frameProcessParam_ = *(reinterpret_cast<OpenNIFrameProcessParam *>(rawData.data()));
     }
 }
 

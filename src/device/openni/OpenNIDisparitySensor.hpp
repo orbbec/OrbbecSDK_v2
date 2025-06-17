@@ -4,6 +4,7 @@
 #pragma once
 
 #include "sensor/video/VideoSensor.hpp"
+#include <vector>
 
 namespace libobsensor {
 class OpenNIDisparitySensor : public VideoSensor {
@@ -21,6 +22,15 @@ public:
 
     void setFrameProcessor(std::shared_ptr<FrameProcessor> frameProcessor);
 
+    OpenNIFrameProcessParam getCurrentFrameProcessParam() {
+        return currentProcessParam_;
+    }
+
+    void setFrameProcessParam(OpenNIFrameProcessParam currentProcessParam) {
+        playbackProcessParam_.clear();
+        playbackProcessParam_.push_back(currentProcessParam);
+    }
+
 protected:
     void outputFrame(std::shared_ptr<Frame> frame) override;
 
@@ -30,5 +40,9 @@ protected:
     bool outputDisparityFrame_ = false;
 
     float depthUnit_ = 1.0f;
+
+    OpenNIFrameProcessParam              currentProcessParam_ = { 1, 0, 0, 0, 0, 0, 0 };
+    std::vector<OpenNIFrameProcessParam> playbackProcessParam_;
+
 };
 }  // namespace libobsensor

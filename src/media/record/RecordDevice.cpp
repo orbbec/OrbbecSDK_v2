@@ -9,6 +9,8 @@
 #include "property/InternalProperty.hpp"
 #include "utils/MediaUtils.hpp"
 #include "IDeviceSyncConfigurator.hpp"
+#include "openni/OpenNIDisparitySensor.hpp"
+#include "openni/OpenNIDeviceBase.hpp"
 
 namespace libobsensor {
 
@@ -93,6 +95,11 @@ void RecordDevice::writeAllProperties() {
 void RecordDevice::stopRecord() {
     writer_->writeDeviceInfo(std::dynamic_pointer_cast<DeviceBase>(device_)->getInfo());
     writer_->writeStreamProfiles();
+    writeOpenNIDepthProcessorParams();
+}
+
+bool RecordDevice::isDeviceInSeries(const std::vector<uint16_t> &pids, const uint16_t &pid) {
+    return std::find(pids.begin(), pids.end(), pid) != pids.end() ? true : false;
 }
 
 void RecordDevice::writeVersionProperty() {
@@ -249,6 +256,13 @@ void RecordDevice::writeMultiDeviceSyncConfigProperty() {
         // The multi-device sync configuration is made up of multiple parts
         // Use OB_STRUCT_MULTI_DEVICE_SYNC_CONFIG for the property id
         writer_->writeProperty(OB_STRUCT_MULTI_DEVICE_SYNC_CONFIG, reinterpret_cast<const uint8_t *>(&config), sizeof(OBMultiDeviceSyncConfig));
+    }
+}
+
+void RecordDevice::writeOpenNIDepthProcessorParams() {
+    if(isDeviceInSeries(OpenniDW2Pids, device_->getInfo()->pid_) || isDeviceInSeries(OpenniMaxPids, device_->getInfo()->pid_)) {
+        OpenNIFrameProcessParam processParam = std::dynamic_pointer_cast<OpenNIDeviceBase>(device_)->getFrameProcessParam();
+        writer_->writeProperty(OB_OPENNI_DEPTH_PROCESSOR_PARAM, reinterpret_cast<uint8_t *>(&processParam), sizeof(OpenNIFrameProcessParam));
     }
 }
 

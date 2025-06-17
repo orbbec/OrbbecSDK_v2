@@ -6,6 +6,7 @@
 #include "IAlgParamManager.hpp"
 #include "PlaybackDevicePort.hpp"
 #include "component/DeviceComponentBase.hpp"
+#include "InternalTypes.hpp"
 
 namespace libobsensor {
 
@@ -21,6 +22,8 @@ public:
 
     virtual const OBDisparityParam &getDisparityParam() const override;
 
+    virtual const OpenNIFrameProcessParam &getOpenNIFrameProcessParam() const;
+
     void bindDisparityParam(std::vector<std::shared_ptr<const StreamProfile>> streamProfileList);
 
 private:
@@ -32,6 +35,7 @@ private:
     std::vector<OBCameraParam>          cameraParamList_;
     OBIMUCalibrateParams                imuCalibrationParam_;
     OBDisparityParam                    disparityParam_;
+    OpenNIFrameProcessParam             frameProcessParam_;
 };
 
 }  // namespace libobsensor

@@ -68,6 +68,7 @@ typedef enum {
     OB_RAW_DATA_DEVICE_UPGRADE                           = 4039, /**< Device firmware upgrade*/
     OB_RAW_DATA_DEVICE_EXTENSION_INFORMATION             = 4041, /**< Device extension information*/
     OB_RAW_DATA_D2C_ALIGN_COLOR_PRE_PROCESS_PROFILE_LIST = 4046, /**< D2C Alignment Resolution List*/
+    OB_OPENNI_DEPTH_PROCESSOR_PARAM                      = 4049, /**< OpenNI device depth process params*/
     OB_RAW_DATA_DE_IR_TRANSFORM_PARAMS                   = 4059, /**< DE-IR transform parameters*/
     OB_PROP_DEVICE_LOG_SEVERITY_LEVEL_INT                = 5003, /**< Device log level*/
 
