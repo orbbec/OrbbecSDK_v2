@@ -21,6 +21,8 @@ public:
 
     std::vector<std::shared_ptr<IFilter>> createRecommendedPostProcessingFilters(OBSensorType type) override;
 
+    OpenNIFrameProcessParam getFrameProcessParam();
+
 protected:
     virtual void init();
     virtual void initSensorList();

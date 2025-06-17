@@ -119,10 +119,11 @@ void PlaybackDevice::initSensorList() {
                 sensor->setStreamProfileList(port_->getStreamProfileList(OB_SENSOR_DEPTH));
                 sensor->updateFormatFilterConfig({});  // for call convertProfileAsDisparityBasedProfile
 
-                std::dynamic_pointer_cast<DW2DisparitySensor>(sensor)->initProfileVirtualRealMap();
-
                 auto algParamManager = getComponentT<PlaybackDeviceParamManager>(OB_DEV_COMPONENT_ALG_PARAM_MANAGER);
                 algParamManager->bindDisparityParam(sensor->getStreamProfileList());
+
+                auto processParam = algParamManager->getOpenNIFrameProcessParam();
+                std::dynamic_pointer_cast<DW2DisparitySensor>(sensor)->setFrameProcessParam(processParam);
 
                 auto propServer = getPropertyServer();
                 std::dynamic_pointer_cast<DW2DisparitySensor>(sensor)->markOutputDisparityFrame(true);
@@ -141,10 +142,11 @@ void PlaybackDevice::initSensorList() {
                 sensor->setStreamProfileList(port_->getStreamProfileList(OB_SENSOR_DEPTH));
                 sensor->updateFormatFilterConfig({});  // for call convertProfileAsDisparityBasedProfile
 
-                std::dynamic_pointer_cast<MaxDisparitySensor>(sensor)->initProfileVirtualRealMap();
-
                 auto algParamManager = getComponentT<PlaybackDeviceParamManager>(OB_DEV_COMPONENT_ALG_PARAM_MANAGER);
                 algParamManager->bindDisparityParam(sensor->getStreamProfileList());
+
+                auto processParam = algParamManager->getOpenNIFrameProcessParam();
+                std::dynamic_pointer_cast<MaxDisparitySensor>(sensor)->setFrameProcessParam(processParam);
 
                 auto propServer = getPropertyServer();
                 std::dynamic_pointer_cast<MaxDisparitySensor>(sensor)->markOutputDisparityFrame(true);

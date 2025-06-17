@@ -47,10 +47,19 @@ void MaxDisparitySensor::start(std::shared_ptr<const StreamProfile> sp, FrameCal
 
     TRY_EXECUTE({ propertyServer->setPropertyValue(OB_PROP_DEPTH_LOAD_ENGINE_GROUP_PARAM_INT, value, PROP_ACCESS_INTERNAL); })
 
+    bool foundProcessParam = false;
     OpenNIFrameProcessParam processParam = { 1, 0, 0, 0, 0, 0, 0 };
+    currentProcessParam_                 = { 1, 0, 0, 0, 0, 0, 0 };
     auto it = profileProcessParamMap_.find(sp);
     if(it != profileProcessParamMap_.end()) {
         processParam = it->second;
+        foundProcessParam = true;
+    }
+
+    if(!foundProcessParam) {
+        if(playbackProcessParam_.size() == 1) {
+            processParam = playbackProcessParam_[0];
+        }
     }
 
     auto        processor        = getOwner()->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR);
@@ -81,6 +90,8 @@ void MaxDisparitySensor::start(std::shared_ptr<const StreamProfile> sp, FrameCal
     configSchemaName = "DisparityTransform#9";
     configValue      = static_cast<double>(processParam.xSet);
     processor->setConfigValue(configSchemaName, configValue);
+
+    currentProcessParam_ = processParam;
 
     VideoSensor::start(playStreamProfile, callback);
 }

@@ -63,7 +63,7 @@ private:
             LOG_WARN("Failed to record property range: {}, message: {}", id, e.what());
         }
     }
-
+    bool isDeviceInSeries(const std::vector<uint16_t> &pids, const uint16_t &pid);
     void writeVersionProperty();
     void writeFilterProperty();
     void writeFrameGeometryProperty();
@@ -72,6 +72,7 @@ private:
     void writeCalibrationParamProperty();
     void writeDepthWorkModeProperty();
     void writeMultiDeviceSyncConfigProperty();
+    void writeOpenNIDepthProcessorParams();
     void writeAllProperties();
 
     void onFrameRecordingCallback(std::shared_ptr<const Frame>);
