@@ -2035,6 +2035,26 @@ std::vector<std::shared_ptr<IFilter>> G330NetDevice::createRecommendedPostProces
         }
         return colorFilterList;
     }
+    else if(type == OB_SENSOR_IR_LEFT) {
+        getComponentT<FrameProcessor>(OB_DEV_COMPONENT_LEFT_IR_FRAME_PROCESSOR, false);
+        std::vector<std::shared_ptr<IFilter>> leftIRFilterList;
+        if(filterFactory->isFilterCreatorExists("SequenceIdFilter")) {
+            auto sequenceIdFilter = filterFactory->createFilter("SequenceIdFilter");
+            sequenceIdFilter->enable(false);
+            leftIRFilterList.push_back(sequenceIdFilter);
+            return leftIRFilterList;
+        }
+    }
+    else if(type == OB_SENSOR_IR_RIGHT) {
+        getComponentT<FrameProcessor>(OB_DEV_COMPONENT_RIGHT_IR_FRAME_PROCESSOR, false);
+        std::vector<std::shared_ptr<IFilter>> rightIRFilterList;
+        if(filterFactory->isFilterCreatorExists("SequenceIdFilter")) {
+            auto sequenceIdFilter = filterFactory->createFilter("SequenceIdFilter");
+            sequenceIdFilter->enable(false);
+            rightIRFilterList.push_back(sequenceIdFilter);
+            return rightIRFilterList;
+        }
+    }
 
     return {};
 }
