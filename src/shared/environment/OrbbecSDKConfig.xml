@@ -2075,7 +2075,7 @@
                 <Height>800</Height>
                 <!-- The frame rate of the resolution enabled by default, int type -->
                 <FPS>10</FPS>
-                <Format>RVL</Format>
+                <Format>Y16</Format>
             </Depth>
             <Color>
                 <!-- The resolution width is enabled by default, int type -->

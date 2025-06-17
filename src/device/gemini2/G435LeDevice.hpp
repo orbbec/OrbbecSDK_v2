@@ -22,6 +22,8 @@ public:
 protected:
     void initSensorStreamProfile(std::shared_ptr<ISensor> sensor);
 
+    void updateDefaultStreamProfile(std::shared_ptr<libobsensor::ISensor> sensor, std::shared_ptr<const libobsensor::StreamProfile> streamProfile);
+
 protected:
     uint64_t deviceTimeFreq_ = 1000;
 };

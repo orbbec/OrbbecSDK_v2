@@ -217,6 +217,8 @@ void G435LeDeviceBase::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) 
     }
     if(streamProfile) {
         sensor->updateDefaultStreamProfile(streamProfile);
+
+        updateDefaultStreamProfile(sensor, streamProfile);
     }
 
     // bind params: extrinsics, intrinsics, etc.
@@ -229,6 +231,57 @@ void G435LeDeviceBase::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) 
     LOG_INFO("Sensor {} created! Found {} stream profiles.", sensorType, profiles.size());
     for(auto &profile: profiles) {
         LOG_INFO(" - {}", profile);
+    }
+}
+
+void G435LeDeviceBase::updateDefaultStreamProfile(std::shared_ptr<libobsensor::ISensor>             sensor,
+                                                  std::shared_ptr<const libobsensor::StreamProfile> streamProfile) {
+    if(sensor == nullptr || streamProfile == nullptr) {
+        return;
+    }
+
+    auto profiles = sensor->getStreamProfileList();
+    if(profiles.empty()) {
+        return;
+    }
+
+    if(sensor->getSensorType() != OB_SENSOR_DEPTH) {
+        return;
+    }
+
+    auto vsp    = profiles[0]->as<VideoStreamProfile>();
+    auto vspCmp = streamProfile->as<VideoStreamProfile>();
+    if(vsp == nullptr || vspCmp == nullptr) {
+        return;
+    }
+
+    if(vsp->getFormat() == vspCmp->getFormat() && vsp->getWidth() == vspCmp->getWidth() && vsp->getHeight() == vspCmp->getHeight()
+       && vsp->getFps() == vspCmp->getFps()) {
+        return;
+    }
+
+    constexpr auto DEFAULT_FORMAT = OB_FORMAT_Y16;
+    constexpr int  DEFAULT_FPS    = 10;
+
+    std::shared_ptr<const StreamProfile> defaultProfile = nullptr;
+
+    for(auto &profile: profiles) {
+        auto vspProfile = profile->as<VideoStreamProfile>();
+        if(vspProfile == nullptr) {
+            continue;
+        }
+
+        if(vspProfile->getFormat() == DEFAULT_FORMAT && vspProfile->getFps() == DEFAULT_FPS) {
+            defaultProfile = profile;
+            break;
+        }
+        else if(vspProfile->getFormat() == DEFAULT_FORMAT) {
+            defaultProfile = profile;
+        }
+    }
+
+    if(defaultProfile != nullptr) {
+        sensor->updateDefaultStreamProfile(defaultProfile);
     }
 }
 
