@@ -28,30 +28,40 @@ OBMultiDeviceSyncConfig DeviceSyncConfigurator::getSyncConfig() {
         return currentMultiDevSyncConfig_;
     }
     auto owner          = getOwner();
-    auto propertyServer = owner->getPropertyServer();
+    auto propertyServer = owner->getPropertyServer(); // Auto-lock when getting propertyServer
+    // double check after get propertyServer
+    if(isSyncConfigInit_) {
+        return currentMultiDevSyncConfig_;
+    }
+    // read from device
+    OBMultiDeviceSyncConfig syncConfig{};
     auto configInternal = propertyServer->getStructureDataProtoV1_1_T<OBMultiDeviceSyncConfigInternal, 1>(OB_STRUCT_MULTI_DEVICE_SYNC_CONFIG);
 
-    currentMultiDevSyncConfig_.syncMode = (OBMultiDeviceSyncMode)configInternal.syncMode;
-    if(currentMultiDevSyncConfig_.syncMode == 0) {
-        currentMultiDevSyncConfig_.syncMode = OB_MULTI_DEVICE_SYNC_MODE_FREE_RUN;
+    syncConfig.syncMode = (OBMultiDeviceSyncMode)configInternal.syncMode;
+    if(syncConfig.syncMode == 0) {
+        syncConfig.syncMode = OB_MULTI_DEVICE_SYNC_MODE_FREE_RUN;
     }
-    else if(currentMultiDevSyncConfig_.syncMode == OB_MULTI_DEVICE_SYNC_MODE_SECONDARY_SYNCED
+    else if(syncConfig.syncMode == OB_MULTI_DEVICE_SYNC_MODE_SECONDARY_SYNCED
             && std::find(supportedSyncModes_.begin(), supportedSyncModes_.end(), OB_MULTI_DEVICE_SYNC_MODE_SECONDARY_SYNCED) == supportedSyncModes_.end()
             && std::find(supportedSyncModes_.begin(), supportedSyncModes_.end(), OB_MULTI_DEVICE_SYNC_MODE_SECONDARY) == supportedSyncModes_.end()) {
-        currentMultiDevSyncConfig_.syncMode = OB_MULTI_DEVICE_SYNC_MODE_SECONDARY;
+        syncConfig.syncMode = OB_MULTI_DEVICE_SYNC_MODE_SECONDARY;
     }
-    currentMultiDevSyncConfig_.depthDelayUs         = configInternal.depthDelayUs;
-    currentMultiDevSyncConfig_.colorDelayUs         = configInternal.colorDelayUs;
-    currentMultiDevSyncConfig_.trigger2ImageDelayUs = configInternal.trigger2ImageDelayUs;
-    currentMultiDevSyncConfig_.triggerOutEnable     = configInternal.triggerOutEnable;
-    currentMultiDevSyncConfig_.triggerOutDelayUs    = configInternal.triggerOutDelayUs;
-    currentMultiDevSyncConfig_.framesPerTrigger     = 1;  // configInternal.framesPerTrigger; set to 1 at default
+    syncConfig.depthDelayUs         = configInternal.depthDelayUs;
+    syncConfig.colorDelayUs         = configInternal.colorDelayUs;
+    syncConfig.trigger2ImageDelayUs = configInternal.trigger2ImageDelayUs;
+    syncConfig.triggerOutEnable     = configInternal.triggerOutEnable;
+    syncConfig.triggerOutDelayUs    = configInternal.triggerOutDelayUs;
+    syncConfig.framesPerTrigger     = 1;  // configInternal.framesPerTrigger; set to 1 at default
 
+    currentMultiDevSyncConfig_ = syncConfig;
     isSyncConfigInit_ = true;
-    return currentMultiDevSyncConfig_;
+    return syncConfig;
 }
 
 void DeviceSyncConfigurator::setSyncConfig(const OBMultiDeviceSyncConfig &deviceSyncConfig) {
+    auto owner          = getOwner();
+    auto propertyServer = owner->getPropertyServer(); // Auto-lock when getting propertyServer
+
     if(isSyncConfigInit_ && 0 == memcmp(&currentMultiDevSyncConfig_, &deviceSyncConfig, sizeof(OBMultiDeviceSyncConfig))) {
         LOG_DEBUG("New sync config is same as current device sync config, the upgrade process would not execute!");
         return;
@@ -74,8 +84,6 @@ void DeviceSyncConfigurator::setSyncConfig(const OBMultiDeviceSyncConfig &device
     internalConfig.triggerOutDelayUs    = deviceSyncConfig.triggerOutDelayUs;
     internalConfig.framesPerTrigger     = deviceSyncConfig.framesPerTrigger;
 
-    auto owner          = getOwner();
-    auto propertyServer = owner->getPropertyServer();
     propertyServer->setStructureDataProtoV1_1_T<OBMultiDeviceSyncConfigInternal, 1>(OB_STRUCT_MULTI_DEVICE_SYNC_CONFIG, internalConfig);
 
     currentMultiDevSyncConfig_ = deviceSyncConfig;
@@ -134,7 +142,13 @@ OBMultiDeviceSyncConfig DeviceSyncConfiguratorOldProtocol::getSyncConfig() {
         return currentMultiDevSyncConfig_;
     }
     auto owner          = getOwner();
-    auto propertyServer = owner->getPropertyServer();
+    auto propertyServer = owner->getPropertyServer();  // Auto-lock when getting propertyServer
+    // double check after get propertyServer
+    if(isSyncConfigInit_) {
+        return currentMultiDevSyncConfig_;
+    }
+    // read from device
+    OBMultiDeviceSyncConfig syncConfig{};
     auto configInternal = propertyServer->getStructureDataT<OBDeviceSyncConfig>(OB_STRUCT_MULTI_DEVICE_SYNC_CONFIG);
 
     bool triggerSignalOutEnable = true;
@@ -146,23 +160,27 @@ OBMultiDeviceSyncConfig DeviceSyncConfiguratorOldProtocol::getSyncConfig() {
         framePerTriggering = propertyServer->getPropertyValueT<int>(OB_PROP_CAPTURE_IMAGE_FRAME_NUMBER_INT);
     }
 
-    currentMultiDevSyncConfig_.syncMode             = syncModeOldToNewMap_.at(configInternal.syncMode);
-    currentMultiDevSyncConfig_.colorDelayUs         = configInternal.rgbTriggerSignalInDelay;
-    currentMultiDevSyncConfig_.depthDelayUs         = configInternal.irTriggerSignalInDelay;
-    currentMultiDevSyncConfig_.trigger2ImageDelayUs = configInternal.irTriggerSignalInDelay;
-    currentMultiDevSyncConfig_.triggerOutEnable     = triggerSignalOutEnable;
-    currentMultiDevSyncConfig_.triggerOutDelayUs    = configInternal.deviceTriggerSignalOutDelay;
-    currentMultiDevSyncConfig_.framesPerTrigger     = framePerTriggering;
+    syncConfig.syncMode             = syncModeOldToNewMap_.at(configInternal.syncMode);
+    syncConfig.colorDelayUs         = configInternal.rgbTriggerSignalInDelay;
+    syncConfig.depthDelayUs         = configInternal.irTriggerSignalInDelay;
+    syncConfig.trigger2ImageDelayUs = configInternal.irTriggerSignalInDelay;
+    syncConfig.triggerOutEnable     = triggerSignalOutEnable;
+    syncConfig.triggerOutDelayUs    = configInternal.deviceTriggerSignalOutDelay;
+    syncConfig.framesPerTrigger     = framePerTriggering;
 
-    if(currentMultiDevSyncConfig_.syncMode == OB_MULTI_DEVICE_SYNC_MODE_SECONDARY) {
-        currentMultiDevSyncConfig_.syncMode = OB_MULTI_DEVICE_SYNC_MODE_SECONDARY_SYNCED;
+    if(syncConfig.syncMode == OB_MULTI_DEVICE_SYNC_MODE_SECONDARY) {
+        syncConfig.syncMode = OB_MULTI_DEVICE_SYNC_MODE_SECONDARY_SYNCED;
     }
 
-    isSyncConfigInit_ = true;
-    return currentMultiDevSyncConfig_;
+    currentMultiDevSyncConfig_ = syncConfig;
+    isSyncConfigInit_          = true;
+    return syncConfig;
 }
 
 void DeviceSyncConfiguratorOldProtocol::setSyncConfig(const OBMultiDeviceSyncConfig &deviceSyncConfig) {
+    auto owner          = getOwner();
+    auto propertyServer = owner->getPropertyServer();  // Auto-lock when getting propertyServer
+
     if(isSyncConfigInit_ && memcmp(&deviceSyncConfig, &currentMultiDevSyncConfig_, sizeof(OBMultiDeviceSyncConfig)) == 0) {
         LOG_DEBUG("Sync config is the same as current config, no need to set!");
         return;
@@ -184,8 +202,6 @@ void DeviceSyncConfiguratorOldProtocol::setSyncConfig(const OBMultiDeviceSyncCon
     v1SyncConfig.deviceId                       = 0;
     v1SyncConfig.mcuTriggerFrequency            = 0;
 
-    auto owner          = getOwner();
-    auto propertyServer = owner->getPropertyServer();
     propertyServer->setStructureDataT<OBDeviceSyncConfig>(OB_STRUCT_MULTI_DEVICE_SYNC_CONFIG, v1SyncConfig);
     if(propertyServer->isPropertySupported(OB_PROP_SYNC_SIGNAL_TRIGGER_OUT_BOOL, PROP_OP_WRITE, PROP_ACCESS_INTERNAL)) {
         propertyServer->setPropertyValueT<bool>(OB_PROP_SYNC_SIGNAL_TRIGGER_OUT_BOOL, v2SyncConfig.triggerOutEnable);
