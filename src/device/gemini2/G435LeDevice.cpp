@@ -715,6 +715,7 @@ void G435LeDevice::initProperties() {
     propertyServer->registerProperty(OB_PROP_CONFIDENCE_STREAM_FILTER_THRESHOLD_INT, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_CONFIDENCE_STREAM_FILTER_BOOL, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_DEPTH_AUTO_EXPOSURE_PRIORITY_INT, "rw", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_DISP_SEARCH_OFFSET_INT, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_RAW_PRESET_RESOLUTION_CONFIG_LIST, "", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_STRUCT_PRESET_RESOLUTION_CONFIG, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerAccessCallback(OB_STRUCT_PRESET_RESOLUTION_CONFIG,
