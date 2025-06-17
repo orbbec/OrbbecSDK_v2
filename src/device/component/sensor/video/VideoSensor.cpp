@@ -198,8 +198,13 @@ void VideoSensor::stop() {
 
     updateStreamState(STREAM_STATE_STOPPING);
 
-    auto vsPort = std::dynamic_pointer_cast<IVideoStreamPort>(backend_);
-    vsPort->stopStream(currentBackendStreamProfile_);
+    try {
+        auto vsPort = std::dynamic_pointer_cast<IVideoStreamPort>(backend_);
+        vsPort->stopStream(currentBackendStreamProfile_);
+    }
+    catch(const std::exception &e) {
+        LOG_WARN("Failed to stop video stream port: {}", e.what());
+    }
 
     try {
         trySendStopStreamVendorCmd();
