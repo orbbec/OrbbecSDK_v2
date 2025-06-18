@@ -10,6 +10,8 @@
 #include <thread>
 #include <atomic>
 
+#define IS_ASTRA_MINI_DEVICE(pid) (pid == 0x069d || pid == 0x065b || pid == 0x065e)
+
 std::atomic<bool> isPaused{false};
 
 void handleKeyPress(ob_smpl::CVWindow &win, std::shared_ptr<ob::RecordDevice> recorder, int key);
@@ -46,6 +48,11 @@ std::cout << "Please enter the output filename (with .bag extension) and press E
     auto sensorList = device->getSensorList();
     for(uint32_t i = 0; i < sensorList->getCount(); i++) {
         auto sensorType = sensorList->getSensorType(i);
+        if(IS_ASTRA_MINI_DEVICE(device->getDeviceInfo()->getPid())) {
+            if(sensorType == OB_SENSOR_IR) {
+                continue;
+            }
+        }
         config->enableStream(sensorType);
     }
 
