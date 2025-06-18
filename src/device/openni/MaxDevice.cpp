@@ -78,16 +78,8 @@ void MaxDevice::initSensorList() {
             [this, depthPortInfo]() {
                 auto port   = getSourcePort(depthPortInfo);
                 auto sensor = std::make_shared<MaxDisparitySensor>(this, OB_SENSOR_DEPTH, port);
-
-                /*std::vector<FormatFilterConfig> formatFilterConfigs = {
-                    { FormatFilterPolicy::REMOVE, OB_FORMAT_Z16, OB_FORMAT_ANY, nullptr },
-                };
-                auto formatConverter = getSensorFrameFilter("FrameUnpacker", OB_SENSOR_DEPTH, false);
-                if(formatConverter) {
-                    formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_Y12, OB_FORMAT_Y16, formatConverter });
-                }
-                sensor->updateFormatFilterConfig(formatFilterConfigs);*/
                 sensor->enableTimestampAnomalyDetection(false);
+
                 auto frameTimestampCalculator = videoFrameTimestampCalculatorCreator_();
                 sensor->setFrameTimestampCalculator(frameTimestampCalculator);
 
