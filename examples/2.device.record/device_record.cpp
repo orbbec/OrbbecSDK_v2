@@ -39,7 +39,7 @@ std::cout << "Please enter the output filename (with .bag extension) and press E
     auto pipe = std::make_shared<ob::Pipeline>(device);
 
     // Activate device clock synchronization
-    context->enableDeviceClockSync(0);
+    device->timerSyncWithHost();
 
     // Create a config and enable all streams
     std::shared_ptr<ob::Config>  config  = std::make_shared<ob::Config>();
