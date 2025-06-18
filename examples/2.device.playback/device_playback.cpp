@@ -26,13 +26,20 @@ int main(void) try {
     std::shared_ptr<ob::Config> config = std::make_shared<ob::Config>();
     std::cout << "duration: " << playback->getDuration() << std::endl;
 
+    std::mutex                          frameMutex;
+    std::shared_ptr<const ob::FrameSet> renderFrameSet;
+    auto                                frameCallback = [&](std::shared_ptr<ob::FrameSet> frameSet) {
+        std::lock_guard<std::mutex> lock(frameMutex);
+        renderFrameSet = frameSet;
+    };
+
     // Set playback status change callback, when the playback stops, start the pipeline again with the same config
     playback->setPlaybackStatusChangeCallback([&](OBPlaybackStatus status) {
         if(status == OB_PLAYBACK_STOPPED && !exited) {
             pipe->stop();
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             std::cout << "Replay again" << std::endl;
-            pipe->start(config);
+            pipe->start(config, frameCallback);
         }
     });
 
@@ -42,14 +49,10 @@ int main(void) try {
 
         config->enableStream(sensorType);
     }
+    config->setFrameAggregateOutputMode(OB_FRAME_AGGREGATE_OUTPUT_ANY_SITUATION);
 
     // Start the pipeline with the config
-    std::mutex                          frameMutex;
-    std::shared_ptr<const ob::FrameSet> renderFrameSet;
-    pipe->start(config, [&](std::shared_ptr<ob::FrameSet> frameSet) {
-        std::lock_guard<std::mutex> lock(frameMutex);
-        renderFrameSet = frameSet;
-    });
+    pipe->start(config, frameCallback);
 
     ob_smpl::CVWindow win("Playback", 1280, 720, ob_smpl::ARRANGE_GRID);
     while(win.run() && !exited) {
