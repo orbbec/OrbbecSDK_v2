@@ -22,9 +22,6 @@ public:
     void markStreamDeactivated(const std::shared_ptr<const StreamProfile> &profile) override;
 
 private:
-
-
-private:
     std::mutex                                        startedStreamListMutex_;
     std::vector<std::shared_ptr<const StreamProfile>> activatedStreamList_;
 };

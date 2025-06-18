@@ -21,10 +21,6 @@ protected:
     virtual void init() override;
     virtual void initSensorList() override;
     virtual void initProperties() override;
-
-private:
-
-
 };
 
 }  // namespace libobsensor

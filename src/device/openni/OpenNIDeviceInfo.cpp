@@ -14,7 +14,6 @@
 #include "ethernet/NetPortGroup.hpp"
 #include "ethernet/RTSPStreamPort.hpp"
 #include "ethernet/NetDataStreamPort.hpp"
-
 #include <map>
 
 namespace libobsensor {
