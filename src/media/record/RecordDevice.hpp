@@ -71,6 +71,7 @@ private:
     void writeExposureAndGainProperty();
     void writeCalibrationParamProperty();
     void writeDepthWorkModeProperty();
+    void writeMultiDeviceSyncConfigProperty();
     void writeAllProperties();
 
     void onFrameRecordingCallback(std::shared_ptr<const Frame>);

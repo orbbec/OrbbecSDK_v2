@@ -5,6 +5,7 @@
 #include "PlaybackDeviceParamManager.hpp"
 #include "PlaybackFilterCreationStrategy.hpp"
 #include "PlaybackDepthWorkModeManager.hpp"
+#include "PlaybackDeviceSyncConfigurator.hpp"
 #include "exception/ObException.hpp"
 #include "DevicePids.hpp"
 #include "component/frameprocessor/FrameProcessor.hpp"
@@ -396,6 +397,16 @@ void PlaybackDevice::initProperties() {
     registerPropertyCondition(propertyServer, OB_PROP_CONFIDENCE_MIRROR_BOOL, "rw", "rw", frameTransformAccessor_);
     registerPropertyCondition(propertyServer, OB_PROP_CONFIDENCE_FLIP_BOOL, "rw", "rw", frameTransformAccessor_);
     registerPropertyCondition(propertyServer, OB_PROP_CONFIDENCE_ROTATE_INT, "rw", "rw", frameTransformAccessor_);
+
+    // Note: Multi-device sync config: made up of multiple parts
+    // 1. Exposed through ob_device_get_multi_device_sync_config, but restricted to internal use
+    // 2. If the property exists, register it for read access
+    if(port_->isPropertySupported(OB_STRUCT_MULTI_DEVICE_SYNC_CONFIG)) {
+        registerPropertyCondition(propertyServer, OB_STRUCT_MULTI_DEVICE_SYNC_CONFIG, "", "r", vendorAccessor);
+
+        auto deviceSyncConfigurator = std::make_shared<PlaybackDeviceSyncConfigurator>(this);
+        registerComponent(OB_DEV_COMPONENT_DEVICE_SYNC_CONFIGURATOR, deviceSyncConfigurator);
+    }
 }
 
 std::vector<std::shared_ptr<IFilter>> PlaybackDevice::createRecommendedPostProcessingFilters(OBSensorType type) {

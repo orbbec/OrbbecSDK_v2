@@ -8,6 +8,7 @@
 #include "IAlgParamManager.hpp"
 #include "property/InternalProperty.hpp"
 #include "utils/MediaUtils.hpp"
+#include "IDeviceSyncConfigurator.hpp"
 
 namespace libobsensor {
 
@@ -86,6 +87,7 @@ void RecordDevice::writeAllProperties() {
     writeExposureAndGainProperty();
     writeCalibrationParamProperty();
     writeDepthWorkModeProperty();
+    writeMultiDeviceSyncConfigProperty();
 }
 
 void RecordDevice::stopRecord() {
@@ -237,6 +239,16 @@ void RecordDevice::writeDepthWorkModeProperty() {
     if(propertyServer && propertyServer->isPropertySupported(OB_STRUCT_CURRENT_DEPTH_ALG_MODE, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
         auto depthMode = propertyServer->getStructureDataProtoV1_1_T<OBDepthWorkMode_Internal, 0>(OB_STRUCT_CURRENT_DEPTH_ALG_MODE);
         writer_->writeProperty(OB_STRUCT_CURRENT_DEPTH_ALG_MODE, reinterpret_cast<uint8_t *>(&depthMode), sizeof(OBDepthWorkMode_Internal));
+    }
+}
+
+void RecordDevice::writeMultiDeviceSyncConfigProperty() {
+    auto configurator = device_->getComponentT<IDeviceSyncConfigurator>(OB_DEV_COMPONENT_DEVICE_SYNC_CONFIGURATOR, false);
+    if(configurator) {
+        OBMultiDeviceSyncConfig config = configurator->getSyncConfig();
+        // The multi-device sync configuration is made up of multiple parts
+        // Use OB_STRUCT_MULTI_DEVICE_SYNC_CONFIG for the property id
+        writer_->writeProperty(OB_STRUCT_MULTI_DEVICE_SYNC_CONFIG, reinterpret_cast<const uint8_t *>(&config), sizeof(OBMultiDeviceSyncConfig));
     }
 }
 
