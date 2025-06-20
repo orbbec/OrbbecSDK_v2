@@ -37,6 +37,9 @@ namespace libobsensor {
 
 FemtoBoltDevice::FemtoBoltDevice(const std::shared_ptr<const IDeviceEnumInfo> &info) : DeviceBase(info) {
     init();
+
+    // check and start heartbeat after initialization is complete
+    checkAndStartHeartbeat();
 }
 
 FemtoBoltDevice::~FemtoBoltDevice() noexcept {}

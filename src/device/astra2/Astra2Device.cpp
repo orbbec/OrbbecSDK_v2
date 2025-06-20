@@ -49,6 +49,9 @@ constexpr uint8_t INTERFACE_DEPTH = 0;
 
 Astra2Device::Astra2Device(const std::shared_ptr<const IDeviceEnumInfo> &info) : DeviceBase(info) {
     init();
+
+    // check and start heartbeat after initialization is complete
+    checkAndStartHeartbeat();
 }
 
 Astra2Device::~Astra2Device() noexcept {}

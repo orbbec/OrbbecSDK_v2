@@ -49,6 +49,9 @@ constexpr uint8_t INTERFACE_DEPTH = 0;
 
 G210Device::G210Device(const std::shared_ptr<const IDeviceEnumInfo> &info) : DeviceBase(info) {
     init();
+
+    // check and start heartbeat after initialization is complete
+    checkAndStartHeartbeat();
 }
 
 G210Device::~G210Device() noexcept {}

@@ -11,6 +11,7 @@
 #include "frameprocessor/FrameProcessor.hpp"
 #include "InternalTypes.hpp"
 #include "Platform.hpp"
+#include "IDeviceMonitor.hpp"
 
 #ifdef __linux__
 #include "usb/uvc/UvcDevicePort.hpp"
@@ -577,6 +578,21 @@ void DeviceBase::activateDeviceAccessor() {
             break;
         default:
             break;
+        }
+    }
+}
+
+void DeviceBase::checkAndStartHeartbeat() {
+    auto        envConfig = EnvConfig::getInstance();
+    std::string key       = std::string("Device.") + utils::string::removeSpace(deviceInfo_->name_) + std::string(".DefaultHeartBeat");
+    int         value     = 0;
+    
+    // read config
+    envConfig->getIntValue(key, value);
+    if(value != 0) {
+        auto devMonitor = getComponentT<IDeviceMonitor>(OB_DEV_COMPONENT_DEVICE_MONITOR, false);
+        if (devMonitor) {
+            devMonitor->enableHeartbeat();
         }
     }
 }

@@ -65,6 +65,9 @@ constexpr uint16_t GMSL_MAX_CMD_DATA_SIZE = 232;
 
 G330Device::G330Device(const std::shared_ptr<const IDeviceEnumInfo> &info) : DeviceBase(info), isGmslDevice_(info->getConnectionType() == "GMSL2") {
     init();
+
+    // check and start heartbeat after initialization is complete
+    checkAndStartHeartbeat();
 }
 
 G330Device::~G330Device() noexcept {}
@@ -1267,6 +1270,9 @@ void G330Device::loadDefaultDepthPostProcessingConfig() {
 G330NetDevice::G330NetDevice(const std::shared_ptr<const IDeviceEnumInfo> &info) : DeviceBase(info) {
     LOG_INFO("Create {} net device.", info->getName());
     init();
+
+    // check and start heartbeat after initialization is complete
+    checkAndStartHeartbeat();
 }
 
 G330NetDevice::~G330NetDevice() noexcept {}

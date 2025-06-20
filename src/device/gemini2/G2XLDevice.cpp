@@ -182,6 +182,9 @@ void G2XLDeviceBase::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
 
 G2XLUSBDevice::G2XLUSBDevice(const std::shared_ptr<const IDeviceEnumInfo> &info) : G2XLDeviceBase(info) {
     init();
+
+    // check and start heartbeat after initialization is complete
+    checkAndStartHeartbeat();
 }
 
 G2XLUSBDevice::~G2XLUSBDevice() noexcept {}
@@ -594,6 +597,9 @@ void G2XLUSBDevice::initProperties() {
 
 G2XLNetDevice::G2XLNetDevice(const std::shared_ptr<const IDeviceEnumInfo> &info) : G2XLDeviceBase(info) {
     init();
+
+    // check and start heartbeat after initialization is complete
+    checkAndStartHeartbeat();
 }
 G2XLNetDevice::~G2XLNetDevice() noexcept {}
 

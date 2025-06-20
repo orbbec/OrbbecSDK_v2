@@ -43,6 +43,9 @@
 namespace libobsensor {
 FemtoMegaUsbDevice::FemtoMegaUsbDevice(const std::shared_ptr<const IDeviceEnumInfo> &info) : DeviceBase(info) {
     init();
+
+    // check and start heartbeat after initialization is complete
+    checkAndStartHeartbeat();
 }
 
 FemtoMegaUsbDevice::~FemtoMegaUsbDevice() noexcept {}
@@ -510,6 +513,9 @@ std::vector<std::shared_ptr<IFilter>> FemtoMegaUsbDevice::createRecommendedPostP
 
 FemtoMegaNetDevice::FemtoMegaNetDevice(const std::shared_ptr<const IDeviceEnumInfo> &info) : DeviceBase(info) {
     init();
+
+    // check and start heartbeat after initialization is complete
+    checkAndStartHeartbeat();
 }
 
 FemtoMegaNetDevice::~FemtoMegaNetDevice() noexcept {}

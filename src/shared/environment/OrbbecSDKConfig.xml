@@ -400,7 +400,7 @@
             </Misc>
 
             <!-- Whether to enable heartbeat by default -->
-            <DefaulHeartBeat>0</DefaulHeartBeat>
+            <DefaultHeartBeat>0</DefaultHeartBeat>
 
             <Depth>
                 <!-- The resolution width is enabled by default, int type -->
@@ -548,7 +548,7 @@
             </Misc>
 
             <!-- Whether to enable heartbeat by default -->
-            <DefaulHeartBeat>0</DefaulHeartBeat>
+            <DefaultHeartBeat>0</DefaultHeartBeat>
 
             <!-- TODO lumiaozi It is cumbersome to consider the recommended configuration in
             different camera depth modes -->
@@ -658,7 +658,7 @@
             </Misc>
 
             <!-- Whether to enable heartbeat by default -->
-            <DefaulHeartBeat>0</DefaulHeartBeat>
+            <DefaultHeartBeat>0</DefaultHeartBeat>
 
             <Depth>
                 <!-- The resolution width is enabled by default, int type -->
@@ -1791,7 +1791,7 @@
             </Misc>
 
             <!-- Whether to enable heartbeat by default -->
-            <DefaulHeartBeat>0</DefaulHeartBeat>
+            <DefaultHeartBeat>0</DefaultHeartBeat>
 
             <Depth>
                 <!-- The resolution width is enabled by default, int type -->
@@ -1839,7 +1839,7 @@
             </Misc>
 
             <!-- Whether to enable heartbeat by default -->
-            <DefaulHeartBeat>0</DefaulHeartBeat>
+            <DefaultHeartBeat>0</DefaultHeartBeat>
 
             <Depth>
                 <!-- The resolution width is enabled by default, int type -->
@@ -2055,7 +2055,7 @@
             <LinuxUVCDefaultBackend>LibUVC</LinuxUVCDefaultBackend>
 
             <!-- Whether to enable heartbeat by default -->
-            <DefaulHeartBeat>0</DefaulHeartBeat>
+            <DefaultHeartBeat>0</DefaultHeartBeat>
 
             <!--Max frame delay-->
             <MaxFrameDelay>1.2</MaxFrameDelay>

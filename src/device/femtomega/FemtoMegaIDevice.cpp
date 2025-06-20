@@ -43,6 +43,9 @@
 namespace libobsensor {
 FemtoMegaINetDevice::FemtoMegaINetDevice(const std::shared_ptr<const IDeviceEnumInfo> &info) : DeviceBase(info) {
     init();
+
+    // check and start heartbeat after initialization is complete
+    checkAndStartHeartbeat();
 }
 
 FemtoMegaINetDevice::~FemtoMegaINetDevice() noexcept {}

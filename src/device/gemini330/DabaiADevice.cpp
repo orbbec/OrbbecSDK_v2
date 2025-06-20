@@ -55,6 +55,9 @@ constexpr uint16_t GMSL_MAX_CMD_DATA_SIZE = 232;
 
 DabaiADevice::DabaiADevice(const std::shared_ptr<const IDeviceEnumInfo> &info) : DeviceBase(info), isGmslDevice_(info->getConnectionType() == "GMSL2") {
     init();
+
+    // check and start heartbeat after initialization is complete
+    checkAndStartHeartbeat();
 }
 
 DabaiADevice::~DabaiADevice() noexcept {}

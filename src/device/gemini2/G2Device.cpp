@@ -52,6 +52,9 @@ constexpr uint16_t GEMINI2_PID  = 0x0670;
 
 G2Device::G2Device(const std::shared_ptr<const IDeviceEnumInfo> &info) : DeviceBase(info) {
     init();
+
+    // check and start heartbeat after initialization is complete
+    checkAndStartHeartbeat();
 }
 
 G2Device::~G2Device() noexcept {}

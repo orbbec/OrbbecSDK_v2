@@ -287,6 +287,9 @@ void G435LeDeviceBase::updateDefaultStreamProfile(std::shared_ptr<libobsensor::I
 
 G435LeDevice::G435LeDevice(const std::shared_ptr<const IDeviceEnumInfo> &info) : G435LeDeviceBase(info) {
     init();
+
+    // check and start heartbeat after initialization is complete
+    checkAndStartHeartbeat();
 }
 G435LeDevice::~G435LeDevice() noexcept {}
 

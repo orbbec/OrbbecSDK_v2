@@ -79,6 +79,14 @@ protected:
 
     std::shared_ptr<ISourcePort> getSourcePort(std::shared_ptr<const SourcePortInfo> sourcePortInfo) const;
 
+    /**
+     * @brief Enable heartbeat if "DefaultHeartBeat" config is true.
+     *        Reads the "DefaultHeartBeat" option from config and starts heartbeat if enabled.
+     * 
+     * @note Must be called after device initialization is complete.
+     */
+    void checkAndStartHeartbeat();
+
 protected:
     const std::shared_ptr<const IDeviceEnumInfo> enumInfo_;
     std::shared_ptr<DeviceInfo>                  deviceInfo_;
