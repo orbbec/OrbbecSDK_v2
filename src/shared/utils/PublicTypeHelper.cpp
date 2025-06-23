@@ -345,6 +345,8 @@ float mapLiDARScanRateToValue(OBLiDARScanRate rate) {
         return 25.0f;
     case OB_LIDAR_SCAN_30HZ:
         return 30.0f;
+    case OB_LIDAR_SCAN_40HZ:
+        return 40.0f;
     default:
         return 0.f;
     }
@@ -409,7 +411,7 @@ const std::map<OBAccelFullScaleRange, std::string> AccelFullScaleRange_Str_Map =
 
 const std::map<OBLiDARScanRate, std::string> LiDARScanRate_Str_Map = {
     { OB_LIDAR_SCAN_UNKNOWN, "Unknown" }, { OB_LIDAR_SCAN_5HZ, "5HZ" },   { OB_LIDAR_SCAN_10HZ, "10HZ" }, { OB_LIDAR_SCAN_15HZ, "15HZ" },
-    { OB_LIDAR_SCAN_20HZ, "20HZ" },       { OB_LIDAR_SCAN_25HZ, "25HZ" }, { OB_LIDAR_SCAN_30HZ, "30HZ" },
+    { OB_LIDAR_SCAN_20HZ, "20HZ" },       { OB_LIDAR_SCAN_25HZ, "25HZ" }, { OB_LIDAR_SCAN_30HZ, "30HZ" }, { OB_LIDAR_SCAN_40HZ, "40HZ" },
 };
 
 const std::map<OBFormat, std::string> Format_Str_Map = {

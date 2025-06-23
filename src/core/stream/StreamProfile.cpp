@@ -303,6 +303,12 @@ LiDARProfileInfo LiDARStreamProfile::getInfo() const {
             info.pointsNum       = 100;
             info.dataBlockSize   = 444;
         } break;
+        case OB_LIDAR_SCAN_40HZ: {
+            info.scanSpeed       = 2400;
+            info.maxDataBlockNum = 18;
+            info.pointsNum       = 75;
+            info.dataBlockSize   = 344;
+        } break;
         default:
             throw invalid_value_exception("Invalid LiDAR scan rate");
             break;

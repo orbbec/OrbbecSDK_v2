@@ -68,9 +68,9 @@ static inline uint64_t ntohll(uint64_t val) {
 
 static inline void copyToOBLiDARSpherePoint(const LiDARSpherePoint *point, OBLiDARSpherePoint *obPoint) {
     // to host order and to unit mm / degrees
-    obPoint->distance     = ntohs(point->distance) * 2.0f;
-    obPoint->theta        = ntohs(point->theta) * 0.01f;
-    obPoint->phi          = ntohs(point->phi) * 0.01f;
+    obPoint->distance = ntohs(point->distance) * 2.0f;
+    obPoint->theta    = static_cast<int16_t>(ntohs(point->theta)) * 0.01f;
+    obPoint->phi      = static_cast<int16_t>(ntohs(point->phi)) * 0.01f;
     obPoint->reflectivity = point->reflectivity;
     obPoint->tag          = point->tag;
 }
@@ -274,7 +274,7 @@ void LiDARStreamer::parseLiDARData(std::shared_ptr<Frame> frame) {
 
     // check data size
     if(dataSize != dataBlockSize) {
-        LOG_WARN("This LiDAR block data will be dropped because data size({}) is not equal to {}!", dataSize, dataBlockSize);
+        //LOG_WARN("This LiDAR block data will be dropped because data size({}) is not equal to {}!", dataSize, dataBlockSize);
         return;
     }
     // convert to host order
@@ -333,8 +333,8 @@ void LiDARStreamer::parseLiDARData(std::shared_ptr<Frame> frame) {
     if(expectedDataNumber_ != header->dataBlockNum) {
         // not the first data block?
         if(header->dataBlockNum != 1) {
-            expectedDataNumber_ = 1;  // reset to 1
             LOG_WARN("This LiDAR block data will be dropped because data block number({}) is not equal to {}", header->dataBlockNum, expectedDataNumber_);
+            expectedDataNumber_ = 1;  // reset to 1
             return;
         }
         // Received the new first data block

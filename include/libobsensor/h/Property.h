@@ -1060,6 +1060,11 @@ typedef enum {
      * @brief LiDAR: get/set specific mode
      */
     OB_PROP_LIDAR_SPECIFIC_MODE_INT = 8033,
+
+    /**
+     * @brief LiDAR: get/set repetitive scan mode
+     */
+    OB_PROP_LIDAR_REPETITIVE_SCAN_MODE_INT = 8034,
 } OBPropertyID,
     ob_property_id;
 

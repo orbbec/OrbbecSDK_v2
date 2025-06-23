@@ -120,17 +120,15 @@ void LiDARDevice::initProperties() {
         return accessor;
     });
 
-    propertyServer->registerProperty(OB_RAW_DATA_LIDAR_IP_ADDRESS, "r", "rw", vendorPropertyAccessor);
-    propertyServer->registerProperty(OB_PROP_LIDAR_PORT_INT, "r", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_RAW_DATA_LIDAR_IP_ADDRESS, "rw", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_LIDAR_PORT_INT, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_RAW_DATA_LIDAR_MAC_ADDRESS, "r", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_RAW_DATA_LIDAR_SUBNET_MASK, "r", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_LIDAR_SCAN_SPEED_INT, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_LIDAR_SCAN_DIRECTION_INT, "r", "r", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_LIDAR_TRANSFER_PROTOCOL_INT, "r", "rw", vendorPropertyAccessor);
-    propertyServer->registerProperty(OB_PROP_LIDAR_WORK_MODE_INT, "r", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_RAW_DATA_LIDAR_SERIAL_NUMBER, "r", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_REBOOT_DEVICE_BOOL, "w", "w", vendorPropertyAccessor);
-    propertyServer->registerProperty(OB_PROP_LIDAR_ECHO_MODE_INT, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_LIDAR_APPLY_CONFIGS_INT, "w", "w", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_LIDAR_TAIL_FILTER_LEVEL_INT, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_LIDAR_MEMS_FOV_SIZE_FLOAT, "rw", "rw", vendorPropertyAccessor);
@@ -139,6 +137,7 @@ void LiDARDevice::initProperties() {
     propertyServer->registerProperty(OB_PROP_LIDAR_MEMS_ON_OFF_INT, "w", "w", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_LIDAR_RESTART_MEMS_INT, "w", "w", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_LIDAR_SAVE_MEMS_PARAM_INT, "w", "w", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_LIDAR_REPETITIVE_SCAN_MODE_INT, "rw", "rw", vendorPropertyAccessor);
 
     propertyServer->registerProperty(OB_RAW_DATA_LIDAR_PRODUCT_MODEL, "r", "r", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_RAW_DATA_LIDAR_FIRMWARE_VERSION, "r", "r", vendorPropertyAccessor);
@@ -247,7 +246,9 @@ void LiDARDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
     // TODO hardcoded here
     if(streamType == OB_STREAM_LIDAR) {
         // LiDAR
-        const std::vector<OBLiDARScanRate> scanRates = { OB_LIDAR_SCAN_20HZ, OB_LIDAR_SCAN_15HZ, OB_LIDAR_SCAN_10HZ, OB_LIDAR_SCAN_5HZ };
+        // TODO: currently, only 20HZ is supported, and other rotation speeds will be enabled later
+        // const std::vector<OBLiDARScanRate> scanRates = { OB_LIDAR_SCAN_20HZ, OB_LIDAR_SCAN_15HZ, OB_LIDAR_SCAN_10HZ, OB_LIDAR_SCAN_5HZ };
+        const std::vector<OBLiDARScanRate> scanRates = { OB_LIDAR_SCAN_20HZ };
         const std::vector<OBFormat>        formats   = { OB_FORMAT_LIDAR_SPHERE_POINT, OB_FORMAT_LIDAR_POINT, OB_FORMAT_LIDAR_CALIBRATION };
         StreamProfileList                  profileList;
 

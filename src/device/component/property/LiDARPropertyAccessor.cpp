@@ -31,11 +31,11 @@ const std::unordered_map<uint32_t, LiDAROpCode> LiDAROperationInfomap = {
     { OB_PROP_LIDAR_INITIATE_DEVICE_CONNECTION_INT,
       { HpOpCode::OPCODE_INITIATE_DEVICE_CONNECTION, HpOpCode::OPCODE_UNSUPPORTED, OB_INT_PROPERTY } },  // initiate device connection
     { OB_RAW_DATA_LIDAR_SERIAL_NUMBER,
-      { HpOpCode::OPCODE_SET_SERIAL_NUMBER, HpOpCode::OPCODE_GET_SERIAL_NUMBER, OB_STRUCT_PROPERTY } },                            // set/get serial number
-    { OB_PROP_REBOOT_DEVICE_BOOL, { HpOpCode::OPCODE_REBOOT_DEVICE, HpOpCode::OPCODE_UNSUPPORTED, OB_BOOL_PROPERTY } },            // reboot device
-    { OB_PROP_LIDAR_ECHO_MODE_INT, { HpOpCode::OPCODE_SET_ECHO_MODE, HpOpCode::OPCODE_GET_ECHO_MODE, OB_INT_PROPERTY } },          // set/get echo mode
-    { OB_PROP_LIDAR_APPLY_CONFIGS_INT, { HpOpCode::OPCODE_APPLY_CONFIGS, HpOpCode::OPCODE_UNSUPPORTED, OB_INT_PROPERTY } },        // apply configs
-    { OB_PROP_LIDAR_STREAMING_ON_OFF_INT, { HpOpCode::OPCODE_STREAMING_ON_OFF, HpOpCode::OPCODE_UNSUPPORTED, OB_INT_PROPERTY } },  // streaming on/off
+      { HpOpCode::OPCODE_SET_SERIAL_NUMBER, HpOpCode::OPCODE_GET_SERIAL_NUMBER, OB_STRUCT_PROPERTY } },                                // set/get serial number
+    { OB_PROP_REBOOT_DEVICE_BOOL, { HpOpCode::OPCODE_REBOOT_DEVICE, HpOpCode::OPCODE_UNSUPPORTED, OB_BOOL_PROPERTY } },                // reboot device
+    { OB_PROP_LIDAR_ECHO_MODE_INT, { HpOpCode::OPCODE_SET_ECHO_MODE, HpOpCode::OPCODE_GET_ECHO_MODE, OB_INT_PROPERTY } },              // set/get echo mode
+    { OB_PROP_LIDAR_APPLY_CONFIGS_INT, { HpOpCode::OPCODE_APPLY_CONFIGS, HpOpCode::OPCODE_UNSUPPORTED, OB_INT_PROPERTY } },            // apply configs
+    { OB_PROP_LIDAR_STREAMING_ON_OFF_INT, { HpOpCode::OPCODE_STREAMING_ON_OFF, HpOpCode::OPCODE_UNSUPPORTED, OB_INT_PROPERTY } },      // streaming on/off
     { OB_PROP_LIDAR_SPECIFIC_MODE_INT, { HpOpCode::OPCODE_SET_SPECIFIC_MODE, HpOpCode::OPCODE_GET_SPECIFIC_MODE, OB_INT_PROPERTY } },  // specific mode
     { OB_PROP_LIDAR_TAIL_FILTER_LEVEL_INT,
       { HpOpCode::OPCODE_SET_TAIL_FILTER_LEVEL, HpOpCode::OPCODE_GET_TAIL_FILTER_LEVEL, OB_INT_PROPERTY } },  // set/set tail filter level
@@ -45,7 +45,7 @@ const std::unordered_map<uint32_t, LiDAROpCode> LiDAROperationInfomap = {
       { HpOpCode::OPCODE_SET_MEMS_FRENQUENCY, HpOpCode::OPCODE_GET_MEMS_FRENQUENCY, OB_FLOAT_PROPERTY } },  // set/get mems frequency
     { OB_PROP_LIDAR_MEMS_FOV_FACTOR_FLOAT,
       { HpOpCode::OPCODE_SET_MEMS_FOV_FACTOR, HpOpCode::OPCODE_GET_MEMS_FOV_FACTOR, OB_FLOAT_PROPERTY } },                       // set/get mems fov factor
-    { OB_PROP_LIDAR_MEMS_ON_OFF_INT, { HpOpCode::OPCODE_MEMS_ON_OFF, HpOpCode::OPCODE_UNSUPPORTED, OB_INT_PROPERTY } },          // mems on/off
+    { OB_PROP_LIDAR_MEMS_ON_OFF_INT, { HpOpCode::OPCODE_UNSUPPORTED, HpOpCode::OPCODE_UNSUPPORTED, OB_INT_PROPERTY } },          // mems on/off
     { OB_PROP_LIDAR_RESTART_MEMS_INT, { HpOpCode::OPCODE_RESTART_MEMS, HpOpCode::OPCODE_UNSUPPORTED, OB_INT_PROPERTY } },        // restart mems
     { OB_PROP_LIDAR_SAVE_MEMS_PARAM_INT, { HpOpCode::OPCODE_SAVE_MEMS_PARAM, HpOpCode::OPCODE_UNSUPPORTED, OB_INT_PROPERTY } },  // save mems param
 
@@ -68,6 +68,8 @@ const std::unordered_map<uint32_t, LiDAROpCode> LiDAROperationInfomap = {
     { OB_PROP_LIDAR_TX_LOWER_POWER_VOLTAGE_FLOAT,
       { HpOpCode::OPCODE_UNSUPPORTED, HpOpCode::OPCODE_GET_TX_LOWER_POWER_VOLTAGE, OB_FLOAT_PROPERTY } },                         // get tx lower power voltage
     { OB_RAW_DATA_LIDAR_MEMS_VERSION, { HpOpCode::OPCODE_UNSUPPORTED, HpOpCode::OPCODE_GET_MEMS_VERSION, OB_STRUCT_PROPERTY } },  // get mems version
+    { OB_PROP_LIDAR_REPETITIVE_SCAN_MODE_INT,
+      { HpOpCode::OPCODE_SET_REPETITIVE_SCAN_MODE, HpOpCode::OPCODE_GET_REPETITIVE_SCAN_MODE, OB_INT_PROPERTY } },  // repetitive scan mode
 };
 
 LiDARPropertyAccessor::LiDARPropertyAccessor(IDevice *owner, const std::shared_ptr<ISourcePort> &backend)
@@ -142,7 +144,7 @@ void LiDARPropertyAccessor::getPropertyValue(uint32_t propertyId, OBPropertyValu
         auto res = lidarprotocol::execute(port, op.first, sendData_.data(), reqSize, recvData_.data(), &respSize);
         lidarprotocol::checkStatus(res);
 
-        auto resp       = lidarprotocol::parseGetFloatPropertyResp(recvData_.data(), respSize);
+        auto resp         = lidarprotocol::parseGetFloatPropertyResp(recvData_.data(), respSize);
         value->floatValue = resp->value;
     }
     else {
@@ -171,7 +173,7 @@ void LiDARPropertyAccessor::getPropertyRange(uint32_t propertyId, OBPropertyRang
             auto res = lidarprotocol::execute(port, op.first, sendData_.data(), reqSize, recvData_.data(), &respSize);
             lidarprotocol::checkStatus(res);
 
-            auto resp           = lidarprotocol::parseGetFloatPropertyResp(recvData_.data(), respSize);
+            auto resp             = lidarprotocol::parseGetFloatPropertyResp(recvData_.data(), respSize);
             range->cur.floatValue = resp->value;
         }
         else {
@@ -210,14 +212,14 @@ void LiDARPropertyAccessor::getPropertyRange(uint32_t propertyId, OBPropertyRang
         break;
     }
     case OB_PROP_LIDAR_TRANSFER_PROTOCOL_INT: {
-        range->min.intValue  = 0; // udp
-        range->max.intValue  = 1; // tcp
+        range->min.intValue  = 0;  // udp
+        range->max.intValue  = 1;  // tcp
         range->step.intValue = 1;
-        range->def.intValue  = 0; // udp
+        range->def.intValue  = 0;  // udp
         break;
     }
     case OB_PROP_LIDAR_WORK_MODE_INT: {
-        range->min.intValue  = 0; // normal
+        range->min.intValue  = 0;  // normal
         range->max.intValue  = 7;
         range->step.intValue = 1;
         range->def.intValue  = 0;
@@ -225,7 +227,7 @@ void LiDARPropertyAccessor::getPropertyRange(uint32_t propertyId, OBPropertyRang
     }
     case OB_PROP_LIDAR_ECHO_MODE_INT: {
         range->min.intValue  = 0;  // single echo
-        range->max.intValue  = 1; // dual echo
+        range->max.intValue  = 1;  // dual echo
         range->step.intValue = 1;
         range->def.intValue  = 0;
         break;
@@ -246,9 +248,9 @@ void LiDARPropertyAccessor::getPropertyRange(uint32_t propertyId, OBPropertyRang
     }
     case OB_PROP_LIDAR_MEMS_FOV_SIZE_FLOAT: {
         range->min.floatValue  = 0.0f;
-        range->max.floatValue = 60.0f;
+        range->max.floatValue  = 60.0f;
         range->step.floatValue = 0.01f;
-        range->def.floatValue  = 0.0f;
+        range->def.floatValue  = 60.0f;
         break;
     }
     case OB_PROP_LIDAR_MEMS_FRENQUENCY_FLOAT: {
@@ -288,6 +290,13 @@ void LiDARPropertyAccessor::getPropertyRange(uint32_t propertyId, OBPropertyRang
         range->def.floatValue  = 0.0f;
         break;
     }
+    case OB_PROP_LIDAR_REPETITIVE_SCAN_MODE_INT: {
+        range->min.intValue  = 0;
+        range->max.intValue  = 3;  // 0:Non-Repetitive Scan, 1: Repetitive Scan(x1), 2: Repetitive Scan(x2), 3: Repetitive Scan(x4)
+        range->step.intValue = 1;
+        range->def.intValue  = 0;
+        break;
+    }
     case OB_PROP_LIDAR_APD_HIGH_VOLTAGE_FLOAT:
     case OB_PROP_LIDAR_TX_HIGH_POWER_VOLTAGE_FLOAT:
     case OB_PROP_LIDAR_TX_LOWER_POWER_VOLTAGE_FLOAT:
@@ -315,7 +324,7 @@ void LiDARPropertyAccessor::setStructureData(uint32_t propertyId, const std::vec
 const std::vector<uint8_t> &LiDARPropertyAccessor::getStructureData(uint32_t propertyId) {
     std::lock_guard<std::mutex> lock(mutex_);
     clearBuffers();
-    auto op  = OBPropertyToOpCode(propertyId, false);
+    auto op      = OBPropertyToOpCode(propertyId, false);
     auto reqSize = lidarprotocol::initGetRawDataReq(sendData_, op.first);
 
     uint16_t respSize = 0;
@@ -352,7 +361,7 @@ std::pair<uint16_t, OBPropertyType> LiDARPropertyAccessor::OBPropertyToOpCode(ui
             throw unsupported_operation_exception(ss.str());
         }
 
-        return {static_cast<uint16_t>(opCode), iter->second.type};
+        return { static_cast<uint16_t>(opCode), iter->second.type };
     }
 }
 

@@ -58,7 +58,7 @@ std::shared_ptr<Frame> LiDARFormatConverter::process(std::shared_ptr<const Frame
     auto spherePointPtr = reinterpret_cast<const OBLiDARSpherePoint *>(frame->getData());
     auto obPointPtr     = reinterpret_cast<OBLiDARPoint *>(outFrame->getDataMutable());
 
-    for(int i = 0; i < pointCount; i++) {
+    for(uint32_t i = 0; i < pointCount; i++) {
         convertToCartesianCoordinate(spherePointPtr, obPointPtr);
         spherePointPtr++;
         obPointPtr++;

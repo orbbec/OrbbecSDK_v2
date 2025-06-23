@@ -477,11 +477,11 @@ typedef struct LiDARProfileInfo {
  * @brief Cartesian coordinate system point
  */
 typedef struct {
-    uint16_t x;             ///< X coordinate, unit 2mm
-    uint16_t y;             ///< Y coordinate, unit 2mm
-    uint16_t z;             ///< Z coordinate, unit 2mm
-    uint8_t  reflectivity;  ///< reflectivity
-    uint8_t  tag;           ///< tag
+    int16_t x;             ///< X coordinate, unit 2mm
+    int16_t y;             ///< Y coordinate, unit 2mm
+    int16_t z;             ///< Z coordinate, unit 2mm
+    uint8_t reflectivity;  ///< reflectivity
+    uint8_t tag;           ///< tag
 } LiDARPoint;
 
 /**
@@ -489,8 +489,8 @@ typedef struct {
  */
 typedef struct {
     uint16_t distance;      ///< distance, unit: 2mm
-    uint16_t theta;         ///< azimuth angle, unit: 0.01 degrees
-    uint16_t phi;           ///< zenith angle, unit: 0.01 degrees
+    int16_t  theta;         ///< azimuth angle, unit: 0.01 degrees
+    int16_t  phi;           ///< zenith angle, unit: 0.01 degrees
     uint8_t  reflectivity;  ///< reflectance
     uint8_t  tag;           ///< tag
 } LiDARSpherePoint;

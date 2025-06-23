@@ -662,6 +662,7 @@ typedef enum {
     OB_LIDAR_SCAN_20HZ    = 4,
     OB_LIDAR_SCAN_25HZ    = 5,
     OB_LIDAR_SCAN_30HZ    = 6,
+    OB_LIDAR_SCAN_40HZ    = 7,
 } OBLiDARScanRate,
     ob_lidar_scan_rate, OB_LIDAR_SCAN_RATE;
 

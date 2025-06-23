@@ -45,7 +45,7 @@ enum HpOpCode {
     // enable or disable streaming
     OPCODE_STREAMING_ON_OFF = 0x010F,
     // set specific mode: 0-normal; 1-fog
-    OPCODE_SET_SPECIFIC_MODE = 0x0100,
+    OPCODE_SET_SPECIFIC_MODE = 0x0110,
     // set tail filter level
     OPCODE_SET_TAIL_FILTER_LEVEL = 0x0111,
 
@@ -55,8 +55,8 @@ enum HpOpCode {
     OPCODE_SET_MEMS_FRENQUENCY = 0x0171,
     // set mems fov factor
     OPCODE_SET_MEMS_FOV_FACTOR = 0x0172,
-    // mems on/off
-    OPCODE_MEMS_ON_OFF = 0x0173,
+    // set repetitive scan mode
+    OPCODE_SET_REPETITIVE_SCAN_MODE = 0x0173,
     // mems restart
     OPCODE_RESTART_MEMS = 0x0174,
     // save mems param
@@ -122,6 +122,8 @@ enum HpOpCode {
     OPCODE_GET_MEMS_FOV_FACTOR = 0x0272,
     // get mems version
     OPCODE_GET_MEMS_VERSION = 0x0273,
+    // get repetitive scan mode
+    OPCODE_GET_REPETITIVE_SCAN_MODE = 0x0274,
 
     // calibration mode set TODO
 
@@ -235,7 +237,8 @@ typedef struct {
 #pragma pack(pop)
 
 bool     checkStatus(HpStatus stat, bool throwException = true);
-HpStatus execute(const std::shared_ptr<IVendorDataPort> &dataPort, uint16_t opCode, const uint8_t *reqData, uint16_t reqDataSize, uint8_t *respData, uint16_t *respDataSize);
+HpStatus execute(const std::shared_ptr<IVendorDataPort> &dataPort, uint16_t opCode, const uint8_t *reqData, uint16_t reqDataSize, uint8_t *respData,
+                 uint16_t *respDataSize);
 
 uint16_t initGetIntPropertyReq(std::vector<uint8_t> &dataBuf, uint16_t opCode);
 uint16_t initSetIntPropertyReq(std::vector<uint8_t> &dataBuf, uint16_t opCode, uint32_t value);
@@ -244,10 +247,10 @@ uint16_t initSetFloatPropertyReq(std::vector<uint8_t> &dataBuf, uint16_t opCode,
 uint16_t initGetRawDataReq(std::vector<uint8_t> &dataBuf, uint16_t opCode);
 uint16_t initSetRawDataReq(std::vector<uint8_t> &dataBuf, uint16_t opCode, const uint8_t *data, uint16_t dataSize);
 
-GetIntPropertyResp *parseGetIntPropertyResp(uint8_t *dataBuf, uint16_t dataSize);
+GetIntPropertyResp   *parseGetIntPropertyResp(uint8_t *dataBuf, uint16_t dataSize);
 GetFloatPropertyResp *parseGetFloatPropertyResp(uint8_t *dataBuf, uint16_t dataSize);
-GetRawDataResp *    parseGetRawDataResp(uint8_t *dataBuf, uint16_t dataSize);
-int16_t             getRaweDataSize(const GetRawDataResp *resp);
+GetRawDataResp       *parseGetRawDataResp(uint8_t *dataBuf, uint16_t dataSize);
+int16_t               getRaweDataSize(const GetRawDataResp *resp);
 
 }  // namespace lidarprotocol
 }  // namespace libobsensor

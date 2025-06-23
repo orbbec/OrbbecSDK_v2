@@ -88,7 +88,7 @@ void MS600Device::fetchDeviceInfo() {
 void MS600Device::initProperties() {
     const auto &sourcePortInfoList = enumInfo_->getSourcePortInfoList();
     auto        vendorPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(),
-                                           [](const std::shared_ptr<const SourcePortInfo> &portInfo) { return portInfo->portType == SOURCE_PORT_NET_VENDOR; });
+                                                  [](const std::shared_ptr<const SourcePortInfo> &portInfo) { return portInfo->portType == SOURCE_PORT_NET_VENDOR; });
 
     if(vendorPortInfoIter == sourcePortInfoList.end()) {
         return;
@@ -118,15 +118,15 @@ void MS600Device::initProperties() {
         return accessor;
     });
 
-    propertyServer->registerProperty(OB_RAW_DATA_LIDAR_IP_ADDRESS, "r", "rw", vendorPropertyAccessor);
-    propertyServer->registerProperty(OB_PROP_LIDAR_PORT_INT, "r", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_RAW_DATA_LIDAR_IP_ADDRESS, "rw", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_LIDAR_PORT_INT, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_RAW_DATA_LIDAR_MAC_ADDRESS, "r", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_LIDAR_SCAN_SPEED_INT, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_LIDAR_SCAN_DIRECTION_INT, "r", "r", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_LIDAR_TRANSFER_PROTOCOL_INT, "r", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_RAW_DATA_LIDAR_SERIAL_NUMBER, "r", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_REBOOT_DEVICE_BOOL, "", "w", vendorPropertyAccessor);
-    propertyServer->registerProperty(OB_PROP_LIDAR_ECHO_MODE_INT, "rw", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_LIDAR_SPECIFIC_MODE_INT, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_LIDAR_APPLY_CONFIGS_INT, "w", "w", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_LIDAR_TAIL_FILTER_LEVEL_INT, "rw", "rw", vendorPropertyAccessor);
 
@@ -141,10 +141,9 @@ void MS600Device::initProperties() {
     propertyServer->registerProperty(OB_PROP_LIDAR_APD_HIGH_VOLTAGE_FLOAT, "r", "r", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_LIDAR_TX_HIGH_POWER_VOLTAGE_FLOAT, "r", "r", vendorPropertyAccessor);
 
-    propertyServer->registerProperty(OB_PROP_LIDAR_SPECIFIC_MODE_INT, "rw", "rw", vendorPropertyAccessor);
-
     propertyServer->registerProperty(OB_PROP_LIDAR_INITIATE_DEVICE_CONNECTION_INT, "", "w", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_LIDAR_STREAMING_ON_OFF_INT, "", "w", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_LIDAR_WORK_MODE_INT, "rw", "rw", vendorPropertyAccessor);
 
     // register property server
     registerComponent(OB_DEV_COMPONENT_PROPERTY_SERVER, propertyServer, true);
@@ -202,7 +201,7 @@ void MS600Device::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
     // TODO hardcoded here
     if(streamType == OB_STREAM_LIDAR) {
         // LiDAR
-        const std::vector<OBLiDARScanRate> scanRates = { OB_LIDAR_SCAN_30HZ, OB_LIDAR_SCAN_25HZ, OB_LIDAR_SCAN_20HZ, OB_LIDAR_SCAN_15HZ };
+        const std::vector<OBLiDARScanRate> scanRates = { OB_LIDAR_SCAN_40HZ, OB_LIDAR_SCAN_30HZ, OB_LIDAR_SCAN_25HZ, OB_LIDAR_SCAN_20HZ, OB_LIDAR_SCAN_15HZ };
         const std::vector<OBFormat>        formats   = { OB_FORMAT_LIDAR_SCAN };
         StreamProfileList                  profileList;
 
