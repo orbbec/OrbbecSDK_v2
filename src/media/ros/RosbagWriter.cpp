@@ -221,17 +221,17 @@ void RosWriter::writeVideoStreamProfile(const OBSensorType sensorType, const std
             writeDisparityParam(videoStreamProfile->as<const DisparityBasedStreamProfile>());
         }
 
-        std::array<float, 8> distortion = { videoStreamProfile->getDistortion().k1, videoStreamProfile->getDistortion().k2,
-                                            videoStreamProfile->getDistortion().k3, videoStreamProfile->getDistortion().k4,
-                                            videoStreamProfile->getDistortion().k5, videoStreamProfile->getDistortion().k6,
-                                            videoStreamProfile->getDistortion().p1, videoStreamProfile->getDistortion().p2 };
+        auto                 spDistortion = videoStreamProfile->getDistortion();
+        std::array<float, 8> distortion   = { spDistortion.k1, spDistortion.k2, spDistortion.k3, spDistortion.k4,
+                                              spDistortion.k5, spDistortion.k6, spDistortion.p1, spDistortion.p2 };
         streamInfoMsg->cameraDistortion = distortion;
-        streamInfoMsg->distortionModel  = static_cast<uint8_t>(videoStreamProfile->getDistortion().model);
+        streamInfoMsg->distortionModel  = static_cast<uint8_t>(spDistortion.model);
 
-        streamInfoMsg->cameraIntrinsic[0] = videoStreamProfile->getIntrinsic().fx;
-        streamInfoMsg->cameraIntrinsic[1] = videoStreamProfile->getIntrinsic().fy;
-        streamInfoMsg->cameraIntrinsic[2] = videoStreamProfile->getIntrinsic().cx;
-        streamInfoMsg->cameraIntrinsic[3] = videoStreamProfile->getIntrinsic().cy;
+        auto spIntrinsic                  = videoStreamProfile->getIntrinsic();
+        streamInfoMsg->cameraIntrinsic[0] = spIntrinsic.fx;
+        streamInfoMsg->cameraIntrinsic[1] = spIntrinsic.fy;
+        streamInfoMsg->cameraIntrinsic[2] = spIntrinsic.cx;
+        streamInfoMsg->cameraIntrinsic[3] = spIntrinsic.cy;
         streamInfoMsg->width              = videoStreamProfile->getWidth();
         streamInfoMsg->height             = videoStreamProfile->getHeight();
         streamInfoMsg->fps                = videoStreamProfile->getFps();
