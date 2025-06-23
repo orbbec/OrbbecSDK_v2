@@ -51,7 +51,7 @@ ImuStreamer::~ImuStreamer() noexcept {
     }
 
     if(running_) {
-        backend_->stopStream();
+        TRY_EXECUTE(backend_->stopStream());
         for(auto &filter: filters_) {
             filter->reset();
         }
