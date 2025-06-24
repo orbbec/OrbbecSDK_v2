@@ -11,7 +11,7 @@
 std::vector<std::function<std::string(std::shared_ptr<DeviceResource> &)>> updateConfigHandlers_ = {
     // get timestamp diff for depth and color
     [](std::shared_ptr<DeviceResource> &deviceResource) -> std::string {
-        std::string msg = "Save time stamp difference for depth and color";
+        std::string msg = "Save timestamp difference for depth and color";
         std::cout << msg << std::endl;
 
         // sync time

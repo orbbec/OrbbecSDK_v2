@@ -28,7 +28,7 @@ public:
     bool isOpen() const;
 
     void writeSystemInfo(const std::string &timestamp, float cpuUsage, float memoryUsage);
-    void writeAverageSystemInfo(float cpuUsage, float memoryUsage);
+    void writeAverageSystemInfo(const std::string &config, float cpuUsage, float memoryUsage);
     void writeSystemInfos(const std::vector<SystemInfo> &systemInfos);
     void writeTitle(const std::string &title);
 

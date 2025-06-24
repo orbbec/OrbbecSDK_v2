@@ -18,6 +18,7 @@ PerformanceTester::PerformanceTester(std::shared_ptr<ob::DeviceList> devList) {
     }
     systemInfosManager_ = std::make_shared<SystemInfosManager>();
     summary_.open("summary.csv");
+    summary_.writeTitle("Config, Average Cpu Usage(%), Average Memory Usage(MB)");
 }
 
 PerformanceTester::~PerformanceTester() {
@@ -55,13 +56,14 @@ void PerformanceTester::startTesting() {
 }
 
 void PerformanceTester::writeSystemInfosToFile(const std::string &configName, const std::string &fileName) {
-    float    totalCpuUsage    = 0.0f;
-    float    totalMemoryUsage = 0.0f;
-    uint64_t totalCnt         = 0;
+    float       totalCpuUsage    = 0.0f;
+    float       totalMemoryUsage = 0.0f;
+    uint64_t    totalCnt         = 0;
+    std::string name             = "\"" + configName + "\"";
 
     CSVFile file;
     file.open(fileName);
-    file.writeTitle(configName);
+    file.writeTitle(name);
     file.writeTitle("Time,CPU Usage,Memory Usage");
     for(auto &info: systemInfosManager_->getData()) {
         file.writeSystemInfo(info.time, info.cpuUsage, info.memUsage);
@@ -71,7 +73,5 @@ void PerformanceTester::writeSystemInfosToFile(const std::string &configName, co
     }
     file.close();
 
-    summary_.writeTitle(std::string("Config: " + configName + " | Total average"));
-    summary_.writeTitle("Average Cpu Usage(%), Average Memory Usage(MB)");
-    summary_.writeAverageSystemInfo(totalCpuUsage / totalCnt, totalMemoryUsage / totalCnt);
+    summary_.writeAverageSystemInfo(name, totalCpuUsage / totalCnt, totalMemoryUsage / totalCnt);
 }
