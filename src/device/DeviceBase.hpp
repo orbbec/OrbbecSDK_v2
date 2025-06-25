@@ -20,7 +20,7 @@ private:
         DeviceComponentId                                  compId = OB_DEV_COMPONENT_UNKNOWN;
         std::shared_ptr<IDeviceComponent>                  component;  // If is nullptr, try to create it
         std::function<std::shared_ptr<IDeviceComponent>()> creator;    // lazy creation
-        bool                                               initialized = false;
+        bool                                               initialized  = false;
         bool                                               lockRequired = false;
     };
 
@@ -39,6 +39,7 @@ public:
     const std::string                &getExtensionInfo(const std::string &infoKey) const override;
     bool                              isExtensionInfoExists(const std::string &infoKey) const override;
     uint64_t                          getDeviceErrorState() const override;
+    void                              fetchDeviceErrorState() override;
 
     void registerComponent(DeviceComponentId compId, std::function<std::shared_ptr<IDeviceComponent>()> creator, bool lockRequired = false);
     void registerComponent(DeviceComponentId compId, std::shared_ptr<IDeviceComponent> component, bool lockRequired = false);
@@ -74,7 +75,6 @@ protected:
     // implement on subclass, and must be called to initialize the device info on construction
     virtual void        fetchDeviceInfo();
     virtual void        fetchExtensionInfo();
-    virtual void        fetchDeviceErrorState();
     DeviceComponentLock tryLockResource();
 
     std::shared_ptr<ISourcePort> getSourcePort(std::shared_ptr<const SourcePortInfo> sourcePortInfo) const;
@@ -82,7 +82,7 @@ protected:
     /**
      * @brief Enable heartbeat if "DefaultHeartBeat" config is true.
      *        Reads the "DefaultHeartBeat" option from config and starts heartbeat if enabled.
-     * 
+     *
      * @note Must be called after device initialization is complete.
      */
     void checkAndStartHeartbeat();

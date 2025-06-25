@@ -74,8 +74,8 @@ void DeviceBase::fetchDeviceInfo() {
     // todo: net device does not have backend type
     auto sensorPortInfo = getSensorPortInfo(OB_SENSOR_DEPTH);
     if(sensorPortInfo->portType == SOURCE_PORT_USB_UVC) {
-        auto port    = getSourcePort(sensorPortInfo);
-        auto uvcPort = std::dynamic_pointer_cast<UvcDevicePort>(port);
+        auto port                 = getSourcePort(sensorPortInfo);
+        auto uvcPort              = std::dynamic_pointer_cast<UvcDevicePort>(port);
         deviceInfo_->backendType_ = uvcPort->getBackendType();
     }
 #else
@@ -525,8 +525,10 @@ void DeviceBase::updateOptionalDepthPresets(const char filePathList[][OB_PATH_MA
     });
 
     if(success) {
-        // refresh extension info and preset list
+        // refresh extension info, device error state and preset list
         fetchExtensionInfo();
+        // device error state
+        fetchDeviceErrorState();
         // update preset list
         auto presetMgr = getComponentT<libobsensor::IPresetManager>(libobsensor::OB_DEV_COMPONENT_PRESET_MANAGER, false);
         if(presetMgr) {
@@ -586,12 +588,12 @@ void DeviceBase::checkAndStartHeartbeat() {
     auto        envConfig = EnvConfig::getInstance();
     std::string key       = std::string("Device.") + utils::string::removeSpace(deviceInfo_->name_) + std::string(".DefaultHeartBeat");
     int         value     = 0;
-    
+
     // read config
     envConfig->getIntValue(key, value);
     if(value != 0) {
         auto devMonitor = getComponentT<IDeviceMonitor>(OB_DEV_COMPONENT_DEVICE_MONITOR, false);
-        if (devMonitor) {
+        if(devMonitor) {
             devMonitor->enableHeartbeat();
         }
     }
