@@ -69,6 +69,11 @@ void ImuStreamer::startStream(std::shared_ptr<const StreamProfile> sp, MutableFr
     }
     running_ = true;
 
+    // Some devices report incorrect timestamps in the first few IMU frames.
+    // Although the actual number of affected frames may vary, discarding
+    // the first 8 frames provides a consistent safeguard against invalid timing data
+    ignoreLeadingFrameCount_ = 8;
+
     backend_->startStream([this](std::shared_ptr<Frame> frame) { ImuStreamer::parseIMUData(frame); });
 }
 
@@ -121,6 +126,24 @@ void ImuStreamer::parseIMUData(std::shared_ptr<Frame> frame) {
         return;
     }
 
+    int32_t discardCount = 0;
+    if(ignoreLeadingFrameCount_>0)
+    {
+        discardCount = ignoreLeadingFrameCount_;
+        if(ignoreLeadingFrameCount_ > header->groupCount) {
+            discardCount = header->groupCount;
+        }
+        //  Discard the first few frames provides a consistent safeguard against invalid timing data
+        LOG_DEBUG("Discard the first few IMU frames. Received count: {}, left count: {}, discard count: {}", header->groupCount, ignoreLeadingFrameCount_,
+                  discardCount);
+        ignoreLeadingFrameCount_ -= discardCount;
+        frameIndex_ += discardCount;
+        if(discardCount >= header->groupCount) {
+            // no any more data for this package
+            return;
+        }
+    }
+
     std::shared_ptr<const AccelStreamProfile> accelStreamProfile;
     std::shared_ptr<const GyroStreamProfile>  gyroStreamProfile;
     {
@@ -136,7 +159,7 @@ void ImuStreamer::parseIMUData(std::shared_ptr<Frame> frame) {
     }
 
     uint8_t *imuOrgData = (uint8_t *)data + sizeof(OBImuHeader);
-    for(int groupIndex = 0; groupIndex < header->groupCount; groupIndex++) {
+    for(int groupIndex = discardCount; groupIndex < header->groupCount; groupIndex++) {
         auto frameSet = FrameFactory::createFrameSet();
 
         OBImuOriginData *imuData    = (OBImuOriginData *)((uint8_t *)imuOrgData + groupIndex * sizeof(OBImuOriginData));

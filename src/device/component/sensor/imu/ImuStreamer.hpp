@@ -64,5 +64,6 @@ private:
 
     std::atomic_bool running_;
     uint64_t         frameIndex_;
+    int32_t          ignoreLeadingFrameCount_ = 0;
 };
 }  // namespace libobsensor
