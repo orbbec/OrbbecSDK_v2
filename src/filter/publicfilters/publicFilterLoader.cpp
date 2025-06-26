@@ -13,6 +13,8 @@
 #include "IMUCorrector.hpp"
 #include "Align.hpp"
 #include "FilterDecorator.hpp"
+#include "LiDARPointFilter.hpp"
+#include "LiDARFormatConverter.hpp"
 
 namespace libobsensor {
 publicFilterCreator::publicFilterCreator(std::function<std::shared_ptr<IFilter>()> creatorFunc) : creatorFunc_(creatorFunc) {}
@@ -38,6 +40,7 @@ std::map<std::string, std::shared_ptr<IFilterCreator>> getCreators() {
         ADD_FILTER_CREATOR(FrameMirror),       ADD_FILTER_CREATOR(FrameFlip),
         ADD_FILTER_CREATOR(FrameRotate),       ADD_FILTER_CREATOR(PointCloudFilter),
         ADD_FILTER_CREATOR(IMUCorrector),      ADD_FILTER_CREATOR(Align),
+        ADD_FILTER_CREATOR(LiDARPointFilter),  ADD_FILTER_CREATOR(LiDARFormatConverter),
     };
 
     return filterCreators;

@@ -11,10 +11,12 @@
 #include "property/LiDARPropertyAccessor.hpp"
 #include "property/PropertyServer.hpp"
 #include "property/CommonPropertyAccessors.hpp"
+#include "property/FilterPropertyAccessors.hpp"
 #include "LiDARStreamProfileFilter.hpp"
 #include "utils/BufferParser.hpp"
 #include "utils/PublicTypeHelper.hpp"
 #include "monitor/LiDARDeviceMonitor.hpp"
+#include "FilterFactory.hpp"
 #include <sstream>
 #include <iomanip>
 
@@ -88,7 +90,7 @@ void LiDARDevice::fetchDeviceInfo() {
 void LiDARDevice::initProperties() {
     const auto &sourcePortInfoList = enumInfo_->getSourcePortInfoList();
     auto        vendorPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(),
-                                           [](const std::shared_ptr<const SourcePortInfo> &portInfo) { return portInfo->portType == SOURCE_PORT_NET_VENDOR; });
+                                                  [](const std::shared_ptr<const SourcePortInfo> &portInfo) { return portInfo->portType == SOURCE_PORT_NET_VENDOR; });
 
     if(vendorPortInfoIter == sourcePortInfoList.end()) {
         return;
@@ -159,6 +161,16 @@ void LiDARDevice::initProperties() {
     // register property server
     registerComponent(OB_DEV_COMPONENT_PROPERTY_SERVER, propertyServer, true);
 
+    // register property server
+    propertyServer->registerAccessCallback(
+        OB_PROP_LIDAR_TAIL_FILTER_LEVEL_INT, [&](uint32_t, const uint8_t *data, size_t, PropertyOperationType operationType) {
+            if(operationType == PROP_OP_WRITE) {
+                if(lidarFilterList_["LiDARPointFilter"]) {
+                    lidarFilterList_["LiDARPointFilter"]->setConfigValue("FilterLevel", static_cast<double>(static_cast<int>(*data)));
+                }
+            }
+        });
+
     // set work mode
     BEGIN_TRY_EXECUTE({
         // set to normal work mode
@@ -188,7 +200,21 @@ void LiDARDevice::initSensorList() {
             // the gyro and accel are both on the same port and share the same filter
             auto port           = getSourcePort(lidarPortInfo);
             auto dataStreamPort = std::dynamic_pointer_cast<IDataStreamPort>(port);
-            auto streamer       = std::make_shared<LiDARStreamer>(this, dataStreamPort);
+
+            auto filterFactory = FilterFactory::getInstance();
+
+            // create filters
+            lidarFilterList_.clear();
+            std::vector<std::pair<std::string, std::shared_ptr<IFilter>>> sortFilters;
+
+            std::vector<std::string> filterNames = { "LiDARPointFilter", "LiDARFormatConverter" };
+            for(const auto &filterName: filterNames) {
+                lidarFilterList_[filterName] = filterFactory->createFilter(filterName);
+                sortFilters.push_back({ filterName, lidarFilterList_[filterName] });
+            }
+
+            auto streamer = std::make_shared<LiDARStreamer>(this, dataStreamPort, sortFilters);
+
             return streamer;
         });
 

@@ -20,6 +20,8 @@ namespace libobsensor {
 class LiDARStreamer : public ILiDARStreamer {
 public:
     LiDARStreamer(IDevice *owner, const std::shared_ptr<IDataStreamPort> &backend);
+    LiDARStreamer(IDevice *owner, const std::shared_ptr<IDataStreamPort> &backend, std::vector<std::pair<std::string, std::shared_ptr<IFilter>>> filters);
+
     virtual ~LiDARStreamer() noexcept;
 
     virtual void     startStream(std::shared_ptr<const StreamProfile> profile, MutableFrameCallback callback) override;
@@ -32,8 +34,11 @@ private:
     void checkAndConvertProfile(std::shared_ptr<const StreamProfile> profile);
     void parseLiDARData(std::shared_ptr<Frame> frame);
 
+    virtual void             outputFrame(std::shared_ptr<Frame> frame);
+    std::shared_ptr<IFilter> getFormatConverter();
+
 private:
-    IDevice *                            owner_;
+    IDevice                             *owner_;
     std::shared_ptr<IDataStreamPort>     backend_;
     std::mutex                           mutex_;
     std::shared_ptr<const StreamProfile> profile_;
@@ -41,9 +46,11 @@ private:
     MutableFrameCallback                 callback_;
     std::atomic_bool                     running_;
     uint64_t                             frameIndex_;
-    std::shared_ptr<Frame>               frame_;      // cache frame data
-    uint32_t                             frameDataOffset_;  // frame data offset
-    uint16_t                             expectedDataNumber_; // expected data block number in the next data block
+    std::shared_ptr<Frame>               frame_;               // cache frame data
+    uint32_t                             frameDataOffset_;     // frame data offset
+    uint16_t                             expectedDataNumber_;  // expected data block number in the next data block
+
+    std::vector<std::pair<std::string, std::shared_ptr<IFilter>>> filters_;
 };
 
 }  // namespace libobsensor

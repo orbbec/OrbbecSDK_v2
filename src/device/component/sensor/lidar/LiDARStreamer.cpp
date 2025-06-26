@@ -24,6 +24,8 @@
 #include <cmath>
 #include <algorithm>
 
+const size_t LIDAR_FILTER_FRAME_QUEUE_SIZE = 10;
+
 namespace libobsensor {
 
 #pragma pack(push, 1)
@@ -45,28 +47,6 @@ typedef struct {
     uint16_t apdtemperature;    // APD temperature, unit 0.01c
     uint8_t  reserved[5];       // reserve
 } LiDARDataHeader;
-
-/**
- * @brief Cartesian coordinate system point
- */
-typedef struct {
-    uint16_t x;             ///< X coordinate, unit 2mm
-    uint16_t y;             ///< Y coordinate, unit 2mm
-    uint16_t z;             ///< Z coordinate, unit 2mm
-    uint8_t  reflectivity;  ///< reflectivity
-    uint8_t  tag;           ///< tag
-} LiDARPoint;
-
-/**
- * @brief 3D point structure with LiDAR information
- */
-typedef struct {
-    uint16_t distance;      ///< distance, unit: 2mm
-    uint16_t theta;         ///< azimuth angle, unit: 0.01 degrees
-    uint16_t phi;           ///< zenith angle, unit: 0.01 degrees
-    uint8_t  reflectivity;  ///< reflectance
-    uint8_t  tag;           ///< tag
-} LiDARSpherePoint;
 
 #pragma pack(pop)
 
@@ -95,26 +75,8 @@ static inline void copyToOBLiDARSpherePoint(const LiDARSpherePoint *point, OBLiD
     obPoint->tag          = point->tag;
 }
 
-static inline void convertToCartesianCoordinate(const LiDARSpherePoint *sphere, OBLiDARPoint *point) {
-    // to host order
-    float distance = ntohs(sphere->distance);
-    float theta    = ntohs(sphere->theta);
-    float phi      = ntohs(sphere->phi);
-
-    constexpr float MY_PI = 3.14159265358979323846f;
-
-    distance *= 2;                    // to unit mm
-    theta *= 0.01f * MY_PI / 180.0f;  // unit 0.01 degrees to unit rad
-    phi *= 0.01f * MY_PI / 180.0f;    // unit 0.01 degrees to unit rad
-
-    point->x            = distance * cos(theta) * cos(phi);
-    point->y            = distance * sin(theta) * cos(phi);
-    point->z            = distance * sin(phi);
-    point->reflectivity = sphere->reflectivity;
-    point->tag          = sphere->tag;
-}
-
-LiDARStreamer::LiDARStreamer(IDevice *owner, const std::shared_ptr<IDataStreamPort> &backend)
+LiDARStreamer::LiDARStreamer(IDevice *owner, const std::shared_ptr<IDataStreamPort> &backend,
+                             std::vector<std::pair<std::string, std::shared_ptr<IFilter>>> filters)
     : owner_(owner),
       backend_(backend),
       profile_(nullptr),
@@ -123,9 +85,30 @@ LiDARStreamer::LiDARStreamer(IDevice *owner, const std::shared_ptr<IDataStreamPo
       frameIndex_(0),
       frame_(nullptr),
       frameDataOffset_(0),
-      expectedDataNumber_(0) {
+      expectedDataNumber_(0),
+      filters_(std::move(filters)) {
+
+    auto iter = filters_.begin();
+    while(iter != filters_.end()) {
+        iter->second->resizeFrameQueue(LIDAR_FILTER_FRAME_QUEUE_SIZE);
+        auto nextIter = iter + 1;
+        if(nextIter == filters_.end()) {
+            iter->second->setCallback([this](std::shared_ptr<Frame> frame) { outputFrame(frame); });
+        }
+        else {
+            iter->second->setCallback([nextIter](std::shared_ptr<Frame> frame) { nextIter->second->pushFrame(frame); });
+        }
+
+        iter++;
+    }
+
+    // add format converter process
+
     LOG_DEBUG("LiDARStreamer created");
 }
+
+LiDARStreamer::LiDARStreamer(IDevice *owner, const std::shared_ptr<IDataStreamPort> &backend)
+    : LiDARStreamer(owner, backend, std::vector<std::pair<std::string, std::shared_ptr<IFilter>>>()) {}
 
 LiDARStreamer::~LiDARStreamer() noexcept {
     try {
@@ -161,6 +144,9 @@ void LiDARStreamer::startStream(std::shared_ptr<const StreamProfile> profile, Mu
     catch(const std::exception &e) {
         LOG_WARN("Exception occurred while send stop stream command: {}", e.what());
     }
+
+    // enable/disable LiDARFormatConverter
+    getFormatConverter()->enable(profile->getFormat() == OB_FORMAT_LIDAR_POINT);
 
     BEGIN_TRY_EXECUTE({
         // 2. start backend stream
@@ -372,37 +358,20 @@ void LiDARStreamer::parseLiDARData(std::shared_ptr<Frame> frame) {
     auto frameData = frame_->getDataMutable() + frameDataOffset_;
     // convert coordinate system
     if(format == OB_FORMAT_LIDAR_SPHERE_POINT) {
-        if(profileInfo_.format == OB_FORMAT_LIDAR_POINT) {
-            // update data offset
-            frameDataOffset_ += curPointsNum * sizeof(OBLiDARPoint);
-            if(frameDataOffset_ <= frameSize) {
-                // to ob cartesian coordinate
-                for(uint16_t i = 0; i < curPointsNum; ++i) {
-                    auto spherePoint = reinterpret_cast<const LiDARSpherePoint *>(data) + i;
-                    auto point       = reinterpret_cast<OBLiDARPoint *>(frameData) + i;
-                    convertToCartesianCoordinate(spherePoint, point);
-                }
-            }
-            else {
-                LOG_WARN("This LiDAR block data will be dropped because frame data is invalid. Data number: {}", header->dataBlockNum);
-                return;
+
+        // update data offset
+        frameDataOffset_ += curPointsNum * sizeof(OBLiDARSpherePoint);
+        if(frameDataOffset_ <= frameSize) {
+            // copy to ob sphere point
+            for(uint16_t i = 0; i < curPointsNum; ++i) {
+                auto point   = reinterpret_cast<const LiDARSpherePoint *>(data) + i;
+                auto obPoint = reinterpret_cast<OBLiDARSpherePoint *>(frameData) + i;
+                copyToOBLiDARSpherePoint(point, obPoint);
             }
         }
         else {
-            // update data offset
-            frameDataOffset_ += curPointsNum * sizeof(OBLiDARSpherePoint);
-            if(frameDataOffset_ <= frameSize) {
-                // copy to ob sphere point
-                for(uint16_t i = 0; i < curPointsNum; ++i) {
-                    auto point   = reinterpret_cast<const LiDARSpherePoint *>(data) + i;
-                    auto obPoint = reinterpret_cast<OBLiDARSpherePoint *>(frameData) + i;
-                    copyToOBLiDARSpherePoint(point, obPoint);
-                }
-            }
-            else {
-                LOG_WARN("This LiDAR block data will be dropped because frame data is invalid. Data number: {}", header->dataBlockNum);
-                return;
-            }
+            LOG_WARN("This LiDAR block data will be dropped because frame data is invalid. Data number: {}", header->dataBlockNum);
+            return;
         }
     }
     else {
@@ -428,11 +397,15 @@ void LiDARStreamer::parseLiDARData(std::shared_ptr<Frame> frame) {
         auto frameIndex = frameIndex_++;
         frame_->setDataSize(frameDataOffset_);
         frame_->setNumber(frameIndex);
-        // output frame
-        std::lock_guard<std::mutex> lock(mutex_);
-        if(callback_ && running_) {
-            callback_(frame_);
+
+        // process the filter in another thread.
+        if(!filters_.empty()) {
+            filters_.front().second->pushFrame(frame_);
         }
+        else {
+            outputFrame(frame_);
+        }
+
         // release the frame
         frame_              = nullptr;
         frameDataOffset_    = 0;
@@ -448,4 +421,21 @@ IDevice *LiDARStreamer::getOwner() const {
     return owner_;
 }
 
+void LiDARStreamer::outputFrame(std::shared_ptr<Frame> frame) {
+    // output frame
+    std::lock_guard<std::mutex> lock(mutex_);
+    if(callback_ && running_) {
+        callback_(frame);
+    }
+}
+
+std::shared_ptr<IFilter> LiDARStreamer::getFormatConverter() {
+    for(auto pair: filters_) {
+        if(pair.first == "LiDARFormatConverter") {
+            return pair.second;
+        }
+    }
+
+    throw invalid_value_exception("Not found the LiDARFormatConverter");
+}
 }  // namespace libobsensor

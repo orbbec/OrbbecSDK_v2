@@ -238,8 +238,8 @@ void LiDARPropertyAccessor::getPropertyRange(uint32_t propertyId, OBPropertyRang
         break;
     }
     case OB_PROP_LIDAR_TAIL_FILTER_LEVEL_INT: {
-        range->min.intValue  = 0;  // close
-        range->max.intValue  = 1;  // open
+        range->min.intValue  = 0;  // close filter
+        range->max.intValue  = 5;  // filter level, up to level 5
         range->step.intValue = 1;
         range->def.intValue  = 0;
         break;

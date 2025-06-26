@@ -26,6 +26,9 @@ private:
     void        fetchDeviceInfo() override;
     void        initSensorStreamProfile(std::shared_ptr<ISensor> sensor);
     std::string Uint8toString(const std::vector<uint8_t> &data, const std::string &defValue);
+
+private:
+    std::map<std::string, std::shared_ptr<IFilter>> lidarFilterList_;
 };
 
 }  // namespace libobsensor
