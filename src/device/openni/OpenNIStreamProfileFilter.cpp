@@ -170,20 +170,14 @@ void OpenNIStreamProfileFilter::fetchEffectiveStreamProfiles() {
         depthEffectiveStreamProfiles_.push_back({ OB_SENSOR_DEPTH, OB_FORMAT_Y12, 640, 320, 5 });
         depthEffectiveStreamProfiles_.push_back({ OB_SENSOR_DEPTH, OB_FORMAT_Y12, 640, 320, 8 });
         depthEffectiveStreamProfiles_.push_back({ OB_SENSOR_DEPTH, OB_FORMAT_Y12, 640, 320, 10 });
-        depthEffectiveStreamProfiles_.push_back({ OB_SENSOR_DEPTH, OB_FORMAT_Y12, 640, 320, 15 });
-        depthEffectiveStreamProfiles_.push_back({ OB_SENSOR_DEPTH, OB_FORMAT_Y12, 640, 320, 30 });
 
         depthEffectiveStreamProfiles_.push_back({ OB_SENSOR_DEPTH, OB_FORMAT_Y12, 320, 200, 5 });
         depthEffectiveStreamProfiles_.push_back({ OB_SENSOR_DEPTH, OB_FORMAT_Y12, 320, 200, 8 });
         depthEffectiveStreamProfiles_.push_back({ OB_SENSOR_DEPTH, OB_FORMAT_Y12, 320, 200, 10 });
-        depthEffectiveStreamProfiles_.push_back({ OB_SENSOR_DEPTH, OB_FORMAT_Y12, 320, 200, 15 });
-        depthEffectiveStreamProfiles_.push_back({ OB_SENSOR_DEPTH, OB_FORMAT_Y12, 320, 200, 30 });
 
         depthEffectiveStreamProfiles_.push_back({ OB_SENSOR_DEPTH, OB_FORMAT_Y12, 320, 160, 5 });
         depthEffectiveStreamProfiles_.push_back({ OB_SENSOR_DEPTH, OB_FORMAT_Y12, 320, 160, 8 });
         depthEffectiveStreamProfiles_.push_back({ OB_SENSOR_DEPTH, OB_FORMAT_Y12, 320, 160, 10 });
-        depthEffectiveStreamProfiles_.push_back({ OB_SENSOR_DEPTH, OB_FORMAT_Y12, 320, 160, 15 });
-        depthEffectiveStreamProfiles_.push_back({ OB_SENSOR_DEPTH, OB_FORMAT_Y12, 320, 160, 30 });
     }
 }
 
