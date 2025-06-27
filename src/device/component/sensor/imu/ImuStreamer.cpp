@@ -67,7 +67,8 @@ void ImuStreamer::startStream(std::shared_ptr<const StreamProfile> sp, MutableFr
             return;
         }
     }
-    running_ = true;
+    running_    = true;
+    frameIndex_ = 1;  // frame number start from 1
 
     // Some devices report incorrect timestamps in the first few IMU frames.
     // Although the actual number of affected frames may vary, discarding
@@ -98,7 +99,8 @@ void ImuStreamer::stopStream(std::shared_ptr<const StreamProfile> sp) {
     for(auto &filter: filters_) {
         filter->reset();
     }
-    running_ = false;
+    running_    = false;
+    frameIndex_ = 1;  // reset frame number
     LOG_DEBUG("ImuStreamer stop finished.");
 }
 
