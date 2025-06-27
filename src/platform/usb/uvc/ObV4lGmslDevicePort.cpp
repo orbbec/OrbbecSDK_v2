@@ -599,6 +599,8 @@ void writeBufferToFile(const char *buf, std::size_t size, const std::string &fil
 void ObV4lGmslDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandleGmsl> devHandle) {
     int metadataBufferIndex = -1;
     int colorFrameNum       = 0;  // color drop 1~3 frame -> fix color green screen issue.
+
+    devHandle->loopFrameIndex.store(1);  // frame number start from 1
     try {
         int max_fd = std::max({ devHandle->fd, devHandle->metadataFd, devHandle->stopPipeFd[0], devHandle->stopPipeFd[1] });
 

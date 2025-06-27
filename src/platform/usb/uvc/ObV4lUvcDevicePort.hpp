@@ -79,6 +79,8 @@ struct V4lDeviceHandle {
     int                          stopPipeFd[2] = { -1, -1 };  // pipe to signal the capture thread to stop
     std::shared_ptr<std::thread> captureThread = nullptr;
     std::atomic<bool>            isCapturing   = { false };
+
+    std::atomic<std::uint64_t> loopFrameIndex = { 0 };
 };
 
 class ObV4lUvcDevicePort : public UvcDevicePort {

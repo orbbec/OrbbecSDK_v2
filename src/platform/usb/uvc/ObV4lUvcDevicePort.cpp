@@ -390,6 +390,8 @@ ObV4lUvcDevicePort::~ObV4lUvcDevicePort() noexcept {
 
 void ObV4lUvcDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandle> devHandle) {
     int metadataBufferIndex = -1;
+
+    devHandle->loopFrameIndex.store(1);  // frame number start from 1
     try {
 
         int max_fd = std::max({ devHandle->fd, devHandle->metadataFd, devHandle->stopPipeFd[0], devHandle->stopPipeFd[1] });
@@ -494,8 +496,11 @@ void ObV4lUvcDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandle> devHandle)
 
                         auto realtime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
                         videoFrame->setSystemTimeStampUsec(realtime);
-                        videoFrame->setNumber(buf.sequence);
+                        // NOte: // V4L2 frame number start from 0; we use a custom frame number starting from 1
+                        // videoFrame->setNumber(buf.sequence);
+                        videoFrame->setNumber(devHandle->loopFrameIndex);
                         devHandle->frameCallback(videoFrame);
+                        devHandle->loopFrameIndex++;
                     })
                 }
 
