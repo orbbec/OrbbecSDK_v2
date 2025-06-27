@@ -67,7 +67,7 @@ ObRTPSink::ObRTPSink(std::shared_ptr<const StreamProfile> streamProfile, UsageEn
       subsession_(subsession),
       frameCallback_(callback),
       streamProfile_(streamProfile),
-      frameCount_(0),
+      frameCount_(1),
       destroy_(false),
       currentBuffer_(nullptr) {
     streamId_ = strDup(streamId);

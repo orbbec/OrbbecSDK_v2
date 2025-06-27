@@ -57,6 +57,10 @@ public:
         return frameNumber_;
     }
 
+    void resetNumber() {
+        frameNumber_ = 0;
+    }
+
     uint64_t getTimestamp() {
         return timestamp_;
     }

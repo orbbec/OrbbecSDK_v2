@@ -87,6 +87,7 @@ void ObRTPUDPClient::start(std::shared_ptr<const StreamProfile> profile, Mutable
 
     startReceive_.store(true);
     rtpQueue_.reset();
+    rtpProcessor_.resetNumber();
     currentProfile_ = profile;
     frameCallback_  = callback;
     receiverThread_ = std::thread(&ObRTPUDPClient::frameReceive, this);
