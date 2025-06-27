@@ -9,6 +9,7 @@
 #include "logger/LoggerHelper.hpp"
 #include "environment/EnvConfig.hpp"
 #include "IDevice.hpp"
+#include "IDepthWorkModeManager.hpp"
 
 namespace libobsensor {
 SensorBase::SensorBase(IDevice *owner, OBSensorType sensorType, const std::shared_ptr<ISourcePort> &backend)
@@ -400,9 +401,9 @@ void SensorBase::validateDeviceState(const std::shared_ptr<const StreamProfile> 
     }
 
     // check device error state
-    {
-        auto     errorState = device->getDeviceErrorState();
-        uint64_t flag       = 0;
+    auto errorState = device->getDeviceErrorState();
+    if(errorState != 0) {
+        uint64_t flag = 0;
 
         // add flag to be checked
         auto streamType = profile->getType();
@@ -417,15 +418,27 @@ void SensorBase::validateDeviceState(const std::shared_ptr<const StreamProfile> 
         case OB_STREAM_DEPTH:
         case OB_STREAM_IR:
         case OB_STREAM_IR_LEFT:
-        case OB_STREAM_IR_RIGHT:
+        case OB_STREAM_IR_RIGHT: {
+            // Skip device error state if the depth work mode is Factory Calibration
+            auto depthWorkModeManager = device->getComponentT<IDepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER, false);
+            if(depthWorkModeManager) {
+                auto        currentDepthMode = depthWorkModeManager->getCurrentDepthWorkMode();
+                const char *factoryMode      = "Factory Calib";
+                if(strncmp(currentDepthMode.name, factoryMode, strlen(factoryMode) + 1) == 0) {
+                    // Factory Calibration mode
+                    flag = 0;
+                    break;
+                }
+            }
             flag |= OB_ERROR_IRL_SENSOR | OB_ERROR_IRR_SENSOR | OB_ERROR_CFG_PARAM;
-            break;
+        } break;
         default:
             break;
         }
 
         if((errorState & flag) != 0) {
-            throw unsupported_operation_exception("Unexpected device state, please update your camera firmware before streaming data.");
+            throw unsupported_operation_exception(utils::string::to_string() << "Unexpected device state: " << errorState
+                                                                             << ". Please update your camera firmware before streaming data.");
         }
     }
 }

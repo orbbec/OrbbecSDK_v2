@@ -124,7 +124,7 @@ void G330SensorStreamStrategy::validatePreset(const std::vector<std::shared_ptr<
     }
 
     const char *FactoryMode = "Factory Calib";
-    if(strncmp(currentDepthMode.name, FactoryMode, strlen(FactoryMode)) == 0) {
+    if(strncmp(currentDepthMode.name, FactoryMode, strlen(FactoryMode) + 1) == 0) {
         // Factory Calibration mode
         for(auto profile: profiles) {
             auto        streamType  = profile->getType();
