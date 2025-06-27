@@ -137,7 +137,6 @@ void ImuStreamer::parseIMUData(std::shared_ptr<Frame> frame) {
         LOG_DEBUG("Discard the first few IMU frames. Received count: {}, left count: {}, discard count: {}", header->groupCount, ignoreLeadingFrameCount_,
                   discardCount);
         ignoreLeadingFrameCount_ -= discardCount;
-        frameIndex_ += discardCount;
         if(discardCount >= header->groupCount) {
             // no any more data for this package
             return;
