@@ -26,7 +26,7 @@
 
 namespace libobsensor {
 
-LiDARDevice::LiDARDevice(const std::shared_ptr<const IDeviceEnumInfo> &info) : DeviceBase(info) {
+LiDARDevice::LiDARDevice(const std::shared_ptr<const IDeviceEnumInfo> &info) : LiDARDeviceBase(info) {
     init();
 }
 
@@ -37,14 +37,6 @@ void LiDARDevice::init() {
     initSensorList();
 
     fetchDeviceInfo();
-}
-
-std::string LiDARDevice::Uint8toString(const std::vector<uint8_t> &data, const std::string &defValue) {
-    if(data.empty()) {
-        return defValue;
-    }
-    size_t len = strnlen(reinterpret_cast<const char *>(data.data()), data.size());
-    return std::string(data.begin(), data.begin() + len);
 }
 
 void LiDARDevice::fetchDeviceInfo() {

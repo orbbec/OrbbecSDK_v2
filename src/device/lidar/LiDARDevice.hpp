@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 #pragma once
-#include "DeviceBase.hpp"
+#include "LiDARDeviceBase.hpp"
 #include "IDeviceManager.hpp"
 #include "frameprocessor/FrameProcessor.hpp"
 
@@ -14,18 +14,17 @@ namespace libobsensor {
 /**
  * @brief LiDARDevice class for LiDAR TL2401 device
  */
-class LiDARDevice : public DeviceBase {
+class LiDARDevice : public LiDARDeviceBase {
 public:
     LiDARDevice(const std::shared_ptr<const IDeviceEnumInfo> &info);
     virtual ~LiDARDevice() noexcept;
 
 private:
-    void        init() override;
-    void        initSensorList();
-    void        initProperties();
-    void        fetchDeviceInfo() override;
-    void        initSensorStreamProfile(std::shared_ptr<ISensor> sensor);
-    std::string Uint8toString(const std::vector<uint8_t> &data, const std::string &defValue);
+    void init() override;
+    void initSensorList();
+    void initProperties();
+    void fetchDeviceInfo() override;
+    void initSensorStreamProfile(std::shared_ptr<ISensor> sensor);
 
 private:
     std::map<std::string, std::shared_ptr<IFilter>> lidarFilterList_;
