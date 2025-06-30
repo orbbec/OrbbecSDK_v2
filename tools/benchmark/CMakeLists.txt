@@ -19,4 +19,8 @@ if(MSVC)
     set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 endif()
 
+set_target_properties(ob_benchmark PROPERTIES
+    INSTALL_RPATH "@loader_path;@loader_path/../lib"
+)
+
 install(TARGETS ob_benchmark RUNTIME DESTINATION bin)
