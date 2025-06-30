@@ -37,6 +37,14 @@ private:
     virtual void             outputFrame(std::shared_ptr<Frame> frame);
     std::shared_ptr<IFilter> getFormatConverter();
 
+    uint8_t calculateReflectivity(const float &distance, const uint16_t &pulseWidth, const uint16_t &targetFlag);
+    void    copyToOBLiDARSpherePoint(const LiDARSpherePoint *point, OBLiDARSpherePoint *obPoint);
+
+    typedef struct {
+        float lowThresh;
+        float mediumThresh;
+    } ReflectivityFactors;
+
 private:
     IDevice                             *owner_;
     std::shared_ptr<IDataStreamPort>     backend_;
@@ -51,6 +59,9 @@ private:
     uint16_t                             expectedDataNumber_;  // expected data block number in the next data block
 
     std::vector<std::pair<std::string, std::shared_ptr<IFilter>>> filters_;
+
+    ReflectivityFactors lowPowerFactors_;
+    ReflectivityFactors highPowerFactors_;
 };
 
 }  // namespace libobsensor

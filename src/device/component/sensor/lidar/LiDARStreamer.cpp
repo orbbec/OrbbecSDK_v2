@@ -66,13 +66,30 @@ static inline uint64_t ntohll(uint64_t val) {
 }
 #endif
 
-static inline void copyToOBLiDARSpherePoint(const LiDARSpherePoint *point, OBLiDARSpherePoint *obPoint) {
+static inline float floatLerp(const float &x0, const float &x1, const float &y0, const float &y1, const float &x) {
+    const float &dy     = y1 - y0;
+    const float &dx     = x1 - x0;
+    float        result = 0.0f;
+
+    if(dx == 0) {
+        return y0;
+    }
+
+    result = y0 + (x - x0) * dy / dx;
+    return result;
+}
+
+void LiDARStreamer::copyToOBLiDARSpherePoint(const LiDARSpherePoint *point, OBLiDARSpherePoint *obPoint) {
     // to host order and to unit mm / degrees
     obPoint->distance = ntohs(point->distance) * 2.0f;
     obPoint->theta    = static_cast<int16_t>(ntohs(point->theta)) * 0.01f;
     obPoint->phi      = static_cast<int16_t>(ntohs(point->phi)) * 0.01f;
-    obPoint->reflectivity = point->reflectivity;
-    obPoint->tag          = point->tag;
+
+    uint16_t extValue = (static_cast<uint16_t>(point->reflectivity) << 8) | point->tag;
+
+    obPoint->tag               = extValue >> 14;
+    const uint16_t &pulseWidth = extValue & 0x3FFF;
+    obPoint->reflectivity      = calculateReflectivity(obPoint->distance * 0.01f, pulseWidth, obPoint->tag);
 }
 
 LiDARStreamer::LiDARStreamer(IDevice *owner, const std::shared_ptr<IDataStreamPort> &backend,
@@ -87,6 +104,9 @@ LiDARStreamer::LiDARStreamer(IDevice *owner, const std::shared_ptr<IDataStreamPo
       frameDataOffset_(0),
       expectedDataNumber_(0),
       filters_(std::move(filters)) {
+
+    lowPowerFactors_  = { 1.f, 1.f };
+    highPowerFactors_ = { 1.f, 1.f };
 
     auto iter = filters_.begin();
     while(iter != filters_.end()) {
@@ -274,7 +294,7 @@ void LiDARStreamer::parseLiDARData(std::shared_ptr<Frame> frame) {
 
     // check data size
     if(dataSize != dataBlockSize) {
-        //LOG_WARN("This LiDAR block data will be dropped because data size({}) is not equal to {}!", dataSize, dataBlockSize);
+        // LOG_WARN("This LiDAR block data will be dropped because data size({}) is not equal to {}!", dataSize, dataBlockSize);
         return;
     }
     // convert to host order
@@ -438,4 +458,112 @@ std::shared_ptr<IFilter> LiDARStreamer::getFormatConverter() {
 
     throw invalid_value_exception("Not found the LiDARFormatConverter");
 }
+
+uint8_t LiDARStreamer::calculateReflectivity(const float &distance, const uint16_t &pulseWidthIn, const uint16_t &targetFlag) {
+
+    static constexpr int highPowerLowThreshTableSize    = 45;
+    static constexpr int highPowerMediumThreshTableSize = 37;
+    static constexpr int lowPowerLowThreshTableSize     = 21;
+    static constexpr int lowPowerMediumThreshTableSize  = 14;
+
+    static float highPowerLowThreshRefCalibData[highPowerLowThreshTableSize][2] = {
+        { 240, 2 },   { 255, 2 },    { 293, 2 },    { 312, 2 },    { 345, 3 },    { 369, 3 },    { 408, 3 },    { 385, 3 },    { 403, 3 },
+        { 453, 4 },   { 474, 4 },    { 488, 4 },    { 504, 5 },    { 521, 5 },    { 542, 6 },    { 566, 7 },    { 576, 7 },    { 623, 8 },
+        { 636, 10 },  { 686, 11 },   { 691, 13 },   { 741, 15 },   { 775, 18 },   { 826, 22 },   { 851, 13 },   { 904, 14 },   { 915, 16 },
+        { 968, 18 },  { 1019, 20 },  { 1021, 23 },  { 1030, 27 },  { 1043, 31 },  { 1054, 37 },  { 1062, 44 },  { 1079, 54 },  { 1097, 68 },
+        { 1124, 87 }, { 1145, 100 }, { 1140, 116 }, { 1178, 136 }, { 1189, 162 }, { 1208, 197 }, { 1275, 244 }, { 1322, 309 }, { 1378, 405 },
+    };
+
+    static float highPowerMediumThreshRefCalibData[highPowerMediumThreshTableSize][2] = {
+        { 111, 4 },   { 141, 4 },   { 143, 5 },   { 146, 5 },   { 163, 6 },   { 203, 7 },    { 228, 7 },    { 288, 8 },   { 313, 10 },  { 369, 11 },
+        { 373, 13 },  { 421, 15 },  { 451, 18 },  { 516, 22 },  { 544, 13 },  { 612, 14 },   { 625, 16 },   { 689, 18 },  { 739, 20 },  { 741, 23 },
+        { 752, 27 },  { 766, 31 },  { 772, 37 },  { 786, 44 },  { 799, 54 },  { 810, 68 },   { 827, 87 },   { 844, 100 }, { 847, 116 }, { 865, 136 },
+        { 875, 162 }, { 889, 197 }, { 921, 244 }, { 952, 309 }, { 982, 405 }, { 1040, 555 }, { 1115, 805 },
+    };
+
+    static float lowPowerLowThreshRefCalibData[lowPowerLowThreshTableSize][2] = {
+        { 153, 27 },  { 198, 31 },  { 210, 37 },  { 273, 44 },   { 316, 54 },   { 349, 68 },    { 420, 87 },
+        { 453, 100 }, { 458, 116 }, { 518, 136 }, { 550, 162 },  { 577, 197 },  { 633, 244 },   { 671, 309 },
+        { 734, 405 }, { 810, 555 }, { 861, 805 }, { 910, 1271 }, { 958, 2298 }, { 1028, 5361 }, { 1391, 16109 },
+    };
+
+    static float lowPowerMediumThreshRefCalibData[lowPowerMediumThreshTableSize][2] = {
+        { 126, 100 }, { 137, 116 }, { 181, 136 }, { 216, 162 },  { 257, 197 },  { 324, 244 },  { 352, 309 },
+        { 406, 405 }, { 505, 555 }, { 565, 805 }, { 607, 1271 }, { 644, 2298 }, { 700, 5361 }, { 809, 16109 },
+    };
+
+    const float &lpLthFactor = lowPowerFactors_.lowThresh;
+    const float &lpMthFactor = lowPowerFactors_.mediumThresh;
+    const float &hpLthFactor = highPowerFactors_.lowThresh;
+    const float &hpMthFactor = highPowerFactors_.mediumThresh;
+
+    float pulseWidth     = static_cast<float>(pulseWidthIn);
+    float(*tableData)[2] = nullptr;
+    int   tableSize      = 0;
+    float recPower       = 0;
+
+    switch(targetFlag) {
+    case 0x0:  // low power low threshold
+    {
+        pulseWidth = pulseWidth * lpLthFactor;
+        tableData  = lowPowerLowThreshRefCalibData;
+        tableSize  = lowPowerLowThreshTableSize;
+        break;
+    }
+    case 0x1:  // low power medium threshold
+    {
+        pulseWidth = pulseWidth * lpMthFactor;
+        tableData  = lowPowerMediumThreshRefCalibData;
+        tableSize  = lowPowerMediumThreshTableSize;
+
+        break;
+    }
+
+    case 0x2:  // high power low threshold
+    {
+        pulseWidth = pulseWidth * hpLthFactor;
+        tableData  = highPowerLowThreshRefCalibData;
+        tableSize  = highPowerLowThreshTableSize;
+        break;
+    }
+
+    case 0x3:  // high power medium threshold
+    {
+        pulseWidth = pulseWidth * hpMthFactor;
+        tableData  = highPowerMediumThreshRefCalibData;
+        tableSize  = highPowerMediumThreshTableSize;
+        break;
+    }
+    default:
+        recPower = 0;
+        break;
+    }
+
+    if(tableData) {
+        if(pulseWidth <= tableData[0][0])
+            recPower = tableData[0][1];
+        else if(pulseWidth >= tableData[tableSize - 1][0])
+            recPower = tableData[tableSize - 1][1];
+        else {
+            for(int i = 0; i < tableSize; i++) {
+                if(pulseWidth > tableData[i][0])
+                    continue;
+                recPower = floatLerp(tableData[i - 1][0], tableData[i][0], tableData[i - 1][1], tableData[i][1], pulseWidth);
+                break;
+            }
+        }
+    }
+
+    float refValue = recPower * distance * distance * 0.00020218f;
+    if(refValue > 10 && refValue < 100) {
+        refValue = sqrt(refValue) * 10;
+    }
+    refValue = (refValue >= 120.f) ? (refValue * 0.7f) : refValue;
+
+    refValue = (refValue > 255.f) ? 255.f : refValue;
+    refValue = (refValue < 5.f) ? 5.f : refValue;
+
+    return static_cast<uint8_t>(refValue);
+}
+
 }  // namespace libobsensor
