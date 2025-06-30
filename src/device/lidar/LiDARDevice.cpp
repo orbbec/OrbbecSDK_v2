@@ -163,11 +163,14 @@ void LiDARDevice::initProperties() {
         });
 
     // set work mode
+    /*
+    // TODO: The work mode setting and acquisition are not open temporarily.
     BEGIN_TRY_EXECUTE({
         // set to normal work mode
         propertyServer->setPropertyValueT(OB_PROP_LIDAR_WORK_MODE_INT, 0);
     })
     CATCH_EXCEPTION_AND_EXECUTE({ LOG_ERROR("Set LiDAR device work mode to normal error!"); })
+    */
 }
 
 void LiDARDevice::initSensorList() {

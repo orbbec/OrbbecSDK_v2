@@ -232,6 +232,8 @@ void LiDARStreamer::trySendStartStreamVendorCmd() {
     bool            isCalibrationMode = false;  // default is normal mode
 
     // get work mode
+    /*
+    // TODO: The work mode setting and acquisition are not open temporarily.
     try {
         auto workMode     = propServer->getPropertyValueT<int32_t>(OB_PROP_LIDAR_WORK_MODE_INT, PROP_ACCESS_INTERNAL);
         isCalibrationMode = workMode == 0x03;
@@ -240,6 +242,8 @@ void LiDARStreamer::trySendStartStreamVendorCmd() {
         LOG_WARN("Get LiDAR work mode failed, error: %s", e.what());
         isCalibrationMode = false;  // default is normal mode
     }
+    */
+
     // format
     switch(profileInfo_.format) {
     case OB_FORMAT_LIDAR_POINT:
@@ -261,9 +265,26 @@ void LiDARStreamer::trySendStartStreamVendorCmd() {
         break;
     }
 
+    // get filter level
+    try {
+        auto filter = getPointFilter();
+        if(filter) {
+            auto filterLevel = propServer->getPropertyValueT<int32_t>(OB_PROP_LIDAR_TAIL_FILTER_LEVEL_INT, PROP_ACCESS_INTERNAL);
+            filter->setConfigValue("FilterLevel", filterLevel);
+        }
+    }
+    catch(std::exception &e) {
+        LOG_WARN("Get LiDAR filter level failed, error: %s", e.what());
+    }
+
     // speed
+    /*
+    // TODO: In repetitive scan mode, setting the rotation speed will cause abnormalities in the point cloud.
+    //  For the time being, do not set the rotation speed, and it will be restored later.
+
     value.intValue = profileInfo_.scanSpeed;
     propServer->setPropertyValue(OB_PROP_LIDAR_SCAN_SPEED_INT, value, PROP_ACCESS_INTERNAL);
+    */
 
     // set streaming on
     value.intValue = 1;
@@ -457,6 +478,16 @@ std::shared_ptr<IFilter> LiDARStreamer::getFormatConverter() {
     }
 
     throw invalid_value_exception("Not found the LiDARFormatConverter");
+}
+
+std::shared_ptr<IFilter> LiDARStreamer::getPointFilter() {
+    for(auto pair: filters_) {
+        if(pair.first == "LiDARPointFilter") {
+            return pair.second;
+        }
+    }
+
+    throw invalid_value_exception("Not found the LiDARPointFilter");
 }
 
 uint8_t LiDARStreamer::calculateReflectivity(const float &distance, const uint16_t &pulseWidthIn, const uint16_t &targetFlag) {

@@ -36,6 +36,7 @@ private:
 
     virtual void             outputFrame(std::shared_ptr<Frame> frame);
     std::shared_ptr<IFilter> getFormatConverter();
+    std::shared_ptr<IFilter> getPointFilter();
 
     uint8_t calculateReflectivity(const float &distance, const uint16_t &pulseWidth, const uint16_t &targetFlag);
     void    copyToOBLiDARSpherePoint(const LiDARSpherePoint *point, OBLiDARSpherePoint *obPoint);

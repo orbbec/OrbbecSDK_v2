@@ -491,7 +491,7 @@ typedef struct {
     uint16_t distance;      ///< distance, unit: 2mm
     int16_t  theta;         ///< azimuth angle, unit: 0.01 degrees
     int16_t  phi;           ///< zenith angle, unit: 0.01 degrees
-    uint8_t  reflectivity;  ///< reflectance
+    uint8_t  reflectivity;  ///< reflectivity
     uint8_t  tag;           ///< tag
 } LiDARSpherePoint;
 
