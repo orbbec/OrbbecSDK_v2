@@ -31,23 +31,20 @@ bool isGemini330Series(int pid) {
     return find;
 }
 
-std::shared_ptr<ob_smpl::CVWindow> win;
-std::shared_ptr<ob::Context>       ctx;
+std::shared_ptr<ob_smpl::CVWindow> win = nullptr;
+std::shared_ptr<ob::Context>       ctx = nullptr;
 
-std::shared_ptr<ob::Device>   device;
-std::shared_ptr<ob::Pipeline> pipeline;
+std::shared_ptr<ob::Device>   device   = nullptr;
+std::shared_ptr<ob::Pipeline> pipeline = nullptr;
 std::recursive_mutex          deviceMutex;
 
-std::thread inputWatchThread;
-
-bool streamStarted = false;
 bool irRightMirrorSupport = false;
 
 std::map<OBSensorType, std::shared_ptr<ob::VideoStreamProfile>> profilesMap;
 std::shared_ptr<ob::VideoStreamProfile>                         depthProfile = nullptr;
 std::shared_ptr<ob::VideoStreamProfile>                         irProfile    = nullptr;
 
-auto align = ob::FilterFactory::createFilter("Align");
+std::shared_ptr<ob::Filter> align = nullptr;
 
 void handleDeviceConnected(std::shared_ptr<ob::DeviceList> connectList);
 void handleDeviceDisconnected(std::shared_ptr<ob::DeviceList> disconnectList);
@@ -62,10 +59,6 @@ void commandProcess(std::string cmd);
 void handleFrameset(std::shared_ptr<ob::FrameSet> frameset);
 void startStream();
 
-void inputWatcher();
-
-std::string convertSensorTypeToString(OBSensorType sensorType);
-
 int main(void) try {
 
     // create window for render
@@ -76,6 +69,9 @@ int main(void) try {
 
     // Create ob:Context.
     ctx = std::make_shared<ob::Context>();
+
+    // create align filter
+    align = ob::FilterFactory::createFilter("Align");
 
     // Register device callback
     ctx->setDeviceChangedCallback([](std::shared_ptr<ob::DeviceList> removedList, std::shared_ptr<ob::DeviceList> addedList) {
@@ -98,17 +94,42 @@ int main(void) try {
 
     irRightMirrorSupport = device->isPropertySupported(OB_PROP_IR_RIGHT_MIRROR_BOOL, OB_PERMISSION_READ_WRITE);
     printUsage();
-
-    inputWatchThread = std::thread(inputWatcher);
+    
+    auto inputWatchThread = std::thread([]{
+        while(true) {
+            std::string cmd;
+            std::cout << "\nInput command:  ";
+            std::getline(std::cin, cmd);
+            if(cmd == "quit" || cmd == "q") {
+                win->close();
+                break;
+            }
+            else {
+                commandProcess(cmd);
+            }
+        }
+    });
     inputWatchThread.detach();
-
+    
     while(win->run()) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
     if(pipeline) {
         pipeline->stop();
     }
+    
+    // destruct all global variables here before exiting main
+    irProfile.reset();
+    depthProfile.reset();
+    profilesMap.clear();
+    pipeline.reset();
+    device.reset();
+    devices.reset();
+    align.reset();
+    ctx.reset();
+    win.reset();
+    
     return 0;
 }
 
@@ -288,7 +309,6 @@ void startStream() {
 
     // start pipeline
     pipeline->start(config, handleFrameset);
-    streamStarted = true;
     std::cout << "Stream started!" << std::endl;
 }
 std::shared_ptr<ob::FrameSet> fileterAlign(std::shared_ptr<ob::FrameSet> frameset) {
@@ -338,7 +358,7 @@ void getCameraParams() {
                 auto type       = item.first;
                 auto intrinsics = profile->getIntrinsic();
                 auto distortion = profile->getDistortion();
-                auto typeString = convertSensorTypeToString(type);
+                auto typeString = ob::TypeHelper::convertOBSensorTypeToString(type);
                 std::cout << typeString << " intrinsics: "
                           << "fx:" << intrinsics.fx << ", fy: " << intrinsics.fy << ", cx: " << intrinsics.cx << ", cy: " << intrinsics.cy
                           << " ,width: " << intrinsics.width << ", height: " << intrinsics.height << std::endl;
@@ -897,41 +917,5 @@ void commandProcess(std::string cmd) {
     }
     else {
         std::cerr << "Unsupported command received! Input \"help\" to get usage" << std::endl;
-    }
-}
-
-void inputWatcher() {
-    while(true) {
-        std::string cmd;
-        std::cout << "\nInput command:  ";
-        std::getline(std::cin, cmd);
-        if(cmd == "quit" || cmd == "q") {
-            win->close();
-            break;
-        }
-        else {
-            commandProcess(cmd);
-        }
-    }
-}
-
-std::string convertSensorTypeToString(OBSensorType sensorType) {
-    switch(sensorType) {
-    case OB_SENSOR_DEPTH:
-        return "Depth";
-    case OB_SENSOR_COLOR:
-        return "Color";
-    case OB_SENSOR_IR:
-        return "IR";
-    case OB_SENSOR_ACCEL:
-        return "Accel";
-    case OB_SENSOR_GYRO:
-        return "Gyro";
-    case OB_SENSOR_IR_LEFT:
-        return "IR Left";
-    case OB_SENSOR_IR_RIGHT:
-        return "IR Right";
-    default:
-        return "Unknown";
     }
 }
