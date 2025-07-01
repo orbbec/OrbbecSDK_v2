@@ -6,7 +6,6 @@
 #include "libobsensor/hpp/Frame.hpp"
 
 void printUsage();
-std::string inputWatcher() ;
 void transformation2dto2d(std::shared_ptr<ob::Frame> colorFrame, std::shared_ptr<ob::Frame> depthFrame);
 void transformation2dto3d(std::shared_ptr<ob::Frame> colorFrame, std::shared_ptr<ob::Frame> depthFrame);
 void transformation3dto2d(std::shared_ptr<ob::Frame> colorFrame, std::shared_ptr<ob::Frame> depthFrame);
@@ -26,13 +25,17 @@ int main(void) try {
     // Create a pipeline with default device to manage stream
     auto pipe = std::make_shared<ob::Pipeline>();
 
-    std::string testType = "1";   
-
     // Start the pipeline with config
     pipe->start(config);
     while(1) {
         printUsage();
-        testType = inputWatcher();
+
+        std::cout << "\nInput command:  ";
+        std::string cmd = "1";
+        std::getline(std::cin, cmd);
+        if(cmd == "quit" || cmd == "q") {
+            break;
+        }
 
         // Wait for a frameset from the pipeline
         auto frameSet = pipe->waitForFrameset(100);  
@@ -45,18 +48,22 @@ int main(void) try {
         
         // Get the depth frame and check its validity
         auto depthFrame = frameSet->getFrame(OB_FRAME_DEPTH);
-        
-        if(testType == "1") {
+
+        if(cmd == "1") {
             transformation2dto2d(colorFrame, depthFrame);
-        } else if (testType == "2") {
+        }
+        else if(cmd == "2") {
             transformation2dto3d(colorFrame, depthFrame);
-        } else if (testType == "3") {
+        }
+        else if(cmd == "3") {
             transformation3dto3d(colorFrame, depthFrame);
-        } else if (testType == "4") {
+        }
+        else if(cmd == "4") {
             transformation3dto2d(colorFrame, depthFrame);
-        } else {
+        }
+        else {
             std::cout << "Invalid command" << std::endl;
-        }  
+        }
      }
      
     pipe->stop();
@@ -65,18 +72,6 @@ int main(void) try {
 catch(ob::Error &e) {
     std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\ntype:" << e.getExceptionType() << std::endl;
     exit(EXIT_FAILURE);
-}
-
-std::string inputWatcher() {
-    while(true) {
-        std::string cmd;
-        std::cout << "\nInput command:  ";
-        std::getline(std::cin, cmd);
-        if(cmd == "quit" || cmd == "q") {
-            exit(EXIT_SUCCESS);
-        }
-        return cmd;
-    }
 }
 void printUsage() {
     std::cout << "Support commands:" << std::endl;
