@@ -581,8 +581,10 @@ void CoordinateUtil::transformationDepthToPointCloud(OBXYTables *xyTables, const
 
         uint16_t depthValue = imageData[i];
         if(isDepthImageY12C4) {
-            depthValue = depthValue & 0xFFF0;
             depthValue = depthValue >> 4;
+            if(depthValue == 0x0FFF) {
+                depthValue = 0xFFFF;
+            }
         }
         if(!std::isnan(x_tab) && depthValue != 65535) {
             z = (float)depthValue;
@@ -645,8 +647,10 @@ void CoordinateUtil::transformationDepthToRGBDPointCloud(OBXYTables *xyTables, c
 
             uint16_t depthValue = dImageData[idc];
             if(isDepthImageY12C4) {
-                depthValue = depthValue & 0xFFF0;
                 depthValue = depthValue >> 4;
+                if(depthValue == 0x0FFF) {
+                    depthValue = 0xFFFF;
+                }
             }
             if(!std::isnan(x_tab) && depthValue != 65535) {
                 z = (float)depthValue;
@@ -718,8 +722,10 @@ void CoordinateUtil::transformationDepthToRGBDPointCloudByUVTables(const OBCamer
 
         uint16_t depthValue = dImageData[i];
         if(isDepthImageY12C4) {
-            depthValue = depthValue & 0xFFF0;
             depthValue = depthValue >> 4;
+            if(depthValue == 0x0FFF) {
+                depthValue = 0xFFFF;
+            }
         }
         if(!std::isnan(uvTables->xTable[i]) && depthValue != 65535) {
             z = (float)depthValue;
