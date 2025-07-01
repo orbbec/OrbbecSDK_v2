@@ -96,7 +96,7 @@ int getPidSn(const std::string &dev_name, void *data) {
     return 0;
 }
 
-int getGmslDeviceInfoFromFW(const std::string &dev_name, void *data) {
+int getGmslDeviceInfoFromFW(const std::string &dev_name, void *data, bool &linkState) {
     int ret = 0, fd = -1;
     // LOG_DEBUG("-Entry get_pid_sn dev_name:{}", dev_name);
 
@@ -124,6 +124,23 @@ int getGmslDeviceInfoFromFW(const std::string &dev_name, void *data) {
         LOG_DEBUG("ioctl failed on getGmslDeviceInfoFromFW-pid-vid from videox strerror:{}", strerror(errno));  // printf err message
         ret = -1;
     }
+
+    // get link state
+    int retry = 0;
+    do {
+        v4l2_control ctrl{};
+        ctrl.id  = G2R_CAMERA_CID_GET_LINK_STATE;
+        auto ret = ioctl(fd, VIDIOC_G_CTRL, &ctrl);
+        if(ret < 0) {
+            LOG_WARN("ioctl failed on getting link_state(retry: {}). Ignore it. error: {}", retry, strerror(errno));
+            ++retry;
+            continue;
+        }
+        LOG_DEBUG("Device: {}, link_state: {}", dev_name, ctrl.value);
+        linkState = ctrl.value == 1;
+        break;
+    } while(retry < 3);
+
     close(fd);
     return ret;
 }
@@ -160,10 +177,8 @@ static const uint8_t INTERFACE_IR_LEFT  = 2;
 static const uint8_t INTERFACE_IR_RIGHT = 3;
 
 //--------------------------------------------------------------------------------------------
-v4l2_capability getV4l2DeviceCapabilitiesGmsl(const std::string &dev_name, bool &linkState) {
+v4l2_capability getV4l2DeviceCapabilitiesGmsl(const std::string &dev_name) {
     // RAII to handle exceptions
-    linkState = false;
-
     v4l2_capability cap = {};
     memset(&cap, 0, sizeof(cap));
     std::unique_ptr<int, std::function<void(int *)>> fd(new int(open(dev_name.c_str(), O_RDWR | O_NONBLOCK, 0)), [](int *d) {
@@ -186,22 +201,6 @@ v4l2_capability getV4l2DeviceCapabilitiesGmsl(const std::string &dev_name, bool 
             LOG_ERROR("getV4l2DeviceCapabilitiesGmsl  xioctlGmsl(VIDIOC_QUERYCAP) failed!");
         }
     }
-
-    // get link state
-    int retry = 0;
-    do {
-        v4l2_control ctrl{};
-        ctrl.id  = G2R_CAMERA_CID_GET_LINK_STATE;
-        auto ret = ioctl(*fd, VIDIOC_G_CTRL, &ctrl);
-        if(ret < 0) {
-            LOG_WARN("getV4l2DeviceCapabilitiesGmsl failed on getting link_state(retry: {}). Ignore it. error: {}", retry, strerror(errno));
-            ++retry;
-            continue;
-        }
-        LOG_DEBUG("getV4l2DeviceCapabilitiesGmsl link_state: {}", ctrl.value);
-        linkState = ctrl.value == 1;
-        break;
-    } while(retry < 3);
 
     return cap;
 }
@@ -233,7 +232,8 @@ std::vector<std::shared_ptr<V4lDeviceInfoGmsl>> ObV4lGmslDevicePort::queryRelate
     std::string portInfo_streamType = portInfo->uid.substr(portInfo->uid.find_last_of('-') + 1);
     // int portInfo_streamType_int = std::stoi(portInfo_streamType);
 
-    int portinfo_videoIndex = checkVideoIndex(portInfo->infName);
+    int  portinfo_videoIndex  = checkVideoIndex(portInfo->infName);
+    bool metadataEmbeddedMode = portInfo->flag & USB_INTERFACE_METADATA_EMBEDDED_MODE ? true : false;
 
     min_node = portinfo_videoIndex;
     max_node = portinfo_videoIndex + 1;
@@ -250,8 +250,12 @@ std::vector<std::shared_ptr<V4lDeviceInfoGmsl>> ObV4lGmslDevicePort::queryRelate
         // if(tmp_videoIndex<portinfo_videoIndex)
         //     continue;
 
-        if((tmp_videoIndex < min_node) || (tmp_videoIndex > max_node))
+        if((tmp_videoIndex < min_node) || (tmp_videoIndex > max_node)) {
             continue;
+        }
+        else if(metadataEmbeddedMode && tmp_videoIndex != portinfo_videoIndex) {
+            continue;
+        }
 
         std::string path = "/sys/class/video4linux/" + name;
         std::string realPath{};
@@ -305,7 +309,6 @@ std::vector<std::shared_ptr<V4lDeviceInfoGmsl>> ObV4lGmslDevicePort::queryRelate
             // LOG_DEBUG("----------------------vid: {0}, pid: {1}, portInfo->vid: {2}, portInfo->pid: {3}", vid, pid, portInfo->vid, portInfo->pid);
             //  if(portInfo->vid == vid && portInfo->pid == pid) && portInfo->infIndex == mi && portInfo->url == url)
             {
-
                 // Find the USB specification (USB2/3) type from the underlying device
                 // Use device mapping obtained in previous step to traverse node tree
                 // and extract the required descriptors
@@ -313,12 +316,12 @@ std::vector<std::shared_ptr<V4lDeviceInfoGmsl>> ObV4lGmslDevicePort::queryRelate
                 /// sys/devices/pci0000:00/0000:00:xx.0/ABC/M-N/3-6:1.0/video4linux/video0
                 // to
                 /// sys/devices/pci0000:00/0000:00:xx.0/ABC/M-N/version
-                auto info  = std::make_shared<V4lDeviceInfoGmsl>();
-                info->name = devname;
-                info->cap  = getV4l2DeviceCapabilitiesGmsl(devname, info->metadataEmbeddedMode);
+                auto info                  = std::make_shared<V4lDeviceInfoGmsl>();
+                info->name                 = devname;
+                info->cap                  = getV4l2DeviceCapabilitiesGmsl(devname);
+                info->metadataEmbeddedMode = metadataEmbeddedMode;
                 devs.push_back(info);
-                if(info->metadataEmbeddedMode) {
-                    // no metadata node
+                if(metadataEmbeddedMode) {
                     break;
                 }
             }
@@ -1869,8 +1872,9 @@ const std::vector<UsbInterfaceInfo> ObV4lGmslDevicePort::queryDevicesInfo() {
         getV4lDeviceBusInfo(devName, bus_info, card);
 
         struct orbbec_device_info devInfo;
+        bool                      linkState = false;
         memset(&devInfo, 0, sizeof(orbbec_device_info));
-        int res = getGmslDeviceInfoFromFW(devName, &devInfo);
+        int res = getGmslDeviceInfoFromFW(devName, &devInfo, linkState);
         if(res != 0) {
             LOG_DEBUG("getGmslDeviceInfoFromFW failed! devName:{}", devName);
             continue;
@@ -1888,6 +1892,10 @@ const std::vector<UsbInterfaceInfo> ObV4lGmslDevicePort::queryDevicesInfo() {
         info.uid              = "gmsl2-" + std::to_string(devInfo.cam_num);
         info.conn_spec        = gmsl2_type;
         info.cls              = OB_USB_CLASS_VIDEO;  // borrowed from usb
+        if(linkState) {
+            info.flag |= USB_INTERFACE_METADATA_EMBEDDED_MODE;
+        }
+
         if(devInfo.video_type == ORB_MUX_PAD_DEPTH) {
             info.infIndex = INTERFACE_DEPTH;
         }
