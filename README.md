@@ -206,13 +206,7 @@ Orbbec Viewer is an all-in-one graphical user interface (GUI) built on the Orbbe
 
 ### 2.2 API Reference
 
-API Reference: [Orbbec_SDK_API_Reference.html](https://orbbec.github.io/docs/OrbbecSDKv2/index.html)
-
-<!--
-Remove the following as it is not updatded to v2.x.x yet.
-OrbbecSDK C++ API user guide：[orbbecsdk_c++_api_user_guide-v1.0.pdf](docs/api/orbbecsdk_c++_api_user_guide-v1.0.pdf)
--->
-
+[Orbbec SDK v2 API User Guide](https://orbbec.github.io/docs/OrbbecSDKv2_API_User_Guide/), this document provides an overview of key features in the Orbbec SDK v2 and demonstrates how to use its most commonly used APIs. For more detailed APIs, please refer to [Orbbec_SDK_API_Reference.html](https://orbbec.github.io/docs/OrbbecSDKv2/index.html)
 ### 2.3 Performance tuning
 
 For different use cases, the SDK can be tuned to achieve optimal performance. Please refer to the [performance tuning guide](docs/tutorial/performance_tuning.md) for more information.
