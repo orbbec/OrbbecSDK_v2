@@ -152,13 +152,15 @@ const std::vector<uint16_t> OpenniMaxPids = {
 const std::vector<uint16_t> LiDARDevPids = {
     LIDAR_PID_MS600,   // Single-line LiDAR MS600
     LIDAR_PID_SL450,   // Single-line LiDAR SL450
-    LIDAR_PID_TL2401,  // Multi-lines LiDAR TL2401
+    LIDAR_PID_TL2401,  // Multi-lines LiDAR TL2401/ME450
 };
 
+// TODO: remove "TL2401"
 const std::map<std::string, uint32_t> LiDARDeviceNameMap = {
     { "MS600", LIDAR_PID_MS600 },    // Single-line LiDAR MS600
     { "SL450", LIDAR_PID_SL450 },    // Single-line LiDAR international Version of MS600
     { "TL2401", LIDAR_PID_TL2401 },  // Multi-lines LiDAR TL2401
+    { "ME450", LIDAR_PID_TL2401 },   // Multi-lines LiDAR ME450
 };
 
 #define IS_OB_LIDAR_SINGLE_LINE(pid) (((pid) == LIDAR_PID_MS600) || ((pid) == LIDAR_PID_SL450))

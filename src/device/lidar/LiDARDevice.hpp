@@ -12,7 +12,7 @@
 namespace libobsensor {
 
 /**
- * @brief LiDARDevice class for LiDAR TL2401 device
+ * @brief LiDARDevice class for LiDAR TL2401/ME450 device
  */
 class LiDARDevice : public LiDARDeviceBase {
 public:

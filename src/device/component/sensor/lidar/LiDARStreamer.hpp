@@ -15,7 +15,7 @@
 namespace libobsensor {
 
 /**
- * @brief LiDARStreamer class for TL2401 LiDAR
+ * @brief LiDARStreamer class for TL2401/ME450 LiDAR
  */
 class LiDARStreamer : public ILiDARStreamer {
 public:

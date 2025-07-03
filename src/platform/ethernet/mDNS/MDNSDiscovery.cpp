@@ -319,7 +319,7 @@ void MDNSDiscovery::sendAndRecvMDNSQuery(SOCKET sock) {
                     // TODO: It is recommended to send a command to get the informations
                     // pid
                     if(info.pid == 0) {
-                        if(info.model == "TL2401") {
+                        if(info.model == "TL2401" || info.model == "ME450") {
                             info.pid = 0x5555;  // multi-lines
                         }
                         else if(info.model == "MS600") {
