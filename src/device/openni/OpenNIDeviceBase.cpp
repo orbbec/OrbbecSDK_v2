@@ -162,7 +162,7 @@ void OpenNIDeviceBase::initProperties() {
                 return vendorPropertyAccessor;
             });
 
-            if(deviceInfo_->pid_ != OB_DEVICE_MINI_PRO_PID && deviceInfo_->pid_ != OB_DEVICE_ASTRA_PRO2_PID) {
+            if(deviceInfo_->pid_ != OB_DEVICE_MINI_S_PRO_PID && deviceInfo_->pid_ != OB_DEVICE_MINI_PRO_PID && deviceInfo_->pid_ != OB_DEVICE_ASTRA_PRO2_PID) {
                 propertyServer->registerProperty(OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL, "rw", "rw", vendorPropertyAccessor_);
             }
             propertyServer->registerProperty(OB_PROP_DEPTH_EXPOSURE_INT, "rw", "rw", vendorPropertyAccessor_);
@@ -186,7 +186,7 @@ void OpenNIDeviceBase::initProperties() {
         }
     }
 
-    if(deviceInfo_->pid_ != OB_DEVICE_MINI_PRO_PID && deviceInfo_->pid_ != OB_DEVICE_ASTRA_PRO2_PID) {
+    if(deviceInfo_->pid_ != OB_DEVICE_MINI_S_PRO_PID && deviceInfo_->pid_ != OB_DEVICE_MINI_PRO_PID && deviceInfo_->pid_ != OB_DEVICE_ASTRA_PRO2_PID) {
         propertyServer->aliasProperty(OB_PROP_IR_AUTO_EXPOSURE_BOOL, OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL);
     }
     propertyServer->aliasProperty(OB_PROP_IR_EXPOSURE_INT, OB_PROP_DEPTH_EXPOSURE_INT);
