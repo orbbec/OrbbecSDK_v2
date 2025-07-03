@@ -76,4 +76,18 @@ private:
     std::condition_variable heartBeatCV_;
 };
 
+
+
+class OpenNITemperatureStructurePropertyAccessor : public IStructureDataAccessor {
+public:
+    explicit OpenNITemperatureStructurePropertyAccessor(IDevice *owner);
+    virtual ~OpenNITemperatureStructurePropertyAccessor() noexcept = default;
+
+    void                        setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) override;
+    const std::vector<uint8_t> &getStructureData(uint32_t propertyId) override;
+
+private:
+    IDevice *owner_;
+};
+
 }  // namespace libobsensor

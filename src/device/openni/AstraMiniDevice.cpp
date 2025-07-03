@@ -180,7 +180,8 @@ void AstraMiniDevice::initProperties() {
 
         if(sensor == OB_SENSOR_DEPTH) {
             propertyServer->registerProperty(OB_PROP_TEMPERATURE_COMPENSATION_BOOL, "rw", "rw", vendorPropertyAccessor_);
-            propertyServer->registerProperty(OB_STRUCT_DEVICE_TEMPERATURE, "r", "r", vendorPropertyAccessor_);
+            auto deviceTempPropertyAccessor = std::make_shared<OpenNITemperatureStructurePropertyAccessor>(this);
+            propertyServer->registerProperty(OB_STRUCT_DEVICE_TEMPERATURE, "r", "r", deviceTempPropertyAccessor);
         }
     }
 }
