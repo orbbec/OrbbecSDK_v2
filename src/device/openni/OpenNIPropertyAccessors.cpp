@@ -6,6 +6,7 @@
 #include "OpenNIDisparitySensor.hpp"
 #include "IDeviceComponent.hpp"
 #include "component/property/InternalProperty.hpp"
+#include <limits>
 
 namespace libobsensor {
 
@@ -301,6 +302,34 @@ void OpenNIHeartBeatPropertyAccessor::stopFeedingWatchDog() {
         heartBeatCV_.notify_all();
         heartBeatThread_.join();
     }
+}
+
+
+
+OpenNITemperatureStructurePropertyAccessor::OpenNITemperatureStructurePropertyAccessor(IDevice *owner)
+    : owner_(owner){
+}
+
+void OpenNITemperatureStructurePropertyAccessor::setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) {
+    utils::unusedVar(data);
+    if(propertyId == OB_STRUCT_DEVICE_TEMPERATURE) {
+        throw invalid_value_exception("OB_PROP_TEMPERATURE_COMPENSATION_BOOL is read-only");
+    }
+    throw invalid_value_exception("OB_PROP_TEMPERATURE_COMPENSATION_BOOL is read-only");
+}
+
+const std::vector<uint8_t> &OpenNITemperatureStructurePropertyAccessor::getStructureData(uint32_t propertyId) {
+    if(propertyId == OB_STRUCT_DEVICE_TEMPERATURE) {
+        auto                commandPort = owner_->getComponentT<IStructureDataAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        auto                data        = commandPort->getStructureData(OB_STRUCT_DEVICE_TEMPERATURE);
+        float               fNaN        = std::numeric_limits<float>::quiet_NaN();
+        OBDeviceTemperature deviceTemp  = { fNaN, fNaN, fNaN, fNaN, fNaN, fNaN, fNaN, fNaN, fNaN, fNaN, fNaN };
+        memcpy(&deviceTemp, data.data(), data.size());
+        static std::vector<uint8_t> result(sizeof(OBDeviceTemperature));
+        memcpy(result.data(), &deviceTemp, sizeof(OBDeviceTemperature));
+        return result;
+    }
+    throw invalid_value_exception(utils::string::to_string() << "unsupported property id:" << propertyId);
 }
 
 }  // namespace libobsensor
