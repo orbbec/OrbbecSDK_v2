@@ -29,6 +29,8 @@ void LiDARDataStreamPort::startStream(MutableFrameCallback callback) {
     uint8_t response[0x100];
     int ret = udpClient_->read(response, sizeof(response));
     if(ret != 10 || 0 != memcmp(response, "\x01\xFE\x01\x00\x00\x01\x09\x01\x00\x1F", ret) || response[8] != 0x00) {
+        // reset the udpClient_
+        udpClient_.reset();
         throw io_exception("UDPDataStreamPort::startStream() failed to connect device");
     }
     isStreaming_    = true;
@@ -36,11 +38,17 @@ void LiDARDataStreamPort::startStream(MutableFrameCallback callback) {
 }
 
 void LiDARDataStreamPort::stopStream() {
-    if(!isStreaming_.load()) {
-        throw wrong_api_call_sequence_exception("UDPDataStreamPort::stopStream() called when not streaming");
-    }
 
-    stop();
+    // catch exceptions, don't throw them.
+    BEGIN_TRY_EXECUTE({
+        if(!isStreaming_.load()) {
+            // throw an exception may result in stop() not being called
+            LOG_WARN("UDPDataStreamPort::stopStream() called when not streaming");
+        }
+
+        stop();
+    })
+    CATCH_EXCEPTION_AND_EXECUTE({ LOG_WARN("stop stream failed"); })
 }
 
 void LiDARDataStreamPort::stop() {

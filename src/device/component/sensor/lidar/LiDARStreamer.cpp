@@ -122,8 +122,6 @@ LiDARStreamer::LiDARStreamer(IDevice *owner, const std::shared_ptr<IDataStreamPo
         iter++;
     }
 
-    // add format converter process
-
     LOG_DEBUG("LiDARStreamer created");
 }
 
