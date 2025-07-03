@@ -41,6 +41,8 @@ int main() try {
     // Start the pipeline with config.
     pipe.start(config);
 
+    uint64_t accelCount = 0;
+    uint64_t gyroCount  = 0;
     while(true) {
         auto key = ob_smpl::waitForKeyPressed(1);
         if(key == ESC_KEY) {  // Esc key to exit.
@@ -57,10 +59,11 @@ int main() try {
         auto accelTimeStampUs = accelFrame->getTimeStampUs();
         auto accelTemperature = accelFrame->getTemperature();
         auto accelType        = accelFrame->getType();
-        if(accelIndex % 50 == 0) {  // print information every 50 frames.
+        if(accelCount % 50 == 0) {  // print information every 50 frames.
             auto accelValue = accelFrame->getValue();
             printImuValue(accelValue, accelIndex, accelTimeStampUs, accelTemperature, accelType, "m/s^2");
         }
+        ++accelCount;
 
         auto gyroFrameRaw    = frameSet->getFrame(OB_FRAME_GYRO);
         auto gyroFrame       = gyroFrameRaw->as<ob::GyroFrame>();
@@ -68,10 +71,11 @@ int main() try {
         auto gyroTimeStampUs = gyroFrame->getTimeStampUs();
         auto gyroTemperature = gyroFrame->getTemperature();
         auto gyroType        = gyroFrame->getType();
-        if(gyroIndex % 50 == 0) {  // print information every 50 frames.
+        if(gyroCount % 50 == 0) {  // print information every 50 frames.
             auto gyroValue = gyroFrame->getValue();
             printImuValue(gyroValue, gyroIndex, gyroTimeStampUs, gyroTemperature, gyroType, "rad/s");
         }
+        ++gyroCount;
     }
 
     pipe.stop();
