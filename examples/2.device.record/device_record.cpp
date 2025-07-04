@@ -41,7 +41,13 @@ std::cout << "Please enter the output filename (with .bag extension) and press E
     auto pipe = std::make_shared<ob::Pipeline>(device);
 
     // Activate device clock synchronization
-    device->timerSyncWithHost();
+    try {
+        device->timerSyncWithHost();
+    }
+    catch(ob::Error &e) {
+        std::cerr << "Function: " << e.getFunction() << "\nArgs: " << e.getArgs() << "\nMessage: " << e.what() << "\nException Type: " << e.getExceptionType()
+                  << std::endl;
+    }
 
     // Create a config and enable all streams
     std::shared_ptr<ob::Config>  config  = std::make_shared<ob::Config>();
