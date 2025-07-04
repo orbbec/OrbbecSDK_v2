@@ -14,7 +14,7 @@ int main(void) try {
     auto config = std::make_shared<ob::Config>();
 
     // enable depth stream with specified format
-    config->enableVideoStream(OB_STREAM_DEPTH, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY, OB_FORMAT_Y16);
+    config->enableVideoStream(OB_STREAM_DEPTH, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY, OB_FORMAT_ANY);
 
     std::shared_ptr<ob::Pipeline> pipeline = std::make_shared<ob::Pipeline>();
     pipeline->start(config);
