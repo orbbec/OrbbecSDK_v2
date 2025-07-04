@@ -645,12 +645,12 @@ void OpenNIAlgParamManager::fetchParamFromDevice() {
             realParam2.depthIntrinsic.width  = realParam2.depthIntrinsic.width * 2;
             realParam2.depthIntrinsic.height = realParam2.depthIntrinsic.height * 2;
 
-            realParam2.rgbIntrinsic.fx     = realParam2.rgbIntrinsic.fx;
-            realParam2.rgbIntrinsic.fy     = realParam2.rgbIntrinsic.fy;
-            realParam2.rgbIntrinsic.cx     = realParam2.rgbIntrinsic.cx;
-            realParam2.rgbIntrinsic.cy     = realParam2.rgbIntrinsic.cy;
-            realParam2.rgbIntrinsic.width  = realParam2.rgbIntrinsic.width;
-            realParam2.rgbIntrinsic.height = realParam2.rgbIntrinsic.height;
+            realParam2.rgbIntrinsic.fx     = realParam2.rgbIntrinsic.fx * 2;
+            realParam2.rgbIntrinsic.fy     = realParam2.rgbIntrinsic.fy * 2;
+            realParam2.rgbIntrinsic.cx     = realParam2.rgbIntrinsic.cx * 2;
+            realParam2.rgbIntrinsic.cy     = realParam2.rgbIntrinsic.cy * 2;
+            realParam2.rgbIntrinsic.width  = realParam2.rgbIntrinsic.width * 2;
+            realParam2.rgbIntrinsic.height = realParam2.rgbIntrinsic.height * 2;
             calibrationCameraParamList_.push_back(realParam2);
 
             OBCameraParam realParam = {};
@@ -662,19 +662,20 @@ void OpenNIAlgParamManager::fetchParamFromDevice() {
             realParam.depthIntrinsic.width  = 1280;
             realParam.depthIntrinsic.height = 1024;
 
-            realParam.rgbIntrinsic.fx     = realParam.rgbIntrinsic.fx;
-            realParam.rgbIntrinsic.fy     = realParam.rgbIntrinsic.fy;
-            realParam.rgbIntrinsic.cx     = realParam.rgbIntrinsic.cx;
-            realParam.rgbIntrinsic.cy     = realParam.rgbIntrinsic.cy;
-            realParam.rgbIntrinsic.width  = realParam.rgbIntrinsic.width;
-            realParam.rgbIntrinsic.height = realParam.rgbIntrinsic.height;
+            realParam.rgbIntrinsic.fx     = realParam.rgbIntrinsic.fx * 2;
+            realParam.rgbIntrinsic.fy     = realParam.rgbIntrinsic.fy * 2;
+            realParam.rgbIntrinsic.cx     = realParam.rgbIntrinsic.cx * 2;
+            realParam.rgbIntrinsic.cy     = realParam.rgbIntrinsic.cy * 2;
+            realParam.rgbIntrinsic.width  = realParam.rgbIntrinsic.width * 2;
+            realParam.rgbIntrinsic.height = realParam.rgbIntrinsic.height * 2;
             calibrationCameraParamList_.push_back(realParam);
 
             d2cProfileList_ = {
                 { 640, 480, 640, 480, ALIGN_D2C_HW, 0, { 1.0f, 0, 0, 0, 0 } },  { 640, 480, 640, 480, ALIGN_D2C_SW, 0, { 1.0f, 0, 0, 0, 0 } },
                 { 640, 480, 320, 240, ALIGN_D2C_HW, 1, { 2.0f, 0, 0, 0, 0 } },  { 640, 480, 320, 240, ALIGN_D2C_SW, 1, { 2.0f, 0, 0, 0, 0 } },
                 { 640, 480, 160, 120, ALIGN_D2C_HW, 2, { 4.0f, 0, 0, 0, 0 } },  { 640, 480, 160, 120, ALIGN_D2C_SW, 2, { 4.0f, 0, 0, 0, 0 } },
-                { 640, 480, 1280, 960, ALIGN_D2C_SW, 3, { 1.0f, 0, 0, 0, 0 } }, { 640, 480, 1280, 1024, ALIGN_UNSUPPORTED, 4, { 1.0f, 0, 0, 0, 0 } },
+                { 1280, 960, 1280, 960, ALIGN_D2C_SW, 3, { 1.0f, 0, 0, 0, 0 } }, { 1280, 960, 1280, 1024, ALIGN_D2C_SW, 4, { 1.0f, 0, 0, 0, 0 } },
+                { 320, 240, 320, 240, ALIGN_D2C_HW, 1, { 1.0f, 0, 0, 0, 0 } },  { 320, 240, 160, 120, ALIGN_D2C_HW, 1, { 2.0f, 0, 0, 0, 0 } },
             };
         }
     }
