@@ -87,9 +87,6 @@ void G435LeDeviceBase::init() {
     propertyServer->registerProperty(OB_PROP_FRAME_INTERLEAVE_ENABLE_BOOL, "rw", "rw", vendorPropertyAccessor.get());
     propertyServer->registerProperty(OB_PROP_FRAME_INTERLEAVE_LASER_PATTERN_SYNC_DELAY_INT, "rw", "rw", vendorPropertyAccessor.get());
 
-    auto frameInterleaveManager = std::make_shared<G435LeFrameInterleaveManager>(this);
-    registerComponent(OB_DEV_COMPONENT_FRAME_INTERLEAVE_MANAGER, frameInterleaveManager);
-
     registerComponent(OB_DEV_COMPONENT_COLOR_FRAME_METADATA_CONTAINER, [this]() {
         std::shared_ptr<FrameMetadataParserContainer> container;
         container = std::make_shared<G435LeColorFrameMetadataParserContainer>(this);
@@ -114,16 +111,6 @@ std::vector<std::shared_ptr<IFilter>> G435LeDeviceBase::createRecommendedPostPro
         if(filterFactory->isFilterCreatorExists("DecimationFilter")) {
             auto decimationFilter = filterFactory->createFilter("DecimationFilter");
             depthFilterList.push_back(decimationFilter);
-        }
-
-        if(filterFactory->isFilterCreatorExists("HDRMerge")) {
-            auto hdrMergeFilter = filterFactory->createFilter("HDRMerge");
-            depthFilterList.push_back(hdrMergeFilter);
-        }
-
-        if(filterFactory->isFilterCreatorExists("SequenceIdFilter")) {
-            auto sequenceIdFilter = filterFactory->createFilter("SequenceIdFilter");
-            depthFilterList.push_back(sequenceIdFilter);
         }
 
         if(filterFactory->isFilterCreatorExists("SpatialAdvancedFilter")) {
@@ -178,26 +165,6 @@ std::vector<std::shared_ptr<IFilter>> G435LeDeviceBase::createRecommendedPostPro
             colorFilterList.push_back(decimationFilter);
         }
         return colorFilterList;
-    }
-    else if(type == OB_SENSOR_IR_LEFT) {
-        getComponentT<FrameProcessor>(OB_DEV_COMPONENT_LEFT_IR_FRAME_PROCESSOR, false);
-        std::vector<std::shared_ptr<IFilter>> leftIRFilterList;
-        if(filterFactory->isFilterCreatorExists("SequenceIdFilter")) {
-            auto sequenceIdFilter = filterFactory->createFilter("SequenceIdFilter");
-            sequenceIdFilter->enable(false);
-            leftIRFilterList.push_back(sequenceIdFilter);
-            return leftIRFilterList;
-        }
-    }
-    else if(type == OB_SENSOR_IR_RIGHT) {
-        getComponentT<FrameProcessor>(OB_DEV_COMPONENT_RIGHT_IR_FRAME_PROCESSOR, false);
-        std::vector<std::shared_ptr<IFilter>> rightIRFilterList;
-        if(filterFactory->isFilterCreatorExists("SequenceIdFilter")) {
-            auto sequenceIdFilter = filterFactory->createFilter("SequenceIdFilter");
-            sequenceIdFilter->enable(false);
-            rightIRFilterList.push_back(sequenceIdFilter);
-            return rightIRFilterList;
-        }
     }
     return {};
 }
@@ -939,8 +906,11 @@ void G435LeDevice::updateSensorStreamProfile() {
     auto g2StreamProfileFilter = streamProfileFilter.as<G2StreamProfileFilter>();
     g2StreamProfileFilter->fetchEffectiveStreamProfiles();
     auto sensorTypeList = getSensorTypeList();
-    for(auto streamType: sensorTypeList) {
-        auto sensor = getSensor(streamType);
+    for(auto sensorType: sensorTypeList) {
+        if(sensorType == OB_SENSOR_ACCEL || sensorType == OB_SENSOR_GYRO) {
+            continue;
+        }
+        auto sensor = getSensor(sensorType);
         G435LeDeviceBase::initSensorStreamProfile(sensor.get());
     }
 }
