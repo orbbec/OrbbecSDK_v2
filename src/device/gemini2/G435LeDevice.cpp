@@ -326,7 +326,6 @@ void G435LeDevice::initSensorList() {
     });
     if(depthPortInfoIter != sourcePortInfoList.end()) {
         auto depthPortInfo = *depthPortInfoIter;
-        auto port          = getSourcePort(depthPortInfo);
 
         registerComponent(
             OB_DEV_COMPONENT_DEPTH_SENSOR,
@@ -570,7 +569,6 @@ void G435LeDevice::initSensorList() {
     });
     if(confidencePortInfoIter != sourcePortInfoList.end()) {
         auto confidencePortInfo = *confidencePortInfoIter;
-        auto port               = getSourcePort(confidencePortInfo);
 
         registerComponent(
             OB_DEV_COMPONENT_CONFIDENCE_SENSOR,

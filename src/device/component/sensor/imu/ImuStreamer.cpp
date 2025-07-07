@@ -67,7 +67,6 @@ void ImuStreamer::startStream(std::shared_ptr<const StreamProfile> sp, MutableFr
             return;
         }
     }
-    running_    = true;
     frameIndex_ = 1;  // frame number start from 1
 
     // Some devices report incorrect timestamps in the first few IMU frames.
@@ -75,7 +74,25 @@ void ImuStreamer::startStream(std::shared_ptr<const StreamProfile> sp, MutableFr
     // the first 8 frames provides a consistent safeguard against invalid timing data
     ignoreLeadingFrameCount_ = 8;
 
-    backend_->startStream([this](std::shared_ptr<Frame> frame) { ImuStreamer::parseIMUData(frame); });
+    int retry = 3;
+    do {
+        try {
+            backend_->startStream([this](std::shared_ptr<Frame> frame) { ImuStreamer::parseIMUData(frame); });
+            break;
+        }
+        catch(const libobsensor::invalid_value_exception &e) {  // Only retry when socket is not ready
+            LOG_ERROR("ImuStreamer start failed");
+            std::string msg = e.get_message();
+            if(msg.find("socket is not ready & timeout") != std::string::npos && --retry > 0) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(500));
+                continue;
+            }
+
+            throw;
+        }
+    } while(retry > 0);
+
+    running_ = true;
 }
 
 void ImuStreamer::stopStream(std::shared_ptr<const StreamProfile> sp) {
