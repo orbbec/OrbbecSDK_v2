@@ -8,6 +8,9 @@
 #include "sensor/video/DisparityBasedSensor.hpp"
 #include "sensor/lidar/LiDARStreamer.hpp"
 #include "sensor/lidar/LiDARSensor.hpp"
+#include "sensor/lidar/LiDARImuStreamer.hpp"
+#include "sensor/lidar/LiDARAccelSensor.hpp"
+#include "sensor/lidar/LiDARGyroSensor.hpp"
 #include "property/LiDARPropertyAccessor.hpp"
 #include "property/PropertyServer.hpp"
 #include "property/CommonPropertyAccessors.hpp"
@@ -149,6 +152,10 @@ void LiDARDevice::initProperties() {
     propertyServer->registerProperty(OB_PROP_LIDAR_INITIATE_DEVICE_CONNECTION_INT, "", "w", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_LIDAR_STREAMING_ON_OFF_INT, "", "w", vendorPropertyAccessor);
 
+    propertyServer->registerProperty(OB_PROP_LIDAR_IMU_UDP_PORT_INT, "", "w", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_LIDAR_IMU_FRAME_RATE_INT, "", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_STRUCT_LIDAR_IMU_FULL_SCALE_RANGE, "", "r", vendorPropertyAccessor);
+
     // register property server
     registerComponent(OB_DEV_COMPONENT_PROPERTY_SERVER, propertyServer, true);
 
@@ -227,7 +234,52 @@ void LiDARDevice::initSensorList() {
         registerSensorPortInfo(OB_SENSOR_LIDAR, lidarPortInfo);
     }
 
-    // TODO imu sensor
+    // imu sensor
+    auto imuPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(), [](const std::shared_ptr<const SourcePortInfo> &portInfo) {
+        if(portInfo->portType != SOURCE_PORT_NET_LIDAR_VENDOR_STREAM) {
+            return false;
+        }
+        return (std::dynamic_pointer_cast<const LiDARDataStreamPortInfo>(portInfo)->streamType == OB_STREAM_ACCEL);
+    });
+    if(imuPortInfoIter != sourcePortInfoList.end()) {
+        auto imuPortInfo = *imuPortInfoIter;
+
+        registerComponent(OB_DEV_COMPONENT_IMU_STREAMER, [this, imuPortInfo]() {
+            // the gyro and accel are both on the same port and share the same filter
+            auto port           = getSourcePort(imuPortInfo);
+            auto dataStreamPort = std::dynamic_pointer_cast<IDataStreamPort>(port);
+            auto imuStreamer    = std::make_shared<LiDARImuStreamer>(this, dataStreamPort);
+            return imuStreamer;
+        });
+
+        registerComponent(
+            OB_DEV_COMPONENT_ACCEL_SENSOR,
+            [this, imuPortInfo]() {
+                auto port                 = getSourcePort(imuPortInfo);
+                auto imuStreamer          = getComponentT<LiDARImuStreamer>(OB_DEV_COMPONENT_IMU_STREAMER);
+                auto imuStreamerSharedPtr = imuStreamer.get();
+                auto sensor               = std::make_shared<LiDARAccelSensor>(this, port, imuStreamerSharedPtr);
+
+                initSensorStreamProfile(sensor);
+                return sensor;
+            },
+            true);
+        registerSensorPortInfo(OB_SENSOR_ACCEL, imuPortInfo);
+
+        registerComponent(
+            OB_DEV_COMPONENT_GYRO_SENSOR,
+            [this, imuPortInfo]() {
+                auto port                 = getSourcePort(imuPortInfo);
+                auto imuStreamer          = getComponentT<LiDARImuStreamer>(OB_DEV_COMPONENT_IMU_STREAMER);
+                auto imuStreamerSharedPtr = imuStreamer.get();
+                auto sensor               = std::make_shared<LiDARGyroSensor>(this, port, imuStreamerSharedPtr);
+
+                initSensorStreamProfile(sensor);
+                return sensor;
+            },
+            true);
+        registerSensorPortInfo(OB_SENSOR_GYRO, imuPortInfo);
+    }
 }
 
 void LiDARDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
@@ -257,6 +309,129 @@ void LiDARDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
             sensor->setStreamProfileList(profileList);
             sensor->updateDefaultStreamProfile(profileList[0]);
         }
+    }
+    else if(streamType == OB_STREAM_ACCEL) {
+        // LiDAR imu accel
+        const std::vector<OBAccelSampleRate> rates = { OB_SAMPLE_RATE_25_HZ,  OB_SAMPLE_RATE_50_HZ,  OB_SAMPLE_RATE_100_HZ,
+                                                       OB_SAMPLE_RATE_200_HZ, OB_SAMPLE_RATE_500_HZ, OB_SAMPLE_RATE_1_KHZ };
+        StreamProfileList                    profileList;
+        auto                                 lazySensor = std::make_shared<LazySensor>(this, OB_SENSOR_ACCEL);
+        OBAccelFullScaleRange                accelRange;
+        OBGyroFullScaleRange                 gyroRange;
+
+        getImuFullScaleRange(accelRange, gyroRange);
+        for(auto rate: rates) {
+            auto profile = StreamProfileFactory::createAccelStreamProfile(lazySensor, accelRange, rate);
+            // TODO: bind IMU Accel Intrinsic
+            OBAccelIntrinsic intrinsic = { 0 };
+            profile->bindIntrinsic(intrinsic);
+
+            profileList.push_back(profile);
+        }
+        if(profileList.size()) {
+            sensor->setStreamProfileList(profileList);
+            sensor->updateDefaultStreamProfile(profileList[1]);
+        }
+    }
+    else if(streamType == OB_STREAM_GYRO) {
+        // LiDAR imu accel
+        const std::vector<OBGyroSampleRate> rates = { OB_SAMPLE_RATE_25_HZ,  OB_SAMPLE_RATE_50_HZ,  OB_SAMPLE_RATE_100_HZ,
+                                                      OB_SAMPLE_RATE_200_HZ, OB_SAMPLE_RATE_500_HZ, OB_SAMPLE_RATE_1_KHZ };
+        StreamProfileList                   profileList;
+        auto                                lazySensor = std::make_shared<LazySensor>(this, OB_SENSOR_GYRO);
+        OBAccelFullScaleRange               accelRange;
+        OBGyroFullScaleRange                gyroRange;
+
+        getImuFullScaleRange(accelRange, gyroRange);
+        for(auto rate: rates) {
+            auto profile = StreamProfileFactory::createGyroStreamProfile(lazySensor, gyroRange, rate);
+            // TODO: bind IMU Gyro Intrinsic
+            OBGyroIntrinsic intrinsic = { 0 };
+            profile->bindIntrinsic(intrinsic);
+
+            profileList.push_back(profile);
+        }
+        if(profileList.size()) {
+            sensor->setStreamProfileList(profileList);
+            sensor->updateDefaultStreamProfile(profileList[1]);
+        }
+    }
+}
+
+void LiDARDevice::getImuFullScaleRange(OBAccelFullScaleRange &accel, OBGyroFullScaleRange &gyro) {
+    auto propertyServer = getPropertyServer();
+    auto data           = propertyServer->getStructureData(OB_STRUCT_LIDAR_IMU_FULL_SCALE_RANGE, PROP_ACCESS_INTERNAL);
+
+    if(data.size() != sizeof(uint32_t)) {
+        throw invalid_value_exception("OB_STRUCT_LIDAR_IMU_FULL_SCALE_RANGE response with wrong data size");
+    }
+    auto     value      = data.data();
+    uint16_t accelValue = (((uint16_t)value[0]) << 8) | value[1];
+    switch(accelValue) {
+    case 2:
+        accel = OB_ACCEL_FS_2g;
+        break;
+    case 3:
+        accel = OB_ACCEL_FS_3g;
+        break;
+    case 4:
+        accel = OB_ACCEL_FS_4g;
+        break;
+    case 6:
+        accel = OB_ACCEL_FS_6g;
+        break;
+    case 8:
+        accel = OB_ACCEL_FS_8g;
+        break;
+    case 12:
+        accel = OB_ACCEL_FS_12g;
+        break;
+    case 16:
+        accel = OB_ACCEL_FS_16g;
+        break;
+    case 24:
+        accel = OB_ACCEL_FS_24g;
+        break;
+    default:
+        throw invalid_value_exception("OB_STRUCT_LIDAR_IMU_FULL_SCALE_RANGE response with invalid accel full scale range");
+        break;
+    }
+
+    uint16_t gyroValue = (((uint16_t)value[2]) << 8) | value[3];
+    switch(gyroValue) {
+    case 16:
+        gyro = OB_GYRO_FS_16dps;
+        break;
+    case 31:
+        gyro = OB_GYRO_FS_31dps;
+        break;
+    case 62:
+        gyro = OB_GYRO_FS_62dps;
+        break;
+    case 125:
+        gyro = OB_GYRO_FS_125dps;
+        break;
+    case 250:
+        gyro = OB_GYRO_FS_250dps;
+        break;
+    case 400:
+        gyro = OB_GYRO_FS_400dps;
+        break;
+    case 500:
+        gyro = OB_GYRO_FS_500dps;
+        break;
+    case 800:
+        gyro = OB_GYRO_FS_800dps;
+        break;
+    case 1000:
+        gyro = OB_GYRO_FS_1000dps;
+        break;
+    case 2000:
+        gyro = OB_GYRO_FS_2000dps;
+        break;
+    default:
+        throw invalid_value_exception("OB_STRUCT_LIDAR_IMU_FULL_SCALE_RANGE response with invalid gyro full scale range");
+        break;
     }
 }
 

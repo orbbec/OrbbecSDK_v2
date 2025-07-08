@@ -73,10 +73,13 @@ typedef enum {
     OB_RAW_DATA_DE_IR_TRANSFORM_PARAMS                   = 4059, /**< DE-IR transform parameters*/
     OB_PROP_DEVICE_LOG_SEVERITY_LEVEL_INT                = 5003, /**< Device log level*/
 
-    OB_STRUCT_DEVICE_ERROR_STATE = 5524, /**< Device error state*/
-    OB_RAW_PRESET_RESOLUTION_CONFIG_LIST                 = 4061, /**< Resolution ratio configuration list*/
+    OB_STRUCT_DEVICE_ERROR_STATE         = 5524, /**< Device error state*/
+    OB_RAW_PRESET_RESOLUTION_CONFIG_LIST = 4061, /**< Resolution ratio configuration list*/
 
-    OB_PROP_LIDAR_STREAMING_ON_OFF_INT                   = 8100, /**< LiDAR: straming on/off*/
+    OB_PROP_LIDAR_STREAMING_ON_OFF_INT   = 8100, /**< LiDAR: straming on/off*/
+    OB_PROP_LIDAR_IMU_UDP_PORT_INT       = 8101, /**< LiDAR: IMU UDP port, set only*/
+    OB_PROP_LIDAR_IMU_FRAME_RATE_INT     = 8102, /**< LiDAR: IMU stream frame rate, 0 for off*/
+    OB_STRUCT_LIDAR_IMU_FULL_SCALE_RANGE = 8103, /**< LiDAR: IMU range, bytes 1~2: accel range, bytes 3~4: gyro range. MSB*/
 } OBInternalPropertyID;
 
 }  // namespace libobsensor

@@ -31,7 +31,7 @@ enum HpOpCode {
     OPCODE_SET_TRANSFER_PROTOCOL = 0x0107,
     // set LiDAR work mode
     OPCODE_SET_WORK_MODE = 0x0108,
-    // set LiDAR initiate device connection
+    // set LiDAR pointcloud stream initiate device connection
     OPCODE_INITIATE_DEVICE_CONNECTION = 0x0109,
     // set LiDAR serial number
     OPCODE_SET_SERIAL_NUMBER = 0x010A,
@@ -48,6 +48,11 @@ enum HpOpCode {
     OPCODE_SET_SPECIFIC_MODE = 0x0110,
     // set tail filter level
     OPCODE_SET_TAIL_FILTER_LEVEL = 0x0111,
+
+    // set IMU stream port
+    OPCODE_SET_IMU_UDP_PORT = 0x0112,
+    // set IMU stream output data rate(frame rate)
+    OPCODE_SET_IMU_FRAME_RATE = 0x0113,
 
     // set mems fov size
     OPCODE_SET_MEMS_FOV_SIZE = 0x0170,
@@ -113,6 +118,11 @@ enum HpOpCode {
     OPCODE_GET_TAIL_FILTER_LEVEL = 0x0218,
     // get TX lower power voltage
     OPCODE_GET_TX_LOWER_POWER_VOLTAGE = 0x0219,
+
+    // get IMU stream output data rate(frame rate)
+    OPCODE_GET_IMU_FRAME_RATE = 0x0222,
+    // get IMU full scale range
+    OPCODE_GET_IMU_FULL_SCALE_RANGE = 0x0223,
 
     // get mems fov size
     OPCODE_GET_MEMS_FOV_SIZE = 0x0270,

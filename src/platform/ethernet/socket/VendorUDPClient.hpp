@@ -18,6 +18,10 @@ public:
     int  read(uint8_t *data, const uint32_t dataLen);
     void write(const uint8_t *data, const uint32_t dataLen);
 
+    uint16_t getPort() const {
+        return clientPort_;
+    }
+
 private:
     void socketConnect(uint32_t retryCount);
     void socketClose();
@@ -26,7 +30,8 @@ private:
 
 private:
     const std::string  address_;
-    uint16_t           port_;
+    const uint16_t     port_;        // servert port
+    uint16_t           clientPort_;  // client port
     SOCKET             socketFd_;
     struct sockaddr_in serverAddr_;
     const uint32_t     commTimeoutMs_  = 1000;

@@ -70,6 +70,13 @@ const std::unordered_map<uint32_t, LiDAROpCode> LiDAROperationInfomap = {
     { OB_RAW_DATA_LIDAR_MEMS_VERSION, { HpOpCode::OPCODE_UNSUPPORTED, HpOpCode::OPCODE_GET_MEMS_VERSION, OB_STRUCT_PROPERTY } },  // get mems version
     { OB_PROP_LIDAR_REPETITIVE_SCAN_MODE_INT,
       { HpOpCode::OPCODE_SET_REPETITIVE_SCAN_MODE, HpOpCode::OPCODE_GET_REPETITIVE_SCAN_MODE, OB_INT_PROPERTY } },  // repetitive scan mode
+
+    { OB_PROP_LIDAR_IMU_UDP_PORT_INT,
+      { HpOpCode::OPCODE_SET_IMU_UDP_PORT, HpOpCode::OPCODE_UNSUPPORTED, OB_INT_PROPERTY } },  // IMU stream output data rate(frame rate)
+    { OB_PROP_LIDAR_IMU_FRAME_RATE_INT,
+      { HpOpCode::OPCODE_SET_IMU_FRAME_RATE, HpOpCode::OPCODE_GET_IMU_FRAME_RATE, OB_INT_PROPERTY } },  // IMU stream output data rate(frame rate)
+    { OB_STRUCT_LIDAR_IMU_FULL_SCALE_RANGE,
+      { HpOpCode::OPCODE_UNSUPPORTED, HpOpCode::OPCODE_GET_IMU_FULL_SCALE_RANGE, OB_STRUCT_PROPERTY } },  // get IMU full scale range
 };
 
 LiDARPropertyAccessor::LiDARPropertyAccessor(IDevice *owner, const std::shared_ptr<ISourcePort> &backend)

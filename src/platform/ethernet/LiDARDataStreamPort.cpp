@@ -23,15 +23,16 @@ void LiDARDataStreamPort::startStream(MutableFrameCallback callback) {
     auto netPortInfo = std::const_pointer_cast<LiDARDataStreamPortInfo>(portInfo_);
     udpClient_       = std::make_shared<VendorUDPClient>(netPortInfo->address, netPortInfo->port, 500);
 
-    // connect and tell the port to the device
-    // TODO: should use the LiDARProtocol API
-    udpClient_->write((const uint8_t*)"\x01\xfe\x01\x00\x04\x01\x09\x00\x00\x12\x34\x56\x78\x84", 14);
-    uint8_t response[0x100];
-    int ret = udpClient_->read(response, sizeof(response));
-    if(ret != 10 || 0 != memcmp(response, "\x01\xFE\x01\x00\x00\x01\x09\x01\x00\x1F", ret) || response[8] != 0x00) {
-        // reset the udpClient_
-        udpClient_.reset();
-        throw io_exception("UDPDataStreamPort::startStream() failed to connect device");
+    if(netPortInfo->streamType == OB_STREAM_LIDAR) {
+        // connect and tell the port to the device
+        udpClient_->write((const uint8_t *)"\x01\xfe\x01\x00\x04\x01\x09\x00\x00\x12\x34\x56\x78\x84", 14);
+        uint8_t response[0x100];
+        int     ret = udpClient_->read(response, sizeof(response));
+        if(ret != 10 || 0 != memcmp(response, "\x01\xFE\x01\x00\x00\x01\x09\x01\x00\x1F", ret) || response[8] != 0x00) {
+            // reset the udpClient_
+            udpClient_.reset();
+            throw io_exception("UDPDataStreamPort::startStream() failed to connect device");
+        }
     }
     isStreaming_    = true;
     readDataThread_ = std::thread(&LiDARDataStreamPort::readData, this);

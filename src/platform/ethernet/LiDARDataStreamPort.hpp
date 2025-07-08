@@ -39,6 +39,13 @@ public:
         return portInfo_;
     }
 
+    uint16_t getSocketPort() const {
+        if(udpClient_) {
+            return udpClient_->getPort();
+        }
+        return 0;
+    }
+
     void startStream(MutableFrameCallback callback) override;
     void stopStream() override;
 

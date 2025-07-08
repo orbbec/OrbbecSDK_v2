@@ -25,6 +25,7 @@ private:
     void initProperties();
     void fetchDeviceInfo() override;
     void initSensorStreamProfile(std::shared_ptr<ISensor> sensor);
+    void getImuFullScaleRange(OBAccelFullScaleRange &accel, OBGyroFullScaleRange &gyro);
 
 private:
     std::map<std::string, std::shared_ptr<IFilter>> lidarFilterList_;

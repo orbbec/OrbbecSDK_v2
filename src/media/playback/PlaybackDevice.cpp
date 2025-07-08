@@ -17,6 +17,8 @@
 #include "component/sensor/imu/AccelSensor.hpp"
 #include "component/sensor/lidar/LiDARStreamer.hpp"
 #include "component/sensor/lidar/LiDARSensor.hpp"
+#include "component/sensor/lidar/LiDARGyroSensor.hpp"
+#include "component/sensor/lidar/LiDARAccelSensor.hpp"
 #include "gemini330/G330FrameMetadataParserContainer.hpp"
 #include "gemini2/G435LeFrameMetadataParserContainer.hpp"
 #include "openni/OpenNIDisparitySensor.hpp"
@@ -144,6 +146,24 @@ void PlaybackDevice::initSensorList() {
                 return sensor;
             },
             true);
+
+        registerComponent(OB_DEV_COMPONENT_GYRO_SENSOR, [this]() {
+            auto sensor = std::make_shared<LiDARGyroSensor>(this, port_, port_);
+            sensor->setStreamProfileList(port_->getStreamProfileList(OB_SENSOR_GYRO));
+
+            // disable timestamp anomaly detection for playback device
+            sensor->enableTimestampAnomalyDetection(false);
+            return sensor;
+        });
+
+        registerComponent(OB_DEV_COMPONENT_ACCEL_SENSOR, [this]() {
+            auto sensor = std::make_shared<LiDARAccelSensor>(this, port_, port_);
+            sensor->setStreamProfileList(port_->getStreamProfileList(OB_SENSOR_ACCEL));
+
+            // disable timestamp anomaly detection for playback device
+            sensor->enableTimestampAnomalyDetection(false);
+            return sensor;
+        });
         return;
     }
 

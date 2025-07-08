@@ -433,7 +433,7 @@ void LiDARStreamer::parseLiDARData(std::shared_ptr<Frame> frame) {
         // Tips: for now, we do not consider out-of-order transmission or packet loss
 
         // update frame info
-        auto frameIndex = frameIndex_++;
+        auto frameIndex = ++frameIndex_;
         frame_->setDataSize(frameDataOffset_);
         frame_->setNumber(frameIndex);
 

@@ -12,7 +12,7 @@
 namespace libobsensor {
 
 VendorUDPClient::VendorUDPClient(const std::string &address, uint16_t port, uint32_t commTimeout)
-    : address_(address), port_(port), socketFd_(INVALID_SOCKET), commTimeoutMs_(commTimeout) {
+    : address_(address), port_(port), clientPort_(0), socketFd_(INVALID_SOCKET), commTimeoutMs_(commTimeout) {
     // os socket
     initOsSocket();
     // try to connect
@@ -78,21 +78,23 @@ void VendorUDPClient::socketConnect(uint32_t retryCount) {
         throw libobsensor::invalid_value_exception("Invalid address!");
     }
 
-    // bind to 0.0.0.0
-    struct sockaddr_in localAddr {};
+    // bind to 0.0.0.0:port
+    clientPort_ = port_;
+
+    struct sockaddr_in localAddr{};
     localAddr.sin_family      = AF_INET;
     localAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    localAddr.sin_port        = htons(port_);
+    localAddr.sin_port        = htons(clientPort_);
     if(bind(sockFd, (sockaddr *)&localAddr, sizeof(localAddr)) < 0) {
         closesocket(sockFd);
         if(GET_LAST_ERROR() == EADDRINUSE && retryCount < maxConnectRetry ) {
             // port is in use, try next port
-            ++port_;
+            ++clientPort_;
             socketConnect(retryCount+1);
         }
         else {
             throw libobsensor::invalid_value_exception(utils::string::to_string() << "VendorUDPClient: bind to 0.0.0.0 failed! addr=" << address_
-                                                                                  << ", port=" << port_ << ", err_code=" << GET_LAST_ERROR());
+                                                                                  << ", port=" << clientPort_ << ", err_code=" << GET_LAST_ERROR());
         }
     }
 
@@ -102,11 +104,11 @@ void VendorUDPClient::socketConnect(uint32_t retryCount) {
     if(rst < 0) {
         closesocket(sockFd);
         throw libobsensor::invalid_value_exception(utils::string::to_string() << "VendorUDPClient: ioctlsocket to blocking mode failed! addr=" << address_
-                                                                              << ", port=" << port_ << ", err_code=" << GET_LAST_ERROR());
+                                                                              << ", port=" << clientPort_ << ", err_code=" << GET_LAST_ERROR());
     }
     // ok
     socketFd_ = sockFd;
-    LOG_DEBUG("UDP client socket created!, addr={0}, port={1}, socket={2}", address_, port_, sockFd);
+    LOG_DEBUG("UDP client socket created!, addr={0}, server port={1}, client port={2}, socket={3}", address_, port_, clientPort_, sockFd);
 }
 
 void VendorUDPClient::socketClose() {
