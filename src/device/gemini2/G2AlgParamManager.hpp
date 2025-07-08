@@ -4,7 +4,7 @@
 #pragma once
 
 #include "param/AlgParamManager.hpp"
-#include "IPresetResolutionConfige.hpp"
+#include "IPresetResolutionConfig.hpp"
 
 namespace libobsensor {
 class G2AlgParamManager : public DisparityAlgParamManagerBase {
@@ -19,12 +19,12 @@ private:
     std::vector<OBDepthCalibrationParam> depthCalibParamList_;
 };
 
-class G435LeAlgParamManager : public G2AlgParamManager, public IPresetResolutionConfigeListManager {
+class G435LeAlgParamManager : public G2AlgParamManager, public IPresetResolutionConfigListManager {
 public:
     G435LeAlgParamManager(IDevice *owner);
 
     void                                  fetchParamFromDevice() override;
-    std::vector<OBPresetResolutionConfig> getPresetResolutionConfigeList() const override {
+    std::vector<OBPresetResolutionConfig> getPresetResolutionConfigList() const override {
         return presetResolutionRatioList_;
     }
     virtual ~G435LeAlgParamManager() override = default;

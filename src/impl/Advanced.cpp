@@ -10,7 +10,7 @@
 #include "IDevice.hpp"
 #include "IDeviceComponent.hpp"
 #include "IFrameInterleaveManager.hpp"
-#include "IPresetResolutionConfige.hpp"
+#include "IPresetResolutionConfig.hpp"
 
 #ifdef __cplusplus
 extern "C" {
@@ -264,9 +264,9 @@ ob_preset_resolution_config_list *ob_device_get_available_preset_resolution_conf
     auto impl = new ob_preset_resolution_config_list();
 
     auto presetResolutionListManager =
-        device->device->getComponentT<libobsensor::IPresetResolutionConfigeListManager>(libobsensor::OB_DEV_COMPONENT_ALG_PARAM_MANAGER, false);
+        device->device->getComponentT<libobsensor::IPresetResolutionConfigListManager>(libobsensor::OB_DEV_COMPONENT_ALG_PARAM_MANAGER, false);
     if(presetResolutionListManager) {
-        auto configList  = presetResolutionListManager->getPresetResolutionConfigeList();
+        auto configList  = presetResolutionListManager->getPresetResolutionConfigList();
         impl->configList = configList;
     }
 

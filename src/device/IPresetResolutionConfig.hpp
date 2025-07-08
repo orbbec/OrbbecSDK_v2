@@ -9,12 +9,12 @@
 
 namespace libobsensor {
 
-class IPresetResolutionConfigeListManager {
+class IPresetResolutionConfigListManager {
 
 public:
-    virtual ~IPresetResolutionConfigeListManager() = default;
+    virtual ~IPresetResolutionConfigListManager() = default;
 
-    virtual std::vector<OBPresetResolutionConfig> getPresetResolutionConfigeList() const = 0;
+    virtual std::vector<OBPresetResolutionConfig> getPresetResolutionConfigList() const = 0;
 };
 }  // namespace libobsensor
 

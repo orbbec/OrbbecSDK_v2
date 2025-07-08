@@ -273,7 +273,7 @@ OB_EXPORT bool ob_device_frame_interleave_list_has_frame_interleave(ob_device_fr
  *
  * @param device The device object.
  * @param error  Log error messages.
- * @return The available frame interleave list.
+ * @return The available frame resolution config list.
  *
  */
 OB_EXPORT ob_preset_resolution_config_list *ob_device_get_available_preset_resolution_config_list(ob_device *device, ob_error **error);
