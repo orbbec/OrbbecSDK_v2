@@ -597,9 +597,9 @@ void OpenNIAlgParamManager::fetchParamFromDevice() {
             param.depthIntrinsic.height = 480;
             param.depthDistortion.k1    = camParam.d_k[0];
             param.depthDistortion.k2    = camParam.d_k[1];
-            param.depthDistortion.k3    = camParam.d_k[2];
-            param.depthDistortion.p1    = camParam.d_k[3];
-            param.depthDistortion.p2    = camParam.d_k[4];
+            param.depthDistortion.k3    = camParam.d_k[4];
+            param.depthDistortion.p1    = camParam.d_k[2];
+            param.depthDistortion.p2    = camParam.d_k[3];
             param.depthDistortion.model = OB_DISTORTION_KANNALA_BRANDT4;
 
             memcpy(&param.rgbIntrinsic, camParam.c_intr_p, sizeof(camParam.c_intr_p));
@@ -607,9 +607,9 @@ void OpenNIAlgParamManager::fetchParamFromDevice() {
             param.rgbIntrinsic.height = 480;
             param.rgbDistortion.k1    = camParam.c_k[0];
             param.rgbDistortion.k2    = camParam.c_k[1];
-            param.rgbDistortion.k3    = camParam.c_k[2];
-            param.rgbDistortion.p1    = camParam.c_k[3];
-            param.rgbDistortion.p2    = camParam.c_k[4];
+            param.rgbDistortion.k3    = camParam.c_k[4];
+            param.rgbDistortion.p1    = camParam.c_k[2];
+            param.rgbDistortion.p2    = camParam.c_k[3];
             param.rgbDistortion.model = OB_DISTORTION_KANNALA_BRANDT4;
             memcpy(&param.transform.rot, camParam.d2c_r, sizeof(camParam.d2c_r));
             memcpy(&param.transform.trans, camParam.d2c_t, sizeof(camParam.d2c_t));
