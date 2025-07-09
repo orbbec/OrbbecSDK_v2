@@ -122,7 +122,7 @@ const std::vector<OBFilterConfigSchemaItem> &FilterExtension::getConfigSchemaVec
         return configSchemaVec_;
     }
 
-    // csv format: name，type， min，max，step，default，description
+    // csv format: name, type, min, max, step, default, description
     auto              schemaCSV = getConfigSchema();
     std::stringstream ss(schemaCSV);
     std::string       itemStr;

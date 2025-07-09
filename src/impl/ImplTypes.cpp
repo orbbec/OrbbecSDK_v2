@@ -2,18 +2,30 @@
 // Licensed under the MIT License.
 
 #include "ImplTypes.hpp"
+#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-ob_error *ob_create_error_internal(ob_status status, const char *what, const char *name, const char *args, ob_exception_type type) {
+static ob_error *ob_create_error_internal(ob_status status, const char *what, const char *name, const char *args, ob_exception_type type) {
     ob_error *e = new ob_error();
     e->status   = status;
-    strcpy(e->message, what);
-    strcpy(e->function, name);
-    strcpy(e->args, args);
+
+    auto safe_copy = [](char *dest, const char *src, size_t dest_size) {
+        if(!src || dest_size == 0) {
+            return;
+        }
+        size_t len = strnlen(src, dest_size - 1);
+        memcpy(dest, src, len);
+        dest[len] = '\0';
+    };
+
+    safe_copy(e->message, what, sizeof(e->message));
+    safe_copy(e->function, name, sizeof(e->function));
+    safe_copy(e->args, args, sizeof(e->args));
     e->exception_type = type;
+
     return e;
 }
 

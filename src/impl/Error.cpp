@@ -9,21 +9,24 @@ extern "C" {
 #endif
 
 ob_error *ob_create_error(ob_status status, const char *message, const char *function, const char *args, ob_exception_type exception_type) {
-    ob_error *error = new ob_error;
-    error->status   = status;
+    ob_error *e = new ob_error();
+    e->status   = status;
 
-    auto message_size = strlen(message) + 1;
-    memcpy(error->message, message, message_size > 256 ? 256 : message_size);
+    auto safe_copy = [](char *dest, const char *src, size_t dest_size) {
+        if(!src || dest_size == 0) {
+            return;
+        }
+        size_t len = strnlen(src, dest_size - 1);
+        memcpy(dest, src, len);
+        dest[len] = '\0';
+    };
 
-    auto function_size = strlen(function) + 1;
-    memcpy(error->function, function, function_size > 256 ? 256 : function_size);
+    safe_copy(e->message, message, sizeof(e->message));
+    safe_copy(e->function, function, sizeof(e->function));
+    safe_copy(e->args, args, sizeof(e->args));
+    e->exception_type = exception_type;
 
-    auto args_size = strlen(args) + 1;
-    memcpy(error->args, args, args_size > 256 ? 256 : args_size);
-
-    error->exception_type = exception_type;
-
-    return error;
+    return e;
 }
 
 ob_status ob_error_get_status(const ob_error *error) {
