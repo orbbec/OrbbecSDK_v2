@@ -307,7 +307,11 @@ bool StreamExtrinsicsManager::searchPath(std::vector<std::pair<uint64_t, OBExtri
 
     // LOG_TRACE("searchPath: {} -> {}", fromId, toId);
     // Check if the from node is directly connected to the to node
-    auto extList = extrinsicsGraph_.at(fromId);
+    auto extIter = extrinsicsGraph_.find(fromId);
+    if(extIter == extrinsicsGraph_.end()) {
+        return false;
+    }
+    auto &extList = extIter->second;
     for(const auto &extPair: extList) {
         if(extPair.first == toId) {
             path.push_back(extPair);
