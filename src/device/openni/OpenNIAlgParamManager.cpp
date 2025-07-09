@@ -84,7 +84,7 @@ void OpenNIAlgParamManager::fetchParamFromDevice() {
             param.depthDistortion.k3    = content.HOST.soft_d2c.d_k[2];
             param.depthDistortion.p1    = content.HOST.soft_d2c.d_k[3];
             param.depthDistortion.p2    = content.HOST.soft_d2c.d_k[4];
-            param.depthDistortion.model = OB_DISTORTION_KANNALA_BRANDT4;
+            param.depthDistortion.model = OB_DISTORTION_BROWN_CONRADY;
 
             memcpy(&param.rgbIntrinsic, content.HOST.soft_d2c.c_intr_p, sizeof(content.HOST.soft_d2c.c_intr_p));
             param.rgbIntrinsic.width  = 640;
@@ -94,7 +94,7 @@ void OpenNIAlgParamManager::fetchParamFromDevice() {
             param.rgbDistortion.k3    = content.HOST.soft_d2c.c_k[2];
             param.rgbDistortion.p1    = content.HOST.soft_d2c.c_k[3];
             param.rgbDistortion.p2    = content.HOST.soft_d2c.c_k[4];
-            param.rgbDistortion.model = OB_DISTORTION_KANNALA_BRANDT4;
+            param.rgbDistortion.model = OB_DISTORTION_BROWN_CONRADY;
             memcpy(&param.transform.rot, content.HOST.soft_d2c.d2c_r, sizeof(content.HOST.soft_d2c.d2c_r));
             memcpy(&param.transform.trans, content.HOST.soft_d2c.d2c_t, sizeof(content.HOST.soft_d2c.d2c_t));
             param.isMirrored = false;
@@ -598,9 +598,12 @@ void OpenNIAlgParamManager::fetchParamFromDevice() {
             param.depthDistortion.k1    = camParam.d_k[0];
             param.depthDistortion.k2    = camParam.d_k[1];
             param.depthDistortion.k3    = camParam.d_k[4];
+            param.depthDistortion.k4    = 0;
+            param.depthDistortion.k5    = 0;
+            param.depthDistortion.k6    = 0;
             param.depthDistortion.p1    = camParam.d_k[2];
             param.depthDistortion.p2    = camParam.d_k[3];
-            param.depthDistortion.model = OB_DISTORTION_KANNALA_BRANDT4;
+            param.depthDistortion.model = OB_DISTORTION_BROWN_CONRADY;
 
             memcpy(&param.rgbIntrinsic, camParam.c_intr_p, sizeof(camParam.c_intr_p));
             param.rgbIntrinsic.width  = 640;
@@ -608,9 +611,12 @@ void OpenNIAlgParamManager::fetchParamFromDevice() {
             param.rgbDistortion.k1    = camParam.c_k[0];
             param.rgbDistortion.k2    = camParam.c_k[1];
             param.rgbDistortion.k3    = camParam.c_k[4];
+            param.rgbDistortion.k4    = 0;
+            param.rgbDistortion.k5    = 0;
+            param.rgbDistortion.k5    = 0;
             param.rgbDistortion.p1    = camParam.c_k[2];
             param.rgbDistortion.p2    = camParam.c_k[3];
-            param.rgbDistortion.model = OB_DISTORTION_KANNALA_BRANDT4;
+            param.rgbDistortion.model = OB_DISTORTION_BROWN_CONRADY;
             memcpy(&param.transform.rot, camParam.d2c_r, sizeof(camParam.d2c_r));
             memcpy(&param.transform.trans, camParam.d2c_t, sizeof(camParam.d2c_t));
             param.isMirrored = false;
