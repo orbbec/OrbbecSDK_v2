@@ -173,6 +173,22 @@ std::vector<std::shared_ptr<IFilter>> Gemini330FilterStrategy::createDepthFilter
         depthFilterList.push_back(sequenceIdFilter);
     }
 
+    if(filterFactory->isFilterCreatorExists("SpatialFastFilter")) {
+        auto spatFilter = filterFactory->createFilter("SpatialFastFilter");
+        // radius
+        std::vector<std::string> params = { "3" };
+        spatFilter->updateConfig(params);
+        depthFilterList.push_back(spatFilter);
+    }
+
+    if(filterFactory->isFilterCreatorExists("SpatialModerateFilter")) {
+        auto spatFilter = filterFactory->createFilter("SpatialModerateFilter");
+        // magnitude, disp_diff, radius
+        std::vector<std::string> params = { "1", "160", "3" };
+        spatFilter->updateConfig(params);
+        depthFilterList.push_back(spatFilter);
+    }
+
     if(filterFactory->isFilterCreatorExists("SpatialAdvancedFilter")) {
         auto spatFilter = filterFactory->createFilter("SpatialAdvancedFilter");
         // magnitude, alpha, disp_diff, radius
