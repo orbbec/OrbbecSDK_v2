@@ -227,7 +227,7 @@ void SensorBase::startStreamRecovery() {
             enableStreamRecovery(streamFailedRetry, maxStartStreamDelayMs, maxFrameIntervalMs);
         }
     } else {
-        LOG_INFO(" No recovery config found for sensor: {}"), utils::obSensorToStr(sensorType_);
+        LOG_INFO(" No recovery config found for sensor: {}", utils::obSensorToStr(sensorType_));
     }
 }
 
@@ -237,6 +237,10 @@ void SensorBase::disableStreamRecovery() {
     if(streamStateWatcherThread_.joinable()) {
         streamStateWatcherThread_.join();
     }
+}
+
+void SensorBase::waitRecoveringFinished() {
+    std::unique_lock<std::recursive_mutex> lock(streamRecoverMutex_);
 }
 
 void SensorBase::watchStreamState() {
@@ -273,6 +277,8 @@ void SensorBase::watchStreamState() {
                 }
             }
             if(recoveryCount_ < maxRecoveryCount_) {
+                LOG_INFO("Start stream for {} sensor failed, retrying...", utils::obSensorToStr(sensorType_));
+                std::unique_lock<std::recursive_mutex> lock(streamRecoverMutex_);
                 onRecovering_ = true;
                 TRY_EXECUTE(restartStream());
                 recoveryCount_++;
@@ -292,6 +298,8 @@ void SensorBase::watchStreamState() {
                 }
             }
             if(recoveryCount_ < maxRecoveryCount_) {
+                LOG_INFO("Stream interrupted for {} sensor, retrying...", utils::obSensorToStr(sensorType_));
+                std::unique_lock<std::recursive_mutex> lock(streamRecoverMutex_);
                 onRecovering_ = true;
                 TRY_EXECUTE(restartStream());
                 recoveryCount_++;

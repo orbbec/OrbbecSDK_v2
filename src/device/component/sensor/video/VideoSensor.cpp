@@ -185,6 +185,9 @@ void VideoSensor::stop() {
         return;
     }
 
+    // Wait for stream recovery to finish
+    waitRecoveringFinished();
+
     try {
         auto owner    = getOwner();
         auto strategy = owner->getComponentT<ISensorStreamStrategy>(OB_DEV_COMPONENT_SENSOR_STREAM_STRATEGY, false);
