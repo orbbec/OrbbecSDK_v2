@@ -49,6 +49,8 @@ public:
      void startStreamRecovery();
     // stop trying to recover the stream
     void disableStreamRecovery();
+    // Waits for the sensor to finish the recovering process.
+    void waitRecoveringFinished();
 
     void setFrameMetadataParserContainer(std::shared_ptr<IFrameMetadataParserContainer> container);
     void setFrameTimestampCalculator(std::shared_ptr<IFrameTimestampCalculator> calculator);
@@ -82,6 +84,8 @@ protected:
     std::mutex                                     streamStateCallbackMutex_;
     std::map<uint32_t, StreamStateChangedCallback> streamStateChangedCallbacks_;
     uint32_t                                       StreamStateChangedCallbackTokenCounter_ = 0;
+
+    std::recursive_mutex                 streamRecoverMutex_;
 
     std::mutex                 streamStateMutex_;
     std::condition_variable    streamStateCv_;
