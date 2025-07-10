@@ -63,7 +63,12 @@ public:
     }
 
     std::shared_ptr<IDeviceManager> getDeviceManager() const override {
-        return context_->getDeviceManager();
+        // If context was released, don't create context and manager here
+        auto context = context_.lock();
+        if(context) {
+            return context->getDeviceManager();
+        }
+        return std::shared_ptr<IDeviceManager>();
     }
 
     bool operator==(const IDeviceEnumInfo &other) const override {
@@ -94,6 +99,6 @@ protected:
     // source port info list
     SourcePortInfoList sourcePortInfoList_;
 
-    std::shared_ptr<Context> context_;  // to handle lifespan of the context
+    std::weak_ptr<Context> context_;  // to handle lifespan of the context
 };
 }  // namespace libobsensor

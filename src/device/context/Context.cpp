@@ -13,6 +13,17 @@ namespace libobsensor {
 std::mutex             Context::instanceMutex_;
 std::weak_ptr<Context> Context::instanceWeakPtr_;
 
+/**
+ * @brief Returns a shared pointer to the global Context instance.
+ *
+ * @param[in] configPath Config file path. Used only on the first call when the Context is created.
+ *
+ * @note IMPORTANT:
+ *       1. Do NOT store this shared_ptr for long-term use.
+ *       2. Always acquire the instance when needed and release it immediately.
+ *       3. If a long-term reference is required (e.g., in a member variable), store a std::weak_ptr
+ *          instead of std::shared_ptr to avoid potential lifetime and ownership issues.
+ */
 std::shared_ptr<Context> Context::getInstance(const std::string &configPath) {
     std::unique_lock<std::mutex> lock(instanceMutex_);
     auto                         ctxInstance = instanceWeakPtr_.lock();

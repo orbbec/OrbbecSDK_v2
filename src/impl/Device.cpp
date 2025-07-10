@@ -113,8 +113,9 @@ ob_device *ob_device_list_get_device(const ob_device_list *list, uint32_t index,
     VALIDATE_UNSIGNED_INDEX(index, list->list.size());
     auto &info      = list->list[index];
     auto  deviceMgr = info->getDeviceManager();
-    auto  device    = deviceMgr->createDevice(info);
+    VALIDATE_NOT_NULL(deviceMgr);
 
+    auto device  = deviceMgr->createDevice(info);
     auto impl    = new ob_device();
     impl->device = device;
     return impl;
@@ -127,9 +128,11 @@ ob_device *ob_device_list_get_device_by_serial_number(const ob_device_list *list
     for(auto &info: list->list) {
         if(info->getDeviceSn() == serial_number) {
             auto deviceMgr = info->getDeviceManager();
-            auto device    = deviceMgr->createDevice(info);
-            auto impl      = new ob_device();
-            impl->device   = device;
+            VALIDATE_NOT_NULL(deviceMgr);
+
+            auto device  = deviceMgr->createDevice(info);
+            auto impl    = new ob_device();
+            impl->device = device;
             return impl;
         }
     }
@@ -149,9 +152,11 @@ ob_device *ob_device_list_get_device_by_uid(const ob_device_list *list, const ch
 #endif
         ) {
             auto deviceMgr = info->getDeviceManager();
-            auto device    = deviceMgr->createDevice(info);
-            auto impl      = new ob_device();
-            impl->device   = device;
+            VALIDATE_NOT_NULL(deviceMgr);
+
+            auto device  = deviceMgr->createDevice(info);
+            auto impl    = new ob_device();
+            impl->device = device;
             return impl;
         }
     }
