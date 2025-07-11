@@ -14,11 +14,12 @@ FrameProcessorFactory::FrameProcessorFactory(IDevice *owner) : DeviceComponentBa
 
     auto dylib = dylib_;
     context_   = std::shared_ptr<FrameProcessorContext>(new FrameProcessorContext(), [dylib](FrameProcessorContext *context) {
-        if(context && context->destroy_context) {
+        if(context->destroy_context) {
             ob_error *error = nullptr;
             context->destroy_context(context->context, &error);
             delete error;
         }
+        delete context;
     });
 
     if(dylib_) {
@@ -33,7 +34,6 @@ FrameProcessorFactory::FrameProcessorFactory(IDevice *owner) : DeviceComponentBa
         context_->set_hardware_d2c_params = dylib->get_function<void(ob_frame_processor *, ob_camera_intrinsic, uint8_t, float, int16_t, int16_t, int16_t,
                                                                      int16_t, bool, bool, ob_error **error)>("ob_frame_processor_set_hardware_d2c_params");
     }
-
     if(context_->create_context && !context_->context) {
         auto cDevice      = new ob_device;
         cDevice->device   = owner->shared_from_this();
@@ -41,6 +41,7 @@ FrameProcessorFactory::FrameProcessorFactory(IDevice *owner) : DeviceComponentBa
         context_->context = context_->create_context(cDevice, &error);
         if(error) {
             // TODO
+            delete cDevice;
             throw std::runtime_error("create frame processor context failed");
         }
 
