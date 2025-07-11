@@ -1518,6 +1518,12 @@ void uvc_stream_close(uvc_stream_handle_t *strmh) {
     if(strmh->frame.data)
         free(strmh->frame.data);
 
+    if (strmh->frame.metadata)
+        free(strmh->frame.metadata);
+
+    if (strmh->frame.payload_header)
+        free(strmh->frame.payload_header);
+
     free(strmh->outbuf);
     free(strmh->holdbuf);
 
