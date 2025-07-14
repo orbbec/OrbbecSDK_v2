@@ -27,7 +27,7 @@ For linux, if you want to build Orbbec SDK by using native toolchain, you need:
 The Orbbec SDK souce code are available on GitHub. You can clone the Orbbec SDK by using the following commands:
 
 ```shell
-git clone https://github.com/Orbbec/OrbbecSDK-dev.git
+git clone https://github.com/Orbbec/OrbbecSDK_v2.git
 ```
 
 ## Build Orbbec SDK
@@ -39,7 +39,7 @@ You can build Orbbec SDK by using the following commands:
 - Linux: Use a terminal emulator to execute the build commands
 
 ```shell
-cd OrbbecSDK-dev
+cd OrbbecSDK_v2
 mkdir build
 cd build
 cmake ..
@@ -49,7 +49,7 @@ cmake --build . --config Release
 If you are using Docker, you can using the script we provide to build Orbbec SDK.
 
 ```shell
-cd OrbbecSDK-dev/scripts/build
+cd OrbbecSDK_v2/scripts/build
 ./build_linux_docker.sh
 # `./build_linux_docker.sh  aarch64` for arm64
 ```
@@ -58,7 +58,7 @@ cd OrbbecSDK-dev/scripts/build
 
 ## Run the Sample
 
-After you build the Orbbec SDK, you can find the executable file in the directory `OrbbecSDK-dev/build/win_XX/bin` or `OrbbecSDK-dev/build/linux_XX/bin`.
+After you build the Orbbec SDK, you can find the executable file in the directory `OrbbecSDK_v2/build/win_XX/bin` or `OrbbecSDK_v2/build/linux_XX/bin`.
 
 ### Environment Setup
 
@@ -75,7 +75,7 @@ For windows,you need to register the metadata associated with frames (this inclu
  Please install it using the following commands:[/scripts/env_setup/install_udev_rules.sh](../../scripts/env_setup/install_udev_rules.sh)
 
 ```shell
-cd OrbbecSDK-dev/scripts/env_setup
+cd OrbbecSDK_v2/scripts/env_setup
 sudo chmod +x ./install_udev_rules.sh
 sudo ./install_udev_rules.sh
 sudo udevadm control --reload-rules && udevadm trigger
