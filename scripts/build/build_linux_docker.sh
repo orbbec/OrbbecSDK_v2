@@ -63,12 +63,17 @@ cd $CURRNET_DIR
 USER_ID=$(id -u)
 GROUP_ID=$(id -g)
 
+TTY_OPT=""
+if [ -t 1 ]; then
+  TTY_OPT="-t"
+fi
+
 # run docker container and build openorbbecsdk
 docker run --rm -u $USER_ID:$GROUP_ID \
     -v $PROJECT_ROOT/../:/workspace \
     -w /workspace/$FOLDER_NAME \
     --name OpenOrbbecSDK_Build_Liunx_$ARCH \
-    -it \
+    -i $TTY_OPT \
     --entrypoint /bin/bash \
     openorbbecsdk-env.$ARCH \
     -c "cd /workspace/$FOLDER_NAME && bash ./scripts/build/build_linux_macos.sh"

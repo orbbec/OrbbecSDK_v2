@@ -1,0 +1,185 @@
+// function: Refresh repo
+def refreshRepo() {
+    def sdkBranch = params.OrbbecSDK_Branch
+    def workspace = env.WORKSPACE
+    
+    if (isUnix()) {
+        sh """
+            set -e
+            git_reset() {
+                path="\$1"
+                branch="\$2"
+                echo "Resetting \$path to branch \$branch"
+                cd "\$path" || exit 1
+                git fetch --depth=1 origin +refs/heads/"\$branch":refs/remotes/origin/"\$branch"
+                git checkout -B "\$branch" "origin/\$branch"
+                git reset --hard "origin/\$branch"
+                git clean -fdx
+                cd \"$workspace\"
+            }
+            
+            git_reset . "${sdkBranch}"
+        """
+    } else {
+        powershell """
+            function git_reset {
+                param (
+                    [string] \$path,
+                    [string] \$branch
+                )
+                Write-Host "Resetting \$path to branch \$branch"
+                Set-Location \$path
+                git fetch --depth=1 origin +refs/heads/"\$branch":refs/remotes/origin/"\$branch"
+                git checkout -B "\$branch" origin/"\$branch"
+                git reset --hard origin/"\$branch"
+                git clean -fdx
+                cd ${workspace}
+            }
+
+            git_reset . "${sdkBranch}"
+        """
+    }
+}
+// pipeline
+pipeline {
+    agent none
+    stages {
+        stage("Build") {
+            failFast true
+            parallel {
+                stage("Build Windows x64") {
+                    agent { label "win32" }
+                    when {
+                        anyOf {
+                            environment name: 'Build_Platform', value: 'Windows_x64'
+                            environment name: 'Build_Platform', value: 'ALL'
+                        }
+                    }
+                    steps {
+                        script {
+                            refreshRepo()
+                            
+                            echo "Build Windows x64 ..."
+                            powershell """
+                                Write-Host "WORKSPACE: ${WORKSPACE}"
+                                cd "${WORKSPACE}"
+                                
+                                # sdk
+                                & "${WORKSPACE}/scripts/build/build_win_msvc.ps1"
+                                # if (\$LASTEXITCODE -ne 0) {
+                                #    exit 1
+                                # }
+                                exit 0
+                            """
+                        }
+                    }
+                    post {
+                        success {
+                            script {
+                                echo "========================================"
+                                archiveArtifacts allowEmptyArchive: true, artifacts: 'build_win_x64/install/*.zip', followSymlinks: false, onlyIfSuccessful: true
+                                echo "Windows x64 build done"
+                                echo "========================================"
+                            }
+                        }
+                        failure {
+                            script {
+                                echo "========================================"
+                                echo "Windows x64 build finished with failure"
+                                echo "========================================"
+                            }
+                        }
+                    }
+                }
+
+                stage("Build Linux x64") {
+                    agent { label "master" }
+                    when {
+                        anyOf {
+                            environment name: 'Build_Platform', value: 'Linux_x64'
+                            environment name: 'Build_Platform', value: 'ALL'
+                        }
+                    }
+                    steps {
+                        script {
+                            refreshRepo()
+                            
+                            echo "Build Linux x64 ..."
+                            sh """
+                                echo "WORKSPACE: ${WORKSPACE}"
+                                cd "${WORKSPACE}"
+                                
+                                chmod +x *.sh || true
+                                # sdk
+                                "${WORKSPACE}/scripts/build/build_linux_docker.sh" x86_64 || {
+                                    exit 1
+                                }
+                            """
+                        }
+                    }
+                    post {
+                        success {
+                            script {
+                                echo "========================================"
+                                archiveArtifacts allowEmptyArchive: true, artifacts: 'build_linux_x86_64/install/*.zip', followSymlinks: false, onlyIfSuccessful: true
+                                echo "Linux x64 build done"
+                                echo "========================================"
+                            }
+                        }
+                        failure {
+                            script {
+                                echo "========================================"
+                                echo "Linux x64 build finished with failure"
+                                echo "========================================"
+                            }
+                        }
+                    }
+                }
+
+                stage("Build Linux aarch64") {
+                    agent { label "master" }
+                    when {
+                        anyOf {
+                            environment name: 'Build_Platform', value: 'Linux_aarch64'
+                            environment name: 'Build_Platform', value: 'ALL'
+                        }
+                    }
+                    steps {
+                        script {
+                            refreshRepo()
+                            
+                            echo "Build Linux aarch64 ..."
+                            sh """
+                                echo "WORKSPACE: ${WORKSPACE}"
+                                cd "${WORKSPACE}"
+                                
+                                chmod +x *.sh || true
+                                # sdk
+                                "${WORKSPACE}/scripts/build/build_linux_docker.sh" aarch64 || {
+                                    exit 1
+                                }
+                            """
+                        }
+                    }
+                    post {
+                        success {
+                            script {
+                                echo "========================================"
+                                archiveArtifacts allowEmptyArchive: true, artifacts: 'build_linux_aarch64/install/*.zip', followSymlinks: false, onlyIfSuccessful: true
+                                echo "Linux arm64 build done"
+                                echo "========================================"
+                            }
+                        }
+                        failure {
+                            script {
+                                echo "========================================"
+                                echo "Linux arm64 build finished with failure"
+                                echo "========================================"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
