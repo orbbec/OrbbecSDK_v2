@@ -93,7 +93,7 @@ pipeline {
                 }
 
                 stage("Build Linux x64") {
-                    agent { label "master" }
+                    agent { label "linux.x86" }
                     when {
                         anyOf {
                             environment name: 'Build_Platform', value: 'Linux_x64'
@@ -137,7 +137,7 @@ pipeline {
                 }
 
                 stage("Build Linux aarch64") {
-                    agent { label "master" }
+                    agent { label "linux.aarch64" }
                     when {
                         anyOf {
                             environment name: 'Build_Platform', value: 'Linux_aarch64'
@@ -179,6 +179,52 @@ pipeline {
                         }
                     }
                 }
+
+                stage("Build macOS") {
+                    agent { label "macOS" }
+                    when {
+                        anyOf {
+                            environment name: 'Build_Platform', value: 'mac'
+                            environment name: 'Build_Platform', value: 'macOS'
+                            environment name: 'Build_Platform', value: 'ALL'
+                        }
+                    }
+                    steps {
+                        script {
+                            refreshRepo()
+                            
+                            echo "Build macOS ..."
+                            sh """
+                                echo "WORKSPACE: ${WORKSPACE}"
+                                cd "${WORKSPACE}"
+                                
+                                chmod +x *.sh || true
+                                # sdk
+                                "${WORKSPACE}/scripts/build/build_macos.sh" || {
+                                    exit 1
+                                }
+                            """
+                        }
+                    }
+                    post {
+                        success {
+                            script {
+                                echo "========================================"
+                                archiveArtifacts allowEmptyArchive: true, artifacts: 'build_macOS/install/*.zip', followSymlinks: false, onlyIfSuccessful: true
+                                echo "macOS build done"
+                                echo "========================================"
+                            }
+                        }
+                        failure {
+                            script {
+                                echo "========================================"
+                                echo "macOS build finished with failure"
+                                echo "========================================"
+                            }
+                        }
+                    }
+                }
+
             }
         }
     }
