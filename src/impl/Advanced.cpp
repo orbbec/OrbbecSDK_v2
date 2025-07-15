@@ -280,11 +280,11 @@ uint32_t ob_device_preset_resolution_config_get_count(ob_preset_resolution_confi
 }
 HANDLE_EXCEPTIONS_AND_RETURN(0, ob_preset_resolution_config_list)
 
-ob_preset_resolution_ratio_config ob_device_preset_resolution_config_list_get_item(const ob_preset_resolution_config_list *ob_preset_resolution_config_lis,
+ob_preset_resolution_ratio_config ob_device_preset_resolution_config_list_get_item(const ob_preset_resolution_config_list *ob_preset_resolution_config_list,
                                                                                    uint32_t index, ob_error **error) BEGIN_API_CALL {
-    VALIDATE_NOT_NULL(ob_preset_resolution_config_lis);
-    VALIDATE_UNSIGNED_INDEX(index, ob_preset_resolution_config_lis->configList.size());
-    auto                              config = ob_preset_resolution_config_lis->configList.at(index);
+    VALIDATE_NOT_NULL(ob_preset_resolution_config_list);
+    VALIDATE_UNSIGNED_INDEX(index, ob_preset_resolution_config_list->configList.size());
+    auto                              config = ob_preset_resolution_config_list->configList.at(index);
     ob_preset_resolution_ratio_config impl;
     impl.width                 = config.width;
     impl.height                = config.height;
@@ -292,7 +292,7 @@ ob_preset_resolution_ratio_config ob_device_preset_resolution_config_list_get_it
     impl.irDecimationFactor    = config.irDecimationFactor;
     return impl;
 }
-HANDLE_EXCEPTIONS_AND_RETURN({}, ob_preset_resolution_config_lis, index)
+HANDLE_EXCEPTIONS_AND_RETURN({}, ob_preset_resolution_config_list, index)
 
 void ob_delete_preset_resolution_config_list(ob_preset_resolution_config_list *ob_preset_resolution_config_list, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(ob_preset_resolution_config_list);

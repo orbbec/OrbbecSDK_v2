@@ -88,7 +88,7 @@ OB_EXPORT ob_depth_work_mode ob_depth_work_mode_list_get_item(const ob_depth_wor
 OB_EXPORT void ob_delete_depth_work_mode_list(ob_depth_work_mode_list *work_mode_list, ob_error **error);
 
 /**
- * @breif Get the current preset name.
+ * @brief Get the current preset name.
  * @brief The preset mean a set of parameters or configurations that can be applied to the device to achieve a specific effect or function.
  *
  * @param device The device object.
@@ -294,7 +294,7 @@ OB_EXPORT uint32_t ob_device_preset_resolution_config_get_count(ob_preset_resolu
  * @param error  Log error messages.
  * @return  The preset resolution in the preset resolution list.
  */
-OB_EXPORT OBPresetResolutionConfig ob_device_preset_resolution_config_list_get_item(const ob_preset_resolution_config_list *ob_preset_resolution_config_lis,
+OB_EXPORT OBPresetResolutionConfig ob_device_preset_resolution_config_list_get_item(const ob_preset_resolution_config_list *ob_preset_resolution_config_list,
                                                                                     uint32_t index, ob_error **error);
 
 /**
