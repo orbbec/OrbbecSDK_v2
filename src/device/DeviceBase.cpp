@@ -128,8 +128,12 @@ void DeviceBase::fetchExtensionInfo() {
 void DeviceBase::fetchDeviceErrorState() {
     auto propServer = getPropertyServer();
     if(propServer->isPropertySupported(OB_STRUCT_DEVICE_ERROR_STATE, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
-        auto state        = propServer->getStructureDataProtoV1_1_T<OBDeviceErrorState, 1>(OB_STRUCT_DEVICE_ERROR_STATE, PROP_ACCESS_INTERNAL);
-        deviceErrorState_ = state.errorCode;
+        try {
+            deviceErrorState_ = 0;
+            auto state        = propServer->getStructureDataProtoV1_1_T<OBDeviceErrorState, 1>(OB_STRUCT_DEVICE_ERROR_STATE, PROP_ACCESS_INTERNAL);
+            deviceErrorState_ = state.errorCode;
+        }
+        CATCH_EXCEPTION
     }
     else {
         // Unsupported
