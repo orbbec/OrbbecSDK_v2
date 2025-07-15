@@ -76,7 +76,7 @@ docker run --rm -u $USER_ID:$GROUP_ID \
     -i $TTY_OPT \
     --entrypoint /bin/bash \
     openorbbecsdk-env.$ARCH \
-    -c "cd /workspace/$FOLDER_NAME && bash ./scripts/build/build_linux_macos.sh"
+    -c "cd /workspace/$FOLDER_NAME && bash ./scripts/build/build_linux.sh"
 
 echo "Done building openorbbecsdk for linux $ARCH via docker"
 
