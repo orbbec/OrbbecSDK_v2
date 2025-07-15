@@ -13,6 +13,7 @@ namespace libobsensor {
 OpenNIDisp2DepthPropertyAccessor::OpenNIDisp2DepthPropertyAccessor(IDevice *owner) : owner_(owner), swDisparityToDepthEnabled_(true) {}
 
 void OpenNIDisp2DepthPropertyAccessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
+    owner_->getComponentT<OpenNIDisparitySensor>(OB_DEV_COMPONENT_DEPTH_SENSOR, false);
     switch(propertyId) {
     case OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL: {
         auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR);
