@@ -14,7 +14,11 @@
 namespace libobsensor {
 
 FormatConverter::FormatConverter() : convertType_(FORMAT_YUYV_TO_RGB) {}
-FormatConverter::~FormatConverter() noexcept {}
+FormatConverter::~FormatConverter() noexcept {
+    if(nullptr != tempDataBuf_) {
+            delete[] tempDataBuf_;
+        }
+}
 
 void FormatConverter::updateConfig(std::vector<std::string> &params) {
     if(params.size() != 1) {
