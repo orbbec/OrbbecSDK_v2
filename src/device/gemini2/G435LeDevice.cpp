@@ -53,6 +53,7 @@ static const uint8_t INTERFACE_COLOR    = 0;
 static const uint8_t INTERFACE_LEFT_IR  = 4;
 static const uint8_t INTERFACE_DEPTH    = 2;
 static const uint8_t INTERFACE_RIGHT_IR = 6;
+static const uint8_t COMPAT_VERSION     = 1;  // 1:Supports embedding metadata into color data streams in MJPEG format.​
 
 G435LeDeviceBase::G435LeDeviceBase(const std::shared_ptr<const IDeviceEnumInfo> &info) : DeviceBase(info) {}
 G435LeDeviceBase::~G435LeDeviceBase() noexcept {}
@@ -686,6 +687,7 @@ void G435LeDevice::initProperties() {
     propertyServer->registerProperty(OB_PROP_DISP_SEARCH_OFFSET_INT, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_RAW_PRESET_RESOLUTION_CONFIG_LIST, "", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_STRUCT_PRESET_RESOLUTION_CONFIG, "rw", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_COMPAT_VERSION_INT, "", "rw", vendorPropertyAccessor);
     propertyServer->registerAccessCallback(OB_STRUCT_PRESET_RESOLUTION_CONFIG,
                                            [&](uint32_t propertyId, const uint8_t *, size_t, PropertyOperationType operationType) {
                                                if(operationType == PROP_OP_WRITE && propertyId == OB_STRUCT_PRESET_RESOLUTION_CONFIG) {
@@ -742,6 +744,8 @@ void G435LeDevice::initProperties() {
 
     BEGIN_TRY_EXECUTE({ propertyServer->setPropertyValueT(OB_PROP_DEVICE_COMMUNICATION_TYPE_INT, OB_COMM_NET); })
     CATCH_EXCEPTION_AND_EXECUTE({ LOG_ERROR("Set device communication type to ethernet mode failed!"); })
+    BEGIN_TRY_EXECUTE({ propertyServer->setPropertyValueT(OB_PROP_COMPAT_VERSION_INT, COMPAT_VERSION); })
+    CATCH_EXCEPTION_AND_EXECUTE({ LOG_ERROR("Set device compat version failed!"); })
 }
 void G435LeDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
     auto              sensorType = sensor->getSensorType();

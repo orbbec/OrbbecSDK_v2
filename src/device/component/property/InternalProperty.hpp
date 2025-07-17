@@ -22,6 +22,7 @@ typedef enum {
     OB_PROP_FAN_WORK_SPEED_INT              = 120, /**< Fan speed*/
     OB_PROP_STOP_IR_RIGHT_STREAM_BOOL       = 139, /**<Disable the right IR stream*/
     OB_PROP_STOP_CONFIDENCE_STREAM_BOOL     = 228, /**<Disable the confidence stream*/
+    OB_PROP_COMPAT_VERSION_INT              = 237, /**< Firmware compatibility version*/
 
     OB_STRUCT_DEVICE_UPGRADE_STATUS    = 1006, /**< Firmware upgrade status, read only*/
     OB_PROP_START_COLOR_STREAM_BOOL    = 125,  /**< Start or stop color stream */
