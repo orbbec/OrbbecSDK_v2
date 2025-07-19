@@ -106,6 +106,12 @@ int main(void) {
     ob_pipeline_stop(pipeline, &error);
     check_ob_error(&error);
 
+    ob_delete_config(config, &error);
+    check_ob_error(&error);
+
+    ob_delete_pipeline(pipeline, &error);
+    check_ob_error(&error);
+    
     return 0;
 }
 

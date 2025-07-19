@@ -197,6 +197,9 @@ void print_device_info(ob_device *device, int index) {
     check_ob_error(&error);
 
     printf("  %d - device name: %s, device pid: %#06x, device sn: %s, connection type: %s\n", index, dev_name, dev_pid, dev_sn, conn_type);
+
+    ob_delete_device_info(dev_inf, &error);
+    check_ob_error(&error);
 }
 
 int main(void) {
