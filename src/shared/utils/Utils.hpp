@@ -87,5 +87,11 @@ template <class T> static bool isMatchDeviceByPid(uint16_t pid, T &pids) {
 }
 
 bool checkJpgImageData(const uint8_t *data, size_t dataLen);
+
+int findJpgSequence(const uint8_t *data, uint32_t size, uint32_t startIndex, const uint8_t *target, uint32_t targetLength);
+int findJpgSOSSequence(const uint8_t *data, uint32_t size, uint32_t startIndex = 0);
+int findJpgCOMSequence(const uint8_t *data, uint32_t size, uint32_t startIndex = 0);
+int getJpgHeadLength(const uint8_t *data, uint32_t size);
+
 }  // namespace utils
 }  // namespace libobsensor

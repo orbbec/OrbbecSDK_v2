@@ -139,6 +139,7 @@ private:
     // redefined virtual functions:
     virtual Boolean continuePlaying() override;
     void            outputFrameFunc();
+    void            mjpgUpdateMetadata(std::shared_ptr<Frame> frame);
 
 private:
     MediaSubsession                     &subsession_;

@@ -56,5 +56,54 @@ namespace utils {
         return validImage;
     }
 
+    int findJpgSequence(const uint8_t *data, uint32_t size, uint32_t startIndex, const uint8_t *target, uint32_t targetLength) {
+        // Limit the maximum search length to 1024 bytes for performance and safety
+        if(size - startIndex > 1024) {
+            size = 1024 + startIndex;
+        }
+
+        // Return -1 early if data is too small to contain the target sequence
+        if(size < targetLength || startIndex > size - targetLength) {
+            return -1;
+        }
+
+        const uint32_t maxIndex = size - targetLength;
+        for(uint32_t i = startIndex; i <= maxIndex; ++i) {
+            bool matched = true;
+            for(uint32_t j = 0; j < targetLength; ++j) {
+                if(data[i + j] != target[j]) {
+                    matched = false;
+                    break;
+                }
+            }
+            if(matched) {
+                return i;  // Now returning size_t to match function signature
+            }
+        }
+
+        return -1;
+    }
+    int findJpgSOSSequence(const uint8_t *data, uint32_t size, uint32_t startIndex) {
+        constexpr uint8_t kSOSSequence[] = { 0xFF, 0xDA };
+        return findJpgSequence(data, size, startIndex, kSOSSequence, sizeof(kSOSSequence));
+    }
+    int findJpgCOMSequence(const uint8_t *data, uint32_t size, uint32_t startIndex) {
+        constexpr uint8_t kCOMSequence[] = { 0xFF, 0xFE };
+        return findJpgSequence(data, size, startIndex, kCOMSequence, sizeof(kCOMSequence));
+    }
+
+    int getJpgHeadLength(const uint8_t *data, uint32_t size) {
+        const uint32_t sosSequencefixedDistance = 14;
+        int            sosSequenceIndex         = findJpgSOSSequence(data, size);
+        if(sosSequenceIndex == -1) {
+            return -1;
+        }
+
+        uint32_t jpegHeadSize = sosSequenceIndex + sosSequencefixedDistance;
+        if(jpegHeadSize >= size) {
+            return -1;
+        }
+        return jpegHeadSize;
+    }
 }  // namespace utils
 }  // namespace libobsensor
