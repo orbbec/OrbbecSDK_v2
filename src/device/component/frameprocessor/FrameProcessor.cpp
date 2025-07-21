@@ -256,9 +256,8 @@ void DepthFrameProcessor::enableHardwareD2CProcess(bool enable) {
     isSupported = propertyServer->isPropertySupported(OB_PROP_DEPTH_ALIGN_HARDWARE_BOOL, PROP_OP_WRITE, PROP_ACCESS_INTERNAL);
     if(isSupported) {
         propertyServer->setPropertyValueT(OB_PROP_DEPTH_ALIGN_HARDWARE_BOOL, enable);
+        TRY_EXECUTE(setConfigValueSync("HardwareD2CProcessor#255", static_cast<double>(enable)));
     }
-
-    TRY_EXECUTE(setConfigValueSync("HardwareD2CProcessor#255", static_cast<double>(enable)));
 }
 
 void DepthFrameProcessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
