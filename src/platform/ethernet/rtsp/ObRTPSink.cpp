@@ -32,6 +32,15 @@ typedef struct {
     uint32_t width;         // Frame pixel width
     uint32_t height;        // Frame pixel height    
 } OBNetworkFrameHeader;
+struct MJPGMetadataHeader {
+    uint8_t  magic[8];  // fixed magic:"ORBBEC"
+    uint32_t data_len;  // Length of the entire metadata data structure
+
+    bool validateMagic() const {
+        const char expectedMagic[8] = "ORBBEC";
+        return std::memcmp(magic, expectedMagic, sizeof(expectedMagic)) == 0;
+    }
+};
 #pragma pack()
 
 const std::vector<std::string> OBVendorCodecs = {
@@ -268,6 +277,10 @@ void ObRTPSink::outputFrameFunc() {
                     frame->updateData(output->getRecvdDataBuffer() + frameOffset, output->getRecvdDataSize() - frameOffset);
                 }
 
+                if(format == OB_FORMAT_MJPG) {
+                    mjpgUpdateMetadata(frame);
+                }
+
                 frameCallback_(frame);
             });
         } while(0);
@@ -277,6 +290,53 @@ void ObRTPSink::outputFrameFunc() {
             reclaimedRTPBufferQueue_.push(output);
         }
     }
+}
+
+void ObRTPSink::mjpgUpdateMetadata(std::shared_ptr<Frame> frame) {
+    if(!frame || !frame->getData()) {
+        return;
+    }
+
+    int            orgFrameSize = static_cast<int>(frame->getDataSize());
+    const uint8_t *orgFrameData = frame->getData();
+
+    int jpegHeadSize = utils::getJpgHeadLength(orgFrameData, orgFrameSize);
+    if(jpegHeadSize == -1 || jpegHeadSize >= orgFrameSize) {
+        return;
+    }
+
+    if(orgFrameData[jpegHeadSize] != 0xFF || orgFrameData[jpegHeadSize + 1] != 0xD8) {
+        return;
+    }
+
+    int comSequenceIndex = utils::findJpgCOMSequence(frame->getData(), orgFrameSize - jpegHeadSize, jpegHeadSize);
+    if(comSequenceIndex == -1) {
+        return;
+    }
+
+    const MJPGMetadataHeader *header = reinterpret_cast<const MJPGMetadataHeader *>(const_cast<uint8_t *>(frame->getData() + comSequenceIndex + 4));
+    if(!header->validateMagic()) {
+        return;
+    }
+
+    const int metadataSize = header->data_len;
+    if(jpegHeadSize + metadataSize >= orgFrameSize) {
+        return;
+    }
+    frame->updateMetadata(const_cast<uint8_t *>(frame->getData() + jpegHeadSize + 2 + 4), metadataSize);
+
+    int secondJpegHeadSize = utils::getJpgHeadLength(orgFrameData + jpegHeadSize, orgFrameSize - jpegHeadSize);
+    if(secondJpegHeadSize == -1 || secondJpegHeadSize >= orgFrameSize) {
+        return;
+    }
+
+    std::vector<uint8_t> data(orgFrameSize - secondJpegHeadSize);
+
+    memcpy(data.data(), frame->getData(), jpegHeadSize);
+
+    memcpy(data.data() + jpegHeadSize, frame->getData() + jpegHeadSize + secondJpegHeadSize, orgFrameSize - (jpegHeadSize + secondJpegHeadSize));
+
+    frame->updateData(data.data(), data.size());
 }
 
 }  // namespace libobsensor
