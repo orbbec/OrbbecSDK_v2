@@ -126,6 +126,8 @@ public:
 
 class ConfidenceFrameProcessor : public FrameProcessor {
 public:
+    using FrameProcessor::getPropertyRange;
+
     ConfidenceFrameProcessor(IDevice *owner, std::shared_ptr<FrameProcessorContext> context);
     virtual ~ConfidenceFrameProcessor() noexcept = default;
 
