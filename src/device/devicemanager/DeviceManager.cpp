@@ -209,10 +209,9 @@ void DeviceManager::setDeviceChangedCallback(DeviceChangedCallback callback) {
 }
 
 void DeviceManager::onDeviceChanged(const DeviceEnumInfoList &removed, const DeviceEnumInfoList &added) {
-    std::unique_lock<std::mutex> lock(callbackMutex_);
-
     LOG_INFO("Device changed! removed: {0}, added: {1}", removed.size(), added.size());
     if(!removed.empty()) {
+        std::unique_lock<std::mutex> lock(createdDevicesMutex_);
         for(const auto &info: removed) {
             auto iter = createdDevices_.find(info->getUid());
             if(iter != createdDevices_.end()) {
@@ -228,6 +227,7 @@ void DeviceManager::onDeviceChanged(const DeviceEnumInfoList &removed, const Dev
     auto deviceInfoList = getDeviceInfoList();
     printDeviceList("Current device(s) list", deviceInfoList);
 
+    std::unique_lock<std::mutex> lock(callbackMutex_);
     for (auto &callback : devChangedCallbacks_) {
         callback(removed, added);
     }
