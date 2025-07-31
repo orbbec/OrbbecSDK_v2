@@ -92,6 +92,7 @@ struct V4L2FrameBufferGmsl {
 struct V4lDeviceInfoGmsl {
     std::string     name;
     v4l2_capability cap;  // capabilities
+    bool            metadataEmbeddedMode; // metadata are stored in frame data
 };
 
 struct V4lDeviceHandleGmsl {
@@ -102,6 +103,7 @@ struct V4lDeviceHandleGmsl {
     std::shared_ptr<V4lDeviceInfoGmsl>                     metadataInfo;
     int                                                    metadataFd;
     std::array<V4L2FrameBufferGmsl, MAX_BUFFER_COUNT_GMSL> metadataBuffers;
+    std::atomic<bool>                                      metadataEmbeddedMode = { false };  // if true. metadataFd will be invalid value
 
     MutableFrameCallback                      frameCallback;
     std::shared_ptr<const VideoStreamProfile> profile = nullptr;

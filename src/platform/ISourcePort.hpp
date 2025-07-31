@@ -91,7 +91,7 @@ struct ShmStreamPortInfo : public SourcePortInfo {  // shared memory stream port
 };
 
 struct USBSourcePortInfo : public SourcePortInfo {
-    USBSourcePortInfo() : SourcePortInfo(SOURCE_PORT_USB_VENDOR) {};
+    USBSourcePortInfo() : SourcePortInfo(SOURCE_PORT_USB_VENDOR){};
     explicit USBSourcePortInfo(SourcePortType type) : SourcePortInfo(type) {}
     ~USBSourcePortInfo() noexcept override = default;
 
@@ -115,6 +115,7 @@ struct USBSourcePortInfo : public SourcePortInfo {
     uint8_t     infIndex = 0;  // interface index
     std::string infName;       // interface name
     std::string hubId;         // hub id
+    uint64_t    flag = 0;      // flag for usb interface. See UsbInterfaceFlag for detail
 };
 
 typedef std::vector<std::shared_ptr<const SourcePortInfo>> SourcePortInfoList;
