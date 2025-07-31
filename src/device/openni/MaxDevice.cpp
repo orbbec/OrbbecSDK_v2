@@ -68,7 +68,8 @@ void MaxDevice::initSensorList() {
     auto depthPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(), [](const std::shared_ptr<const SourcePortInfo> &portInfo) {
         return portInfo->portType == SOURCE_PORT_USB_UVC && std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->infIndex == INTERFACE_DEPTH
                && (std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->pid == OB_DEVICE_MAX_PRO_PID
-                   || std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->pid == OB_DEVICE_DABAI_MAX_PID);
+                   || std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->pid == OB_DEVICE_DABAI_MAX_PID
+                   || std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->pid == OB_DEVICE_GEMINI_UW_PID);
     });
 
     if(depthPortInfoIter != sourcePortInfoList.end()) {
