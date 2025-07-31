@@ -48,7 +48,7 @@ MaxDevice::~MaxDevice() noexcept {
 
 void MaxDevice::init() {
     OpenNIDeviceBase::init();
-    if(deviceInfo_->pid_ == OB_DEVICE_MAX_PRO_PID) {
+    if(deviceInfo_->pid_ == OB_DEVICE_MAX_PRO_PID || deviceInfo_->pid_ == OB_DEVICE_GEMINI_UW_PID) {
         static const std::vector<OBMultiDeviceSyncMode> supportedSyncModes = {
             OB_MULTI_DEVICE_SYNC_MODE_FREE_RUN,
             OB_MULTI_DEVICE_SYNC_MODE_PRIMARY,
@@ -221,7 +221,7 @@ void MaxDevice::initProperties() {
                 propertyServer->registerProperty(OB_PROP_LDP_STATUS_BOOL, "r", "r", vendorPropertyAccessor_);
                 propertyServer->registerProperty(OB_PROP_LDP_BOOL, "rw", "rw", vendorPropertyAccessor_);
             }
-            if(deviceInfo_->pid_ == OB_DEVICE_MAX_PRO_PID) {
+            if(deviceInfo_->pid_ == OB_DEVICE_MAX_PRO_PID || deviceInfo_->pid_ == OB_DEVICE_GEMINI_UW_PID) {
                 propertyServer->registerProperty(OB_STRUCT_MULTI_DEVICE_SYNC_CONFIG, "rw", "rw", vendorPropertyAccessor_);
             }
             auto heartBeatPropertyAccessor = std::make_shared<OpenNIHeartBeatPropertyAccessor>(this);
