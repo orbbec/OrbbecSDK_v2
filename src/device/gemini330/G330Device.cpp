@@ -2026,7 +2026,7 @@ std::vector<std::shared_ptr<IFilter>> G330NetDevice::createRecommendedPostProces
         if(filterFactory->isFilterCreatorExists("SpatialModerateFilter")) {
             auto spatFilter = filterFactory->createFilter("SpatialModerateFilter");
             // magnitude, disp_diff, radius
-            std::vector<std::string> params = { "1", "160", "3" };
+            std::vector<std::string> params = { "1", "160", "5" };
             spatFilter->updateConfig(params);
             depthFilterList.push_back(spatFilter);
         }
