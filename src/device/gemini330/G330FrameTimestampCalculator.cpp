@@ -66,11 +66,13 @@ uint64_t G330FrameTimestampCalculatorBaseDeviceTime::calculate(uint64_t srcTimes
 
         uint64_t overFlowTimes              = baseDevTime_ / (256 * frameTimeFreq_);
         uint64_t calculateLeftoverTimestamp = baseDevTime_ - overFlowTimes * (256 * frameTimeFreq_);
-        if(calculateLeftoverTimestamp < srcTimestamp) {
-            baseDevTime_ = (overFlowTimes - 1) * (256 * frameTimeFreq_);
-        }
-        else {
-            baseDevTime_ -= calculateLeftoverTimestamp;
+        if(overFlowTimes > 0) {
+            if(calculateLeftoverTimestamp < srcTimestamp) {
+                baseDevTime_ = (overFlowTimes - 1) * (256 * frameTimeFreq_);
+            }
+            else {
+                baseDevTime_ -= calculateLeftoverTimestamp;
+            }
         }
     }
 
