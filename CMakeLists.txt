@@ -3,7 +3,7 @@
 
 cmake_minimum_required(VERSION 3.5)
 
-project(OrbbecSDK VERSION 2.4.10 LANGUAGES CXX C)
+project(OrbbecSDK VERSION 2.4.11 LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
