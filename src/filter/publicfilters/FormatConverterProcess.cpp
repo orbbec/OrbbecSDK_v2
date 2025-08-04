@@ -11,13 +11,16 @@
 #include <libyuv.h>
 #include <turbojpeg.h>
 
+#if defined(__linux__)
+#include <sys/mman.h>
+#include <unistd.h>
+#endif
+
 namespace libobsensor {
 
 FormatConverter::FormatConverter() : convertType_(FORMAT_YUYV_TO_RGB) {}
 FormatConverter::~FormatConverter() noexcept {
-    if(nullptr != tempDataBuf_) {
-            delete[] tempDataBuf_;
-        }
+    clearTempDataBuf();
 }
 
 void FormatConverter::updateConfig(std::vector<std::string> &params) {
@@ -183,14 +186,8 @@ std::shared_ptr<Frame> FormatConverter::process(std::shared_ptr<const Frame> fra
 }
 
 void FormatConverter::yuyvToRgb(uint8_t *src, uint8_t *target, uint32_t width, uint32_t height) {
-    const auto preferSize = width * height * 3 / 2;
-    if(tempDataBuf_ == nullptr || preferSize != tempDataBufSize_) {
-        if(nullptr != tempDataBuf_) {
-            delete[] tempDataBuf_;
-        }
-        tempDataBuf_     = new uint8_t[preferSize];
-        tempDataBufSize_ = preferSize;
-    }
+    const size_t preferSize = width * height * 3 / 2;
+    allocateTempDataBufIfNeeded(preferSize);
     uint8_t *yData = tempDataBuf_;
     uint8_t *uData = tempDataBuf_ + width * height;
     uint8_t *vData = tempDataBuf_ + width * height * 5 / 4;
@@ -199,14 +196,8 @@ void FormatConverter::yuyvToRgb(uint8_t *src, uint8_t *target, uint32_t width, u
 }
 
 void FormatConverter::yuyvToRgba(uint8_t *src, uint8_t *target, uint32_t width, uint32_t height) {
-    const auto preferSize = width * height * 4;
-    if(tempDataBuf_ == nullptr || preferSize != tempDataBufSize_) {
-        if(nullptr != tempDataBuf_) {
-            delete[] tempDataBuf_;
-        }
-        tempDataBuf_     = new uint8_t[preferSize];
-        tempDataBufSize_ = preferSize;
-    }
+    const size_t preferSize = width * height * 4;
+    allocateTempDataBufIfNeeded(preferSize);
     uint8_t *yData = tempDataBuf_;
     uint8_t *uData = tempDataBuf_ + width * height;
     uint8_t *vData = tempDataBuf_ + width * height * 5 / 4;
@@ -215,14 +206,8 @@ void FormatConverter::yuyvToRgba(uint8_t *src, uint8_t *target, uint32_t width, 
 }
 
 void FormatConverter::yuyvToBgr(uint8_t *src, uint8_t *target, uint32_t width, uint32_t height) {
-    const auto preferSize = width * height * 3 / 2;
-    if(tempDataBuf_ == nullptr || preferSize != tempDataBufSize_) {
-        if(nullptr != tempDataBuf_) {
-            delete[] tempDataBuf_;
-        }
-        tempDataBuf_     = new uint8_t[preferSize];
-        tempDataBufSize_ = preferSize;
-    }
+    const size_t preferSize = width * height * 3 / 2;
+    allocateTempDataBufIfNeeded(static_cast<size_t>(preferSize));
     uint8_t *yData = tempDataBuf_;
     uint8_t *uData = tempDataBuf_ + width * height;
     uint8_t *vData = tempDataBuf_ + width * height * 5 / 4;
@@ -231,14 +216,8 @@ void FormatConverter::yuyvToBgr(uint8_t *src, uint8_t *target, uint32_t width, u
 }
 
 void FormatConverter::yuyvToBgra(uint8_t *src, uint8_t *target, uint32_t width, uint32_t height) {
-    const auto preferSize = width * height * 4;
-    if(tempDataBuf_ == nullptr || preferSize != tempDataBufSize_) {
-        if(nullptr != tempDataBuf_) {
-            delete[] tempDataBuf_;
-        }
-        tempDataBuf_     = new uint8_t[preferSize];
-        tempDataBufSize_ = preferSize;
-    }
+    const size_t preferSize = width * height * 4;
+    allocateTempDataBufIfNeeded(preferSize);
     uint8_t *yData = tempDataBuf_;
     uint8_t *uData = tempDataBuf_ + width * height;
     uint8_t *vData = tempDataBuf_ + width * height * 5 / 4;
@@ -281,14 +260,8 @@ void FormatConverter::yuyvToy8(uint8_t *src, uint8_t *target, uint32_t width, ui
 }
 
 void FormatConverter::uyvyToRgb(uint8_t *src, uint8_t *target, uint32_t width, uint32_t height) {
-    const auto preferSize = width * height * 3 / 2;
-    if(tempDataBuf_ == nullptr || preferSize != tempDataBufSize_) {
-        if(nullptr != tempDataBuf_) {
-            delete[] tempDataBuf_;
-        }
-        tempDataBuf_     = new uint8_t[preferSize];
-        tempDataBufSize_ = preferSize;
-    }
+    const size_t preferSize = width * height * 3 / 2;
+    allocateTempDataBufIfNeeded(preferSize);
     uint8_t *yData = tempDataBuf_;
     uint8_t *uData = tempDataBuf_ + width * height;
     uint8_t *vData = tempDataBuf_ + width * height * 5 / 4;
@@ -426,7 +399,7 @@ void FormatConverter::rgbaToRgb(uint8_t *src, uint32_t src_len, uint8_t *target,
     }
 }
 
-void FormatConverter::bgraToBgr(uint8_t *src, uint32_t src_len, uint8_t *target, uint32_t width, uint32_t height){
+void FormatConverter::bgraToBgr(uint8_t *src, uint32_t src_len, uint8_t *target, uint32_t width, uint32_t height) {
     if(src == nullptr || target == nullptr)
         return;
 
@@ -478,6 +451,36 @@ void FormatConverter::y8ToRgb(uint8_t *src, uint32_t src_len, uint8_t *target, u
     }
 }
 
+void FormatConverter::allocateTempDataBufIfNeeded(const size_t preferSize) {
+    if(tempDataBuf_ == nullptr || preferSize != tempDataBufSize_) {
+        clearTempDataBuf();
+#if defined(__linux__)
+        // use mmap instead of new/delete to avoid heap memory fragmentation
+        tempDataBuf_ = static_cast<uint8_t *>(mmap(nullptr, preferSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0));
+        if(tempDataBuf_ == MAP_FAILED) {
+            tempDataBuf_ = nullptr;
+            LOG_ERROR("mmap failed! size: ", preferSize, ", errno: ", errno, ", msg: ", strerror(errno));
+            throw std::bad_alloc();
+        }
+#else
+        tempDataBuf_ = new uint8_t[preferSize];
+#endif
+        tempDataBufSize_ = preferSize;
+    }
+}
+
+void FormatConverter::clearTempDataBuf() {
+#if defined(__linux__)
+    if(tempDataBuf_ && tempDataBufSize_) {
+        munmap(tempDataBuf_, tempDataBufSize_);
+    }
+#else
+    if(tempDataBuf_) {
+        delete[] tempDataBuf_;
+    }
+#endif
+    tempDataBuf_     = nullptr;
+    tempDataBufSize_ = 0;
+}
 
 }  // namespace libobsensor
-

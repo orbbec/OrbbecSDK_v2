@@ -41,13 +41,15 @@ private:
     void bgraToBgr(uint8_t *src, uint32_t src_len, uint8_t *target, uint32_t width, uint32_t height);
     void y16ToRgb(uint8_t *src, uint32_t src_len, uint8_t *target, uint32_t width, uint32_t height);
     void y8ToRgb(uint8_t *src, uint32_t src_len, uint8_t *target, uint32_t width, uint32_t height);
+    void clearTempDataBuf();
+    void allocateTempDataBufIfNeeded(const size_t preferSize);
 
 protected:
     std::shared_ptr<const StreamProfile> currentStreamProfile_;
     std::shared_ptr<StreamProfile>       tarStreamProfile_;
     OBConvertFormat                      convertType_;
     uint8_t                             *tempDataBuf_     = nullptr;
-    uint32_t                             tempDataBufSize_ = 0;
+    size_t                               tempDataBufSize_ = 0;
 };
 
 }  // namespace libobsensor
