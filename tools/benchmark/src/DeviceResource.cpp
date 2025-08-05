@@ -33,8 +33,8 @@ void DeviceResource::timestampDiffSaver() {
     }
 
     // write title
-    std::string title =
-        "FrameType,Resolution,FrameRate,SystemTimestamp(us),GlobalTimestamp(us),DeviceTimestamp(us),Difference(System - Global),Difference(System - Device)";
+    std::string title = "FrameType,Resolution,FrameRate,FrameFormat,FrameNumber,SystemTimestamp(us),GlobalTimestamp(us),DeviceTimestamp(us)"
+                        ",Difference(System - Global),Difference(System - Device)";
     rgbFile << title << std::endl;
     depthFile << title << std::endl;
 
@@ -59,9 +59,19 @@ void DeviceResource::timestampDiffSaver() {
                 auto globalTimestamp = frame->getGlobalTimeStampUs();
                 auto timestamp       = frame->getTimeStampUs();
                 auto profile         = frame->getStreamProfile()->as<ob::VideoStreamProfile>();
+                auto format          = frame->getFormat();
 
-                file << type << "," << profile->getWidth() << "x" << profile->getHeight() << "," << profile->getFps() << "," << sysTimestamp << ","
-                     << globalTimestamp << "," << timestamp << "," << sysTimestamp - globalTimestamp << "," << sysTimestamp - timestamp << std::endl;
+                file << type << "," << profile->getWidth() << "x" << profile->getHeight() << "," << profile->getFps() << ","
+                     << ob::TypeHelper::convertOBFormatTypeToString(format) << ",";
+                if(frame->hasMetadata(OB_FRAME_METADATA_TYPE_FRAME_NUMBER)) {
+                    auto metadataIndex = frame->getMetadataValue(OB_FRAME_METADATA_TYPE_FRAME_NUMBER);
+                    file << metadataIndex << ",";
+                }
+                else {
+                    file << "n/a" << ",";
+                }
+                file << sysTimestamp << "," << globalTimestamp << "," << timestamp << "," << static_cast<int64_t>(sysTimestamp - globalTimestamp) << ","
+                     << static_cast<int64_t>(sysTimestamp - timestamp) << std::endl;
             };
 
             auto frameset = queue.front();
