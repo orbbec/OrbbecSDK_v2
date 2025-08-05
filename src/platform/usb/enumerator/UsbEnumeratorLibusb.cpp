@@ -367,7 +367,7 @@ const std::vector<UsbInterfaceInfo> &UsbEnumeratorLibusb::queryUsbInterfaces() {
             LOG_WARN("Femto Bolt is unavailable on macOS duo to Depth Engine");
             continue;
         }
-#endif
+#else
         // todo: remove interface info from devInterfaceList_ when device is removed
         auto path  = getDevicePath(device);
         bool found = false;
@@ -381,7 +381,7 @@ const std::vector<UsbInterfaceInfo> &UsbEnumeratorLibusb::queryUsbInterfaces() {
         if(found) {
             continue;
         }
-
+#endif
         libusb_device_handle *handle = nullptr;
         auto                  rst    = libusb_open(device, &handle);
         if(rst != LIBUSB_SUCCESS) {
