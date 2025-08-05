@@ -458,7 +458,11 @@ int DeviceBase::getFirmwareVersionInt() {
             }
         }
     }
-
+    buf[sizeof(buf) - 1] = '\0';
+    if(strlen(buf) > 0 && strlen(buf) <= 2 && dotCount == 2) {
+        int value = atoi(buf);
+        calFwVersion += value;
+    }
     // If the version number cannot be determined, then fix logic is given priority
     if(calFwVersion == 0 || dotCount < 2) {
         LOG_ERROR("bad fwVersion: {}, parse digital version failed", deviceInfo_->fwVersion_);
