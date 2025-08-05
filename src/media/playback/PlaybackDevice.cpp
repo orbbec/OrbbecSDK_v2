@@ -15,6 +15,7 @@
 #include "component/sensor/imu/GyroSensor.hpp"
 #include "component/sensor/imu/AccelSensor.hpp"
 #include "gemini330/G330FrameMetadataParserContainer.hpp"
+#include "gemini2/G435LeFrameMetadataParserContainer.hpp"
 #include "openni/OpenNIDisparitySensor.hpp"
 #include "openni/DW2DisparitySensor.hpp"
 #include "openni/MaxDisparitySensor.hpp"
@@ -58,6 +59,19 @@ void PlaybackDevice::init() {
             }
 #endif
             container = std::make_shared<G330DepthFrameMetadataParserContainer>(this);
+            return container;
+        });
+    }
+    else if(deviceInfo_->pid_ == OB_DEVICE_G435LE_PID) {
+        registerComponent(OB_DEV_COMPONENT_COLOR_FRAME_METADATA_CONTAINER, [this]() {
+            std::shared_ptr<FrameMetadataParserContainer> container;
+            container = std::make_shared<G435LeColorFrameMetadataParserContainer>(this);
+            return container;
+        });
+
+        registerComponent(OB_DEV_COMPONENT_DEPTH_FRAME_METADATA_CONTAINER, [this]() {
+            std::shared_ptr<FrameMetadataParserContainer> container;
+            container = std::make_shared<G435LeDepthFrameMetadataParserContainer>(this);
             return container;
         });
     }
@@ -173,12 +187,9 @@ void PlaybackDevice::initSensorList() {
                 auto hwD2D = propServer->getPropertyValueT<bool>(OB_PROP_DISPARITY_TO_DEPTH_BOOL);
                 std::dynamic_pointer_cast<DisparityBasedSensor>(sensor)->markOutputDisparityFrame(!hwD2D);
 
+                // init depth unit property
                 if(isDeviceInSeries(G330DevPids, deviceInfo_->pid_)) {
-                    // metadata parser container
-                    auto depthMdParserContainer = getComponentT<IFrameMetadataParserContainer>(OB_DEV_COMPONENT_DEPTH_FRAME_METADATA_CONTAINER);
-                    sensor->setFrameMetadataParserContainer(depthMdParserContainer.get());
-
-                    // depth unit - G330 specific
+                    // G330 specific
                     if(port_->isPropertySupported(OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT)) {
                         OBPropertyValue value{};
 
@@ -188,7 +199,7 @@ void PlaybackDevice::initSensorList() {
                     }
                 }
                 else {
-                    // depth unit - non-G330 specific
+                    // non-G330 specific
                     if(port_->isPropertySupported(OB_PROP_DEPTH_PRECISION_LEVEL_INT)) {
                         OBPropertyValue value{};
                         port_->getRecordedPropertyValue(OB_PROP_DEPTH_PRECISION_LEVEL_INT, &value);
@@ -197,6 +208,12 @@ void PlaybackDevice::initSensorList() {
                         propServer->setPropertyValueT<int>(OB_PROP_DEPTH_PRECISION_LEVEL_INT, value.intValue);
                     }
                 }
+            }
+
+            // register metadata parser container if the device have metadata
+            auto depthMdParserContainer = getComponentT<IFrameMetadataParserContainer>(OB_DEV_COMPONENT_DEPTH_FRAME_METADATA_CONTAINER);
+            if(depthMdParserContainer) {
+                sensor->setFrameMetadataParserContainer(depthMdParserContainer.get());
             }
 
             auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR, false);
@@ -245,8 +262,8 @@ void PlaybackDevice::initSensorList() {
 
         sensor->setStreamProfileList(port_->getStreamProfileList(OB_SENSOR_COLOR));
 
-        if(isDeviceInSeries(G330DevPids, deviceInfo_->pid_)) {
-            auto colorMdParserContainer = getComponentT<IFrameMetadataParserContainer>(OB_DEV_COMPONENT_COLOR_FRAME_METADATA_CONTAINER);
+        auto colorMdParserContainer = getComponentT<IFrameMetadataParserContainer>(OB_DEV_COMPONENT_COLOR_FRAME_METADATA_CONTAINER);
+        if(colorMdParserContainer) {
             sensor->setFrameMetadataParserContainer(colorMdParserContainer.get());
         }
 
@@ -269,7 +286,7 @@ void PlaybackDevice::initSensorList() {
         if(frameProcessor) {
             sensor->setFrameProcessor(frameProcessor.get());
         }
-        
+
         // disable timestamp anomaly detection for playback device
         sensor->enableTimestampAnomalyDetection(false);
         return sensor;
@@ -294,7 +311,7 @@ void PlaybackDevice::initSensorList() {
             auto depthMdParserContainer = getComponentT<IFrameMetadataParserContainer>(OB_DEV_COMPONENT_DEPTH_FRAME_METADATA_CONTAINER);
             sensor->setFrameMetadataParserContainer(depthMdParserContainer.get());
         }
-        
+
         // disable timestamp anomaly detection for playback device
         sensor->enableTimestampAnomalyDetection(false);
         return sensor;
@@ -319,7 +336,7 @@ void PlaybackDevice::initSensorList() {
             auto depthMdParserContainer = getComponentT<IFrameMetadataParserContainer>(OB_DEV_COMPONENT_DEPTH_FRAME_METADATA_CONTAINER);
             sensor->setFrameMetadataParserContainer(depthMdParserContainer.get());
         }
-        
+
         // disable timestamp anomaly detection for playback device
         sensor->enableTimestampAnomalyDetection(false);
         return sensor;
@@ -334,7 +351,7 @@ void PlaybackDevice::initSensorList() {
     registerComponent(OB_DEV_COMPONENT_GYRO_SENSOR, [this]() {
         auto sensor = std::make_shared<GyroSensor>(this, port_, port_);
         sensor->setStreamProfileList(port_->getStreamProfileList(OB_SENSOR_GYRO));
-        
+
         // disable timestamp anomaly detection for playback device
         sensor->enableTimestampAnomalyDetection(false);
         return sensor;
@@ -343,7 +360,7 @@ void PlaybackDevice::initSensorList() {
     registerComponent(OB_DEV_COMPONENT_ACCEL_SENSOR, [this]() {
         auto sensor = std::make_shared<AccelSensor>(this, port_, port_);
         sensor->setStreamProfileList(port_->getStreamProfileList(OB_SENSOR_ACCEL));
-        
+
         // disable timestamp anomaly detection for playback device
         sensor->enableTimestampAnomalyDetection(false);
         return sensor;
