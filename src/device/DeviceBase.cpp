@@ -444,6 +444,9 @@ int DeviceBase::getFirmwareVersionInt() {
                 else if(dotCount == 1) {  // minor version number
                     calFwVersion += 100 * value;
                 }
+                else if(dotCount == 2) {  // Test version number
+                    calFwVersion += value;
+                }
                 else {
                     LOG_ERROR("bad fwVersion: {}", deviceInfo_->fwVersion_);
                     return false;
@@ -454,13 +457,6 @@ int DeviceBase::getFirmwareVersionInt() {
                 memset(buf, 0, sizeof(buf));
             }
         }
-    }
-
-    // Test version number
-    buf[sizeof(buf) - 1] = '\0';
-    if(strlen(buf) > 0 && strlen(buf) <= 2 && dotCount == 2) {
-        int value = atoi(buf);
-        calFwVersion += value;
     }
 
     // If the version number cannot be determined, then fix logic is given priority
