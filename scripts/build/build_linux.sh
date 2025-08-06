@@ -18,7 +18,7 @@ else
     system=linux
 fi
 
-arch=$(uname -m)
+ARCH=$(uname -m)
 if [ "$ARCH" = "aarch64" ]; then
     PLATFORM=${system}_arm64
 elif [ "$ARCH" = "armv7l" ]; then
