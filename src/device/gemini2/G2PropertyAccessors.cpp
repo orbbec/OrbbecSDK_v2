@@ -402,6 +402,32 @@ G435LeDisp2DepthPropertyAccessor::G435LeDisp2DepthPropertyAccessor(IDevice *owne
     hwD2DSupportList_ = { OB_PRECISION_1MM, OB_PRECISION_0MM4, OB_PRECISION_0MM2 };
 }
 
+void G435LeDisp2DepthPropertyAccessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
+    auto owner = getOwner();
+    owner->getComponentT<DisparityBasedSensor>(OB_DEV_COMPONENT_DEPTH_SENSOR, false);
+    switch(propertyId) {
+    case OB_PROP_DISPARITY_TO_DEPTH_BOOL: {
+        if(value.intValue == 1) {
+            OBPropertyRange range;
+            auto            propertyAccessor = owner->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+            propertyAccessor->getPropertyRange(OB_PROP_DEPTH_PRECISION_LEVEL_INT, &range);
+            LOG_DEBUG("Depth precision level range: min={}, max={}, def={}, cur={}", range.min.intValue, range.max.intValue, range.def.intValue,
+                      range.cur.intValue);
+            OBPropertyValue precisionLevel;
+            precisionLevel.intValue = range.def.intValue;
+            setPropertyValue(OB_PROP_DEPTH_PRECISION_LEVEL_INT, precisionLevel);
+        }
+        auto propertyAccessor = owner->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        propertyAccessor->setPropertyValue(propertyId, value);
+        hwDisparityToDepthEnabled_ = static_cast<bool>(value.intValue);
+        markOutputDisparityFrame(!hwDisparityToDepthEnabled_);
+    } break;
+    default: {
+        G2Disp2DepthPropertyAccessor::setPropertyValue(propertyId, value);
+    }
+    }
+}
+
 const std::vector<uint8_t> &G435LeDisp2DepthPropertyAccessor::getStructureData(uint32_t propertyId) {
     if(propertyId == OB_STRUCT_DEPTH_PRECISION_SUPPORT_LIST) {
         if(hwDisparityToDepthEnabled_) {
