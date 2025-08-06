@@ -19,7 +19,7 @@ public:
     void                        setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) override;
     const std::vector<uint8_t> &getStructureData(uint32_t propertyId) override;
 
-private:
+protected:
     void markOutputDisparityFrame(bool enable);
 
 protected:
@@ -62,7 +62,8 @@ public:
     explicit G435LeDisp2DepthPropertyAccessor(IDevice *owner);
     virtual ~G435LeDisp2DepthPropertyAccessor() noexcept override = default;
 
-    const std::vector<uint8_t> &getStructureData(uint32_t propertyId) override;    
+    virtual const std::vector<uint8_t> &getStructureData(uint32_t propertyId) override;
+    virtual void                        setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
 };
 
 class G210FrameTransformPropertyAccessor : public IBasicPropertyAccessor {
