@@ -24,7 +24,7 @@ if [ "$ARCH" = "aarch64" ]; then
 elif [ "$ARCH" = "armv7l" ]; then
     PLATFORM=${system}_arm32
 else
-    PLATFORM=${system}_$arch
+    PLATFORM=${system}_$ARCH
 fi
 
 echo "Building OrbbecSDK for $PLATFORM"
