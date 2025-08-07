@@ -76,7 +76,7 @@ template <typename T> std::vector<std::vector<T>> groupVector(const std::vector<
     return group;
 }
 
-template <class T> static bool isMatchDeviceByPid(uint16_t pid, T &pids) {
+template <class T> inline bool isMatchDeviceByPid(uint16_t pid, T &pids) {
     for(auto pid_: pids) {
         if(pid_ == pid)
             return true;

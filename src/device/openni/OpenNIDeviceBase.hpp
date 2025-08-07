@@ -24,7 +24,7 @@ public:
     OpenNIFrameProcessParam getFrameProcessParam();
 
 protected:
-    virtual void init();
+    virtual void init() override;
     virtual void initSensorList();
     virtual void initProperties();
     virtual void initSensorStreamProfile(std::shared_ptr<ISensor> sensor);
