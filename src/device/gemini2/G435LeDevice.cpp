@@ -229,7 +229,6 @@ void G435LeDeviceBase::updateDefaultStreamProfile(std::shared_ptr<libobsensor::I
     }
 
     constexpr auto DEFAULT_FORMAT = OB_FORMAT_Y16;
-    constexpr int  DEFAULT_FPS    = 10;
 
     std::shared_ptr<const StreamProfile> defaultProfile = nullptr;
 
@@ -239,7 +238,7 @@ void G435LeDeviceBase::updateDefaultStreamProfile(std::shared_ptr<libobsensor::I
             continue;
         }
 
-        if(vspProfile->getFormat() == DEFAULT_FORMAT && vspProfile->getFps() == DEFAULT_FPS) {
+        if(vspProfile->getFormat() == DEFAULT_FORMAT) {
             defaultProfile = profile;
             break;
         }
