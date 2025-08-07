@@ -11,7 +11,7 @@ public:
     OpenNIAlgParamManager(IDevice *owner);
     virtual ~OpenNIAlgParamManager() = default;
 
-    virtual void bindDisparityParam(std::vector<std::shared_ptr<const StreamProfile>> streamProfileList);
+    virtual void bindDisparityParam(std::vector<std::shared_ptr<const StreamProfile>> streamProfileList) override;
 
 private:
     void fetchParamFromDevice() override;
