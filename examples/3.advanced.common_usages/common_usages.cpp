@@ -10,9 +10,9 @@
 #include <string>
 #include <iomanip>
 
-const std::map<std::string, int> gemini_330_list = { { "gemini335", 0x0800 }, { "gemini335L", 0x0804 },  { "gemini336", 0x0803 }, { "gemini336L", 0x0807 },
-                                                     { "gemini330", 0x0801 }, { "gemini330L", 0x0805 },  { "DabaiA", 0x0A12 },    { "DabaiAL", 0x0A13 },
-                                                     { "Gemini345", 0x0812 }, { "Gemini345Lg", 0x0813 }, { "CAM-5330", 0x0816 },  { "CAM-5530", 0x0817 } };
+const std::map<std::string, int> gemini_330_list = { { "Gemini 335", 0x0800 }, { "Gemini 335L", 0x0804 },  { "Gemini 336", 0x0803 }, { "Gemini 336L", 0x0807 },
+                                                     { "Gemini 330", 0x0801 }, { "Gemini 330L", 0x0805 },  { "DabaiA", 0x0A12 },    { "DabaiAL", 0x0A13 },
+                                                     { "Gemini 345", 0x0812 }, { "Gemini 345Lg", 0x0813 }, { "CAM-5330", 0x0816 },  { "CAM-5530", 0x0817 },{"Gemini 338",0x0818} };
 
 const std::map<OBSensorType, std::string> sensorTypeToStringMap = { { OB_SENSOR_COLOR, "Color profile: " },
                                                                     { OB_SENSOR_DEPTH, "Depth profile: " },

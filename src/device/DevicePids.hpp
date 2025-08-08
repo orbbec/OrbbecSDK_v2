@@ -34,6 +34,7 @@ const std::vector<uint16_t> G330DevPids = {
     0x080E,  // Gemini 335Le
     0x080F,  // Gemini 330Le
     0x0810,  // Gemini 336Le
+    0x0818,  // Gemini 338
 
     // DaBai A and daBai AL are new product line base on Gemini 330 series
     0x0A12,  // DaBai A

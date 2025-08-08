@@ -21,7 +21,7 @@ const std::map<int, std::string> G300DeviceNameMap = {
     { 0x0803, "Gemini 336" },   { 0x0804, "Gemini 335L" },  { 0x0805, "Gemini 330L" },  { 0x0806, "Gemini dm330L" }, { 0x0807, "Gemini 336L" },
     { 0x080B, "Gemini 335Lg" }, { 0x080C, "Gemini 330Lg" }, { 0x080D, "Gemini 336Lg" }, { 0x080E, "Gemini 335Le" },  { 0x080F, "Gemini 330Le" },
     { 0x0A12, "Dabai A" },      { 0x0A13, "Dabai AL" },     { 0x0812, "Gemini 345" },   { 0x0813, "Gemini 345Lg" },  { 0x0816, "CAM-5330" },
-    { 0x0817, "CAM-5530" },
+    { 0x0817, "CAM-5530" },{0x0818,"Gemini 338"}
 };
 
 G330DeviceInfo::G330DeviceInfo(const SourcePortInfoList groupedInfoList) {
