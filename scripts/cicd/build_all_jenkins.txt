@@ -165,7 +165,7 @@ pipeline {
                         success {
                             script {
                                 echo "========================================"
-                                archiveArtifacts allowEmptyArchive: true, artifacts: 'build_linux_aarch64/install/*.zip', followSymlinks: false, onlyIfSuccessful: true
+                                archiveArtifacts allowEmptyArchive: true, artifacts: 'build_linux_arm64/install/*.zip', followSymlinks: false, onlyIfSuccessful: true
                                 echo "Linux arm64 build done"
                                 echo "========================================"
                             }
