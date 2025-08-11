@@ -171,14 +171,14 @@ If you prefer to continue with Orbbec SDK v1.x, you can still access the pre-com
 | **Products List** | **Minimal Firmware Version** | **Recommended FW Version**    |
 |-------------------|------------------------------|-------------------------------|
 | Gemini 435Le        | 1.2.4                     |        1.3.2                   |
-| Gemini 335Le        | 1.5.31                     |        1.5.5                     |
-| Gemini 330        | 1.2.20                       |        1.5.5                       |
-| Gemini 330L       | 1.2.20                       |       1.5.5                      |
-| Gemini 335        | 1.2.20                       |       1.5.5                        |
-| Gemini 335L       | 1.2.20                       |        1.5.5                       |
-| Gemini 336        | 1.2.20                       |       1.5.5                        |
-| Gemini 336L       | 1.2.20                       |        1.5.5                       |
-| Gemini 335Lg      | 1.3.46                       |        1.5.5                       |
+| Gemini 335Le        | 1.5.31                     |        1.5.55                     |
+| Gemini 330        | 1.2.20                       |        1.5.55                       |
+| Gemini 330L       | 1.2.20                       |       1.5.55                      |
+| Gemini 335        | 1.2.20                       |       1.5.55                        |
+| Gemini 335L       | 1.2.20                       |        1.5.55                       |
+| Gemini 336        | 1.2.20                       |       1.5.55                        |
+| Gemini 336L       | 1.2.20                       |        1.5.55                       |
+| Gemini 335Lg      | 1.3.46                       |        1.5.55                       |
 | Femto Bolt        | 1.1.2                  |              1.1.2                       |
 | Femto Mega        | 1.3.0                  |              1.3.1                       |
 | Femto Mega I        | 2.0.4                  |            2.0.4                     |
