@@ -103,11 +103,20 @@ void DeviceResource::startStream(std::shared_ptr<ob::Config> config, bool enable
 
     // check if enable timestamp saver
     if(enableTimestampDiffSaver) {
+        // TODO: close auto exposure and set exposure time to 3ms here, needs optimization in the future
+        device_->setBoolProperty(OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL, false);
+        device_->setIntProperty(OB_PROP_DEPTH_EXPOSURE_INT, 3000);  // unit: us
+        device_->setBoolProperty(OB_PROP_COLOR_AUTO_EXPOSURE_BOOL, false);
+        device_->setIntProperty(OB_PROP_COLOR_EXPOSURE_INT, 30);  // unit: 100us
+
         timestamp_diff_saver_thread_ = std::thread(&DeviceResource::timestampDiffSaver, this);
         is_timestamp_saver_enabled_  = true;
     }
     else {
         is_timestamp_saver_enabled_ = false;
+        // restore to auto exposure
+        device_->setBoolProperty(OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL, true);
+        device_->setBoolProperty(OB_PROP_COLOR_AUTO_EXPOSURE_BOOL, true);
     }
 
     pipeline_->start(config, [this](std::shared_ptr<ob::FrameSet> frameset) {
