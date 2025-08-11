@@ -168,25 +168,25 @@ If you prefer to continue with Orbbec SDK v1.x, you can still access the pre-com
 
 ### 1.2 Supported Devices
 
-| **Products List** | **Minimal Firmware Version** |
-|-------------------|------------------------------|
-| Gemini 435Le        | 1.2.04                       |
-| Gemini 335Le        | 1.5.31                       |
-| Gemini 330        | 1.2.20                       |
-| Gemini 330L       | 1.2.20                       |
-| Gemini 335        | 1.2.20                       |
-| Gemini 335L       | 1.2.20                       |
-| Gemini 336        | 1.2.20                       |
-| Gemini 336L       | 1.2.20                       |
-| Gemini 335Lg      | 1.3.46                       |
-| Femto Bolt        | 1.1.2                  |
-| Femto Mega        | 1.3.0                  |
-| Femto Mega I        | 2.0.4                  |
-| Astra 2           | 2.8.20                       |
-| Gemini 2 L        | 1.4.53                       |
-| Gemini 2          | 1.4.92               |
-| Gemini 215        | 1.0.9                        |
-| Gemini 210        | 1.0.9                        |
+| **Products List** | **Minimal Firmware Version** | **Recommended FW Version**    |
+|-------------------|------------------------------|-------------------------------|
+| Gemini 435Le        | 1.2.4                     |        1.3.2                   |
+| Gemini 335Le        | 1.5.31                     |        1.5.5                     |
+| Gemini 330        | 1.2.20                       |        1.5.5                       |
+| Gemini 330L       | 1.2.20                       |       1.5.5                      |
+| Gemini 335        | 1.2.20                       |       1.5.5                        |
+| Gemini 335L       | 1.2.20                       |        1.5.5                       |
+| Gemini 336        | 1.2.20                       |       1.5.5                        |
+| Gemini 336L       | 1.2.20                       |        1.5.5                       |
+| Gemini 335Lg      | 1.3.46                       |        1.5.5                       |
+| Femto Bolt        | 1.1.2                  |              1.1.2                       |
+| Femto Mega        | 1.3.0                  |              1.3.1                       |
+| Femto Mega I        | 2.0.4                  |            2.0.4                     |
+| Astra 2           | 2.8.20                       |         2.8.20                      |
+| Gemini 2 L        | 1.4.53                       |        1.5.2                       |
+| Gemini 2          | 1.4.92               |                1.4.98                       |
+| Gemini 215        | 1.0.9                        |        1.0.9                      |
+| Gemini 210        | 1.0.9                        |        1.0.9                      |
 
 For optimal performance, we strongly recommend updating to the latest firmware version. This ensures that you benefit from the most recent enhancements and bug fixes.
 
