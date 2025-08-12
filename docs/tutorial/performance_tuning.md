@@ -4,11 +4,11 @@
 
 For cameras connected via USB, the Orbbec SDK supports both LibUVC and V4L2 as backends, with the V4L2 backend generally offering better performance and lower resource consumption. However, the V4L2 backend may have compatibility issues with different Linux versions, which is why the Orbbec SDK defaults to using the LibUVC backend. If you encounter frame dropping or latency issues, you can try switching to the V4L2 backend.
 
-**Note**: The V4L2 backend requires a kernel version of at least 4.16 (Ubuntu version 20.04 or higher) to function properly. Otherwise, there may be issues with obtaining the correct data frame timestamps and metadata.
+**Note**: For devices other than the Gemini 330 series, the V4L2 backend requires a kernel version of at least 4.16 (Ubuntu 20.04 or higher) to function properly. Otherwise, there may be issues with obtaining correct data frame timestamps and metadata. The Gemini 330 series has no kernel version restrictions.
 
 If you face performance issues, you can attempt to switch to the V4L2 backend by following these steps:
 
-1. Locate the `OrbbecSDKConfig.xml` file within the SDK package (usually found in the `./lib` or `./bin` directory, which can be located through a file search), and copy it to your application's working directory.
+1. Locate the `OrbbecSDKConfig.xml` file in the SDK package (usually found in the ./lib or ./bin directory, which can be located via file search), then copy it to the working directory at the same level as libOrbbecSDK.so.
 
 2. In the `OrbbecSDKConfig.xml` file, find the `<LinuxUVCBackend>` tag and change `LibUVC` to `V4L2`:
 
@@ -16,13 +16,7 @@ If you face performance issues, you can attempt to switch to the V4L2 backend by
     <LinuxUVCBackend>V4L2</LinuxUVCBackend>
     ```
 
-3. For G330 series devices, you need to upgrade the firmware to version v1.0.60 or higher and in the `OrbbecSDKConfig.xml` file, change the `FrameMetadataParsingPath` tag from `ExtensionHeader` to `PayloadHeader`. Otherwise, metadata will not be retrieved correctly.
-
-   ```xml
-   <FrameMetadataParsingPath>PayloadHeader</FrameMetadataParsingPath>
-   ```
-
-4. After configuration, you will need to re-plug the device and restart your application.
+3. After configuration, you will need to re-plug the device and restart your application.
 
 ## 2. Improving usbfs Buffer Sizes (Linux Only)
 

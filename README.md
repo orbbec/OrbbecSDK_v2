@@ -196,26 +196,72 @@ More devices support will be added in the near future. If you can not find your 
 
 *The Orbbec SDK documentation is available on [GitHub Pages](https://orbbec.github.io/OrbbecSDK_v2/).*
 
-### 2.1 Quick Start
+### 2.1 Environment Setup
 
-If you do not intend to modify the SDK itself, it is recommended to use a pre-compiled distribution. For a comprehensive guide on installing the SDK, setting up your development environment, and developing applications, please consult the [Tutorial](docs/tutorial/installation_and_development_guide.md) section for detailed information.
+#### windows
+
+For windows, you need to register the metadata associated with frames (this includes things like timestamps and other information about the video frame).
+
+- Metadata registration follow this:[/scripts/env_setup/obsensor_metadata_win10.md](scripts/env_setup/obsensor_metadata_win10.md)
+
+*Notes: If the metadata is not registered, the device timestamp will be abnormal, thereby affecting the SDK’s internal frame synchronization functionality.*
+
+#### Linux
+
+For Linux, we have provided a script to help you set up the environment. You can run the script as follows:
+
+```bash
+cd scripts/env_setup
+  sudo chmod +x ./install_udev_rules.sh
+  sudo ./install_udev_rules.sh
+  sudo udevadm control --reload && sudo udevadm trigger
+```
+
+*Notes: If this script is not executed, open the device will fail due to permission issues. You need to run the sample with sudo (administrator privileges).*
+
+
+### 2.2 How to Use install package
+If you do not want to compile the Orbbec SDK, you can use the SDK installation package. First [download the corresponding installation package](https://github.com/orbbec/OrbbecSDK_v2/releases) for your platform.
+
+The file OrbbecSDK_vx.x.x_win64.exe serves as the installation package for the Orbbec SDK and Orbbec Viewer tools on Windows.
+
+The file OrbbecSDK_vx.x.x_amd64.deb serves as the installation package for the Orbbec SDK and Orbbec Viewer tools on Linux x86_64, likes ubuntu.
+
+The file OrbbecSDK_vx.x.x_arm64.deb serves as the installation package for the Orbbec SDK and Orbbec Viewer tools on ARM64，likes NVIDIA Jetson AGX Orin , NVIDIA Jetson Orin NX , NVIDIA Jetson Orin Nano , NVIDIA Jetson AGX Xavier , NVIDIA Jetson Xavier NX.
+
+#### Install via .deb Package
+On the Linux x64 (ubuntu) platform, install using the following command. (If you are using the Arm64 platform, please use OrbbecSDK_vx.x.x_arm64.deb)
+
+sudo dpkg -i OrbbecSDK_v2.x.x_amd64.deb
+Check the entire package path of the Orbbec SDK using dpkg -L orbbecsdk, while the header files and library files of the Orbbec SDK will be installed in the /usr/local path.
+
+dpkg -L orbbecsdk
+Run the Orbbec Viewer. sudo ./OrbbecViewer
+
+#### Install via .exe Package
+On the windows platform, Double-click OrbbecSDK_vx.x.x_win64.exe directly to install, After installation is complete, run OrbbecViewer or the Orbbec SDK from the installation directory.
+
+### 2.3 Quick Start
+
+If you do not intend to modify the SDK itself, it is recommended to use a [pre-compiled distribution](https://github.com/orbbec/OrbbecSDK_v2/releases). For a comprehensive guide on installing the SDK, setting up your development environment, and developing applications, please consult the [Tutorial](docs/tutorial/installation_and_development_guide.md) section for detailed information.
 
 To explore practical examples and gain insights on utilizing the SDK, please navigate to [Examples](examples/README.md) section for more information.
 
 Orbbec Viewer is an all-in-one graphical user interface (GUI) built on the Orbbec SDK, offering a suite of features including data stream preview, camera configuration, post-processing, and more. To learn how to effectively use the Orbbec Viewer, please refer to the  [Orbbec Viewer User Guide](docs/tutorial/orbbecviewer.md).
 
-### 2.2 API Reference
+### 2.4 API Reference
 
 [Orbbec SDK v2 API User Guide](https://orbbec.github.io/docs/OrbbecSDKv2_API_User_Guide/), this document provides an overview of key features in the Orbbec SDK v2 and demonstrates how to use its most commonly used APIs. For more detailed APIs, please refer to [Orbbec_SDK_API_Reference.html](https://orbbec.github.io/docs/OrbbecSDKv2/index.html)
-### 2.3 Performance tuning
+
+### 2.5 Performance tuning
 
 For different use cases, the SDK can be tuned to achieve optimal performance. Please refer to the [performance tuning guide](docs/tutorial/performance_tuning.md) for more information.
 
-### 2.4 Building from Source
+### 2.6 Building from Source
 
 If you would like to modify the SDK itself, you can build the SDK from source. Please refer to the [build guide](docs/tutorial/building_orbbec_sdk.md) for more information.
 
-### 2.5 FAQ
+### 2.7 FAQ
 
 Most frequently asked questions can be found in the [FAQ](docs/FAQ.md) file.
 
