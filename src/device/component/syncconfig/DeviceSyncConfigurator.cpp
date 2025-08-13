@@ -51,7 +51,16 @@ OBMultiDeviceSyncConfig DeviceSyncConfigurator::getSyncConfig() {
     syncConfig.trigger2ImageDelayUs = configInternal.trigger2ImageDelayUs;
     syncConfig.triggerOutEnable     = configInternal.triggerOutEnable;
     syncConfig.triggerOutDelayUs    = configInternal.triggerOutDelayUs;
-    syncConfig.framesPerTrigger     = 1;  // configInternal.framesPerTrigger; set to 1 at default
+
+    // Firmware bug workaround:
+    // The highest byte of 'int' is missing in the incoming data due to a known firmware issue.
+    // Since the missing byte is always 0, mask it out to ensure a correct value.
+    configInternal.framesPerTrigger &= 0x00FFFFFF;
+    if(configInternal.framesPerTrigger <= 0) {
+        // set to 1 at default
+        configInternal.framesPerTrigger = 1;
+    }
+    syncConfig.framesPerTrigger = configInternal.framesPerTrigger;
 
     currentMultiDevSyncConfig_ = syncConfig;
     isSyncConfigInit_ = true;
