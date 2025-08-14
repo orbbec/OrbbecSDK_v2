@@ -193,6 +193,10 @@ void RecordDevice::writeMetadataProperty() {
 }
 
 void RecordDevice::writeExposureAndGainProperty() {
+    // laser
+    writePropertyT<bool>(OB_PROP_LASER_CONTROL_INT);
+    writePropertyT<bool>(OB_PROP_LASER_POWER_LEVEL_CONTROL_INT);
+
     // depth property
     writePropertyT<bool>(OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL);
     writePropertyT<int>(OB_PROP_DEPTH_EXPOSURE_INT);
@@ -213,6 +217,7 @@ void RecordDevice::writeExposureAndGainProperty() {
     writePropertyT<int>(OB_PROP_COLOR_CONTRAST_INT);
     writePropertyT<int>(OB_PROP_COLOR_GAMMA_INT);
     writePropertyT<int>(OB_PROP_COLOR_HUE_INT);
+    writePropertyT<int>(OB_PROP_COLOR_BACKLIGHT_COMPENSATION_INT);
 
     // ir property
     writePropertyT<bool>(OB_PROP_IR_AUTO_EXPOSURE_BOOL);

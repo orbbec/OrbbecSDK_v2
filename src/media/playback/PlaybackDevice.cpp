@@ -5,6 +5,7 @@
 #include "PlaybackDeviceParamManager.hpp"
 #include "PlaybackFilterCreationStrategy.hpp"
 #include "PlaybackDepthWorkModeManager.hpp"
+#include "PlaybackPresetManager.hpp"
 #include "PlaybackDeviceSyncConfigurator.hpp"
 #include "exception/ObException.hpp"
 #include "DevicePids.hpp"
@@ -82,6 +83,12 @@ void PlaybackDevice::init() {
     // Note: LiDAR not supported this component
     auto depthWorkModeManager = std::make_shared<PlaybackDepthWorkModeManager>(this, port_);
     registerComponent(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER, depthWorkModeManager);
+
+    if(isDeviceInSeries(G330DevPids, deviceInfo_->pid_)) {
+        // preset manager
+        auto presetManager = std::make_shared<PlaybackPresetManager>(this);
+        registerComponent(OB_DEV_COMPONENT_PRESET_MANAGER, presetManager);
+    }
 }
 
 void PlaybackDevice::fetchDeviceInfo() {
@@ -428,6 +435,10 @@ void PlaybackDevice::initProperties() {
     registerPropertyCondition(propertyServer, OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL, "r", "r", vendorAccessor);
     registerPropertyCondition(propertyServer, OB_PROP_HW_NOISE_REMOVE_FILTER_THRESHOLD_FLOAT, "r", "r", vendorAccessor);
 
+    // laser
+    registerPropertyCondition(propertyServer, OB_PROP_LASER_CONTROL_INT, "r", "r", vendorAccessor);
+    registerPropertyCondition(propertyServer, OB_PROP_LASER_POWER_LEVEL_CONTROL_INT, "r", "r", vendorAccessor);
+
     // Exposure properties
     // Depth sensor properties
     registerPropertyCondition(propertyServer, OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL, "r", "r", vendorAccessor);
@@ -450,6 +461,7 @@ void PlaybackDevice::initProperties() {
     registerPropertyCondition(propertyServer, OB_PROP_COLOR_CONTRAST_INT, "r", "r", vendorAccessor);
     registerPropertyCondition(propertyServer, OB_PROP_COLOR_GAMMA_INT, "r", "r", vendorAccessor);
     registerPropertyCondition(propertyServer, OB_PROP_COLOR_HUE_INT, "r", "r", vendorAccessor);
+    registerPropertyCondition(propertyServer, OB_PROP_COLOR_BACKLIGHT_COMPENSATION_INT, "r", "r", vendorAccessor);
     // IR sensor properties
     registerPropertyCondition(propertyServer, OB_PROP_IR_AUTO_EXPOSURE_BOOL, "r", "r", vendorAccessor);
     registerPropertyCondition(propertyServer, OB_PROP_IR_AE_MAX_EXPOSURE_INT, "r", "r", vendorAccessor);
@@ -483,6 +495,10 @@ void PlaybackDevice::initProperties() {
     registerPropertyCondition(propertyServer, OB_PROP_CONFIDENCE_MIRROR_BOOL, "rw", "rw", frameTransformAccessor_);
     registerPropertyCondition(propertyServer, OB_PROP_CONFIDENCE_FLIP_BOOL, "rw", "rw", frameTransformAccessor_);
     registerPropertyCondition(propertyServer, OB_PROP_CONFIDENCE_ROTATE_INT, "rw", "rw", frameTransformAccessor_);
+
+    if(port_->isPropertySupported(OB_STRUCT_CURRENT_DEPTH_ALG_MODE)) {
+        registerPropertyCondition(propertyServer, OB_STRUCT_CURRENT_DEPTH_ALG_MODE, "r", "r", vendorAccessor);
+    }
 
     // Note: Multi-device sync config: made up of multiple parts
     // 1. Exposed through ob_device_get_multi_device_sync_config, but restricted to internal use
