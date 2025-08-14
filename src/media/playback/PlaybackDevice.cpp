@@ -218,7 +218,7 @@ void PlaybackDevice::initSensorList() {
             }
 
             // register metadata parser container if the device have metadata
-            auto depthMdParserContainer = getComponentT<IFrameMetadataParserContainer>(OB_DEV_COMPONENT_DEPTH_FRAME_METADATA_CONTAINER);
+            auto depthMdParserContainer = getComponentT<IFrameMetadataParserContainer>(OB_DEV_COMPONENT_DEPTH_FRAME_METADATA_CONTAINER, false);
             if(depthMdParserContainer) {
                 sensor->setFrameMetadataParserContainer(depthMdParserContainer.get());
             }
@@ -269,7 +269,7 @@ void PlaybackDevice::initSensorList() {
 
         sensor->setStreamProfileList(port_->getStreamProfileList(OB_SENSOR_COLOR));
 
-        auto colorMdParserContainer = getComponentT<IFrameMetadataParserContainer>(OB_DEV_COMPONENT_COLOR_FRAME_METADATA_CONTAINER);
+        auto colorMdParserContainer = getComponentT<IFrameMetadataParserContainer>(OB_DEV_COMPONENT_COLOR_FRAME_METADATA_CONTAINER, false);
         if(colorMdParserContainer) {
             sensor->setFrameMetadataParserContainer(colorMdParserContainer.get());
         }
