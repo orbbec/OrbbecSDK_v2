@@ -14,6 +14,7 @@ constexpr const uint64_t MAX_SLEEP_TIME_US = 6ULL * 60ULL * 60ULL * 1000000ULL; 
 
 PlaybackDevicePort::PlaybackDevicePort(const std::string &filePath)
     : reader_(std::make_shared<RosReader>(filePath)),
+      seekOccurred_(false),
       needUpdateBaseTime_(true),
       isLooping_(true),
       playbackStatus_(OB_PLAYBACK_STOPPED),
@@ -143,12 +144,16 @@ void PlaybackDevicePort::playbackLoop() {
     while(isLooping_) {
         {
             std::unique_lock<std::mutex> lock(playbackMutex_);
-            playbackCv_.wait(lock, [this]() { return !isLooping_ || (playbackStatus_.getCurrentState() == OB_PLAYBACK_PLAYING && !activeSensors_.none()); });
+            playbackCv_.wait(lock, [this]() {
+                return !isLooping_ || seekOccurred_ || (playbackStatus_.getCurrentState() == OB_PLAYBACK_PLAYING && !activeSensors_.none());
+            });
             if(!isLooping_) {
                 break;
             }
         }
 
+        bool seekOccurred = seekOccurred_.load();
+        seekOccurred_.store(false);
         bool isEndOfFile = reader_->getIsEndOfFile();
         if(!isEndOfFile) {
             std::shared_ptr<Frame>   frame;
@@ -170,15 +175,18 @@ void PlaybackDevicePort::playbackLoop() {
                 continue;
             }
 
+            // If seek occurred, output frame directly
             uint64_t sleepTime = calculateSleepTime(frame->getTimeStampUsec());  // in microseconds
-            if(sleepTime > 0 && sleepTime < MAX_SLEEP_TIME_US) {
-                utils::sleepMs(sleepTime / 1000);  // in milliseconds
-            }
+            if(!seekOccurred) {
+                if(sleepTime > 0 && sleepTime < MAX_SLEEP_TIME_US) {
+                    utils::sleepMs(sleepTime / 1000);  // in milliseconds
+                }
 
-            auto currentTime = reader_->getCurTime();
-            if(currentTime != lastTime) {
-                LOG_DEBUG("Playback progress changed, discard the current frame... index: {}", frame->getNumber());
-                continue;
+                auto currentTime = reader_->getCurTime();
+                if(currentTime != lastTime) {
+                    LOG_DEBUG("Playback progress changed, discard the current frame... index: {}", frame->getNumber());
+                    continue;
+                }
             }
 
             auto sensorType = utils::mapFrameTypeToSensorType(frame->getType());
@@ -230,6 +238,8 @@ uint64_t PlaybackDevicePort::getPosition() const {
 void PlaybackDevicePort::seek(uint64_t position) {
     try {
         reader_->seekToTime(std::chrono::nanoseconds(position * playbackTimeFreq_));
+        seekOccurred_.store(true);
+        playbackCv_.notify_all();
         std::unique_lock<std::mutex> lock(baseTimestampMutex_);
         needUpdateBaseTime_ = true;
     }

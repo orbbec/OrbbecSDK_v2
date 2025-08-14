@@ -96,6 +96,7 @@ private:
     StreamProfileList        streamProfileList_;
     std::shared_ptr<IReader> reader_;
 
+    std::atomic_bool        seekOccurred_;
     bool                    needUpdateBaseTime_;
     bool                    isLooping_;
     std::mutex              playbackMutex_;
