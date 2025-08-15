@@ -507,9 +507,7 @@ void PlaybackDevice::initProperties() {
     registerPropertyCondition(propertyServer, OB_PROP_CONFIDENCE_FLIP_BOOL, "rw", "rw", frameTransformAccessor_);
     registerPropertyCondition(propertyServer, OB_PROP_CONFIDENCE_ROTATE_INT, "rw", "rw", frameTransformAccessor_);
 
-    if(port_->isPropertySupported(OB_STRUCT_CURRENT_DEPTH_ALG_MODE)) {
-        registerPropertyCondition(propertyServer, OB_STRUCT_CURRENT_DEPTH_ALG_MODE, "r", "r", vendorAccessor);
-    }
+    registerPropertyCondition(propertyServer, OB_STRUCT_CURRENT_DEPTH_ALG_MODE, "r", "r", vendorAccessor);
 
     // Note: Multi-device sync config: made up of multiple parts
     // 1. Exposed through ob_device_get_multi_device_sync_config, but restricted to internal use
