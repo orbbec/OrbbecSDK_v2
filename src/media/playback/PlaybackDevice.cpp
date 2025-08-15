@@ -294,6 +294,12 @@ void PlaybackDevice::initSensorList() {
             sensor->setFrameProcessor(frameProcessor.get());
         }
 
+        // Currently IR sensor does not supports this component, implemented here for possible compatibility
+        auto metaParserContainer = getComponentT<IFrameMetadataParserContainer>(OB_DEV_COMPONENT_DEPTH_FRAME_METADATA_CONTAINER, false);
+        if(metaParserContainer) {
+            sensor->setFrameMetadataParserContainer(metaParserContainer.get());
+        }
+
         // disable timestamp anomaly detection for playback device
         sensor->enableTimestampAnomalyDetection(false);
         return sensor;
@@ -314,9 +320,9 @@ void PlaybackDevice::initSensorList() {
             sensor->setFrameProcessor(frameProcessor.get());
         }
 
-        if(isDeviceInSeries(G330DevPids, deviceInfo_->pid_)) {
-            auto depthMdParserContainer = getComponentT<IFrameMetadataParserContainer>(OB_DEV_COMPONENT_DEPTH_FRAME_METADATA_CONTAINER);
-            sensor->setFrameMetadataParserContainer(depthMdParserContainer.get());
+        auto metaParserContainer = getComponentT<IFrameMetadataParserContainer>(OB_DEV_COMPONENT_DEPTH_FRAME_METADATA_CONTAINER, false);
+        if(metaParserContainer) {
+            sensor->setFrameMetadataParserContainer(metaParserContainer.get());
         }
 
         // disable timestamp anomaly detection for playback device
@@ -339,9 +345,9 @@ void PlaybackDevice::initSensorList() {
             sensor->setFrameProcessor(frameProcessor.get());
         }
 
-        if(isDeviceInSeries(G330DevPids, deviceInfo_->pid_)) {
-            auto depthMdParserContainer = getComponentT<IFrameMetadataParserContainer>(OB_DEV_COMPONENT_DEPTH_FRAME_METADATA_CONTAINER);
-            sensor->setFrameMetadataParserContainer(depthMdParserContainer.get());
+        auto metaParserContainer = getComponentT<IFrameMetadataParserContainer>(OB_DEV_COMPONENT_DEPTH_FRAME_METADATA_CONTAINER, false);
+        if(metaParserContainer) {
+            sensor->setFrameMetadataParserContainer(metaParserContainer.get());
         }
 
         // disable timestamp anomaly detection for playback device
@@ -381,6 +387,11 @@ void PlaybackDevice::initSensorList() {
             auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_CONFIDENCE_FRAME_PROCESSOR, false);
             if(frameProcessor) {
                 sensor->setFrameProcessor(frameProcessor.get());
+            }
+
+            auto metaParserContainer = getComponentT<IFrameMetadataParserContainer>(OB_DEV_COMPONENT_DEPTH_FRAME_METADATA_CONTAINER, false);
+            if(metaParserContainer) {
+                sensor->setFrameMetadataParserContainer(metaParserContainer.get());
             }
 
             // disable timestamp anomaly detection for playback device
