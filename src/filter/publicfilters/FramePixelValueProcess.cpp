@@ -151,28 +151,48 @@ std::shared_ptr<Frame> ThresholdFilter::process(std::shared_ptr<const Frame> fra
         return nullptr;
     }
 
-    std::lock_guard<std::mutex> cutOffLock(mtx_);
-    auto                        videoFrame = frame->as<VideoFrame>();
-    auto                        outFrame   = FrameFactory::createFrameFromOtherFrame(frame);
-    float                       scale      = 1.0f;
-    if(frame->is<DepthFrame>()) {
-        scale = frame->as<DepthFrame>()->getValueScale();
+    std::lock_guard<std::mutex>       cutOffLock(mtx_);
+    std::shared_ptr<const DepthFrame> depth;
+    if (frame->is<FrameSet>()) {
+        auto fset = frame->as<FrameSet>();
+        auto df   = fset->getFrame(OB_FRAME_DEPTH);
+        if(!df) {
+            LOG_WARN("Invalid input frame, not depth frame found!");
+            return nullptr;
+        }
+        depth = df->as<DepthFrame>();
     }
+    else if(frame->is<DepthFrame>()) {
+        depth = frame->as<DepthFrame>();
+    }
+    else {
+        LOG_WARN("Invalid input frame, not depth frame found!");
+        return nullptr;
+    }
+    auto  outFrame = FrameFactory::createFrameFromOtherFrame(depth);
+    float scale    = depth->getValueScale();
 
     if(max_ != 65535) {
-        switch(frame->getFormat()) {
+        switch(depth->getFormat()) {
         case OB_FORMAT_Y16:
-            imagePixelValueThreshold((uint16_t *)frame->getData(), (uint16_t *)outFrame->getData(), videoFrame->getWidth(), videoFrame->getHeight(),
+            imagePixelValueThreshold((uint16_t *)depth->getData(), (uint16_t *)outFrame->getData(), depth->getWidth(), depth->getHeight(),
                                      (uint32_t)(min_ / scale), (uint32_t)(max_ / scale));
             break;
         case OB_FORMAT_Y8:
-            imagePixelValueThreshold((uint8_t *)frame->getData(), (uint8_t *)outFrame->getData(), videoFrame->getWidth(), videoFrame->getHeight(),
+            imagePixelValueThreshold((uint8_t *)depth->getData(), (uint8_t *)outFrame->getData(), depth->getWidth(), depth->getHeight(),
                                      (uint32_t)(min_ / scale), (uint32_t)(max_ / scale));
             break;
         default:
-            LOG_ERROR_INTVL("ThresholdFilter: unsupported format: {}", frame->getFormat());
+            LOG_ERROR_INTVL("ThresholdFilter: unsupported format: {}", depth->getFormat());
             break;
         }
+    }
+
+    if(frame->is<FrameSet>()) {
+        auto frameSet = FrameFactory::createFrameFromOtherFrame(frame);
+        auto outFrameSet = frameSet->as<FrameSet>();
+        outFrameSet->pushFrame(std::move(outFrame));
+        return frameSet;
     }
 
     return outFrame;
