@@ -329,14 +329,26 @@ void Logger::setFileLogConfig(OBLogSeverity severity, const std::string &directo
     config_.fileLogOutputDir                 = directory;
     config_.fileLogMaxFileSize               = static_cast<uint64_t>(maxFileSize) * 1024 * 1024;  // MB to Byte
     config_.fileLogMaxFileNum                = maxFileNum;
+    auto envConfig       = EnvConfig::getInstance();
     if(directory.empty()) {
         config_.fileLogOutputDir = OB_DEFAULT_LOG_FILE_PATH;
     }
     if(maxFileSize == 0) {
-        config_.fileLogMaxFileSize = OB_DEFAULT_MAX_FILE_SIZE;
+        int envConfigMaxFileSize = 0;
+        envConfig->getIntValue("Log.MaxFileSize", envConfigMaxFileSize);
+        envConfigMaxFileSize = envConfigMaxFileSize * 1024 * 1024;  // MB to Byte
+        if(envConfigMaxFileSize == 0) {
+            envConfigMaxFileSize = OB_DEFAULT_MAX_FILE_SIZE;
+        }
+        config_.fileLogMaxFileSize = envConfigMaxFileSize;
     }
     if(maxFileNum == 0) {
-        config_.fileLogMaxFileNum = OB_DEFAULT_MAX_FILE_NUM;
+        int envConfigMaxFileNum = 0;
+        envConfig->getIntValue("Log.MaxFileNum", envConfigMaxFileNum);
+        if(envConfigMaxFileNum == 0) {
+            envConfigMaxFileNum = OB_DEFAULT_MAX_FILE_NUM;
+        }
+        config_.fileLogMaxFileNum = envConfigMaxFileNum;
     }
 
     std::lock_guard<std::mutex> lock(instanceMutex_);
