@@ -137,6 +137,7 @@ void ObLibuvcDevicePort::startStream(std::shared_ptr<const StreamProfile> profil
         auto obStreamHandle = std::make_shared<OBUvcStreamHandle>(videoProfile, callback, uvcStreamHandle);
         // std::shared_ptr<OBUvcStreamHandle>(new OBUvcStreamHandle(profile, callback, uvcStreamHandle));
         streamHandles_.push_back(obStreamHandle);
+        obStreamHandle->loopFrameIndex.store(1);  // frame number start from 1
         uvcStreamHandle->actual_transfer_buff_num = bufNum;
         ret                                       = uvc_stream_start(uvcStreamHandle, ObLibuvcDevicePort::onFrameCallback, obStreamHandle.get(), 0);
     }
@@ -454,7 +455,10 @@ void ObLibuvcDevicePort::onFrameCallback(uvc_frame *frame, void *userPtr) {
         auto realtime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         videoFrame->setSystemTimeStampUsec(realtime);
         videoFrame->setTimeStampUsec(frame->pts);
-        videoFrame->setNumber(frame->sequence);
+        // Use a custom frame index instand of uvc_frame::sequence to avoid abnormal sequence ID increments 
+        // when UVC data reception encounters errors.
+        videoFrame->setNumber(handle->loopFrameIndex);
+        handle->loopFrameIndex++;
 
         handle->callback(videoFrame);
     });

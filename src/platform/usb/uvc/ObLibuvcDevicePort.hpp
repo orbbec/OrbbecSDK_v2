@@ -30,6 +30,7 @@ private:
         std::shared_ptr<const VideoStreamProfile>   profile;
         std::function<void(std::shared_ptr<Frame>)> callback;
         uvc_stream_handle_t                        *streamHandle;
+        std::atomic<std::uint64_t>                  loopFrameIndex = { 0 };
     };
 
     typedef struct {
