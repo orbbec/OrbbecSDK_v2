@@ -23,9 +23,14 @@ SensorBase::SensorBase(IDevice *owner, OBSensorType sensorType, const std::share
       recoveryCount_(0),
       noStreamTimeoutMs_(DefaultNoStreamTimeoutMs),
       streamInterruptTimeoutMs_(DefaultStreamInterruptTimeoutMs) {
-        enableTimestampAnomalyDetection(true);
-        startStreamRecovery();
-      }
+    enableTimestampAnomalyDetection(true);
+    startStreamRecovery();
+
+    auto activityRecorder = owner->getComponentT<IDeviceActivityRecorder>(OB_DEV_COMPONENT_DEVICE_ACTIVITY_RECORDER, false);
+    if(activityRecorder) {
+        deviceActivityRecorder_ = activityRecorder.get();
+    }
+}
 
 SensorBase::~SensorBase() noexcept {
     if(streamStateWatcherThread_.joinable()) {
@@ -357,6 +362,11 @@ void SensorBase::enableTimestampAnomalyDetection(bool enable){
 }
 
 void SensorBase::outputFrame(std::shared_ptr<Frame> frame) {
+    if(deviceActivityRecorder_) {
+        // update device activity
+        deviceActivityRecorder_->touch(DeviceActivity::Stream);
+    }
+
     if(streamState_ != STREAM_STATE_STREAMING && streamState_ != STREAM_STATE_STARTING) {
         return;
     }

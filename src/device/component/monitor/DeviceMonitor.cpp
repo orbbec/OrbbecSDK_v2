@@ -21,6 +21,11 @@ DeviceMonitor::DeviceMonitor(IDevice *owner, std::shared_ptr<ISourcePort> dataPo
     if(!vendorDataPort_) {
         throw std::runtime_error("DeviceMonitor: data port must be a vendor data port!");
     }
+
+    auto activityRecorder = owner->getComponentT<IDeviceActivityRecorder>(OB_DEV_COMPONENT_DEVICE_ACTIVITY_RECORDER, false);
+    if(activityRecorder) {
+        activityRecorder_ = activityRecorder.get();
+    }
 }
 
 DeviceMonitor::~DeviceMonitor() noexcept {
@@ -107,6 +112,11 @@ void DeviceMonitor::heartbeatAndFetchState() {
             for(auto &callback: stateChangedCallbacks_) {
                 callback.second(devState_, msg);
             }
+        }
+
+        // update active time
+        if(activityRecorder_) {
+            activityRecorder_->touch(DeviceActivity::Command);
         }
     } while(emitNextHeartBeatImmediately);
 }
@@ -227,6 +237,11 @@ void DeviceMonitor::sendAndReceiveData(const uint8_t *sendData, uint32_t sendDat
     std::lock_guard<std::mutex> lock(commMutex_);
     auto                        recvLen = vendorDataPort_->sendAndReceive(sendData, sendDataSize, receiveData, *receiveDataSize);
     *receiveDataSize                    = recvLen;
+    
+    // update active time
+    if(activityRecorder_) {
+        activityRecorder_->touch(DeviceActivity::Command);
+    }
 }
 
 }  // namespace libobsensor

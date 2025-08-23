@@ -6,7 +6,7 @@
 #include "IDeviceMonitor.hpp"
 #include "ISourcePort.hpp"
 #include "DeviceComponentBase.hpp"
-
+#include "DeviceActivityRecorder.hpp"
 #include <map>
 
 namespace libobsensor {
@@ -38,8 +38,7 @@ private:
     std::mutex                                     stateChangedCallbacksMutex_;
     std::map<uint32_t, DeviceStateChangedCallback> stateChangedCallbacks_;
 
-
-    std::mutex                       commMutex_;
+    std::mutex              commMutex_;
     std::condition_variable heartbeatAndFetchStateThreadCv_;
     std::thread             heartbeatAndFetchStateThread_;
     std::atomic<bool>       heartbeatAndFetchStateThreadStarted_;
@@ -51,5 +50,7 @@ private:
     std::vector<uint8_t> hbSendData_;
 
     OBDeviceState devState_;
+
+    std::shared_ptr<IDeviceActivityRecorder> activityRecorder_;
 };
 }  // namespace libobsensor

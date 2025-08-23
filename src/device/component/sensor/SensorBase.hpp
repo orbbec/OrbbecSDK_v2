@@ -9,6 +9,7 @@
 #include "IFrameTimestamp.hpp"
 #include "frameprocessor/FrameProcessor.hpp"
 #include "timestamp/TimestampAnomalyDetector.hpp"
+#include "monitor/DeviceActivityRecorder.hpp"
 
 #include <map>
 #include <mutex>
@@ -104,6 +105,7 @@ protected:
     std::shared_ptr<IFrameTimestampCalculator>     globalTimestampCalculator_;
     std::shared_ptr<FrameProcessor>                frameProcessor_;
     std::shared_ptr<TimestampAnomalyDetector>      timestampAnomalyDetector_;
+    std::shared_ptr<IDeviceActivityRecorder>       deviceActivityRecorder_;
 };
 
 }  // namespace libobsensor
