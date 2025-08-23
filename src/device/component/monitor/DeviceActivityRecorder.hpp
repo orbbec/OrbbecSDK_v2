@@ -9,6 +9,7 @@
 
 #include <array>
 #include <atomic>
+#include <chrono>
 
 namespace libobsensor {
 class DeviceActivityRecorder : public IDeviceActivityRecorder, public DeviceComponentBase {
@@ -17,14 +18,16 @@ public:
     virtual ~DeviceActivityRecorder() noexcept override;
 
     void     touch(DeviceActivity activity) override;
-    uint64_t getElapsedSinceLastActive(DeviceActivity activity) const override;
-    uint64_t getElapsedSinceLastActive() const override;
+    uint64_t getLastActive(DeviceActivity activity) const override;
+    uint64_t getLastActive() const override;
 
 private:
     /**
-     * @brief Get current time in millisecond
+     * @brief Get current time in milliseconds since steady_clock epoch
      */
-    uint64_t getNow() const;
+    uint64_t getNow() const {
+        return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+    }
 
 private:
     static constexpr uint32_t                         activityCount_ = static_cast<uint32_t>(DeviceActivity::Count);

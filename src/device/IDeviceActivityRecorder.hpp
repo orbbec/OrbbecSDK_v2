@@ -29,19 +29,21 @@ public:
     virtual void touch(DeviceActivity activity) = 0;
 
     /**
-     * @brief Get elapsed milliseconds since last activity of the given type
+     * @brief Get the last active timestamp of the specified activity type
+     *        (milliseconds since steady_clock epoch).
      *
      * @param activity The activity type
-     * @return Elapsed time in milliseconds
+     * @return Timestamp in milliseconds since steady_clock epoch
      */
-    virtual uint64_t getElapsedSinceLastActive(DeviceActivity activity) const = 0;
+    virtual uint64_t getLastActive(DeviceActivity activity) const = 0;
 
     /**
-     * @brief Get elapsed milliseconds since the latest activity across all types
+     * @brief Get the last active timestamp among all activity types
+     *        (milliseconds since steady_clock epoch).
      *
-     * @return Elapsed time in milliseconds
+     * @return Timestamp in milliseconds since steady_clock epoch
      */
-    virtual uint64_t getElapsedSinceLastActive() const = 0;
+    virtual uint64_t getLastActive() const = 0;
 };
 
 }  // namespace libobsensor

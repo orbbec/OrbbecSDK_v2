@@ -4,6 +4,7 @@
 #include "DeviceManager.hpp"
 #include "utils/Utils.hpp"
 #include "IDeviceClockSynchronizer.hpp"
+#include "IDeviceActivityRecorder.hpp"
 
 #if defined(BUILD_USB_PAL)
 #include "UsbDeviceEnumerator.hpp"
@@ -45,6 +46,9 @@ std::shared_ptr<DeviceManager> DeviceManager::getInstance() {
 DeviceManager::DeviceManager() : destroy_(false), multiDeviceSyncIntervalMs_(0) {
     LOG_DEBUG("DeviceManager init ...");
 
+    deviceActivityManager_ = std::make_shared<DeviceActivityManager>();
+    startDeviceActivitySync();
+
 #if defined(BUILD_USB_PAL)
     LOG_DEBUG("Enable USB Device Enumerator ...");
     auto usbDeviceEnumerator =
@@ -76,6 +80,7 @@ DeviceManager::~DeviceManager() noexcept {
         multiDeviceSyncThread_.join();
     }
 
+    stopDeviceActivitySync();
     LOG_DEBUG("DeviceManager Destructors done");
 }
 
@@ -293,6 +298,41 @@ bool DeviceManager::isNetDeviceEnumerationEnable() const {
     return iter != deviceEnumerators_.end();
 #endif
     return false;
+}
+
+void DeviceManager::startDeviceActivitySync() {
+    deviceActivitySyncStopped_ = false;
+    deviceActivitySyncThread_ = std::thread([this]() {
+        std::mutex                   mutex;
+        std::unique_lock<std::mutex> lock(mutex);
+        while(!deviceActivitySyncStopped_) {
+            deviceActivityCv_.wait_for(lock, std::chrono::milliseconds(1000), [&]() { return deviceActivitySyncStopped_.load(); });
+            if(deviceActivitySyncStopped_) {
+                break;
+            }
+
+            std::unique_lock<std::mutex> devLock(createdDevicesMutex_);
+            for(auto &devItem: createdDevices_) {
+                auto dev = devItem.second.lock();
+                if(!dev) {
+                    continue;
+                }
+                auto activityRecorder = dev->getComponentT<IDeviceActivityRecorder>(OB_DEV_COMPONENT_DEVICE_CLOCK_SYNCHRONIZER, false);
+                if(activityRecorder) {
+                    deviceActivityManager_->update(devItem.first, activityRecorder.get());
+                }
+            }
+        }
+        deviceActivitySyncStopped_ = true;
+    });
+}
+
+void DeviceManager::stopDeviceActivitySync() {
+    deviceActivitySyncStopped_ = true;
+    deviceActivityCv_.notify_all();
+    if(deviceActivitySyncThread_.joinable()) {
+        deviceActivitySyncThread_.join();
+    }
 }
 
 }  // namespace libobsensor

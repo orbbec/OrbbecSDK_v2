@@ -18,24 +18,16 @@ void DeviceActivityRecorder::touch(DeviceActivity activity) {
     }
 }
 
-uint64_t DeviceActivityRecorder::getElapsedSinceLastActive(DeviceActivity activity) const {
+uint64_t DeviceActivityRecorder::getLastActive(DeviceActivity activity) const {
     auto index = static_cast<uint32_t>(activity);
     if(index < DeviceActivityRecorder::activityCount_) {
-        auto now = getNow();
-        auto last = lastActive_[index].load(std::memory_order_relaxed);
-        return now - last;
+        return lastActive_[index].load(std::memory_order_relaxed);
     }
     return 0;
 }
 
-uint64_t DeviceActivityRecorder::getElapsedSinceLastActive() const {
-    auto now  = getNow();
-    auto last = lastActiveOverall_.load(std::memory_order_relaxed);
-    return now - last;
-}
-
-uint64_t DeviceActivityRecorder::getNow() const {
-    return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+uint64_t DeviceActivityRecorder::getLastActive() const {
+    return lastActiveOverall_.load(std::memory_order_relaxed);
 }
 
 }  // namespace libobsensor

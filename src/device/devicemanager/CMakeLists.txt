@@ -5,7 +5,8 @@
 cmake_minimum_required(VERSION 3.5)
 
 target_sources(
-    ${OB_TARGET_DEVICE} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/DeviceManager.cpp ${CMAKE_CURRENT_LIST_DIR}/DeviceManager.hpp
+    ${OB_TARGET_DEVICE} PRIVATE ${CMAKE_CURRENT_LIST_DIR}/DeviceManager.cpp ${CMAKE_CURRENT_LIST_DIR}/DeviceManager.hpp 
+                                ${CMAKE_CURRENT_LIST_DIR}/DeviceActivityManager.cpp ${CMAKE_CURRENT_LIST_DIR}/DeviceManager.hpp
                                 ${CMAKE_CURRENT_LIST_DIR}/DeviceEnumInfoBase.hpp
 )
 

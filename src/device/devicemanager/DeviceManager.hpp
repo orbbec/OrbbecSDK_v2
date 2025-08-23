@@ -3,6 +3,7 @@
 
 #pragma once
 #include "IDeviceManager.hpp"
+#include "DeviceActivityManager.hpp"
 
 #include <string>
 #include <vector>
@@ -10,6 +11,7 @@
 #include <mutex>
 #include <thread>
 #include <condition_variable>
+#include <atomic>
 
 namespace libobsensor {
 
@@ -38,10 +40,13 @@ public:
 private:
     void onDeviceChanged(const DeviceEnumInfoList &removed, const DeviceEnumInfoList &added);
 
-private:
-    bool destroy_;
+    void startDeviceActivitySync();
+    void stopDeviceActivitySync();
 
-    std::mutex            callbackMutex_;
+private:
+    std::atomic<bool> destroy_;
+
+    std::mutex callbackMutex_;
     // trying to resolve the multi-node callback issues in ROS1
     // DeviceChangedCallback devChangedCallback_ = nullptr;
     std::vector<DeviceChangedCallback> devChangedCallbacks_;
@@ -57,7 +62,13 @@ private:
 
     std::map<std::string, std::shared_ptr<const IDeviceEnumInfo>> customConnectedDevices_;
     std::mutex                                                    customConnectedDevicesMutex_;
-    bool isCustomConnectedDevice_ = false;
-};
-}  // namespace libobsensor
+    bool                                                          isCustomConnectedDevice_ = false;
 
+    std::thread             deviceActivitySyncThread_;
+    std::condition_variable deviceActivityCv_;
+    std::atomic<bool>       deviceActivitySyncStopped_{ false };
+
+    std::shared_ptr<DeviceActivityManager> deviceActivityManager_;
+};
+
+}  // namespace libobsensor
