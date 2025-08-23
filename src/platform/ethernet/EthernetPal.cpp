@@ -9,8 +9,9 @@
 
 namespace libobsensor {
 
-const uint16_t DEFAULT_CMD_PORT                     = 8090;
-const uint16_t DEVICE_WATCHER_POLLING_INTERVAL_MSEC = 2000;
+const uint16_t DEFAULT_CMD_PORT                           = 8090;
+const uint16_t DEVICE_WATCHER_POLLING_INTERVAL_MSEC       = 5000;
+const uint16_t DEVICE_WATCHER_POLLING_SHORT_INTERVAL_MSEC = 1000;
 
 NetDeviceWatcher::~NetDeviceWatcher() noexcept {
     if(!stopWatch_) {
@@ -36,7 +37,12 @@ void NetDeviceWatcher::start(deviceChangedCallback callback) {
             }
 
             netDevInfoList_ = list;
-            condVar_.wait_for(lock, std::chrono::milliseconds(DEVICE_WATCHER_POLLING_INTERVAL_MSEC), [&]() { return stopWatch_; });
+            auto interval   = DEVICE_WATCHER_POLLING_INTERVAL_MSEC;
+            if(netDevInfoList_.empty()) {
+                // Speed up discovery when no devices are found
+                interval = DEVICE_WATCHER_POLLING_SHORT_INTERVAL_MSEC;
+            }
+            condVar_.wait_for(lock, std::chrono::milliseconds(interval), [&]() { return stopWatch_; });
         }
     });
 }
