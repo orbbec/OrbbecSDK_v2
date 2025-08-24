@@ -275,8 +275,8 @@ void DeviceManager::enableNetDeviceEnumeration(bool enable) {
         return std::dynamic_pointer_cast<NetDeviceEnumerator>(enumerator) != nullptr;
     });
     if(enable && iter == deviceEnumerators_.end()) {
-        auto netDeviceEnumerator =
-            std::make_shared<NetDeviceEnumerator>([&](DeviceEnumInfoList removed, DeviceEnumInfoList added) { onDeviceChanged(removed, added); });
+        auto netDeviceEnumerator = std::make_shared<NetDeviceEnumerator>(
+            [&](DeviceEnumInfoList removed, DeviceEnumInfoList added) { onDeviceChanged(removed, added); }, deviceActivityManager_);
         deviceEnumerators_.emplace_back(netDeviceEnumerator);
         auto deviceInfoList = getDeviceInfoList();
         printDeviceList("Current device(s) list", deviceInfoList);
@@ -291,7 +291,6 @@ void DeviceManager::enableNetDeviceEnumeration(bool enable) {
 
 bool DeviceManager::isNetDeviceEnumerationEnable() const {
 #if defined(BUILD_NET_PAL)
-
     auto iter = std::find_if(deviceEnumerators_.begin(), deviceEnumerators_.end(), [](const std::shared_ptr<IDeviceEnumerator> &enumerator) {  //
         return std::dynamic_pointer_cast<NetDeviceEnumerator>(enumerator) != nullptr;
     });
@@ -317,7 +316,7 @@ void DeviceManager::startDeviceActivitySync() {
                 if(!dev) {
                     continue;
                 }
-                auto activityRecorder = dev->getComponentT<IDeviceActivityRecorder>(OB_DEV_COMPONENT_DEVICE_CLOCK_SYNCHRONIZER, false);
+                auto activityRecorder = dev->getComponentT<IDeviceActivityRecorder>(OB_DEV_COMPONENT_DEVICE_ACTIVITY_RECORDER, false);
                 if(activityRecorder) {
                     deviceActivityManager_->update(devItem.first, activityRecorder.get());
                 }

@@ -6,11 +6,12 @@
 #include "IDeviceManager.hpp"
 #include "IDeviceWatcher.hpp"
 #include "Platform.hpp"
+#include "DeviceActivityManager.hpp"
 
 namespace libobsensor {
 class NetDeviceEnumerator : public IDeviceEnumerator {
 public:
-    NetDeviceEnumerator(DeviceChangedCallback callback);
+    NetDeviceEnumerator(DeviceChangedCallback callback, std::shared_ptr<DeviceActivityManager> deviceActivityManager);
     virtual ~NetDeviceEnumerator() noexcept override;
     virtual DeviceEnumInfoList getDeviceInfoList() override;
     virtual void               setDeviceChangedCallback(DeviceChangedCallback callback) override;
@@ -34,6 +35,7 @@ private:
     DeviceEnumInfoList   deviceInfoList_;
     SourcePortInfoList   sourcePortInfoList_;
 
-    std::shared_ptr<IDeviceWatcher> deviceWatcher_;
+    std::shared_ptr<IDeviceWatcher>        deviceWatcher_;
+    std::shared_ptr<DeviceActivityManager> deviceActivityManager_;
 };
 }  // namespace libobsensor

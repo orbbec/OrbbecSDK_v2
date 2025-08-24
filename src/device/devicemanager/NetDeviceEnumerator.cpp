@@ -19,7 +19,8 @@
 
 namespace libobsensor {
 
-NetDeviceEnumerator::NetDeviceEnumerator(DeviceChangedCallback callback) : platform_(Platform::getInstance()), deviceChangedCallback_(callback) {
+NetDeviceEnumerator::NetDeviceEnumerator(DeviceChangedCallback callback, std::shared_ptr<DeviceActivityManager> deviceActivityManager)
+    : platform_(Platform::getInstance()), deviceChangedCallback_(callback), deviceActivityManager_(deviceActivityManager) {
     deviceInfoList_ = queryDeviceList();
     if(!deviceInfoList_.empty()) {
         LOG_DEBUG("Current net device list: ({})", deviceInfoList_.size());
@@ -145,6 +146,16 @@ void NetDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType
         if(!rmDevs.empty()) {
             LOG_DEBUG("{} net device(s) in removedeviceList:", rmDevs.size());
             for(auto &&item: rmDevs) {
+                // We assume the device has gone offline and perform extra verification
+                // check the last active of the device
+                auto elapsed = deviceActivityManager_->getElapsedSinceLastActive(item->getUid());
+                if(elapsed <= 2000) {
+                    // If the device is active within 2 seconds, consider it online
+                    deviceInfoList_.push_back(item);
+                    continue;
+                }
+                // Continue device check via PID acquisition to confirm online status
+                // TODO: Busy devices may be misjudged as offline due to temporary unresponsiveness
                 auto firstPortInfo = item->getSourcePortInfoList().front();
                 auto info          = std::dynamic_pointer_cast<const NetSourcePortInfo>(firstPortInfo);
                 if(info->pid == OB_DEVICE_G335LE_PID || info->pid == OB_FEMTO_MEGA_PID || IS_OB_FEMTO_MEGA_I_PID(info->pid) || info->pid == OB_DEVICE_G435LE_PID) {
@@ -163,15 +174,13 @@ void NetDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType
                     });
 
                     if(!disconnected) {
+                        // device is still online
                         deviceInfoList_.push_back(item);
-                    }
-                    else {
-                        newRmDevs.push_back(item);
+                        continue;
                     }
                 }
-                else {
-                    newRmDevs.push_back(item);
-                }
+                // device has gone offline
+                newRmDevs.push_back(item);
             }
         }
 
