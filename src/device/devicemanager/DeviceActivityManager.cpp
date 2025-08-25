@@ -35,7 +35,7 @@ uint64_t DeviceActivityManager::getElapsedSinceLastActive(const std::string &dev
         std::lock_guard<std::mutex> lock(mutex_);
         auto                        it = deviceLastActive_.find(deviceId);
         if(it == deviceLastActive_.end()) {
-            return 0;  // return 0 if device not found
+            return UINT64_MAX;  // return UINT64_MAX if device not found
         }
         lastActive = it->second;
     }

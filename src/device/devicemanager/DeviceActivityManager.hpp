@@ -36,7 +36,7 @@ public:
      * @brief Get elapsed milliseconds since last activity of the special device
      *
      * @param activity The activity type
-     * @return Elapsed time in milliseconds
+     * @return Elapsed time in milliseconds. -1 means no any activity
      */
     uint64_t getElapsedSinceLastActive(const std::string &deviceId) const;
 
