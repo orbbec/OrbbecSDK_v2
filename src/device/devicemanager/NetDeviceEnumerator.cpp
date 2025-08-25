@@ -181,6 +181,8 @@ void NetDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType
                 }
                 // device has gone offline
                 newRmDevs.push_back(item);
+                // remove activity record
+                deviceActivityManager_->removeActivity(item->getUid());
             }
         }
 
