@@ -65,6 +65,8 @@ GVCPClient::~GVCPClient() {
 
 std::vector<GVCPDeviceInfo> GVCPClient::queryNetDeviceList() {
     std::lock_guard<std::mutex> lck(queryMtx_);
+
+    auto tmpList = devInfoList_;
     devInfoList_.clear();
 
     checkAndUpdateSockets();
@@ -91,12 +93,30 @@ std::vector<GVCPDeviceInfo> GVCPClient::queryNetDeviceList() {
         }
     }
 
-    LOG_DEBUG("queryNetDevice completed ({}):", devInfoList_.size());
-    for(auto &&info: devInfoList_) {
-        // LOG_INFO("\t-mac:{}, ip:{}, sn:{}, pid:0x{:04x}", info.mac, info.ip, info.sn, info.pid);
-        LOG_INTVL(LOG_INTVL_OBJECT_TAG + "queryNetDevice", DEF_MIN_LOG_INTVL, spdlog::level::debug, "\t- mac:{}, ip:{}, sn:{}, pid:0x{:04x}", info.mac, info.ip,
-                  info.sn, info.pid);
+    // Compare two std::vector:
+    // 1. elements are unique in both vectors
+    // 2. order of the item may be different
+    auto compare = [](const std::vector<GVCPDeviceInfo> &vec1, std::vector<GVCPDeviceInfo> &vec2) -> bool {
+        if(vec1.size() != vec2.size()) {
+            return false;
+        }
+        // For small vectors, linear search might be faster
+        for(const auto &item: vec2) {
+            if(std::find(vec1.begin(), vec1.end(), item) == vec1.end()) {
+                return false;
+            }
+        }
+
+        return true;
+    };
+
+    if(!compare(tmpList, devInfoList_)) {
+        LOG_DEBUG("queryNetDevice completed ({}):", devInfoList_.size());
+        for(auto &&info: devInfoList_) {
+            LOG_DEBUG("\t- mac:{}, ip:{}, sn:{}, pid:0x{:04x}", info.mac, info.ip, info.sn, info.pid);
+        }
     }
+
     return devInfoList_;
 }
 
@@ -169,9 +189,9 @@ int GVCPClient::openClientSockets() {
             addrSrv            = *(SOCKADDR_IN *)ua->Address.lpSockaddr;
             addrSrv.sin_family = AF_INET;
             addrSrv.sin_port   = htons(0);
-            auto ipStr         = inet_ntoa(addrSrv.sin_addr);
+            std::string ipStr  = inet_ntoa(addrSrv.sin_addr);
             // "169.254.xxx.xxx" is link-local address for windows, "127.0.0.1" is loopback address
-            if(strncmp(ipStr, "169.254", 7) == 0 || strcmp(ipStr, "127.0.0.1") == 0) {
+            if(strncmp(ipStr.c_str(), "169.254", 7) == 0 || strcmp(ipStr.c_str(), "127.0.0.1") == 0) {
                 continue;
             }
             //socks_[index++] = openClientSocket(addrSrv);
@@ -335,7 +355,8 @@ SOCKET GVCPClient::openClientSocket(SOCKADDR_IN addr) {
 #if(defined(__linux__) || defined(OS_IOS) || defined(OS_MACOS) || defined(__ANDROID__))
     //addr.sin_addr.s_addr = inet_addr("0.0.0.0");
 #endif
-    LOG_INTVL(LOG_INTVL_OBJECT_TAG + "GVCP bind", MAX_LOG_INTERVAL, spdlog::level::debug, "bind {}:{}", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
+    std::string ip = inet_ntoa(addr.sin_addr);
+    LOG_INTVL(LOG_INTVL_OBJECT_TAG + "GVCP bind", MAX_LOG_INTERVAL, spdlog::level::debug, "bind {}:{}", ip, ntohs(addr.sin_port));
     err = bind(sock, (SOCKADDR *)&addr, sizeof(SOCKADDR));
     if(err == SOCKET_ERROR) {
         return 0;
@@ -372,8 +393,6 @@ int GVCPClient::recvAndParseGVCPResponse(SOCKET sock, const GVCPSocketInfo &sock
     uint16_t len    = ntohs(ackHeader->wLen);
     uint16_t reqID  = ntohs(ackHeader->wReqID);
 
-    LOG_INTVL(LOG_INTVL_OBJECT_TAG + "GVCP get info", DEF_MIN_LOG_INTVL, spdlog::level::info, "{}, {}, {}, {}", status, ack, len, reqID);
-
     if(status == GEV_STATUS_SUCCESS && ack == GVCP_DISCOVERY_ACK && reqID == GVCP_REQUEST_ID) {
         gvcp_ack_payload *ackPayload = reinterpret_cast<gvcp_ack_payload *>(recvBuf + sizeof(gvcp_ack_header));
         if(respLen < sizeof(gvcp_ack_payload)) {
@@ -381,10 +400,10 @@ int GVCPClient::recvAndParseGVCPResponse(SOCKET sock, const GVCPSocketInfo &sock
             return 0;
         }
 
-        auto specVer  = ntohl(ackPayload->dwSpecVer);
-        auto devMode  = ntohl(ackPayload->dwDevMode);
-        auto supIpSet = ntohl(ackPayload->dwSupIpSet);
-        auto curIpSet = ntohl(ackPayload->dwCurIpSet);
+        // auto specVer  = ntohl(ackPayload->dwSpecVer);
+        // auto devMode  = ntohl(ackPayload->dwDevMode);
+        // auto supIpSet = ntohl(ackPayload->dwSupIpSet);
+        // auto curIpSet = ntohl(ackPayload->dwCurIpSet);
         auto curPID   = ntohl(ackPayload->dwPID);
 
         // Get Mac address
@@ -407,14 +426,10 @@ int GVCPClient::recvAndParseGVCPResponse(SOCKET sock, const GVCPSocketInfo &sock
         char     gatewayStr[INET_ADDRSTRLEN];
         inet_ntop(AF_INET, &gateway, gatewayStr, INET_ADDRSTRLEN);
 
-        // LOG_INFO("{},{}, {},{}, {},{}, {}, {}, {}, {}, {}, {}, {}, {}, {}", specVer, devMode, macStr, supIpSet, curIpSet, curPID, curIPStr,
-        //          subMaskStr, gatewayStr, ackPayload->szFacName, ackPayload->szModelName, ackPayload->szDevVer, ackPayload->szFacInfo,
-        //          ackPayload->szSerial, ackPayload->szUserName);
-
-        LOG_INTVL(LOG_INTVL_OBJECT_TAG + "GVCP get ack info", DEF_MIN_LOG_INTVL, spdlog::level::info, "{},{}, {},{}, {},{}, {}, {}, {}, {}, {}, {}, {}, {}, {}",
-                  specVer, devMode, std::string(macStr), supIpSet, curIpSet, curPID, std::string(curIPStr), std::string(subMaskStr), std::string(gatewayStr),
-                  std::string(ackPayload->szFacName), std::string(ackPayload->szModelName), std::string(ackPayload->szDevVer),
-                  std::string(ackPayload->szFacInfo), std::string(ackPayload->szSerial), std::string(ackPayload->szUserName));
+        // LOG_INTVL(LOG_INTVL_OBJECT_TAG + "GVCP get ack info", DEF_MIN_LOG_INTVL, spdlog::level::info, "{},{}, {},{}, {},{}, {}, {}, {}, {}, {}, {}, {}, {}, {}",
+        //           specVer, devMode, std::string(macStr), supIpSet, curIpSet, curPID, std::string(curIPStr), std::string(subMaskStr), std::string(gatewayStr),
+        //           std::string(ackPayload->szFacName), std::string(ackPayload->szModelName), std::string(ackPayload->szDevVer),
+        //           std::string(ackPayload->szFacInfo), std::string(ackPayload->szSerial), std::string(ackPayload->szUserName));
 
         // Filter non-Orbbec devices
         if(strcmp(ackPayload->szFacName, "Orbbec") != 0) {
@@ -439,11 +454,15 @@ int GVCPClient::recvAndParseGVCPResponse(SOCKET sock, const GVCPSocketInfo &sock
         devInfoList_.push_back(info);
         return 1;
     }
+    else {
+        LOG_INTVL(LOG_INTVL_OBJECT_TAG + "GVCP get info", DEF_MIN_LOG_INTVL, spdlog::level::debug,
+                  "GVCP response error: status:{}, ack:{}, device response reqID:{}, response len:{}", status, ack, reqID, len);
+    }
     return 0;
 }
 
 void GVCPClient::sendGVCPDiscovery(GVCPSocketInfo socketInfo) {
-    LOG_TRACE("send gvcp discovery {}", socketInfo.sock);
+    // LOG_TRACE("send gvcp discovery {}", socketInfo.sock);
     gvcp_discover_cmd discoverCmd;
 
     SOCKADDR_IN destAddr;

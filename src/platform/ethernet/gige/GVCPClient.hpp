@@ -12,7 +12,6 @@
 
 namespace libobsensor {
 
-
 #define GVCP_VERSION 0x42  // GVCP protocol version number
 #define GVCP_DISCOVERY_FLAGS 0x11
 #define GVCP_FORCEIP_FLAGS 0x01
@@ -119,7 +118,7 @@ public:
     ~GVCPClient();
 
     std::vector<GVCPDeviceInfo> queryNetDeviceList();
-    bool                       changeNetDeviceIpConfig(std::string mac, const OBNetIpConfig &config);
+    bool                        changeNetDeviceIpConfig(std::string mac, const OBNetIpConfig &config);
 
     static GVCPClient &instance() {
         static GVCPClient instance;
@@ -139,9 +138,9 @@ private:
      * @return < 0: error
      *         other: device count
      */
-    int    recvAndParseGVCPResponse(SOCKET sock, const GVCPSocketInfo &socketInfo);
-    void   sendGVCPDiscovery(GVCPSocketInfo socketInfo);
-    void   sendGVCPForceIP(GVCPSocketInfo socketInfo, std::string mac, const OBNetIpConfig &config);
+    int  recvAndParseGVCPResponse(SOCKET sock, const GVCPSocketInfo &socketInfo);
+    void sendGVCPDiscovery(GVCPSocketInfo socketInfo);
+    void sendGVCPForceIP(GVCPSocketInfo socketInfo, std::string mac, const OBNetIpConfig &config);
 
 #if defined(__APPLE__)
     const uint8_t *getMACAddress(struct ifaddrs *ifap, const char *interface_name);
@@ -153,17 +152,16 @@ private:
     SOCKET openClientRecvSocket(SOCKET srcSock);
 
 private:
-    SOCKET                     socks_[MAX_SOCKETS];
-    GVCPSocketInfo             socketInfos_[MAX_SOCKETS];
-    int                        sockCount_ = 0;
+    SOCKET                      socks_[MAX_SOCKETS];
+    GVCPSocketInfo              socketInfos_[MAX_SOCKETS];
+    int                         sockCount_ = 0;
     std::vector<GVCPDeviceInfo> devInfoList_;
-    std::mutex                 queryMtx_;
-    std::mutex                 devInfoListMtx_;
+    std::mutex                  queryMtx_;
+    std::mutex                  devInfoListMtx_;
 
 #ifndef WIN32
     std::set<std::string> ipAddressStrSet_;
 #endif
 };
-
 
 }  // namespace libobsensor
