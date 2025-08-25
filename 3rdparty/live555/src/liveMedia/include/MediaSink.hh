@@ -43,7 +43,7 @@ public:
 
 protected:
   MediaSink(UsageEnvironment& env); // abstract base class
-  virtual ~MediaSink();
+  virtual ~MediaSink() override;
 
   virtual Boolean sourceIsCompatibleWithUs(MediaSource& source);
       // called by startPlaying()
@@ -59,7 +59,7 @@ protected:
 
 private:
   // redefined virtual functions:
-  virtual Boolean isSink() const;
+  virtual Boolean isSink() const override;
 
 private:
   // The following fields are used when we're being played:

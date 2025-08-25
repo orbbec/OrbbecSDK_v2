@@ -43,22 +43,22 @@ protected:
 		      unsigned numChannels);
 	// called only by createNew()
 
-  virtual ~MPEG4GenericRTPSink();
+  virtual ~MPEG4GenericRTPSink() override;
 
 private: // redefined virtual functions:
   virtual
   Boolean frameCanAppearAfterPacketStart(unsigned char const* frameStart,
-					 unsigned numBytesInFrame) const;
+					 unsigned numBytesInFrame) const override;
   virtual void doSpecialFrameHandling(unsigned fragmentationOffset,
                                       unsigned char* frameStart,
                                       unsigned numBytesInFrame,
                                       struct timeval framePresentationTime,
-                                      unsigned numRemainingBytes);
-  virtual unsigned specialHeaderSize() const;
+                                      unsigned numRemainingBytes) override;
+  virtual unsigned specialHeaderSize() const override;
 
-  virtual char const* sdpMediaType() const;
+  virtual char const* sdpMediaType() const override;
 
-  virtual char const* auxSDPLine(); // for the "a=fmtp:" SDP line
+  virtual char const* auxSDPLine() override; // for the "a=fmtp:" SDP line
 
 private:
   char const* fSDPMediaTypeString;

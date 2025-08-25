@@ -33,20 +33,20 @@ protected:
   JPEGVideoRTPSink(UsageEnvironment& env, Groupsock* RTPgs);
 	// called only by createNew()
 
-  virtual ~JPEGVideoRTPSink();
+  virtual ~JPEGVideoRTPSink() override;
 
 private: // redefined virtual functions:
-  virtual Boolean sourceIsCompatibleWithUs(MediaSource& source);
+  virtual Boolean sourceIsCompatibleWithUs(MediaSource& source) override;
 
   virtual void doSpecialFrameHandling(unsigned fragmentationOffset,
                                       unsigned char* frameStart,
                                       unsigned numBytesInFrame,
                                       struct timeval framePresentationTime,
-                                      unsigned numRemainingBytes);
+                                      unsigned numRemainingBytes) override;
   virtual
   Boolean frameCanAppearAfterPacketStart(unsigned char const* frameStart,
-					 unsigned numBytesInFrame) const;
-  virtual unsigned specialHeaderSize() const;
+					 unsigned numBytesInFrame) const override;
+  virtual unsigned specialHeaderSize() const override;
 };
 
 #endif

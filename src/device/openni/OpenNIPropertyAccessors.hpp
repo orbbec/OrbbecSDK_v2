@@ -12,7 +12,7 @@ namespace libobsensor {
 class OpenNIDisp2DepthPropertyAccessor : public IBasicPropertyAccessor, public IStructureDataAccessor {
 public:
     explicit OpenNIDisp2DepthPropertyAccessor(IDevice *owner);
-    virtual ~OpenNIDisp2DepthPropertyAccessor() noexcept = default;
+    virtual ~OpenNIDisp2DepthPropertyAccessor() noexcept override = default;
 
     virtual void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
     virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
@@ -38,7 +38,7 @@ private:
 class OpenNIFrameTransformPropertyAccessor : public IBasicPropertyAccessor {
 public:
     explicit OpenNIFrameTransformPropertyAccessor(IDevice *owner);
-    virtual ~OpenNIFrameTransformPropertyAccessor() noexcept = default;
+    virtual ~OpenNIFrameTransformPropertyAccessor() noexcept override = default;
 
     virtual void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
     virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
@@ -53,7 +53,7 @@ private:
 class OpenNIHeartBeatPropertyAccessor : public IBasicPropertyAccessor {
 public:
     explicit OpenNIHeartBeatPropertyAccessor(IDevice *owner);
-    virtual ~OpenNIHeartBeatPropertyAccessor() noexcept;
+    virtual ~OpenNIHeartBeatPropertyAccessor() noexcept override;
 
     virtual void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
     virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
@@ -81,7 +81,7 @@ private:
 class OpenNITemperatureStructurePropertyAccessor : public IStructureDataAccessor {
 public:
     explicit OpenNITemperatureStructurePropertyAccessor(IDevice *owner);
-    virtual ~OpenNITemperatureStructurePropertyAccessor() noexcept = default;
+    virtual ~OpenNITemperatureStructurePropertyAccessor() noexcept override = default;
 
     void                        setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) override;
     const std::vector<uint8_t> &getStructureData(uint32_t propertyId) override;

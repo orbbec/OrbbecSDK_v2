@@ -11,7 +11,7 @@ namespace libobsensor {
 class OpenNIStreamProfileFilter : public DeviceComponentBase, public IStreamProfileFilter {
 public:
     OpenNIStreamProfileFilter(IDevice *owner);
-    virtual ~OpenNIStreamProfileFilter() noexcept = default;
+    virtual ~OpenNIStreamProfileFilter() noexcept override = default;
 
     StreamProfileList filter(const StreamProfileList &profiles) const override;
 

@@ -129,7 +129,7 @@ public:
     using FrameProcessor::getPropertyRange;
 
     ConfidenceFrameProcessor(IDevice *owner, std::shared_ptr<FrameProcessorContext> context);
-    virtual ~ConfidenceFrameProcessor() noexcept = default;
+    virtual ~ConfidenceFrameProcessor() noexcept override = default;
 
     virtual void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
     virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;

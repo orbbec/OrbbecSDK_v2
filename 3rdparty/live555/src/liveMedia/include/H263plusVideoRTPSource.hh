@@ -42,7 +42,7 @@ public:
   unsigned fPacketSizes[256];
 
 protected:
-  virtual ~H263plusVideoRTPSource();
+  virtual ~H263plusVideoRTPSource() override;
 
 private:
   H263plusVideoRTPSource(UsageEnvironment& env, Groupsock* RTPgs,
@@ -53,8 +53,8 @@ private:
 private:
   // redefined virtual functions:
   virtual Boolean processSpecialHeader(BufferedPacket* packet,
-                                       unsigned& resultSpecialHeaderSize);
-  virtual char const* MIMEtype() const;
+                                       unsigned& resultSpecialHeaderSize) override;
+  virtual char const* MIMEtype() const override;
 };
 
 #endif

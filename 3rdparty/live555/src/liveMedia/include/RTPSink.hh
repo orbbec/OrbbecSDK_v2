@@ -110,7 +110,7 @@ protected:
 	  unsigned numChannels);
 	// abstract base class
 
-  virtual ~RTPSink();
+  virtual ~RTPSink() override;
 
   // used by RTCP:
   friend class RTCPInstance;
@@ -133,7 +133,7 @@ protected:
 
 private:
   // redefined virtual functions:
-  virtual Boolean isRTPSink() const;
+  virtual Boolean isRTPSink() const override;
 
 private:
   u_int32_t fSSRC, fTimestampBase;

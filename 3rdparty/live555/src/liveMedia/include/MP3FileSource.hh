@@ -41,7 +41,7 @@ protected:
   MP3FileSource(UsageEnvironment& env, FILE* fid);
 	// called only by createNew()
 
-  virtual ~MP3FileSource();
+  virtual ~MP3FileSource() override;
 
 protected:
   void assignStream(FILE* fid, unsigned filesize);
@@ -51,9 +51,9 @@ protected:
 
 private:
   // redefined virtual functions:
-  virtual void doGetNextFrame();
-  virtual char const* MIMEtype() const;
-  virtual void getAttributes() const;
+  virtual void doGetNextFrame() override;
+  virtual char const* MIMEtype() const override;
+  virtual void getAttributes() const override;
 
 private:
   static void fileReadableHandler(MP3FileSource* source, int mask);

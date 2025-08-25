@@ -10,7 +10,7 @@ namespace libobsensor {
 class OpenNIDisparitySensor : public VideoSensor {
 public:
     OpenNIDisparitySensor(IDevice *owner, OBSensorType sensorType, const std::shared_ptr<ISourcePort> &backend);
-    ~OpenNIDisparitySensor() noexcept;
+    ~OpenNIDisparitySensor() noexcept override;
 
     void start(std::shared_ptr<const StreamProfile> sp, FrameCallback callback) override;
 

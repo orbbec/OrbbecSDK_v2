@@ -47,7 +47,7 @@ private:
   MPEG1or2FileServerDemux(UsageEnvironment& env, char const* fileName,
 			  Boolean reuseFirstSource);
       // called only by createNew();
-  virtual ~MPEG1or2FileServerDemux();
+  virtual ~MPEG1or2FileServerDemux() override;
 
 private:
   friend class MPEG1or2DemuxedServerMediaSubsession;

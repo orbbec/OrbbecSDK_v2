@@ -41,11 +41,11 @@ protected:
 			    Boolean iFramesOnly, double vshPeriod,
 			    Boolean createParser = True);
       // called only by createNew(), or by subclass constructors
-  virtual ~MPEG1or2VideoStreamFramer();
+  virtual ~MPEG1or2VideoStreamFramer() override;
 
 private:
   // redefined virtual functions:
-  virtual Boolean isMPEG1or2VideoStreamFramer() const;
+  virtual Boolean isMPEG1or2VideoStreamFramer() const override;
 
 private:
   double getCurrentPTS() const;

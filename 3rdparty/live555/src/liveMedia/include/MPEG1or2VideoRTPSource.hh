@@ -33,7 +33,7 @@ public:
 	    unsigned rtpPayloadFrequency = 90000);
 
 protected:
-  virtual ~MPEG1or2VideoRTPSource();
+  virtual ~MPEG1or2VideoRTPSource() override;
 
 private:
   MPEG1or2VideoRTPSource(UsageEnvironment& env, Groupsock* RTPgs,
@@ -44,10 +44,10 @@ private:
 private:
   // redefined virtual functions:
   virtual Boolean processSpecialHeader(BufferedPacket* packet,
-                                       unsigned& resultSpecialHeaderSize);
+                                       unsigned& resultSpecialHeaderSize) override;
   virtual Boolean packetIsUsableInJitterCalculation(unsigned char* packet,
-						    unsigned packetSize);
-  virtual char const* MIMEtype() const;
+						    unsigned packetSize) override;
+  virtual char const* MIMEtype() const override;
 };
 
 #endif

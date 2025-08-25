@@ -9,7 +9,7 @@ namespace libobsensor {
 class DW2DisparitySensor : public OpenNIDisparitySensor {
 public:
     DW2DisparitySensor(IDevice *owner, OBSensorType sensorType, const std::shared_ptr<ISourcePort> &backend);
-    ~DW2DisparitySensor() noexcept;
+    ~DW2DisparitySensor() noexcept override;
 
     void start(std::shared_ptr<const StreamProfile> sp, FrameCallback callback) override;
 

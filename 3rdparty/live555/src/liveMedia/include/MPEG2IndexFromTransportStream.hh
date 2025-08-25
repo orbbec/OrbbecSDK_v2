@@ -44,11 +44,11 @@ protected:
   MPEG2IFrameIndexFromTransportStream(UsageEnvironment& env,
 				      FramedSource* inputSource);
       // called only by createNew()
-  virtual ~MPEG2IFrameIndexFromTransportStream();
+  virtual ~MPEG2IFrameIndexFromTransportStream() override;
 
 private:
   // Redefined virtual functions:
-  virtual void doGetNextFrame();
+  virtual void doGetNextFrame() override;
 
 private:
   static void afterGettingFrame(void* clientData, unsigned frameSize,

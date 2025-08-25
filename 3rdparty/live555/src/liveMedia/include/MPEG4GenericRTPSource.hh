@@ -49,13 +49,13 @@ protected:
 			unsigned indexDeltaLength
 			);
       // called only by createNew(), or by subclass constructors
-  virtual ~MPEG4GenericRTPSource();
+  virtual ~MPEG4GenericRTPSource() override;
 
 protected:
   // redefined virtual functions:
   virtual Boolean processSpecialHeader(BufferedPacket* packet,
-                                       unsigned& resultSpecialHeaderSize);
-  virtual char const* MIMEtype() const;
+                                       unsigned& resultSpecialHeaderSize) override;
+  virtual char const* MIMEtype() const override;
 
 private:
   char* fMIMEType;

@@ -244,7 +244,7 @@ protected:
   RTSPClient(UsageEnvironment& env, char const* rtspURL,
 	     int verbosityLevel, char const* applicationName, portNumBits tunnelOverHTTPPortNum, int socketNumToServer);
       // called only by createNew();
-  virtual ~RTSPClient();
+  virtual ~RTSPClient() override;
 
   void reset();
   void setBaseURL(char const* url);
@@ -258,7 +258,7 @@ protected:
   virtual int connectToServer(int socketNum, portNumBits remotePortNum); // used to implement "openConnection()"; result values: -1: failure; 0: pending; 1: success
 
 private: // redefined virtual functions
-  virtual Boolean isRTSPClient() const;
+  virtual Boolean isRTSPClient() const override;
 
 private:
   class RequestQueue {
@@ -388,7 +388,7 @@ protected:
   HandlerServerForREGISTERCommand(UsageEnvironment& env, onRTSPClientCreationFunc* creationFunc, int ourSocketIPv4, int ourSocketIPv6, Port ourPort,
 				  UserAuthenticationDatabase* authDatabase, int verbosityLevel, char const* applicationName);
       // called only by createNew();
-  virtual ~HandlerServerForREGISTERCommand();
+  virtual ~HandlerServerForREGISTERCommand() override;
 
   virtual RTSPClient* createNewRTSPClient(char const* rtspURL, int verbosityLevel, char const* applicationName,
 					  int socketNumToServer);
@@ -396,13 +396,13 @@ protected:
       // of "RTSPClient" instead, then subclass this class, and redefine this virtual function.
 
 protected: // redefined virtual functions
-  virtual char const* allowedCommandNames(); // "OPTIONS", "REGISTER", and (perhaps) "DEREGISTER" only
+  virtual char const* allowedCommandNames() override; // "OPTIONS", "REGISTER", and (perhaps) "DEREGISTER" only
   virtual Boolean weImplementREGISTER(char const* cmd/*"REGISTER" or "DEREGISTER"*/,
-				      char const* proxyURLSuffix, char*& responseStr);
+				      char const* proxyURLSuffix, char*& responseStr) override;
       // redefined to return True (for cmd=="REGISTER")
   virtual void implementCmd_REGISTER(char const* cmd/*"REGISTER" or "DEREGISTER"*/,
 				     char const* url, char const* urlSuffix, int socketToRemoteServer,
-				     Boolean deliverViaTCP, char const* proxyURLSuffix);
+				     Boolean deliverViaTCP, char const* proxyURLSuffix) override;
 
 private:
   onRTSPClientCreationFunc* fCreationFunc;

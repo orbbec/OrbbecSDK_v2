@@ -42,14 +42,14 @@ private:
 					 Boolean iFramesOnly,
 					 double vshPeriod);
       // called only by createNew();
-  virtual ~MPEG1or2VideoFileServerMediaSubsession();
+  virtual ~MPEG1or2VideoFileServerMediaSubsession() override;
 
 private: // redefined virtual functions
   virtual FramedSource* createNewStreamSource(unsigned clientSessionId,
-					      unsigned& estBitrate);
+					      unsigned& estBitrate) override;
   virtual RTPSink* createNewRTPSink(Groupsock* rtpGroupsock,
                                     unsigned char rtpPayloadTypeIfDynamic,
-				    FramedSource* inputSource);
+				    FramedSource* inputSource) override;
 
 private:
   Boolean fIFramesOnly;

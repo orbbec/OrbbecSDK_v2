@@ -52,12 +52,12 @@ protected:
   MPEG2TransportStreamTrickModeFilter(UsageEnvironment& env, FramedSource* inputSource,
 				      MPEG2TransportStreamIndexFile* indexFile, int scale);
       // called only by createNew()
-  virtual ~MPEG2TransportStreamTrickModeFilter();
+  virtual ~MPEG2TransportStreamTrickModeFilter() override;
 
 private:
   // Redefined virtual functions:
-  virtual void doGetNextFrame();
-  virtual void doStopGettingFrames();
+  virtual void doGetNextFrame() override;
+  virtual void doStopGettingFrames() override;
 
 private:
   void attemptDeliveryToClient();

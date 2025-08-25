@@ -41,21 +41,21 @@ protected:
 		  Boolean sourceIsWideband, unsigned numChannelsInSource);
 	// called only by createNew()
 
-  virtual ~AMRAudioRTPSink();
+  virtual ~AMRAudioRTPSink() override;
 
 private: // redefined virtual functions:
-  virtual Boolean sourceIsCompatibleWithUs(MediaSource& source);
+  virtual Boolean sourceIsCompatibleWithUs(MediaSource& source) override;
   virtual void doSpecialFrameHandling(unsigned fragmentationOffset,
                                       unsigned char* frameStart,
                                       unsigned numBytesInFrame,
                                       struct timeval framePresentationTime,
-                                      unsigned numRemainingBytes);
+                                      unsigned numRemainingBytes) override;
   virtual Boolean
   frameCanAppearAfterPacketStart(unsigned char const* frameStart,
-				 unsigned numBytesInFrame) const;
+				 unsigned numBytesInFrame) const override;
 
-  virtual unsigned specialHeaderSize() const;
-  virtual char const* auxSDPLine();
+  virtual unsigned specialHeaderSize() const override;
+  virtual char const* auxSDPLine() override;
 
 private:
   Boolean fSourceIsWideband;

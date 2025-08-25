@@ -13,7 +13,7 @@ extern "C" {
  * @brief Get the current system timestamp in milliseconds.
  *
  */
-uint64_t ob_smpl_get_current_timestamp_ms();
+uint64_t ob_smpl_get_current_timestamp_ms(void);
 
 /**
  * @brief Wait for key press.

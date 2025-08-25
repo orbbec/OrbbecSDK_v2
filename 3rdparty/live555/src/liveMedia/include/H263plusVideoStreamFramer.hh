@@ -38,7 +38,7 @@ protected:
   H263plusVideoStreamFramer(UsageEnvironment& env,
 			                FramedSource* inputSource,
 			                Boolean createParser = True);
-  virtual ~H263plusVideoStreamFramer();
+  virtual ~H263plusVideoStreamFramer() override;
 
 
 public:
@@ -48,7 +48,7 @@ public:
   void continueReadProcessing();
 
 private:
-  virtual void doGetNextFrame();
+  virtual void doGetNextFrame() override;
   virtual Boolean isH263plusVideoStreamFramer() const;
 
 protected:

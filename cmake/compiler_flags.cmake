@@ -1,6 +1,9 @@
 # Copyright (c) Orbbec Inc. All Rights Reserved.
 # Licensed under the MIT License.
 
+include(CheckCCompilerFlag)
+include(CheckCXXCompilerFlag)
+
 if (NOT ("${CMAKE_C_COMPILER_ID}" STREQUAL "${CMAKE_CXX_COMPILER_ID}"))
     message(FATAL_ERROR "C compiler (${CMAKE_C_COMPILER_ID}) does not match C++ compiler (${CMAKE_CXX_COMPILER_ID})")
 endif()
@@ -52,9 +55,11 @@ if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQU
     add_compile_options(-Wno-implicit-int-conversion) # uint16_t -> int conversion
     add_compile_options(-Wno-float-equal) # float comparison
     add_compile_options(-Wno-undefined-func-template)
-    if(NOT "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang")
+    check_cxx_compiler_flag("-Wno-return-std-move-in-c++11" HAS_NO_RETURN_STD_MOVE_IN_CPP11)
+    if(HAS_NO_RETURN_STD_MOVE_IN_CPP11)
         add_compile_options(-Wno-return-std-move-in-c++11)
     endif()
+    # add_compile_options(-Wno-return-std-move-in-c++11) # no-return-std-move-in-c++11 is unknown for Clang
     add_compile_options(-Wno-comma)
     add_compile_options(-Wno-missing-prototypes)
     add_compile_options(-Wno-shadow-field-in-constructor) # TODO: should enable
@@ -83,7 +88,12 @@ if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQU
     add_compile_options(-Wno-error=unused-lambda-capture)
     add_compile_options(-Wno-constexpr-not-const)
     add_compile_options(-Wno-error=unreachable-code) # Ignore unreachable-code warning: some code is platform-dependent (Windows/Linux)
-
+    check_cxx_compiler_flag("-Wno-unsafe-buffer-usage" HAS_NO_UNSAFE_BUFFER_USAGE)
+    if(HAS_NO_UNSAFE_BUFFER_USAGE)
+        add_compile_options(-Wno-unsafe-buffer-usage)
+    endif()
+    add_compile_options(-Wno-missing-include-dirs)
+    
 elseif ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
     set(GNU_ALL_WARNINGS "-Wall" "-Wextra")
     list(APPEND GNU_ALL_WARNINGS "-Wno-missing-field-initializers") # Allow c structs without all fields initialized

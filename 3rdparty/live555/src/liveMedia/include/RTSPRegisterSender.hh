@@ -28,7 +28,7 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 
 class RTSPRegisterOrDeregisterSender: public RTSPClient {
 public:
-  virtual ~RTSPRegisterOrDeregisterSender();
+  virtual ~RTSPRegisterOrDeregisterSender() override;
 protected: // we're a virtual base class
   RTSPRegisterOrDeregisterSender(UsageEnvironment& env,
 				 char const* remoteClientNameOrAddress, portNumBits remoteClientPortNum,
@@ -40,7 +40,7 @@ public: // Some compilers complain if this is "protected:"
   class RequestRecord_REGISTER_or_DEREGISTER: public RTSPClient::RequestRecord {
   public:
     RequestRecord_REGISTER_or_DEREGISTER(unsigned cseq, char const* cmdName, RTSPClient::responseHandler* rtspResponseHandler, char const* rtspURLToRegisterOrDeregister, char const* proxyURLSuffix);
-    virtual ~RequestRecord_REGISTER_or_DEREGISTER();
+    virtual ~RequestRecord_REGISTER_or_DEREGISTER() override;
 
     char const* proxyURLSuffix() const { return fProxyURLSuffix; }
 
@@ -73,13 +73,13 @@ protected:
 		     Boolean requestStreamingViaTCP, char const* proxyURLSuffix, Boolean reuseConnection,
 		     int verbosityLevel, char const* applicationName);
     // called only by "createNew()"
-  virtual ~RTSPRegisterSender();
+  virtual ~RTSPRegisterSender() override;
 
   // Redefined virtual functions:
   virtual Boolean setRequestFields(RequestRecord* request,
                                    char*& cmdURL, Boolean& cmdURLWasAllocated,
                                    char const*& protocolStr,
-                                   char*& extraHeaders, Boolean& extraHeadersWereAllocated);
+                                   char*& extraHeaders, Boolean& extraHeadersWereAllocated) override;
 
 public: // Some compilers complain if this is "protected:"
   // A subclass of "RequestRecord_REGISTER_or_DEREGISTER", specific to our "REGISTER" command:
@@ -87,7 +87,7 @@ public: // Some compilers complain if this is "protected:"
   public:
     RequestRecord_REGISTER(unsigned cseq, RTSPClient::responseHandler* rtspResponseHandler, char const* rtspURLToRegister,
 			   Boolean reuseConnection, Boolean requestStreamingViaTCP, char const* proxyURLSuffix);
-    virtual ~RequestRecord_REGISTER();
+    virtual ~RequestRecord_REGISTER() override;
 
     char const* rtspURLToRegister() const { return fRTSPURLToRegisterOrDeregister; }
     Boolean reuseConnection() const { return fReuseConnection; }
@@ -116,20 +116,20 @@ protected:
 		     char const* proxyURLSuffix,
 		     int verbosityLevel, char const* applicationName);
     // called only by "createNew()"
-  virtual ~RTSPDeregisterSender();
+  virtual ~RTSPDeregisterSender() override;
 
   // Redefined virtual functions:
   virtual Boolean setRequestFields(RequestRecord* request,
                                    char*& cmdURL, Boolean& cmdURLWasAllocated,
                                    char const*& protocolStr,
-                                   char*& extraHeaders, Boolean& extraHeadersWereAllocated);
+                                   char*& extraHeaders, Boolean& extraHeadersWereAllocated) override;
 
 public: // Some compilers complain if this is "protected:"
   // A subclass of "RequestRecord_REGISTER_or_DEREGISTER", specific to our "DEREGISTER" command:
   class RequestRecord_DEREGISTER: public RTSPRegisterOrDeregisterSender::RequestRecord_REGISTER_or_DEREGISTER {
   public:
     RequestRecord_DEREGISTER(unsigned cseq, RTSPClient::responseHandler* rtspResponseHandler, char const* rtspURLToDeregister, char const* proxyURLSuffix);
-    virtual ~RequestRecord_DEREGISTER();
+    virtual ~RequestRecord_DEREGISTER() override;
 
     char const* rtspURLToDeregister() const { return fRTSPURLToRegisterOrDeregister; }
   };

@@ -14,7 +14,7 @@ namespace libobsensor {
 class OpenNIDeviceInfo : public DeviceEnumInfoBase, public std::enable_shared_from_this<OpenNIDeviceInfo> {
 public:
     OpenNIDeviceInfo(const SourcePortInfoList groupedInfoList);
-    ~OpenNIDeviceInfo() noexcept;
+    ~OpenNIDeviceInfo() noexcept override;
 
     std::shared_ptr<IDevice> createDevice() const override;
 

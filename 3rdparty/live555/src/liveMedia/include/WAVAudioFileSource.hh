@@ -54,17 +54,17 @@ protected:
   WAVAudioFileSource(UsageEnvironment& env, FILE* fid);
 	// called only by createNew()
 
-  virtual ~WAVAudioFileSource();
+  virtual ~WAVAudioFileSource() override;
 
   static void fileReadableHandler(WAVAudioFileSource* source, int mask);
   void doReadFromFile();
 
 private:
   // redefined virtual functions:
-  virtual void doGetNextFrame();
-  virtual void doStopGettingFrames();
-  virtual Boolean setInputPort(int portIndex);
-  virtual double getAverageLevel() const;
+  virtual void doGetNextFrame() override;
+  virtual void doStopGettingFrames() override;
+  virtual Boolean setInputPort(int portIndex) override;
+  virtual double getAverageLevel() const override;
 
 protected:
   unsigned fPreferredFrameSize;

@@ -99,12 +99,12 @@ public:
   SRTPCryptographicContext* getCrypto() const { return fCrypto; }
 
 protected: // redefined virtual functions
-  virtual Boolean isMediaSession() const;
+  virtual Boolean isMediaSession() const override;
 
 protected:
   MediaSession(UsageEnvironment& env);
       // called only by createNew();
-  virtual ~MediaSession();
+  virtual ~MediaSession() override;
 
   virtual MediaSubsession* createNewMediaSubsession();
 

@@ -49,7 +49,7 @@ protected:
   MP3ADUinterleaverBase(UsageEnvironment& env,
 			FramedSource* inputSource);
       // abstract base class
-  virtual ~MP3ADUinterleaverBase();
+  virtual ~MP3ADUinterleaverBase() override;
 
   static FramedSource* getInputSource(UsageEnvironment& env,
 				      char const* inputSourceName);
@@ -77,14 +77,14 @@ protected:
 		    Interleaving const& interleaving,
 		    FramedSource* inputSource);
       // called only by createNew()
-  virtual ~MP3ADUinterleaver();
+  virtual ~MP3ADUinterleaver() override;
 
 private:
   // redefined virtual functions:
-  virtual void doGetNextFrame();
+  virtual void doGetNextFrame() override;
   virtual void afterGettingFrame(unsigned numBytesRead,
 				 struct timeval presentationTime,
-				 unsigned durationInMicroseconds);
+				 unsigned durationInMicroseconds) override;
 
 private:
   void releaseOutgoingFrame();
@@ -108,14 +108,14 @@ protected:
   MP3ADUdeinterleaver(UsageEnvironment& env,
 		      FramedSource* inputSource);
       // called only by createNew()
-  virtual ~MP3ADUdeinterleaver();
+  virtual ~MP3ADUdeinterleaver() override;
 
 private:
   // redefined virtual functions:
-  virtual void doGetNextFrame();
+  virtual void doGetNextFrame() override;
   virtual void afterGettingFrame(unsigned numBytesRead,
 				 struct timeval presentationTime,
-				 unsigned durationInMicroseconds);
+				 unsigned durationInMicroseconds) override;
 
 private:
   void releaseOutgoingFrame();

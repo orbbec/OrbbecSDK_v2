@@ -17,7 +17,7 @@ namespace libobsensor {
 class OpenNIDeviceBase : public DeviceBase {
 public:
     OpenNIDeviceBase(const std::shared_ptr<const IDeviceEnumInfo> &info);
-    virtual ~OpenNIDeviceBase() noexcept;
+    virtual ~OpenNIDeviceBase() noexcept override;
 
     std::vector<std::shared_ptr<IFilter>> createRecommendedPostProcessingFilters(OBSensorType type) override;
 

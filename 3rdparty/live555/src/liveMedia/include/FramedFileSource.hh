@@ -28,7 +28,7 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 class FramedFileSource: public FramedSource {
 protected:
   FramedFileSource(UsageEnvironment& env, FILE* fid); // abstract base class
-  virtual ~FramedFileSource();
+  virtual ~FramedFileSource() override;
 
 protected:
   FILE* fFid;

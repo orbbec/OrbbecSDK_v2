@@ -44,12 +44,12 @@ protected:
 		   FramedSource* inputSource,
 		   Boolean includeADUdescriptors);
       // called only by createNew()
-  virtual ~ADUFromMP3Source();
+  virtual ~ADUFromMP3Source() override;
 
 private:
   // Redefined virtual functions:
-  virtual void doGetNextFrame();
-  virtual char const* MIMEtype() const;
+  virtual void doGetNextFrame() override;
+  virtual char const* MIMEtype() const override;
 
 private:
   Boolean doGetNextFrame1();
@@ -74,12 +74,12 @@ protected:
 		   FramedSource* inputSource,
 		   Boolean includeADUdescriptors);
       // called only by createNew()
-  virtual ~MP3FromADUSource();
+  virtual ~MP3FromADUSource() override;
 
 private:
   // Redefined virtual functions:
-  virtual void doGetNextFrame();
-  virtual char const* MIMEtype() const;
+  virtual void doGetNextFrame() override;
+  virtual char const* MIMEtype() const override;
 
 private:
   Boolean needToGetAnADU();

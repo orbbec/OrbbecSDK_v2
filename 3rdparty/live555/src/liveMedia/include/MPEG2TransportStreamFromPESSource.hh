@@ -37,12 +37,12 @@ protected:
   MPEG2TransportStreamFromPESSource(UsageEnvironment& env,
 				    MPEG1or2DemuxedElementaryStream* inputSource);
       // called only by createNew()
-  virtual ~MPEG2TransportStreamFromPESSource();
+  virtual ~MPEG2TransportStreamFromPESSource() override;
 
 private:
   // Redefined virtual functions:
-  virtual void doStopGettingFrames();
-  virtual void awaitNewBuffer(unsigned char* oldBuffer);
+  virtual void doStopGettingFrames() override;
+  virtual void awaitNewBuffer(unsigned char* oldBuffer) override;
 
 private:
   static void afterGettingFrame(void* clientData, unsigned frameSize,

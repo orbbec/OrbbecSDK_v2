@@ -39,18 +39,18 @@ protected:
   MPEG4VideoFileServerMediaSubsession(UsageEnvironment& env,
 				      char const* fileName, Boolean reuseFirstSource);
       // called only by createNew();
-  virtual ~MPEG4VideoFileServerMediaSubsession();
+  virtual ~MPEG4VideoFileServerMediaSubsession() override;
 
   void setDoneFlag() { fDoneFlag = ~0; }
 
 protected: // redefined virtual functions
   virtual char const* getAuxSDPLine(RTPSink* rtpSink,
-				    FramedSource* inputSource);
+				    FramedSource* inputSource) override;
   virtual FramedSource* createNewStreamSource(unsigned clientSessionId,
-					      unsigned& estBitrate);
+					      unsigned& estBitrate) override;
   virtual RTPSink* createNewRTPSink(Groupsock* rtpGroupsock,
                                     unsigned char rtpPayloadTypeIfDynamic,
-				    FramedSource* inputSource);
+				    FramedSource* inputSource) override;
 
 private:
   char* fAuxSDPLine;

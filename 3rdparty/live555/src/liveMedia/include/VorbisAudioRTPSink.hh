@@ -52,20 +52,20 @@ protected:
 		     u_int32_t identField);
 	// called only by createNew()
 
-  virtual ~VorbisAudioRTPSink();
+  virtual ~VorbisAudioRTPSink() override;
 
 private: // redefined virtual functions:
-  virtual char const* auxSDPLine(); // for the "a=fmtp:" SDP line
+  virtual char const* auxSDPLine() override; // for the "a=fmtp:" SDP line
 
   virtual void doSpecialFrameHandling(unsigned fragmentationOffset,
                                       unsigned char* frameStart,
                                       unsigned numBytesInFrame,
                                       struct timeval framePresentationTime,
-                                      unsigned numRemainingBytes);
+                                      unsigned numRemainingBytes) override;
   virtual Boolean frameCanAppearAfterPacketStart(unsigned char const* frameStart,
-						 unsigned numBytesInFrame) const;
-  virtual unsigned specialHeaderSize() const;
-  virtual unsigned frameSpecificHeaderSize() const;
+						 unsigned numBytesInFrame) const override;
+  virtual unsigned specialHeaderSize() const override;
+  virtual unsigned frameSpecificHeaderSize() const override;
 
 private:
   u_int32_t fIdent; // "Ident" field used by this stream.  (Only the low 24 bits of this are used.)

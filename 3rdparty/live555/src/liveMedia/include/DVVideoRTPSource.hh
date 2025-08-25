@@ -33,7 +33,7 @@ public:
 	    unsigned rtpTimestampFrequency);
 
 protected:
-  virtual ~DVVideoRTPSource();
+  virtual ~DVVideoRTPSource() override;
 
 private:
   DVVideoRTPSource(UsageEnvironment& env, Groupsock* RTPgs,
@@ -44,8 +44,8 @@ private:
 private:
   // redefined virtual functions:
   virtual Boolean processSpecialHeader(BufferedPacket* packet,
-                                       unsigned& resultSpecialHeaderSize);
-  virtual char const* MIMEtype() const;
+                                       unsigned& resultSpecialHeaderSize) override;
+  virtual char const* MIMEtype() const override;
 };
 
 #endif

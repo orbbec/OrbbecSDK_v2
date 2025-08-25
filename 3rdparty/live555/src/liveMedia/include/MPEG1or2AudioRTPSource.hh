@@ -33,7 +33,7 @@ public:
 	    unsigned rtpTimestampFrequency = 90000);
 
 protected:
-  virtual ~MPEG1or2AudioRTPSource();
+  virtual ~MPEG1or2AudioRTPSource() override;
 
 private:
   MPEG1or2AudioRTPSource(UsageEnvironment& env, Groupsock* RTPgs,
@@ -44,8 +44,8 @@ private:
 private:
   // redefined virtual functions:
   virtual Boolean processSpecialHeader(BufferedPacket* packet,
-                                       unsigned& resultSpecialHeaderSize);
-  virtual char const* MIMEtype() const;
+                                       unsigned& resultSpecialHeaderSize) override;
+  virtual char const* MIMEtype() const override;
 };
 
 #endif

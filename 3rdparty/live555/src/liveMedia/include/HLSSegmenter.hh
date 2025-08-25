@@ -40,7 +40,7 @@ private:
   HLSSegmenter(UsageEnvironment& env, unsigned segmentationDuration, char const* fileNamePrefix,
 	       onEndOfSegmentFunc* onEndOfSegmentFunc, void* onEndOfSegmentClientData);
     // called only by createNew()
-  virtual ~HLSSegmenter();
+  virtual ~HLSSegmenter() override;
 
   static void ourEndOfSegmentHandler(void* clientData, double segmentDuration);
   void ourEndOfSegmentHandler(double segmentDuration);
@@ -58,8 +58,8 @@ private:
   void ourOnSourceClosure();
 
 private: // redefined virtual functions:
-  virtual Boolean sourceIsCompatibleWithUs(MediaSource& source);
-  virtual Boolean continuePlaying();
+  virtual Boolean sourceIsCompatibleWithUs(MediaSource& source) override;
+  virtual Boolean continuePlaying() override;
 
 private:
   unsigned fSegmentationDuration;

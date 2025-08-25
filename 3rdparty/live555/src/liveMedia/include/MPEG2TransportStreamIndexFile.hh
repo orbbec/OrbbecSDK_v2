@@ -35,7 +35,7 @@ public:
   static MPEG2TransportStreamIndexFile* createNew(UsageEnvironment& env,
 						  char const* indexFileName);
 
-  virtual ~MPEG2TransportStreamIndexFile();
+  virtual ~MPEG2TransportStreamIndexFile() override;
 
   // Functions that map between a playing time and a Transport packet number
   // in the original Transport Stream file:

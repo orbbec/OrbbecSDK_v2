@@ -135,7 +135,7 @@ protected:
 	       Boolean isSSMTransmitter,
 	       SRTPCryptographicContext* crypto);
       // called only by createNew()
-  virtual ~RTCPInstance();
+  virtual ~RTCPInstance() override;
 
   virtual void noteArrivingRR(struct sockaddr_storage const& fromAddressAndPort,
 			      int tcpSocketNum, unsigned char tcpStreamChannelId);
@@ -144,7 +144,7 @@ protected:
 
 private:
   // redefined virtual functions:
-  virtual Boolean isRTCPInstance() const;
+  virtual Boolean isRTCPInstance() const override;
 
 private:
   Boolean addReport(Boolean alwaysAdd = False);

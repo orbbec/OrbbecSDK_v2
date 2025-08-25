@@ -37,11 +37,11 @@ protected:
   MPEG4VideoStreamDiscreteFramer(UsageEnvironment& env,
 				 FramedSource* inputSource, Boolean leavePresentationTimesUnmodified);
       // called only by createNew()
-  virtual ~MPEG4VideoStreamDiscreteFramer();
+  virtual ~MPEG4VideoStreamDiscreteFramer() override;
 
 protected:
   // redefined virtual functions:
-  virtual void doGetNextFrame();
+  virtual void doGetNextFrame() override;
 
 protected:
   static void afterGettingFrame(void* clientData, unsigned frameSize,

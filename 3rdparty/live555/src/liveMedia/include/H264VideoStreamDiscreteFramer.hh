@@ -38,11 +38,11 @@ protected:
   H264VideoStreamDiscreteFramer(UsageEnvironment& env, FramedSource* inputSource,
 				Boolean includeStartCodeInOutput, Boolean insertAccessUnitDelimiters);
       // called only by createNew()
-  virtual ~H264VideoStreamDiscreteFramer();
+  virtual ~H264VideoStreamDiscreteFramer() override;
 
 private:
   // redefined virtual functions:
-  virtual Boolean isH264VideoStreamFramer() const;
+  virtual Boolean isH264VideoStreamFramer() const override;
 };
 
 #endif

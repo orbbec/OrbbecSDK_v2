@@ -45,7 +45,7 @@ public:
 protected:
   MPEGVideoStreamFramer(UsageEnvironment& env, FramedSource* inputSource);
       // we're an abstract base class
-  virtual ~MPEGVideoStreamFramer();
+  virtual ~MPEGVideoStreamFramer() override;
 
   void computePresentationTime(unsigned numAdditionalPictures);
       // sets "fPresentationTime"
@@ -53,8 +53,8 @@ protected:
 		   unsigned pictures, unsigned picturesSinceLastGOP);
 
 protected: // redefined virtual functions
-  virtual void doGetNextFrame();
-  virtual void doStopGettingFrames();
+  virtual void doGetNextFrame() override;
+  virtual void doStopGettingFrames() override;
 
 private:
   void reset();

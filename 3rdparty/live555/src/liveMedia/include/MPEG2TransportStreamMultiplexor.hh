@@ -50,7 +50,7 @@ public:
 
 protected:
   MPEG2TransportStreamMultiplexor(UsageEnvironment& env);
-  virtual ~MPEG2TransportStreamMultiplexor();
+  virtual ~MPEG2TransportStreamMultiplexor() override;
 
   virtual void awaitNewBuffer(unsigned char* oldBuffer) = 0;
       // implemented by subclasses
@@ -67,8 +67,8 @@ protected:
 
 private:
   // Redefined virtual functions:
-  virtual Boolean isMPEG2TransportStreamMultiplexor() const;
-  virtual void doGetNextFrame();
+  virtual Boolean isMPEG2TransportStreamMultiplexor() const override;
+  virtual void doGetNextFrame() override;
 
 private:
   void deliverDataToClient(u_int16_t pid, unsigned char* buffer, unsigned bufferSize,

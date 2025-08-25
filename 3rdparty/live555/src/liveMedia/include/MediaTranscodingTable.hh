@@ -59,7 +59,7 @@ protected: // we are to be subclassed only
   MediaTranscodingTable(UsageEnvironment& env)
     : Medium(env) {
   }
-  virtual ~MediaTranscodingTable() {
+  virtual ~MediaTranscodingTable() override {
   }
 };
 

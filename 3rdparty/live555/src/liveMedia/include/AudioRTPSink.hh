@@ -33,10 +33,10 @@ protected:
 	       char const* rtpPayloadFormatName,
 	       unsigned numChannels = 1);
   // (we're an abstract base class)
-  virtual ~AudioRTPSink();
+  virtual ~AudioRTPSink() override;
 
 private: // redefined virtual functions:
-  virtual char const* sdpMediaType() const;
+  virtual char const* sdpMediaType() const override;
 };
 
 #endif

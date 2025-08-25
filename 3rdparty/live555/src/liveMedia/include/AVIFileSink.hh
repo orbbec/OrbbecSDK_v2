@@ -48,7 +48,7 @@ private:
 	      unsigned short movieWidth, unsigned short movieHeight,
 	      unsigned movieFPS, Boolean packetLossCompensate);
       // called only by createNew()
-  virtual ~AVIFileSink();
+  virtual ~AVIFileSink() override;
 
   Boolean continuePlaying();
   static void afterGettingFrame(void* clientData, unsigned frameSize,

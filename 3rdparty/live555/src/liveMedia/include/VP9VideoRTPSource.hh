@@ -38,13 +38,13 @@ protected:
 		    unsigned rtpTimestampFrequency);
       // called only by createNew()
 
-  virtual ~VP9VideoRTPSource();
+  virtual ~VP9VideoRTPSource() override;
 
 protected:
   // redefined virtual functions:
   virtual Boolean processSpecialHeader(BufferedPacket* packet,
-                                       unsigned& resultSpecialHeaderSize);
-  virtual char const* MIMEtype() const;
+                                       unsigned& resultSpecialHeaderSize) override;
+  virtual char const* MIMEtype() const override;
 };
 
 #endif

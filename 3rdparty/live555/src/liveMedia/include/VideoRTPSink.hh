@@ -32,10 +32,10 @@ protected:
 	       unsigned rtpTimestampFrequency,
 	       char const* rtpPayloadFormatName);
   // (we're an abstract base class)
-  virtual ~VideoRTPSink();
+  virtual ~VideoRTPSink() override;
 
 private: // redefined virtual functions:
-  virtual char const* sdpMediaType() const;
+  virtual char const* sdpMediaType() const override;
 };
 
 #endif

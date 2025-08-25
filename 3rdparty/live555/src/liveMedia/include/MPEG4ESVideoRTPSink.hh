@@ -41,22 +41,22 @@ protected:
 		      u_int8_t profileAndLevelIndication = 0, char const* configStr = NULL);
 	// called only by createNew()
 
-  virtual ~MPEG4ESVideoRTPSink();
+  virtual ~MPEG4ESVideoRTPSink() override;
 
 protected: // redefined virtual functions:
-  virtual Boolean sourceIsCompatibleWithUs(MediaSource& source);
+  virtual Boolean sourceIsCompatibleWithUs(MediaSource& source) override;
 
   virtual void doSpecialFrameHandling(unsigned fragmentationOffset,
                                       unsigned char* frameStart,
                                       unsigned numBytesInFrame,
                                       struct timeval framePresentationTime,
-                                      unsigned numRemainingBytes);
-  virtual Boolean allowFragmentationAfterStart() const;
+                                      unsigned numRemainingBytes) override;
+  virtual Boolean allowFragmentationAfterStart() const override;
   virtual Boolean
   frameCanAppearAfterPacketStart(unsigned char const* frameStart,
-				 unsigned numBytesInFrame) const;
+				 unsigned numBytesInFrame) const override;
 
-  virtual char const* auxSDPLine();
+  virtual char const* auxSDPLine() override;
 
 protected:
   Boolean fVOPIsPresent;

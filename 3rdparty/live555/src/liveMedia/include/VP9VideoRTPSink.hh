@@ -33,18 +33,18 @@ protected:
   VP9VideoRTPSink(UsageEnvironment& env, Groupsock* RTPgs, unsigned char rtpPayloadFormat);
 	// called only by createNew()
 
-  virtual ~VP9VideoRTPSink();
+  virtual ~VP9VideoRTPSink() override;
 
 private: // redefined virtual functions:
   virtual void doSpecialFrameHandling(unsigned fragmentationOffset,
                                       unsigned char* frameStart,
                                       unsigned numBytesInFrame,
                                       struct timeval framePresentationTime,
-                                      unsigned numRemainingBytes);
+                                      unsigned numRemainingBytes) override;
   virtual
   Boolean frameCanAppearAfterPacketStart(unsigned char const* frameStart,
-					 unsigned numBytesInFrame) const;
-  virtual unsigned specialHeaderSize() const;
+					 unsigned numBytesInFrame) const override;
+  virtual unsigned specialHeaderSize() const override;
 };
 
 #endif

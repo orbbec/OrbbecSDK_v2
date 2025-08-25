@@ -38,13 +38,13 @@ protected:
 			 unsigned rtpTimestampFrequency);
       // called only by createNew()
 
-  virtual ~H264VideoRTPSource();
+  virtual ~H264VideoRTPSource() override;
 
 protected:
   // redefined virtual functions:
   virtual Boolean processSpecialHeader(BufferedPacket* packet,
-                                       unsigned& resultSpecialHeaderSize);
-  virtual char const* MIMEtype() const;
+                                       unsigned& resultSpecialHeaderSize) override;
+  virtual char const* MIMEtype() const override;
 
 private:
   friend class H264BufferedPacket;

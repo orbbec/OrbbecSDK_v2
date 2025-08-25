@@ -29,18 +29,18 @@ public:
   static BasicUsageEnvironment* createNew(TaskScheduler& taskScheduler);
 
   // redefined virtual functions:
-  virtual int getErrno() const;
+  virtual int getErrno() const override;
 
-  virtual UsageEnvironment& operator<<(char const* str);
-  virtual UsageEnvironment& operator<<(int i);
-  virtual UsageEnvironment& operator<<(unsigned u);
-  virtual UsageEnvironment& operator<<(double d);
-  virtual UsageEnvironment& operator<<(void* p);
+  virtual UsageEnvironment& operator<<(char const* str) override;
+  virtual UsageEnvironment& operator<<(int i) override;
+  virtual UsageEnvironment& operator<<(unsigned u) override;
+  virtual UsageEnvironment& operator<<(double d) override;
+  virtual UsageEnvironment& operator<<(void* p) override;
 
 protected:
   BasicUsageEnvironment(TaskScheduler& taskScheduler);
       // called only by "createNew()" (or subclass constructors)
-  virtual ~BasicUsageEnvironment();
+  virtual ~BasicUsageEnvironment() override;
 };
 
 
@@ -51,7 +51,7 @@ public:
     // returning to the event loop to handle non-socket or non-timer-based events, such as 'triggered events'.
     // You can change this is you wish (but only if you know what you're doing!), or set it to 0, to specify no such maximum time.
     // (You should set it to 0 only if you know that you will not be using 'event triggers'.)
-  virtual ~BasicTaskScheduler();
+  virtual ~BasicTaskScheduler() override;
 
 protected:
   BasicTaskScheduler(unsigned maxSchedulerGranularity);
@@ -62,10 +62,10 @@ protected:
 
 protected:
   // Redefined virtual functions:
-  virtual void SingleStep(unsigned maxDelayTime);
+  virtual void SingleStep(unsigned maxDelayTime) override;
 
-  virtual void setBackgroundHandling(int socketNum, int conditionSet, BackgroundHandlerProc* handlerProc, void* clientData);
-  virtual void moveSocketHandling(int oldSocketNum, int newSocketNum);
+  virtual void setBackgroundHandling(int socketNum, int conditionSet, BackgroundHandlerProc* handlerProc, void* clientData) override;
+  virtual void moveSocketHandling(int oldSocketNum, int newSocketNum) override;
 
 protected:
   unsigned fMaxSchedulerGranularity;

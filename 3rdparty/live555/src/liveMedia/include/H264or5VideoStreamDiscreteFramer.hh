@@ -34,11 +34,11 @@ protected:
 				   Boolean includeStartCodeInOutput,
 				   Boolean insertAccessUnitDelimiters);
       // we're an abstract base class
-  virtual ~H264or5VideoStreamDiscreteFramer();
+  virtual ~H264or5VideoStreamDiscreteFramer() override;
 
 protected:
   // redefined virtual functions:
-  virtual void doGetNextFrame();
+  virtual void doGetNextFrame() override;
 
 protected:
   static void afterGettingFrame(void* clientData, unsigned frameSize,

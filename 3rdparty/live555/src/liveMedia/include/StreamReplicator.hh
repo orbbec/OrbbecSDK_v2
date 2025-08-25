@@ -49,7 +49,7 @@ public:
 protected:
   StreamReplicator(UsageEnvironment& env, FramedSource* inputSource, Boolean deleteWhenLastReplicaDies);
     // called only by "createNew()"
-  virtual ~StreamReplicator();
+  virtual ~StreamReplicator() override;
 
 private:
   // Routines called by replicas to implement frame delivery, and the stopping/restarting/deletion of replicas:

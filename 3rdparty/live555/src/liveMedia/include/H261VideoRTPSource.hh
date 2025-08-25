@@ -35,7 +35,7 @@ public:
   u_int32_t lastSpecialHeader() const {return fLastSpecialHeader;}
 
 protected:
-  virtual ~H261VideoRTPSource();
+  virtual ~H261VideoRTPSource() override;
 
 private:
   H261VideoRTPSource(UsageEnvironment& env, Groupsock* RTPgs,
@@ -46,8 +46,8 @@ private:
 private:
   // redefined virtual functions:
   virtual Boolean processSpecialHeader(BufferedPacket* packet,
-                                       unsigned& resultSpecialHeaderSize);
-  virtual char const* MIMEtype() const;
+                                       unsigned& resultSpecialHeaderSize) override;
+  virtual char const* MIMEtype() const override;
 
 private:
   u_int32_t fLastSpecialHeader;

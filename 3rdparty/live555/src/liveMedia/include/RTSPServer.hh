@@ -118,7 +118,7 @@ protected:
 	     UserAuthenticationDatabase* authDatabase,
 	     unsigned reclamationSeconds);
       // called only by createNew();
-  virtual ~RTSPServer();
+  virtual ~RTSPServer() override;
 
   virtual char const* allowedCommandNames(); // used to implement "RTSPClientConnection::handleCmd_OPTIONS()"
   virtual Boolean weImplementREGISTER(char const* cmd/*"REGISTER" or "DEREGISTER"*/,
@@ -142,8 +142,8 @@ protected:
       // (This test can only be used to further restrict access, not to grant additional access.)
 
 public: // redefined virtual functions
-  virtual Boolean isRTSPServer() const;
-  virtual void addServerMediaSession(ServerMediaSession* serverMediaSession);
+  virtual Boolean isRTSPServer() const override;
+  virtual void addServerMediaSession(ServerMediaSession* serverMediaSession) override;
 
 public: // should be protected, but some old compilers complain otherwise
   // The state of a TCP connection used by a RTSP client:
@@ -167,13 +167,13 @@ public: // should be protected, but some old compilers complain otherwise
       char* fProxyURLSuffix;
     };
   protected: // redefined virtual functions:
-    virtual void handleRequestBytes(int newBytesRead);
+    virtual void handleRequestBytes(int newBytesRead) override;
 
   protected:
     RTSPClientConnection(RTSPServer& ourServer,
 			 int clientSocket, struct sockaddr_storage const& clientAddr,
 			 Boolean useTLS = False);
-    virtual ~RTSPClientConnection();
+    virtual ~RTSPClientConnection() override;
 
     friend class RTSPServer;
     friend class RTSPClientSession;
@@ -243,7 +243,7 @@ public: // should be protected, but some old compilers complain otherwise
   class RTSPClientSession: public GenericMediaServer::ClientSession {
   protected:
     RTSPClientSession(RTSPServer& ourServer, u_int32_t sessionId);
-    virtual ~RTSPClientSession();
+    virtual ~RTSPClientSession() override;
 
     friend class RTSPServer;
     friend class RTSPClientConnection;
@@ -299,12 +299,12 @@ public: // should be protected, but some old compilers complain otherwise
 protected: // redefined virtual functions
   // If you subclass "RTSPClientConnection", then you must also redefine this virtual function in order
   // to create new objects of your subclass:
-  virtual ClientConnection* createNewClientConnection(int clientSocket, struct sockaddr_storage const& clientAddr);
+  virtual ClientConnection* createNewClientConnection(int clientSocket, struct sockaddr_storage const& clientAddr) override;
 
 protected:
   // If you subclass "RTSPClientSession", then you must also redefine this virtual function in order
   // to create new objects of your subclass:
-  virtual ClientSession* createNewClientSession(u_int32_t sessionId);
+  virtual ClientSession* createNewClientSession(u_int32_t sessionId) override;
 
 private:
   static void incomingConnectionHandlerHTTPIPv4(void*, int /*mask*/);
@@ -357,16 +357,16 @@ protected:
 				 Boolean streamRTPOverTCP, int verbosityLevelForProxying,
 				 char const* backEndUsername, char const* backEndPassword);
   // called only by createNew();
-  virtual ~RTSPServerWithREGISTERProxying();
+  virtual ~RTSPServerWithREGISTERProxying() override;
 
 protected: // redefined virtual functions
-  virtual char const* allowedCommandNames();
+  virtual char const* allowedCommandNames() override;
   virtual Boolean weImplementREGISTER(char const* cmd/*"REGISTER" or "DEREGISTER"*/,
-				      char const* proxyURLSuffix, char*& responseStr);
+				      char const* proxyURLSuffix, char*& responseStr) override;
   virtual void implementCmd_REGISTER(char const* cmd/*"REGISTER" or "DEREGISTER"*/,
 				     char const* url, char const* urlSuffix, int socketToRemoteServer,
-				     Boolean deliverViaTCP, char const* proxyURLSuffix);
-  virtual UserAuthenticationDatabase* getAuthenticationDatabaseForCommand(char const* cmdName);
+				     Boolean deliverViaTCP, char const* proxyURLSuffix) override;
+  virtual UserAuthenticationDatabase* getAuthenticationDatabaseForCommand(char const* cmdName) override;
 
 private:
   Boolean fStreamRTPOverTCP;

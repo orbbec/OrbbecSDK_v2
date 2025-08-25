@@ -112,6 +112,8 @@ int main(void) try {
             std::cout << "\nStart Devices video stream." << std::endl;
             exitValue = testMultiDeviceSync();
             break;
+        default:
+            break;
         }
 
         if(exitValue == 0) {

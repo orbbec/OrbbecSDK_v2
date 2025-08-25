@@ -36,10 +36,10 @@ protected:
 			Boolean createParser,
 			Boolean includeStartCodeInOutput, Boolean insertAccessUnitDelimiters);
       // called only by "createNew()"
-  virtual ~H264VideoStreamFramer();
+  virtual ~H264VideoStreamFramer() override;
 
   // redefined virtual functions:
-  virtual Boolean isH264VideoStreamFramer() const;
+  virtual Boolean isH264VideoStreamFramer() const override;
 };
 
 #endif

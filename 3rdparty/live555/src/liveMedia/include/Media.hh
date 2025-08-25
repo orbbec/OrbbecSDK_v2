@@ -114,7 +114,10 @@ private:
   unsigned fNameGenerator;
 };
 
-
+#if defined(__clang__) && __clang_major__ >= 16
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-identifier"
+#endif
 // The structure pointed to by the "liveMediaPriv" UsageEnvironment field:
 class _Tables {
 public:
@@ -133,5 +136,8 @@ protected:
 private:
   UsageEnvironment& fEnv;
 };
+#if defined(__clang__) && __clang_major__ >= 16
+#pragma clang diagnostic pop
+#endif
 
 #endif

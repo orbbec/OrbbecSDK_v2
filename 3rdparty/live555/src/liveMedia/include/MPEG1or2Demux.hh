@@ -88,7 +88,7 @@ private:
 		FramedSource* inputSource, Boolean reclaimWhenLastESDies,
 		MPEG1or2DemuxOnDeletionFunc* onDeletionFunc, void* objectToNotify);
       // called only by createNew()
-  virtual ~MPEG1or2Demux();
+  virtual ~MPEG1or2Demux() override;
 
   void registerReadInterest(u_int8_t streamIdTag,
 			    unsigned char* to, unsigned maxSize,

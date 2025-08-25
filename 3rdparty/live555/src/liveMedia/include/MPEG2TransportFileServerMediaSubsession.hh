@@ -53,7 +53,7 @@ protected:
 					  MPEG2TransportStreamIndexFile* indexFile,
 					  Boolean reuseFirstSource);
       // called only by createNew();
-  virtual ~MPEG2TransportFileServerMediaSubsession();
+  virtual ~MPEG2TransportFileServerMediaSubsession() override;
 
   virtual ClientTrickPlayState* newClientTrickPlayState();
 
@@ -68,21 +68,21 @@ private: // redefined virtual functions
                            unsigned short& rtpSeqNum,
                            unsigned& rtpTimestamp,
 			   ServerRequestAlternativeByteHandler* serverRequestAlternativeByteHandler,
-                           void* serverRequestAlternativeByteHandlerClientData);
-  virtual void pauseStream(unsigned clientSessionId, void* streamToken);
-  virtual void seekStream(unsigned clientSessionId, void* streamToken, double& seekNPT, double streamDuration, u_int64_t& numBytes);
-  virtual void setStreamScale(unsigned clientSessionId, void* streamToken, float scale);
-  virtual void deleteStream(unsigned clientSessionId, void*& streamToken);
+                           void* serverRequestAlternativeByteHandlerClientData) override;
+  virtual void pauseStream(unsigned clientSessionId, void* streamToken) override;
+  virtual void seekStream(unsigned clientSessionId, void* streamToken, double& seekNPT, double streamDuration, u_int64_t& numBytes) override;
+  virtual void setStreamScale(unsigned clientSessionId, void* streamToken, float scale) override;
+  virtual void deleteStream(unsigned clientSessionId, void*& streamToken) override;
 
   // The virtual functions that are usually implemented by "ServerMediaSubsession"s:
   virtual FramedSource* createNewStreamSource(unsigned clientSessionId,
-					      unsigned& estBitrate);
+					      unsigned& estBitrate) override;
   virtual RTPSink* createNewRTPSink(Groupsock* rtpGroupsock,
                                     unsigned char rtpPayloadTypeIfDynamic,
-				    FramedSource* inputSource);
+				    FramedSource* inputSource) override;
 
-  virtual void testScaleFactor(float& scale);
-  virtual float duration() const;
+  virtual void testScaleFactor(float& scale) override;
+  virtual float duration() const override;
 
 private:
   ClientTrickPlayState* lookupClient(unsigned clientSessionId);

@@ -36,7 +36,7 @@ private:
   MPEG2TransportStreamDemux(UsageEnvironment& env, FramedSource* inputSource,
 			    FramedSource::onCloseFunc* onCloseFunc, void* onCloseClientData);
       // called only by createNew()
-  virtual ~MPEG2TransportStreamDemux();
+  virtual ~MPEG2TransportStreamDemux() override;
 
   static void handleEndOfFile(void* clientData);
   void handleEndOfFile();

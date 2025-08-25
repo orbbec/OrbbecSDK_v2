@@ -44,17 +44,19 @@ int select_index(const char *prompt, int min_value, int max_value) {  // todo: t
 // Enumerates stream information.
 void enumerate_stream_info(ob_sensor *sensor) {
     ob_error *error = NULL;
+ob_stream_profile_list *stream_profile_list = NULL;
+uint32_t stream_profile_count;
 
     // Get sensor type.
     ob_sensor_type sensor_type = ob_sensor_get_type(sensor, &error);
     check_ob_error(&error);
 
     // Get stream profile list.
-    ob_stream_profile_list *stream_profile_list = ob_sensor_get_stream_profile_list(sensor, &error);
+    stream_profile_list = ob_sensor_get_stream_profile_list(sensor, &error);
     check_ob_error(&error);
 
     // Get stream profile count.
-    uint32_t stream_profile_count = ob_stream_profile_list_get_count(stream_profile_list, &error);
+    stream_profile_count = ob_stream_profile_list_get_count(stream_profile_list, &error);
     check_ob_error(&error);
 
     printf("Available stream profiles: \n");
@@ -66,45 +68,59 @@ void enumerate_stream_info(ob_sensor *sensor) {
         // Print video stream profile information.
         if(sensor_type == OB_SENSOR_IR || sensor_type == OB_SENSOR_COLOR || sensor_type == OB_SENSOR_DEPTH || sensor_type == OB_SENSOR_IR_LEFT
            || sensor_type == OB_SENSOR_IR_RIGHT) {
-            ob_stream_type stream_type = ob_stream_profile_get_type(stream_profile, &error);
-            check_ob_error(&error);
-            const char *stream_type_str = ob_stream_type_to_string(stream_type);
+            ob_stream_type stream_type;
+            const char    *stream_type_str;
+            const char    *stream_format_str;
+            ob_format      stream_format;
+            uint32_t       stream_width;
+            uint32_t       stream_height;
+            uint32_t       stream_fps;
 
-            ob_format stream_format = ob_stream_profile_get_format(stream_profile, &error);
+            stream_type = ob_stream_profile_get_type(stream_profile, &error);
             check_ob_error(&error);
-            const char *stream_format_str = ob_format_to_string(stream_format);
+            stream_type_str = ob_stream_type_to_string(stream_type);
 
-            uint32_t stream_width = ob_video_stream_profile_get_width(stream_profile, &error);
+            stream_format = ob_stream_profile_get_format(stream_profile, &error);
             check_ob_error(&error);
+            stream_format_str = ob_format_to_string(stream_format);
 
-            uint32_t stream_height = ob_video_stream_profile_get_height(stream_profile, &error);
-            check_ob_error(&error);
-
-            uint32_t stream_fps = ob_video_stream_profile_get_fps(stream_profile, &error);
+            stream_width = ob_video_stream_profile_get_width(stream_profile, &error);
             check_ob_error(&error);
 
-            printf("  %d - type: %4s, format: %4s, width: %4d, height: %4d, fps: %4d\n", index, stream_type_str, stream_format_str, stream_width, stream_height,
+            stream_height = ob_video_stream_profile_get_height(stream_profile, &error);
+            check_ob_error(&error);
+
+            stream_fps = ob_video_stream_profile_get_fps(stream_profile, &error);
+            check_ob_error(&error);
+
+            printf("  %u - type: %4s, format: %4s, width: %4u, height: %4u, fps: %4u\n", index, stream_type_str, stream_format_str, stream_width, stream_height,
                    stream_fps);
         }
         else if(sensor_type == OB_SENSOR_ACCEL) {
+            ob_format            stream_format;
+            ob_accel_sample_rate acc_fps;
+
             // Print acc stream profile information.
-            ob_format stream_format = ob_stream_profile_get_format(stream_profile, &error);
+            stream_format = ob_stream_profile_get_format(stream_profile, &error);
             check_ob_error(&error);
 
-            ob_accel_sample_rate acc_fps = ob_accel_stream_profile_get_sample_rate(stream_profile, &error);
+            acc_fps = ob_accel_stream_profile_get_sample_rate(stream_profile, &error);
             check_ob_error(&error);
 
-            printf("  %d - type: %s, fps: %s\n", index, ob_format_to_string(stream_format), ob_imu_rate_type_to_string(acc_fps));
+            printf("  %u - type: %s, fps: %s\n", index, ob_format_to_string(stream_format), ob_imu_rate_type_to_string(acc_fps));
         }
         else if(sensor_type == OB_SENSOR_GYRO) {
+            ob_format           stream_format;
+            ob_gyro_sample_rate gyro_fps;
+
             // Print gyro stream profile information.
-            ob_format stream_format = ob_stream_profile_get_format(stream_profile, &error);
+            stream_format = ob_stream_profile_get_format(stream_profile, &error);
             check_ob_error(&error);
 
-            ob_gyro_sample_rate gyro_fps = ob_gyro_stream_profile_get_sample_rate(stream_profile, &error);
+            gyro_fps = ob_gyro_stream_profile_get_sample_rate(stream_profile, &error);
             check_ob_error(&error);
 
-            printf("  %d - type: %s, fps: %s\n", index, ob_format_to_string(stream_format), ob_imu_rate_type_to_string(gyro_fps));
+            printf("  %u - type: %s, fps: %s\n", index, ob_format_to_string(stream_format), ob_imu_rate_type_to_string(gyro_fps));
         }
 
         // destroy stream profile
@@ -120,37 +136,44 @@ void enumerate_stream_info(ob_sensor *sensor) {
 // enumerate sensor list.
 void enumerate_sensor_info(ob_device *device) {
     ob_error *error = NULL;
+    uint32_t  sensor_count;
 
     // Get sensor list.
     ob_sensor_list *sensor_list = ob_device_get_sensor_list(device, &error);
     check_ob_error(&error);
 
     // Get sensor count.
-    uint32_t sensor_count = ob_sensor_list_get_count(sensor_list, &error);
+    sensor_count = ob_sensor_list_get_count(sensor_list, &error);
     check_ob_error(&error);
 
-    while(true){
+    while(true) {
+        int index;
+
         // Print sensor information.
         printf("Available sensors: \n");
-        for(uint32_t index = 0; index < sensor_count; index++) {
+        for(uint32_t i = 0; i < sensor_count; i++) {
+            ob_sensor     *sensor;
+            ob_sensor_type sensor_type;
+            const char    *sensor_name;
+
             // Get device sensor.
-            ob_sensor *sensor = ob_sensor_list_get_sensor(sensor_list, index, &error);
+            sensor = ob_sensor_list_get_sensor(sensor_list, i, &error);
             check_ob_error(&error);
 
             // Get sensor type.
-            ob_sensor_type sensor_type = ob_sensor_get_type(sensor, &error);
+            sensor_type = ob_sensor_get_type(sensor, &error);
             check_ob_error(&error);
-            const char *sensor_name = ob_sensor_type_to_string(sensor_type);
+            sensor_name = ob_sensor_type_to_string(sensor_type);
 
             // Print sensor information.
-            printf("  %d - sensor name: %s\n", index, sensor_name);
+            printf("  %u - sensor name: %s\n", i, sensor_name);
 
             // destroy sensor
             ob_delete_sensor(sensor, &error);
             check_ob_error(&error);
         }
 
-        int index = select_index("Select a sensor to enumerate its stream profiles", 0, sensor_count - 1);
+        index = select_index("Select a sensor to enumerate its stream profiles", 0, sensor_count - 1);
         if(index >= 0) {
             // Get the selected sensor.
             ob_sensor *sensor = ob_sensor_list_get_sensor(sensor_list, index, &error);
@@ -162,10 +185,10 @@ void enumerate_sensor_info(ob_device *device) {
             // destroy sensor
             ob_delete_sensor(sensor, &error);
             check_ob_error(&error);
-        }else{
+        }
+        else {
             break;
         }
-
     }
     // destroy sensor list
     ob_delete_sensor_list(sensor_list, &error);
@@ -174,29 +197,33 @@ void enumerate_sensor_info(ob_device *device) {
 
 // Enumerates device information.
 void print_device_info(ob_device *device, int index) {
-    ob_error *error = NULL;
+    ob_error   *error    = NULL;
+    const char *dev_name = NULL;
+    int         dev_pid;
+    const char *dev_sn    = NULL;
+    const char *conn_type = NULL;
 
     // Get device information.
     ob_device_info *dev_inf = ob_device_get_device_info(device, &error);
     check_ob_error(&error);
 
     // Get device name.
-    const char *dev_name = ob_device_info_get_name(dev_inf, &error);
+    dev_name = ob_device_info_get_name(dev_inf, &error);
     check_ob_error(&error);
 
     // Get device pid.
-    int dev_pid = ob_device_info_get_pid(dev_inf, &error);
+    dev_pid = ob_device_info_get_pid(dev_inf, &error);
     check_ob_error(&error);
 
     // Get device serial number.
-    const char *dev_sn = ob_device_info_get_serial_number(dev_inf, &error);
+    dev_sn = ob_device_info_get_serial_number(dev_inf, &error);
     check_ob_error(&error);
 
     // Get connection type.
-    const char *conn_type = ob_device_info_get_connection_type(dev_inf, &error);
+    conn_type = ob_device_info_get_connection_type(dev_inf, &error);
     check_ob_error(&error);
 
-    printf("  %d - device name: %s, device pid: %#06x, device sn: %s, connection type: %s\n", index, dev_name, dev_pid, dev_sn, conn_type);
+    printf("  %d - device name: %s, device pid: %#06x, device sn: %s, connection type: %s\n", index, dev_name, (unsigned int)dev_pid, dev_sn, conn_type);
 
     ob_delete_device_info(dev_inf, &error);
     check_ob_error(&error);
@@ -205,7 +232,10 @@ void print_device_info(ob_device *device, int index) {
 int main(void) {
 
     // Used to return SDK interface error information.
-    ob_error *error = NULL;
+    ob_error       *error    = NULL;
+    ob_context     *ctx      = NULL;
+    ob_device_list *dev_list = NULL;
+    uint32_t        dev_count;
 
     // Get OrbbecSDK version.
     int major_version = ob_get_major_version();
@@ -214,15 +244,15 @@ int main(void) {
     printf("Orbbec SDK version: %d.%d.%d\n", major_version, minor_version, patch_version);
 
     // Create context.
-    ob_context *ctx = ob_create_context(&error);
+    ctx = ob_create_context(&error);
     check_ob_error(&error);
 
     // Get device list from context.
-    ob_device_list *dev_list = ob_query_device_list(ctx, &error);
+    dev_list = ob_query_device_list(ctx, &error);
     check_ob_error(&error);
 
     // Get device count from device list.
-    uint32_t dev_count = ob_device_list_get_count(dev_list, &error);
+    dev_count = ob_device_list_get_count(dev_list, &error);
     check_ob_error(&error);
 
     // Check if any device is connected.
@@ -242,6 +272,8 @@ int main(void) {
     }
 
     while(true) {
+        int device_index;
+
         printf("Connected devices: \n");
         for(uint32_t index = 0; index < dev_count; index++) {
             // Get device from device list.
@@ -257,7 +289,7 @@ int main(void) {
         }
 
         // Select a device.
-        int device_index = select_index("Select a device to enumerate its sensors", 0, dev_count - 1);
+        device_index = select_index("Select a device to enumerate its sensors", 0, dev_count - 1);
         if(device_index >= 0) {
             // get device from device list
             ob_device *device = ob_device_list_get_device(dev_list, device_index, &error);
@@ -269,7 +301,8 @@ int main(void) {
             // destroy device
             ob_delete_device(device, &error);
             check_ob_error(&error);
-        }else{
+        }
+        else {
             break;
         }
     }
@@ -287,4 +320,3 @@ int main(void) {
 
     return 0;
 }
-

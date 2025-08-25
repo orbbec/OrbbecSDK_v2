@@ -37,14 +37,14 @@ protected:
   MPEG2TransportUDPServerMediaSubsession(UsageEnvironment& env,
 					 char const* inputAddressStr, Port const& inputPort, Boolean inputStreamIsRawUDP);
       // called only by createNew();
-  virtual ~MPEG2TransportUDPServerMediaSubsession();
+  virtual ~MPEG2TransportUDPServerMediaSubsession() override;
 
 protected: // redefined virtual functions
   virtual FramedSource* createNewStreamSource(unsigned clientSessionId,
-					      unsigned& estBitrate);
+					      unsigned& estBitrate) override;
   virtual RTPSink* createNewRTPSink(Groupsock* rtpGroupsock,
 				    unsigned char rtpPayloadTypeIfDynamic,
-				    FramedSource* inputSource);
+				    FramedSource* inputSource) override;
 protected:
   char const* fInputAddressStr;
   Port fInputPort;

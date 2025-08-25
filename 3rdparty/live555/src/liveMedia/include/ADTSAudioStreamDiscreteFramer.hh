@@ -38,11 +38,11 @@ protected:
   ADTSAudioStreamDiscreteFramer(UsageEnvironment& env, FramedSource* inputSource,
 				u_int8_t profile, u_int8_t samplingFrequencyIndex, u_int8_t channelConfiguration);
       // called only by createNew()
-  virtual ~ADTSAudioStreamDiscreteFramer();
+  virtual ~ADTSAudioStreamDiscreteFramer() override;
 
 protected:
   // redefined virtual functions:
-  virtual void doGetNextFrame();
+  virtual void doGetNextFrame() override;
 
 protected:
   static void afterGettingFrame(void* clientData, unsigned frameSize,

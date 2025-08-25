@@ -44,7 +44,7 @@ public:
   ProxyRTSPClient(class ProxyServerMediaSession& ourServerMediaSession, char const* rtspURL,
                   char const* username, char const* password,
                   portNumBits tunnelOverHTTPPortNum, int verbosityLevel, int socketNumToServer);
-  virtual ~ProxyRTSPClient();
+  virtual ~ProxyRTSPClient() override;
 
   void continueAfterDESCRIBE(char const* sdpDescription);
   void continueAfterLivenessCommand(int resultCode, Boolean serverSupportsGetParameter);
@@ -54,7 +54,7 @@ public:
 
 private:
   void reset();
-  int connectToServer(int socketNum, portNumBits remotePortNum);
+  int connectToServer(int socketNum, portNumBits remotePortNum) override;
 
   Authenticator* auth() { return fOurAuthenticator; }
 
@@ -115,7 +115,7 @@ public:
       // If "socketNumToServer" is >= 0, then it is the socket number of an already-existing TCP connection to the server.
       //      (In this case, "inputStreamURL" must point to the socket's endpoint, so that it can be accessed via the socket.)
 
-  virtual ~ProxyServerMediaSession();
+  virtual ~ProxyServerMediaSession() override;
 
   char const* url() const;
 
@@ -192,7 +192,7 @@ private:
   PresentationTimeSubsessionNormalizer(PresentationTimeSessionNormalizer& parent, FramedSource* inputSource, RTPSource* rtpSource,
 				       char const* codecName, PresentationTimeSubsessionNormalizer* next);
       // called only from within "PresentationTimeSessionNormalizer"
-  virtual ~PresentationTimeSubsessionNormalizer();
+  virtual ~PresentationTimeSubsessionNormalizer() override;
 
   static void afterGettingFrame(void* clientData, unsigned frameSize,
                                 unsigned numTruncatedBytes,
@@ -204,7 +204,7 @@ private:
 			 unsigned durationInMicroseconds);
 
 private: // redefined virtual functions:
-  virtual void doGetNextFrame();
+  virtual void doGetNextFrame() override;
 
 private:
   PresentationTimeSessionNormalizer& fParent;
@@ -217,7 +217,7 @@ private:
 class PresentationTimeSessionNormalizer: public Medium {
 public:
   PresentationTimeSessionNormalizer(UsageEnvironment& env);
-  virtual ~PresentationTimeSessionNormalizer();
+  virtual ~PresentationTimeSessionNormalizer() override;
 
   PresentationTimeSubsessionNormalizer*
   createNewPresentationTimeSubsessionNormalizer(FramedSource* inputSource, RTPSource* rtpSource, char const* codecName);

@@ -54,18 +54,18 @@ protected:
 		Boolean doNormalMBitRule);
 	// called only by createNew()
 
-  virtual ~SimpleRTPSink();
+  virtual ~SimpleRTPSink() override;
 
 protected: // redefined virtual functions
   virtual void doSpecialFrameHandling(unsigned fragmentationOffset,
                                       unsigned char* frameStart,
                                       unsigned numBytesInFrame,
                                       struct timeval framePresentationTime,
-                                      unsigned numRemainingBytes);
+                                      unsigned numRemainingBytes) override;
   virtual
   Boolean frameCanAppearAfterPacketStart(unsigned char const* frameStart,
-					 unsigned numBytesInFrame) const;
-  virtual char const* sdpMediaType() const;
+					 unsigned numBytesInFrame) const override;
+  virtual char const* sdpMediaType() const override;
 
 private:
   char const* fSDPMediaTypeString;

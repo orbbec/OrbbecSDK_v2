@@ -40,13 +40,13 @@ protected:
 		       unsigned rtpTimestampFrequency);
       // called only by createNew()
 
-  virtual ~VorbisAudioRTPSource();
+  virtual ~VorbisAudioRTPSource() override;
 
 protected:
   // redefined virtual functions:
   virtual Boolean processSpecialHeader(BufferedPacket* packet,
-                                       unsigned& resultSpecialHeaderSize);
-  virtual char const* MIMEtype() const;
+                                       unsigned& resultSpecialHeaderSize) override;
+  virtual char const* MIMEtype() const override;
 
 private:
   u_int32_t fCurPacketIdent; // only the low-order 24 bits are used

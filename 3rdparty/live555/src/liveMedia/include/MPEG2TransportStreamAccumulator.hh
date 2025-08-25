@@ -36,11 +36,11 @@ protected:
   MPEG2TransportStreamAccumulator(UsageEnvironment& env,
 				  FramedSource* inputSource, unsigned maxPacketSize);
       // called only by createNew()
-  virtual ~MPEG2TransportStreamAccumulator();
+  virtual ~MPEG2TransportStreamAccumulator() override;
 
 private:
   // redefined virtual functions:
-  virtual void doGetNextFrame();
+  virtual void doGetNextFrame() override;
 
 private:
   static void afterGettingFrame(void* clientData, unsigned frameSize,

@@ -36,12 +36,12 @@ public:
 protected:
   AMRAudioSource(UsageEnvironment& env, Boolean isWideband, unsigned numChannels);
 	// virtual base class
-  virtual ~AMRAudioSource();
+  virtual ~AMRAudioSource() override;
 
 private:
   // redefined virtual functions:
-  virtual char const* MIMEtype() const;
-  virtual Boolean isAMRAudioSource() const;
+  virtual char const* MIMEtype() const override;
+  virtual Boolean isAMRAudioSource() const override;
 
 protected:
   Boolean fIsWideband;

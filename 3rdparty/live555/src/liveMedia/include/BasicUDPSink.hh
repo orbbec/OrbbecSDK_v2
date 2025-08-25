@@ -35,10 +35,10 @@ public:
 protected:
   BasicUDPSink(UsageEnvironment& env, Groupsock* gs, unsigned maxPayloadSize);
       // called only by createNew()
-  virtual ~BasicUDPSink();
+  virtual ~BasicUDPSink() override;
 
 private: // redefined virtual functions:
-  virtual Boolean continuePlaying();
+  virtual Boolean continuePlaying() override;
 
 private:
   void continuePlaying1();

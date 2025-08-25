@@ -39,23 +39,23 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 class BasicUsageEnvironment0: public UsageEnvironment {
 public:
   // redefined virtual functions:
-  virtual MsgString getResultMsg() const;
+  virtual MsgString getResultMsg() const override;
 
-  virtual void setResultMsg(MsgString msg);
+  virtual void setResultMsg(MsgString msg) override;
   virtual void setResultMsg(MsgString msg1,
-		    MsgString msg2);
+		    MsgString msg2) override;
   virtual void setResultMsg(MsgString msg1,
 		    MsgString msg2,
-		    MsgString msg3);
-  virtual void setResultErrMsg(MsgString msg, int err = 0);
+		    MsgString msg3) override;
+  virtual void setResultErrMsg(MsgString msg, int err = 0) override;
 
-  virtual void appendToResultMsg(MsgString msg);
+  virtual void appendToResultMsg(MsgString msg) override;
 
-  virtual void reportBackgroundError();
+  virtual void reportBackgroundError() override;
 
 protected:
   BasicUsageEnvironment0(TaskScheduler& taskScheduler);
-  virtual ~BasicUsageEnvironment0();
+  virtual ~BasicUsageEnvironment0() override;
 
 private:
   void reset();
@@ -73,7 +73,7 @@ class HandlerSet; // forward
 // (e.g., to redefine the implementation of socket event handling)
 class BasicTaskScheduler0: public TaskScheduler {
 public:
-  virtual ~BasicTaskScheduler0();
+  virtual ~BasicTaskScheduler0() override;
 
   virtual void SingleStep(unsigned maxDelayTime = 0) = 0;
       // "maxDelayTime" is in microseconds.  It allows a subclass to impose a limit
@@ -83,14 +83,14 @@ public:
 public:
   // Redefined virtual functions:
   virtual TaskToken scheduleDelayedTask(int64_t microseconds, TaskFunc* proc,
-				void* clientData);
-  virtual void unscheduleDelayedTask(TaskToken& prevTask);
+				void* clientData) override;
+  virtual void unscheduleDelayedTask(TaskToken& prevTask) override;
 
-  virtual void doEventLoop(char volatile* watchVariable);
+  virtual void doEventLoop(char volatile* watchVariable) override;
 
-  virtual EventTriggerId createEventTrigger(TaskFunc* eventHandlerProc);
-  virtual void deleteEventTrigger(EventTriggerId eventTriggerId);
-  virtual void triggerEvent(EventTriggerId eventTriggerId, void* clientData = NULL);
+  virtual EventTriggerId createEventTrigger(TaskFunc* eventHandlerProc) override;
+  virtual void deleteEventTrigger(EventTriggerId eventTriggerId) override;
+  virtual void triggerEvent(EventTriggerId eventTriggerId, void* clientData = NULL) override;
 
 protected:
   BasicTaskScheduler0();

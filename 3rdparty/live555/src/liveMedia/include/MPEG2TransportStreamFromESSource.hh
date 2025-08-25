@@ -45,7 +45,7 @@ public:
 protected:
   MPEG2TransportStreamFromESSource(UsageEnvironment& env);
       // called only by createNew()
-  virtual ~MPEG2TransportStreamFromESSource();
+  virtual ~MPEG2TransportStreamFromESSource() override;
 
   void addNewInputSource(FramedSource* inputSource,
 			 u_int8_t streamId, int mpegVersion, int16_t PID = -1);
@@ -53,8 +53,8 @@ protected:
 
 private:
   // Redefined virtual functions:
-  virtual void doStopGettingFrames();
-  virtual void awaitNewBuffer(unsigned char* oldBuffer);
+  virtual void doStopGettingFrames() override;
+  virtual void awaitNewBuffer(unsigned char* oldBuffer) override;
 
 private:
   friend class InputESSourceRecord;

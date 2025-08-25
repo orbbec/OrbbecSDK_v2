@@ -48,13 +48,13 @@ protected:
 		  char const* mimeTypeString, unsigned offset,
 		  Boolean doNormalMBitRule);
       // called only by createNew(), or by subclass constructors
-  virtual ~SimpleRTPSource();
+  virtual ~SimpleRTPSource() override;
 
 protected:
   // redefined virtual functions:
   virtual Boolean processSpecialHeader(BufferedPacket* packet,
-                                       unsigned& resultSpecialHeaderSize);
-  virtual char const* MIMEtype() const;
+                                       unsigned& resultSpecialHeaderSize) override;
+  virtual char const* MIMEtype() const override;
 
 private:
   char const* fMIMEtypeString;

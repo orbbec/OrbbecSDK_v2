@@ -36,13 +36,13 @@ protected:
   AMRAudioFileSink(UsageEnvironment& env, FILE* fid, unsigned bufferSize,
 		   char const* perFrameFileNamePrefix);
       // called only by createNew()
-  virtual ~AMRAudioFileSink();
+  virtual ~AMRAudioFileSink() override;
 
 protected: // redefined virtual functions:
-  virtual Boolean sourceIsCompatibleWithUs(MediaSource& source);
+  virtual Boolean sourceIsCompatibleWithUs(MediaSource& source) override;
   virtual void afterGettingFrame(unsigned frameSize,
 				 unsigned numTruncatedBytes,
-				 struct timeval presentationTime);
+				 struct timeval presentationTime) override;
 
 protected:
   Boolean fHaveWrittenHeader;

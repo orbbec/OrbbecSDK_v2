@@ -54,7 +54,7 @@ protected:
 			   Boolean createParser,
 			   Boolean includeStartCodeInOutput, Boolean insertAccessUnitDelimiters);
       // We're an abstract base class.
-  virtual ~H264or5VideoStreamFramer();
+  virtual ~H264or5VideoStreamFramer() override;
 
   void saveCopyOfVPS(u_int8_t* from, unsigned size);
   void saveCopyOfSPS(u_int8_t* from, unsigned size);
@@ -68,7 +68,7 @@ protected:
   Boolean isVCL(u_int8_t nal_unit_type);
 
 protected: // redefined virtual functions
-  virtual void doGetNextFrame();
+  virtual void doGetNextFrame() override;
 
 protected:
   int fHNumber;

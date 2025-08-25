@@ -2199,6 +2199,8 @@ FMT_CONSTEXPR inline auto parse_align(char c) -> align_t {
     return align::right;
   case '^':
     return align::center;
+  default:
+    break;
   }
   return align::none;
 }
@@ -2367,6 +2369,8 @@ FMT_CONSTEXPR FMT_INLINE auto parse_format_specs(
         break;
       case ' ':
         specs.sign = sign::space;
+        break;
+      default:
         break;
       }
       ++begin;

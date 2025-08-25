@@ -44,12 +44,12 @@ protected:
   DVVideoStreamFramer(UsageEnvironment& env, FramedSource* inputSource,
 		      Boolean sourceIsSeekable, Boolean leavePresentationTimesUnmodified);
       // called only by createNew(), or by subclass constructors
-  virtual ~DVVideoStreamFramer();
+  virtual ~DVVideoStreamFramer() override;
 
 protected:
   // redefined virtual functions:
-  virtual Boolean isDVVideoStreamFramer() const;
-  virtual void doGetNextFrame();
+  virtual Boolean isDVVideoStreamFramer() const override;
+  virtual void doGetNextFrame() override;
 
 protected:
   void getAndDeliverData(); // used to implement "doGetNextFrame()"

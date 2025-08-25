@@ -85,7 +85,7 @@ protected:
       // If "reclamationSeconds" > 0, then the "ClientSession" state for each client will get
       // reclaimed if no activity from the client is detected in at least "reclamationSeconds".
   // we're an abstract base class
-  virtual ~GenericMediaServer();
+  virtual ~GenericMediaServer() override;
   void cleanup(); // MUST be called in the destructor of any subclass of us
 
   static int setUpOurSocket(UsageEnvironment& env, Port& ourPort, int domain);

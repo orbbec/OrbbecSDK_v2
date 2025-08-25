@@ -60,7 +60,7 @@ protected:
 		   unsigned granularityInMS);
 	// we're an abstract base class
 
-  virtual ~AudioInputDevice();
+  virtual ~AudioInputDevice() override;
 
 protected:
   unsigned char fBitsPerSample, fNumChannels;

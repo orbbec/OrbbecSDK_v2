@@ -33,21 +33,21 @@ protected:
   MPEG1or2VideoRTPSink(UsageEnvironment& env, Groupsock* RTPgs);
 	// called only by createNew()
 
-  virtual ~MPEG1or2VideoRTPSink();
+  virtual ~MPEG1or2VideoRTPSink() override;
 
 private: // redefined virtual functions:
-  virtual Boolean sourceIsCompatibleWithUs(MediaSource& source);
+  virtual Boolean sourceIsCompatibleWithUs(MediaSource& source) override;
 
   virtual void doSpecialFrameHandling(unsigned fragmentationOffset,
                                       unsigned char* frameStart,
                                       unsigned numBytesInFrame,
                                       struct timeval framePresentationTime,
-                                      unsigned numRemainingBytes);
-  virtual Boolean allowFragmentationAfterStart() const;
+                                      unsigned numRemainingBytes) override;
+  virtual Boolean allowFragmentationAfterStart() const override;
   virtual
   Boolean frameCanAppearAfterPacketStart(unsigned char const* frameStart,
-					 unsigned numBytesInFrame) const;
-  virtual unsigned specialHeaderSize() const;
+					 unsigned numBytesInFrame) const override;
+  virtual unsigned specialHeaderSize() const override;
 
 private:
   // MPEG video-specific state, used to decide how to fill out the

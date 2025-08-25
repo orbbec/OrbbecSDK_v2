@@ -37,12 +37,12 @@ protected:
 		unsigned outBitrate /* in kbps */,
 		FramedSource* inputSource);
       // called only by createNew()
-  virtual ~MP3ADUTranscoder();
+  virtual ~MP3ADUTranscoder() override;
 
 private:
   // redefined virtual functions:
-  virtual void doGetNextFrame();
-  virtual void getAttributes() const;
+  virtual void doGetNextFrame() override;
+  virtual void getAttributes() const override;
 
 private:
   static void afterGettingFrame(void* clientData,

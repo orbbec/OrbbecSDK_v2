@@ -41,12 +41,12 @@ public:
 protected:
   PassiveServerMediaSubsession(RTPSink& rtpSink, RTCPInstance* rtcpInstance);
       // called only by createNew();
-  virtual ~PassiveServerMediaSubsession();
+  virtual ~PassiveServerMediaSubsession() override;
 
   virtual Boolean rtcpIsMuxed();
 
 protected: // redefined virtual functions
-  virtual char const* sdpLines(int addressFamily);
+  virtual char const* sdpLines(int addressFamily) override;
   virtual void getStreamParameters(unsigned clientSessionId,
 				   struct sockaddr_storage const& clientAddress,
                                    Port const& clientRTPPort,
@@ -60,18 +60,18 @@ protected: // redefined virtual functions
                                    Boolean& isMulticast,
                                    Port& serverRTPPort,
                                    Port& serverRTCPPort,
-                                   void*& streamToken);
+                                   void*& streamToken) override;
   virtual void startStream(unsigned clientSessionId, void* streamToken,
 			   TaskFunc* rtcpRRHandler,
 			   void* rtcpRRHandlerClientData,
                            unsigned short& rtpSeqNum,
                            unsigned& rtpTimestamp,
 			   ServerRequestAlternativeByteHandler* serverRequestAlternativeByteHandler,
-                           void* serverRequestAlternativeByteHandlerClientData);
-  virtual float getCurrentNPT(void* streamToken);
+                           void* serverRequestAlternativeByteHandlerClientData) override;
+  virtual float getCurrentNPT(void* streamToken) override;
   virtual void getRTPSinkandRTCP(void* streamToken,
-				 RTPSink const*& rtpSink, RTCPInstance const*& rtcp);
-  virtual void deleteStream(unsigned clientSessionId, void*& streamToken);
+				 RTPSink const*& rtpSink, RTCPInstance const*& rtcp) override;
+  virtual void deleteStream(unsigned clientSessionId, void*& streamToken) override;
 
 protected:
   char* fSDPLines;

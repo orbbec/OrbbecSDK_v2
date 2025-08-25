@@ -33,10 +33,10 @@ protected:
 		       char const* sPropParameterSetsStr2 = NULL,
 		       char const* sPropParameterSetsStr3 = NULL);
       // we're an abstract base class
-  virtual ~H264or5VideoFileSink();
+  virtual ~H264or5VideoFileSink() override;
 
 protected: // redefined virtual functions:
-  virtual void afterGettingFrame(unsigned frameSize, unsigned numTruncatedBytes, struct timeval presentationTime);
+  virtual void afterGettingFrame(unsigned frameSize, unsigned numTruncatedBytes, struct timeval presentationTime) override;
 
 private:
   char const* fSPropParameterSetsStr[3];

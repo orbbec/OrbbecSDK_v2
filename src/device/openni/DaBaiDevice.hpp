@@ -15,7 +15,7 @@ namespace libobsensor {
 class DaBaiDevice : public OpenNIDeviceBase {
 public:
     DaBaiDevice(const std::shared_ptr<const IDeviceEnumInfo> &info);
-    virtual ~DaBaiDevice() noexcept;
+    virtual ~DaBaiDevice() noexcept override;
 
 protected:
     virtual void init() override;

@@ -40,7 +40,7 @@ private:
   MPEG1or2AudioStreamFramer(UsageEnvironment& env, FramedSource* inputSource,
 			    Boolean syncWithInputSource);
       // called only by createNew()
-  virtual ~MPEG1or2AudioStreamFramer();
+  virtual ~MPEG1or2AudioStreamFramer() override;
 
   static void continueReadProcessing(void* clientData,
 				     unsigned char* ptr, unsigned size,
@@ -52,7 +52,7 @@ private:
 
 private:
   // redefined virtual functions:
-  virtual void doGetNextFrame();
+  virtual void doGetNextFrame() override;
 
 private:
   void reset();

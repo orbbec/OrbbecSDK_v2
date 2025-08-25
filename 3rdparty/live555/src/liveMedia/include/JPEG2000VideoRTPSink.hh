@@ -32,15 +32,15 @@ protected:
   JPEG2000VideoRTPSink(UsageEnvironment& env, Groupsock* RTPgs);
 	// called only by createNew()
 
-  virtual ~JPEG2000VideoRTPSink();
+  virtual ~JPEG2000VideoRTPSink() override;
 
 private: // redefined virtual functions:
   virtual void doSpecialFrameHandling(unsigned fragmentationOffset,
                                       unsigned char* frameStart,
                                       unsigned numBytesInFrame,
                                       struct timeval framePresentationTime,
-                                      unsigned numRemainingBytes);
-  virtual unsigned specialHeaderSize() const;
+                                      unsigned numRemainingBytes) override;
+  virtual unsigned specialHeaderSize() const override;
 };
 
 #endif

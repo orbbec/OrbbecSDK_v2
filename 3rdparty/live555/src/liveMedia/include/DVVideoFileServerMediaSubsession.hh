@@ -34,15 +34,15 @@ public:
 private:
   DVVideoFileServerMediaSubsession(UsageEnvironment& env, char const* fileName, Boolean reuseFirstSource);
       // called only by createNew();
-  virtual ~DVVideoFileServerMediaSubsession();
+  virtual ~DVVideoFileServerMediaSubsession() override;
 
 private: // redefined virtual functions
-  virtual char const* getAuxSDPLine(RTPSink* rtpSink, FramedSource* inputSource);
-  virtual void seekStreamSource(FramedSource* inputSource, double& seekNPT, double streamDuration, u_int64_t& numBytes);
-  virtual void setStreamSourceDuration(FramedSource* inputSource, double streamDuration, u_int64_t& numBytes);
-  virtual FramedSource* createNewStreamSource(unsigned clientSessionId, unsigned& estBitrate);
-  virtual RTPSink* createNewRTPSink(Groupsock* rtpGroupsock, unsigned char rtpPayloadTypeIfDynamic, FramedSource* inputSource);
-  virtual float duration() const;
+  virtual char const* getAuxSDPLine(RTPSink* rtpSink, FramedSource* inputSource) override;
+  virtual void seekStreamSource(FramedSource* inputSource, double& seekNPT, double streamDuration, u_int64_t& numBytes) override;
+  virtual void setStreamSourceDuration(FramedSource* inputSource, double streamDuration, u_int64_t& numBytes) override;
+  virtual FramedSource* createNewStreamSource(unsigned clientSessionId, unsigned& estBitrate) override;
+  virtual RTPSink* createNewRTPSink(Groupsock* rtpGroupsock, unsigned char rtpPayloadTypeIfDynamic, FramedSource* inputSource) override;
+  virtual float duration() const override;
 
 private:
   float fFileDuration; // in seconds

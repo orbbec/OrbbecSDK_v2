@@ -31,7 +31,7 @@ public:
 					   char const* sampling);
 
 protected:
-  virtual ~JPEG2000VideoRTPSource();
+  virtual ~JPEG2000VideoRTPSource() override;
 
 protected:
   JPEG2000VideoRTPSource(UsageEnvironment& env, Groupsock* RTPgs,
@@ -43,8 +43,8 @@ protected:
 private:
   // redefined virtual functions:
   virtual Boolean processSpecialHeader(BufferedPacket* packet,
-                                       unsigned& resultSpecialHeaderSize);
-  virtual char const* MIMEtype() const;
+                                       unsigned& resultSpecialHeaderSize) override;
+  virtual char const* MIMEtype() const override;
 
 private:
   char* fSampling;

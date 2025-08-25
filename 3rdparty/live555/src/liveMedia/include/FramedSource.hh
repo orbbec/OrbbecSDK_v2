@@ -66,7 +66,7 @@ public:
 
 protected:
   FramedSource(UsageEnvironment& env); // abstract base class
-  virtual ~FramedSource();
+  virtual ~FramedSource() override;
 
   virtual void doStopGettingFrames();
 
@@ -81,7 +81,7 @@ protected:
 
 private:
   // redefined virtual functions:
-  virtual Boolean isFramedSource() const;
+  virtual Boolean isFramedSource() const override;
 
 private:
   afterGettingFunc* fAfterGettingFunc;

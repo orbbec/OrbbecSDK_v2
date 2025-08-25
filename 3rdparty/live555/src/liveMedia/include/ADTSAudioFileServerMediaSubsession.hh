@@ -35,14 +35,14 @@ protected:
   ADTSAudioFileServerMediaSubsession(UsageEnvironment& env,
 				      char const* fileName, Boolean reuseFirstSource);
       // called only by createNew();
-  virtual ~ADTSAudioFileServerMediaSubsession();
+  virtual ~ADTSAudioFileServerMediaSubsession() override;
 
 protected: // redefined virtual functions
   virtual FramedSource* createNewStreamSource(unsigned clientSessionId,
-					      unsigned& estBitrate);
+					      unsigned& estBitrate) override;
   virtual RTPSink* createNewRTPSink(Groupsock* rtpGroupsock,
                                     unsigned char rtpPayloadTypeIfDynamic,
-				    FramedSource* inputSource);
+				    FramedSource* inputSource) override;
 };
 
 #endif

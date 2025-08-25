@@ -30,7 +30,8 @@ public:
     }
 
 private:
-    Field T::            *field_;
+    Field T::*field_;
+    
     FrameMetadataModifier modifier_;
 };
 

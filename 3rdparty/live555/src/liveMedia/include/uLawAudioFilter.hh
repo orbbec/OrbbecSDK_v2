@@ -40,11 +40,11 @@ protected:
   uLawFromPCMAudioSource(UsageEnvironment& env, FramedSource* inputSource,
 			 int byteOrdering);
       // called only by createNew()
-  virtual ~uLawFromPCMAudioSource();
+  virtual ~uLawFromPCMAudioSource() override;
 
 private:
   // Redefined virtual functions:
-  virtual void doGetNextFrame();
+  virtual void doGetNextFrame() override;
 
 private:
   static void afterGettingFrame(void* clientData, unsigned frameSize,
@@ -74,11 +74,11 @@ protected:
   PCMFromuLawAudioSource(UsageEnvironment& env,
 			 FramedSource* inputSource);
       // called only by createNew()
-  virtual ~PCMFromuLawAudioSource();
+  virtual ~PCMFromuLawAudioSource() override;
 
 private:
   // Redefined virtual functions:
-  virtual void doGetNextFrame();
+  virtual void doGetNextFrame() override;
 
 private:
   static void afterGettingFrame(void* clientData, unsigned frameSize,
@@ -106,11 +106,11 @@ public:
 protected:
   NetworkFromHostOrder16(UsageEnvironment& env, FramedSource* inputSource);
       // called only by createNew()
-  virtual ~NetworkFromHostOrder16();
+  virtual ~NetworkFromHostOrder16() override;
 
 private:
   // Redefined virtual functions:
-  virtual void doGetNextFrame();
+  virtual void doGetNextFrame() override;
 
 private:
   static void afterGettingFrame(void* clientData, unsigned frameSize,
@@ -134,11 +134,11 @@ public:
 protected:
   HostFromNetworkOrder16(UsageEnvironment& env, FramedSource* inputSource);
       // called only by createNew()
-  virtual ~HostFromNetworkOrder16();
+  virtual ~HostFromNetworkOrder16() override;
 
 private:
   // Redefined virtual functions:
-  virtual void doGetNextFrame();
+  virtual void doGetNextFrame() override;
 
 private:
   static void afterGettingFrame(void* clientData, unsigned frameSize,
@@ -161,11 +161,11 @@ public:
 protected:
   EndianSwap16(UsageEnvironment& env, FramedSource* inputSource);
       // called only by createNew()
-  virtual ~EndianSwap16();
+  virtual ~EndianSwap16() override;
 
 private:
   // Redefined virtual functions:
-  virtual void doGetNextFrame();
+  virtual void doGetNextFrame() override;
 
 private:
   static void afterGettingFrame(void* clientData, unsigned frameSize,
@@ -188,11 +188,11 @@ public:
 protected:
   EndianSwap24(UsageEnvironment& env, FramedSource* inputSource);
       // called only by createNew()
-  virtual ~EndianSwap24();
+  virtual ~EndianSwap24() override;
 
 private:
   // Redefined virtual functions:
-  virtual void doGetNextFrame();
+  virtual void doGetNextFrame() override;
 
 private:
   static void afterGettingFrame(void* clientData, unsigned frameSize,

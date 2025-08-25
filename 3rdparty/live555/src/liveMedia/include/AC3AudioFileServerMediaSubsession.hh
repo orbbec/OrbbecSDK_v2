@@ -35,14 +35,14 @@ private:
   AC3AudioFileServerMediaSubsession(UsageEnvironment& env,
 				      char const* fileName, Boolean reuseFirstSource);
       // called only by createNew();
-  virtual ~AC3AudioFileServerMediaSubsession();
+  virtual ~AC3AudioFileServerMediaSubsession() override;
 
 private: // redefined virtual functions
   virtual FramedSource* createNewStreamSource(unsigned clientSessionId,
-					      unsigned& estBitrate);
+					      unsigned& estBitrate) override;
   virtual RTPSink* createNewRTPSink(Groupsock* rtpGroupsock,
                                     unsigned char rtpPayloadTypeIfDynamic,
-				    FramedSource* inputSource);
+				    FramedSource* inputSource) override;
 };
 
 #endif

@@ -3,12 +3,13 @@
 
 message(STATUS "Setting Linux configurations")
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}   -Wl,-Bsymbolic -fPIC -pedantic -D_DEFAULT_SOURCE -fvisibility=hidden")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC -pedantic -D_DEFAULT_SOURCE -fvisibility=hidden")
 set(CMAKE_CXX_FLAGS
-    "${CMAKE_CXX_FLAGS}  -Wl,-Bsymbolic -fPIC -pedantic -Wno-missing-field-initializers -fpermissive -fvisibility=hidden"
+    "${CMAKE_CXX_FLAGS} -fPIC -pedantic -Wno-missing-field-initializers -fpermissive -fvisibility=hidden"
 )
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -Wno-switch -Wno-multichar -Wsequence-point -Wformat -Wformat-security")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--disable-new-dtags")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--disable-new-dtags -Wl,-Bsymbolic")
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-Bsymbolic")
 
 set(CMAKE_C_VISIBILITY_PRESET hidden)
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
@@ -44,21 +45,23 @@ endif()
 execute_process(COMMAND ${CMAKE_C_COMPILER} -dumpmachine OUTPUT_VARIABLE MACHINE)
 
 if(OB_BUILD_LINUX_ARM64)
-    if(${MACHINE} MATCHES "aarch64-linux-gnu")
+    if(${MACHINE} MATCHES "aarch64.*-linux-gnu")
         add_definitions(-DOS_ARM)
         add_definitions(-DOS_ARM64)
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -Wl,--allow-shlib-undefined -mstrict-align -ftree-vectorize")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mstrict-align -ftree-vectorize")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mstrict-align -ftree-vectorize")
 
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,--allow-shlib-undefined -mstrict-align -ftree-vectorize")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--allow-shlib-undefined")
+        set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--allow-shlib-undefined")
 
         set(OB_CURRENT_OS "linux_arm64")
     else()
         message(SEND_ERROR "Obsensor: check aarch64-linux-gnu not found!!!")
-    endif(${MACHINE} MATCHES "aarch64-linux-gnu")
+    endif()
 endif()
 
 if(OB_BUILD_LINUX_ARM32)
-    if(${MACHINE} MATCHES "arm-linux-gnueabihf")
+    if(${MACHINE} MATCHES "arm.*-linux-gnueabihf")
         add_definitions(-DOS_ARM)
         add_definitions(-DOS_ARM32)
         set(CMAKE_C_FLAGS

@@ -34,15 +34,15 @@ protected:
   MPEG1or2AudioRTPSink(UsageEnvironment& env, Groupsock* RTPgs);
 	// called only by createNew()
 
-  virtual ~MPEG1or2AudioRTPSink();
+  virtual ~MPEG1or2AudioRTPSink() override;
 
 private: // redefined virtual functions:
   virtual void doSpecialFrameHandling(unsigned fragmentationOffset,
                                       unsigned char* frameStart,
                                       unsigned numBytesInFrame,
                                       struct timeval framePresentationTime,
-                                      unsigned numRemainingBytes);
-  virtual unsigned specialHeaderSize() const;
+                                      unsigned numRemainingBytes) override;
+  virtual unsigned specialHeaderSize() const override;
 };
 
 #endif

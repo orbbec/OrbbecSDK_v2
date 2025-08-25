@@ -45,10 +45,10 @@ protected:
   FileSink(UsageEnvironment& env, FILE* fid, unsigned bufferSize,
 	   char const* perFrameFileNamePrefix);
       // called only by createNew()
-  virtual ~FileSink();
+  virtual ~FileSink() override;
 
 protected: // redefined virtual functions:
-  virtual Boolean continuePlaying();
+  virtual Boolean continuePlaying() override;
 
 protected:
   static void afterGettingFrame(void* clientData, unsigned frameSize,

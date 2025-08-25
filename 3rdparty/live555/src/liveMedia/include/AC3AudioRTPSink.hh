@@ -38,17 +38,17 @@ protected:
 		  u_int32_t rtpTimestampFrequency);
 	// called only by createNew()
 
-  virtual ~AC3AudioRTPSink();
+  virtual ~AC3AudioRTPSink() override;
 
 private: // redefined virtual functions:
   virtual Boolean frameCanAppearAfterPacketStart(unsigned char const* frameStart,
-						 unsigned numBytesInFrame) const;
+						 unsigned numBytesInFrame) const override;
   virtual void doSpecialFrameHandling(unsigned fragmentationOffset,
                                       unsigned char* frameStart,
                                       unsigned numBytesInFrame,
                                       struct timeval framePresentationTime,
-                                      unsigned numRemainingBytes);
-  virtual unsigned specialHeaderSize() const;
+                                      unsigned numRemainingBytes) override;
+  virtual unsigned specialHeaderSize() const override;
 
 private:
   unsigned char fTotNumFragmentsUsed; // used only if a frame gets fragmented across multiple packets

@@ -84,7 +84,7 @@ private:
   MatroskaFile(UsageEnvironment& env, char const* fileName, onCreationFunc* onCreation, void* onCreationClientData,
 	       char const* preferredLanguage);
       // called only by createNew()
-  virtual ~MatroskaFile();
+  virtual ~MatroskaFile() override;
 
   static void handleEndOfTrackHeaderParsing(void* clientData);
   void handleEndOfTrackHeaderParsing();
@@ -192,7 +192,7 @@ protected:
   class MatroskaDemuxedTrack* lookupDemuxedTrack(unsigned trackNumber);
 
   MatroskaDemux(MatroskaFile& ourFile); // we're created only by a "MatroskaFile" (a friend)
-  virtual ~MatroskaDemux();
+  virtual ~MatroskaDemux() override;
 
 private:
   friend class MatroskaDemuxedTrack;

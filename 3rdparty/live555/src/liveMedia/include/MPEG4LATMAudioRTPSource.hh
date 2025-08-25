@@ -39,7 +39,7 @@ public:
   Boolean returnedFrameIncludesLATMDataLengthField() const { return fIncludeLATMDataLengthField; }
 
 protected:
-  virtual ~MPEG4LATMAudioRTPSource();
+  virtual ~MPEG4LATMAudioRTPSource() override;
 
 private:
   MPEG4LATMAudioRTPSource(UsageEnvironment& env, Groupsock* RTPgs,
@@ -50,8 +50,8 @@ private:
 private:
   // redefined virtual functions:
   virtual Boolean processSpecialHeader(BufferedPacket* packet,
-                                       unsigned& resultSpecialHeaderSize);
-  virtual char const* MIMEtype() const;
+                                       unsigned& resultSpecialHeaderSize) override;
+  virtual char const* MIMEtype() const override;
 
 private:
   Boolean fIncludeLATMDataLengthField;

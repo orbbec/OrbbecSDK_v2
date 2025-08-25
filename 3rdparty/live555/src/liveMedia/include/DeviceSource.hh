@@ -47,11 +47,11 @@ public:
 protected:
   DeviceSource(UsageEnvironment& env, DeviceParameters params);
   // called only by createNew(), or by subclass constructors
-  virtual ~DeviceSource();
+  virtual ~DeviceSource() override;
 
 private:
   // redefined virtual functions:
-  virtual void doGetNextFrame();
+  virtual void doGetNextFrame() override;
   //virtual void doStopGettingFrames(); // optional
 
 private:

@@ -38,7 +38,7 @@ protected:
   MP3Transcoder(UsageEnvironment& env,
 		MP3ADUTranscoder* aduTranscoder);
       // called only by createNew()
-  virtual ~MP3Transcoder();
+  virtual ~MP3Transcoder() override;
 };
 
 #endif

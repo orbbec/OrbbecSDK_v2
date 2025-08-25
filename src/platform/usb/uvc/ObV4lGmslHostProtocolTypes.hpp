@@ -25,6 +25,12 @@
 #include <condition_variable>
 
 namespace libobsensor {
+
+#if defined(__clang__)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wpacked"
+#endif
+
 //----------------------------------------------------------------------------
 // GMSL MIPI & V4L2 CMD protocol code
 #define DS5_DEPTH_STREAM_DT 0x4000
@@ -297,5 +303,9 @@ typedef struct __attribute__((__packed__)) {
 
 extern std::mutex mMultiThreadI2CMutex;
 extern int        xioctlGmsl(int fh, unsigned long request, void *arg);
+
+#if defined(__clang__)
+#pragma clang diagnostic pop
+#endif
 
 }  // namespace libobsensor

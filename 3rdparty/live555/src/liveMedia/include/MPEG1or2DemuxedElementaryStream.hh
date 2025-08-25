@@ -37,14 +37,14 @@ private: // We are created only by a MPEG1or2Demux (a friend)
   MPEG1or2DemuxedElementaryStream(UsageEnvironment& env,
 			      u_int8_t streamIdTag,
 			      MPEG1or2Demux& sourceDemux);
-  virtual ~MPEG1or2DemuxedElementaryStream();
+  virtual ~MPEG1or2DemuxedElementaryStream() override;
 
 private:
   // redefined virtual functions:
-  virtual void doGetNextFrame();
-  virtual void doStopGettingFrames();
-  virtual char const* MIMEtype() const;
-  virtual unsigned maxFrameSize() const;
+  virtual void doGetNextFrame() override;
+  virtual void doStopGettingFrames() override;
+  virtual char const* MIMEtype() const override;
+  virtual unsigned maxFrameSize() const override;
 
 private:
   static void afterGettingFrame(void* clientData,

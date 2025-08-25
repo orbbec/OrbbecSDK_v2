@@ -56,15 +56,15 @@ protected:
 		       unsigned playTimePerFrame);
 	// called only by createNew()
 
-  virtual ~ByteStreamFileSource();
+  virtual ~ByteStreamFileSource() override;
 
   static void fileReadableHandler(ByteStreamFileSource* source, int mask);
   void doReadFromFile();
 
 private:
   // redefined virtual functions:
-  virtual void doGetNextFrame();
-  virtual void doStopGettingFrames();
+  virtual void doGetNextFrame() override;
+  virtual void doStopGettingFrames() override;
 
 protected:
   u_int64_t fFileSize;

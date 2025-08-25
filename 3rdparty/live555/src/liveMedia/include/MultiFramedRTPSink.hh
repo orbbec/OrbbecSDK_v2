@@ -45,7 +45,7 @@ protected:
 		     unsigned numChannels = 1);
 	// we're a virtual base class
 
-  virtual ~MultiFramedRTPSink();
+  virtual ~MultiFramedRTPSink() override;
 
   virtual void doSpecialFrameHandling(unsigned fragmentationOffset,
 				      unsigned char* frameStart,
@@ -92,10 +92,10 @@ protected:
   unsigned ourMaxPacketSize() const { return fOurMaxPacketSize; }
 
 public: // redefined virtual functions:
-  virtual void stopPlaying();
+  virtual void stopPlaying() override;
 
 protected: // redefined virtual functions:
-  virtual Boolean continuePlaying();
+  virtual Boolean continuePlaying() override;
 
 private:
   void buildAndSendPacket(Boolean isFirstPacket);

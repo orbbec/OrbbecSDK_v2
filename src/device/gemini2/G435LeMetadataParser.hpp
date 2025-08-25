@@ -19,7 +19,7 @@ namespace libobsensor {
 template <typename T> class G435LeMetadataTimestampParser : public IFrameMetadataParser {
 public:
     G435LeMetadataTimestampParser() {};
-    virtual ~G435LeMetadataTimestampParser() = default;
+    virtual ~G435LeMetadataTimestampParser() override = default;
 
     int64_t getValue(const uint8_t *metadata, size_t dataSize) override {
         if(!isSupported(metadata, dataSize)) {

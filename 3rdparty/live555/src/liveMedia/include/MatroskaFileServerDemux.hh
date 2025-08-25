@@ -63,7 +63,7 @@ private:
 			  onCreationFunc* onCreation, void* onCreationClientData,
 			  char const* preferredLanguage);
       // called only by createNew()
-  virtual ~MatroskaFileServerDemux();
+  virtual ~MatroskaFileServerDemux() override;
 
   static void onMatroskaFileCreation(MatroskaFile* newFile, void* clientData);
   void onMatroskaFileCreation(MatroskaFile* newFile);

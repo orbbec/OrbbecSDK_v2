@@ -93,7 +93,7 @@ protected:
   RTPSource(UsageEnvironment& env, Groupsock* RTPgs,
 	    unsigned char rtpPayloadFormat, u_int32_t rtpTimestampFrequency);
       // abstract base class
-  virtual ~RTPSource();
+  virtual ~RTPSource() override;
 
 protected:
   RTPInterface fRTPInterface;
@@ -107,8 +107,8 @@ protected:
 
 private:
   // redefined virtual functions:
-  virtual Boolean isRTPSource() const;
-  virtual void getAttributes() const;
+  virtual Boolean isRTPSource() const override;
+  virtual void getAttributes() const override;
 
 private:
   unsigned char fRTPPayloadFormat;

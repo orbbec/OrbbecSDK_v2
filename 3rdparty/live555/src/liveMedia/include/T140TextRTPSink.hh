@@ -38,17 +38,17 @@ protected:
   T140TextRTPSink(UsageEnvironment& env, Groupsock* RTPgs, unsigned char rtpPayloadFormat);
 	// called only by createNew()
 
-  virtual ~T140TextRTPSink();
+  virtual ~T140TextRTPSink() override;
 
 protected: // redefined virtual functions:
-  virtual Boolean continuePlaying();
+  virtual Boolean continuePlaying() override;
   virtual void doSpecialFrameHandling(unsigned fragmentationOffset,
                                       unsigned char* frameStart,
                                       unsigned numBytesInFrame,
                                       struct timeval framePresentationTime,
-                                      unsigned numRemainingBytes);
+                                      unsigned numRemainingBytes) override;
   virtual Boolean frameCanAppearAfterPacketStart(unsigned char const* frameStart,
-						 unsigned numBytesInFrame) const;
+						 unsigned numBytesInFrame) const override;
 
 protected:
   T140IdleFilter* fOurIdleFilter;
@@ -66,11 +66,11 @@ protected:
 class T140IdleFilter: public FramedFilter {
 public:
   T140IdleFilter(UsageEnvironment& env, FramedSource* inputSource);
-  virtual ~T140IdleFilter();
+  virtual ~T140IdleFilter() override;
 
 private: // redefined virtual functions:
-  virtual void doGetNextFrame();
-  virtual void doStopGettingFrames();
+  virtual void doGetNextFrame() override;
+  virtual void doStopGettingFrames() override;
 
 private:
   static void afterGettingFrame(void* clientData, unsigned frameSize,

@@ -42,7 +42,7 @@ private:
   AC3AudioStreamFramer(UsageEnvironment& env, FramedSource* inputSource,
 		       unsigned char streamCode);
       // called only by createNew()
-  virtual ~AC3AudioStreamFramer();
+  virtual ~AC3AudioStreamFramer() override;
 
   static void handleNewData(void* clientData,
 			    unsigned char* ptr, unsigned size,
@@ -53,7 +53,7 @@ private:
 
 private:
   // redefined virtual functions:
-  virtual void doGetNextFrame();
+  virtual void doGetNextFrame() override;
 
 private:
   struct timeval currentFramePlayTime() const;

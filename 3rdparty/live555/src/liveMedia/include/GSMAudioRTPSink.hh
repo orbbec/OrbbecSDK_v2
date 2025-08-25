@@ -33,12 +33,12 @@ protected:
   GSMAudioRTPSink(UsageEnvironment& env, Groupsock* RTPgs);
 	// called only by createNew()
 
-  virtual ~GSMAudioRTPSink();
+  virtual ~GSMAudioRTPSink() override;
 
 private: // redefined virtual functions:
   virtual
   Boolean frameCanAppearAfterPacketStart(unsigned char const* frameStart,
-					 unsigned numBytesInFrame) const;
+					 unsigned numBytesInFrame) const override;
 };
 
 #endif

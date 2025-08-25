@@ -49,11 +49,11 @@ public:
 
 protected:
   MediaSource(UsageEnvironment& env); // abstract base class
-  virtual ~MediaSource();
+  virtual ~MediaSource() override;
 
 private:
   // redefined virtual functions:
-  virtual Boolean isSource() const;
+  virtual Boolean isSource() const override;
 };
 
 #endif

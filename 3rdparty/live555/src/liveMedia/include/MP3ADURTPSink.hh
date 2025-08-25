@@ -31,7 +31,7 @@ public:
 				  unsigned char RTPPayloadType);
 
 protected:
-  virtual ~MP3ADURTPSink();
+  virtual ~MP3ADURTPSink() override;
 
 private:
   MP3ADURTPSink(UsageEnvironment& env, Groupsock* RTPgs,
@@ -45,8 +45,8 @@ private:
                                       unsigned char* frameStart,
                                       unsigned numBytesInFrame,
                                       struct timeval framePresentationTime,
-                                      unsigned numRemainingBytes);
-  virtual unsigned specialHeaderSize() const;
+                                      unsigned numRemainingBytes) override;
+  virtual unsigned specialHeaderSize() const override;
 
 private:
   unsigned fCurADUSize; // used when fragmenting over multiple RTP packets

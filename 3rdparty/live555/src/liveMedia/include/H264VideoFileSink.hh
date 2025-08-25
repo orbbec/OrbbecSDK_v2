@@ -41,7 +41,7 @@ protected:
 		    char const* sPropParameterSetsStr,
 		    unsigned bufferSize, char const* perFrameFileNamePrefix);
       // called only by createNew()
-  virtual ~H264VideoFileSink();
+  virtual ~H264VideoFileSink() override;
 };
 
 #endif

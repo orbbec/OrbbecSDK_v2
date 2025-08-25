@@ -37,18 +37,18 @@ protected:
 		       u_int32_t rtpTimestampFrequency);
 	// called only by createNew()
 
-  virtual ~H263plusVideoRTPSink();
+  virtual ~H263plusVideoRTPSink() override;
 
 private: // redefined virtual functions:
   virtual void doSpecialFrameHandling(unsigned fragmentationOffset,
                                       unsigned char* frameStart,
                                       unsigned numBytesInFrame,
                                       struct timeval framePresentationTime,
-                                      unsigned numRemainingBytes);
+                                      unsigned numRemainingBytes) override;
   virtual
   Boolean frameCanAppearAfterPacketStart(unsigned char const* frameStart,
-					 unsigned numBytesInFrame) const;
-  virtual unsigned specialHeaderSize() const;
+					 unsigned numBytesInFrame) const override;
+  virtual unsigned specialHeaderSize() const override;
 };
 
 #endif

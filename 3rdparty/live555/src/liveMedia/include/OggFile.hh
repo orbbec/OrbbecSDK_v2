@@ -69,7 +69,7 @@ public:
 private:
   OggFile(UsageEnvironment& env, char const* fileName, onCreationFunc* onCreation, void* onCreationClientData);
     // called only by createNew()
-  virtual ~OggFile();
+  virtual ~OggFile() override;
 
   static void handleEndOfBosPageParsing(void* clientData);
   void handleEndOfBosPageParsing();
@@ -159,7 +159,7 @@ protected:
   class OggDemuxedTrack* lookupDemuxedTrack(u_int32_t trackNumber);
 
   OggDemux(OggFile& ourFile);
-  virtual ~OggDemux();
+  virtual ~OggDemux() override;
 
 private:
   friend class OggDemuxedTrack;

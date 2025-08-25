@@ -50,7 +50,7 @@ protected:
 			 FramedSource* inputSource,
 			 Boolean createParser = True);
       // called only by createNew(), or by subclass constructors
-  virtual ~MPEG4VideoStreamFramer();
+  virtual ~MPEG4VideoStreamFramer() override;
 
   void startNewConfig();
   void appendToNewConfig(unsigned char* newConfigBytes,
@@ -59,7 +59,7 @@ protected:
 
 private:
   // redefined virtual functions:
-  virtual Boolean isMPEG4VideoStreamFramer() const;
+  virtual Boolean isMPEG4VideoStreamFramer() const override;
 
 protected:
   u_int8_t fProfileAndLevelIndication;

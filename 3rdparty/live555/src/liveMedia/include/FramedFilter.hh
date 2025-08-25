@@ -37,13 +37,13 @@ public:
 protected:
   FramedFilter(UsageEnvironment& env, FramedSource* inputSource);
 	 // abstract base class
-  virtual ~FramedFilter();
+  virtual ~FramedFilter() override;
 
 protected:
   // Redefined virtual functions (with default 'null' implementations):
-  virtual char const* MIMEtype() const;
-  virtual void getAttributes() const;
-  virtual void doStopGettingFrames();
+  virtual char const* MIMEtype() const override;
+  virtual void getAttributes() const override;
+  virtual void doStopGettingFrames() override;
 
 protected:
   FramedSource* fInputSource;

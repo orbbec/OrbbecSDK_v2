@@ -33,7 +33,7 @@ public:
 	    unsigned rtpTimestampFrequency);
 
 protected:
-  virtual ~MPEG4ESVideoRTPSource();
+  virtual ~MPEG4ESVideoRTPSource() override;
 
 private:
   MPEG4ESVideoRTPSource(UsageEnvironment& env, Groupsock* RTPgs,
@@ -44,8 +44,8 @@ private:
 private:
   // redefined virtual functions:
   virtual Boolean processSpecialHeader(BufferedPacket* packet,
-                                       unsigned& resultSpecialHeaderSize);
-  virtual char const* MIMEtype() const;
+                                       unsigned& resultSpecialHeaderSize) override;
+  virtual char const* MIMEtype() const override;
 };
 
 #endif

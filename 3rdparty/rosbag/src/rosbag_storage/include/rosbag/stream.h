@@ -112,12 +112,12 @@ class ROSBAG_DECL UncompressedStream : public Stream
 public:
     UncompressedStream(ChunkedFile* file);
 
-    CompressionType getCompressionType() const;
+    CompressionType getCompressionType() const override;
 
-    void write(void* ptr, size_t size);
-    void read(void* ptr, size_t size);
+    void write(void* ptr, size_t size) override;
+    void read(void* ptr, size_t size) override;
 
-    void decompress(uint8_t* dest, unsigned int dest_len, uint8_t* source, unsigned int source_len);
+    void decompress(uint8_t* dest, unsigned int dest_len, uint8_t* source, unsigned int source_len) override;
 };
 
 // LZ4Stream reads/writes compressed datat in the LZ4 format
@@ -126,19 +126,19 @@ class ROSBAG_DECL LZ4Stream : public Stream
 {
 public:
     LZ4Stream(ChunkedFile* file);
-    ~LZ4Stream();
+    ~LZ4Stream() override;
 
-    CompressionType getCompressionType() const;
+    CompressionType getCompressionType() const override;
 
-    void startWrite();
-    void write(void* ptr, size_t size);
-    void stopWrite();
+    void startWrite() override;
+    void write(void* ptr, size_t size) override;
+    void stopWrite() override;
 
-    void startRead();
-    void read(void* ptr, size_t size);
-    void stopRead();
+    void startRead() override;
+    void read(void* ptr, size_t size) override;
+    void stopRead() override;
 
-    void decompress(uint8_t* dest, unsigned int dest_len, uint8_t* source, unsigned int source_len);
+    void decompress(uint8_t* dest, unsigned int dest_len, uint8_t* source, unsigned int source_len) override;
 
 private:
     void writeStream(int action);

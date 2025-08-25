@@ -45,11 +45,11 @@ public:
 
 protected:
   JPEGVideoSource(UsageEnvironment& env); // abstract base class
-  virtual ~JPEGVideoSource();
+  virtual ~JPEGVideoSource() override;
 
 private:
   // redefined virtual functions:
-  virtual Boolean isJPEGVideoSource() const;
+  virtual Boolean isJPEGVideoSource() const override;
 };
 
 #endif

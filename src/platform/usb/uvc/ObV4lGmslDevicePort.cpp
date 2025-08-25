@@ -128,16 +128,16 @@ int getGmslDeviceInfoFromFW(const std::string &dev_name, void *data, bool &linkS
     // get link state
     int retry = 0;
     do {
-        v4l2_control ctrl{};
-        ctrl.id  = G2R_CAMERA_CID_GET_LINK_STATE;
-        auto ret = ioctl(fd, VIDIOC_G_CTRL, &ctrl);
+        v4l2_control ctrlLink{};
+        ctrlLink.id  = G2R_CAMERA_CID_GET_LINK_STATE;
+        ret = ioctl(fd, VIDIOC_G_CTRL, &ctrlLink);
         if(ret < 0) {
             LOG_WARN("ioctl failed on getting link_state(retry: {}). Ignore it. error: {}", retry, strerror(errno));
             ++retry;
             continue;
         }
-        LOG_DEBUG("Device: {}, link_state: {}", dev_name, ctrl.value);
-        linkState = ctrl.value == 1;
+        LOG_DEBUG("Device: {}, link_state: {}", dev_name, ctrlLink.value);
+        linkState = ctrlLink.value == 1;
         break;
     } while(retry < 3);
 
@@ -357,7 +357,7 @@ bool ObV4lGmslDevicePort::isContainedMetadataDevice(std::shared_ptr<const USBSou
 void foreachProfileGmsl(std::vector<std::shared_ptr<V4lDeviceHandleGmsl>>                                              deviceHandles,
                         std::function<bool(std::shared_ptr<V4lDeviceHandleGmsl>, std::shared_ptr<VideoStreamProfile>)> func) {
     bool quit        = false;
-    int  mStreamType = OB_STREAM_VIDEO;
+    auto mStreamType = OB_STREAM_VIDEO;
     for(auto &devHandle: deviceHandles) {
         if(quit) {
             break;

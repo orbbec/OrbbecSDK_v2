@@ -15,7 +15,7 @@ namespace libobsensor {
 class AstraMiniDevice : public OpenNIDeviceBase {
 public:
     AstraMiniDevice(const std::shared_ptr<const IDeviceEnumInfo> &info);
-    virtual ~AstraMiniDevice() noexcept;
+    virtual ~AstraMiniDevice() noexcept override;
 
 protected:
     virtual void init() override;

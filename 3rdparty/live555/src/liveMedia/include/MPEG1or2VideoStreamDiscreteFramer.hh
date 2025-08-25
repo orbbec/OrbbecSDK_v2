@@ -43,11 +43,11 @@ protected:
                                     FramedSource* inputSource,
                                     Boolean iFramesOnly, double vshPeriod, Boolean leavePresentationTimesUnmodified);
   // called only by createNew()
-  virtual ~MPEG1or2VideoStreamDiscreteFramer();
+  virtual ~MPEG1or2VideoStreamDiscreteFramer() override;
 
 protected:
   // redefined virtual functions:
-  virtual void doGetNextFrame();
+  virtual void doGetNextFrame() override;
 
 protected:
   static void afterGettingFrame(void* clientData, unsigned frameSize,

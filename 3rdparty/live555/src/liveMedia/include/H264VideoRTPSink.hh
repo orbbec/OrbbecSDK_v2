@@ -47,13 +47,13 @@ protected:
 		   u_int8_t const* sps = NULL, unsigned spsSize = 0,
 		   u_int8_t const* pps = NULL, unsigned ppsSize = 0);
 	// called only by createNew()
-  virtual ~H264VideoRTPSink();
+  virtual ~H264VideoRTPSink() override;
 
 protected: // redefined virtual functions:
-  virtual char const* auxSDPLine();
+  virtual char const* auxSDPLine() override;
 
 private: // redefined virtual functions:
-  virtual Boolean sourceIsCompatibleWithUs(MediaSource& source);
+  virtual Boolean sourceIsCompatibleWithUs(MediaSource& source) override;
 };
 
 #endif

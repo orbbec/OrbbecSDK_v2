@@ -64,24 +64,27 @@ int kbhit(void) {
 }
 
 #include <sys/time.h>
-uint64_t ob_smpl_get_current_timestamp_ms() {
+uint64_t ob_smpl_get_current_timestamp_ms(void) {
     struct timeval te;
-    gettimeofday(&te, NULL);                                          // Get the current time
-    long long milliseconds = te.tv_sec * 1000LL + te.tv_usec / 1000;  // Calculate milliseconds
+    long long      milliseconds;
+    gettimeofday(&te, NULL);                                // Get the current time
+    milliseconds = te.tv_sec * 1000LL + te.tv_usec / 1000;  // Calculate milliseconds
     return milliseconds;
 }
 
 char ob_smpl_wait_for_key_press(uint32_t timeout_ms) {  // Get the current time
     struct timeval te;
+    long long      start_time;
     gettimeofday(&te, NULL);
-    long long start_time = te.tv_sec * 1000LL + te.tv_usec / 1000;
+    start_time = te.tv_sec * 1000LL + te.tv_usec / 1000;
 
     while(true) {
+        long long current_time;
         if(kbhit()) {
             return getch();
         }
         gettimeofday(&te, NULL);
-        long long current_time = te.tv_sec * 1000LL + te.tv_usec / 1000;
+        current_time = te.tv_sec * 1000LL + te.tv_usec / 1000;
         if(timeout_ms > 0 && current_time - start_time > timeout_ms) {
             return 0;
         }

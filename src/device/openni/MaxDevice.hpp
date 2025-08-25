@@ -15,7 +15,7 @@ namespace libobsensor {
 class MaxDevice : public OpenNIDeviceBase {
 public:
     MaxDevice(const std::shared_ptr<const IDeviceEnumInfo> &info);
-    virtual ~MaxDevice() noexcept;
+    virtual ~MaxDevice() noexcept override;
 
 protected:
     virtual void init() override;

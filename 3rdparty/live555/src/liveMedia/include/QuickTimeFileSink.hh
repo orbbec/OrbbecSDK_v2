@@ -53,7 +53,7 @@ protected:
 		    Boolean syncStreams, Boolean generateHintTracks,
 		    Boolean generateMP4Format);
       // called only by createNew()
-  virtual ~QuickTimeFileSink();
+  virtual ~QuickTimeFileSink() override;
 
   virtual void noteRecordedFrame(MediaSubsession& inputSubsession,
 				 unsigned packetDataSize, struct timeval const& presentationTime);

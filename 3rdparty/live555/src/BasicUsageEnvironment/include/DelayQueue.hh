@@ -116,7 +116,10 @@ extern DelayInterval const DELAY_HOUR;
 extern DelayInterval const DELAY_DAY;
 
 ///// _EventTime /////
-
+#if defined(__clang__) && __clang_major__ >= 16
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-identifier"
+#endif
 class _EventTime: public Timeval {
 public:
   _EventTime(unsigned secondsSinceEpoch = 0,
@@ -124,7 +127,9 @@ public:
     // We use the Unix standard epoch: January 1, 1970
     : Timeval(secondsSinceEpoch, usecondsSinceEpoch) {}
 };
-
+#if defined(__clang__) && __clang_major__ >= 16
+#pragma clang diagnostic pop
+#endif
 _EventTime TimeNow();
 
 extern _EventTime const THE_END_OF_TIME;
@@ -160,7 +165,7 @@ private:
 class DelayQueue: public DelayQueueEntry {
 public:
   DelayQueue();
-  virtual ~DelayQueue();
+  virtual ~DelayQueue() override;
 
   void addEntry(DelayQueueEntry* newEntry); // returns a token for the entry
   void updateEntry(DelayQueueEntry* entry, DelayInterval newDelay);

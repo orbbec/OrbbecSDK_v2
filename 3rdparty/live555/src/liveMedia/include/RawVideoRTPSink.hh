@@ -43,20 +43,20 @@ protected:
                   char const* sampling, char const* colorimetry);
   // called only by createNew()
   
-  virtual ~RawVideoRTPSink();
+  virtual ~RawVideoRTPSink() override;
   
 private: // redefined virtual functions:
-  virtual char const* auxSDPLine(); // for the "a=fmtp:" SDP line
+  virtual char const* auxSDPLine() override; // for the "a=fmtp:" SDP line
   
   virtual void doSpecialFrameHandling(unsigned fragmentationOffset,
                       unsigned char* frameStart,
                       unsigned numBytesInFrame,
                       struct timeval framePresentationTime,
-                      unsigned numRemainingBytes);
+                      unsigned numRemainingBytes) override;
   virtual Boolean frameCanAppearAfterPacketStart(unsigned char const* frameStart,
-                         unsigned numBytesInFrame) const;
-  virtual unsigned specialHeaderSize() const;
-  virtual unsigned computeOverflowForNewFrame(unsigned newFrameSize) const;
+                         unsigned numBytesInFrame) const override;
+  virtual unsigned specialHeaderSize() const override;
+  virtual unsigned computeOverflowForNewFrame(unsigned newFrameSize) const override;
   
 private:
   char* fFmtpSDPLine;

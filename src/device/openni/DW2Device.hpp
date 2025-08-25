@@ -15,7 +15,7 @@ namespace libobsensor {
 class DW2Device : public OpenNIDeviceBase {
 public:
     DW2Device(const std::shared_ptr<const IDeviceEnumInfo> &info);
-    virtual ~DW2Device() noexcept;
+    virtual ~DW2Device() noexcept override;
 
 protected:
     virtual void init() override;

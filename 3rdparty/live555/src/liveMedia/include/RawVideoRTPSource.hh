@@ -41,13 +41,13 @@ protected:
                     unsigned rtpTimestampFrequency = 90000);
       // called only by createNew()
 
-  virtual ~RawVideoRTPSource();
+  virtual ~RawVideoRTPSource() override;
 
 protected:
   // redefined virtual functions:
   virtual Boolean processSpecialHeader(BufferedPacket* packet,
-                                       unsigned& resultSpecialHeaderSize);
-  virtual char const* MIMEtype() const;
+                                       unsigned& resultSpecialHeaderSize) override;
+  virtual char const* MIMEtype() const override;
 
 private:
   unsigned fNumLines; // in the most recently read packet

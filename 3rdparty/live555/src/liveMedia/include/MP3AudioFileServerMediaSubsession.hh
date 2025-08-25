@@ -47,22 +47,22 @@ protected:
 				    Boolean generateADUs,
 				    Interleaving* interleaving);
       // called only by createNew();
-  virtual ~MP3AudioFileServerMediaSubsession();
+  virtual ~MP3AudioFileServerMediaSubsession() override;
 
   FramedSource* createNewStreamSourceCommon(FramedSource* baseMP3Source, unsigned mp3NumBytes, unsigned& estBitrate);
   void getBaseStreams(FramedSource* frontStream,
 		      FramedSource*& sourceMP3Stream, ADUFromMP3Source*& aduStream/*if any*/);
 
 protected: // redefined virtual functions
-  virtual void seekStreamSource(FramedSource* inputSource, double& seekNPT, double streamDuration, u_int64_t& numBytes);
-  virtual void setStreamSourceScale(FramedSource* inputSource, float scale);
+  virtual void seekStreamSource(FramedSource* inputSource, double& seekNPT, double streamDuration, u_int64_t& numBytes) override;
+  virtual void setStreamSourceScale(FramedSource* inputSource, float scale) override;
   virtual FramedSource* createNewStreamSource(unsigned clientSessionId,
-					      unsigned& estBitrate);
+					      unsigned& estBitrate) override;
   virtual RTPSink* createNewRTPSink(Groupsock* rtpGroupsock,
                                     unsigned char rtpPayloadTypeIfDynamic,
-				    FramedSource* inputSource);
-  virtual void testScaleFactor(float& scale);
-  virtual float duration() const;
+				    FramedSource* inputSource) override;
+  virtual void testScaleFactor(float& scale) override;
+  virtual float duration() const override;
 
 protected:
   Boolean fGenerateADUs;

@@ -38,17 +38,17 @@ protected:
   DVVideoRTPSink(UsageEnvironment& env, Groupsock* RTPgs, unsigned char rtpPayloadFormat);
 	// called only by createNew()
 
-  virtual ~DVVideoRTPSink();
+  virtual ~DVVideoRTPSink() override;
 
 private: // redefined virtual functions:
-  virtual Boolean sourceIsCompatibleWithUs(MediaSource& source);
+  virtual Boolean sourceIsCompatibleWithUs(MediaSource& source) override;
   virtual void doSpecialFrameHandling(unsigned fragmentationOffset,
                                       unsigned char* frameStart,
                                       unsigned numBytesInFrame,
                                       struct timeval framePresentationTime,
-                                      unsigned numRemainingBytes);
-  virtual unsigned computeOverflowForNewFrame(unsigned newFrameSize) const;
-  virtual char const* auxSDPLine();
+                                      unsigned numRemainingBytes) override;
+  virtual unsigned computeOverflowForNewFrame(unsigned newFrameSize) const override;
+  virtual char const* auxSDPLine() override;
 
 private:
   char* fFmtpSDPLine;

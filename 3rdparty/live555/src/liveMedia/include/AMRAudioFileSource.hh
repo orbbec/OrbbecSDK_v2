@@ -35,11 +35,11 @@ private:
 		     Boolean isWideband, unsigned numChannels);
 	// called only by createNew()
 
-  virtual ~AMRAudioFileSource();
+  virtual ~AMRAudioFileSource() override;
 
 private:
   // redefined virtual functions:
-  virtual void doGetNextFrame();
+  virtual void doGetNextFrame() override;
 
 private:
   FILE* fFid;

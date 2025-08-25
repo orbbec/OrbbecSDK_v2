@@ -38,11 +38,11 @@ protected:
   H265VideoStreamDiscreteFramer(UsageEnvironment& env, FramedSource* inputSource,
 				Boolean includeStartCodeInOutput, Boolean insertAccessUnitDelimiters);
       // called only by createNew()
-  virtual ~H265VideoStreamDiscreteFramer();
+  virtual ~H265VideoStreamDiscreteFramer() override;
 
 private:
   // redefined virtual functions:
-  virtual Boolean isH265VideoStreamFramer() const;
+  virtual Boolean isH265VideoStreamFramer() const override;
 };
 
 #endif

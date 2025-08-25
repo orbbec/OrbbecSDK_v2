@@ -21,6 +21,11 @@
 #define __cdecl   /**< __cdecl not defined in Linux */
 #endif
 
+#if defined(__clang__) && __clang_major__ >= 16
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-identifier"
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -526,6 +531,10 @@ typedef bool(__cdecl *k4a_register_plugin_fn)(k4a_plugin_t *plugin);
 
 #ifdef __cplusplus
 }
+#endif
+
+#if defined(__clang__) && __clang_major__ >= 16
+#pragma clang diagnostic pop
 #endif
 
 #endif /* K4A_PLUGIN_H */

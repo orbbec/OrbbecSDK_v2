@@ -47,12 +47,12 @@ public:
 protected:
   MPEG2TransportStreamFramer(UsageEnvironment& env, FramedSource* inputSource);
       // called only by createNew()
-  virtual ~MPEG2TransportStreamFramer();
+  virtual ~MPEG2TransportStreamFramer() override;
 
 private:
   // Redefined virtual functions:
-  virtual void doGetNextFrame();
-  virtual void doStopGettingFrames();
+  virtual void doGetNextFrame() override;
+  virtual void doStopGettingFrames() override;
 
 private:
   static void afterGettingFrame(void* clientData, unsigned frameSize,

@@ -33,7 +33,7 @@ public:
 	    unsigned rtpTimestampFrequency = 90000);
 
 protected:
-  virtual ~MP3ADURTPSource();
+  virtual ~MP3ADURTPSource() override;
 
 private:
   MP3ADURTPSource(UsageEnvironment& env, Groupsock* RTPgs,
@@ -43,7 +43,7 @@ private:
 
 private:
   // redefined virtual functions:
-  virtual char const* MIMEtype() const;
+  virtual char const* MIMEtype() const override;
 };
 
 #endif

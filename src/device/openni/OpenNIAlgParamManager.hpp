@@ -9,7 +9,7 @@ namespace libobsensor {
 class OpenNIAlgParamManager : public DisparityAlgParamManagerBase {
 public:
     OpenNIAlgParamManager(IDevice *owner);
-    virtual ~OpenNIAlgParamManager() = default;
+    virtual ~OpenNIAlgParamManager() override = default;
 
     virtual void bindDisparityParam(std::vector<std::shared_ptr<const StreamProfile>> streamProfileList) override;
 

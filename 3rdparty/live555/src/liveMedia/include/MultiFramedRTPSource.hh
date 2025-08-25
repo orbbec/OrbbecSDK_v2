@@ -36,7 +36,7 @@ protected:
 		       unsigned rtpTimestampFrequency,
 		       BufferedPacketFactory* packetFactory = NULL);
       // virtual base class
-  virtual ~MultiFramedRTPSource();
+  virtual ~MultiFramedRTPSource() override;
 
   virtual Boolean processSpecialHeader(BufferedPacket* packet,
 				       unsigned& resultSpecialHeaderSize);
@@ -53,12 +53,12 @@ protected:
 
 protected:
   // redefined virtual functions:
-  virtual void doGetNextFrame();
-  virtual void doStopGettingFrames();
+  virtual void doGetNextFrame() override;
+  virtual void doStopGettingFrames() override;
 
 private:
   // redefined virtual functions:
-  virtual void setPacketReorderingThresholdTime(unsigned uSeconds);
+  virtual void setPacketReorderingThresholdTime(unsigned uSeconds) override;
 
 private:
   void reset();

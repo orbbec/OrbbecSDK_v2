@@ -45,7 +45,7 @@ protected:
 		    char const* sPropPPSStr,
 		    unsigned bufferSize, char const* perFrameFileNamePrefix);
       // called only by createNew()
-  virtual ~H265VideoFileSink();
+  virtual ~H265VideoFileSink() override;
 };
 
 #endif

@@ -40,11 +40,11 @@ private:
 		      u_int8_t samplingFrequencyIndex, u_int8_t channelConfiguration);
 	// called only by createNew()
 
-  virtual ~ADTSAudioFileSource();
+  virtual ~ADTSAudioFileSource() override;
 
 private:
   // redefined virtual functions:
-  virtual void doGetNextFrame();
+  virtual void doGetNextFrame() override;
 
 private:
   unsigned fSamplingFrequency;

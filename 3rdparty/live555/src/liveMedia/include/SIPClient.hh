@@ -73,7 +73,7 @@ public:
        // sets an alternative string to be used in SIP "User-Agent:" headers
 
 protected:
-  virtual ~SIPClient();
+  virtual ~SIPClient() override;
 
 private:
   SIPClient(UsageEnvironment& env,

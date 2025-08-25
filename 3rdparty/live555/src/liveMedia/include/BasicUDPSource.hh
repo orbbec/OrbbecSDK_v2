@@ -32,7 +32,7 @@ class BasicUDPSource: public FramedSource {
 public:
   static BasicUDPSource* createNew(UsageEnvironment& env, Groupsock* inputGS);
 
-  virtual ~BasicUDPSource();
+  virtual ~BasicUDPSource() override;
 
   Groupsock* gs() const { return fInputGS; }
 
@@ -44,9 +44,9 @@ private:
   void incomingPacketHandler1();
 
 private: // redefined virtual functions:
-  virtual unsigned maxFrameSize() const;
-  virtual void doGetNextFrame();
-  virtual void doStopGettingFrames();
+  virtual unsigned maxFrameSize() const override;
+  virtual void doGetNextFrame() override;
+  virtual void doStopGettingFrames() override;
 
 private:
   Groupsock* fInputGS;

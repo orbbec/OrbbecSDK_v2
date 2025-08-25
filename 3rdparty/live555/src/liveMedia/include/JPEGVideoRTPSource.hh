@@ -36,7 +36,7 @@ public:
 	    unsigned defaultWidth = 0, unsigned defaultHeight = 0);
 
 protected:
-  virtual ~JPEGVideoRTPSource();
+  virtual ~JPEGVideoRTPSource() override;
 
 private:
   JPEGVideoRTPSource(UsageEnvironment& env, Groupsock* RTPgs,
@@ -51,9 +51,9 @@ private:
 private:
   // redefined virtual functions:
   virtual Boolean processSpecialHeader(BufferedPacket* packet,
-                                       unsigned& resultSpecialHeaderSize);
+                                       unsigned& resultSpecialHeaderSize) override;
 
-  virtual char const* MIMEtype() const;
+  virtual char const* MIMEtype() const override;
 };
 
 #endif

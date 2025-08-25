@@ -38,20 +38,20 @@ protected:
   WAVAudioFileServerMediaSubsession(UsageEnvironment& env, char const* fileName,
 				    Boolean reuseFirstSource, Boolean convertToULaw);
       // called only by createNew();
-  virtual ~WAVAudioFileServerMediaSubsession();
+  virtual ~WAVAudioFileServerMediaSubsession() override;
 
 protected: // redefined virtual functions
-  virtual void seekStreamSource(FramedSource* inputSource, double& seekNPT, double streamDuration, u_int64_t& numBytes);
-  virtual void setStreamSourceScale(FramedSource* inputSource, float scale);
-  virtual void setStreamSourceDuration(FramedSource* inputSource, double streamDuration, u_int64_t& numBytes);
+  virtual void seekStreamSource(FramedSource* inputSource, double& seekNPT, double streamDuration, u_int64_t& numBytes) override;
+  virtual void setStreamSourceScale(FramedSource* inputSource, float scale) override;
+  virtual void setStreamSourceDuration(FramedSource* inputSource, double streamDuration, u_int64_t& numBytes) override;
 
   virtual FramedSource* createNewStreamSource(unsigned clientSessionId,
-					      unsigned& estBitrate);
+					      unsigned& estBitrate) override;
   virtual RTPSink* createNewRTPSink(Groupsock* rtpGroupsock,
                                     unsigned char rtpPayloadTypeIfDynamic,
-				    FramedSource* inputSource);
-  virtual void testScaleFactor(float& scale);
-  virtual float duration() const;
+				    FramedSource* inputSource) override;
+  virtual void testScaleFactor(float& scale) override;
+  virtual float duration() const override;
 
 protected:
   Boolean fConvertToULaw;

@@ -1,6 +1,11 @@
 #pragma once
 #ifdef __NEON__
 
+#if defined(__clang__) && __clang_major__ >= 16
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreserved-identifier"
+#endif
+
 /*
  * sse2neon is freely redistributable under the MIT License.
  *
@@ -8673,8 +8678,8 @@ FORCE_INLINE __m128i _mm_aesenc_si128(__m128i a, __m128i RoundKey)
 
     /* sub bytes */
     // Here, we separate the whole 256-bytes table into 4 64-bytes tables, and
-    // look up each of the table. After each lookup, we load the next table
     // which locates at the next 64-bytes. In the meantime, the index in the
+    // look up each of the table. After each lookup, we load the next table
     // table would be smaller than it was, so the index parameters of
     // `vqtbx4q_u8()` need to be added the same constant as the loaded tables.
     v = vqtbl4q_u8(_sse2neon_vld1q_u8_x4(_sse2neon_sbox), w);
@@ -9278,6 +9283,10 @@ FORCE_INLINE uint64_t _rdtsc(void)
 
 #if defined(__GNUC__) && !defined(__clang__)
 #pragma GCC pop_options
+#endif
+
+#if defined(__clang__) && __clang_major__ >= 16
+#pragma clang diagnostic pop
 #endif
 
 #endif

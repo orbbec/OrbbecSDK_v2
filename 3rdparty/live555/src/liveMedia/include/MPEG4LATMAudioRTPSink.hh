@@ -46,19 +46,19 @@ protected:
 			Boolean allowMultipleFramesPerPacket);
 	// called only by createNew()
 
-  virtual ~MPEG4LATMAudioRTPSink();
+  virtual ~MPEG4LATMAudioRTPSink() override;
 
 private: // redefined virtual functions:
   virtual void doSpecialFrameHandling(unsigned fragmentationOffset,
                                       unsigned char* frameStart,
                                       unsigned numBytesInFrame,
                                       struct timeval framePresentationTime,
-                                      unsigned numRemainingBytes);
+                                      unsigned numRemainingBytes) override;
   virtual Boolean
   frameCanAppearAfterPacketStart(unsigned char const* frameStart,
-				 unsigned numBytesInFrame) const;
+				 unsigned numBytesInFrame) const override;
 
-  virtual char const* auxSDPLine(); // for the "a=fmtp:" SDP line
+  virtual char const* auxSDPLine() override; // for the "a=fmtp:" SDP line
 
 private:
   char const* fStreamMuxConfigString;

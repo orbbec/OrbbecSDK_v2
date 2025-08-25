@@ -39,7 +39,7 @@ along with this library; if not, write to the Free Software Foundation, Inc.,
 class OutputSocket: public Socket {
 public:
   OutputSocket(UsageEnvironment& env, int family);
-  virtual ~OutputSocket();
+  virtual ~OutputSocket() override;
 
   virtual Boolean write(struct sockaddr_storage const& addressAndPort, u_int8_t ttl,
 			unsigned char* buffer, unsigned bufferSize);
@@ -52,7 +52,7 @@ protected:
 private: // redefined virtual function
   virtual Boolean handleRead(unsigned char* buffer, unsigned bufferMaxSize,
 			     unsigned& bytesRead,
-			     struct sockaddr_storage& fromAddressAndPort);
+			     struct sockaddr_storage& fromAddressAndPort) override;
 
 private:
   Port fSourcePort;
@@ -85,7 +85,7 @@ public:
 	    Port port);
       // used for a 'source-specific multicast' group
 
-  virtual ~Groupsock();
+  virtual ~Groupsock() override;
 
   virtual destRecord* createNewDestRecord(struct sockaddr_storage const& addr, Port const& port, u_int8_t ttl, unsigned sessionId, destRecord* next);
       // Can be redefined by subclasses that also subclass "destRecord"
@@ -139,7 +139,7 @@ public:
 public: // redefined virtual functions
   virtual Boolean handleRead(unsigned char* buffer, unsigned bufferMaxSize,
 			     unsigned& bytesRead,
-			     struct sockaddr_storage& fromAddressAndPort);
+			     struct sockaddr_storage& fromAddressAndPort) override;
 
 protected:
   destRecord* lookupDestRecordFromDestination(struct sockaddr_storage const& targetAddrAndPort) const;

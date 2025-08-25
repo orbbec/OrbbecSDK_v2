@@ -61,7 +61,7 @@ protected:
 class ClientTLSState: public TLSState {
 public:
   ClientTLSState(class RTSPClient& client);
-  virtual ~ClientTLSState();
+  virtual ~ClientTLSState() override;
 
   int connect(int socketNum); // returns: <0 (error), 0 (pending), >0 (success)
 
@@ -77,7 +77,7 @@ private:
 class ServerTLSState: public TLSState {
 public:
   ServerTLSState(UsageEnvironment& env);
-  virtual ~ServerTLSState();
+  virtual ~ServerTLSState() override;
 
   void setCertificateAndPrivateKeyFileNames(char const* certFileName, char const* privKeyFileName);
 

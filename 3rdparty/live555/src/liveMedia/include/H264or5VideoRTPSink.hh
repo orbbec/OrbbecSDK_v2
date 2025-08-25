@@ -36,17 +36,17 @@ protected:
 		      u_int8_t const* sps = NULL, unsigned spsSize = 0,
 		      u_int8_t const* pps = NULL, unsigned ppsSize = 0);
 	// we're an abstrace base class
-  virtual ~H264or5VideoRTPSink();
+  virtual ~H264or5VideoRTPSink() override;
 
 private: // redefined virtual functions:
-  virtual Boolean continuePlaying();
+  virtual Boolean continuePlaying() override;
   virtual void doSpecialFrameHandling(unsigned fragmentationOffset,
                                       unsigned char* frameStart,
                                       unsigned numBytesInFrame,
                                       struct timeval framePresentationTime,
-                                      unsigned numRemainingBytes);
+                                      unsigned numRemainingBytes) override;
   virtual Boolean frameCanAppearAfterPacketStart(unsigned char const* frameStart,
-						 unsigned numBytesInFrame) const;
+						 unsigned numBytesInFrame) const override;
 
 protected:
   int fHNumber;

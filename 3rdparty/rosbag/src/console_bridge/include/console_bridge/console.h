@@ -149,7 +149,7 @@ public:
   {
   }
   
-  virtual void log(const std::string &text, LogLevel level, const char *filename, int line);
+  virtual void log(const std::string &text, LogLevel level, const char *filename, int line) override;
   
 };
 
@@ -161,9 +161,9 @@ public:
   /** \brief The name of the file in which to save the message data */
   OutputHandlerFile(const char *filename);
   
-  virtual ~OutputHandlerFile(void);
+  virtual ~OutputHandlerFile(void) override;
   
-  virtual void log(const std::string &text, LogLevel level, const char *filename, int line);
+  virtual void log(const std::string &text, LogLevel level, const char *filename, int line) override;
   
 private:
   

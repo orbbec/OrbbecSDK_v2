@@ -12,7 +12,7 @@ class OpenNIFrameTimestampCalculator : public IFrameTimestampCalculator {
 public:
     OpenNIFrameTimestampCalculator(IDevice *device, uint64_t deviceTimeFreq, uint64_t frameTimeFreq);
 
-    virtual ~OpenNIFrameTimestampCalculator() = default;
+    virtual ~OpenNIFrameTimestampCalculator() override = default;
 
     void calculate(std::shared_ptr<Frame> frame) override;
     void clear() override;

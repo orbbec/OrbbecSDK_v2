@@ -8,7 +8,7 @@ namespace libobsensor {
 class MaxDisparitySensor : public OpenNIDisparitySensor {
 public:
     MaxDisparitySensor(IDevice *owner, OBSensorType sensorType, const std::shared_ptr<ISourcePort> &backend);
-    ~MaxDisparitySensor() noexcept;
+    ~MaxDisparitySensor() noexcept override;
 
     void start(std::shared_ptr<const StreamProfile> sp, FrameCallback callback) override;
 

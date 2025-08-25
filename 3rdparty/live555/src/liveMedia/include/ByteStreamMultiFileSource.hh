@@ -42,11 +42,11 @@ protected:
 			    unsigned preferredFrameSize, unsigned playTimePerFrame);
 	// called only by createNew()
 
-  virtual ~ByteStreamMultiFileSource();
+  virtual ~ByteStreamMultiFileSource() override;
 
 private:
   // redefined virtual functions:
-  virtual void doGetNextFrame();
+  virtual void doGetNextFrame() override;
 
 private:
   static void onSourceClosure(void* clientData);

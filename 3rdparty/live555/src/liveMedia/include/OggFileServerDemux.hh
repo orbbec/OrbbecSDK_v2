@@ -60,7 +60,7 @@ private:
   OggFileServerDemux(UsageEnvironment& env, char const* fileName,
 		     onCreationFunc* onCreation, void* onCreationClientData);
       // called only by createNew()
-  virtual ~OggFileServerDemux();
+  virtual ~OggFileServerDemux() override;
 
   static void onOggFileCreation(OggFile* newFile, void* clientData);
   void onOggFileCreation(OggFile* newFile);

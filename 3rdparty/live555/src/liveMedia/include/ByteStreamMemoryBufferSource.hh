@@ -49,11 +49,11 @@ protected:
 			       unsigned playTimePerFrame);
 	// called only by createNew()
 
-  virtual ~ByteStreamMemoryBufferSource();
+  virtual ~ByteStreamMemoryBufferSource() override;
 
 private:
   // redefined virtual functions:
-  virtual void doGetNextFrame();
+  virtual void doGetNextFrame() override;
 
 private:
   u_int8_t* fBuffer;

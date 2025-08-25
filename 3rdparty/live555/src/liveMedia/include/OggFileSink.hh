@@ -41,14 +41,14 @@ protected:
   OggFileSink(UsageEnvironment& env, FILE* fid, unsigned samplingFrequency, char const* configStr,
 	      unsigned bufferSize, char const* perFrameFileNamePrefix);
       // called only by createNew()
-  virtual ~OggFileSink();
+  virtual ~OggFileSink() override;
 
 protected: // redefined virtual functions:
-  virtual Boolean continuePlaying();
+  virtual Boolean continuePlaying() override;
   virtual void addData(unsigned char const* data, unsigned dataSize,
-		       struct timeval presentationTime);
+		       struct timeval presentationTime) override;
   virtual void afterGettingFrame(unsigned frameSize, unsigned numTruncatedBytes,
-				 struct timeval presentationTime);
+				 struct timeval presentationTime) override;
 
 private:
   static void ourOnSourceClosure(void* clientData);

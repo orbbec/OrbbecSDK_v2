@@ -82,10 +82,10 @@ protected:
 		     Boolean isSSM, char const* miscSDPLines);
   // called only by "createNew()"
 
-  virtual ~ServerMediaSession();
+  virtual ~ServerMediaSession() override;
 
 private: // redefined virtual functions
-  virtual Boolean isServerMediaSession() const;
+  virtual Boolean isServerMediaSession() const override;
 
 private:
   Boolean fIsSSM;
@@ -181,7 +181,7 @@ public:
 
 protected: // we're a virtual base class
   ServerMediaSubsession(UsageEnvironment& env);
-  virtual ~ServerMediaSubsession();
+  virtual ~ServerMediaSubsession() override;
 
   char const* rangeSDPLine() const;
       // returns a string to be delete[]d
