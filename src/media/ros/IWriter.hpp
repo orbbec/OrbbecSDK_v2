@@ -22,7 +22,8 @@ public:
     virtual void writeFrame(const OBSensorType &sensorType, std::shared_ptr<const Frame> curFrame) = 0;
     virtual void writeDeviceInfo(const std::shared_ptr<const DeviceInfo> &deviceInfo)              = 0;
     virtual void writeProperty(uint32_t propertyID, const uint8_t *data, const uint32_t datasize)  = 0;
-    virtual void writeStreamProfiles() = 0;
+    virtual void writeStreamProfiles()                                                             = 0;
+    virtual void stop(bool hasError)                                                               = 0;
 };
 
 }  // namespace libobsensor

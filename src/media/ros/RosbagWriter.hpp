@@ -40,8 +40,8 @@ public:
     virtual void writeFrame(const OBSensorType &sensorType, std::shared_ptr<const Frame> curFrame) override;
     virtual void writeDeviceInfo(const std::shared_ptr<const DeviceInfo> &deviceInfo) override;
     virtual void writeProperty(uint32_t propertyID, const uint8_t *data, const uint32_t datasize) override;
-
     virtual void writeStreamProfiles() override;
+    virtual void stop(bool hasError) override;
 
 private:
     void writeVideoFrame(const OBSensorType &sensorType, std::shared_ptr<const Frame> curFrame);

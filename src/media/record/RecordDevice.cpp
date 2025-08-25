@@ -41,7 +41,13 @@ RecordDevice::~RecordDevice() {
     }
 
     // stop recorder and write device&frame info
-    stopRecord();
+    bool hasError = false;
+    BEGIN_TRY_EXECUTE({ stopRecord(); })
+    CATCH_EXCEPTION_AND_EXECUTE({
+        LOG_DEBUG("RecordDevice Destructor: set bag state to error");
+        hasError = true;
+    })
+    writer_->stop(hasError);
     LOG_DEBUG("RecordDevice Destructor");
 }
 

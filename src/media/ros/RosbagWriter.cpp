@@ -17,15 +17,34 @@ RosWriter::RosWriter(const std::string &file, bool compressWhileRecord) : filePa
 }
 
 RosWriter::~RosWriter() {
-    file_.reset();
-    file_ = nullptr;
+    stop(false);
+}
 
-    if(maxFrameTime_ - minFrameTime_ >= INVALID_DIFF) {
-        LOG_DEBUG("Error timestamp data frames during recording! maxFrametime: {}, minFrameTime: {}, diff: {}", maxFrameTime_, minFrameTime_,
-                  maxFrameTime_ - minFrameTime_);
-        LOG_WARN("Error when saving rosbag file! There are abnormal timestamp data frames during recording!");
-        std::string errFilePath = filePath_ + "_error";
-        std::rename(filePath_.c_str(), errFilePath.c_str());
+void RosWriter::stop(bool hasError) {
+    if (file_) {
+        file_.reset();
+        file_ = nullptr;
+
+        auto markFileAsError = [](const std::string &path) {
+            const std::string errPath = path + "_error";
+            if(std::rename(path.c_str(), errPath.c_str()) != 0) {
+                LOG_ERROR("Failed to rename file {} -> {}", path, errPath);
+            }
+            else {
+                LOG_ERROR("Recording failed, file renamed to: {}", errPath);
+            }
+        };
+
+        if(hasError) {
+            LOG_DEBUG("Error occurred during recording! file: {}", filePath_);
+            markFileAsError(filePath_);
+        }
+        else if(maxFrameTime_ - minFrameTime_ >= INVALID_DIFF) {
+            LOG_DEBUG("Error timestamp data frames during recording! maxFrametime: {}, minFrameTime: {}, diff: {}", maxFrameTime_, minFrameTime_,
+                      maxFrameTime_ - minFrameTime_);
+            LOG_WARN("Error when saving rosbag file! There are abnormal timestamp data frames during recording!");
+            markFileAsError(filePath_);
+        }
     }
 }
 
