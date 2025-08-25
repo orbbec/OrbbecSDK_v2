@@ -158,6 +158,12 @@ void G330Device::init() {
         propertyServer->registerProperty(OB_PROP_INTRA_CAMERA_SYNC_REFERENCE_INT, "rw", "rw", vendorPropertyAccessor.get());
     }
 
+    if(fwVersion >= 10564) {
+        auto propertyServer         = getPropertyServer();
+        auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        propertyServer->registerProperty(OB_PROP_COLOR_DENOISING_LEVEL_INT, "rw", "rw", vendorPropertyAccessor.get());
+    }
+
     auto sensorStreamStrategy = std::make_shared<G330SensorStreamStrategy>(this);
     registerComponent(OB_DEV_COMPONENT_SENSOR_STREAM_STRATEGY, sensorStreamStrategy);
 
@@ -1424,6 +1430,12 @@ void G330NetDevice::init() {
         propertyServer->registerProperty(OB_DEVICE_PTP_CLOCK_SYNC_ENABLE_BOOL, "rw", "rw", ptpClockSyncPropertyAccessor);
     }
 #endif
+
+    if(fwVersion >= 10564) {
+        auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        propertyServer->registerProperty(OB_PROP_COLOR_DENOISING_LEVEL_INT, "rw", "rw", vendorPropertyAccessor.get());
+        propertyServer->registerProperty(OB_STRUCT_DEVICE_STATIC_IP_CONFIG_RECORD, "rw", "rw", vendorPropertyAccessor.get());
+    }
 
     fetchDeviceErrorState();
 }
