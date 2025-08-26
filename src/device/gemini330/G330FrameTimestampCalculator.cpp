@@ -73,6 +73,8 @@ uint64_t G330FrameTimestampCalculatorBaseDeviceTime::calculate(uint64_t srcTimes
             else {
                 baseDevTime_ -= calculateLeftoverTimestamp;
             }
+        } else {
+            baseDevTime_ = 0;
         }
     }
 
