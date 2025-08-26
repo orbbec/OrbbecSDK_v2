@@ -206,35 +206,36 @@ private:
 
     // possible inflection point of the calibrated K6 distortion curve
     float r2_max_loc_;
-
     // members for SSE
-    __m128 color_cx_;
-    __m128 color_cy_;
-    __m128 color_fx_;
-    __m128 color_fy_;
-    __m128 color_k1_;
-    __m128 color_k2_;
-    __m128 color_k3_;
-    __m128 color_k4_;
-    __m128 color_k5_;
-    __m128 color_k6_;
-    __m128 color_p1_;
-    __m128 color_p2_;
-    __m128 scaled_trans_1_;
-    __m128 scaled_trans_2_;
-    __m128 scaled_trans_3_;
-    __m128 r2_max_loc_sse_;
-    __m128 x1_limit;
-    __m128 x2_limit;
-    __m128 y1_limit;
-    __m128 y2_limit;
-
-    const static __m128  POINT_FIVE;
-    const static __m128  TWO;
-    const static __m128i ZERO;
-    const static __m128  ZERO_F;
-    bool                 use_scale_ = false;
+    bool use_scale_ = false;
     OBFormat             depth_format_;
+    struct AlignImplSSEData {
+        __m128 color_cx_;
+        __m128 color_cy_;
+        __m128 color_fx_;
+        __m128 color_fy_;
+        __m128 color_k1_;
+        __m128 color_k2_;
+        __m128 color_k3_;
+        __m128 color_k4_;
+        __m128 color_k5_;
+        __m128 color_k6_;
+        __m128 color_p1_;
+        __m128 color_p2_;
+        __m128 scaled_trans_1_;
+        __m128 scaled_trans_2_;
+        __m128 scaled_trans_3_;
+        __m128 r2_max_loc_sse_;
+        __m128 x1_limit;
+        __m128 x2_limit;
+        __m128 y1_limit;
+        __m128 y2_limit;
+        const static __m128  POINT_FIVE;
+        const static __m128  TWO;
+        const static __m128i ZERO;
+        const static __m128  ZERO_F;
+    };
+    AlignImplSSEData *sseData_;
 };
 
 #endif  // D2C_DEPTH_TO_COLOR_IMPL_H

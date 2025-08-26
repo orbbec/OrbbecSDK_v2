@@ -74,12 +74,18 @@ static inline void removeDistortion(const OBCameraDistortion &distort_param, con
     pt_ud[1] = tmp_p_ud[1];
 }
 
-const __m128  AlignImpl::POINT_FIVE = _mm_set_ps1(0.5);
-const __m128  AlignImpl::TWO        = _mm_set_ps1(2);
-const __m128i AlignImpl::ZERO       = _mm_setzero_si128();
-const __m128  AlignImpl::ZERO_F     = _mm_set_ps1(0.0);
+const __m128  AlignImpl::AlignImplSSEData::POINT_FIVE = _mm_set_ps1(0.5);
+const __m128  AlignImpl::AlignImplSSEData::TWO        = _mm_set_ps1(2);
+const __m128i AlignImpl::AlignImplSSEData::ZERO       = _mm_setzero_si128();
+const __m128  AlignImpl::AlignImplSSEData::ZERO_F     = _mm_set_ps1(0.0);
 
 AlignImpl::AlignImpl() : initialized_(false) {
+#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+    sseData_ = static_cast<AlignImplSSEData *>( _aligned_malloc(sizeof(AlignImplSSEData), 16));
+#else
+    sseData_ = static_cast<AlignImplSSEData *>( malloc(sizeof(AlignImplSSEData)));
+#endif
+
     depth_unit_mm_   = 1.0;
     r2_max_loc_      = 0.0;
     auto_down_scale_ = 1.0;
@@ -91,6 +97,12 @@ AlignImpl::AlignImpl() : initialized_(false) {
 }
 
 AlignImpl::~AlignImpl() {
+#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+    _aligned_free(sseData_);
+#else
+    free(sseData_);
+#endif
+
     clearMatrixCache();
     initialized_ = false;
 }
@@ -122,21 +134,21 @@ void AlignImpl::initialize(OBCameraIntrinsic depth_intrin, OBCameraDistortion de
         scaled_trans_[i] = transform_.trans[i] / depth_unit_mm_;
     }
 
-    color_fx_       = _mm_set_ps1(rgb_intric_.fx);
-    color_cx_       = _mm_set_ps1(rgb_intric_.cx);
-    color_fy_       = _mm_set_ps1(rgb_intric_.fy);
-    color_cy_       = _mm_set_ps1(rgb_intric_.cy);
-    color_k1_       = _mm_set_ps1(rgb_disto_.k1);
-    color_k2_       = _mm_set_ps1(rgb_disto_.k2);
-    color_k3_       = _mm_set_ps1(rgb_disto_.k3);
-    color_k4_       = _mm_set_ps1(rgb_disto_.k4);
-    color_k5_       = _mm_set_ps1(rgb_disto_.k5);
-    color_k6_       = _mm_set_ps1(rgb_disto_.k6);
-    color_p1_       = _mm_set_ps1(rgb_disto_.p1);
-    color_p2_       = _mm_set_ps1(rgb_disto_.p2);
-    scaled_trans_1_ = _mm_set_ps1(scaled_trans_[0]);
-    scaled_trans_2_ = _mm_set_ps1(scaled_trans_[1]);
-    scaled_trans_3_ = _mm_set_ps1(scaled_trans_[2]);
+    sseData_->color_fx_       = _mm_set_ps1(rgb_intric_.fx);
+    sseData_->color_cx_       = _mm_set_ps1(rgb_intric_.cx);
+    sseData_->color_fy_       = _mm_set_ps1(rgb_intric_.fy);
+    sseData_->color_cy_       = _mm_set_ps1(rgb_intric_.cy);
+    sseData_->color_k1_       = _mm_set_ps1(rgb_disto_.k1);
+    sseData_->color_k2_       = _mm_set_ps1(rgb_disto_.k2);
+    sseData_->color_k3_       = _mm_set_ps1(rgb_disto_.k3);
+    sseData_->color_k4_       = _mm_set_ps1(rgb_disto_.k4);
+    sseData_->color_k5_       = _mm_set_ps1(rgb_disto_.k5);
+    sseData_->color_k6_       = _mm_set_ps1(rgb_disto_.k6);
+    sseData_->color_p1_       = _mm_set_ps1(rgb_disto_.p1);
+    sseData_->color_p2_       = _mm_set_ps1(rgb_disto_.p2);
+    sseData_->scaled_trans_1_ = _mm_set_ps1(scaled_trans_[0]);
+    sseData_->scaled_trans_2_ = _mm_set_ps1(scaled_trans_[1]);
+    sseData_->scaled_trans_3_ = _mm_set_ps1(scaled_trans_[2]);
 
     prepareDepthResolution();
     setLimitROI();
@@ -215,7 +227,7 @@ void AlignImpl::prepareDepthResolution() {
     // There may be outliers due to possible inflection points of the calibrated K6 distortion curve;
     if(add_target_distortion_) {
         r2_max_loc_     = estimateInflectionPoint(depth_intric_, rgb_intric_, rgb_disto_);
-        r2_max_loc_sse_ = _mm_set_ps1(r2_max_loc_);
+        sseData_->r2_max_loc_sse_ = _mm_set_ps1(r2_max_loc_);
     }
 
     // Prepare LUTs
@@ -227,9 +239,9 @@ void AlignImpl::prepareDepthResolution() {
     float *rot_coeff2[2];
     float *rot_coeff3[2];
     for(int i = 0; i < channel; i++) {
-        rot_coeff1[i] = new float[coeff_num];
-        rot_coeff2[i] = new float[coeff_num];
-        rot_coeff3[i] = new float[coeff_num];
+        rot_coeff1[i] = new float[static_cast<unsigned int>(coeff_num)];
+        rot_coeff2[i] = new float[static_cast<unsigned int>(coeff_num)];
+        rot_coeff3[i] = new float[static_cast<unsigned int>(coeff_num)];
     }
 
     for(int i = 0; i < channel; i++) {
@@ -288,10 +300,10 @@ void AlignImpl::clearMatrixCache() {
 }
 
 void AlignImpl::setLimitROI() {
-    x1_limit = _mm_set_ps1(0.0f);
-    x2_limit = _mm_set_ps1(static_cast<float>(rgb_intric_.width - 1));
-    y1_limit = _mm_set_ps1(0.0f);
-    y2_limit = _mm_set_ps1(static_cast<float>(rgb_intric_.height - 1));
+    sseData_->x1_limit = _mm_set_ps1(0.0f);
+    sseData_->x2_limit = _mm_set_ps1(static_cast<float>(rgb_intric_.width - 1));
+    sseData_->y1_limit = _mm_set_ps1(0.0f);
+    sseData_->y2_limit = _mm_set_ps1(static_cast<float>(rgb_intric_.height - 1));
 }
 
 template <typename T> void fillPixelGap(const int *u, const int *v, const int width, const int height, const T val, T *buffer, bool copy = true) {
@@ -337,13 +349,13 @@ void AlignImpl::distortedWithSSE(__m128 &tx, __m128 &ty, const __m128 x2, const 
     __m128 r6 = _mm_mul_ps(r4, r2);
 
     // float k_jx = 1 + k1 * r2 + k2 * r4 + k3 * r6;
-    __m128 k_jx = _mm_add_ps(_mm_set_ps1(1), _mm_add_ps(_mm_add_ps(_mm_mul_ps(color_k1_, r2), _mm_mul_ps(color_k2_, r4)), _mm_mul_ps(color_k3_, r6)));
+    __m128 k_jx = _mm_add_ps(_mm_set_ps1(1), _mm_add_ps(_mm_add_ps(_mm_mul_ps(sseData_->color_k1_, r2), _mm_mul_ps(sseData_->color_k2_, r4)), _mm_mul_ps(sseData_->color_k3_, r6)));
 
     // float x_qx = p2 * (2 * x2 + r2) + 2 * p1 * xy;
-    __m128 x_qx = _mm_add_ps(_mm_mul_ps(color_p2_, _mm_add_ps(_mm_mul_ps(x2, TWO), r2)), _mm_mul_ps(_mm_mul_ps(color_p1_, xy), TWO));
+    __m128 x_qx = _mm_add_ps(_mm_mul_ps(sseData_->color_p2_, _mm_add_ps(_mm_mul_ps(x2, sseData_->TWO), r2)), _mm_mul_ps(_mm_mul_ps(sseData_->color_p1_, xy), sseData_->TWO));
 
     // float y_qx = p1 * (2 * y2 + r2) + 2 * p2 * xy;
-    __m128 y_qx = _mm_add_ps(_mm_mul_ps(color_p1_, _mm_add_ps(_mm_mul_ps(y2, TWO), r2)), _mm_mul_ps(_mm_mul_ps(color_p2_, xy), TWO));
+    __m128 y_qx = _mm_add_ps(_mm_mul_ps(sseData_->color_p1_, _mm_add_ps(_mm_mul_ps(y2, sseData_->TWO), r2)), _mm_mul_ps(_mm_mul_ps(sseData_->color_p2_, xy), sseData_->TWO));
 
     // float distx = tx * k_jx + x_qx;
     tx = _mm_add_ps(_mm_mul_ps(tx, k_jx), x_qx);
@@ -359,14 +371,14 @@ void AlignImpl::BMDistortedWithSSE(__m128 &tx, __m128 &ty, const __m128 x2, cons
 
     // float k_jx = k_diff = (1 + k1 * r2 + k2 * r4 + k3 * r6) / (1 + k4 * r2 + k5 * r4 + k6 * r6);
     __m128 k_jx =
-        _mm_div_ps(_mm_add_ps(_mm_set_ps1(1), _mm_add_ps(_mm_add_ps(_mm_mul_ps(color_k1_, r2), _mm_mul_ps(color_k2_, r4)), _mm_mul_ps(color_k3_, r6))),
-                   _mm_add_ps(_mm_set_ps1(1), _mm_add_ps(_mm_add_ps(_mm_mul_ps(color_k4_, r2), _mm_mul_ps(color_k5_, r4)), _mm_mul_ps(color_k6_, r6))));
+        _mm_div_ps(_mm_add_ps(_mm_set_ps1(1), _mm_add_ps(_mm_add_ps(_mm_mul_ps(sseData_->color_k1_, r2), _mm_mul_ps(sseData_->color_k2_, r4)), _mm_mul_ps(sseData_->color_k3_, r6))),
+                   _mm_add_ps(_mm_set_ps1(1), _mm_add_ps(_mm_add_ps(_mm_mul_ps(sseData_->color_k4_, r2), _mm_mul_ps(sseData_->color_k5_, r4)), _mm_mul_ps(sseData_->color_k6_, r6))));
 
     // float x_qx = p2 * (2 * x2 + r2) + 2 * p1 * xy;
-    __m128 x_qx = _mm_add_ps(_mm_mul_ps(color_p2_, _mm_add_ps(_mm_mul_ps(x2, TWO), r2)), _mm_mul_ps(_mm_mul_ps(color_p1_, xy), TWO));
+    __m128 x_qx = _mm_add_ps(_mm_mul_ps(sseData_->color_p2_, _mm_add_ps(_mm_mul_ps(x2, sseData_->TWO), r2)), _mm_mul_ps(_mm_mul_ps(sseData_->color_p1_, xy), sseData_->TWO));
 
     // float y_qx = p1 * (2 * y2 + r2) + 2 * p2 * xy;
-    __m128 y_qx = _mm_add_ps(_mm_mul_ps(color_p1_, _mm_add_ps(_mm_mul_ps(y2, TWO), r2)), _mm_mul_ps(_mm_mul_ps(color_p2_, xy), TWO));
+    __m128 y_qx = _mm_add_ps(_mm_mul_ps(sseData_->color_p1_, _mm_add_ps(_mm_mul_ps(y2, sseData_->TWO), r2)), _mm_mul_ps(_mm_mul_ps(sseData_->color_p2_, xy), sseData_->TWO));
 
     // float distx = tx * k_jx + x_qx;
     tx = _mm_add_ps(_mm_mul_ps(tx, k_jx), x_qx);
@@ -397,8 +409,8 @@ void AlignImpl::KBDistortedWithSSE(__m128 &tx, __m128 &ty, const __m128 r2) {
 
     // float theta_jx=theta+k1*theta2+k2*theta4+k3*theta6+k4*theta8
     __m128 theta_jx =
-        _mm_add_ps(_mm_add_ps(_mm_add_ps(_mm_add_ps(theta, _mm_mul_ps(color_k1_, theta3)), _mm_mul_ps(color_k2_, theta5)), _mm_mul_ps(color_k3_, theta7)),
-                   _mm_mul_ps(color_k4_, theta9));
+        _mm_add_ps(_mm_add_ps(_mm_add_ps(_mm_add_ps(theta, _mm_mul_ps(sseData_->color_k1_, theta3)), _mm_mul_ps(sseData_->color_k2_, theta5)), _mm_mul_ps(sseData_->color_k3_, theta7)),
+                   _mm_mul_ps(sseData_->color_k4_, theta9));
 
     // float tx=(theta_jx/r)*tx
     tx = _mm_mul_ps(_mm_div_ps(theta_jx, r), tx);
@@ -1094,8 +1106,8 @@ void AlignImpl::LinearD2CWithSSE(const uint16_t *depth_buffer, uint16_t *out_dep
 inline void AlignImpl::K3ProcessWithSSE(const uint16_t *depth_buffer, const float *coeff_mat_x[2], const float *coeff_mat_y[2], const float *coeff_mat_z[2],
                                         float *x_lo, float *y_lo, float *z_lo, float *x_hi, float *y_hi, float *z_hi, int start_idx, int channel) {
     __m128i depth_i16  = _mm_loadu_si128((__m128i *)(depth_buffer + start_idx));
-    __m128i depth_i_lo = _mm_unpacklo_epi16(depth_i16, ZERO);
-    __m128i depth_i_hi = _mm_unpackhi_epi16(depth_i16, ZERO);
+    __m128i depth_i_lo = _mm_unpacklo_epi16(depth_i16, sseData_->ZERO);
+    __m128i depth_i_hi = _mm_unpackhi_epi16(depth_i16, sseData_->ZERO);
 
     __m128 depth_sse_lo = _mm_cvtepi32_ps(depth_i_lo);
     __m128 depth_sse_hi = _mm_cvtepi32_ps(depth_i_hi);
@@ -1123,10 +1135,10 @@ inline void AlignImpl::K3ProcessWithSSE(const uint16_t *depth_buffer, const floa
         distortedWithSSE(nx_lo, ny_lo, x2_lo, y2_lo, r2_lo);
         distortedWithSSE(nx_hi, ny_hi, x2_hi, y2_hi, r2_hi);
 
-        __m128 pixelx_lo = _mm_add_ps(_mm_mul_ps(nx_lo, color_fx_), color_cx_);
-        __m128 pixely_lo = _mm_add_ps(_mm_mul_ps(ny_lo, color_fy_), color_cy_);
-        __m128 pixelx_hi = _mm_add_ps(_mm_mul_ps(nx_hi, color_fx_), color_cx_);
-        __m128 pixely_hi = _mm_add_ps(_mm_mul_ps(ny_hi, color_fy_), color_cy_);
+        __m128 pixelx_lo = _mm_add_ps(_mm_mul_ps(nx_lo, sseData_->color_fx_), sseData_->color_cx_);
+        __m128 pixely_lo = _mm_add_ps(_mm_mul_ps(ny_lo, sseData_->color_fy_), sseData_->color_cy_);
+        __m128 pixelx_hi = _mm_add_ps(_mm_mul_ps(nx_hi, sseData_->color_fx_), sseData_->color_cx_);
+        __m128 pixely_hi = _mm_add_ps(_mm_mul_ps(ny_hi, sseData_->color_fy_), sseData_->color_cy_);
 
         _mm_storeu_ps(x_lo + fold * 4, pixelx_lo);
         _mm_storeu_ps(y_lo + fold * 4, pixely_lo);
@@ -1140,8 +1152,8 @@ inline void AlignImpl::K3ProcessWithSSE(const uint16_t *depth_buffer, const floa
 inline void AlignImpl::K6ProcessWithSSE(const uint16_t *depth_buffer, const float *coeff_mat_x[2], const float *coeff_mat_y[2], const float *coeff_mat_z[2],
                                         float *x_lo, float *y_lo, float *z_lo, float *x_hi, float *y_hi, float *z_hi, int start_idx, int channel) {
     __m128i depth_i16  = _mm_loadu_si128((__m128i *)(depth_buffer + start_idx));
-    __m128i depth_i_lo = _mm_unpacklo_epi16(depth_i16, ZERO);
-    __m128i depth_i_hi = _mm_unpackhi_epi16(depth_i16, ZERO);
+    __m128i depth_i_lo = _mm_unpacklo_epi16(depth_i16, sseData_->ZERO);
+    __m128i depth_i_hi = _mm_unpackhi_epi16(depth_i16, sseData_->ZERO);
 
     __m128 depth_sse_lo = _mm_cvtepi32_ps(depth_i_lo);
     __m128 depth_sse_hi = _mm_cvtepi32_ps(depth_i_hi);
@@ -1166,18 +1178,18 @@ inline void AlignImpl::K6ProcessWithSSE(const uint16_t *depth_buffer, const floa
         __m128 y2_hi = _mm_mul_ps(ny_hi, ny_hi);
         __m128 r2_hi = _mm_add_ps(x2_hi, y2_hi);
 
-        __m128 flag_lo = _mm_or_ps(_mm_cmpge_ps(ZERO_F, r2_max_loc_sse_), _mm_cmplt_ps(r2_lo, r2_max_loc_sse_));
-        __m128 flag_hi = _mm_or_ps(_mm_cmpge_ps(ZERO_F, r2_max_loc_sse_), _mm_cmplt_ps(r2_hi, r2_max_loc_sse_));
+        __m128 flag_lo = _mm_or_ps(_mm_cmpge_ps(sseData_->ZERO_F, sseData_->r2_max_loc_sse_), _mm_cmplt_ps(r2_lo, sseData_->r2_max_loc_sse_));
+        __m128 flag_hi = _mm_or_ps(_mm_cmpge_ps(sseData_->ZERO_F, sseData_->r2_max_loc_sse_), _mm_cmplt_ps(r2_hi, sseData_->r2_max_loc_sse_));
 
         depth_o_lo = _mm_and_ps(depth_o_lo, flag_lo);
         BMDistortedWithSSE(nx_lo, ny_lo, x2_lo, y2_lo, r2_lo);
         depth_o_hi = _mm_and_ps(depth_o_hi, flag_hi);
         BMDistortedWithSSE(nx_hi, ny_hi, x2_hi, y2_hi, r2_lo);
 
-        __m128 pixelx_lo = _mm_add_ps(_mm_mul_ps(nx_lo, color_fx_), color_cx_);
-        __m128 pixely_lo = _mm_add_ps(_mm_mul_ps(ny_lo, color_fy_), color_cy_);
-        __m128 pixelx_hi = _mm_add_ps(_mm_mul_ps(nx_hi, color_fx_), color_cx_);
-        __m128 pixely_hi = _mm_add_ps(_mm_mul_ps(ny_hi, color_fy_), color_cy_);
+        __m128 pixelx_lo = _mm_add_ps(_mm_mul_ps(nx_lo, sseData_->color_fx_), sseData_->color_cx_);
+        __m128 pixely_lo = _mm_add_ps(_mm_mul_ps(ny_lo, sseData_->color_fy_), sseData_->color_cy_);
+        __m128 pixelx_hi = _mm_add_ps(_mm_mul_ps(nx_hi, sseData_->color_fx_), sseData_->color_cx_);
+        __m128 pixely_hi = _mm_add_ps(_mm_mul_ps(ny_hi, sseData_->color_fy_), sseData_->color_cy_);
 
         _mm_storeu_ps(x_lo + fold * 4, pixelx_lo);
         _mm_storeu_ps(y_lo + fold * 4, pixely_lo);
@@ -1192,8 +1204,8 @@ inline void AlignImpl::K6ProcessWithSSEOnY12C4(const uint16_t *depth_buffer, con
                                                const float *coeff_mat_z[2], float *x_lo, float *y_lo, float *z_lo, float *x_hi, float *y_hi, float *z_hi,
                                                int start_idx, int channel) {
     __m128i depth_i16  = _mm_loadu_si128((__m128i *)(depth_buffer + start_idx));
-    __m128i depth_i_lo = _mm_unpacklo_epi16(depth_i16, ZERO);
-    __m128i depth_i_hi = _mm_unpackhi_epi16(depth_i16, ZERO);
+    __m128i depth_i_lo = _mm_unpacklo_epi16(depth_i16, sseData_->ZERO);
+    __m128i depth_i_hi = _mm_unpackhi_epi16(depth_i16, sseData_->ZERO);
 
     __m128i shifted_depth_i_lo = _mm_srli_epi32(depth_i_lo, 4);
     __m128i shifted_depth_i_hi = _mm_srli_epi32(depth_i_hi, 4);
@@ -1221,18 +1233,18 @@ inline void AlignImpl::K6ProcessWithSSEOnY12C4(const uint16_t *depth_buffer, con
         __m128 y2_hi = _mm_mul_ps(ny_hi, ny_hi);
         __m128 r2_hi = _mm_add_ps(x2_hi, y2_hi);
 
-        __m128 flag_lo = _mm_or_ps(_mm_cmpge_ps(ZERO_F, r2_max_loc_sse_), _mm_cmplt_ps(r2_lo, r2_max_loc_sse_));
-        __m128 flag_hi = _mm_or_ps(_mm_cmpge_ps(ZERO_F, r2_max_loc_sse_), _mm_cmplt_ps(r2_hi, r2_max_loc_sse_));
+        __m128 flag_lo = _mm_or_ps(_mm_cmpge_ps(sseData_->ZERO_F, sseData_->r2_max_loc_sse_), _mm_cmplt_ps(r2_lo, sseData_->r2_max_loc_sse_));
+        __m128 flag_hi = _mm_or_ps(_mm_cmpge_ps(sseData_->ZERO_F, sseData_->r2_max_loc_sse_), _mm_cmplt_ps(r2_hi, sseData_->r2_max_loc_sse_));
 
         depth_o_lo = _mm_and_ps(depth_o_lo, flag_lo);
         BMDistortedWithSSE(nx_lo, ny_lo, x2_lo, y2_lo, r2_lo);
         depth_o_hi = _mm_and_ps(depth_o_hi, flag_hi);
         BMDistortedWithSSE(nx_hi, ny_hi, x2_hi, y2_hi, r2_lo);
 
-        __m128 pixelx_lo = _mm_add_ps(_mm_mul_ps(nx_lo, color_fx_), color_cx_);
-        __m128 pixely_lo = _mm_add_ps(_mm_mul_ps(ny_lo, color_fy_), color_cy_);
-        __m128 pixelx_hi = _mm_add_ps(_mm_mul_ps(nx_hi, color_fx_), color_cx_);
-        __m128 pixely_hi = _mm_add_ps(_mm_mul_ps(ny_hi, color_fy_), color_cy_);
+        __m128 pixelx_lo = _mm_add_ps(_mm_mul_ps(nx_lo, sseData_->color_fx_), sseData_->color_cx_);
+        __m128 pixely_lo = _mm_add_ps(_mm_mul_ps(ny_lo, sseData_->color_fy_), sseData_->color_cy_);
+        __m128 pixelx_hi = _mm_add_ps(_mm_mul_ps(nx_hi, sseData_->color_fx_), sseData_->color_cx_);
+        __m128 pixely_hi = _mm_add_ps(_mm_mul_ps(ny_hi, sseData_->color_fy_), sseData_->color_cy_);
 
         __m128i mask_low_4bits = _mm_set1_epi32(0x0000000F);
 
@@ -1258,8 +1270,8 @@ inline void AlignImpl::K6ProcessWithSSEOnY12C4(const uint16_t *depth_buffer, con
 inline void AlignImpl::KBProcessWithSSE(const uint16_t *depth_buffer, const float *coeff_mat_x[2], const float *coeff_mat_y[2], const float *coeff_mat_z[2],
                                         float *x_lo, float *y_lo, float *z_lo, float *x_hi, float *y_hi, float *z_hi, int start_idx, int channel) {
     __m128i depth_i16  = _mm_loadu_si128((__m128i *)(depth_buffer + start_idx));
-    __m128i depth_i_lo = _mm_unpacklo_epi16(depth_i16, ZERO);
-    __m128i depth_i_hi = _mm_unpackhi_epi16(depth_i16, ZERO);
+    __m128i depth_i_lo = _mm_unpacklo_epi16(depth_i16, sseData_->ZERO);
+    __m128i depth_i_hi = _mm_unpackhi_epi16(depth_i16, sseData_->ZERO);
 
     __m128 depth_sse_lo = _mm_cvtepi32_ps(depth_i_lo);
     __m128 depth_sse_hi = _mm_cvtepi32_ps(depth_i_hi);
@@ -1287,10 +1299,10 @@ inline void AlignImpl::KBProcessWithSSE(const uint16_t *depth_buffer, const floa
         KBDistortedWithSSE(nx_lo, ny_lo, r2_lo);
         KBDistortedWithSSE(nx_hi, ny_hi, r2_hi);
 
-        __m128 pixelx_lo = _mm_add_ps(_mm_mul_ps(nx_lo, color_fx_), color_cx_);
-        __m128 pixely_lo = _mm_add_ps(_mm_mul_ps(ny_lo, color_fy_), color_cy_);
-        __m128 pixelx_hi = _mm_add_ps(_mm_mul_ps(nx_hi, color_fx_), color_cx_);
-        __m128 pixely_hi = _mm_add_ps(_mm_mul_ps(ny_hi, color_fy_), color_cy_);
+        __m128 pixelx_lo = _mm_add_ps(_mm_mul_ps(nx_lo, sseData_->color_fx_), sseData_->color_cx_);
+        __m128 pixely_lo = _mm_add_ps(_mm_mul_ps(ny_lo, sseData_->color_fy_), sseData_->color_cy_);
+        __m128 pixelx_hi = _mm_add_ps(_mm_mul_ps(nx_hi, sseData_->color_fx_), sseData_->color_cx_);
+        __m128 pixely_hi = _mm_add_ps(_mm_mul_ps(ny_hi, sseData_->color_fy_), sseData_->color_cy_);
 
         _mm_storeu_ps(x_lo + fold * 4, pixelx_lo);
         _mm_storeu_ps(y_lo + fold * 4, pixely_lo);
@@ -1304,8 +1316,8 @@ inline void AlignImpl::KBProcessWithSSE(const uint16_t *depth_buffer, const floa
 inline void AlignImpl::LinearProcessWithSSE(const uint16_t *depth_buffer, const float *coeff_mat_x[2], const float *coeff_mat_y[2], const float *coeff_mat_z[2],
                                             float *x_lo, float *y_lo, float *z_lo, float *x_hi, float *y_hi, float *z_hi, int start_idx, int channel) {
     __m128i depth_i16  = _mm_loadu_si128((__m128i *)(depth_buffer + start_idx));
-    __m128i depth_i_lo = _mm_unpacklo_epi16(depth_i16, ZERO);
-    __m128i depth_i_hi = _mm_unpackhi_epi16(depth_i16, ZERO);
+    __m128i depth_i_lo = _mm_unpacklo_epi16(depth_i16, sseData_->ZERO);
+    __m128i depth_i_hi = _mm_unpackhi_epi16(depth_i16, sseData_->ZERO);
 
     __m128 depth_sse_lo = _mm_cvtepi32_ps(depth_i_lo);
     __m128 depth_sse_hi = _mm_cvtepi32_ps(depth_i_hi);
@@ -1323,10 +1335,10 @@ inline void AlignImpl::LinearProcessWithSSE(const uint16_t *depth_buffer, const 
         CalcNormCorrdWithSSE(depth_sse_lo, coeff_sse1_lo, coeff_sse2_lo, coeff_sse3_lo, depth_o_lo, nx_lo, ny_lo);
         CalcNormCorrdWithSSE(depth_sse_hi, coeff_sse1_hi, coeff_sse2_hi, coeff_sse3_hi, depth_o_hi, nx_hi, ny_hi);
 
-        __m128 pixelx_lo = _mm_add_ps(_mm_mul_ps(nx_lo, color_fx_), color_cx_);
-        __m128 pixely_lo = _mm_add_ps(_mm_mul_ps(ny_lo, color_fy_), color_cy_);
-        __m128 pixelx_hi = _mm_add_ps(_mm_mul_ps(nx_hi, color_fx_), color_cx_);
-        __m128 pixely_hi = _mm_add_ps(_mm_mul_ps(ny_hi, color_fy_), color_cy_);
+        __m128 pixelx_lo = _mm_add_ps(_mm_mul_ps(nx_lo, sseData_->color_fx_), sseData_->color_cx_);
+        __m128 pixely_lo = _mm_add_ps(_mm_mul_ps(ny_lo, sseData_->color_fy_), sseData_->color_cy_);
+        __m128 pixelx_hi = _mm_add_ps(_mm_mul_ps(nx_hi, sseData_->color_fx_), sseData_->color_cx_);
+        __m128 pixely_hi = _mm_add_ps(_mm_mul_ps(ny_hi, sseData_->color_fy_), sseData_->color_cy_);
 
         _mm_storeu_ps(x_lo + fold * 4, pixelx_lo);
         _mm_storeu_ps(y_lo + fold * 4, pixely_lo);
@@ -1341,8 +1353,8 @@ inline void AlignImpl::LinearProcessWithSSEOnY12C4(const uint16_t *depth_buffer,
                                                    const float *coeff_mat_z[2], float *x_lo, float *y_lo, float *z_lo, float *x_hi, float *y_hi, float *z_hi,
                                                    int start_idx, int channel) {
     __m128i depth_i16  = _mm_loadu_si128((__m128i *)(depth_buffer + start_idx));
-    __m128i depth_i_lo = _mm_unpacklo_epi16(depth_i16, ZERO);
-    __m128i depth_i_hi = _mm_unpackhi_epi16(depth_i16, ZERO);
+    __m128i depth_i_lo = _mm_unpacklo_epi16(depth_i16, sseData_->ZERO);
+    __m128i depth_i_hi = _mm_unpackhi_epi16(depth_i16, sseData_->ZERO);
 
     __m128i shifted_depth_i_lo = _mm_srli_epi32(depth_i_lo, 4);
     __m128i shifted_depth_i_hi = _mm_srli_epi32(depth_i_hi, 4);
@@ -1363,10 +1375,10 @@ inline void AlignImpl::LinearProcessWithSSEOnY12C4(const uint16_t *depth_buffer,
         CalcNormCorrdWithSSE(depth_sse_lo, coeff_sse1_lo, coeff_sse2_lo, coeff_sse3_lo, depth_o_lo, nx_lo, ny_lo);
         CalcNormCorrdWithSSE(depth_sse_hi, coeff_sse1_hi, coeff_sse2_hi, coeff_sse3_hi, depth_o_hi, nx_hi, ny_hi);
 
-        __m128 pixelx_lo = _mm_add_ps(_mm_mul_ps(nx_lo, color_fx_), color_cx_);
-        __m128 pixely_lo = _mm_add_ps(_mm_mul_ps(ny_lo, color_fy_), color_cy_);
-        __m128 pixelx_hi = _mm_add_ps(_mm_mul_ps(nx_hi, color_fx_), color_cx_);
-        __m128 pixely_hi = _mm_add_ps(_mm_mul_ps(ny_hi, color_fy_), color_cy_);
+        __m128 pixelx_lo = _mm_add_ps(_mm_mul_ps(nx_lo, sseData_->color_fx_), sseData_->color_cx_);
+        __m128 pixely_lo = _mm_add_ps(_mm_mul_ps(ny_lo, sseData_->color_fy_), sseData_->color_cy_);
+        __m128 pixelx_hi = _mm_add_ps(_mm_mul_ps(nx_hi, sseData_->color_fx_), sseData_->color_cx_);
+        __m128 pixely_hi = _mm_add_ps(_mm_mul_ps(ny_hi, sseData_->color_fy_), sseData_->color_cy_);
 
         __m128i mask_low_4bits = _mm_set1_epi32(0x0000000F);
 
@@ -1391,9 +1403,9 @@ inline void AlignImpl::LinearProcessWithSSEOnY12C4(const uint16_t *depth_buffer,
 
 void AlignImpl::CalcNormCorrdWithSSE(const __m128 &depth_sse, const __m128 &coeff_sse1, const __m128 &coeff_sse2, const __m128 &coeff_sse3, __m128 &depth_o,
                                      __m128 &nx, __m128 &ny) {
-    __m128 Y = _mm_add_ps(_mm_mul_ps(depth_sse, coeff_sse2), scaled_trans_2_);
-    __m128 X = _mm_add_ps(_mm_mul_ps(depth_sse, coeff_sse1), scaled_trans_1_);
-    depth_o  = _mm_add_ps(_mm_mul_ps(depth_sse, coeff_sse3), scaled_trans_3_);
+    __m128 Y = _mm_add_ps(_mm_mul_ps(depth_sse, coeff_sse2), sseData_->scaled_trans_2_);
+    __m128 X = _mm_add_ps(_mm_mul_ps(depth_sse, coeff_sse1), sseData_->scaled_trans_1_);
+    depth_o  = _mm_add_ps(_mm_mul_ps(depth_sse, coeff_sse3), sseData_->scaled_trans_3_);
 
     nx = _mm_div_ps(X, depth_o);
     ny = _mm_div_ps(Y, depth_o);
@@ -1558,10 +1570,10 @@ int AlignImpl::D2C(const uint16_t *depth_buffer, int depth_width, int depth_heig
         rgb_intric_.cy     = rgb_intric_.cy / scale;
         rgb_intric_.width  = static_cast<int16_t>(rgb_intric_.width / scale);
         rgb_intric_.height = static_cast<int16_t>(rgb_intric_.height / scale);
-        color_fx_          = _mm_set_ps1(rgb_intric_.fx);
-        color_cx_          = _mm_set_ps1(rgb_intric_.cx);
-        color_fy_          = _mm_set_ps1(rgb_intric_.fy);
-        color_cy_          = _mm_set_ps1(rgb_intric_.cy);
+        sseData_->color_fx_          = _mm_set_ps1(rgb_intric_.fx);
+        sseData_->color_cx_          = _mm_set_ps1(rgb_intric_.cx);
+        sseData_->color_fy_          = _mm_set_ps1(rgb_intric_.fy);
+        sseData_->color_cy_          = _mm_set_ps1(rgb_intric_.cy);
     }
 
     int pixnum = rgb_intric_.width * rgb_intric_.height;
@@ -1641,10 +1653,10 @@ int AlignImpl::D2C(const uint16_t *depth_buffer, int depth_width, int depth_heig
         rgb_intric_.cy     = rgb_temp_cy;
         rgb_intric_.width  = rgb_temp_width;
         rgb_intric_.height = rgb_temp_height;
-        color_fx_          = _mm_set_ps1(rgb_intric_.fx);
-        color_cx_          = _mm_set_ps1(rgb_intric_.cx);
-        color_fy_          = _mm_set_ps1(rgb_intric_.fy);
-        color_cy_          = _mm_set_ps1(rgb_intric_.cy);
+        sseData_->color_fx_          = _mm_set_ps1(rgb_intric_.fx);
+        sseData_->color_cx_          = _mm_set_ps1(rgb_intric_.cx);
+        sseData_->color_fy_          = _mm_set_ps1(rgb_intric_.fy);
+        sseData_->color_cy_          = _mm_set_ps1(rgb_intric_.cy);
     }
     pixnum = rgb_intric_.width * rgb_intric_.height;
     if(out_depth) {
@@ -1667,8 +1679,8 @@ int AlignImpl::C2D(const uint16_t *depth_buffer, int depth_width, int depth_heig
 
     // rgb x-y coordinates for each depth pixel
     unsigned long long size     = static_cast<unsigned long long>(depth_width) * depth_height * 2;
-    int               *depth_xy = new int[size];
-    memset(depth_xy, -1, size * sizeof(int));
+    int *              depth_xy = new int[static_cast<unsigned int>(size)];
+    memset(depth_xy, -1, static_cast<unsigned int>(size) * sizeof(int));
 
     int ret = -1;
     if(!D2C(depth_buffer, depth_width, depth_height, nullptr, color_width, color_height, depth_xy, withSSE)) {
