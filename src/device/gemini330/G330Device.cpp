@@ -1158,6 +1158,11 @@ std::vector<std::shared_ptr<IFilter>> G330Device::createRecommendedPostProcessin
             depthFilterList.push_back(decimationFilter);
         }
 
+        if(filterFactory->isFilterCreatorExists("ThresholdFilter")) {
+            auto ThresholdFilter = filterFactory->createFilter("ThresholdFilter");
+            depthFilterList.push_back(ThresholdFilter);
+        }
+
         if(filterFactory->isFilterCreatorExists("HDRMerge")) {
             auto hdrMergeFilter = filterFactory->createFilter("HDRMerge");
             depthFilterList.push_back(hdrMergeFilter);
@@ -1179,7 +1184,7 @@ std::vector<std::shared_ptr<IFilter>> G330Device::createRecommendedPostProcessin
         if(filterFactory->isFilterCreatorExists("SpatialModerateFilter")) {
             auto spatFilter = filterFactory->createFilter("SpatialModerateFilter");
             // magnitude, disp_diff, radius
-            std::vector<std::string> params = { "1", "160", "3" };
+            std::vector<std::string> params = { "1", "160", "5" };
             spatFilter->updateConfig(params);
             depthFilterList.push_back(spatFilter);
         }
@@ -1210,11 +1215,6 @@ std::vector<std::shared_ptr<IFilter>> G330Device::createRecommendedPostProcessin
         if(filterFactory->isFilterCreatorExists("DisparityTransform")) {
             auto dtFilter = filterFactory->createFilter("DisparityTransform");
             depthFilterList.push_back(dtFilter);
-        }
-
-        if(filterFactory->isFilterCreatorExists("ThresholdFilter")) {
-            auto ThresholdFilter = filterFactory->createFilter("ThresholdFilter");
-            depthFilterList.push_back(ThresholdFilter);
         }
 
         for(size_t i = 0; i < depthFilterList.size(); i++) {
@@ -2027,6 +2027,11 @@ std::vector<std::shared_ptr<IFilter>> G330NetDevice::createRecommendedPostProces
             depthFilterList.push_back(decimationFilter);
         }
 
+        if(filterFactory->isFilterCreatorExists("ThresholdFilter")) {
+            auto ThresholdFilter = filterFactory->createFilter("ThresholdFilter");
+            depthFilterList.push_back(ThresholdFilter);
+        }
+
         if(filterFactory->isFilterCreatorExists("HDRMerge")) {
             auto hdrMergeFilter = filterFactory->createFilter("HDRMerge");
             depthFilterList.push_back(hdrMergeFilter);
@@ -2079,11 +2084,6 @@ std::vector<std::shared_ptr<IFilter>> G330NetDevice::createRecommendedPostProces
         if(filterFactory->isFilterCreatorExists("DisparityTransform")) {
             auto dtFilter = filterFactory->createFilter("DisparityTransform");
             depthFilterList.push_back(dtFilter);
-        }
-
-        if(filterFactory->isFilterCreatorExists("ThresholdFilter")) {
-            auto ThresholdFilter = filterFactory->createFilter("ThresholdFilter");
-            depthFilterList.push_back(ThresholdFilter);
         }
 
         for(size_t i = 0; i < depthFilterList.size(); i++) {
