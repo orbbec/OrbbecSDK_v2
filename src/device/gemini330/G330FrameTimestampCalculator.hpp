@@ -26,7 +26,8 @@ private:
 
     uint64_t prevSrcTsp_;
     uint64_t prevHostTsp_;
-    uint64_t baseDevTime_;
+    uint64_t baseDevTime_;  // Processed device timestamp, aligned to multiples of 256 seconds
+    uint64_t devTime_;      // Original device timestamp
 };
 
 }  // namespace libobsensor

@@ -8,7 +8,7 @@
 
 namespace libobsensor {
 G330FrameTimestampCalculatorBaseDeviceTime::G330FrameTimestampCalculatorBaseDeviceTime(IDevice *device, uint64_t deviceTimeFreq, uint64_t frameTimeFreq)
-    : device_(device), deviceTimeFreq_(deviceTimeFreq), frameTimeFreq_(frameTimeFreq), prevSrcTsp_(0), prevHostTsp_(0), baseDevTime_(0) {
+    : device_(device), deviceTimeFreq_(deviceTimeFreq), frameTimeFreq_(frameTimeFreq), prevSrcTsp_(0), prevHostTsp_(0), baseDevTime_(0), devTime_(0) {
     auto                  propServer = device->getPropertyServer();
     std::vector<uint32_t> supportedProps;
     if(propServer->isPropertySupported(OB_PROP_TIMER_RESET_SIGNAL_BOOL, PROP_OP_WRITE, PROP_ACCESS_INTERNAL)) {
@@ -53,7 +53,7 @@ uint64_t G330FrameTimestampCalculatorBaseDeviceTime::calculate(uint64_t srcTimes
     uint64_t prevSrcTspMs    = static_cast<uint64_t>(static_cast<double>(prevSrcTsp_) / frameTimeFreq_ * 1000);
     bool     tspDiffAbnormal = ((static_cast<double>(hostTspDiffMs) - srcTspDiffMs) >= prevSrcTspMs / 2);
 
-    if(baseDevTime_ == 0 || ((tspDecrease || tspDiffAbnormal) && (srcTimestamp != 0 || prevSrcTsp_ != 0)) || prevSrcTspMs <= 50) {
+    if(devTime_ == 0 || ((tspDecrease || tspDiffAbnormal) && (srcTimestamp != 0 || prevSrcTsp_ != 0)) || prevSrcTspMs <= 50) {
         LOG_DEBUG_INTVL_MS(1000, "updateBaseTimeStamp:");
         LOG_DEBUG_INTVL_MS(1000, "\tsrcTimestamp={0}, prevSrcTsp_={1}, tspDecrease={2}", srcTimestamp, prevSrcTsp_, tspDecrease);
         LOG_DEBUG_INTVL_MS(1000, "\tsrcTspDiffMs={0}, hostTspDiffMs={1}, tspDiffAbnormal={2}", srcTspDiffMs, hostTspDiffMs, tspDiffAbnormal);
@@ -61,17 +61,17 @@ uint64_t G330FrameTimestampCalculatorBaseDeviceTime::calculate(uint64_t srcTimes
         {
             auto propertyServer = device_->getPropertyServer();
             auto devTime        = propertyServer->getStructureDataT<OBDeviceTime>(OB_STRUCT_DEVICE_TIME);
-            baseDevTime_        = static_cast<uint64_t>((static_cast<double>(devTime.time) + devTime.rtt / 2) / deviceTimeFreq_ * frameTimeFreq_);
+            devTime_            = static_cast<uint64_t>((static_cast<double>(devTime.time) + devTime.rtt / 2) / deviceTimeFreq_ * frameTimeFreq_);
         }
 
-        uint64_t overFlowTimes              = baseDevTime_ / (256 * frameTimeFreq_);
-        uint64_t calculateLeftoverTimestamp = baseDevTime_ - overFlowTimes * (256 * frameTimeFreq_);
+        uint64_t overFlowTimes              = devTime_ / (256 * frameTimeFreq_);
+        uint64_t calculateLeftoverTimestamp = devTime_ - overFlowTimes * (256 * frameTimeFreq_);
         if(overFlowTimes > 0) {
             if(calculateLeftoverTimestamp < srcTimestamp) {
                 baseDevTime_ = (overFlowTimes - 1) * (256 * frameTimeFreq_);
             }
             else {
-                baseDevTime_ -= calculateLeftoverTimestamp;
+                baseDevTime_ = devTime_ - calculateLeftoverTimestamp;
             }
         } else {
             baseDevTime_ = 0;
