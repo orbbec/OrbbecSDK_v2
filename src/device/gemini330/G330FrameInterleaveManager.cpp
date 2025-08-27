@@ -15,14 +15,14 @@ G330FrameInterleaveManager::G330FrameInterleaveManager(IDevice *owner) : DeviceC
 
     hdrDefault_[0].depthExposureTime = 7500;
     hdrDefault_[0].depthGain         = 16;
-    hdrDefault_[0].depthBrightness   = 60;
-    hdrDefault_[0].depthMaxExposure  = 10000;
+    hdrDefault_[0].depthBrightness   = 90;
+    hdrDefault_[0].depthMaxExposure  = 30458;
     hdrDefault_[0].laserSwitch       = 1;
 
     hdrDefault_[1].depthExposureTime = 1;
     hdrDefault_[1].depthGain         = 16;
-    hdrDefault_[1].depthBrightness   = 20;
-    hdrDefault_[1].depthMaxExposure  = 2000;
+    hdrDefault_[1].depthBrightness   = 30;
+    hdrDefault_[1].depthMaxExposure  = 30458;
     hdrDefault_[1].laserSwitch       = 1;
 
     memcpy(hdr_, hdrDefault_, sizeof(hdrDefault_));
