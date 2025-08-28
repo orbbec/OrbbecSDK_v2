@@ -293,9 +293,17 @@ void MDNSDiscovery::sendAndRecvMDNSQuery(SOCKET sock) {
 
                 MDNSDeviceInfo info;
 
-                info.ip    = ack.ip;
-                info.port  = ack.port;
-                info.mac   = info.ip + ":" + std::to_string(info.port);  // TODO: get mac address
+                info.ip   = ack.ip;
+                info.port = ack.port;
+                auto mac  = findTxtRecord(ack.txtList, "MAC", "unknown");
+                if(!mac.empty()) {
+                    std::replace(mac.begin(), mac.end(), '-', ':');
+                    info.mac = mac;
+                }
+                else {
+                    info.mac = info.ip + ":" + std::to_string(info.port);
+                }
+
                 info.sn    = findTxtRecord(ack.txtList, "SN", "unknown");
                 info.model = findTxtRecord(ack.txtList, "MODEL", "");
                 auto pid   = findTxtRecord(ack.txtList, "PID", "");
@@ -320,7 +328,7 @@ void MDNSDiscovery::sendAndRecvMDNSQuery(SOCKET sock) {
                     // pid
                     if(info.pid == 0) {
                         if(info.model == "TL2401" || info.model == "ME450") {
-                            info.pid = 0x5555;  // multi-lines
+                            info.pid = 0x0213;  // multi-lines
                         }
                         else if(info.model == "MS600") {
                             info.pid = 0x1600;  // single-line

@@ -275,14 +275,9 @@ void LiDARStreamer::trySendStartStreamVendorCmd() {
         LOG_WARN("Get LiDAR filter level failed, error: %s", e.what());
     }
 
-    // speed
-    /*
-    // TODO: In repetitive scan mode, setting the rotation speed will cause abnormalities in the point cloud.
-    //  For the time being, do not set the rotation speed, and it will be restored later.
-
+    // set speed
     value.intValue = profileInfo_.scanSpeed;
     propServer->setPropertyValue(OB_PROP_LIDAR_SCAN_SPEED_INT, value, PROP_ACCESS_INTERNAL);
-    */
 
     // set streaming on
     value.intValue = 1;

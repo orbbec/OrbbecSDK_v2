@@ -304,9 +304,34 @@ void LiDARPropertyAccessor::getPropertyRange(uint32_t propertyId, OBPropertyRang
         range->def.intValue  = 0;
         break;
     }
-    case OB_PROP_LIDAR_APD_HIGH_VOLTAGE_FLOAT:
-    case OB_PROP_LIDAR_TX_HIGH_POWER_VOLTAGE_FLOAT:
-    case OB_PROP_LIDAR_TX_LOWER_POWER_VOLTAGE_FLOAT:
+    case OB_PROP_LIDAR_SAVE_MEMS_PARAM_INT: {
+        range->min.intValue  = 1;
+        range->max.intValue  = 1;
+        range->step.intValue = 1;
+        range->def.intValue  = 1;
+        break;
+    }
+    case OB_PROP_LIDAR_APD_HIGH_VOLTAGE_FLOAT: {
+        range->min.floatValue  = 70.0f;
+        range->max.floatValue  = 200.0f;
+        range->step.floatValue = 0.1f;
+        range->def.floatValue  = 70.0f;
+        break;
+    }
+    case OB_PROP_LIDAR_TX_HIGH_POWER_VOLTAGE_FLOAT: {
+        range->min.floatValue  = 50.0f;
+        range->max.floatValue  = 80.0f;
+        range->step.floatValue = 0.1f;
+        range->def.floatValue  = 50.0f;
+        break;
+    }
+    case OB_PROP_LIDAR_TX_LOWER_POWER_VOLTAGE_FLOAT: {
+        range->min.floatValue  = 8.0f;
+        range->max.floatValue  = 20.0f;
+        range->step.floatValue = 0.1f;
+        range->def.floatValue  = 8.0f;
+        break;
+    }
     default: {
         std::stringstream ss;
         ss << "LiDARPropertyAccessor propertyId(" << propertyId << ") doesn't support get range!!!";

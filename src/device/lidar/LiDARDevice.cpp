@@ -290,12 +290,9 @@ void LiDARDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
     auto streamProfileFilter = getComponentT<IStreamProfileFilter>(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER);
     sensor->setStreamProfileFilter(streamProfileFilter.get());
 
-    // TODO hardcoded here
+    // hardcoded here
     if(streamType == OB_STREAM_LIDAR) {
-        // LiDAR
-        // TODO: currently, only 20HZ is supported, and other rotation speeds will be enabled later
-        // const std::vector<OBLiDARScanRate> scanRates = { OB_LIDAR_SCAN_20HZ, OB_LIDAR_SCAN_15HZ, OB_LIDAR_SCAN_10HZ, OB_LIDAR_SCAN_5HZ };
-        const std::vector<OBLiDARScanRate> scanRates = { OB_LIDAR_SCAN_20HZ };
+        const std::vector<OBLiDARScanRate> scanRates = { OB_LIDAR_SCAN_20HZ, OB_LIDAR_SCAN_15HZ, OB_LIDAR_SCAN_10HZ };
         const std::vector<OBFormat>        formats   = { OB_FORMAT_LIDAR_SPHERE_POINT, OB_FORMAT_LIDAR_POINT, OB_FORMAT_LIDAR_CALIBRATION };
         StreamProfileList                  profileList;
 
