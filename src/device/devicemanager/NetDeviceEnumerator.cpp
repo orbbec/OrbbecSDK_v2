@@ -146,6 +146,9 @@ void NetDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType
         if(!rmDevs.empty()) {
             LOG_DEBUG("{} net device(s) in removedeviceList:", rmDevs.size());
             for(auto &&item: rmDevs) {
+                auto firstPortInfo = item->getSourcePortInfoList().front();
+                auto info          = std::dynamic_pointer_cast<const NetSourcePortInfo>(firstPortInfo);
+
                 // We assume the device has gone offline and perform extra verification
                 // check the last active of the device
                 auto elapsed = deviceActivityManager_->getElapsedSinceLastActive(item->getUid());
@@ -153,13 +156,11 @@ void NetDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType
                     // If the device is active within 2 seconds, consider it online
                     deviceInfoList_.push_back(item);
                     LOG_DEBUG("The device actived within 2s, consider it online: name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", item->getName(),
-                              item->getPid(), item->getDeviceSn());
+                              item->getPid(), item->getDeviceSn(), info->mac, info->address);
                     continue;
                 }
                 // Continue device check via PID acquisition to confirm online status
                 // TODO: Busy devices may be misjudged as offline due to temporary unresponsiveness
-                auto firstPortInfo = item->getSourcePortInfoList().front();
-                auto info          = std::dynamic_pointer_cast<const NetSourcePortInfo>(firstPortInfo);
                 if(info->pid == OB_DEVICE_G335LE_PID || info->pid == OB_FEMTO_MEGA_PID || IS_OB_FEMTO_MEGA_I_PID(info->pid) || info->pid == OB_DEVICE_G435LE_PID) {
                     bool    disconnected = true;
                     BEGIN_TRY_EXECUTE({
@@ -179,7 +180,7 @@ void NetDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType
                         // device is still online
                         deviceInfoList_.push_back(item);
                         LOG_DEBUG("Got device PID successfully, consider it online: name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", item->getName(),
-                                  item->getPid(), item->getDeviceSn());
+                                  item->getPid(), item->getDeviceSn(), info->mac, info->address);
                         continue;
                     }
                 }
