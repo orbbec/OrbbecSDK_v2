@@ -12,7 +12,14 @@ typedef enum {
     OB_DEVICE_ARRIVAL,
 } OBDeviceChangedType;
 
-typedef std::function<void(OBDeviceChangedType changeType, std::string devUid)> deviceChangedCallback;
+/**
+ * @brief Callback for device status changes.
+ *
+ * @param changeType Type of device change (e.g., connected, disconnected).
+ * @param devUid Unique identifier of the device.
+ * @return true if the event was handled successfully, false otherwise.
+ */
+typedef std::function<bool(OBDeviceChangedType changeType, std::string devUid)> deviceChangedCallback;
 
 class IDeviceWatcher {
 public:

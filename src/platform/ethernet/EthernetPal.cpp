@@ -30,10 +30,21 @@ void NetDeviceWatcher::start(deviceChangedCallback callback) {
             auto added   = utils::subtract_sets(list, netDevInfoList_);
             auto removed = utils::subtract_sets(netDevInfoList_, list);
             for(auto &&info: removed) {
-                callback_(OB_DEVICE_REMOVED, info.mac);
+                if(!callback_(OB_DEVICE_REMOVED, info.mac)) {
+                    // if device is still online, restore it to the list
+                    list.push_back(info);
+                }
             }
             for(auto &&info: added) {
-                callback_(OB_DEVICE_ARRIVAL, info.mac);
+                if(!callback_(OB_DEVICE_ARRIVAL, info.mac)) {
+                    // if device is still offline, remove it form the list
+                    auto it = std::find_if(list.begin(), list.end(), [info](const GVCPDeviceInfo& item) {
+                        return item == info;
+                    });
+                    if(it != list.end()) {
+                        list.erase(it);
+                    }
+                }
             }
 
             netDevInfoList_ = list;

@@ -363,13 +363,13 @@ LRESULT CALLBACK WinUsbDeviceWatcher::onWinEvent(HWND hWnd, UINT message, WPARAM
                 if(wParam == DBT_DEVICEARRIVAL) {
                     LOG_DEBUG("Device arrival event occurred! symbolicLink={}", symbolicLink);
                     if(devIntf->dbcc_classguid != GUID_DEVINTERFACE_USB_DEVICE || PID_BOOTLOADER_UVC == pid) {
-                        watcherExtraData->callback_(OB_DEVICE_ARRIVAL, symbolicLink);
+                        (void)watcherExtraData->callback_(OB_DEVICE_ARRIVAL, symbolicLink);
                     }
                 }
                 else if(wParam == DBT_DEVICEREMOVECOMPLETE) {
                     LOG_DEBUG("Device removed event occurred! symbolicLink={}", symbolicLink);
                     if(devIntf->dbcc_classguid == GUID_DEVINTERFACE_USB_DEVICE) {
-                        watcherExtraData->callback_(OB_DEVICE_REMOVED, symbolicLink);
+                        (void)watcherExtraData->callback_(OB_DEVICE_REMOVED, symbolicLink);
                     }
                 }
             }

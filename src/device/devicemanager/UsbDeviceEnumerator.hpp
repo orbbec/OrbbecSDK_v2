@@ -17,7 +17,7 @@ public:
     void                     setDeviceChangedCallback(DeviceChangedCallback callback) override;
 
 private:
-    void               onPlatformDeviceChanged(OBDeviceChangedType changeType, std::string devUid);
+    bool               onPlatformDeviceChanged(OBDeviceChangedType changeType, std::string devUid);
     DeviceEnumInfoList queryRemovedDevice(std::string rmDevUid);
     DeviceEnumInfoList queryArrivalDevice();
 

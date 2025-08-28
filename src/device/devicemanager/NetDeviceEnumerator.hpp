@@ -21,7 +21,7 @@ public:
 private:
     static DeviceEnumInfoList deviceInfoMatch(const SourcePortInfoList infoList);
 
-    void               onPlatformDeviceChanged(OBDeviceChangedType changeType, std::string devUid);
+    bool               onPlatformDeviceChanged(OBDeviceChangedType changeType, std::string devUid);
     DeviceEnumInfoList queryDeviceList();
 
 private:

@@ -35,7 +35,7 @@ NetDeviceEnumerator::NetDeviceEnumerator(DeviceChangedCallback callback, std::sh
     }
 
     deviceWatcher_ = platform_->createNetDeviceWatcher();
-    deviceWatcher_->start([this](OBDeviceChangedType changedType, std::string url) { onPlatformDeviceChanged(changedType, url); });
+    deviceWatcher_->start([this](OBDeviceChangedType changedType, std::string url) { return onPlatformDeviceChanged(changedType, url); });
 }
 
 NetDeviceEnumerator::~NetDeviceEnumerator() noexcept {
@@ -113,7 +113,7 @@ void NetDeviceEnumerator::setDeviceChangedCallback(DeviceChangedCallback callbac
     };
 }
 
-void NetDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType, std::string devUid) {
+bool NetDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType, std::string devUid) {
     utils::unusedVar(changeType);
     utils::unusedVar(devUid);
 
@@ -131,7 +131,7 @@ void NetDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType
 
     // callback
     std::unique_lock<std::mutex> lock(deviceChangedCallbackMutex_);
-    if(deviceChangedCallback_ && (!addDevs.empty() || !rmDevs.empty())) {
+    if(!addDevs.empty() || !rmDevs.empty()) {
         LOG_DEBUG("Net device list changed!");
         if(!addDevs.empty()) {
             LOG_DEBUG("{} net device(s) found:", addDevs.size());
@@ -208,8 +208,29 @@ void NetDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType
             LOG_DEBUG("  - Name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", item->getName(), item->getPid(), item->getDeviceSn(), info->mac, info->address);
         }
 
-        deviceChangedCallback_(newRmDevs, addDevs);
+        if(deviceChangedCallback_) {
+            deviceChangedCallback_(newRmDevs, addDevs);
+        }
     }
+
+    auto it = std::find_if(deviceInfoList_.begin(), deviceInfoList_.end(),
+                           [&devUid](const std::shared_ptr<const IDeviceEnumInfo> &item) { return item->getUid() == devUid; });
+
+    bool deviceFound = !(it == deviceInfoList_.end());
+    // Check if the device changed event handle successfully
+    if(changeType == OB_DEVICE_REMOVED) {
+        if(deviceFound) {
+            LOG_DEBUG("The device was previously reported offline but is still online: {}", devUid);
+            return false;
+        }
+    }
+    else if(changeType == OB_DEVICE_ARRIVAL) {
+        if(!deviceFound) {
+            LOG_DEBUG("The device was previously reported online but is still offline: {}", devUid);
+            return false;
+        }
+    }
+    return true;
 }
 
 std::shared_ptr<const IDeviceEnumInfo> NetDeviceEnumerator::queryNetDevice(std::string address, uint16_t port) {

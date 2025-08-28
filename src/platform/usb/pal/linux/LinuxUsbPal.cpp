@@ -92,7 +92,7 @@ int deviceArrivalCallback(libusb_context *ctx, libusb_device *device, libusb_hot
     (void)event;
     auto watcher = (LibusbDeviceWatcher *)user_data;
     LOG_DEBUG("Device arrival event occurred");
-    watcher->callback_(OB_DEVICE_ARRIVAL, parseDevicePath(device));
+    (void)watcher->callback_(OB_DEVICE_ARRIVAL, parseDevicePath(device));
     return 0;
 }
 
@@ -101,7 +101,7 @@ int deviceRemovedCallback(libusb_context *ctx, libusb_device *device, libusb_hot
     (void)event;
     auto watcher = (LibusbDeviceWatcher *)user_data;
     LOG_DEBUG("Device removed event occurred");
-    watcher->callback_(OB_DEVICE_REMOVED, parseDevicePath(device));
+    (void)watcher->callback_(OB_DEVICE_REMOVED, parseDevicePath(device));
     return 0;
 }
 

@@ -40,7 +40,7 @@ UsbDeviceEnumerator::UsbDeviceEnumerator(DeviceChangedCallback callback) : platf
     deviceArrivalHandleThread_ = std::thread(&UsbDeviceEnumerator::deviceArrivalHandleThreadFunc, this);
 
     deviceWatcher_ = platform_->createUsbDeviceWatcher();
-    deviceWatcher_->start([this](OBDeviceChangedType changedType, std::string url) { onPlatformDeviceChanged(changedType, url); });
+    deviceWatcher_->start([this](OBDeviceChangedType changedType, std::string url) { return onPlatformDeviceChanged(changedType, url); });
 
     std::unique_lock<std::recursive_mutex> lock(deviceInfoListMutex_);
     if(!deviceInfoList_.empty()) {
@@ -70,7 +70,7 @@ UsbDeviceEnumerator::~UsbDeviceEnumerator() noexcept {
     platform_.reset();
 }
 
-void UsbDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType, std::string devUid) {
+bool UsbDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType, std::string devUid) {
     if(changeType == OB_DEVICE_REMOVED) {
         std::vector<std::shared_ptr<const IDeviceEnumInfo>> removedDevList;
         {
@@ -109,6 +109,8 @@ void UsbDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType
         newUsbPortArrival_ = true;
         newUsbPortArrivalCV_.notify_all();
     }
+
+    return true; // default
 }
 
 DeviceEnumInfoList UsbDeviceEnumerator::queryRemovedDevice(std::string rmDevUid) {

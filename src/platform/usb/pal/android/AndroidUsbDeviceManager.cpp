@@ -86,7 +86,7 @@ void AndroidUsbDeviceManager::onDeviceChanged(OBDeviceChangedType changedType, c
     }
 
     if(callback_) {
-        callback_(changedType, usbDevInfo.uid);  // TODO: Change to a URL callback
+        (void)callback_(changedType, usbDevInfo.uid);  // TODO: Change to a URL callback
     }
 }
 
