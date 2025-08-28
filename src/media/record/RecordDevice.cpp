@@ -200,8 +200,8 @@ void RecordDevice::writeMetadataProperty() {
 
 void RecordDevice::writeExposureAndGainProperty() {
     // laser
-    writePropertyT<bool>(OB_PROP_LASER_CONTROL_INT);
-    writePropertyT<bool>(OB_PROP_LASER_POWER_LEVEL_CONTROL_INT);
+    writePropertyT<int>(OB_PROP_LASER_CONTROL_INT);
+    writePropertyT<int>(OB_PROP_LASER_POWER_LEVEL_CONTROL_INT);
 
     // depth property
     writePropertyT<bool>(OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL);
