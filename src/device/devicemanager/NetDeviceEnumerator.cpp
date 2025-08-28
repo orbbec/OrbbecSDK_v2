@@ -155,9 +155,13 @@ bool NetDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType
                 if(elapsed <= 2000) {
                     // If the device is active within 2 seconds, consider it online
                     deviceInfoList_.push_back(item);
-                    LOG_DEBUG("The device actived within 2s, consider it online: name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", item->getName(),
+                    LOG_DEBUG("The device responded within 2s and is considered online: name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", item->getName(),
                               item->getPid(), item->getDeviceSn(), info->mac, info->address);
                     continue;
+                }
+                else {
+                    LOG_DEBUG("The device was last active {} ms ago, it might be offline. Name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}",
+                              elapsed, item->getName(), item->getPid(), item->getDeviceSn(), info->mac, info->address);
                 }
                 // Continue device check via PID acquisition to confirm online status
                 // TODO: Busy devices may be misjudged as offline due to temporary unresponsiveness
