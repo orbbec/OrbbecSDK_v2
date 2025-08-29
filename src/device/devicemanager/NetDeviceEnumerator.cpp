@@ -113,6 +113,30 @@ void NetDeviceEnumerator::setDeviceChangedCallback(DeviceChangedCallback callbac
     };
 }
 
+bool NetDeviceEnumerator::checkDeviceActivity(std::shared_ptr<const IDeviceEnumInfo> dev, std::shared_ptr<const NetSourcePortInfo> info) {
+    if(deviceActivityManager_ == nullptr) {
+        LOG_DEBUG("The device activity manager is nullptr");
+        return false;
+    }
+
+    // check the last active of the device
+    std::string    mac           = info ? info->mac : "unknown";
+    std::string    ip            = info ? info->address : "unknown";
+    auto           elapsed       = deviceActivityManager_->getElapsedSinceLastActive(dev->getUid());
+    const uint64_t timeThreshold = 2000;  // 2s
+    if(elapsed <= timeThreshold) {
+        // If the device is active within the allowed elapsed time threshold, consider it online
+        LOG_DEBUG("The device responded {} ms ago and is considered online. Name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", elapsed, dev->getName(),
+                  dev->getPid(), dev->getDeviceSn(), mac, ip);
+        return true;
+    }
+    else {
+        LOG_DEBUG("The device responded {} ms ago, it might be offline. Name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", elapsed, dev->getName(),
+                  dev->getPid(), dev->getDeviceSn(), mac, ip);
+        return false;
+    }
+}
+
 bool NetDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType, std::string devUid) {
     utils::unusedVar(changeType);
     utils::unusedVar(devUid);
@@ -151,18 +175,12 @@ bool NetDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType
 
                 // We assume the device has gone offline and perform extra verification
                 // check the last active of the device
-                auto elapsed = deviceActivityManager_->getElapsedSinceLastActive(item->getUid());
-                if(elapsed <= 2000) {
-                    // If the device is active within 2 seconds, consider it online
+                if(checkDeviceActivity(item, info)) {
+                    // If the device is active within the allowed elapsed time threshold, consider it online
                     deviceInfoList_.push_back(item);
-                    LOG_DEBUG("The device responded within 2s and is considered online: name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", item->getName(),
-                              item->getPid(), item->getDeviceSn(), info->mac, info->address);
                     continue;
                 }
-                else {
-                    LOG_DEBUG("The device was last active {} ms ago, it might be offline. Name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}",
-                              elapsed, item->getName(), item->getPid(), item->getDeviceSn(), info->mac, info->address);
-                }
+
                 // Continue device check via PID acquisition to confirm online status
                 // TODO: Busy devices may be misjudged as offline due to temporary unresponsiveness
                 if(info->pid == OB_DEVICE_G335LE_PID || info->pid == OB_FEMTO_MEGA_PID || IS_OB_FEMTO_MEGA_I_PID(info->pid) || info->pid == OB_DEVICE_G435LE_PID) {
@@ -180,7 +198,15 @@ bool NetDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType
                         LOG_WARN("Get pid failed, ip:{},mac:{},device is disconnect.", info->address, info->mac);
                     });
 
-                    if(!disconnected) {
+                    if(disconnected) {
+                        // check device activity again
+                        if(checkDeviceActivity(item, info)) {
+                            // If the device is active within the allowed elapsed time threshold, consider it online
+                            deviceInfoList_.push_back(item);
+                            continue;
+                        }
+                    }
+                    else {
                         // device is still online
                         deviceInfoList_.push_back(item);
                         LOG_DEBUG("Got device PID successfully, consider it online: name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", item->getName(),
