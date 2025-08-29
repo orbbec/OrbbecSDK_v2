@@ -263,7 +263,10 @@ bool DeviceBase::isComponentCreated(DeviceComponentId compId) const {
 
 DeviceComponentPtr<IDeviceComponent> DeviceBase::getComponent(DeviceComponentId compId, bool throwExIfNotFound) {
     if(isDeactivated_) {
-        throw libobsensor::wrong_api_call_sequence_exception("Device is deactivated/disconnected!");
+        if(throwExIfNotFound) {
+            throw libobsensor::wrong_api_call_sequence_exception("Device is deactivated/disconnected!");
+        }
+        return DeviceComponentPtr<IDeviceComponent>();
     }
 
     ComponentItem item{};
