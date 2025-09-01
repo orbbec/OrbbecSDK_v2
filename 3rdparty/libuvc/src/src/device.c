@@ -261,8 +261,12 @@ uvc_error_t uvc_open(uvc_device_t *dev, uint16_t mi, uvc_device_handle_t **devh,
 
     UVC_DEBUG("claiming control interface %d", internal_devh->info->ctrl_if.bInterfaceNumber);
     ret = uvc_claim_if(internal_devh, internal_devh->info->ctrl_if.bInterfaceNumber);
-    if(ret != UVC_SUCCESS)
-        goto fail;
+    if(ret != UVC_SUCCESS) {
+        ret = uvc_claim_if(internal_devh, internal_devh->info->ctrl_if.bInterfaceNumber);
+        if (ret != UVC_SUCCESS) {
+            goto fail;
+        }
+    }
 
     libusb_get_device_descriptor(dev->usb_dev, &desc);
     internal_devh->is_isight = (desc.idVendor == 0x05ac && desc.idProduct == 0x8501);
