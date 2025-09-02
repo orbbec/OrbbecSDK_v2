@@ -450,6 +450,10 @@ int GVCPClient::recvAndParseGVCPResponse(SOCKET sock, const GVCPSocketInfo &sock
         // info.manufacturer = ackPayload->szFacName;
         // info.version      = ackPayload->szDevVer;
 
+        if(info.pid == 0x0000 && info.name == "OI-BC300I") {
+            // TODO: Treat OI-BC300I (pid=0x0000) as Femto Mega I (pid=0x06c0) for compatibility
+            info.pid = 0x06c0;
+        }
         std::lock_guard<std::mutex> lock(devInfoListMtx_);
         devInfoList_.push_back(info);
         return 1;
