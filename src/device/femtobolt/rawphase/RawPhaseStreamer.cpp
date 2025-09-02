@@ -224,10 +224,12 @@ void RawPhaseStreamer::parseAndOutputFrame(std::shared_ptr<Frame> frame) {
     size_t    captureSize = 0, rawFrameSize = 0; /** headerSize = 0*/
 
     // Parse the metadata from the MIPI header
-    YEATS_MIPI_HDR mipiHdr      = { 0 };
-    int            mipiHeadSize = sizeof(YEATS_MIPI_HDR) * 2;
+    YEATS_MIPI_HDR mipiHdr       = { 0 };
+    int            mipiHeadSize  = sizeof(YEATS_MIPI_HDR) * 2;
+    auto           frameDataSize = frame->getDataSize();
+
     // passive ir
-    if(frame->getDataSize() == 4096 * 1154 * 2) {
+    if(frameDataSize == 4096 * 1154 * 2) {
         mipiHeadSize = sizeof(YEATS_MIPI_HDR);
     }
 
@@ -261,6 +263,10 @@ void RawPhaseStreamer::parseAndOutputFrame(std::shared_ptr<Frame> frame) {
     captureSize = inputInfo.nRows * inputInfo.nCols * inputInfo.nBitsPerSample / 8;
 
     rawFrameSize = captureSize * inputInfo.nStreams;
+    if(rawFrameSize > frameDataSize || inputInfo.nRows * 2 >= rawFrameSize) {
+        LOG_ERROR("Frame data size error: rawFrameSize: {}, frameDataSize: {}, nRows: {}", rawFrameSize, frameDataSize, inputInfo.nRows);
+        return;
+    }
 
     uint8_t *dstData = (uint8_t *)data + rawFrameSize;
     uint8_t *srcData = (uint8_t *)data + rawFrameSize - static_cast<size_t>(inputInfo.nRows) * 2;
@@ -491,10 +497,19 @@ void RawPhaseStreamer::initNvramData() {
         std::unique_lock<std::mutex> streamLock(streamMutex_);
 
         backend_->startStream(firmwareDataProfile, [&](std::shared_ptr<const Frame> frame) {
+            const uint16_t  headerSize  = sizeof(ObcFrameHeader);
             ObcFrameHeader *frameHeader = (ObcFrameHeader *)frame->getData();
+            auto            dataSize    = frame->getDataSize();
+            if(dataSize <= headerSize || dataSize < (headerSize + frameHeader->metadataHeader.size)) {
+                LOG_ERROR("Frame data size error: {}", dataSize);
+                return;
+            }
+
             nvramData_.resize(frameHeader->metadataHeader.size);
             {
                 std::unique_lock<std::mutex> lk(nvramMutex_);
+                LOG_INFO("initNvramData: metadataHeader.size: {}, metadataHeader.width: {}, metadataHeader.height: {}", frameHeader->metadataHeader.size,
+                         frameHeader->metadataHeader.width, frameHeader->metadataHeader.height);
                 memcpy(nvramData_.data(), (uint8_t *)frame->getData() + sizeof(ObcFrameHeader), frameHeader->metadataHeader.size);
             }
             nvramCV_.notify_all();
