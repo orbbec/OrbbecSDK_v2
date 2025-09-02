@@ -134,10 +134,12 @@ int getGmslDeviceInfoFromFW(const std::string &dev_name, void *data, bool &linkS
         if(ret < 0) {
             LOG_WARN("ioctl failed on getting link_state(retry: {}). Ignore it. error: {}", retry, strerror(errno));
             ++retry;
+            ret = 0;
             continue;
         }
         LOG_DEBUG("Device: {}, link_state: {}", dev_name, ctrlLink.value);
         linkState = ctrlLink.value == 1;
+        ret       = 0;
         break;
     } while(retry < 3);
 
