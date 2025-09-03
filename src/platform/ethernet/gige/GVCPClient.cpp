@@ -190,8 +190,8 @@ int GVCPClient::openClientSockets() {
             addrSrv.sin_family = AF_INET;
             addrSrv.sin_port   = htons(0);
             std::string ipStr  = inet_ntoa(addrSrv.sin_addr);
-            // "169.254.xxx.xxx" is link-local address for windows, "127.0.0.1" is loopback address
-            if(strncmp(ipStr.c_str(), "169.254", 7) == 0 || strcmp(ipStr.c_str(), "127.0.0.1") == 0) {
+            // "127.0.0.1" is loopback address
+            if(strcmp(ipStr.c_str(), "127.0.0.1") == 0) {
                 continue;
             }
             //socks_[index++] = openClientSocket(addrSrv);
@@ -235,7 +235,8 @@ int GVCPClient::openClientSockets() {
             addrSrv.sin_family = AF_INET;
             addrSrv.sin_port   = htons(0);
             std::string ipStr  = inet_ntoa(addrSrv.sin_addr);
-            if(strncmp(ipStr.c_str(), "169.254", 7) == 0 || strcmp(ipStr.c_str(), "127.0.0.1") == 0) {
+            // "127.0.0.1" is loopback address
+            if(strcmp(ipStr.c_str(), "127.0.0.1") == 0) {
                 continue;
             }
             ipAddressStrSet_.insert(ipStr);
@@ -620,8 +621,8 @@ void GVCPClient::checkAndUpdateSockets() {
             addrSrv.sin_family = AF_INET;
             addrSrv.sin_port   = htons(0);
             std::string ipStr  = inet_ntoa(addrSrv.sin_addr);
-
-            if(strncmp(ipStr.c_str(), "169.254", 7) == 0 || strcmp(ipStr.c_str(), "127.0.0.1") == 0) {
+            // "127.0.0.1" is loopback address
+            if(strcmp(ipStr.c_str(), "127.0.0.1") == 0) {
                 continue;
             }
 
@@ -704,7 +705,8 @@ void GVCPClient::checkAndUpdateSockets() {
             addrSrv.sin_family = AF_INET;
             addrSrv.sin_port   = htons(0);
             std::string ipStr  = inet_ntoa(addrSrv.sin_addr);
-            if(strncmp(ipStr.c_str(), "169.254", 7) == 0 ||strcmp(ipStr.c_str(), "127.0.0.1") == 0) {
+            // "127.0.0.1" is loopback address
+            if(strcmp(ipStr.c_str(), "127.0.0.1") == 0) {
                 continue;
             }
 
