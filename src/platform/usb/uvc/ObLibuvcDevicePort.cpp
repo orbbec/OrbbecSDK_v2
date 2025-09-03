@@ -41,15 +41,16 @@ const std::map<uint32_t, uvc_frame_format> fourccToUvcFormatMap = {
 };
 
 uvc_frame_format fourCC2UvcFormat(int32_t fourccCode) {
-    uvc_frame_format uvcFormat = UVC_FRAME_FORMAT_UNKNOWN;
-    std::find_if(fourccToUvcFormatMap.begin(), fourccToUvcFormatMap.end(), [&](const std::pair<uint32_t, uvc_frame_format> sf) {
+    auto it = std::find_if(fourccToUvcFormatMap.begin(), fourccToUvcFormatMap.end(), [&](const std::pair<uint32_t, uvc_frame_format> sf) {
         if(static_cast<uint32_t>(fourccCode) == sf.first) {
-            uvcFormat = sf.second;
             return true;
         }
         return false;
     });
-    return uvcFormat;
+    if(it != fourccToUvcFormatMap.end()) {
+        return it->second;
+    }
+    return UVC_FRAME_FORMAT_UNKNOWN;
 }
 
 ObLibuvcDevicePort::ObLibuvcDevicePort(std::shared_ptr<IUsbDevice> usbDev, std::shared_ptr<const USBSourcePortInfo> portInfo)
@@ -455,7 +456,7 @@ void ObLibuvcDevicePort::onFrameCallback(uvc_frame *frame, void *userPtr) {
         auto realtime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         videoFrame->setSystemTimeStampUsec(realtime);
         videoFrame->setTimeStampUsec(frame->pts);
-        // Use a custom frame index instand of uvc_frame::sequence to avoid abnormal sequence ID increments 
+        // Use a custom frame index instand of uvc_frame::sequence to avoid abnormal sequence ID increments
         // when UVC data reception encounters errors.
         videoFrame->setNumber(handle->loopFrameIndex);
         handle->loopFrameIndex++;
@@ -603,12 +604,12 @@ std::string ObLibuvcDevicePort::getUsbConnectType() {
     auto device    = libusb_get_device(devHandle);
 
     libusb_device_descriptor desc;
-    auto  ret = libusb_get_device_descriptor(device, &desc);
+    auto                     ret = libusb_get_device_descriptor(device, &desc);
     if(ret < 0) {
         LOG_ERROR("Failed to get device descriptor, error code={}", ret);
         return "";
     }
-    
+
     return usb_spec_names.find(UsbSpec(desc.bcdUSB))->second;
 }
 #endif

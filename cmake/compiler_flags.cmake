@@ -93,7 +93,19 @@ if ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQU
         add_compile_options(-Wno-unsafe-buffer-usage)
     endif()
     add_compile_options(-Wno-missing-include-dirs)
-    
+    if(ANDROID)
+        # for android only
+        # reserved-identifier
+        check_cxx_compiler_flag(-Wno-reserved-identifier HAS_NO_RESERVED_IDENTIFIER)
+        if(HAS_NO_RESERVED_IDENTIFIER)
+            add_compile_options(-Wno-reserved-identifier)
+        endif()
+        # nullable-to-nonnull-conversion
+        check_cxx_compiler_flag(-Wno-error=nullable-to-nonnull-conversion HAS_NO_ERROR_NULLABLE_TO_NONNULL)
+        if(HAS_NO_ERROR_NULLABLE_TO_NONNULL)
+            add_compile_options(-Wno-error=nullable-to-nonnull-conversion)
+        endif()
+    endif()
 elseif ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
     set(GNU_ALL_WARNINGS "-Wall" "-Wextra")
     list(APPEND GNU_ALL_WARNINGS "-Wno-missing-field-initializers") # Allow c structs without all fields initialized
