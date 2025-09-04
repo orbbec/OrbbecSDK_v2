@@ -5,6 +5,24 @@ cmake_minimum_required(VERSION 3.5)
 
 set(OB_INTERFACE_DIR "${CMAKE_CURRENT_LIST_DIR}/interface")
 
+if(OB_ENABLE_BOLT_OPENGL_COMPAT)
+    if(NOT ANDROID AND NOT APPLE)
+        find_package(OpenGL REQUIRED)
+        if(OPENGL_FOUND)
+            if(OPENGL_INCLUDE_DIR)
+                include_directories(${OPENGL_INCLUDE_DIR})
+                message(STATUS "OpenGL found: include directory: ${OPENGL_INCLUDE_DIR}")
+            endif()
+            message(STATUS "OpenGL found: libraries: ${OPENGL_gl_LIBRARY}")
+            add_definitions(-DOB_BOLT_OPENGL_COMPAT)
+        else()
+            message(WARNING "Femto Bolt OpenGL compatibility disabled: OpenGL not found")
+        endif()
+    else()
+        message(STATUS "Femto Bolt is not supported on Android/Apple platforms, skipping OpenGL check")
+    endif()
+endif()
+
 # modules
 add_subdirectory(shared) # utils, logger, etc.
 add_subdirectory(core) # core library
@@ -40,25 +58,9 @@ if(UNIX)
     target_link_libraries(OrbbecSDK PRIVATE Threads::Threads)
 endif()
 
-if(ANDROID)
-    find_library(OpenGLES_LIB GLESv3)
-
-    if(OpenGLES_LIB)
-        target_link_libraries(OrbbecSDK PRIVATE ${OpenGLES_LIB})
-    else()
-        message("OpenGL ES library not found")
-    endif()
-else()
-    find_package(OpenGL REQUIRED)
-
-    if(OPENGL_FOUND)
-        include_directories(${OPENGL_INCLUDE_DIR})
-        message("OpenGL include directory: ${OPENGL_INCLUDE_DIR}")
-        target_link_libraries(OrbbecSDK PRIVATE ${OPENGL_gl_LIBRARY})
-        add_definitions(-DOPENGL_FOUND)
-    else()
-        message("OpenGL not found")
-    endif()
+# Link OpenGL libraries if found
+if(OPENGL_gl_LIBRARY)
+    target_link_libraries(OrbbecSDK PRIVATE ${OPENGL_gl_LIBRARY})
 endif()
 
 add_library(ob::OrbbecSDK ALIAS OrbbecSDK)

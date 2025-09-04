@@ -10,7 +10,7 @@
 #include "stream/StreamProfileFactory.hpp"
 #include "property/InternalProperty.hpp"
 
-#ifdef OPENGL_FOUND
+#ifdef OB_BOLT_OPENGL_COMPAT
 #ifdef __linux__
 #include <GL/glx.h>
 #elif(defined(WIN32) || defined(_WIN32) || defined(WINCE))
@@ -399,7 +399,7 @@ void RawPhaseStreamer::startDepthEngineThread(std::shared_ptr<const StreamProfil
     lastStreamProfile_     = profile;
     depthEngineThreadExit_ = false;
     depthEngineReady_      = false;
-#ifdef OPENGL_FOUND
+#ifdef OB_BOLT_OPENGL_COMPAT
     // clear opengl context before depth engine initialize
     auto display        = glXGetCurrentDisplay();
     auto drawable       = glXGetCurrentDrawable();
@@ -433,7 +433,7 @@ void RawPhaseStreamer::startDepthEngineThread(std::shared_ptr<const StreamProfil
         throw io_exception("Depth engine thread start failed, timeout!");
     }
 
-#ifdef OPENGL_FOUND
+#ifdef OB_BOLT_OPENGL_COMPAT
     // resume opengl current context
     glXMakeCurrent(display, drawable, currentContext);
 #endif
