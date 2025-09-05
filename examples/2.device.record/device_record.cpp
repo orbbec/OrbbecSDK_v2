@@ -17,8 +17,7 @@ std::atomic<bool> isPaused{false};
 void handleKeyPress(ob_smpl::CVWindow &win, std::shared_ptr<ob::RecordDevice> recorder, int key);
 
 int main(void) try {
-
-std::cout << "Please enter the output filename (with .bag extension) and press Enter to start recording: ";
+    std::cout << "Please enter the output filename (with .bag extension) and press Enter to start recording: ";
     std::string filePath;
     std::getline(std::cin, filePath);
 
@@ -71,6 +70,9 @@ std::cout << "Please enter the output filename (with .bag extension) and press E
 
     // Initialize recording device with output file
     auto recordDevice = std::make_shared<ob::RecordDevice>(device, filePath);
+    std::cout << "Streams and recorder have started!" << std::endl;
+    std::cout << "Press ESC to stop recording and exit safely." << std::endl;
+    std::cout << "IMPORTANT: Always use ESC to stop! Otherwise, the bag file will be corrupted and unplayable." << std::endl << std::endl;
 
     ob_smpl::CVWindow win("Record", 1280, 720, ob_smpl::ARRANGE_GRID);
 
