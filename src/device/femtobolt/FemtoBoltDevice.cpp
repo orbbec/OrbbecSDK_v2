@@ -25,6 +25,7 @@
 #include "property/PrivateFilterPropertyAccessors.hpp"
 #include "monitor/DeviceMonitor.hpp"
 #include "FemtoBoltAlgParamManager.hpp"
+#include "FemtoBoltPresetManager.hpp"
 #include "syncconfig/DeviceSyncConfigurator.hpp"
 
 #include "rawphase/RawPhaseStreamer.hpp"
@@ -61,6 +62,9 @@ void FemtoBoltDevice::init() {
 
     auto algParamManager = std::make_shared<FemtoBoltAlgParamManager>(this);
     registerComponent(OB_DEV_COMPONENT_ALG_PARAM_MANAGER, algParamManager);
+
+    auto presetManager = std::make_shared<BoltPresetManager>(this);
+    registerComponent(OB_DEV_COMPONENT_PRESET_MANAGER, presetManager);
 
     static const std::vector<OBMultiDeviceSyncMode>          supportedSyncModes  = { OB_MULTI_DEVICE_SYNC_MODE_FREE_RUN, OB_MULTI_DEVICE_SYNC_MODE_STANDALONE,
                                                                                      OB_MULTI_DEVICE_SYNC_MODE_PRIMARY, OB_MULTI_DEVICE_SYNC_MODE_SECONDARY };

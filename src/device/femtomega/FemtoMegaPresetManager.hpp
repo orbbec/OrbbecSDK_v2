@@ -6,27 +6,35 @@
 #include "IPresetManager.hpp"
 #include "InternalTypes.hpp"
 #include "DeviceComponentBase.hpp"
-#include "gemini330/DaBaiAPresetManager.hpp"
-#include "gemini330/G330PresetManager.hpp"
-#include "femtomega/FemtoMegaPresetManager.hpp"
 
 #include <map>
 #include <string>
 #include <vector>
 
-typedef enum {
-    OB_PLAYBACK_DEVICE_TYPE_MEGA      = 0,
-    OB_PLAYBACK_DEVICE_TYPE_DABAI_A   = 1,
-    OB_PLAYBACK_DEVICE_TYPE_GEMINI330 = 2,
-    OB_PLAYBACK_DEVICE_TYPE_OTHER     = 255,
-} OBPlaybackDeviceType;
+namespace Json {
+class Value;  // forward declaration
+}  // namespace Json
 
 namespace libobsensor {
 
-class PlaybackPresetManager : public IPresetManager, public DeviceComponentBase {
+struct MegaPreset {
+    // color sensor
+    int colorAutoExposure;
+    int colorExposureTime;
+    int colorGain;
+    int colorAutoWhiteBalance;
+    int colorWhiteBalance;
+    int colorSaturation;
+    int colorContrast;
+    int colorBrightness;
+    int colorSharpness;
+    int colorPowerLineFrequency;
+};
+
+class MegaPresetManager : public IPresetManager, public DeviceComponentBase {
 public:
-    PlaybackPresetManager(IDevice *owner);
-    ~PlaybackPresetManager() override = default;
+    MegaPresetManager(IDevice *owner);
+    ~MegaPresetManager() override = default;
 
     void                            loadPreset(const std::string &presetName) override;
     const std::string              &getCurrentPresetName() const override;
@@ -38,16 +46,17 @@ public:
     void                            fetchPreset() override;
 
 private:
-    Json::Value exportSettingsAsPresetJsonValue();
-    Json::Value exportSettingsAsPresetJsonValueDaBaiA();
-    Json::Value exportSettingsAsPresetJsonValueG300();
-    Json::Value exportSettingsAsPresetJsonValueMega();
+    void        storeCurrentParamsAsCustomPreset(const std::string &presetName);
+    void        loadCustomPreset(const std::string &presetName, const MegaPreset &preset);
+    void        loadPresetFromJsonValue(const std::string &presetName, const Json::Value &root);
+    Json::Value exportSettingsAsPresetJsonValue(const std::string &presetName);
 
 private:
-    OBPlaybackDeviceType     playbackDeviceType_ = OB_PLAYBACK_DEVICE_TYPE_OTHER;
-    std::vector<std::string> availablePresets_;    // Available preset names; playback devices support only one preset
-    std::string              currentPreset_ = "";  // Current preset name
+    std::vector<std::string> availablePresets_;
+    std::string              currentPreset_;
     std::vector<uint8_t>     tmpJsonData_;
+
+    std::map<std::string, MegaPreset> customPresets_;
 };
 
 }  // namespace libobsensor

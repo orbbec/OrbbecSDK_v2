@@ -15,5 +15,7 @@ target_sources(
              ${CMAKE_CURRENT_LIST_DIR}/FemtoMegaPropertyAccessor.cpp
              ${CMAKE_CURRENT_LIST_DIR}/FemtoMegaFrameTimestampCalculator.hpp
              ${CMAKE_CURRENT_LIST_DIR}/FemtoMegaFrameTimestampCalculator.cpp
+			 ${CMAKE_CURRENT_LIST_DIR}/FemtoMegaPresetManager.hpp
+             ${CMAKE_CURRENT_LIST_DIR}/FemtoMegaPresetManager.cpp
         )
 

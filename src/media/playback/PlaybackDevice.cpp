@@ -84,7 +84,8 @@ void PlaybackDevice::init() {
     auto depthWorkModeManager = std::make_shared<PlaybackDepthWorkModeManager>(this, port_);
     registerComponent(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER, depthWorkModeManager);
 
-    if(isDeviceInSeries(G330DevPids, deviceInfo_->pid_)) {
+    if(isDeviceInSeries(G330DevPids, deviceInfo_->pid_) || isDeviceInSeries(FemtoMegaDevPids, deviceInfo_->pid_)
+        || isDeviceInSeries(FemtoBoltDevPids, deviceInfo_->pid_)) {
         // preset manager
         auto presetManager = std::make_shared<PlaybackPresetManager>(this);
         registerComponent(OB_DEV_COMPONENT_PRESET_MANAGER, presetManager);

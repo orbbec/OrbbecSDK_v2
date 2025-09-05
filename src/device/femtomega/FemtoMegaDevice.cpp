@@ -22,6 +22,7 @@
 #include "property/FilterPropertyAccessors.hpp"
 #include "property/PrivateFilterPropertyAccessors.hpp"
 #include "param/AlgParamManager.hpp"
+#include "FemtoMegaPresetManager.hpp"
 #include "syncconfig/DeviceSyncConfigurator.hpp"
 
 #include "FilterFactory.hpp"
@@ -66,6 +67,9 @@ void FemtoMegaUsbDevice::init() {
 
     auto algParamManager = std::make_shared<TOFDeviceCommonAlgParamManager>(this);
     registerComponent(OB_DEV_COMPONENT_ALG_PARAM_MANAGER, algParamManager);
+
+    auto presetManager = std::make_shared<MegaPresetManager>(this);
+    registerComponent(OB_DEV_COMPONENT_PRESET_MANAGER, presetManager);
 
     static const std::vector<OBMultiDeviceSyncMode>          supportedSyncModes  = { OB_MULTI_DEVICE_SYNC_MODE_FREE_RUN, OB_MULTI_DEVICE_SYNC_MODE_STANDALONE,
                                                                                      OB_MULTI_DEVICE_SYNC_MODE_PRIMARY, OB_MULTI_DEVICE_SYNC_MODE_SECONDARY,
@@ -540,6 +544,9 @@ void FemtoMegaNetDevice::init() {
 
         auto algParamManager = std::make_shared<TOFDeviceCommonAlgParamManager>(this);
         registerComponent(OB_DEV_COMPONENT_ALG_PARAM_MANAGER, algParamManager);
+
+        auto presetManager = std::make_shared<MegaPresetManager>(this);
+        registerComponent(OB_DEV_COMPONENT_PRESET_MANAGER, presetManager);
 
         static const std::vector<OBMultiDeviceSyncMode> supportedSyncModes = { OB_MULTI_DEVICE_SYNC_MODE_FREE_RUN, OB_MULTI_DEVICE_SYNC_MODE_STANDALONE,
                                                                                OB_MULTI_DEVICE_SYNC_MODE_PRIMARY, OB_MULTI_DEVICE_SYNC_MODE_SECONDARY,

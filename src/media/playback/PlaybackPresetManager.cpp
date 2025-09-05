@@ -14,23 +14,41 @@ namespace libobsensor {
 
 PlaybackPresetManager::PlaybackPresetManager(IDevice *owner) : DeviceComponentBase(owner) {
     auto devInfo = owner->getInfo();
-    if(!devInfo || std::find(G330DevPids.begin(), G330DevPids.end(), devInfo->pid_) == G330DevPids.end()) {
-        throw invalid_value_exception(utils::string::to_string() << "Unsupported device, pid: " << devInfo->pid_);
+    if(!devInfo) {
+        throw invalid_value_exception("Device info is null");
     }
 
     if(std::find(DaBaiADevPids.begin(), DaBaiADevPids.end(), devInfo->pid_) != DaBaiADevPids.end()) {
-        isDaBaiADevice_ = true;
+        playbackDeviceType_ = OB_PLAYBACK_DEVICE_TYPE_DABAI_A;
+    }
+    else if(std::find(FemtoMegaDevPids.begin(), FemtoMegaDevPids.end(), devInfo->pid_) != FemtoMegaDevPids.end()) {
+        playbackDeviceType_ = OB_PLAYBACK_DEVICE_TYPE_MEGA;
+    }
+    else if(std::find(FemtoBoltDevPids.begin(), FemtoBoltDevPids.end(), devInfo->pid_) != FemtoBoltDevPids.end()) {
+        playbackDeviceType_ = OB_PLAYBACK_DEVICE_TYPE_MEGA;
+    }
+    else if(std::find(G330DevPids.begin(), G330DevPids.end(), devInfo->pid_) != G330DevPids.end()) {
+        playbackDeviceType_ = OB_PLAYBACK_DEVICE_TYPE_GEMINI330;
+    }
+    else {
+        throw invalid_value_exception(utils::string::to_string() << "device Info " << devInfo->pid_);
     }
 
-    auto depthWorkModeManager = owner->getComponentT<PlaybackDepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
-    auto depthWorkModeList    = depthWorkModeManager->getDepthWorkModeList();
+    if(playbackDeviceType_ == OB_PLAYBACK_DEVICE_TYPE_DABAI_A || playbackDeviceType_ == OB_PLAYBACK_DEVICE_TYPE_GEMINI330) {
+        auto depthWorkModeManager = owner->getComponentT<PlaybackDepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
+        auto depthWorkModeList    = depthWorkModeManager->getDepthWorkModeList();
 
-    for(auto &mode: depthWorkModeList) {
-        availablePresets_.emplace_back(mode.name);
+        for(auto &mode: depthWorkModeList) {
+            availablePresets_.emplace_back(mode.name);
+        }
+
+        if(!availablePresets_.empty()) {
+            currentPreset_ = availablePresets_[0];
+        }
     }
-
-    if (!availablePresets_.empty()) {
-        currentPreset_ = availablePresets_[0];
+    else {
+        availablePresets_.emplace_back("Custom");
+        currentPreset_ = "Custom";
     }
 }
 
@@ -126,12 +144,33 @@ Json::Value PlaybackPresetManager::exportSettingsAsPresetJsonValueG300() {
     return root;
 }
 
+Json::Value PlaybackPresetManager::exportSettingsAsPresetJsonValueMega() {
+    auto        owner = getOwner();
+    Json::Value root;
+    auto        propServer = owner->getPropertyServer();
+
+    root["color_auto_exposure"]        = propServer->getPropertyValueT<bool>(OB_PROP_COLOR_AUTO_EXPOSURE_BOOL);
+    root["color_exposure_time"]        = propServer->getPropertyValueT<int>(OB_PROP_COLOR_EXPOSURE_INT);
+    root["color_auto_white_balance"]   = propServer->getPropertyValueT<bool>(OB_PROP_COLOR_AUTO_WHITE_BALANCE_BOOL);
+    root["color_white_balance"]        = propServer->getPropertyValueT<int>(OB_PROP_COLOR_WHITE_BALANCE_INT);
+    root["color_gain"]                 = propServer->getPropertyValueT<int>(OB_PROP_COLOR_GAIN_INT);
+    root["color_contrast"]             = propServer->getPropertyValueT<int>(OB_PROP_COLOR_CONTRAST_INT);
+    root["color_saturation"]           = propServer->getPropertyValueT<int>(OB_PROP_COLOR_SATURATION_INT);
+    root["color_sharpness"]            = propServer->getPropertyValueT<int>(OB_PROP_COLOR_SHARPNESS_INT);
+    root["color_brightness"]           = propServer->getPropertyValueT<int>(OB_PROP_COLOR_BRIGHTNESS_INT);
+    root["color_power_line_frequency"] = propServer->getPropertyValueT<int>(OB_PROP_COLOR_POWER_LINE_FREQUENCY_INT);
+    return root;
+}
+
 Json::Value PlaybackPresetManager::exportSettingsAsPresetJsonValue() {
-    if(isDaBaiADevice_) {
+    if(playbackDeviceType_ == OB_PLAYBACK_DEVICE_TYPE_DABAI_A) {
         return exportSettingsAsPresetJsonValueDaBaiA();
     }
-    else {
+    else if(playbackDeviceType_ == OB_PLAYBACK_DEVICE_TYPE_GEMINI330) {
         return exportSettingsAsPresetJsonValueG300();
+    }
+    else {
+        return exportSettingsAsPresetJsonValueMega();
     }
 }
 
