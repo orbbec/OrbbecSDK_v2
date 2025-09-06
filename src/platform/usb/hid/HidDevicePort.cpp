@@ -26,6 +26,10 @@ HidDevicePort::HidDevicePort(const std::shared_ptr<IUsbDevice> &usbDevice, std::
         }
     }
     auto res = libusb_claim_interface(libusbDevHandle, portInfo->infIndex);
+    if(res == LIBUSB_ERROR_BUSY) {
+        LOG_WARN("libusb_claim_interface busy, retrying once. Interface: {}", portInfo->infIndex);
+        res = libusb_claim_interface(libusbDevHandle, portInfo->infIndex);
+    }
     if(res != LIBUSB_SUCCESS) {
         throw io_exception("claim interface failed, error: " + std::string(libusb_strerror(res)));
     }
