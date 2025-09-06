@@ -10,14 +10,6 @@
 
 namespace libobsensor {
 
-struct FrameInterleaveParam {
-    int depthExposureTime;  // exposure
-    int depthGain;          // gain
-    int depthBrightness;    // target brightness
-    int depthMaxExposure;   // max exposure
-    int laserSwitch;        // laser on/off switch
-};
-
 class G330FrameInterleaveManager : public IFrameInterleaveManager, public DeviceComponentBase {
 public:
     G330FrameInterleaveManager(IDevice *owner);

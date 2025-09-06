@@ -441,4 +441,12 @@ typedef struct OpenNIFrameProcessParam {
     int   dstHeight;
 } OpenNIFrameProcessParam;
 
+typedef struct FrameInterleaveParam {
+    int depthExposureTime;  // exposure
+    int depthGain;          // gain
+    int depthBrightness;    // target brightness
+    int depthMaxExposure;   // max exposure
+    int laserSwitch;        // laser on/off switch
+} FrameInterleaveParam;
+
 #pragma pack(pop)

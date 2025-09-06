@@ -195,6 +195,22 @@ void RecordDevice::writeMetadataProperty() {
             }
         }
     }
+
+    const auto pid = device_->getInfo()->pid_;
+    if(std::find(G330DevPids.begin(), G330DevPids.end(), pid) != G330DevPids.end() || pid == OB_DEVICE_G435LE_PID) {
+        if(device_->isComponentExists(OB_DEV_COMPONENT_FRAME_INTERLEAVE_MANAGER)) {
+            writePropertyT<int>(OB_PROP_FRAME_INTERLEAVE_CONFIG_INDEX_INT);
+            writePropertyT<bool>(OB_PROP_FRAME_INTERLEAVE_ENABLE_BOOL);
+        }
+        else {
+            auto server = device_->getPropertyServer();
+            if(server->isPropertySupported(OB_STRUCT_DEPTH_HDR_CONFIG, PROP_OP_READ, PROP_ACCESS_USER)) {
+                auto data = server->getStructureData(OB_STRUCT_DEPTH_HDR_CONFIG, PROP_ACCESS_USER);
+                writer_->writeProperty(OB_STRUCT_DEPTH_HDR_CONFIG, data.data(), static_cast<uint32_t>(data.size()));
+            }
+        }
+    }
+
     writePropertyT<int>(OB_PROP_DISP_SEARCH_RANGE_MODE_INT);
 }
 

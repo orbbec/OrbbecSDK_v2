@@ -21,6 +21,9 @@
 #include "openni/DW2DisparitySensor.hpp"
 #include "openni/MaxDisparitySensor.hpp"
 #include "FilterFactory.hpp"
+#include "PlaybackFrameInterleaveManager.hpp"
+#include "gemini330/G330FrameInterleaveManager.hpp"
+#include "gemini2/G435LeFrameInterleaveManager.hpp"
 
 namespace libobsensor {
 using namespace playback;
@@ -85,10 +88,28 @@ void PlaybackDevice::init() {
     registerComponent(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER, depthWorkModeManager);
 
     if(isDeviceInSeries(G330DevPids, deviceInfo_->pid_) || isDeviceInSeries(FemtoMegaDevPids, deviceInfo_->pid_)
-        || isDeviceInSeries(FemtoBoltDevPids, deviceInfo_->pid_)) {
+       || isDeviceInSeries(FemtoBoltDevPids, deviceInfo_->pid_)) {
         // preset manager
         auto presetManager = std::make_shared<PlaybackPresetManager>(this);
         registerComponent(OB_DEV_COMPONENT_PRESET_MANAGER, presetManager);
+    }
+
+    if(port_->isPropertySupported(OB_PROP_FRAME_INTERLEAVE_ENABLE_BOOL)) {
+        OBPropertyValue interleaveEnable{};
+        port_->getRecordedPropertyValue(OB_PROP_FRAME_INTERLEAVE_ENABLE_BOOL, &interleaveEnable);
+
+        if(interleaveEnable.intValue > 0) {
+            std::shared_ptr<IFrameInterleaveManager> devFrameInterleaveManager;
+            if(isDeviceInSeries(G330DevPids, deviceInfo_->pid_)) {
+                devFrameInterleaveManager = std::make_shared<G330FrameInterleaveManager>(this);
+            }
+            else {
+                devFrameInterleaveManager = std::make_shared<G435LeFrameInterleaveManager>(this);
+            }
+
+            auto frameInterleaveManagerProxy = std::make_shared<libobsensor::PlaybackFrameInterleaveManager>(devFrameInterleaveManager);
+            registerComponent(OB_DEV_COMPONENT_FRAME_INTERLEAVE_MANAGER, frameInterleaveManagerProxy);
+        }
     }
 }
 
@@ -490,6 +511,10 @@ void PlaybackDevice::initProperties() {
     registerPropertyCondition(propertyServer, OB_STRUCT_DEPTH_AE_ROI, "r", "r", vendorAccessor);
     registerPropertyCondition(propertyServer, OB_STRUCT_DEVICE_TIME, "r", "r", vendorAccessor);
     registerPropertyCondition(propertyServer, OB_PROP_DISP_SEARCH_RANGE_MODE_INT, "r", "r", vendorAccessor);
+
+    // Interleave config property
+    registerPropertyCondition(propertyServer, OB_PROP_FRAME_INTERLEAVE_ENABLE_BOOL, "r", "r", vendorAccessor);
+    registerPropertyCondition(propertyServer, OB_PROP_FRAME_INTERLEAVE_CONFIG_INDEX_INT, "r", "r", vendorAccessor);
 
     // Mirror, Flip, Rotation properties
     registerPropertyCondition(propertyServer, OB_PROP_COLOR_MIRROR_BOOL, "rw", "rw", frameTransformAccessor_);
