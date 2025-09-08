@@ -13,7 +13,7 @@ namespace libobsensor {
 class PlaybackFrameInterleaveManager : public IFrameInterleaveManager, public DeviceComponentBase {
 public:
     PlaybackFrameInterleaveManager(std::shared_ptr<IFrameInterleaveManager> frameInterleaveManager);
-    ~PlaybackFrameInterleaveManager();
+    ~PlaybackFrameInterleaveManager() override;
 
     void                            loadFrameInterleave(const std::string &frameInterleaveName) override;
     const std::vector<std::string> &getAvailableFrameInterleaveList() const override;

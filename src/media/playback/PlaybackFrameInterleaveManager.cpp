@@ -8,7 +8,7 @@
 namespace libobsensor {
 
 PlaybackFrameInterleaveManager::PlaybackFrameInterleaveManager(std::shared_ptr<IFrameInterleaveManager> frameInterleaveManager)
-    : deviceFrameInterleaveManager_(frameInterleaveManager), DeviceComponentBase(nullptr) {}
+    : DeviceComponentBase(nullptr), deviceFrameInterleaveManager_(frameInterleaveManager) {}
 
 PlaybackFrameInterleaveManager::~PlaybackFrameInterleaveManager() {}
 
