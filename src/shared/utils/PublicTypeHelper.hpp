@@ -70,3 +70,4 @@ std::ostream &operator<<(std::ostream &os, const OBFilterConfigValueType &type);
 std::ostream &operator<<(std::ostream &os, const OBExceptionType &type);
 std::ostream &operator<<(std::ostream &os, const OBDERectifyD2CParams &params);
 std::ostream &operator<<(std::ostream &os, const OBDEIRTransformParam &params);
+std::ostream &operator<<(std::ostream &os, const OBPlaybackStatus &status);

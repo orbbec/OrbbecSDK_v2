@@ -863,3 +863,24 @@ std::ostream &operator<<(std::ostream &os, const OBDEIRTransformParam &params) {
 
     return os;
 }
+
+std::ostream &operator<<(std::ostream &os, const OBPlaybackStatus &status) {
+    switch(status) {
+    case OB_PLAYBACK_UNKNOWN:
+        os << "Unknown";
+        break;
+    case OB_PLAYBACK_PLAYING:
+        os << "Playing";
+        break;
+    case OB_PLAYBACK_PAUSED:
+        os << "Paused";
+        break;
+    case OB_PLAYBACK_STOPPED:
+        os << "Stopped";
+        break;
+    default:
+        os << "Unsupported enumeation value";
+        break;
+    }
+    return os;
+}

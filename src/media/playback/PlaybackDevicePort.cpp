@@ -176,10 +176,31 @@ void PlaybackDevicePort::playbackLoop() {
             }
 
             // If seek occurred, output frame directly
-            uint64_t sleepTime = calculateSleepTime(frame->getTimeStampUsec());  // in microseconds
             if(!seekOccurred) {
-                if(sleepTime > 0 && sleepTime < MAX_SLEEP_TIME_US) {
-                    utils::sleepMs(sleepTime / 1000);  // in milliseconds
+                uint64_t sleepTimeUs = calculateSleepTime(frame->getTimeStampUsec());  // in microseconds
+                if(sleepTimeUs > 0) {
+                    std::unique_lock<std::mutex> lock(playbackMutex_);
+
+                    auto waitDuration  = std::chrono::microseconds(sleepTimeUs);
+                    bool isInterrupted = playbackCv_.wait_for(lock, waitDuration, [this]() {
+                        // Note: playback status should acquire here rather than lambda capture.
+                        auto playbackStatus = playbackStatus_.getCurrentState();
+                        return !isLooping_ || seekOccurred_ || playbackStatus != OB_PLAYBACK_PLAYING;
+                    });
+
+                    if(isInterrupted) {
+                        if(!isLooping_) {
+                            LOG_DEBUG("Interrupted sleep of {}us: playback loop terminated", sleepTimeUs);
+                        }
+                        else if(seekOccurred_) {
+                            LOG_DEBUG("Interrupted sleep of {}us: seek occurred", sleepTimeUs);
+                        }
+                        else {
+                            auto status = playbackStatus_.getCurrentState();
+                            LOG_DEBUG("Interrupted sleep of {}us, playback status changed to {}", sleepTimeUs, status);
+                        }
+                        continue;
+                    }
                 }
 
                 auto currentTime = reader_->getCurTime();
@@ -239,9 +260,9 @@ void PlaybackDevicePort::seek(uint64_t position) {
     try {
         reader_->seekToTime(std::chrono::nanoseconds(position * playbackTimeFreq_));
         seekOccurred_.store(true);
-        playbackCv_.notify_all();
         std::unique_lock<std::mutex> lock(baseTimestampMutex_);
         needUpdateBaseTime_ = true;
+        playbackCv_.notify_all();
     }
     catch(const libobsensor_exception &e) {
         LOG_WARN("Error when seeking to position: {}, {}", position, e.what());
@@ -359,8 +380,9 @@ void PlaybackDevicePort::setPlaybackStatusCallback(const PlaybackStatusCallback 
 
     if(playbackStatusCallback_) {
         playbackStatus_.registerGlobalCallback([this]() {
-            LOG_DEBUG("Playback status change to {}", static_cast<int>(playbackStatus_.getCurrentState()));
-            playbackStatusCallback_(playbackStatus_.getCurrentState());
+            auto playbackStatus = playbackStatus_.getCurrentState();
+            LOG_DEBUG("Playback status change to {}", playbackStatus);
+            playbackStatusCallback_(playbackStatus);
         });
     }
 }
