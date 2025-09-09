@@ -1,43 +1,70 @@
 # Benchmark Tool
 
-This tool is used to measure the performance of the OrbbecSDK_v2. It can be used to measure the frame rate of the camera, the latency of the camera, and the processing time of the SDK.
+This tool is used to measure the performance of OrbbecSDK_v2. It can be used to measure the camera’s CPU usage, memory consumption, camera latency, and more. The benchmark tool is cross-platform and supports Windows, Linux, ARM64, and MacOS.
 
-## Building the Benchmark Tool
+**Note:**
+- This tool is designed for testing the **Gemini 330** series cameras. If you are using other camera, it may cause some issues (e.g., non-Gemini 330 series do not support hardware noiseremoval). You can modify the code in this project according to your needs.
+- The benchmark tool includes two methods: `enableSwNoiseRemoveFilter` and `enableHwNoiseRemoveFilter`. For Gemini 330 series, the OrbbecSDK internally enables a software filter for noise removal by default. You can call `enableSwNoiseRemoveFilter` to enable or disable software noise removal. If you're using the latest firmware (1.4.1 firmware or later), hardware noise removal is supported, yout can enable or disable the hardware noise removal filter by calling `enableHwNoiseRemoveFilter`. Disabling the software filter and enabling hardware noise removal can improve the performance of the camera.
+
+
+## Usage
+First, download the packaged version from the [Release page](https://github.com/orbbec/OrbbecSDK_v2/releases) of OrbbecSDKv2. In the bin directory of each platform, you will find the packaged benchmark executable: on Windows, the file is named ob_benchmark.exe, while on other platforms it is ob_benchmark.
+For example, in version v2.4.11, the SDK download link is as follows:
+
+![summary](image/sdk_zip.png)
+
+On the Windows platform, double-click ob_benchmark.exe to run the tool.
+![summary](image/windows_benchmark.png)
+
+
+On platforms other than Windows, run the tool using `sudo ./ob_benchmark`, as shown in the figure below.
+![summary](image/linux_benchmark.png)
+
+### CPU and Memory Consumption
+The current benchmark tool runs five test cases by default, Each test case runs for **five minutes**.
+
+|    Test Case    |                     Note                      |
+| --- | --- |
+| Measure the latency of depth and color streams  |   1. Enable depth and color streams using the default resolutions defined in the OrbbecSDKConfig.xml. Measure the latency and save the results in a .csv file. <br /> 2. Disable Software Noise Remove Filter   <br /> 3. Disable hardware Noise Remove Filter         |
+| Get depth, color, left IR, and right IR streams |  1. Enable depth,color,left IR, right IR using the default resolutions   <br />  2. Disable Software Noise Remove Filter   <br /> 3. Disable hardware Noise Remove Filter                  |
+| Software D2C         |  1. Enable depth and color streams using the default resolutions  <br /> 2. Disable Software Noise Remove Filter   <br /> 3. Enable hardware Noise Remove Filter  <br /> 4.  Enable Software D2C Filter              |
+| Depth point cloud         |  1.  Enable depth stream using the default resolutions  <br />  2. Disable Software Noise Remove Filter   <br /> 3. Enable hardware Noise Remove Filter  <br /> 4. Enable depth point cloud filter          |
+| Color point cloud     |   1.  Enable depth and color streams using the default resolutions  <br />  2. Disable Software Noise Remove Filter   <br /> 3. Enable hardware Noise Remove Filter  <br /> 4. Enable RGBD point cloud filter                    |
+
+After the benchmark tool finishes, a `summary.csv` file will be generated in the same directory as the executable. This file contains the average results of the five test cases. For example, the following demonstrates on AGX Orin (Arm64 Ubuntu 22.04, JetPack 6.2, 64GB RAM).
+
+- Test results of the 335L on AGX Orin with Libuvc backend 
+![summary](image/libuvc_summary.png)
+
+
+- Test results of the 335L on AGX Orin with V4l2 backend 
+![summary](image/v4l2_summary.png)
+
+**In OrbbecSDKConfig.xml, the default backend is libuvc. To switch to V4L2, find the corresponding device entry in the configuration file and modify the backend setting as shown below.**
+~~~
+<LinuxUVCDefaultBackend>V4L2</LinuxUVCDefaultBackend>
+~~~
+
+**Notes:**
+CPU usage includes the CPU consumed by writing CSV files. 
+
+### Depth and Color latency
+- The test cases for measuring the latency of depth and color streams will generate two .csv files: `xxx_timestamp_difference_color.csv` and `xxx_timestamp_difference_depth.csv`, where `xxx` represents the camera's serial number. The latency is represented by the difference between the system timestamp and the device timestamp. 
+
+## Advanced requirements
+The benchmark included in the SDK zip package only supports the Gemini 330 series. If you need to test other devices or add additional test items, you will need to modify the benchmark code. To do this, download the SDK source code, make the necessary changes, and then recompile it.
+
 ### Step 1: Clone the repository
 ```bash
 git clone https://github.com/orbbec/OrbbecSDK_v2.git
 ```
 
-### Step 2: Open the tool building options
-Navigate to the `cmake` folder in the root directory of the repository and open the `option.cmake` file.
-```CMake
-option(OB_BUILD_TOOLS "Build tools" ON)
-``` 
-
-### Step 3: Build the SDK
+### Step 2: Build the SDK
 You can build the SDK by following the instructions in the [build guide](docs/tutorial/building_orbbec_sdk.md).
 
 
-## Usage
-The current benchmark tool runs four test cases by default for the following streams: depth, color, left IR, and right IR streams, D2C, depth point cloud, and color point cloud. Each test case runs for **five minutes**.
+### Modifying Test Cases
 
-After the benchmark tool finishes, a `summary.csv` file will be generated in the same directory as the executable. This file contains the average results of the four test cases, which will look something like this:
-```csv
-Config: Enable depth, color, ir | Total average
-Average Cpu Usage(%), Average Memory Usage(MB)
-34.1462,55.9516
-Config: Enable software d2c | Total average
-Average Cpu Usage(%), Average Memory Usage(MB)
-63.2846,69.4766
-Config: Enable point cloud | Total average
-Average Cpu Usage(%), Average Memory Usage(MB)
-90.7615,96.832
-Config: Enable rgb point cloud | Total average
-Average Cpu Usage(%), Average Memory Usage(MB)
-115.731,128.32
-```
-
-## Modifying Test Cases
 If you wish to modify the test time for each group of test cases, follow these steps:
 1. Locate the `config/PerformanceConfig.hpp` file in the benchmark project.
 2. Modify the `RECONDING_TIME_SECONDS` value, for example:
@@ -69,7 +96,7 @@ updateConfigHandlers_ = {
 ```
 After modifying the test case, recompile the benchmark project and run the benchmark program again. You will see the results of the newly added test case.
 
-## Test Filtering Effects
+### Test Filtering Effects
 If you would like to test the effect of certain filters, follow these steps to modify the benchmark code.
 Example: Enable `Spatial Filtering`
 1. Add a `spatial_filter_` member variable in `src/DeviceResource.hpp`:
@@ -125,7 +152,5 @@ void DeviceResource::startStream(std::shared_ptr<ob::Config> config) {
 }
 ```
 
-## Note
-1. This benchmark is designed for testing the **G330** series cameras. If you are using a different camera, it may cause some issues (e.g., non-G330 devices do not support hardware noiseremoval). You can modify the code in this project according to your needs..
-2. The benchmark tool includes two methods: `enableSwNoiseRemoveFilter` and `enableHwNoiseRemoveFilter`. For G330 devices, the OrbbecSDK internally enables a software filter for noise removal by default. You can call `enableSwNoiseRemoveFilter` to enable or disable software noise removal. If you're using the latest firmware (1.4.1 firmware or later), hardware noise removal is supported, yout can disable the software filter by calling `enableHwNoiseRemoveFilter(false)`. Disabling the software filter and enabling hardware noise removal can improve the performance of the camera.
+
 
