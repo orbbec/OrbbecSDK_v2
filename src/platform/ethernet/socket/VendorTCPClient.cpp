@@ -48,57 +48,81 @@ VendorTCPClient::VendorTCPClient(std::string localAddress, std::string localMac,
 }
 
 void VendorTCPClient::checkLocalIP() {
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
-    unsigned int a, b, c, d;
-    if(sscanf(localAddress_.c_str(), "%u.%u.%u.%u", &a, &b, &c, &d) == 4) {
-        if((a == 10) ||                         // 10.0.0.0 - 10.255.255.255
-           (a == 172 && b >= 16 && b <= 31) ||  // 172.16.0.0 - 172.31.255.255
-           (a == 192 && b == 168)) {            // 192.168.0.0 - 192.168.255.255
-            isValidIP_ = true;
-        }
-    }
+#if (defined(WIN32) || defined(_WIN32) || defined(WINCE))
+    // If we already have a private localAddress_ provided, try to keep it
+    auto isPrivate = [](const std::string &ip) -> bool {
+        unsigned a,b,c,d;
+        if (sscanf(ip.c_str(), "%u.%u.%u.%u", &a,&b,&c,&d) != 4) return false;
+        return (a == 10) || (a == 172 && b >= 16 && b <= 31) || (a == 192 && b == 168);
+    };
 
-    if(!isValidIP_) {
-        localAddress_ = "";
-        IP_ADAPTER_INFO adapterInfo[16];  // Buffer to hold adapter info
-        DWORD           bufLen = sizeof(adapterInfo);
+    // Parse destination IP for subnet matching
+    in_addr destAddr{};
+    bool hasDest = (inet_pton(AF_INET, address_.c_str(), &destAddr) == 1);
 
-        // Get the network adapter information
-        DWORD dwRetVal = GetAdaptersInfo(adapterInfo, &bufLen);
-        if(dwRetVal == ERROR_SUCCESS) {
-            // Loop through all the adapters
-            PIP_ADAPTER_INFO pAdapterInfo = adapterInfo;
-            while(pAdapterInfo) {
-                // Convert MAC address to string format
-                std::ostringstream oss;
-                for(int i = 0; i < 6; ++i) {
-                    if(i > 0)
-                        oss << ":";
-                    oss << std::setw(2) << std::setfill('0') << std::hex << (int)pAdapterInfo->Address[i];
-                }
+    // Enumerate adapter by MAC and pick the right IP
+    IP_ADAPTER_INFO adapterInfo[16];
+    DWORD bufLen = sizeof(adapterInfo);
+    DWORD dwRetVal = GetAdaptersInfo(adapterInfo, &bufLen);
+    if (dwRetVal == ERROR_SUCCESS) {
+        PIP_ADAPTER_INFO pAdapterInfo = adapterInfo;
+        while (pAdapterInfo) {
+            // Build MAC string for comparison
+            std::ostringstream oss;
+            for (int i = 0; i < 6; ++i) {
+                if (i > 0) oss << ":";
+                oss << std::setw(2) << std::setfill('0') << std::hex << (int)pAdapterInfo->Address[i];
+            }
+            std::string currentMac = oss.str();
 
-                // Compare MAC address with the input MAC address
-                std::string currentMac = oss.str();
-                if(currentMac == localMac_) {
-                    // If MAC matches, get the associated IP address (return the first one)
-                    PIP_ADDR_STRING pIpAddr = &pAdapterInfo->IpAddressList;
-                    if(pIpAddr) {
-                        localAddress_ = pIpAddr->IpAddress.String;  // Return the first IP address
+            if (currentMac == localMac_) {
+                // First: if caller-specified localAddress_ exists on this adapter, keep it
+                if (!localAddress_.empty()) {
+                    for (PIP_ADDR_STRING p = &pAdapterInfo->IpAddressList; p; p = p->Next) {
+                        if (localAddress_ == p->IpAddress.String) {
+                            isValidIP_ = isPrivate(localAddress_);
+                            return; // keep caller-provided address
+                        }
                     }
-                    break;  // If no IP address found, break out of the loop
                 }
-                pAdapterInfo = pAdapterInfo->Next;
-            }
-        }
 
-        if(sscanf(localAddress_.c_str(), "%u.%u.%u.%u", &a, &b, &c, &d) == 4) {
-            if((a == 10) ||                         // 10.0.0.0 - 10.255.255.255
-               (a == 172 && b >= 16 && b <= 31) ||  // 172.16.0.0 - 172.31.255.255
-               (a == 192 && b == 168)) {            // 192.168.0.0 - 192.168.255.255
-                isValidIP_ = true;
+                // Second: try to pick an IP on same subnet as destination
+                if (hasDest) {
+                    for (PIP_ADDR_STRING p = &pAdapterInfo->IpAddressList; p; p = p->Next) {
+                        in_addr ip{}, mask{};
+                        if (inet_pton(AF_INET, p->IpAddress.String, &ip) != 1) continue;
+                        if (inet_pton(AF_INET, p->IpMask.String, &mask) != 1) continue;
+                        if ( (ip.S_un.S_addr & mask.S_un.S_addr) == (destAddr.S_un.S_addr & mask.S_un.S_addr) ) {
+                            localAddress_ = p->IpAddress.String;
+                            isValidIP_ = isPrivate(localAddress_);
+                            return;
+                        }
+                    }
+                }
+
+                // Third: fallback to the first private IPv4 on this adapter
+                for (PIP_ADDR_STRING p = &pAdapterInfo->IpAddressList; p; p = p->Next) {
+                    if (isPrivate(p->IpAddress.String)) {
+                        localAddress_ = p->IpAddress.String;
+                        isValidIP_ = true;
+                        return;
+                    }
+                }
+
+                // No suitable IP; clear to let OS decide
+                localAddress_.clear();
+                isValidIP_ = false;
+                return;
             }
+            pAdapterInfo = pAdapterInfo->Next;
         }
     }
+
+    // Adapter not found or error: if caller provided a private IP, keep it; otherwise clear
+    isValidIP_ = isPrivate(localAddress_);
+    if (!isValidIP_) localAddress_.clear();
+#else
+    // Non-Windows: keep current behavior (if any)
 #endif
 }
 

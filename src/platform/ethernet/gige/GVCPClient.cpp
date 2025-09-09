@@ -335,7 +335,7 @@ SOCKET GVCPClient::openClientSocket(SOCKADDR_IN addr) {
 #if(defined(__linux__) || defined(OS_IOS) || defined(OS_MACOS) || defined(__ANDROID__))
     //addr.sin_addr.s_addr = inet_addr("0.0.0.0");
 #endif
-    LOG_INTVL(LOG_INTVL_OBJECT_TAG + "GVCP bind", MAX_LOG_INTERVAL, spdlog::level::debug, "bind {}:{}", inet_ntoa(addr.sin_addr), ntohs(addr.sin_port));
+    LOG_INTVL(LOG_INTVL_OBJECT_TAG + "GVCP bind", MAX_LOG_INTERVAL, spdlog::level::debug, "bind {}:{}", std::string(inet_ntoa(addr.sin_addr)), ntohs(addr.sin_port));
     err = bind(sock, (SOCKADDR *)&addr, sizeof(SOCKADDR));
     if(err == SOCKET_ERROR) {
         return 0;
