@@ -58,7 +58,7 @@ static const uint8_t COMPAT_VERSION     = 1;  // 1:Supports embedding metadata i
 G435LeDeviceBase::G435LeDeviceBase(const std::shared_ptr<const IDeviceEnumInfo> &info) : DeviceBase(info) {}
 G435LeDeviceBase::~G435LeDeviceBase() noexcept {}
 
-void G435LeDeviceBase::init() {    
+void G435LeDeviceBase::init() {
     fetchExtensionInfo();
     fetchDeviceInfo();
 
@@ -324,11 +324,12 @@ void G435LeDevice::initSensorList() {
                 propServer->setPropertyValueT<bool>(OB_PROP_DISPARITY_TO_DEPTH_BOOL, true);
                 propServer->setPropertyValueT<bool>(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL, false);
                 sensor->markOutputDisparityFrame(false);
-                
-                auto depthPrecisionRange = propServer->getPropertyRangeT<int32_t>(OB_PROP_DEPTH_PRECISION_LEVEL_INT);  
-                LOG_DEBUG("Depth precision level range: min={}, max={}, def={}, cur={}", depthPrecisionRange.min, depthPrecisionRange.max, depthPrecisionRange.def, depthPrecisionRange.cur);              
+
+                auto depthPrecisionRange = propServer->getPropertyRangeT<int32_t>(OB_PROP_DEPTH_PRECISION_LEVEL_INT);
+                LOG_DEBUG("Depth precision level range: min={}, max={}, def={}, cur={}", depthPrecisionRange.min, depthPrecisionRange.max,
+                          depthPrecisionRange.def, depthPrecisionRange.cur);
                 propServer->setPropertyValueT(OB_PROP_DEPTH_PRECISION_LEVEL_INT, depthPrecisionRange.def);
-                sensor->setDepthUnit( utils::depthPrecisionLevelToUnit((OBDepthPrecisionLevel)depthPrecisionRange.def));
+                sensor->setDepthUnit(utils::depthPrecisionLevelToUnit((OBDepthPrecisionLevel)depthPrecisionRange.def));
 
                 initSensorStreamProfile(sensor);
 
@@ -919,11 +920,13 @@ void G435LeDevice::updateSensorStreamProfile() {
 }
 
 void G435LeDevice::fetchDeviceInfo() {
-    auto portInfo          = enumInfo_->getSourcePortInfoList().front();
-    auto netPortInfo       = std::dynamic_pointer_cast<const NetSourcePortInfo>(portInfo);
-    auto deviceInfo        = std::make_shared<NetDeviceInfo>();
-    deviceInfo->ipAddress_ = netPortInfo->address;
-    deviceInfo_            = deviceInfo;
+    auto portInfo           = enumInfo_->getSourcePortInfoList().front();
+    auto netPortInfo        = std::dynamic_pointer_cast<const NetSourcePortInfo>(portInfo);
+    auto deviceInfo         = std::make_shared<NetDeviceInfo>();
+    deviceInfo->ipAddress_  = netPortInfo->address;
+    deviceInfo->subnetMask_ = netPortInfo->mask;
+    deviceInfo->gateway_    = netPortInfo->gateway;
+    deviceInfo_             = deviceInfo;
 
     deviceInfo_->name_           = enumInfo_->getName();
     deviceInfo_->pid_            = enumInfo_->getPid();

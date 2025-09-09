@@ -1,7 +1,7 @@
 // Copyright (c) Orbbec Inc. All Rights Reserved.
 // Licensed under the MIT License.
 
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+#if (defined(WIN32) || defined(_WIN32) || defined(WINCE))
 #define _WINSOCK_DEPRECATED_NO_WARNINGS disable
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -25,6 +25,8 @@
 #include <string>
 #include <sstream>
 #include <iomanip>
+#include <future>
+#include <vector>
 
 #include "GVCPClient.hpp"
 #include "exception/ObException.hpp"
@@ -120,21 +122,26 @@ std::vector<GVCPDeviceInfo> GVCPClient::queryNetDeviceList() {
     return devInfoList_;
 }
 
-bool GVCPClient::changeNetDeviceIpConfig(std::string mac, const OBNetIpConfig &config) {
+bool GVCPClient::changeNetDeviceIpConfig(std::string macAddress, const OBNetIpConfig &config) {
     std::lock_guard<std::mutex> lck(queryMtx_);
 
-    std::vector<std::thread> threads;
+    std::vector<std::future<bool>> futures;
 
     for(int i = 0; i < sockCount_; ++i) {
-        auto func = std::bind(&GVCPClient::sendGVCPForceIP, this, socketInfos_[i], mac, config);
-        threads.emplace_back(func, socketInfos_[i]);
+        futures.push_back(std::async(std::launch::async, &GVCPClient::sendGVCPForceIP, this, socketInfos_[i], macAddress, config));
     }
-
-    for(auto &thread: threads) {
-        thread.join();
+    bool success = false;
+    for(auto &f: futures) {
+        if(f.get()) {
+            success = true;
+        }
     }
-    LOG_INFO("change net device ip config completed. mac:{}", mac);
-    return true;
+    if(success) {
+        LOG_INFO("Change net device ip config successfully. MAC: {}", macAddress);
+        return true;
+    }
+    LOG_INFO("Failed to change net device ip config. MAC: {}", macAddress);
+    return false;
 }
 
 #if defined(__APPLE__)
@@ -151,8 +158,38 @@ const uint8_t *GVCPClient::getMACAddress(struct ifaddrs *ifap, const char *inter
         }
         p = p->ifa_next;
     }
+    return nullptr;
 }
 #endif  // __APPLE__
+
+#if (defined(__linux__) || defined(__ANDROID__))
+std::string getGateway(const std::string &ifName) {
+    std::ifstream routeFile("/proc/net/route");
+    std::string   line;
+    std::string   gateway = "0.0.0.0";
+
+    while(std::getline(routeFile, line)) {
+        std::istringstream iss(line);
+        std::string        iface, destination, gatewayHex, flags;
+        if(!(iss >> iface >> destination >> gatewayHex >> flags)) {
+            continue;
+        }
+
+        if(iface == ifName && destination == "00000000") {
+            unsigned long     gw;
+            std::stringstream ss;
+            ss << std::hex << gatewayHex;
+            ss >> gw;
+
+            struct in_addr addr;
+            addr.s_addr = gw;
+            gateway     = std::string(inet_ntoa(addr));
+            break;
+        }
+    }
+    return gateway;
+}
+#endif  // __linux__ || __ANDROID__
 
 int GVCPClient::openClientSockets() {
 #if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
@@ -186,21 +223,28 @@ int GVCPClient::openClientSockets() {
 
         for(PIP_ADAPTER_UNICAST_ADDRESS ua = aa->FirstUnicastAddress; ua != NULL; ua = ua->Next) {
             SOCKADDR_IN addrSrv;
-            addrSrv            = *(SOCKADDR_IN *)ua->Address.lpSockaddr;
-            addrSrv.sin_family = AF_INET;
-            addrSrv.sin_port   = htons(0);
-            std::string ipStr  = inet_ntoa(addrSrv.sin_addr);
+            addrSrv                  = *(SOCKADDR_IN *)ua->Address.lpSockaddr;
+            addrSrv.sin_family       = AF_INET;
+            addrSrv.sin_port         = htons(0);
+            std::string ipStr        = inet_ntoa(addrSrv.sin_addr);
+            uint8_t     subnetLength = ua->OnLinkPrefixLength;
+            std::string gateway      = "";
+            if(aa->FirstGatewayAddress != nullptr) {
+                SOCKADDR_IN *gatewayAddr = reinterpret_cast<SOCKADDR_IN *>(aa->FirstGatewayAddress->Address.lpSockaddr);
+                gateway                  = inet_ntoa(gatewayAddr->sin_addr);
+            }
             // "127.0.0.1" is loopback address
             if(strcmp(ipStr.c_str(), "127.0.0.1") == 0) {
                 continue;
             }
-            //socks_[index++] = openClientSocket(addrSrv);
 
-            SOCKET socket                  = openClientSocket(addrSrv);
-            int    curIndex                = index++;
-            socketInfos_[curIndex].sock    = socket;
-            socketInfos_[curIndex].mac     = macAddress;
-            socketInfos_[curIndex].address = ipStr;
+            SOCKET socket                       = openClientSocket(addrSrv);
+            int    curIndex                     = index++;
+            socketInfos_[curIndex].sock         = socket;
+            socketInfos_[curIndex].mac          = macAddress;
+            socketInfos_[curIndex].address      = ipStr;
+            socketInfos_[curIndex].subnetLength = subnetLength;
+            socketInfos_[curIndex].gateway      = gateway;
             LOG_DEBUG("local mac address: {},local ip address:{}", macAddress, ipStr);
         }
     }
@@ -245,6 +289,15 @@ int GVCPClient::openClientSockets() {
             int    curIndex                 = index++;
             socketInfos_[curIndex].sock     = socket;
             socketInfos_[curIndex].sockRecv = openClientRecvSocket(socket);
+            int prefixLength                = 0;
+            if(ifa->ifa_netmask != NULL) {
+                struct sockaddr_in *netmask = (struct sockaddr_in *)ifa->ifa_netmask;
+                uint32_t            mask    = ntohl(netmask->sin_addr.s_addr);
+                while(mask) {
+                    prefixLength += (mask & 1);
+                    mask >>= 1;
+                }
+            }
 
             LOG_DEBUG("getnameinfo-name: {}", ifa->ifa_name);
 #if defined(__APPLE__)
@@ -266,11 +319,19 @@ int GVCPClient::openClientSockets() {
                     }
                 }
 
-                std::string macAddress         = macAddressStream.str();
-                socketInfos_[curIndex].mac     = macAddress;
-                socketInfos_[curIndex].address = ipStr;
                 std::string interfaceNameStr(ifa->ifa_name);
+#if defined(__APPLE__)
+                // TODO get gateway for macOS
+                std::string gateway = "0.0.0.0";
+#else
+                std::string gateway = getGateway(interfaceNameStr);
+#endif
+                std::string macAddress                  = macAddressStream.str();
+                socketInfos_[curIndex].mac              = macAddress;
+                socketInfos_[curIndex].address          = ipStr;
                 socketInfos_[curIndex].netInterfaceName = interfaceNameStr;
+                socketInfos_[curIndex].gateway          = gateway;
+                socketInfos_[curIndex].subnetLength     = prefixLength;
                 LOG_DEBUG("local mac address: {},local ip address:{}, interfaceName:{}", macAddress, ipStr, interfaceNameStr);
             }
         }
@@ -438,16 +499,18 @@ int GVCPClient::recvAndParseGVCPResponse(SOCKET sock, const GVCPSocketInfo &sock
         }
 
         GVCPDeviceInfo info;
-        info.netInterfaceName = socketInfo.netInterfaceName;
-        info.localIp          = socketInfo.address;
-        info.localMac         = socketInfo.mac;
-        info.mac              = macStr;
-        info.ip               = curIPStr;
-        info.mask             = subMaskStr;
-        info.gateway          = gatewayStr;
-        info.sn               = ackPayload->szSerial;
-        info.name             = ackPayload->szModelName;
-        info.pid              = curPID;
+        info.netInterfaceName  = socketInfo.netInterfaceName;
+        info.localIp           = socketInfo.address;
+        info.localMac          = socketInfo.mac;
+        info.localGateway      = socketInfo.gateway;
+        info.localSubnetLength = socketInfo.subnetLength;
+        info.mac               = macStr;
+        info.ip                = curIPStr;
+        info.mask              = subMaskStr;
+        info.gateway           = gatewayStr;
+        info.sn                = ackPayload->szSerial;
+        info.name              = ackPayload->szModelName;
+        info.pid               = curPID;
         // info.manufacturer = ackPayload->szFacName;
         // info.version      = ackPayload->szDevVer;
 
@@ -531,7 +594,7 @@ void GVCPClient::sendGVCPDiscovery(GVCPSocketInfo socketInfo) {
                     }
                 }
             }
-            if(FD_ISSET(socketInfo.sockRecv, &readfs)) {
+            if(socketInfo.sockRecv > 0 && FD_ISSET(socketInfo.sockRecv, &readfs)) {
                 err = recvAndParseGVCPResponse(socketInfo.sockRecv, socketInfo);
                 if(err == SOCKET_ERROR) {
                     if(failedCount-- < 0) {
@@ -546,7 +609,7 @@ void GVCPClient::sendGVCPDiscovery(GVCPSocketInfo socketInfo) {
     // LOG_INFO("finish gvcp discovery {}", sock);
 }
 
-void GVCPClient::sendGVCPForceIP(GVCPSocketInfo socketInfo, std::string mac, const OBNetIpConfig &config) {
+bool GVCPClient::sendGVCPForceIP(GVCPSocketInfo socketInfo, std::string mac, const OBNetIpConfig &config) {
     gvcp_forceip_cmd forceIPCmd;
     // gvcp_forceip_ack forceIPAck;
 
@@ -580,9 +643,9 @@ void GVCPClient::sendGVCPForceIP(GVCPSocketInfo socketInfo, std::string mac, con
     //*((uint32_t *)&payload.SubMask[12]) = inet_addr(m_szLocalMask);     //last 4 byte
     //*((uint32_t *)&payload.Gateway[12]) = inet_addr(m_szLocalGateway);  //last 4 byte
 
-    memcpy(payload.CurIP, config.address, 4);
-    memcpy(payload.SubMask, config.mask, 4);
-    memcpy(payload.Gateway, config.gateway, 4);
+    memcpy(payload.CurIP + sizeof(payload.CurIP) - 4, config.address, 4);
+    memcpy(payload.SubMask + sizeof(payload.SubMask) - 4, config.mask, 4);
+    memcpy(payload.Gateway + sizeof(payload.Gateway) - 4, config.gateway, 4);
 
     forceIPCmd.payload = payload;
 
@@ -591,6 +654,84 @@ void GVCPClient::sendGVCPForceIP(GVCPSocketInfo socketInfo, std::string mac, con
     if(err == SOCKET_ERROR) {
         LOG_TRACE("sendto failed with error: {}", GET_LAST_ERROR());
     }
+    const uint8_t FORCEIP_ACK = 0x05;
+    int           res;
+    int           failedCount = 100;
+
+    do {
+        struct timeval timeout{};
+        timeout.tv_sec  = 1;
+        timeout.tv_usec = 0;
+
+        int    nfds = static_cast<int>(socketInfo.sock) + 1;
+        fd_set readfs;
+        FD_ZERO(&readfs);
+        FD_SET(socketInfo.sock, &readfs);
+
+        if(socketInfo.sockRecv > 0) {
+            FD_SET(socketInfo.sockRecv, &readfs);
+            if(socketInfo.sockRecv > socketInfo.sock) {
+                nfds = static_cast<int>(socketInfo.sockRecv) + 1;
+            }
+        }
+
+        res = select(nfds, &readfs, nullptr, nullptr, &timeout);
+        if(res > 0) {
+            if(FD_ISSET(socketInfo.sock, &readfs)) {
+                uint8_t     buffer[1024]{};
+                SOCKADDR_IN senderAddr{};
+                socklen_t   senderLen = sizeof(senderAddr);
+
+                int recvLen = recvfrom(socketInfo.sock, (char *)buffer, sizeof(buffer), 0, (struct sockaddr *)&senderAddr, &senderLen);
+                if(recvLen >= (int)sizeof(gvcp_ack_header)) {
+                    gvcp_ack_header *ack = (gvcp_ack_header *)buffer;
+                    if(ntohs(ack->wAck) == FORCEIP_ACK && ack->wReqID == forceIPCmd.header.wReqID && ntohs(ack->wStatus) == 0) {
+                        std::string ip = inet_ntoa(senderAddr.sin_addr);
+                        LOG_TRACE("Received GVCP ForceIP ACK from {}", ip.c_str());
+                        return true;
+                    }
+                }
+                else if(failedCount-- < 0) {
+                    LOG_WARN("GVCP recvfrom failed on sock");
+                    break;
+                }
+            }
+            if(socketInfo.sockRecv > 0 && FD_ISSET(socketInfo.sockRecv, &readfs)) {
+                uint8_t     buffer[1024]{};
+                SOCKADDR_IN senderAddr{};
+                socklen_t   senderLen = sizeof(senderAddr);
+
+                int recvLen = recvfrom(socketInfo.sockRecv, (char *)buffer, sizeof(buffer), 0, (struct sockaddr *)&senderAddr, &senderLen);
+                if(recvLen >= (int)sizeof(gvcp_ack_header)) {
+                    gvcp_ack_header *ack = (gvcp_ack_header *)buffer;
+
+                    if(ntohs(ack->wAck) == FORCEIP_ACK && ack->wReqID == forceIPCmd.header.wReqID) {
+                        uint16_t    status = ntohs(ack->wStatus);
+                        std::string ipStr  = inet_ntoa(senderAddr.sin_addr);
+
+                        if(status == 0x0000) {
+                            // GEV_STATUS_SUCCESS
+                            LOG_TRACE("Received GVCP ForceIP ACK from {}, status=0x0000 (SUCCESS)", ipStr.c_str());
+                            return true;
+                        }
+                        else if(status == 0x8003) {
+                            // GEV_STATUS_INVALID_ADDRESS
+                            LOG_WARN("Received GVCP ForceIP ACK from {}, status=0x8003 (INVALID ADDRESS: IP not acceptable)", ipStr.c_str());
+                        }
+                        else {
+                            LOG_WARN("Received GVCP ForceIP ACK from {}, unknown status=0x{:04x}", ipStr.c_str(), status);
+                        }
+                    }
+                }
+                else if(failedCount-- < 0) {
+                    LOG_WARN("GVCP recvfrom failed on sockRecv");
+                    break;
+                }
+            }
+        }
+    } while(res > 0);
+
+    return false;
 }
 
 void GVCPClient::checkAndUpdateSockets() {
@@ -617,11 +758,16 @@ void GVCPClient::checkAndUpdateSockets() {
     for(PIP_ADAPTER_ADDRESSES aa = adapterAddresses.get(); aa != NULL; aa = aa->Next) {
         for(PIP_ADAPTER_UNICAST_ADDRESS ua = aa->FirstUnicastAddress; ua != NULL; ua = ua->Next) {
             SOCKADDR_IN addrSrv;
-            addrSrv            = *(SOCKADDR_IN *)ua->Address.lpSockaddr;
-            addrSrv.sin_family = AF_INET;
-            addrSrv.sin_port   = htons(0);
-            std::string ipStr  = inet_ntoa(addrSrv.sin_addr);
-            // "127.0.0.1" is loopback address
+            addrSrv                  = *(SOCKADDR_IN *)ua->Address.lpSockaddr;
+            addrSrv.sin_family       = AF_INET;
+            addrSrv.sin_port         = htons(0);
+            std::string ipStr        = inet_ntoa(addrSrv.sin_addr);
+            uint8_t     subnetLength = ua->OnLinkPrefixLength;
+            std::string gateway      = "";
+            if(aa->FirstGatewayAddress != nullptr) {
+                SOCKADDR_IN *gatewayAddr = reinterpret_cast<SOCKADDR_IN *>(aa->FirstGatewayAddress->Address.lpSockaddr);
+                gateway                  = inet_ntoa(gatewayAddr->sin_addr);
+            }
             if(strcmp(ipStr.c_str(), "127.0.0.1") == 0) {
                 continue;
             }
@@ -661,10 +807,12 @@ void GVCPClient::checkAndUpdateSockets() {
                         }
                         std::string macAddress = macAddressStream.str();
 
-                        int curIndex                   = index++;
-                        socketInfos_[curIndex].sock    = socketFd;
-                        socketInfos_[curIndex].mac     = macAddress;
-                        socketInfos_[curIndex].address = ipStr;
+                        int curIndex                        = index++;
+                        socketInfos_[curIndex].sock         = socketFd;
+                        socketInfos_[curIndex].mac          = macAddress;
+                        socketInfos_[curIndex].address      = ipStr;
+                        socketInfos_[curIndex].subnetLength = subnetLength;
+                        socketInfos_[curIndex].gateway      = gateway;
                         LOG_INFO("New ip segment found,new ip addr:{}, mac:{}", ipStr, macAddress);
                     }
                 }
@@ -719,12 +867,23 @@ void GVCPClient::checkAndUpdateSockets() {
             }
 
             if(!found) {
-                auto sock = openClientSocket(addrSrv);
-                int  curIndex = index++;
+                auto sock                       = openClientSocket(addrSrv);
+                int  curIndex                   = index++;
                 socketInfos_[curIndex].sock     = sock;
                 socketInfos_[curIndex].sockRecv = openClientRecvSocket(sock);
 
                 LOG_DEBUG("getnameinfo-name: {}", ifa->ifa_name);
+
+                int prefixLength = 0;
+                if(ifa->ifa_netmask != NULL) {
+                    struct sockaddr_in *netmask = (struct sockaddr_in *)ifa->ifa_netmask;
+                    uint32_t            mask    = ntohl(netmask->sin_addr.s_addr);
+                    while(mask) {
+                        prefixLength += (mask & 1);
+                        mask >>= 1;
+                    }
+                }
+
 #if defined(__APPLE__)
                 auto mac = getMACAddress(ifaddr, ifa->ifa_name);
                 if(mac != nullptr) {
@@ -744,11 +903,19 @@ void GVCPClient::checkAndUpdateSockets() {
                         }
                     }
 
-                    std::string macAddress = macAddressStream.str();
-                    socketInfos_[curIndex].mac     = macAddress;
-                    socketInfos_[curIndex].address = ipStr;
                     std::string interfaceNameStr(ifa->ifa_name);
+#if defined(__APPLE__)
+                    // TODO get gateway for macOS
+                    std::string gateway = "0.0.0.0";
+#else
+                    std::string gateway = getGateway(interfaceNameStr);
+#endif
+                    std::string macAddress                  = macAddressStream.str();
+                    socketInfos_[curIndex].mac              = macAddress;
+                    socketInfos_[curIndex].address          = ipStr;
                     socketInfos_[curIndex].netInterfaceName = interfaceNameStr;
+                    socketInfos_[curIndex].gateway          = gateway;
+                    socketInfos_[curIndex].subnetLength     = prefixLength;
                     LOG_INFO("New ip segment found,new ip addr:{}, mac:{}, interfaceName:{}", ipStr, macAddress, interfaceNameStr);
                 }
 

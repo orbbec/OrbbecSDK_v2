@@ -83,7 +83,7 @@ const char *ob_device_list_get_device_ip_address(const ob_device_list *list, uin
     VALIDATE_UNSIGNED_INDEX(index, list->list.size());
     auto &info = list->list[index];
     if(std::string(info->getConnectionType()) != "Ethernet") {
-        LOG_WARN("get ipAddress() failed! Only valid for Ethernet devices.");
+        LOG_WARN("Failed to get device IP address: valid only for Ethernet devices.");
         return "0.0.0.0";
     }
 
@@ -93,18 +93,93 @@ const char *ob_device_list_get_device_ip_address(const ob_device_list *list, uin
 }
 HANDLE_EXCEPTIONS_AND_RETURN(nullptr, list, index)
 
+const char *ob_device_list_get_device_subnet_mask(const ob_device_list *list, uint32_t index, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(list);
+    VALIDATE_UNSIGNED_INDEX(index, list->list.size());
+    auto &info = list->list[index];
+    if(std::string(info->getConnectionType()) != "Ethernet") {
+        LOG_WARN("Failed to get subnet mask: valid only for Ethernet devices.");
+        return "0.0.0.0";
+    }
+
+    auto sourcePort    = info->getSourcePortInfoList().front();
+    auto netSourcePort = std::dynamic_pointer_cast<const libobsensor::NetSourcePortInfo>(sourcePort);
+    return netSourcePort->mask.c_str();
+}
+HANDLE_EXCEPTIONS_AND_RETURN(nullptr, list, index)
+
+const char *ob_device_list_get_device_gateway(const ob_device_list *list, uint32_t index, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(list);
+    VALIDATE_UNSIGNED_INDEX(index, list->list.size());
+    auto &info = list->list[index];
+    if(std::string(info->getConnectionType()) != "Ethernet") {
+        LOG_WARN("Failed to get gateway: valid only for Ethernet devices.");
+        return "0.0.0.0";
+    }
+
+    auto sourcePort    = info->getSourcePortInfoList().front();
+    auto netSourcePort = std::dynamic_pointer_cast<const libobsensor::NetSourcePortInfo>(sourcePort);
+    return netSourcePort->gateway.c_str();
+}
+HANDLE_EXCEPTIONS_AND_RETURN(nullptr, list, index)
+
 const char *ob_device_list_get_device_local_mac(const ob_device_list *list, uint32_t index, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(list);
     VALIDATE_UNSIGNED_INDEX(index, list->list.size());
     auto &info = list->list[index];
     if(std::string(info->getConnectionType()) != "Ethernet") {
-        LOG_WARN("get localMac() failed! Only valid for Ethernet devices.");
+        LOG_WARN("Failed to get local net iface mac address: valid only for Ethernet devices.");
         return "0:0:0:0:0:0";
     }
 
     auto sourcePort    = info->getSourcePortInfoList().front();
     auto netSourcePort = std::dynamic_pointer_cast<const libobsensor::NetSourcePortInfo>(sourcePort);
     return netSourcePort->localMac.c_str();
+}
+HANDLE_EXCEPTIONS_AND_RETURN(nullptr, list, index)
+
+const char *ob_device_list_get_device_local_ip(const ob_device_list *list, uint32_t index, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(list);
+    VALIDATE_UNSIGNED_INDEX(index, list->list.size());
+    auto &info = list->list[index];
+    if(std::string(info->getConnectionType()) != "Ethernet") {
+        LOG_WARN("Failed to get local net iface IP address: valid only for Ethernet devices.");
+        return "0:0:0:0";
+    }
+
+    auto sourcePort    = info->getSourcePortInfoList().front();
+    auto netSourcePort = std::dynamic_pointer_cast<const libobsensor::NetSourcePortInfo>(sourcePort);
+    return netSourcePort->localAddress.c_str();
+}
+HANDLE_EXCEPTIONS_AND_RETURN(nullptr, list, index)
+
+uint8_t ob_device_list_get_device_local_subnet_length(const ob_device_list *list, uint32_t index, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(list);
+    VALIDATE_UNSIGNED_INDEX(index, list->list.size());
+    auto &info = list->list[index];
+    if(std::string(info->getConnectionType()) != "Ethernet") {
+        LOG_WARN("Failed to get local net iface subnet length: valid only for Ethernet devices.");
+        return 0;
+    }
+
+    auto sourcePort    = info->getSourcePortInfoList().front();
+    auto netSourcePort = std::dynamic_pointer_cast<const libobsensor::NetSourcePortInfo>(sourcePort);
+    return netSourcePort->localSubnetLength;
+}
+HANDLE_EXCEPTIONS_AND_RETURN(uint8_t(0), list, index)
+
+const char *ob_device_list_get_device_local_gateway(const ob_device_list *list, uint32_t index, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(list);
+    VALIDATE_UNSIGNED_INDEX(index, list->list.size());
+    auto &info = list->list[index];
+    if(std::string(info->getConnectionType()) != "Ethernet") {
+        LOG_WARN("get localGateway() failed! Only valid for Ethernet devices.");
+        return "0:0:0:0";
+    }
+
+    auto sourcePort    = info->getSourcePortInfoList().front();
+    auto netSourcePort = std::dynamic_pointer_cast<const libobsensor::NetSourcePortInfo>(sourcePort);
+    return (netSourcePort->localGateway.empty() || netSourcePort->localGateway == "unknown") ? "0.0.0.0" : netSourcePort->localGateway.c_str();
 }
 HANDLE_EXCEPTIONS_AND_RETURN(nullptr, list, index)
 
@@ -294,7 +369,7 @@ HANDLE_EXCEPTIONS_NO_RETURN(device, property_id, user_data)
 void ob_device_write_customer_data(ob_device *device, const void *data, uint32_t data_size, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(device);
     VALIDATE_NOT_NULL(data);
-    auto updater =  device->device->getComponentT<libobsensor::FirmwareUpdater>(libobsensor::OB_DEV_COMPONENT_FIRMWARE_UPDATER, true);
+    auto updater = device->device->getComponentT<libobsensor::FirmwareUpdater>(libobsensor::OB_DEV_COMPONENT_FIRMWARE_UPDATER, true);
     updater->writeCustomerDataExt(reinterpret_cast<const uint8_t *>(data), data_size, error);
 }
 HANDLE_EXCEPTIONS_NO_RETURN(device)
@@ -302,7 +377,7 @@ HANDLE_EXCEPTIONS_NO_RETURN(device)
 void ob_device_read_customer_data(ob_device *device, void *data, uint32_t *data_size, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(device);
     VALIDATE_NOT_NULL(data);
-    auto updater =  device->device->getComponentT<libobsensor::FirmwareUpdater>(libobsensor::OB_DEV_COMPONENT_FIRMWARE_UPDATER, true);
+    auto updater = device->device->getComponentT<libobsensor::FirmwareUpdater>(libobsensor::OB_DEV_COMPONENT_FIRMWARE_UPDATER, true);
     updater->readCustomerDataExt(reinterpret_cast<uint8_t *>(data), data_size, error);
 }
 HANDLE_EXCEPTIONS_NO_RETURN(device)
@@ -536,6 +611,26 @@ ob_device_type ob_device_info_get_device_type(const ob_device_info *info, ob_err
     return static_cast<ob_device_type>(info->info->type_);
 }
 HANDLE_EXCEPTIONS_AND_RETURN(OB_DEVICE_TYPE_UNKNOWN, info)
+
+const char *ob_device_info_get_subnet_mask(const ob_device_info *info, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(info);
+    auto netDeviceInfo = std::static_pointer_cast<const libobsensor::NetDeviceInfo>(info->info);
+    if(!netDeviceInfo) {
+        throw libobsensor::invalid_value_exception("Not a network device");
+    }
+    return netDeviceInfo->subnetMask_.c_str();
+}
+HANDLE_EXCEPTIONS_AND_RETURN(nullptr, info)
+
+const char *ob_device_info_get_gateway(const ob_device_info *info, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(info);
+    auto netDeviceInfo = std::static_pointer_cast<const libobsensor::NetDeviceInfo>(info->info);
+    if(!netDeviceInfo) {
+        throw libobsensor::invalid_value_exception("Not a network device");
+    }
+    return netDeviceInfo->gateway_.c_str();
+}
+HANDLE_EXCEPTIONS_AND_RETURN(nullptr, info)
 
 bool ob_device_is_extension_info_exist(const ob_device *device, const char *info_key, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(device);

@@ -14,7 +14,7 @@ namespace libobsensor {
 
 #define GVCP_VERSION 0x42  // GVCP protocol version number
 #define GVCP_DISCOVERY_FLAGS 0x11
-#define GVCP_FORCEIP_FLAGS 0x01
+#define GVCP_FORCEIP_FLAGS 0x11
 #define GVCP_PORT 3956  // GVCP protocol port number
 #define GVCP_REQUEST_ID 0x0001
 #define GEV_STATUS_SUCCESS 0x0000
@@ -84,16 +84,18 @@ struct gvcp_forceip_ack {
 #pragma pack(pop)
 
 struct GVCPDeviceInfo {
-    std::string netInterfaceName = "unknown";
-    std::string localIp          = "unknown";
-    std::string localMac         = "unknown";
-    std::string mac              = "unknown";
-    std::string ip               = "unknown";
-    std::string mask             = "unknown";
-    std::string gateway          = "unknown";
-    std::string sn               = "unknown";
-    std::string name             = "unknown";
-    uint32_t    pid              = 0;
+    std::string netInterfaceName  = "unknown";
+    std::string localIp           = "unknown";
+    std::string localMac          = "unknown";
+    std::string localGateway      = "unknown";
+    uint8_t     localSubnetLength = 0;
+    std::string mac               = "unknown";
+    std::string ip                = "unknown";
+    std::string mask              = "unknown";
+    std::string gateway           = "unknown";
+    std::string sn                = "unknown";
+    std::string name              = "unknown";
+    uint32_t    pid               = 0;
     // std::string version      = "";
     // std::string manufacturer = "";
 
@@ -107,6 +109,8 @@ struct GVCPSocketInfo {
     std::string mac              = "unknown";
     std::string address          = "unknown";
     std::string netInterfaceName = "unknown";
+    std::string gateway          = "unknown";
+    uint8_t     subnetLength     = 0;
     SOCKET      sock             = 0;
     SOCKET      sockRecv         = 0;
 };
@@ -118,7 +122,7 @@ public:
     ~GVCPClient();
 
     std::vector<GVCPDeviceInfo> queryNetDeviceList();
-    bool                        changeNetDeviceIpConfig(std::string mac, const OBNetIpConfig &config);
+    bool                        changeNetDeviceIpConfig(std::string macAddress, const OBNetIpConfig &config);
 
     static GVCPClient &instance() {
         static GVCPClient instance;
@@ -140,7 +144,7 @@ private:
      */
     int  recvAndParseGVCPResponse(SOCKET sock, const GVCPSocketInfo &socketInfo);
     void sendGVCPDiscovery(GVCPSocketInfo socketInfo);
-    void sendGVCPForceIP(GVCPSocketInfo socketInfo, std::string mac, const OBNetIpConfig &config);
+    bool sendGVCPForceIP(GVCPSocketInfo socketInfo, std::string mac, const OBNetIpConfig &config);
 
 #if defined(__APPLE__)
     const uint8_t *getMACAddress(struct ifaddrs *ifap, const char *interface_name);

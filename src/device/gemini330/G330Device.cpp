@@ -1457,6 +1457,8 @@ void G330NetDevice::fetchDeviceInfo() {
     auto portInfo                     = enumInfo_->getSourcePortInfoList().front();
     auto netPortInfo                  = std::dynamic_pointer_cast<const NetSourcePortInfo>(portInfo);
     deviceInfo->ipAddress_            = netPortInfo->address;
+    deviceInfo->subnetMask_           = netPortInfo->mask;
+    deviceInfo->gateway_              = netPortInfo->gateway;
     deviceInfo_                       = deviceInfo;
     deviceInfo_->name_                = enumInfo_->getName();
     deviceInfo_->fullName_            = "Orbbec " + deviceInfo_->name_;

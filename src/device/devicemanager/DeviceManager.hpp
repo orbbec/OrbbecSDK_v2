@@ -28,6 +28,7 @@ public:
 
     std::shared_ptr<IDevice> createDevice(const std::shared_ptr<const IDeviceEnumInfo> &info) override;
     std::shared_ptr<IDevice> createNetDevice(std::string address, uint16_t port) override;
+    bool                     changeNetDeviceIpConfig(std::string deviceUid, const OBNetIpConfig &config) override;
 
     DeviceEnumInfoList getDeviceInfoList() override;
     void               setDeviceChangedCallback(DeviceChangedCallback callback) override;

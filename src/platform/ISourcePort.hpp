@@ -40,7 +40,8 @@ struct SourcePortInfo {
 
 struct NetSourcePortInfo : public SourcePortInfo {
     NetSourcePortInfo(SourcePortType portType, std::string netInterfaceName, std::string localMac, std::string localAddress, std::string address, uint16_t port,
-                      std::string mac, std::string serialNumber, uint32_t pid)
+                      std::string mac, std::string serialNumber, uint32_t pid, std::string mask = "unknown", std::string gateway = "unknown",
+                      uint8_t localSubnetLength = 0, std::string localGateway = "unknown")
         : SourcePortInfo(portType),
           netInterfaceName(netInterfaceName),
           localMac(localMac),
@@ -49,7 +50,11 @@ struct NetSourcePortInfo : public SourcePortInfo {
           port(port),
           mac(mac),
           serialNumber(serialNumber),
-          pid(pid) {}
+          pid(pid),
+          mask(mask),
+          gateway(gateway),
+          localSubnetLength(localSubnetLength),
+          localGateway(localGateway) {}
 
     ~NetSourcePortInfo() noexcept override = default;
 
@@ -71,6 +76,10 @@ struct NetSourcePortInfo : public SourcePortInfo {
     std::string mac;
     std::string serialNumber;
     uint32_t    pid;
+    std::string mask;
+    std::string gateway;
+    uint8_t     localSubnetLength;
+    std::string localGateway;
 };
 
 struct ShmStreamPortInfo : public SourcePortInfo {  // shared memory stream port

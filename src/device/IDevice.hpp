@@ -33,6 +33,8 @@ struct DeviceInfo {
 struct NetDeviceInfo : public DeviceInfo {
     std::string ipAddress_;
     std::string localMac_;
+    std::string subnetMask_;
+    std::string gateway_;
 };
 
 typedef std::function<void(OBFwUpdateState state, const char *message, uint8_t percent)> DeviceFwUpdateCallback;

@@ -583,11 +583,13 @@ void FemtoMegaNetDevice::init() {
 }
 
 void FemtoMegaNetDevice::fetchDeviceInfo() {
-    auto portInfo          = enumInfo_->getSourcePortInfoList().front();
-    auto netPortInfo       = std::dynamic_pointer_cast<const NetSourcePortInfo>(portInfo);
-    auto deviceInfo        = std::make_shared<NetDeviceInfo>();
-    deviceInfo->ipAddress_ = netPortInfo->address;
-    deviceInfo_            = deviceInfo;
+    auto portInfo           = enumInfo_->getSourcePortInfoList().front();
+    auto netPortInfo        = std::dynamic_pointer_cast<const NetSourcePortInfo>(portInfo);
+    auto deviceInfo         = std::make_shared<NetDeviceInfo>();
+    deviceInfo->ipAddress_  = netPortInfo->address;
+    deviceInfo->subnetMask_ = netPortInfo->mask;
+    deviceInfo->gateway_    = netPortInfo->gateway;
+    deviceInfo_             = deviceInfo;
 
     deviceInfo_->name_           = enumInfo_->getName();
     deviceInfo_->pid_            = enumInfo_->getPid();

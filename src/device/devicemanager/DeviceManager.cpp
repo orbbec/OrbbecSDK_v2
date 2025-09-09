@@ -12,6 +12,7 @@
 
 #if defined(BUILD_NET_PAL)
 #include "NetDeviceEnumerator.hpp"
+#include "ethernet/EthernetPal.hpp"
 #endif
 
 namespace libobsensor {
@@ -95,8 +96,8 @@ std::shared_ptr<IDevice> DeviceManager::createNetDevice(std::string address, uin
     for(auto &info: deviceInfoList) {
         if(info->getConnectionType() == "Ethernet") {
             auto netPortInfo = std::dynamic_pointer_cast<const NetSourcePortInfo>(info->getSourcePortInfoList().front());
-            LOG_INFO("\t- Name: {0}, PID: 0x{1:04x}, SN/ID: {2}, Connection: {3}, MAC:{4}, ip:{5}", info->getName(), info->getPid(),
-            info->getDeviceSn(), info->getConnectionType(), netPortInfo->mac, netPortInfo->address);
+            LOG_INFO("\t- Name: {0}, PID: 0x{1:04x}, SN/ID: {2}, Connection: {3}, MAC:{4}, ip:{5}", info->getName(), info->getPid(), info->getDeviceSn(),
+                     info->getConnectionType(), netPortInfo->mac, netPortInfo->address);
             if(netPortInfo->address == address && netPortInfo->port == port) {
                 return createDevice(info);
             }
@@ -108,7 +109,7 @@ std::shared_ptr<IDevice> DeviceManager::createNetDevice(std::string address, uin
         throw libobsensor::invalid_value_exception("Failed to query Net Device, address=" + address + ", port=" + std::to_string(port));
     }
     isCustomConnectedDevice_ = true;
-    auto device = createDevice(deviceInfo);
+    auto device              = createDevice(deviceInfo);
     isCustomConnectedDevice_ = false;
     {
         std::unique_lock<std::mutex> lock(customConnectedDevicesMutex_);
@@ -170,6 +171,14 @@ std::shared_ptr<IDevice> DeviceManager::createDevice(const std::shared_ptr<const
     return device;
 }
 
+bool DeviceManager::changeNetDeviceIpConfig(std::string deviceUid, const OBNetIpConfig &config) {
+#if defined(BUILD_NET_PAL)
+    return EthernetPal::changeNetDeviceIpConfig(deviceUid, config);
+#else
+    return false;
+#endif
+}
+
 DeviceEnumInfoList DeviceManager::getDeviceInfoList() {
     DeviceEnumInfoList deviceInfoList;
     for(auto &enumerator_: deviceEnumerators_) {
@@ -203,11 +212,11 @@ DeviceEnumInfoList DeviceManager::getDeviceInfoList() {
 }
 
 void DeviceManager::setDeviceChangedCallback(DeviceChangedCallback callback) {
-    if (!callback) {
+    if(!callback) {
         LOG_WARN("Device changed callback is nullptr, ignore it!");
         return;
     }
- 
+
     std::unique_lock<std::mutex> lock(callbackMutex_);
     devChangedCallbacks_.emplace_back(callback);
     LOG_DEBUG("Add device changed callback, callback index = {}", devChangedCallbacks_.size() - 1);
@@ -233,7 +242,7 @@ void DeviceManager::onDeviceChanged(const DeviceEnumInfoList &removed, const Dev
     printDeviceList("Current device(s) list", deviceInfoList);
 
     std::unique_lock<std::mutex> lock(callbackMutex_);
-    for (auto &callback : devChangedCallbacks_) {
+    for(auto &callback: devChangedCallbacks_) {
         callback(removed, added);
     }
 }

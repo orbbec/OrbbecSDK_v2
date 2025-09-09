@@ -50,6 +50,14 @@ void ob_enable_net_device_enumeration(ob_context *context, bool enable, ob_error
 }
 HANDLE_EXCEPTIONS_NO_RETURN(context, enable)
 
+bool ob_change_net_device_ip_config(const char *deviceUid, ob_net_ip_config config, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(deviceUid);
+    auto ctx    = libobsensor::Context::getInstance();
+    auto devMgr = ctx->getDeviceManager();
+    return devMgr->changeNetDeviceIpConfig(deviceUid, config);
+}
+HANDLE_EXCEPTIONS_AND_RETURN(false, deviceUid)
+
 ob_device *ob_create_net_device(ob_context *context, const char *address, uint16_t port, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(context);
     auto deviceMgr  = context->context->getDeviceManager();
