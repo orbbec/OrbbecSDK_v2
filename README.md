@@ -152,8 +152,6 @@ To enhance performance and accommodate the diverse needs of our customers, the O
 
 We have made every effort to maintain backward compatibility with our APIs. However, in pursuit of enhanced performance and an improved user experience, we have made necessary updates. Some interfaces have been removed or altered due to infrequent use or design imperfections. These changes are intended to be minimally disruptive and should not interfere with the standard functionality of the SDK.
 
-For a detailed list of features not available in the current version, please refer to our documentation: [features_not_available_at_v2.x.x](docs/api/features_not_available_at_v2.x.x.md).
-
 Additionally, a comprehensive overview of the API changes from Orbbec SDK v1.x to v2.x.x can be found here: [api_changes_at_v2.x.x](docs/api/api_changes_at_v2.x.x.md).
 
 If you prefer to continue with Orbbec SDK v1.x, you can still access the pre-compiled binaries on our [Orbbec SDK](https://github.com/orbbec/OrbbecSDK) repository. Nonetheless, we encourage you to consider transitioning to Orbbec SDK v2.x. This move will allow you to take advantage of  improved and new features and ensure ongoing support. Our dedication to v2.x is part of a broader strategy aimed at delivering robust long-term support, fostering an open-source community, and driving innovation.
