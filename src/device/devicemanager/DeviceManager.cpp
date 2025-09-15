@@ -171,9 +171,9 @@ std::shared_ptr<IDevice> DeviceManager::createDevice(const std::shared_ptr<const
     return device;
 }
 
-bool DeviceManager::changeNetDeviceIpConfig(std::string deviceUid, const OBNetIpConfig &config) {
+bool DeviceManager::forceIpConfig(std::string deviceUid, const OBNetIpConfig &config) {
 #if defined(BUILD_NET_PAL)
-    return EthernetPal::changeNetDeviceIpConfig(deviceUid, config);
+    return EthernetPal::forceIpConfig(deviceUid, config);
 #else
     return false;
 #endif

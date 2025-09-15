@@ -41,7 +41,7 @@ public:
     SourcePortInfoList              querySourcePortInfos() override;
     std::shared_ptr<IDeviceWatcher> createDeviceWatcher() const override;
 
-    static bool changeNetDeviceIpConfig(std::string macAddress, const OBNetIpConfig &config);
+    static bool forceIpConfig(std::string macAddress, const OBNetIpConfig &config);
 
 private:
     std::vector<GVCPDeviceInfo> netDeviceInfoList_;

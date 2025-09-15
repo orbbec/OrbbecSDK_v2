@@ -31,7 +31,7 @@ The Context class serves as the entry point to the SDK. It provides functionalit
 3. Change the selected device IP configuration and print the result of the operation.
 
     ```cpp
-    res = context.changeNetDeviceIpConfig(deviceList->getUid(deviceNumber), config);
+    res = context.forceIp(deviceList->getUid(deviceNumber), config);
     if(res) {
         std::cout << "The new IP configuration has been successfully applied to the device." << std::endl;
     }

@@ -148,7 +148,7 @@ std::shared_ptr<IPal> createNetPal() {
     return std::make_shared<EthernetPal>();
 }
 
-bool EthernetPal::changeNetDeviceIpConfig(std::string macAddress, const OBNetIpConfig &config) {
-    return GVCPClient::instance().changeNetDeviceIpConfig(macAddress, config);
+bool EthernetPal::forceIpConfig(std::string macAddress, const OBNetIpConfig &config) {
+    return GVCPClient::instance().forceIpConfig(macAddress, config);
 }
 }  // namespace libobsensor

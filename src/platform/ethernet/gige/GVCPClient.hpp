@@ -122,7 +122,7 @@ public:
     ~GVCPClient();
 
     std::vector<GVCPDeviceInfo> queryNetDeviceList();
-    bool                        changeNetDeviceIpConfig(std::string macAddress, const OBNetIpConfig &config);
+    bool                        forceIpConfig(std::string macAddress, const OBNetIpConfig &config);
 
     static GVCPClient &instance() {
         static GVCPClient instance;

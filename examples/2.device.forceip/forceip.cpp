@@ -153,7 +153,7 @@ int main(void) try {
         OBNetIpConfig config = getIPConfig();
 
         // Change device IP configuration
-        res = context.changeNetDeviceIpConfig(deviceList->getUid(selectedIndex), config);
+        res = context.forceIp(deviceList->getUid(selectedIndex), config);
         if(res) {
             std::cout << "The new IP configuration has been successfully applied to the device." << std::endl;
         }

@@ -122,7 +122,7 @@ std::vector<GVCPDeviceInfo> GVCPClient::queryNetDeviceList() {
     return devInfoList_;
 }
 
-bool GVCPClient::changeNetDeviceIpConfig(std::string macAddress, const OBNetIpConfig &config) {
+bool GVCPClient::forceIpConfig(std::string macAddress, const OBNetIpConfig &config) {
     std::lock_guard<std::mutex> lck(queryMtx_);
 
     std::vector<std::future<bool>> futures;
