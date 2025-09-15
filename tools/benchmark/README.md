@@ -3,12 +3,12 @@
 This tool is used to measure the performance of OrbbecSDK_v2. It can be used to measure the camera’s CPU usage, memory consumption, camera latency, and more. The benchmark tool is cross-platform and supports Windows, Linux, ARM64, and MacOS.
 
 **Note:**
-- This tool is designed for testing the **Gemini 330** series cameras. If you are using other camera, it may cause some issues (e.g., non-Gemini 330 series do not support hardware noiseremoval). You can modify the code in this project according to your needs.
-- The benchmark tool includes two methods: `enableSwNoiseRemoveFilter` and `enableHwNoiseRemoveFilter`. For Gemini 330 series, the OrbbecSDK internally enables a software filter for noise removal by default. You can call `enableSwNoiseRemoveFilter` to enable or disable software noise removal. If you're using the latest firmware (1.4.1 firmware or later), hardware noise removal is supported, yout can enable or disable the hardware noise removal filter by calling `enableHwNoiseRemoveFilter`. Disabling the software filter and enabling hardware noise removal can improve the performance of the camera.
+- This tool is designed for testing the **Gemini 330** series cameras. If you are using other camera, it may cause some issues (e.g., non-Gemini 330 series do not support hardware noise removal). You can modify the code in this project according to your needs.
+- The benchmark tool includes two methods: `enableSwNoiseRemoveFilter` and `enableHwNoiseRemoveFilter`. For Gemini 330 series, the Orbbec SDK v2 internally enables a software filter for noise removal by default. You can call `enableSwNoiseRemoveFilter` to enable or disable software noise removal. If you're using the latest firmware (1.4.1 firmware or later), hardware noise removal is supported, you can enable or disable the hardware noise removal filter by calling `enableHwNoiseRemoveFilter`. Disabling the software filter and enabling hardware noise removal can improve the performance of the camera.
 
 
 ## Usage
-First, download the packaged version from the [Release page](https://github.com/orbbec/OrbbecSDK_v2/releases) of OrbbecSDKv2. In the bin directory of each platform, you will find the packaged benchmark executable: on Windows, the file is named ob_benchmark.exe, while on other platforms it is ob_benchmark.
+First, download the packaged version from the [Release page](https://github.com/orbbec/OrbbecSDK_v2/releases) of Orbbec SDK v2. In the bin directory of each platform, you will find the packaged benchmark executable: on Windows, the file is named ob_benchmark.exe, while on other platforms it is ob_benchmark.
 For example, in version v2.4.11, the SDK download link is as follows:
 
 ![summary](image/sdk_zip.png)
