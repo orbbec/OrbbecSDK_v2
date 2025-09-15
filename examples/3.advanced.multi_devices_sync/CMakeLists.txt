@@ -4,10 +4,17 @@
 cmake_minimum_required(VERSION 3.5)
 project(ob_multi_devices_sync)
 
-add_executable(${PROJECT_NAME} ob_multi_devices_sync.cpp utils/cJSON.c)
+file(GLOB_RECURSE SOURCE_FILES *.cpp)
+file(GLOB_RECURSE HEADER_FILES *.hpp)
+
+add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${HEADER_FILES} utils/cJSON.c)
+
+#add_executable(${PROJECT_NAME} ob_multi_devices_sync.cpp PipelineHolder.cpp utils/cJSON.c)
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 11)
-target_link_libraries(${PROJECT_NAME} ob::OrbbecSDK ob::examples::utils)
+
+find_package(Threads REQUIRED)
+target_link_libraries(${PROJECT_NAME} ob::OrbbecSDK ob::examples::utils Threads::Threads)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "examples")
 if(MSVC)

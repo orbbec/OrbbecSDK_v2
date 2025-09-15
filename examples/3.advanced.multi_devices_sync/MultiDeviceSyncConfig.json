@@ -1,6 +1,8 @@
 {
     "version": "1.0.0",
     "configTime": "2023/01/01",
+	"timestampPairingEnable": true,
+	"timestampPairingRange": 33,
     "devices": [
         {
             "sn": "CP2194200060",

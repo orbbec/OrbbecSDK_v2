@@ -2,7 +2,8 @@
 // Licensed under the MIT License.
 
 #include <libobsensor/ObSensor.hpp>
-
+#include "PipelineHolder.hpp"
+#include "FramePairingManager.hpp"
 #include "utils.hpp"
 #include "utils_opencv.hpp"
 #include "utils/cJSON.h"
@@ -23,28 +24,12 @@
 #define CONFIG_FILE "./MultiDeviceSyncConfig.json"
 #define KEY_ESC 27
 
-static bool quitStreamPreview = false;
+static bool     quitStreamPreview      = false;
 
 typedef struct DeviceConfigInfo_t {
     std::string             deviceSN;
     OBMultiDeviceSyncConfig syncConfig;
 } DeviceConfigInfo;
-
-typedef struct PipelineHolder_t {
-    std::shared_ptr<ob::Pipeline> pipeline;
-    OBSensorType                  sensorType;
-    int                           deviceIndex;
-    std::string                   deviceSN;
-} PipelineHolder;
-
-std::ostream &operator<<(std::ostream &os, const PipelineHolder &holder);
-std::ostream &operator<<(std::ostream &os, std::shared_ptr<PipelineHolder> holder) {
-    return os << *holder;
-}
-
-std::mutex                                    frameMutex;
-std::map<uint8_t, std::shared_ptr<ob::Frame>> colorFrames;
-std::map<uint8_t, std::shared_ptr<ob::Frame>> depthFrames;
 
 std::vector<std::shared_ptr<ob::Device>>       streamDevList;
 std::vector<std::shared_ptr<ob::Device>>       configDevList;
@@ -59,16 +44,10 @@ bool loadConfigFile();
 int  configMultiDeviceSync();
 int  testMultiDeviceSync();
 
-void startStream(std::shared_ptr<PipelineHolder> pipelineHolder);
-void stopStream(std::shared_ptr<PipelineHolder> pipelineHolder);
-
-void handleColorStream(uint8_t devIndex, std::shared_ptr<ob::Frame> frame);
-void handleDepthStream(uint8_t devIndex, std::shared_ptr<ob::Frame> frame);
 
 std::string           OBSyncModeToString(const OBMultiDeviceSyncMode syncMode);
 OBMultiDeviceSyncMode stringToOBSyncMode(const std::string &modeString);
 
-OBFrameType mapFrameType(OBSensorType sensorType);
 std::string readFileContent(const char *filePath);
 
 int  strcmp_nocase(const char *str0, const char *str1);
@@ -191,7 +170,7 @@ void startDeviceStreams(const std::vector<std::shared_ptr<ob::Device>> &devices,
         for(auto sensorType: sensorTypes) {
             auto holder = createPipelineHolder(dev, sensorType, startIndex);
             pipelineHolderList.push_back(holder);
-            startStream(holder);
+            holder->startStream();
         }
         startIndex++;
     }
@@ -273,6 +252,9 @@ int testMultiDeviceSync() {
         // Start the multi-device time synchronization function
         context.enableDeviceClockSync(60000);  // update and sync every minitor
 
+        auto framePairingManager = std::make_shared<FramePairingManager>();
+        framePairingManager->setPipelineHolderList(pipelineHolderList);
+
         // Create a window for rendering and set the resolution of the window
         ob_smpl::CVWindow win("MultiDeviceSyncViewer", 1600, 900, ob_smpl::ARRANGE_GRID);
 
@@ -287,15 +269,12 @@ int testMultiDeviceSync() {
             if(quitStreamPreview) {
                 break;
             }
-            std::vector<std::pair<std::shared_ptr<ob::Frame>, std::shared_ptr<ob::Frame>>> framePairs;
-            {
-                std::lock_guard<std::mutex> lock(frameMutex);
-                for(uint8_t i = 0; i < static_cast<uint8_t>(std::min(MAX_DEVICE_COUNT, (int)depthFrames.size())); i++) {
-                    if(depthFrames[i] != nullptr && colorFrames[i] != nullptr) {
-                        framePairs.emplace_back(depthFrames[i], colorFrames[i]);
-                    }
-                }
+
+            std::vector<std::pair<std::shared_ptr<ob::Frame>, std::shared_ptr<ob::Frame>>> framePairs = framePairingManager->getFramePairs();
+            if(framePairs.size() == 0) {
+                continue;
             }
+
             auto groudID = 0;
             for(const auto &pair: framePairs) {
                 groudID++;
@@ -303,13 +282,13 @@ int testMultiDeviceSync() {
             }
         }
 
+        framePairingManager->release();
+
         // Stop streams and clear resources
         for(auto &holder: pipelineHolderList) {
-            stopStream(holder);
+            holder->stopStream();
         }
         pipelineHolderList.clear();
-        depthFrames.clear();
-        colorFrames.clear();
 
         // Release resource
         streamDevList.clear();
@@ -327,93 +306,9 @@ int testMultiDeviceSync() {
 }
 
 std::shared_ptr<PipelineHolder> createPipelineHolder(std::shared_ptr<ob::Device> device, OBSensorType sensorType, int deviceIndex) {
-    auto holder         = std::make_shared<PipelineHolder>();
-    holder->pipeline    = std::make_shared<ob::Pipeline>(device);
-    holder->sensorType  = sensorType;
-    holder->deviceIndex = deviceIndex;
-    holder->deviceSN    = device->getDeviceInfo()->serialNumber();
+    auto pipeline    = std::make_shared<ob::Pipeline>(device);
+    auto holder         = std::make_shared<PipelineHolder>(pipeline, sensorType, device->getDeviceInfo()->serialNumber(), deviceIndex);
     return holder;
-}
-
-void processFrame(std::shared_ptr<ob::FrameSet> frameSet, OBFrameType frameType, int deviceIndex) {
-    if(!frameSet) {
-        std::cerr << "Invalid frameSet received." << std::endl;
-        return;
-    }
-
-    if(quitStreamPreview) {
-        // std::cerr << "press ESC quit Stream ProcessFrame." << std::endl;
-        return;
-    }
-
-    auto frame = frameSet->getFrame(frameType);
-    if(frame) {
-        if(frameType == OB_FRAME_COLOR) {
-            handleColorStream(static_cast<uint8_t>(deviceIndex), frame);
-        }
-        else if(frameType == OB_FRAME_DEPTH) {
-            handleDepthStream(static_cast<uint8_t>(deviceIndex), frame);
-        }
-    }
-}
-
-void handleStreamError(const ob::Error &e) {
-    // Separate error handling logic
-    std::cerr << "Function: " << e.getName() << "\nArgs: " << e.getArgs() << "\nMessage: " << e.getMessage() << "\nType: " << e.getExceptionType() << std::endl;
-}
-
-void startStream(std::shared_ptr<PipelineHolder> holder) {
-    std::cout << "startStream. " << holder << std::endl;
-    try {
-        auto pipeline      = holder->pipeline;
-        auto profileList   = pipeline->getStreamProfileList(holder->sensorType);
-        auto streamProfile = profileList->getProfile(OB_PROFILE_DEFAULT)->as<ob::VideoStreamProfile>();
-        auto frameType     = mapFrameType(holder->sensorType);
-        auto deviceIndex   = holder->deviceIndex;
-
-        std::shared_ptr<ob::Config> config = std::make_shared<ob::Config>();
-        config->enableStream(streamProfile);
-
-        pipeline->start(config, [frameType, deviceIndex](std::shared_ptr<ob::FrameSet> frameSet) { processFrame(frameSet, frameType, deviceIndex); });
-    }
-    catch(ob::Error &e) {
-        std::cerr << "starting stream failed: " << holder << std::endl;
-        handleStreamError(e);
-    }
-}
-
-void stopStream(std::shared_ptr<PipelineHolder> holder) {
-    try {
-        std::cout << "stopStream " << holder << std::endl;
-        holder->pipeline->stop();
-    }
-    catch(ob::Error &e) {
-        std::cerr << "stopping stream failed: " << holder << std::endl;
-        std::cerr << "function:" << e.getName() << "\nargs:" << e.getArgs() << "\nmessage:" << e.getMessage() << "\ntype:" << e.getExceptionType() << std::endl;
-    }
-}
-
-void handleStream(uint8_t devIndex, std::shared_ptr<ob::Frame> frame, const char *frameType) {
-    std::lock_guard<std::mutex> lock(frameMutex);
-    std::cout << "Device#" << static_cast<int>(devIndex) << ", " << frameType << " frame(us) "
-              << ", frame timestamp=" << frame->timeStampUs() << ","
-              << "global timestamp = " << frame->globalTimeStampUs() << ","
-              << "system timestamp = " << frame->systemTimeStampUs() << std::endl;
-
-    if(strcmp(frameType, "color") == 0) {
-        colorFrames[devIndex] = frame;
-    }
-    else if(strcmp(frameType, "depth") == 0) {
-        depthFrames[devIndex] = frame;
-    }
-}
-
-void handleColorStream(uint8_t devIndex, std::shared_ptr<ob::Frame> frame) {
-    handleStream(devIndex, frame, "color");
-}
-
-void handleDepthStream(uint8_t devIndex, std::shared_ptr<ob::Frame> frame) {
-    handleStream(devIndex, frame, "depth");
 }
 
 std::string readFileContent(const char *filePath) {
@@ -551,40 +446,4 @@ int strcmp_nocase(const char *str0, const char *str1) {
 #else
     return strcasecmp(str0, str1);
 #endif
-}
-
-OBFrameType mapFrameType(OBSensorType sensorType) {
-    switch(sensorType) {
-    case OB_SENSOR_COLOR:
-        return OB_FRAME_COLOR;
-    case OB_SENSOR_IR:
-        return OB_FRAME_IR;
-    case OB_SENSOR_IR_LEFT:
-        return OB_FRAME_IR_LEFT;
-    case OB_SENSOR_IR_RIGHT:
-        return OB_FRAME_IR_RIGHT;
-    case OB_SENSOR_DEPTH:
-        return OB_FRAME_DEPTH;
-    default:
-        return OBFrameType::OB_FRAME_UNKNOWN;
-    }
-}
-
-std::ostream &operator<<(std::ostream &os, const PipelineHolder &holder) {
-    if(os.good()) {
-        os << "deviceSN: " << holder.deviceSN << ", sensorType: ";
-        switch(holder.sensorType) {
-        case OB_SENSOR_COLOR:
-            os << "OB_SENSOR_COLOR";
-            break;
-        case OB_SENSOR_DEPTH:
-            os << "OB_SENSOR_DEPTH";
-            break;
-        default:
-            os << static_cast<int>(holder.sensorType);
-            break;
-        }
-        os << ", deviceIndex: " << holder.deviceIndex;
-    }
-    return os;
 }
