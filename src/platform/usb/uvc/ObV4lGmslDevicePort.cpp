@@ -1263,17 +1263,40 @@ std::shared_ptr<const SourcePortInfo> ObV4lGmslDevicePort::getSourcePortInfo() c
 #define BASE_WAIT_RESPONSE_TIME_MS 1
 uint32_t ObV4lGmslDevicePort::sendAndReceive(const uint8_t *send, uint32_t sendLen, uint8_t *recv, uint32_t exceptedRecvLen) {
     std::unique_lock<std::mutex> lk(mMultiThreadI2CMutex);
-    if(!sendData(send, sendLen)) {
+    constexpr auto               opcode_finish_read_raw_data = 19;
+    auto                         header                      = reinterpret_cast<const ProtocolHeader *>(send);
+
+    if((sendLen >= sizeof(ProtocolHeader)) && (header->opcode == opcode_finish_read_raw_data)) {
+        // Patch: for OPCODE_FINISH_READ_RAW_DATA (19), set max retry count to 3
+        // First two attempts use 'false' to avoid throwing exceptions
+        for(uint16_t i = 0; i < 2; i++) {
+            if(!sendData(send, sendLen, false)) {
+                LOG_DEBUG("sendAndReceive: send error: retry count: {}", i+1);
+                continue;
+            }
+
+            utils::sleepMs(BASE_WAIT_RESPONSE_TIME_MS);
+            if(!recvData(recv, &exceptedRecvLen, false)) {
+                LOG_DEBUG("sendAndReceive: recv error: retry count: {}", i+1);
+                continue;
+            }
+            return exceptedRecvLen;
+        }
+        // If all previous attempts failed, perform the final attempt
+    }
+
+    // Final attempt for all commands, exceptions may be thrown
+    if(!sendData(send, sendLen, true)) {
         return -1;
     }
     utils::sleepMs(BASE_WAIT_RESPONSE_TIME_MS);
-    if(!recvData(recv, &exceptedRecvLen)) {
+    if(!recvData(recv, &exceptedRecvLen, true)) {
         return -1;
     }
     return exceptedRecvLen;
 }
 
-bool ObV4lGmslDevicePort::sendData(const uint8_t *data, const uint32_t dataLen) {
+bool ObV4lGmslDevicePort::sendData(const uint8_t *data, const uint32_t dataLen, bool throwIfError) {
     VALIDATE_NOT_NULL(data);
 
     uint16_t opcode, nId = 0;
@@ -1359,7 +1382,7 @@ bool ObV4lGmslDevicePort::sendData(const uint8_t *data, const uint32_t dataLen) 
 
             // alignDataLen = OB_GMSL_FW_I2C_DATA_LEN_CUR_MAX;  //252; //172;  GMSL I2C read 252 bytes/per
             ctrl = G2R_CAMERA_CID_SET_DATA;
-            ret  = setXuExt(ctrl, (uint8_t *)(&send_i2c_pack_msg), alignI2CDataLen);
+            ret  = setXuExt(ctrl, (uint8_t *)(&send_i2c_pack_msg), alignI2CDataLen, throwIfError);
             // LOG_DEBUG("-Leave ObV4lGmslDevicePort::sendData ret:{} ", ret);
             return ret;
             // return setXuExt(ctrl, data, alignDataLen);
@@ -1370,8 +1393,7 @@ bool ObV4lGmslDevicePort::sendData(const uint8_t *data, const uint32_t dataLen) 
     return ret;
 }
 
-bool ObV4lGmslDevicePort::recvData(uint8_t *data, uint32_t *dataLen) {
-
+bool ObV4lGmslDevicePort::recvData(uint8_t *data, uint32_t *dataLen, bool throwIfError) {
     // LOG_DEBUG("-Entry recvData-dataLen:{0}", *dataLen);
     uint32_t ctrl = 0;
 
@@ -1417,7 +1439,7 @@ bool ObV4lGmslDevicePort::recvData(uint8_t *data, uint32_t *dataLen) {
         ctrl = G2R_CAMERA_CID_GET_DATA;
     }
 
-    return getXuExt(ctrl, data, dataLen);
+    return getXuExt(ctrl, data, dataLen, throwIfError);
 }
 
 bool ObV4lGmslDevicePort::setPu(uint32_t propertyId, int32_t value) {
@@ -1544,8 +1566,16 @@ bool ObV4lGmslDevicePort::setPuRaw(uint32_t propertyId, int32_t value) {
     return true;
 }
 
-bool ObV4lGmslDevicePort::setXuExt(uint32_t ctrl, const uint8_t *data, uint32_t len) {
-    VALIDATE_NOT_NULL(data);
+bool ObV4lGmslDevicePort::setXuExt(uint32_t ctrl, const uint8_t *data, uint32_t len, bool throwIfError) {
+    if(throwIfError) {
+        VALIDATE_NOT_NULL(data);
+    }
+    else {
+        if(data == nullptr) {
+            return false;
+        }
+    }
+
     (void)len;
     auto fd  = deviceHandles_.front()->fd;
     auto cid = ctrl;  // CIDFromOBPropertyID(ctrl);
@@ -1594,10 +1624,14 @@ bool ObV4lGmslDevicePort::setXuExt(uint32_t ctrl, const uint8_t *data, uint32_t 
         int retVal = xioctlGmsl(fd, VIDIOC_S_EXT_CTRLS, &ctrls_block);
         if(retVal < 0) {
             LOG_DEBUG("--->>> set_xu---NG---");
-            if(errno == EIO || errno == EAGAIN)  // TODO: Log?
+            if(errno == EIO || errno == EAGAIN) {
                 return false;
+            }
 
-            throw io_exception("set ctrl:" + std::to_string(ctrl) + "xioctlGmsl(VIDIOC_S_EXT_CTRLS) failed! err:" + strerror(errno));
+            if(throwIfError) {
+                throw io_exception("set ctrl:" + std::to_string(ctrl) + "xioctlGmsl(VIDIOC_S_EXT_CTRLS) failed! err:" + strerror(errno));
+            }
+            return false;
         }
     }
 
@@ -1605,12 +1639,18 @@ bool ObV4lGmslDevicePort::setXuExt(uint32_t ctrl, const uint8_t *data, uint32_t 
     return true;
 }
 
-bool ObV4lGmslDevicePort::getXuExt(uint32_t ctrl, uint8_t *data, uint32_t *len) {
-
+bool ObV4lGmslDevicePort::getXuExt(uint32_t ctrl, uint8_t *data, uint32_t *len, bool throwIfError) {
     // LOG_DEBUG("-Entry ObV4lGmslDevicePort::getXuExt-ctrl:{}, *len:{} ", ctrl, *len);
+    if(throwIfError) {
+        VALIDATE_NOT_NULL(data);
+        VALIDATE_NOT_NULL(len);
+    }
+    else {
+        if(data == nullptr || len == 0) {
+            return false;
+        }
+    }
 
-    VALIDATE_NOT_NULL(data);
-    VALIDATE_NOT_NULL(len);
     auto                    fd  = deviceHandles_.front()->fd;
     auto                    cid = ctrl;  // CIDFromOBPropertyID(ctrl);
     struct v4l2_ext_control control {
@@ -1713,8 +1753,11 @@ bool ObV4lGmslDevicePort::getXuExt(uint32_t ctrl, uint8_t *data, uint32_t *len) 
     if(errno == EIO || errno == EAGAIN) {
         return false;
     }
-    throw io_exception("set ctrl:" + std::to_string(ctrl) + "xioctlGmsl(VIDIOC_G_EXT_CTRLS) failed! err:" + strerror(errno)
-                       + " tries:" + std::to_string(tries));
+    if(throwIfError) {
+        throw io_exception("set ctrl:" + std::to_string(ctrl) + "xioctlGmsl(VIDIOC_G_EXT_CTRLS) failed! err:" + strerror(errno)
+                           + " tries:" + std::to_string(tries));
+    }
+    return false;
 }
 
 // reset firmware cmd to driver. driver reset gmsl9295/9296 & firmware.

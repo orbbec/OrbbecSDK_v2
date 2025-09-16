@@ -148,10 +148,10 @@ private:
 
     bool setPuRaw(uint32_t propertyId, int32_t value);
 
-    bool sendData(const uint8_t *data, uint32_t dataLen);
-    bool recvData(uint8_t *data, uint32_t *dataLen);
-    bool getXuExt(uint32_t ctrl, uint8_t *data, uint32_t *len);
-    bool setXuExt(uint32_t ctrl, const uint8_t *data, uint32_t len);
+    bool sendData(const uint8_t *data, uint32_t dataLen, bool throwIfError = true);
+    bool recvData(uint8_t *data, uint32_t *dataLen, bool throwIfError = true);
+    bool getXuExt(uint32_t ctrl, uint8_t *data, uint32_t *len, bool throwIfError = true);
+    bool setXuExt(uint32_t ctrl, const uint8_t *data, uint32_t len, bool throwIfError = true);
 
     static void handleSpecialResolution(std::shared_ptr<V4lDeviceHandleGmsl> devHandle, const uint8_t *srcData, uint32_t srcSize,
                                         std::shared_ptr<VideoFrame> videoFrame);
