@@ -209,6 +209,9 @@ void DW2Device::initProperties() {
             propertyServer->registerProperty(OB_PROP_DEPTH_INDUSTRY_MODE_INT, "rw", "rw", vendorPropertyAccessor_);
             auto heartBeatPropertyAccessor = std::make_shared<OpenNIHeartBeatPropertyAccessor>(this);
             propertyServer->registerProperty(OB_PROP_HEARTBEAT_BOOL, "rw", "rw", heartBeatPropertyAccessor);
+            propertyServer->registerProperty(OB_PROP_TEMPERATURE_COMPENSATION_BOOL, "rw", "rw", vendorPropertyAccessor_);
+            auto deviceTempPropertyAccessor = std::make_shared<OpenNITemperatureStructurePropertyAccessor>(this);
+            propertyServer->registerProperty(OB_STRUCT_DEVICE_TEMPERATURE, "r", "r", deviceTempPropertyAccessor);
         }
     }
 }
