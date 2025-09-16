@@ -138,6 +138,8 @@ bool NetDeviceEnumerator::checkDeviceActivity(std::shared_ptr<const IDeviceEnumI
 }
 
 bool NetDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType, std::string devUid) {
+    LOG_DEBUG("NetDeviceEnumerator::onPlatformDeviceChanged: changeType: {}, devUid: {}", static_cast<uint32_t>(changeType), devUid);
+
     utils::unusedVar(changeType);
     utils::unusedVar(devUid);
 
@@ -238,7 +240,7 @@ bool NetDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType
             LOG_DEBUG("  - Name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", item->getName(), item->getPid(), item->getDeviceSn(), info->mac, info->address);
         }
 
-        if(deviceChangedCallback_) {
+        if(deviceChangedCallback_ && (!newRmDevs.empty() || !addDevs.empty())) {
             deviceChangedCallback_(newRmDevs, addDevs);
         }
     }
