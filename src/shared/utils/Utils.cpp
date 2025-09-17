@@ -114,6 +114,11 @@ bool checkIpConfig(const ob_net_ip_config &config) {
     uint32_t mask    = (config.mask[3]) | (config.mask[2] << 8) | (config.mask[1] << 16) | (config.mask[0] << 24);
     uint32_t gateway = (config.gateway[3]) | (config.gateway[2] << 8) | (config.gateway[1] << 16) | (config.gateway[0] << 24);
 
+    if(config.dhcp != 0) {
+        // Skip validation if DHCP is enabled
+        return true;
+    }
+
     // ip
     if(ip == 0x00000000 || ip == 0xFFFFFFFF || ((ip & 0xF0000000) == 0xE0000000) || ((ip & 0xF0000000) == 0xF0000000) || ((ip & 0xFF) == 0x00)
        || ((ip & 0xFF) == 0xFF)) {
