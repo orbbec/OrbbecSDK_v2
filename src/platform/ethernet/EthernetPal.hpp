@@ -16,27 +16,16 @@
 
 namespace libobsensor {
 
-typedef std::vector<std::shared_ptr<NetSourcePortInfo>> NetSourcePortList;
-
-class NetDeviceWatcher : public IDeviceWatcher {
+class EthernetPal : virtual public IPal, virtual public IDeviceWatcher, public std::enable_shared_from_this<EthernetPal> {
 public:
-    virtual ~NetDeviceWatcher() noexcept override;
+    EthernetPal() {}
+    virtual ~EthernetPal() noexcept override;
+
+    // IDeviceWatcher interface methods
     virtual void start(deviceChangedCallback callback) override;
     virtual void stop() override;
 
-private:
-    deviceChangedCallback       callback_;
-    std::thread                 deviceWatchThread_;
-    bool                        stopWatch_ = false;
-    std::vector<GVCPDeviceInfo> netDevInfoList_;
-    std::condition_variable     condVar_;
-};
-
-class EthernetPal : public IPal {
-public:
-    EthernetPal() {}
-    virtual ~EthernetPal() noexcept override = default;
-
+    // IPal interface methods
     std::shared_ptr<ISourcePort>    getSourcePort(std::shared_ptr<const SourcePortInfo>) override;
     SourcePortInfoList              querySourcePortInfos() override;
     std::shared_ptr<IDeviceWatcher> createDeviceWatcher() const override;
@@ -44,12 +33,21 @@ public:
     static bool forceIpConfig(std::string macAddress, const OBNetIpConfig &config);
 
 private:
-    std::vector<GVCPDeviceInfo> netDeviceInfoList_;
-    SourcePortInfoList          sourcePortInfoList_;
+    void updateSourcePortInfoList(const std::vector<GVCPDeviceInfo> &added, const std::vector<GVCPDeviceInfo> &removed);
+
+private:
+    std::mutex         sourcePortInfoMetux_;
+    SourcePortInfoList sourcePortInfoList_;
 
     std::mutex                                                                  sourcePortMapMutex_;
     std::map<std::shared_ptr<const SourcePortInfo>, std::weak_ptr<ISourcePort>> sourcePortMap_;
+
+    // for device watcher
+    deviceChangedCallback       callback_;
+    std::thread                 deviceWatchThread_;
+    bool                        stopWatch_ = false;
+    std::vector<GVCPDeviceInfo> netDevInfoList_;
+    std::condition_variable     condVar_;
 };
 
 }  // namespace libobsensor
-

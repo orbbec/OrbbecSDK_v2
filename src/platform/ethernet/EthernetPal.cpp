@@ -13,13 +13,13 @@ const uint16_t DEFAULT_CMD_PORT                           = 8090;
 const uint16_t DEVICE_WATCHER_POLLING_INTERVAL_MSEC       = 3000;
 const uint16_t DEVICE_WATCHER_POLLING_SHORT_INTERVAL_MSEC = 1000;
 
-NetDeviceWatcher::~NetDeviceWatcher() noexcept {
+EthernetPal::~EthernetPal() noexcept {
     if(!stopWatch_) {
         stop();
     }
 }
 
-void NetDeviceWatcher::start(deviceChangedCallback callback) {
+void EthernetPal::start(deviceChangedCallback callback) {
     callback_          = callback;
     stopWatch_         = false;
     deviceWatchThread_ = std::thread([&]() {
@@ -29,6 +29,8 @@ void NetDeviceWatcher::start(deviceChangedCallback callback) {
             auto list    = GVCPClient::instance().queryNetDeviceList();
             auto added   = utils::subtract_sets(list, netDevInfoList_);
             auto removed = utils::subtract_sets(netDevInfoList_, list);
+            updateSourcePortInfoList(added, removed);
+
             for(auto &&info: removed) {
                 if(!callback_(OB_DEVICE_REMOVED, info.mac)) {
                     // if device is still online, restore it to the list
@@ -58,7 +60,7 @@ void NetDeviceWatcher::start(deviceChangedCallback callback) {
     });
 }
 
-void NetDeviceWatcher::stop() {
+void EthernetPal::stop() {
     stopWatch_ = true;
     condVar_.notify_all();
     if(deviceWatchThread_.joinable()) {
@@ -110,12 +112,8 @@ std::shared_ptr<ISourcePort> EthernetPal::getSourcePort(std::shared_ptr<const So
     return port;
 }
 
-SourcePortInfoList EthernetPal::querySourcePortInfos() {
-    auto infos = GVCPClient::instance().queryNetDeviceList();
-
-    auto added         = utils::subtract_sets(infos, netDeviceInfoList_);
-    auto removed       = utils::subtract_sets(netDeviceInfoList_, infos);
-    netDeviceInfoList_ = infos;
+void EthernetPal::updateSourcePortInfoList(const std::vector<GVCPDeviceInfo> &added, const std::vector<GVCPDeviceInfo> &removed) {
+    std::lock_guard<std::mutex> lock(sourcePortInfoMetux_);
 
     // Only re-query port information for newly online devices
     for(auto &&info: added) {
@@ -137,11 +135,24 @@ SourcePortInfoList EthernetPal::querySourcePortInfos() {
             }
         }
     }
+}
+
+SourcePortInfoList EthernetPal::querySourcePortInfos() {
+    if (stopWatch_) {
+        auto list       = GVCPClient::instance().queryNetDeviceList();
+        auto added      = utils::subtract_sets(list, netDevInfoList_);
+        auto removed    = utils::subtract_sets(netDevInfoList_, list);
+        netDevInfoList_ = list;
+        updateSourcePortInfoList(added, removed);
+    }
+    std::lock_guard<std::mutex> lock(sourcePortInfoMetux_);
     return sourcePortInfoList_;
 }
 
 std::shared_ptr<IDeviceWatcher> EthernetPal::createDeviceWatcher() const {
-    return std::make_shared<NetDeviceWatcher>();
+    auto self_nonconst = std::const_pointer_cast<EthernetPal>(shared_from_this());
+    return std::static_pointer_cast<IDeviceWatcher>(self_nonconst);
+    // return std::make_shared<NetDeviceWatcher>();
 }
 
 std::shared_ptr<IPal> createNetPal() {
