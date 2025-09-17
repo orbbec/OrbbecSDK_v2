@@ -7,6 +7,7 @@
 #include "logger/Logger.hpp"
 #include "context/Context.hpp"
 #include "environment/EnvConfig.hpp"
+#include "shared/utils/Utils.hpp"
 
 #ifdef __cplusplus
 extern "C" {
@@ -52,6 +53,10 @@ HANDLE_EXCEPTIONS_NO_RETURN(context, enable)
 
 bool ob_force_ip_config(const char *deviceUid, ob_net_ip_config config, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(deviceUid);
+    if(!libobsensor::utils::checkIpConfig(config)) {
+        throw libobsensor::invalid_value_exception("Invalid IP configuration");
+        // return false;
+    }
     auto ctx    = libobsensor::Context::getInstance();
     auto devMgr = ctx->getDeviceManager();
     return devMgr->forceIpConfig(deviceUid, config);

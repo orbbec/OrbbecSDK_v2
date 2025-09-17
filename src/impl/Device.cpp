@@ -6,6 +6,7 @@
 #include "ImplTypes.hpp"
 #include "exception/ObException.hpp"
 #include "firmwareupdater/FirmwareUpdater.hpp"
+#include "shared/utils/Utils.hpp"
 
 #include "IDeviceManager.hpp"
 #include "IProperty.hpp"
@@ -336,6 +337,15 @@ HANDLE_EXCEPTIONS_AND_RETURN(ob_bool_property_range(), device, property_id)
 
 void ob_device_set_structured_data(ob_device *device, ob_property_id property_id, const uint8_t *data, uint32_t data_size, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(device);
+    if(property_id == OB_STRUCT_DEVICE_IP_ADDR_CONFIG) {
+        VALIDATE_NOT_NULL(data);
+        VALIDATE_EQUAL(data_size, sizeof(ob_net_ip_config));
+        auto config = reinterpret_cast<const ob_net_ip_config *>(data);
+        if(!libobsensor::utils::checkIpConfig(*config)) {
+            throw libobsensor::invalid_value_exception("Invalid IP configuration");
+            return;
+        }
+    }
     auto                 propServer = device->device->getPropertyServer();
     std::vector<uint8_t> dataVec(data, data + data_size);
     propServer->setStructureData(property_id, dataVec, libobsensor::PROP_ACCESS_USER);
