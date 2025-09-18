@@ -38,15 +38,7 @@ void EthernetPal::start(deviceChangedCallback callback) {
                 }
             }
             for(auto &&info: added) {
-                if(!callback_(OB_DEVICE_ARRIVAL, info.mac)) {
-                    // if device is still offline, remove it form the list
-                    auto it = std::find_if(list.begin(), list.end(), [info](const GVCPDeviceInfo& item) {
-                        return item == info;
-                    });
-                    if(it != list.end()) {
-                        list.erase(it);
-                    }
-                }
+                (void)callback_(OB_DEVICE_ARRIVAL, info.mac);
             }
 
             netDevInfoList_ = list;
@@ -55,7 +47,7 @@ void EthernetPal::start(deviceChangedCallback callback) {
                 // Speed up discovery when no devices are found
                 interval = DEVICE_WATCHER_POLLING_SHORT_INTERVAL_MSEC;
             }
-            condVar_.wait_for(lock, std::chrono::milliseconds(interval), [&]() { return stopWatch_; });
+            condVar_.wait_for(lock, std::chrono::milliseconds(interval), [&]() { return stopWatch_.load(); });
         }
     });
 }
@@ -138,7 +130,8 @@ void EthernetPal::updateSourcePortInfoList(const std::vector<GVCPDeviceInfo> &ad
 }
 
 SourcePortInfoList EthernetPal::querySourcePortInfos() {
-    if (stopWatch_) {
+    if(!deviceWatchThread_.joinable()) {
+        // watcher thread is not runnig
         auto list       = GVCPClient::instance().queryNetDeviceList();
         auto added      = utils::subtract_sets(list, netDevInfoList_);
         auto removed    = utils::subtract_sets(netDevInfoList_, list);

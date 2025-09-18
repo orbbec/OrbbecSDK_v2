@@ -23,6 +23,8 @@ private:
 
     bool               checkDeviceActivity(std::shared_ptr<const IDeviceEnumInfo> dev, std::shared_ptr<const NetSourcePortInfo> info);
     bool               onPlatformDeviceChanged(OBDeviceChangedType changeType, std::string devUid);
+    bool               handleDeviceRemoved(std::string devUid);
+    bool               handleDeviceArrival(std::string devUid);
     DeviceEnumInfoList queryDeviceList();
 
 private:
@@ -34,7 +36,6 @@ private:
 
     std::recursive_mutex deviceInfoListMutex_;
     DeviceEnumInfoList   deviceInfoList_;
-    SourcePortInfoList   sourcePortInfoList_;
 
     std::shared_ptr<IDeviceWatcher>        deviceWatcher_;
     std::shared_ptr<DeviceActivityManager> deviceActivityManager_;

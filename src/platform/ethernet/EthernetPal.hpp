@@ -13,6 +13,8 @@
 
 #include <vector>
 #include <map>
+#include <mutex>
+#include <atomic>
 
 namespace libobsensor {
 
@@ -45,7 +47,7 @@ private:
     // for device watcher
     deviceChangedCallback       callback_;
     std::thread                 deviceWatchThread_;
-    bool                        stopWatch_ = false;
+    std::atomic<bool>           stopWatch_{ false };
     std::vector<GVCPDeviceInfo> netDevInfoList_;
     std::condition_variable     condVar_;
 };

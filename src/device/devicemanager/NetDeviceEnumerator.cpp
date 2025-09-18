@@ -44,9 +44,8 @@ NetDeviceEnumerator::~NetDeviceEnumerator() noexcept {
 }
 
 DeviceEnumInfoList NetDeviceEnumerator::queryDeviceList() {
-    std::unique_lock<std::recursive_mutex> lock(deviceInfoListMutex_);
-    sourcePortInfoList_.clear();
-    auto portInfoList = platform_->queryNetSourcePort();
+    SourcePortInfoList sourcePortInfoList;
+    auto               portInfoList = platform_->queryNetSourcePort();
 
     if(portInfoList.empty()) {
         LOG_DEBUG("No net source port found!");
@@ -56,7 +55,7 @@ DeviceEnumInfoList NetDeviceEnumerator::queryDeviceList() {
     for(const auto &portInfo: portInfoList) {
         auto info = std::dynamic_pointer_cast<const NetSourcePortInfo>(portInfo);
         if(info->pid != 0) {
-            sourcePortInfoList_.push_back(info);
+            sourcePortInfoList.push_back(info);
             continue;
         }
 
@@ -69,17 +68,17 @@ DeviceEnumInfoList NetDeviceEnumerator::queryDeviceList() {
             vendorPropAccessor->getPropertyValue(OB_PROP_DEVICE_PID_INT, &value);
             auto newInfo = std::make_shared<NetSourcePortInfo>(info->portType, info->netInterfaceName, info->localMac, info->localAddress, info->address,
                                                                info->port, info->mac, info->serialNumber, value.intValue);
-            sourcePortInfoList_.push_back(newInfo);
+            sourcePortInfoList.push_back(newInfo);
         })
         CATCH_EXCEPTION_AND_LOG(DEBUG, "Get device pid failed! address:{}, port:{}", info->address, info->port);
     }
 
     LOG_DEBUG("Current net source port list:");
-    for(const auto &item: sourcePortInfoList_) {
+    for(const auto &item: sourcePortInfoList) {
         auto info = std::dynamic_pointer_cast<const NetSourcePortInfo>(item);
         LOG_DEBUG(" - mac:{}, ip:{}, port:{}", info->mac, info->address, info->port);
     }
-    return deviceInfoMatch(sourcePortInfoList_);
+    return deviceInfoMatch(sourcePortInfoList);
 }
 
 DeviceEnumInfoList NetDeviceEnumerator::getDeviceInfoList() {
@@ -138,132 +137,152 @@ bool NetDeviceEnumerator::checkDeviceActivity(std::shared_ptr<const IDeviceEnumI
     }
 }
 
+bool NetDeviceEnumerator::handleDeviceRemoved(std::string devUid) {
+    // remove: handle only the current device
+    DeviceEnumInfoList                     removedDevs;
+    std::shared_ptr<const IDeviceEnumInfo> removedDevice;
+    // get removed device info
+    {
+        std::unique_lock<std::recursive_mutex> lock(deviceInfoListMutex_);
+        for(auto &&item: deviceInfoList_) {
+            if(item->getUid() == devUid) {
+                removedDevice = item;
+            }
+        }
+    }
+    if(removedDevice == nullptr) {
+        LOG_DEBUG("NetDeviceEnumerator::onPlatformDeviceChanged: can't find device from current device info list. devUid: {}", devUid);
+        return true;
+    }
+
+    LOG_DEBUG("Net device list changed!");
+    auto firstPortInfo = removedDevice->getSourcePortInfoList().front();
+    auto info          = std::dynamic_pointer_cast<const NetSourcePortInfo>(firstPortInfo);
+
+    // We assume the device has gone offline and perform extra verification
+    // check the last active of the device
+    if(checkDeviceActivity(removedDevice, info)) {
+        // If the device is active within the allowed elapsed time threshold, consider it online
+        return false;
+    }
+
+    // Continue device check via PID acquisition to confirm online status
+    // TODO: Busy devices may be misjudged as offline due to temporary unresponsiveness
+    if(info->pid == OB_DEVICE_G335LE_PID || info->pid == OB_FEMTO_MEGA_PID || IS_OB_FEMTO_MEGA_I_PID(info->pid) || info->pid == OB_DEVICE_G435LE_PID) {
+        bool disconnected = true;
+        BEGIN_TRY_EXECUTE({
+            auto            sourcePort         = Platform::getInstance()->getNetSourcePort(info);
+            auto            vendorPropAccessor = std::make_shared<VendorPropertyAccessor>(nullptr, sourcePort);
+            OBPropertyValue value;
+            value.intValue = 0;
+            vendorPropAccessor->getPropertyValue(OB_PROP_DEVICE_PID_INT, &value);
+            disconnected = false;
+            LOG_DEBUG("Get device pid success, pid:{}", value.intValue);
+        })
+        CATCH_EXCEPTION_AND_EXECUTE({ LOG_WARN("Get pid failed, ip:{},mac:{},device is disconnect.", info->address, info->mac); });
+
+        if(disconnected) {
+            // check device activity again
+            if(checkDeviceActivity(removedDevice, info)) {
+                // If the device is active within the allowed elapsed time threshold, consider it online
+                return false;
+            }
+        }
+        else {
+            // device is still online
+            LOG_DEBUG("Got device PID successfully, consider it online: name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", removedDevice->getName(),
+                      removedDevice->getPid(), removedDevice->getDeviceSn(), info->mac, info->address);
+            return false;
+        }
+    }
+    // device has gone offline
+    removedDevs.push_back(removedDevice);
+    LOG_WARN("1 net device removed:");
+    LOG_WARN("  - Name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", removedDevice->getName(), removedDevice->getPid(), removedDevice->getDeviceSn(),
+             info->mac, info->address);
+    // remove activity record
+    deviceActivityManager_->removeActivity(removedDevice->getUid());
+    // printf current device list
+    {
+        std::unique_lock<std::recursive_mutex> lock(deviceInfoListMutex_);
+        LOG_DEBUG("Current net device list: ({})", deviceInfoList_.size());
+        for(auto it = deviceInfoList_.begin(); it != deviceInfoList_.end();) {
+            if((*it)->getUid() == devUid) {
+                it = deviceInfoList_.erase(it);
+            }
+            else {
+                auto &item = *it;
+                firstPortInfo = item->getSourcePortInfoList().front();
+                info          = std::dynamic_pointer_cast<const NetSourcePortInfo>(firstPortInfo);
+                LOG_DEBUG("  - Name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", item->getName(), item->getPid(), item->getDeviceSn(), info->mac,
+                          info->address);
+                ++it;
+            }
+        }
+    }
+    // callback
+    std::unique_lock<std::mutex> lock(deviceChangedCallbackMutex_);
+    if(deviceChangedCallback_) {
+        deviceChangedCallback_(removedDevs, {});
+    }
+    return true;
+}
+
+bool NetDeviceEnumerator::handleDeviceArrival(std::string devUid) {
+    utils::unusedVar(devUid);
+
+    // arrival: handle all arrival devices
+    DeviceEnumInfoList addedDevs;
+    {
+        auto                                   devices = queryDeviceList();
+        std::unique_lock<std::recursive_mutex> lock(deviceInfoListMutex_);
+        addedDevs = utils::subtract_sets(devices, deviceInfoList_);
+        if(!addedDevs.empty()) {
+            // update device list
+            deviceInfoList_.insert(deviceInfoList_.end(), addedDevs.begin(), addedDevs.end());
+        }
+    }
+    if(!addedDevs.empty()) {
+        LOG_DEBUG("Net device list changed!");
+        for(auto &&item: addedDevs) {
+            auto firstPortInfo = item->getSourcePortInfoList().front();
+            auto info          = std::dynamic_pointer_cast<const NetSourcePortInfo>(firstPortInfo);
+            LOG_DEBUG("  - Name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", item->getName(), item->getPid(), item->getDeviceSn(), info->mac, info->address);
+        }
+    }
+    // printf current device list
+    {
+        std::unique_lock<std::recursive_mutex> lock(deviceInfoListMutex_);
+        LOG_DEBUG("Current net device list: ({})", deviceInfoList_.size());
+        for(auto &&item: deviceInfoList_) { 
+            auto firstPortInfo = item->getSourcePortInfoList().front();
+            auto info          = std::dynamic_pointer_cast<const NetSourcePortInfo>(firstPortInfo);
+            LOG_DEBUG("  - Name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", item->getName(), item->getPid(), item->getDeviceSn(), info->mac, info->address);
+        }
+    }
+    // callback
+    std::unique_lock<std::mutex> lock(deviceChangedCallbackMutex_);
+    if(deviceChangedCallback_ && !addedDevs.empty()) {
+        deviceChangedCallback_({}, addedDevs);
+    }
+    return true;
+}
+
 bool NetDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType, std::string devUid) {
     LOG_DEBUG("NetDeviceEnumerator::onPlatformDeviceChanged: changeType: {}, devUid: {}", static_cast<uint32_t>(changeType), devUid);
 
     utils::unusedVar(changeType);
     utils::unusedVar(devUid);
 
-    DeviceEnumInfoList addDevs;
-    DeviceEnumInfoList rmDevs;
-    DeviceEnumInfoList newRmDevs;
-
-    {
-        auto                                   devices = queryDeviceList();
-        std::unique_lock<std::recursive_mutex> lock(deviceInfoListMutex_);
-        addDevs         = utils ::subtract_sets(devices, deviceInfoList_);
-        rmDevs          = utils ::subtract_sets(deviceInfoList_, devices);
-        deviceInfoList_ = devices;
-    }
-
-    // callback
-    std::unique_lock<std::mutex> lock(deviceChangedCallbackMutex_);
-    if(!addDevs.empty() || !rmDevs.empty()) {
-        LOG_DEBUG("Net device list changed!");
-        if(!addDevs.empty()) {
-            LOG_DEBUG("{} net device(s) found:", addDevs.size());
-            for(auto &&item: addDevs) {
-                auto firstPortInfo = item->getSourcePortInfoList().front();
-                auto info          = std::dynamic_pointer_cast<const NetSourcePortInfo>(firstPortInfo);
-                LOG_DEBUG("  - Name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", item->getName(), item->getPid(), item->getDeviceSn(), info->mac,
-                          info->address);
-            }
-        }
-
-        if(!rmDevs.empty()) {
-            LOG_DEBUG("{} net device(s) in removedeviceList:", rmDevs.size());
-            for(auto &&item: rmDevs) {
-                auto firstPortInfo = item->getSourcePortInfoList().front();
-                auto info          = std::dynamic_pointer_cast<const NetSourcePortInfo>(firstPortInfo);
-
-                // We assume the device has gone offline and perform extra verification
-                // check the last active of the device
-                if(checkDeviceActivity(item, info)) {
-                    // If the device is active within the allowed elapsed time threshold, consider it online
-                    deviceInfoList_.push_back(item);
-                    continue;
-                }
-
-                // Continue device check via PID acquisition to confirm online status
-                // TODO: Busy devices may be misjudged as offline due to temporary unresponsiveness
-                if(info->pid == OB_DEVICE_G335LE_PID || info->pid == OB_FEMTO_MEGA_PID || IS_OB_FEMTO_MEGA_I_PID(info->pid) || info->pid == OB_DEVICE_G435LE_PID) {
-                    bool    disconnected = true;
-                    BEGIN_TRY_EXECUTE({
-                        auto            sourcePort         = Platform::getInstance()->getNetSourcePort(info);
-                        auto            vendorPropAccessor = std::make_shared<VendorPropertyAccessor>(nullptr, sourcePort);
-                        OBPropertyValue value;
-                        value.intValue = 0;
-                        vendorPropAccessor->getPropertyValue(OB_PROP_DEVICE_PID_INT, &value);
-                        disconnected = false;
-                        LOG_DEBUG("Get device pid success, pid:{}", value.intValue);
-                    })
-                    CATCH_EXCEPTION_AND_EXECUTE({
-                        LOG_WARN("Get pid failed, ip:{},mac:{},device is disconnect.", info->address, info->mac);
-                    });
-
-                    if(disconnected) {
-                        // check device activity again
-                        if(checkDeviceActivity(item, info)) {
-                            // If the device is active within the allowed elapsed time threshold, consider it online
-                            deviceInfoList_.push_back(item);
-                            continue;
-                        }
-                    }
-                    else {
-                        // device is still online
-                        deviceInfoList_.push_back(item);
-                        LOG_DEBUG("Got device PID successfully, consider it online: name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", item->getName(),
-                                  item->getPid(), item->getDeviceSn(), info->mac, info->address);
-                        continue;
-                    }
-                }
-                // device has gone offline
-                newRmDevs.push_back(item);
-                // remove activity record
-                deviceActivityManager_->removeActivity(item->getUid());
-            }
-        }
-
-        if(!newRmDevs.empty()) {
-            LOG_WARN("{} net device(s) removed:", newRmDevs.size());
-            for(auto &&item: newRmDevs) {
-                auto firstPortInfo = item->getSourcePortInfoList().front();
-                auto info          = std::dynamic_pointer_cast<const NetSourcePortInfo>(firstPortInfo);
-                LOG_WARN("  - Name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", item->getName(), item->getPid(), item->getDeviceSn(), info->mac,
-                          info->address);
-            }
-        }
-
-        LOG_DEBUG("Current net device list: ({})", deviceInfoList_.size());
-        for(auto &&item: deviceInfoList_) {
-            auto firstPortInfo = item->getSourcePortInfoList().front();
-            auto info          = std::dynamic_pointer_cast<const NetSourcePortInfo>(firstPortInfo);
-            LOG_DEBUG("  - Name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", item->getName(), item->getPid(), item->getDeviceSn(), info->mac, info->address);
-        }
-
-        if(deviceChangedCallback_ && (!newRmDevs.empty() || !addDevs.empty())) {
-            deviceChangedCallback_(newRmDevs, addDevs);
-        }
-    }
-
-    auto it = std::find_if(deviceInfoList_.begin(), deviceInfoList_.end(),
-                           [&devUid](const std::shared_ptr<const IDeviceEnumInfo> &item) { return item->getUid() == devUid; });
-
-    bool deviceFound = !(it == deviceInfoList_.end());
-    // Check if the device changed event handle successfully
     if(changeType == OB_DEVICE_REMOVED) {
-        if(deviceFound) {
-            LOG_DEBUG("The device was previously reported offline but is still online: {}", devUid);
-            return false;
-        }
+        return handleDeviceRemoved(devUid);
     }
     else if(changeType == OB_DEVICE_ARRIVAL) {
-        if(!deviceFound) {
-            LOG_DEBUG("The device was previously reported online but is still offline: {}", devUid);
-            return false;
-        }
+        return handleDeviceArrival(devUid);
     }
-    return true;
+    else {
+        return false;
+    }
 }
 
 std::shared_ptr<const IDeviceEnumInfo> NetDeviceEnumerator::queryNetDevice(std::string address, uint16_t port) {
