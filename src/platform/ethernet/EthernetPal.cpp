@@ -25,8 +25,13 @@ void EthernetPal::start(deviceChangedCallback callback) {
     deviceWatchThread_ = std::thread([&]() {
         std::mutex                   mutex;
         std::unique_lock<std::mutex> lock(mutex);
+        auto                         getNow = []() {
+            // get now
+            return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+        };
         while(!stopWatch_) {
             auto list    = GVCPClient::instance().queryNetDeviceList();
+            auto start   = getNow();
             auto added   = utils::subtract_sets(list, netDevInfoList_);
             auto removed = utils::subtract_sets(netDevInfoList_, list);
             updateSourcePortInfoList(added, removed);
@@ -40,13 +45,20 @@ void EthernetPal::start(deviceChangedCallback callback) {
             for(auto &&info: added) {
                 (void)callback_(OB_DEVICE_ARRIVAL, info.mac);
             }
-
+            // update info list
             netDevInfoList_ = list;
-            auto interval   = DEVICE_WATCHER_POLLING_INTERVAL_MSEC;
+            // calc the interval
+            int64_t interval = DEVICE_WATCHER_POLLING_INTERVAL_MSEC;
             if(netDevInfoList_.empty()) {
                 // Speed up discovery when no devices are found
                 interval = DEVICE_WATCHER_POLLING_SHORT_INTERVAL_MSEC;
             }
+            auto now = getNow();
+            if(now >= start + interval) {
+                // Callback takes too long, query the device list immediately for optimization
+                continue;
+            }
+            interval = start + interval - now;
             condVar_.wait_for(lock, std::chrono::milliseconds(interval), [&]() { return stopWatch_.load(); });
         }
     });
