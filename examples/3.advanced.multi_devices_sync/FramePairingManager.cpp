@@ -32,9 +32,8 @@ bool FramePairingManager::pipelineHoldersFrameNotEmpty() {
 
 void FramePairingManager::setPipelineHolderList(std::vector<std::shared_ptr<PipelineHolder>> pipelineHolderList) {
 	this->pipelineHolderList_ = pipelineHolderList;
-    for(int i = 0; i < pipelineHolderList.size(); i++) {
-        auto pipelineHolder = pipelineHolderList[i];
-        int  deviceIndex    = pipelineHolder->getDeviceIndex();
+    for(auto &&pipelineHolder: pipelineHolderList) {
+        int deviceIndex = pipelineHolder->getDeviceIndex();
         if(pipelineHolder->getSensorType() == OB_SENSOR_DEPTH) {
             depthPipelineHolderList_[deviceIndex] = pipelineHolder;
         }

@@ -65,7 +65,7 @@ private:
 
     std::condition_variable condVar_;
     std::mutex              queueMutex_;
-    int                     maxFrameSize_ = 16;
+    uint32_t                maxFrameSize_ = 16;
 
 
     std::queue<std::shared_ptr<ob::Frame>> obFrames;
