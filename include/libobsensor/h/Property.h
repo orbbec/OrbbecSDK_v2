@@ -463,7 +463,7 @@ typedef enum {
      */
     OB_PROP_DISP_SEARCH_OFFSET_INT = 196,
 
-     /**
+    /**
      * @brief cpu temperature correction . true: calibrate temperature
      */
     OB_PROP_CPU_TEMPERATURE_CALIBRATION_BOOL = 199,
@@ -891,6 +891,21 @@ typedef enum {
      */
     OB_PROP_COLOR_DENOISING_LEVEL_INT = 5525,
 
+    /**
+     * @brief Right Color sensor rotation, angle{0, 90, 180, 270}
+     */
+    OB_PROP_COLOR_RIGHT_ROTATE_INT = 5526,
+
+    /**
+     * @brief Right Color mirror
+     */
+    OB_PROP_COLOR_RIGHT_MIRROR_BOOL = 5527,
+
+    /**
+     * @brief Right Color flip
+     */
+    OB_PROP_COLOR_RIGHT_FLIP_BOOL = 5528,
+
     /*
      * @brief LiDAR: set/get IP address
      */
@@ -957,7 +972,7 @@ typedef enum {
     OB_PROP_LIDAR_WARNING_INFO_INT = 8012,
 
     /**
-     * @brief LiDAR: get realtime motor spin speed, unit:0.01rpm 
+     * @brief LiDAR: get realtime motor spin speed, unit:0.01rpm
      */
     OB_PROP_LIDAR_MOTOR_SPIN_SPEED_INT = 8013,
 
@@ -979,7 +994,7 @@ typedef enum {
     /**
      * @brief LiDAR: get/set repetitive scan mode
      */
-    OB_PROP_LIDAR_REPETITIVE_SCAN_MODE_INT = 8017,
+    OB_PROP_LIDAR_REPETITIVE_SCAN_MODE_INT = 8017
 } OBPropertyID,
     ob_property_id;
 

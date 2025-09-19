@@ -284,6 +284,12 @@ void VideoFrame::copyInfoFromOther(std::shared_ptr<const Frame> sourceFrame) {
 ColorFrame::ColorFrame(uint8_t *data, size_t dataBufSize, FrameBufferReclaimFunc bufferReclaimFunc)
     : VideoFrame(data, dataBufSize, OB_FRAME_COLOR, bufferReclaimFunc) {}
 
+ColorLeftFrame::ColorLeftFrame(uint8_t *data, size_t dataBufSize, FrameBufferReclaimFunc bufferReclaimFunc)
+    : VideoFrame(data, dataBufSize, OB_FRAME_COLOR_LEFT, bufferReclaimFunc) {}
+
+ColorRightFrame::ColorRightFrame(uint8_t *data, size_t dataBufSize, FrameBufferReclaimFunc bufferReclaimFunc)
+    : VideoFrame(data, dataBufSize, OB_FRAME_COLOR_RIGHT, bufferReclaimFunc) {}
+
 DepthFrame::DepthFrame(uint8_t *data, size_t dataBufSize, FrameBufferReclaimFunc bufferReclaimFunc)
     : VideoFrame(data, dataBufSize, OB_FRAME_DEPTH, bufferReclaimFunc), valueScale_(1.0f) {
     setPixelType(OB_PIXEL_DEPTH);  // set default pixel type to OB_PIXEL_DEPTH

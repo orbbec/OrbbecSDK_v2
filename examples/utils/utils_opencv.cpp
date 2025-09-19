@@ -371,7 +371,10 @@ cv::Mat CVWindow::visualize(std::shared_ptr<const ob::Frame> frame) {
     }
 
     cv::Mat rstMat;
-    if(frame->getType() == OB_FRAME_COLOR) {
+    switch(frame->getType()) {
+    case OB_FRAME_COLOR:
+    case OB_FRAME_COLOR_LEFT:
+    case OB_FRAME_COLOR_RIGHT: {
         auto videoFrame = frame->as<const ob::VideoFrame>();
         switch(videoFrame->getFormat()) {
         case OB_FORMAT_MJPG: {
@@ -427,8 +430,8 @@ cv::Mat CVWindow::visualize(std::shared_ptr<const ob::Frame> frame) {
         if(showSyncTimeInfo_ && !rstMat.empty()) {
             drawInfo(rstMat, videoFrame);
         }
-    }
-    else if(frame->getType() == OB_FRAME_DEPTH) {
+    } break;
+    case OB_FRAME_DEPTH: {
         auto videoFrame = frame->as<const ob::VideoFrame>();
         if(videoFrame->getFormat() == OB_FORMAT_Y16 || videoFrame->getFormat() == OB_FORMAT_Z16 || videoFrame->getFormat() == OB_FORMAT_Y12C4) {
             cv::Mat rawMat = cv::Mat(videoFrame->getHeight(), videoFrame->getWidth(), CV_16UC1, videoFrame->getData());
@@ -451,8 +454,10 @@ cv::Mat CVWindow::visualize(std::shared_ptr<const ob::Frame> frame) {
         if(showSyncTimeInfo_ && !rstMat.empty()) {
             drawInfo(rstMat, videoFrame);
         }
-    }
-    else if(frame->getType() == OB_FRAME_IR || frame->getType() == OB_FRAME_IR_LEFT || frame->getType() == OB_FRAME_IR_RIGHT) {
+    } break;
+    case OB_FRAME_IR:
+    case OB_FRAME_IR_LEFT:
+    case OB_FRAME_IR_RIGHT: {
         auto videoFrame = frame->as<const ob::VideoFrame>();
         if(videoFrame->getFormat() == OB_FORMAT_Y16) {
             cv::Mat cvtMat;
@@ -472,8 +477,8 @@ cv::Mat CVWindow::visualize(std::shared_ptr<const ob::Frame> frame) {
         if(showSyncTimeInfo_ && !rstMat.empty()) {
             drawInfo(rstMat, videoFrame);
         }
-    }
-    else if(frame->getType() == OB_FRAME_CONFIDENCE) {
+    } break;
+    case OB_FRAME_CONFIDENCE: {
         auto videoFrame = frame->as<const ob::VideoFrame>();
         if(videoFrame->getFormat() == OB_FORMAT_Y16) {
             cv::Mat cvtMat;
@@ -485,8 +490,8 @@ cv::Mat CVWindow::visualize(std::shared_ptr<const ob::Frame> frame) {
             cv::Mat rawMat = cv::Mat(videoFrame->getHeight(), videoFrame->getWidth(), CV_8UC1, videoFrame->getData());
             cv::cvtColor(rawMat, rstMat, cv::COLOR_GRAY2RGB);
         }
-    }
-    else if(frame->getType() == OB_FRAME_ACCEL) {
+    } break;
+    case OB_FRAME_ACCEL: {
         rstMat                 = cv::Mat::zeros(320, 300, CV_8UC3);
         auto        accelFrame = frame->as<ob::AccelFrame>();
         auto        value      = accelFrame->getValue();
@@ -500,8 +505,8 @@ cv::Mat CVWindow::visualize(std::shared_ptr<const ob::Frame> frame) {
         cv::putText(rstMat, str.c_str(), cv::Point(8, 180), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255), 1, cv::LINE_AA);
         str = std::string(" z=") + std::to_string(value.z) + "m/s^2";
         cv::putText(rstMat, str.c_str(), cv::Point(8, 220), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255), 1, cv::LINE_AA);
-    }
-    else if(frame->getType() == OB_FRAME_GYRO) {
+    } break;
+    case OB_FRAME_GYRO: {
         rstMat                = cv::Mat::zeros(320, 300, CV_8UC3);
         auto        gyroFrame = frame->as<ob::GyroFrame>();
         auto        value     = gyroFrame->getValue();
@@ -515,6 +520,9 @@ cv::Mat CVWindow::visualize(std::shared_ptr<const ob::Frame> frame) {
         cv::putText(rstMat, str.c_str(), cv::Point(8, 180), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255), 1, cv::LINE_AA);
         str = std::string(" z=") + std::to_string(value.z) + "rad/s";
         cv::putText(rstMat, str.c_str(), cv::Point(8, 220), cv::FONT_HERSHEY_DUPLEX, 0.5, cv::Scalar(255, 255, 255), 1, cv::LINE_AA);
+    } break;
+    default:
+        break;
     }
     return rstMat;
 }
@@ -539,26 +547,73 @@ void CVWindow::drawInfo(cv::Mat &imageMat, std::shared_ptr<const ob::VideoFrame>
     };
 
     // Drawing text with background based on frame type
-    if(frame->getType() == OB_FRAME_COLOR && frame->getFormat() == OB_FORMAT_NV21) {
-        putTextWithBackground("Color-NV21", cv::Point(8, 16));
-    }
-    else if(frame->getType() == OB_FRAME_COLOR && frame->getFormat() == OB_FORMAT_MJPG) {
-        putTextWithBackground("Color-MJPG", cv::Point(8, 16));
-    }
-    else if(frame->getType() == OB_FRAME_COLOR && ((frame->getFormat() == OB_FORMAT_YUYV) || (frame->getFormat() == OB_FORMAT_YUY2))) {
-        putTextWithBackground("Color-YUYV", cv::Point(8, 16));
-    }
-    else if(frame->getType() == OB_FRAME_DEPTH) {
-        putTextWithBackground("Depth", cv::Point(8, 16));
-    }
-    else if(frame->getType() == OB_FRAME_IR) {
-        putTextWithBackground("IR", cv::Point(8, 16));
-    }
-    else if(frame->getType() == OB_FRAME_IR_LEFT) {
-        putTextWithBackground("LeftIR", cv::Point(8, 16));
-    }
-    else if(frame->getType() == OB_FRAME_IR_RIGHT) {
-        putTextWithBackground("RightIR", cv::Point(8, 16));
+    auto frameType   = frame->getType();
+    auto frameFormat = frame->getFormat();
+    switch(frameFormat) {
+    case OB_FORMAT_NV21: {
+        switch(frameType) {
+        case OB_FRAME_COLOR:
+            putTextWithBackground("Color-NV21", cv::Point(8, 16));
+            break;
+        case OB_FRAME_COLOR_LEFT:
+            putTextWithBackground("LeftColor-NV21", cv::Point(8, 16));
+            break;
+        case OB_FRAME_COLOR_RIGHT:
+            putTextWithBackground("RightColor-NV21", cv::Point(8, 16));
+            break;
+        default:
+            break;
+        }
+    } break;
+    case OB_FORMAT_MJPG: {
+        switch(frameType) {
+        case OB_FRAME_COLOR:
+            putTextWithBackground("Color-MJPG", cv::Point(8, 16));
+            break;
+        case OB_FRAME_COLOR_LEFT:
+            putTextWithBackground("LeftColor-MJPG", cv::Point(8, 16));
+            break;
+        case OB_FRAME_COLOR_RIGHT:
+            putTextWithBackground("RightColor-MJPG", cv::Point(8, 16));
+            break;
+        default:
+            break;
+        }
+    } break;
+    case OB_FORMAT_YUYV:
+    case OB_FORMAT_YUY2: {
+        switch(frameType) {
+        case OB_FRAME_COLOR:
+            putTextWithBackground("Color-YUYV", cv::Point(8, 16));
+            break;
+        case OB_FRAME_COLOR_LEFT:
+            putTextWithBackground("LeftColor-YUYV", cv::Point(8, 16));
+            break;
+        case OB_FRAME_COLOR_RIGHT:
+            putTextWithBackground("RightColor-YUYV", cv::Point(8, 16));
+            break;
+        default:
+            break;
+        }
+    } break;
+    default: {
+        switch(frameType) {
+        case OB_FRAME_DEPTH:
+            putTextWithBackground("Depth", cv::Point(8, 16));
+            break;
+        case OB_FRAME_IR:
+            putTextWithBackground("IR", cv::Point(8, 16));
+            break;
+        case OB_FRAME_IR_LEFT:
+            putTextWithBackground("LeftIR", cv::Point(8, 16));
+            break;
+        case OB_FRAME_IR_RIGHT:
+            putTextWithBackground("RightIR", cv::Point(8, 16));
+            break;
+        default:
+            break;
+        }
+    } break;
     }
 
     // Timestamp information with background

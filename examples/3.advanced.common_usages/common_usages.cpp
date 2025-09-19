@@ -16,6 +16,8 @@ const std::map<std::string, int> openni_device_list = { { "Astra Mini S Pro", 0x
                                                         { "Astra Pro2", 0x069d } };
 
 const std::map<OBSensorType, std::string> sensorTypeToStringMap = { { OB_SENSOR_COLOR, "Color profile: " },
+                                                                    { OB_SENSOR_COLOR_LEFT, "Left Color profile: " },
+                                                                    { OB_SENSOR_COLOR_RIGHT, "Right Color profile: " },
                                                                     { OB_SENSOR_DEPTH, "Depth profile: " },
                                                                     { OB_SENSOR_IR, "IR profile: " },
                                                                     { OB_SENSOR_IR_LEFT, "Left IR profile: " },

@@ -92,6 +92,8 @@ std::shared_ptr<Frame> FrameFactory::createFrameFromUserBuffer(OBFrameType frame
     case OB_FRAME_IR_RIGHT:
     case OB_FRAME_IR:
     case OB_FRAME_COLOR:
+    case OB_FRAME_COLOR_LEFT:
+    case OB_FRAME_COLOR_RIGHT:
     case OB_FRAME_CONFIDENCE:
         return createVideoFrameFromUserBuffer(frameType, format, 0, 0, 0, buffer, bufferSize, bufferReclaimFunc);
     case OB_FRAME_ACCEL:
@@ -126,6 +128,8 @@ std::shared_ptr<Frame> FrameFactory::createFrameFromUserBuffer(OBFrameType frame
     case OB_FRAME_IR_RIGHT:
     case OB_FRAME_IR:
     case OB_FRAME_COLOR:
+    case OB_FRAME_COLOR_LEFT:
+    case OB_FRAME_COLOR_RIGHT:
     case OB_FRAME_CONFIDENCE:
         sp = StreamProfileFactory::createVideoStreamProfile(utils::mapFrameTypeToStreamType(frameType), format, 0, 0, 0);
         break;
@@ -172,6 +176,12 @@ std::shared_ptr<Frame> FrameFactory::createVideoFrameFromUserBuffer(OBFrameType 
     case OB_FRAME_COLOR:
         frame = std::make_shared<ColorFrame>(buffer, bufferSize, bufferReclaimFunc);
         break;
+    case OB_FRAME_COLOR_LEFT:
+        frame = std::make_shared<ColorLeftFrame>(buffer, bufferSize, bufferReclaimFunc);
+        break;
+    case OB_FRAME_COLOR_RIGHT:
+        frame = std::make_shared<ColorRightFrame>(buffer, bufferSize, bufferReclaimFunc);
+        break;
     case OB_FRAME_CONFIDENCE:
         frame = std::make_shared<ConfidenceFrame>(buffer, bufferSize, bufferReclaimFunc);
         break;
@@ -205,6 +215,8 @@ std::shared_ptr<Frame> FrameFactory::createVideoFrameFromUserBuffer(OBFrameType 
     case OB_FRAME_IR_RIGHT:
     case OB_FRAME_IR:
     case OB_FRAME_COLOR:
+    case OB_FRAME_COLOR_LEFT:
+    case OB_FRAME_COLOR_RIGHT:
     case OB_FRAME_CONFIDENCE:
         sp = StreamProfileFactory::createVideoStreamProfile(utils::mapFrameTypeToStreamType(frameType), format, width, height, 0);
         break;

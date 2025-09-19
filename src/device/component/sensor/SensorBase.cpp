@@ -454,6 +454,8 @@ void SensorBase::validateDeviceState(const std::shared_ptr<const StreamProfile> 
         auto streamType = profile->getType();
         switch(streamType) {
         case OB_STREAM_COLOR:
+        case OB_STREAM_COLOR_LEFT:
+        case OB_STREAM_COLOR_RIGHT:
             flag |= OB_ERROR_RGB_SENSOR;
             break;
         case OB_STREAM_ACCEL:

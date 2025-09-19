@@ -17,10 +17,10 @@ namespace libobsensor {
 typedef std::map<OBFrameType, SourceFrameQueue>::iterator FrameQueuePair;
 
 const std::map<OBStreamType, OBFrameType> STREAM_FRAME_TYPE_MAP = {
-    { OB_STREAM_COLOR, OB_FRAME_COLOR },       { OB_STREAM_DEPTH, OB_FRAME_DEPTH },         { OB_STREAM_IR, OB_FRAME_IR },
-    { OB_STREAM_IR_LEFT, OB_FRAME_IR_LEFT },   { OB_STREAM_IR_RIGHT, OB_FRAME_IR_RIGHT },   { OB_STREAM_ACCEL, OB_FRAME_ACCEL },
-    { OB_STREAM_GYRO, OB_FRAME_GYRO },         { OB_STREAM_RAW_PHASE, OB_FRAME_RAW_PHASE }, { OB_STREAM_CONFIDENCE, OB_FRAME_CONFIDENCE },
-    { OB_STREAM_LIDAR, OB_FRAME_LIDAR_POINTS }
+    { OB_STREAM_COLOR, OB_FRAME_COLOR },        { OB_STREAM_DEPTH, OB_FRAME_DEPTH },           { OB_STREAM_IR, OB_FRAME_IR },
+    { OB_STREAM_IR_LEFT, OB_FRAME_IR_LEFT },    { OB_STREAM_IR_RIGHT, OB_FRAME_IR_RIGHT },     { OB_STREAM_ACCEL, OB_FRAME_ACCEL },
+    { OB_STREAM_GYRO, OB_FRAME_GYRO },          { OB_STREAM_RAW_PHASE, OB_FRAME_RAW_PHASE },   { OB_STREAM_CONFIDENCE, OB_FRAME_CONFIDENCE },
+    { OB_STREAM_LIDAR, OB_FRAME_LIDAR_POINTS }, { OB_STREAM_COLOR_LEFT, OB_FRAME_COLOR_LEFT }, { OB_STREAM_COLOR_RIGHT, OB_FRAME_COLOR_RIGHT },
 };
 
 uint64_t getFrameTimestampMsec(const std::shared_ptr<const Frame> &frame, FrameSyncMode syncMode) {
@@ -42,12 +42,13 @@ FrameAggregator::FrameAggregator(float maxFrameDelay)
       withColorFrame_(false),
       matchingRateFirst_(true),
       maxNormalModeQueueSize_(MAX_NORMAL_MODE_QUEUE_SIZE) {
-        if(maxFrameDelay > 0) {
-            maxFrameDelay_ = maxFrameDelay;
-        } else {
-            maxFrameDelay_ = MAX_FRAME_DELAY;
-        }
-      }
+    if(maxFrameDelay > 0) {
+        maxFrameDelay_ = maxFrameDelay;
+    }
+    else {
+        maxFrameDelay_ = MAX_FRAME_DELAY;
+    }
+}
 
 FrameAggregator::~FrameAggregator() noexcept {
     reset();
@@ -171,7 +172,7 @@ void FrameAggregator::tryAggregator() {
                     refHalfTspGap = tarHalfTspGap;
                     frameSet->pushFrame(std::move(tarFrame));
                     frameCnt_++;
-                    if(item->first == OB_FRAME_COLOR) {
+                    if(item->first == OB_FRAME_COLOR || item->first == OB_FRAME_COLOR_LEFT || item->first == OB_FRAME_COLOR_RIGHT) {
                         withColorFrame_ = true;
                     }
                     item->second.queue.pop();
@@ -199,7 +200,7 @@ void FrameAggregator::tryAggregator() {
                         if(tarTsp - refTsp <= tspHalfGap) {
                             frameSet->pushFrame(std::move(tarFrame));
                             frameCnt_++;
-                            if(item.first == OB_FRAME_COLOR) {
+                            if(item.first == OB_FRAME_COLOR || item.first == OB_FRAME_COLOR_LEFT || item.first == OB_FRAME_COLOR_RIGHT) {
                                 withColorFrame_ = true;
                             }
                             item.second.queue.pop();
@@ -232,7 +233,7 @@ void FrameAggregator::tryAggregator() {
                     frameSet->pushFrame(std::move(srcFrame));
                     item.second.queue.pop();
                     frameCnt_++;
-                    if(item.first == OB_FRAME_COLOR) {
+                    if(item.first == OB_FRAME_COLOR || item.first == OB_FRAME_COLOR_LEFT || item.first == OB_FRAME_COLOR_RIGHT) {
                         withColorFrame_ = true;
                     }
                 }
@@ -280,7 +281,7 @@ void FrameAggregator::outputFrameset(std::shared_ptr<const FrameSet> frameSet) {
         }
         else if(frameAggregateOutputMode_ == OB_FRAME_AGGREGATE_OUTPUT_DISABLE) {
             FrameSetCallbackFunc_(frameSet);
-        } 
+        }
         else {
             uint32_t count = frameSet->getCount();
             for(uint32_t i = 0; i < count; i++) {

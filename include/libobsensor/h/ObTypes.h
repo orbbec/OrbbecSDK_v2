@@ -128,18 +128,20 @@ typedef struct ob_error {
  * @brief Enumeration value describing the sensor type
  */
 typedef enum {
-    OB_SENSOR_UNKNOWN    = 0,  /**< Unknown type sensor */
-    OB_SENSOR_IR         = 1,  /**< IR */
-    OB_SENSOR_COLOR      = 2,  /**< Color */
-    OB_SENSOR_DEPTH      = 3,  /**< Depth */
-    OB_SENSOR_ACCEL      = 4,  /**< Accel */
-    OB_SENSOR_GYRO       = 5,  /**< Gyro */
-    OB_SENSOR_IR_LEFT    = 6,  /**< left IR for stereo camera*/
-    OB_SENSOR_IR_RIGHT   = 7,  /**< Right IR for stereo camera*/
-    OB_SENSOR_RAW_PHASE  = 8,  /**< Raw Phase */
-    OB_SENSOR_CONFIDENCE = 9,  /**< Confidence */
-    OB_SENSOR_LIDAR      = 10, /**< LiDAR */
-    OB_SENSOR_TYPE_COUNT,      /**The total number of sensor types, is not a valid sensor type */
+    OB_SENSOR_UNKNOWN     = 0,         /**< Unknown type sensor */
+    OB_SENSOR_IR          = 1,         /**< IR */
+    OB_SENSOR_COLOR       = 2,         /**< Color */
+    OB_SENSOR_DEPTH       = 3,         /**< Depth */
+    OB_SENSOR_ACCEL       = 4,         /**< Accel */
+    OB_SENSOR_GYRO        = 5,         /**< Gyro */
+    OB_SENSOR_IR_LEFT     = 6,         /**< left IR for stereo camera*/
+    OB_SENSOR_IR_RIGHT    = 7,         /**< Right IR for stereo camera*/
+    OB_SENSOR_RAW_PHASE   = 8,         /**< Raw Phase */
+    OB_SENSOR_CONFIDENCE  = 9,         /**< Confidence */
+    OB_SENSOR_LIDAR       = 10,        /**< LiDAR */
+    OB_SENSOR_COLOR_LEFT  = 10,        /**< Left Color */
+    OB_SENSOR_COLOR_RIGHT = 11,        /**< Right Color */
+    OB_SENSOR_TYPE_COUNT,              /**The total number of sensor types, is not a valid sensor type */
 } OBSensorType,
     ob_sensor_type;
 
@@ -147,19 +149,21 @@ typedef enum {
  * @brief Enumeration value describing the type of data stream
  */
 typedef enum {
-    OB_STREAM_UNKNOWN    = -1, /**< Unknown type stream */
-    OB_STREAM_VIDEO      = 0,  /**< Video stream (infrared, color, depth streams are all video streams) */
-    OB_STREAM_IR         = 1,  /**< IR stream */
-    OB_STREAM_COLOR      = 2,  /**< color stream */
-    OB_STREAM_DEPTH      = 3,  /**< depth stream */
-    OB_STREAM_ACCEL      = 4,  /**< Accelerometer data stream */
-    OB_STREAM_GYRO       = 5,  /**< Gyroscope data stream */
-    OB_STREAM_IR_LEFT    = 6,  /**< Left IR stream for stereo camera */
-    OB_STREAM_IR_RIGHT   = 7,  /**< Right IR stream for stereo camera */
-    OB_STREAM_RAW_PHASE  = 8,  /**< RawPhase Stream */
-    OB_STREAM_CONFIDENCE = 9,  /**< Confidence Stream*/
-    OB_STREAM_LIDAR      = 10, /**< LiDAR Stream for LiDAR device*/
-    OB_STREAM_TYPE_COUNT,      /**< The total number of stream type,is not a valid stream type */
+    OB_STREAM_UNKNOWN     = -1,        /**< Unknown type stream */
+    OB_STREAM_VIDEO       = 0,         /**< Video stream (infrared, color, depth streams are all video streams) */
+    OB_STREAM_IR          = 1,         /**< IR stream */
+    OB_STREAM_COLOR       = 2,         /**< color stream */
+    OB_STREAM_DEPTH       = 3,         /**< depth stream */
+    OB_STREAM_ACCEL       = 4,         /**< Accelerometer data stream */
+    OB_STREAM_GYRO        = 5,         /**< Gyroscope data stream */
+    OB_STREAM_IR_LEFT     = 6,         /**< Left IR stream for stereo camera */
+    OB_STREAM_IR_RIGHT    = 7,         /**< Right IR stream for stereo camera */
+    OB_STREAM_RAW_PHASE   = 8,         /**< RawPhase Stream */
+    OB_STREAM_CONFIDENCE  = 9,         /**< Confidence Stream*/
+    OB_STREAM_LIDAR       = 10,        /**< LiDAR Stream for LiDAR device*/
+    OB_STREAM_COLOR_LEFT  = 11,        /**< Left Color stream */
+    OB_STREAM_COLOR_RIGHT = 12,        /**< Right Color stream */
+    OB_STREAM_TYPE_COUNT,              /**< The total number of stream type,is not a valid stream type */
 } OBStreamType,
     ob_stream_type;
 
@@ -167,21 +171,23 @@ typedef enum {
  * @brief Enumeration value describing the type of frame
  */
 typedef enum {
-    OB_FRAME_UNKNOWN      = -1, /**< Unknown frame type */
-    OB_FRAME_VIDEO        = 0,  /**< Video frame */
-    OB_FRAME_IR           = 1,  /**< IR frame */
-    OB_FRAME_COLOR        = 2,  /**< Color frame */
-    OB_FRAME_DEPTH        = 3,  /**< Depth frame */
-    OB_FRAME_ACCEL        = 4,  /**< Accelerometer data frame */
-    OB_FRAME_SET          = 5,  /**< Frame collection (internally contains a variety of data frames) */
-    OB_FRAME_POINTS       = 6,  /**< Point cloud frame */
-    OB_FRAME_GYRO         = 7,  /**< Gyroscope data frame */
-    OB_FRAME_IR_LEFT      = 8,  /**< Left IR frame for stereo camera */
-    OB_FRAME_IR_RIGHT     = 9,  /**< Right IR frame for stereo camera */
-    OB_FRAME_RAW_PHASE    = 10, /**< Raw Phase frame*/
-    OB_FRAME_CONFIDENCE   = 11, /**< Confidence frame*/
-    OB_FRAME_LIDAR_POINTS = 12, /**< LiDAR point3d cloud frame*/
-    OB_FRAME_TYPE_COUNT,        /**< The total number of frame types, is not a valid frame type */
+    OB_FRAME_UNKNOWN      = -1,       /**< Unknown frame type */
+    OB_FRAME_VIDEO        = 0,        /**< Video frame */
+    OB_FRAME_IR           = 1,        /**< IR frame */
+    OB_FRAME_COLOR        = 2,        /**< Color frame */
+    OB_FRAME_DEPTH        = 3,        /**< Depth frame */
+    OB_FRAME_ACCEL        = 4,        /**< Accelerometer data frame */
+    OB_FRAME_SET          = 5,        /**< Frame collection (internally contains a variety of data frames) */
+    OB_FRAME_POINTS       = 6,        /**< Point cloud frame */
+    OB_FRAME_GYRO         = 7,        /**< Gyroscope data frame */
+    OB_FRAME_IR_LEFT      = 8,        /**< Left IR frame for stereo camera */
+    OB_FRAME_IR_RIGHT     = 9,        /**< Right IR frame for stereo camera */
+    OB_FRAME_RAW_PHASE    = 10,       /**< Raw Phase frame*/
+    OB_FRAME_CONFIDENCE   = 11,       /**< Confidence frame*/
+    OB_FRAME_LIDAR_POINTS = 12,       /**< LiDAR point3d cloud frame*/
+    OB_FRAME_COLOR_LEFT   = 13,       /**< Left Color frame */
+    OB_FRAME_COLOR_RIGHT  = 14,       /**< Right Color frame */
+    OB_FRAME_TYPE_COUNT,              /**< The total number of frame types, is not a valid frame type */
 } OBFrameType,
     ob_frame_type;
 
@@ -1939,9 +1945,9 @@ typedef uint64_t OBCallbackId, ob_callback_id;
  * @param[in] sensor_type Sensor type to check
  * @return True if sensor_type is a video sensor, false otherwise
  */
-#define ob_is_video_sensor_type(sensor_type)                                                                                             \
-    (sensor_type == OB_SENSOR_COLOR || sensor_type == OB_SENSOR_DEPTH || sensor_type == OB_SENSOR_IR || sensor_type == OB_SENSOR_IR_LEFT \
-     || sensor_type == OB_SENSOR_IR_RIGHT || sensor_type == OB_SENSOR_CONFIDENCE)
+#define ob_is_video_sensor_type(sensor_type)                                                                                                         \
+    (sensor_type == OB_SENSOR_COLOR || sensor_type == OB_SENSOR_COLOR_LEFT || sensor_type == OB_SENSOR_COLOR_RIGHT || sensor_type == OB_SENSOR_DEPTH \
+     || sensor_type == OB_SENSOR_IR || sensor_type == OB_SENSOR_IR_LEFT || sensor_type == OB_SENSOR_IR_RIGHT || sensor_type == OB_SENSOR_CONFIDENCE)
 
 /**
  * @brief check if the stream_type is a video stream
@@ -1949,9 +1955,10 @@ typedef uint64_t OBCallbackId, ob_callback_id;
  * @param[in] stream_type Stream type to check
  * @return True if stream_type is a video stream, false otherwise
  */
-#define ob_is_video_stream_type(stream_type)                                                                                             \
-    (stream_type == OB_STREAM_COLOR || stream_type == OB_STREAM_DEPTH || stream_type == OB_STREAM_IR || stream_type == OB_STREAM_IR_LEFT \
-     || stream_type == OB_STREAM_IR_RIGHT || stream_type == OB_STREAM_VIDEO || stream_type == OB_STREAM_CONFIDENCE)
+#define ob_is_video_stream_type(stream_type)                                                                                                         \
+    (stream_type == OB_STREAM_COLOR || stream_type == OB_STREAM_COLOR_LEFT || stream_type == OB_STREAM_COLOR_RIGHT || stream_type == OB_STREAM_DEPTH \
+     || stream_type == OB_STREAM_IR || stream_type == OB_STREAM_IR_LEFT || stream_type == OB_STREAM_IR_RIGHT || stream_type == OB_STREAM_VIDEO       \
+     || stream_type == OB_STREAM_CONFIDENCE)
 
 /**
  * @brief Check if sensor_type is an IR sensor
@@ -1963,6 +1970,15 @@ typedef uint64_t OBCallbackId, ob_callback_id;
 #define isIRSensor is_ir_sensor
 
 /**
+ * @brief Check if sensor_type is an Color sensor
+ *
+ * @param sensor_type Sensor type to check
+ * @return True if sensor_type is an Color sensor, false otherwise
+ */
+#define is_color_sensor(sensor_type) (sensor_type == OB_SENSOR_COLOR || sensor_type == OB_SENSOR_COLOR_LEFT || sensor_type == OB_SENSOR_COLOR_RIGHT)
+#define isColorSensor is_color_sensor
+
+/**
  * @brief Check if stream_type is an IR stream
  *
  * @param[in] stream_type Stream type to check
@@ -1972,6 +1988,15 @@ typedef uint64_t OBCallbackId, ob_callback_id;
 #define isIRStream is_ir_stream
 
 /**
+ * @brief Check if stream_type is an Color stream
+ *
+ * @param stream_type Stream type to check
+ * @return True if stream_type is an Color stream, false otherwise
+ */
+#define is_color_stream(stream_type) (stream_type == OB_STREAM_COLOR || stream_type == OB_STREAM_COLOR_LEFT || stream_type == OB_STREAM_COLOR_RIGHT)
+#define isColorStream is_color_stream
+
+/**
  * @brief Check if frame_type is an IR frame
  *
  * @param[in] frame_type Frame type to check
@@ -1979,6 +2004,15 @@ typedef uint64_t OBCallbackId, ob_callback_id;
  */
 #define is_ir_frame(frame_type) (frame_type == OB_FRAME_IR || frame_type == OB_FRAME_IR_LEFT || frame_type == OB_FRAME_IR_RIGHT)
 #define isIRFrame is_ir_frame
+
+/**
+ * @brief Check if frame_type is an Color frame
+ *
+ * @param frame_type Frame type to check
+ * @return True if frame_type is an Color frame, false otherwise
+ */
+#define is_color_frame(frame_type) (frame_type == OB_FRAME_COLOR || frame_type == OB_FRAME_COLOR_LEFT || frame_type == OB_FRAME_COLOR_RIGHT)
+#define isColorFrame is_color_frame
 
 /**
  * @brief The default Decrypt Key

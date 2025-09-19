@@ -136,6 +136,10 @@ OBFrameType PipelineHolder::mapFrameType(OBSensorType sensorType) {
     switch(sensorType) {
     case OB_SENSOR_COLOR:
         return OB_FRAME_COLOR;
+    case OB_SENSOR_COLOR_LEFT:
+        return OB_FRAME_COLOR_LEFT;
+    case OB_SENSOR_COLOR_RIGHT:
+        return OB_FRAME_COLOR_RIGHT;
     case OB_SENSOR_IR:
         return OB_FRAME_IR;
     case OB_SENSOR_IR_LEFT:

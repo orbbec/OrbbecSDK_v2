@@ -156,6 +156,16 @@ public:
     ColorFrame(uint8_t *data, size_t dataBufSize, FrameBufferReclaimFunc bufferReclaimFunc = nullptr);
 };
 
+class ColorLeftFrame : public VideoFrame {
+public:
+    ColorLeftFrame(uint8_t *data, size_t dataBufSize, FrameBufferReclaimFunc bufferReclaimFunc = nullptr);
+};
+
+class ColorRightFrame : public VideoFrame {
+public:
+    ColorRightFrame(uint8_t *data, size_t dataBufSize, FrameBufferReclaimFunc bufferReclaimFunc = nullptr);
+};
+
 class DepthFrame : public VideoFrame {
 public:
     DepthFrame(uint8_t *data, size_t dataBufSize, FrameBufferReclaimFunc bufferReclaimFunc = nullptr);

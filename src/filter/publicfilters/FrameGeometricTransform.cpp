@@ -251,6 +251,7 @@ std::shared_ptr<Frame> FrameMirror::process(std::shared_ptr<const Frame> frame) 
     auto outFrame        = FrameFactory::createFrameFromOtherFrame(frame);
     auto videoFrame      = frame->as<VideoFrame>();
     bool isMirrorSupport = true;
+    auto frameType       = frame->getType();
     switch(frame->getFormat()) {
     case OB_FORMAT_Y8:
         imageMirror<uint8_t>((uint8_t *)videoFrame->getData(), (uint8_t *)outFrame->getData(), videoFrame->getWidth(), videoFrame->getHeight());
@@ -260,7 +261,7 @@ std::shared_ptr<Frame> FrameMirror::process(std::shared_ptr<const Frame> frame) 
         imageMirror<uint16_t>((uint16_t *)videoFrame->getData(), (uint16_t *)outFrame->getData(), videoFrame->getWidth(), videoFrame->getHeight());
         break;
     case OB_FORMAT_YUYV:
-        if(frame->getType() == OB_FRAME_COLOR) {
+        if(frameType == OB_FRAME_COLOR || frameType == OB_FRAME_COLOR_LEFT || frameType == OB_FRAME_COLOR_RIGHT) {
             mirrorYUYVImage((uint8_t *)videoFrame->getData(), (uint8_t *)outFrame->getData(), videoFrame->getWidth(), videoFrame->getHeight());
         }
         else {
@@ -268,7 +269,7 @@ std::shared_ptr<Frame> FrameMirror::process(std::shared_ptr<const Frame> frame) 
         }
         break;
     case OB_FORMAT_UYVY:
-        if(frame->getType() == OB_FRAME_COLOR) {
+        if(frameType == OB_FRAME_COLOR || frameType == OB_FRAME_COLOR_LEFT || frameType == OB_FRAME_COLOR_RIGHT) {
             mirrorUYVYImage((uint8_t *)videoFrame->getData(), (uint8_t *)outFrame->getData(), videoFrame->getWidth(), videoFrame->getHeight());
         }
         break;

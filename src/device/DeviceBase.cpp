@@ -24,6 +24,8 @@ namespace libobsensor {
 
 const std::map<OBSensorType, DeviceComponentId> SensorTypeToComponentIdMap = {
     { OB_SENSOR_COLOR, OB_DEV_COMPONENT_COLOR_SENSOR },
+    { OB_SENSOR_COLOR_LEFT, OB_DEV_COMPONENT_LEFT_COLOR_SENSOR },
+    { OB_SENSOR_COLOR_RIGHT, OB_DEV_COMPONENT_RIGHT_COLOR_SENSOR },
     { OB_SENSOR_DEPTH, OB_DEV_COMPONENT_DEPTH_SENSOR },
     { OB_SENSOR_IR, OB_DEV_COMPONENT_IR_SENSOR },
     { OB_SENSOR_IR_LEFT, OB_DEV_COMPONENT_LEFT_IR_SENSOR },
@@ -653,6 +655,12 @@ void DeviceBase::activateDeviceAccessor() {
             break;
         case OB_SENSOR_COLOR:
             getComponentT<FrameProcessor>(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR, false);
+            break;
+        case OB_SENSOR_COLOR_LEFT:
+            getComponentT<FrameProcessor>(OB_DEV_COMPONENT_LEFT_COLOR_FRAME_PROCESSOR, false);
+            break;
+        case OB_SENSOR_COLOR_RIGHT:
+            getComponentT<FrameProcessor>(OB_DEV_COMPONENT_RIGHT_COLOR_FRAME_PROCESSOR, false);
             break;
         case OB_SENSOR_IR:
             getComponentT<FrameProcessor>(OB_DEV_COMPONENT_IR_FRAME_PROCESSOR, false);

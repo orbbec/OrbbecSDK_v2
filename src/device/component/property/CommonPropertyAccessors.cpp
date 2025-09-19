@@ -212,7 +212,16 @@ void StereoFrameTransformPropertyAccessor::setPropertyValue(uint32_t propertyId,
     case OB_PROP_COLOR_MIRROR_BOOL:
     case OB_PROP_COLOR_FLIP_BOOL:
     case OB_PROP_COLOR_ROTATE_INT: {
-        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR);
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR, false);
+        if(!processor) {
+            processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_LEFT_COLOR_FRAME_PROCESSOR, true);
+        }
+        processor->setPropertyValue(propertyId, value);
+    } break;
+    case OB_PROP_COLOR_RIGHT_MIRROR_BOOL:
+    case OB_PROP_COLOR_RIGHT_FLIP_BOOL:
+    case OB_PROP_COLOR_RIGHT_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_RIGHT_COLOR_FRAME_PROCESSOR);
         processor->setPropertyValue(propertyId, value);
     } break;
     case OB_PROP_IR_MIRROR_BOOL:
@@ -249,7 +258,16 @@ void StereoFrameTransformPropertyAccessor::getPropertyValue(uint32_t propertyId,
     case OB_PROP_COLOR_MIRROR_BOOL:
     case OB_PROP_COLOR_FLIP_BOOL:
     case OB_PROP_COLOR_ROTATE_INT: {
-        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR);
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR, false);
+        if(!processor) {
+            processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_LEFT_COLOR_FRAME_PROCESSOR, true);
+        }
+        processor->getPropertyValue(propertyId, value);
+    } break;
+    case OB_PROP_COLOR_RIGHT_MIRROR_BOOL:
+    case OB_PROP_COLOR_RIGHT_FLIP_BOOL:
+    case OB_PROP_COLOR_RIGHT_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_RIGHT_COLOR_FRAME_PROCESSOR);
         processor->getPropertyValue(propertyId, value);
     } break;
     case OB_PROP_IR_MIRROR_BOOL:
@@ -286,7 +304,16 @@ void StereoFrameTransformPropertyAccessor::getPropertyRange(uint32_t propertyId,
     case OB_PROP_COLOR_MIRROR_BOOL:
     case OB_PROP_COLOR_FLIP_BOOL:
     case OB_PROP_COLOR_ROTATE_INT: {
-        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR);
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR, false);
+        if(!processor) {
+            processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_LEFT_COLOR_FRAME_PROCESSOR, true);
+        }
+        processor->getPropertyRange(propertyId, range);
+    } break;
+    case OB_PROP_COLOR_RIGHT_MIRROR_BOOL:
+    case OB_PROP_COLOR_RIGHT_FLIP_BOOL:
+    case OB_PROP_COLOR_RIGHT_ROTATE_INT: {
+        auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_RIGHT_COLOR_FRAME_PROCESSOR);
         processor->getPropertyRange(propertyId, range);
     } break;
     case OB_PROP_IR_MIRROR_BOOL:
@@ -311,7 +338,6 @@ void StereoFrameTransformPropertyAccessor::getPropertyRange(uint32_t propertyId,
         throw invalid_value_exception("Invalid property id");
     }
 }
-
 
 MonocularFrameTransformPropertyAccessor::MonocularFrameTransformPropertyAccessor(IDevice *owner) : owner_(owner) {}
 

@@ -159,6 +159,10 @@ const char *frameTypeToString(OBFrameType type) {
         return "OB_FRAME_IR";
     case OB_FRAME_COLOR:
         return "OB_FRAME_COLOR";
+    case OB_FRAME_COLOR_LEFT:
+        return "OB_FRAME_COLOR_LEFT";
+    case OB_FRAME_COLOR_RIGHT:
+        return "OB_FRAME_COLOR_RIGHT";
     case OB_FRAME_DEPTH:
         return "OB_FRAME_DEPTH";
     case OB_FRAME_ACCEL:

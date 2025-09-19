@@ -64,8 +64,8 @@ void enumerateStreamProfiles(std::shared_ptr<ob::Sensor> sensor) {
     for(uint32_t index = 0; index < streamProfileList->getCount(); index++) {
         // Get the stream profile.
         auto profile = streamProfileList->getProfile(index);
-        if(sensorType == OB_SENSOR_IR || sensorType == OB_SENSOR_COLOR || sensorType == OB_SENSOR_DEPTH || sensorType == OB_SENSOR_IR_LEFT
-           || sensorType == OB_SENSOR_IR_RIGHT || sensorType == OB_SENSOR_CONFIDENCE) {
+        if(sensorType == OB_SENSOR_IR || sensorType == OB_SENSOR_COLOR || sensorType == OB_SENSOR_COLOR_LEFT || sensorType == OB_SENSOR_COLOR_RIGHT
+           || sensorType == OB_SENSOR_DEPTH || sensorType == OB_SENSOR_IR_LEFT || sensorType == OB_SENSOR_IR_RIGHT || sensorType == OB_SENSOR_CONFIDENCE) {
             printStreamProfile(profile, index);
         }
         else if(sensorType == OB_SENSOR_ACCEL) {

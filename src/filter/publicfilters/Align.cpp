@@ -17,6 +17,8 @@ namespace libobsensor {
 #define IS_FEMTO_MEGA_SERIES(pid) (pid == 0x0669 || pid == 0x066B || pid == 0x06C0)
 
 const std::map<OBStreamType, OBFrameType> streamTypeToFrameType = { { OB_STREAM_COLOR, OB_FRAME_COLOR },
+                                                                    { OB_STREAM_COLOR_LEFT, OB_FRAME_COLOR_LEFT },
+                                                                    { OB_STREAM_COLOR_RIGHT, OB_FRAME_COLOR_RIGHT },
                                                                     { OB_STREAM_DEPTH, OB_FRAME_DEPTH },
                                                                     { OB_STREAM_IR, OB_FRAME_IR },
                                                                     { OB_STREAM_IR_LEFT, OB_FRAME_IR_LEFT },
@@ -196,6 +198,10 @@ OBFrameType Align::getAlignFrameType() {
         return OB_FRAME_DEPTH;
     case OB_STREAM_COLOR:
         return OB_FRAME_COLOR;
+    case OB_STREAM_COLOR_LEFT:
+        return OB_FRAME_COLOR_LEFT;
+    case OB_STREAM_COLOR_RIGHT:
+        return OB_FRAME_COLOR_RIGHT;
     case OB_STREAM_IR:
         return OB_FRAME_IR;
     case OB_STREAM_IR_LEFT:

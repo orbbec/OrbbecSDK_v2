@@ -55,11 +55,11 @@ std::shared_ptr<IFrameBufferManager> FrameMemoryPool::createFrameBufferManager(O
         break;
     case OB_FRAME_IR_LEFT:
         frameBufMgr = std::shared_ptr<FrameBufferManager<IRLeftFrame>>(new FrameBufferManager<IRLeftFrame>(frameBufferSize));
-        LOG_DEBUG("IRFrame bufferManager created!");
+        LOG_DEBUG("IRLeftFrame bufferManager created!");
         break;
     case OB_FRAME_IR_RIGHT:
         frameBufMgr = std::shared_ptr<FrameBufferManager<IRRightFrame>>(new FrameBufferManager<IRRightFrame>(frameBufferSize));
-        LOG_DEBUG("IRFrame bufferManager created!");
+        LOG_DEBUG("IRRightFrame bufferManager created!");
         break;
     case OB_FRAME_IR:
         frameBufMgr = std::shared_ptr<FrameBufferManager<IRFrame>>(new FrameBufferManager<IRFrame>(frameBufferSize));
@@ -68,6 +68,14 @@ std::shared_ptr<IFrameBufferManager> FrameMemoryPool::createFrameBufferManager(O
     case OB_FRAME_COLOR:
         frameBufMgr = std::shared_ptr<FrameBufferManager<ColorFrame>>(new FrameBufferManager<ColorFrame>(frameBufferSize));
         LOG_DEBUG("ColorFrame bufferManager created!");
+        break;
+    case OB_FRAME_COLOR_LEFT:
+        frameBufMgr = std::shared_ptr<FrameBufferManager<ColorLeftFrame>>(new FrameBufferManager<ColorLeftFrame>(frameBufferSize));
+        LOG_DEBUG("ColorLeftFrame bufferManager created!");
+        break;
+    case OB_FRAME_COLOR_RIGHT:
+        frameBufMgr = std::shared_ptr<FrameBufferManager<ColorRightFrame>>(new FrameBufferManager<ColorRightFrame>(frameBufferSize));
+        LOG_DEBUG("ColorRightFrame bufferManager created!");
         break;
     case OB_FRAME_CONFIDENCE:
         frameBufMgr = std::shared_ptr<FrameBufferManager<ConfidenceFrame>>(new FrameBufferManager<ConfidenceFrame>(frameBufferSize));

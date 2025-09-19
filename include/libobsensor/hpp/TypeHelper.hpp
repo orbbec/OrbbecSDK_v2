@@ -127,6 +127,8 @@ public:
      * @brief Video sensors are sensors that produce video frames.
      * @brief The following sensor types are considered video sensors:
      *      OB_SENSOR_COLOR,
+     *      OB_SENSOR_COLOR_LEFT,
+     *      OB_SENSOR_COLOR_RIGHT,
      *      OB_SENSOR_DEPTH,
      *      OB_SENSOR_IR,
      *      OB_SENSOR_IR_LEFT,
@@ -148,6 +150,8 @@ public:
      *      OB_STREAM_VIDEO,
      *      OB_STREAM_DEPTH,
      *      OB_STREAM_COLOR,
+     *      OB_STREAM_COLOR_LEFT,
+     *      OB_STREAM_COLOR_RIGHT,
      *      OB_STREAM_IR,
      *      OB_STREAM_IR_LEFT,
      *      OB_STREAM_IR_RIGHT,

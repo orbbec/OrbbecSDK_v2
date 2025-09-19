@@ -66,8 +66,7 @@ void enumerate_stream_info(ob_sensor *sensor) {
         check_ob_error(&error);
 
         // Print video stream profile information.
-        if(sensor_type == OB_SENSOR_IR || sensor_type == OB_SENSOR_COLOR || sensor_type == OB_SENSOR_DEPTH || sensor_type == OB_SENSOR_IR_LEFT
-           || sensor_type == OB_SENSOR_IR_RIGHT) {
+        if(ob_is_video_sensor_type(sensor_type)) {
             ob_stream_type stream_type;
             const char    *stream_type_str;
             const char    *stream_format_str;

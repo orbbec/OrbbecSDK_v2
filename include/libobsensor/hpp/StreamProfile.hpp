@@ -406,6 +406,8 @@ template <typename T> bool StreamProfile::is() const {
     case OB_STREAM_IR_LEFT:
     case OB_STREAM_IR_RIGHT:
     case OB_STREAM_COLOR:
+    case OB_STREAM_COLOR_LEFT:
+    case OB_STREAM_COLOR_RIGHT:
     case OB_STREAM_DEPTH:
     case OB_STREAM_RAW_PHASE:
     case OB_STREAM_CONFIDENCE:
@@ -434,6 +436,8 @@ public:
         case OB_STREAM_IR_RIGHT:
         case OB_STREAM_DEPTH:
         case OB_STREAM_COLOR:
+        case OB_STREAM_COLOR_LEFT:
+        case OB_STREAM_COLOR_RIGHT:
         case OB_STREAM_VIDEO:
         case OB_STREAM_CONFIDENCE:
             return std::make_shared<VideoStreamProfile>(impl);
