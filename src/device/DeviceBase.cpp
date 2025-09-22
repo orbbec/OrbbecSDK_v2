@@ -97,28 +97,56 @@ bool DeviceBase::isDeactivated() const {
 void DeviceBase::fetchExtensionInfo() {
     auto propServer = getPropertyServer();
     if(propServer->isPropertySupported(OB_RAW_DATA_DEVICE_EXTENSION_INFORMATION, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
-        uint8_t *data     = nullptr;
-        uint32_t dataSize = 0;
-        propServer->getRawData(
-            OB_RAW_DATA_DEVICE_EXTENSION_INFORMATION,
-            [&](OBDataTranState state, OBDataChunk *dataChunk) {
-                if(state == DATA_TRAN_STAT_TRANSFERRING) {
-                    if(data == nullptr) {
-                        dataSize = dataChunk->fullDataSize;
-                        data     = new uint8_t[dataSize];
-                    }
-                    memcpy(data + dataChunk->offset, dataChunk->data, dataChunk->size);
+        uint8_t *data       = nullptr;
+        uint32_t dataSize   = 0;
+        int32_t  retryCount = 1;  // retry if error
+
+        do {
+            BEGIN_TRY_EXECUTE({
+                propServer->getRawData(
+                    OB_RAW_DATA_DEVICE_EXTENSION_INFORMATION,
+                    [&](OBDataTranState state, OBDataChunk *dataChunk) {
+                        if(state == DATA_TRAN_STAT_TRANSFERRING) {
+                            if(data == nullptr) {
+                                dataSize = dataChunk->fullDataSize;
+                                data     = new uint8_t[dataSize];
+                            }
+                            memcpy(data + dataChunk->offset, dataChunk->data, dataChunk->size);
+                        }
+                    },
+                    PROP_ACCESS_INTERNAL);
+            })
+            CATCH_EXCEPTION_AND_EXECUTE({
+                // retry if empty
+                --retryCount;
+                continue;
+            });
+
+            if(data) {
+                TRY_EXECUTE({
+                    std::string jsonStr((char *)data);
+                    // Returns extended info as a map:
+                    //   - valid jsonStr  -> populated map
+                    //   - empty jsonStr  -> empty map
+                    //   - invalid jsonStr -> throws exception
+                    extensionInfo_ = DeviceBase::parseExtensionInfo(jsonStr);
+                })
+                delete[] data;
+                data = nullptr;
+                if(!extensionInfo_.empty()) {
+                    // ok, data is valid
+                    break;
                 }
-            },
-            PROP_ACCESS_INTERNAL);
-        if(data) {
-            std::string jsonStr((char *)data);
-            extensionInfo_ = DeviceBase::parseExtensionInfo(jsonStr);
-            delete[] data;
-            data = nullptr;
-        }
-        else {
-            LOG_ERROR("Get ExtensionInfo Data is Null!");
+                // continue to retry
+            }
+            else {
+                LOG_ERROR("Get ExtensionInfo Data is Null!");
+            }
+            // retry if empty
+            --retryCount;
+        } while(retryCount>=0);
+        if(extensionInfo_.empty()) {
+            LOG_ERROR("Failed to get ExtensionInfo data!");
         }
     }
 
