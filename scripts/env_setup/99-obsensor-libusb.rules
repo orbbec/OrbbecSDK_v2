@@ -40,6 +40,8 @@ SUBSYSTEMS=="usb", ATTRS{idVendor}=="2bc5", ATTRS{idProduct}=="0816", MODE:="066
 SUBSYSTEMS=="usb", ATTRS{idVendor}=="2bc5", ATTRS{idProduct}=="0817", MODE:="0666",  OWNER:="root", GROUP:="video", SYMLINK+="CAM-5530"
 SUBSYSTEMS=="usb", ATTRS{idVendor}=="2bc5", ATTRS{idProduct}=="0819", MODE:="0666",  OWNER:="root", GROUP:="video", SYMLINK+="CAM-5530"
 SUBSYSTEMS=="usb", ATTRS{idVendor}=="2bc5", ATTRS{idProduct}=="0818", MODE:="0666",  OWNER:="root", GROUP:="video", SYMLINK+="Gemini_338"
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="2bc5", ATTRS{idProduct}=="0840", MODE:="0666",  OWNER:="root", GROUP:="video", SYMLINK+="Gemini_305"
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="2bc5", ATTRS{idProduct}=="0841", MODE:="0666",  OWNER:="root", GROUP:="video", SYMLINK+="Gemini_305"
 
 # OpenNI Modules
 SUBSYSTEM=="usb", ATTR{idProduct}=="0400", ATTR{idVendor}=="2bc5", MODE:="0666", OWNER:="root", GROUP:="video", SYMLINK+="astra_bootloader"

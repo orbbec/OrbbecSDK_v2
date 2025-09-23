@@ -22,6 +22,7 @@ add_subdirectory(component)
 add_subdirectory(utils)
 
 # devices support:
+add_subdirectory(gemini305) # Gemini 305 series
 add_subdirectory(gemini330) # Gemini 330 series
 add_subdirectory(gemini2) # Gemini 2 series
 add_subdirectory(astra2) # Astra 2 series

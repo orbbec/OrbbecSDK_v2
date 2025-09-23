@@ -143,6 +143,11 @@ const std::vector<uint16_t> OpenniMaxPids = {
     0x06aa,  // Gemini UW
 };
 
+const std::vector<uint16_t> G305DevPids = {
+    0x0840,  // Gemini 305
+    0x0841,  // Gmeini 305
+};
+
 #define LIDAR_PID_ME450_OLD 0x5555
 #define LIDAR_PID_ME450 0x1302
 #define LIDAR_PID_MS600 0x1300
@@ -162,5 +167,4 @@ const std::map<std::string, uint32_t> LiDARDeviceNameMap = {
 
 #define IS_OB_LIDAR_SINGLE_LINE(pid) (((pid) == LIDAR_PID_MS600) || ((pid) == LIDAR_PID_SL450))
 #define IS_OB_LIDAR_MULTI_LINE(pid) (((pid) == LIDAR_PID_ME450) || ((pid) == LIDAR_PID_ME450_OLD))
-
 }  // namespace libobsensor

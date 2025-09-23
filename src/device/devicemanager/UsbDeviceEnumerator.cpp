@@ -4,6 +4,7 @@
 #include "UsbDeviceEnumerator.hpp"
 #include "utils/Utils.hpp"
 
+#include "gemini305/G305DeviceInfo.hpp"
 #include "gemini330/G330DeviceInfo.hpp"
 #include "gemini2/G2DeviceInfo.hpp"
 #include "astra2/Astra2DeviceInfo.hpp"
@@ -166,7 +167,11 @@ DeviceEnumInfoList UsbDeviceEnumerator::queryArrivalDevice() {
 
 DeviceEnumInfoList UsbDeviceEnumerator::usbDeviceInfoMatch(const SourcePortInfoList portInfoList) {
     DeviceEnumInfoList deviceInfoList;
-    auto               g330Devs = G330DeviceInfo::pickDevices(portInfoList);
+
+    auto g305Devs = G305DeviceInfo::pickDevices(portInfoList);
+    std::copy(g305Devs.begin(), g305Devs.end(), std::back_inserter(deviceInfoList));
+
+    auto g330Devs = G330DeviceInfo::pickDevices(portInfoList);
     std::copy(g330Devs.begin(), g330Devs.end(), std::back_inserter(deviceInfoList));
 
     auto g2Devs = G2DeviceInfo::pickDevices(portInfoList);
