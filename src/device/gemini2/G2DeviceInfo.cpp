@@ -6,13 +6,17 @@
 #include "G2XLDevice.hpp"
 #include "G210Device.hpp"
 #include "G435LeDevice.hpp"
-#include "usb/UsbPortGroup.hpp"
 #include "DevicePids.hpp"
 #include "utils/Utils.hpp"
 #include "exception/ObException.hpp"
+#include "SourcePortInfo.hpp"
+#if defined(BUILD_USB_PAL)
+#include "usb/UsbPortGroup.hpp"
+#endif
+#if defined(BUILD_NET_PAL)
 #include "ethernet/NetPortGroup.hpp"
-#include "ethernet/RTSPStreamPort.hpp"
 #include "ethernet/NetDataStreamPort.hpp"
+#endif
 
 #include <map>
 
@@ -88,6 +92,7 @@ std::shared_ptr<IDevice> G2DeviceInfo::createDevice() const {
     return std::make_shared<G2Device>(shared_from_this());
 }
 
+#if defined(BUILD_USB_PAL)
 std::vector<std::shared_ptr<IDeviceEnumInfo>> G2DeviceInfo::pickDevices(const SourcePortInfoList infoList) {
     std::vector<std::shared_ptr<IDeviceEnumInfo>> G2DeviceInfos;
     auto                                          remainder = FilterUSBPortInfoByPid(infoList, Gemini2DevPids);
@@ -103,7 +108,9 @@ std::vector<std::shared_ptr<IDeviceEnumInfo>> G2DeviceInfo::pickDevices(const So
 
     return G2DeviceInfos;
 }
+#endif
 
+#if defined(BUILD_NET_PAL)
 std::vector<std::shared_ptr<IDeviceEnumInfo>> G2DeviceInfo::pickNetDevices(const SourcePortInfoList infoList) {
     std::vector<std::shared_ptr<IDeviceEnumInfo>> gemini2DeviceInfos;
     auto                                          remainder = FilterNetPortInfoByPid(infoList, Gemini2DevPids);
@@ -139,5 +146,6 @@ std::vector<std::shared_ptr<IDeviceEnumInfo>> G2DeviceInfo::pickNetDevices(const
 
     return gemini2DeviceInfos;
 }
+#endif
 
 }  // namespace libobsensor

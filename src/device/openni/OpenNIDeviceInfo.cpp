@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 #include "OpenNIDeviceInfo.hpp"
-#include "usb/UsbPortGroup.hpp"
 #include "DevicePids.hpp"
 #include "utils/Utils.hpp"
 #include "OpenNIDeviceBase.hpp"
@@ -11,11 +10,16 @@
 #include "DW2Device.hpp"
 #include "AstraMiniDevice.hpp"
 #include "exception/ObException.hpp"
+#include "SourcePortInfo.hpp"
+#if defined(BUILD_USB_PAL)
+#include "usb/UsbPortGroup.hpp"
+#endif
+#if defined(BUILD_NET_PAL)
 #include "ethernet/NetPortGroup.hpp"
-#include "ethernet/RTSPStreamPort.hpp"
 #include "ethernet/NetDataStreamPort.hpp"
-#include <map>
+#endif
 
+#include <map>
 namespace libobsensor {
 
 const std::map<int, std::string> OpenNIDeviceNameMap = {
@@ -77,6 +81,7 @@ std::shared_ptr<IDevice> OpenNIDeviceInfo::createDevice() const {
     return std::make_shared<OpenNIDeviceBase>(shared_from_this());
 }
 
+#if defined(BUILD_USB_PAL)
 std::vector<std::shared_ptr<IDeviceEnumInfo>> OpenNIDeviceInfo::pickDevices(const SourcePortInfoList infoList) {
     std::vector<std::shared_ptr<IDeviceEnumInfo>> OpenNIDeviceInfos;
     auto                                          uvcRemainder   = FilterUSBPortInfoByPid(infoList, OpenniRgbPids);
@@ -117,5 +122,6 @@ std::vector<std::shared_ptr<IDeviceEnumInfo>> OpenNIDeviceInfo::pickDevices(cons
     }
     return OpenNIDeviceInfos;
 }
+#endif
 
 }  // namespace libobsensor

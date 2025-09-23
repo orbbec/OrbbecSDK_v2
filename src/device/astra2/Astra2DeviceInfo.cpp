@@ -3,8 +3,10 @@
 
 #include "Astra2DeviceInfo.hpp"
 #include "Astra2Device.hpp"
-#include "usb/UsbPortGroup.hpp"
 #include "DevicePids.hpp"
+#if defined(BUILD_USB_PAL)
+#include "usb/UsbPortGroup.hpp"
+#endif
 
 #include <map>
 
@@ -39,6 +41,7 @@ std::shared_ptr<IDevice> Astra2DeviceInfo::createDevice() const {
     return std::make_shared<Astra2Device>(shared_from_this());
 }
 
+#ifdef BUILD_USB_PAL
 std::vector<std::shared_ptr<IDeviceEnumInfo>> Astra2DeviceInfo::pickDevices(const SourcePortInfoList infoList) {
     std::vector<std::shared_ptr<IDeviceEnumInfo>> Astra2DeviceInfos;
     auto                                          remainder = FilterUSBPortInfoByPid(infoList, Astra2DevPids);
@@ -54,6 +57,7 @@ std::vector<std::shared_ptr<IDeviceEnumInfo>> Astra2DeviceInfo::pickDevices(cons
 
     return Astra2DeviceInfos;
 }
+#endif
 
 }  // namespace libobsensor
 

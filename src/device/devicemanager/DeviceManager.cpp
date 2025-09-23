@@ -175,6 +175,8 @@ bool DeviceManager::forceIpConfig(std::string deviceUid, const OBNetIpConfig &co
 #if defined(BUILD_NET_PAL)
     return EthernetPal::forceIpConfig(deviceUid, config);
 #else
+    utils::unusedVar(deviceUid);
+    utils::unusedVar(config);
     return false;
 #endif
 }

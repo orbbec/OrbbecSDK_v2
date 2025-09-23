@@ -259,7 +259,7 @@ std::vector<UsbInterfaceInfo> queryInterfaces(libusb_device *device, libusb_devi
 #ifndef __ANDROID__
 UsbDeviceLibusb::UsbDeviceLibusb(libusb_context *libusbCtx, std::shared_ptr<libusb_device_handle> handle) : libusbCtx_(libusbCtx), handle_(handle) {}
 #else
-UsbDeviceLibusb::UsbDeviceLibusb(libusb_context *libusbCtx, std::shared_ptr<libusb_device_handle> handle, const std::string& devUrl)
+UsbDeviceLibusb::UsbDeviceLibusb(libusb_context *libusbCtx, std::shared_ptr<libusb_device_handle> handle, const std::string &devUrl)
     : libusbCtx_(libusbCtx), handle_(handle), devUrl_(devUrl) {}
 
 UsbDeviceLibusb::~UsbDeviceLibusb() {
@@ -332,6 +332,7 @@ UsbEnumeratorLibusb::UsbEnumeratorLibusb() {
     auto sts = libusb_init(&libusbCtx_);
     if(sts != LIBUSB_SUCCESS) {
         LOG_ERROR("libusb_init failed");
+        return;
     }
 
     startEventHandleThread();
@@ -340,11 +341,18 @@ UsbEnumeratorLibusb::UsbEnumeratorLibusb() {
 
 UsbEnumeratorLibusb::~UsbEnumeratorLibusb() noexcept {
     stopEventHandleThread();
-    libusb_exit(libusbCtx_);
+    if(libusbCtx_) {
+        libusb_exit(libusbCtx_);
+    }
     LOG_DEBUG("UsbEnumeratorLibusb destroyed");
 }
 
 const std::vector<UsbInterfaceInfo> &UsbEnumeratorLibusb::queryUsbInterfaces() {
+    if(!libusbCtx_) {
+        LOG_ERROR("libusb_context is not initialized, skip query interfaces");
+        return devInterfaceList_;
+    }
+
     std::vector<UsbInterfaceInfo> tempInfoList;
     libusb_device               **devList;
     auto                          count = libusb_get_device_list(libusbCtx_, &devList);
@@ -457,7 +465,9 @@ void UsbEnumeratorLibusb::startEventHandleThread() {
 void UsbEnumeratorLibusb::stopEventHandleThread() {
     LOG_DEBUG("UsbContext::stopEventHandler()");
     libusbEventHandlerExit_ = 1;
-    libusb_interrupt_event_handler(libusbCtx_);
+    if(libusbCtx_) {
+        libusb_interrupt_event_handler(libusbCtx_);
+    }
     if(libusbEventHandlerThread_.joinable()) {
         libusbEventHandlerThread_.join();
     }

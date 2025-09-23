@@ -5,6 +5,7 @@
 
 #include "DevicePids.hpp"
 #include "InternalTypes.hpp"
+#include "SourcePortInfo.hpp"
 
 #include "utils/Utils.hpp"
 #include "environment/EnvConfig.hpp"
@@ -44,14 +45,17 @@
 #include "G330SensorStreamStrategy.hpp"
 #include "G330PropertyAccessors.hpp"
 #include "G330FrameMetadataParserContainer.hpp"
+#include "utils/BufferParser.hpp"
+#include "G330FrameInterleaveManager.hpp"
+#include "G330DeviceInfo.hpp"
+
+#if defined(BUILD_NET_PAL)
 #include "G330NetDisparitySensor.hpp"
 #include "G330NetVideoSensor.hpp"
 #include "G330NetAccelSensor.hpp"
 #include "G330NetGyroSensor.hpp"
-#include "utils/BufferParser.hpp"
-#include "G330FrameInterleaveManager.hpp"
 #include "G330NetStreamProfileFilter.hpp"
-#include "G330DeviceInfo.hpp"
+#endif
 
 #include <algorithm>
 #include <fstream>
@@ -1293,6 +1297,7 @@ void G330Device::loadDefaultDepthPostProcessingConfig() {
     }
 }
 
+#if defined(BUILD_NET_PAL)
 //====================================================================================================================================
 //=========================================================G330NetDevice==============================================================
 
@@ -2266,5 +2271,6 @@ void G330NetDevice::initStreamProfileFilter(std::shared_ptr<ISensor> sensor) {
     streamProfileFilter->switchFilterMode((OBCameraPerformanceMode)performanceMode);
     sensor->setStreamProfileFilter(streamProfileFilter.get());
 }
+#endif
 
 }  // namespace libobsensor

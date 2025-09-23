@@ -5,8 +5,10 @@
 #include "component/frameprocessor/FrameProcessor.hpp"
 #include "sensor/video/DisparityBasedSensor.hpp"
 #include "IDeviceComponent.hpp"
-#include "G330NetStreamProfileFilter.hpp"
 #include "IDeviceClockSynchronizer.hpp"
+#if defined(BUILD_NET_PAL)
+#include "G330NetStreamProfileFilter.hpp"
+#endif
 
 namespace libobsensor {
 
@@ -142,6 +144,7 @@ void G330Disp2DepthPropertyAccessor::markOutputDisparityFrame(bool enable) {
     }
 }
 
+#if defined(BUILD_NET_PAL)
 G330NetPerformanceModePropertyAccessor::G330NetPerformanceModePropertyAccessor(IDevice *owner) : owner_(owner), performanceMode_(0) {}
 
 void G330NetPerformanceModePropertyAccessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
@@ -189,6 +192,7 @@ void G330NetPerformanceModePropertyAccessor::updatePerformanceMode(uint32_t mode
     auto streamProfileFilter = owner_->getComponentT<G330NetStreamProfileFilter>(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER);
     streamProfileFilter->switchFilterMode((OBCameraPerformanceMode)mode);
 }
+#endif
 
 G330HWNoiseRemovePropertyAccessor::G330HWNoiseRemovePropertyAccessor(IDevice *owner) : owner_(owner) {}
 
@@ -251,7 +255,7 @@ void G330HWNoiseRemovePropertyAccessor::getPropertyRange(uint32_t propertyId, OB
     }
 }
 
-
+#if defined(BUILD_NET_PAL)
 G330NetPTPClockSyncPropertyAccessor::G330NetPTPClockSyncPropertyAccessor(IDevice *owner) : owner_(owner) {}
 
 void G330NetPTPClockSyncPropertyAccessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
@@ -284,4 +288,5 @@ void G330NetPTPClockSyncPropertyAccessor::getPropertyRange(uint32_t propertyId, 
     auto commandPort = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
     commandPort->getPropertyRange(propertyId, range);
 }
+#endif
 }  // namespace libobsensor

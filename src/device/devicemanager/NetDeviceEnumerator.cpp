@@ -6,13 +6,14 @@
 #include "gemini330/G330DeviceInfo.hpp"
 #include "gemini2/G2DeviceInfo.hpp"
 #include "bootloader/BootDeviceInfo.hpp"
-#include "ethernet/RTSPStreamPort.hpp"
-#include "ethernet/NetDataStreamPort.hpp"
+#include "SourcePortInfo.hpp"
 #include "property/VendorPropertyAccessor.hpp"
 #include "property/InternalProperty.hpp"
 #include "DevicePids.hpp"
-
 #include "utils/Utils.hpp"
+#if defined(BUILD_NET_PAL)
+#include "ethernet/NetDataStreamPort.hpp"
+#endif
 
 #include <map>
 #include <string>

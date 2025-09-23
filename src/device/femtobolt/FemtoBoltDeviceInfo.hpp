@@ -15,8 +15,10 @@ public:
     FemtoBoltDeviceInfo(const SourcePortInfoList groupedInfoList);
     ~FemtoBoltDeviceInfo() noexcept override;
 
-    std::shared_ptr<IDevice>                             createDevice() const override;
+    std::shared_ptr<IDevice> createDevice() const override;
+#if defined(BUILD_USB_PAL)
     static std::vector<std::shared_ptr<IDeviceEnumInfo>> pickDevices(const SourcePortInfoList infoList);
+#endif
 };
 
 }  // namespace libobsensor

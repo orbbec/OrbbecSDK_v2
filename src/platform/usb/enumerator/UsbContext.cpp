@@ -17,10 +17,10 @@ UsbContext::UsbContext() {
     }
 #endif
 
-    auto sts = libusb_init(&libusbCtx_);
-    if(sts != LIBUSB_SUCCESS) {
-        LOG_ERROR("libusb_init failed");
-    }
+     auto sts = libusb_init(&libusbCtx_);
+     if(sts != LIBUSB_SUCCESS) {
+         LOG_ERROR("libusb_init failed");
+     }
 
     startEventHandleThread();
 

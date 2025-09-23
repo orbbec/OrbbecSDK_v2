@@ -49,7 +49,7 @@ void PipelineHolder::processFrame(std::shared_ptr<ob::FrameSet> frameSet) {
         std::lock_guard<std::mutex> lock(queueMutex_);
         auto obFrame = frameSet->getFrame(frameType_);
         if(obFrame) {
-            if(obFrames.size() >= maxFrameSize_) {
+            if(obFrames.size() >= static_cast<size_t>(maxFrameSize_)) {
                 obFrames.pop();
             }
             obFrames.push(obFrame);

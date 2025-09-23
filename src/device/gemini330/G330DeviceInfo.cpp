@@ -5,12 +5,16 @@
 #include "G330Device.hpp"
 #include "DabaiADevice.hpp"
 #include "DevicePids.hpp"
-#include "usb/UsbPortGroup.hpp"
-#include "ethernet/NetPortGroup.hpp"
 #include "utils/Utils.hpp"
 #include "exception/ObException.hpp"
 #include "ethernet/RTPStreamPort.hpp"
 #include "ethernet/NetDataStreamPort.hpp"
+#if defined(BUILD_USB_PAL)
+#include "usb/UsbPortGroup.hpp"
+#endif
+#if defined(BUILD_NET_PAL)
+#include "ethernet/NetPortGroup.hpp"
+#endif
 
 #include <map>
 
@@ -73,7 +77,12 @@ G330DeviceInfo::~G330DeviceInfo() noexcept {}
 
 std::shared_ptr<IDevice> G330DeviceInfo::createDevice() const {
     if(connectionType_ == "Ethernet") {
+#if defined(BUILD_NET_PAL)
         return std::make_shared<G330NetDevice>(shared_from_this());
+#else
+        LOG_ERROR("Ethernet pal not supported, please rebuild with BUILD_NET_PAL=ON");
+        return nullptr;
+#endif
     }
     else {
         if(std::find(DaBaiADevPids.begin(), DaBaiADevPids.end(), pid_) != DaBaiADevPids.end()) {
@@ -83,6 +92,7 @@ std::shared_ptr<IDevice> G330DeviceInfo::createDevice() const {
     }
 }
 
+#if defined(BUILD_USB_PAL)
 std::vector<std::shared_ptr<IDeviceEnumInfo>> G330DeviceInfo::pickDevices(const SourcePortInfoList infoList) {
     std::vector<std::shared_ptr<IDeviceEnumInfo>> G330DeviceInfos;
 
@@ -99,7 +109,9 @@ std::vector<std::shared_ptr<IDeviceEnumInfo>> G330DeviceInfo::pickDevices(const 
     }
     return G330DeviceInfos;
 }
+#endif
 
+#if defined(BUILD_NET_PAL)
 std::vector<std::shared_ptr<IDeviceEnumInfo>> G330DeviceInfo::pickNetDevices(const SourcePortInfoList infoList) {
     std::vector<std::shared_ptr<IDeviceEnumInfo>> G330DeviceInfos;
     auto                                          remainder = FilterNetPortInfoByPid(infoList, G330DevPids);
@@ -136,5 +148,6 @@ std::vector<std::shared_ptr<IDeviceEnumInfo>> G330DeviceInfo::pickNetDevices(con
 
     return G330DeviceInfos;
 }
+#endif
 
 }  // namespace libobsensor

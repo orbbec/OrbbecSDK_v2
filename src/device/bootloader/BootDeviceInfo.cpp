@@ -3,9 +3,13 @@
 
 #include "BootDeviceInfo.hpp"
 #include "BootDevice.hpp"
-#include "usb/UsbPortGroup.hpp"
-#include "ethernet/NetPortGroup.hpp"
 #include "DevicePids.hpp"
+#if defined(BUILD_USB_PAL)
+#include "usb/UsbPortGroup.hpp"
+#endif
+#if defined(BUILD_NET_PAL)
+#include "ethernet/NetPortGroup.hpp"
+#endif
 
 #include <map>
 
@@ -43,7 +47,6 @@ BootDeviceInfo::BootDeviceInfo(const SourcePortInfoList groupedInfoList) {
     else {
         throw invalid_value_exception("Invalid port type");
     }
-
 }
 
 BootDeviceInfo::~BootDeviceInfo() noexcept {}
@@ -52,6 +55,7 @@ std::shared_ptr<IDevice> BootDeviceInfo::createDevice() const {
     return std::make_shared<BootDevice>(shared_from_this());
 }
 
+#if defined(BUILD_USB_PAL)
 std::vector<std::shared_ptr<IDeviceEnumInfo>> BootDeviceInfo::pickDevices(const SourcePortInfoList infoList) {
     std::vector<std::shared_ptr<IDeviceEnumInfo>> BootDeviceInfos;
     auto                                          remainder = FilterUSBPortInfoByPid(infoList, BootDevPids);
@@ -67,7 +71,9 @@ std::vector<std::shared_ptr<IDeviceEnumInfo>> BootDeviceInfo::pickDevices(const 
 
     return BootDeviceInfos;
 }
+#endif
 
+#if defined(BUILD_NET_PAL)
 std::vector<std::shared_ptr<IDeviceEnumInfo>> BootDeviceInfo::pickNetDevices(const SourcePortInfoList infoList) {
     std::vector<std::shared_ptr<IDeviceEnumInfo>> G330DeviceInfos;
     auto                                          remainder = FilterNetPortInfoByPid(infoList, BootDevPids);
@@ -83,5 +89,6 @@ std::vector<std::shared_ptr<IDeviceEnumInfo>> BootDeviceInfo::pickNetDevices(con
 
     return G330DeviceInfos;
 }
+#endif
 
 }  // namespace libobsensor

@@ -39,6 +39,7 @@ private:
     bool                                                        isGmslDevice_;
 };
 
+#if defined(BUILD_NET_PAL)
 //========================================================G330NetDevice==================================================
 
 class G330NetDevice : public DeviceBase {
@@ -73,5 +74,6 @@ private:
     int      netBandwidth_;
     uint32_t linkSpeed_;
 };
+#endif
 
 }  // namespace libobsensor
