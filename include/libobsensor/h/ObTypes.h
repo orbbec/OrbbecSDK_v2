@@ -237,7 +237,7 @@ typedef enum {
     OB_FORMAT_RW16               = 33, /**< RAW16 format */
     OB_FORMAT_Y12C4              = 34, /**<  Y12C4 format */
     OB_FORMAT_LIDAR_POINT        = 35, /**< XYZ 3D coordinate point format with LiDAR information, @ref OBLiDARPoint */
-    OB_FORMAT_LIDAR_SPHERE_POINT = 36, /**< XYZ 3D coordinate point format with LiDAR information, @ref OBLiDARSpherePoint */
+    OB_FORMAT_LIDAR_SPHERE_POINT = 36, /**< Spherical coordinate point format with LiDAR information, @ref OBLiDARSpherePoint */
     OB_FORMAT_LIDAR_SCAN         = 37, /**< LiDAR single-line scan mode data format, @ref OBLiDARScanPoint */
     OB_FORMAT_LIDAR_CALIBRATION  = 38, /**< LiDAR calibration mode point format */
 } OBFormat,

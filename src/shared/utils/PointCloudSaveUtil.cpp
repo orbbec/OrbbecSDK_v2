@@ -7,6 +7,9 @@
 
 #include <cmath>
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846 /* pi */
+#endif
 namespace libobsensor {
 
 struct PixelCoord {
@@ -131,6 +134,7 @@ void savePointCloud(const char *fileName, MeshData meshData, bool useMesh, bool 
 
     plyOut.close();
 }
+
 bool PointCloudSaveUtil::savePointCloudToPly(const char *fileName, std::shared_ptr<Frame> frame, bool saveBinary, bool useMesh, float meshThreshold) {
     if(!frame) {
         LOG_WARN("depth point cloud frame is null");
@@ -262,4 +266,101 @@ bool PointCloudSaveUtil::savePointCloudToPly(const char *fileName, std::shared_p
     return true;
 }
 
+bool PointCloudSaveUtil::saveLiDARPointCloudToPly(const char *fileName, std::shared_ptr<Frame> frame, bool saveBinary) {
+    if(!frame) {
+        LOG_WARN("LiDAR point cloud frame is null");
+        return false;
+    }
+
+    auto pointCloudFrame = frame->as<libobsensor::LiDARPointsFrame>();
+    auto pointCloudType  = pointCloudFrame->getFormat();
+
+    if(pointCloudType != OB_FORMAT_LIDAR_SPHERE_POINT && pointCloudType != OB_FORMAT_LIDAR_POINT && pointCloudType != OB_FORMAT_LIDAR_SCAN) {
+        LOG_WARN("LiDAR point cloud format invalid");
+        return false;
+    }
+
+    MeshData            meshData;
+    std::vector<Vertex> vertices;
+
+    switch(pointCloudType) {
+    case OB_FORMAT_LIDAR_SPHERE_POINT: {
+        auto     points     = reinterpret_cast<const OBLiDARSpherePoint *>(pointCloudFrame->getData());
+        uint32_t pointCount = static_cast<uint32_t>(pointCloudFrame->getDataSize() / sizeof(OBLiDARSpherePoint));
+        vertices.reserve(pointCount);
+
+        for(uint32_t i = 0; i < pointCount; ++i) {
+            double thetaRad = points->theta * M_PI / 180.0f;  // to unit rad
+            double phiRad   = points->phi * M_PI / 180.0f;    // to unit rad
+            auto   distance = points->distance;
+
+            if(distance < minPointValue) {
+                ++points;
+                continue;  // skip invalid measurements
+            }
+            auto x = static_cast<float>(distance * cos(thetaRad) * cos(phiRad));
+            auto y = static_cast<float>(distance * sin(thetaRad) * cos(phiRad));
+            auto z = static_cast<float>(distance * sin(phiRad));
+            if(std::isfinite(x) && std::isfinite(y) && std::isfinite(z)) {
+                vertices.emplace_back(Vertex(x, y, z));
+            }
+
+            ++points;
+        }
+        break;
+    }
+    case OB_FORMAT_LIDAR_POINT: {
+        auto     points     = reinterpret_cast<const OBLiDARPoint *>(pointCloudFrame->getData());
+        uint32_t pointCount = static_cast<uint32_t>(pointCloudFrame->getDataSize() / sizeof(OBLiDARPoint));
+        vertices.reserve(pointCount);
+        for(uint32_t i = 0; i < pointCount; ++i) {
+            auto x = points->x;
+            auto y = points->y;
+            auto z = points->z;
+
+            if(std::fabs(z) >= minPointValue && std::isfinite(x) && std::isfinite(y) && std::isfinite(z)) {
+                vertices.emplace_back(Vertex(x, y, z));
+            }
+            ++points;
+        }
+        break;
+    }
+    case OB_FORMAT_LIDAR_SCAN: {
+        auto     points     = reinterpret_cast<const OBLiDARScanPoint *>(pointCloudFrame->getData());
+        uint32_t pointCount = static_cast<uint32_t>(pointCloudFrame->getDataSize() / sizeof(OBLiDARScanPoint));
+        vertices.reserve(pointCount);
+        for(uint32_t i = 0; i < pointCount; ++i) {
+            double angleRad = points->angle * M_PI / 180.0f;  // to unit rad
+            auto   distance = points->distance;
+
+            if(distance < minPointValue) {
+                ++points;
+                continue;  // skip invalid measurements
+            }
+            auto x = static_cast<float>(distance * cos(angleRad));
+            auto y = static_cast<float>(distance * sin(angleRad));
+            auto z = 0.0f;
+            if(std::isfinite(x) && std::isfinite(y)) {
+                vertices.emplace_back(Vertex(x, y, z));
+            }
+
+            ++points;
+        }
+    }
+    default:
+        LOG_WARN("Invalid LiDAR point cloud format");
+        return false;
+    }
+
+    if(vertices.empty()) {
+        LOG_WARN("LiDAR point cloud vertices is zero");
+        return false;
+    }
+
+    vertices.shrink_to_fit();
+    meshData.vertices.swap(vertices);
+
+    savePointCloud(fileName, meshData, false, false, saveBinary);
+    return true;
+}
 }  // namespace libobsensor

@@ -67,5 +67,8 @@ if(${OpenCV_FOUND})
     add_subdirectory(5.wrapper.opencv)
 endif()
 
+# lidar examples
+add_subdirectory(lidar_examples)
+
 # InstallRequiredSystemLibraries
 include(InstallRequiredSystemLibraries)

@@ -11,5 +11,7 @@ class PointCloudSaveUtil {
 public:
     static bool savePointCloudToPly(const char *fileName, std::shared_ptr<Frame> frame, bool saveBinary = false, bool useMesh = false,
                                     float meshThreshold = 50.0);
+
+    static bool saveLiDARPointCloudToPly(const char *fileName, std::shared_ptr<Frame> frame, bool saveBinary = false);
 };
 }  // namespace libobsensor

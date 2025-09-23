@@ -927,7 +927,7 @@ typedef enum {
     OB_PROP_LIDAR_TRANSFER_PROTOCOL_INT = 8006,
 
     /**
-     * @brief LiDAR: set/get transfer protocol
+     * @brief LiDAR: set/get work mode
      */
     OB_PROP_LIDAR_WORK_MODE_INT = 8007,
 

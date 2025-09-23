@@ -244,7 +244,14 @@ bool ob_save_pointcloud_to_ply(const char *file_name, ob_frame *frame, bool save
     VALIDATE_NOT_NULL(file_name);
     VALIDATE_NOT_NULL(frame);
     auto point_cloud_frame = frame->frame;
-    return libobsensor::PointCloudSaveUtil::savePointCloudToPly(file_name, point_cloud_frame, save_binary, use_mesh, mesh_threshold);
+    auto format            = point_cloud_frame->getFormat();
+
+    if(format == OB_FORMAT_LIDAR_SPHERE_POINT || format == OB_FORMAT_LIDAR_POINT || format == OB_FORMAT_LIDAR_SCAN) {
+        return libobsensor::PointCloudSaveUtil::saveLiDARPointCloudToPly(file_name, point_cloud_frame, save_binary);
+    }
+    else {
+        return libobsensor::PointCloudSaveUtil::savePointCloudToPly(file_name, point_cloud_frame, save_binary, use_mesh, mesh_threshold);
+    }
 }
 HANDLE_EXCEPTIONS_AND_RETURN(false, file_name, frame, save_binary, use_mesh, mesh_threshold)
 
