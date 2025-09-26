@@ -346,6 +346,7 @@ bool PointCloudSaveUtil::saveLiDARPointCloudToPly(const char *fileName, std::sha
 
             ++points;
         }
+        break;
     }
     default:
         LOG_WARN("Invalid LiDAR point cloud format");

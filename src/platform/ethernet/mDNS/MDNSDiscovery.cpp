@@ -291,14 +291,18 @@ void MDNSDiscovery::sendAndRecvMDNSQuery(SOCKET sock) {
                     continue;
                 }
 
+                auto formatMacAddress = [](const std::string &mac) -> std::string {
+                    return mac.substr(0, 2) + ":" + mac.substr(2, 2) + ":" + mac.substr(4, 2) + ":" + mac.substr(6, 2) + ":" + mac.substr(8, 2) + ":"
+                           + mac.substr(10, 2);
+                };
+
                 MDNSDeviceInfo info;
 
                 info.ip   = ack.ip;
                 info.port = ack.port;
-                auto mac  = findTxtRecord(ack.txtList, "MAC", "unknown");
-                if(!mac.empty()) {
-                    std::replace(mac.begin(), mac.end(), '-', ':');
-                    info.mac = mac;
+                auto mac  = findTxtRecord(ack.txtList, "MAC", "");
+                if(mac.length() == 12) {
+                    info.mac = formatMacAddress(mac);
                 }
                 else {
                     info.mac = info.ip + ":" + std::to_string(info.port);
@@ -327,14 +331,14 @@ void MDNSDiscovery::sendAndRecvMDNSQuery(SOCKET sock) {
                     // TODO: It is recommended to send a command to get the informations
                     // pid
                     if(info.pid == 0) {
-                        if(info.model == "TL2401" || info.model == "ME450") {
-                            info.pid = 0x0213;  // multi-lines
+                        if(info.model == "ME450") {
+                            info.pid = 0x1302;  // multi-lines
                         }
                         else if(info.model == "MS600") {
-                            info.pid = 0x1600;  // single-line
+                            info.pid = 0x1300;  // single-line
                         }
                         else if(info.model == "SL450") {
-                            info.pid = 0x1450;  // single-line
+                            info.pid = 0x1301;  // single-line
                         }
                     }
                     devInfoList_.emplace_back(info);

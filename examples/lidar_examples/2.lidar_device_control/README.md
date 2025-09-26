@@ -87,7 +87,7 @@ The program provides an interactive interface to monitor and modify LiDAR device
 ```shell
 
 ------------------------------------------------------------------------
-Current Device:  name: Orbbec_LiDAR_ME450, vid: 0x2bc5, pid: 0x0213, uid: 0x20:4b:5e:13:64:30
+Current Device:  name: Orbbec_LiDAR_ME450, vid: 0x2bc5, pid: 0x1302, uid: 0x20:4b:5e:13:64:30
 Input "?" to get all properties.
 ?
 size: 21
