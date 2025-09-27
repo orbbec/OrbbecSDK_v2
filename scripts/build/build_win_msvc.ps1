@@ -63,12 +63,13 @@ switch($vsversion){
 $cmake_generator = "Visual Studio ${vsversion} ${year}"
 Write-Output  "Using $cmake_generator as cmake generator"
 
+$build_dir = "build_$fullPlatform"
 # create build directory
-if (Test-Path build_win_x64) {
-    Remove-Item -Recurse -Force build_win_x64
+if (Test-Path $build_dir) {
+    Remove-Item -Recurse -Force $build_dir
 }
-mkdir build_win_x64
-Set-Location build_win_x64
+mkdir $build_dir
+Set-Location $build_dir
 
 # create install directory
 $install_dir = Join-Path (Get-Location).Path "install\${package_name}"
@@ -77,58 +78,58 @@ mkdir $install_dir/bin
 
 # copy opencv dll to install bin directory (here we use opencv 3.4.0 vc15 build)
 $opencvPath = [System.Environment]::GetEnvironmentVariable("OpenCV_DIR")
-if (-not $opencvPath) {
-    Write-Output "OpenCV path not found in environment variables."
-}
-
-$opencvPath = "$opencvPath\x64"
-# get all available opencv vc version
-$availableVersions = Get-ChildItem -Directory $opencvPath  | Sort-Object Name -Descending
-
-# initialize
-$selectedVersion = $null
-$exactMatch = $false
-
-# matching vc&vs version
-foreach ($version in $availableVersions) {
-    $versionNumber = [int]($version.Name -replace "vc", "")
-
-    # Find the correct version and stop searching
-    if ($versionNumber -eq $vsversion) {
-        $selectedVersion = $version.Name
-        $exactMatch = $true
-        break
-    } elseif ($versionNumber -lt $vsversion) {
-        # If the correct version is not found, select the next available smaller version
-        $selectedVersion = $version.Name
-        break
-    } elseif (-not $selectedVersion) {
-        # If the correct version is not found, select the next larger version available
-        $selectedVersion = $version.Name
-    }
-}
-
-# Check whether the correct version is found
-if (-not $selectedVersion) {
-    Write-Output "No compatible OpenCV version found for Visual Studio $cmake_generator"
-    exit 1
+$opencvLibPath  = Join-Path $opencvPath $targetArch
+if (-not $opencvPath -or -not (Test-Path $opencvLibPath)) {
+    Write-Warning "OpenCV path not found in environment variables. OpenCV DLL copy will be skipped."
 } else {
-    Write-Output "Using OpenCV version: $selectedVersion"
+    # get all available opencv vc version
+    $availableVersions = Get-ChildItem -Directory $opencvLibPath  | Sort-Object Name -Descending
 
-    # No correct version found. Issue a warning
-    if (-not $exactMatch) {
-        Write-Warning "Warning: Selected OpenCV version ($selectedVersion) may not be fully compatible with Visual Studio toolset $cmake_generator. Proceed with caution."
+    # initialize
+    $selectedVersion = $null
+    $exactMatch = $false
+
+    # matching vc&vs version
+    foreach ($version in $availableVersions) {
+        $versionNumber = [int]($version.Name -replace "vc", "")
+
+        # Find the correct version and stop searching
+        if ($versionNumber -eq $vsversion) {
+            $selectedVersion = $version.Name
+            $exactMatch = $true
+            break
+        } elseif ($versionNumber -lt $vsversion) {
+            # If the correct version is not found, select the next available smaller version
+            $selectedVersion = $version.Name
+            break
+        } elseif (-not $selectedVersion) {
+            # If the correct version is not found, select the next larger version available
+            $selectedVersion = $version.Name
+        }
     }
-}
 
-$opencvPath = "$opencvPath/${selectedVersion}"
-$opencvDll = Get-ChildItem -Path $opencvPath -Filter "opencv_world*.dll" -Recurse
-$opencv_path = $opencvDll.FullName
-if (-not (Test-Path $opencv_path)) {
-    Write-Output  "OpenCV dll not found at $opencv_path, please change the opecv dll path in build_win_msvc.ps1"
-    exit 1
+    # Check whether the correct version is found
+    if (-not $selectedVersion) {
+        Write-Output "No compatible OpenCV version found for Visual Studio $cmake_generator"
+        exit 1
+    } else {
+        Write-Output "Using OpenCV version: $selectedVersion"
+
+        # No correct version found. Issue a warning
+        if (-not $exactMatch) {
+            Write-Warning "Warning: Selected OpenCV version ($selectedVersion) may not be fully compatible with Visual Studio toolset $cmake_generator. Proceed with caution."
+        }
+    }
+
+    $opencvLibPath = "$opencvLibPath/${selectedVersion}"
+    $opencvDll = Get-ChildItem -Path $opencvLibPath -Filter "opencv_world*.dll" -Recurse
+    $opencv_path = $opencvDll.FullName
+    if (-not (Test-Path $opencv_path)) {
+        Write-Output  "OpenCV dll not found at $opencv_path, please change the opecv dll path in build_win_msvc.ps1"
+        exit 1
+    }
+    Copy-Item $opencv_path $install_dir/bin/
 }
-Copy-Item $opencv_path $install_dir/bin/
 
 # build and install
 cmake -G "$cmake_generator" -A "$platform" -T "v141,host=${targetArch}" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="${install_dir}" ..
@@ -140,7 +141,6 @@ $zip_file_path = Join-Path (Get-Location).Path "install\${zip_file}"
 Add-Type -assembly "system.io.compression.filesystem"
 [io.compression.zipfile]::CreateFromDirectory("${install_dir}", "${zip_file_path}")
 Write-Output  "Package zip file created at ${zip_file_path}"
-
 
 Write-Output  "OrbbecSDK for ${fullPlatform} build and install completed"
 
