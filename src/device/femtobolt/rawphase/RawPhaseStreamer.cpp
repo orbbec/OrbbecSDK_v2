@@ -263,7 +263,7 @@ void RawPhaseStreamer::parseAndOutputFrame(std::shared_ptr<Frame> frame) {
     captureSize = inputInfo.nRows * inputInfo.nCols * inputInfo.nBitsPerSample / 8;
 
     rawFrameSize = captureSize * inputInfo.nStreams;
-    if(rawFrameSize > frameDataSize || inputInfo.nRows * 2 >= rawFrameSize) {
+    if(rawFrameSize > frameDataSize || inputInfo.nRows * 2u >= rawFrameSize) {
         LOG_ERROR("Frame data size error: rawFrameSize: {}, frameDataSize: {}, nRows: {}", rawFrameSize, frameDataSize, inputInfo.nRows);
         return;
     }
