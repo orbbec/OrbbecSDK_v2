@@ -72,9 +72,9 @@ typedef enum {
     OB_OPENNI_DEPTH_PROCESSOR_PARAM                      = 4049, /**< OpenNI device depth process params*/
     OB_RAW_DATA_DE_IR_TRANSFORM_PARAMS                   = 4059, /**< DE-IR transform parameters*/
     OB_PROP_DEVICE_LOG_SEVERITY_LEVEL_INT                = 5003, /**< Device log level*/
-
-    OB_STRUCT_DEVICE_ERROR_STATE         = 5524, /**< Device error state*/
-    OB_RAW_PRESET_RESOLUTION_CONFIG_LIST = 4061, /**< Resolution ratio configuration list*/
+    OB_STRUCT_DEVICE_ERROR_STATE                         = 5524, /**< Device error state*/
+    OB_RAW_PRESET_RESOLUTION_CONFIG_LIST                 = 4061, /**< Resolution ratio configuration list*/
+    OB_PROP_STOP_COLOR_RIGHT_STREAM_BOOL                 = 4062, /**< Disable the right Color stream*/
 
     OB_PROP_LIDAR_SCAN_SPEED_INT                 = 8018, /**< LiDAR: set/get scan speed*/
     OB_PROP_LIDAR_STREAMING_ON_OFF_INT           = 8019, /**< LiDAR: straming on/off*/
@@ -93,7 +93,6 @@ typedef enum {
     OB_PROP_LIDAR_TX_LOWER_POWER_VOLTAGE_INT     = 8032, /**< LiDAR: get tx lower power voltage, uint: 0.01v*/
     OB_RAW_DATA_LIDAR_MOTOR_VERSION              = 8033, /**< LiDAR: get motor version*/
     OB_RAW_DATA_LIDAR_MEMS_VERSION               = 8034, /**< LiDAR: get mems version*/
-
 } OBInternalPropertyID;
 
 }  // namespace libobsensor

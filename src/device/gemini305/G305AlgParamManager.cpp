@@ -27,7 +27,8 @@ bool G305AlgParamManager::findBestMatchedCameraParam(const std::vector<OBCameraP
             result = param;
             break;
         }
-        else if(streamType == OB_STREAM_COLOR && static_cast<uint32_t>(param.rgbIntrinsic.width) == profile->getWidth()
+        else if(streamType == OB_STREAM_COLOR || streamType == OB_STREAM_COLOR_RIGHT || streamType == OB_STREAM_COLOR_LEFT
+                && static_cast<uint32_t>(param.rgbIntrinsic.width) == profile->getWidth()
                 && static_cast<uint32_t>(param.rgbIntrinsic.height) == profile->getHeight()) {
             found  = true;
             result = param;
@@ -46,7 +47,8 @@ bool G305AlgParamManager::findBestMatchedCameraParam(const std::vector<OBCameraP
                 result = param;
                 break;
             }
-            else if(streamType == OB_STREAM_COLOR && (float)param.rgbIntrinsic.width / param.rgbIntrinsic.height == ratio) {
+            else if(streamType == OB_STREAM_COLOR && streamType == OB_STREAM_COLOR_RIGHT && streamType == OB_STREAM_COLOR_LEFT
+                    && (float)param.rgbIntrinsic.width / param.rgbIntrinsic.height == ratio) {
                 found  = true;
                 result = param;
                 break;
@@ -198,6 +200,10 @@ void G305AlgParamManager::registerBasicExtrinsics() {
     auto extrinsicMgr              = StreamExtrinsicsManager::getInstance();
     auto depthBasicStreamProfile   = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_DEPTH, OB_FORMAT_ANY, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY);
     auto colorBasicStreamProfile   = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_COLOR, OB_FORMAT_ANY, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY);
+    auto leftcolorBasicStreamProfile =
+        StreamProfileFactory::createVideoStreamProfile(OB_STREAM_COLOR_LEFT, OB_FORMAT_ANY, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY);
+    auto rightcolorBasicStreamProfile =
+        StreamProfileFactory::createVideoStreamProfile(OB_STREAM_COLOR_RIGHT, OB_FORMAT_ANY, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY);
     auto leftIrBasicStreamProfile  = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_IR_LEFT, OB_FORMAT_ANY, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY);
     auto rightIrBasicStreamProfile = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_IR_RIGHT, OB_FORMAT_ANY, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY);
     auto accelBasicStreamProfile   = StreamProfileFactory::createAccelStreamProfile(OB_ACCEL_FS_2g, OB_SAMPLE_RATE_1_5625_HZ);
@@ -238,6 +244,8 @@ void G305AlgParamManager::registerBasicExtrinsics() {
 
     basicStreamProfileList_.emplace_back(depthBasicStreamProfile);
     basicStreamProfileList_.emplace_back(colorBasicStreamProfile);
+    basicStreamProfileList_.emplace_back(leftcolorBasicStreamProfile);
+    basicStreamProfileList_.emplace_back(rightcolorBasicStreamProfile);
     basicStreamProfileList_.emplace_back(leftIrBasicStreamProfile);
     basicStreamProfileList_.emplace_back(rightIrBasicStreamProfile);
     basicStreamProfileList_.emplace_back(accelBasicStreamProfile);
@@ -448,6 +456,8 @@ void G305AlgParamManager::bindIntrinsic(std::vector<std::shared_ptr<const Stream
             }
             switch(sp->getType()) {
             case OB_STREAM_COLOR:
+            case OB_STREAM_COLOR_LEFT:
+            case OB_STREAM_COLOR_RIGHT:
                 intrinsic  = param.rgbIntrinsic;
                 distortion = param.rgbDistortion;
                 break;

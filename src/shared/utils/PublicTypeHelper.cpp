@@ -404,12 +404,20 @@ const std::map<OBFrameType, std::string> Frame_Str_Map = { { OB_FRAME_UNKNOWN, "
                                                            { OB_FRAME_CONFIDENCE, "Confidence" },
                                                            { OB_FRAME_LIDAR_POINTS, "LiDAR Points" } };
 
-const std::map<OBStreamType, std::string> Stream_Str_Map = {
-    { OB_STREAM_UNKNOWN, "Unknown" },    { OB_STREAM_VIDEO, "Video" },           { OB_STREAM_IR, "IR" },
-    { OB_STREAM_COLOR, "Color" },        { OB_STREAM_DEPTH, "Depth" },           { OB_STREAM_ACCEL, "Accel" },
-    { OB_STREAM_GYRO, "Gyro" },          { OB_STREAM_IR_LEFT, "Left IR" },       { OB_STREAM_IR_RIGHT, "Right IR" },
-    { OB_STREAM_RAW_PHASE, "RawPhase" }, { OB_STREAM_CONFIDENCE, "Confidence" }, { OB_STREAM_LIDAR, "LiDAR" }
-};
+const std::map<OBStreamType, std::string> Stream_Str_Map = { { OB_STREAM_UNKNOWN, "Unknown" },
+                                                             { OB_STREAM_VIDEO, "Video" },
+                                                             { OB_STREAM_IR, "IR" },
+                                                             { OB_STREAM_COLOR, "Color" },
+                                                             { OB_STREAM_DEPTH, "Depth" },
+                                                             { OB_STREAM_ACCEL, "Accel" },
+                                                             { OB_STREAM_GYRO, "Gyro" },
+                                                             { OB_STREAM_IR_LEFT, "Left IR" },
+                                                             { OB_STREAM_IR_RIGHT, "Right IR" },
+                                                             { OB_STREAM_RAW_PHASE, "RawPhase" },
+                                                             { OB_STREAM_CONFIDENCE, "Confidence" },
+                                                             { OB_STREAM_LIDAR, "LiDAR" },
+                                                             { OB_STREAM_COLOR_LEFT, "Left Color" },
+                                                             { OB_STREAM_COLOR_RIGHT, "Right Color" } };
 
 const std::map<OBIMUSampleRate, std::string> ImuRate_Str_Map = {
     { OB_SAMPLE_RATE_UNKNOWN, "UNKNOWN" }, { OB_SAMPLE_RATE_1_5625_HZ, "1_5625_HZ" }, { OB_SAMPLE_RATE_3_125_HZ, "3_125_HZ" },

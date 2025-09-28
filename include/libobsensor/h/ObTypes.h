@@ -139,8 +139,8 @@ typedef enum {
     OB_SENSOR_RAW_PHASE   = 8,         /**< Raw Phase */
     OB_SENSOR_CONFIDENCE  = 9,         /**< Confidence */
     OB_SENSOR_LIDAR       = 10,        /**< LiDAR */
-    OB_SENSOR_COLOR_LEFT  = 10,        /**< Left Color */
-    OB_SENSOR_COLOR_RIGHT = 11,        /**< Right Color */
+    OB_SENSOR_COLOR_LEFT  = 11,        /**< Left Color */
+    OB_SENSOR_COLOR_RIGHT = 12,        /**< Right Color */
     OB_SENSOR_TYPE_COUNT,              /**The total number of sensor types, is not a valid sensor type */
 } OBSensorType,
     ob_sensor_type;
