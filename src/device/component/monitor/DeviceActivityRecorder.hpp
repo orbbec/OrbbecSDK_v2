@@ -17,22 +17,22 @@ public:
     DeviceActivityRecorder(IDevice *owner);
     virtual ~DeviceActivityRecorder() noexcept override;
 
-    void     touch(DeviceActivity activity) override;
-    uint64_t getLastActive(DeviceActivity activity) const override;
-    uint64_t getLastActive() const override;
+    void    touch(DeviceActivity activity) override;
+    int64_t getLastActive(DeviceActivity activity) const override;
+    int64_t getLastActive() const override;
 
 private:
     /**
      * @brief Get current time in milliseconds since steady_clock epoch
      */
-    uint64_t getNow() const {
+    int64_t getNow() const {
         return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
     }
 
 private:
     static constexpr uint32_t                         activityCount_ = static_cast<uint32_t>(DeviceActivity::Count);
-    std::array<std::atomic<uint64_t>, activityCount_> lastActive_{};
-    std::atomic<uint64_t>                             lastActiveOverall_{ 0 };
+    std::array<std::atomic<int64_t>, activityCount_>  lastActive_{};
+    std::atomic<int64_t>                              lastActiveOverall_{ 0 };
 };
 
 }  // namespace libobsensor

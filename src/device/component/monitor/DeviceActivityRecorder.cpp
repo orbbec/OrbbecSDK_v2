@@ -18,7 +18,7 @@ void DeviceActivityRecorder::touch(DeviceActivity activity) {
     }
 }
 
-uint64_t DeviceActivityRecorder::getLastActive(DeviceActivity activity) const {
+int64_t DeviceActivityRecorder::getLastActive(DeviceActivity activity) const {
     auto index = static_cast<uint32_t>(activity);
     if(index < DeviceActivityRecorder::activityCount_) {
         return lastActive_[index].load(std::memory_order_relaxed);
@@ -26,7 +26,7 @@ uint64_t DeviceActivityRecorder::getLastActive(DeviceActivity activity) const {
     return 0;
 }
 
-uint64_t DeviceActivityRecorder::getLastActive() const {
+int64_t DeviceActivityRecorder::getLastActive() const {
     return lastActiveOverall_.load(std::memory_order_relaxed);
 }
 

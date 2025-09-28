@@ -27,6 +27,12 @@ public:
     void update(const std::string &deviceId, std::shared_ptr<IDeviceActivityRecorder> activityRecorder);
 
     /**
+     * @brief Notify that the specified device has started a reboot action.
+     * @param deviceId The device id (reboot not necessarily finished).
+     */
+    void notifyDeviceReboot(const std::string &deviceId);
+
+    /**
      * @brief Remove all activity for the special device
      *
      * @param deviceId The device id
@@ -36,22 +42,31 @@ public:
     /**
      * @brief Get elapsed milliseconds since last activity of the special device
      *
-     * @param activity The activity type
+     * @param deviceId The device id
      * @return Elapsed time in milliseconds. -1 means no any activity
      */
-    uint64_t getElapsedSinceLastActive(const std::string &deviceId) const;
+    int64_t getElapsedSinceLastActive(const std::string &deviceId) const;
+
+    /**
+     * @brief Check whether the specified device has rebooted since the last status check.
+     *
+     * @param deviceId The device id
+     * @return true/false.
+     */
+    bool hasDeviceRebooted(const std::string &deviceId) const;
 
 private:
     /**
      * @brief Get current time in milliseconds since steady_clock epoch
      */
-    uint64_t getNow() const {
+    int64_t getNow() const {
         return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
     }
 
 private:
     mutable std::mutex                        mutex_;
-    std::unordered_map<std::string, uint64_t> deviceLastActive_;
+    std::unordered_map<std::string, int64_t>  deviceLastActive_;
+    std::unordered_map<std::string, int64_t>  deviceLastReboot_;
 };
 
 }  // namespace libobsensor

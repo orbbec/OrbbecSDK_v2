@@ -123,8 +123,13 @@ bool NetDeviceEnumerator::checkDeviceActivity(std::shared_ptr<const IDeviceEnumI
     std::string    mac           = info ? info->mac : "unknown";
     std::string    ip            = info ? info->address : "unknown";
     auto           elapsed       = deviceActivityManager_->getElapsedSinceLastActive(dev->getUid());
-    const uint64_t timeThreshold = 2000;  // 2s
-    if(elapsed <= timeThreshold) {
+    const int64_t  timeThreshold = 2000;  // 2s
+    if(elapsed < 0) {
+        LOG_DEBUG("Can't find activity of the device, it might be offline. Name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", elapsed, dev->getName(),
+                  dev->getPid(), dev->getDeviceSn(), mac, ip);
+        return false;
+    }
+    else if(elapsed <= timeThreshold) {
         // If the device is active within the allowed elapsed time threshold, consider it online
         LOG_DEBUG("The device responded {} ms ago and is considered online. Name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", elapsed, dev->getName(),
                   dev->getPid(), dev->getDeviceSn(), mac, ip);
@@ -159,40 +164,46 @@ bool NetDeviceEnumerator::handleDeviceRemoved(std::string devUid) {
     auto firstPortInfo = removedDevice->getSourcePortInfoList().front();
     auto info          = std::dynamic_pointer_cast<const NetSourcePortInfo>(firstPortInfo);
 
-    // We assume the device has gone offline and perform extra verification
-    // check the last active of the device
-    if(checkDeviceActivity(removedDevice, info)) {
-        // If the device is active within the allowed elapsed time threshold, consider it online
-        return false;
+    if(deviceActivityManager_ && deviceActivityManager_->hasDeviceRebooted(removedDevice->getUid())) {
+        LOG_DEBUG("The device has reboot, consider it as offline. Name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", removedDevice->getName(),
+                  removedDevice->getPid(), removedDevice->getDeviceSn(), info->mac, info->address);
     }
+    else {
+        // We assume the device has gone offline and perform extra verification
+        // check the last active of the device
+        if(checkDeviceActivity(removedDevice, info)) {
+            // If the device is active within the allowed elapsed time threshold, consider it online
+            return false;
+        }
 
-    // Continue device check via PID acquisition to confirm online status
-    // TODO: Busy devices may be misjudged as offline due to temporary unresponsiveness
-    if(info->pid == OB_DEVICE_G335LE_PID || info->pid == OB_FEMTO_MEGA_PID || IS_OB_FEMTO_MEGA_I_PID(info->pid) || info->pid == OB_DEVICE_G435LE_PID) {
-        bool disconnected = true;
-        BEGIN_TRY_EXECUTE({
-            auto            sourcePort         = Platform::getInstance()->getNetSourcePort(info);
-            auto            vendorPropAccessor = std::make_shared<VendorPropertyAccessor>(nullptr, sourcePort);
-            OBPropertyValue value;
-            value.intValue = 0;
-            vendorPropAccessor->getPropertyValue(OB_PROP_DEVICE_PID_INT, &value);
-            disconnected = false;
-            LOG_DEBUG("Get device pid success, pid:{}", value.intValue);
-        })
-        CATCH_EXCEPTION_AND_EXECUTE({ LOG_WARN("Get pid failed, ip:{},mac:{},device is disconnect.", info->address, info->mac); });
+        // Continue device check via PID acquisition to confirm online status
+        // TODO: Busy devices may be misjudged as offline due to temporary unresponsiveness
+        if(info->pid == OB_DEVICE_G335LE_PID || info->pid == OB_FEMTO_MEGA_PID || IS_OB_FEMTO_MEGA_I_PID(info->pid) || info->pid == OB_DEVICE_G435LE_PID) {
+            bool disconnected = true;
+            BEGIN_TRY_EXECUTE({
+                auto            sourcePort         = Platform::getInstance()->getNetSourcePort(info);
+                auto            vendorPropAccessor = std::make_shared<VendorPropertyAccessor>(nullptr, sourcePort);
+                OBPropertyValue value;
+                value.intValue = 0;
+                vendorPropAccessor->getPropertyValue(OB_PROP_DEVICE_PID_INT, &value);
+                disconnected = false;
+                LOG_DEBUG("Get device pid success, pid:{}", value.intValue);
+            })
+            CATCH_EXCEPTION_AND_EXECUTE({ LOG_WARN("Get pid failed, ip:{},mac:{},device is disconnect.", info->address, info->mac); });
 
-        if(disconnected) {
-            // check device activity again
-            if(checkDeviceActivity(removedDevice, info)) {
-                // If the device is active within the allowed elapsed time threshold, consider it online
+            if(disconnected) {
+                // check device activity again
+                if(checkDeviceActivity(removedDevice, info)) {
+                    // If the device is active within the allowed elapsed time threshold, consider it online
+                    return false;
+                }
+            }
+            else {
+                // device is still online
+                LOG_DEBUG("Got device PID successfully, consider it online: name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", removedDevice->getName(),
+                          removedDevice->getPid(), removedDevice->getDeviceSn(), info->mac, info->address);
                 return false;
             }
-        }
-        else {
-            // device is still online
-            LOG_DEBUG("Got device PID successfully, consider it online: name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", removedDevice->getName(),
-                      removedDevice->getPid(), removedDevice->getDeviceSn(), info->mac, info->address);
-            return false;
         }
     }
     // device has gone offline
@@ -201,7 +212,9 @@ bool NetDeviceEnumerator::handleDeviceRemoved(std::string devUid) {
     LOG_WARN("  - Name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", removedDevice->getName(), removedDevice->getPid(), removedDevice->getDeviceSn(),
              info->mac, info->address);
     // remove activity record
-    deviceActivityManager_->removeActivity(removedDevice->getUid());
+    if(deviceActivityManager_) {
+        deviceActivityManager_->removeActivity(removedDevice->getUid());
+    }
     // printf current device list
     {
         std::unique_lock<std::recursive_mutex> lock(deviceInfoListMutex_);

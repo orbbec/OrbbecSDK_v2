@@ -37,7 +37,17 @@ struct NetDeviceInfo : public DeviceInfo {
     std::string gateway_;
 };
 
+// declare class IDevice for callback
+class IDevice;
+
 typedef std::function<void(OBFwUpdateState state, const char *message, uint8_t percent)> DeviceFwUpdateCallback;
+
+/**
+ * @brief Callback invoked when a device is rebooted.
+ *
+ * @param device Shared pointer to the IDevice instance that has rebooted.
+ */
+typedef std::function<void(const std::shared_ptr<IDevice> device)> DeviceRebootCallback;
 
 class IDevice : public std::enable_shared_from_this<IDevice> {
 public:
@@ -97,6 +107,9 @@ public:
     virtual void activateDeviceAccessor() = 0;
 
     virtual int getFirmwareVersionInt() = 0;
+
+    // register callback for device reboot
+    virtual void registerRebootCallback(DeviceRebootCallback callback) = 0;
 
 public:
     // templated functions

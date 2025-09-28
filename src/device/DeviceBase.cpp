@@ -221,6 +221,13 @@ void DeviceBase::reboot() {
     else {
         throw invalid_value_exception("Device does not support reboot!");
     }
+
+    // notify
+    auto cb = std::atomic_load(&rebootCallback_);
+    if(cb && *cb) {
+        (*cb)(shared_from_this());
+    }
+
     deactivate();
 }
 
@@ -631,6 +638,17 @@ void DeviceBase::checkAndStartHeartbeat() {
         if(devMonitor) {
             devMonitor->enableHeartbeat();
         }
+    }
+}
+
+void DeviceBase::registerRebootCallback(DeviceRebootCallback callback) {
+    if(callback) {
+        auto ptr = std::make_shared<DeviceRebootCallback>(std::move(callback));
+        std::atomic_store(&rebootCallback_, ptr);
+    }
+    else {
+        auto ptr = std::make_shared<DeviceRebootCallback>(nullptr);
+        std::atomic_store(&rebootCallback_, ptr);
     }
 }
 

@@ -156,7 +156,14 @@ std::shared_ptr<IDevice> DeviceManager::createDevice(const std::shared_ptr<const
 
     // create device
     auto device = info->createDevice();
-
+    // remove activity for the device
+    deviceActivityManager_->removeActivity(info->getUid());
+    // register callback for reboot
+    device->registerRebootCallback([&](const std::shared_ptr<IDevice> device) {
+        if(!destroy_ && device && deviceActivityManager_) {
+            deviceActivityManager_->notifyDeviceReboot(device->getInfo()->uid_);
+        }
+    });
     // add to createdDevices_
     {
         std::unique_lock<std::mutex> lock(createdDevicesMutex_);
@@ -236,10 +243,12 @@ void DeviceManager::onDeviceChanged(const DeviceEnumInfoList &removed, const Dev
             if(iter != createdDevices_.end()) {
                 auto dev = iter->second.lock();
                 if(dev) {
+                    dev->registerRebootCallback(nullptr);
                     dev->deactivate();
                 }
                 createdDevices_.erase(iter);
             }
+            deviceActivityManager_->removeActivity(info->getUid());
         }
         printDeviceList("Removed device(s) list", removed);
     }

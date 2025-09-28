@@ -22,26 +22,37 @@ void DeviceActivityManager::update(const std::string &deviceId, std::shared_ptr<
     }
 }
 
+void DeviceActivityManager::notifyDeviceReboot(const std::string &deviceId) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    deviceLastReboot_[deviceId] = getNow();
+}
+
 void DeviceActivityManager::removeActivity(const std::string &deviceId) {
     // Remove all activity records for the device
     std::lock_guard<std::mutex> lock(mutex_);
     deviceLastActive_.erase(deviceId);
+    deviceLastReboot_.erase(deviceId);
 }
 
-uint64_t DeviceActivityManager::getElapsedSinceLastActive(const std::string &deviceId) const {
-    uint64_t lastActive = 0;
-
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        auto                        it = deviceLastActive_.find(deviceId);
-        if(it == deviceLastActive_.end()) {
-            return UINT64_MAX;  // return UINT64_MAX if device not found
-        }
-        lastActive = it->second;
+int64_t DeviceActivityManager::getElapsedSinceLastActive(const std::string &deviceId) const {
+    int64_t                     lastActive = 0;
+    std::lock_guard<std::mutex> lock(mutex_);
+    auto                        it = deviceLastActive_.find(deviceId);
+    if(it == deviceLastActive_.end()) {
+        return -1;  // return -1 if device not found
     }
-
-    uint64_t now = getNow();
+    int64_t now = getNow();
+    lastActive  = it->second;
     return (now > lastActive) ? (now - lastActive) : 0;
+}
+
+bool DeviceActivityManager::hasDeviceRebooted(const std::string &deviceId) const {
+    std::lock_guard<std::mutex> lock(mutex_);
+    auto                        it = deviceLastReboot_.find(deviceId);
+    if(it == deviceLastReboot_.end()) {
+        return false;
+    }
+    return true;
 }
 
 }  // namespace libobsensor

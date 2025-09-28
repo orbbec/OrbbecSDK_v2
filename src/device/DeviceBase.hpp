@@ -71,6 +71,8 @@ public:
     void activateDeviceAccessor() override;
     int  getFirmwareVersionInt() override;
 
+    void registerRebootCallback(DeviceRebootCallback callback) override;
+
 protected:
     // implement on subclass, and must be called to initialize the device info on construction
     virtual void        fetchDeviceInfo();
@@ -105,7 +107,8 @@ private:
     std::map<OBSensorType, std::shared_ptr<const SourcePortInfo>> sensorPortInfos_;
     std::map<OBSensorType, std::shared_ptr<IFilter>>              sensorFrameFilters_;
 
-    std::atomic<bool> isFirmwareUpdating_;
+    std::atomic<bool>                     isFirmwareUpdating_;
+    std::shared_ptr<DeviceRebootCallback> rebootCallback_;
 };
 
 }  // namespace libobsensor

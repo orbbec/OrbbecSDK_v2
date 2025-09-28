@@ -35,7 +35,7 @@ public:
      * @param activity The activity type
      * @return Timestamp in milliseconds since steady_clock epoch
      */
-    virtual uint64_t getLastActive(DeviceActivity activity) const = 0;
+    virtual int64_t getLastActive(DeviceActivity activity) const = 0;
 
     /**
      * @brief Get the last active timestamp among all activity types
@@ -43,7 +43,7 @@ public:
      *
      * @return Timestamp in milliseconds since steady_clock epoch
      */
-    virtual uint64_t getLastActive() const = 0;
+    virtual int64_t getLastActive() const = 0;
 };
 
 }  // namespace libobsensor
