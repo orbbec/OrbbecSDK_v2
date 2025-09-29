@@ -100,7 +100,7 @@ struct GVCPDeviceInfo {
     // std::string manufacturer = "";
 
     virtual bool operator==(const GVCPDeviceInfo &other) const {
-        return other.mac == mac && other.sn == sn && other.ip == ip;
+        return other.mac == mac && other.sn == sn && other.ip == ip && other.localIp == localIp;
     }
     virtual ~GVCPDeviceInfo() {}
 };
