@@ -82,6 +82,17 @@ if(OB_IS_MAIN_PROJECT)
     )
 
     install(EXPORT OrbbecSDKConfig NAMESPACE ob:: DESTINATION lib)
+
+    include(CMakePackageConfigHelpers)
+    write_basic_package_version_file(
+        "${CMAKE_CURRENT_BINARY_DIR}/OrbbecSDKConfigVersion.cmake"
+        VERSION "${PROJECT_VERSION}"
+        COMPATIBILITY AnyNewerVersion
+    )
+    install(
+        FILES "${CMAKE_CURRENT_BINARY_DIR}/OrbbecSDKConfigVersion.cmake"
+        DESTINATION lib
+    )
 endif()
 
 if(OB_BUILD_SOVERSION)
