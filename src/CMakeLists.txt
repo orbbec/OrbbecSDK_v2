@@ -87,7 +87,7 @@ if(OB_IS_MAIN_PROJECT)
     write_basic_package_version_file(
         "${CMAKE_CURRENT_BINARY_DIR}/OrbbecSDKConfigVersion.cmake"
         VERSION "${PROJECT_VERSION}"
-        COMPATIBILITY AnyNewerVersion
+        COMPATIBILITY SameMajorVersion
     )
     install(
         FILES "${CMAKE_CURRENT_BINARY_DIR}/OrbbecSDKConfigVersion.cmake"
