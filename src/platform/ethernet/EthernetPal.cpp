@@ -40,6 +40,7 @@ void EthernetPal::start(deviceChangedCallback callback) {
                 if(!callback_(OB_DEVICE_REMOVED, info.mac)) {
                     // if device is still online, restore it to the list
                     list.push_back(info);
+                    updateSourcePortInfoList({ info }, {});
                 }
             }
             for(auto &&info: added) {
