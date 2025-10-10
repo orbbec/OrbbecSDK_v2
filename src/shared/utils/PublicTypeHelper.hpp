@@ -71,3 +71,5 @@ std::ostream &operator<<(std::ostream &os, const OBExceptionType &type);
 std::ostream &operator<<(std::ostream &os, const OBDERectifyD2CParams &params);
 std::ostream &operator<<(std::ostream &os, const OBDEIRTransformParam &params);
 std::ostream &operator<<(std::ostream &os, const OBPlaybackStatus &status);
+std::ostream &operator<<(std::ostream &os, const OBMultiDeviceSyncConfig &config);
+std::ostream &operator<<(std::ostream &os, const OBDeviceSyncConfig &config);

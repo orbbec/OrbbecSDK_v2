@@ -879,8 +879,86 @@ std::ostream &operator<<(std::ostream &os, const OBPlaybackStatus &status) {
         os << "Stopped";
         break;
     default:
-        os << "Unsupported enumeation value";
+        os << "Unsupported enumeration value";
         break;
     }
+    return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const OBMultiDeviceSyncConfig &config) {
+    os << "{" << "syncMode: ";
+    switch(config.syncMode) {
+    case OB_MULTI_DEVICE_SYNC_MODE_FREE_RUN:
+        os << "free run";
+        break;
+    case OB_MULTI_DEVICE_SYNC_MODE_STANDALONE:
+        os << "standalone";
+        break;
+    case OB_MULTI_DEVICE_SYNC_MODE_PRIMARY:
+        os << "primary";
+        break;
+    case OB_MULTI_DEVICE_SYNC_MODE_SECONDARY:
+        os << "secondary";
+        break;
+    case OB_MULTI_DEVICE_SYNC_MODE_SECONDARY_SYNCED:
+        os << "secondary synced";
+        break;
+    case OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_TRIGGERING:
+        os << "software triggering";
+        break;
+    case OB_MULTI_DEVICE_SYNC_MODE_HARDWARE_TRIGGERING:
+        os << "hardware triggering";
+        break;
+    case OB_MULTI_DEVICE_SYNC_MODE_IR_IMU_SYNC:
+        os << "IR and IMU";
+        break;
+    default:
+        os << "unknown(" << config.syncMode << ")";
+        break;
+    }
+    auto enable = (config.triggerOutEnable ? "true" : "false");
+    os << ", depthDelayUs: " << config.depthDelayUs << ", colorDelayUs: " << config.colorDelayUs << ", trigger2ImageDelayUs: " << config.trigger2ImageDelayUs
+       << ", triggerOutEnable: " << enable << ", triggerOutDelayUs: " << config.triggerOutDelayUs << ", framesPerTrigger: " << config.framesPerTrigger << "}";
+    return os;
+}
+
+std::ostream &operator<<(std::ostream &os, const OBDeviceSyncConfig &config) {
+    os << "{" << "syncMode: ";
+    switch(config.syncMode) {
+    case OB_SYNC_MODE_CLOSE:
+        os << "free run";
+        break;
+    case OB_SYNC_MODE_STANDALONE:
+        os << "standalone";
+        break;
+    case OB_SYNC_MODE_PRIMARY:
+        os << "primary";
+        break;
+    case OB_SYNC_MODE_SECONDARY:
+        os << "secondary";
+        break;
+    case OB_SYNC_MODE_PRIMARY_MCU_TRIGGER:
+        os << "mcu trigger";
+        break;
+    case OB_SYNC_MODE_PRIMARY_IR_TRIGGER:
+        os << "ir trigger";
+        break;
+    case OB_SYNC_MODE_PRIMARY_SOFT_TRIGGER:
+        os << "software trigger";
+        break;
+    case OB_SYNC_MODE_SECONDARY_SOFT_TRIGGER:
+        os << "secondary software trigger";
+        break;
+    case OB_SYNC_MODE_IR_IMU_SYNC:
+        os << "IR and IMU";
+        break;
+    default:
+        os << "unknown(" << config.syncMode << ")";
+        break;
+    }
+    os << ", irTriggerSignalInDelay: " << config.irTriggerSignalInDelay << ", rgbTriggerSignalInDelay: " << config.rgbTriggerSignalInDelay
+       << ", deviceTriggerSignalOutDelay: " << config.deviceTriggerSignalOutDelay
+       << ", deviceTriggerSignalOutPolarity: " << config.deviceTriggerSignalOutPolarity << ", mcuTriggerFrequency: " << config.mcuTriggerFrequency
+       << ", deviceId: " << config.deviceId << "}";
     return os;
 }

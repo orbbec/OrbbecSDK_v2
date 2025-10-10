@@ -93,6 +93,7 @@ void DeviceSyncConfigurator::setSyncConfig(const OBMultiDeviceSyncConfig &device
     internalConfig.triggerOutDelayUs    = deviceSyncConfig.triggerOutDelayUs;
     internalConfig.framesPerTrigger     = deviceSyncConfig.framesPerTrigger;
 
+    LOG_INFO("MultiDeviceSyncConfig: {}", deviceSyncConfig);
     propertyServer->setStructureDataProtoV1_1_T<OBMultiDeviceSyncConfigInternal, 1>(OB_STRUCT_MULTI_DEVICE_SYNC_CONFIG, internalConfig);
 
     currentMultiDevSyncConfig_ = deviceSyncConfig;
@@ -211,6 +212,7 @@ void DeviceSyncConfiguratorOldProtocol::setSyncConfig(const OBMultiDeviceSyncCon
     v1SyncConfig.deviceId                       = 0;
     v1SyncConfig.mcuTriggerFrequency            = 0;
 
+    LOG_INFO("MultiDeviceSyncConfig: {}", v1SyncConfig);
     propertyServer->setStructureDataT<OBDeviceSyncConfig>(OB_STRUCT_MULTI_DEVICE_SYNC_CONFIG, v1SyncConfig);
     if(propertyServer->isPropertySupported(OB_PROP_SYNC_SIGNAL_TRIGGER_OUT_BOOL, PROP_OP_WRITE, PROP_ACCESS_INTERNAL)) {
         propertyServer->setPropertyValueT<bool>(OB_PROP_SYNC_SIGNAL_TRIGGER_OUT_BOOL, v2SyncConfig.triggerOutEnable);
