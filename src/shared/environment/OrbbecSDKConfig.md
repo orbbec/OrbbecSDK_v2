@@ -145,8 +145,6 @@ Based on the device's timestamp and considering data transmission delays, the ti
 				<StreamFailedRetry>0</StreamFailedRetry>
 				<!--Open flow waits for the timeout period of the first frame of data, after which the open flow will fail-->
 				<MaxStartStreamDelayMs>5000</MaxStartStreamDelayMs>
-				<!--The number of data stream restarts due to abnormal interruption, 0 means no restart-->
-				<StreamInterruptedRestart>0</StreamInterruptedRestart>
 				<!--The maximum frame interval time, if this value is exceeded, it will be judged that the stream is interrupted-->
 				<MaxFrameIntervalMs>2000</MaxFrameIntervalMs>
                 <!--The resolution width is enabled by default, int type-->
