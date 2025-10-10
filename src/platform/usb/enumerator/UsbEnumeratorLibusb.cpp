@@ -154,7 +154,8 @@ bool findSN2Toupper(const std::string &src, std::string &dst) {
 
 std::string getStringDesc(libusb_device_handle *deviceHandle, uint8_t descIndex) {
     if(descIndex == 0) {
-        throw invalid_value_exception("Invalid descriptor index");
+        LOG_ERROR("Invalid descriptor index: {}", descIndex);
+        return "";
     }
 
     char str[256];
@@ -397,13 +398,9 @@ const std::vector<UsbInterfaceInfo> &UsbEnumeratorLibusb::queryUsbInterfaces() {
             continue;
         }
 
-        std::string serial;
-        try {
-            serial = getStringDesc(handle, desc.iSerialNumber);
-        }
-        catch(const std::exception &e) {
-            LOG_ERROR("Failed to query USB device serial number: {}", e.what());
-            serial = "";
+        std::string serial = getStringDesc(handle, desc.iSerialNumber);
+        if(serial.empty()) {
+            LOG_ERROR("Failed to query USB device serial number");
         }
 
         auto infs = queryInterfaces(device, desc);
@@ -418,7 +415,12 @@ const std::vector<UsbInterfaceInfo> &UsbEnumeratorLibusb::queryUsbInterfaces() {
 #endif
             inf.serial  = serial;
             inf.infName = getStringDesc(handle, inf.infNameDescIndex);
-            tempInfoList.push_back(inf);
+            if(inf.infName.empty()) {
+                LOG_ERROR("Failed to query USB device interface name");
+            }
+            else {
+                tempInfoList.push_back(inf);
+            }
         }
 
         libusb_close(handle);
