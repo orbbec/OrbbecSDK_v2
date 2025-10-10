@@ -2112,6 +2112,7 @@
             <!--
             <DepthFilterDDOConfig>./Gemini2_v1.0.json</DepthFilterDDOConfig>
 			 -->
+            <Depth>
                 <!-- Number of retries for open stream failures, 0 means no retries -->
                 <StreamFailedRetry>0</StreamFailedRetry>
                 <!-- Open flow waits for the timeout period of the first frame of data, after which
@@ -2164,8 +2165,8 @@
                 <Format>Y8</Format>
             </RightIR>
         </CAM-5530>
-        
-               <!--  Gemini435Le config -->
+
+        <!--  Gemini435Le config -->
         <Gemini435Le>
             <!-- The default Linux UVC backend. If the LinuxUVCBackend is set to "Auto," this item
             will determine the device's speciality. Optional values: V4L2, LibUVC -->
