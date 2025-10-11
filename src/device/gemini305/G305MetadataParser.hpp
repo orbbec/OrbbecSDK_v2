@@ -321,39 +321,6 @@ private:
     IDevice *device_;
 };
 
-class G305DepthScrMetadataLaserStatusParser : public G305ScrMetadataParserBase {
-public:
-    int64_t getValue(const uint8_t *metadata, size_t dataSize) override {
-        if(!isSupported(metadata, dataSize)) {
-            LOG_WARN_INTVL("Current metadata does not contain laser status!");
-            return -1;
-        }
-        auto    standardUvcMetadata = *(reinterpret_cast<const StandardUvcFramePayloadHeader *>(metadata));
-        uint8_t laserStatus         = (standardUvcMetadata.scrSourceClock[2] & 0x04) >> 2;
-        return static_cast<int64_t>(laserStatus);
-    }
-};
-
-class G305DepthScrMetadataLaserPowerLevelParser : public G305ScrMetadataParserBase {
-public:
-    G305DepthScrMetadataLaserPowerLevelParser(FrameMetadataModifier modifier = nullptr) : modifier_(modifier) {}
-    int64_t getValue(const uint8_t *metadata, size_t dataSize) override {
-        if(!isSupported(metadata, dataSize)) {
-            LOG_WARN_INTVL("Current metadata does not contain laser power level!");
-            return -1;
-        }
-        auto    standardUvcMetadata = *(reinterpret_cast<const StandardUvcFramePayloadHeader *>(metadata));
-        int64_t laserPowerLevel     = (standardUvcMetadata.scrSourceClock[2] & 0x38) >> 3;
-        if(modifier_) {
-            laserPowerLevel = modifier_(laserPowerLevel);
-        }
-        return laserPowerLevel;
-    }
-
-private:
-    FrameMetadataModifier modifier_;
-};
-
 class G305DepthScrMetadataHDRSequenceIDParser : public G305ScrMetadataParserBase {
 public:
     int64_t getValue(const uint8_t *metadata, size_t dataSize) override {

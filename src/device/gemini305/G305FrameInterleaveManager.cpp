@@ -6,10 +6,8 @@
 
 namespace libobsensor {
 const std::string hdr_interleave   = "Depth from HDR";
-const std::string laser_interleave = "Laser On-Off";
 G305FrameInterleaveManager::G305FrameInterleaveManager(IDevice *owner) : DeviceComponentBase(owner) {
     availableFrameInterleaves_.emplace_back(hdr_interleave);
-    availableFrameInterleaves_.emplace_back(laser_interleave);
 
     currentIndex_ = -1;
 
@@ -17,28 +15,13 @@ G305FrameInterleaveManager::G305FrameInterleaveManager(IDevice *owner) : DeviceC
     hdrDefault_[0].depthGain         = 16;
     hdrDefault_[0].depthBrightness   = 90;
     hdrDefault_[0].depthMaxExposure  = 30458;
-    hdrDefault_[0].laserSwitch       = 1;
 
     hdrDefault_[1].depthExposureTime = 1;
     hdrDefault_[1].depthGain         = 16;
     hdrDefault_[1].depthBrightness   = 30;
     hdrDefault_[1].depthMaxExposure  = 30458;
-    hdrDefault_[1].laserSwitch       = 1;
 
     memcpy(hdr_, hdrDefault_, sizeof(hdrDefault_));
-    laserInterleaveDefault_[0].depthExposureTime = 3000;
-    laserInterleaveDefault_[0].depthGain         = 16;
-    laserInterleaveDefault_[0].depthBrightness   = 60;
-    laserInterleaveDefault_[0].depthMaxExposure  = 30000;
-    laserInterleaveDefault_[0].laserSwitch       = 1;
-
-    laserInterleaveDefault_[1].depthExposureTime = 3000;
-    laserInterleaveDefault_[1].depthGain         = 16;
-    laserInterleaveDefault_[1].depthBrightness   = 60;
-    laserInterleaveDefault_[1].depthMaxExposure  = 30000;
-    laserInterleaveDefault_[1].laserSwitch       = 0;
-
-    memcpy(laserInterleave_, laserInterleaveDefault_, sizeof(hdrDefault_));
 
     auto propServer = owner->getPropertyServer();
 
@@ -50,7 +33,6 @@ G305FrameInterleaveManager::G305FrameInterleaveManager(IDevice *owner) : DeviceC
             OB_PROP_IR_AE_MAX_EXPOSURE_INT,
             OB_PROP_FRAME_INTERLEAVE_CONFIG_INDEX_INT,
             OB_PROP_FRAME_INTERLEAVE_ENABLE_BOOL,
-            OB_PROP_LASER_CONTROL_INT,
         },
         [&](uint32_t propertyId, const uint8_t *, size_t, PropertyOperationType operationType) {
             if(operationType == PROP_OP_WRITE) {
@@ -86,14 +68,10 @@ void G305FrameInterleaveManager::loadFrameInterleave(const std::string &frameInt
 
             setPropertyValue(owner, OB_PROP_IR_BRIGHTNESS_INT, interleave[sequenceId].depthBrightness);
             setPropertyValue(owner, OB_PROP_IR_AE_MAX_EXPOSURE_INT, interleave[sequenceId].depthMaxExposure);
-            setPropertyValue(owner, OB_PROP_LASER_CONTROL_INT, interleave[sequenceId].laserSwitch);
         };
 
         if(frameInterleaveName == hdr_interleave) {
             setProperties(hdr_, i);
-        }
-        else if(frameInterleaveName == laser_interleave) {
-            setProperties(laserInterleave_, i);
         }
     }
 }
@@ -135,9 +113,6 @@ void G305FrameInterleaveManager::updateFrameInterleaveParam(uint32_t propertyId)
         case OB_PROP_IR_AE_MAX_EXPOSURE_INT:
             interleave[currentIndex_].depthMaxExposure = getPropertyValue<int>(owner, OB_PROP_IR_AE_MAX_EXPOSURE_INT);
             break;
-        case OB_PROP_LASER_CONTROL_INT:
-            interleave[currentIndex_].laserSwitch = getPropertyValue<int>(owner, OB_PROP_LASER_CONTROL_INT);
-            break;
         default:
             break;
         }
@@ -145,9 +120,6 @@ void G305FrameInterleaveManager::updateFrameInterleaveParam(uint32_t propertyId)
 
     if(currentFrameInterleave_ == hdr_interleave) {
         updateProperty(hdr_);
-    }
-    else if(currentFrameInterleave_ == laser_interleave) {
-        updateProperty(laserInterleave_);
     }
 }
 

@@ -20,8 +20,6 @@ namespace libobsensor {
 struct G305Preset {
     // device/global
     std::string depthWorkMode;
-    int         laserState;
-    int         laserPowerLevel;
 
     // depth and infrared sensor
     int depthAutoExposure;

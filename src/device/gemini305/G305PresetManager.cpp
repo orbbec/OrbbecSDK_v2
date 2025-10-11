@@ -29,8 +29,6 @@ G305PresetManager::G305PresetManager(IDevice *owner) : DeviceComponentBase(owner
 
     propServer->registerAccessCallback(
         {
-            OB_PROP_LASER_CONTROL_INT,
-            OB_PROP_LASER_POWER_LEVEL_CONTROL_INT,
             OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL,
             OB_PROP_IR_AUTO_EXPOSURE_BOOL,
             OB_PROP_DEPTH_EXPOSURE_INT,
@@ -119,8 +117,6 @@ void G305PresetManager::loadPresetFromJsonFile(const std::string &filePath) {
 void G305PresetManager::loadPresetFromJsonValue(const std::string &presetName, const Json::Value &root) {
     G305Preset preset{};
     preset.depthWorkMode              = root["depth_alg_mode"].asString();
-    preset.laserState                 = root["laser_state"].asInt();
-    preset.laserPowerLevel            = root["laser_power_level"].asInt();
     preset.depthAutoExposure          = root["depth_auto_exposure"].asBool();
     preset.depthExposureTime          = root["depth_exposure_time"].asInt();
     preset.depthGain                  = root["depth_gain"].asInt();
@@ -157,8 +153,6 @@ Json::Value G305PresetManager::exportSettingsAsPresetJsonValue(const std::string
 
     Json::Value root;
     root["depth_alg_mode"]               = preset.depthWorkMode;
-    root["laser_state"]                  = preset.laserState;
-    root["laser_power_level"]            = preset.laserPowerLevel;
     root["depth_auto_exposure"]          = preset.depthAutoExposure;
     root["depth_exposure_time"]          = preset.depthExposureTime;
     root["depth_gain"]                   = preset.depthGain;
@@ -245,8 +239,6 @@ void G305PresetManager::loadCustomPreset(const std::string &presetName, const G3
         depthWorkModeManager->switchDepthWorkMode(preset.depthWorkMode.c_str());
     }
 
-    setPropertyValue(owner, OB_PROP_LASER_CONTROL_INT, preset.laserState);
-    setPropertyValue(owner, OB_PROP_LASER_POWER_LEVEL_CONTROL_INT, preset.laserPowerLevel);
     setPropertyValue(owner, OB_PROP_IR_EXPOSURE_INT, preset.depthExposureTime);
     setPropertyValue(owner, OB_PROP_IR_GAIN_INT, preset.depthGain);
     setPropertyValue(owner, OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL, (bool)preset.depthAutoExposure);
@@ -282,8 +274,6 @@ void G305PresetManager::storeCurrentParamsAsCustomPreset(const std::string &pres
     G305Preset preset{};
     auto       owner = getOwner();
 
-    preset.laserState                 = getPropertyValue<int>(owner, OB_PROP_LASER_CONTROL_INT);
-    preset.laserPowerLevel            = getPropertyValue<int>(owner, OB_PROP_LASER_POWER_LEVEL_CONTROL_INT);
     preset.depthAutoExposure          = getPropertyValue<bool>(owner, OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL);
     preset.depthExposureTime          = getPropertyValue<int>(owner, OB_PROP_IR_EXPOSURE_INT);
     preset.depthGain                  = getPropertyValue<int>(owner, OB_PROP_IR_GAIN_INT);

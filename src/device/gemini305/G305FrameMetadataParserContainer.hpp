@@ -67,9 +67,6 @@ public:
             registerParser(OB_FRAME_METADATA_TYPE_EXPOSURE_PRIORITY, makeStructureMetadataParser(&G305DepthUvcMetadata::exposure_priority));
         }
 
-        registerParser(OB_FRAME_METADATA_TYPE_LASER_POWER, makeStructureMetadataParser(&G305DepthUvcMetadata::laser_power));
-        registerParser(OB_FRAME_METADATA_TYPE_LASER_POWER_LEVEL, makeStructureMetadataParser(&G305DepthUvcMetadata::laser_power_level));
-        registerParser(OB_FRAME_METADATA_TYPE_LASER_STATUS, makeStructureMetadataParser(&G305DepthUvcMetadata::laser_status));
         registerParser(OB_FRAME_METADATA_TYPE_AE_ROI_LEFT, makeStructureMetadataParser(&G305DepthUvcMetadata::exposure_roi_left));
         registerParser(OB_FRAME_METADATA_TYPE_AE_ROI_TOP, makeStructureMetadataParser(&G305DepthUvcMetadata::exposure_roi_top));
         registerParser(OB_FRAME_METADATA_TYPE_AE_ROI_RIGHT, makeStructureMetadataParser(&G305DepthUvcMetadata::exposure_roi_right));
@@ -141,10 +138,6 @@ public:
                            std::make_shared<G305DepthMetadataParser>(device, OB_FRAME_METADATA_TYPE_EXPOSURE_PRIORITY));
         }
 
-        registerParser(OB_FRAME_METADATA_TYPE_LASER_POWER,
-                       std::make_shared<G305DepthScrMetadataLaserPowerLevelParser>([](const int64_t &param) { return param * 80; }));
-        registerParser(OB_FRAME_METADATA_TYPE_LASER_POWER_LEVEL, std::make_shared<G305DepthScrMetadataLaserPowerLevelParser>());
-        registerParser(OB_FRAME_METADATA_TYPE_LASER_STATUS, std::make_shared<G305DepthScrMetadataLaserStatusParser>());
         registerParser(OB_FRAME_METADATA_TYPE_DISPARITY_SEARCH_RANGE,
                        std::make_shared<G305DepthMetadataParser>(device, OB_FRAME_METADATA_TYPE_DISPARITY_SEARCH_RANGE));
         {

@@ -29,9 +29,6 @@ private:
 
     FrameInterleaveParam hdr_[2];
     FrameInterleaveParam hdrDefault_[2];
-
-    FrameInterleaveParam laserInterleave_[2];
-    FrameInterleaveParam laserInterleaveDefault_[2];
 };
 
 }  // namespace libobsensor

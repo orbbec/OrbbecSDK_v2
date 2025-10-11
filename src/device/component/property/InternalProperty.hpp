@@ -74,7 +74,6 @@ typedef enum {
     OB_PROP_DEVICE_LOG_SEVERITY_LEVEL_INT                = 5003, /**< Device log level*/
     OB_STRUCT_DEVICE_ERROR_STATE                         = 5524, /**< Device error state*/
     OB_RAW_PRESET_RESOLUTION_CONFIG_LIST                 = 4061, /**< Resolution ratio configuration list*/
-    OB_PROP_STOP_COLOR_RIGHT_STREAM_BOOL                 = 4062, /**< Disable the right Color stream*/
 
     OB_PROP_LIDAR_SCAN_SPEED_INT                 = 8018, /**< LiDAR: set/get scan speed*/
     OB_PROP_LIDAR_STREAMING_ON_OFF_INT           = 8019, /**< LiDAR: straming on/off*/
