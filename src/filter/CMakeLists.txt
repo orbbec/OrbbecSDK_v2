@@ -1,7 +1,7 @@
 # Copyright (c) Orbbec Inc. All Rights Reserved.
 # Licensed under the MIT License.
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 
 # add the filter library with the version as the project
 add_library(filter STATIC)

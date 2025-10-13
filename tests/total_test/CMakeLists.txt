@@ -1,7 +1,7 @@
 # Copyright (c) Orbbec Inc. All Rights Reserved.
 # Licensed under the MIT License.
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 
 add_executable(total_test total_test.cpp)
 target_link_libraries(total_test PRIVATE ob::OrbbecSDK)

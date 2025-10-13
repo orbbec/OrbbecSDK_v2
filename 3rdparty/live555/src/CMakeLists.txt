@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 project(Live555 LANGUAGES CXX C)
 
 add_definitions(-DNO_OPENSSL)

@@ -1,7 +1,7 @@
 # Copyright (c) Orbbec Inc. All Rights Reserved.
 # Licensed under the MIT License.
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 project(ob_hw_d2c_align)
 
 add_executable(${PROJECT_NAME} hw_d2c_align.cpp)

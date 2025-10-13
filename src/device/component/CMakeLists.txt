@@ -1,7 +1,7 @@
 # Copyright (c) Orbbec Inc. All Rights Reserved.
 # Licensed under the MIT License.
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 
 file(GLOB_RECURSE SOURCE_FILES "*.cpp" EXCLUDE unittest)
 file(GLOB_RECURSE HEADERS_FILES "*.hpp" EXCLUDE unittest)

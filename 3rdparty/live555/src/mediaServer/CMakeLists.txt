@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.0)
+cmake_minimum_required(VERSION 3.10)
 
 aux_source_directory(./ MEDIA_SERVER_SRCS)
 add_executable(mediaServer ${MEDIA_SERVER_SRCS})

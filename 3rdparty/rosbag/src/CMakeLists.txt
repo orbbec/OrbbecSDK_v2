@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 project(rosbag LANGUAGES CXX C)
 
 include(${CMAKE_CURRENT_LIST_DIR}/config.cmake)

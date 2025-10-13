@@ -1,7 +1,7 @@
 # Copyright (c) Orbbec Inc. All Rights Reserved.
 # Licensed under the MIT License.
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 
 add_executable(align_test align_test.cpp ${OB_PROJECT_ROOT_DIR}/src/filter/publicfilters/AlignImpl.hpp ../../src/filter/publicfilters/AlignImpl.cpp)
 target_include_directories(align_test PRIVATE ${OB_PROJECT_ROOT_DIR}/src/filter/publicfilters/ 

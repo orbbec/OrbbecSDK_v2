@@ -1,7 +1,7 @@
 # Copyright (c) Orbbec Inc. All Rights Reserved.
 # Licensed under the MIT License.
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 
 project(OrbbecSDK VERSION 2.5.5 LANGUAGES CXX C)
 
@@ -58,9 +58,9 @@ if(OB_INSTALL_EXAMPLES_SOURCE AND OB_IS_MAIN_PROJECT)
         install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/examples/publish_files/CMakeLists.txt DESTINATION examples)
         if(UNIX)
             if(APPLE)
-                install(PROGRAMS ${CMAKE_CURRENT_SOURCE_DIR}/examples/publish_files/build_examples_macos.sh DESTINATION ./ RENAME build_examples.sh)
+                install(PROGRAMS ${CMAKE_CURRENT_SOURCE_DIR}/examples/publish_files/build_examples_macos.sh DESTINATION . RENAME build_examples.sh)
             else()
-                install(PROGRAMS ${CMAKE_CURRENT_SOURCE_DIR}/examples/publish_files/build_examples.sh DESTINATION ./)
+                install(PROGRAMS ${CMAKE_CURRENT_SOURCE_DIR}/examples/publish_files/build_examples.sh DESTINATION .)
             endif()
         endif()
     endif()

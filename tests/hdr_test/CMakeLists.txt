@@ -1,7 +1,7 @@
 # Copyright (c) Orbbec Inc. All Rights Reserved.
 # Licensed under the MIT License.
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.10)
 
 add_executable(hdr_test hdr_test.cpp)
 target_include_directories(hdr_test PRIVATE ${OB_PROJECT_ROOT_DIR}/src/filter/public_filters/)
