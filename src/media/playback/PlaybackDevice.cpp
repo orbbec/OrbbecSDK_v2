@@ -28,6 +28,7 @@
 #include "PlaybackFrameInterleaveManager.hpp"
 #include "gemini330/G330FrameInterleaveManager.hpp"
 #include "gemini2/G435LeFrameInterleaveManager.hpp"
+#include "gemini305/G305FrameMetadataParserContainer.hpp "
 
 namespace libobsensor {
 using namespace playback;
@@ -87,6 +88,31 @@ void PlaybackDevice::init() {
             return container;
         });
     }
+    else if(isDeviceInOrbbecSeries(G305DevPids, vid, pid)) {
+        registerComponent(OB_DEV_COMPONENT_COLOR_FRAME_METADATA_CONTAINER, [this]() {
+            std::shared_ptr<FrameMetadataParserContainer> container;
+#ifdef __linux__
+            if(port_->getDeviceInfo()->backendType_ == OB_UVC_BACKEND_TYPE_V4L2) {
+                container = std::make_shared<G305ColorFrameMetadataParserContainerByScr>(this, G305DeviceTimeFreq_, G305FrameTimeFreq_);
+                return container;
+            }
+#endif
+            container = std::make_shared<G305ColorFrameMetadataParserContainer>(this);
+            return container;
+        });
+
+        registerComponent(OB_DEV_COMPONENT_DEPTH_FRAME_METADATA_CONTAINER, [this]() {
+            std::shared_ptr<FrameMetadataParserContainer> container;
+#ifdef __linux__
+            if(port_->getDeviceInfo()->backendType_ == OB_UVC_BACKEND_TYPE_V4L2) {
+                container = std::make_shared<G305DepthFrameMetadataParserContainerByScr>(this, G305DeviceTimeFreq_, G305FrameTimeFreq_);
+                return container;
+            }
+#endif
+            container = std::make_shared<G305DepthFrameMetadataParserContainer>(this);
+            return container;
+        });
+    }
 
     if(!isDeviceInOrbbecSeries(LiDARDevPids, vid, pid)) {
         auto algParamManager = std::make_shared<PlaybackDeviceParamManager>(this, port_);
@@ -97,8 +123,8 @@ void PlaybackDevice::init() {
         registerComponent(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER, depthWorkModeManager);
     }
 
-    if(isDeviceInContainer(G330DevPids, vid, pid) || isDeviceInOrbbecSeries(FemtoMegaDevPids, vid, pid)
-       || isDeviceInOrbbecSeries(FemtoBoltDevPids, vid, pid)) {
+    if(isDeviceInContainer(G330DevPids, vid, pid) || isDeviceInOrbbecSeries(FemtoMegaDevPids, vid, pid) || isDeviceInOrbbecSeries(FemtoBoltDevPids, vid, pid)
+       || isDeviceInOrbbecSeries(G305DevPids, vid, pid)) {
         // preset manager
         auto presetManager = std::make_shared<PlaybackPresetManager>(this);
         registerComponent(OB_DEV_COMPONENT_PRESET_MANAGER, presetManager);
@@ -643,6 +669,11 @@ void PlaybackDevice::initProperties() {
 
     registerPropertyCondition(propertyServer, OB_STRUCT_CURRENT_DEPTH_ALG_MODE, "r", "r", vendorAccessor);
 
+    // G305 metadata properties
+    registerPropertyCondition(propertyServer, OB_PROP_COLOR_RIGHT_MIRROR_BOOL, "rw", "rw", frameTransformAccessor_);
+    registerPropertyCondition(propertyServer, OB_PROP_COLOR_RIGHT_FLIP_BOOL, "rw", "rw", frameTransformAccessor_);
+    registerPropertyCondition(propertyServer, OB_PROP_COLOR_RIGHT_ROTATE_INT, "rw", "rw", frameTransformAccessor_);
+
     // Note: Multi-device sync config: made up of multiple parts
     // 1. Exposed through ob_device_get_multi_device_sync_config, but restricted to internal use
     // 2. If the property exists, register it for read access
@@ -714,7 +745,7 @@ OBPlaybackStatus PlaybackDevice::getCurrentPlaybackStatus() const {
 }
 
 void PlaybackDevice::fetchProperties() {
-    if (frameTransformAccessor_) {
+    if(frameTransformAccessor_) {
         frameTransformAccessor_->initFrameTransformProperty();
     }
 }

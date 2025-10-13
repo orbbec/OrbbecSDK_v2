@@ -33,12 +33,15 @@ PlaybackPresetManager::PlaybackPresetManager(IDevice *owner) : DeviceComponentBa
         else if(std::find(FemtoBoltDevPids.begin(), FemtoBoltDevPids.end(), devInfo->pid_) != FemtoBoltDevPids.end()) {
             playbackDeviceType_ = OB_PLAYBACK_DEVICE_TYPE_MEGA;
         }
+        else if(std::find(G305DevPids.begin(), G305DevPids.end(), devInfo->pid_) != G305DevPids.end()) {
+            playbackDeviceType_ = OB_PLAYBACK_DEVICE_TYPE_GEMINI305;
+        }
+        else {
+            throw invalid_value_exception(utils::string::to_string() << "device Info " << devInfo->pid_);
+        }
     }
-    else {
-        throw invalid_value_exception(utils::string::to_string() << "device Info " << devInfo->pid_);
-    }
-
-    if(playbackDeviceType_ == OB_PLAYBACK_DEVICE_TYPE_DABAI_A || playbackDeviceType_ == OB_PLAYBACK_DEVICE_TYPE_GEMINI330) {
+    if(playbackDeviceType_ == OB_PLAYBACK_DEVICE_TYPE_DABAI_A || playbackDeviceType_ == OB_PLAYBACK_DEVICE_TYPE_GEMINI330
+       || playbackDeviceType_ == OB_PLAYBACK_DEVICE_TYPE_GEMINI305) {
         auto depthWorkModeManager = owner->getComponentT<PlaybackDepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
         auto depthWorkModeList    = depthWorkModeManager->getDepthWorkModeList();
 

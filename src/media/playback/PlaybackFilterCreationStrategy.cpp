@@ -47,6 +47,9 @@ std::shared_ptr<IFilterCreationStrategy> FilterCreationStrategyFactory::create(u
             return std::make_shared<DefaultFilterStrategy>();
         }
     }
+    else if(std::find(G305DevPids.begin(), G305DevPids.end(), pid) != G305DevPids.end()) {
+        return std::make_shared<Gemini305FilterStrategy>(); 
+    }
     return nullptr;
 }
 
@@ -440,6 +443,165 @@ std::vector<std::shared_ptr<IFilter>> Gemini2XLFilterStrategy::createDepthFilter
 std::vector<std::shared_ptr<IFilter>> Gemini2XLFilterStrategy::createColorFilters() {
     return {};
 }
+
+// Gemini305FilterStrategy
+std::vector<std::shared_ptr<IFilter>> Gemini305FilterStrategy::createFilters(OBSensorType type) {
+    switch(type) {
+    case OB_SENSOR_DEPTH:
+        return createDepthFilters();
+    case OB_SENSOR_COLOR:
+        return createColorFilters();
+    case OB_SENSOR_COLOR_LEFT:
+        return createColorLeftFilters();
+    case OB_SENSOR_COLOR_RIGHT:
+        return createColorRightFilters();
+    case OB_SENSOR_IR_LEFT:
+        return createIRLeftFilters();
+    case OB_SENSOR_IR_RIGHT:
+        return createIRRightFilters();
+    default:
+        break;
+    }
+    return {};
+}
+
+std::vector<std::shared_ptr<IFilter>> Gemini305FilterStrategy::createDepthFilters() {
+    auto filterFactory = FilterFactory::getInstance();
+
+    std::vector<std::shared_ptr<IFilter>> depthFilterList;
+    if(filterFactory->isFilterCreatorExists("DecimationFilter")) {
+        auto decimationFilter = filterFactory->createFilter("DecimationFilter");
+        depthFilterList.push_back(decimationFilter);
+    }
+
+    if(filterFactory->isFilterCreatorExists("HDRMerge")) {
+        auto hdrMergeFilter = filterFactory->createFilter("HDRMerge");
+        depthFilterList.push_back(hdrMergeFilter);
+    }
+
+    if(filterFactory->isFilterCreatorExists("SequenceIdFilter")) {
+        auto sequenceIdFilter = filterFactory->createFilter("SequenceIdFilter");
+        depthFilterList.push_back(sequenceIdFilter);
+    }
+
+    if(filterFactory->isFilterCreatorExists("SpatialFastFilter")) {
+        auto spatFilter = filterFactory->createFilter("SpatialFastFilter");
+        // radius
+        std::vector<std::string> params = { "3" };
+        spatFilter->updateConfig(params);
+        depthFilterList.push_back(spatFilter);
+    }
+
+    if(filterFactory->isFilterCreatorExists("SpatialModerateFilter")) {
+        auto spatFilter = filterFactory->createFilter("SpatialModerateFilter");
+        // magnitude, disp_diff, radius
+        std::vector<std::string> params = { "1", "160", "3" };
+        spatFilter->updateConfig(params);
+        depthFilterList.push_back(spatFilter);
+    }
+
+    if(filterFactory->isFilterCreatorExists("SpatialAdvancedFilter")) {
+        auto spatFilter = filterFactory->createFilter("SpatialAdvancedFilter");
+        // magnitude, alpha, disp_diff, radius
+        std::vector<std::string> params = { "1", "0.5", "160", "1" };
+        spatFilter->updateConfig(params);
+        depthFilterList.push_back(spatFilter);
+    }
+
+    if(filterFactory->isFilterCreatorExists("TemporalFilter")) {
+        auto tempFilter = filterFactory->createFilter("TemporalFilter");
+        // diff_scale, weight
+        std::vector<std::string> params = { "0.1", "0.4" };
+        tempFilter->updateConfig(params);
+        depthFilterList.push_back(tempFilter);
+    }
+
+    if(filterFactory->isFilterCreatorExists("HoleFillingFilter")) {
+        auto                     hfFilter = filterFactory->createFilter("HoleFillingFilter");
+        std::vector<std::string> params   = { "2" };
+        hfFilter->updateConfig(params);
+        depthFilterList.push_back(hfFilter);
+    }
+
+    if(filterFactory->isFilterCreatorExists("DisparityTransform")) {
+        auto dtFilter = filterFactory->createFilter("DisparityTransform");
+        depthFilterList.push_back(dtFilter);
+    }
+
+    if(filterFactory->isFilterCreatorExists("ThresholdFilter")) {
+        auto ThresholdFilter = filterFactory->createFilter("ThresholdFilter");
+        depthFilterList.push_back(ThresholdFilter);
+    }
+
+    for(size_t i = 0; i < depthFilterList.size(); i++) {
+        auto filter = depthFilterList[i];
+        if(filter->getName() != "DisparityTransform") {
+            filter->enable(false);
+        }
+    }
+    return depthFilterList;
+}
+
+std::vector<std::shared_ptr<IFilter>> Gemini305FilterStrategy::createColorLeftFilters() {
+    auto filterFactory = FilterFactory::getInstance();
+
+    std::vector<std::shared_ptr<IFilter>> colorFilterList;
+    if(filterFactory->isFilterCreatorExists("DecimationFilter")) {
+        auto decimationFilter = filterFactory->createFilter("DecimationFilter");
+        decimationFilter->enable(false);
+        colorFilterList.push_back(decimationFilter);
+    }
+    return colorFilterList;
+}
+
+std::vector<std::shared_ptr<IFilter>> Gemini305FilterStrategy::createColorRightFilters() {
+    auto filterFactory = FilterFactory::getInstance();
+
+    std::vector<std::shared_ptr<IFilter>> colorFilterList;
+    if(filterFactory->isFilterCreatorExists("DecimationFilter")) {
+        auto decimationFilter = filterFactory->createFilter("DecimationFilter");
+        decimationFilter->enable(false);
+        colorFilterList.push_back(decimationFilter);
+    }
+    return colorFilterList;
+}
+
+std::vector<std::shared_ptr<IFilter>> Gemini305FilterStrategy::createColorFilters() {
+    auto filterFactory = FilterFactory::getInstance();
+
+    std::vector<std::shared_ptr<IFilter>> colorFilterList;
+    if(filterFactory->isFilterCreatorExists("DecimationFilter")) {
+        auto decimationFilter = filterFactory->createFilter("DecimationFilter");
+        decimationFilter->enable(false);
+        colorFilterList.push_back(decimationFilter);
+    }
+    return colorFilterList;
+}
+
+std::vector<std::shared_ptr<IFilter>> Gemini305FilterStrategy::createIRLeftFilters() {
+    auto filterFactory = FilterFactory::getInstance();
+
+    std::vector<std::shared_ptr<IFilter>> leftIRFilterList;
+    if(filterFactory->isFilterCreatorExists("SequenceIdFilter")) {
+        auto sequenceIdFilter = filterFactory->createFilter("SequenceIdFilter");
+        sequenceIdFilter->enable(false);
+        leftIRFilterList.push_back(sequenceIdFilter);
+    }
+    return leftIRFilterList;
+}
+
+std::vector<std::shared_ptr<IFilter>> Gemini305FilterStrategy::createIRRightFilters() {
+    auto filterFactory = FilterFactory::getInstance();
+
+    std::vector<std::shared_ptr<IFilter>> rightIRFilterList;
+    if(filterFactory->isFilterCreatorExists("SequenceIdFilter")) {
+        auto sequenceIdFilter = filterFactory->createFilter("SequenceIdFilter");
+        sequenceIdFilter->enable(false);
+        rightIRFilterList.push_back(sequenceIdFilter);
+    }
+    return rightIRFilterList;
+}
+
 
 }  // namespace playback
 }  // namespace libobsensor

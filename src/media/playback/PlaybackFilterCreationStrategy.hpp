@@ -88,6 +88,20 @@ private:
     virtual std::vector<std::shared_ptr<IFilter>> createIRRightFilters() override;
 };
 
+class Gemini305FilterStrategy : public FilterCreationStrategyBase, IIRFilterCreationStrategy {
+public:
+    virtual ~Gemini305FilterStrategy() noexcept override = default;
+    virtual std::vector<std::shared_ptr<IFilter>> createFilters(OBSensorType type) override;
+
+private:
+    virtual std::vector<std::shared_ptr<IFilter>> createDepthFilters() override;
+    virtual std::vector<std::shared_ptr<IFilter>> createColorFilters() override;
+    virtual std::vector<std::shared_ptr<IFilter>> createIRLeftFilters() override;
+    virtual std::vector<std::shared_ptr<IFilter>> createIRRightFilters() override;
+     std::vector<std::shared_ptr<IFilter>> createColorLeftFilters();
+     std::vector<std::shared_ptr<IFilter>> createColorRightFilters() ;
+};
+
 class Astra2FilterStrategy : public FilterCreationStrategyBase {
 public:
     virtual ~Astra2FilterStrategy() noexcept override = default;

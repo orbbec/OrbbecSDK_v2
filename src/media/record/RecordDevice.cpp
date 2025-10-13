@@ -163,7 +163,8 @@ void RecordDevice::writeMetadataProperty() {
     auto devInfo = device_->getInfo();
     auto vid     = devInfo->vid_;
     auto pid     = devInfo->pid_;
-    if(devInfo->backendType_ == OB_UVC_BACKEND_TYPE_V4L2 && isDeviceInContainer(G330DevPids, vid, pid)) {
+    if(devInfo->backendType_ == OB_UVC_BACKEND_TYPE_V4L2
+       && (isDeviceInContainer(G330DevPids, vid, pid) || (vid == ORBBEC_DEVICE_VID && isDeviceInSeries(G305DevPids, pid)))) {
         // color sensor property
         // writePropertyT<bool>(OB_PROP_COLOR_AUTO_EXPOSURE_BOOL);
         // writePropertyT<int>(OB_PROP_COLOR_AUTO_EXPOSURE_PRIORITY_INT);
