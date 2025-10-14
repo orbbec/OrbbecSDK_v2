@@ -12,6 +12,7 @@
 #include "InternalTypes.hpp"
 #include "Platform.hpp"
 #include "IDeviceMonitor.hpp"
+#include "utils/DeviceTypeHelper.hpp"
 
 #ifdef __linux__
 #include "usb/uvc/UvcDevicePort.hpp"
@@ -342,7 +343,10 @@ DeviceComponentPtr<IDeviceComponent> DeviceBase::getComponent(DeviceComponentId 
     }
 
     if(throwExIfNotFound) {
-        throw invalid_value_exception(utils::string::to_string() << "Component " << compId << " not found!");
+        std::ostringstream oss;
+
+        oss << compId << " not found!";
+        throw invalid_value_exception(oss.str());
     }
     return DeviceComponentPtr<IDeviceComponent>();
 }

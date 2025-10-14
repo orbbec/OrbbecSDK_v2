@@ -19,6 +19,7 @@ add_subdirectory(context)
 add_subdirectory(devicemanager)
 add_subdirectory(protocol)
 add_subdirectory(component)
+add_subdirectory(utils)
 
 # devices support:
 add_subdirectory(gemini330) # Gemini 330 series
