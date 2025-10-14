@@ -142,32 +142,58 @@ Here is the device support list of OrbbecSDK v1 (v1.x) and Orbbec SDK v2 (v2.x):
 
 ## 1. Introduction
 
-This is the open source library of the Orbbec SDK v2.x. The Orbbec SDK is a cross-platform library for interfacing with the Orbbec RGB-D cameras. It provides C/C++ APIs and many other languages or frameworks [wrappers](wrappers/README.md).
+
+This is the open-source library of Orbbec SDK v2.x.
+The Orbbec SDK is a cross-platform library for interfacing with Orbbec RGB-D cameras, providing C/C++ APIs as well as [wrappers](wrappers/README.md) for various other languages and frameworks.
 
 <div align=center>
 <img src="docs/resource/Overview.jpg" width="400" align="center" />
 </div>
 
-To enhance performance and accommodate the diverse needs of our customers, the Orbbec SDK has been open source since version 2.0.0. For projects currently utilizing version Orbbec SDK v1.x that are considering an upgrade to Orbbec SDK v2.x, we advise using the pre-compiled binaries available in the [Release](https://github.com/orbbec/OrbbecSDK_v2/releases) page. This ensures a seamless transition and maintains consistency with your existing setup.
+### 1.1 Migration from Orbbec SDK v1 to Open-Source Orbbec SDK v2
+To enhance performance and meet the diverse needs of our customers, the Orbbec SDK has been open-sourced since version 2.0.0.
+
+#### Upgrade Recommendation
+
+For projects currently utilizing version Orbbec SDK v1.x that are considering an upgrade to Orbbec SDK v2.x, we advise using the pre-compiled binaries available in the [Release](https://github.com/orbbec/OrbbecSDK_v2/releases) page. This ensures a seamless transition and maintains consistency with your existing setup.
+
+#### API Compatibility
+We have made every effort to maintain backward compatibility with the previous API. However, in pursuit of higher performance and an improved user experience, several updates have been introduced. Some interfaces were modified or removed due to infrequent use or design limitations. These adjustments were made carefully to minimize disruption and do not affect the SDK’s standard functionality.
+
+#### Migration Resources
+
+- Migration guidance: [orbbecsdkv1_to_openorbbecsdkv2.md](docs/tutorial/orbbecsdkv1_to_openorbbecsdkv2.md)
+- Comprehensive API Changes Overview: [api_changes_at_v2.x.x.md](docs/api/api_changes_at_v2.x.x.md)
+
+#### Continued using for Orbbec SDK v1.x
+
+If you wish to continue using Orbbec SDK v1.x, the pre-compiled binaries remain available in our [OrbbecSDK v1](https://github.com/orbbec/OrbbecSDK) repository.
+Nonetheless, we strongly encourage migration to Orbbec SDK v2.x, which offers enhanced features, better performance, and ongoing support.
+Our commitment to SDK v2.x reflects Orbbec’s long-term strategy to provide robust support, foster an open-source community, and drive continuous innovation.
+
+### 1.2 Upgrading from OpenNI Protocol to UVC Protocol
+
+#### Timeline and Scope
+Starting from October 2025 (Orbbec SDK v2.5.5), we will begin upgrading devices that use the OpenNI protocol to the UVC protocol, enabling full compatibility with Orbbec SDK v2.
+
+Already upgraded devices and future upgrade schedule：
+
+| **Already Upgraded Devices** | **Future Upgrade Schedule** |
+|---|---|
+| • Astra Mini S Pro<br>• Astra Mini Pro | • Gemini E, Gemini UW, Gemini EW<br>• DaBai Max, DaBai Max Pro<br>• DaBai DW, DaBai DCW, DaBai DCW2, DaBai DW2 |
 
 
-We have made every effort to maintain backward compatibility with our APIs. However, in pursuit of enhanced performance and an improved user experience, we have made necessary updates. Some interfaces have been removed or altered due to infrequent use or design imperfections. These changes are intended to be minimally disruptive and should not interfere with the standard functionality of the SDK. **How to migrate from Orbbec SDK v1 to the open-source Orbbec SDK v2**,Please refer to the [orbbecsdkv1_to_orbbecsdkv2](docs/tutorial/orbbecsdkv1_to_openorbbecsdkv2.md) document.
-
-Additionally, a comprehensive overview of the API changes from Orbbec SDK v1.x to v2.x.x can be found here: [api_changes_at_v2.x.x](docs/api/api_changes_at_v2.x.x.md).
-
-If you prefer to continue with Orbbec SDK v1.x, you can still access the pre-compiled binaries on our [Orbbec SDK](https://github.com/orbbec/OrbbecSDK) repository. Nonetheless, we encourage you to consider transitioning to Orbbec SDK v2.x. This move will allow you to take advantage of  improved and new features and ensure ongoing support. Our dedication to v2.x is part of a broader strategy aimed at delivering robust long-term support, fostering an open-source community, and driving innovation.
+#### Upgrade Instructions
+If you are currently using the OpenNI SDK, please refer to the [How to Upgrade OpenNI Protocol Devices to UVC Protocol and API Usage Guide](docs/tutorial/opennisdk_to_orbbecsdkv2.md) for detailed instructions on switching to Orbbec SDK v2 after updating your device firmware.
+After upgrading to the UVC protocol, these devices will have a firmware major version number of 2 (for example: v2.x.xx).
 
 
-Starting from October 2025 (Orbbec SDK v2 Version v2.5.5), we will begin upgrading devices that use the OpenNI protocol to the UVC protocol, enabling them to work with the Orbbec SDK v2. Devices that have already been upgraded include the Astra Mini (S) Pro, and future upgrades will cover the Gemini E, Gemini UW, Gemini EW, DaBai Max, DaBai Max Pro, DaBai DW, DaBai DCW, DaBai DCW2, and DaBai DW2. If you were previously using the OpenNI SDK, please refer to [How to Upgrade OpenNI Protocol Devices to UVC Protocol and API Usage Guide](docs/tutorial/opennisdk_to_orbbecsdkv2.md) document for detailed instructions on switching to Orbbec SDK v2 after upgrading your device firmware to the UVC protocol.
+#### Important Notes
+- Firmware version v2.x.x (major version 2) indicates a UVC protocol device, which requires Orbbec SDK v2.
+- Firmware version v1.x.x (major version 1) indicates an OpenNI protocol device, which requires either the OpenNI SDK or Orbbec SDK v1.
 
-After these devices are upgraded to the UVC protocol, their firmware major version number will be 2 (e.g., v2.x.xx).
 
-**Notes**
-
-- A version of v2.x.x (major version 2) indicates firmware using the UVC protocol, which requires the Orbbec SDK v2.
-- A version of v1.x.x (major version 1) indicates firmware using the OpenNI protocol, which requires either the OpenNI SDK or Orbbec SDK v1.
-
-### 1.1 Supported Platforms
+### 1.3 Supported Platforms
 
 - Windows 10 or later: x86 and x64 architectures
 - Linux x64: tested on Ubuntu 20.04, 22.04 and 24.04
@@ -175,7 +201,7 @@ After these devices are upgraded to the UVC protocol, their firmware major versi
 - [Android](https://github.com/orbbec/OrbbecSDK-Android-Wrapper/tree/v2-main): tested on Android 13
 - macOS: tested on M2 chip, OS version 13.2
 
-### 1.2 Supported Devices
+### 1.4 Supported Devices
 
 | **Products List** | **Minimal Firmware Version** | **Recommended FW Version**    |
 |-------------------|------------------------------|-------------------------------|
@@ -202,7 +228,7 @@ After these devices are upgraded to the UVC protocol, their firmware major versi
 
 For optimal performance, we strongly recommend updating to the latest firmware version. This ensures that you benefit from the most recent enhancements and bug fixes.
 
-More devices support will be added in the near future. If you can not find your device in the table above currently, try the version v1.x.y at [Orbbec SDK](https://github.com/orbbec/OrbbecSDK)
+More devices support will be added in the near future. If you can not find your device in the table above currently, try the version v1.x.y at [Orbbec SDK v1](https://github.com/orbbec/OrbbecSDK)
 
 ## 2. Documentation
 
