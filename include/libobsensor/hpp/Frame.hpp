@@ -57,7 +57,7 @@ public:
      * frame object is destroyed.
      * @attention The internal frame object should not be deleted by the caller.
      *
-     * @param impl The pointer to the internal frame object.
+     * @param[in] impl The pointer to the internal frame object.
      */
     explicit Frame(const ob_frame *impl) : impl_(impl) {}
 
@@ -227,7 +227,8 @@ public:
     /**
      * @brief Check if the frame object has metadata of a given type.
      *
-     * @param type The metadata type. refer to @ref OBFrameMetadataType
+     * @param[in] type The metadata type. refer to @ref OBFrameMetadataType
+     *
      * @return bool The result.
      */
     bool hasMetadata(OBFrameMetadataType type) const {
@@ -241,7 +242,8 @@ public:
     /**
      * @brief Get the metadata value
      *
-     * @param type The metadata type. refer to @ref OBFrameMetadataType
+     * @param[in] type The metadata type. refer to @ref OBFrameMetadataType
+     *
      * @return int64_t The metadata value.
      */
     int64_t getMetadataValue(OBFrameMetadataType type) const {
@@ -294,6 +296,7 @@ public:
      * @brief Check if the runtime type of the frame object is compatible with a given type.
      *
      * @tparam T The given type.
+     *
      * @return bool The result.
      */
     template <typename T> bool is() const;
@@ -302,6 +305,7 @@ public:
      * @brief Convert the frame object to a target type.
      *
      * @tparam T The target type.
+     *
      * @return std::shared_ptr<T> The result. If it cannot be converted, an exception will be thrown.
      */
     template <typename T> std::shared_ptr<T> as() {
@@ -320,6 +324,7 @@ public:
      * @brief Convert the frame object to a target type.
      *
      * @tparam T The target type.
+     *
      * @return std::shared_ptr<T> The result. If it cannot be converted, an exception will be thrown.
      */
     template <typename T> std::shared_ptr<const T> as() const {
@@ -398,7 +403,7 @@ public:
      * frame object is destroyed.
      * @attention The internal frame object should not be deleted by the caller.
      *
-     * @param impl The pointer to the internal frame object.
+     * @param[in] impl The pointer to the internal frame object.
      */
     explicit VideoFrame(const ob_frame *impl) : Frame(impl) {};
 
@@ -488,7 +493,7 @@ public:
      * @attention The internal frame object should not be deleted by the caller.
      * @attention Please use the FrameFactory to create a Frame object.
      *
-     * @param impl The pointer to the internal frame object.
+     * @param[in] impl The pointer to the internal frame object.
      */
     explicit ColorFrame(const ob_frame *impl) : VideoFrame(impl) {};
 
@@ -509,7 +514,7 @@ public:
      * @attention The internal frame object should not be deleted by the caller.
      * @attention Please use the FrameFactory to create a Frame object.
      *
-     * @param impl The pointer to the internal frame object.
+     * @param[in] impl The pointer to the internal frame object.
      */
     explicit DepthFrame(const ob_frame *impl) : VideoFrame(impl) {};
 
@@ -546,7 +551,7 @@ public:
      * @attention The internal frame object should not be deleted by the caller.
      * @attention Please use the FrameFactory to create a Frame object.
      *
-     * @param impl The pointer to the internal frame object.
+     * @param[in] impl The pointer to the internal frame object.
      */
     explicit IRFrame(const ob_frame *impl) : VideoFrame(impl) {};
 
@@ -568,7 +573,7 @@ public:
      * @attention The internal frame object should not be deleted by the caller.
      * @attention Please use the FrameFactory to create a Frame object.
      *
-     * @param impl The pointer to the internal frame object.
+     * @param[in] impl The pointer to the internal frame object.
      */
     explicit ConfidenceFrame(const ob_frame *impl) : VideoFrame(impl) {};
 
@@ -580,8 +585,8 @@ public:
  * @brief The PointsFrame class is used to obtain pointcloud data and point cloud information.
  *
  * @note The pointcloud data format can be obtained from the @ref Frame::getFormat() function. Witch can be one of the following formats:
- * - @ref OB_FORMAT_POINT: 32-bit float format with 3D point coordinates (x, y, z), @ref OBPoint
- * - @ref OB_FORMAT_RGB_POINT: 32-bit float format with 3D point coordinates (x, y, z) and point colors (r, g, b) @ref, OBColorPoint
+ * - @ref OB_FORMAT_POINT : 32-bit float format with 3D point coordinates (x, y, z), @ref OBPoint
+ * - @ref OB_FORMAT_RGB_POINT : 32-bit float format with 3D point coordinates (x, y, z) and point colors (r, g, b) @ref OBColorPoint
  */
 class PointsFrame : public Frame {
 
@@ -594,7 +599,7 @@ public:
      * @attention The internal frame object should not be deleted by the caller.
      * @attention Please use the FrameFactory to create a Frame object.
      *
-     * @param impl The pointer to the internal frame object.
+     * @param[in] impl The pointer to the internal frame object.
      */
     explicit PointsFrame(const ob_frame *impl) : Frame(impl) {};
 
@@ -768,7 +773,8 @@ public:
     /**
      * @brief Get a frame of a specific type from the FrameSet
      *
-     * @param frameType The type of sensor
+     * @param[in] frameType The type of sensor
+     *
      * @return std::shared_ptr<Frame> The corresponding type of frame
      */
     std::shared_ptr<Frame> getFrame(OBFrameType frameType) const {
@@ -784,7 +790,8 @@ public:
     /**
      * @brief Get a frame at a specific index from the FrameSet
      *
-     * @param index The index of the frame
+     * @param[in] index The index of the frame
+     *
      * @return std::shared_ptr<Frame> The frame at the specified index
      */
     std::shared_ptr<Frame> getFrameByIndex(uint32_t index) const {
@@ -802,7 +809,7 @@ public:
      *
      * @attention If the FrameSet contains the same type of frame, the new frame will replace the old one.
      *
-     * @param frame The frame to be pushed
+     * @param[in] frame The frame to be pushed
      */
     void pushFrame(std::shared_ptr<const Frame> frame) const {
         ob_error *error = nullptr;
@@ -873,9 +880,10 @@ public:
     /**
      * @brief Create a Frame object of a specific type with a given format and data size.
      *
-     * @param frameType The type of the frame.
-     * @param format The format of the frame.
-     * @param dataSize The size of the data in bytes.
+     * @param[in] frameType The type of the frame.
+     * @param[in] format The format of the frame.
+     * @param[in] dataSize The size of the data in bytes.
+     *
      * @return std::shared_ptr<Frame> The created frame object.
      */
     static std::shared_ptr<Frame> createFrame(OBFrameType frameType, OBFormat format, uint32_t dataSize) {
@@ -890,11 +898,11 @@ public:
      * @brief Create a VideoFrame object of a specific type with a given format, width, height, and stride.
      * @note If stride is not specified, it will be calculated based on the width and format.
      *
-     * @param frameType The type of the frame.
-     * @param format The format of the frame.
-     * @param width The width of the frame.
-     * @param height The height of the frame.
-     * @param stride The stride of the frame.
+     * @param[in] frameType The type of the frame.
+     * @param[in] format The format of the frame.
+     * @param[in] width The width of the frame.
+     * @param[in] height The height of the frame.
+     * @param[in] stride The stride of the frame.
      *
      * @return std::shared_ptr<VideoFrame> The created video frame object.
      */
@@ -911,7 +919,8 @@ public:
      * @brief Create (clone) a frame object based on the specified other frame object.
      * @brief The new frame object will have the same properties as the other frame object, but the data buffer is newly allocated.
      *
-     * @param shouldCopyData If true, the data of the source frame object will be copied to the new frame object. If false, the new frame object will
+     * @param[in] otherFrame The source frame to be copied.
+     * @param[in] shouldCopyData If true, the data of the source frame object will be copied to the new frame object. If false, the new frame object will
      * have a data buffer with random data. The default value is true.
      *
      * @return std::shared_ptr<Frame> The new frame object.
@@ -928,7 +937,7 @@ public:
     /**
      * @brief Create a Frame From (according to)Stream Profile object
      *
-     * @param profile The stream profile object to create the frame from.
+     * @param[in] profile The stream profile object to create the frame from.
      *
      * @return std::shared_ptr<Frame>  The created frame object.
      */
@@ -1038,8 +1047,8 @@ public:
     /**
      * @brief Set the device timestamp of the frame.
      *
-     * @param frame The frame object.
-     * @param deviceTimestampUs The device timestamp to set in microseconds.
+     * @param[in] frame The frame object.
+     * @param[in] deviceTimestampUs The device timestamp to set in microseconds.
      */
     static void setFrameDeviceTimestampUs(std::shared_ptr<Frame> frame, uint64_t deviceTimestampUs) {
         ob_error *error = nullptr;

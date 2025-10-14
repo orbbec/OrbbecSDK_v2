@@ -28,16 +28,16 @@ public:
     /**
      * @brief Type definition for the device changed callback function.
      *
-     * @param removedList The list of removed devices.
-     * @param addedList The list of added devices.
+     * @param[in] removedList The list of removed devices.
+     * @param[in] addedList The list of added devices.
      */
     typedef std::function<void(std::shared_ptr<DeviceList> removedList, std::shared_ptr<DeviceList> addedList)> DeviceChangedCallback;
 
     /**
      * @brief Type definition for the log output callback function.
      *
-     * @param severity The current callback log level.
-     * @param logMsg The log message.
+     * @param[in] severity The current callback log level.
+     * @param[in] logMsg The log message.
      */
     typedef std::function<void(OBLogSeverity severity, const char *logMsg)> LogCallback;
 
@@ -101,7 +101,7 @@ public:
      * @brief "Force" a static IP address configuration in a device identified by its MAC Address.
      *
      * @param[in] macAddress MAC address of the network device.
-     *                       You can obtain it from @ref DeviceList::uid(), or specify it manually
+     *                       You can obtain it from @ref ob_device_info_get_uid, or specify it manually
      *                       in the format xx:xx:xx:xx:xx:xx, where each xx is a two-digit hexadecimal value.
      * @param[in] config The new IP configuration.
      * @return bool true if the configuration command was processed successfully, false otherwise.
@@ -133,7 +133,7 @@ public:
      * @brief Set the device plug-in callback function.
      * @attention This function supports multiple callbacks. Each call to this function adds a new callback to an internal list.
      *
-     * @param callback The function triggered when the device is plugged and unplugged.
+     * @param[in] callback The function triggered when the device is plugged and unplugged.
      */
     void setDeviceChangedCallback(DeviceChangedCallback callback) {
         deviceChangedCallback_ = callback;
@@ -145,7 +145,7 @@ public:
     /**
      * @brief Activates device clock synchronization to synchronize the clock of the host and all created devices (if supported).
      *
-     * @param repeatIntervalMsec The interval for auto-repeated synchronization, in milliseconds. If the value is 0, synchronization is performed only once.
+     * @param[in] repeatIntervalMsec The interval for auto-repeated synchronization, in milliseconds. If the value is 0, synchronization is performed only once.
      */
     void enableDeviceClockSync(uint64_t repeatIntervalMsec) const {
         ob_error *error = nullptr;
@@ -181,7 +181,7 @@ public:
      * @brief Set the level of the global log, which affects both the log level output to the console, output to the file and output the user defined
      * callback.
      *
-     * @param severity The log output level.
+     * @param[in] severity The log output level.
      */
     static void setLoggerSeverity(OBLogSeverity severity) {
         ob_error *error = nullptr;
@@ -192,9 +192,9 @@ public:
     /**
      * @brief Set log output to a file.
      *
-     * @param severity The log level output to the file.
-     * @param directory The log file output path. If the path is empty, the existing settings will continue to be used (if the existing configuration is also
-     * empty, the log will not be output to the file).
+     * @param[in] severity The log level output to the file.
+     * @param[in] directory The log file output path. If the path is empty, the existing settings will continue to be used (if the existing configuration is
+     * also empty, the log will not be output to the file).
      */
     static void setLoggerToFile(OBLogSeverity severity, const char *directory) {
         ob_error *error = nullptr;
@@ -205,7 +205,7 @@ public:
     /**
      * @brief Set log output to the console.
      *
-     * @param severity The log level output to the console.
+     * @param[in] severity The log level output to the console.
      */
     static void setLoggerToConsole(OBLogSeverity severity) {
         ob_error *error = nullptr;
@@ -216,8 +216,8 @@ public:
     /**
      * @brief Set the logger to callback.
      *
-     * @param severity The callback log level.
-     * @param callback The callback function.
+     * @param[in] severity The callback log level.
+     * @param[in] callback The callback function.
      */
     static void setLoggerToCallback(OBLogSeverity severity, LogCallback callback) {
         ob_error *error           = nullptr;
@@ -232,7 +232,7 @@ public:
      *
      * @attention Should be called before creating the context and pipeline, otherwise the default extensions directory (./extensions) will be used.
      *
-     * @param directory Path to the extensions directory. If the path is empty, the existing settings will continue to be used (if the existing
+     * @param[in] directory Path to the extensions directory. If the path is empty, the existing settings will continue to be used (if the existing
      */
     static void setExtensionsDirectory(const char *directory) {
         ob_error *error = nullptr;
