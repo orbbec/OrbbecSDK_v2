@@ -75,22 +75,27 @@ void EthernetPal::start(deviceChangedCallback callback) {
     // mDNS device
     mdnsWatchThread_ = std::thread([&]() {
         std::mutex                   mutex;
-        auto                         mdnsDiscovery = MDNSDiscovery::getInstance();
         std::unique_lock<std::mutex> lock(mutex);
+
         while(!stopWatch_) {
-            auto list    = mdnsDiscovery->queryDeviceList();
+            auto list    = mdnsDiscovery_->queryDeviceList();
             auto added   = utils::subtract_sets(list, mdnsDevInfoList_);
             auto removed = utils::subtract_sets(mdnsDevInfoList_, list);
+            updateMDNSDeviceSourceInfo(added, removed);
+
             for(auto &&info: removed) {
-                callback_(OB_DEVICE_REMOVED, info.mac);
+                if(!callback_(OB_DEVICE_REMOVED, info.mac + +"." + info.ip)) {
+                    // if device is still online, restore it to the list
+                    list.push_back(info);
+                    updateMDNSDeviceSourceInfo({ info }, {});
+                }
             }
             for(auto &&info: added) {
-                callback_(OB_DEVICE_ARRIVAL, info.mac);
+                callback_(OB_DEVICE_ARRIVAL, info.mac + +"." + info.ip);
             }
             mdnsDevInfoList_ = list;
             mdnsCondVar_.wait_for(lock, std::chrono::milliseconds(MDNS_WATCHER_POLLING_INTERVAL_MSEC), [&]() { return stopWatch_.load(); });
         }
-        mdnsDiscovery.reset();
     });
 }
 
@@ -153,13 +158,7 @@ std::shared_ptr<ISourcePort> EthernetPal::getSourcePort(std::shared_ptr<const So
     return port;
 }
 
-void EthernetPal::updateMDNSDeviceSourceInfo() {
-    auto infos = mdnsDiscovery_->queryDeviceList();
-
-    auto added       = utils::subtract_sets(infos, mdnsDevInfoList_);
-    auto removed     = utils::subtract_sets(mdnsDevInfoList_, infos);
-    mdnsDevInfoList_ = infos;
-
+void EthernetPal::updateMDNSDeviceSourceInfo(const std::vector<MDNSDeviceInfo> &added, const std::vector<MDNSDeviceInfo> &removed) {
     // Only re-query port information for newly online devices
     for(auto &&info: added) {
         sourcePortInfoList_.push_back(std::make_shared<NetSourcePortInfo>(SOURCE_PORT_NET_VENDOR, "unknown", "unknown", "unknown", info.ip, info.port, info.mac, info.sn, ORBBEC_DEVICE_VID, info.pid));
@@ -213,10 +212,18 @@ SourcePortInfoList EthernetPal::querySourcePortInfos() {
         netDevInfoList_ = list;
         updateSourcePortInfoList(added, removed);
     }
-    std::lock_guard<std::mutex> lock(sourcePortInfoMetux_);
-    // mDNS device
-    updateMDNSDeviceSourceInfo();
 
+    if(!mdnsWatchThread_.joinable()) {
+        // mDNS watcher thread is not runnig
+        auto list        = mdnsDiscovery_->queryDeviceList();
+        auto added       = utils::subtract_sets(list, mdnsDevInfoList_);
+        auto removed     = utils::subtract_sets(mdnsDevInfoList_, list);
+        mdnsDevInfoList_ = list;
+
+        updateMDNSDeviceSourceInfo(added, removed);
+    }
+
+    std::lock_guard<std::mutex> lock(sourcePortInfoMetux_);
     return sourcePortInfoList_;
 }
 

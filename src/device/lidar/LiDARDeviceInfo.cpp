@@ -33,7 +33,7 @@ LiDARDeviceInfo::LiDARDeviceInfo(const SourcePortInfoList groupedInfoList) {
         fullName_           = "Orbbec_" + name_;
         pid_                = portInfo->pid;
         vid_                = 0x2BC5;
-        uid_                = portInfo->mac;
+        uid_                = portInfo->mac + "." + portInfo->address;
         deviceSn_           = portInfo->serialNumber;
         connectionType_     = "Ethernet";
         sourcePortInfoList_ = groupedInfoList;

@@ -220,20 +220,13 @@ bool NetDeviceEnumerator::handleDeviceRemoved(std::string devUid) {
         // TODO: Busy devices may be misjudged as offline due to temporary unresponsiveness
         auto vid = info->vid;
         auto pid = info->pid;
-        if(isDeviceInContainer(G335LeDevPids, vid, pid) || (isDeviceInOrbbecSeries(FemtoMegaDevPids, vid, pid))
-           || isDeviceInContainer(G435LeDevPids, vid, pid)) {
-            bool disconnected = true;
-            BEGIN_TRY_EXECUTE({
-                auto            sourcePort         = Platform::getInstance()->getNetSourcePort(info);
-                auto            vendorPropAccessor = std::make_shared<VendorPropertyAccessor>(nullptr, sourcePort);
-                OBPropertyValue value;
-                value.intValue = 0;
-                vendorPropAccessor->getPropertyValue(OB_PROP_DEVICE_PID_INT, &value);
-                disconnected = false;
-                LOG_DEBUG("Get device pid success, pid:{}", value.intValue);
-            })
-            CATCH_EXCEPTION_AND_EXECUTE({ LOG_WARN("Get pid failed, ip:{},mac:{},device is disconnect.", info->address, info->mac); });
 
+        bool isLiDAR = isDeviceInOrbbecSeries(LiDARDevPids, vid, pid);
+        if(isDeviceInContainer(G335LeDevPids, vid, pid) || (isDeviceInOrbbecSeries(FemtoMegaDevPids, vid, pid)) || isDeviceInContainer(G435LeDevPids, vid, pid)
+           || isLiDAR) {
+
+            auto devPid       = getDevicePid(info, 0, !isLiDAR, isLiDAR);
+            bool disconnected = (devPid == 0);  // get pid failed
             if(disconnected) {
                 // check device activity again
                 if(checkDeviceActivity(removedDevice, info)) {

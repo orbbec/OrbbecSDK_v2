@@ -36,7 +36,7 @@ public:
 
 private:
     void updateSourcePortInfoList(const std::vector<GVCPDeviceInfo> &added, const std::vector<GVCPDeviceInfo> &removed);
-    void updateMDNSDeviceSourceInfo();
+    void updateMDNSDeviceSourceInfo(const std::vector<MDNSDeviceInfo> &added, const std::vector<MDNSDeviceInfo> &removed);
 
 private:
     std::mutex         sourcePortInfoMetux_;
