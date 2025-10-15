@@ -16,29 +16,29 @@ enum HpOpCode {
     OPCODE_UNSUPPORTED = 0x0000,
 
     // scan mode set
-    // set lidar ip address
+    // set LiDAR ip address
     OPCODE_SET_IP_ADDR = 0x0101,
-    // set lidar port
+    // set LiDAR port
     OPCODE_SET_PORT = 0x0102,
-    // set lidar mac address
+    // set LiDAR mac address
     OPCODE_SET_MAC_ADDR = 0x0103,
-    //  set lidar subnet mask
+    //  set LiDAR subnet mask
     OPCODE_SET_SUBNET_MASK = 0x0104,
-    // set lidar scan speed
+    // set LiDAR scan speed
     OPCODE_SET_SCAN_SPEED = 0x0105,
     // 0x0106 is reserved
-    // set lidar transfer protocol
+    // set LiDAR transfer protocol
     OPCODE_SET_TRANSFER_PROTOCOL = 0x0107,
-    // set lidar work mode
+    // set LiDAR work mode
     OPCODE_SET_WORK_MODE = 0x0108,
-    // set lidar initiate device connection
+    // set LiDAR initiate device connection
     OPCODE_INITIATE_DEVICE_CONNECTION = 0x0109,
-    // set lidar serial number
+    // set LiDAR serial number
     OPCODE_SET_SERIAL_NUMBER = 0x010A,
     // reboot device
     OPCODE_REBOOT_DEVICE = 0x010B,
     // 0x010C is reserved
-    // set lidar echo mode
+    // set LiDAR echo mode
     OPCODE_SET_ECHO_MODE = 0x010D,
     // apply configs
     OPCODE_APPLY_CONFIGS = 0x010E,
@@ -158,7 +158,7 @@ enum HpStatusCode {
 enum HpRespErrorCode {
     HP_RESP_OK = 0,
 
-    // TODO single-line lidar error code is different from multi-lines lidar!!
+    // TODO single-line LiDAR error code is different from multi-lines lidar!!
     // error
     HP_RESP_ERROR_OPERATION_FAILURE     = 0x01,  // operation failure, such as invalid req data
     HP_RESP_ERROR_TIMEOUT               = 0x02,  // resp timeout
@@ -207,13 +207,23 @@ typedef struct {
 
 typedef struct {
     RespHeader header;
-    int32_t    value;  // int32_t means 4 bytes data, type is depends on propertyId
+    int32_t    value;  // int32_t/uint32_t
 } GetIntPropertyResp;
 
 typedef struct {
     ReqHeader header;
-    int32_t   value;  // int32_t means 4 bytes data, type is depends on propertyId
+    int32_t   value;  // int32_t/uint32_t
 } SetIntPropertyReq;
+
+typedef struct {
+    RespHeader header;
+    float      value;
+} GetFloatPropertyResp;
+
+typedef struct {
+    ReqHeader header;
+    float     value;
+} SetFloatPropertyReq;
 
 typedef struct {
     RespHeader header;
@@ -227,10 +237,13 @@ HpStatus execute(const std::shared_ptr<IVendorDataPort> &dataPort, uint16_t opCo
 
 uint16_t initGetIntPropertyReq(std::vector<uint8_t> &dataBuf, uint16_t opCode);
 uint16_t initSetIntPropertyReq(std::vector<uint8_t> &dataBuf, uint16_t opCode, uint32_t value);
+uint16_t initGetFloatPropertyReq(std::vector<uint8_t> &dataBuf, uint16_t opCode);
+uint16_t initSetFloatPropertyReq(std::vector<uint8_t> &dataBuf, uint16_t opCode, float value);
 uint16_t initGetRawDataReq(std::vector<uint8_t> &dataBuf, uint16_t opCode);
 uint16_t initSetRawDataReq(std::vector<uint8_t> &dataBuf, uint16_t opCode, const uint8_t *data, uint16_t dataSize);
 
 GetIntPropertyResp *parseGetIntPropertyResp(uint8_t *dataBuf, uint16_t dataSize);
+GetFloatPropertyResp *parseGetFloatPropertyResp(uint8_t *dataBuf, uint16_t dataSize);
 GetRawDataResp *    parseGetRawDataResp(uint8_t *dataBuf, uint16_t dataSize);
 int16_t             getRaweDataSize(const GetRawDataResp *resp);
 

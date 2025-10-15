@@ -91,6 +91,16 @@ public:
     }
 
     /**
+     * @brief Convert OBLiDARScanSpeed to " string " type and then return.
+     *
+     * @param[in] type OBLiDARScanSpeed type.
+     * @return OBLiDARScanSpeed of "string" type.
+     */
+    static std::string convertOBLiDARScanSpeedTypeToString(const OBLiDARScanSpeed &type) {
+        return ob_lidar_scan_speed_type_to_string(type);
+    }
+
+    /**
      * @brief Convert OBFrameMetadataType to " string " type and then return.
      *
      * @param[in] type OBFrameMetadataType type.

@@ -9,30 +9,28 @@ namespace libobsensor {
 
 /**
  * @brief Communicate via UDP
- *        TODO: copy from TCP, must change to UDP
  */
 class VendorUDPClient {
 public:
-    VendorUDPClient(std::string address, uint16_t port, uint32_t connectTimeout = 2000, uint32_t commTimeout = 5000);
+    VendorUDPClient(std::string address, uint16_t port, uint32_t commTimeout = 1000);
     virtual ~VendorUDPClient() noexcept;
 
     int  read(uint8_t *data, const uint32_t dataLen);
     void write(const uint8_t *data, const uint32_t dataLen);
 
-    void flush();
-
 private:
-    void socketConnect();
+    void socketConnect(uint32_t retryCount);
     void socketClose();
-    void socketReconnect();
+    void initOsSocket();
+    void deinitOsSocket();
 
 private:
-    const std::string address_;
-    const uint16_t    port_;
-    SOCKET            socketFd_;
-    bool              flushed_;
-    uint32_t          CONNECT_TIMEOUT_MS = 2000;
-    uint32_t          COMM_TIMEOUT_MS    = 5000;
+    const std::string  address_;
+    uint16_t           port_;
+    SOCKET             socketFd_;
+    struct sockaddr_in serverAddr_;
+    const uint32_t     commTimeoutMs_  = 1000;
+    const uint32_t     maxConnectRetry = 100;
 };
 
 }  // namespace libobsensor

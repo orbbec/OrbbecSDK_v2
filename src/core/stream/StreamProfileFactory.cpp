@@ -21,6 +21,8 @@ std::shared_ptr<StreamProfile> createStreamProfile(OBStreamType streamType, OBFo
         return createAccelStreamProfile(OB_ACCEL_FULL_SCALE_RANGE_ANY, OB_ACCEL_SAMPLE_RATE_ANY);
     case OB_STREAM_GYRO:
         return createGyroStreamProfile(OB_GYRO_FULL_SCALE_RANGE_ANY, OB_GYRO_SAMPLE_RATE_ANY);
+    case OB_STREAM_LIDAR:
+        return createLiDARStreamProfile(OB_LIDAR_SCAN_ANY, frameFormat);
     case OB_STREAM_VIDEO:
     case OB_STREAM_DEPTH:
     case OB_STREAM_COLOR:
@@ -82,13 +84,22 @@ std::shared_ptr<GyroStreamProfile> createGyroStreamProfile(std::shared_ptr<LazyS
     return gsp;
 }
 
+std::shared_ptr<LiDARStreamProfile> createLiDARStreamProfile(OBLiDARScanSpeed scanSpeed, OBFormat format) {
+    return createLiDARStreamProfile(std::shared_ptr<LazySensor>(), scanSpeed, format);
+}
+
+std::shared_ptr<LiDARStreamProfile> createLiDARStreamProfile(std::shared_ptr<LazySensor> owner, OBLiDARScanSpeed scanSpeed, OBFormat format) {
+    auto sp = std::make_shared<LiDARStreamProfile>(owner, scanSpeed, format);
+    return sp;
+}
+
 std::shared_ptr<const StreamProfile> getStreamProfileFromEnvConfig(const std::string &nodePathName, OBSensorType sensorType) {
     auto envConfig = EnvConfig::getInstance();
 
     auto nodePath = nodePathName + utils::obSensorToStr(sensorType);
     nodePath      = utils::string::removeSpace(nodePath);
 
-    if(sensorType == OB_SENSOR_ACCEL || sensorType == OB_SENSOR_GYRO) {
+    if(sensorType == OB_SENSOR_ACCEL || sensorType == OB_SENSOR_GYRO || sensorType == OB_SENSOR_LIDAR) {
         return nullptr;  // todo: implement it
     }
 

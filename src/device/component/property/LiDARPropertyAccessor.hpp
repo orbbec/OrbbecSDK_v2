@@ -27,8 +27,10 @@ public:
     const std::vector<uint8_t> &getStructureData(uint32_t propertyId) override;
 
 private:
-    void clearBuffers();
-    uint16_t OBPropertyToOpCode(uint32_t propertyId, bool set);
+    uint32_t getLiDARPid();
+    void     clearBuffers();
+
+    std::pair<uint16_t, OBPropertyType> OBPropertyToOpCode(uint32_t propertyId, bool set);
 
 private:
     IDevice *                    owner_;

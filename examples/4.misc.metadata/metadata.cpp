@@ -169,6 +169,8 @@ const char *frameTypeToString(OBFrameType type) {
         return "OB_FRAME_IR_LEFT";
     case OB_FRAME_IR_RIGHT:
         return "OB_FRAME_IR_RIGHT";
+    case OB_FRAME_LIDAR_POINTS:
+        return "OB_FRAME_LIDAR_POINTS";
     default:
         return "unknown frame type";
     }

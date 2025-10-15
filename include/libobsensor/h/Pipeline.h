@@ -245,6 +245,16 @@ OB_EXPORT void ob_config_enable_accel_stream(ob_config *config, ob_accel_full_sc
 OB_EXPORT void ob_config_enable_gyro_stream(ob_config *config, ob_gyro_full_scale_range full_scale_range, ob_gyro_sample_rate sample_rate, ob_error **error);
 
 /**
+ * @brief Enable LiDAR stream with specified parameters
+ *
+ * @param config[in] The pipeline configuration object
+ * @param scan_speed[in] The scan speed LiDAR
+ * @param format[in] The format of the LiDAR stream
+ * @param error[out] Pointer to an error object that will be set if an error occurs.
+ */
+OB_EXPORT void ob_config_enable_lidar_stream(ob_config *config, ob_lidar_scan_speed scan_speed, ob_format format, ob_error **error);
+
+/**
  * @brief  Get the enabled stream profile list in the pipeline configuration
  *
  * @param[in] config The pipeline configuration object

@@ -19,6 +19,7 @@ public:
     void enableVideoStream(OBStreamType type, uint32_t width, uint32_t height, uint32_t fps, OBFormat format);
     void enableAccelStream(OBAccelFullScaleRange fullScaleRange, OBAccelSampleRate sampleRate);
     void enableGyroStream(OBGyroFullScaleRange fullScaleRange, OBGyroSampleRate sampleRate);
+    void enableLiDARStream(OBLiDARScanSpeed scanSpeed, OBFormat format);
 
     void disableStream(OBStreamType type);
     void disableAllStream();

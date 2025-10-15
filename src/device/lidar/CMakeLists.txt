@@ -9,5 +9,7 @@ if(OB_BUILD_NET_PAL)
                                     ${CMAKE_CURRENT_LIST_DIR}/LiDARDevice.hpp
                                     ${CMAKE_CURRENT_LIST_DIR}/LiDARDeviceInfo.cpp
                                     ${CMAKE_CURRENT_LIST_DIR}/LiDARDeviceInfo.hpp
+                                    ${CMAKE_CURRENT_LIST_DIR}/LiDARStreamProfileFilter.cpp
+                                    ${CMAKE_CURRENT_LIST_DIR}/LiDARStreamProfileFilter.hpp
     )
 endif()

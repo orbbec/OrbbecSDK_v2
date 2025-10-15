@@ -9,6 +9,7 @@
 #include "bootloader/BootDeviceInfo.hpp"
 #include "SourcePortInfo.hpp"
 #include "property/VendorPropertyAccessor.hpp"
+#include "property/LiDARPropertyAccessor.hpp"
 #include "property/InternalProperty.hpp"
 #include "DevicePids.hpp"
 #include "utils/Utils.hpp"
@@ -307,16 +308,18 @@ bool NetDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType
 
 std::shared_ptr<const IDeviceEnumInfo> NetDeviceEnumerator::queryNetDevice(std::string address, uint16_t port) {
     auto info               = std::make_shared<NetSourcePortInfo>(SOURCE_PORT_NET_VENDOR,  //
-                                                    "Unknown", "Unknown", "Unknown", address, static_cast<uint16_t>(8090), address + ":" + std::to_string(port),
+                                                    "Unknown", "Unknown", "Unknown", address, port, address + ":" + std::to_string(port),
                                                     "Unknown", ORBBEC_DEVICE_VID, 0);
     auto sourcePort         = Platform::getInstance()->getNetSourcePort(info);
     auto vendorPropAccessor = std::make_shared<VendorPropertyAccessor>(nullptr, sourcePort);
+    bool found              = false;
 
     BEGIN_TRY_EXECUTE({
         OBPropertyValue value;
         value.intValue = 0;
         vendorPropAccessor->getPropertyValue(OB_PROP_DEVICE_PID_INT, &value);
         info->pid = static_cast<uint16_t>(value.intValue);
+        found     = true;
     })
     CATCH_EXCEPTION_AND_EXECUTE({
         LOG_WARN("Get device pid failed, use default pid as Femto Mega Device! address:{}, port:{}", address, port);
@@ -325,6 +328,23 @@ std::shared_ptr<const IDeviceEnumInfo> NetDeviceEnumerator::queryNetDevice(std::
 
     if(isDeviceInContainer(G335LeDevPids, info->vid, info->pid)) {
         throw invalid_value_exception("No supported G335Le found for address: " + address + ":" + std::to_string(port));
+    }
+
+    if(!found) {
+        // check if is LiDAR device
+        BEGIN_TRY_EXECUTE({
+            OBPropertyValue value;
+            value.intValue = 0;
+
+            auto propAccessor = std::make_shared<LiDARPropertyAccessor>(nullptr, sourcePort);
+            propAccessor->getPropertyValue(OB_PROP_DEVICE_PID_INT, &value);
+            info->pid = static_cast<uint16_t>(value.intValue);
+            found     = true;
+        })
+        CATCH_EXCEPTION_AND_EXECUTE({
+            LOG_WARN("Get device pid failed with LiDARPropertyAccessor, use default pid as Femto Mega Device! address:{}, port:{}", address, port);
+            info->pid = OB_FEMTO_MEGA_PID;
+        });
     }
 
     auto deviceEnumInfoList = deviceInfoMatch({ info });

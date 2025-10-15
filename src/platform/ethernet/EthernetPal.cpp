@@ -5,7 +5,7 @@
 #include "exception/ObException.hpp"
 #include "utils/Utils.hpp"
 #include "mDNS/MDNSDiscovery.hpp"
-#include "UDPDataStreamPort.hpp"
+#include "LiDARDataStreamPort.hpp"
 #include "RTPStreamPort.hpp"
 #include "logger/Logger.hpp"
 
@@ -15,7 +15,12 @@ const uint16_t DEFAULT_CMD_PORT                           = 8090;
 const uint16_t DEVICE_WATCHER_POLLING_INTERVAL_MSEC       = 3000;
 const uint16_t DEVICE_WATCHER_POLLING_SHORT_INTERVAL_MSEC = 1000;
 
+EthernetPal::EthernetPal() {
+    mdnsDiscovery_ = MDNSDiscovery::getInstance();
+}
+
 EthernetPal::~EthernetPal() noexcept {
+    mdnsDiscovery_.reset();
     if(!stopWatch_) {
         stop();
     }
@@ -26,6 +31,7 @@ void EthernetPal::start(deviceChangedCallback callback) {
     stopWatch_         = false;
     deviceWatchThread_ = std::thread([&]() {
         std::mutex                   mutex;
+        auto                         mdnsDiscovery = MDNSDiscovery::getInstance();
         std::unique_lock<std::mutex> lock(mutex);
         auto                         getNow = []() {
             // get now
@@ -68,7 +74,7 @@ void EthernetPal::start(deviceChangedCallback callback) {
 
             // mDNS device
             {
-                auto list    = MDNSDiscovery::instance().queryDeviceList();
+                auto list    = mdnsDiscovery->queryDeviceList();
                 auto added   = utils::subtract_sets(list, mdnsDevInfoList_);
                 auto removed = utils::subtract_sets(mdnsDevInfoList_, list);
                 for(auto &&info: removed) {
@@ -81,6 +87,7 @@ void EthernetPal::start(deviceChangedCallback callback) {
                 condVar_.wait_for(lock, std::chrono::milliseconds(DEVICE_WATCHER_POLLING_INTERVAL_MSEC), [&]() { return stopWatch_.load(); });
             }
         }
+        mdnsDiscovery.reset();
     });
 }
 
@@ -123,8 +130,8 @@ std::shared_ptr<ISourcePort> EthernetPal::getSourcePort(std::shared_ptr<const So
     case SOURCE_PORT_NET_VENDOR_STREAM:
         port = std::make_shared<NetDataStreamPort>(std::dynamic_pointer_cast<const NetDataStreamPortInfo>(portInfo));
         break;
-    case SOURCE_PORT_NET_UDP_VENDOR_STREAM:
-        port = std::make_shared<UDPDataStreamPort>(std::dynamic_pointer_cast<const NetDataStreamPortInfo>(portInfo));
+    case SOURCE_PORT_NET_LIDAR_VENDOR_STREAM:
+        port = std::make_shared<LiDARDataStreamPort>(std::dynamic_pointer_cast<const LiDARDataStreamPortInfo>(portInfo));
         break;
     case SOURCE_PORT_NET_RTSP:
         port = std::make_shared<RTSPStreamPort>(std::dynamic_pointer_cast<const RTSPStreamPortInfo>(portInfo));
@@ -140,7 +147,7 @@ std::shared_ptr<ISourcePort> EthernetPal::getSourcePort(std::shared_ptr<const So
 }
 
 void EthernetPal::updateMDNSDeviceSourceInfo() {
-    auto infos = MDNSDiscovery::instance().queryDeviceList();
+    auto infos = mdnsDiscovery_->queryDeviceList();
 
     auto added          = utils::subtract_sets(infos, mdnsDevInfoList_);
     auto removed        = utils::subtract_sets(mdnsDevInfoList_, infos);
@@ -148,7 +155,7 @@ void EthernetPal::updateMDNSDeviceSourceInfo() {
 
     // Only re-query port information for newly online devices
     for(auto &&info: added) {
-        sourcePortInfoList_.push_back(std::make_shared<NetSourcePortInfo>(SOURCE_PORT_NET_VENDOR, "unknown", "unknown", "unknown", info.ip, info.port, info.mac, info.sn, info.pid));
+        sourcePortInfoList_.push_back(std::make_shared<NetSourcePortInfo>(SOURCE_PORT_NET_VENDOR, "unknown", "unknown", "unknown", info.ip, info.port, info.mac, info.sn, ORBBEC_DEVICE_VID, info.pid));
     }
 
     // Delete devices that have been offline from the list

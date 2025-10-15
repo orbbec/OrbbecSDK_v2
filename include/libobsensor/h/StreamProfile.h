@@ -63,6 +63,16 @@ OB_EXPORT ob_stream_profile *ob_create_accel_stream_profile(ob_accel_full_scale_
 OB_EXPORT ob_stream_profile *ob_create_gyro_stream_profile(ob_gyro_full_scale_range full_scale_range, ob_gyro_sample_rate sample_rate, ob_error **error);
 
 /**
+ * @brief Create a LiDAR stream profile object
+ *
+ * @param[in] scan_speed The scan speed LiDAR
+ * @param[in] format The format of the LiDAR stream
+ * @param[out] error Pointer to an error object that will be set if an error occurs.
+ * @return ob_stream_profile* return the accel stream profile object
+ */
+OB_EXPORT ob_stream_profile *ob_create_lidar_stream_profile(ob_lidar_scan_speed scan_speed, ob_format format, ob_error **error);
+
+/**
  * @brief Copy the stream profile object from an other stream profile object
  *
  * @param[in] srcProfile Source stream profile object
@@ -344,6 +354,15 @@ OB_EXPORT ob_gyro_intrinsic ob_gyro_stream_get_intrinsic(const ob_stream_profile
 OB_EXPORT void ob_gyro_stream_set_intrinsic(ob_stream_profile *profile, ob_gyro_intrinsic intrinsic, ob_error **error);
 
 /**
+ * @brief Get the scan speed of the LiDAR stream.
+ *
+ * @param[in] profile Stream profile object. If the profile is not for the LiDAR stream, an error will be returned.
+ * @param[out] error Pointer to an error object that will be set if an error occurs.
+ * @return The scan speed of the LiDAR stream.
+ */
+OB_EXPORT ob_lidar_scan_speed ob_lidar_stream_profile_get_scan_speed(const ob_stream_profile *profile, ob_error **error);
+
+/**
  * @brief Get the number of StreamProfile lists.
  *
  * @param[in] profile_list StreamProfile list.
@@ -417,6 +436,21 @@ OB_EXPORT ob_stream_profile *ob_stream_profile_list_get_accel_stream_profile(con
 OB_EXPORT ob_stream_profile *ob_stream_profile_list_get_gyro_stream_profile(const ob_stream_profile_list *profile_list,
                                                                             ob_gyro_full_scale_range full_scale_range, ob_gyro_sample_rate sample_rate,
                                                                             ob_error **error);
+
+/**
+ * @brief Match the corresponding ob_stream_profile through the passed parameters. If there are multiple matches,
+ * the first one in the list will be returned by default. If no matched profile is found, an error will be returned.
+ *
+ * @attention The stream profile returned by this function should be deleted by calling @ref ob_delete_stream_profile() when it is no longer needed.
+ *
+ * @param[in] profile_list Resolution list.
+ * @param scan_speed[in] The scan speed LiDAR. If you don't need to add matching conditions, you can pass OB_LIDAR_SCAN_ANY.
+ * @param format[in] The format of the LiDAR stream. If you don't need to add matching conditions, you can pass OB_FORMAT_ANY.
+ * @param[out] error Pointer to an error object that will be set if an error occurs.
+ * @return The matching profile.
+ */
+OB_EXPORT ob_stream_profile *ob_stream_profile_list_get_lidar_stream_profile(const ob_stream_profile_list *profile_list, ob_lidar_scan_speed scan_speed,
+                                                                             ob_format format, ob_error **error);
 
 /**
  * @brief Delete the stream profile list.

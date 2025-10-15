@@ -184,6 +184,14 @@ std::shared_ptr<Config> Pipeline::checkAndSetConfig(std::shared_ptr<const Config
             }
             config->enableStream(matchedProfileList.front());
         }
+        else if(sensorType == OB_SENSOR_LIDAR) {
+            auto profile            = sp->as<LiDARStreamProfile>();
+            auto matchedProfileList = matchLiDARStreamProfile(sensorSpList, profile->getScanSpeed(), profile->getFormat());
+            if(matchedProfileList.empty()) {
+                throw invalid_value_exception(utils::string::to_string() << "No matched profile found for:" << sp);
+            }
+            config->enableStream(matchedProfileList.front());
+        }
         else {
             auto profile            = sp->as<VideoStreamProfile>();
             auto matchedProfileList = matchVideoStreamProfile(sensorSpList, profile->getWidth(), profile->getHeight(), profile->getFps(), profile->getFormat());
@@ -480,7 +488,7 @@ OBCalibrationParam Pipeline::getCalibrationParam(std::shared_ptr<Config> cfg) {
             continue;
         }
         auto streamType = utils::mapSensorTypeToStreamType(sensorType);
-        if(streamType == OB_STREAM_ACCEL || streamType == OB_STREAM_GYRO) {
+        if(streamType == OB_STREAM_ACCEL || streamType == OB_STREAM_GYRO || streamType == OB_STREAM_LIDAR) {
             continue;
         }
 

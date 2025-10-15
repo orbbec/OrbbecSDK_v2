@@ -6,33 +6,20 @@
 #include "stream/StreamProfileFactory.hpp"
 #include "sensor/video/VideoSensor.hpp"
 #include "sensor/video/DisparityBasedSensor.hpp"
-#include "sensor/imu/ImuStreamer.hpp"
-#include "sensor/imu/AccelSensor.hpp"
-#include "sensor/imu/GyroSensor.hpp"
-#include "usb/uvc/UvcDevicePort.hpp"
-
-#include "metadata/FrameMetadataParserContainer.hpp"
-#include "timestamp/GlobalTimestampFitter.hpp"
-#include "timestamp/FrameTimestampCalculator.hpp"
-#include "timestamp/DeviceClockSynchronizer.hpp"
+#include "sensor/lidar/LiDARStreamer.hpp"
+#include "sensor/lidar/LiDARSensor.hpp"
 #include "property/LiDARPropertyAccessor.hpp"
-#include "property/UvcPropertyAccessor.hpp"
 #include "property/PropertyServer.hpp"
 #include "property/CommonPropertyAccessors.hpp"
-#include "property/FilterPropertyAccessors.hpp"
-#include "property/PrivateFilterPropertyAccessors.hpp"
-#include "param/AlgParamManager.hpp"
-#include "syncconfig/DeviceSyncConfigurator.hpp"
-
-#include "FilterFactory.hpp"
-#include "publicfilters/FormatConverterProcess.hpp"
-#include "publicfilters/IMUCorrector.hpp"
-
+#include "LiDARStreamProfileFilter.hpp"
 #include "utils/BufferParser.hpp"
 #include "utils/PublicTypeHelper.hpp"
+#include "monitor/LiDARDeviceMonitor.hpp"
+#include <sstream>
+#include <iomanip>
 
 #if defined(BUILD_NET_PAL)
-// TODO #include "ethernet/RTSPStreamPort.hpp"
+#include "ethernet/LiDARDataStreamPort.hpp"
 #endif
 
 namespace libobsensor {
@@ -50,6 +37,14 @@ void LiDARDevice::init() {
     fetchDeviceInfo();
 }
 
+std::string LiDARDevice::Uint8toString(const std::vector<uint8_t> &data, const std::string &default) {
+    if(data.empty()) {
+        return default;
+    }
+    size_t len = strnlen(reinterpret_cast<const char *>(data.data()), data.size());
+    return std::string(data.begin(), data.begin() + len);
+}
+
 void LiDARDevice::fetchDeviceInfo() {
     auto portInfo          = enumInfo_->getSourcePortInfoList().front();
     auto netPortInfo       = std::dynamic_pointer_cast<const NetSourcePortInfo>(portInfo);
@@ -64,28 +59,47 @@ void LiDARDevice::fetchDeviceInfo() {
     deviceInfo_->connectionType_ = enumInfo_->getConnectionType();
 
     BEGIN_TRY_EXECUTE({
-        auto                        propertyServer = getPropertyServer();
-        const std::vector<uint8_t> &data           = propertyServer->getStructureData(OB_RAW_DATA_LIDAR_FIRMWARE_VERSION, PROP_ACCESS_INTERNAL);
+        auto propertyServer = getPropertyServer();
+        // get mac address as ui
+        auto data           = propertyServer->getStructureData(OB_RAW_DATA_LIDAR_MAC_ADDRESS, PROP_ACCESS_INTERNAL);
+
         if(data.empty()) {
-            deviceInfo_->fwVersion_ = "unknown";  // TODO getFirmwareVersion
+            deviceInfo_->uid_ = enumInfo_->getUid();
         }
         else {
-            deviceInfo_->fwVersion_ = std::string(data.begin(), data.end());
-        }
-    })
-    CATCH_EXCEPTION_AND_EXECUTE({ LOG_ERROR("fetch LiDAR deviceInfo error!"); })
+            std::ostringstream ss;
+            auto              size = data.size();
 
-    deviceInfo_->deviceSn_            = enumInfo_->getDeviceSn();
+            ss << std::hex << std::setfill('0');
+            ss << std::setw(2) << static_cast<uint16_t>(data[0]);
+            for(size_t i = 1; i < size; ++i) {
+                ss << ":" << std::setw(2) << static_cast<int>(data[i]);
+            }
+            deviceInfo_->uid_ = ss.str();
+        }
+        // firmware version
+        data                    = propertyServer->getStructureData(OB_RAW_DATA_LIDAR_FIRMWARE_VERSION, PROP_ACCESS_INTERNAL);
+        deviceInfo_->fwVersion_ = Uint8toString(data, "unknown");
+        // sn
+        data                    = propertyServer->getStructureData(OB_RAW_DATA_LIDAR_SERIAL_NUMBER, PROP_ACCESS_INTERNAL);
+        deviceInfo_->deviceSn_ = Uint8toString(data, enumInfo_->getDeviceSn());
+    })
+    CATCH_EXCEPTION_AND_EXECUTE({
+        LOG_ERROR("fetch LiDAR deviceInfo error!");
+        deviceInfo_->uid_      = enumInfo_->getUid();
+        deviceInfo_->fwVersion_ = "unknown";
+        deviceInfo_->deviceSn_ = enumInfo_->getDeviceSn();
+    })
+
     deviceInfo_->asicName_            = "unknown";  // TODO
-    deviceInfo_->hwVersion_           = "unknown";  // TODO lidar doesn't have hw version
-    deviceInfo_->type_                = 0xFFFF;     // TODO lidar doesn't have type
-    deviceInfo_->supportedSdkVersion_ = "2.2.8";    // TODO fix
+    deviceInfo_->hwVersion_           = "unknown";  // TODO LiDAR doesn't have hw version
+    deviceInfo_->type_                = 0xFFFF;     // TODO LiDAR doesn't have type
+    deviceInfo_->supportedSdkVersion_ = "2.2.10";   // TODO fix
 
     deviceInfo_->fullName_ = enumInfo_->getFullName();
-}
 
-void LiDARDevice::initSensorList() {
-    // TODO
+    // mark the device as a multi-sensor device with same clock at default
+    extensionInfo_["AllSensorsUsingSameClock"] = "true";
 }
 
 void LiDARDevice::initProperties() {
@@ -99,6 +113,13 @@ void LiDARDevice::initProperties() {
 
     auto propertyServer = std::make_shared<PropertyServer>(this);
     auto vendorPortInfo = *vendorPortInfoIter;
+
+    // The device monitor
+    registerComponent(OB_DEV_COMPONENT_DEVICE_MONITOR, [this, vendorPortInfo]() {
+        auto port       = getSourcePort(vendorPortInfo);
+        auto devMonitor = std::make_shared<LiDARDeviceMonitor>(this, port);
+        return devMonitor;
+    });
 
     // common property accessor
     auto vendorPropertyAccessor = std::make_shared<LazySuperPropertyAccessor>([this, vendorPortInfo]() {
@@ -155,13 +176,82 @@ void LiDARDevice::initProperties() {
     // register property server
     registerComponent(OB_DEV_COMPONENT_PROPERTY_SERVER, propertyServer, true);
 
-    // connect
-    BEGIN_TRY_EXECUTE({ propertyServer->setPropertyValueT(OB_PROP_LIDAR_INITIATE_DEVICE_CONNECTION_INT, 0x12345678); })
-    CATCH_EXCEPTION_AND_EXECUTE({ LOG_ERROR("Connect LiDAR device error!"); })
+    // set work mode
+    BEGIN_TRY_EXECUTE({
+        // set to normal work mode
+        propertyServer->setPropertyValueT(OB_PROP_LIDAR_WORK_MODE_INT, 0);
+    })
+    CATCH_EXCEPTION_AND_EXECUTE({ LOG_ERROR("Set LiDAR device work mode to normal error!"); })
+}
+
+void LiDARDevice::initSensorList() {
+    // stream filter
+    registerComponent(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER, [this]() { return std::make_shared<LiDARStreamProfileFilter>(this); });
+
+    // sensor
+    const auto &sourcePortInfoList = enumInfo_->getSourcePortInfoList();
+    auto lidarPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(), [](const std::shared_ptr<const SourcePortInfo> &portInfo) {
+        if(portInfo->portType != SOURCE_PORT_NET_LIDAR_VENDOR_STREAM) {
+            return false;
+        }
+        return (std::dynamic_pointer_cast<const LiDARDataStreamPortInfo>(portInfo)->streamType == OB_STREAM_LIDAR);
+    });
+
+    // LiDAR sensor
+    if(lidarPortInfoIter != sourcePortInfoList.end()) {
+        // found LiDAR port
+        auto lidarPortInfo = *lidarPortInfoIter;
+        registerComponent(OB_DEV_COMPONENT_LIDAR_STREAMER, [this, lidarPortInfo]() {
+            // the gyro and accel are both on the same port and share the same filter
+            auto port           = getSourcePort(lidarPortInfo);
+            auto dataStreamPort = std::dynamic_pointer_cast<IDataStreamPort>(port);
+            auto streamer    = std::make_shared<LiDARStreamer>(this, dataStreamPort);
+            return streamer;
+        });
+
+        registerComponent(OB_DEV_COMPONENT_LIDAR_SENSOR, 
+            [this, lidarPortInfo]() {
+                auto port              = getSourcePort(lidarPortInfo);
+                auto streamer          = getComponentT<LiDARStreamer>(OB_DEV_COMPONENT_LIDAR_STREAMER);
+                auto streamerSharedPtr = streamer.get();
+                auto sensor            = std::make_shared<LiDARSensor>(this, port, streamerSharedPtr);
+
+                initSensorStreamProfile(sensor);
+                return sensor;
+            },
+            true);
+        registerSensorPortInfo(OB_SENSOR_LIDAR, lidarPortInfo);
+    }
+
+    // TODO imu sensor
 }
 
 void LiDARDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
-    // TODO
+    auto         sensorType = sensor->getSensorType();
+    OBStreamType streamType = utils::mapSensorTypeToStreamType(sensorType);
+
+    // set stream profile filter
+    auto streamProfileFilter = getComponentT<IStreamProfileFilter>(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER);
+    sensor->setStreamProfileFilter(streamProfileFilter.get());
+
+    // TODO hardcoded here
+    if ( streamType == OB_STREAM_LIDAR ) {
+        // LiDAR
+        const std::vector<OBLiDARScanSpeed> scanSpeeds = { OB_LIDAR_SCAN_5HZ, OB_LIDAR_SCAN_10HZ, OB_LIDAR_SCAN_15HZ, OB_LIDAR_SCAN_20HZ };
+        const std::vector<OBFormat>         formats    = { OB_FORMAT_LIDAR_POINT, OB_FORMAT_LIDAR_SPHERE_POINT, OB_FORMAT_LIDAR_CALIBRATION };
+        StreamProfileList                   profileList;
+
+        for(auto speed: scanSpeeds) {
+            for(auto format: formats) {
+                auto profile = StreamProfileFactory::createLiDARStreamProfile(speed, format);
+                profileList.push_back(profile);
+            }
+        }
+        if(profileList.size()) {
+            sensor->setStreamProfileList(profileList);
+            sensor->updateDefaultStreamProfile(profileList[0]);
+        }
+    }
 }
 
 }  // namespace libobsensor

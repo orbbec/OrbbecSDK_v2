@@ -225,6 +225,11 @@ void ob_config_enable_gyro_stream(ob_config *config, ob_gyro_full_scale_range fu
 }
 HANDLE_EXCEPTIONS_NO_RETURN(config, full_scale_range, sample_rate)
 
+void ob_config_enable_lidar_stream(ob_config *config, ob_lidar_scan_speed scan_speed, ob_format format, ob_error **error) BEGIN_API_CALL {
+    config->config->enableLiDARStream(scan_speed, format);
+}
+HANDLE_EXCEPTIONS_NO_RETURN(config, scan_speed, format)
+
 ob_stream_profile_list *ob_config_get_enabled_stream_profile_list(const ob_config *config, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(config);
     auto profiles     = config->config->getEnabledStreamProfileList();

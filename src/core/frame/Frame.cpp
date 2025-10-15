@@ -364,6 +364,9 @@ float GyroFrame ::temperature() const {
     return ((GyroFrame::Data *)getData())->temp;
 }
 
+LiDARPointsFrame::LiDARPointsFrame(uint8_t *data, size_t dataBufSize, FrameBufferReclaimFunc bufferReclaimFunc)
+    : Frame(data, dataBufSize, OB_FRAME_LIDAR_POINTS, bufferReclaimFunc) {}
+
 FrameSet::FrameSet(uint8_t *data, size_t dataBufSize, FrameBufferReclaimFunc bufferReclaimFunc) : Frame(data, dataBufSize, OB_FRAME_SET, bufferReclaimFunc) {}
 
 FrameSet::~FrameSet() noexcept {

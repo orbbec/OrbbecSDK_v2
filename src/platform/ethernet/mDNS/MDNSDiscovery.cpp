@@ -42,6 +42,15 @@ typedef struct MDNSAckData {
     std::vector<std::string> txtList;  // data of record TXT
 } MDNSAckData;
 
+static std::string mDNSStrToStdString(mdns_string_t mdnsStr) {
+    size_t len = strlen(mdnsStr.str);
+    if(len > mdnsStr.length) {
+        len = mdnsStr.length;
+    }
+
+    return std::string(mdnsStr.str, len);
+}
+
 // Callback handling parsing answers to queries sent
 static int query_callback(int sock, const struct sockaddr *from, size_t addrlen, mdns_entry_type_t entry, uint16_t query_id, uint16_t rtype, uint16_t rclass,
                           uint32_t ttl, const void *data, size_t size, size_t name_offset, size_t name_length, size_t record_offset, size_t record_length,
@@ -65,7 +74,7 @@ static int query_callback(int sock, const struct sockaddr *from, size_t addrlen,
     }
 
     // mdns_string_t fromaddrstr = MDNSUtil::ip_address_to_string(addrbuffer, sizeof(addrbuffer), from, addrlen);
-    mdns_string_t entrystr    = mdns_string_extract(data, size, &name_offset, entrybuffer, sizeof(entrybuffer));
+    mdns_string_t entrystr = mdns_string_extract(data, size, &name_offset, entrybuffer, sizeof(entrybuffer));
 
     if(rtype == MDNS_RECORDTYPE_PTR) {
         // ignore
@@ -75,14 +84,14 @@ static int query_callback(int sock, const struct sockaddr *from, size_t addrlen,
         // port
         mdns_record_srv_t srv = mdns_record_parse_srv(data, size, record_offset, record_length, namebuffer, sizeof(namebuffer));
         // save name and port
-        ack->name = entrystr.str;
+        ack->name = mDNSStrToStdString(entrystr);
         ack->port = srv.port;
     }
     else if(rtype == MDNS_RECORDTYPE_A) {
         struct sockaddr_in addr;
         mdns_record_parse_a(data, size, record_offset, record_length, &addr);
         mdns_string_t addrstr = MDNSUtil::ipv4_address_to_string(namebuffer, sizeof(namebuffer), &addr, sizeof(addr));
-        ack->ip               = addrstr.str;
+        ack->ip               = mDNSStrToStdString(addrstr);
     }
     else if(rtype == MDNS_RECORDTYPE_AAAA) {
         // ipv6 ignore
@@ -94,15 +103,28 @@ static int query_callback(int sock, const struct sockaddr *from, size_t addrlen,
         // txt: sn and model
         size_t parsed = mdns_record_parse_txt(data, size, record_offset, record_length, txtbuffer, sizeof(txtbuffer) / sizeof(mdns_record_txt_t));
         for(size_t itxt = 0; itxt < parsed; ++itxt) {
-            std::string txt = txtbuffer[itxt].key.str;
+            std::string txt = mDNSStrToStdString(txtbuffer[itxt].key);
             if(txtbuffer[itxt].value.length) {
-                txt += txtbuffer[itxt].value.str;
+                txt += mDNSStrToStdString(txtbuffer[itxt].value);
             }
             ack->txtList.push_back(txt);
         }
     }
 
     return 0;
+}
+
+std::mutex                   MDNSDiscovery::instanceMutex_;
+std::weak_ptr<MDNSDiscovery> MDNSDiscovery::instanceWeakPtr_;
+
+std::shared_ptr<MDNSDiscovery> MDNSDiscovery::getInstance() {
+    std::unique_lock<std::mutex> lock(instanceMutex_);
+    auto                         ctxInstance = instanceWeakPtr_.lock();
+    if(!ctxInstance) {
+        ctxInstance      = std::shared_ptr<MDNSDiscovery>(new MDNSDiscovery());
+        instanceWeakPtr_ = ctxInstance;
+    }
+    return ctxInstance;
 }
 
 MDNSDiscovery::MDNSDiscovery() {
@@ -129,14 +151,16 @@ std::vector<SOCKET> MDNSDiscovery::openClientSockets() {
 
     ret = GetAdaptersAddresses(AF_INET, GAA_FLAG_INCLUDE_PREFIX, NULL, NULL, &size);
     if(ret != ERROR_BUFFER_OVERFLOW) {
-        fprintf(stderr, "GetAdaptersAddresses() failed...");
+        LOG_INTVL(LOG_INTVL_OBJECT_TAG + "openClientSockets", MAX_LOG_INTERVAL, spdlog::level::debug, "GetAdaptersAddresses failed with error:{}",
+                  GET_LAST_ERROR());
         return socks;
     }
     adapterAddresses.reset(reinterpret_cast<IP_ADAPTER_ADDRESSES *>(malloc(size)));
 
     ret = GetAdaptersAddresses(AF_INET, GAA_FLAG_INCLUDE_PREFIX, NULL, adapterAddresses.get(), &size);
     if(ret != ERROR_SUCCESS) {
-        fprintf(stderr, "GetAdaptersAddresses() failed...");
+        LOG_INTVL(LOG_INTVL_OBJECT_TAG + "openClientSockets", MAX_LOG_INTERVAL, spdlog::level::debug, "GetAdaptersAddresses failed with error:{}",
+                  GET_LAST_ERROR());
         return socks;
     }
 
@@ -155,12 +179,16 @@ std::vector<SOCKET> MDNSDiscovery::openClientSockets() {
                 addrSrv.sin_port   = htons(MDNS_PORT);  // 5353
                 auto ipStr         = inet_ntoa(addrSrv.sin_addr);
                 // "169.254.xxx.xxx" is link-local address for windows, "127.0.0.1" is loopback address
-                if(strncmp(ipStr, "169.254", 7) == 0 || strcmp(ipStr, "127.0.0.1") == 0 || strcmp(ipStr, "192.168.1.1") != 0) {
+                if(strncmp(ipStr, "169.254", 7) == 0 || strcmp(ipStr, "127.0.0.1") == 0 ) {
                     continue;
                 }
                 int sock = mdns_socket_open_ipv4(&addrSrv);
                 if(sock >= 0) {
                     socks.push_back(sock);
+                }
+                else {
+                    LOG_INTVL(LOG_INTVL_OBJECT_TAG + "openClientSockets", MAX_LOG_INTERVAL, spdlog::level::debug, "open ip({}) failed with error:{}",
+                              ipStr, GET_LAST_ERROR());
                 }
             }
         }
@@ -170,7 +198,7 @@ std::vector<SOCKET> MDNSDiscovery::openClientSockets() {
     int             family, n;
 
     if(getifaddrs(&ifaddr) == -1) {
-        perror("Unable to get interface addresses\n");
+        LOG_INTVL(LOG_INTVL_OBJECT_TAG + "openClientSockets", MAX_LOG_INTERVAL, spdlog::level::debug, "getifaddrs failed with error:{}", GET_LAST_ERROR());
         return socks;
     }
 
@@ -200,6 +228,10 @@ std::vector<SOCKET> MDNSDiscovery::openClientSockets() {
             if(sock >= 0) {
                 socks.push_back(sock);
             }
+            else {
+                LOG_INTVL(LOG_INTVL_OBJECT_TAG + "openClientSockets", MAX_LOG_INTERVAL, spdlog::level::debug, "open ip({}) failed with error:{}", ipStr,
+                          GET_LAST_ERROR());
+            }
         }
     }
     freeifaddrs(ifaddr);
@@ -222,7 +254,7 @@ void MDNSDiscovery::sendAndRecvMDNSQuery(SOCKET sock) {
     // Sending mDNS query
     int id = mdns_multiquery_send(static_cast<int>(sock), NULL, 0, buffer, capacity, 0);
     if(id < 0) {
-        LOG_INTVL(LOG_INTVL_OBJECT_TAG + "mdns_multiquery_send", MAX_LOG_INTERVAL, spdlog::level::debug, "mdns_multiquery_send failed with error:{}",
+        LOG_INTVL(LOG_INTVL_OBJECT_TAG + "sendAndRecvMDNSQuery", MAX_LOG_INTERVAL, spdlog::level::debug, "mdns_multiquery_send failed with error:{}",
                   GET_LAST_ERROR());
     }
 
@@ -247,22 +279,36 @@ void MDNSDiscovery::sendAndRecvMDNSQuery(SOCKET sock) {
                 MDNSAckData ack;
                 size_t      rec = mdns_query_recv(static_cast<int>(sock), buffer, capacity, query_callback, &ack, id);
                 if(rec <= 0) {
+                    LOG_INTVL(LOG_INTVL_OBJECT_TAG + "sendAndRecvMDNSQuery", MAX_LOG_INTERVAL, spdlog::level::debug,
+                              "mdns_query_recv failed with error:{}", GET_LAST_ERROR());
                     break;
                 }
 
                 if(ack.name.find("_oradar_udp") == std::string::npos || ack.ip.empty()) {
-                    // LOG_INTVL(LOG_INTVL_OBJECT_TAG + "mdns_query_recv", MAX_LOG_INTERVAL, spdlog::level::debug,
-                    //           "mdns_query_recv Invalid device, srv name: {}, ip: {}, port, {}", ack.name, ack.ip, ack.port);
+                    LOG_INTVL(LOG_INTVL_OBJECT_TAG + "sendAndRecvMDNSQuery", MAX_LOG_INTERVAL, spdlog::level::debug,
+                              "Invalid device, srv name: {}, ip: {}, port, {}", ack.name, ack.ip, ack.port);
                     continue;
                 }
 
-                // TODO: get sn and model from MDNSAckData::txtList
                 MDNSDeviceInfo info;
 
-                info.ip   = ack.ip;
-                info.port = ack.port;
-                info.mac  = info.ip + ":" + std::to_string(info.port);  // TODO: get mac address
-                info.pid  = 0x5678; // TODO: pid
+                info.ip    = ack.ip;
+                info.port  = ack.port;
+                info.mac   = info.ip + ":" + std::to_string(info.port);  // TODO: get mac address
+                info.sn    = findTxtRecord(ack.txtList, "SN");
+                info.model = findTxtRecord(ack.txtList, "MODEL");
+
+                auto pid = findTxtRecord(ack.txtList, "PID");
+                try {
+                    uint32_t uintPid = std::stoul(pid, nullptr, 16);
+                    info.pid = static_cast<uint16_t>(uintPid);
+                }
+                catch(const std::exception &e) {
+                    (void)e;
+                    info.pid = 0;
+                    LOG_INTVL(LOG_INTVL_OBJECT_TAG + "sendAndRecvMDNSQuery", MAX_LOG_INTERVAL, spdlog::level::debug,
+                              "Parse PID failed. pid: {}, ip: {}, port, {}", pid, ack.ip, ack.port);
+                }
 
                 std::lock_guard<std::mutex> lock(devInfoListMtx_);
                 // check for duplication
@@ -274,6 +320,21 @@ void MDNSDiscovery::sendAndRecvMDNSQuery(SOCKET sock) {
         }
         FD_SET(sock, &readfs);
     }
+}
+
+std::string MDNSDiscovery::findTxtRecord(const std::vector<std::string> &txtList, const std::string &key) {
+    // data format: "key:value,key:value,key:value"
+    for(const auto &str: txtList) {
+        std::istringstream iss(str);
+        std::string        token;
+        while(std::getline(iss, token, ',')) {
+            size_t pos = token.find(':');
+            if(pos != std::string::npos && token.substr(0, pos) == key) {
+                return token.substr(pos + 1);
+            }
+        }
+    }
+    return ""; // not found
 }
 
 std::vector<MDNSDeviceInfo> MDNSDiscovery::queryDeviceList() {

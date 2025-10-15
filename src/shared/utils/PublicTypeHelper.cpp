@@ -141,6 +141,8 @@ OBFrameType mapStreamTypeToFrameType(OBStreamType type) {
         return OB_FRAME_RAW_PHASE;
     case OB_STREAM_CONFIDENCE:
         return OB_FRAME_CONFIDENCE;
+    case OB_STREAM_LIDAR:
+        return OB_FRAME_LIDAR_POINTS;
     default:
         break;
     }
@@ -169,6 +171,8 @@ OBStreamType mapFrameTypeToStreamType(OBFrameType type) {
         return OB_STREAM_RAW_PHASE;
     case OB_FRAME_CONFIDENCE:
         return OB_STREAM_CONFIDENCE;
+    case OB_FRAME_LIDAR_POINTS:
+        return OB_STREAM_LIDAR;
     default:
         break;
     }
@@ -195,6 +199,8 @@ OBStreamType mapSensorTypeToStreamType(OBSensorType type) {
         return OB_STREAM_RAW_PHASE;
     case OB_SENSOR_CONFIDENCE:
         return OB_STREAM_CONFIDENCE;
+    case OB_SENSOR_LIDAR:
+        return OB_STREAM_LIDAR;
     default:
         break;
     }
@@ -221,6 +227,8 @@ OBSensorType mapStreamTypeToSensorType(OBStreamType type) {
         return OB_SENSOR_RAW_PHASE;
     case OB_STREAM_CONFIDENCE:
         return OB_SENSOR_CONFIDENCE;
+    case OB_STREAM_LIDAR:
+        return OB_SENSOR_LIDAR;
     default:
         break;
     }
@@ -321,11 +329,38 @@ float mapIMUSampleRateToValue(OBIMUSampleRate rate) {
     }
 }
 
+float mapLiDARScanSpeedToValue(OBLiDARScanSpeed speed) {
+    switch(speed) {
+    case OB_LIDAR_SCAN_5HZ:
+        return 5.0f;
+    case OB_LIDAR_SCAN_10HZ:
+        return 10.0f;
+    case OB_LIDAR_SCAN_15HZ:
+        return 15.0f;
+    case OB_LIDAR_SCAN_20HZ:
+        return 20.0f;
+    case OB_LIDAR_SCAN_25HZ:
+        return 25.0f;
+    case OB_LIDAR_SCAN_30HZ:
+        return 30.0f;
+    default:
+        return 0.f;
+    }
+}
+
 // type to string map
 const std::map<OBSensorType, std::string> Sensor_Str_Map = {
-    { OB_SENSOR_IR, "IR" },           { OB_SENSOR_COLOR, "Color" },    { OB_SENSOR_DEPTH, "Depth" },      { OB_SENSOR_ACCEL, "Accel" },
-    { OB_SENSOR_GYRO, "Gyro" },       { OB_SENSOR_IR_LEFT, "LeftIR" }, { OB_SENSOR_IR_RIGHT, "RightIR" }, { OB_SENSOR_RAW_PHASE, "RawPhase" },
-    { OB_SENSOR_CONFIDENCE, "Confidence" },{ OB_SENSOR_UNKNOWN, "Unknown" },
+    { OB_SENSOR_IR, "IR" },
+    { OB_SENSOR_COLOR, "Color" },
+    { OB_SENSOR_DEPTH, "Depth" },
+    { OB_SENSOR_ACCEL, "Accel" },
+    { OB_SENSOR_GYRO, "Gyro" },
+    { OB_SENSOR_IR_LEFT, "LeftIR" },
+    { OB_SENSOR_IR_RIGHT, "RightIR" },
+    { OB_SENSOR_RAW_PHASE, "RawPhase" },
+    { OB_SENSOR_CONFIDENCE, "Confidence" },
+    { OB_SENSOR_LIDAR, "LiDAR" },
+    { OB_SENSOR_UNKNOWN, "Unknown" },
 };
 
 const std::map<OBFrameType, std::string> Frame_Str_Map = { { OB_FRAME_UNKNOWN, "Unknown frame type" },
@@ -340,12 +375,14 @@ const std::map<OBFrameType, std::string> Frame_Str_Map = { { OB_FRAME_UNKNOWN, "
                                                            { OB_FRAME_IR_LEFT, "Left IR" },
                                                            { OB_FRAME_IR_RIGHT, "Right IR" },
                                                            { OB_FRAME_RAW_PHASE, "RawPhase" },
-                                                           { OB_FRAME_CONFIDENCE, "Confidence" } };
+                                                           { OB_FRAME_CONFIDENCE, "Confidence" },
+                                                           { OB_FRAME_LIDAR_POINTS, "LiDAR Points" } };
 
 const std::map<OBStreamType, std::string> Stream_Str_Map = {
-    { OB_STREAM_UNKNOWN, "Unknown" },   { OB_STREAM_VIDEO, "Video" },       { OB_STREAM_IR, "IR" },     { OB_STREAM_COLOR, "Color" },
-    { OB_STREAM_DEPTH, "Depth" },       { OB_STREAM_ACCEL, "Accel" },       { OB_STREAM_GYRO, "Gyro" }, { OB_STREAM_IR_LEFT, "Left IR" },
-    { OB_STREAM_IR_RIGHT, "Right IR" }, { OB_STREAM_RAW_PHASE, "RawPhase" }, { OB_STREAM_CONFIDENCE, "Confidence" }
+    { OB_STREAM_UNKNOWN, "Unknown" },    { OB_STREAM_VIDEO, "Video" },           { OB_STREAM_IR, "IR" },
+    { OB_STREAM_COLOR, "Color" },        { OB_STREAM_DEPTH, "Depth" },           { OB_STREAM_ACCEL, "Accel" },
+    { OB_STREAM_GYRO, "Gyro" },          { OB_STREAM_IR_LEFT, "Left IR" },       { OB_STREAM_IR_RIGHT, "Right IR" },
+    { OB_STREAM_RAW_PHASE, "RawPhase" }, { OB_STREAM_CONFIDENCE, "Confidence" }, { OB_STREAM_LIDAR, "LiDAR" }
 };
 
 const std::map<OBIMUSampleRate, std::string> ImuRate_Str_Map = {
@@ -368,25 +405,51 @@ const std::map<OBAccelFullScaleRange, std::string> AccelFullScaleRange_Str_Map =
     { OB_ACCEL_FS_3g, "3g" },           { OB_ACCEL_FS_6g, "6g" }, { OB_ACCEL_FS_12g, "12g" }, { OB_ACCEL_FS_24g, "24g" }
 };
 
+const std::map<OBLiDARScanSpeed, std::string> LiDARScanSpeed_Str_Map = {
+    { OB_LIDAR_SCAN_UNKNOWN, "Unknown" }, { OB_LIDAR_SCAN_5HZ, "5HZ" },   { OB_LIDAR_SCAN_10HZ, "10HZ" }, { OB_LIDAR_SCAN_15HZ, "15HZ" },
+    { OB_LIDAR_SCAN_20HZ, "20HZ" },       { OB_LIDAR_SCAN_25HZ, "25HZ" }, { OB_LIDAR_SCAN_30HZ, "30HZ" },
+};
+
 const std::map<OBFormat, std::string> Format_Str_Map = {
-    { OB_FORMAT_YUYV, "YUYV" },   { OB_FORMAT_YUY2, "YUY2" },
-    { OB_FORMAT_UYVY, "UYVY" },   { OB_FORMAT_NV12, "NV12" },
-    { OB_FORMAT_NV21, "NV21" },   { OB_FORMAT_MJPG, "MJPG" },
-    { OB_FORMAT_H264, "H264" },   { OB_FORMAT_H265, "H265" },
-    { OB_FORMAT_Y16, "Y16" },     { OB_FORMAT_Y8, "Y8" },
-    { OB_FORMAT_Y10, "Y10" },     { OB_FORMAT_Y11, "Y11" },
-    { OB_FORMAT_Y12, "Y12" },     { OB_FORMAT_GRAY, "GRAY" },
-    { OB_FORMAT_HEVC, "HEVC" },   { OB_FORMAT_I420, "I420" },
-    { OB_FORMAT_ACCEL, "ACCEL" }, { OB_FORMAT_GYRO, "GYRO" },
-    { OB_FORMAT_POINT, "POINT" }, { OB_FORMAT_RGB_POINT, "RGB_POINT" },
-    { OB_FORMAT_RLE, "RLE" },     { OB_FORMAT_RGB, "RGB" },
-    { OB_FORMAT_BGR, "BGR" },     { OB_FORMAT_Y14, "Y14" },
-    { OB_FORMAT_BGRA, "BGRA" },   { OB_FORMAT_COMPRESSED, "COMPRESSED" },
-    { OB_FORMAT_RVL, "RVL" },     { OB_FORMAT_Z16, "Z16" },
-    { OB_FORMAT_YV12, "YV12" },   { OB_FORMAT_BA81, "BA81" },
-    { OB_FORMAT_RGBA, "RGBA" },   { OB_FORMAT_BYR2, "BYR2" },
-    { OB_FORMAT_RW16, "RW16" },   { OB_FORMAT_UNKNOWN, "UNKNOWN" },
+    { OB_FORMAT_YUYV, "YUYV" },
+    { OB_FORMAT_YUY2, "YUY2" },
+    { OB_FORMAT_UYVY, "UYVY" },
+    { OB_FORMAT_NV12, "NV12" },
+    { OB_FORMAT_NV21, "NV21" },
+    { OB_FORMAT_MJPG, "MJPG" },
+    { OB_FORMAT_H264, "H264" },
+    { OB_FORMAT_H265, "H265" },
+    { OB_FORMAT_Y16, "Y16" },
+    { OB_FORMAT_Y8, "Y8" },
+    { OB_FORMAT_Y10, "Y10" },
+    { OB_FORMAT_Y11, "Y11" },
+    { OB_FORMAT_Y12, "Y12" },
+    { OB_FORMAT_GRAY, "GRAY" },
+    { OB_FORMAT_HEVC, "HEVC" },
+    { OB_FORMAT_I420, "I420" },
+    { OB_FORMAT_ACCEL, "ACCEL" },
+    { OB_FORMAT_GYRO, "GYRO" },
+    { OB_FORMAT_POINT, "POINT" },
+    { OB_FORMAT_RGB_POINT, "RGB_POINT" },
+    { OB_FORMAT_RLE, "RLE" },
+    { OB_FORMAT_RGB, "RGB" },
+    { OB_FORMAT_BGR, "BGR" },
+    { OB_FORMAT_Y14, "Y14" },
+    { OB_FORMAT_BGRA, "BGRA" },
+    { OB_FORMAT_COMPRESSED, "COMPRESSED" },
+    { OB_FORMAT_RVL, "RVL" },
+    { OB_FORMAT_Z16, "Z16" },
+    { OB_FORMAT_YV12, "YV12" },
+    { OB_FORMAT_BA81, "BA81" },
+    { OB_FORMAT_RGBA, "RGBA" },
+    { OB_FORMAT_BYR2, "BYR2" },
+    { OB_FORMAT_RW16, "RW16" },
     { OB_FORMAT_Y12C4, "Y12C4" },
+    { OB_FORMAT_LIDAR_POINT, "LIDAR_POINT" },
+    { OB_FORMAT_LIDAR_SPHERE_POINT, "LIDAR_SPHERE_POINT" },
+    { OB_FORMAT_LIDAR_SCAN, "LIDAR_SCAN" },
+    { OB_FORMAT_LIDAR_CALIBRATION, "LIDAR_CALIBRATION" },
+    { OB_FORMAT_UNKNOWN, "UNKNOWN" },
 };
 
 std::map<OBFrameMetadataType, std::string> Metadata_Str_Map = { { OB_FRAME_METADATA_TYPE_TIMESTAMP, "Timestamp" },
@@ -477,6 +540,14 @@ const std::string &AccelFullScaleRangeToStr(OBAccelFullScaleRange type) {
     auto it = AccelFullScaleRange_Str_Map.find(type);
     if(it == AccelFullScaleRange_Str_Map.end()) {
         throw invalid_value_exception("Unregistered acc full scale range name");
+    }
+    return it->second;
+}
+
+const std::string &LiDARScanSpeedToStr(OBLiDARScanSpeed scanSpeed) {
+    auto it = LiDARScanSpeed_Str_Map.find(scanSpeed);
+    if(it == LiDARScanSpeed_Str_Map.end()) {
+        throw invalid_value_exception("Unregistered LiDAR scan speed name");
     }
     return it->second;
 }

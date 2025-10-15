@@ -78,7 +78,7 @@ HpStatus validateResp(uint8_t *dataBuf, uint16_t &dataSize, uint16_t expectedOpc
         retStatus.msg           = ssMsg.str();
         return retStatus;
     }
-    if ( header->opDirection != 0x01) {
+    if(header->opDirection != 0x01) {
         std::ostringstream ssMsg;
         ssMsg << "Device response with inconsistent opDirection, opDirection=" << header->opDirection << ", expectedOpcode=0x01";
         retStatus.statusCode    = HP_STATUS_DEVICE_RESPONSE_ERROR;
@@ -87,7 +87,7 @@ HpStatus validateResp(uint8_t *dataBuf, uint16_t &dataSize, uint16_t expectedOpc
         return retStatus;
     }
 
-    uint16_t respDataSize = ntohs(header->dataSize); // to host order
+    uint16_t respDataSize = ntohs(header->dataSize);  // to host order
     if(respDataSize + respHeaderSize + 0x01 > dataSize) {
         retStatus.statusCode    = HP_STATUS_DEVICE_RESPONSE_WRONG_DATA_SIZE;
         retStatus.respErrorCode = HP_RESP_ERROR_UNKNOWN;
@@ -105,8 +105,8 @@ HpStatus validateResp(uint8_t *dataBuf, uint16_t &dataSize, uint16_t expectedOpc
     }
 
     // to host order
-    header->magic = ntohs(header->magic);
-    header->opCode = ntohs(header->opCode);
+    header->magic    = ntohs(header->magic);
+    header->opCode   = ntohs(header->opCode);
     header->dataSize = ntohs(header->dataSize);
 
     switch(header->opError) {
@@ -255,7 +255,34 @@ uint16_t initSetIntPropertyReq(std::vector<uint8_t> &dataBuf, uint16_t opCode, u
     req->header.dataSize    = htons(dataSize);
     req->header.opCode      = htons(opCode);
     req->header.opInfo      = 0x0000;
-    req->value              = htonl(value);
+    req->value              = htonl(value); // to network byte order
+    *crc                    = calcCrc8(dataPtr, headerSize + dataSize);
+
+    return reqSize;
+}
+
+uint16_t initGetFloatPropertyReq(std::vector<uint8_t> &dataBuf, uint16_t opCode) {
+    return initGetIntPropertyReq(dataBuf, opCode);
+}
+
+uint16_t initSetFloatPropertyReq(std::vector<uint8_t> &dataBuf, uint16_t opCode, float value) {
+    const uint16_t headerSize = sizeof(ReqHeader);
+    const uint16_t dataSize   = operationRequiresParam(opCode) ? 0x04 : 0;
+    const uint16_t reqSize    = headerSize + dataSize + 1;  // add crc byte
+
+    if(dataBuf.size() < reqSize) {
+        dataBuf.resize(reqSize);
+    }
+    auto *   dataPtr = dataBuf.data();
+    auto *   req     = reinterpret_cast<SetFloatPropertyReq *>(dataPtr);
+    uint8_t *crc     = dataPtr + headerSize + dataSize;
+
+    req->header.magic       = htons(HP_REQUEST_MAGIC);
+    req->header.protocolVer = HP_PROTOCOL_VER_1;
+    req->header.dataSize    = htons(dataSize);
+    req->header.opCode      = htons(opCode);
+    req->header.opInfo      = 0x0000;
+    req->value              = value; // float type uses little endian
     *crc                    = calcCrc8(dataPtr, headerSize + dataSize);
 
     return reqSize;
@@ -311,7 +338,16 @@ GetIntPropertyResp *parseGetIntPropertyResp(uint8_t *dataBuf, uint16_t dataSize)
     if(dataSize < sizeof(GetIntPropertyResp) || resp->header.dataSize != sizeof(int32_t)) {
         throw io_exception("Device response with wrong data size");
     }
-    resp->value = ntohl(resp->value); // to host order
+    resp->value = ntohl(resp->value);  // to host order
+    return resp;
+}
+
+GetFloatPropertyResp *parseGetFloatPropertyResp(uint8_t *dataBuf, uint16_t dataSize) {
+    auto *resp = reinterpret_cast<GetFloatPropertyResp *>(dataBuf);
+    if(dataSize < sizeof(GetFloatPropertyResp) || resp->header.dataSize != sizeof(float)) {
+        throw io_exception("Device response with wrong data size");
+    }
+    // float data uses little endian, don't convert any more
     return resp;
 }
 

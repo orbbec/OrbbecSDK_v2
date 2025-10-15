@@ -155,6 +155,22 @@ protected:
     OBGyroSampleRate     sampleRate_;
 };
 
+/**
+ * @brief Class representing a LiDAR stream profile.
+ */
+class LiDARStreamProfile : public StreamProfile {
+public:
+    LiDARStreamProfile(std::shared_ptr<LazySensor> owner, OBLiDARScanSpeed scanSpeed, OBFormat format);
+    ~LiDARStreamProfile() noexcept override = default;
+
+    OBLiDARScanSpeed               getScanSpeed() const;
+    std::shared_ptr<StreamProfile> clone() const override;
+    std::ostream &                 operator<<(std::ostream &os) const override;
+
+protected:
+    OBLiDARScanSpeed scanSpeed_;
+};
+
 std::ostream &operator<<(std::ostream &os, const std::shared_ptr<const StreamProfile> &streamProfile);
 
 std::vector<std::shared_ptr<const VideoStreamProfile>> matchVideoStreamProfile(const StreamProfileList &profileList, uint32_t width, uint32_t height,
@@ -165,6 +181,9 @@ std::vector<std::shared_ptr<const AccelStreamProfile>> matchAccelStreamProfile(c
 
 std::vector<std::shared_ptr<const GyroStreamProfile>> matchGyroStreamProfile(const StreamProfileList &profileList, OBGyroFullScaleRange fullScaleRange,
                                                                              OBGyroSampleRate sampleRate);
+
+std::vector<std::shared_ptr<const LiDARStreamProfile>> matchLiDARStreamProfile(const StreamProfileList &profileList, OBLiDARScanSpeed scanSpeed,
+                                                                               OBFormat format);
 
 }  // namespace libobsensor
 
@@ -182,3 +201,6 @@ OB_LOG_FORMATTER(std::shared_ptr<const libobsensor::AccelStreamProfile>)
 
 OB_LOG_FORMATTER(std::shared_ptr<libobsensor::GyroStreamProfile>)
 OB_LOG_FORMATTER(std::shared_ptr<const libobsensor::GyroStreamProfile>)
+
+OB_LOG_FORMATTER(std::shared_ptr<libobsensor::LiDARStreamProfile>)
+OB_LOG_FORMATTER(std::shared_ptr<const libobsensor::LiDARStreamProfile>)

@@ -127,6 +127,15 @@ void SensorBase::updateDefaultStreamProfile(const std::shared_ptr<const StreamPr
                 break;
             }
         }
+        else if((*iter)->is<LiDARStreamProfile>() && profile->is<LiDARStreamProfile>()) {
+            auto lsp    = (*iter)->as<LiDARStreamProfile>();
+            auto lspCmp = profile->as<LiDARStreamProfile>();
+            if(lsp->getFormat() == lspCmp->getFormat() && lsp->getScanSpeed() == lspCmp->getScanSpeed()) {
+                defaultProfile = *iter;
+                streamProfileList_.erase(iter);
+                break;
+            }
+        }
     }
 
     if(defaultProfile) {

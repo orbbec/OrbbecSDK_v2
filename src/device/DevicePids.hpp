@@ -142,10 +142,15 @@ const std::vector<uint16_t> OpenniMaxPids = {
     0x06aa,  // Gemini UW
 };
 
+// TODO need to change pid
+#define LIDAR_PID_TL2401 0x5555
+#define LIDAR_PID_MS600 0x1234
+
 const std::vector<uint16_t> LiDARDevPids = {
-    // TODO need to change pid and name
-    0x1234,  // Single-line LiDAR MS600
-    0x5678,  // Multi-lines LiDAR TL2401
+    LIDAR_PID_MS600,   // Single-line LiDAR MS600
+    LIDAR_PID_TL2401,  // Multi-lines LiDAR TL2401
 };
+#define IS_OB_LIDAR_MS600(pid) (((pid) == LIDAR_PID_MS600))
+#define IS_OB_LIDAR_TL2401(pid) (((pid) == LIDAR_PID_TL2401))
 
 }  // namespace libobsensor

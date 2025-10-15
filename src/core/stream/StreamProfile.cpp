@@ -265,6 +265,24 @@ std::ostream &GyroStreamProfile::operator<<(std::ostream &os) const {
     return os;
 }
 
+LiDARStreamProfile::LiDARStreamProfile(std::shared_ptr<LazySensor> owner, OBLiDARScanSpeed scanSpeed, OBFormat format)
+    : StreamProfile{ owner, OB_STREAM_LIDAR, format }, scanSpeed_(scanSpeed) {}
+
+OBLiDARScanSpeed LiDARStreamProfile::getScanSpeed() const {
+    return scanSpeed_;
+}
+
+std::shared_ptr<StreamProfile> LiDARStreamProfile::clone() const {
+    auto sp = std::make_shared<LiDARStreamProfile>(owner_.lock(), scanSpeed_, format_);
+    return sp;
+}
+
+std::ostream &LiDARStreamProfile::operator<<(std::ostream &os) const {
+    os << "{"
+       << "type: " << type_ << ", format: " << format_ << ", scanSpeed: " << scanSpeed_ << "}";
+    return os;
+}
+
 std::ostream &operator<<(std::ostream &os, const std::shared_ptr<const StreamProfile> &streamProfile) {
     return streamProfile->operator<<(os);
 }
@@ -315,6 +333,29 @@ std::vector<std::shared_ptr<const GyroStreamProfile>> matchGyroStreamProfile(con
                && (sampleRate == OB_GYRO_SAMPLE_RATE_ANY || GyroProfile->getSampleRate() == sampleRate)) {
                 matchProfileList.push_back(GyroProfile);
             }
+        }
+    }
+    return matchProfileList;
+}
+
+std::vector<std::shared_ptr<const LiDARStreamProfile>> matchLiDARStreamProfile(const StreamProfileList &profileList, OBLiDARScanSpeed scanSpeed,
+                                                                               OBFormat format) {
+    std::vector<std::shared_ptr<const LiDARStreamProfile>> matchProfileList;
+
+    for(auto profile: profileList) {
+        if(profile->is<LiDARStreamProfile>()) {
+            auto lidarProfile = profile->as<LiDARStreamProfile>();
+
+            // Get the profile that matches the user's items of interest
+            // format
+            if((lidarProfile->getFormat() != format) && (format != OB_FORMAT_ANY)) {
+                continue;
+            }
+            // speed
+            if((lidarProfile->getScanSpeed() != scanSpeed) && (scanSpeed != OB_LIDAR_SCAN_ANY)) {
+                continue;
+            }
+            matchProfileList.push_back(lidarProfile);
         }
     }
     return matchProfileList;

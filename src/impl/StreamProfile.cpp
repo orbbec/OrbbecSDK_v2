@@ -49,6 +49,14 @@ ob_stream_profile *ob_create_gyro_stream_profile(ob_gyro_full_scale_range full_s
 }
 HANDLE_EXCEPTIONS_AND_RETURN(nullptr, full_scale_range, sample_rate)
 
+ob_stream_profile *ob_create_lidar_stream_profile(ob_lidar_scan_speed scan_speed, ob_format format, ob_error **error) BEGIN_API_CALL {
+    auto profile         = libobsensor::StreamProfileFactory::createLiDARStreamProfile(scan_speed, format);
+    auto profileImpl     = new ob_stream_profile();
+    profileImpl->profile = profile;
+    return profileImpl;
+}
+HANDLE_EXCEPTIONS_AND_RETURN(nullptr, scan_speed, format)
+
 ob_stream_profile *ob_create_stream_profile_from_other_stream_profile(const ob_stream_profile *srcProfile, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(srcProfile);
     auto sp              = srcProfile->profile->clone();
@@ -314,6 +322,16 @@ void ob_gyro_stream_set_intrinsic(ob_stream_profile *profile, ob_gyro_intrinsic 
 }
 HANDLE_EXCEPTIONS_NO_RETURN(profile /*, intrinsic*/)  // TODO: add ob_gyro_intrinsic operator<<
 
+ob_lidar_scan_speed ob_lidar_stream_profile_get_scan_speed(const ob_stream_profile *profile, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(profile);
+    if(!profile->profile->is<libobsensor::LiDARStreamProfile>()) {
+        throw libobsensor::unsupported_operation_exception("It's not a LiDAR stream profile!");
+    }
+    auto lidarProfile = profile->profile->as<libobsensor::LiDARStreamProfile>();
+    return lidarProfile->getScanSpeed();
+}
+HANDLE_EXCEPTIONS_AND_RETURN(OB_LIDAR_SCAN_UNKNOWN, profile)
+
 ob_stream_profile *ob_stream_profile_list_get_video_stream_profile(const ob_stream_profile_list *profile_list, int width, int height, ob_format format, int fps,
                                                                    ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(profile_list);
@@ -345,13 +363,26 @@ ob_stream_profile *ob_stream_profile_list_get_gyro_stream_profile(const ob_strea
     VALIDATE_NOT_NULL(profile_list);
     auto matchedProfileList = libobsensor::matchGyroStreamProfile(profile_list->profileList, full_scale_range, sample_rate);
     if(matchedProfileList.empty()) {
-        throw libobsensor::invalid_value_exception("Invalid input, No matched accel stream profile found!");
+        throw libobsensor::invalid_value_exception("Invalid input, No matched gyro stream profile found!");
     }
     auto profileImpl     = new ob_stream_profile();
     profileImpl->profile = matchedProfileList[0];
     return profileImpl;
 }
 HANDLE_EXCEPTIONS_AND_RETURN(nullptr, profile_list, full_scale_range, sample_rate)
+
+ob_stream_profile *ob_stream_profile_list_get_lidar_stream_profile(const ob_stream_profile_list *profile_list, ob_lidar_scan_speed scan_speed, ob_format format,
+                                                                   ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(profile_list);
+    auto matchedProfileList = libobsensor::matchLiDARStreamProfile(profile_list->profileList, scan_speed, format);
+    if(matchedProfileList.empty()) {
+        throw libobsensor::invalid_value_exception("Invalid input, No matched LiDAR stream profile found!");
+    }
+    auto profileImpl     = new ob_stream_profile();
+    profileImpl->profile = matchedProfileList[0];
+    return profileImpl;
+}
+HANDLE_EXCEPTIONS_AND_RETURN(nullptr, profile_list, scan_speed, format)
 
 ob_stream_profile *ob_stream_profile_list_get_profile(const ob_stream_profile_list *profile_list, int index, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(profile_list);

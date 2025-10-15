@@ -17,9 +17,10 @@ namespace libobsensor {
 typedef std::map<OBFrameType, SourceFrameQueue>::iterator FrameQueuePair;
 
 const std::map<OBStreamType, OBFrameType> STREAM_FRAME_TYPE_MAP = {
-    { OB_STREAM_COLOR, OB_FRAME_COLOR },     { OB_STREAM_DEPTH, OB_FRAME_DEPTH },        { OB_STREAM_IR, OB_FRAME_IR },
-    { OB_STREAM_IR_LEFT, OB_FRAME_IR_LEFT }, { OB_STREAM_IR_RIGHT, OB_FRAME_IR_RIGHT },  { OB_STREAM_ACCEL, OB_FRAME_ACCEL },
-    { OB_STREAM_GYRO, OB_FRAME_GYRO },       { OB_STREAM_RAW_PHASE, OB_FRAME_RAW_PHASE }, { OB_STREAM_CONFIDENCE, OB_FRAME_CONFIDENCE}
+    { OB_STREAM_COLOR, OB_FRAME_COLOR },       { OB_STREAM_DEPTH, OB_FRAME_DEPTH },         { OB_STREAM_IR, OB_FRAME_IR },
+    { OB_STREAM_IR_LEFT, OB_FRAME_IR_LEFT },   { OB_STREAM_IR_RIGHT, OB_FRAME_IR_RIGHT },   { OB_STREAM_ACCEL, OB_FRAME_ACCEL },
+    { OB_STREAM_GYRO, OB_FRAME_GYRO },         { OB_STREAM_RAW_PHASE, OB_FRAME_RAW_PHASE }, { OB_STREAM_CONFIDENCE, OB_FRAME_CONFIDENCE },
+    { OB_STREAM_LIDAR, OB_FRAME_LIDAR_POINTS }
 };
 
 uint64_t getFrameTimestampMsec(const std::shared_ptr<const Frame> &frame, FrameSyncMode syncMode) {
@@ -71,6 +72,10 @@ void FrameAggregator::updateConfig(std::shared_ptr<const Config> config, const b
         else if(profile->is<const GyroStreamProfile>()) {
             auto gyroStreamProfile = profile->as<const GyroStreamProfile>();
             fps                    = utils::mapIMUSampleRateToValue(gyroStreamProfile->getSampleRate());
+        }
+        else if(profile->is<const LiDARStreamProfile>()) {
+            auto lidarStreamProfile = profile->as<const LiDARStreamProfile>();
+            fps                     = utils::mapLiDARScanSpeedToValue(lidarStreamProfile->getScanSpeed());
         }
 
         float maxSyncQueueSize = fps * maxFrameDelay_ + 1;

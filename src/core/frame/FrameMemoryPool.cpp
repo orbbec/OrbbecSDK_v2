@@ -85,6 +85,10 @@ std::shared_ptr<IFrameBufferManager> FrameMemoryPool::createFrameBufferManager(O
         frameBufMgr = std::shared_ptr<FrameBufferManager<PointsFrame>>(new FrameBufferManager<PointsFrame>(frameBufferSize));
         LOG_DEBUG("PointsFrame bufferManager created!");
         break;
+    case OB_FRAME_LIDAR_POINTS:
+        frameBufMgr = std::shared_ptr<FrameBufferManager<LiDARPointsFrame>>(new FrameBufferManager<LiDARPointsFrame>(frameBufferSize));
+        LOG_DEBUG("LiDARPointsFrame bufferManager created!");
+        break;
     case OB_FRAME_SET:
         frameBufMgr = std::shared_ptr<FrameBufferManager<FrameSet>>(new FrameBufferManager<FrameSet>(frameBufferSize));
         LOG_DEBUG("Frameset bufferManager created!");

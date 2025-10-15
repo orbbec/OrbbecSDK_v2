@@ -24,6 +24,9 @@ std::shared_ptr<AccelStreamProfile> createAccelStreamProfile(std::shared_ptr<Laz
 std::shared_ptr<GyroStreamProfile> createGyroStreamProfile(OBGyroFullScaleRange fullScaleRange, OBGyroSampleRate sampleRate);
 std::shared_ptr<GyroStreamProfile> createGyroStreamProfile(std::shared_ptr<LazySensor> owner, OBGyroFullScaleRange fullScaleRange, OBGyroSampleRate sampleRate);
 
+std::shared_ptr<LiDARStreamProfile> createLiDARStreamProfile(OBLiDARScanSpeed scanSpeed, OBFormat format);
+std::shared_ptr<LiDARStreamProfile> createLiDARStreamProfile(std::shared_ptr<LazySensor> owner, OBLiDARScanSpeed scanSpeed, OBFormat format);
+
 std::shared_ptr<const StreamProfile> getStreamProfileFromEnvConfig(const std::string &nodeName, OBSensorType sensorType);
 std::shared_ptr<const StreamProfile> getDefaultStreamProfileFromEnvConfig(const std::string &deviceName, OBSensorType sensorType, const std::string &tag = "");
 

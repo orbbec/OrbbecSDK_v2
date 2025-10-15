@@ -73,6 +73,14 @@ OB_EXPORT const char* ob_gyro_range_type_to_string(OBGyroFullScaleRange type);
 OB_EXPORT const char* ob_accel_range_type_to_string(OBAccelFullScaleRange type);
 
 /**
+ * @brief Convert OBLiDARScanSpeed to " char* " type and then return.
+ *
+ * @param[in] type OBLiDARScanSpeed type.
+ * @return OBLiDARScanSpeed of "char*" type.
+ */
+OB_EXPORT const char *ob_lidar_scan_speed_type_to_string(OBLiDARScanSpeed type);
+
+    /**
  * @brief Convert OBFrameMetadataType to " char* " type and then return.
  *
  * @param[in] type OBFrameMetadataType type.

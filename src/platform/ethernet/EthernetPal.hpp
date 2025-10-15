@@ -21,7 +21,7 @@ namespace libobsensor {
 
 class EthernetPal : virtual public IPal, virtual public IDeviceWatcher, public std::enable_shared_from_this<EthernetPal> {
 public:
-    EthernetPal() {}
+    EthernetPal();
     virtual ~EthernetPal() noexcept override;
 
     // IDeviceWatcher interface methods
@@ -54,7 +54,8 @@ private:
     std::condition_variable     condVar_;
 
     // mDNS
-    std::vector<MDNSDeviceInfo> mdnsDevInfoList_;
+    std::vector<MDNSDeviceInfo>    mdnsDevInfoList_;
+    std::shared_ptr<MDNSDiscovery> mdnsDiscovery_;
 };
 
 }  // namespace libobsensor

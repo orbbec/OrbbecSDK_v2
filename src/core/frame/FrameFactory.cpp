@@ -56,7 +56,7 @@ std::shared_ptr<Frame> FrameFactory::createFrameFromOtherFrame(std::shared_ptr<c
 }
 
 std::shared_ptr<Frame> FrameFactory::createVideoFrame(OBFrameType frameType, OBFormat frameFormat, uint32_t width, uint32_t height, uint32_t strideBytes) {
-    if(frameType == OB_FRAME_UNKNOWN || frameType == OB_FRAME_ACCEL || frameType == OB_FRAME_GYRO || frameType == OB_FRAME_SET) {
+    if(frameType == OB_FRAME_UNKNOWN || frameType == OB_FRAME_ACCEL || frameType == OB_FRAME_GYRO || frameType == OB_FRAME_SET || frameType == OB_FRAME_LIDAR_POINTS ) {
         throw libobsensor::invalid_value_exception("Invalid frame type for video frame.");
     }
 
@@ -101,6 +101,10 @@ std::shared_ptr<Frame> FrameFactory::createFrameFromUserBuffer(OBFrameType frame
     case OB_FRAME_GYRO:
         frame = std::make_shared<GyroFrame>(buffer, bufferSize, bufferReclaimFunc);
         sp    = StreamProfileFactory::createGyroStreamProfile(OB_GYRO_FS_16dps, OB_SAMPLE_RATE_1_5625_HZ);
+        break;
+    case OB_FRAME_LIDAR_POINTS:
+        frame = std::make_shared<LiDARPointsFrame>(buffer, bufferSize, bufferReclaimFunc);
+        sp    = StreamProfileFactory::createLiDARStreamProfile(OB_LIDAR_SCAN_ANY, format);
         break;
     default:
         throw libobsensor::invalid_value_exception("Invalid frame type for user frame.");

@@ -102,7 +102,9 @@ private:
     X(OB_DEV_COMPONENT_FRAME_INTERLEAVE_MANAGER, "frame interleave manager")             \
     X(OB_DEV_COMPONENT_FIRMWARE_UPDATE_GUARD_FACTORY, "firmware update guard factory")   \
     X(OB_DEV_COMPONENT_CONFIDENCE_SENSOR, "confidence sensor")                           \
-    X(OB_DEV_COMPONENT_DEVICE_ACTIVITY_RECORDER, "device activity recorder")
+    X(OB_DEV_COMPONENT_DEVICE_ACTIVITY_RECORDER, "device activity recorder")             \
+    X(OB_DEV_COMPONENT_LIDAR_SENSOR, "lidar sensor")                                     \
+    X(OB_DEV_COMPONENT_LIDAR_STREAMER, "lidar streamer")
 
 // generate enum
 typedef enum {

@@ -240,6 +240,11 @@ public:
     float       temperature() const;
 };
 
+class LiDARPointsFrame : public Frame {
+public:
+    LiDARPointsFrame(uint8_t *data, size_t dataBufSize, FrameBufferReclaimFunc bufferReclaimFunc = nullptr);
+};
+
 class FrameSet : public Frame {
     typedef std::function<bool(void *)> ForeachBack;
 

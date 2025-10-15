@@ -35,10 +35,7 @@ class MDNSDiscovery {
 public:
     ~MDNSDiscovery();
 
-    static MDNSDiscovery &instance() {
-        static MDNSDiscovery instance;
-        return instance;
-    }
+    static std::shared_ptr<MDNSDiscovery> getInstance();
 
     std::vector<MDNSDeviceInfo> queryDeviceList();
 
@@ -48,11 +45,14 @@ private:
     std::vector<SOCKET> openClientSockets();
     void                closeClientSockets(std::vector<SOCKET> &socks);
     void                sendAndRecvMDNSQuery(SOCKET sock);
+    std::string         findTxtRecord(const std::vector<std::string> &txtList, const std::string &key);
 
 private:
-    std::vector<MDNSDeviceInfo> devInfoList_;
-    std::mutex                  queryMtx_;
-    std::mutex                  devInfoListMtx_;
+    std::vector<MDNSDeviceInfo>         devInfoList_;
+    std::mutex                          queryMtx_;
+    std::mutex                          devInfoListMtx_;
+    static std::mutex                   instanceMutex_;
+    static std::weak_ptr<MDNSDiscovery> instanceWeakPtr_;
 };
 
 }  // namespace libobsensor
