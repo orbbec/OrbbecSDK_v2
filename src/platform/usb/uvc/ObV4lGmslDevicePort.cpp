@@ -843,7 +843,8 @@ void ObV4lGmslDevicePort::handleSpecialResolution(std::shared_ptr<V4lDeviceHandl
                 std::cerr << "Error: " << e.what() << std::endl;
             }
         }
-        else if((streamType == OB_STREAM_DEPTH || streamType == OB_STREAM_COLOR) && height != 270)  // Depth OR Color
+        else if((streamType == OB_STREAM_DEPTH || streamType == OB_STREAM_COLOR || streamType == OB_STREAM_COLOR_LEFT || streamType == OB_STREAM_COLOR_RIGHT)
+                && height != 270)  // Depth OR Color
         {
             if(originalWidth == 848) {
                 paddedWidth = (originalWidth + 16);

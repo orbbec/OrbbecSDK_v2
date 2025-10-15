@@ -13,7 +13,7 @@ namespace libobsensor {
 static const std::multimap<OBPropertyID, std::vector<OBFrameMetadataType>> initMetadataTypeIdMap(OBSensorType type) {
     std::multimap<OBPropertyID, std::vector<OBFrameMetadataType>> map;
 
-    if(type == OB_SENSOR_COLOR) {
+    if(type == OB_SENSOR_COLOR||type==OB_SENSOR_COLOR_LEFT||type==OB_SENSOR_COLOR_RIGHT) {
         map.insert({ OB_PROP_COLOR_AUTO_EXPOSURE_BOOL, { OB_FRAME_METADATA_TYPE_AUTO_EXPOSURE } });
         map.insert({ OB_PROP_COLOR_AUTO_EXPOSURE_PRIORITY_INT, { OB_FRAME_METADATA_TYPE_LOW_LIGHT_COMPENSATION } });
         map.insert({ OB_PROP_COLOR_AUTO_WHITE_BALANCE_BOOL, { OB_FRAME_METADATA_TYPE_AUTO_WHITE_BALANCE } });
