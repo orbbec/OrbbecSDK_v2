@@ -461,16 +461,6 @@ OB_EXPORT uint8_t ob_video_frame_get_pixel_available_bit_size(const ob_frame *fr
 OB_EXPORT void ob_video_frame_set_pixel_available_bit_size(ob_frame *frame, uint8_t bit_size, ob_error **error);
 
 /**
- * @brief Get the source sensor type of the ir frame (left or right for dual camera)
- *
- * @param[in] frame Frame object
- * @param[out] ob_error Pointer to an error object that will be set if an error occurs.
- *
- * @return ob_sensor_type return the source sensor type of the ir frame
- */
-OB_EXPORT ob_sensor_type ob_ir_frame_get_source_sensor_type(const ob_frame *frame, ob_error **ob_error);
-
-/**
  * @brief Get the value scale of the depth frame. The pixel value of the depth frame is multiplied by the scale to give a depth value in millimeters.
  * For example, if valueScale=0.1 and a certain coordinate pixel value is pixelValue=10000, then the depth value = pixelValue*valueScale = 10000*0.1=1000mm.
  *
