@@ -8,6 +8,7 @@ $current_dir = Get-Location
 $platform = "x64"
 $targetArch = "x64"
 $fullPlatform = "win_x64"
+$buildType = "Release"
 
 if ($args.Length -eq 1) {
     if ($args[0] -eq "x64") {
@@ -19,6 +20,8 @@ if ($args.Length -eq 1) {
         $platform = "Win32"
         $fullPlatform = "win_x86"
         $targetArch = "x86"
+        # build release with debug info
+        $buildType = "RelWithDebInfo"
     }
     else {
         Write-Output "Invalid argument, please use x64 or x86"
@@ -132,8 +135,8 @@ if (-not $opencvPath -or -not (Test-Path $opencvLibPath)) {
 }
 
 # build and install
-cmake -G "$cmake_generator" -A "$platform" -T "v141,host=${targetArch}" -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="${install_dir}" ..
-cmake --build . --config Release --target install
+cmake -G "$cmake_generator" -A "$platform" -T "v141,host=${targetArch}" -DCMAKE_BUILD_TYPE=$buildType -DCMAKE_INSTALL_PREFIX="${install_dir}" ..
+cmake --build . --config $buildType --target install
 
 # create zip file
 $zip_file = "${package_name}.zip"

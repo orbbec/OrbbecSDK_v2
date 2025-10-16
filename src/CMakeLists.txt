@@ -95,6 +95,7 @@ if(OB_IS_MAIN_PROJECT)
         FILES "${CMAKE_CURRENT_BINARY_DIR}/OrbbecSDKConfigVersion.cmake"
         DESTINATION lib
     )
+    install(FILES $<TARGET_PDB_FILE:OrbbecSDK> DESTINATION bin OPTIONAL)
 endif()
 
 if(OB_BUILD_SOVERSION)
