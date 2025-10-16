@@ -557,6 +557,11 @@ typedef enum {
     OB_PROP_INTRA_CAMERA_SYNC_REFERENCE_INT = 236,
 
     /**
+     * @brief Color camera ROI brightness adjustment
+     */
+    OB_PROP_COLOR_ROI_BRIGHTNESS_INT = 249,
+
+    /**
      * @brief Baseline calibration parameters
      */
     OB_STRUCT_BASELINE_CALIBRATION_PARAM = 1002,

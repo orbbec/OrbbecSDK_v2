@@ -699,6 +699,7 @@ void G435LeDevice::initProperties() {
     propertyServer->registerProperty(OB_RAW_PRESET_RESOLUTION_CONFIG_LIST, "", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_STRUCT_PRESET_RESOLUTION_CONFIG, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_COMPAT_VERSION_INT, "", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_COLOR_ROI_BRIGHTNESS_INT, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerAccessCallback(OB_STRUCT_PRESET_RESOLUTION_CONFIG,
                                            [&](uint32_t propertyId, const uint8_t *, size_t, PropertyOperationType operationType) {
                                                if(operationType == PROP_OP_WRITE && propertyId == OB_STRUCT_PRESET_RESOLUTION_CONFIG) {
