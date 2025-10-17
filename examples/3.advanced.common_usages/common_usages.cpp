@@ -14,6 +14,11 @@ const std::map<std::string, int> gemini_330_list = { { "Gemini 335", 0x0800 }, {
                                                      { "Gemini 330", 0x0801 }, { "Gemini 330L", 0x0805 },  { "DabaiA", 0x0A12 },    { "DabaiAL", 0x0A13 },
                                                      { "Gemini 345", 0x0812 }, { "Gemini 345Lg", 0x0813 }, { "CAM-5330", 0x0816 },  { "CAM-5530", 0x0817 },{"Gemini 338",0x0818} };
 
+const std::map<std::string, int> openni_device_list = { { "Astra Mini S Pro", 0x065e }, { "Astra Mini Pro", 0x065b }, { "DaBai Max", 0x069a },
+                                                        { "DaBai Max Pro", 0x069e },    { "Gemini UW", 0x06aa },      { "DaBai DW2", 0x069f },
+                                                        { "Gemini EW Lite", 0x06a7 },   { "DaBai DCW2", 0x06a0 },     { "Gemini EW", 0x06a6 },
+                                                        { "Astra Pro2", 0x069d } };
+
 const std::map<OBSensorType, std::string> sensorTypeToStringMap = { { OB_SENSOR_COLOR, "Color profile: " },
                                                                     { OB_SENSOR_DEPTH, "Depth profile: " },
                                                                     { OB_SENSOR_IR, "IR profile: " },
@@ -23,6 +28,17 @@ const std::map<OBSensorType, std::string> sensorTypeToStringMap = { { OB_SENSOR_
 bool isGemini330Series(int pid) {
     bool find = false;
     for(auto it = gemini_330_list.begin(); it != gemini_330_list.end(); ++it) {
+        if(it->second == pid) {
+            find = true;
+            break;
+        }
+    }
+    return find;
+}
+
+bool isOpenniDeviceSeries(int pid) {
+    bool find = false;
+    for(auto it = openni_device_list.begin(); it != openni_device_list.end(); ++it) {
         if(it->second == pid) {
             find = true;
             break;
@@ -746,21 +762,37 @@ void setDepthGainValue(bool increase) {
                 int value = device->getIntProperty(OB_PROP_DEPTH_GAIN_INT);
                 std::cout << "Depth current gain:" << value << std::endl;
                 if(device->isPropertySupported(OB_PROP_DEPTH_GAIN_INT, OB_PERMISSION_WRITE)) {
-                    if(increase) {
-                        value += (valueRange.max - valueRange.min) / 10;
-                        if(value > valueRange.max) {
-                            value = valueRange.max;
+                    auto pid = device->getDeviceInfo()->getPid();
+                    if(isOpenniDeviceSeries(pid)) {
+                        if(increase) {
+                            value ++;
+                            if(value > valueRange.max) {
+                                value = valueRange.max;
+                            }
+                        }
+                        else {
+                            value --;
+                            if(value < valueRange.min) {
+                                value = valueRange.min;
+                            }
                         }
                     }
                     else {
-                        value -= (valueRange.max - valueRange.min) / 10;
-                        if(value < valueRange.min) {
-                            value = valueRange.min;
+                        if(increase) {
+                            value += (valueRange.max - valueRange.min) / 10;
+                            if(value > valueRange.max) {
+                                value = valueRange.max;
+                            }
                         }
+                        else {
+                            value -= (valueRange.max - valueRange.min) / 10;
+                            if(value < valueRange.min) {
+                                value = valueRange.min;
+                            }
+                        }
+                        // Ensure that the value meet the step value requirements
+                        value = valueRange.min + (value - valueRange.min) / valueRange.step * valueRange.step;
                     }
-                    // Ensure that the value meet the step value requirements
-                    value = valueRange.min + (value - valueRange.min) / valueRange.step * valueRange.step;
-
                     std::cout << "Set depth gain:" << value << std::endl;
                     device->setIntProperty(OB_PROP_DEPTH_GAIN_INT, value);
                 }
