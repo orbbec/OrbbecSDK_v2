@@ -232,18 +232,29 @@ void G435LeDeviceBase::updateDefaultStreamProfile(std::shared_ptr<libobsensor::I
 
     std::shared_ptr<const StreamProfile> defaultProfile = nullptr;
 
+    uint32_t maxFps = 0;
+
+    for(auto &profile: profiles){
+        auto vspProfile = profile->as<VideoStreamProfile>();
+        if(vspProfile == nullptr) {
+            continue;
+        }
+        uint32_t currentFps = vspProfile->getFps();
+
+        if(currentFps > maxFps) {
+            maxFps = currentFps;
+        }
+    }
+
     for(auto &profile: profiles) {
         auto vspProfile = profile->as<VideoStreamProfile>();
         if(vspProfile == nullptr) {
             continue;
         }
 
-        if(vspProfile->getFormat() == DEFAULT_FORMAT) {
+        if(vspProfile->getFormat() == DEFAULT_FORMAT && vspProfile->getFps() == maxFps) {
             defaultProfile = profile;
             break;
-        }
-        else if(vspProfile->getFormat() == DEFAULT_FORMAT) {
-            defaultProfile = profile;
         }
     }
 
