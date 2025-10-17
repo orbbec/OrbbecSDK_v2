@@ -84,14 +84,14 @@ void EthernetPal::start(deviceChangedCallback callback) {
             updateMDNSDeviceSourceInfo(added, removed);
 
             for(auto &&info: removed) {
-                if(!callback_(OB_DEVICE_REMOVED, info.mac + +"." + info.ip)) {
+                if(!callback_(OB_DEVICE_REMOVED, info.mac)) {
                     // if device is still online, restore it to the list
                     list.push_back(info);
                     updateMDNSDeviceSourceInfo({ info }, {});
                 }
             }
             for(auto &&info: added) {
-                callback_(OB_DEVICE_ARRIVAL, info.mac + +"." + info.ip);
+                callback_(OB_DEVICE_ARRIVAL, info.mac);
             }
             mdnsDevInfoList_ = list;
             mdnsCondVar_.wait_for(lock, std::chrono::milliseconds(MDNS_WATCHER_POLLING_INTERVAL_MSEC), [&]() { return stopWatch_.load(); });

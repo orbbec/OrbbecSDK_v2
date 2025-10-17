@@ -272,7 +272,7 @@ void MDNSDiscovery::MDNSQuery(std::vector<MDNSSocketInfo> &sockInfos, int timeou
 
     struct timeval timeout;
     timeout.tv_sec  = timeoutSec;
-    timeout.tv_usec = timeoutUsec;  // 100ms
+    timeout.tv_usec = timeoutUsec;
 
     do {
         FD_ZERO(&readfs);

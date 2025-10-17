@@ -40,6 +40,15 @@ void LiDARDevice::init() {
     initSensorList();
 
     fetchDeviceInfo();
+
+    registerComponent(
+    OB_DEV_COMPONENT_DEVICE_ACTIVITY_RECORDER,
+    [this]() {
+        std::shared_ptr<DeviceActivityRecorder> activityRecorder;
+        TRY_EXECUTE({ activityRecorder = std::make_shared<DeviceActivityRecorder>(this); })
+        return activityRecorder;
+    },
+    false);
 }
 
 void LiDARDevice::fetchDeviceInfo() {
