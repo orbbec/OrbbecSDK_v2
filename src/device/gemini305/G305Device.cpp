@@ -856,8 +856,6 @@ void G305Device::initSensorList() {
                         { FormatFilterPolicy::REPLACE, OB_FORMAT_NV12, OB_FORMAT_Y12, nullptr },
                         { FormatFilterPolicy::REMOVE, OB_FORMAT_BGR, OB_FORMAT_ANY, nullptr },
                         { FormatFilterPolicy::REMOVE, OB_FORMAT_BGRA, OB_FORMAT_ANY, nullptr },
-                        { FormatFilterPolicy::REPLACE, OB_FORMAT_BA81, OB_FORMAT_Y8, nullptr },  //
-                        { FormatFilterPolicy::REPLACE, OB_FORMAT_YV12, OB_FORMAT_Y12, nullptr },
                     };
 
                     auto formatConverter = getSensorFrameFilter("FrameUnpacker", OB_SENSOR_IR_LEFT, false);
@@ -1162,6 +1160,7 @@ std::shared_ptr<const StreamProfile> G305Device::loadDefaultStreamProfile(OBSens
 }
 
 void G305Device::updateSensorStreamProfile(){
+    // auto streamProfileFilter   = getComponentT<IStreamProfileFilter>(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER);
     auto sensorTypeList = getSensorTypeList();
     for(auto sensorType: sensorTypeList) {
         if(ob_is_video_sensor_type(sensorType)) {
