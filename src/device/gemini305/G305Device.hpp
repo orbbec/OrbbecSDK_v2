@@ -30,6 +30,7 @@ private:
     //void                                 initSensorListGMSL();
     void                                 loadDefaultDepthPostProcessingConfig();
     std::shared_ptr<const StreamProfile> loadDefaultStreamProfile(OBSensorType sensorType);
+    void updateSensorStreamProfile();
 
 private:
     const uint64_t                                              deviceTimeFreq_ = 1000;     // in ms

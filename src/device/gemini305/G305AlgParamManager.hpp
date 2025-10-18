@@ -7,23 +7,35 @@
 #include "stream/StreamIntrinsicsManager.hpp"
 #include "stream/StreamExtrinsicsManager.hpp"
 #include "stream/StreamProfileFactory.hpp"
+#include "IPresetResolutionConfig.hpp"
 #include <vector>
 #include <memory>
 
 namespace libobsensor {
 
-class G305AlgParamManager : public DisparityAlgParamManagerBase {
+typedef struct {
+    int16_t  width;                ///< width
+    int16_t  height;               ///< height
+    uint16_t irDecimationFlag;     ///< ir decimation flag. Bit 0 corresponds to the original resolution, bit 1 to 1/2 resolution, etc. A set bit indicates the
+                                   ///< availability of that downsampling factor.
+    uint16_t depthDecimationFlag;  ///< depth decimation flag. Bit 0 corresponds to the original resolution, bit 1 to 1/2 resolution, etc. A set bit indicates
+                                   ///< the availability of that downsampling factor.
+} OBPresetResolutionMask;
+
+class G305AlgParamManager : public DisparityAlgParamManagerBase, public IPresetResolutionConfigListManager {
 public:
     G305AlgParamManager(IDevice *owner);
     virtual ~G305AlgParamManager() override = default;
 
-    void bindIntrinsic(std::vector<std::shared_ptr<const StreamProfile>> streamProfileList) override;
-    void reFetchDisparityParams();
-    void updateD2CProfileList(const std::string currentDepthAlgMode);
+    void                                  bindIntrinsic(std::vector<std::shared_ptr<const StreamProfile>> streamProfileList) override;
+    void                                  reFetchDisparityParams();
+    void                                  updateD2CProfileList(const std::string currentDepthAlgMode);
+    std::vector<OBPresetResolutionConfig> getPresetResolutionConfigList() const override;
 
 private:
     void fetchParamFromDevice() override;
     void registerBasicExtrinsics() override;
+    void fetchPresetResolutionConfig();
     void fixD2CParmaList();
     bool findBestMatchedCameraParam(const std::vector<OBCameraParam> &cameraParamList, const std::shared_ptr<const VideoStreamProfile> &profile,
                                     OBCameraParam &result);
@@ -48,6 +60,8 @@ private:
     OBDERectifyD2CParams d2cRectifyParam_;
     OBDEIRTransformParam depthEngineTransformParam_;
     bool                 irRectifyEnable_ = false;
+    // Preset resolution config list
+    std::vector<OBPresetResolutionConfig> presetResolutionConfigList_;
 };
 
 }  // namespace libobsensor

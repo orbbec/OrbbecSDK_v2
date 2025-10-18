@@ -556,7 +556,7 @@ typedef enum {
      */
     OB_PROP_INTRA_CAMERA_SYNC_REFERENCE_INT = 236,
 
-    /*
+    /**
      * @brief Right Color sensor rotation, angle{0, 90, 180, 270}
      */
     OB_PROP_COLOR_RIGHT_ROTATE_INT = 242,
@@ -570,6 +570,13 @@ typedef enum {
      * @brief Right Color flip
      */
     OB_PROP_COLOR_RIGHT_FLIP_BOOL = 244,
+
+    /**
+     * @brief Color AE mode
+     * - 0: Depth based
+     * - 1: Color based
+     */
+    OB_PROP_COLOR_AE_MODE_INT = 247,
 
     /**
      * @brief Color camera ROI brightness adjustment

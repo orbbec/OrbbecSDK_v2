@@ -406,6 +406,12 @@ void G305Device::initProperties() {
             propertyServer->registerProperty(OB_PROP_COLOR_POWER_LINE_FREQUENCY_INT, "rw", "rw", uvcPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_COLOR_BACKLIGHT_COMPENSATION_INT, "rw", "rw", uvcPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_COLOR_AUTO_EXPOSURE_PRIORITY_INT, "rw", "rw", uvcPropertyAccessor);
+
+            auto vendorPropertyAccessor = std::make_shared<LazySuperPropertyAccessor>([this, &sourcePortInfo]() {
+                auto accessor = getComponentT<IPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+                return accessor.get();
+            });
+            propertyServer->registerProperty(OB_PROP_COLOR_AE_MODE_INT, "rw", "rw", vendorPropertyAccessor);
         }
         else if(sensor == OB_SENSOR_COLOR_LEFT) {
             auto uvcPropertyAccessor = std::make_shared<LazyPropertyAccessor>([this, &sourcePortInfo]() {
@@ -601,6 +607,17 @@ void G305Device::initProperties() {
     auto hwNoiseRemovePropertyAccessor = std::make_shared<G305HWNoiseRemovePropertyAccessor>(this);
     propertyServer->registerProperty(OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL, "rw", "rw", hwNoiseRemovePropertyAccessor);
     propertyServer->registerProperty(OB_PROP_HW_NOISE_REMOVE_FILTER_THRESHOLD_FLOAT, "rw", "rw", hwNoiseRemovePropertyAccessor);
+
+    propertyServer->registerProperty(OB_STRUCT_PRESET_RESOLUTION_CONFIG, "rw", "rw", vendorPropertyAccessor.get());
+    propertyServer->registerProperty(OB_RAW_PRESET_RESOLUTION_CONFIG_LIST, "", "rw", vendorPropertyAccessor.get());
+    propertyServer->registerAccessCallback(OB_STRUCT_PRESET_RESOLUTION_CONFIG,
+                                           [&](uint32_t propertyId, const uint8_t *, size_t, PropertyOperationType operationType) {
+                                               if(operationType == PROP_OP_WRITE && propertyId == OB_STRUCT_PRESET_RESOLUTION_CONFIG) {
+                                                   updateSensorStreamProfile();
+                                               }
+                                           });
+
+    propertyServer->registerProperty(OB_RAW_DATA_PRESET_RESOLUTION_MASK_LIST, "", "r", vendorPropertyAccessor.get());
 }
 
 void G305Device::initSensorList() {
@@ -829,6 +846,8 @@ void G305Device::initSensorList() {
                         { FormatFilterPolicy::REPLACE, OB_FORMAT_NV12, OB_FORMAT_Y12, nullptr },
                         { FormatFilterPolicy::REMOVE, OB_FORMAT_BGR, OB_FORMAT_ANY, nullptr },
                         { FormatFilterPolicy::REMOVE, OB_FORMAT_BGRA, OB_FORMAT_ANY, nullptr },
+                        { FormatFilterPolicy::REPLACE, OB_FORMAT_BA81, OB_FORMAT_Y8, nullptr },  //
+                        { FormatFilterPolicy::REPLACE, OB_FORMAT_YV12, OB_FORMAT_Y12, nullptr },
                     };
 
                     auto formatConverter = getSensorFrameFilter("FrameUnpacker", OB_SENSOR_IR_LEFT, false);
@@ -1129,6 +1148,15 @@ std::shared_ptr<const StreamProfile> G305Device::loadDefaultStreamProfile(OBSens
     }
 
     return defaultStreamProfile;
+}
+
+void G305Device::updateSensorStreamProfile(){
+    auto streamProfileFilter   = getComponentT<IStreamProfileFilter>(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER);
+    auto sensorTypeList = getSensorTypeList();
+    for(auto sensorType: sensorTypeList) {
+        auto sensor = getSensor(sensorType);
+        initSensorStreamProfile(sensor.get());
+    }
 }
 
 }  // namespace libobsensor

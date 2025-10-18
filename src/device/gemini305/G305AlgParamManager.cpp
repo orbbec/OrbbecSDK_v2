@@ -27,7 +27,7 @@ bool G305AlgParamManager::findBestMatchedCameraParam(const std::vector<OBCameraP
             result = param;
             break;
         }
-        else if(streamType == OB_STREAM_COLOR || streamType == OB_STREAM_COLOR_RIGHT || streamType == OB_STREAM_COLOR_LEFT
+        else if((streamType == OB_STREAM_COLOR || streamType == OB_STREAM_COLOR_RIGHT || streamType == OB_STREAM_COLOR_LEFT)
                 && static_cast<uint32_t>(param.rgbIntrinsic.width) == profile->getWidth()
                 && static_cast<uint32_t>(param.rgbIntrinsic.height) == profile->getHeight()) {
             found  = true;
@@ -47,7 +47,7 @@ bool G305AlgParamManager::findBestMatchedCameraParam(const std::vector<OBCameraP
                 result = param;
                 break;
             }
-            else if(streamType == OB_STREAM_COLOR && streamType == OB_STREAM_COLOR_RIGHT && streamType == OB_STREAM_COLOR_LEFT
+            else if((streamType == OB_STREAM_COLOR || streamType == OB_STREAM_COLOR_RIGHT || streamType == OB_STREAM_COLOR_LEFT)
                     && (float)param.rgbIntrinsic.width / param.rgbIntrinsic.height == ratio) {
                 found  = true;
                 result = param;
@@ -61,6 +61,7 @@ bool G305AlgParamManager::findBestMatchedCameraParam(const std::vector<OBCameraP
 
 G305AlgParamManager::G305AlgParamManager(IDevice *owner) : DisparityAlgParamManagerBase(owner) {
     fetchParamFromDevice();
+    fetchPresetResolutionConfig();
     fixD2CParmaList();
     registerBasicExtrinsics();
 }
@@ -197,9 +198,9 @@ void G305AlgParamManager::reFetchDisparityParams() {
 }
 
 void G305AlgParamManager::registerBasicExtrinsics() {
-    auto extrinsicMgr              = StreamExtrinsicsManager::getInstance();
-    auto depthBasicStreamProfile   = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_DEPTH, OB_FORMAT_ANY, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY);
-    auto colorBasicStreamProfile   = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_COLOR, OB_FORMAT_ANY, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY);
+    auto extrinsicMgr            = StreamExtrinsicsManager::getInstance();
+    auto depthBasicStreamProfile = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_DEPTH, OB_FORMAT_ANY, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY);
+    auto colorBasicStreamProfile = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_COLOR, OB_FORMAT_ANY, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY);
     auto leftcolorBasicStreamProfile =
         StreamProfileFactory::createVideoStreamProfile(OB_STREAM_COLOR_LEFT, OB_FORMAT_ANY, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY);
     auto rightcolorBasicStreamProfile =
@@ -484,4 +485,57 @@ void G305AlgParamManager::bindIntrinsic(std::vector<std::shared_ptr<const Stream
         }
     }
 }
+
+void G305AlgParamManager::fetchPresetResolutionConfig() {
+    auto owner      = getOwner();
+    auto propServer = owner->getPropertyServer();  // Auto-lock when getting propertyServer
+
+    if(!propServer->isPropertySupported(OB_RAW_DATA_PRESET_RESOLUTION_MASK_LIST, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
+        return;
+    }
+
+    try {
+        auto presetResolutionMaskList = propServer->getStructureDataListProtoV1_1_T<OBPresetResolutionMask, 0>(OB_RAW_DATA_PRESET_RESOLUTION_MASK_LIST);
+        for(auto &ratio: presetResolutionMaskList) {
+            int depthDecimation[16] = { 0 };
+            int irDecimation[16]    = { 0 };
+            for(int bit = 0; bit < 16; ++bit) {
+                bool depthBitSet = (ratio.depthDecimationFlag & (1 << bit)) != 0;
+                bool irBitSet    = (ratio.irDecimationFlag & (1 << bit)) != 0;
+                if(irBitSet) {
+                    irDecimation[bit] = 1;
+                }
+                if(depthBitSet) {
+                    depthDecimation[bit] = 1;
+                }
+            }
+
+            for(int depthBit = 0; depthBit < 16; ++depthBit) {
+                if(depthDecimation[depthBit] == 0) {
+                    continue;
+                }
+                for(int irBit = 0; irBit < 16; ++irBit) {
+                    if(irDecimation[irBit] == 0) {
+                        continue;
+                    }
+                    OBPresetResolutionConfig config{};
+                    config.width                 = ratio.width;
+                    config.height                = ratio.height;
+                    config.depthDecimationFactor = depthBit + 1;
+                    config.irDecimationFactor    = irBit + 1;
+                    presetResolutionConfigList_.push_back(config);
+                }
+            }
+        }
+    }
+    catch(const std::exception &e) {
+        LOG_ERROR("Get preset resolution mask failed! {}", e.what());
+        return;
+    }
+}
+
+std::vector<OBPresetResolutionConfig> G305AlgParamManager::getPresetResolutionConfigList() const {
+    return presetResolutionConfigList_;
+}
+
 }  // namespace libobsensor
