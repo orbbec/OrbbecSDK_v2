@@ -26,5 +26,6 @@ target_sources(
     ${CMAKE_CURRENT_LIST_DIR}/G305PropertyAccessors.cpp
     ${CMAKE_CURRENT_LIST_DIR}/G305AlgParamManager.hpp
     ${CMAKE_CURRENT_LIST_DIR}/G305AlgParamManager.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/G305StreamProfileFilter.cpp
 )
 

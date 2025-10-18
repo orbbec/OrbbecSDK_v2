@@ -45,6 +45,7 @@
 #include "G305FrameMetadataParserContainer.hpp"
 #include "G305PropertyAccessors.hpp"
 #include "G305AlgParamManager.hpp"
+#include "G305StreamProfileFilter.hpp"
 
 #include <algorithm>
 #include <fstream>
@@ -611,8 +612,13 @@ void G305Device::initProperties() {
     propertyServer->registerProperty(OB_STRUCT_PRESET_RESOLUTION_CONFIG, "rw", "rw", vendorPropertyAccessor.get());
     propertyServer->registerProperty(OB_RAW_PRESET_RESOLUTION_CONFIG_LIST, "", "rw", vendorPropertyAccessor.get());
     propertyServer->registerAccessCallback(OB_STRUCT_PRESET_RESOLUTION_CONFIG,
-                                           [&](uint32_t propertyId, const uint8_t *, size_t, PropertyOperationType operationType) {
+                                           [&](uint32_t propertyId, const uint8_t *data, size_t, PropertyOperationType operationType) {
                                                if(operationType == PROP_OP_WRITE && propertyId == OB_STRUCT_PRESET_RESOLUTION_CONFIG) {
+                                                   const OBPresetResolutionConfig *config = reinterpret_cast<const OBPresetResolutionConfig *>(data);
+                                                   // update stream profile filter config
+                                                   auto streamProfileFilter = getComponentT<G305StreamProfileFilter>(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER);
+                                                   streamProfileFilter->onPresetResolutionConfigChanged(config);
+                                                   // update stream profile
                                                    updateSensorStreamProfile();
                                                }
                                            });
@@ -626,6 +632,8 @@ void G305Device::initSensorList() {
         TRY_EXECUTE({ factory = std::make_shared<FrameProcessorFactory>(this); })
         return factory;
     });
+
+    registerComponent(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER, [this]() { return std::make_shared<G305StreamProfileFilter>(this); });
 
     const auto &sourcePortInfoList = enumInfo_->getSourcePortInfoList();
     auto        doubleColorMode = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(), [](const std::shared_ptr<const SourcePortInfo> &portInfo) {
@@ -810,6 +818,8 @@ void G305Device::initSensorList() {
                     auto hwD2D = propServer->getPropertyValueT<bool>(OB_PROP_DISPARITY_TO_DEPTH_BOOL);
                     sensor->markOutputDisparityFrame(!hwD2D);
 
+                    auto streamProfileFilter = getComponentT<G305StreamProfileFilter>(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER);
+                    sensor->setStreamProfileFilter(streamProfileFilter.get());
                     initSensorStreamProfile(sensor);
 
                     sensor->registerStreamStateChangedCallback([&](OBStreamState state, const std::shared_ptr<const StreamProfile> &sp) {
@@ -870,6 +880,8 @@ void G305Device::initSensorList() {
                         sensor->setFrameProcessor(frameProcessor.get());
                     }
 
+                    auto streamProfileFilter = getComponentT<G305StreamProfileFilter>(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER);
+                    sensor->setStreamProfileFilter(streamProfileFilter.get());
                     initSensorStreamProfile(sensor);
 
                     return sensor;
@@ -920,6 +932,8 @@ void G305Device::initSensorList() {
                         sensor->setFrameProcessor(frameProcessor.get());
                     }
 
+                    auto streamProfileFilter = getComponentT<G305StreamProfileFilter>(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER);
+                    sensor->setStreamProfileFilter(streamProfileFilter.get());
                     initSensorStreamProfile(sensor);
 
                     return sensor;
@@ -1068,8 +1082,8 @@ std::shared_ptr<const StreamProfile> G305Device::loadDefaultStreamProfile(OBSens
 
     OBStreamType defStreamType = OB_STREAM_UNKNOWN;
     int          defFps        = 10;
-    int          defWidth      = 848;
-    int          defHeight     = 480;
+    int          defWidth      = 1280;
+    int          defHeight     = 800;
     OBFormat     defFormat     = OB_FORMAT_Y16;
 
     // USB2.0 default resolution config
@@ -1094,11 +1108,8 @@ std::shared_ptr<const StreamProfile> G305Device::loadDefaultStreamProfile(OBSens
         case OB_SENSOR_COLOR:
         case OB_SENSOR_COLOR_LEFT:
         case OB_SENSOR_COLOR_RIGHT: {
-            defFormat     = OB_FORMAT_MJPG;
+            defFormat     = OB_FORMAT_YUYV;
             defStreamType = OB_STREAM_COLOR;
-            defWidth      = 1280;
-            defHeight     = 720;
-
         } break;
         default:
             break;
@@ -1129,7 +1140,7 @@ std::shared_ptr<const StreamProfile> G305Device::loadDefaultStreamProfile(OBSens
             defFormat     = OB_FORMAT_YUYV;
             defStreamType = OB_STREAM_COLOR;
             defWidth      = 1280;
-            defHeight     = 720;
+            defHeight     = 800;
 
         } break;
         default:
@@ -1151,11 +1162,12 @@ std::shared_ptr<const StreamProfile> G305Device::loadDefaultStreamProfile(OBSens
 }
 
 void G305Device::updateSensorStreamProfile(){
-    auto streamProfileFilter   = getComponentT<IStreamProfileFilter>(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER);
     auto sensorTypeList = getSensorTypeList();
     for(auto sensorType: sensorTypeList) {
-        auto sensor = getSensor(sensorType);
-        initSensorStreamProfile(sensor.get());
+        if(ob_is_video_sensor_type(sensorType)) {
+            auto sensor = getSensor(sensorType);
+            initSensorStreamProfile(sensor.get());
+        }
     }
 }
 
