@@ -83,6 +83,20 @@ void OpenNIStreamProfileFilter::fetchEffectiveStreamProfiles() {
         colorEffectiveStreamProfiles_.push_back({ OB_SENSOR_COLOR, OB_FORMAT_MJPG, 1600, 1200, 20 });
         colorEffectiveStreamProfiles_.push_back({ OB_SENSOR_COLOR, OB_FORMAT_MJPG, 1600, 1200, 25 });
         colorEffectiveStreamProfiles_.push_back({ OB_SENSOR_COLOR, OB_FORMAT_MJPG, 1600, 1200, 30 });
+
+        // YUYV
+        colorEffectiveStreamProfiles_.push_back({ OB_SENSOR_COLOR, OB_FORMAT_YUYV, 640, 480, 5 });
+        colorEffectiveStreamProfiles_.push_back({ OB_SENSOR_COLOR, OB_FORMAT_YUYV, 640, 480, 6 });
+        colorEffectiveStreamProfiles_.push_back({ OB_SENSOR_COLOR, OB_FORMAT_YUYV, 640, 480, 10 });
+        colorEffectiveStreamProfiles_.push_back({ OB_SENSOR_COLOR, OB_FORMAT_YUYV, 640, 480, 15 });
+        colorEffectiveStreamProfiles_.push_back({ OB_SENSOR_COLOR, OB_FORMAT_YUYV, 640, 480, 20 });
+        colorEffectiveStreamProfiles_.push_back({ OB_SENSOR_COLOR, OB_FORMAT_YUYV, 640, 480, 25 });
+        colorEffectiveStreamProfiles_.push_back({ OB_SENSOR_COLOR, OB_FORMAT_YUYV, 640, 480, 30 });
+
+        colorEffectiveStreamProfiles_.push_back({ OB_SENSOR_COLOR, OB_FORMAT_YUYV, 1280, 960, 5 });
+        colorEffectiveStreamProfiles_.push_back({ OB_SENSOR_COLOR, OB_FORMAT_YUYV, 1280, 960, 6 });
+
+        colorEffectiveStreamProfiles_.push_back({ OB_SENSOR_COLOR, OB_FORMAT_YUYV, 1600, 1200, 5 });
     }
 
     if(owner->getInfo()->pid_ == OB_DEVICE_DABAI_DW2_PID || owner->getInfo()->pid_ == OB_DEVICE_DABAI_DCW2_PID

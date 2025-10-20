@@ -152,6 +152,9 @@ void MaxDevice::initSensorList() {
                 };
 
                 auto formatConverter = getSensorFrameFilter("FormatConverter", OB_SENSOR_COLOR, false);
+                if(formatConverter) {
+                    formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_YUYV, OB_FORMAT_RGB, formatConverter });
+                }
                 sensor->updateFormatFilterConfig(formatFilterConfigs);
 
                 sensor->enableTimestampAnomalyDetection(false);
