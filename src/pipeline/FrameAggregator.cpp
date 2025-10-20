@@ -277,11 +277,13 @@ void FrameAggregator::outputFrameset(std::shared_ptr<const FrameSet> frameSet) {
             FrameSetCallbackFunc_(frameSet);
         } 
         else {
-            for(int i = 0; i < frameSet->getCount(); i++) {
+            uint32_t count = frameSet->getCount();
+            for(uint32_t i = 0; i < count; i++) {
                 auto frame = frameSet->getFrame(i);
                 if(frame != nullptr) {
                     std::string typeStr = libobsensor::utils::obFrameToStr(frame->getType());
-                    LOG_DEBUG("The frame {} was dropped, frameCnt:{}, system timestamp:{}, device timestamp:{}, index:{}", typeStr, frameCnt_, frame->getSystemTimeStampUsec(), frame->getTimeStampUsec(), frame->getNumber());
+                    LOG_DEBUG("The frame {} was dropped, frameCnt:{}, system timestamp:{}, device timestamp:{}, index:{}", typeStr, frameCnt_,
+                              frame->getSystemTimeStampUsec(), frame->getTimeStampUsec(), frame->getNumber());
                 }
             }
         }
