@@ -182,6 +182,10 @@ Already upgraded devices and future upgrade schedule：
 |---|---|
 | • Astra Mini S Pro<br>• Astra Mini Pro | • Gemini E, Gemini UW, Gemini EW<br>• DaBai Max, DaBai Max Pro<br>• DaBai DW, DaBai DCW, DaBai DCW2, DaBai DW2 |
 
+#### OpenNI-to-UVC Firmware Upgrade Tool
+Orbbec provides a dedicated [firmware upgrade tool](https://github.com/orbbec/OrbbecFirmware) that enables devices to switch from the OpenNI protocol to the UVC protocol.
+Please select the firmware download link for your device type and follow the corresponding upgrade guide to update the firmware.
+
 
 #### Upgrade Instructions
 If you are currently using the OpenNI SDK, please refer to the [How to Upgrade OpenNI Protocol Devices to UVC Protocol and API Usage Guide](docs/tutorial/opennisdk_to_orbbecsdkv2.md) for detailed instructions on switching to Orbbec SDK v2 after updating your device firmware.

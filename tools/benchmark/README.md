@@ -60,7 +60,7 @@ git clone https://github.com/orbbec/OrbbecSDK_v2.git
 ```
 
 ### Step 2: Build the SDK
-You can build the SDK by following the instructions in the [build guide](docs/tutorial/building_orbbec_sdk.md).
+You can build the SDK by following the instructions in the [build guide](https://github.com/orbbec/OrbbecSDK_v2/blob/main/docs/tutorial/building_orbbec_sdk.md).
 
 
 ### Modifying Test Cases
