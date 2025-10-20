@@ -196,7 +196,7 @@ void G305Device::init() {
             auto uvcPort = std::dynamic_pointer_cast<UvcDevicePort>(port);
             auto backend = uvcPort->getBackendType();
             if(backend == OB_UVC_BACKEND_TYPE_V4L2) {
-                container = std::make_shared<G330DepthFrameMetadataParserContainerByScr>(this, deviceTimeFreq_, frameTimeFreq_);
+                container = std::make_shared<G305DepthFrameMetadataParserContainerByScr>(this, deviceTimeFreq_, frameTimeFreq_);
                 return container;
             }
         }
@@ -497,6 +497,7 @@ void G305Device::initProperties() {
                 return accessor.get();
             });
 
+            propertyServer->registerProperty(OB_PROP_DISP_SEARCH_OFFSET_INT, "rw", "rw", d2dPropertyAccessor);  // using d2d property accessor
             propertyServer->registerProperty(OB_STRUCT_DISP_OFFSET_CONFIG, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_DEPTH_GAIN_INT, "rw", "rw", uvcPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL, "rw", "rw", vendorPropertyAccessor);

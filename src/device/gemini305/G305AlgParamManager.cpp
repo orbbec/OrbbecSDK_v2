@@ -16,20 +16,21 @@ namespace libobsensor {
 
 bool G305AlgParamManager::findBestMatchedCameraParam(const std::vector<OBCameraParam>                &cameraParamList,
                                                      const std::shared_ptr<const VideoStreamProfile> &profile, OBCameraParam &result) {
-    bool found = false;
+    bool found      = false;
+    auto width      = profile->getOriginalWidth();
+    auto height     = profile->getOriginalHeight();
+
     // match same resolution
     for(auto &param: cameraParamList) {
         auto streamType = profile->getType();
         if((streamType == OB_STREAM_DEPTH || streamType == OB_STREAM_IR || streamType == OB_STREAM_IR_LEFT || streamType == OB_STREAM_IR_RIGHT)
-           && static_cast<uint32_t>(param.depthIntrinsic.width) == profile->getWidth()
-           && static_cast<uint32_t>(param.depthIntrinsic.height) == profile->getHeight()) {
+           && static_cast<uint32_t>(param.depthIntrinsic.width) == width && static_cast<uint32_t>(param.depthIntrinsic.height) == height) {
             found  = true;
             result = param;
             break;
         }
         else if((streamType == OB_STREAM_COLOR || streamType == OB_STREAM_COLOR_RIGHT || streamType == OB_STREAM_COLOR_LEFT)
-                && static_cast<uint32_t>(param.rgbIntrinsic.width) == profile->getWidth()
-                && static_cast<uint32_t>(param.rgbIntrinsic.height) == profile->getHeight()) {
+                && static_cast<uint32_t>(param.rgbIntrinsic.width) == width && static_cast<uint32_t>(param.rgbIntrinsic.height) == height) {
             found  = true;
             result = param;
             break;
@@ -472,7 +473,8 @@ void G305AlgParamManager::bindIntrinsic(std::vector<std::shared_ptr<const Stream
             default:
                 break;
             }
-            auto ratio = (float)vsp->getWidth() / (float)intrinsic.width;
+            auto originWidth = vsp->getOriginalWidth() == 0 ? vsp->getWidth() : vsp->getOriginalWidth();
+            auto ratio       = (float)originWidth / (float)intrinsic.width;
             intrinsic.fx *= ratio;
             intrinsic.fy *= ratio;
             intrinsic.cx *= ratio;

@@ -113,6 +113,22 @@ uint32_t VideoStreamProfile::getFps() const {
     return fps_;
 }
 
+void VideoStreamProfile::setOriginalWidth(uint32_t originalWidth) {
+    originalWidth_ = originalWidth;
+}
+
+uint32_t VideoStreamProfile::getOriginalWidth() const {
+    return originalWidth_;
+}
+
+void VideoStreamProfile::setOriginalHeight(uint32_t originalHeight) {
+    originalHeight_ = originalHeight;
+}
+
+uint32_t VideoStreamProfile::getOriginalHeight() const {
+    return originalHeight_;
+}
+
 OBCameraIntrinsic VideoStreamProfile::getIntrinsic() const {
     auto intrinsicsMgr = StreamIntrinsicsManager::getInstance();
     return intrinsicsMgr->getVideoStreamIntrinsics(shared_from_this());

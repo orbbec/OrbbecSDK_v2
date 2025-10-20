@@ -47,10 +47,54 @@ StreamProfileList G305StreamProfileFilter::filter(const StreamProfileList &profi
         return filteredProfiles;
     }
 
-    uint32_t irWidth     = static_cast<uint32_t>(config.width / config.irDecimationFactor);
-    uint32_t irHeight    = static_cast<uint32_t>(config.height / config.irDecimationFactor);
-    uint32_t depthWidth  = static_cast<uint32_t>(config.width / config.depthDecimationFactor);
-    uint32_t depthHeight = static_cast<uint32_t>(config.height / config.depthDecimationFactor);
+    // calc size from origin size and factor
+    auto calcSize = [](int originSize, int factor) -> uint32_t {
+        if(factor <= 0) {
+            return static_cast<uint32_t>(originSize);
+        }
+
+        // Floor division since originSize, factor >= 0
+        auto size = static_cast<uint32_t>(originSize / factor);
+        // Round to the nearest even integer
+        if(size % 2 != 0) {
+            --size;
+        }
+        return size;
+    };
+
+    uint32_t irWidth        = calcSize(config.width, config.irDecimationFactor);
+    uint32_t irHeight       = calcSize(config.height, config.irDecimationFactor);
+    uint32_t depthWidth     = calcSize(config.width, config.depthDecimationFactor);
+    uint32_t depthHeight    = calcSize(config.height, config.depthDecimationFactor);
+    uint32_t originalWidth  = static_cast<uint32_t>(config.width);
+    uint32_t originalHeight = static_cast<uint32_t>(config.height);
+
+    std::vector<std::shared_ptr<const VideoStreamProfile>> irOriginalResolution;
+    std::vector<std::shared_ptr<const VideoStreamProfile>> depthOriginalResolution;
+
+    for(const auto &profile: profiles) {
+        if(!profile->is<VideoStreamProfile>()) {
+            continue;
+        }
+        auto vsp        = profile->as<VideoStreamProfile>();
+        auto streamType = profile->getType();
+        auto sensorType = utils::mapStreamTypeToSensorType(streamType);
+        if(isIRSensor(sensorType)) {
+            if(vsp->getOriginalWidth() != originalWidth || vsp->getOriginalHeight() != originalHeight) {
+                // invalid
+                continue;
+            }
+            irOriginalResolution.push_back(vsp);
+        }
+        else if(sensorType == OB_SENSOR_DEPTH) {
+            if(vsp->getOriginalWidth() != originalWidth || vsp->getOriginalHeight() != originalHeight) {
+                // invalid
+                continue;
+            }
+            depthOriginalResolution.push_back(vsp);
+        }
+    }
+
     for(const auto &profile: profiles) {
         if(!profile->is<VideoStreamProfile>()) {
             filteredProfiles.push_back(profile);
@@ -64,13 +108,34 @@ StreamProfileList G305StreamProfileFilter::filter(const StreamProfileList &profi
                 // invalid
                 continue;
             }
+            if(!irOriginalResolution.empty()) {
+                auto it = std::find_if(irOriginalResolution.begin(), irOriginalResolution.end(),
+                                       [&](std::shared_ptr<const VideoStreamProfile> p) { return p->getFps() == vsp->getFps(); });
+                if(it == irOriginalResolution.end()) {
+                    continue;
+                }
+            }
+            auto vspMutable = std::const_pointer_cast<VideoStreamProfile>(vsp);
+            vspMutable->setOriginalHeight(originalHeight);
+            vspMutable->setOriginalWidth(originalWidth);
         }
         else if(sensorType == OB_SENSOR_DEPTH) {
             if(vsp->getWidth() != depthWidth || vsp->getHeight() != depthHeight) {
                 // invalid
                 continue;
             }
+            if(!depthOriginalResolution.empty()) {
+                auto it = std::find_if(depthOriginalResolution.begin(), depthOriginalResolution.end(),
+                                       [&](std::shared_ptr<const VideoStreamProfile> p) { return p->getFps() == vsp->getFps(); });
+                if(it == depthOriginalResolution.end()) {
+                    continue;
+                }
+            }
+            auto vspMutable = std::const_pointer_cast<VideoStreamProfile>(vsp);
+            vspMutable->setOriginalHeight(originalHeight);
+            vspMutable->setOriginalWidth(originalWidth);
         }
+
         // ok, add to list
         filteredProfiles.push_back(profile);
         continue;

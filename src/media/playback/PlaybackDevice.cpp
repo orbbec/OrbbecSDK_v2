@@ -28,7 +28,7 @@
 #include "PlaybackFrameInterleaveManager.hpp"
 #include "gemini330/G330FrameInterleaveManager.hpp"
 #include "gemini2/G435LeFrameInterleaveManager.hpp"
-#include "gemini305/G305FrameMetadataParserContainer.hpp "
+#include "gemini305/G305FrameMetadataParserContainer.hpp"
 
 namespace libobsensor {
 using namespace playback;
@@ -93,7 +93,7 @@ void PlaybackDevice::init() {
             std::shared_ptr<FrameMetadataParserContainer> container;
 #ifdef __linux__
             if(port_->getDeviceInfo()->backendType_ == OB_UVC_BACKEND_TYPE_V4L2) {
-                container = std::make_shared<G305ColorFrameMetadataParserContainerByScr>(this, G305DeviceTimeFreq_, G305FrameTimeFreq_);
+                container = std::make_shared<G305ColorFrameMetadataParserContainerByScr>(this, G330DeviceTimeFreq_, G330FrameTimeFreq_);
                 return container;
             }
 #endif
@@ -105,7 +105,7 @@ void PlaybackDevice::init() {
             std::shared_ptr<FrameMetadataParserContainer> container;
 #ifdef __linux__
             if(port_->getDeviceInfo()->backendType_ == OB_UVC_BACKEND_TYPE_V4L2) {
-                container = std::make_shared<G305DepthFrameMetadataParserContainerByScr>(this, G305DeviceTimeFreq_, G305FrameTimeFreq_);
+                container = std::make_shared<G305DepthFrameMetadataParserContainerByScr>(this, G330DeviceTimeFreq_, G330FrameTimeFreq_);
                 return container;
             }
 #endif

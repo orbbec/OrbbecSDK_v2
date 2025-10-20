@@ -95,6 +95,10 @@ public:
     void               setHeight(uint32_t height);
     uint32_t           getHeight() const;
     uint32_t           getFps() const;
+    void               setOriginalWidth(uint32_t originalWidth);
+    uint32_t           getOriginalWidth() const;
+    void               setOriginalHeight(uint32_t originalHeight);
+    uint32_t           getOriginalHeight() const;
     OBCameraIntrinsic  getIntrinsic() const;
     void               bindIntrinsic(const OBCameraIntrinsic &intrinsic);
     OBCameraDistortion getDistortion() const;
@@ -109,6 +113,8 @@ protected:
     uint32_t width_;
     uint32_t height_;
     uint32_t fps_;
+    uint32_t originalWidth_{ 0 };
+    uint32_t originalHeight_{ 0 };
 };
 
 class DisparityBasedStreamProfile : public VideoStreamProfile {
