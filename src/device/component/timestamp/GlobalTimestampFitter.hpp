@@ -28,7 +28,8 @@ public:
     bool isEnabled() const override;
 
 private:
-    void fittingLoop();
+    void                      fittingLoop();
+    inline const std::string &GetCurrentSN() const;
 
 private:
     const uint64_t MAX_VALID_RTT = 20000;  // 10ms

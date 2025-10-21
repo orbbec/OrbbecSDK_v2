@@ -11,7 +11,12 @@
 #include "IDevice.hpp"
 #include "IDepthWorkModeManager.hpp"
 
+#include "logger/LoggerSnWrapper.hpp"  // Must be included last to override log macros
+
 namespace libobsensor {
+
+#define GetCurrentSN() owner_->getSn()
+
 SensorBase::SensorBase(IDevice *owner, OBSensorType sensorType, const std::shared_ptr<ISourcePort> &backend)
     : owner_(owner),
       sensorType_(sensorType),
@@ -339,14 +344,13 @@ void SensorBase::setFrameProcessor(std::shared_ptr<FrameProcessor> frameProcesso
     }
     frameProcessor_ = frameProcessor;
     frameProcessor_->setCallback([this](std::shared_ptr<Frame> frame) {
-        auto deviceInfo = owner_->getInfo();
-        LOG_FREQ_CALC(DEBUG, 5000, "{}({}): {} frameProcessor_ callback frameRate={freq}fps", deviceInfo->name_, deviceInfo->deviceSn_, sensorType_);
+        LOG_FREQ_CALC(DEBUG, 5000, "{} frameProcessor_ callback frameRate={freq}fps", sensorType_);
         if (frameCallback_)
         {
             frameCallback_(frame);
         }
-        
-        LOG_FREQ_CALC(INFO, 5000, "{}({}): {} Streaming... frameRate={freq}fps", deviceInfo->name_, deviceInfo->deviceSn_, sensorType_);
+
+        LOG_FREQ_CALC(INFO, 5000, "{} Streaming... frameRate={freq}fps", sensorType_);
     });
 }
 
@@ -405,8 +409,7 @@ void SensorBase::outputFrame(std::shared_ptr<Frame> frame) {
         {
             frameCallback_(frame);
         }
-        auto deviceInfo = owner_->getInfo();
-        LOG_FREQ_CALC(INFO, 5000, "{}({}): {} Streaming... frameRate={freq}fps", deviceInfo->name_, deviceInfo->deviceSn_, sensorType_);
+        LOG_FREQ_CALC(INFO, 5000, "{} Streaming... frameRate={freq}fps", sensorType_);
     }
 }
 

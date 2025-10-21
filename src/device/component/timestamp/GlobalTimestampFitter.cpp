@@ -9,7 +9,20 @@
 #include "property/InternalProperty.hpp"
 #include "environment/EnvConfig.hpp"
 
+#include "logger/LoggerSnWrapper.hpp"  // Must be included last to override log macros
+
 namespace libobsensor {
+
+const std::string &GlobalTimestampFitter::GetCurrentSN() const {
+    auto owner = getOwner();
+    if(owner) {
+        return owner->getSn();
+    }
+
+    static std::string unknown = "Unknown";
+    return unknown;
+}
+
 GlobalTimestampFitter::GlobalTimestampFitter(IDevice *owner)
     : DeviceComponentBase(owner), enable_(false), sampleLoopExit_(false), linearFuncParam_({ 0, 0, 0, 0 }), maxValidRtt_(MAX_VALID_RTT) {
     std::string deviceName = utils::string::removeSpace(owner->getInfo()->name_);

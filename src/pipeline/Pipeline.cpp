@@ -15,7 +15,12 @@
 #include <cmath>
 #include <algorithm>
 
+#include "logger/LoggerSnWrapper.hpp"  // Must be included last to override log macros
+
 namespace libobsensor {
+
+#define GetCurrentSN() device_->getSn()
+
 Pipeline::Pipeline(std::shared_ptr<IDevice> dev) : device_(dev), config_(nullptr), streamState_(STREAM_STATE_STOPPED), pipelineCallback_(nullptr) {
     LOG_DEBUG("Pipeline init ...");
     auto sensorTypeList = device_->getSensorTypeList();
@@ -258,8 +263,7 @@ void Pipeline::onFrameCallback(std::shared_ptr<const Frame> frame) {
 }
 
 void Pipeline::outputFrame(std::shared_ptr<const Frame> frame) {
-    auto deviceInfo = device_->getInfo();
-    LOG_FREQ_CALC(DEBUG, 5000, "{}({}): Pipeline {}, frameset output rate={freq}fps", deviceInfo->name_, deviceInfo->deviceSn_, STREAM_STATE_STR(streamState_));
+    LOG_FREQ_CALC(DEBUG, 5000, "Pipeline {}, frameset output rate={freq}fps", STREAM_STATE_STR(streamState_));
     if(streamState_ == STREAM_STATE_STREAMING) {
         if(pipelineCallback_ != nullptr) {
             pipelineCallback_(frame);

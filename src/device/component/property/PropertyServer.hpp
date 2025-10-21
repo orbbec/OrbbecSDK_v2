@@ -53,7 +53,8 @@ public:
     const std::vector<uint8_t> &getStructureDataListProtoV1_1(uint32_t propertyId, uint16_t cmdVersion, PropertyAccessType accessType) override;
 
 private:
-    void appendToPropertyMap(uint32_t propertyId, OBPermissionType userPerms, OBPermissionType intPerms);
+    void                      appendToPropertyMap(uint32_t propertyId, OBPermissionType userPerms, OBPermissionType intPerms);
+    inline const std::string &GetCurrentSN() const;
 
 private:
     std::recursive_mutex             mutex_;

@@ -43,6 +43,7 @@ DeviceBase::DeviceBase(const std::shared_ptr<const IDeviceEnumInfo> &info)
     deviceInfo_->vid_            = enumInfo_->getVid();
     deviceInfo_->uid_            = enumInfo_->getUid();
     deviceInfo_->connectionType_ = enumInfo_->getConnectionType();
+    deviceInfo_->deviceSn_       = enumInfo_->getDeviceSn();
 }
 
 void DeviceBase::fetchDeviceInfo() {

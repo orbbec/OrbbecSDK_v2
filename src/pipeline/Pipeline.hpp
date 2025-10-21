@@ -34,6 +34,7 @@ public:
 
     std::shared_ptr<const Config> getConfig();
     void switchConfig(std::shared_ptr<const Config> cfg);
+    
 private:
     inline void startStream();
     inline void stopStream();

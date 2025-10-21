@@ -41,6 +41,12 @@ public:
     uint64_t                          getDeviceErrorState() const override;
     void                              fetchDeviceErrorState() override;
 
+    const std::string &getSn() const override {
+        // Hold a local reference to keep the device info valid during access.
+        auto info = deviceInfo_;
+        return info->deviceSn_;
+    }
+
     void registerComponent(DeviceComponentId compId, std::function<std::shared_ptr<IDeviceComponent>()> creator, bool lockRequired = false);
     void registerComponent(DeviceComponentId compId, std::shared_ptr<IDeviceComponent> component, bool lockRequired = false);
     void deregisterComponent(DeviceComponentId compId);

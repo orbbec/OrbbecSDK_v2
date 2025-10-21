@@ -15,7 +15,11 @@
 #include "property/InternalProperty.hpp"
 #include "DevicePids.hpp"
 
+#include "logger/LoggerSnWrapper.hpp"  // Must be included last to override log macros
+
 namespace libobsensor {
+
+#define GetCurrentSN() owner_->getSn()
 
 VideoSensor::VideoSensor(IDevice *owner, OBSensorType sensorType, const std::shared_ptr<ISourcePort> &backend)
     : SensorBase(owner, sensorType, backend), lazySelf_(std::make_shared<LazySensor>(owner, sensorType)) {
@@ -85,9 +89,7 @@ void VideoSensor::start(std::shared_ptr<const StreamProfile> sp, FrameCallback c
             formatConverter->setConversion(currentFormatFilterConfig_->srcFormat, currentFormatFilterConfig_->dstFormat);
         }
         currentFormatFilterConfig_->converter->setCallback([this](std::shared_ptr<Frame> frame) {
-            auto deviceInfo = owner_->getInfo();
-            LOG_FREQ_CALC(DEBUG, 5000, "{}({}): {} format converter frame callback, frameRate={freq}fps", deviceInfo->name_, deviceInfo->deviceSn_,
-                          sensorType_);
+            LOG_FREQ_CALC(DEBUG, 5000, "{} format converter frame callback, frameRate={freq}fps", sensorType_);
             outputFrame(frame);
         });
     }
@@ -122,9 +124,9 @@ void VideoSensor::onBackendFrameCallback(std::shared_ptr<Frame> frame) {
         return;
     }
 
+    LOG_FREQ_CALC(DEBUG, 5000, "{} backend frame callback, frameRate={freq}fps", sensorType_);
     auto deviceInfo = owner_->getInfo();
-    LOG_FREQ_CALC(DEBUG, 5000, "{}({}): {} backend frame callback, frameRate={freq}fps", deviceInfo->name_, deviceInfo->deviceSn_, sensorType_);
-    auto pid = deviceInfo->pid_;
+    auto pid        = deviceInfo->pid_;
     if(isPidInPidList(pid, FemtoBoltDevPids) || isPidInPidList(pid, FemtoMegaDevPids)) {
         auto videoFrame = frame->as<VideoFrame>();
         videoFrame->setPixelType(OB_PIXEL_TOF_DEPTH);

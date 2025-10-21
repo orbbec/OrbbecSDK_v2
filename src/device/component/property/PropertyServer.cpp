@@ -7,7 +7,19 @@
 #include "utils/Utils.hpp"
 #include <memory>
 
+#include "logger/LoggerSnWrapper.hpp"  // Must be included last to override log macros
+
 namespace libobsensor {
+
+const std::string &PropertyServer::GetCurrentSN() const {
+    auto owner = getOwner();
+    if(owner) {
+        return owner->getSn();
+    }
+
+    static std::string unknown = "Unknown";
+    return unknown;
+}
 
 PropertyServer::PropertyServer(IDevice *owner) : DeviceComponentBase(owner) {}
 
