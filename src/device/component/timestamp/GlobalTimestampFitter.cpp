@@ -229,7 +229,8 @@ void GlobalTimestampFitter::fittingLoop() {
             // auto fixDiff   = fixDevTsp -sysTspUsec;
             // LOG_TRACE("a = {}, b = {}, fix={}, diff={}", linearFuncParam_.coefficientA, linearFuncParam_.constantB, fixDevTsp, fixDiff);
 
-            LOG_DEBUG_INTVL("GlobalTimestampFitter update: coefficientA = {}, constantB = {}", linearFuncParam_.coefficientA, linearFuncParam_.constantB);
+            LOG_DEBUG_INTVL("[{}] GlobalTimestampFitter update: coefficientA = {}, constantB = {}", GetCurrentSN(), linearFuncParam_.coefficientA,
+                            linearFuncParam_.constantB);
             linearFuncParamCondVar_.notify_all();
         }
 

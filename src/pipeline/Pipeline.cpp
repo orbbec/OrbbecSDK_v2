@@ -259,7 +259,8 @@ void Pipeline::onFrameCallback(std::shared_ptr<const Frame> frame) {
         frameAggregator_->pushFrame(frame);
     }
     auto frameType = frame->getType();
-    LOG_INTVL(LOG_INTVL_OBJECT_TAG + std::to_string(frameType), DEF_MIN_LOG_INTVL, spdlog::level::debug, "Frame received on pipeline! type={}", frameType);
+    LOG_INTVL(LOG_INTVL_OBJECT_TAG + std::to_string(frameType), DEF_MIN_LOG_INTVL, spdlog::level::debug, "[{}] Frame received on pipeline! type={}",
+              GetCurrentSN(), frameType);
 }
 
 void Pipeline::outputFrame(std::shared_ptr<const Frame> frame) {
@@ -271,7 +272,7 @@ void Pipeline::outputFrame(std::shared_ptr<const Frame> frame) {
         }
 
         if(outputFrameQueue_->fulled()) {
-            LOG_WARN_INTVL("Output frameset queue is full, drop oldest frameset!");
+            LOG_WARN_INTVL("[{}] Output frameset queue is full, drop oldest frameset!", GetCurrentSN());
             outputFrameQueue_->dequeue();
         }
         outputFrameQueue_->enqueue(std::move(frame));
@@ -281,7 +282,7 @@ void Pipeline::outputFrame(std::shared_ptr<const Frame> frame) {
 std::shared_ptr<const Frame> Pipeline::waitForFrame(uint32_t timeout_ms) {
     auto frame = outputFrameQueue_->dequeue(timeout_ms);
     if(!frame) {
-        LOG_WARN_INTVL("Wait for frame timeout, you can try to increase the wait time! current timeout={}", timeout_ms);
+        LOG_WARN_INTVL("[{}] Wait for frame timeout, you can try to increase the wait time! current timeout={}", GetCurrentSN(), timeout_ms);
         return nullptr;
     }
     return frame;
