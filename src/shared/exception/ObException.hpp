@@ -128,6 +128,18 @@ public:
     BEGIN_TRY_EXECUTE(statement) \
     CATCH_EXCEPTION
 
+// Only execute the code block in Debug builds; does nothing in Release builds.
+#ifdef _DEBUG
+#define DEBUG_EXECUTE(statement) \
+    do {                         \
+        statement;               \
+    } while(0)
+#else
+#define DEBUG_EXECUTE(statement) \
+    do {                         \
+    } while(0)
+#endif
+
 #define VALIDATE(ARG)                                                             \
     if(!(ARG)) {                                                                  \
         throw std::logic_error("Invalid value passed for argument \"" #ARG "\""); \

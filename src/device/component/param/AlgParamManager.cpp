@@ -297,9 +297,11 @@ void TOFDeviceCommonAlgParamManager::fetchParamFromDevice() {
             param.isMirrored          = false;
             calibrationCameraParamList_.emplace_back(param);
 
-            std::stringstream ss;
-            ss << param;
-            LOG_DEBUG("-{}", ss.str());
+            DEBUG_EXECUTE({
+                std::stringstream ss;
+                ss << param;
+                LOG_TRACE("-{}", ss.str());
+            });
         }
     }
 

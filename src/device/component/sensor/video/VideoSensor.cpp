@@ -306,12 +306,12 @@ void VideoSensor::updateFormatFilterConfig(const std::vector<FormatFilterConfig>
         }
     }
 
-#ifdef _DEBUG
-    LOG_TRACE(" filtered stream profile list size={} @{}", streamProfileList_.size(), sensorType_);
-    for(auto &sp: streamProfileList_) {
-        LOG_TRACE(" - {}", sp);
-    }
-#endif
+    DEBUG_EXECUTE({
+        LOG_TRACE(" filtered stream profile list size={} @{}", streamProfileList_.size(), sensorType_);
+        for(auto &sp: streamProfileList_) {
+            LOG_TRACE(" - {}", sp);
+        }
+    });
 }
 
 void VideoSensor::setStreamProfileList(const StreamProfileList &profileList) {
@@ -322,7 +322,7 @@ void VideoSensor::setStreamProfileList(const StreamProfileList &profileList) {
         sp->bindOwner(lazySelf_);
         sp->setType(streamType);
         backendStreamProfileList_.push_back(sp);
-        LOG_DEBUG("Backend stream profile {}", backendSp);
+        LOG_TRACE("Backend stream profile {}", backendSp);
     }
 
     std::sort(backendStreamProfileList_.begin(), backendStreamProfileList_.end(),

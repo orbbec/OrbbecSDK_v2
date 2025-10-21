@@ -142,7 +142,7 @@ void DeviceBase::fetchExtensionInfo() {
                 // continue to retry
             }
             else {
-                LOG_ERROR("Get ExtensionInfo Data is Null!");
+                LOG_ERROR("ExtensionInfo Data is null!");
             }
             // retry if empty
             --retryCount;

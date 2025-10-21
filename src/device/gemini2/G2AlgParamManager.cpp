@@ -55,9 +55,11 @@ void G2AlgParamManager::fetchParamFromDevice() {
             param.isMirrored          = false;
             calibrationCameraParamList_.emplace_back(param);
 
-            std::stringstream ss;
-            ss << param;
-            LOG_DEBUG("-{}", ss.str());
+            DEBUG_EXECUTE({
+                std::stringstream ss;
+                ss << param;
+                LOG_DEBUG("-{}", ss.str());
+            });
         }
     }
     catch(const std::exception &e) {

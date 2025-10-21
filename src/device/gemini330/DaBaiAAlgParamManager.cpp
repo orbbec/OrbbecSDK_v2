@@ -190,9 +190,11 @@ void DaBaiAAlgParamManager::fetchParamFromDevice() {
             param.isMirrored          = false;
             originCalibrationCameraParamList_.emplace_back(param);
 
-            std::stringstream ss;
-            ss << param;
-            LOG_DEBUG("-{}", ss.str());
+            DEBUG_EXECUTE({
+                std::stringstream ss;
+                ss << param;
+                LOG_DEBUG("-{}", ss.str());
+            });
         }
     }
     catch(const std::exception &e) {
@@ -205,9 +207,11 @@ void DaBaiAAlgParamManager::fetchParamFromDevice() {
         auto propServer      = owner->getPropertyServer();
         auto rectifyD2CParam = propServer->getStructureDataProtoV1_1_T<OBDERectifyD2CParams, 0>(OB_RAW_DATA_DE_IR_RECTIFY_PARAMS);
         d2cRectifyParam_     = rectifyD2CParam;
-        std::stringstream ss;
-        ss << rectifyD2CParam;
-        LOG_DEBUG("rectify d2c param -{}", ss.str());
+        DEBUG_EXECUTE({
+            std::stringstream ss;
+            ss << rectifyD2CParam;
+            LOG_DEBUG("rectify d2c param -{}", ss.str());
+        });
     }
     catch(const std::exception &e) {
         LOG_ERROR("Get rectify d2c params failed! {}", e.what());
@@ -218,9 +222,12 @@ void DaBaiAAlgParamManager::fetchParamFromDevice() {
         auto propServer            = owner->getPropertyServer();
         auto transformParam        = propServer->getStructureDataProtoV1_1_T<OBDEIRTransformParam, 0>(OB_RAW_DATA_DE_IR_TRANSFORM_PARAMS);
         depthEngineTransformParam_ = transformParam;
-        std::stringstream ss;
-        ss << transformParam;
-        LOG_DEBUG("transfrom param -{}", ss.str());
+
+        DEBUG_EXECUTE({
+            std::stringstream ss;
+            ss << transformParam;
+            LOG_DEBUG("transfrom param -{}", ss.str());
+        });
     }
     catch(const std::exception &e) {
         LOG_ERROR("Get depth engine transform params failed! {}", e.what());
