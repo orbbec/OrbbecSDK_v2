@@ -372,4 +372,31 @@ void Logger::setLogCallback(OBLogSeverity severity, LogCallback logCallback) {
     }
 }
 
+void Logger::logMessage(OBLogSeverity severity, const char *module, const char *message, const char *file, const char *func, int line) {
+    spdlog::source_loc        loc{ file, line, func };
+    spdlog::level::level_enum level = spdlog::level::debug;
+
+    auto iter = OBLogSeverityToSpdlogLevel.find(severity);
+    if(iter == OBLogSeverityToSpdlogLevel.end()) {
+        // found
+        level = iter->second;
+    }
+    LOG_EXTERNAL_MSG(loc, level, module, message);
+}
+
+void Logger::logExternalMessage(OBLogSeverity severity, const char *module, const char *message, const char *file, const char *func, int line) {
+    if(severity != OB_LOG_SEVERITY_OFF) {
+        std::shared_ptr<Logger> logger;
+        {
+            std::lock_guard<std::mutex> lock(instanceMutex_);
+            logger = instanceWeakPtr_.lock();
+            if(logger == nullptr) {
+                // no instance
+                return;
+            }
+        }
+        logger->logMessage(severity, module, message, file, func, line);
+    }
+}
+
 }  // namespace libobsensor

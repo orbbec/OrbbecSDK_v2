@@ -33,6 +33,12 @@
 // Fatal error message (for example: insufficient system memory prevents normal operation)
 #define LOG_FATAL(...) SPDLOG_LOGGER_CRITICAL(spdlog::default_logger(), __VA_ARGS__)
 
+// External message, only valid when compiled into debug version
+#define LOG_EXTERNAL_MSG(loc, level, module, msg)                                  \
+    do {                                                                           \
+        spdlog::default_logger()->log((loc), (level), "[{}] {}", (module), (msg)); \
+    } while(0)
+
 #include <atomic>
 #include <string>
 #include <memory>
@@ -64,6 +70,7 @@ public:
     static void setConsoleLogSeverity(OBLogSeverity severity);
     static void setFileLogConfig(OBLogSeverity severity, const std::string &directory = "", uint32_t maxFileSize = 0, uint32_t maxFileNum = 0);
     static void setLogCallback(OBLogSeverity severity, LogCallback callback);
+    static void logExternalMessage(OBLogSeverity severity, const char *module, const char *message, const char *file, const char *func, int line);
 
 private:
     void loadEnvConfig();
@@ -71,6 +78,7 @@ private:
     void createFileSink();
     void createCallbackSink();
     void updateDefaultSpdLogger();
+    void logMessage(OBLogSeverity severity, const char *module, const char *message, const char *file, const char *func, int line);
 
 private:
     spdlog::sink_ptr consoleSink_;

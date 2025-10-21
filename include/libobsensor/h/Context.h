@@ -174,6 +174,20 @@ OB_EXPORT void ob_set_logger_to_callback(ob_log_severity severity, ob_log_callba
 OB_EXPORT void ob_set_logger_to_console(ob_log_severity severity, ob_error **error);
 
 /**
+ * @brief Logs a message with severity, file, function, and line info.
+ *
+ * @param[in] severity Log level, see @ref ob_log_severity for details
+ * @param[in] module The module or component the log belongs to
+ * @param[in] message Message string to log
+ * @param[in] file Source file name, e.g., __FILE__
+ * @param[in] func Function name, e.g., __func__
+ * @param[in] line Line number, e.g., __LINE__
+ * @param[out] error Pointer to an error object that will be populated if an error occurs during log output setting
+ */
+OB_EXPORT void ob_log_external_message(ob_log_severity severity, const char *module, const char *message, const char *file, const char *func, int line,
+                                       ob_error **error);
+
+/**
  * @brief Set the extensions directory
  * @brief The extensions directory is used to search for dynamic libraries that provide additional functionality to the SDK, such as the Frame filters.
  *

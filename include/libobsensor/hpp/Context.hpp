@@ -15,6 +15,7 @@
 
 #include <functional>
 #include <memory>
+#include <string>
 
 namespace ob {
 
@@ -223,6 +224,23 @@ public:
         ob_error *error           = nullptr;
         Context::getLogCallback() = callback;
         ob_set_logger_to_callback(severity, &Context::logCallback, &Context::getLogCallback(), &error);
+        Error::handle(&error);
+    }
+
+    /**
+     * @brief Logs a message with severity, file, function, and line info.
+     *
+     * @param severity Log level, see @ref OBLogSeverity for details
+     * @param module The module or component the log belongs to
+     * @param message Message string to log
+     * @param file Source file name, e.g., __FILE__
+     * @param func Function name, e.g., __func__
+     * @param line Line number, e.g., __LINE__
+     */
+    static void logExternalMessage(OBLogSeverity severity, const std::string &module, const std::string &message, const std::string &file,
+                                   const std::string &func, int line) {
+        ob_error *error = nullptr;
+        ob_log_external_message(severity, module.c_str(), message.c_str(), file.c_str(), func.c_str(), line, &error);
         Error::handle(&error);
     }
 

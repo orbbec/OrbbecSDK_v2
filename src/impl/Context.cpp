@@ -136,6 +136,21 @@ void ob_set_logger_to_console(ob_log_severity severity, ob_error **error) BEGIN_
 }
 HANDLE_EXCEPTIONS_NO_RETURN(severity)
 
+void ob_log_external_message(ob_log_severity severity, const char *module, const char *message, const char *file, const char *func, int line,
+                             ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(module);
+    VALIDATE_NOT_NULL(message);
+    if(file == nullptr) {
+        file = "";
+    }
+    if(func == nullptr) {
+        func = "";
+    }
+
+    libobsensor::Logger::logExternalMessage(severity, module, message, file, func, line);
+}
+HANDLE_EXCEPTIONS_NO_RETURN(severity)
+
 void ob_set_extensions_directory(const char *directory, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(directory);
     libobsensor::EnvConfig::setExtensionsDirectory(directory);
