@@ -269,6 +269,8 @@ typedef enum {
     ERR_MISMATCH              = -9,  /**< Mismatch firmware error */
     ERR_UNSUPPORT_DEV         = -10, /**< Unsupported device error */
     ERR_INVALID_COUNT         = -11, /**< invalid firmware/preset count */
+    ERR_FILE_READ             = -12, /**< Read image file error */
+    ERR_TRANSFER              = -13  /**< Transfer failed */
 } OBUpgradeState,
     OBFwUpdateState, ob_upgrade_state, ob_fw_update_state;
 
