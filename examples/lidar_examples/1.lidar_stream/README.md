@@ -29,7 +29,7 @@ This sample demonstrates how to configure and start LiDAR and IMU sensor streams
 
     ```c
     // Get property
-    device->getStructuredData(OB_RAW_DATA_LIDAR_SERIAL_NUMBER, data, &dataSize);
+    device->getStructuredData(OB_STRUCT_DEVICE_SERIAL_NUMBER, data, &dataSize);
     // Set property
     device->setIntProperty(OB_PROP_LIDAR_TAIL_FILTER_LEVEL_INT, 0);
     ```

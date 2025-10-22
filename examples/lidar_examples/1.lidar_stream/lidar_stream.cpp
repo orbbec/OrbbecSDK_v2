@@ -37,7 +37,7 @@ int main(void) try {
     // Get serial number
     uint32_t dataSize = 64;
     uint8_t  data[64] = { 0 };
-    device->getStructuredData(OB_RAW_DATA_LIDAR_SERIAL_NUMBER, data, &dataSize);
+    device->getStructuredData(OB_STRUCT_DEVICE_SERIAL_NUMBER, data, &dataSize);
     std::cout << "LiDAR SN: " << std::string((const char *)data, dataSize) << std::endl << std::endl;
 
     device->setIntProperty(OB_PROP_LIDAR_TAIL_FILTER_LEVEL_INT, 0);

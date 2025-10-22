@@ -28,7 +28,7 @@ This C language sample demonstrates how to configure and stream LiDAR and IMU se
 
     ```c
     // Get property
-    ob_device_get_structured_data(device, OB_RAW_DATA_LIDAR_SERIAL_NUMBER, data, &data_size, &error);
+    ob_device_get_structured_data(device, OB_STRUCT_DEVICE_SERIAL_NUMBER, data, &data_size, &error);
     // Set property
     ob_device_set_int_property(device, OB_PROP_LIDAR_TAIL_FILTER_LEVEL_INT, 0, &error);
     ```

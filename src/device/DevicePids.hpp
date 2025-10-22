@@ -156,7 +156,6 @@ const std::vector<uint16_t> LiDARDevPids = {
     LIDAR_PID_ME450_OLD,  // Multi-lines LiDAR ME450 old pid
 };
 
-// TODO: remove "TL2401"
 const std::map<std::string, uint32_t> LiDARDeviceNameMap = {
     { "MS600", LIDAR_PID_MS600 },  // Single-line LiDAR MS600
     { "SL450", LIDAR_PID_SL450 },  // Single-line LiDAR international Version of MS600

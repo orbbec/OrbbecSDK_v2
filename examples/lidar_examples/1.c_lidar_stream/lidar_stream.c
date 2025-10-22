@@ -71,7 +71,7 @@ int main(void) {
     // Get serial number
     uint32_t data_size = 64;
     uint8_t  data[64]  = { 0 };
-    ob_device_get_structured_data(device, OB_RAW_DATA_LIDAR_SERIAL_NUMBER, data, &data_size, &error);
+    ob_device_get_structured_data(device, OB_STRUCT_DEVICE_SERIAL_NUMBER, data, &data_size, &error);
     CHECK_OB_ERROR_EXIT(&error);
     printf("LiDAR SN: %s\n\n", (const char *)data);
 

@@ -71,7 +71,7 @@ void LiDARDevice::fetchDeviceInfo() {
         auto data               = propertyServer->getStructureData(OB_RAW_DATA_LIDAR_FIRMWARE_VERSION, PROP_ACCESS_INTERNAL);
         deviceInfo_->fwVersion_ = Uint8toString(data, "unknown");
         // sn
-        data                   = propertyServer->getStructureData(OB_RAW_DATA_LIDAR_SERIAL_NUMBER, PROP_ACCESS_INTERNAL);
+        data                   = propertyServer->getStructureData(OB_STRUCT_DEVICE_SERIAL_NUMBER, PROP_ACCESS_INTERNAL);
         deviceInfo_->deviceSn_ = Uint8toString(data, enumInfo_->getDeviceSn());
     })
     CATCH_EXCEPTION_AND_EXECUTE({
@@ -127,43 +127,40 @@ void LiDARDevice::initProperties() {
     propertyServer->registerProperty(OB_RAW_DATA_LIDAR_IP_ADDRESS, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_LIDAR_PORT_INT, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_RAW_DATA_LIDAR_MAC_ADDRESS, "r", "rw", vendorPropertyAccessor);
-    propertyServer->registerProperty(OB_RAW_DATA_LIDAR_SUBNET_MASK, "r", "rw", vendorPropertyAccessor);
-    propertyServer->registerProperty(OB_PROP_LIDAR_SCAN_SPEED_INT, "rw", "rw", vendorPropertyAccessor);
-    propertyServer->registerProperty(OB_PROP_LIDAR_SCAN_DIRECTION_INT, "r", "r", vendorPropertyAccessor);
-    propertyServer->registerProperty(OB_PROP_LIDAR_TRANSFER_PROTOCOL_INT, "r", "rw", vendorPropertyAccessor);
-    propertyServer->registerProperty(OB_RAW_DATA_LIDAR_SERIAL_NUMBER, "r", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_RAW_DATA_LIDAR_SUBNET_MASK, "", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_REBOOT_DEVICE_BOOL, "w", "w", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_LIDAR_APPLY_CONFIGS_INT, "w", "w", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_LIDAR_TAIL_FILTER_LEVEL_INT, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_LIDAR_MEMS_FOV_SIZE_FLOAT, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_LIDAR_MEMS_FRENQUENCY_FLOAT, "rw", "rw", vendorPropertyAccessor);
-    propertyServer->registerProperty(OB_PROP_LIDAR_MEMS_FOV_FACTOR_FLOAT, "rw", "rw", vendorPropertyAccessor);
-    propertyServer->registerProperty(OB_PROP_LIDAR_MEMS_ON_OFF_INT, "w", "w", vendorPropertyAccessor);
-    propertyServer->registerProperty(OB_PROP_LIDAR_RESTART_MEMS_INT, "w", "w", vendorPropertyAccessor);
-    propertyServer->registerProperty(OB_PROP_LIDAR_SAVE_MEMS_PARAM_INT, "w", "w", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_LIDAR_REPETITIVE_SCAN_MODE_INT, "rw", "rw", vendorPropertyAccessor);
-
     propertyServer->registerProperty(OB_RAW_DATA_LIDAR_PRODUCT_MODEL, "r", "r", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_RAW_DATA_LIDAR_FIRMWARE_VERSION, "r", "r", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_RAW_DATA_LIDAR_FPGA_VERSION, "r", "r", vendorPropertyAccessor);
-    propertyServer->registerProperty(OB_STRUCT_LIDAR_STATUS_INFO, "r", "r", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_LIDAR_WARNING_INFO_INT, "r", "r", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_LIDAR_MOTOR_SPIN_SPEED_INT, "r", "r", vendorPropertyAccessor);
-    propertyServer->registerProperty(OB_PROP_LIDAR_MCU_TEMPERATURE_FLOAT, "r", "r", vendorPropertyAccessor);
-    propertyServer->registerProperty(OB_PROP_LIDAR_FPGA_TEMPERATURE_FLOAT, "r", "r", vendorPropertyAccessor);
-    propertyServer->registerProperty(OB_RAW_DATA_LIDAR_MOTOR_VERSION, "r", "r", vendorPropertyAccessor);
-    propertyServer->registerProperty(OB_PROP_LIDAR_APD_HIGH_VOLTAGE_FLOAT, "r", "r", vendorPropertyAccessor);
-    propertyServer->registerProperty(OB_PROP_LIDAR_APD_TEMPERATURE_FLOAT, "r", "r", vendorPropertyAccessor);
-    propertyServer->registerProperty(OB_PROP_LIDAR_TX_HIGH_POWER_VOLTAGE_FLOAT, "r", "r", vendorPropertyAccessor);
-    propertyServer->registerProperty(OB_PROP_LIDAR_TX_LOWER_POWER_VOLTAGE_FLOAT, "r", "r", vendorPropertyAccessor);
-    propertyServer->registerProperty(OB_RAW_DATA_LIDAR_MEMS_VERSION, "r", "r", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_LIDAR_MCU_TEMPERATURE_INT, "r", "r", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_LIDAR_APD_TEMPERATURE_INT, "r", "r", vendorPropertyAccessor);
 
+    propertyServer->registerProperty(OB_STRUCT_DEVICE_SERIAL_NUMBER, "", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_LIDAR_SCAN_SPEED_INT, "", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_LIDAR_INITIATE_DEVICE_CONNECTION_INT, "", "w", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_LIDAR_STREAMING_ON_OFF_INT, "", "w", vendorPropertyAccessor);
-
-    propertyServer->registerProperty(OB_PROP_LIDAR_IMU_UDP_PORT_INT, "", "w", vendorPropertyAccessor);
-    propertyServer->registerProperty(OB_PROP_LIDAR_IMU_FRAME_RATE_INT, "", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_STRUCT_LIDAR_IMU_FULL_SCALE_RANGE, "", "r", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_LIDAR_SCAN_DIRECTION_INT, "", "r", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_LIDAR_TRANSFER_PROTOCOL_INT, "", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_LIDAR_MEMS_FOV_FACTOR_FLOAT, "", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_LIDAR_MEMS_ON_OFF_INT, "", "w", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_LIDAR_RESTART_MEMS_INT, "", "w", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_STRUCT_LIDAR_STATUS_INFO, "", "r", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_LIDAR_FPGA_TEMPERATURE_INT, "", "r", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_RAW_DATA_LIDAR_MOTOR_VERSION, "", "r", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_LIDAR_TX_HIGH_POWER_VOLTAGE_INT, "", "r", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_LIDAR_TX_LOWER_POWER_VOLTAGE_INT, "", "r", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_RAW_DATA_LIDAR_MEMS_VERSION, "", "r", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_LIDAR_APD_HIGH_VOLTAGE_INT, "", "r", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_IMU_STREAM_PORT_INT, "", "w", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_LIDAR_IMU_FRAME_RATE_INT, "", "rw", vendorPropertyAccessor);
 
     // register property server
     registerComponent(OB_DEV_COMPONENT_PROPERTY_SERVER, propertyServer, true);
@@ -318,8 +315,7 @@ void LiDARDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
     }
     else if(streamType == OB_STREAM_ACCEL) {
         // LiDAR imu accel
-        const std::vector<OBAccelSampleRate> rates = { OB_SAMPLE_RATE_25_HZ,  OB_SAMPLE_RATE_50_HZ,  OB_SAMPLE_RATE_100_HZ,
-                                                       OB_SAMPLE_RATE_200_HZ, OB_SAMPLE_RATE_500_HZ, OB_SAMPLE_RATE_1_KHZ };
+        const std::vector<OBAccelSampleRate> rates = { OB_SAMPLE_RATE_25_HZ, OB_SAMPLE_RATE_50_HZ, OB_SAMPLE_RATE_100_HZ, OB_SAMPLE_RATE_200_HZ };
         StreamProfileList                    profileList;
         auto                                 lazySensor = std::make_shared<LazySensor>(this, OB_SENSOR_ACCEL);
         OBAccelFullScaleRange                accelRange;
@@ -341,8 +337,7 @@ void LiDARDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
     }
     else if(streamType == OB_STREAM_GYRO) {
         // LiDAR imu accel
-        const std::vector<OBGyroSampleRate> rates = { OB_SAMPLE_RATE_25_HZ,  OB_SAMPLE_RATE_50_HZ,  OB_SAMPLE_RATE_100_HZ,
-                                                      OB_SAMPLE_RATE_200_HZ, OB_SAMPLE_RATE_500_HZ, OB_SAMPLE_RATE_1_KHZ };
+        const std::vector<OBGyroSampleRate> rates = { OB_SAMPLE_RATE_25_HZ, OB_SAMPLE_RATE_50_HZ, OB_SAMPLE_RATE_100_HZ, OB_SAMPLE_RATE_200_HZ };
         StreamProfileList                   profileList;
         auto                                lazySensor = std::make_shared<LazySensor>(this, OB_SENSOR_GYRO);
         OBAccelFullScaleRange               accelRange;

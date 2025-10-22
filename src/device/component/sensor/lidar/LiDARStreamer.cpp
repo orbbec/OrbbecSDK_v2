@@ -33,7 +33,7 @@ namespace libobsensor {
 typedef struct {
     uint8_t  magic[6];           // magic data, must be 0x4D 0x53 0x02 0xF4 0xEB 0x90
     uint16_t dataLen;            // data lenth
-    uint8_t  model;              // 0: MS600; 1:TL2401/ME450
+    uint8_t  model;              // 0: MS600; 1:ME450
     uint8_t  scanRate;           // 1:5HZ;2:10HZ;3:15HZ;4:20HZ;
     uint16_t dataBlockNum;       // data block index based 1
     uint16_t frameIndex;         // 1~65535

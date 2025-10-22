@@ -24,7 +24,7 @@ namespace libobsensor {
 typedef struct {
     uint8_t  magic[6];           // magic data, must be 0x4D 0x53 0x02 0xF4 0xEB 0x90
     uint16_t dataLen;            // data lenth, must be 68(44+24)
-    uint8_t  model;              // 0: MS600; 1:TL2401/ME450
+    uint8_t  model;              // 0: MS600; 1:ME450
     uint8_t  scanRate;           // TODO
     uint16_t dataBlockNum;       // data block index based 1
     uint16_t frameIndex;         // 1~65535
@@ -35,7 +35,7 @@ typedef struct {
     uint8_t  echoMode;          // 1:first echo; 2:last echo
     uint16_t scanSpeed;         // scan speed, RPM
     uint16_t verticalScanRate;  // vertical scan rate, unit 0.1Hz
-    uint16_t apdtemperature;    // APD temperature, unit 0.01c
+    uint16_t temperature;       // temperature, unit 0.01c
     uint8_t  reserved[5];       // reserve
 } ImuDataHeader;
 
@@ -243,7 +243,7 @@ void LiDARImuStreamer::trySendStartStreamVendorCmd() {
     }
     // set stream port
     value.intValue = backend_->getSocketPort();
-    propServer->setPropertyValue(OB_PROP_LIDAR_IMU_UDP_PORT_INT, value, PROP_ACCESS_INTERNAL);
+    propServer->setPropertyValue(OB_PROP_IMU_STREAM_PORT_INT, value, PROP_ACCESS_INTERNAL);
     // set frame rate
     value.intValue = frameRate;
     propServer->setPropertyValue(OB_PROP_LIDAR_IMU_FRAME_RATE_INT, value, PROP_ACCESS_INTERNAL);
@@ -279,7 +279,7 @@ void LiDARImuStreamer::parseIMUData(std::shared_ptr<Frame> frame) {
     header->warningInfo      = ntohl(header->warningInfo);
     header->scanSpeed        = ntohs(header->scanSpeed);
     header->verticalScanRate = ntohs(header->verticalScanRate);
-    header->apdtemperature   = ntohs(header->apdtemperature);
+    header->temperature      = ntohs(header->temperature);
 
     // check header and tail magic
     if((0 != memcmp(header->magic, HEAD_MAGIC, HEAD_MAGIC_LEN)) || (0 != memcmp(data + dataSize - TAIL_MAGIC_LEN, TAIL_MAGIC, TAIL_MAGIC_LEN))) {
@@ -296,7 +296,7 @@ void LiDARImuStreamer::parseIMUData(std::shared_ptr<Frame> frame) {
     }
 
     // move data ptr
-    auto                   temperature = header->apdtemperature * 0.01f;
+    auto                   temperature = header->temperature * 0.01f;
     auto                   originData  = (OriginImuData *)(data + sizeof(ImuDataHeader));
     std::shared_ptr<Frame> accelFrame;
     std::shared_ptr<Frame> gyroFrame;

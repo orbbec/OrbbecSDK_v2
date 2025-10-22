@@ -66,7 +66,7 @@ void MS600Device::fetchDeviceInfo() {
         auto data               = propertyServer->getStructureData(OB_RAW_DATA_LIDAR_FIRMWARE_VERSION, PROP_ACCESS_INTERNAL);
         deviceInfo_->fwVersion_ = Uint8toString(data, "unknown");
         // sn
-        data                   = propertyServer->getStructureData(OB_RAW_DATA_LIDAR_SERIAL_NUMBER, PROP_ACCESS_INTERNAL);
+        data                   = propertyServer->getStructureData(OB_STRUCT_DEVICE_SERIAL_NUMBER, PROP_ACCESS_INTERNAL);
         deviceInfo_->deviceSn_ = Uint8toString(data, enumInfo_->getDeviceSn());
     })
     CATCH_EXCEPTION_AND_EXECUTE({
@@ -122,29 +122,29 @@ void MS600Device::initProperties() {
     propertyServer->registerProperty(OB_RAW_DATA_LIDAR_IP_ADDRESS, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_LIDAR_PORT_INT, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_RAW_DATA_LIDAR_MAC_ADDRESS, "r", "rw", vendorPropertyAccessor);
-    propertyServer->registerProperty(OB_PROP_LIDAR_SCAN_SPEED_INT, "rw", "rw", vendorPropertyAccessor);
-    propertyServer->registerProperty(OB_PROP_LIDAR_SCAN_DIRECTION_INT, "r", "r", vendorPropertyAccessor);
-    propertyServer->registerProperty(OB_PROP_LIDAR_TRANSFER_PROTOCOL_INT, "r", "rw", vendorPropertyAccessor);
-    propertyServer->registerProperty(OB_RAW_DATA_LIDAR_SERIAL_NUMBER, "r", "rw", vendorPropertyAccessor);
-    propertyServer->registerProperty(OB_PROP_REBOOT_DEVICE_BOOL, "", "w", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_REBOOT_DEVICE_BOOL, "w", "w", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_LIDAR_SPECIFIC_MODE_INT, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_LIDAR_APPLY_CONFIGS_INT, "w", "w", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_LIDAR_TAIL_FILTER_LEVEL_INT, "rw", "rw", vendorPropertyAccessor);
-
     propertyServer->registerProperty(OB_RAW_DATA_LIDAR_PRODUCT_MODEL, "r", "r", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_RAW_DATA_LIDAR_FIRMWARE_VERSION, "r", "r", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_RAW_DATA_LIDAR_FPGA_VERSION, "r", "r", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_LIDAR_WARNING_INFO_INT, "r", "r", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_LIDAR_MOTOR_SPIN_SPEED_INT, "r", "r", vendorPropertyAccessor);
-    propertyServer->registerProperty(OB_PROP_LIDAR_MCU_TEMPERATURE_FLOAT, "r", "r", vendorPropertyAccessor);
-    propertyServer->registerProperty(OB_PROP_LIDAR_FPGA_TEMPERATURE_FLOAT, "r", "r", vendorPropertyAccessor);
-    propertyServer->registerProperty(OB_RAW_DATA_LIDAR_MOTOR_VERSION, "r", "r", vendorPropertyAccessor);
-    propertyServer->registerProperty(OB_PROP_LIDAR_APD_HIGH_VOLTAGE_FLOAT, "r", "r", vendorPropertyAccessor);
-    propertyServer->registerProperty(OB_PROP_LIDAR_TX_HIGH_POWER_VOLTAGE_FLOAT, "r", "r", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_LIDAR_MCU_TEMPERATURE_INT, "r", "r", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_LIDAR_APD_TEMPERATURE_INT, "r", "r", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_LIDAR_WORK_MODE_INT, "rw", "rw", vendorPropertyAccessor);
 
+    propertyServer->registerProperty(OB_STRUCT_DEVICE_SERIAL_NUMBER, "", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_LIDAR_SCAN_SPEED_INT, "", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_LIDAR_FPGA_TEMPERATURE_INT, "", "r", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_RAW_DATA_LIDAR_MOTOR_VERSION, "", "r", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_LIDAR_APD_HIGH_VOLTAGE_INT, "", "r", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_LIDAR_TX_HIGH_POWER_VOLTAGE_INT, "", "r", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_LIDAR_SCAN_DIRECTION_INT, "", "r", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_LIDAR_TRANSFER_PROTOCOL_INT, "", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_LIDAR_INITIATE_DEVICE_CONNECTION_INT, "", "w", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_LIDAR_STREAMING_ON_OFF_INT, "", "w", vendorPropertyAccessor);
-    propertyServer->registerProperty(OB_PROP_LIDAR_WORK_MODE_INT, "rw", "rw", vendorPropertyAccessor);
 
     // register property server
     registerComponent(OB_DEV_COMPONENT_PROPERTY_SERVER, propertyServer, true);

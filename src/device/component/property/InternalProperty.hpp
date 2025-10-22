@@ -30,7 +30,7 @@ typedef enum {
     OB_PROP_START_IR_STREAM_BOOL       = 127,  /**< Start or stop left ir stream */
     OB_PROP_START_IR_RIGHT_STREAM_BOOL = 201,  /**< Start or stop right ir stream */
 
-	OB_PROP_DEPTH_LOAD_ENGINE_GROUP_PARAM_INT = 172, /**< Load depth engine group parameters*/
+    OB_PROP_DEPTH_LOAD_ENGINE_GROUP_PARAM_INT = 172, /**< Load depth engine group parameters*/
     OB_PROP_DEVICE_KEEP_ALIVE_INT             = 225, /**< OpenNI device heartbeat keep-alive command*/
 
     OB_PROP_GYRO_SWITCH_BOOL     = 2019, /**< Gyroscope switch*/
@@ -52,9 +52,9 @@ typedef enum {
     OB_STRUCT_DEPTH_STREAM_PROFILE    = 1049, /**< set stream profile to depth*/
     OB_STRUCT_IR_STREAM_PROFILE       = 1050, /**< set stream profile to ir or left ir*/
     OB_STRUCT_IR_RIGHT_STREAM_PROFILE = 1065, /**< set stream profile to right ir*/
-    OB_RAW_DATA_DUAL_CAMERA_PARAMS_0                = 4045, /**< Obtain Mx6000 binocular Content0 parameters */
-    OB_RAW_DATA_DUAL_CAMERA_PARAMS_1                = 4046, /**< Obtain Mx6000 binocular Content1 parameters */
-    OB_RAW_DATA_DUAL_CAMERA_PARAMS_2                = 4047, /**< Obtain Mx6000 binocular Content2 parameters */
+    OB_RAW_DATA_DUAL_CAMERA_PARAMS_0  = 4045, /**< Obtain Mx6000 binocular Content0 parameters */
+    OB_RAW_DATA_DUAL_CAMERA_PARAMS_1  = 4046, /**< Obtain Mx6000 binocular Content1 parameters */
+    OB_RAW_DATA_DUAL_CAMERA_PARAMS_2  = 4047, /**< Obtain Mx6000 binocular Content2 parameters */
 
     OB_PROP_IMU_STREAM_PORT_INT = 3026, /**< set stream port to imu*/
 
@@ -76,10 +76,24 @@ typedef enum {
     OB_STRUCT_DEVICE_ERROR_STATE         = 5524, /**< Device error state*/
     OB_RAW_PRESET_RESOLUTION_CONFIG_LIST = 4061, /**< Resolution ratio configuration list*/
 
-    OB_PROP_LIDAR_STREAMING_ON_OFF_INT   = 8100, /**< LiDAR: straming on/off*/
-    OB_PROP_LIDAR_IMU_UDP_PORT_INT       = 8101, /**< LiDAR: IMU UDP port, set only*/
-    OB_PROP_LIDAR_IMU_FRAME_RATE_INT     = 8102, /**< LiDAR: IMU stream frame rate, 0 for off*/
-    OB_STRUCT_LIDAR_IMU_FULL_SCALE_RANGE = 8103, /**< LiDAR: IMU range, bytes 1~2: accel range, bytes 3~4: gyro range. MSB*/
+    OB_PROP_LIDAR_SCAN_SPEED_INT                 = 8018, /**< LiDAR: set/get scan speed*/
+    OB_PROP_LIDAR_STREAMING_ON_OFF_INT           = 8019, /**< LiDAR: straming on/off*/
+    OB_PROP_LIDAR_IMU_FRAME_RATE_INT             = 8020, /**< LiDAR: IMU stream frame rate, 0 for off*/
+    OB_STRUCT_LIDAR_IMU_FULL_SCALE_RANGE         = 8021, /**< LiDAR: IMU range, bytes 1~2: accel range, bytes 3~4: gyro range. MSB*/
+    OB_PROP_LIDAR_INITIATE_DEVICE_CONNECTION_INT = 8022, /**< LiDAR: initiate device connection*/
+    OB_PROP_LIDAR_FPGA_TEMPERATURE_INT           = 8023, /**< LiDAR: get fpga temperature, uint: 0.01degrees delsius*/
+    OB_PROP_LIDAR_SCAN_DIRECTION_INT             = 8024, /**< LiDAR: set/get scan direction*/
+    OB_PROP_LIDAR_TRANSFER_PROTOCOL_INT          = 8025, /**< LiDAR: set/get transfer protocol*/
+    OB_PROP_LIDAR_MEMS_FOV_FACTOR_FLOAT          = 8026, /**< LiDAR: set/get mems fov factor*/
+    OB_PROP_LIDAR_MEMS_ON_OFF_INT                = 8027, /**< LiDAR: mems on/off*/
+    OB_PROP_LIDAR_RESTART_MEMS_INT               = 8028, /**< LiDAR: restart mems*/
+    OB_STRUCT_LIDAR_STATUS_INFO                  = 8029, /**< LiDAR: get status info*/
+    OB_PROP_LIDAR_APD_HIGH_VOLTAGE_INT           = 8030, /**< LiDAR: get apd high voltage, uint: 0.01v*/
+    OB_PROP_LIDAR_TX_HIGH_POWER_VOLTAGE_INT      = 8031, /**< LiDAR: get tx high power voltage, uint: 0.01v*/
+    OB_PROP_LIDAR_TX_LOWER_POWER_VOLTAGE_INT     = 8032, /**< LiDAR: get tx lower power voltage, uint: 0.01v*/
+    OB_RAW_DATA_LIDAR_MOTOR_VERSION              = 8033, /**< LiDAR: get motor version*/
+    OB_RAW_DATA_LIDAR_MEMS_VERSION               = 8034, /**< LiDAR: get mems version*/
+
 } OBInternalPropertyID;
 
 }  // namespace libobsensor

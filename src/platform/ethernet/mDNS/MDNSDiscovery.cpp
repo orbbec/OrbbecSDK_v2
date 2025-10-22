@@ -56,8 +56,8 @@ static int query_callback(int sock, const struct sockaddr *from, size_t addrlen,
     (void)ttl;
 
     // char              addrbuffer[64];
-    char              entrybuffer[256];
-    char              namebuffer[256];
+    char              entrybuffer[256] = {0};
+    char              namebuffer[256]  = {0};
     mdns_record_txt_t txtbuffer[128];
     MDNSAckData      *ack = static_cast<MDNSAckData *>(user_data);
 

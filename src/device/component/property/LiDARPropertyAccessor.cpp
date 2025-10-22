@@ -30,10 +30,9 @@ const std::unordered_map<uint32_t, LiDAROpCode> LiDAROperationInfomap = {
     { OB_PROP_LIDAR_WORK_MODE_INT, { HpOpCode::OPCODE_SET_WORK_MODE, HpOpCode::OPCODE_GET_WORK_MODE, OB_INT_PROPERTY } },  // set/get work mode
     { OB_PROP_LIDAR_INITIATE_DEVICE_CONNECTION_INT,
       { HpOpCode::OPCODE_INITIATE_DEVICE_CONNECTION, HpOpCode::OPCODE_UNSUPPORTED, OB_INT_PROPERTY } },  // initiate device connection
-    { OB_RAW_DATA_LIDAR_SERIAL_NUMBER,
+    { OB_STRUCT_DEVICE_SERIAL_NUMBER,
       { HpOpCode::OPCODE_SET_SERIAL_NUMBER, HpOpCode::OPCODE_GET_SERIAL_NUMBER, OB_STRUCT_PROPERTY } },                                // set/get serial number
     { OB_PROP_REBOOT_DEVICE_BOOL, { HpOpCode::OPCODE_REBOOT_DEVICE, HpOpCode::OPCODE_UNSUPPORTED, OB_BOOL_PROPERTY } },                // reboot device
-    { OB_PROP_LIDAR_ECHO_MODE_INT, { HpOpCode::OPCODE_SET_ECHO_MODE, HpOpCode::OPCODE_GET_ECHO_MODE, OB_INT_PROPERTY } },              // set/get echo mode
     { OB_PROP_LIDAR_APPLY_CONFIGS_INT, { HpOpCode::OPCODE_APPLY_CONFIGS, HpOpCode::OPCODE_UNSUPPORTED, OB_INT_PROPERTY } },            // apply configs
     { OB_PROP_LIDAR_STREAMING_ON_OFF_INT, { HpOpCode::OPCODE_STREAMING_ON_OFF, HpOpCode::OPCODE_UNSUPPORTED, OB_INT_PROPERTY } },      // streaming on/off
     { OB_PROP_LIDAR_SPECIFIC_MODE_INT, { HpOpCode::OPCODE_SET_SPECIFIC_MODE, HpOpCode::OPCODE_GET_SPECIFIC_MODE, OB_INT_PROPERTY } },  // specific mode
@@ -47,8 +46,6 @@ const std::unordered_map<uint32_t, LiDAROpCode> LiDAROperationInfomap = {
       { HpOpCode::OPCODE_SET_MEMS_FOV_FACTOR, HpOpCode::OPCODE_GET_MEMS_FOV_FACTOR, OB_FLOAT_PROPERTY } },                       // set/get mems fov factor
     { OB_PROP_LIDAR_MEMS_ON_OFF_INT, { HpOpCode::OPCODE_UNSUPPORTED, HpOpCode::OPCODE_UNSUPPORTED, OB_INT_PROPERTY } },          // mems on/off
     { OB_PROP_LIDAR_RESTART_MEMS_INT, { HpOpCode::OPCODE_RESTART_MEMS, HpOpCode::OPCODE_UNSUPPORTED, OB_INT_PROPERTY } },        // restart mems
-    { OB_PROP_LIDAR_SAVE_MEMS_PARAM_INT, { HpOpCode::OPCODE_SAVE_MEMS_PARAM, HpOpCode::OPCODE_UNSUPPORTED, OB_INT_PROPERTY } },  // save mems param
-
     { OB_RAW_DATA_LIDAR_PRODUCT_MODEL, { HpOpCode::OPCODE_UNSUPPORTED, HpOpCode::OPCODE_GET_PRODUCT_MODEL, OB_STRUCT_PROPERTY } },  // get product model
     { OB_RAW_DATA_LIDAR_FIRMWARE_VERSION,
       { HpOpCode::OPCODE_UNSUPPORTED, HpOpCode::OPCODE_GET_FIRMWARE_VERSION, OB_STRUCT_PROPERTY } },                                     // get firmware version
@@ -56,22 +53,20 @@ const std::unordered_map<uint32_t, LiDAROpCode> LiDAROperationInfomap = {
     { OB_STRUCT_LIDAR_STATUS_INFO, { HpOpCode::OPCODE_UNSUPPORTED, HpOpCode::OPCODE_GET_STATUS_INFO, OB_STRUCT_PROPERTY } },             // get status info
     { OB_PROP_LIDAR_WARNING_INFO_INT, { HpOpCode::OPCODE_UNSUPPORTED, HpOpCode::OPCODE_GET_WARNING_INFO, OB_INT_PROPERTY } },            // get warning info
     { OB_PROP_LIDAR_MOTOR_SPIN_SPEED_INT, { HpOpCode::OPCODE_UNSUPPORTED, HpOpCode::OPCODE_GET_MOTOR_SPIN_SPEED, OB_INT_PROPERTY } },    // get spin speed
-    { OB_PROP_LIDAR_MCU_TEMPERATURE_FLOAT, { HpOpCode::OPCODE_UNSUPPORTED, HpOpCode::OPCODE_GET_MCU_TEMPERATURE, OB_FLOAT_PROPERTY } },  // get mcu temperature
-    { OB_PROP_LIDAR_FPGA_TEMPERATURE_FLOAT,
-      { HpOpCode::OPCODE_UNSUPPORTED, HpOpCode::OPCODE_GET_FPGA_TEMPERATURE, OB_FLOAT_PROPERTY } },                                 // get fpga temperature
+    { OB_PROP_LIDAR_MCU_TEMPERATURE_INT, { HpOpCode::OPCODE_UNSUPPORTED, HpOpCode::OPCODE_GET_MCU_TEMPERATURE, OB_INT_PROPERTY } },    // get mcu temperature
+    { OB_PROP_LIDAR_FPGA_TEMPERATURE_INT, { HpOpCode::OPCODE_UNSUPPORTED, HpOpCode::OPCODE_GET_FPGA_TEMPERATURE, OB_INT_PROPERTY } },  // get fpga temperature
     { OB_RAW_DATA_LIDAR_MOTOR_VERSION, { HpOpCode::OPCODE_UNSUPPORTED, HpOpCode::OPCODE_GET_MOTOR_VERSION, OB_STRUCT_PROPERTY } },  // get motor version
-    { OB_PROP_LIDAR_APD_HIGH_VOLTAGE_FLOAT,
-      { HpOpCode::OPCODE_UNSUPPORTED, HpOpCode::OPCODE_GET_APD_HIGH_VOLTAGE, OB_FLOAT_PROPERTY } },                                      // get apd high voltage
-    { OB_PROP_LIDAR_APD_TEMPERATURE_FLOAT, { HpOpCode::OPCODE_UNSUPPORTED, HpOpCode::OPCODE_GET_APD_TEMPERATURE, OB_FLOAT_PROPERTY } },  // get apd temperature
-    { OB_PROP_LIDAR_TX_HIGH_POWER_VOLTAGE_FLOAT,
-      { HpOpCode::OPCODE_UNSUPPORTED, HpOpCode::OPCODE_GET_TX_HIGH_POWER_VOLTAGE, OB_FLOAT_PROPERTY } },  // get tx high power voltage
-    { OB_PROP_LIDAR_TX_LOWER_POWER_VOLTAGE_FLOAT,
-      { HpOpCode::OPCODE_UNSUPPORTED, HpOpCode::OPCODE_GET_TX_LOWER_POWER_VOLTAGE, OB_FLOAT_PROPERTY } },                         // get tx lower power voltage
+    { OB_PROP_LIDAR_APD_HIGH_VOLTAGE_INT, { HpOpCode::OPCODE_UNSUPPORTED, HpOpCode::OPCODE_GET_APD_HIGH_VOLTAGE, OB_INT_PROPERTY } },    // get apd high voltage
+    { OB_PROP_LIDAR_APD_TEMPERATURE_INT, { HpOpCode::OPCODE_UNSUPPORTED, HpOpCode::OPCODE_GET_APD_TEMPERATURE, OB_INT_PROPERTY } },  // get apd temperature
+    { OB_PROP_LIDAR_TX_HIGH_POWER_VOLTAGE_INT,
+      { HpOpCode::OPCODE_UNSUPPORTED, HpOpCode::OPCODE_GET_TX_HIGH_POWER_VOLTAGE, OB_INT_PROPERTY } },  // get tx high power voltage
+    { OB_PROP_LIDAR_TX_LOWER_POWER_VOLTAGE_INT,
+      { HpOpCode::OPCODE_UNSUPPORTED, HpOpCode::OPCODE_GET_TX_LOWER_POWER_VOLTAGE, OB_INT_PROPERTY } },                           // get tx lower power voltage
     { OB_RAW_DATA_LIDAR_MEMS_VERSION, { HpOpCode::OPCODE_UNSUPPORTED, HpOpCode::OPCODE_GET_MEMS_VERSION, OB_STRUCT_PROPERTY } },  // get mems version
     { OB_PROP_LIDAR_REPETITIVE_SCAN_MODE_INT,
       { HpOpCode::OPCODE_SET_REPETITIVE_SCAN_MODE, HpOpCode::OPCODE_GET_REPETITIVE_SCAN_MODE, OB_INT_PROPERTY } },  // repetitive scan mode
 
-    { OB_PROP_LIDAR_IMU_UDP_PORT_INT,
+    { OB_PROP_IMU_STREAM_PORT_INT,
       { HpOpCode::OPCODE_SET_IMU_UDP_PORT, HpOpCode::OPCODE_UNSUPPORTED, OB_INT_PROPERTY } },  // IMU stream output data rate(frame rate)
     { OB_PROP_LIDAR_IMU_FRAME_RATE_INT,
       { HpOpCode::OPCODE_SET_IMU_FRAME_RATE, HpOpCode::OPCODE_GET_IMU_FRAME_RATE, OB_INT_PROPERTY } },  // IMU stream output data rate(frame rate)
@@ -232,13 +227,6 @@ void LiDARPropertyAccessor::getPropertyRange(uint32_t propertyId, OBPropertyRang
         range->def.intValue  = 0;
         break;
     }
-    case OB_PROP_LIDAR_ECHO_MODE_INT: {
-        range->min.intValue  = 0;  // single echo
-        range->max.intValue  = 1;  // dual echo
-        range->step.intValue = 1;
-        range->def.intValue  = 0;
-        break;
-    }
     case OB_PROP_LIDAR_SPECIFIC_MODE_INT: {
         range->min.intValue  = 0;  // normal mode
         range->max.intValue  = 1;  // fog mode
@@ -288,13 +276,13 @@ void LiDARPropertyAccessor::getPropertyRange(uint32_t propertyId, OBPropertyRang
         range->def.intValue  = 0;
         break;
     }
-    case OB_PROP_LIDAR_MCU_TEMPERATURE_FLOAT:
-    case OB_PROP_LIDAR_FPGA_TEMPERATURE_FLOAT:
-    case OB_PROP_LIDAR_APD_TEMPERATURE_FLOAT: {
-        range->min.floatValue  = 0.0f;
-        range->max.floatValue  = 100.0f;
-        range->step.floatValue = 0.01f;
-        range->def.floatValue  = 0.0f;
+    case OB_PROP_LIDAR_MCU_TEMPERATURE_INT: 
+    case OB_PROP_LIDAR_APD_TEMPERATURE_INT:
+    case OB_PROP_LIDAR_FPGA_TEMPERATURE_INT: {
+        range->min.intValue  = 0;
+        range->max.intValue  = 10000;
+        range->step.intValue = 1;
+        range->def.intValue  = 0;
         break;
     }
     case OB_PROP_LIDAR_REPETITIVE_SCAN_MODE_INT: {
@@ -304,32 +292,25 @@ void LiDARPropertyAccessor::getPropertyRange(uint32_t propertyId, OBPropertyRang
         range->def.intValue  = 0;
         break;
     }
-    case OB_PROP_LIDAR_SAVE_MEMS_PARAM_INT: {
-        range->min.intValue  = 1;
-        range->max.intValue  = 1;
-        range->step.intValue = 1;
-        range->def.intValue  = 1;
+    case OB_PROP_LIDAR_APD_HIGH_VOLTAGE_INT: {
+        range->min.intValue    = 70;
+        range->max.intValue    = 200;
+        range->step.intValue   = 1;
+        range->def.intValue    = 70;
         break;
     }
-    case OB_PROP_LIDAR_APD_HIGH_VOLTAGE_FLOAT: {
-        range->min.floatValue  = 70.0f;
-        range->max.floatValue  = 200.0f;
-        range->step.floatValue = 0.1f;
-        range->def.floatValue  = 70.0f;
+    case OB_PROP_LIDAR_TX_HIGH_POWER_VOLTAGE_INT: {
+        range->min.floatValue  = 50;
+        range->max.floatValue  = 80;
+        range->step.floatValue = 1;
+        range->def.floatValue  = 50;
         break;
     }
-    case OB_PROP_LIDAR_TX_HIGH_POWER_VOLTAGE_FLOAT: {
-        range->min.floatValue  = 50.0f;
-        range->max.floatValue  = 80.0f;
-        range->step.floatValue = 0.1f;
-        range->def.floatValue  = 50.0f;
-        break;
-    }
-    case OB_PROP_LIDAR_TX_LOWER_POWER_VOLTAGE_FLOAT: {
-        range->min.floatValue  = 8.0f;
-        range->max.floatValue  = 20.0f;
-        range->step.floatValue = 0.1f;
-        range->def.floatValue  = 8.0f;
+    case OB_PROP_LIDAR_TX_LOWER_POWER_VOLTAGE_INT: {
+        range->min.floatValue  = 8;
+        range->max.floatValue  = 20;
+        range->step.floatValue = 1;
+        range->def.floatValue  = 8;
         break;
     }
     default: {
