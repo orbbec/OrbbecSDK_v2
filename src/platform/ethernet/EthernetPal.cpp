@@ -76,6 +76,8 @@ void EthernetPal::start(deviceChangedCallback callback) {
     mdnsWatchThread_ = std::thread([&]() {
         std::mutex                   mutex;
         std::unique_lock<std::mutex> lock(mutex);
+        int                          socketRefreshCounter    = 0;
+        const int                    SOCKET_REFRESH_INTERVAL = 3;
 
         while(!stopWatch_) {
             auto list    = mdnsDiscovery_->queryDeviceList();
@@ -93,9 +95,18 @@ void EthernetPal::start(deviceChangedCallback callback) {
             for(auto &&info: added) {
                 callback_(OB_DEVICE_ARRIVAL, info.mac);
             }
+
+            // refresh sockets periodically
+            if(++socketRefreshCounter >= SOCKET_REFRESH_INTERVAL) {
+                mdnsDiscovery_->refreshQuery();
+                socketRefreshCounter = 0;
+            }
+
             mdnsDevInfoList_ = list;
             mdnsCondVar_.wait_for(lock, std::chrono::milliseconds(MDNS_WATCHER_POLLING_INTERVAL_MSEC), [&]() { return stopWatch_.load(); });
         }
+
+        mdnsDiscovery_->refreshQuery();
     });
 }
 

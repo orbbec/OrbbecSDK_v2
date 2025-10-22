@@ -66,19 +66,31 @@ public:
      */
     std::vector<MDNSDeviceInfo> queryDeviceList();
 
+    /**
+     * @brief refresh mDNS query, clear socket cache
+     *
+     */
+    void refreshQuery();
+
 private:
     MDNSDiscovery();
 
     std::vector<MDNSSocketInfo> openClientSockets();
     void                        closeClientSockets(std::vector<MDNSSocketInfo> &socks);
-    void                        MDNSQuery(std::vector<MDNSSocketInfo> &socks, int timeoutSec = 1, int timeoutUsec = 0);
-    std::string                 findTxtRecord(const std::vector<std::string> &txtList, const std::string &key, const std::string &defValue);
-    MDNSDeviceInfo              parseDeviceInfo(const MDNSAckData &ack);
+
+    void MDNSQuery(std::vector<MDNSSocketInfo> &socks, int timeoutSec = 1, int timeoutUsec = 0);
+    bool receiveMDNSResponses(const std::vector<MDNSSocketInfo> &sockInfos, uint8_t *buffer, size_t bufferSize, int timeoutSec, int timeoutUsec);
+
+    std::string    findTxtRecord(const std::vector<std::string> &txtList, const std::string &key, const std::string &defValue);
+    MDNSDeviceInfo parseDeviceInfo(const MDNSAckData &ack);
 
 private:
     std::vector<MDNSDeviceInfo>         devInfoList_;
     std::mutex                          devInfoListMtx_;
     std::mutex                          queryMtx_;
+    std::vector<MDNSSocketInfo>         cachedSockInfos_;
+    std::mutex                          cacheMtx_;
+
     static std::mutex                   instanceMutex_;
     static std::weak_ptr<MDNSDiscovery> instanceWeakPtr_;
 };

@@ -129,6 +129,7 @@ MDNSDiscovery::MDNSDiscovery() {
 }
 
 MDNSDiscovery::~MDNSDiscovery() {
+    closeClientSockets(cachedSockInfos_);
 #if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
     WSACleanup();
 #endif
@@ -262,56 +263,79 @@ void MDNSDiscovery::closeClientSockets(std::vector<MDNSSocketInfo> &sockInfos) {
     sockInfos.clear();
 }
 
-void MDNSDiscovery::MDNSQuery(std::vector<MDNSSocketInfo> &sockInfos, int timeoutSec, int timeoutUsec) {
-    uint8_t buffer[4096] = { 0 };
-    size_t  capacity     = sizeof(buffer) / sizeof(buffer[0]);
-    // Reading mDNS query replies
-    int    res  = 0;
+bool MDNSDiscovery::receiveMDNSResponses(const std::vector<MDNSSocketInfo> &sockInfos, uint8_t *buffer, size_t bufferSize, int timeoutSec, int timeoutUsec) {
     int    nfds = 0;
     fd_set readfs;
+    bool   receivedData = false;
+    auto   startTime    = std::chrono::steady_clock::now();
+    auto   timeoutMs    = timeoutSec * 1000 + timeoutUsec / 1000;
 
-    struct timeval timeout;
-    timeout.tv_sec  = timeoutSec;
-    timeout.tv_usec = timeoutUsec;
+    auto isTimeOut = [=]() -> bool {
+        auto currentTime = std::chrono::steady_clock::now();
+        auto elapsed     = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime).count();
+        return elapsed >= timeoutMs;
+    };
 
-    do {
+    while(true) {
         FD_ZERO(&readfs);
+        nfds = 0;
+
         for(const auto &info: sockInfos) {
             FD_SET(info.sock, &readfs);
-            if(info.sock + 1 > nfds) {
+            if(static_cast<int>(info.sock) + 1 > nfds) {
                 nfds = static_cast<int>(info.sock) + 1;
             }
         }
 
-        res = select(nfds, &readfs, 0, 0, &timeout);
+        struct timeval shortTimeout;
+        shortTimeout.tv_sec  = 0;
+        shortTimeout.tv_usec = 25000;
+
+        int res = select(nfds, &readfs, nullptr, nullptr, &shortTimeout);
         if(res <= 0) {
-            break;
+            if(isTimeOut()) {
+                break;
+            }
+            continue;
         }
 
         for(const auto &info: sockInfos) {
             if(FD_ISSET(info.sock, &readfs)) {
-                // for udp, read one packet at a time
-                MDNSAckData ack;
-                memset(buffer, 0, capacity);
-                size_t rec = mdns_query_recv(static_cast<int>(info.sock), buffer, capacity, query_callback, &ack, 0);
-                if(rec <= 0) {
-                    LOG_INTVL(LOG_INTVL_OBJECT_TAG + "sendAndRecvMDNSQuery", MAX_LOG_INTERVAL, spdlog::level::debug, "mdns_query_recv failed with error:{}",
-                              GET_LAST_ERROR());
-                    continue;
-                }
+                int maxRecvCount = 100;  // avoid infinite loop
+                while(maxRecvCount-- > 0) {
+                    memset(buffer, 0, bufferSize);
+                    MDNSAckData ack;
 
-                if(ack.name.find("_oradar_udp") == std::string::npos || ack.ip.empty()) {
-                    LOG_INTVL(LOG_INTVL_OBJECT_TAG + "sendAndRecvMDNSQuery", MAX_LOG_INTERVAL, spdlog::level::debug,
-                              "Invalid device, srv name: {}, ip: {}, port, {}", ack.name, ack.ip, ack.port);
-                    continue;
+                    size_t rec = mdns_query_recv(static_cast<int>(info.sock), buffer, bufferSize, query_callback, &ack, 0);
+                    if(rec <= 0) {
+                        break;
+                    }
+
+                    receivedData = true;
+                    if(ack.name.find("_oradar_udp") == std::string::npos || ack.ip.empty()) {
+                        LOG_INTVL(LOG_INTVL_OBJECT_TAG + "receiveMDNSResponses", MAX_LOG_INTERVAL, spdlog::level::debug,
+                                  "Invalid device, srv name: {}, ip: {}, port: {}", ack.name, ack.ip, ack.port);
+                        continue;
+                    }
+
+                    parseDeviceInfo(ack);
                 }
-                // parse device info
-                parseDeviceInfo(ack);
             }
-            FD_SET(info.sock, &readfs);
         }
 
-    } while(false);
+        if(isTimeOut()) {
+            break;
+        }
+    }
+
+    return receivedData;
+}
+
+void MDNSDiscovery::MDNSQuery(std::vector<MDNSSocketInfo> &sockInfos, int timeoutSec, int timeoutUsec) {
+    const size_t         BUFFER_SIZE = 4096;
+    std::vector<uint8_t> buffer(BUFFER_SIZE);
+
+    receiveMDNSResponses(sockInfos, buffer.data(), BUFFER_SIZE, timeoutSec, timeoutUsec);
 }
 
 std::string MDNSDiscovery::findTxtRecord(const std::vector<std::string> &txtList, const std::string &key, const std::string &defValue) {
@@ -336,9 +360,16 @@ std::vector<MDNSDeviceInfo> MDNSDiscovery::queryDeviceList() {
     auto tmpList = devInfoList_;
     devInfoList_.clear();
 
-    std::vector<MDNSSocketInfo> sockInfos = openClientSockets();
+    std::vector<MDNSSocketInfo> sockInfos;
+    {
+        std::lock_guard<std::mutex> cacheLock(cacheMtx_);
+        if(cachedSockInfos_.empty()) {
+            cachedSockInfos_ = openClientSockets();
+        }
+        sockInfos = cachedSockInfos_;
+    }
+
     MDNSQuery(sockInfos);
-    closeClientSockets(sockInfos);
 
     // Compare two std::vector:
     // 1. elements are unique in both vectors
@@ -421,6 +452,13 @@ MDNSDeviceInfo MDNSDiscovery::parseDeviceInfo(const MDNSAckData &ack) {
     }
 
     return info;
+}
+
+void MDNSDiscovery::refreshQuery() {
+    std::lock_guard<std::mutex> cacheLock(cacheMtx_);
+    if(!cachedSockInfos_.empty()) {
+        closeClientSockets(cachedSockInfos_);
+    }
 }
 
 }  // namespace libobsensor
