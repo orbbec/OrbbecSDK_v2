@@ -204,6 +204,20 @@ public:
     }
 
     /**
+     * @brief Set the log file name for file output
+     *
+     * @param[in] fileName Log file name. Must not be empty.
+     * @param[out] error Pointer to an error object that will be set if an error occurs.
+     *
+     * @note Other settings, such as log level and output directory, remain unchanged.
+     */
+    static void setLoggerFileName(const std::string &fileName) {
+        ob_error *error = nullptr;
+        ob_set_logger_file_name(fileName.c_str(), &error);
+        Error::handle(&error);
+    }
+
+    /**
      * @brief Set log output to the console.
      *
      * @param[in] severity The log level output to the console.

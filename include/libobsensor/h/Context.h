@@ -149,11 +149,25 @@ OB_EXPORT void ob_set_logger_severity(ob_log_severity severity, ob_error **error
  * @brief Set the log output to a file
  *
  * @param[in] severity Log level to output to file
- * @param[in] directory Path to the log file output directory. If the path is empty, the existing settings will continue to be used (if the existing
- * configuration is also empty, the log will not be output to the file)
+ * @param[in] directory Path to the log file output directory.
+ *                      If empty, the existing configuration is used;
+ *                      if the existing configuration is also empty,
+ *                      the value from the config file or the default configuration will be used.
  * @param[out] error Pointer to an error object that will be populated if an error occurs during log output setting
+ *
+ * @note Other settings, such as log file name, remain unchanged.
  */
 OB_EXPORT void ob_set_logger_to_file(ob_log_severity severity, const char *directory, ob_error **error);
+
+/**
+ * @brief Set the log file name for file output
+ *
+ * @param[in] file_name Log file name. Must not be empty.
+ * @param[out] error Pointer to an error object that will be set if an error occurs.
+ *
+ * @note Other settings, such as log level and output directory, remain unchanged.
+ */
+OB_EXPORT void ob_set_logger_file_name(const char *file_name, ob_error **error);
 
 /**
  * @brief Set the log callback function

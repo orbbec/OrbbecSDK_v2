@@ -124,6 +124,12 @@ void ob_set_logger_to_file(ob_log_severity severity, const char *directory, ob_e
 }
 HANDLE_EXCEPTIONS_NO_RETURN(severity, directory)
 
+void ob_set_logger_file_name(const char *file_name, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_STR_NOT_NULL(file_name);
+    libobsensor::Logger::setFileLogFileName(file_name);
+}
+NO_ARGS_HANDLE_EXCEPTIONS_NO_RETURN()
+
 void ob_set_logger_to_callback(ob_log_severity severity, ob_log_callback callback, void *user_data, ob_error **error) BEGIN_API_CALL {
     libobsensor::Logger::setLogCallback(severity, [callback, user_data](ob_log_severity severity, const std::string logMsg) {  //
         callback(severity, logMsg.c_str(), user_data);

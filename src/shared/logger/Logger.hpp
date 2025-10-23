@@ -68,7 +68,9 @@ public:
 
     static void setLogSeverity(OBLogSeverity severity);
     static void setConsoleLogSeverity(OBLogSeverity severity);
-    static void setFileLogConfig(OBLogSeverity severity, const std::string &directory = "", uint32_t maxFileSize = 0, uint32_t maxFileNum = 0);
+    static void setFileLogConfig(OBLogSeverity severity, const std::string &directory = "", const std::string &fileName = "", uint32_t maxFileSize = 0,
+                                 uint32_t maxFileNum = 0);
+    static void setFileLogFileName(const std::string &fileName = "");
     static void setLogCallback(OBLogSeverity severity, LogCallback callback);
     static void logExternalMessage(OBLogSeverity severity, const char *module, const char *message, const char *file, const char *func, int line);
 

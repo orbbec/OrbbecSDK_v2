@@ -152,6 +152,13 @@ public:
         throw std::logic_error(msg);                                       \
     }
 
+#define VALIDATE_STR_NOT_NULL(str)                                                 \
+    if(!(str) || *(str) == '0') {                                                  \
+        std::string msg = "NULL or empty string passed for argument \"" #str "\""; \
+        LOG_WARN(msg);                                                             \
+        throw std::logic_error(msg);                                               \
+    }
+
 #define VALIDATE_EQUAL(ARG, CMP)                                            \
     if(ARG != CMP) {                                                        \
         std::string msg = "Invalid value passed for argument \"" #ARG "\""; \

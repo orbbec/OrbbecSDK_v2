@@ -61,11 +61,12 @@ struct Logger::LoggerConfig {
     bool          loadFileLogSeverityFromEnvConfig = true;
     OBLogSeverity fileLogSeverity                  = OB_LOG_SEVERITY_DEBUG;
 
-    bool        loadFileLogPathFromEnvConfig = true;
-    std::string fileLogOutputDir             = OB_DEFAULT_LOG_FILE_PATH;
-    std::string fileLogFileName              = OB_DEFAULT_LOG_FILE_NAME;
-    uint64_t    fileLogMaxFileSize           = OB_DEFAULT_MAX_FILE_SIZE;
-    uint64_t    fileLogMaxFileNum            = OB_DEFAULT_MAX_FILE_NUM;
+    // Log config: directory, filename, maxfilesize, maxfilenum
+    // All initialized empty/0, used to check if set later.
+    std::string fileLogOutputDir   = "";
+    std::string fileLogFileName    = "";
+    uint64_t    fileLogMaxFileSize = 0;
+    uint64_t    fileLogMaxFileNum  = 0;
 
     bool          loadConsoleLogSeverityFromEnvConfig = true;
     OBLogSeverity consoleLogSeverity                  = OB_DEFAULT_LOG_SEVERITY;
@@ -142,7 +143,7 @@ void Logger::createFileSink() {
         auto &fileSize = config_.fileLogMaxFileSize;
         auto &fileNum  = config_.fileLogMaxFileNum;
         try {
-            fileSink_ = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(path, static_cast<unsigned int>(fileSize), static_cast<unsigned int>(fileNum));
+            fileSink_ = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(path, static_cast<size_t>(fileSize), static_cast<size_t>(fileNum));
         }
         catch(const std::exception &e) {
             LOG_ERROR("Error creating file sink for logger! {}", e.what());
@@ -234,6 +235,8 @@ void Logger::loadEnvConfig() {
     int  globalLogLevel  = -1;
     int  fileLogLevel    = -1;
     int  consoleLogLevel = -1;
+
+    // log level
     if(!envConfig->getIntValue("Log.LogLevel", globalLogLevel)) {
         globalLogLevel = OB_DEFAULT_LOG_SEVERITY;
     }
@@ -252,40 +255,47 @@ void Logger::loadEnvConfig() {
         config_.consoleLogSeverity = (OBLogSeverity)consoleLogLevel;
     }
 
-    std::string dir;
-    envConfig->getStringValue("Log.OutputDir", dir);
-    if(dir.empty()) {
-        dir = OB_DEFAULT_LOG_FILE_PATH;
-    }
-
-    std::string fileName;
-    envConfig->getStringValue("Log.FileName", fileName);
-    if(fileName.empty()) {
-        fileName = OB_DEFAULT_LOG_FILE_NAME;
-    }
-
-    int maxFileSize = 0;
-    envConfig->getIntValue("Log.MaxFileSize", maxFileSize);
-    maxFileSize = maxFileSize * 1024 * 1024;  // MB to Byte
-    if(maxFileSize == 0) {
-        maxFileSize = OB_DEFAULT_MAX_FILE_SIZE;
-    }
-
-    int maxFileNum = 0;
-    envConfig->getIntValue("Log.MaxFileNum", maxFileNum);
-    if(maxFileNum == 0) {
-        maxFileNum = OB_DEFAULT_MAX_FILE_NUM;
-    }
-
-    if(config_.loadFileLogPathFromEnvConfig) {
+    // file log output directory
+    if(config_.fileLogOutputDir.empty()) {
+        std::string dir;
+        envConfig->getStringValue("Log.OutputDir", dir);
+        if(dir.empty()) {
+            dir = OB_DEFAULT_LOG_FILE_PATH;
+        }
         config_.fileLogOutputDir = dir;
+    }
 
+    // file log output file name
+    if(config_.fileLogFileName.empty()) {
+        std::string fileName;
+        envConfig->getStringValue("Log.FileName", fileName);
+        if(fileName.empty()) {
+            fileName = OB_DEFAULT_LOG_FILE_NAME;
+        }
         config_.fileLogFileName = fileName;
+    }
 
+    // file log output max file size
+    if(config_.fileLogMaxFileSize == 0) {
+        int maxFileSize = 0;
+        envConfig->getIntValue("Log.MaxFileSize", maxFileSize);
+        maxFileSize = maxFileSize * 1024 * 1024;  // MB to Byte
+        if(maxFileSize <= 0) {
+            maxFileSize = OB_DEFAULT_MAX_FILE_SIZE;
+        }
         config_.fileLogMaxFileSize = maxFileSize;
+    }
 
+    // file log output max file number
+    if(config_.fileLogMaxFileNum == 0) {
+        int maxFileNum = 0;
+        envConfig->getIntValue("Log.MaxFileNum", maxFileNum);
+        if(maxFileNum <= 0) {
+            maxFileNum = OB_DEFAULT_MAX_FILE_NUM;
+        }
         config_.fileLogMaxFileNum = maxFileNum;
     }
+
     bool async = false;
     if(envConfig->getBooleanValue("Log.Async", async)) {
         config_.async = async;
@@ -322,33 +332,21 @@ void Logger::setConsoleLogSeverity(OBLogSeverity severity) {
     }
 }
 
-void Logger::setFileLogConfig(OBLogSeverity severity, const std::string &directory, uint32_t maxFileSize, uint32_t maxFileNum) {
+void Logger::setFileLogConfig(OBLogSeverity severity, const std::string &directory, const std::string &fileName, uint32_t maxFileSize, uint32_t maxFileNum) {
     config_.loadFileLogSeverityFromEnvConfig = false;
     config_.fileLogSeverity                  = severity;
-    config_.loadFileLogPathFromEnvConfig     = false;
-    config_.fileLogOutputDir                 = directory;
-    config_.fileLogMaxFileSize               = static_cast<uint64_t>(maxFileSize) * 1024 * 1024;  // MB to Byte
-    config_.fileLogMaxFileNum                = maxFileNum;
-    auto envConfig       = EnvConfig::getInstance();
-    if(directory.empty()) {
-        config_.fileLogOutputDir = OB_DEFAULT_LOG_FILE_PATH;
+
+    if(!directory.empty()) {
+        config_.fileLogOutputDir = directory;
     }
-    if(maxFileSize == 0) {
-        int envConfigMaxFileSize = 0;
-        envConfig->getIntValue("Log.MaxFileSize", envConfigMaxFileSize);
-        envConfigMaxFileSize = envConfigMaxFileSize * 1024 * 1024;  // MB to Byte
-        if(envConfigMaxFileSize == 0) {
-            envConfigMaxFileSize = OB_DEFAULT_MAX_FILE_SIZE;
-        }
-        config_.fileLogMaxFileSize = envConfigMaxFileSize;
+    if(!fileName.empty()) {
+        config_.fileLogFileName = fileName;
     }
-    if(maxFileNum == 0) {
-        int envConfigMaxFileNum = 0;
-        envConfig->getIntValue("Log.MaxFileNum", envConfigMaxFileNum);
-        if(envConfigMaxFileNum == 0) {
-            envConfigMaxFileNum = OB_DEFAULT_MAX_FILE_NUM;
-        }
-        config_.fileLogMaxFileNum = envConfigMaxFileNum;
+    if(maxFileSize > 0) {
+        config_.fileLogMaxFileSize = static_cast<uint64_t>(maxFileSize) * 1024 * 1024;  // MB to Byte
+    }
+    if(maxFileNum > 0) {
+        config_.fileLogMaxFileNum = maxFileNum;
     }
 
     std::lock_guard<std::mutex> lock(instanceMutex_);
@@ -356,6 +354,19 @@ void Logger::setFileLogConfig(OBLogSeverity severity, const std::string &directo
     if(instance) {
         instance->createFileSink();
         instance->updateDefaultSpdLogger();
+    }
+}
+
+void Logger::setFileLogFileName(const std::string &fileName) {
+    if(!fileName.empty()) {
+        config_.fileLogFileName = fileName;
+
+        std::lock_guard<std::mutex> lock(instanceMutex_);
+        auto                        instance = instanceWeakPtr_.lock();
+        if(instance) {
+            instance->createFileSink();
+            instance->updateDefaultSpdLogger();
+        }
     }
 }
 
