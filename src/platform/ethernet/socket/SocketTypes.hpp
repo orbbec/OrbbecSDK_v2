@@ -30,8 +30,10 @@ namespace libobsensor {
 
 #if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
 #define GET_LAST_ERROR() WSAGetLastError()
+#define ERR_ADDR_IN_USE WSAEADDRINUSE
 #else
 #define GET_LAST_ERROR() errno
+#define ERR_ADDR_IN_USE EADDRINUSE
 #endif
 
 

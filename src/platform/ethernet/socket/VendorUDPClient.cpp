@@ -12,7 +12,7 @@
 namespace libobsensor {
 
 VendorUDPClient::VendorUDPClient(const std::string &address, uint16_t port, uint32_t commTimeout)
-    : address_(address), port_(port), clientPort_(0), socketFd_(INVALID_SOCKET), commTimeoutMs_(commTimeout) {
+    : address_(address), port_(port), clientPort_(port), socketFd_(INVALID_SOCKET), commTimeoutMs_(commTimeout) {
     // os socket
     initOsSocket();
     // try to connect
@@ -52,6 +52,7 @@ void VendorUDPClient::deinitOsSocket() {
 
 void VendorUDPClient::socketConnect(uint32_t retryCount) {
     int    rst;
+    int    errCode = 0;
     SOCKET sockFd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);  // ipv4, udp(Streaming)
     if(sockFd == INVALID_SOCKET) {
         throw libobsensor::io_exception(utils::string::to_string() << "create socket failed! err_code=" << GET_LAST_ERROR());
@@ -78,23 +79,22 @@ void VendorUDPClient::socketConnect(uint32_t retryCount) {
         throw libobsensor::invalid_value_exception("Invalid address!");
     }
 
-    // bind to 0.0.0.0:port
-    clientPort_ = port_;
-
     struct sockaddr_in localAddr{};
     localAddr.sin_family      = AF_INET;
     localAddr.sin_addr.s_addr = htonl(INADDR_ANY);
     localAddr.sin_port        = htons(clientPort_);
     if(bind(sockFd, (sockaddr *)&localAddr, sizeof(localAddr)) < 0) {
+        errCode = GET_LAST_ERROR();
         closesocket(sockFd);
-        if(GET_LAST_ERROR() == EADDRINUSE && retryCount < maxConnectRetry ) {
+        if(errCode == ERR_ADDR_IN_USE && retryCount < maxConnectRetry) {
             // port is in use, try next port
             ++clientPort_;
             socketConnect(retryCount+1);
+            return;
         }
         else {
             throw libobsensor::invalid_value_exception(utils::string::to_string() << "VendorUDPClient: bind to 0.0.0.0 failed! addr=" << address_
-                                                                                  << ", port=" << clientPort_ << ", err_code=" << GET_LAST_ERROR());
+                                                                                  << ", port=" << clientPort_ << ", err_code=" << errCode);
         }
     }
 
@@ -102,9 +102,10 @@ void VendorUDPClient::socketConnect(uint32_t retryCount) {
     unsigned long mode = 0;  // blocking mode
     rst                = ioctlsocket(sockFd, FIONBIO, &mode);
     if(rst < 0) {
+        errCode = GET_LAST_ERROR();
         closesocket(sockFd);
         throw libobsensor::invalid_value_exception(utils::string::to_string() << "VendorUDPClient: ioctlsocket to blocking mode failed! addr=" << address_
-                                                                              << ", port=" << clientPort_ << ", err_code=" << GET_LAST_ERROR());
+                                                                              << ", port=" << clientPort_ << ", err_code=" << errCode);
     }
     // ok
     socketFd_ = sockFd;
