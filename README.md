@@ -207,9 +207,9 @@ After upgrading to the UVC protocol, these devices will have a firmware major ve
 
 ### 1.4 Supported Devices
 
-| **Products List** | **Minimal Firmware Version** | **Recommended FW Version**    |
+| **Products List** | **Minimal Firmware Version** | **Recommended Firmware Version**    |
 |-------------------|------------------------------|-------------------------------|
-| Gemini 435Le        | 1.2.4                     |        1.3.2                   |
+| Gemini 435Le        | 1.2.4                     |        1.3.6                   |
 | Gemini 335Le        | 1.5.31                     |        1.6.00                     |
 | Gemini 330        | 1.2.20                       |        1.6.00                       |
 | Gemini 330L       | 1.2.20                       |       1.6.00                      |
