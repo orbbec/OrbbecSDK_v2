@@ -4,6 +4,7 @@
 #include "UsbContext.hpp"
 #include "logger/Logger.hpp"
 #include "logger/LoggerInterval.hpp"
+#include "exception/ObException.hpp"
 
 namespace libobsensor {
 UsbContext::UsbContext() {
@@ -20,6 +21,7 @@ UsbContext::UsbContext() {
      auto sts = libusb_init(&libusbCtx_);
      if(sts != LIBUSB_SUCCESS) {
          LOG_ERROR("libusb_init failed");
+         return;
      }
 
     startEventHandleThread();

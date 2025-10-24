@@ -52,9 +52,12 @@ DeviceManager::DeviceManager() : destroy_(false), multiDeviceSyncIntervalMs_(0) 
 
 #if defined(BUILD_USB_PAL)
     LOG_DEBUG("Enable USB Device Enumerator ...");
-    auto usbDeviceEnumerator =
-        std::make_shared<UsbDeviceEnumerator>([&](const DeviceEnumInfoList &removed, const DeviceEnumInfoList &added) { onDeviceChanged(removed, added); });
-    deviceEnumerators_.emplace_back(usbDeviceEnumerator);
+    BEGIN_TRY_EXECUTE({
+        auto usbDeviceEnumerator = /*  */
+            std::make_shared<UsbDeviceEnumerator>([&](const DeviceEnumInfoList &removed, const DeviceEnumInfoList &added) { onDeviceChanged(removed, added); });
+        deviceEnumerators_.emplace_back(usbDeviceEnumerator);
+    })
+    CATCH_EXCEPTION_AND_LOG(DEBUG, "USB device enumerator creation failed: USB devices not supported");
 #endif
 
     // don't create net pal here, enable it by enableNetDeviceEnumeration

@@ -31,13 +31,19 @@ std::shared_ptr<Platform> Platform::getInstance() {
 
 Platform::Platform() {
 #if defined(BUILD_USB_PAL)
-    auto usbPal = createUsbPal();
-    palMap_.insert(std::make_pair("usb", usbPal));
+    BEGIN_TRY_EXECUTE({
+        auto usbPal = createUsbPal();
+        palMap_.insert(std::make_pair("usb", usbPal));
+    })
+    CATCH_EXCEPTION_AND_EXECUTE({ LOG_WARN("Failed to create usb pal!"); });
 #endif
 
 #if defined(BUILD_NET_PAL)
-    auto netPal = createNetPal();
-    palMap_.insert(std::make_pair("net", netPal));
+    BEGIN_TRY_EXECUTE({
+        auto netPal = createNetPal();
+        palMap_.insert(std::make_pair("net", netPal));
+    })
+    CATCH_EXCEPTION_AND_EXECUTE({ LOG_WARN("Failed to create network pal!"); });
 #endif
 }
 

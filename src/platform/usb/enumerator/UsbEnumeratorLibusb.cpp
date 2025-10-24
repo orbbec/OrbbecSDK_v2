@@ -332,8 +332,7 @@ std::shared_ptr<IUsbEnumerator> IUsbEnumerator::getInstance() {
 UsbEnumeratorLibusb::UsbEnumeratorLibusb() {
     auto sts = libusb_init(&libusbCtx_);
     if(sts != LIBUSB_SUCCESS) {
-        LOG_ERROR("libusb_init failed");
-        return;
+        throw libobsensor::pal_exception("libusb_init failed");
     }
 
     startEventHandleThread();
@@ -452,7 +451,7 @@ std::shared_ptr<IUsbDevice> UsbEnumeratorLibusb::openUsbDevice(const std::string
 }
 
 void UsbEnumeratorLibusb::startEventHandleThread() {
-    LOG_DEBUG("UsbContext::startEventHandler()");
+    LOG_DEBUG("UsbEnumeratorLibusb::startEventHandler()");
     libusbEventHandlerExit_   = 0;
     libusbEventHandlerThread_ = std::thread([&]() {
         while(!libusbEventHandlerExit_) {
@@ -465,7 +464,7 @@ void UsbEnumeratorLibusb::startEventHandleThread() {
 }
 
 void UsbEnumeratorLibusb::stopEventHandleThread() {
-    LOG_DEBUG("UsbContext::stopEventHandler()");
+    LOG_DEBUG("UsbEnumeratorLibusb::stopEventHandler()");
     libusbEventHandlerExit_ = 1;
     if(libusbCtx_) {
         libusb_interrupt_event_handler(libusbCtx_);
