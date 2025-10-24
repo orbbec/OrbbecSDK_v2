@@ -10,8 +10,7 @@
 
 namespace libobsensor {
 
-#define G305_UVC_METADATA_COLOR_SIZE (96 + sizeof(StandardUvcFramePayloadHeader))
-#define G305_UVC_METADATA_DEPTH_SIZE (92 + sizeof(StandardUvcFramePayloadHeader))
+#define G305_UVC_METADATA_SIZE (96 + sizeof(StandardUvcFramePayloadHeader))
 #pragma pack(push, 1)
 struct G305CommonUvcMetadata {
     StandardUvcFramePayloadHeader uvc_payload_header;
@@ -68,12 +67,15 @@ struct G305DepthUvcMetadata : public G305CommonUvcMetadata {
     uint16_t width;
     uint16_t gain_level;
     uint16_t white_balance;
+    uint16_t laser_power;
+    uint8_t  laser_power_level;
     uint8_t  gpio_input_data;
     uint16_t exposure_roi_right;
     uint16_t exposure_roi_left;
     uint16_t exposure_roi_bottom;
     uint16_t exposure_roi_top;
     uint16_t led_power;
+    uint8_t  laser_status;
     uint8_t  exposure_priority;
     uint8_t  actual_fps;
     uint8_t  format;
@@ -91,6 +93,6 @@ struct G305DepthUvcMetadata : public G305CommonUvcMetadata {
 
 #pragma pack(pop)
 
-static_assert(sizeof(G305ColorUvcMetadata) == G305_UVC_METADATA_COLOR_SIZE, "G305ColorUvcMetadata size mismatch!");
-static_assert(sizeof(G305DepthUvcMetadata) == G305_UVC_METADATA_DEPTH_SIZE, "G305DepthUvcMetadata size mismatch!");
+static_assert(sizeof(G305ColorUvcMetadata) == G305_UVC_METADATA_SIZE, "G305ColorUvcMetadata size mismatch!");
+static_assert(sizeof(G305DepthUvcMetadata) == G305_UVC_METADATA_SIZE, "G305DepthUvcMetadata size mismatch!");
 }  // namespace libobsensor
