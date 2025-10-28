@@ -23,4 +23,16 @@ int getInputOption() {
     return inputOption - '0';
 }
 
+bool isLiDARDevice(std::shared_ptr<ob::Device> device) {
+    std::shared_ptr<ob::SensorList> sensorList = device->getSensorList();
+
+    for(uint32_t index = 0; index < sensorList->getCount(); index++) {
+        OBSensorType sensorType = sensorList->getSensorType(index);
+        if(sensorType == OB_SENSOR_LIDAR) {
+            return true;
+        }
+    }
+
+    return false;
+}
 }  // namespace ob_smpl

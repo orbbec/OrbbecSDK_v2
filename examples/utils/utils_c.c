@@ -3,6 +3,7 @@
 
 #include "utils_c.h"
 #include <stdbool.h>
+#include <stdio.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -14,7 +15,6 @@ extern "C" {
 #else
 #include <termios.h>
 #endif
-#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -134,6 +134,35 @@ char ob_smpl_wait_for_key_press(uint32_t timeout_ms) {
     }
 }
 #endif
+
+bool ob_smpl_is_lidar_device(ob_device *device) {
+    if(device == NULL) {
+        return false;
+    }
+
+    ob_error       *error      = NULL;
+    ob_sensor_list *sensorList = ob_device_get_sensor_list(device, &error);
+    CHECK_OB_ERROR_EXIT(&error);
+
+    uint32_t sensorCount = ob_sensor_list_get_count(sensorList, &error);
+    CHECK_OB_ERROR_EXIT(&error);
+
+    for(uint32_t index = 0; index < sensorCount; index++) {
+        OBSensorType sensorType = ob_sensor_list_get_sensor_type(sensorList, index, &error);
+        CHECK_OB_ERROR_EXIT(&error);
+
+        if(sensorType == OB_SENSOR_LIDAR) {
+            ob_delete_sensor_list(sensorList, &error);
+            CHECK_OB_ERROR_EXIT(&error);
+            return true;
+        }
+    }
+
+    ob_delete_sensor_list(sensorList, &error);
+    CHECK_OB_ERROR_EXIT(&error);
+
+    return false;
+}
 
 #ifdef __cplusplus
 }

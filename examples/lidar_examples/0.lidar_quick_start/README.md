@@ -52,7 +52,7 @@ Use the SDK interface to quickly obtain LiDAR point cloud data and save it to a 
 The program will generate "LiDARPoints.ply" file containing the 3D point cloud data when the R key is pressed. The file can be opened with 3D point cloud visualization software.
 
 ```shell
-LiDAR stream are started!
+LiDAR stream is started!
 Press R or r to create LiDAR PointCloud and save to ply file!
 Press ESC to exit!
 Save LiDAR PointCloud to ply file, this will take some time...

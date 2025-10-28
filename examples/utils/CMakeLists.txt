@@ -11,12 +11,13 @@ add_library(ob_examples_utils STATIC
     ${CMAKE_CURRENT_LIST_DIR}/utils.hpp
 )
 
+target_link_libraries(ob_examples_utils PUBLIC ob::${OB_SDK_LIB_NAME})
 if(${OpenCV_FOUND})
     target_sources(ob_examples_utils PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}/utils_opencv.cpp
         ${CMAKE_CURRENT_LIST_DIR}/utils_opencv.hpp
     )
-    target_link_libraries(ob_examples_utils PUBLIC ${OpenCV_LIBS} ob::${OB_SDK_LIB_NAME})
+    target_link_libraries(ob_examples_utils PUBLIC ${OpenCV_LIBS})
     target_include_directories(ob_examples_utils PUBLIC ${OpenCV_INCLUDE_DIRS})
 endif()
 

@@ -85,43 +85,33 @@ The program provides an interactive interface to monitor and modify LiDAR device
 - Current values when queried
 
 ```shell
-
 ------------------------------------------------------------------------
 Current Device:  name: Orbbec_LiDAR_ME450, vid: 0x2bc5, pid: 0x1302, uid: 0x20:4b:5e:13:64:30
 Input "?" to get all properties.
+Input "exit" to exit the program.
 ?
-size: 21
+size: 11
 
 ------------------------------------------------------------------------
-00. OB_PROP_LIDAR_PORT_INT(8001), permission=R/W, range=Int value(min:1024, max:65535, step:1)
-01. OB_PROP_LIDAR_SCAN_SPEED_INT(8004), permission=R/W, range=Int value(min:0, max:1200, step:300)
-02. OB_PROP_LIDAR_SCAN_DIRECTION_INT(8005), permission=R/_, range=Int value(min:0, max:1, step:1)
-03. OB_PROP_LIDAR_TRANSFER_PROTOCOL_INT(8006), permission=R/_, range=Int value(min:0, max:1, step:1)
-04. OB_PROP_LIDAR_APPLY_CONFIGS_INT(8011), permission=_/W, range=Int value
-05. OB_PROP_LIDAR_TAIL_FILTER_LEVEL_INT(8012), permission=R/W, range=Int value(min:0, max:5, step:1)
-06. OB_PROP_LIDAR_MEMS_FOV_SIZE_FLOAT(8013), permission=R/W, range=Float value(min:0.000000, max:60.000000, step:0.010000)
-07. OB_PROP_LIDAR_MEMS_FRENQUENCY_FLOAT(8014), permission=R/W, range=Float value(min:0.000000, max:1100.000000, step:0.500000)
-08. OB_PROP_LIDAR_MEMS_FOV_FACTOR_FLOAT(8015), permission=R/W, range=Float value(min:1.000000, max:2.000000, step:0.010000)
-09. OB_PROP_LIDAR_MEMS_ON_OFF_INT(8016), permission=_/W, range=Int value
-10. OB_PROP_LIDAR_RESTART_MEMS_INT(8017), permission=_/W, range=Int value
-11. OB_PROP_LIDAR_SAVE_MEMS_PARAM_INT(8018), permission=_/W, range=Int value
-12. OB_PROP_LIDAR_WARNING_INFO_INT(8023), permission=R/_, range=Int value(min:0, max:1023, step:1)
-13. OB_PROP_LIDAR_MOTOR_SPIN_SPEED_INT(8024), permission=R/_, range=Int value(min:0, max:1200, step:300)
-14. OB_PROP_LIDAR_MCU_TEMPERATURE_FLOAT(8025), permission=R/_, range=Float value(min:0.000000, max:100.000000, step:0.010000)
-15. OB_PROP_LIDAR_FPGA_TEMPERATURE_FLOAT(8026), permission=R/_, range=Float value(min:0.000000, max:100.000000, step:0.010000)
-16. OB_PROP_LIDAR_APD_HIGH_VOLTAGE_FLOAT(8028), permission=R/_, range=Float value(min:70.000000, max:200.000000, step:0.100000)
-17. OB_PROP_LIDAR_APD_TEMPERATURE_FLOAT(8029), permission=R/_, range=Float value(min:0.000000, max:100.000000, step:0.010000)
-18. OB_PROP_LIDAR_TX_HIGH_POWER_VOLTAGE_FLOAT(8030), permission=R/_, range=Float value(min:50.000000, max:80.000000, step:0.100000)
-19. OB_PROP_LIDAR_TX_LOWER_POWER_VOLTAGE_FLOAT(8031), permission=R/_, range=Float value(min:8.000000, max:20.000000, step:0.100000)
-20. OB_PROP_LIDAR_REPETITIVE_SCAN_MODE_INT(8034), permission=R/W, range=Int value(min:0, max:3, step:1)
+00. OB_PROP_REBOOT_DEVICE_BOOL(57), permission=_/W, range=Bool value(min:0, max:1, step:1)
+01. OB_PROP_LIDAR_PORT_INT(8001), permission=R/W, range=Int value(min:1024, max:65535, step:1)
+02. OB_PROP_LIDAR_APPLY_CONFIGS_INT(8005), permission=_/W, range=Int value
+03. OB_PROP_LIDAR_TAIL_FILTER_LEVEL_INT(8006), permission=R/W, range=Int value(min:0, max:5, step:1)
+04. OB_PROP_LIDAR_MEMS_FOV_SIZE_FLOAT(8007), permission=R/W, range=Float value(min:0.000000, max:60.000000, step:0.010000)
+05. OB_PROP_LIDAR_MEMS_FRENQUENCY_FLOAT(8008), permission=R/W, range=Float value(min:0.000000, max:1100.000000, step:0.500000)
+06. OB_PROP_LIDAR_WARNING_INFO_INT(8012), permission=R/_, range=Int value(min:0, max:1023, step:1)
+07. OB_PROP_LIDAR_MOTOR_SPIN_SPEED_INT(8013), permission=R/_, range=Int value(min:0, max:1200, step:300)
+08. OB_PROP_LIDAR_MCU_TEMPERATURE_INT(8014), permission=R/_, range=Int value(min:0, max:10000, step:1)
+09. OB_PROP_LIDAR_APD_TEMPERATURE_INT(8015), permission=R/_, range=Int value(min:0, max:10000, step:1)
+10. OB_PROP_LIDAR_REPETITIVE_SCAN_MODE_INT(8017), permission=R/W, range=Int value(min:0, max:3, step:1)
 ------------------------------------------------------------------------
 Please select property.(Property control usage: [property number] [set/get] [property value])
 1 get
-property name:OB_PROP_LIDAR_SCAN_SPEED_INT,get int value:1200
-20 set 1
-property name:OB_PROP_LIDAR_REPETITIVE_SCAN_MODE_INT,set int value:1
-20 get
-property name:OB_PROP_LIDAR_REPETITIVE_SCAN_MODE_INT,get int value:1
+property name:OB_PROP_LIDAR_PORT_INT,get int value:2401
+3 set 2
+property name:OB_PROP_LIDAR_TAIL_FILTER_LEVEL_INT,set int value:2
+3 get
+property name:OB_PROP_LIDAR_TAIL_FILTER_LEVEL_INT,get int value:2
 exit
 ```
 

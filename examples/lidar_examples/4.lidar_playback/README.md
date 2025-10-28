@@ -115,7 +115,7 @@ Please input the path of the Rosbag file (.bag) to playback:
 Path: LiDAR.bag
 Playback file confirmed: LiDAR.bag
 
-duration: 5669
+Duration: 5669
 frame index: 2, tsp: 1758807585910889, format: ACCEL
 frame index: 2, tsp: 1758807585910889, format: GYRO
 frame index: 22, tsp: 1758807586330468, format: ACCEL

@@ -17,13 +17,23 @@ int main(void) {
     ob_pipeline *pipe = ob_create_pipeline(&error);
     CHECK_OB_ERROR_EXIT(&error);
 
+    // Get the device from the pipeline
+    ob_device *device = ob_pipeline_get_device(pipe, &error);
+    CHECK_OB_ERROR_EXIT(&error);
+
+    // Check LiDAR device
+    if(!ob_smpl_is_lidar_device(device)) {
+        printf("Invalid device, please connect a LiDAR device!\n");
+        return -1;
+    }
+
     // Start Pipeline with default configuration
     // Modify the default configuration by the configuration file: "OrbbecSDKConfig.xml"
     ob_pipeline_start(pipe, &error);
     CHECK_OB_ERROR_EXIT(&error);
 
     // Print instructions
-    printf("Streams have been started!\n");
+    printf("LiDAR stream is started!\n");
     printf("Press R or r to create LiDAR PointCloud and save to ply file!\n");
     printf("Press ESC to exit!\n");
 
@@ -49,7 +59,7 @@ int main(void) {
             CHECK_OB_ERROR_EXIT(&error);
 
             // Save point cloud data to ply file
-            bool result = ob_save_pointcloud_to_ply("LiDARPoints.ply", frame, false, false, 50, &error);
+            bool result = ob_save_lidar_pointcloud_to_ply("LiDARPoints.ply", frame, false, &error);
             CHECK_OB_ERROR_EXIT(&error);
             if(!result) {
                 printf("Failed to save LiDARPoints.ply\n");

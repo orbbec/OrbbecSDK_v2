@@ -4,6 +4,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <libobsensor/ObSensor.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -23,6 +24,15 @@ uint64_t ob_smpl_get_current_timestamp_ms(void);
  * @return char The key that was pressed.
  */
 char ob_smpl_wait_for_key_press(uint32_t timeout_ms);
+
+/**
+ * @brief Check if the device is a LiDAR device.
+ *
+ * @param device The device to check.
+ * @return true if the device is a LiDAR device.
+ * @return false otherwise.
+ */
+bool ob_smpl_is_lidar_device(ob_device *device);
 
 // Macro to check for error and exit program if there is one.
 #define CHECK_OB_ERROR_EXIT(error)                                \

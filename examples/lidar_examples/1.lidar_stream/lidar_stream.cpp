@@ -24,22 +24,32 @@ int main(void) try {
     ob::Pipeline pipe;
     // Configure which streams to enable or disable for the Pipeline by creating a Config.
     std::shared_ptr<ob::Config> config = std::make_shared<ob::Config>();
-    config->disableAllStream();
 
     // Get the device from the pipeline
     auto device = pipe.getDevice();
 
+    // Check LiDAR device
+    if(!ob_smpl::isLiDARDevice(device)) {
+        std::cout << "Invalid device, please connect a LiDAR device!" << std::endl;
+        return -1;
+    }
+
+    // Get and print device information
     auto deviceInfo = device->getDeviceInfo();
     std::cout << "\n------------------------------------------------------------------------\n";
     std::cout << "Current Device: "
               << " name: " << deviceInfo->getName() << ", vid: 0x" << std::hex << deviceInfo->getVid() << ", pid: 0x" << std::setw(4) << std::setfill('0')
-              << deviceInfo->getPid() << ", uid: 0x" << deviceInfo->getUid() << std::dec << std::endl;
-    // Get serial number
-    uint32_t dataSize = 64;
-    uint8_t  data[64] = { 0 };
-    device->getStructuredData(OB_STRUCT_DEVICE_SERIAL_NUMBER, data, &dataSize);
-    std::cout << "LiDAR SN: " << std::string((const char *)data, dataSize) << std::endl << std::endl;
+              << deviceInfo->getPid() << ", uid: 0x" << deviceInfo->getUid() << std::dec << ", sn: " << deviceInfo->getSerialNumber() << std::endl;
 
+    // Get and print LiDAR IP address
+    uint32_t dataSize = 32;
+    uint8_t  data[32] = { 0 };
+    device->getStructuredData(OB_RAW_DATA_LIDAR_IP_ADDRESS, data, &dataSize);
+
+    std::string ipStr = std::to_string(data[3]) + "." + std::to_string(data[2]) + "." + std::to_string(data[1]) + "." + std::to_string(data[0]);
+    std::cout << "LiDAR IP Address: " << ipStr << std::endl;
+
+    // Set LiDAR tail filter level to 0 (disable tail filtering)
     device->setIntProperty(OB_PROP_LIDAR_TAIL_FILTER_LEVEL_INT, 0);
 
     // Select and enable desired streams
@@ -84,6 +94,9 @@ int main(void) try {
 
         frameCount++;
     });
+
+    std::cout << "The stream is started!" << std::endl;
+    std::cout << "Press ESC to exit! " << std::endl << std::endl;
 
     while(true) {
         // Wait for user input

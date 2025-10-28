@@ -24,7 +24,7 @@ int main(void) try {
     std::shared_ptr<ob::Pipeline> pipe = std::make_shared<ob::Pipeline>(playback);
     // Enable all recording streams from the playback device
     std::shared_ptr<ob::Config> config = std::make_shared<ob::Config>();
-    std::cout << "duration: " << playback->getDuration() << std::endl;
+    std::cout << "Duration: " << playback->getDuration() << std::endl;
 
     uint32_t frameCount    = 0;
     auto     frameCallback = [&](std::shared_ptr<ob::FrameSet> frameSet) {

@@ -57,12 +57,19 @@ int main(void) {
     ob_device *device = ob_pipeline_get_device(pipe, &error);
     CHECK_OB_ERROR_EXIT(&error);
 
+    // Check LiDAR device
+    if(!ob_smpl_is_lidar_device(device)) {
+        printf("Invalid device, please connect a LiDAR device!\n");
+        return -1;
+    }
+
     // Get properties of the device
     ob_device_info *device_info = ob_device_get_device_info(device, &error);
     CHECK_OB_ERROR_EXIT(&error);
     printf("\n------------------------------------------------------------------------\n");
-    printf("Current Device: name: %s, vid: 0x%04x, pid: 0x%04x, uid: 0x%s\n", ob_device_info_get_name(device_info, &error),
-           ob_device_info_get_vid(device_info, &error), ob_device_info_get_pid(device_info, &error), ob_device_info_get_uid(device_info, &error));
+    printf("Current Device: name: %s, vid: 0x%04x, pid: 0x%04x, uid: 0x%s, sn: %s\n", ob_device_info_get_name(device_info, &error),
+           ob_device_info_get_vid(device_info, &error), ob_device_info_get_pid(device_info, &error), ob_device_info_get_uid(device_info, &error),
+           ob_device_info_get_serial_number(device_info, &error));
     CHECK_OB_ERROR_EXIT(&error);
     //  Delete device info
     ob_delete_device_info(device_info, &error);
@@ -71,9 +78,9 @@ int main(void) {
     // Get serial number
     uint32_t data_size = 64;
     uint8_t  data[64]  = { 0 };
-    ob_device_get_structured_data(device, OB_STRUCT_DEVICE_SERIAL_NUMBER, data, &data_size, &error);
+    ob_device_get_structured_data(device, OB_RAW_DATA_LIDAR_IP_ADDRESS, data, &data_size, &error);
     CHECK_OB_ERROR_EXIT(&error);
-    printf("LiDAR SN: %s\n\n", (const char *)data);
+    printf("LiDAR IP Address: %d.%d.%d.%d\n\n", data[3], data[2], data[1], data[0]);
 
     // Set property: OB_PROP_LIDAR_TAIL_FILTER_LEVEL_INT to 0
     ob_device_set_int_property(device, OB_PROP_LIDAR_TAIL_FILTER_LEVEL_INT, 0, &error);

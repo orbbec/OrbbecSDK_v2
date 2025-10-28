@@ -10,11 +10,20 @@ int main(void) try {
     // Create a pipeline.
     ob::Pipeline pipe;
 
+    // Get the device from pipeline.
+    auto device = pipe.getDevice();
+
+    // Check LiDAR device
+    if(!ob_smpl::isLiDARDevice(device)) {
+        std::cout << "Invalid device, please connect a LiDAR device!" << std::endl;
+        return -1;
+    }
+
     // Start the pipeline with default config.
     // Modify the default configuration by the configuration file: "OrbbecSDKConfig.xml"
     pipe.start();
 
-    std::cout << "LiDAR stream are started!" << std::endl;
+    std::cout << "LiDAR stream is started!" << std::endl;
     std::cout << "Press R or r to create LiDAR PointCloud and save to ply file! " << std::endl;
     std::cout << "Press ESC to exit! " << std::endl;
 
@@ -44,7 +53,7 @@ int main(void) try {
             }
 
             // Save point cloud data to ply file
-            if(!ob::PointCloudHelper::savePointcloudToPly("LiDARPoints.ply", frame, false, false, 50)) {
+            if(!ob::PointCloudHelper::saveLiDARPointcloudToPly("LiDARPoints.ply", frame->as<ob::LiDARPointsFrame>(), false)) {
                 std::cout << "Failed to save LiDARPoints.ply" << std::endl;
                 continue;
             }

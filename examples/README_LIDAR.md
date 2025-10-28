@@ -4,7 +4,7 @@ There are several examples codes for users learn how to use Orbbec LiDARs. Here 
 
 | Level | Sample                                                       | Description                                                  |
 | ----- | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| lidar | [lidar_quik_start](lidar_examples/0.lidar_quik_start)        | Use the SDK interface to quickly obtain LiDAR point cloud data and save it to a PLY file when triggered by user input. |
+| lidar | [lidar_quick_start](lidar_examples/0.lidar_quick_start)        | Use the SDK interface to quickly obtain LiDAR point cloud data and save it to a PLY file when triggered by user input. |
 | lidar | [lidar_stream](lidar_examples/1.lidar_stream)                | This sample demonstrates how to configure and start LiDAR and IMU sensor streams, process the data frames through a callback function, and display sensor information. |
 | lidar | [lidar_device_control](lidar_examples/2.lidar_device_control) | This sample demonstrates how to interactively control LiDAR device properties through a command-line interface, allowing users to get and set various device parameters. |
 | lidar | [lidar_record](lidar_examples/3.lidar_record)                | This sample demonstrates how to record LiDAR and IMU sensor data to a bag file format, providing real-time data capture with pause/resume functionality for flexible recording sessions. |
@@ -16,7 +16,7 @@ The listed examples at previous section are written in C++ language. Here is a b
 
 | Level | Sample                                                    | Description                                                  |
 | ----- | --------------------------------------------------------- | ------------------------------------------------------------ |
-| lidar | [c_lidar_quik_start](lidar_examples/0.c_lidar_quik_start) | This C language sample demonstrates how to quickly obtain LiDAR point cloud data using the Orbbec SDK C API and save it to a PLY file when triggered by user input. |
+| lidar | [c_lidar_quick_start](lidar_examples/0.c_lidar_quick_start) | This C language sample demonstrates how to quickly obtain LiDAR point cloud data using the Orbbec SDK C API and save it to a PLY file when triggered by user input. |
 | lidar | [c_lidar_stream](lidar_examples/1.c_lidar_stream)         | This C language sample demonstrates how to configure and stream LiDAR and IMU sensor data using the Orbbec SDK C API, providing interactive sensor selection and real-time data monitoring. |
 
 ## Append

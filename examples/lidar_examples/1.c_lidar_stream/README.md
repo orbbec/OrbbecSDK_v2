@@ -128,9 +128,10 @@ The program provides a comprehensive C-based streaming solution that:
 This sample serves as a foundation for building C applications that require flexible sensor configuration and real-time data processing capabilities.
 
 ```shell
+
 ------------------------------------------------------------------------
-Current Device: name: Orbbec_LiDAR_ME450, vid: 0x2bc5, pid: 0x1302, uid: 0x20:4b:5e:13:64:30
-LiDAR SN: T0HW8510001
+Current Device: name: Orbbec_LiDAR_ME450, vid: 0x2bc5, pid: 0x1302, uid: 0x20:4b:5e:13:64:30, sn: T0H6851000Z
+LiDAR IP Address: 192.168.1.100
 
 Sensor list:
  - 0. sensor type: Accel
@@ -144,8 +145,6 @@ Stream profile list for sensor Accel:
  - 1. format: ACCEL,  fps: 25_HZ
  - 2. format: ACCEL,  fps: 100_HZ
  - 3. format: ACCEL,  fps: 200_HZ
- - 4. format: ACCEL,  fps: 500_HZ
- - 5. format: ACCEL,  fps: 1_KHZ
 
 Select a stream profile to enable (Input index or 'q' to exit): 0
 Stream profile list for sensor Gyro:
@@ -153,8 +152,6 @@ Stream profile list for sensor Gyro:
  - 1. format: GYRO,  fps: 25_HZ
  - 2. format: GYRO,  fps: 100_HZ
  - 3. format: GYRO,  fps: 200_HZ
- - 4. format: GYRO,  fps: 500_HZ
- - 5. format: GYRO,  fps: 1_KHZ
 
 Select a stream profile to enable (Input index or 'q' to exit): 0
 Stream profile list for sensor LiDAR:
@@ -171,29 +168,29 @@ Press ESC to exit!
 LiDAR PointCloud Frame:
 {
   frame index: 1
-  tsp = 1758875521154717
+  tsp = 1761620162421700
   format = 36
-  valid point count = 6577
+  valid point count = 6218
 }
 
 Accel Frame:
 {
   frame index = 5
-  tsp = 1758875521162752
-  temperature = 0.00 C
-  x = -0.007080 m/s^2
-  y = -0.007202 m/s^2
-  z = -1.018921 m/s^2
+  tsp = 1761620162427200
+  temperature = 49.33 C
+  x = -0.014038 m/s^2
+  y = -0.000977 m/s^2
+  z = -0.976196 m/s^2
 }
 
 Gyro Frame:
 {
   frame index = 5
-  tsp = 1758875521162752
-  temperature = 0.00 C
-  x = -0.137329 rad/s
-  y = -2.471924 rad/s
-  z = 0.808716 rad/s
+  tsp = 1761620162427200
+  temperature = 49.33 C
+  x = -0.091553 rad/s
+  y = -0.358582 rad/s
+  z = -0.251770 rad/s
 }
 ```
 

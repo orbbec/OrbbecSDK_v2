@@ -29,87 +29,92 @@ int main(void) try {
     // Query the list of connected devices
     auto deviceList = context.queryDeviceList();
 
-    bool isSelectDevice = true;
-    while(isSelectDevice) {
-        // select a device to operate
-        std::shared_ptr<ob::Device> device = nullptr;
-        if(deviceList->getCount() > 0) {
-            if(deviceList->getCount() <= 1) {
-                // If a single device is plugged in, the first one is selected by default
-                device = deviceList->getDevice(0);
+    // Found no device
+    if(deviceList->getCount() <= 0) {
+        std::cout << "Device Not Found" << std::endl;
+        return -1;
+    }
+
+    std::shared_ptr<ob::Device> device = nullptr;
+    if(deviceList->getCount() == 1) {
+        // If a single device is plugged in, the first one is selected by default
+        device = deviceList->getDevice(0);
+    }
+    else {
+        device = selectDevice(deviceList);
+    }
+
+    // Check LiDAR device
+    if(!ob_smpl::isLiDARDevice(device)) {
+        std::cout << "Invalid device, please connect a LiDAR device!" << std::endl;
+        return -1;
+    }
+
+    // Get and print device information
+    auto deviceInfo = device->getDeviceInfo();
+    std::cout << "\n------------------------------------------------------------------------\n";
+    std::cout << "Current Device: "
+              << " name: " << deviceInfo->getName() << ", vid: 0x" << std::hex << deviceInfo->getVid() << ", pid: 0x" << std::setw(4) << std::setfill('0')
+              << deviceInfo->getPid() << ", uid: 0x" << deviceInfo->getUid() << std::dec << std::endl;
+
+    // Enter property control loop
+    std::cout << "Input \"?\" to get all properties." << std::endl;
+    std::cout << "Input \"exit\" to exit the program." << std::endl;
+
+    // Get property list
+    std::vector<OBPropertyItem> propertyList = getPropertyList(device);
+    std::sort(propertyList.begin(), propertyList.end(), [](const OBPropertyItem &a, const OBPropertyItem &b) { return a.id < b.id; });
+
+    bool isSelectProperty = true;
+    while(isSelectProperty) {
+        std::string choice;
+        std::getline(std::cin, choice);
+
+        if(choice != "?") {
+            std::istringstream       ss(choice);
+            std::string              tmp;
+            std::vector<std::string> controlVec;
+            while(ss >> tmp) {
+                controlVec.push_back(tmp);
+            }
+
+            if(controlVec.size() <= 0)
+                continue;
+
+            // Exit the program
+            if(controlVec.at(0) == "exit") {
+                isSelectProperty = false;
+                break;
+            }
+
+            // Check if it matches the input format
+            if(controlVec.size() <= 1 || (controlVec.at(1) != "get" && controlVec.at(1) != "set") || controlVec.size() > 3
+               || (controlVec.at(1) == "set" && controlVec.size() < 3)) {
+                std::cout << "Property control usage: [property index] [set] [property value] or [property index] [get]" << std::endl;
+                continue;
+            }
+            size_t size     = propertyList.size();
+            size_t selectId = std::atoi(controlVec.at(0).c_str());
+            if(selectId >= size) {
+                std::cout << "Your selection is out of range, please reselect: " << std::endl;
+                continue;
+            }
+
+            bool isGetValue   = controlVec.at(1) == "get" ? true : false;
+            auto propertyItem = propertyList.at(selectId);
+
+            if(isGetValue) {
+                // get property value
+                getPropertyValue(device, propertyItem);
             }
             else {
-                device = selectDevice(deviceList);
+                // set property value
+                setPropertyValue(device, propertyItem, controlVec.at(2));
             }
-            auto deviceInfo = device->getDeviceInfo();
-            std::cout << "\n------------------------------------------------------------------------\n";
-            std::cout << "Current Device: "
-                      << " name: " << deviceInfo->getName() << ", vid: 0x" << std::hex << deviceInfo->getVid() << ", pid: 0x" << std::setw(4)
-                      << std::setfill('0') << deviceInfo->getPid() << ", uid: 0x" << deviceInfo->getUid() << std::dec << std::endl;
         }
         else {
-            std::cout << "Device Not Found" << std::endl;
-            isSelectDevice = false;
-            break;
-        }
-
-        std::cout << "Input \"?\" to get all properties." << std::endl;
-
-        std::vector<OBPropertyItem> propertyList = getPropertyList(device);
-        std::sort(propertyList.begin(), propertyList.end(), [](const OBPropertyItem &a, const OBPropertyItem &b) { return a.id < b.id; });
-
-        bool isSelectProperty = true;
-        while(isSelectProperty) {
-            std::string choice;
-            std::getline(std::cin, choice);
-
-            if(choice != "?") {
-                std::istringstream       ss(choice);
-                std::string              tmp;
-                std::vector<std::string> controlVec;
-                while(ss >> tmp) {
-                    controlVec.push_back(tmp);
-                }
-
-                if(controlVec.size() <= 0)
-                    continue;
-
-                // exit the program
-                if(controlVec.at(0) == "exit") {
-                    isSelectProperty = false;
-                    isSelectDevice   = false;
-                    break;
-                }
-
-                // Check if it matches the input format
-                if(controlVec.size() <= 1 || (controlVec.at(1) != "get" && controlVec.at(1) != "set") || controlVec.size() > 3
-                   || (controlVec.at(1) == "set" && controlVec.size() < 3)) {
-                    std::cout << "Property control usage: [property index] [set] [property value] or [property index] [get]" << std::endl;
-                    continue;
-                }
-                size_t size     = propertyList.size();
-                size_t selectId = std::atoi(controlVec.at(0).c_str());
-                if(selectId >= size) {
-                    std::cout << "Your selection is out of range, please reselect: " << std::endl;
-                    continue;
-                }
-
-                bool isGetValue   = controlVec.at(1) == "get" ? true : false;
-                auto propertyItem = propertyList.at(selectId);
-
-                if(isGetValue) {
-                    // get property value
-                    getPropertyValue(device, propertyItem);
-                }
-                else {
-                    // set property value
-                    setPropertyValue(device, propertyItem, controlVec.at(2));
-                }
-            }
-            else {
-                printfPropertyList(device, propertyList);
-                std::cout << "Please select property.(Property control usage: [property number] [set/get] [property value])" << std::endl;
-            }
+            printfPropertyList(device, propertyList);
+            std::cout << "Please select property.(Property control usage: [property number] [set/get] [property value])" << std::endl;
         }
     }
 
@@ -219,7 +224,7 @@ std::vector<OBPropertyItem> getPropertyList(std::shared_ptr<ob::Device> device) 
     return propertyVec;
 }
 
-// set properties
+// Set properties
 void setPropertyValue(std::shared_ptr<ob::Device> device, OBPropertyItem propertyItem, std::string strValue) {
     try {
         int   int_value   = 0;
@@ -265,7 +270,7 @@ void setPropertyValue(std::shared_ptr<ob::Device> device, OBPropertyItem propert
     }
 }
 
-// get property value
+// Get property value
 void getPropertyValue(std::shared_ptr<ob::Device> device, OBPropertyItem propertyItem) {
     try {
         bool  bool_ret  = false;
@@ -309,6 +314,7 @@ void getPropertyValue(std::shared_ptr<ob::Device> device, OBPropertyItem propert
     }
 }
 
+// Convert permission type to string
 std::string permissionTypeToString(OBPermissionType permission) {
     switch(permission) {
     case OB_PERMISSION_READ:

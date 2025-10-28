@@ -18,7 +18,6 @@ This sample demonstrates how to configure and start LiDAR and IMU sensor streams
     ```cpp
     ob::Pipeline pipe;
     std::shared_ptr<ob::Config> config = std::make_shared<ob::Config>();
-    config->disableAllStream();
     
     // Select and enable desired streams
     selectStreams(device, config);
@@ -29,7 +28,7 @@ This sample demonstrates how to configure and start LiDAR and IMU sensor streams
 
     ```c
     // Get property
-    device->getStructuredData(OB_STRUCT_DEVICE_SERIAL_NUMBER, data, &dataSize);
+    device->getStructuredData(OB_RAW_DATA_LIDAR_IP_ADDRESS, data, &dataSize);
     // Set property
     device->setIntProperty(OB_PROP_LIDAR_TAIL_FILTER_LEVEL_INT, 0);
     ```
@@ -109,9 +108,8 @@ The program outputs LiDAR point cloud information (frame index, timestamp, forma
 
 ```shell
 ------------------------------------------------------------------------
-Current Device: name: Orbbec_LiDAR_ME450, vid: 0x2bc5, pid: 0x1302, uid: 0x20:4b:5e:13:64:30
-LiDAR SN: T0HW8510001
-
+Current Device:  name: Orbbec_LiDAR_ME450, vid: 0x2bc5, pid: 0x1302, uid: 0x20:4b:5e:13:64:30, sn: T0H6851000Z
+LiDAR IP Address: 192.168.1.100
 Sensor list:
  - 0.sensor type: Accel
  - 1.sensor type: Gyro
@@ -123,16 +121,12 @@ Stream profile list for sensor: Accel
  - 1.acc rate: 25_HZ
  - 2.acc rate: 100_HZ
  - 3.acc rate: 200_HZ
- - 4.acc rate: 500_HZ
- - 5.acc rate: 1_KHZ
 Select a stream profile to enable (input stream profile index):
 Stream profile list for sensor: Gyro
  - 0.gyro rate: 50_HZ
  - 1.gyro rate: 25_HZ
  - 2.gyro rate: 100_HZ
  - 3.gyro rate: 200_HZ
- - 4.gyro rate: 500_HZ
- - 5.gyro rate: 1_KHZ
 Select a stream profile to enable (input stream profile index):
 Stream profile list for sensor: LiDAR
  - 0.format: LIDAR_SPHERE_POINT, scan rate: 20HZ
@@ -142,32 +136,35 @@ Stream profile list for sensor: LiDAR
  - 4.format: LIDAR_SPHERE_POINT, scan rate: 10HZ
  - 5.format: LIDAR_POINT, scan rate: 10HZ
 Select a stream profile to enable (input stream profile index):
-frame index: 4
-Accel Frame:
-{
-  tsp = 1758807027704535
-  temperature = 0
-  Accel.x = -0.0065918m/s^2
-  Accel.y = -0.00622559m/s^2
-  Accel.z = -1.01978m/s^2
-}
-
-frame index: 4
-Gyro Frame:
-{
-  tsp = 1758807027704535
-  temperature = 0
-  Gyro.x = -1.51062rad/s
-  Gyro.y = -1.93024rad/s
-  Gyro.z = 0.747681rad/s
-}
+The stream is started!
+Press ESC to exit!
 
 frame index: 1
 LiDAR PointCloud Frame:
 {
-  tsp = 1758807027712041
+  tsp = 1761617624998914
   format = LIDAR_SPHERE_POINT
-  valid point count = 6182
+  valid point count = 6156
+}
+
+frame index: 3
+Accel Frame:
+{
+  tsp = 1761617624999927
+  temperature = 49.01
+  Accel.x = -0.0130615m/s^2
+  Accel.y = -0.00805664m/s^2
+  Accel.z = -1.00146m/s^2
+}
+
+frame index: 3
+Gyro Frame:
+{
+  tsp = 1761617624999927
+  temperature = 49.01
+  Gyro.x = 1.10626rad/s
+  Gyro.y = -0.320435rad/s
+  Gyro.z = -0.221252rad/s
 }
 ```
 

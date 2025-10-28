@@ -76,7 +76,7 @@ This C language sample demonstrates how to quickly obtain LiDAR point cloud data
 The program generates "LiDARPoints.ply" file containing 3D point cloud data when the R key is pressed. The C API provides the same functionality as the C++ version but with explicit memory management and error handling typical of C programming patterns.
 
 ```shell
-Streams have been started!
+LiDAR stream is started!
 Press R or r to create LiDAR PointCloud and save to ply file!
 Press ESC to exit!
 Save LiDAR PointCloud to ply file, this will take some time...
