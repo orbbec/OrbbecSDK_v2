@@ -38,10 +38,15 @@ std::string SystemInfosManager::getCurrentTimeHMS() {
 #endif
 
     // Format the time into a stringstream (HH:MM:SS)
+#if defined(__GNUC__) && (__GNUC__ >= 5)
     std::ostringstream oss;
     oss << std::put_time(&now_tm, "%H:%M:%S");
-
     return oss.str();
+#else
+    char buf[32] = { 0 };
+    std::strftime(buf, sizeof(buf), "%H:%M:%S", &now_tm);
+    return std::string(buf);
+#endif
 }
 
 #if(defined(_WIN32) || defined(_WIN64))

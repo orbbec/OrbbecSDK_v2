@@ -1,6 +1,8 @@
 // Copyright (c) Orbbec Inc. All Rights Reserved.
 // Licensed under the MIT License.
 
+#if defined(__ARM_NEON__) || defined(__NEON__) || defined(__SSSE3__)
+
 #include "AlignImpl.hpp"
 #include "logger/Logger.hpp"
 #include "exception/ObException.hpp"
@@ -1734,3 +1736,5 @@ void AlignImpl::mapPixel(const int *map, const T *src_buffer, int src_width, int
 }
 
 }  // namespace libobsensor
+
+#endif  // __ARM_NEON__ || __NEON__ || __SSSE3__

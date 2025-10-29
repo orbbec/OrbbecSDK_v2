@@ -8,6 +8,8 @@
 #include "frame/FrameMemoryPool.hpp"
 #include "ISensor.hpp"
 #include "IDevice.hpp"
+#include "AlignImpl.hpp"
+#include "AlignImplGeneric.hpp"
 
 namespace libobsensor {
 
@@ -20,8 +22,16 @@ const std::map<OBStreamType, OBFrameType> streamTypeToFrameType = { { OB_STREAM_
                                                                     { OB_STREAM_IR_RIGHT, OB_FRAME_IR_RIGHT },
                                                                     { OB_STREAM_CONFIDENCE, OB_FRAME_CONFIDENCE } };
 
+std::shared_ptr<IAlignImpl> createAlignImpl() {
+#if defined(__ARM_NEON__) || defined(__NEON__) || defined(__SSSE3__)
+    return std::make_shared<AlignImpl>();
+#else  // No optimizations
+    return std::make_shared<AlignImplGeneric>();
+#endif
+}
+
 Align::Align()
-    : impl_(new AlignImpl()),  //
+    : impl_(createAlignImpl()),  //
       alignToStreamType_(OB_STREAM_COLOR),
       addTargetDistortion_(false),
       gapFillCopy_(true),
@@ -29,7 +39,7 @@ Align::Align()
 
 Align::~Align() noexcept {
     reset();
-    delete impl_;
+    impl_.reset();
 }
 
 void Align::updateConfig(std::vector<std::string> &params) {

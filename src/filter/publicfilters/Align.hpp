@@ -4,7 +4,7 @@
 #pragma once
 #include "IFilter.hpp"
 #include "stream/StreamProfile.hpp"
-#include "AlignImpl.hpp"
+#include "IAlignImpl.hpp"
 
 namespace libobsensor {
 
@@ -43,11 +43,11 @@ protected:
 private:
     std::recursive_mutex alignMutex_;
 
-    AlignImpl                 *impl_;
-    OBStreamType               alignToStreamType_;
-    bool                       addTargetDistortion_;
-    bool                       gapFillCopy_;
-    bool                       matchTargetRes_;
+    std::shared_ptr<IAlignImpl> impl_;
+    OBStreamType                alignToStreamType_;
+    bool                        addTargetDistortion_;
+    bool                        gapFillCopy_;
+    bool                        matchTargetRes_;
 
     std::shared_ptr<const VideoStreamProfile> fromProfile_;
     std::shared_ptr<const VideoStreamProfile> toProfile_;

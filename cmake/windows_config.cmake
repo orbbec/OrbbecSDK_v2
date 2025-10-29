@@ -30,6 +30,8 @@ if(MSVC)
     add_definitions(-D_UNICODE -DUNICODE -D_CRT_SECURE_NO_WARNINGS)
     add_compile_definitions(" _DISABLE_VECTOR_ANNOTATION")
     add_compile_definitions(" _DISABLE_STRING_ANNOTATION")
+    # add sse3 macro for AVX
+    add_definitions(-D__SSSE3__)
 endif()
 
 set(OB_BUILD_WIN32 ON)

@@ -4,8 +4,9 @@
 #include <spdlog/fmt/bundled/format.h>
 #include "utils/PublicTypeHelper.hpp"
 
-#define OB_LOG_FORMATTER(type)                                                                                       \
-    template <> struct fmt::formatter<type> {                                                                         \
+#define OB_LOG_FORMATTER(type)                                                                                        \
+    namespace fmt {                                                                                                   \
+    template <> struct formatter<type> {                                                                              \
         constexpr auto parse(format_parse_context &ctx) -> decltype(ctx.begin()) {                                    \
             return ctx.end();                                                                                         \
         }                                                                                                             \
@@ -14,7 +15,8 @@
             oss << input;                                                                                             \
             return format_to(ctx.out(), "{}", oss.str());                                                             \
         }                                                                                                             \
-    };
+    };                                                                                                                \
+    }
 
 OB_LOG_FORMATTER(OBFormat)
 OB_LOG_FORMATTER(OBFrameType)

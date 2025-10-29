@@ -33,7 +33,7 @@ elseif(WIN32)
     include(cmake/windows_config.cmake)
 elseif(APPLE)
     include(cmake/macos_config.cmake)
-elseif(UNIX)
+elseif(UNIX OR CMAKE_SYSTEM_NAME STREQUAL "Linux")
     include(cmake/linux_config.cmake)
 endif()
 

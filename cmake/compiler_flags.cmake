@@ -111,7 +111,14 @@ elseif ("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
     list(APPEND GNU_ALL_WARNINGS "-Wno-missing-field-initializers") # Allow c structs without all fields initialized
     set(GNU_WARNINGS_AS_ERRORS "-Werror")
     add_compile_options(${GNU_ALL_WARNINGS})
-    add_compile_options(${GNU_WARNINGS_AS_ERRORS})
+    # Check if the GCC compiler version is 5.0 or newer.
+    if (CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL "5.0")
+        set(GNU_WARNINGS_AS_ERRORS "-Werror")
+        add_compile_options(${GNU_WARNINGS_AS_ERRORS})
+    else()
+        # For older versions (e.g., 4.9.x), do not set -Werror to avoid issues with older toolchains.
+        message(STATUS "Disabling -Werror for GCC version ${CMAKE_C_COMPILER_VERSION}")
+    endif()
 elseif ("${CMAKE_C_COMPILER_ID}" STREQUAL "MSVC")
     set(MSVC_ALL_WARNINGS "/W4" "/wd4200") #Note: allow zero length arrays
     set(MSVC_WARNINGS_AS_ERRORS "/WX")
