@@ -225,7 +225,7 @@ void DeviceBase::reboot() {
     }
 
     // notify
-    auto cb = std::atomic_load(&rebootCallback_);
+    auto cb = rebootCallback_;
     if(cb && *cb) {
         (*cb)(shared_from_this());
     }
@@ -648,12 +648,10 @@ void DeviceBase::checkAndStartHeartbeat() {
 
 void DeviceBase::registerRebootCallback(DeviceRebootCallback callback) {
     if(callback) {
-        auto ptr = std::make_shared<DeviceRebootCallback>(std::move(callback));
-        std::atomic_store(&rebootCallback_, ptr);
+        rebootCallback_ = std::make_shared<DeviceRebootCallback>(std::move(callback));
     }
     else {
-        auto ptr = std::make_shared<DeviceRebootCallback>(nullptr);
-        std::atomic_store(&rebootCallback_, ptr);
+        rebootCallback_.reset();
     }
 }
 

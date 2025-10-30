@@ -4,7 +4,7 @@
 #pragma once
 #include <mutex>
 #include <memory>
-
+#include <map>
 #include "utils/Utils.hpp"
 #include "exception/ObException.hpp"
 
@@ -119,7 +119,7 @@ typedef enum {
 } DeviceComponentId;
 
 // generate enum map
-static const std::unordered_map<DeviceComponentId, std::string> DeviceComponentIdMap = {
+static const std::map<DeviceComponentId, std::string> DeviceComponentIdMap = {
 #define GENERATE_MAP(ENUM, STR) { ENUM, STR },
     FOREACH_DEV_COMPONENT_ID(GENERATE_MAP)
 #undef GENERATE_MAP
