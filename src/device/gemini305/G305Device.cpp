@@ -206,6 +206,7 @@ void G305Device::init() {
     });
 
     fetchDeviceErrorState();
+    fixSensorList();
 }
 
 static const uint8_t GMSL_INTERFACE_DEPTH    = 0;
@@ -681,9 +682,352 @@ void G305Device::initSensorList() {
                     auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
                     sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
 
-                    auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_LEFT_COLOR_FRAME_PROCESSOR, false);
-                    if(frameProcessor) {
-                        sensor->setFrameProcessor(frameProcessor.get());
+        registerComponent(
+            OB_DEV_COMPONENT_LEFT_IR_SENSOR,
+            [this, depthPortInfo]() {
+                auto port   = getSourcePort(depthPortInfo);
+                auto sensor = std::make_shared<VideoSensor>(this, OB_SENSOR_IR_LEFT, port);
+
+                std::vector<FormatFilterConfig> formatFilterConfigs = {
+                    { FormatFilterPolicy::REMOVE, OB_FORMAT_Z16, OB_FORMAT_ANY, nullptr },  //
+                    { FormatFilterPolicy::REMOVE, OB_FORMAT_BA81, OB_FORMAT_ANY, nullptr },
+                    { FormatFilterPolicy::REMOVE, OB_FORMAT_YV12, OB_FORMAT_ANY, nullptr },
+                    { FormatFilterPolicy::REPLACE, OB_FORMAT_NV12, OB_FORMAT_Y12, nullptr },
+                    { FormatFilterPolicy::REMOVE, OB_FORMAT_BGR, OB_FORMAT_ANY, nullptr },
+                    { FormatFilterPolicy::REMOVE, OB_FORMAT_BGRA, OB_FORMAT_ANY, nullptr },
+                };
+
+                auto formatConverter = getSensorFrameFilter("FrameUnpacker", OB_SENSOR_IR_LEFT, false);
+                if(formatConverter) {
+                    formatFilterConfigs.push_back({ FormatFilterPolicy::REPLACE, OB_FORMAT_NV12, OB_FORMAT_Y16, formatConverter });
+                }
+
+                sensor->updateFormatFilterConfig(formatFilterConfigs);
+                auto depthMdParserContainer = getComponentT<IFrameMetadataParserContainer>(OB_DEV_COMPONENT_DEPTH_FRAME_METADATA_CONTAINER);
+                sensor->setFrameMetadataParserContainer(depthMdParserContainer.get());
+
+                auto frameTimestampCalculator = videoFrameTimestampCalculatorCreator_();
+                sensor->setFrameTimestampCalculator(frameTimestampCalculator);
+
+                auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
+                sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
+
+                auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_LEFT_IR_FRAME_PROCESSOR, false);
+                if(frameProcessor) {
+                    sensor->setFrameProcessor(frameProcessor.get());
+                }
+
+                auto streamProfileFilter = getComponentT<G305StreamProfileFilter>(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER);
+                sensor->setStreamProfileFilter(streamProfileFilter.get());
+                initSensorStreamProfile(sensor);
+
+                return sensor;
+            },
+            true);
+        registerSensorPortInfo(OB_SENSOR_IR_LEFT, depthPortInfo);
+
+        registerComponent(OB_DEV_COMPONENT_LEFT_IR_FRAME_PROCESSOR, [this]() {
+            auto factory        = getComponentT<FrameProcessorFactory>(OB_DEV_COMPONENT_FRAME_PROCESSOR_FACTORY);
+            auto frameProcessor = factory->createFrameProcessor(OB_SENSOR_IR_LEFT);
+            return frameProcessor;
+        });
+
+        registerComponent(
+            OB_DEV_COMPONENT_RIGHT_IR_SENSOR,
+            [this, depthPortInfo]() {
+                auto port   = getSourcePort(depthPortInfo);
+                auto sensor = std::make_shared<VideoSensor>(this, OB_SENSOR_IR_RIGHT, port);
+
+                std::vector<FormatFilterConfig> formatFilterConfigs = {
+                    { FormatFilterPolicy::REMOVE, OB_FORMAT_Z16, OB_FORMAT_ANY, nullptr },   //
+                    { FormatFilterPolicy::REMOVE, OB_FORMAT_Y8, OB_FORMAT_ANY, nullptr },    //
+                    { FormatFilterPolicy::REMOVE, OB_FORMAT_NV12, OB_FORMAT_ANY, nullptr },  //
+                    { FormatFilterPolicy::REMOVE, OB_FORMAT_BGR, OB_FORMAT_ANY, nullptr },
+                    { FormatFilterPolicy::REMOVE, OB_FORMAT_BGRA, OB_FORMAT_ANY, nullptr },
+                    { FormatFilterPolicy::REMOVE, OB_FORMAT_UYVY, OB_FORMAT_ANY, nullptr },  //
+                    { FormatFilterPolicy::REPLACE, OB_FORMAT_BA81, OB_FORMAT_Y8, nullptr },  //
+                    { FormatFilterPolicy::REPLACE, OB_FORMAT_YV12, OB_FORMAT_Y12, nullptr },
+                };
+
+                auto formatConverter = getSensorFrameFilter("FrameUnpacker", OB_SENSOR_IR_RIGHT, false);
+                if(formatConverter) {
+                    formatFilterConfigs.push_back({ FormatFilterPolicy::REPLACE, OB_FORMAT_YV12, OB_FORMAT_Y16, formatConverter });
+                }
+
+                sensor->updateFormatFilterConfig(formatFilterConfigs);
+                auto depthMdParserContainer = getComponentT<IFrameMetadataParserContainer>(OB_DEV_COMPONENT_DEPTH_FRAME_METADATA_CONTAINER);
+                sensor->setFrameMetadataParserContainer(depthMdParserContainer.get());
+
+                auto frameTimestampCalculator = videoFrameTimestampCalculatorCreator_();
+                sensor->setFrameTimestampCalculator(frameTimestampCalculator);
+
+                auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
+                sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
+
+                auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_RIGHT_IR_FRAME_PROCESSOR, false);
+                if(frameProcessor) {
+                    sensor->setFrameProcessor(frameProcessor.get());
+                }
+
+                auto streamProfileFilter = getComponentT<G305StreamProfileFilter>(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER);
+                sensor->setStreamProfileFilter(streamProfileFilter.get());
+                initSensorStreamProfile(sensor);
+
+                return sensor;
+            },
+            true);
+        registerSensorPortInfo(OB_SENSOR_IR_RIGHT, depthPortInfo);
+
+        registerComponent(OB_DEV_COMPONENT_RIGHT_IR_FRAME_PROCESSOR, [this]() {
+            auto factory        = getComponentT<FrameProcessorFactory>(OB_DEV_COMPONENT_FRAME_PROCESSOR_FACTORY);
+            auto frameProcessor = factory->createFrameProcessor(OB_SENSOR_IR_RIGHT);
+            return frameProcessor;
+        });
+
+        // the main property accessor is using the color port(uvc xu)
+        registerComponent(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR, [this, depthPortInfo]() {
+            auto port          = getSourcePort(depthPortInfo);
+            auto uvcDevicePort = std::dynamic_pointer_cast<UvcDevicePort>(port);
+            uvcDevicePort->updateXuUnit(OB_G330_XU_UNIT);  // update xu unit to g330 xu unit
+            auto accessor = std::make_shared<VendorPropertyAccessor>(this, port);
+            return accessor;
+        });
+
+        // The device monitor is using the color port(uvc xu)
+        registerComponent(OB_DEV_COMPONENT_DEVICE_MONITOR, [this, depthPortInfo]() {
+            auto port          = getSourcePort(depthPortInfo);
+            auto uvcDevicePort = std::dynamic_pointer_cast<UvcDevicePort>(port);
+            uvcDevicePort->updateXuUnit(OB_G330_XU_UNIT);  // update xu unit to g330 xu unit
+            auto devMonitor = std::make_shared<DeviceMonitor>(this, port);
+            return devMonitor;
+        });
+    }
+
+    auto colorPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(), [](const std::shared_ptr<const SourcePortInfo> &portInfo) {
+        return portInfo->portType == SOURCE_PORT_USB_UVC && std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->infIndex == INTERFACE_COLOR;
+    });
+    if(colorPortInfoIter != sourcePortInfoList.end()) {
+        auto colorPortInfo = *colorPortInfoIter;
+        registerComponent(
+            OB_DEV_COMPONENT_COLOR_SENSOR,
+            [this, colorPortInfo]() {
+                auto port   = getSourcePort(colorPortInfo);
+                auto sensor = std::make_shared<VideoSensor>(this, OB_SENSOR_COLOR, port);
+
+                std::vector<FormatFilterConfig> formatFilterConfigs = {
+                    { FormatFilterPolicy::REMOVE, OB_FORMAT_NV12, OB_FORMAT_ANY, nullptr },
+                    { FormatFilterPolicy::REPLACE, OB_FORMAT_BYR2, OB_FORMAT_RW16, nullptr },
+                };
+
+                auto formatConverter = getSensorFrameFilter("FormatConverter", OB_SENSOR_COLOR, false);
+                if(formatConverter) {
+                    formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_YUYV, OB_FORMAT_RGB, formatConverter });
+                    formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_YUYV, OB_FORMAT_RGBA, formatConverter });
+                    formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_YUYV, OB_FORMAT_BGR, formatConverter });
+                    formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_YUYV, OB_FORMAT_BGRA, formatConverter });
+                    formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_YUYV, OB_FORMAT_Y16, formatConverter });
+                    formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_YUYV, OB_FORMAT_Y8, formatConverter });
+                }
+
+                sensor->updateFormatFilterConfig(formatFilterConfigs);
+                auto colorMdParserContainer = getComponentT<IFrameMetadataParserContainer>(OB_DEV_COMPONENT_COLOR_FRAME_METADATA_CONTAINER);
+                sensor->setFrameMetadataParserContainer(colorMdParserContainer.get());
+
+                auto frameTimestampCalculator = videoFrameTimestampCalculatorCreator_();
+                sensor->setFrameTimestampCalculator(frameTimestampCalculator);
+
+                auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
+                sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
+
+                auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR, false);
+                if(frameProcessor) {
+                    sensor->setFrameProcessor(frameProcessor.get());
+                }
+
+                initSensorStreamProfile(sensor);
+
+                return sensor;
+            },
+            true);
+        registerSensorPortInfo(OB_SENSOR_COLOR, colorPortInfo);
+
+        registerComponent(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR, [this]() {
+            auto factory        = getComponentT<FrameProcessorFactory>(OB_DEV_COMPONENT_FRAME_PROCESSOR_FACTORY);
+            auto frameProcessor = factory->createFrameProcessor(OB_SENSOR_COLOR);
+            return frameProcessor;
+        });
+
+        registerComponent(
+            OB_DEV_COMPONENT_LEFT_COLOR_SENSOR,
+            [this, colorPortInfo]() {
+                auto port   = getSourcePort(colorPortInfo);
+                auto sensor = std::make_shared<VideoSensor>(this, OB_SENSOR_COLOR_LEFT, port);
+
+                std::vector<FormatFilterConfig> formatFilterConfigs = {
+                    { FormatFilterPolicy::REMOVE, OB_FORMAT_NV12, OB_FORMAT_ANY, nullptr },
+                    { FormatFilterPolicy::REPLACE, OB_FORMAT_BYR2, OB_FORMAT_RW16, nullptr },
+                };
+
+                auto formatConverter = getSensorFrameFilter("FormatConverter", OB_SENSOR_COLOR_LEFT, false);
+                if(formatConverter) {
+                    formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_YUYV, OB_FORMAT_RGB, formatConverter });
+                    formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_YUYV, OB_FORMAT_RGBA, formatConverter });
+                    formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_YUYV, OB_FORMAT_BGR, formatConverter });
+                    formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_YUYV, OB_FORMAT_BGRA, formatConverter });
+                    formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_YUYV, OB_FORMAT_Y16, formatConverter });
+                    formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_YUYV, OB_FORMAT_Y8, formatConverter });
+                }
+
+                sensor->updateFormatFilterConfig(formatFilterConfigs);
+                auto colorMdParserContainer = getComponentT<IFrameMetadataParserContainer>(OB_DEV_COMPONENT_LEFT_COLOR_FRAME_METADATA_CONTAINER);
+                sensor->setFrameMetadataParserContainer(colorMdParserContainer.get());
+
+                auto frameTimestampCalculator = videoFrameTimestampCalculatorCreator_();
+                sensor->setFrameTimestampCalculator(frameTimestampCalculator);
+
+                auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
+                sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
+
+                auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_LEFT_COLOR_FRAME_PROCESSOR, false);
+                if(frameProcessor) {
+                    sensor->setFrameProcessor(frameProcessor.get());
+                }
+
+                initSensorStreamProfile(sensor);
+
+                return sensor;
+            },
+            true);
+        registerSensorPortInfo(OB_SENSOR_COLOR_LEFT, colorPortInfo);
+
+        registerComponent(OB_DEV_COMPONENT_LEFT_COLOR_FRAME_PROCESSOR, [this]() {
+            auto factory        = getComponentT<FrameProcessorFactory>(OB_DEV_COMPONENT_FRAME_PROCESSOR_FACTORY);
+            auto frameProcessor = factory->createFrameProcessor(OB_SENSOR_COLOR_LEFT);
+            return frameProcessor;
+        });
+    }
+
+    auto colorRightPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(), [](const std::shared_ptr<const SourcePortInfo> &portInfo) {
+        return portInfo->portType == SOURCE_PORT_USB_UVC && std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->infIndex == INTERFACE_COLOR_RIGHT;
+    });
+    if(colorRightPortInfoIter != sourcePortInfoList.end()) {
+        auto colorRightPortInfo = *colorRightPortInfoIter;
+        registerComponent(
+            OB_DEV_COMPONENT_RIGHT_COLOR_SENSOR,
+            [this, colorRightPortInfo]() {
+                auto port   = getSourcePort(colorRightPortInfo);
+                auto sensor = std::make_shared<VideoSensor>(this, OB_SENSOR_COLOR_RIGHT, port);
+
+                std::vector<FormatFilterConfig> formatFilterConfigs = {
+                    { FormatFilterPolicy::REMOVE, OB_FORMAT_NV12, OB_FORMAT_ANY, nullptr },
+                    { FormatFilterPolicy::REPLACE, OB_FORMAT_BYR2, OB_FORMAT_RW16, nullptr },
+                };
+
+                auto formatConverter = getSensorFrameFilter("FormatConverter", OB_SENSOR_COLOR_RIGHT, false);
+                if(formatConverter) {
+                    formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_YUYV, OB_FORMAT_RGB, formatConverter });
+                    formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_YUYV, OB_FORMAT_RGBA, formatConverter });
+                    formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_YUYV, OB_FORMAT_BGR, formatConverter });
+                    formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_YUYV, OB_FORMAT_BGRA, formatConverter });
+                    formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_YUYV, OB_FORMAT_Y16, formatConverter });
+                    formatFilterConfigs.push_back({ FormatFilterPolicy::ADD, OB_FORMAT_YUYV, OB_FORMAT_Y8, formatConverter });
+                }
+
+                sensor->updateFormatFilterConfig(formatFilterConfigs);
+                auto colorMdParserContainer = getComponentT<IFrameMetadataParserContainer>(OB_DEV_COMPONENT_RIGHT_COLOR_FRAME_METADATA_CONTAINER);
+                sensor->setFrameMetadataParserContainer(colorMdParserContainer.get());
+
+                auto frameTimestampCalculator = videoFrameTimestampCalculatorCreator_();
+                sensor->setFrameTimestampCalculator(frameTimestampCalculator);
+
+                auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
+                sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
+
+                auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_RIGHT_COLOR_FRAME_PROCESSOR, false);
+                if(frameProcessor) {
+                    sensor->setFrameProcessor(frameProcessor.get());
+                }
+
+                initSensorStreamProfile(sensor);
+
+                return sensor;
+            },
+            true);
+        registerSensorPortInfo(OB_SENSOR_COLOR_RIGHT, colorRightPortInfo);
+
+        registerComponent(OB_DEV_COMPONENT_RIGHT_COLOR_FRAME_PROCESSOR, [this]() {
+            auto factory        = getComponentT<FrameProcessorFactory>(OB_DEV_COMPONENT_FRAME_PROCESSOR_FACTORY);
+            auto frameProcessor = factory->createFrameProcessor(OB_SENSOR_COLOR_RIGHT);
+            return frameProcessor;
+        });
+    }
+}
+
+static const uint8_t GMSL_INTERFACE_DEPTH    = 0;
+static const uint8_t GMSL_INTERFACE_IR_LEFT  = 2;
+static const uint8_t GMSL_INTERFACE_IR_RIGHT = 3;
+static const uint8_t GMSL_INTERFACE_COLOR    = 4;
+
+void G305Device::initSensorListGMSL() {
+    registerComponent(OB_DEV_COMPONENT_FRAME_PROCESSOR_FACTORY, [this]() {
+        std::shared_ptr<FrameProcessorFactory> factory;
+        TRY_EXECUTE({ factory = std::make_shared<FrameProcessorFactory>(this); })
+        return factory;
+    });
+    registerComponent(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER, [this]() { return std::make_shared<G305StreamProfileFilter>(this); });
+
+    const auto &sourcePortInfoList = enumInfo_->getSourcePortInfoList();
+
+    auto depthPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(), [](const std::shared_ptr<const SourcePortInfo> &portInfo) {
+        return portInfo->portType == SOURCE_PORT_USB_UVC && std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->infIndex == GMSL_INTERFACE_DEPTH;
+    });
+    if(depthPortInfoIter != sourcePortInfoList.end()) {
+        auto depthPortInfo = *depthPortInfoIter;
+        registerComponent(
+            OB_DEV_COMPONENT_DEPTH_SENSOR,
+            [this, depthPortInfo]() {
+                auto port   = getSourcePort(depthPortInfo);
+                auto sensor = std::make_shared<DisparityBasedSensor>(this, OB_SENSOR_DEPTH, port);
+
+                sensor->updateFormatFilterConfig({ { FormatFilterPolicy::REMOVE, OB_FORMAT_Y8, OB_FORMAT_ANY, nullptr },
+                                                   { FormatFilterPolicy::REMOVE, OB_FORMAT_NV12, OB_FORMAT_ANY, nullptr },
+                                                   { FormatFilterPolicy::REMOVE, OB_FORMAT_BGR, OB_FORMAT_ANY, nullptr },
+                                                   { FormatFilterPolicy::REMOVE, OB_FORMAT_BGRA, OB_FORMAT_ANY, nullptr },
+                                                   { FormatFilterPolicy::REMOVE, OB_FORMAT_BA81, OB_FORMAT_ANY, nullptr },
+                                                   { FormatFilterPolicy::REMOVE, OB_FORMAT_YV12, OB_FORMAT_ANY, nullptr },
+                                                   { FormatFilterPolicy::REMOVE, OB_FORMAT_UYVY, OB_FORMAT_ANY, nullptr },
+                                                   { FormatFilterPolicy::REPLACE, OB_FORMAT_Z16, OB_FORMAT_Y16, nullptr } });
+
+                auto depthMdParserContainer = getComponentT<IFrameMetadataParserContainer>(OB_DEV_COMPONENT_DEPTH_FRAME_METADATA_CONTAINER);
+                sensor->setFrameMetadataParserContainer(depthMdParserContainer.get());
+
+                auto frameTimestampCalculator = videoFrameTimestampCalculatorCreator_();
+                sensor->setFrameTimestampCalculator(frameTimestampCalculator);
+
+                auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
+                sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
+
+                auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR, false);
+                if(frameProcessor) {
+                    sensor->setFrameProcessor(frameProcessor.get());
+                }
+
+                auto propServer = getPropertyServer();
+                auto depthUnit  = propServer->getPropertyValueT<float>(OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT);
+                sensor->setDepthUnit(depthUnit);
+
+                auto hwD2D = propServer->getPropertyValueT<bool>(OB_PROP_DISPARITY_TO_DEPTH_BOOL);
+                sensor->markOutputDisparityFrame(!hwD2D);
+
+                auto streamProfileFilter = getComponentT<G305StreamProfileFilter>(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER);
+                sensor->setStreamProfileFilter(streamProfileFilter.get());
+                initSensorStreamProfile(sensor);
+
+                sensor->registerStreamStateChangedCallback([&](OBStreamState state, const std::shared_ptr<const StreamProfile> &sp) {
+                    if(state == STREAM_STATE_STREAMING) {
+                        auto algParamManager = getComponentT<G305AlgParamManager>(OB_DEV_COMPONENT_ALG_PARAM_MANAGER);
+                        algParamManager->reFetchDisparityParams();
+                        algParamManager->bindDisparityParam({ sp });
                     }
 
                     initSensorStreamProfile(sensor);

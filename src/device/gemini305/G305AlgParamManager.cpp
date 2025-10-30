@@ -8,7 +8,6 @@
 #include "property/InternalProperty.hpp"
 #include "DevicePids.hpp"
 #include "exception/ObException.hpp"
-#include "publicfilters/IMUCorrector.hpp"
 
 #include <vector>
 #include <sstream>
@@ -16,9 +15,9 @@ namespace libobsensor {
 
 bool G305AlgParamManager::findBestMatchedCameraParam(const std::vector<OBCameraParam>                &cameraParamList,
                                                      const std::shared_ptr<const VideoStreamProfile> &profile, OBCameraParam &result) {
-    bool found      = false;
-    auto width      = profile->getOriginalWidth();
-    auto height     = profile->getOriginalHeight();
+    bool found  = false;
+    auto width  = profile->getOriginalWidth() == 0 ? profile->getWidth() : profile->getOriginalWidth();
+    auto height = profile->getOriginalHeight() == 0 ? profile->getHeight() : profile->getOriginalHeight();
 
     // match same resolution
     for(auto &param: cameraParamList) {
@@ -145,33 +144,6 @@ void G305AlgParamManager::fetchParamFromDevice() {
             }
         }
     }
-
-    // imu param
-    std::vector<uint8_t> data;
-    BEGIN_TRY_EXECUTE({
-        auto owner      = getOwner();
-        auto propServer = owner->getPropertyServer();
-        propServer->getRawData(
-            OB_RAW_DATA_IMU_CALIB_PARAM,
-            [&](OBDataTranState state, OBDataChunk *dataChunk) {
-                if(state == DATA_TRAN_STAT_TRANSFERRING) {
-                    data.insert(data.end(), dataChunk->data, dataChunk->data + dataChunk->size);
-                }
-            },
-            PROP_ACCESS_INTERNAL);
-    })
-    CATCH_EXCEPTION_AND_EXECUTE({
-        LOG_ERROR("Get imu calibration params failed!");
-        data.clear();
-    })
-    if(!data.empty()) {
-        imuCalibParam_ = IMUCorrector::parserIMUCalibParamRaw(data.data(), static_cast<uint32_t>(data.size()));
-        LOG_DEBUG("Get imu calibration params success!");
-    }
-    else {
-        LOG_WARN("Get imu calibration params failed! Use default params instead!");
-        imuCalibParam_ = IMUCorrector::getDefaultImuCalibParam();
-    }
 }
 
 void G305AlgParamManager::reFetchDisparityParams() {
@@ -208,9 +180,6 @@ void G305AlgParamManager::registerBasicExtrinsics() {
         StreamProfileFactory::createVideoStreamProfile(OB_STREAM_COLOR_RIGHT, OB_FORMAT_ANY, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY);
     auto leftIrBasicStreamProfile  = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_IR_LEFT, OB_FORMAT_ANY, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY);
     auto rightIrBasicStreamProfile = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_IR_RIGHT, OB_FORMAT_ANY, OB_WIDTH_ANY, OB_HEIGHT_ANY, OB_FPS_ANY);
-    auto accelBasicStreamProfile   = StreamProfileFactory::createAccelStreamProfile(OB_ACCEL_FS_2g, OB_SAMPLE_RATE_1_5625_HZ);
-    auto gyroBasicStreamProfile    = StreamProfileFactory::createGyroStreamProfile(OB_GYRO_FS_16dps, OB_SAMPLE_RATE_1_5625_HZ);
-
     if(!originCalibrationCameraParamList_.empty()) {
         auto d2cExtrinsic = originCalibrationCameraParamList_.front().transform;
         extrinsicMgr->registerExtrinsics(depthBasicStreamProfile, colorBasicStreamProfile, d2cExtrinsic);
@@ -223,41 +192,21 @@ void G305AlgParamManager::registerBasicExtrinsics() {
         extrinsicMgr->registerExtrinsics(leftIrBasicStreamProfile, rightIrBasicStreamProfile, left_to_right);
     }
 
-    const auto &imuCalibParam = getIMUCalibrationParam();
-    double      imuExtr[16]   = { 0 };
-    memcpy(imuExtr, imuCalibParam.singleIMUParams[0].imu_to_cam_extrinsics, sizeof(imuExtr));
-
-    OBExtrinsic imu_to_depth;
-    imu_to_depth.rot[0] = (float)imuExtr[0];
-    imu_to_depth.rot[1] = (float)imuExtr[1];
-
-    imu_to_depth.rot[2]   = (float)imuExtr[2];
-    imu_to_depth.rot[3]   = (float)imuExtr[4];
-    imu_to_depth.rot[4]   = (float)imuExtr[5];
-    imu_to_depth.rot[5]   = (float)imuExtr[6];
-    imu_to_depth.rot[6]   = (float)imuExtr[8];
-    imu_to_depth.rot[7]   = (float)imuExtr[9];
-    imu_to_depth.rot[8]   = (float)imuExtr[10];
-    imu_to_depth.trans[0] = (float)imuExtr[3];
-    imu_to_depth.trans[1] = (float)imuExtr[7];
-    imu_to_depth.trans[2] = (float)imuExtr[11];
-    extrinsicMgr->registerExtrinsics(accelBasicStreamProfile, depthBasicStreamProfile, imu_to_depth);
-    extrinsicMgr->registerSameExtrinsics(gyroBasicStreamProfile, accelBasicStreamProfile);
-
     basicStreamProfileList_.emplace_back(depthBasicStreamProfile);
     basicStreamProfileList_.emplace_back(colorBasicStreamProfile);
     basicStreamProfileList_.emplace_back(leftcolorBasicStreamProfile);
     basicStreamProfileList_.emplace_back(rightcolorBasicStreamProfile);
     basicStreamProfileList_.emplace_back(leftIrBasicStreamProfile);
     basicStreamProfileList_.emplace_back(rightIrBasicStreamProfile);
-    basicStreamProfileList_.emplace_back(accelBasicStreamProfile);
-    basicStreamProfileList_.emplace_back(gyroBasicStreamProfile);
 }
 
-typedef struct {
+struct Resolution {
     uint32_t width;
     uint32_t height;
-} Resolution;
+    bool     operator<(const Resolution &other) const {
+        return std::tie(width, height) < std::tie(other.width, other.height);
+    }
+};
 
 void G305AlgParamManager::fixD2CParmaList() {
     std::vector<Resolution> appendColorResolutions;
@@ -265,23 +214,20 @@ void G305AlgParamManager::fixD2CParmaList() {
 
     auto owner      = getOwner();
     auto deviceInfo = owner->getInfo();
-    if(deviceInfo->pid_ == 0x080E) {
-        std::vector<Resolution> leColorResolutions = { { 1280, 800 }, { 1280, 720 }, { 848, 530 }, { 640, 480 }, { 640, 400 }, { 640, 360 }, { 320, 200 } };
-        std::vector<Resolution> ledepthResolutions = { { 1280, 800 }, { 848, 530 }, { 640, 480 }, { 640, 400 }, { 424, 266 }, { 320, 200 } };
 
-        appendColorResolutions.assign(leColorResolutions.begin(), leColorResolutions.end());
-        depthResolutions.assign(ledepthResolutions.begin(), ledepthResolutions.end());
-    }
-    else {
-        std::vector<Resolution> otherDeviceColorResolutions = { { 1920, 1080 }, { 1280, 800 }, { 1280, 720 }, { 960, 540 }, { 848, 480 }, { 640, 480 },
-                                                                { 640, 400 },   { 640, 360 },  { 424, 270 },  { 424, 240 }, { 320, 240 }, { 320, 180 } };
+    std::vector<Resolution> otherDeviceColorResolutions = { { 1280, 800 }, { 1280, 720 }, { 848, 480 }, { 848, 530 }, { 640, 480 } };
 
-        std::vector<Resolution> otherDevicedepthResolutions = { { 1280, 800 }, { 1280, 720 }, { 848, 480 }, { 640, 480 }, { 640, 400 },
-                                                                { 640, 360 },  { 480, 270 },  { 424, 240 }, { 848, 100 } };
+    std::map<std::pair<Resolution, int>, Resolution> downDacimationToOrigMap = {
+        { { { 1280, 800 }, 1 }, { 1280, 800 } }, { { { 640, 400 }, 2 }, { 1280, 800 } }, { { { 320, 200 }, 4 }, { 1280, 800 } },
+        { { { 1280, 720 }, 1 }, { 1280, 720 } }, { { { 640, 360 }, 2 }, { 1280, 720 } }, { { { 320, 180 }, 4 }, { 1280, 720 } },
+        { { { 848, 530 }, 1 }, { 848, 530 } },   { { { 424, 264 }, 2 }, { 848, 530 } },  { { { 282, 176 }, 3 }, { 848, 530 } },
+        { { { 212, 132 }, 4 }, { 848, 530 } },   { { { 848, 480 }, 1 }, { 848, 480 } },  { { { 424, 240 }, 2 }, { 848, 480 } },
+        { { { 282, 160 }, 3 }, { 848, 480 } },   { { { 212, 120 }, 4 }, { 848, 480 } },  { { { 640, 480 }, 1 }, { 640, 480 } },
+        { { { 320, 240 }, 2 }, { 640, 480 } },   { { { 160, 120 }, 4 }, { 640, 480 } },  { { { 424, 266 }, 3 }, { 1272, 800 } },
+        { { { 424, 240 }, 3 }, { 1272, 720 } },
+    };
 
-        appendColorResolutions.assign(otherDeviceColorResolutions.begin(), otherDeviceColorResolutions.end());
-        depthResolutions.assign(otherDevicedepthResolutions.begin(), otherDevicedepthResolutions.end());
-    }
+    appendColorResolutions.assign(otherDeviceColorResolutions.begin(), otherDeviceColorResolutions.end());
 
     if(originD2cProfileList_.empty()) {
         return;
@@ -300,27 +246,35 @@ void G305AlgParamManager::fixD2CParmaList() {
             continue;
         }
         OBCameraIntrinsic colorIntrinsic = colorAlignParam.rgbIntrinsic;
-        float             ratio          = (float)colorProfile->getWidth() / colorIntrinsic.width;
-        colorIntrinsic.fx *= ratio;
-        colorIntrinsic.fy *= ratio;
-        colorIntrinsic.cx *= ratio;
-        colorIntrinsic.cy *= ratio;
+        int               colorScale     = colorIntrinsic.width / colorProfile->getWidth();
+        auto              colorRatio     = 1.f / colorScale;
+        int               colorDx        = (colorIntrinsic.width - colorScale * colorProfile->getWidth()) >> 1;  // delta_w/2
+        int               colorDy        = (colorIntrinsic.height - colorScale * colorProfile->getHeight()) >> 1;
+        colorIntrinsic.fx *= colorRatio;
+        colorIntrinsic.fy *= colorRatio;
+        colorIntrinsic.cx     = (colorIntrinsic.cx - colorDx) * colorRatio;
+        colorIntrinsic.cy     = (colorIntrinsic.cy - colorDy) * colorRatio;
         colorIntrinsic.width  = static_cast<int16_t>(colorProfile->getWidth());
-        colorIntrinsic.height = static_cast<int16_t>((float)colorIntrinsic.height * ratio);
-        for(const auto &depthRes: depthResolutions) {
-            auto depthProfile = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_DEPTH, OB_FORMAT_UNKNOWN, depthRes.width, depthRes.height, 30);
+        colorIntrinsic.height = static_cast<int16_t>(colorProfile->getHeight());
+        for(const auto &downDepthResolution: downDacimationToOrigMap) {
+            auto depthRes     = downDepthResolution.first.first;
+            auto origDepthRes = downDepthResolution.second;
+            auto depthProfile = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_DEPTH, OB_FORMAT_UNKNOWN, origDepthRes.width, origDepthRes.height, 30);
             OBCameraParam depthAlignParam;
             if(!findBestMatchedCameraParam(originCalibrationCameraParamList_, depthProfile, depthAlignParam)) {
                 continue;
             }
             OBCameraIntrinsic depthIntrinsic = depthAlignParam.depthIntrinsic;
-            ratio                            = (float)depthProfile->getWidth() / depthIntrinsic.width;
-            depthIntrinsic.fx *= ratio;
-            depthIntrinsic.fy *= ratio;
-            depthIntrinsic.cx *= ratio;
-            depthIntrinsic.cy *= ratio;
-            depthIntrinsic.width  = static_cast<int16_t>(depthProfile->getWidth());
-            depthIntrinsic.height = static_cast<int16_t>((float)depthIntrinsic.height * ratio);
+            int               depthScale     = depthIntrinsic.width / depthRes.width;
+            auto              depthRatio     = 1.f / depthScale;
+            int               depthDx        = (depthIntrinsic.width - depthScale * depthRes.width) >> 1;  // delta_w/2
+            int               depthDy        = (depthIntrinsic.height - depthScale * depthRes.height) >> 1;
+            depthIntrinsic.fx *= depthRatio;
+            depthIntrinsic.fy *= depthRatio;
+            depthIntrinsic.cx     = (depthIntrinsic.cx - depthDx) * depthRatio;
+            depthIntrinsic.cy     = (depthIntrinsic.cy - depthDy) * depthRatio;
+            depthIntrinsic.width  = static_cast<int16_t>(depthRes.width);
+            depthIntrinsic.height = static_cast<int16_t>(depthRes.height);
 
             auto index = calibrationCameraParamList_.size();
             calibrationCameraParamList_.push_back({ depthIntrinsic, colorIntrinsic, depthAlignParam.depthDistortion, depthAlignParam.rgbDistortion,
@@ -331,8 +285,8 @@ void G305AlgParamManager::fixD2CParmaList() {
             d2cProfile.postProcessParam = { 1.0f, 0, 0, 0, 0 };
             d2cProfile.colorWidth       = static_cast<int16_t>(colorProfile->getWidth());
             d2cProfile.colorHeight      = static_cast<int16_t>(colorProfile->getHeight());
-            d2cProfile.depthWidth       = static_cast<int16_t>(depthProfile->getWidth());
-            d2cProfile.depthHeight      = static_cast<int16_t>(depthProfile->getHeight());
+            d2cProfile.depthWidth       = static_cast<int16_t>(depthRes.width);
+            d2cProfile.depthHeight      = static_cast<int16_t>(depthRes.height);
             d2cProfile.paramIndex       = (uint8_t)index;
             d2cProfileList_.push_back(d2cProfile);
         }
@@ -395,6 +349,24 @@ void G305AlgParamManager::fixD2CParmaList() {
         // LOG_INFO("- {}", ss.str());
     }
 
+    for(auto &d2cProfile: d2cProfileList_) {
+        if(d2cProfile.alignType != 1) {
+            continue;
+        }
+        auto colorWidth  = d2cProfile.colorWidth;
+        auto colorHeight = d2cProfile.colorHeight;
+        auto depthWidth  = d2cProfile.depthWidth;
+        auto depthHeight = d2cProfile.depthHeight;
+        for(uint8_t i = 0; i < calibrationCameraParamList_.size(); i++) {
+            if(calibrationCameraParamList_[i].rgbIntrinsic.width != colorWidth || calibrationCameraParamList_[i].rgbIntrinsic.height != colorHeight
+               || calibrationCameraParamList_[i].depthIntrinsic.width != depthWidth || calibrationCameraParamList_[i].depthIntrinsic.height != depthHeight) {
+                continue;
+            }
+            d2cProfile.paramIndex = i;
+            break;
+        }
+    }
+
     // LOG_DEBUG("Fixed align calibration camera params success! num={}", calibrationCameraParamList_.size());
     // for(auto &&profile: d2cProfileList_) {
     //     if(profile.paramIndex >= calibrationCameraParamList_.size()) {
@@ -407,84 +379,50 @@ void G305AlgParamManager::fixD2CParmaList() {
     //     ss << calibrationCameraParamList_[profile.paramIndex];
     //     LOG_DEBUG("- {}", ss.str());
     // }
-
-    if(deviceInfo->pid_ != OB_DEVICE_G335LE_PID) {
-        // add depth 424*266 from 1280*800
-        auto iter = std::find_if(originCalibrationCameraParamList_.begin(), originCalibrationCameraParamList_.end(),
-                                 [](const OBCameraParam &param) { return param.depthIntrinsic.width == 1280 && param.depthIntrinsic.height == 800; });
-        if(iter != originCalibrationCameraParamList_.end()) {
-            OBCameraIntrinsic depthIntrinsic = iter->depthIntrinsic;
-            depthIntrinsic.fx                = depthIntrinsic.fx / 3;
-            depthIntrinsic.fy                = depthIntrinsic.fy / 3;
-            depthIntrinsic.cx                = (depthIntrinsic.cx - 4) / 3;
-            depthIntrinsic.cy                = (depthIntrinsic.cy - 1) / 3;
-            depthIntrinsic.width             = 424;
-            depthIntrinsic.height            = 266;
-            auto index                       = calibrationCameraParamList_.size();
-            calibrationCameraParamList_.push_back(
-                { depthIntrinsic, iter->rgbIntrinsic, iter->depthDistortion, iter->rgbDistortion, iter->transform, iter->isMirrored });
-            OBD2CProfile d2cProfile;
-            d2cProfile.alignType        = ALIGN_D2C_SW;
-            d2cProfile.postProcessParam = { 1.0f, 0, 0, 0, 0 };
-            d2cProfile.colorWidth       = 0;
-            d2cProfile.colorHeight      = 0;
-            d2cProfile.depthWidth       = 424;
-            d2cProfile.depthHeight      = 266;
-            d2cProfile.paramIndex       = (uint8_t)index;
-            d2cProfileList_.push_back(d2cProfile);
-        }
-    }
 }
 
 void G305AlgParamManager::bindIntrinsic(std::vector<std::shared_ptr<const StreamProfile>> streamProfileList) {
     auto intrinsicMgr = StreamIntrinsicsManager::getInstance();
     for(const auto &sp: streamProfileList) {
-        if(sp->is<AccelStreamProfile>()) {
-            const auto &imuCalibParam = getIMUCalibrationParam();
-            intrinsicMgr->registerAccelStreamIntrinsics(sp, imuCalibParam.singleIMUParams[0].acc);
+        OBCameraIntrinsic  intrinsic  = { 0 };
+        OBCameraDistortion distortion = { 0 };
+        OBCameraParam      param{};
+        auto               vsp = sp->as<VideoStreamProfile>();
+        if(!findBestMatchedCameraParam(calibrationCameraParamList_, vsp, param)) {
+            // throw libobsensor::unsupported_operation_exception("Can not find matched camera param!");
+            continue;
         }
-        else if(sp->is<GyroStreamProfile>()) {
-            const auto &imuCalibParam = getIMUCalibrationParam();
-            intrinsicMgr->registerGyroStreamIntrinsics(sp, imuCalibParam.singleIMUParams[0].gyro);
+        switch(sp->getType()) {
+        case OB_STREAM_COLOR:
+        case OB_STREAM_COLOR_LEFT:
+        case OB_STREAM_COLOR_RIGHT:
+            intrinsic  = param.rgbIntrinsic;
+            distortion = param.rgbDistortion;
+            break;
+        case OB_STREAM_DEPTH:
+        case OB_STREAM_IR:
+        case OB_STREAM_IR_LEFT:
+        case OB_STREAM_IR_RIGHT:
+            intrinsic  = param.depthIntrinsic;
+            distortion = param.depthDistortion;
+            break;
+        default:
+            break;
         }
-        else {
-            OBCameraIntrinsic  intrinsic  = { 0 };
-            OBCameraDistortion distortion = { 0 };
-            OBCameraParam      param{};
-            auto               vsp = sp->as<VideoStreamProfile>();
-            if(!findBestMatchedCameraParam(calibrationCameraParamList_, vsp, param)) {
-                // throw libobsensor::unsupported_operation_exception("Can not find matched camera param!");
-                continue;
-            }
-            switch(sp->getType()) {
-            case OB_STREAM_COLOR:
-            case OB_STREAM_COLOR_LEFT:
-            case OB_STREAM_COLOR_RIGHT:
-                intrinsic  = param.rgbIntrinsic;
-                distortion = param.rgbDistortion;
-                break;
-            case OB_STREAM_DEPTH:
-            case OB_STREAM_IR:
-            case OB_STREAM_IR_LEFT:
-            case OB_STREAM_IR_RIGHT:
-                intrinsic  = param.depthIntrinsic;
-                distortion = param.depthDistortion;
-                break;
-            default:
-                break;
-            }
-            auto originWidth = vsp->getOriginalWidth() == 0 ? vsp->getWidth() : vsp->getOriginalWidth();
-            auto ratio       = (float)originWidth / (float)intrinsic.width;
-            intrinsic.fx *= ratio;
-            intrinsic.fy *= ratio;
-            intrinsic.cx *= ratio;
-            intrinsic.cy *= ratio;
-            intrinsic.width  = static_cast<int16_t>(vsp->getWidth());
-            intrinsic.height = static_cast<int16_t>((float)intrinsic.height * ratio);
-
-            intrinsicMgr->registerVideoStreamIntrinsics(sp, intrinsic);
-            intrinsicMgr->registerVideoStreamDistortion(sp, distortion);
-        }
+        auto originWidth  = vsp->getOriginalWidth() == 0 ? vsp->getWidth() : vsp->getOriginalWidth();
+        auto originHeight = vsp->getOriginalHeight() == 0 ? vsp->getHeight() : vsp->getOriginalHeight();
+        int  scale        = originWidth / vsp->getWidth();
+        auto ratio        = 1.f / scale;
+        int  dx           = (originWidth - scale * vsp->getWidth()) >> 1;  // delta_w/2
+        int  dy           = (originHeight - scale * vsp->getHeight()) >> 1;
+        intrinsic.fx *= ratio;
+        intrinsic.fy *= ratio;
+        intrinsic.cx     = (intrinsic.cx - dx) * ratio;
+        intrinsic.cy     = (intrinsic.cy - dy) * ratio;
+        intrinsic.width  = static_cast<int16_t>(vsp->getWidth());
+        intrinsic.height = static_cast<int16_t>(vsp->getHeight());
+        intrinsicMgr->registerVideoStreamIntrinsics(sp, intrinsic);
+        intrinsicMgr->registerVideoStreamDistortion(sp, distortion);
     }
 }
 
