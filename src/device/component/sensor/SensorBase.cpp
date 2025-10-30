@@ -206,6 +206,11 @@ void SensorBase::updateStreamState(OBStreamState state) {
 }
 
 void SensorBase::enableStreamRecovery(uint32_t maxRecoveryCount, int noStreamTimeoutMs, int streamInterruptTimeoutMs) {
+    if(owner_->isPlaybackDevice()) {
+        LOG_WARN("Sensor {}: the current device is a playback device and does not support stream recovery", sensorType_);
+        return;
+    }
+
     {
         std::unique_lock<std::mutex> lock(streamStateMutex_);
         recoveryCount_            = 0;
@@ -221,6 +226,11 @@ void SensorBase::enableStreamRecovery(uint32_t maxRecoveryCount, int noStreamTim
 }
 
 void SensorBase::startStreamRecovery() {
+    if(owner_->isPlaybackDevice()) {
+        LOG_WARN("Sensor {}: the current device is a playback device and does not support stream recovery", sensorType_);
+        return;
+    }
+
     auto        envConfig    = EnvConfig::getInstance();
     std::string nodePathName = "Device." + getOwner()->getInfo()->name_ + ".";
     auto nodePath = nodePathName + utils::obSensorToStr(getSensorType());
@@ -356,6 +366,10 @@ void SensorBase::setFrameProcessor(std::shared_ptr<FrameProcessor> frameProcesso
 
 void SensorBase::enableTimestampAnomalyDetection(bool enable){
     if(enable) {
+        if(owner_->isPlaybackDevice()) {
+            LOG_WARN("Sensor {}: the current device is a playback device and does not support timestamp anomaly detection", sensorType_);
+            return;
+        }
         if(!timestampAnomalyDetector_) {
             TRY_EXECUTE({ timestampAnomalyDetector_ = std::make_shared<TimestampAnomalyDetector>(owner_); });
         }

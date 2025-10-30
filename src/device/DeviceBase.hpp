@@ -34,6 +34,10 @@ public:
     void reboot() override;
     void deactivate() override;
 
+    virtual bool isPlaybackDevice() const override {
+        return isPlaybackDevice_.load();
+    }
+
     std::shared_ptr<const DeviceInfo> getInfo() const override;
     bool                              isDeactivated() const override;
     const std::string                &getExtensionInfo(const std::string &infoKey) const override;
@@ -100,6 +104,7 @@ protected:
     std::shared_ptr<DeviceInfo>                  deviceInfo_;
     std::map<std::string, std::string>           extensionInfo_;
     uint64_t                                     deviceErrorState_ = 0;
+    std::atomic<bool>                            isPlaybackDevice_{ false };
 
 private:
     std::shared_ptr<Context> ctx_;  // handle the lifespan of the context

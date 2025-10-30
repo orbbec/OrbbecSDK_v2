@@ -58,6 +58,8 @@ public:
     virtual void reboot()     = 0;
     virtual void deactivate() = 0;
 
+    virtual bool isPlaybackDevice() const = 0;
+
     // device info
     virtual std::shared_ptr<const DeviceInfo> getInfo() const                                         = 0;
     virtual const std::string                &getSn() const                                           = 0;

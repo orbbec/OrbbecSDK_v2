@@ -29,6 +29,7 @@ namespace libobsensor {
 using namespace playback;
 
 PlaybackDevice::PlaybackDevice(const std::string &filePath) : filePath_(filePath), port_(std::make_shared<PlaybackDevicePort>(filePath)) {
+    isPlaybackDevice_ = true;
     init();
 }
 
