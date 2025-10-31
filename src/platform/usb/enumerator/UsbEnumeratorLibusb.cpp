@@ -161,7 +161,7 @@ std::string getStringDesc(libusb_device_handle *deviceHandle, uint8_t descIndex)
     char str[256];
     auto rst = libusb_get_string_descriptor_ascii(deviceHandle, descIndex, reinterpret_cast<unsigned char *>(str), 256);  // get length
     if(rst < 0) {
-        LOG_ERROR("Failed to get string descriptor: error={}", libusb_strerror(rst));
+        LOG_ERROR("Failed to get string descriptor {}: error={}", descIndex, libusb_strerror(rst));
         return "";
     }
     str[rst] = '\0';
@@ -415,11 +415,10 @@ const std::vector<UsbInterfaceInfo> &UsbEnumeratorLibusb::queryUsbInterfaces() {
             inf.serial  = serial;
             inf.infName = getStringDesc(handle, inf.infNameDescIndex);
             if(inf.infName.empty()) {
-                LOG_ERROR("Failed to query USB device interface name");
+                LOG_ERROR("Failed to query USB device interface name. SN: {}", serial);
+                // ignore the error
             }
-            else {
-                tempInfoList.push_back(inf);
-            }
+            tempInfoList.push_back(inf);
         }
 
         libusb_close(handle);
