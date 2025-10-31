@@ -171,11 +171,14 @@ std::shared_ptr<ISourcePort> LinuxUsbPal::getSourcePort(std::shared_ptr<const So
         }
 
         if(backend == OB_UVC_BACKEND_TYPE_V4L2) {
+#ifdef BUILD_GMSL_PAL
             if(ObV4lGmslDevicePort::isGmslDeviceForPlatformNvidia(usbPortInfo)) {
                 port = std::make_shared<ObV4lGmslDevicePort>(usbPortInfo);
                 LOG_DEBUG("GMSL device have been create with V4L2 backend! dev: {}, inf: {}", usbPortInfo->url, usbPortInfo->infUrl);
             }
-            else {
+            else
+#endif
+            {
                 port = std::make_shared<ObV4lUvcDevicePort>(usbPortInfo);
                 LOG_DEBUG("UVC device have been create with V4L2 backend! dev: {}, inf: {}", usbPortInfo->url, usbPortInfo->infUrl);
             }
@@ -192,11 +195,14 @@ std::shared_ptr<ISourcePort> LinuxUsbPal::getSourcePort(std::shared_ptr<const So
     }
     case SOURCE_PORT_USB_HID: {
         auto usbPortInfo = std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo);
+#ifdef BUILD_GMSL_PAL
         if(ObV4lGmslDevicePort::isGmslDeviceForPlatformNvidia(usbPortInfo)) {
             port = std::make_shared<HidDevicePortGmsl>(usbPortInfo);
             LOG_DEBUG("GMSL device have been create with HID backend! dev: {}, inf: {}", usbPortInfo->url, usbPortInfo->infUrl);
         }
-        else {
+        else
+#endif
+        {
             auto usbDev = usbEnumerator_->openUsbDevice(std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->url);
             if(usbDev == nullptr) {
                 throw libobsensor::camera_disconnected_exception("usbEnumerator openUsbDevice failed!");
@@ -268,11 +274,14 @@ std::shared_ptr<ISourcePort> LinuxUsbPal::getUvcSourcePort(std::shared_ptr<const
     }
 
     if(backend == OB_UVC_BACKEND_TYPE_V4L2) {
+#ifdef BUILD_GMSL_PAL
         if(ObV4lGmslDevicePort::isGmslDeviceForPlatformNvidia(usbPortInfo)) {
             port = std::make_shared<ObV4lGmslDevicePort>(usbPortInfo);
             LOG_DEBUG("GMSL device have been create with V4L2 backend! dev: {}, inf: {}", usbPortInfo->url, usbPortInfo->infUrl);
         }
-        else {
+        else
+#endif
+        {
             port = std::make_shared<ObV4lUvcDevicePort>(usbPortInfo);
             LOG_DEBUG("UVC device have been create with V4L2 backend! dev: {}, inf: {}", usbPortInfo->url, usbPortInfo->infUrl);
         }
