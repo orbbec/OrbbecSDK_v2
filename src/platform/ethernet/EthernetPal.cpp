@@ -14,7 +14,6 @@ namespace libobsensor {
 const uint16_t DEFAULT_CMD_PORT                           = 8090;
 const uint16_t DEVICE_WATCHER_POLLING_INTERVAL_MSEC       = 3000;
 const uint16_t DEVICE_WATCHER_POLLING_SHORT_INTERVAL_MSEC = 1000;
-const uint16_t MDNS_WATCHER_POLLING_INTERVAL_MSEC         = 2000;
 
 EthernetPal::EthernetPal() {
     mdnsDiscovery_ = MDNSDiscovery::getInstance();
@@ -28,15 +27,18 @@ EthernetPal::~EthernetPal() noexcept {
 }
 
 void EthernetPal::start(deviceChangedCallback callback) {
-    callback_          = callback;
-    stopWatch_         = false;
+    callback_  = callback;
+    stopWatch_ = false;
+
+    auto getNow = []() {
+        // get now
+        return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+    };
+
+    // GVCP device
     deviceWatchThread_ = std::thread([&]() {
         std::mutex                   mutex;
         std::unique_lock<std::mutex> lock(mutex);
-        auto                         getNow = []() {
-            // get now
-            return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
-        };
         while(!stopWatch_) {
             auto list    = GVCPClient::instance().queryNetDeviceList();
             auto start   = getNow();
@@ -81,6 +83,7 @@ void EthernetPal::start(deviceChangedCallback callback) {
 
         while(!stopWatch_) {
             auto list    = mdnsDiscovery_->queryDeviceList();
+            auto start   = getNow();
             auto added   = utils::subtract_sets(list, mdnsDevInfoList_);
             auto removed = utils::subtract_sets(mdnsDevInfoList_, list);
             updateMDNSDeviceSourceInfo(added, removed);
@@ -103,7 +106,20 @@ void EthernetPal::start(deviceChangedCallback callback) {
             }
 
             mdnsDevInfoList_ = list;
-            mdnsCondVar_.wait_for(lock, std::chrono::milliseconds(MDNS_WATCHER_POLLING_INTERVAL_MSEC), [&]() { return stopWatch_.load(); });
+
+            // calc the interval
+            int64_t interval = DEVICE_WATCHER_POLLING_INTERVAL_MSEC;
+            if(netDevInfoList_.empty()) {
+                // Speed up discovery when no devices are found
+                interval = DEVICE_WATCHER_POLLING_SHORT_INTERVAL_MSEC;
+            }
+            auto now = getNow();
+            if(now >= start + interval) {
+                // Callback takes too long, query the device list immediately for optimization
+                continue;
+            }
+            interval = start + interval - now;
+            mdnsCondVar_.wait_for(lock, std::chrono::milliseconds(interval), [&]() { return stopWatch_.load(); });
         }
 
         mdnsDiscovery_->refreshQuery();

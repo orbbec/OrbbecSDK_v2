@@ -7,8 +7,6 @@
 #include <string>
 #include <cstdint>
 #include "common/DeviceSeriesInfo.hpp"
-#include <string>
-
 namespace libobsensor {
 const std::vector<uint16_t> BootDevPids = {
     0x0501,  // bootloader
