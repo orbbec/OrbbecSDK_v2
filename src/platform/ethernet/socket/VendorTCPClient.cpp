@@ -149,9 +149,10 @@ void VendorTCPClient::socketConnect() {
     // Set to non-blocking; handle connect timeout
     rst = ioctlsocket(socketFd_, FIONBIO, &mode);
     if(rst < 0) {
+        rst = GET_LAST_ERROR();
         socketClose();
         throw libobsensor::invalid_value_exception(utils::string::to_string() << "VendorTCPClient: ioctlsocket to non-blocking mode failed! addr=" << address_
-                                                                              << ", port=" << port_ << ", err_code=" << GET_LAST_ERROR());
+                                                                              << ", port=" << port_ << ", err_code=" << rst);
     }
 
 #if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
@@ -161,15 +162,17 @@ void VendorTCPClient::socketConnect() {
         localAddr.sin_family = AF_INET;
         localAddr.sin_port   = htons(0);
         if(inet_pton(AF_INET, localAddress_.c_str(), &localAddr.sin_addr) <= 0) {
+            rst = GET_LAST_ERROR();
             socketClose();
-            throw libobsensor::invalid_value_exception(utils::string::to_string() << "VendorTCPClient: Invalid local ip address! addr=" << localAddress_
-                                                                                  << ", err_code=" << GET_LAST_ERROR());
+            throw libobsensor::invalid_value_exception(utils::string::to_string()
+                                                       << "VendorTCPClient: Invalid local ip address! addr=" << localAddress_ << ", err_code=" << rst);
         }
 
         if(bind(socketFd_, (struct sockaddr *)&localAddr, sizeof(localAddr)) < 0) {
+            rst = GET_LAST_ERROR();
             socketClose();
             throw libobsensor::invalid_value_exception(utils::string::to_string()
-                                                       << "VendorTCPClient: local ip bind failed! addr=" << localAddress_ << ", err_code=" << GET_LAST_ERROR());
+                                                       << "VendorTCPClient: local ip bind failed! addr=" << localAddress_ << ", err_code=" << rst);
         }
         LOG_DEBUG("bind local address success!");
     }
@@ -179,8 +182,9 @@ void VendorTCPClient::socketConnect() {
     serverAddr.sin_family = AF_INET;                                       // ipv4
     serverAddr.sin_port   = htons(port_);                                  // convert uint16_t from host to network byte sequence
     if(inet_pton(AF_INET, address_.c_str(), &serverAddr.sin_addr) <= 0) {  // address string to sin_addr
+        rst = GET_LAST_ERROR();
         socketClose();
-        throw libobsensor::invalid_value_exception("Invalid address!");
+        throw libobsensor::invalid_value_exception("Invalid address! err_code=" + std::to_string(rst));
     }
 
     rst = connect(socketFd_, (struct sockaddr *)&serverAddr, sizeof(serverAddr));
