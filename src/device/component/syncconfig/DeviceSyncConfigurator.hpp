@@ -7,12 +7,17 @@
 #include "IDevice.hpp"
 #include "IDeviceSyncConfigurator.hpp"
 #include "DeviceComponentBase.hpp"
+#include "IFrameTimestamp.hpp"
 
 #include <vector>
 #include <memory>
 #include <map>
 
 namespace libobsensor {
+
+struct OBDeviceSoftSyncTime {
+    uint64_t deviceTriggerTime;
+};
 
 class DeviceSyncConfigurator : public IDeviceSyncConfigurator, public DeviceComponentBase {
 public:
@@ -23,6 +28,7 @@ public:
     void                    setSyncConfig(const OBMultiDeviceSyncConfig &deviceSyncConfig) override;
     uint16_t                getSupportedSyncModeBitmap() override;
     void                    triggerCapture() override;
+    void                    triggerTimeCapture(uint64_t systemTime, uint64_t triggerTime, LinearFuncParam param);
 
 private:
     const std::vector<OBMultiDeviceSyncMode> supportedSyncModes_;

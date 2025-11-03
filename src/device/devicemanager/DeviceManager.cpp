@@ -7,6 +7,8 @@
 #include "IDeviceActivityRecorder.hpp"
 #include "IFrameTimestamp.hpp"
 #include "DeviceBase.hpp"
+#include "IDeviceSyncConfigurator.hpp"
+#include "component/syncconfig/DeviceSyncConfigurator.hpp"
 
 #if defined(BUILD_USB_PAL)
 #include "UsbDeviceEnumerator.hpp"
@@ -324,6 +326,30 @@ void DeviceManager::enableDeviceClockSync(uint64_t repeatInterval) {
             multiDeviceSyncCv_.wait_for(lock, std::chrono::milliseconds(multiDeviceSyncIntervalMs_));
         } while(multiDeviceSyncIntervalMs_ > 0 && !destroy_);
     });
+}
+
+void DeviceManager::setMultiDeviceSoftSync(uint64_t softSyncTime) {
+    std::unique_lock<std::mutex> lock(createdDevicesMutex_);
+    if(!destroy_) {
+        auto currentSystemTime = utils::getNowTimesUs();
+        for(auto &item: createdDevices_) {
+            auto dev = item.second.lock();
+            if(!dev || !dev->isComponentExists(OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER)
+               || !dev->isComponentExists(OB_DEV_COMPONENT_DEVICE_SYNC_CONFIGURATOR)) {
+                continue;
+            }
+            auto            globalTimestampFilter = dev->getComponentT<IGlobalTimestampFitter>(OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER);
+            LinearFuncParam param                 = globalTimestampFilter->getLinearFuncParam();
+
+            auto configurator = dev->getComponentT<IDeviceSyncConfigurator>(OB_DEV_COMPONENT_DEVICE_SYNC_CONFIGURATOR);
+            auto config       = configurator->getSyncConfig();
+            if(config.syncMode == OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_SYNCED) {
+                if(auto impl = configurator.as<DeviceSyncConfigurator>()) {
+                    impl->triggerTimeCapture(currentSystemTime, softSyncTime, param);
+                }
+            }
+        }
+    }
 }
 
 void DeviceManager::enableNetDeviceEnumeration(bool enable) {

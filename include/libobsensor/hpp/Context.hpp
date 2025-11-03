@@ -206,6 +206,17 @@ public:
     }
 
     /**
+     * @brief Trigger data acquisition on all devices configured for software synchronization, ensuring they capture data based on the same system time.
+     *
+     * @param[in] softSyncTime The time to synchronize, in microseconds. If the value is 0, synchronization is performed immediately.
+     */
+    void setMultieDeviceSoftSyncTimeCapture(uint64_t softSyncTime) const {
+        ob_error *error = nullptr;
+        ob_multie_device_soft_sync_capture(impl_, softSyncTime, &error);
+        Error::handle(&error);
+    }
+
+    /**
      * @brief Frees idle memory from the internal frame memory pool.
      * @brief The SDK includes an internal frame memory pool that caches memory allocated for frames received from devices.
      */

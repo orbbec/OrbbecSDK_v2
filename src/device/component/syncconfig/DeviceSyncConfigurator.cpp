@@ -4,6 +4,9 @@
 #include "DeviceSyncConfigurator.hpp"
 #include "exception/ObException.hpp"
 #include "InternalTypes.hpp"
+#include "IDevice.hpp"
+#include "component/property/InternalProperty.hpp"
+
 #include <map>
 
 namespace libobsensor {
@@ -112,6 +115,16 @@ void DeviceSyncConfigurator::triggerCapture() {
     auto owner          = getOwner();
     auto propertyServer = owner->getPropertyServer();
     propertyServer->setPropertyValueT(OB_PROP_CAPTURE_IMAGE_SIGNAL_BOOL, true);
+}
+
+void DeviceSyncConfigurator::triggerTimeCapture(uint64_t systemTime, uint64_t triggerTime, LinearFuncParam param) {
+    auto                 deviceTime = (systemTime + triggerTime - param.constantB) / param.coefficientA;
+    OBDeviceSoftSyncTime deviceSoftSyncTime{ static_cast<uint64_t>(std::llround(deviceTime)) };
+    std::vector<uint8_t> data(sizeof(deviceSoftSyncTime));
+    memcpy(data.data(), &deviceSoftSyncTime, sizeof(deviceSoftSyncTime));
+    auto owner          = getOwner();
+    auto propertyServer = owner->getPropertyServer();
+    propertyServer->setStructureData(OB_STRUCT_SOFTWARE_SYNCED_TARGET_TIME, data, PROP_ACCESS_INTERNAL);
 }
 
 const std::map<OBMultiDeviceSyncMode, OBSyncMode> DefaultSyncModeMapV2ToV1 = {

@@ -1382,6 +1382,10 @@ typedef enum {
      */
     OB_MULTI_DEVICE_SYNC_MODE_IR_IMU_SYNC = 1 << 7,
 
+    /**
+     * @brief The device captures data in software synchronization mode, starting acquisition based on the system time.
+     */
+    OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_SYNCED = 1 << 8,
 } ob_multi_device_sync_mode,
     OBMultiDeviceSyncMode;
 

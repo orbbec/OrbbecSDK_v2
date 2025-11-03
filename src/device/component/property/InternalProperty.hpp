@@ -48,13 +48,14 @@ typedef enum {
     OB_STRUCT_GET_GYRO_PRESETS_FULL_SCALE_LIST  = 1033, /**< Get the range list supported by the gyroscope*/
     OB_STRUCT_GET_ACCEL_PRESETS_FULL_SCALE_LIST = 1034, /**< Get the range list supported by the accelerometer*/
 
-    OB_STRUCT_COLOR_STREAM_PROFILE    = 1048, /**< set stream profile to color*/
-    OB_STRUCT_DEPTH_STREAM_PROFILE    = 1049, /**< set stream profile to depth*/
-    OB_STRUCT_IR_STREAM_PROFILE       = 1050, /**< set stream profile to ir or left ir*/
-    OB_STRUCT_IR_RIGHT_STREAM_PROFILE = 1065, /**< set stream profile to right ir*/
-    OB_RAW_DATA_DUAL_CAMERA_PARAMS_0  = 4045, /**< Obtain Mx6000 binocular Content0 parameters */
-    OB_RAW_DATA_DUAL_CAMERA_PARAMS_1  = 4046, /**< Obtain Mx6000 binocular Content1 parameters */
-    OB_RAW_DATA_DUAL_CAMERA_PARAMS_2  = 4047, /**< Obtain Mx6000 binocular Content2 parameters */
+    OB_STRUCT_COLOR_STREAM_PROFILE        = 1048, /**< set stream profile to color*/
+    OB_STRUCT_DEPTH_STREAM_PROFILE        = 1049, /**< set stream profile to depth*/
+    OB_STRUCT_IR_STREAM_PROFILE           = 1050, /**< set stream profile to ir or left ir*/
+    OB_STRUCT_IR_RIGHT_STREAM_PROFILE     = 1065, /**< set stream profile to right ir*/
+    OB_STRUCT_SOFTWARE_SYNCED_TARGET_TIME = 1076, /**< Soft sync capture image*/
+    OB_RAW_DATA_DUAL_CAMERA_PARAMS_0      = 4045, /**< Obtain Mx6000 binocular Content0 parameters */
+    OB_RAW_DATA_DUAL_CAMERA_PARAMS_1      = 4046, /**< Obtain Mx6000 binocular Content1 parameters */
+    OB_RAW_DATA_DUAL_CAMERA_PARAMS_2      = 4047, /**< Obtain Mx6000 binocular Content2 parameters */
 
     OB_PROP_IMU_STREAM_PORT_INT = 3026, /**< set stream port to imu*/
 

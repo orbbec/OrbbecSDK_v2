@@ -134,6 +134,13 @@ void ob_enable_device_clock_sync(ob_context *context, uint64_t repeat_interval_m
 }
 HANDLE_EXCEPTIONS_NO_RETURN(context, repeat_interval_msec)
 
+void ob_multie_device_soft_sync_capture(ob_context *context, uint64_t soft_sync_time, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(context);
+    auto deviceMgr = context->context->getDeviceManager();
+    deviceMgr->setMultiDeviceSoftSync(soft_sync_time);
+}
+HANDLE_EXCEPTIONS_NO_RETURN(context, soft_sync_time)
+
 void ob_free_idle_memory(ob_context *context, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(context);
     auto frameMemPool = context->context->getFrameMemoryPool();

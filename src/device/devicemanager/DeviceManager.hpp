@@ -39,7 +39,7 @@ public:
     bool isNetDeviceEnumerationEnable() const override;
 
     void enableDeviceClockSync(uint64_t repeatInterval) override;
-
+    void setMultiDeviceSoftSync(uint64_t softSyncTime) override; 
 private:
     void onDeviceChanged(const DeviceEnumInfoList &removed, const DeviceEnumInfoList &added);
 
