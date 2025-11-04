@@ -96,7 +96,7 @@ int getPidSn(const std::string &dev_name, void *data) {
     return 0;
 }
 
-int getGmslDeviceInfoFromFW(const std::string &dev_name, void *data, bool &linkState) {
+int getGmslDeviceInfoFromFW(const std::string &dev_name, void *data, bool &metadataEmbedded) {
     int ret = 0, fd = -1;
     // LOG_DEBUG("-Entry get_pid_sn dev_name:{}", dev_name);
 
@@ -125,20 +125,20 @@ int getGmslDeviceInfoFromFW(const std::string &dev_name, void *data, bool &linkS
         ret = -1;
     }
 
-    // get link state
+    // get metadata place
     int retry = 0;
     do {
-        v4l2_control ctrlLink{};
-        ctrlLink.id  = G2R_CAMERA_CID_GET_LINK_STATE;
-        ret = ioctl(fd, VIDIOC_G_CTRL, &ctrlLink);
+        v4l2_control ctrlMetadata{};
+        ctrlMetadata.id = G2R_CAMERA_CID_GET_METADATA_PLACE;
+        ret             = ioctl(fd, VIDIOC_G_CTRL, &ctrlMetadata);
         if(ret < 0) {
-            LOG_WARN("ioctl failed on getting link_state(retry: {}). Ignore it. error: {}", retry, strerror(errno));
+            LOG_WARN("ioctl failed on getting metadata place(retry: {}). Ignore it. error: {}", retry, strerror(errno));
             ++retry;
             ret = 0;
             continue;
         }
-        LOG_DEBUG("Device: {}, link_state: {}", dev_name, ctrlLink.value);
-        linkState = ctrlLink.value == 1;
+        LOG_DEBUG("Device: {}, metadata place: {}", dev_name, ctrlMetadata.value);
+        metadataEmbedded = ctrlMetadata.value == 1;
         ret       = 0;
         break;
     } while(retry < 3);
@@ -1923,9 +1923,9 @@ const std::vector<UsbInterfaceInfo> ObV4lGmslDevicePort::queryDevicesInfo() {
         getV4lDeviceBusInfo(devName, bus_info, card);
 
         struct orbbec_device_info devInfo;
-        bool                      linkState = false;
+        bool                      metadataEmbedded = false;
         memset(&devInfo, 0, sizeof(orbbec_device_info));
-        int res = getGmslDeviceInfoFromFW(devName, &devInfo, linkState);
+        int res = getGmslDeviceInfoFromFW(devName, &devInfo, metadataEmbedded);
         if(res != 0) {
             LOG_DEBUG("getGmslDeviceInfoFromFW failed! devName:{}", devName);
             continue;
@@ -1943,7 +1943,7 @@ const std::vector<UsbInterfaceInfo> ObV4lGmslDevicePort::queryDevicesInfo() {
         info.uid              = "gmsl2-" + std::to_string(devInfo.cam_num);
         info.conn_spec        = gmsl2_type;
         info.cls              = OB_USB_CLASS_VIDEO;  // borrowed from usb
-        if(linkState) {
+        if(metadataEmbedded) {
             info.flag |= USB_INTERFACE_METADATA_EMBEDDED_MODE;
         }
 
