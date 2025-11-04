@@ -21,7 +21,11 @@ PointCloudFilter::PointCloudFilter()
       depthTablesDataSize_(0),
       rgbdTablesDataSize_(0),
       depthTablesData_(nullptr),
-      rgbdTablesData_(nullptr) {
+      rgbdTablesData_(nullptr),
+      decimationFactor_(1),
+      patchSize_(1),
+      optionsChanged_(false),
+      recalcProfile_(false){
 
     depthXyTables_.xTable = nullptr;
     depthXyTables_.yTable = nullptr;
@@ -58,10 +62,15 @@ void PointCloudFilter::reset() {
         rgbdXyTables_.height = 0;
         rgbdXyTables_.width  = 0;
     }
+
+    optionsChanged_ = true;
+    registeredProfiles_.clear();
+    sourceStreamProfile_.reset();
+    targetStreamProfile_.reset();
 }
 
 void PointCloudFilter::updateConfig(std::vector<std::string> &params) {
-    if(params.size() != 5) {
+    if(params.size() != 6) {
         throw invalid_value_exception("PointCloudFilter config error: params size not match");
     }
     try {
@@ -86,6 +95,16 @@ void PointCloudFilter::updateConfig(std::vector<std::string> &params) {
 
         int outputZeroPointState = std::stoi(params[4]);
         isOutputZeroPoint_       = outputZeroPointState == 0 ? false : true;
+
+        int decimateValue = std::stoi(params[5]);
+        if(decimateValue >= 1 && decimateValue <= 8) {
+            if(decimateValue != decimationFactor_) {
+                uint8_t controlVal = static_cast<uint8_t>(decimateValue);
+                patchSize_        = controlVal;
+                decimationFactor_ = controlVal;
+                optionsChanged_   = true;
+            }
+        }
     }
     catch(const std::exception &e) {
         throw invalid_value_exception("PointCloudFilter config error: " + std::string(e.what()));
@@ -98,7 +117,8 @@ const std::string &PointCloudFilter::getConfigSchema() const {
                                       "coordinateDataScale, float, 0.00000001, 100, 0.00001, 1.0, coordinate data scale\n"
                                       "colorDataNormalization, integer, 0, 1, 1, 0, color data normal state\n"
                                       "coordinateSystemType, integer, 0, 1, 1, 1, Coordinate system representation type: 0 is left hand; 1 is right hand\n"
-                                      "outputZeroPoint, integer, 0, 1, 1, 1, output zero point\n";
+                                      "outputZeroPoint, integer, 0, 1, 1, 1, output zero point\n"
+                                      "decimate, integer, 1, 8, 1, 1, value decimate factor\n";
     return schema;
 }
 
@@ -128,6 +148,7 @@ std::shared_ptr<Frame> PointCloudFilter::createDepthPointCloud(std::shared_ptr<c
         LOG_ERROR_INTVL("Acquire point cloud frame failed!");
         return nullptr;
     }
+    memset((void *)pointFrame->getData(), 0, pointFrame->getDataSize());
 
     auto frameSize = depthWidth * depthHeight * 2;
     if(depthTablesData_ && depthTablesDataSize_ != frameSize) {
@@ -148,21 +169,28 @@ std::shared_ptr<Frame> PointCloudFilter::createDepthPointCloud(std::shared_ptr<c
         }
     }
 
+    updateOutputProfile(depthFrame);
+
+    uint32_t width = targetStreamProfile_->getWidth();
+    pointFrame->as<PointsFrame>()->setWidth(width);
+
+    uint32_t height = targetStreamProfile_->getHeight();
+    pointFrame->as<PointsFrame>()->setHeight(height);
+
     uint32_t validPointCount = 0;
     CoordinateUtil::transformationDepthToPointCloud(&depthXyTables_, depthFrame->getData(), (void *)pointFrame->getData(), isOutputZeroPoint_, &validPointCount,
-                                                    positionDataScale_,
-                                                    coordinateSystemType_, depthFrame->getFormat() == OB_FORMAT_Y12C4);
+                                                    positionDataScale_, coordinateSystemType_, depthFrame->getFormat() == OB_FORMAT_Y12C4, decimationFactor_, width);
 
-    pointFrame->setDataSize(validPointCount * sizeof(OBPoint));
+    if(!isOutputZeroPoint_) {
+        pointFrame->setDataSize(validPointCount * sizeof(OBPoint));
+    }
+    else {
+        pointFrame->setDataSize(width * height * sizeof(OBPoint));
+    }
     float depthValueScale = depthFrame->as<DepthFrame>()->getValueScale();
     pointFrame->copyInfoFromOther(depthFrame);
     // Actual coordinate scaling = Depth scaling factor / Set coordinate scaling factor.
     pointFrame->as<PointsFrame>()->setCoordinateValueScale(depthValueScale / positionDataScale_);
-    uint32_t width = depthFrame->as<DepthFrame>()->getWidth();
-    pointFrame->as<PointsFrame>()->setWidth(width);
-
-    uint32_t height = depthFrame->as<DepthFrame>()->getHeight();
-    pointFrame->as<PointsFrame>()->setHeight(height);
 
     return pointFrame;
 }
@@ -201,6 +229,7 @@ std::shared_ptr<Frame> PointCloudFilter::createRGBDPointCloud(std::shared_ptr<co
         LOG_WARN_INTVL("Acquire point cloud frame failed!");
         return nullptr;
     }
+    memset((void *)pointFrame->getData(), 0, pointFrame->getDataSize());
 
     // decode rgb frame
     if(formatConverter_ == nullptr) {
@@ -310,29 +339,39 @@ std::shared_ptr<Frame> PointCloudFilter::createRGBDPointCloud(std::shared_ptr<co
         }
     }
 
+    updateOutputProfile(depthFrame);
+
+    uint32_t width = targetStreamProfile_->getWidth();
+    pointFrame->as<PointsFrame>()->setWidth(width);
+
+    uint32_t height = targetStreamProfile_->getHeight();
+    pointFrame->as<PointsFrame>()->setHeight(height);
+
     uint32_t validPointCount = 0;
     if(distortionType == OBPointCloudDistortionType::OB_POINT_CLOUD_ADD_DISTORTION_TYPE) {
         CoordinateUtil::transformationDepthToRGBDPointCloudByUVTables(dstIntrinsic, &rgbdXyTables_, depthFrame->getData(), colorData,
                                                                       (void *)pointFrame->getData(), isOutputZeroPoint_, &validPointCount, 
-                                                                      positionDataScale_,coordinateSystemType_,isColorDataNormalization_, depthFrame->getFormat() == OB_FORMAT_Y12C4);
+                                                                      positionDataScale_, coordinateSystemType_, isColorDataNormalization_, depthFrame->getFormat() == OB_FORMAT_Y12C4, decimationFactor_, width);
     }
     else {
         CoordinateUtil::transformationDepthToRGBDPointCloud(&rgbdXyTables_, depthFrame->getData(), colorData, (void *)pointFrame->getData(), 
                                                             isOutputZeroPoint_,&validPointCount,positionDataScale_,
-                                                            coordinateSystemType_, isColorDataNormalization_, colorVideoFrame->getWidth(),
-                                                            colorVideoFrame->getHeight(), depthFrame->getFormat() == OB_FORMAT_Y12C4);
+                                                            coordinateSystemType_, isColorDataNormalization_, colorVideoFrame->getWidth(), colorVideoFrame->getHeight(),
+                                                            depthFrame->getFormat() == OB_FORMAT_Y12C4, decimationFactor_, width);
     }
 
-    pointFrame->setDataSize(validPointCount * sizeof(OBColorPoint));
+    
+    if(!isOutputZeroPoint_) {
+        pointFrame->setDataSize(validPointCount * sizeof(OBColorPoint));
+    }
+    else {
+        pointFrame->setDataSize(width * height * sizeof(OBColorPoint));
+    }
     float depthValueScale = depthVideoFrame->as<DepthFrame>()->getValueScale();
     pointFrame->copyInfoFromOther(depthFrame);
     // Actual coordinate scaling = Depth scaling factor / Set coordinate scaling factor.
     pointFrame->as<PointsFrame>()->setCoordinateValueScale(depthValueScale / positionDataScale_);
-    uint32_t width = depthFrame->as<DepthFrame>()->getWidth();
-    pointFrame->as<PointsFrame>()->setWidth(width);
 
-    uint32_t height = depthFrame->as<DepthFrame>()->getHeight();
-    pointFrame->as<PointsFrame>()->setHeight(height);
     return pointFrame;
 }
 
@@ -367,6 +406,61 @@ PointCloudFilter::OBPointCloudDistortionType PointCloudFilter::getDistortionType
         type = OBPointCloudDistortionType::OB_POINT_CLOUD_ZERO_DISTORTION_TYPE;
     }
     return type;
+}
+
+
+void PointCloudFilter::updateOutputProfile(const std::shared_ptr<const Frame> frame) {
+    auto streamProfile = frame->getStreamProfile()->as<VideoStreamProfile>();
+    if(optionsChanged_ || !sourceStreamProfile_ || !(*(streamProfile) == *(sourceStreamProfile_))) {
+        optionsChanged_       = false;
+        sourceStreamProfile_ = streamProfile->clone()->as<VideoStreamProfile>();
+        std::stringstream oss;
+        *sourceStreamProfile_ << oss;
+        const auto pf = registeredProfiles_.find(std::make_tuple(oss.str(), decimationFactor_));
+        if(registeredProfiles_.end() != pf) {
+            targetStreamProfile_ = pf->second;
+        }
+        else {
+            recalcProfile_ = true;
+        }
+    }
+
+    // Build a new target profile for every system/filter change
+    if(recalcProfile_) {
+        auto source_vsp = sourceStreamProfile_->as<VideoStreamProfile>();
+
+        // recalculate real/padded output frame size based on new input porperties
+        uint16_t realWidth  = (uint16_t)source_vsp->getWidth() / patchSize_;
+        uint16_t realHeight = (uint16_t)source_vsp->getHeight() / patchSize_;
+
+        // The resulted frame dimension will be dividable by 4;
+        uint16_t paddedWidth = realWidth + 3;
+        paddedWidth /= 4;
+        paddedWidth *= 4;
+
+        uint16_t paddedHeight = realHeight + 3;
+        paddedHeight /= 4;
+        paddedHeight *= 4;
+
+        auto intrinsic   = source_vsp->getIntrinsic();
+        intrinsic.width  = paddedWidth;
+        intrinsic.height = paddedHeight;
+        intrinsic.fx     = intrinsic.fx / patchSize_;
+        intrinsic.fy     = intrinsic.fy / patchSize_;
+        intrinsic.cx     = intrinsic.cx / patchSize_;
+        intrinsic.cy     = intrinsic.cy / patchSize_;
+
+        targetStreamProfile_ = source_vsp->clone()->as<VideoStreamProfile>();
+        targetStreamProfile_->setWidth(paddedWidth);
+        targetStreamProfile_->setHeight(paddedHeight);
+        // extrinsic and distortion parameters remain unchanged.
+        targetStreamProfile_->bindIntrinsic(intrinsic);
+        std::stringstream oss;
+        *sourceStreamProfile_ << oss;
+        registeredProfiles_[std::make_tuple(oss.str(), decimationFactor_)] = targetStreamProfile_;
+
+        recalcProfile_ = false;
+    }
 }
 
 }  // namespace libobsensor

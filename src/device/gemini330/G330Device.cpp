@@ -2164,7 +2164,7 @@ std::shared_ptr<const StreamProfile> G330NetDevice::loadDefaultStreamProfile(OBS
 
     // USB2.0 default resolution config
     if(netBandwidth_ == 100) {
-        LOG_DEBUG("loadDefaultStreamProfile set USB2.1 device default stream profile.");
+        LOG_DEBUG("loadDefaultStreamProfile set 100Mbps network device default stream profile.");
         switch(sensorType) {
         case OB_SENSOR_DEPTH:
             defFormat     = OB_FORMAT_Y16;

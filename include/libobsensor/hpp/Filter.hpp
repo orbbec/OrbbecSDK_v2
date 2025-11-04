@@ -396,6 +396,29 @@ public:
         setConfigValue("coordinateSystemType", static_cast<double>(type));
     }
 
+    /**
+     * @brief Set the point cloud decimation factor.
+     *
+     * @brief Calling this function to decimation factor will output thedownsampled data of the the cloud frame
+     *
+     * @param factor The decimation factor.
+     */
+    void setDecimationFactor(int value) {
+        setConfigValue("decimate", value);
+    }
+
+    /**
+     * @brief Get the property range of the decimation factor range.
+     */
+    OBIntPropertyRange getDecimationFactorRange() {
+        OBIntPropertyRange scaleRange{};
+        if(configSchemaVec_.size() != 0) {
+            const auto &item = configSchemaVec_[5];
+            scaleRange       = getPropertyRange<OBIntPropertyRange>(item, getConfigValue("decimate"));
+        }
+        return scaleRange;
+    }
+
 public:
     // The following interfaces are deprecated and are retained here for compatibility purposes.
     void setPositionDataScaled(float scale) {

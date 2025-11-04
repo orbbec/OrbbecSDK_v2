@@ -4,7 +4,9 @@
 #pragma once
 #include "IFilter.hpp"
 #include "FormatConverterProcess.hpp"
+#include "stream/StreamProfile.hpp"
 #include <mutex>
+#include <map>
 
 namespace libobsensor {
 
@@ -41,6 +43,9 @@ private:
 
     PointCloudFilter::OBPointCloudDistortionType getDistortionType(OBCameraDistortion colorDistortion, OBCameraDistortion depthDistortion);
 
+    void updateOutputProfile(const std::shared_ptr<const Frame> frame);
+
+
 protected:
     OBFormat               pointFormat_;
     float                  positionDataScale_;
@@ -56,6 +61,16 @@ protected:
     std::shared_ptr<float> rgbdTablesData_;
     OBXYTables             depthXyTables_;
     OBXYTables             rgbdXyTables_;
+
+
+    std::map<std::tuple<std::string, uint8_t>, std::shared_ptr<VideoStreamProfile>> registeredProfiles_;
+    std::shared_ptr<const VideoStreamProfile>                                       sourceStreamProfile_;
+    std::shared_ptr<VideoStreamProfile>                                             targetStreamProfile_;
+
+    uint8_t decimationFactor_;
+    uint8_t patchSize_;
+    bool    optionsChanged_;
+    bool    recalcProfile_;
 };
 
 }  // namespace libobsensor
