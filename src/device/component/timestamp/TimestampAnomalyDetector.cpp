@@ -4,6 +4,10 @@
 namespace libobsensor {
 TimestampAnomalyDetector::TimestampAnomalyDetector(IDevice *device) : cacheTimestamp_(0), maxValidTimestampDiff_(0), cacheFps_(0) {
     deviceSyncConfigurator_ = device->getComponentT<IDeviceSyncConfigurator>(OB_DEV_COMPONENT_DEVICE_SYNC_CONFIGURATOR).get();
+    if(deviceSyncConfigurator_) {
+        // Warm up device cache by preloading sync config
+        (void)deviceSyncConfigurator_->getSyncConfig();
+    }
 }
 
 void TimestampAnomalyDetector::setCurrentFps(uint32_t fps) {
