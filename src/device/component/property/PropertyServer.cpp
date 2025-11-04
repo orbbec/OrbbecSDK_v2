@@ -163,15 +163,16 @@ void PropertyServer::setPropertyValue(uint32_t propertyId, OBPropertyValue value
         LOG_DEBUG("Property {} alias to {}", propId, propertyId);
     }
 
-    auto basicAccessor = std::dynamic_pointer_cast<IBasicPropertyAccessor>(accessor);
+    utils::Timer timer;
+    auto         basicAccessor = std::dynamic_pointer_cast<IBasicPropertyAccessor>(accessor);
     basicAccessor->setPropertyValue(propId, value);
 
     for(auto &callback: it->second.accessCallbacks) {
         auto data = reinterpret_cast<uint8_t *>(&value);
         callback(propertyId, data, sizeof(OBPropertyValue), PROP_OP_WRITE);
     }
-
-    LOG_DEBUG("Property {} set to {}|{}", propId, value.intValue, value.floatValue);
+    auto delta = timer.touchUs();
+    LOG_DEBUG("[delta: {}us] Property {} set to {}|{}", delta, propId, value.intValue, value.floatValue);
 }
 
 void PropertyServer::getPropertyValue(uint32_t propertyId, OBPropertyValue *value, PropertyAccessType accessType) {
@@ -187,15 +188,16 @@ void PropertyServer::getPropertyValue(uint32_t propertyId, OBPropertyValue *valu
         LOG_DEBUG("Property {} alias to {}", propId, propertyId);
     }
 
-    auto basicAccessor = std::dynamic_pointer_cast<IBasicPropertyAccessor>(accessor);
+    utils::Timer timer;
+    auto         basicAccessor = std::dynamic_pointer_cast<IBasicPropertyAccessor>(accessor);
     basicAccessor->getPropertyValue(propId, value);
 
     for(auto &callback: it->second.accessCallbacks) {
         auto data = reinterpret_cast<uint8_t *>(value);
         callback(propertyId, data, sizeof(OBPropertyValue), PROP_OP_READ);
     }
-
-    LOG_DEBUG("Property {} get as {}|{}", propId, value->intValue, value->floatValue);
+    auto delta = timer.touchUs();
+    LOG_DEBUG("[delta: {}us] Property {} get as {}|{}", delta, propId, value->intValue, value->floatValue);
 }
 
 // std::vector<OBPropertyItem> PropertyServer::getProperties(PropertyAccessType accessType) const{
@@ -216,10 +218,12 @@ void PropertyServer::getPropertyRange(uint32_t propertyId, OBPropertyRange *rang
         LOG_DEBUG("Property {} alias to {}", propId, propertyId);
     }
 
-    auto basicAccessor = std::dynamic_pointer_cast<IBasicPropertyAccessor>(accessor);
+    utils::Timer timer;
+    auto         basicAccessor = std::dynamic_pointer_cast<IBasicPropertyAccessor>(accessor);
     basicAccessor->getPropertyRange(propId, range);
-    LOG_DEBUG("Property {} range as {}-{} step {} def {}|{}-{} step {} def {}", propId, range->min.intValue, range->max.intValue, range->step.intValue,
-              range->def.intValue, range->min.floatValue, range->max.floatValue, range->step.floatValue, range->def.floatValue);
+    auto delta = timer.touchUs();
+    LOG_DEBUG("[delta: {}us] Property {} range as {}-{} step {} def {}|{}-{} step {} def {}", delta, propId, range->min.intValue, range->max.intValue,
+              range->step.intValue, range->def.intValue, range->min.floatValue, range->max.floatValue, range->step.floatValue, range->def.floatValue);
 }
 
 void PropertyServer::setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data, PropertyAccessType accessType) {
@@ -238,12 +242,13 @@ void PropertyServer::setStructureData(uint32_t propertyId, const std::vector<uin
     if(structAccessor == nullptr) {
         throw invalid_value_exception(utils::string::to_string() << "Property" << propId << " does not support structure data setting");
     }
+    utils::Timer timer;
     structAccessor->setStructureData(propId, data);
-
     for(auto &callback: it->second.accessCallbacks) {
         callback(propertyId, data.data(), data.size(), PROP_OP_WRITE);
     }
-    LOG_DEBUG("Property {} set structure data successfully", propId);
+    auto delta = timer.touchUs();
+    LOG_DEBUG("[delta: {}us] Property {} set structure data successfully", delta, propId);
 }
 
 const std::vector<uint8_t> &PropertyServer::getStructureData(uint32_t propertyId, PropertyAccessType accessType) {
@@ -263,11 +268,13 @@ const std::vector<uint8_t> &PropertyServer::getStructureData(uint32_t propertyId
     if(structAccessor == nullptr) {
         throw invalid_value_exception(utils::string::to_string() << "Property " << propId << " does not support structure data getting");
     }
-    const auto &data = structAccessor->getStructureData(propId);
+    utils::Timer timer;
+    const auto & data = structAccessor->getStructureData(propId);
     for(auto &callback: it->second.accessCallbacks) {
         callback(propertyId, data.data(), data.size(), PROP_OP_READ);
     }
-    LOG_DEBUG("Property {} get structure data successfully, size {}", propId, data.size());
+    auto delta = timer.touchUs();
+    LOG_DEBUG("[delta: {}us] Property {} get structure data successfully, size {}", delta, propId, data.size());
     return data;
 }
 
@@ -288,11 +295,13 @@ void PropertyServer::getRawData(uint32_t propertyId, GetDataCallback callback, P
         throw invalid_value_exception(utils::string::to_string() << "Property" << propId << " does not support raw data getting");
     }
 
+    utils::Timer timer;
     rawDataAccessor->getRawData(propId, callback);  // todo: add async support
     for(auto &accessCallback: it->second.accessCallbacks) {
         accessCallback(propertyId, nullptr, 0, PROP_OP_READ);
     }
-    LOG_DEBUG("Property {} get raw data successfully", propId);
+    auto delta = timer.touchUs();
+    LOG_DEBUG("[delta: {}us] Property {} get raw data successfully", delta, propId);
 }
 
 uint16_t PropertyServer::getCmdVersionProtoV1_1(uint32_t propertyId, PropertyAccessType accessType) {
@@ -312,8 +321,10 @@ uint16_t PropertyServer::getCmdVersionProtoV1_1(uint32_t propertyId, PropertyAcc
         throw invalid_value_exception(utils::string::to_string() << "Property" << propId << " does not support cmd version getting");
     }
 
-    auto ver = structAccessor->getCmdVersionProtoV1_1(propId);
-    LOG_DEBUG("Property {} get cmd version successfully, version {}", propId, ver);
+    utils::Timer timer;
+    auto         ver   = structAccessor->getCmdVersionProtoV1_1(propId);
+    auto         delta = timer.touchUs();
+    LOG_DEBUG("[delta: {}us] Property {} get cmd version successfully, version {}", delta, propId, ver);
     return ver;
 }
 
@@ -333,11 +344,13 @@ const std::vector<uint8_t> &PropertyServer::getStructureDataProtoV1_1(uint32_t p
     if(structAccessor == nullptr) {
         throw invalid_value_exception(utils::string::to_string() << "Property" << propId << " does not support structure data getting over proto v1.1");
     }
-    const auto &data = structAccessor->getStructureDataProtoV1_1(propId, cmdVersion);
+    utils::Timer timer;
+    const auto & data = structAccessor->getStructureDataProtoV1_1(propId, cmdVersion);
     for(auto callback: it->second.accessCallbacks) {
         callback(propertyId, data.data(), data.size(), PROP_OP_READ);
     }
-    LOG_DEBUG("Property {} get structure data successfully over proto v1.1, size {}", propId, data.size());
+    auto delta = timer.touchUs();
+    LOG_DEBUG("[delta: {}us] Property {} get structure data successfully over proto v1.1, size {}", delta, propId, data.size());
     return data;
 }
 
@@ -357,11 +370,13 @@ void PropertyServer::setStructureDataProtoV1_1(uint32_t propertyId, const std::v
     if(structAccessor == nullptr) {
         throw invalid_value_exception(utils::string::to_string() << "Property" << propId << " does not support structure data setting over proto v1.1");
     }
+    utils::Timer timer;
     structAccessor->setStructureDataProtoV1_1(propId, data, cmdVersion);
     for(auto callback: it->second.accessCallbacks) {
         callback(propertyId, data.data(), data.size(), PROP_OP_WRITE);
     }
-    LOG_DEBUG("Property {} set structure data successfully over proto v1.1", propId);
+    auto delta = timer.touchUs();
+    LOG_DEBUG("[delta: {}us] Property {} set structure data successfully over proto v1.1", delta, propId);
 }
 
 const std::vector<uint8_t> &PropertyServer::getStructureDataListProtoV1_1(uint32_t propertyId, uint16_t cmdVersion, PropertyAccessType accessType) {
@@ -380,11 +395,13 @@ const std::vector<uint8_t> &PropertyServer::getStructureDataListProtoV1_1(uint32
     if(structAccessor == nullptr) {
         throw invalid_value_exception(utils::string::to_string() << "Property" << propId << " does not support structure data list getting over proto v1.1");
     }
-    const auto &data = structAccessor->getStructureDataListProtoV1_1(propId, cmdVersion);
+    utils::Timer timer;
+    const auto & data = structAccessor->getStructureDataListProtoV1_1(propId, cmdVersion);
     for(auto callback: it->second.accessCallbacks) {
         callback(propertyId, data.data(), data.size(), PROP_OP_READ);
     }
-    LOG_DEBUG("Property {} get structure data list successfully over proto v1.1, size {}", propId, data.size());
+    auto delta = timer.touchUs();
+    LOG_DEBUG("[delta: {}us] Property {} get structure data list successfully over proto v1.1, size {}", delta, propId, data.size());
     return data;
 }
 

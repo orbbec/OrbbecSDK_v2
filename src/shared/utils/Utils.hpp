@@ -7,6 +7,7 @@
 #include <vector>
 #include <memory>
 #include <algorithm>
+#include <chrono>
 
 // Include all the headers in the utils directory for convenience
 #include "StringUtils.hpp"
@@ -19,6 +20,46 @@ namespace utils {
 uint64_t getNowTimesMs();
 uint64_t getNowTimesUs();
 void     sleepMs(uint64_t msec);
+
+/**
+ * @brief Timer class to measure time intervals between calls
+ */
+class Timer {
+public:
+    Timer() {
+        reset();
+    }
+
+    /**
+     * @brief Reset the timer to now
+     */
+    void reset() {
+        last_ = std::chrono::steady_clock::now();
+    }
+
+    /**
+     * @brief Returns milliseconds elapsed since last call and resets timer
+     */
+    uint64_t touchMs() {
+        auto now  = std::chrono::steady_clock::now();
+        auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_).count();
+        last_     = now;
+        return static_cast<uint64_t>(diff);
+    }
+
+    /**
+     * @brief Returns microseconds elapsed since last call and resets timer
+     */
+    uint64_t touchUs() {
+        auto now  = std::chrono::steady_clock::now();
+        auto diff = std::chrono::duration_cast<std::chrono::microseconds>(now - last_).count();
+        last_     = now;
+        return static_cast<uint64_t>(diff);
+    }
+
+private:
+    std::chrono::steady_clock::time_point last_;
+};
 
 #pragma pack(push, 1)
 template <class T> class big_endian {
