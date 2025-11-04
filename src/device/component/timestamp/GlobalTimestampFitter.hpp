@@ -19,7 +19,7 @@ public:
     virtual ~GlobalTimestampFitter() override;
 
     LinearFuncParam getLinearFuncParam() override;
-    void            reFitting() override;
+    void            reFitting(bool async) override;
     void            pause() override;
     void            resume() override;
     void            setMaxValidRtt(uint64_t maxValidTime);
@@ -30,11 +30,13 @@ public:
 private:
     void                      fittingLoop();
     inline const std::string &GetCurrentSN() const;
+    void                      calcLinearParam(uint64_t sysTimestamp, uint64_t devTimestamp);
+    bool                      ensureFitting();
 
 private:
     const uint64_t MAX_VALID_RTT = 20000;  // 10ms
 
-    bool enable_;
+    bool                    enable_;
     std::thread             sampleThread_;
     std::mutex              sampleMutex_;
     std::condition_variable sampleCondVar_;
@@ -47,6 +49,7 @@ private:
 
     std::deque<TimestampPair> samplingQueue_;
     uint32_t                  maxQueueSize_ = 100;
+    bool                      needCalculation_{ false };  // true if samplingQueue_ changed
 
     // The refresh interval needs to be less than half the interval of the data frame, that is, it needs to be sampled at least twice within an overflow period.
     uint32_t refreshIntervalMsec_ = 1000;
@@ -54,6 +57,7 @@ private:
     std::mutex              linearFuncParamMutex_;
     std::condition_variable linearFuncParamCondVar_;
     LinearFuncParam         linearFuncParam_;
+    uint64_t                lastCheckDataY = 0;
     uint64_t                maxValidRtt_;
 };
 }  // namespace libobsensor

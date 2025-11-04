@@ -7,6 +7,7 @@
 #include "IDevice.hpp"
 #include "IDeviceSyncConfigurator.hpp"
 #include "IDeviceClockSynchronizer.hpp"
+#include "IFrameTimestamp.hpp"
 
 #ifdef __cplusplus
 extern "C" {
@@ -75,6 +76,11 @@ void ob_device_timer_sync_with_host(ob_device *device, ob_error **error) BEGIN_A
 
     auto configurator = device->device->getComponentT<libobsensor::IDeviceClockSynchronizer>(libobsensor::OB_DEV_COMPONENT_DEVICE_CLOCK_SYNCHRONIZER);
     configurator->timerSyncWithHost();
+    // ensure fitting after time sync
+    TRY_EXECUTE({
+        auto globalTspFitter = device->device->getComponentT<libobsensor::IGlobalTimestampFitter>(libobsensor::OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER);
+        globalTspFitter->reFitting(false);
+    });
 }
 HANDLE_EXCEPTIONS_AND_RETURN(, device)
 

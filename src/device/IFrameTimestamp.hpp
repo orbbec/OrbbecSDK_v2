@@ -28,9 +28,15 @@ public:
     virtual ~IGlobalTimestampFitter() = default;
 
     virtual LinearFuncParam getLinearFuncParam() = 0;
-    virtual void            reFitting()          = 0;
-    virtual void            pause()              = 0;
-    virtual void            resume()             = 0;
+
+    /**
+     * @brief re-fitting timestamp linear param
+     *
+     * @param[in] async true/false
+     */
+    virtual void reFitting(bool async) = 0;
+    virtual void pause()               = 0;
+    virtual void resume()              = 0;
 
     virtual void enable(bool en)   = 0;
     virtual bool isEnabled() const = 0;

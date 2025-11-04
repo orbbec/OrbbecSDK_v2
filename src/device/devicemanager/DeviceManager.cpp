@@ -5,6 +5,7 @@
 #include "utils/Utils.hpp"
 #include "IDeviceClockSynchronizer.hpp"
 #include "IDeviceActivityRecorder.hpp"
+#include "IFrameTimestamp.hpp"
 
 #if defined(BUILD_USB_PAL)
 #include "UsbDeviceEnumerator.hpp"
@@ -279,11 +280,18 @@ void DeviceManager::enableDeviceClockSync(uint64_t repeatInterval) {
             if(!destroy_) {
                 for(auto &item: createdDevices_) {
                     auto dev = item.second.lock();
-                    if(!dev || !dev->isComponentExists(OB_DEV_COMPONENT_DEVICE_CLOCK_SYNCHRONIZER)) {
+                    if(!dev) {
                         continue;
                     }
-                    auto synchronizer = dev->getComponentT<IDeviceClockSynchronizer>(OB_DEV_COMPONENT_DEVICE_CLOCK_SYNCHRONIZER);
-                    TRY_EXECUTE(synchronizer->timerSyncWithHost());
+                    auto synchronizer = dev->getComponentT<IDeviceClockSynchronizer>(OB_DEV_COMPONENT_DEVICE_CLOCK_SYNCHRONIZER, false);
+                    if(synchronizer) {
+                        TRY_EXECUTE({
+                            synchronizer->timerSyncWithHost();
+                            // ensure fitting after time sync
+                            auto globalTspFitter = dev->getComponentT<IGlobalTimestampFitter>(libobsensor::OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER);
+                            globalTspFitter->reFitting(false);
+                        });
+                    }
                 }
             }
             multiDeviceSyncCv_.wait_for(lock, std::chrono::milliseconds(multiDeviceSyncIntervalMs_));

@@ -44,18 +44,11 @@ GlobalTimestampFitter::GlobalTimestampFitter(IDevice *owner)
         enable(en);
     }
 
-    auto                  propServer = owner->getPropertyServer();
-    std::vector<uint32_t> supportedProps;
+    auto propServer = owner->getPropertyServer();
     if(propServer->isPropertySupported(OB_PROP_TIMER_RESET_SIGNAL_BOOL, PROP_OP_WRITE, PROP_ACCESS_INTERNAL)) {
-        supportedProps.push_back(OB_PROP_TIMER_RESET_SIGNAL_BOOL);
-    }
-    if(propServer->isPropertySupported(OB_STRUCT_DEVICE_TIME, PROP_OP_WRITE, PROP_ACCESS_INTERNAL)) {
-        supportedProps.push_back(OB_STRUCT_DEVICE_TIME);
-    }
-    if(!supportedProps.empty()) {
-        propServer->registerAccessCallback(supportedProps, [&](uint32_t, const uint8_t *, size_t, PropertyOperationType operationType) {
+        propServer->registerAccessCallback(OB_PROP_TIMER_RESET_SIGNAL_BOOL, [&](uint32_t, const uint8_t *, size_t, PropertyOperationType operationType) {
             if(operationType == PROP_OP_WRITE) {
-                reFitting();
+                reFitting(false);
             }
         });
     }
@@ -73,13 +66,31 @@ GlobalTimestampFitter::~GlobalTimestampFitter() {
 
 LinearFuncParam GlobalTimestampFitter::getLinearFuncParam() {
     std::unique_lock<std::mutex> lock(linearFuncParamMutex_);
+    if(lastCheckDataY != linearFuncParam_.checkDataY) {
+        lastCheckDataY = linearFuncParam_.checkDataY;
+        auto &param    = linearFuncParam_;
+        LOG_DEBUG("GetLinearFuncParam: coefficientA: {}, constantB: {}, checkDataX: {}, checkDataY: {}", param.coefficientA, param.constantB, param.checkDataX,
+                  param.checkDataY);
+    }
+
     return linearFuncParam_;
 }
 
-void GlobalTimestampFitter::reFitting() {
-    std::unique_lock<std::mutex> lock(sampleMutex_);
-    samplingQueue_.clear();
-    sampleCondVar_.notify_one();
+void GlobalTimestampFitter::reFitting(bool async) {
+    if(!enable_) {
+        return;
+    }
+
+    {
+        std::unique_lock<std::mutex> lock(sampleMutex_);
+        needCalculation_ = true;
+        samplingQueue_.clear();
+        sampleCondVar_.notify_one();
+    }
+
+    if(!async) {
+        ensureFitting();
+    }
 }
 
 void GlobalTimestampFitter::pause() {
@@ -127,8 +138,104 @@ bool GlobalTimestampFitter::isEnabled() const {
     return enable_;
 }
 
+void GlobalTimestampFitter::calcLinearParam(uint64_t sysTimestamp, uint64_t devTimestamp) {
+    // Use the first set of data as offset to prevent overflow during calculation
+    uint64_t offset_x  = 0;
+    uint64_t offset_y  = 0;
+    double   Ex        = 0;
+    double   Exx       = 0;
+    double   Ey        = 0;
+    double   Exy       = 0;
+    size_t   queueSize = 0;
+    {
+        std::unique_lock<std::mutex> lock(sampleMutex_);
+
+        if(!needCalculation_) {
+            return;
+        }
+
+        auto it = samplingQueue_.begin();
+
+        offset_x  = samplingQueue_.front().deviceTimestamp;
+        offset_y  = samplingQueue_.front().systemTimestamp;
+        queueSize = samplingQueue_.size();
+
+        while(it != samplingQueue_.end()) {
+            auto systemTimestamp = it->systemTimestamp - offset_y;
+            auto deviceTimestamp = it->deviceTimestamp - offset_x;
+            Ex += deviceTimestamp;
+            Exx += deviceTimestamp * deviceTimestamp;
+            Ey += systemTimestamp;
+            Exy += deviceTimestamp * systemTimestamp;
+            it++;
+        }
+        needCalculation_ = false;
+    }
+
+    {
+        std::unique_lock<std::mutex> linearFuncParamLock(linearFuncParamMutex_);
+        // Linear regression to find a and b: y=ax+b
+        linearFuncParam_.coefficientA = (Exy * queueSize - Ex * Ey) / (queueSize * Exx - Ex * Ex);
+        linearFuncParam_.constantB    = (Exx * Ey - Exy * Ex) / (queueSize * Exx - Ex * Ex) + offset_y - linearFuncParam_.coefficientA * offset_x;
+        linearFuncParam_.checkDataX   = devTimestamp;
+        linearFuncParam_.checkDataY   = sysTimestamp;
+
+        // auto fixDevTsp = (double)devTime *linearFuncParam_.coefficientA + linearFuncParam_.constantB;
+        // auto fixDiff   = fixDevTsp -sysTspUsec;
+        // LOG_TRACE("a = {}, b = {}, fix={}, diff={}", linearFuncParam_.coefficientA, linearFuncParam_.constantB, fixDevTsp, fixDiff);
+
+        auto &param = linearFuncParam_;
+        LOG_DEBUG("LinearParam update! QueueSize: {}, coefficientA: {}, constantB: {}, checkDataX: {}, checkDataY: {}", queueSize, param.coefficientA,
+                  param.constantB, param.checkDataX, param.checkDataY);
+        linearFuncParamCondVar_.notify_all();
+    }
+}
+
+bool GlobalTimestampFitter::ensureFitting() {
+    uint64_t     sysTspUsec = 0;
+    OBDeviceTime devTime{};
+    bool         calc = false;
+
+    {
+        auto    owner          = getOwner();
+        auto    propertyServer = owner->getPropertyServer();
+        uint8_t count          = 0;
+
+        sampleCondVar_.notify_all();
+        std::unique_lock<std::mutex> lock(sampleMutex_);
+        while(samplingQueue_.size() < 6 && count < 6) {
+            ++count;
+            auto sysTsp1Usec = utils::getNowTimesUs();
+            devTime          = propertyServer->getStructureDataT<OBDeviceTime>(OB_STRUCT_DEVICE_TIME);
+            auto sysTsp2Usec = utils::getNowTimesUs();
+            sysTspUsec       = (sysTsp2Usec + sysTsp1Usec) / 2;
+            devTime.rtt      = sysTsp2Usec - sysTsp1Usec;
+            if(devTime.rtt > maxValidRtt_) {
+                LOG_DEBUG("Get device time rtt is too large! rtt={}", devTime.rtt);
+                std::this_thread::sleep_for(std::chrono::milliseconds(50));
+                continue;
+            }
+            LOG_DEBUG("sys={}, dev={}, rtt={}", sysTspUsec, devTime.time, devTime.rtt);
+            needCalculation_ = true;
+            calc             = true;
+            samplingQueue_.push_back({ sysTspUsec, devTime.time });
+            std::this_thread::sleep_for(std::chrono::milliseconds(40));
+        }
+        if(samplingQueue_.size() < 4) {
+            LOG_ERROR("Error, sampling queue size is too small: {}", samplingQueue_.size());
+            return false;
+        }
+    }
+
+    if(calc) {
+        calcLinearParam(sysTspUsec, devTime.time);
+    }
+
+    return true;
+}
+
 void GlobalTimestampFitter::fittingLoop() {
-    const int      MAX_RETRY_COUNT = 5;
+    const int MAX_RETRY_COUNT = 5;
 
     int retryCount = 0;
     do {
@@ -149,7 +256,7 @@ void GlobalTimestampFitter::fittingLoop() {
                 LOG_DEBUG("Get device time rtt is too large! rtt={}", devTime.rtt);
                 throw std::runtime_error("RTT too large");
             }
-            LOG_TRACE("sys={}, dev={}, rtt={}", sysTspUsec, devTime.time, devTime.rtt);
+            LOG_DEBUG("sys={}, dev={}, rtt={}", sysTspUsec, devTime.time, devTime.rtt);
         }
         catch(...) {
             retryCount++;
@@ -182,6 +289,7 @@ void GlobalTimestampFitter::fittingLoop() {
                 samplingQueue_.clear();
             }
 
+            needCalculation_ = true;
             samplingQueue_.push_back({ sysTspUsec, devTime.time });
 
             if(samplingQueue_.size() < 4) {
@@ -190,50 +298,10 @@ void GlobalTimestampFitter::fittingLoop() {
             }
         }
 
-        // Use the first set of data as offset to prevent overflow during calculation
-        uint64_t offset_x = 0;
-        uint64_t offset_y = 0;
-        double   Ex       = 0;
-        double   Exx      = 0;
-        double   Ey       = 0;
-        double   Exy       = 0;
-        size_t   queueSize = 0;
-        {
-            std::unique_lock<std::mutex> lock(sampleMutex_);
-            auto                         it = samplingQueue_.begin();
+        // calc linear param
+        calcLinearParam(sysTspUsec, devTime.time);
 
-            offset_x = samplingQueue_.front().deviceTimestamp;
-            offset_y = samplingQueue_.front().systemTimestamp;
-            queueSize = samplingQueue_.size();
-
-            while(it != samplingQueue_.end()) {
-                auto systemTimestamp = it->systemTimestamp - offset_y;
-                auto deviceTimestamp = it->deviceTimestamp - offset_x;
-                Ex += deviceTimestamp;
-                Exx += deviceTimestamp * deviceTimestamp;
-                Ey += systemTimestamp;
-                Exy += deviceTimestamp * systemTimestamp;
-                it++;
-            }
-        }
-
-        {
-            std::unique_lock<std::mutex> linearFuncParamLock(linearFuncParamMutex_);
-            // Linear regression to find a and b: y=ax+b
-            linearFuncParam_.coefficientA = (Exy * queueSize - Ex * Ey) / (queueSize * Exx - Ex * Ex);
-            linearFuncParam_.constantB    = (Exx * Ey - Exy * Ex) / (queueSize * Exx - Ex * Ex) + offset_y - linearFuncParam_.coefficientA * offset_x;
-            linearFuncParam_.checkDataX = devTime.time;
-            linearFuncParam_.checkDataY = sysTspUsec;
-
-            // auto fixDevTsp = (double)devTime *linearFuncParam_.coefficientA + linearFuncParam_.constantB;
-            // auto fixDiff   = fixDevTsp -sysTspUsec;
-            // LOG_TRACE("a = {}, b = {}, fix={}, diff={}", linearFuncParam_.coefficientA, linearFuncParam_.constantB, fixDevTsp, fixDiff);
-
-            LOG_DEBUG_INTVL("[{}] GlobalTimestampFitter update: coefficientA = {}, constantB = {}", GetCurrentSN(), linearFuncParam_.coefficientA,
-                            linearFuncParam_.constantB);
-            linearFuncParamCondVar_.notify_all();
-        }
-
+        // wait for a moment
         {
             std::unique_lock<std::mutex> lock(sampleMutex_);
             auto                         interval = refreshIntervalMsec_;
