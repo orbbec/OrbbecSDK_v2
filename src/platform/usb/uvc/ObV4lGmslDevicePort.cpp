@@ -123,6 +123,8 @@ int getGmslDeviceInfoFromFW(const std::string &dev_name, void *data, bool &metad
     if(ret < 0) {
         LOG_DEBUG("ioctl failed on getGmslDeviceInfoFromFW-pid-vid from videox strerror:{}", strerror(errno));  // printf err message
         ret = -1;
+        close(fd);
+        return ret;
     }
 
     // get metadata place
@@ -139,7 +141,7 @@ int getGmslDeviceInfoFromFW(const std::string &dev_name, void *data, bool &metad
         }
         LOG_DEBUG("Device: {}, metadata place: {}", dev_name, ctrlMetadata.value);
         metadataEmbedded = ctrlMetadata.value == 1;
-        ret       = 0;
+        ret              = 0;
         break;
     } while(retry < 3);
 
@@ -223,7 +225,7 @@ int checkVideoIndex(const std::string &dev_name) {
 
 std::vector<std::shared_ptr<V4lDeviceInfoGmsl>> ObV4lGmslDevicePort::queryRelatedDevices(std::shared_ptr<const USBSourcePortInfo> portInfo) {
     std::vector<std::shared_ptr<V4lDeviceInfoGmsl>> devs;
-    DIR                                            *dir = opendir("/sys/class/video4linux");
+    DIR *                                           dir = opendir("/sys/class/video4linux");
     if(!dir) {
         LOG_DEBUG("Failed to open /sys/class/video4linux, possibly no device connected");
         return devs;
@@ -576,7 +578,7 @@ void cropDepthImage(const uint8_t *src, uint8_t *dst, int srcWidth, int srcHeigh
     for(int y = 0; y < cropHeight; y++) {
         // Calculate the source and destination pointers of the current row
         const uint8_t *srcRow = src + y * srcWidth;
-        uint8_t       *dstRow = dst + y * cropWidth;
+        uint8_t *      dstRow = dst + y * cropWidth;
 
         // Copy the pixels of the current row (except the rightmost 32 columns)
         // memcpy(dstRow, srcRow, dstBytesPerRow);
@@ -601,7 +603,7 @@ void cropDepthImage16(const uint16_t *src, uint16_t *dst, int srcWidth, int srcH
     for(int y = 0; y < cropHeight; y++) {
         // Calculate the source and destination pointers of the current row
         const uint16_t *srcRow = src + y * srcWidth;
-        uint16_t       *dstRow = dst + y * cropWidth;
+        uint16_t *      dstRow = dst + y * cropWidth;
 
         // Copy the pixels of the current row (except the rightmost 32 columns)
         // memcpy(dstRow, srcRow, dstBytesPerRow);
@@ -910,7 +912,7 @@ uint32_t phaseProfileFormatToFourccGmsl(std::shared_ptr<const VideoStreamProfile
     int      formatFourcc    = 0;
     OBFormat format          = profile->getFormat();
     auto     foundFormatIter = std::find_if(v4lFourccMapGmsl.begin(), v4lFourccMapGmsl.end(),
-                                            [&](const std::pair<uint32_t, uint32_t> &item) { return item.second == utils::obFormatToUvcFourcc(format); });
+                                        [&](const std::pair<uint32_t, uint32_t> &item) { return item.second == utils::obFormatToUvcFourcc(format); });
     if(foundFormatIter != v4lFourccMapGmsl.end()) {
         return (const utils::big_endian<int> &)(foundFormatIter->first);
     }
@@ -1271,13 +1273,13 @@ uint32_t ObV4lGmslDevicePort::sendAndReceive(const uint8_t *send, uint32_t sendL
         // First two attempts use 'false' to avoid throwing exceptions
         for(uint16_t i = 0; i < 2; i++) {
             if(!sendData(send, sendLen, false)) {
-                LOG_DEBUG("sendAndReceive: send error: retry count: {}", i+1);
+                LOG_DEBUG("sendAndReceive: send error: retry count: {}", i + 1);
                 continue;
             }
 
             utils::sleepMs(BASE_WAIT_RESPONSE_TIME_MS);
             if(!recvData(recv, &exceptedRecvLen, false)) {
-                LOG_DEBUG("sendAndReceive: recv error: retry count: {}", i+1);
+                LOG_DEBUG("sendAndReceive: recv error: retry count: {}", i + 1);
                 continue;
             }
             return exceptedRecvLen;
