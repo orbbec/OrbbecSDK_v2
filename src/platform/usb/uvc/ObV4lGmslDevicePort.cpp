@@ -651,6 +651,13 @@ void ObV4lGmslDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandleGmsl> devHa
             xioctlGmsl(devHandle->fd, VIDIOC_QBUF, &buf);
         }
 
+        std::unique_lock<std::mutex> lock(devHandle->streamMutex);
+        // wait stream on
+        devHandle->streamCv.wait_for(lock, std::chrono::milliseconds(100),
+                                     [&]() { return devHandle->canStartCapture.load() || !devHandle->isCapturing.load(); });
+        LOG_INFO("Start to capture: {}", devHandle->info->name);
+
+        // capture video frames
         while(devHandle->isCapturing) {
             struct timeval remaining = { 0, 500000 };  // 500ms
             fd_set         fds{};
@@ -912,7 +919,7 @@ void ObV4lGmslDevicePort::startStream(std::shared_ptr<const StreamProfile> profi
                             + ", format=" + std::to_string(videoProfile->getFormat()));
     }
     if(devHandle->isCapturing) {
-        pal_exception("V4l device is already capturing");
+        throw pal_exception("V4l device is already capturing");
     }
 
     if(devHandle->metadataFd >= 0) {
@@ -991,27 +998,30 @@ void ObV4lGmslDevicePort::startStream(std::shared_ptr<const StreamProfile> profi
         }
     }
 
-    if(devHandle->fd >= 0) {
-        v4l2_format fmt    = {};
-        fmt.type           = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        fmt.fmt.pix.width  = videoProfile->getWidth();
-        fmt.fmt.pix.height = videoProfile->getHeight();
-        // fmt.fmt.pix.field       = V4L2_FIELD_NONE;
-        fmt.fmt.pix.field       = V4L2_FIELD_INTERLACED;
-        fmt.fmt.pix.pixelformat = phaseProfileFormatToFourccGmsl(videoProfile);
+    if(devHandle->fd < 0) {
+        throw camera_disconnected_exception("Invalid video file descriptor");
+    }
 
-        if(xioctlGmsl(devHandle->fd, VIDIOC_S_FMT, &fmt) < 0) {
-            auto err = errno;
-            stopStream(devHandle);
-            throw io_exception("Failed to set format!" + devHandle->info->name + ", " + strerror(err));
-        }
-        if(xioctlGmsl(devHandle->fd, VIDIOC_G_FMT, &fmt) < 0) {
-            auto err = errno;
-            stopStream(devHandle);
-            throw io_exception("Failed to get format!" + devHandle->info->name + ", " + strerror(err));
-        }
-        LOG_DEBUG("Video node was successfully configured to {0} format, fd {1}, name: {2}", fourccToStringGmsl(fmt.fmt.pix.pixelformat), devHandle->fd,
-                  devHandle->info->name);
+    v4l2_format fmt    = {};
+    fmt.type           = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    fmt.fmt.pix.width  = videoProfile->getWidth();
+    fmt.fmt.pix.height = videoProfile->getHeight();
+    // fmt.fmt.pix.field       = V4L2_FIELD_NONE;
+    fmt.fmt.pix.field       = V4L2_FIELD_INTERLACED;
+    fmt.fmt.pix.pixelformat = phaseProfileFormatToFourccGmsl(videoProfile);
+
+    if(xioctlGmsl(devHandle->fd, VIDIOC_S_FMT, &fmt) < 0) {
+        auto err = errno;
+        stopStream(devHandle);
+        throw io_exception("Failed to set format!" + devHandle->info->name + ", " + strerror(err));
+    }
+    if(xioctlGmsl(devHandle->fd, VIDIOC_G_FMT, &fmt) < 0) {
+        auto err = errno;
+        stopStream(devHandle);
+        throw io_exception("Failed to get format!" + devHandle->info->name + ", " + strerror(err));
+    }
+    LOG_DEBUG("Video node was successfully configured to {0} format, fd {1}, name: {2}", fourccToStringGmsl(fmt.fmt.pix.pixelformat), devHandle->fd,
+              devHandle->info->name);
 
 #if 0
         struct v4l2_streamparm streamparm={};
@@ -1028,81 +1038,67 @@ void ObV4lGmslDevicePort::startStream(std::shared_ptr<const StreamProfile> profi
 #endif
 
 #if 1
-        v4l2_streamparm streamparm                       = {};
-        streamparm.type                                  = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        streamparm.parm.capture.timeperframe.numerator   = 1;
-        streamparm.parm.capture.timeperframe.denominator = videoProfile->getFps();
-        if(xioctlGmsl(devHandle->fd, VIDIOC_S_PARM, &streamparm) < 0) {
-            auto err = errno;
-            stopStream(devHandle);
-            throw io_exception("Failed to set streamparm!" + devHandle->info->name + ", " + strerror(err));
-        }
-        if(xioctlGmsl(devHandle->fd, VIDIOC_G_PARM, &streamparm) < 0) {
-            auto err = errno;
-            stopStream(devHandle);
-            throw io_exception("Failed to get streamparm!" + devHandle->info->name + ", " + strerror(err));
-        }
+    v4l2_streamparm streamparm                       = {};
+    streamparm.type                                  = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    streamparm.parm.capture.timeperframe.numerator   = 1;
+    streamparm.parm.capture.timeperframe.denominator = videoProfile->getFps();
+    if(xioctlGmsl(devHandle->fd, VIDIOC_S_PARM, &streamparm) < 0) {
+        auto err = errno;
+        stopStream(devHandle);
+        throw io_exception("Failed to set streamparm!" + devHandle->info->name + ", " + strerror(err));
+    }
+    if(xioctlGmsl(devHandle->fd, VIDIOC_G_PARM, &streamparm) < 0) {
+        auto err = errno;
+        stopStream(devHandle);
+        throw io_exception("Failed to get streamparm!" + devHandle->info->name + ", " + strerror(err));
+    }
 #endif
 
-        struct v4l2_requestbuffers req = {};
-        req.count                      = MAX_BUFFER_COUNT_GMSL;
-        req.type                       = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        req.memory                     = USE_MEMORY_MMAP ? V4L2_MEMORY_MMAP : V4L2_MEMORY_USERPTR;
-        if(xioctlGmsl(devHandle->fd, VIDIOC_REQBUFS, &req) < 0) {
+    struct v4l2_requestbuffers req = {};
+    req.count                      = MAX_BUFFER_COUNT_GMSL;
+    req.type                       = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    req.memory                     = USE_MEMORY_MMAP ? V4L2_MEMORY_MMAP : V4L2_MEMORY_USERPTR;
+    if(xioctlGmsl(devHandle->fd, VIDIOC_REQBUFS, &req) < 0) {
+        auto err = errno;
+        stopStream(devHandle);
+        throw io_exception("Failed to request buffers!" + devHandle->info->name + ", " + strerror(err));
+    }
+    for(uint32_t i = 0; i < req.count && i < MAX_BUFFER_COUNT_GMSL; i++) {
+        struct v4l2_buffer buf = {};
+        memset(&buf, 0, sizeof(buf));
+        buf.type   = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        buf.memory = USE_MEMORY_MMAP ? V4L2_MEMORY_MMAP : V4L2_MEMORY_USERPTR;
+        buf.index  = i;
+        if(xioctlGmsl(devHandle->fd, VIDIOC_QUERYBUF, &buf) < 0) {
             auto err = errno;
             stopStream(devHandle);
-            throw io_exception("Failed to request buffers!" + devHandle->info->name + ", " + strerror(err));
-        }
-        for(uint32_t i = 0; i < req.count && i < MAX_BUFFER_COUNT_GMSL; i++) {
-            struct v4l2_buffer buf = {};
-            memset(&buf, 0, sizeof(buf));
-            buf.type   = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-            buf.memory = USE_MEMORY_MMAP ? V4L2_MEMORY_MMAP : V4L2_MEMORY_USERPTR;
-            buf.index  = i;
-            if(xioctlGmsl(devHandle->fd, VIDIOC_QUERYBUF, &buf) < 0) {
-                auto err = errno;
-                stopStream(devHandle);
-                throw io_exception("Failed to query buffer!" + devHandle->info->name + ", " + strerror(err));
-            }
-
-            if(USE_MEMORY_MMAP) {
-                devHandle->buffers[i].ptr    = (uint8_t *)mmap(NULL, buf.length, PROT_READ | PROT_WRITE, MAP_SHARED, devHandle->fd, buf.m.offset);
-                devHandle->buffers[i].length = buf.length;
-                if(devHandle->buffers[i].ptr == MAP_FAILED) {
-                    LOG_ERROR(" mmap, errnoStr:{}, errno:{}, line:{} ", strerror(errno), errno, __LINE__);
-                }
-            }
-            else {
-                uint8_t  md_extra            = (V4L2_BUF_TYPE_VIDEO_CAPTURE == buf.type) ? MAX_META_DATA_SIZE : 0;
-                uint32_t _length             = buf.length + md_extra;
-                devHandle->buffers[i].ptr    = static_cast<uint8_t *>(malloc(_length));
-                devHandle->buffers[i].length = _length;
-
-                if(!devHandle->buffers[i].ptr) {
-                    LOG_ERROR(" User_p allocation failed!, errnoStr:{}, errno:{}, line:{} ", strerror(errno), errno, __LINE__);
-                }
-                memset(devHandle->buffers[i].ptr, 0, _length);
-
-                buf.m.userptr = reinterpret_cast<unsigned long>(devHandle->buffers[i].ptr);
-            }
-
-            if(xioctlGmsl(devHandle->fd, VIDIOC_QBUF, &buf) < 0) {
-                LOG_ERROR(" VIDIOC_QBUF, errnoStr:{}, errno:{}, line:{} ", strerror(errno), errno, __LINE__);
-            }
+            throw io_exception("Failed to query buffer!" + devHandle->info->name + ", " + strerror(err));
         }
 
-        devHandle->profile = videoProfile;  // fix stoptream no streamoff issue. when streamon exception.
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
-        v4l2_buf_type                bufType = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        std::unique_lock<std::mutex> lk(mMultiThreadI2CMutex);
-        if(xioctlGmsl(devHandle->fd, VIDIOC_STREAMON, &bufType) < 0) {
-            auto err = errno;
-            stopStream(devHandle);
-            throw io_exception("Failed to stream on!" + devHandle->info->name + ", " + strerror(err));
+        if(USE_MEMORY_MMAP) {
+            devHandle->buffers[i].ptr    = (uint8_t *)mmap(NULL, buf.length, PROT_READ | PROT_WRITE, MAP_SHARED, devHandle->fd, buf.m.offset);
+            devHandle->buffers[i].length = buf.length;
+            if(devHandle->buffers[i].ptr == MAP_FAILED) {
+                LOG_ERROR(" mmap, errnoStr:{}, errno:{}, line:{} ", strerror(errno), errno, __LINE__);
+            }
         }
-        lk.unlock();
-        LOG_DEBUG("-VIDIOC_STREAMON success-");
+        else {
+            uint8_t  md_extra            = (V4L2_BUF_TYPE_VIDEO_CAPTURE == buf.type) ? MAX_META_DATA_SIZE : 0;
+            uint32_t _length             = buf.length + md_extra;
+            devHandle->buffers[i].ptr    = static_cast<uint8_t *>(malloc(_length));
+            devHandle->buffers[i].length = _length;
+
+            if(!devHandle->buffers[i].ptr) {
+                LOG_ERROR(" User_p allocation failed!, errnoStr:{}, errno:{}, line:{} ", strerror(errno), errno, __LINE__);
+            }
+            memset(devHandle->buffers[i].ptr, 0, _length);
+
+            buf.m.userptr = reinterpret_cast<unsigned long>(devHandle->buffers[i].ptr);
+        }
+
+        if(xioctlGmsl(devHandle->fd, VIDIOC_QBUF, &buf) < 0) {
+            LOG_ERROR(" VIDIOC_QBUF, errnoStr:{}, errno:{}, line:{} ", strerror(errno), errno, __LINE__);
+        }
     }
 
     if(pipe(devHandle->stopPipeFd) < 0) {
@@ -1111,10 +1107,29 @@ void ObV4lGmslDevicePort::startStream(std::shared_ptr<const StreamProfile> profi
         throw io_exception("Failed to create stop pipe!" + devHandle->info->name + ", " + strerror(err));
     }
 
-    devHandle->isCapturing   = true;
-    devHandle->profile       = videoProfile;
-    devHandle->frameCallback = callback;
-    devHandle->captureThread = std::make_shared<std::thread>([this, devHandle]() { captureLoop(devHandle); });
+    // NOTE: Ensure the thread is started before calling Stream On.
+    // Starting the stream before the thread may cause the first few frames to be lost
+    // due to the thread not being ready in time.
+    devHandle->isCapturing     = true;
+    devHandle->canStartCapture = false;
+    devHandle->profile         = videoProfile;
+    devHandle->frameCallback   = callback;
+    devHandle->captureThread   = std::make_shared<std::thread>([this, devHandle]() { captureLoop(devHandle); });
+
+    // stream on
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    v4l2_buf_type                bufType = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    std::unique_lock<std::mutex> lk(mMultiThreadI2CMutex);
+    if(xioctlGmsl(devHandle->fd, VIDIOC_STREAMON, &bufType) < 0) {
+        auto err = errno;
+        stopStream(devHandle);
+        throw io_exception("Failed to stream on!" + devHandle->info->name + ", " + strerror(err));
+    }
+    lk.unlock();
+    LOG_DEBUG("-VIDIOC_STREAMON success-");
+    // start capture
+    devHandle->canStartCapture = true;
+    devHandle->streamCv.notify_all();
 
     LOG_DEBUG("-Leave startStream-");
 }
@@ -1191,6 +1206,7 @@ void ObV4lGmslDevicePort::stopStream(std::shared_ptr<V4lDeviceHandleGmsl> devHan
     // are properly reset and released to avoid inconsistent states.
 
     devHandle->isCapturing = false;
+    devHandle->streamCv.notify_all();
     // signal the capture loop to stop
     if(devHandle->stopPipeFd[1] >= 0) {
         char buff[1] = { 0 };

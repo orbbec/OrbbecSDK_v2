@@ -7,6 +7,8 @@
 #include <string>
 #include <thread>
 #include <sys/mman.h>
+#include <mutex>
+#include <condition_variable>
 
 #include "UvcDevicePort.hpp"
 #include "usb/enumerator/IUsbEnumerator.hpp"
@@ -108,9 +110,12 @@ struct V4lDeviceHandleGmsl {
     MutableFrameCallback                      frameCallback;
     std::shared_ptr<const VideoStreamProfile> profile = nullptr;
 
-    int                          stopPipeFd[2]  = { -1, -1 };  // pipe to signal the capture thread to stop
-    std::shared_ptr<std::thread> captureThread  = nullptr;
-    std::atomic<bool>            isCapturing    = { false };
+    int                          stopPipeFd[2]   = { -1, -1 };  // pipe to signal the capture thread to stop
+    std::shared_ptr<std::thread> captureThread   = nullptr;
+    std::atomic<bool>            isCapturing     = { false };
+    std::atomic<bool>            canStartCapture = { false };
+    std::mutex                   streamMutex;  // mutex for start capture
+    std::condition_variable      streamCv;     // cv for start capture
     std::atomic<std::uint64_t>   loopFrameIndex = { 0 };
 };
 

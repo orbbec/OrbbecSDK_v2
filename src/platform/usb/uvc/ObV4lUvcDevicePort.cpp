@@ -10,7 +10,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/sysmacros.h>
-
+#include <mutex>
+#include <condition_variable>
 #include "ObV4lUvcDevicePort.hpp"
 
 #include "logger/Logger.hpp"
@@ -416,6 +417,12 @@ void ObV4lUvcDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandle> devHandle)
             }
         }
 
+        std::unique_lock<std::mutex> lock(devHandle->streamMutex);
+        // wait stream on
+        devHandle->streamCv.wait(lock, [&]() { return devHandle->canStartCapture.load() || !devHandle->isCapturing.load(); });
+        LOG_INFO("Start to capture: {}", devHandle->info->name);
+
+        // capture video frames
         while(devHandle->isCapturing) {
             fd_set fds{};
             FD_ZERO(&fds);
@@ -616,6 +623,10 @@ void ObV4lUvcDevicePort::startStream(std::shared_ptr<const StreamProfile> profil
         }
     }
 
+    if(devHandle->fd < 0) {
+        throw camera_disconnected_exception("Invalid video file descriptor");
+    }
+
     v4l2_format fmt         = {};
     fmt.type                = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     fmt.fmt.pix.width       = videoProfile->getWidth();
@@ -672,23 +683,31 @@ void ObV4lUvcDevicePort::startStream(std::shared_ptr<const StreamProfile> profil
         devHandle->buffers[i].length = buf.length;
     }
 
-    v4l2_buf_type bufType = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-    if(xioctl(devHandle->fd, VIDIOC_STREAMON, &bufType) < 0) {
-        auto err = errno;
-        stopStream(devHandle);
-        throw libobsensor::io_exception("Failed to stream on!" + devHandle->info->name + ", " + strerror(err));
-    }
-
     if(pipe(devHandle->stopPipeFd) < 0) {
         auto err = errno;
         stopStream(devHandle);
         throw libobsensor::io_exception("Failed to create stop pipe!" + devHandle->info->name + ", " + strerror(err));
     }
 
-    devHandle->isCapturing   = true;
-    devHandle->profile       = videoProfile;
-    devHandle->frameCallback = callback;
-    devHandle->captureThread = std::make_shared<std::thread>([devHandle]() { captureLoop(devHandle); });
+    // NOTE: Ensure the thread is started before calling Stream On.
+    // Starting the stream before the thread may cause the first few frames to be lost
+    // due to the thread not being ready in time.
+    devHandle->isCapturing     = true;
+    devHandle->canStartCapture = false;
+    devHandle->profile         = videoProfile;
+    devHandle->frameCallback   = callback;
+    devHandle->captureThread   = std::make_shared<std::thread>([devHandle]() { captureLoop(devHandle); });
+
+    // stream on
+    v4l2_buf_type bufType = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    if(xioctl(devHandle->fd, VIDIOC_STREAMON, &bufType) < 0) {
+        auto err = errno;
+        stopStream(devHandle);
+        throw libobsensor::io_exception("Failed to stream on!" + devHandle->info->name + ", " + strerror(err));
+    }
+    // start capture
+    devHandle->canStartCapture = true;
+    devHandle->streamCv.notify_all();
 }
 
 void ObV4lUvcDevicePort::stopStream(std::shared_ptr<const StreamProfile> profile) {
@@ -742,6 +761,7 @@ void ObV4lUvcDevicePort::stopStream(std::shared_ptr<V4lDeviceHandle> devHandle) 
     // are properly reset and released to avoid inconsistent states.
 
     devHandle->isCapturing = false;
+    devHandle->streamCv.notify_all();
     // signal the capture loop to stop
     if(devHandle->stopPipeFd[1] >= 0) {
         char    buff[1] = { 0 };
@@ -905,7 +925,7 @@ UvcControlRange ObV4lUvcDevicePort::getXuRange(uint8_t control, int len) {
     std::lock_guard<std::recursive_mutex> lock(ctrlMutex_);
     auto                                  fd = deviceHandles_.front()->fd;
     UvcControlRange                       range;
-    struct uvc_xu_control_query           xquery{};
+    struct uvc_xu_control_query           xquery {};
     memset(&xquery, 0, sizeof(xquery));
     __u16 size   = 0;
     xquery.query = UVC_GET_LEN;
@@ -1026,7 +1046,7 @@ bool ObV4lUvcDevicePort::setXu(uint8_t ctrl, const uint8_t *data, uint32_t len) 
 
 void ObV4lUvcDevicePort::subscribeToCtrlEvent(uint32_t ctrl_id) const {
     auto                           fd = deviceHandles_.front()->fd;
-    struct v4l2_event_subscription event_subscription{};
+    struct v4l2_event_subscription event_subscription {};
     event_subscription.flags = V4L2_EVENT_SUB_FL_ALLOW_FEEDBACK;
     event_subscription.type  = V4L2_EVENT_CTRL;
     event_subscription.id    = ctrl_id;
@@ -1038,7 +1058,7 @@ void ObV4lUvcDevicePort::subscribeToCtrlEvent(uint32_t ctrl_id) const {
 
 void ObV4lUvcDevicePort::unsubscribeFromCtrlEvent(uint32_t ctrl_id) const {
     auto                           fd = deviceHandles_.front()->fd;
-    struct v4l2_event_subscription event_subscription{};
+    struct v4l2_event_subscription event_subscription {};
     event_subscription.flags = V4L2_EVENT_SUB_FL_ALLOW_FEEDBACK;
     event_subscription.type  = V4L2_EVENT_CTRL;
     event_subscription.id    = ctrl_id;
@@ -1050,7 +1070,7 @@ void ObV4lUvcDevicePort::unsubscribeFromCtrlEvent(uint32_t ctrl_id) const {
 
 bool ObV4lUvcDevicePort::pendForCtrlStatusEvent() const {
     auto              fd = deviceHandles_.front()->fd;
-    struct v4l2_event event{};
+    struct v4l2_event event {};
     memset(&event, 0, sizeof(event));
     // Poll registered events and verify that set control event raised (wait max of 10 * 2 = 20 [ms])
     static int MAX_POLL_RETRIES = 10;
