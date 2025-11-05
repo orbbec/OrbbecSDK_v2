@@ -610,7 +610,9 @@ void ObV4lUvcDevicePort::startStream(std::shared_ptr<const StreamProfile> profil
 
         v4l2_buf_type bufType = LOCAL_V4L2_BUF_TYPE_META_CAPTURE;
         if(xioctl(devHandle->metadataFd, VIDIOC_STREAMON, &bufType) < 0) {
-            throw libobsensor::io_exception("Failed to stream on metadata!" + devHandle->metadataInfo->name + ", " + strerror(errno));
+            auto err = errno;
+            stopStream(devHandle);
+            throw libobsensor::io_exception("Failed to stream on metadata!" + devHandle->metadataInfo->name + ", " + strerror(err));
         }
     }
 
@@ -621,10 +623,14 @@ void ObV4lUvcDevicePort::startStream(std::shared_ptr<const StreamProfile> profil
     fmt.fmt.pix.field       = V4L2_FIELD_NONE;
     fmt.fmt.pix.pixelformat = phaseProfileFormatToFourcc(videoProfile);
     if(xioctl(devHandle->fd, VIDIOC_S_FMT, &fmt) < 0) {
-        throw libobsensor::io_exception("Failed to set format!" + devHandle->info->name + ", " + strerror(errno));
+        auto err = errno;
+        stopStream(devHandle);
+        throw libobsensor::io_exception("Failed to set format!" + devHandle->info->name + ", " + strerror(err));
     }
     if(xioctl(devHandle->fd, VIDIOC_G_FMT, &fmt) < 0) {
-        throw libobsensor::io_exception("Failed to get format!" + devHandle->info->name + ", " + strerror(errno));
+        auto err = errno;
+        stopStream(devHandle);
+        throw libobsensor::io_exception("Failed to get format!" + devHandle->info->name + ", " + strerror(err));
     }
     LOG_DEBUG("Video node was successfully configured to {0} format, fd {1}", fourccToString(fmt.fmt.pix.pixelformat), devHandle->fd);
 
@@ -633,10 +639,14 @@ void ObV4lUvcDevicePort::startStream(std::shared_ptr<const StreamProfile> profil
     streamparm.parm.capture.timeperframe.numerator   = 1;
     streamparm.parm.capture.timeperframe.denominator = videoProfile->getFps();
     if(xioctl(devHandle->fd, VIDIOC_S_PARM, &streamparm) < 0) {
-        throw libobsensor::io_exception("Failed to set streamparm!" + devHandle->info->name + ", " + strerror(errno));
+        auto err = errno;
+        stopStream(devHandle);
+        throw libobsensor::io_exception("Failed to set streamparm!" + devHandle->info->name + ", " + strerror(err));
     }
     if(xioctl(devHandle->fd, VIDIOC_G_PARM, &streamparm) < 0) {
-        throw libobsensor::io_exception("Failed to get streamparm!" + devHandle->info->name + ", " + strerror(errno));
+        auto err = errno;
+        stopStream(devHandle);
+        throw libobsensor::io_exception("Failed to get streamparm!" + devHandle->info->name + ", " + strerror(err));
     }
 
     struct v4l2_requestbuffers req = {};
@@ -644,7 +654,9 @@ void ObV4lUvcDevicePort::startStream(std::shared_ptr<const StreamProfile> profil
     req.type                       = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     req.memory                     = V4L2_MEMORY_MMAP;
     if(xioctl(devHandle->fd, VIDIOC_REQBUFS, &req) < 0) {
-        throw libobsensor::io_exception("Failed to request buffers!" + devHandle->info->name + ", " + strerror(errno));
+        auto err = errno;
+        stopStream(devHandle);
+        throw libobsensor::io_exception("Failed to request buffers!" + devHandle->info->name + ", " + strerror(err));
     }
     for(uint32_t i = 0; i < req.count && i < MAX_BUFFER_COUNT; i++) {
         struct v4l2_buffer buf = {};
@@ -652,7 +664,9 @@ void ObV4lUvcDevicePort::startStream(std::shared_ptr<const StreamProfile> profil
         buf.memory             = V4L2_MEMORY_MMAP;
         buf.index              = i;
         if(xioctl(devHandle->fd, VIDIOC_QUERYBUF, &buf) < 0) {
-            throw libobsensor::io_exception("Failed to query buffer!" + devHandle->info->name + ", " + strerror(errno));
+            auto err = errno;
+            stopStream(devHandle);
+            throw libobsensor::io_exception("Failed to query buffer!" + devHandle->info->name + ", " + strerror(err));
         }
         devHandle->buffers[i].ptr    = (uint8_t *)mmap(NULL, buf.length, PROT_READ | PROT_WRITE, MAP_SHARED, devHandle->fd, buf.m.offset);
         devHandle->buffers[i].length = buf.length;
@@ -660,11 +674,15 @@ void ObV4lUvcDevicePort::startStream(std::shared_ptr<const StreamProfile> profil
 
     v4l2_buf_type bufType = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     if(xioctl(devHandle->fd, VIDIOC_STREAMON, &bufType) < 0) {
-        throw libobsensor::io_exception("Failed to stream on!" + devHandle->info->name + ", " + strerror(errno));
+        auto err = errno;
+        stopStream(devHandle);
+        throw libobsensor::io_exception("Failed to stream on!" + devHandle->info->name + ", " + strerror(err));
     }
 
     if(pipe(devHandle->stopPipeFd) < 0) {
-        throw libobsensor::io_exception("Failed to create stop pipe!" + devHandle->info->name + ", " + strerror(errno));
+        auto err = errno;
+        stopStream(devHandle);
+        throw libobsensor::io_exception("Failed to create stop pipe!" + devHandle->info->name + ", " + strerror(err));
     }
 
     devHandle->isCapturing   = true;
@@ -678,6 +696,20 @@ void ObV4lUvcDevicePort::stopStream(std::shared_ptr<const StreamProfile> profile
         return;
     }
 
+    auto videoProfile = profile->as<VideoStreamProfile>();
+    for(auto &devHandle: deviceHandles_) {
+        if(!devHandle->profile || !(*devHandle->profile == *videoProfile) || !devHandle->isCapturing) {
+            continue;
+        }
+
+        stopStream(devHandle);
+    }
+}
+
+void ObV4lUvcDevicePort::stopStream(std::shared_ptr<V4lDeviceHandle> devHandle) {
+    if(devHandle == nullptr) {
+        return;
+    }
     auto clearUp = [](std::shared_ptr<V4lDeviceHandle> devHandle) {
         // cleanup
         for(uint32_t i = 0; i < MAX_BUFFER_COUNT; i++) {
@@ -702,54 +734,64 @@ void ObV4lUvcDevicePort::stopStream(std::shared_ptr<const StreamProfile> profile
             devHandle->stopPipeFd[1] = -1;
         }
     };
-    auto videoProfile = profile->as<VideoStreamProfile>();
-    for(auto &devHandle: deviceHandles_) {
-        if(!devHandle->profile || !(*devHandle->profile == *videoProfile) || !devHandle->isCapturing) {
-            continue;
-        }
 
-        devHandle->isCapturing = false;
-        // signal the capture loop to stop
+    // NOTE:
+    // Even if an error occurs during the stop-stream procedure,
+    // all subsequent cleanup steps must still be executed.
+    // This ensures that internal states, handles, and resources
+    // are properly reset and released to avoid inconsistent states.
+
+    devHandle->isCapturing = false;
+    // signal the capture loop to stop
+    if(devHandle->stopPipeFd[1] >= 0) {
         char    buff[1] = { 0 };
         ssize_t ret     = write(devHandle->stopPipeFd[1], buff, 1);
         if(ret < 0) {
-            clearUp(devHandle);
-            throw libobsensor::io_exception("Failed to write stop pipe " + std::string(strerror(errno)));
+            auto err = errno;
+            LOG_ERROR("Failed to write stop pipe! Error: {}", std::string(strerror(err)));
+            // continue to clean others
         }
+    }
 
-        // wait for the capture loop to stop
-        if(devHandle->captureThread && devHandle->captureThread->joinable()) {
-            devHandle->captureThread->join();
+    // wait for the capture loop to stop
+    if(devHandle->captureThread && devHandle->captureThread->joinable()) {
+        devHandle->captureThread->join();
+    }
+    devHandle->captureThread.reset();
+
+    v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    if(xioctl(devHandle->fd, VIDIOC_STREAMOFF, &type) < 0) {
+        auto err = errno;
+        LOG_ERROR("Failed to stream off! Device: {}, error: {}", devHandle->info->name, std::string(strerror(err)));
+        // continue to clean others
+    }
+
+    // clearUp buffer
+    clearUp(devHandle);
+
+    struct v4l2_requestbuffers req = {};
+    req.count                      = 0;
+    req.type                       = type;
+    req.memory                     = V4L2_MEMORY_MMAP;
+    if(xioctl(devHandle->fd, VIDIOC_REQBUFS, &req) < 0) {
+        auto err = errno;
+        LOG_ERROR("Failed to request buffers! Device: {}, error: {}", devHandle->info->name, std::string(strerror(err)));
+        // continue to clean others
+    }
+
+    if(devHandle->metadataFd >= 0) {
+        type = LOCAL_V4L2_BUF_TYPE_META_CAPTURE;
+        if(xioctl(devHandle->metadataFd, VIDIOC_STREAMOFF, &type) < 0) {
+            auto err = errno;
+            LOG_ERROR("Failed to stream off metadata! Device: {}, error: {}", devHandle->metadataInfo->name, std::string(strerror(err)));
+            // continue to clean others
         }
-        devHandle->captureThread.reset();
-
-        v4l2_buf_type type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        if(xioctl(devHandle->fd, VIDIOC_STREAMOFF, &type) < 0) {
-            clearUp(devHandle);
-            throw libobsensor::io_exception("Failed to stream off!" + devHandle->info->name + ", " + strerror(errno));
-        }
-
-        clearUp(devHandle);
-
-        struct v4l2_requestbuffers req = {};
-        req.count                      = 0;
-        req.type                       = type;
-        req.memory                     = V4L2_MEMORY_MMAP;
-        if(xioctl(devHandle->fd, VIDIOC_REQBUFS, &req) < 0) {
-            throw libobsensor::io_exception("Failed to request buffers!" + devHandle->info->name + ", " + strerror(errno));
-        }
-
-        if(devHandle->metadataFd >= 0) {
-            type = LOCAL_V4L2_BUF_TYPE_META_CAPTURE;
-            if(xioctl(devHandle->metadataFd, VIDIOC_STREAMOFF, &type) < 0) {
-                throw libobsensor::io_exception("Failed to stream off metadata!" + devHandle->metadataInfo->name + ", " + strerror(errno));
-            }
-            req.count  = 0;
-            req.type   = type;
-            req.memory = V4L2_MEMORY_MMAP;
-            if(xioctl(devHandle->metadataFd, VIDIOC_REQBUFS, &req) < 0) {
-                throw libobsensor::io_exception("Failed to request metadata buffers!" + devHandle->metadataInfo->name + ", " + strerror(errno));
-            }
+        req.count  = 0;
+        req.type   = type;
+        req.memory = V4L2_MEMORY_MMAP;
+        if(xioctl(devHandle->metadataFd, VIDIOC_REQBUFS, &req) < 0) {
+            auto err = errno;
+            LOG_ERROR("Failed to request metadata buffers! Device: {}, error: {}", devHandle->metadataInfo->name, std::string(strerror(err)));
         }
     }
 }
@@ -757,7 +799,7 @@ void ObV4lUvcDevicePort::stopStream(std::shared_ptr<const StreamProfile> profile
 void ObV4lUvcDevicePort::stopAllStream() {
     for(auto &devHandle: deviceHandles_) {
         if(devHandle->isCapturing) {
-            BEGIN_TRY_EXECUTE({ stopStream(devHandle->profile); })
+            BEGIN_TRY_EXECUTE({ stopStream(devHandle); })
             CATCH_EXCEPTION_AND_EXECUTE({
                 LOG_WARN("Failed to stop stream for {}", devHandle->info->name);
                 devHandle->isCapturing = false;

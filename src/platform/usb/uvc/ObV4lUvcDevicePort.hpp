@@ -111,6 +111,7 @@ public:
 #endif
 
 private:
+    void            stopStream(std::shared_ptr<V4lDeviceHandle> deviceHandle);
     static void     captureLoop(std::shared_ptr<V4lDeviceHandle> deviceHandle);
     bool            getXu(uint8_t ctrl, uint8_t *data, uint32_t *len);
     bool            setXu(uint8_t ctrl, const uint8_t *data, uint32_t len);
