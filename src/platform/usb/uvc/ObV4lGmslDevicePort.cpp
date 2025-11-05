@@ -96,7 +96,7 @@ int getPidSn(const std::string &dev_name, void *data) {
     return 0;
 }
 
-int getGmslDeviceInfoFromFW(const std::string &dev_name, void *data, bool &metadataEmbedded) {
+int getGmslDeviceInfoFromFW(const std::string &dev_name, void *data, bool &metadataPrepended) {
     int ret = 0, fd = -1;
     // LOG_DEBUG("-Entry get_pid_sn dev_name:{}", dev_name);
 
@@ -140,8 +140,8 @@ int getGmslDeviceInfoFromFW(const std::string &dev_name, void *data, bool &metad
             continue;
         }
         LOG_DEBUG("Device: {}, metadata place: {}", dev_name, ctrlMetadata.value);
-        metadataEmbedded = ctrlMetadata.value == 1;
-        ret              = 0;
+        metadataPrepended = ctrlMetadata.value == 1;
+        ret               = 0;
         break;
     } while(retry < 3);
 
@@ -236,8 +236,8 @@ std::vector<std::shared_ptr<V4lDeviceInfoGmsl>> ObV4lGmslDevicePort::queryRelate
     std::string portInfo_streamType = portInfo->uid.substr(portInfo->uid.find_last_of('-') + 1);
     // int portInfo_streamType_int = std::stoi(portInfo_streamType);
 
-    int  portinfo_videoIndex  = checkVideoIndex(portInfo->infName);
-    bool metadataEmbeddedMode = portInfo->flag & USB_INTERFACE_METADATA_EMBEDDED_MODE ? true : false;
+    int  portinfo_videoIndex   = checkVideoIndex(portInfo->infName);
+    bool metadataPrependedMode = portInfo->infFlag & USB_INF_FRAME_METADATA_PREPENDED_96B ? true : false;
 
     min_node = portinfo_videoIndex;
     max_node = portinfo_videoIndex + 1;
@@ -257,7 +257,7 @@ std::vector<std::shared_ptr<V4lDeviceInfoGmsl>> ObV4lGmslDevicePort::queryRelate
         if((tmp_videoIndex < min_node) || (tmp_videoIndex > max_node)) {
             continue;
         }
-        else if(metadataEmbeddedMode && tmp_videoIndex != portinfo_videoIndex) {
+        else if(metadataPrependedMode && tmp_videoIndex != portinfo_videoIndex) {
             continue;
         }
 
@@ -320,12 +320,12 @@ std::vector<std::shared_ptr<V4lDeviceInfoGmsl>> ObV4lGmslDevicePort::queryRelate
                 /// sys/devices/pci0000:00/0000:00:xx.0/ABC/M-N/3-6:1.0/video4linux/video0
                 // to
                 /// sys/devices/pci0000:00/0000:00:xx.0/ABC/M-N/version
-                auto info                  = std::make_shared<V4lDeviceInfoGmsl>();
-                info->name                 = devname;
-                info->cap                  = getV4l2DeviceCapabilitiesGmsl(devname);
-                info->metadataEmbeddedMode = metadataEmbeddedMode;
+                auto info                   = std::make_shared<V4lDeviceInfoGmsl>();
+                info->name                  = devname;
+                info->cap                   = getV4l2DeviceCapabilitiesGmsl(devname);
+                info->metadataPrependedMode = metadataPrependedMode;
                 devs.push_back(info);
-                if(metadataEmbeddedMode) {
+                if(metadataPrependedMode) {
                     break;
                 }
             }
@@ -512,11 +512,11 @@ ObV4lGmslDevicePort::ObV4lGmslDevicePort(std::shared_ptr<const USBSourcePortInfo
             devHandle->metadataFd = fd;
         }
         else {
-            devHandle                       = std::make_shared<V4lDeviceHandleGmsl>();
-            devHandle->info                 = *iter;
-            devHandle->metadataFd           = -1;
-            devHandle->metadataEmbeddedMode = (*iter)->metadataEmbeddedMode;
-            int fd                          = open(devHandle->info->name.c_str(), O_RDWR | O_NONBLOCK, 0);
+            devHandle                        = std::make_shared<V4lDeviceHandleGmsl>();
+            devHandle->info                  = *iter;
+            devHandle->metadataFd            = -1;
+            devHandle->metadataPrependedMode = (*iter)->metadataPrependedMode;
+            int fd                           = open(devHandle->info->name.c_str(), O_RDWR | O_NONBLOCK, 0);
             if(fd < 0) {
                 throw io_exception("Failed to open: " + devHandle->info->name);
             }
@@ -739,50 +739,17 @@ void ObV4lGmslDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandleGmsl> devHa
                             videoFrame->updateData(devHandle->buffers[buf.index].ptr, buf.bytesused);
                         }
 
-                        if(devHandle->metadataEmbeddedMode) {
-                            constexpr const int metadataSize = 96;
+                        if(metadataBufferIndex >= 0) {
+                            // temp fix orbbecviewer metadata view flash issue. reason:Occasional missing of one frame in metadata data.
+                            auto &metaBuf                = devHandle->metadataBuffers[metadataBufferIndex];
+                            auto  uvc_payload_header     = metaBuf.ptr;
+                            auto  uvc_payload_header_len = metaBuf.actual_length;
+                            videoFrame->updateMetadata(static_cast<const uint8_t *>(uvc_payload_header), 12);
+                            videoFrame->appendMetadata(static_cast<const uint8_t *>(uvc_payload_header), uvc_payload_header_len);
 
-                            videoFrame->setMetadataSize(metadataSize + 12);  // 12 bytes for front padding, useless data
-                            uint8_t *metadataBuffer = videoFrame->getMetadataMutable();
-                            if(videoFrame->getType() == OB_FRAME_COLOR) {
-                                const uint16_t *frameDataBuffer = reinterpret_cast<const uint16_t *>(videoFrame->getData());
-                                for(int i = 0; i < metadataSize; i++) {
-                                    metadataBuffer[i + 12] = static_cast<uint8_t>(frameDataBuffer[i] >> 8);
-                                }
-                            }
-                            else if(videoFrame->getType() == OB_FRAME_DEPTH) {
-                                auto            frameData       = videoFrame->getDataMutable();
-                                const uint16_t *frameDataBuffer = reinterpret_cast<const uint16_t *>(frameData);
-                                for(int i = 0; i < metadataSize; i++) {
-                                    metadataBuffer[i + 12] = static_cast<uint8_t>(frameDataBuffer[i] & 0x00ff);
-                                }
-                                // Zeroing the metadata region prevents horizontal stripes in display
-                                // For depth images, zeroed pixels are interpreted as depth=0 and do not affect usage
-                                memset(frameData, 0, metadataSize * sizeof(uint16_t));
-                            }
-                            else {
-                                auto frameData = videoFrame->getDataMutable();
-                                memcpy(metadataBuffer + 12, frameData, metadataSize);
-                                // Zeroing the metadata region prevents horizontal stripes in display
-                                memset(frameData, 0, metadataSize);
-                            }
-
-                            // videoFrame->updateMetadata(reinterpret_cast<const uint8_t *>(&buffer), 12);
-                            // videoFrame->appendMetadata(videoFrame->getData(), metadataSize);
-                        }
-                        else {
-                            if(metadataBufferIndex >= 0) {
-                                // temp fix orbbecviewer metadata view flash issue. reason:Occasional missing of one frame in metadata data.
-                                auto &metaBuf                = devHandle->metadataBuffers[metadataBufferIndex];
-                                auto  uvc_payload_header     = metaBuf.ptr;
-                                auto  uvc_payload_header_len = metaBuf.actual_length;
-                                videoFrame->updateMetadata(static_cast<const uint8_t *>(uvc_payload_header), 12);
-                                videoFrame->appendMetadata(static_cast<const uint8_t *>(uvc_payload_header), uvc_payload_header_len);
-
-                                if(uvc_payload_header_len >= sizeof(StandardUvcFramePayloadHeader)) {
-                                    auto payloadHeader = (StandardUvcFramePayloadHeader *)uvc_payload_header;
-                                    videoFrame->setTimeStampUsec(payloadHeader->dwPresentationTime);
-                                }
+                            if(uvc_payload_header_len >= sizeof(StandardUvcFramePayloadHeader)) {
+                                auto payloadHeader = (StandardUvcFramePayloadHeader *)uvc_payload_header;
+                                videoFrame->setTimeStampUsec(payloadHeader->dwPresentationTime);
                             }
                         }
 
@@ -858,7 +825,8 @@ void ObV4lGmslDevicePort::handleSpecialResolution(std::shared_ptr<V4lDeviceHandl
             // Calculate the number of pixels to fill
             trimRight  = paddedWidth - originalWidth;
             trimBottom = paddedHeight - originalHeight;
-            // LOG_DEBUG("-SpecialResolution paddedWidth:{}, paddedHeight:{}, trimRight:{}, trimBottom:{}", paddedWidth, paddedHeight, trimRight, trimBottom);
+            // LOG_DEBUG("-SpecialResolution paddedWidth:{}, paddedHeight:{}, trimRight:{}, trimBottom:{}", paddedWidth, paddedHeight, trimRight,
+            // trimBottom);
             try {
                 cropDepthImage(srcData, videoFrame->getDataMutable(), paddedWidth, paddedHeight, trimRight, trimBottom);
                 videoFrame->setDataSize(originalWidth * originalHeight);
@@ -881,7 +849,8 @@ void ObV4lGmslDevicePort::handleSpecialResolution(std::shared_ptr<V4lDeviceHandl
             // Calculate the number of pixels to fill
             trimRight  = paddedWidth - originalWidth;
             trimBottom = paddedHeight - originalHeight;
-            // LOG_DEBUG("-SpecialResolution paddedWidth:{}, paddedHeight:{}, trimRight:{}, trimBottom:{}", paddedWidth, paddedHeight, trimRight, trimBottom);
+            // LOG_DEBUG("-SpecialResolution paddedWidth:{}, paddedHeight:{}, trimRight:{}, trimBottom:{}", paddedWidth, paddedHeight, trimRight,
+            // trimBottom);
 
             try {
                 cropDepthImage16(reinterpret_cast<const uint16_t *>(srcData), reinterpret_cast<uint16_t *>(videoFrame->getDataMutable()), paddedWidth,
@@ -1546,7 +1515,8 @@ UvcControlRange ObV4lGmslDevicePort::getPuRange(uint32_t propertyId) {
     }
 
     UvcControlRange range(query.minimum, query.maximum, query.step, query.default_value);
-    // LOG_DEBUG("Leave ObV4lGmslDevicePort::getPuRange propertyId:{}, query.minimum:{}, query.maximum:{}, query.step:{}, query.default_value:{} ", propertyId,
+    // LOG_DEBUG("Leave ObV4lGmslDevicePort::getPuRange propertyId:{}, query.minimum:{}, query.maximum:{}, query.step:{}, query.default_value:{} ",
+    // propertyId,
     //           query.minimum, query.maximum, query.step, query.default_value);
     return range;
 }
@@ -1925,9 +1895,9 @@ const std::vector<UsbInterfaceInfo> ObV4lGmslDevicePort::queryDevicesInfo() {
         getV4lDeviceBusInfo(devName, bus_info, card);
 
         struct orbbec_device_info devInfo;
-        bool                      metadataEmbedded = false;
+        bool                      metadataPrepended = false;
         memset(&devInfo, 0, sizeof(orbbec_device_info));
-        int res = getGmslDeviceInfoFromFW(devName, &devInfo, metadataEmbedded);
+        int res = getGmslDeviceInfoFromFW(devName, &devInfo, metadataPrepended);
         if(res != 0) {
             LOG_DEBUG("getGmslDeviceInfoFromFW failed! devName:{}", devName);
             continue;
@@ -1945,8 +1915,8 @@ const std::vector<UsbInterfaceInfo> ObV4lGmslDevicePort::queryDevicesInfo() {
         info.uid              = "gmsl2-" + std::to_string(devInfo.cam_num);
         info.conn_spec        = gmsl2_type;
         info.cls              = OB_USB_CLASS_VIDEO;  // borrowed from usb
-        if(metadataEmbedded) {
-            info.flag |= USB_INTERFACE_METADATA_EMBEDDED_MODE;
+        if(metadataPrepended) {
+            info.infFlag |= USB_INF_FRAME_METADATA_PREPENDED_96B;
         }
 
         if(devInfo.video_type == ORB_MUX_PAD_DEPTH) {

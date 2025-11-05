@@ -13,6 +13,10 @@
 #include <memory>
 #include <vector>
 
+enum UsbInterfaceFlag : uint64_t {
+    USB_INF_FRAME_METADATA_PREPENDED_96B = 1ull << 0,  // 96-byte metadata embedded at the beginning of the frame data
+};
+
 namespace libobsensor {
 enum SourcePortType {
     SOURCE_PORT_USB_VENDOR = 0x00,
@@ -124,7 +128,7 @@ struct USBSourcePortInfo : public SourcePortInfo {
     uint8_t     infIndex = 0;  // interface index
     std::string infName;       // interface name
     std::string hubId;         // hub id
-    uint64_t    flag = 0;      // flag for usb interface. See UsbInterfaceFlag for detail
+    uint64_t    infFlag = 0;   // flag for usb interface. See UsbInterfaceFlag for detail
 };
 
 struct RTPStreamPortInfo : public NetSourcePortInfo {

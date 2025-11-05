@@ -331,7 +331,7 @@ SourcePortInfoList LinuxUsbPal::querySourcePortInfos() {
         portInfo->infIndex = info.infIndex;
         portInfo->infName  = info.infName;
         portInfo->hubId    = info.hubId;
-        portInfo->flag     = info.flag;
+        portInfo->infFlag  = info.infFlag;
 
         portInfoList.push_back(portInfo);
     }
@@ -351,7 +351,7 @@ SourcePortInfoList LinuxUsbPal::querySourcePortInfos() {
             portInfo->infIndex = info.infIndex;
             portInfo->infName  = info.infName;
             portInfo->hubId    = info.hubId;
-            portInfo->flag     = info.flag;
+            portInfo->infFlag  = info.infFlag;
             portInfoList.push_back(portInfo);
         }
     }

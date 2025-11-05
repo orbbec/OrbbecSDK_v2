@@ -10,10 +10,6 @@
 
 namespace libobsensor {
 
-enum UsbInterfaceFlag : uint64_t {
-    USB_INTERFACE_METADATA_EMBEDDED_MODE = 1 << 0,  // The metadata is prefixed to the frame data
-};
-
 struct UsbInterfaceInfo {
     std::string url;
     std::string uid;
@@ -27,8 +23,8 @@ struct UsbInterfaceInfo {
     uint8_t     infNameDescIndex = 0;  // iInterface (index of string description of interface)
     std::string infName;
     std::string infUrl;  // to distinguish between different pins of the same device
-    uint8_t     cls  = 0;
-    uint64_t    flag = 0;  // flag for usb interface. See UsbInterfaceFlag for detail
+    uint8_t     cls     = 0;
+    uint64_t    infFlag = 0;  // flag for usb interface. See UsbInterfaceFlag for detail
 
     operator std::string() {
         std::stringstream s;

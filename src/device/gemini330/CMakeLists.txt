@@ -25,6 +25,8 @@ target_sources(
     ${CMAKE_CURRENT_LIST_DIR}/G330FrameTimestampCalculator.cpp
     ${CMAKE_CURRENT_LIST_DIR}/G330FrameInterleaveManager.hpp
     ${CMAKE_CURRENT_LIST_DIR}/G330FrameInterleaveManager.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/G330MetadataModifier.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/G330MetadataModifier.hpp
     ${CMAKE_CURRENT_LIST_DIR}/DabaiADevice.cpp
     ${CMAKE_CURRENT_LIST_DIR}/DabaiADevice.hpp
     ${CMAKE_CURRENT_LIST_DIR}/DabaiAMetadataModifier.cpp

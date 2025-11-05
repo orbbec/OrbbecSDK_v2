@@ -48,6 +48,7 @@
 #include "utils/BufferParser.hpp"
 #include "G330FrameInterleaveManager.hpp"
 #include "G330DeviceInfo.hpp"
+#include "G330MetadataModifier.hpp"
 
 #if defined(BUILD_NET_PAL)
 #include "G330NetDisparitySensor.hpp"
@@ -698,6 +699,13 @@ void                 G330Device::initSensorListGMSL() {
                     sensor->setFrameProcessor(frameProcessor.get());
                 }
 
+                // metadata modifier
+                auto usbPortInfo = std::dynamic_pointer_cast<const USBSourcePortInfo>(depthPortInfo);
+                if(usbPortInfo && (usbPortInfo->infFlag & USB_INF_FRAME_METADATA_PREPENDED_96B) != 0) {
+                    auto metadataModifer = std::make_shared<G330GMSLMetadataModifier>(this);
+                    sensor->setFrameMetadataModifer(metadataModifer);
+                }
+
                 auto propServer = getPropertyServer();
                 auto depthUnit  = propServer->getPropertyValueT<float>(OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT);
                 sensor->setDepthUnit(depthUnit);
@@ -793,6 +801,13 @@ void                 G330Device::initSensorListGMSL() {
                     sensor->setFrameProcessor(frameProcessor.get());
                 }
 
+                // metadata modifier
+                auto usbPortInfo = std::dynamic_pointer_cast<const USBSourcePortInfo>(leftIrPortInfo);
+                if(usbPortInfo && (usbPortInfo->infFlag & USB_INF_FRAME_METADATA_PREPENDED_96B) != 0) {
+                    auto metadataModifer = std::make_shared<G330GMSLMetadataModifier>(this);
+                    sensor->setFrameMetadataModifer(metadataModifer);
+                }
+
                 initSensorStreamProfile(sensor);
 
                 return sensor;
@@ -847,6 +862,13 @@ void                 G330Device::initSensorListGMSL() {
                 auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_RIGHT_IR_FRAME_PROCESSOR, false);
                 if(frameProcessor) {
                     sensor->setFrameProcessor(frameProcessor.get());
+                }
+
+                // metadata modifier
+                auto usbPortInfo = std::dynamic_pointer_cast<const USBSourcePortInfo>(rightIrPortInfo);
+                if(usbPortInfo && (usbPortInfo->infFlag & USB_INF_FRAME_METADATA_PREPENDED_96B) != 0) {
+                    auto metadataModifer = std::make_shared<G330GMSLMetadataModifier>(this);
+                    sensor->setFrameMetadataModifer(metadataModifer);
                 }
 
                 initSensorStreamProfile(sensor);
@@ -909,6 +931,13 @@ void                 G330Device::initSensorListGMSL() {
                 auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR, false);
                 if(frameProcessor) {
                     sensor->setFrameProcessor(frameProcessor.get());
+                }
+
+                // metadata modifier
+                auto usbPortInfo = std::dynamic_pointer_cast<const USBSourcePortInfo>(colorPortInfo);
+                if(usbPortInfo && (usbPortInfo->infFlag & USB_INF_FRAME_METADATA_PREPENDED_96B) != 0) {
+                    auto metadataModifer = std::make_shared<G330GMSLMetadataModifier>(this);
+                    sensor->setFrameMetadataModifer(metadataModifer);
                 }
 
                 initSensorStreamProfile(sensor);
