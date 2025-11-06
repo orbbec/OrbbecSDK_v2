@@ -433,14 +433,18 @@ void PointCloudFilter::updateOutputProfile(const std::shared_ptr<const Frame> fr
         uint16_t realWidth  = (uint16_t)source_vsp->getWidth() / patchSize_;
         uint16_t realHeight = (uint16_t)source_vsp->getHeight() / patchSize_;
 
-        // The resulted frame dimension will be dividable by 4;
-        uint16_t paddedWidth = realWidth + 3;
-        paddedWidth /= 4;
-        paddedWidth *= 4;
+        uint16_t paddedWidth  = realWidth;
+        uint16_t paddedHeight = realHeight;
+        if(patchSize_ != 1) {
+            // The resulted frame dimension will be dividable by 4;
+            paddedWidth  = realWidth + 3;
+            paddedHeight = realHeight + 3;
+            paddedWidth /= 4;
+            paddedWidth *= 4;
 
-        uint16_t paddedHeight = realHeight + 3;
-        paddedHeight /= 4;
-        paddedHeight *= 4;
+            paddedHeight /= 4;
+            paddedHeight *= 4;
+        }
 
         auto intrinsic   = source_vsp->getIntrinsic();
         intrinsic.width  = paddedWidth;
