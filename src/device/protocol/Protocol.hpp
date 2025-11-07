@@ -279,7 +279,8 @@ ReadRawDataResp               *parseReadRawDataResp(uint8_t *dataBuf, uint16_t d
 StartGetStructureDataListResp *parseStartStructureDataListResp(uint8_t *dataBuf, uint16_t dataSize);
 HeartbeatAndStateResp         *parseHeartbeatAndStateResp(uint8_t *dataBuf, uint16_t dataSize);
 
-HpStatus execute(const std::shared_ptr<IVendorDataPort> &dataPort, uint8_t *reqData, uint16_t reqDataSize, uint8_t *respData, uint16_t *respDataSize);
+HpStatus execute(const std::shared_ptr<IVendorDataPort> &dataPort, uint8_t *reqData, uint16_t reqDataSize, uint8_t *respData, uint16_t *respDataSize,
+                 uint16_t expectedRespLen = 0);
 bool     checkStatus(HpStatus stat, bool throwException = true);
 
 }  // namespace protocol

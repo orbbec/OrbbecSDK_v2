@@ -127,20 +127,24 @@ HpStatus validateResp(uint8_t *dataBuf, uint16_t dataSize, uint16_t expectedOpco
     return retStatus;
 }
 
-HpStatus execute(const std::shared_ptr<IVendorDataPort> &dataPort, uint8_t *reqData, uint16_t reqDataSize, uint8_t *respData, uint16_t *respDataSize) {
+HpStatus execute(const std::shared_ptr<IVendorDataPort> &dataPort, uint8_t *reqData, uint16_t reqDataSize, uint8_t *respData, uint16_t *respDataSize,
+                 uint16_t expectedRespLen) {
     HpStatusCode rc = HP_STATUS_OK;
     HpStatus     hpStatus;
 
     uint16_t requestId    = ((ReqHeader *)(reqData))->requestId;
     uint16_t opcode       = ((ReqHeader *)(reqData))->opcode;
     uint16_t nRetriesLeft = HP_NOT_READY_RETRIES;
-    uint32_t exceptRecLen = getExpectedRespSize(static_cast<HpOpCodes>(opcode));
+
+    if(expectedRespLen == 0) {
+        expectedRespLen = getExpectedRespSize(static_cast<HpOpCodes>(opcode));
+    }
 
     while(nRetriesLeft-- > 0)  // loop until device is ready
     {
         rc = HP_STATUS_OK;
         try {
-            *respDataSize = static_cast<uint16_t>(dataPort->sendAndReceive(reqData, static_cast<uint32_t>(reqDataSize), respData, exceptRecLen));
+            *respDataSize = static_cast<uint16_t>(dataPort->sendAndReceive(reqData, static_cast<uint32_t>(reqDataSize), respData, expectedRespLen));
         }
         catch(...) {
             rc = HP_STATUS_CONTROL_TRANSFER_FAILED;
