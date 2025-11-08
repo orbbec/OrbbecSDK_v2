@@ -68,15 +68,30 @@ if [ -t 1 ]; then
   TTY_OPT="-t"
 fi
 
+# Define a unique container name using architecture, current timestamp, and shell PID
+CONTAINER_NAME="OrbbecSDK_Linux_${ARCH}_$(date +%s)_$$"
+# Cleanup function to remove container associated with the current build
+cleanup() {
+    echo "Cleaning up docker container $CONTAINER_NAME"
+    docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
+}
+trap cleanup EXIT INT TERM
+
 # run docker container and build openorbbecsdk
 docker run --rm -u $USER_ID:$GROUP_ID \
     -v $PROJECT_ROOT/../:/workspace \
     -w /workspace/$FOLDER_NAME \
-    --name OpenOrbbecSDK_Build_Liunx_$ARCH \
-    -i $TTY_OPT \
+    --name $CONTAINER_NAME \
+    $TTY_OPT \
     --entrypoint /bin/bash \
     openorbbecsdk-env.$ARCH \
-    -c "cd /workspace/$FOLDER_NAME && bash ./scripts/build/build_linux.sh"
+    -c "cd /workspace/$FOLDER_NAME && bash ./scripts/build/build_linux.sh" &
+DOCKER_PID=$!
+wait $DOCKER_PID
+EXIT_CODE=$?
+if [ $EXIT_CODE -ne 0 ]; then
+    echo "Failed to build openorbbecsdk for linux $ARCH via docker. Exit code: $EXIT_CODE"
+    exit $EXIT_CODE
+fi
 
 echo "Done building openorbbecsdk for linux $ARCH via docker"
-
