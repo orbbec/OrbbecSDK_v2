@@ -12,6 +12,8 @@
 #define M_PI 3.14159265358979323846 /* pi */
 #endif
 
+// Select devices
+ob_device *selectDevice(ob_device_list *deviceList, ob_error *error);
 // Select sensors and enable streams
 void select_sensors_and_streams(ob_device *device, ob_config *config);
 // Print LiDAR point cloud frame information
@@ -45,16 +47,35 @@ int select_index(const char *prompt, int min_value, int max_value) {
 }
 
 int main(void) {
-
     // Used to return SDK interface error information.
     ob_error *error = NULL;
 
-    // Create a pipeline to manage the streams
-    ob_pipeline *pipe = ob_create_pipeline(&error);
+    // Create a context
+    ob_context *context = ob_create_context(&error);
     CHECK_OB_ERROR_EXIT(&error);
 
-    // Get the device from the pipeline
-    ob_device *device = ob_pipeline_get_device(pipe, &error);
+    // Query the list of connected devices
+    ob_device_list *deviceList = ob_query_device_list(context, &error);
+    CHECK_OB_ERROR_EXIT(&error);
+
+    ob_device *device      = NULL;
+    int        deviceCount = ob_device_list_get_count(deviceList, &error);
+    CHECK_OB_ERROR_EXIT(&error);
+    if(deviceCount <= 0) {
+        printf("Device Not Found\n");
+        return -1;
+    }
+    else if(deviceCount == 1) {
+        device = ob_device_list_get_device(deviceList, 0, &error);
+        CHECK_OB_ERROR_EXIT(&error);
+    }
+    else {
+        device = selectDevice(deviceList, error);
+        CHECK_OB_ERROR_EXIT(&error);
+    }
+
+    // Create a pipeline to manage the streams
+    ob_pipeline *pipe = ob_create_pipeline_with_device(device, &error);
     CHECK_OB_ERROR_EXIT(&error);
 
     // Check LiDAR device
@@ -345,6 +366,24 @@ void print_lidar_point_cloud_info(ob_frame *point_cloud_frame) {
     printf("}\n\n");
 }
 
+// Select a device, the name, pid, vid, uid of the device will be printed here, and the corresponding device object will be created after selection
+ob_device *selectDevice(ob_device_list *deviceList, ob_error *error) {
+    int devCount = ob_device_list_get_count(deviceList, &error);
+    CHECK_OB_ERROR_EXIT(&error);
+    printf("Device List:\n");
+    for(int i = 0; i < devCount; i++) {
+        const char *name = ob_device_list_get_device_name(deviceList, i, &error);
+        int         vid  = ob_device_list_get_device_vid(deviceList, i, &error);
+        int         pid  = ob_device_list_get_device_pid(deviceList, i, &error);
+        const char *uid  = ob_device_list_get_device_uid(deviceList, i, &error);
+        const char *sn   = ob_device_list_get_device_serial_number(deviceList, i, &error);
+        CHECK_OB_ERROR_EXIT(&error);
+        printf("%d. name: %s, vid: 0x%04x, pid: 0x%04x, uid: %s, sn: %s\n", i, name, vid, pid, uid, sn);
+    }
+    int devIndex = select_index("Select a device", 0, devCount - 1);
+
+    return ob_device_list_get_device(deviceList, devIndex, &error);
+}
 // Select sensors and enable streams
 void select_sensors_and_streams(ob_device *device, ob_config *config) {
 

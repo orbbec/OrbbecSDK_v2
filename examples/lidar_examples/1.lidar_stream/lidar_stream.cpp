@@ -9,6 +9,8 @@
 #include <vector>
 #include <cmath>
 
+// Select devices
+std::shared_ptr<ob::Device> selectDevice(std::shared_ptr<ob::DeviceList> deviceList);
 // Select streams
 void selectStreams(std::shared_ptr<ob::Device> device, std::shared_ptr<ob::Config> config);
 // Select sensors.
@@ -20,19 +22,34 @@ void printLiDARPointCloudInfo(std::shared_ptr<ob::LiDARPointsFrame> frame);
 
 int main(void) try {
 
-    // Create a pipeline.
-    ob::Pipeline pipe;
-    // Configure which streams to enable or disable for the Pipeline by creating a Config.
-    std::shared_ptr<ob::Config> config = std::make_shared<ob::Config>();
-
-    // Get the device from the pipeline
-    auto device = pipe.getDevice();
+    // Create a context
+    ob::Context context;
+    // Query the list of connected devices
+    auto deviceList = context.queryDeviceList();
+    // Found no device
+    if(deviceList->getCount() <= 0) {
+        std::cout << "Device Not Found" << std::endl;
+        return -1;
+    }
+    std::shared_ptr<ob::Device> device = nullptr;
+    if(deviceList->getCount() == 1) {
+        // If a single device is plugged in, the first one is selected by default
+        device = deviceList->getDevice(0);
+    }
+    else {
+        device = selectDevice(deviceList);
+    }
 
     // Check LiDAR device
     if(!ob_smpl::isLiDARDevice(device)) {
         std::cout << "Invalid device, please connect a LiDAR device!" << std::endl;
         return -1;
     }
+
+    // Create a pipeline.
+    ob::Pipeline pipe(device);
+    // Configure which streams to enable or disable for the Pipeline by creating a Config.
+    std::shared_ptr<ob::Config> config = std::make_shared<ob::Config>();
 
     // Get and print device information
     auto deviceInfo = device->getDeviceInfo();
@@ -149,6 +166,30 @@ void printGyroProfile(std::shared_ptr<ob::StreamProfile> profile, uint32_t index
     auto gyroRate = gyroProfile->getSampleRate();
     std::cout << " - " << index << "."
               << "gyro rate: " << ob::TypeHelper::convertOBIMUSampleRateTypeToString(gyroRate) << std::endl;
+}
+
+// Select a device, the name, pid, vid, uid of the device will be printed here, and the corresponding device object will be created after selection
+std::shared_ptr<ob::Device> selectDevice(std::shared_ptr<ob::DeviceList> deviceList) {
+    int devCount = deviceList->getCount();
+    std::cout << "Device list: " << std::endl;
+    for(int i = 0; i < devCount; i++) {
+        std::cout << i << ". name: " << deviceList->getName(i) << ", vid: 0x" << std::hex << deviceList->getVid(i) << ", pid: 0x" << std::setw(4)
+                  << std::setfill('0') << deviceList->getPid(i) << ", uid: 0x" << deviceList->getUid(i) << ", sn: " << deviceList->getSerialNumber(i)
+                  << std::dec << std::endl;
+    }
+    std::cout << "Select a device: ";
+
+    int devIndex;
+    std::cin >> devIndex;
+    while(devIndex < 0 || devIndex >= devCount || std::cin.fail()) {
+        std::cin.clear();
+        std::cin.ignore();
+        std::cout << "Your select is out of range, please reselect: " << std::endl;
+        std::cin >> devIndex;
+    }
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+    return deviceList->getDevice(devIndex);
 }
 
 // Select streams
@@ -340,7 +381,7 @@ void printLiDARPointCloudInfo(std::shared_ptr<ob::LiDARPointsFrame> pointCloudFr
             }
             auto x = static_cast<float>(distance * cos(angleRad));
             auto y = static_cast<float>(distance * sin(angleRad));
-            //auto z = 0.0f;
+            // auto z = 0.0f;
             if(std::isfinite(x) && std::isfinite(y)) {
                 validPointCount++;
             }

@@ -11,11 +11,9 @@
 #include <atomic>
 #include <map>
 
-int main(void) try {
-    std::cout << "Please enter the output filename (with .bag extension) and press Enter to start recording: ";
-    std::string filePath;
-    std::getline(std::cin, filePath);
+std::shared_ptr<ob::Device> selectDevice(std::shared_ptr<ob::DeviceList> deviceList);
 
+int main(void) try {
     // Create a context, for getting devices and sensors
     std::shared_ptr<ob::Context> context = std::make_shared<ob::Context>();
 
@@ -28,13 +26,29 @@ int main(void) try {
         exit(EXIT_FAILURE);
     }
 
-    // Acquire first available device
-    auto device = deviceList->getDevice(0);
+    std::shared_ptr<ob::Device> device = nullptr;
+    if(deviceList->getCount() == 1) {
+        // If a single device is plugged in, the first one is selected by default
+        device = deviceList->getDevice(0);
+    }
+    else {
+        device = selectDevice(deviceList);
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    }
 
     // Check LiDAR device
     if(!ob_smpl::isLiDARDevice(device)) {
         std::cout << "Invalid device, please connect a LiDAR device!" << std::endl;
         return -1;
+    }
+
+    std::cout << "\n------------------------------------------------------------------------\n";
+    std::cout << "Please enter the output filename (with .bag extension) and press Enter to start recording: ";
+    std::string filePath;
+    std::getline(std::cin, filePath);
+    std::string suffix = ".bag";
+    if(filePath.compare(filePath.length() - suffix.length(), suffix.length(), suffix) != 0) {
+        filePath.append(suffix);
     }
 
     // Create a pipeline the specified device
@@ -137,4 +151,27 @@ catch(ob::Error &e) {
     std::cout << "\nPress any key to exit.";
     ob_smpl::waitForKeyPressed();
     exit(EXIT_FAILURE);
+}
+
+// Select a device, the name, pid, vid, uid of the device will be printed here, and the corresponding device object will be created after selection
+std::shared_ptr<ob::Device> selectDevice(std::shared_ptr<ob::DeviceList> deviceList) {
+    int devCount = deviceList->getCount();
+    std::cout << "Device list: " << std::endl;
+    for(int i = 0; i < devCount; i++) {
+        std::cout << i << ". name: " << deviceList->getName(i) << ", vid: 0x" << std::hex << deviceList->getVid(i) << ", pid: 0x" << std::setw(4)
+                  << std::setfill('0') << deviceList->getPid(i) << ", uid: 0x" << deviceList->getUid(i) << ", sn: " << deviceList->getSerialNumber(i)
+                  << std::dec << std::endl;
+    }
+    std::cout << "Select a device: ";
+
+    int devIndex;
+    std::cin >> devIndex;
+    while(devIndex < 0 || devIndex >= devCount || std::cin.fail()) {
+        std::cin.clear();
+        std::cin.ignore();
+        std::cout << "Your select is out of range, please reselect: " << std::endl;
+        std::cin >> devIndex;
+    }
+
+    return deviceList->getDevice(devIndex);
 }

@@ -13,10 +13,18 @@ This sample demonstrates how to configure and start LiDAR and IMU sensor streams
 
 ## Code Overview
 
-1. **Initialize pipeline and configure streams**
+1. **Initialize context and device selection**
 
     ```cpp
-    ob::Pipeline pipe;
+    ob::Context context;
+    auto deviceList = context.queryDeviceList();
+    auto device = selectDevice(deviceList);
+    ```
+
+2. **Initialize pipeline and configure streams**
+
+    ```cpp
+    ob::Pipeline pipe(device);
     std::shared_ptr<ob::Config> config = std::make_shared<ob::Config>();
     
     // Select and enable desired streams
@@ -24,7 +32,7 @@ This sample demonstrates how to configure and start LiDAR and IMU sensor streams
     config->setFrameAggregateOutputMode(OB_FRAME_AGGREGATE_OUTPUT_ALL_TYPE_FRAME_REQUIRE);
     ```
 
-2. **Set/Get property**
+3. **Set/Get property**
 
     ```c
     // Get property
@@ -33,7 +41,7 @@ This sample demonstrates how to configure and start LiDAR and IMU sensor streams
     device->setIntProperty(OB_PROP_LIDAR_TAIL_FILTER_LEVEL_INT, 0);
     ```
 
-3. **Start pipeline with callback function for frame processing**
+4. **Start pipeline with callback function for frame processing**
 
     ```cpp
     pipe.start(config, [&](std::shared_ptr<ob::FrameSet> frameSet) {
@@ -59,7 +67,7 @@ This sample demonstrates how to configure and start LiDAR and IMU sensor streams
     });
     ```
 
-4. **Stream selection and configuration interface**
+5. **Stream selection and configuration interface**
 
     ```cpp
     void selectStreams(std::shared_ptr<ob::Device> device, std::shared_ptr<ob::Config> config) {
@@ -72,7 +80,7 @@ This sample demonstrates how to configure and start LiDAR and IMU sensor streams
     }
     ```
 
-5. **LiDAR point cloud data processing**
+6. **LiDAR point cloud data processing**
 
     ```cpp
     void printLiDARPointCloudInfo(std::shared_ptr<ob::LiDARPointsFrame> pointCloudFrame) {
@@ -107,6 +115,11 @@ This sample demonstrates how to configure and start LiDAR and IMU sensor streams
 The program outputs LiDAR point cloud information (frame index, timestamp, format, valid point count) and IMU data (acceleration, angular velocity) at regular intervals, demonstrating real-time sensor data acquisition and processing.
 
 ```shell
+Device list:
+0. name: Orbbec_LiDAR_ME450, vid: 0x2bc5, pid: 0x1302, uid: 0x20:4b:5e:00:43:09, sn: T0H6851001Z
+1. name: Orbbec_LiDAR_ME450, vid: 0x2bc5, pid: 0x1302, uid: 0x20:4b:5e:13:64:30, sn: T0H6851000Z
+Select a device: 1
+
 ------------------------------------------------------------------------
 Current Device:  name: Orbbec_LiDAR_ME450, vid: 0x2bc5, pid: 0x1302, uid: 0x20:4b:5e:13:64:30, sn: T0H6851000Z
 LiDAR IP Address: 192.168.1.100

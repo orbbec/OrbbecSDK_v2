@@ -13,10 +13,18 @@ This C language sample demonstrates how to configure and stream LiDAR and IMU se
 
 ## Code overview
 
-1. **Initialize pipeline and configuration with frame aggregation**
+1. **Initialize context and device selection**
 
     ```c
-    ob_pipeline *pipe = ob_create_pipeline(&error);
+    ob_context *context = ob_create_context(&error);
+    ob_device_list* deviceList = ob_query_device_list(context, &error);
+    ob_device *device = selectDevice(deviceList, error);
+    ```
+
+2. **Initialize pipeline and configuration with frame aggregation**
+
+    ```c
+    ob_pipeline *pipe = ob_create_pipeline_with_device(device, &error);
     ob_device *device = ob_pipeline_get_device(pipe, &error);
     ob_config *config = ob_create_config(&error);
     
@@ -24,7 +32,7 @@ This C language sample demonstrates how to configure and stream LiDAR and IMU se
     ob_config_disable_all_stream(config, &error);
     ```
 
-2. **Set/Get property**
+3. **Set/Get property**
 
     ```c
     // Get property
@@ -34,14 +42,14 @@ This C language sample demonstrates how to configure and stream LiDAR and IMU se
     ```
 
 
-3. **Interactive sensor and stream profile selection**
+4. **Interactive sensor and stream profile selection**
 
     ```c
     select_sensors_and_streams(device, config);
     ob_pipeline_start_with_callback(pipe, config, frame_callback, NULL, &error);
     ```
 
-4. **Frame callback with multi-sensor data processing**
+5. **Frame callback with multi-sensor data processing**
 
     ```c
     void frame_callback(ob_frame *frameset, void *user_data) {
@@ -70,7 +78,7 @@ This C language sample demonstrates how to configure and stream LiDAR and IMU se
     }
     ```
 
-5. **LiDAR point cloud processing with coordinate conversion**
+6. **LiDAR point cloud processing with coordinate conversion**
 
     ```c
     void print_lidar_point_cloud_info(ob_frame *point_cloud_frame) {
@@ -128,6 +136,10 @@ The program provides a comprehensive C-based streaming solution that:
 This sample serves as a foundation for building C applications that require flexible sensor configuration and real-time data processing capabilities.
 
 ```shell
+Device List:
+0. name: Orbbec_LiDAR_ME450, vid: 0x2bc5, pid: 0x1302, uid: 0x20:4b:5e:00:43:09, sn: T0H6851001Z
+1. name: Orbbec_LiDAR_ME450, vid: 0x2bc5, pid: 0x1302, uid: 0x20:4b:5e:13:64:30, sn: T0H6851000Z
+Select a device: 1
 
 ------------------------------------------------------------------------
 Current Device: name: Orbbec_LiDAR_ME450, vid: 0x2bc5, pid: 0x1302, uid: 0x20:4b:5e:13:64:30, sn: T0H6851000Z

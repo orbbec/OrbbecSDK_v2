@@ -11,14 +11,22 @@ This sample demonstrates how to record LiDAR and IMU sensor data to a bag file f
 
 ## Code overview
 
-1. **Recording setup**
+1. **Initialize context and device selection**
+
+    ```cpp
+    ob::Context context;
+    auto deviceList = context.queryDeviceList();
+    auto device = selectDevice(deviceList);
+    ```
+    
+2. **Recording setup**
 
     ```cpp
     // Initialize recording with user-specified filename
     auto recordDevice = std::make_shared<ob::RecordDevice>(device, filePath);
     ```
 
-2. **Frame counting with thread-safe monitoring**
+3. **Frame counting with thread-safe monitoring**
 
     ```cpp
     std::mutex frameMutex;
@@ -33,7 +41,7 @@ This sample demonstrates how to record LiDAR and IMU sensor data to a bag file f
     });
     ```
 
-3. **Real-time FPS calculation and display**
+4. **Real-time FPS calculation and display**
 
     ```cpp
     auto currentTime = ob_smpl::getNowTimesMs();
@@ -47,7 +55,7 @@ This sample demonstrates how to record LiDAR and IMU sensor data to a bag file f
     }
     ```
 
-4. **Safe recording termination**
+5. **Safe recording termination**
 
     ```cpp
     do {
@@ -93,6 +101,12 @@ The program creates a complete sensor data recording with:
 - **Professional Workflow**: Suitable for production data collection and testing
 
 ```shell
+Device list:
+0. name: Orbbec_LiDAR_ME450, vid: 0x2bc5, pid: 0x1302, uid: 0x20:4b:5e:00:43:09, sn: T0H6851001Z
+1. name: Orbbec_LiDAR_ME450, vid: 0x2bc5, pid: 0x1302, uid: 0x20:4b:5e:13:64:30, sn: T0H6851000Z
+Select a device: 1
+
+------------------------------------------------------------------------
 Please enter the output filename (with .bag extension) and press Enter to start recording: test.bag
 Streams and recorder have started!
 Press ESC, 'q', or 'Q' to stop recording and exit safely.
