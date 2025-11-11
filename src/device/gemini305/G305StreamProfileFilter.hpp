@@ -14,7 +14,7 @@ public:
     G305StreamProfileFilter(IDevice *owner);
     virtual ~G305StreamProfileFilter() noexcept override = default;
 
-    StreamProfileList filter(const StreamProfileList &profiles) const override;
+    //StreamProfileList filter(const StreamProfileList &profiles) const override;
 
     void onPresetResolutionConfigChanged(const OBPresetResolutionConfig *config);
 
