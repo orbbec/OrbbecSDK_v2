@@ -6,10 +6,12 @@
 #include "sensor/video/DisparityBasedSensor.hpp"
 #include "IDeviceComponent.hpp"
 #include "IDeviceClockSynchronizer.hpp"
+#include "component/property/CommonPropertyAccessors.hpp"
 
 namespace libobsensor {
 
-G305Disp2DepthPropertyAccessor::G305Disp2DepthPropertyAccessor(IDevice *owner) : owner_(owner), hwDisparityToDepthEnabled_(true), swDisparityToDepthEnabled_(false) {}
+G305Disp2DepthPropertyAccessor::G305Disp2DepthPropertyAccessor(IDevice *owner)
+    : owner_(owner), hwDisparityToDepthEnabled_(true), swDisparityToDepthEnabled_(false) {}
 
 void G305Disp2DepthPropertyAccessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
     switch(propertyId) {
@@ -202,4 +204,64 @@ void G305HWNoiseRemovePropertyAccessor::getPropertyRange(uint32_t propertyId, OB
     }
 }
 
+G305ColorAePropertyAccessor::G305ColorAePropertyAccessor(IDevice *owner) : owner_(owner) {}
+
+void G305ColorAePropertyAccessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
+    auto vendorPropertyAccessor = std::make_shared<LazySuperPropertyAccessor>([this]() {
+        auto accessor = owner_->getComponentT<IPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        return accessor.get();
+    });
+
+    switch(propertyId) {
+    case OB_PROP_COLOR_AE_MAX_EXPOSURE_INT: {
+        // due to the firmware not supporting the log function, the log function conversion is done in the SDK.
+        OBPropertyValue colorExposureInt;
+        colorExposureInt.intValue = value.intValue * 100;
+        vendorPropertyAccessor->setPropertyValue(OB_PROP_IR_AE_MAX_EXPOSURE_INT, colorExposureInt);
+    } break;
+
+    case OB_PROP_COLOR_EXPOSURE_INT: {
+        // due to the firmware not supporting the log function, the log function conversion is done in the SDK.
+        OBPropertyValue colorExposureInt;
+        colorExposureInt.intValue = value.intValue * 100;
+        vendorPropertyAccessor->setPropertyValue(OB_PROP_DEPTH_EXPOSURE_INT, colorExposureInt);
+    } break;
+    }
+}
+
+void G305ColorAePropertyAccessor::getPropertyValue(uint32_t propertyId, OBPropertyValue *value) {
+    auto vendorPropertyAccessor = std::make_shared<LazySuperPropertyAccessor>([this]() {
+        auto accessor = owner_->getComponentT<IPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        return accessor.get();
+    });
+    switch(propertyId) {
+    case OB_PROP_COLOR_AE_MAX_EXPOSURE_INT: {
+        vendorPropertyAccessor->getPropertyValue(OB_PROP_IR_AE_MAX_EXPOSURE_INT, value);
+        value->intValue /= 100;
+    } break;
+    case OB_PROP_COLOR_EXPOSURE_INT: {
+        vendorPropertyAccessor->getPropertyValue(OB_PROP_DEPTH_EXPOSURE_INT, value);
+        value->intValue /= 100;
+    } break;
+    }
+}
+
+void G305ColorAePropertyAccessor::getPropertyRange(uint32_t propertyId, OBPropertyRange *range) {
+    auto vendorPropertyAccessor = std::make_shared<LazySuperPropertyAccessor>([this]() {
+        auto accessor = owner_->getComponentT<IPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        return accessor.get();
+    });
+    switch(propertyId) {
+    case OB_PROP_COLOR_AE_MAX_EXPOSURE_INT: {
+        vendorPropertyAccessor->getPropertyRange(OB_PROP_IR_AE_MAX_EXPOSURE_INT, range);
+        range->max.intValue /= 100;
+        range->def.intValue /= 100;
+    } break;
+    case OB_PROP_COLOR_EXPOSURE_INT: {
+        vendorPropertyAccessor->getPropertyRange(OB_PROP_DEPTH_EXPOSURE_INT, range);
+        range->max.intValue /= 100;
+        range->def.intValue /= 100;
+    } break;
+    }
+}
 }  // namespace libobsensor

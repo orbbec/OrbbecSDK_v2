@@ -401,6 +401,7 @@ void G305Device::initProperties() {
                 return accessor.get();
             });
             propertyServer->registerProperty(OB_PROP_COLOR_AE_MODE_INT, "rw", "rw", vendorPropertyAccessor);
+            propertyServer->registerProperty(OB_PROP_COLOR_FAST_AE_BOOL, "rw", "rw", vendorPropertyAccessor);
         }
         else if(sensor == OB_SENSOR_COLOR_LEFT) {
             auto uvcPropertyAccessor = std::make_shared<LazyPropertyAccessor>([this, &sourcePortInfo]() {
@@ -540,12 +541,14 @@ void G305Device::initProperties() {
     propertyServer->aliasProperty(OB_PROP_COLOR_EXPOSURE_INT, OB_PROP_DEPTH_EXPOSURE_INT);
     propertyServer->aliasProperty(OB_PROP_IR_GAIN_INT, OB_PROP_DEPTH_GAIN_INT);
     propertyServer->aliasProperty(OB_PROP_COLOR_GAIN_INT, OB_PROP_DEPTH_GAIN_INT);
-    propertyServer->aliasProperty(OB_PROP_COLOR_AE_MAX_EXPOSURE_INT, OB_PROP_IR_AE_MAX_EXPOSURE_INT);
     propertyServer->aliasProperty(OB_PROP_COLOR_AUTO_EXPOSURE_PRIORITY_INT, OB_PROP_DEPTH_AUTO_EXPOSURE_PRIORITY_INT);
-    propertyServer->aliasProperty(OB_PROP_COLOR_EXPOSURE_INT, OB_PROP_DEPTH_EXPOSURE_INT);
 
     auto heartbeatPropertyAccessor = std::make_shared<HeartbeatPropertyAccessor>(this);
     propertyServer->registerProperty(OB_PROP_HEARTBEAT_BOOL, "rw", "rw", heartbeatPropertyAccessor);
+
+    auto colorAeAccessor = std::make_shared<G305ColorAePropertyAccessor>(this);
+    propertyServer->registerProperty(OB_PROP_COLOR_AE_MAX_EXPOSURE_INT, "rw", "rw", colorAeAccessor);
+    propertyServer->registerProperty(OB_PROP_COLOR_EXPOSURE_INT, "rw", "rw", colorAeAccessor);
 
     auto baseLinePropertyAccessor = std::make_shared<BaselinePropertyAccessor>(this);
     propertyServer->registerProperty(OB_STRUCT_BASELINE_CALIBRATION_PARAM, "r", "r", baseLinePropertyAccessor);

@@ -38,4 +38,17 @@ private:
     IDevice *owner_;
 };
 
+class G305ColorAePropertyAccessor : public IBasicPropertyAccessor {
+public:
+    explicit G305ColorAePropertyAccessor(IDevice *owner);
+    virtual ~G305ColorAePropertyAccessor() noexcept override = default;
+
+    virtual void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
+    virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
+    virtual void getPropertyRange(uint32_t propertyId, OBPropertyRange *range) override;
+
+private:
+    IDevice *owner_;
+};
+
 }  // namespace libobsensor

@@ -53,7 +53,7 @@ std::vector<std::shared_ptr<IDeviceEnumInfo>> G305DeviceInfo::pickDevices(const 
     std::vector<std::shared_ptr<IDeviceEnumInfo>> G305DeviceInfos;
 
     // pick usb device
-    auto remainder = FilterUSBPortInfoByPid(infoList, G305DevPids);
+    auto remainder = FilterUSBPortInfoByVidPid(infoList, ORBBEC_DEVICE_VID, G305DevPids);
     auto groups    = utils::groupVector<std::shared_ptr<const SourcePortInfo>>(remainder, GroupUSBSourcePortByUrl);
     auto iter      = groups.begin();
     while(iter != groups.end()) {

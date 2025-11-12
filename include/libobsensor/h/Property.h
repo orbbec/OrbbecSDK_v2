@@ -577,6 +577,11 @@ typedef enum {
      * - 1: Color based
      */
     OB_PROP_COLOR_AE_MODE_INT = 247,
+    
+    /**
+     * @brief COLOR FAST AE
+     */
+    OB_PROP_COLOR_FAST_AE_BOOL = 248,
 
     /**
      * @brief Color camera ROI brightness adjustment
