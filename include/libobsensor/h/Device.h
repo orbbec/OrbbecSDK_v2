@@ -426,8 +426,8 @@ OB_EXPORT const char *ob_device_info_get_firmware_version(const ob_device_info *
  *
  * @param[in] info Device Information
  * @param[out] error Pointer to an error object that will be set if an error occurs.
- * 
- * @return const char* The connection type, currently supports: "USB", "USB1.0", "USB1.1", "USB2.0", "USB2.1", "USB3.0", "USB3.1", "USB3.2", "Ethernet"
+ *
+ * @return const char* The connection type, currently supports: "USB", "USB1.0", "USB1.1", "USB2.0", "USB2.1", "USB3.0", "USB3.1", "USB3.2", "Ethernet", "GMSL2"
  */
 OB_EXPORT const char *ob_device_info_get_connection_type(const ob_device_info *info, ob_error **error);
 
@@ -606,7 +606,7 @@ OB_EXPORT const char *ob_device_list_get_device_serial_number(const ob_device_li
  * @param[out] error Pointer to an error object that will be set if an error occurs.
  *
  * @return const char* returns the device connection type, currently supports: "USB", "USB1.0", "USB1.1", "USB2.0", "USB2.1", "USB3.0", "USB3.1", "USB3.2",
- * "Ethernet"
+ * "Ethernet", "GMSL2"
  */
 OB_EXPORT const char *ob_device_list_get_device_connection_type(const ob_device_list *list, uint32_t index, ob_error **error);
 

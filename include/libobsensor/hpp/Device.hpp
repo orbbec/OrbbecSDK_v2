@@ -1225,7 +1225,8 @@ public:
      *
      * @param[in] index device index
      *
-     * @return const char* returns connection type, currently supports: "USB", "USB1.0", "USB1.1", "USB2.0", "USB2.1", "USB3.0", "USB3.1", "USB3.2", "Ethernet"
+     * @return const char* returns connection type, currently supports: "USB", "USB1.0", "USB1.1", "USB2.0", "USB2.1", "USB3.0", "USB3.1", "USB3.2", "Ethernet",
+     * "GMSL2"
      */
     const char *getConnectionType(uint32_t index) const {
         ob_error *error = nullptr;
