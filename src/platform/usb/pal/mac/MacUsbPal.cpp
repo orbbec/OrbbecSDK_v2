@@ -39,13 +39,13 @@ public:
     }
     void start(deviceChangedCallback callback) override {
         callback_ = callback;
-        auto rc   = libusb_hotplug_register_callback(NULL, LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED, 0, 0x2BC5, LIBUSB_HOTPLUG_MATCH_ANY, LIBUSB_HOTPLUG_MATCH_ANY,
-                                                     deviceArrivalCallback, this, &hp[0]);
+        auto rc   = libusb_hotplug_register_callback(NULL, LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED, 0, LIBUSB_HOTPLUG_MATCH_ANY, LIBUSB_HOTPLUG_MATCH_ANY,
+                                                     LIBUSB_HOTPLUG_MATCH_ANY, deviceArrivalCallback, this, &hp[0]);
         if(LIBUSB_SUCCESS != rc) {
             LOG_WARN("register libusb hotplug failed!");
         }
-        rc = libusb_hotplug_register_callback(NULL, LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT, 0, 0x2BC5, LIBUSB_HOTPLUG_MATCH_ANY, LIBUSB_HOTPLUG_MATCH_ANY,
-                                              deviceRemovedCallback, this, &hp[1]);
+        rc = libusb_hotplug_register_callback(NULL, LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT, 0, LIBUSB_HOTPLUG_MATCH_ANY, LIBUSB_HOTPLUG_MATCH_ANY,
+                                              LIBUSB_HOTPLUG_MATCH_ANY, deviceRemovedCallback, this, &hp[1]);
         if(LIBUSB_SUCCESS != rc) {
             LOG_WARN("register libusb hotplug failed!");
         }
@@ -87,25 +87,31 @@ std::string parseDevicePath(libusb_device *usbDevice) {
 
 bool checkDevice(libusb_device *device) {
     struct libusb_device_descriptor desc;
-    auto res = libusb_get_device_descriptor(device, &desc);
-    if (res==0) {
-        if (desc.idProduct==0x066B) {
-            LOG_WARN("Femto Bolt is unavailable on macOS duo to Depth Engine");
-            return false;
-        }
+    auto                            res = libusb_get_device_descriptor(device, &desc);
+    if(res != LIBUSB_SUCCESS) {
+        LOG_WARN("Failed to retrieve USB descriptor for device. libusb_get_device_descriptor returned {}", res);
+        return false;
     }
-    // other: default is available
+
+    if(desc.idProduct == 0x066B && desc.idVendor == ORBBEC_DEVICE_VID) {
+        LOG_WARN("Femto Bolt is unavailable on macOS duo to Depth Engine");
+        return false;
+    }
+    const auto &allowedVids = libobsensor::supportedUsbVids;
+    if(std::find(allowedVids.begin(), allowedVids.end(), desc.idVendor) == allowedVids.end()) {
+        return false;
+    }
     return true;
 }
 
 int deviceArrivalCallback(libusb_context *ctx, libusb_device *device, libusb_hotplug_event event, void *user_data) {
     (void)ctx;
     (void)event;
-    
-    if (!checkDevice(device)) {
+
+    if(!checkDevice(device)) {
         return 0;
     }
-    
+
     auto watcher = (LibusbDeviceWatcher *)user_data;
     LOG_DEBUG("Device arrival event occurred");
     (void)watcher->callback_(OB_DEVICE_ARRIVAL, parseDevicePath(device));
@@ -115,11 +121,11 @@ int deviceArrivalCallback(libusb_context *ctx, libusb_device *device, libusb_hot
 int deviceRemovedCallback(libusb_context *ctx, libusb_device *device, libusb_hotplug_event event, void *user_data) {
     (void)ctx;
     (void)event;
-    
-    if (!checkDevice(device)) {
+
+    if(!checkDevice(device)) {
         return 0;
     }
-    
+
     auto watcher = (LibusbDeviceWatcher *)user_data;
     LOG_DEBUG("Device removed event occurred");
     (void)watcher->callback_(OB_DEVICE_REMOVED, parseDevicePath(device));
@@ -175,7 +181,7 @@ std::shared_ptr<ISourcePort> MacUsbPal::getSourcePort(std::shared_ptr<const Sour
     }
     case SOURCE_PORT_USB_UVC: {
         auto usbPortInfo = std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo);
-        auto usbDev = usbEnumerator_->openUsbDevice(std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->url);
+        auto usbDev      = usbEnumerator_->openUsbDevice(std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->url);
         if(usbDev == nullptr) {
             throw libobsensor::camera_disconnected_exception("usbEnumerator openUsbDevice failed!");
         }
@@ -185,7 +191,7 @@ std::shared_ptr<ISourcePort> MacUsbPal::getSourcePort(std::shared_ptr<const Sour
     }
     case SOURCE_PORT_USB_HID: {
         auto usbPortInfo = std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo);
-        auto usbDev = usbEnumerator_->openUsbDevice(std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->url);
+        auto usbDev      = usbEnumerator_->openUsbDevice(std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->url);
         if(usbDev == nullptr) {
             throw libobsensor::camera_disconnected_exception("usbEnumerator openUsbDevice failed!");
         }
@@ -237,4 +243,3 @@ SourcePortInfoList MacUsbPal::querySourcePortInfos() {
 }
 
 }  // namespace libobsensor
-

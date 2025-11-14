@@ -100,7 +100,7 @@ void BootDevice::fetchDeviceInfo() {
     if(deviceInfo_->name_.find("Orbbec ") == 0) {
         deviceInfo_->name_ = deviceInfo_->name_.substr(7);
     }
-    deviceInfo_->fullName_ = "Orbbec " + deviceInfo_->name_;
+    deviceInfo_->fullName_ = deviceInfo_->name_;
 
     // mark the device as a multi-sensor device with same clock at default
     extensionInfo_["AllSensorsUsingSameClock"] = "true";

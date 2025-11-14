@@ -54,7 +54,7 @@ private:
 
 public:
     static std::shared_ptr<FilterCreationStrategyFactory> getInstance();
-    static std::shared_ptr<IFilterCreationStrategy>       create(uint16_t pid);
+    static std::shared_ptr<IFilterCreationStrategy>       create(uint16_t vid, uint16_t pid);
 };
 
 // Subclass of FilterCreationStrategyBase

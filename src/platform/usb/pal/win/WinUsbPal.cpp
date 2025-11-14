@@ -3,7 +3,7 @@
 
 #include "WinUsbPal.hpp"
 
-#if(_MSC_FULL_VER < 180031101)
+#if (_MSC_FULL_VER < 180031101)
 #error At least Visual Studio 2013 Update 4 is required to compile this backend
 #endif
 #ifndef WIN32_LEAN_AND_MEAN
@@ -223,9 +223,11 @@ SourcePortInfoList WinUsbPal::querySourcePortInfos() {
 
     WmfUvcDevicePort::foreachUvcDevice(action);
 
+    const auto &allowedVids = libobsensor::supportedUsbVids;
     const auto &usbInfoList = usbEnumerator_->queryUsbInterfaces();
     for(const auto &info: usbInfoList) {
-        if(info.vid == 0x2bc5 && (info.cls == OB_USB_CLASS_HID || info.cls == OB_USB_CLASS_VENDOR_SPECIFIC)) {
+        auto iter = std::find(allowedVids.begin(), allowedVids.end(), info.vid);
+        if((iter != allowedVids.end()) && (info.cls == OB_USB_CLASS_HID || info.cls == OB_USB_CLASS_VENDOR_SPECIFIC)) {
             // 1. Filter non orbbec devices 2. Filter uvc class
             auto portInfo      = std::make_shared<USBSourcePortInfo>();
             portInfo->portType = info.cls == OB_USB_CLASS_HID ? SOURCE_PORT_USB_HID : SOURCE_PORT_USB_VENDOR;
@@ -357,19 +359,22 @@ LRESULT CALLBACK WinUsbDeviceWatcher::onWinEvent(HWND hWnd, UINT message, WPARAM
             std::string device_guid;
             auto        devIntf      = reinterpret_cast<PDEV_BROADCAST_DEVICEINTERFACE>(lParam);
             std::string symbolicLink = wideCharToUTF8(devIntf->dbcc_name);
-            if(parseSymbolicLink(symbolicLink, vid, pid, mi, uid, device_guid) && vid == 0x2bc5) {
-                auto watcherExtraData = reinterpret_cast<extra_data *>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
-                symbolicLink          = utils::string::toUpper(symbolicLink);
-                if(wParam == DBT_DEVICEARRIVAL) {
-                    LOG_DEBUG("Device arrival event occurred! symbolicLink={}", symbolicLink);
-                    if(devIntf->dbcc_classguid != GUID_DEVINTERFACE_USB_DEVICE || PID_BOOTLOADER_UVC == pid) {
-                        (void)watcherExtraData->callback_(OB_DEVICE_ARRIVAL, symbolicLink);
+            if(parseSymbolicLink(symbolicLink, vid, pid, mi, uid, device_guid)) {
+                const auto &allowedVids = libobsensor::supportedUsbVids;
+                if(std::find(allowedVids.begin(), allowedVids.end(), vid) != allowedVids.end()) {
+                    auto watcherExtraData = reinterpret_cast<extra_data *>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
+                    symbolicLink          = utils::string::toUpper(symbolicLink);
+                    if(wParam == DBT_DEVICEARRIVAL) {
+                        LOG_DEBUG("Device arrival event occurred! symbolicLink={}", symbolicLink);
+                        if(devIntf->dbcc_classguid != GUID_DEVINTERFACE_USB_DEVICE || ((ORBBEC_DEVICE_VID == vid) && (PID_BOOTLOADER_UVC == pid))) {
+                            (void)watcherExtraData->callback_(OB_DEVICE_ARRIVAL, symbolicLink);
+                        }
                     }
-                }
-                else if(wParam == DBT_DEVICEREMOVECOMPLETE) {
-                    LOG_DEBUG("Device removed event occurred! symbolicLink={}", symbolicLink);
-                    if(devIntf->dbcc_classguid == GUID_DEVINTERFACE_USB_DEVICE) {
-                        (void)watcherExtraData->callback_(OB_DEVICE_REMOVED, symbolicLink);
+                    else if(wParam == DBT_DEVICEREMOVECOMPLETE) {
+                        LOG_DEBUG("Device removed event occurred! symbolicLink={}", symbolicLink);
+                        if(devIntf->dbcc_classguid == GUID_DEVINTERFACE_USB_DEVICE) {
+                            (void)watcherExtraData->callback_(OB_DEVICE_REMOVED, symbolicLink);
+                        }
                     }
                 }
             }
@@ -458,4 +463,3 @@ bool WinUsbDeviceWatcher::registerDeviceInterfaceToHwnd(HWND hWnd) {
 }
 
 }  // namespace libobsensor
-

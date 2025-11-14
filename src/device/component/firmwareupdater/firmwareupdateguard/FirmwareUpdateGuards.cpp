@@ -11,29 +11,37 @@ namespace libobsensor {
 FirmwareUpdateGuardFactory::FirmwareUpdateGuardFactory(IDevice *owner) : DeviceComponentBase(owner) {}
 
 std::shared_ptr<IFirmwareUpdateGuard> FirmwareUpdateGuardFactory::create() {
+    auto vid   = getOwner()->getInfo()->vid_;
     auto pid   = getOwner()->getInfo()->pid_;
     auto guard = std::make_shared<CompositeGuard>();
 
     guard->addGuard(std::make_shared<FirmwareUpgradeStateGuard>(getOwner()));
-    if(std::find(G330DevPids.begin(), G330DevPids.end(), pid) != G330DevPids.end()) {
+    if(isDeviceInContainer(G330DevPids, vid, pid)) {
         guard->addGuard(std::make_shared<GlobalTimestampGuard>(getOwner()));
         guard->addGuard(std::make_shared<HeardbeatGuard>(getOwner()));
         return guard;
     }
-    else if(std::find(DaBaiADevPids.begin(), DaBaiADevPids.end(), pid) != DaBaiADevPids.end()) {
+    else if(isDeviceInContainer(DaBaiADevPids, vid, pid)) {
         guard->addGuard(std::make_shared<GlobalTimestampGuard>(getOwner()));
         guard->addGuard(std::make_shared<HeardbeatGuard>(getOwner()));
         return guard;
     }
-    else if(std::find(Gemini2DevPids.begin(), Gemini2DevPids.end(), pid) != Gemini2DevPids.end()) {
+    else if(isDeviceInContainer(G435LeDevPids, vid, pid)) {
         guard->addGuard(std::make_shared<GlobalTimestampGuard>(getOwner()));
         guard->addGuard(std::make_shared<HeardbeatGuard>(getOwner()));
         return guard;
     }
-    else if(std::find(Astra2DevPids.begin(), Astra2DevPids.end(), pid) != Astra2DevPids.end()) {
-        guard->addGuard(std::make_shared<GlobalTimestampGuard>(getOwner()));
-        guard->addGuard(std::make_shared<HeardbeatGuard>(getOwner()));
-        return guard;
+    else if(vid == ORBBEC_DEVICE_VID) {
+        if(std::find(Gemini2DevPids.begin(), Gemini2DevPids.end(), pid) != Gemini2DevPids.end()) {
+            guard->addGuard(std::make_shared<GlobalTimestampGuard>(getOwner()));
+            guard->addGuard(std::make_shared<HeardbeatGuard>(getOwner()));
+            return guard;
+        }
+        else if(std::find(Astra2DevPids.begin(), Astra2DevPids.end(), pid) != Astra2DevPids.end()) {
+            guard->addGuard(std::make_shared<GlobalTimestampGuard>(getOwner()));
+            guard->addGuard(std::make_shared<HeardbeatGuard>(getOwner()));
+            return guard;
+        }
     }
 
     // FemtoBolt and FemtoMega upgrade differently than other devices, no need to add any guards for them

@@ -31,7 +31,7 @@ std::shared_ptr<IDevice> FemtoBoltDeviceInfo::createDevice() const {
 #if defined(BUILD_USB_PAL)
 std::vector<std::shared_ptr<IDeviceEnumInfo>> FemtoBoltDeviceInfo::pickDevices(const SourcePortInfoList infoList) {
     std::vector<std::shared_ptr<IDeviceEnumInfo>> femtoBoltDeviceInfos;
-    auto                                          remainder = FilterUSBPortInfoByPid(infoList, FemtoBoltDevPids);
+    auto                                          remainder = FilterUSBPortInfoByVidPid(infoList, ORBBEC_DEVICE_VID, FemtoBoltDevPids);
     auto                                          groups    = utils::groupVector<std::shared_ptr<const SourcePortInfo>>(remainder, GroupUSBSourcePortByUrl);
     auto                                          iter      = groups.begin();
     while(iter != groups.end()) {

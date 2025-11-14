@@ -44,7 +44,7 @@ std::shared_ptr<IDevice> Astra2DeviceInfo::createDevice() const {
 #ifdef BUILD_USB_PAL
 std::vector<std::shared_ptr<IDeviceEnumInfo>> Astra2DeviceInfo::pickDevices(const SourcePortInfoList infoList) {
     std::vector<std::shared_ptr<IDeviceEnumInfo>> Astra2DeviceInfos;
-    auto                                          remainder = FilterUSBPortInfoByPid(infoList, Astra2DevPids);
+    auto                                          remainder = FilterUSBPortInfoByVidPid(infoList, ORBBEC_DEVICE_VID, Astra2DevPids);
     auto                                          groups    = utils::groupVector<std::shared_ptr<const SourcePortInfo>>(remainder, GroupUSBSourcePortByUrl);
     auto                                          iter      = groups.begin();
     while(iter != groups.end()) {

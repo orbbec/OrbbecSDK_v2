@@ -36,12 +36,14 @@ std::shared_ptr<Context> Context::getInstance(const std::string &configPath) {
 
 Context::Context(const std::string &configFilePath) {
     envConfig_               = EnvConfig::getInstance(configFilePath);
+    devInfoConfig_           = DevInfoConfig::getInstance();
     logger_                  = Logger::getInstance();
     frameMemoryPool_         = FrameMemoryPool::getInstance();
     streamIntrinsicsManager_ = StreamIntrinsicsManager::getInstance();
     streamExtrinsicsManager_ = StreamExtrinsicsManager::getInstance();
     filterFactory_           = FilterFactory::getInstance();
     platform_                = Platform::getInstance();
+    dynamicLibraryManager_   = DynamicLibraryManager::getInstance();
 
     if(configFilePath.empty()) {
         LOG_DEBUG("Context created! Library version: v{}", OB_LIB_VERSION_STR);

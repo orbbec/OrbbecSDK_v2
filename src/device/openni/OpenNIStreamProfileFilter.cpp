@@ -58,7 +58,7 @@ StreamProfileList OpenNIStreamProfileFilter::filter(const StreamProfileList &pro
 }
 
 void OpenNIStreamProfileFilter::fetchEffectiveStreamProfiles() {
-    auto owner      = getOwner();
+    auto owner = getOwner();
     if(owner->getInfo()->pid_ == OB_DEVICE_MAX_PRO_PID || owner->getInfo()->pid_ == OB_DEVICE_GEMINI_UW_PID) {
         colorEffectiveStreamProfiles_.push_back({ OB_SENSOR_COLOR, OB_FORMAT_MJPG, 640, 480, 5 });
         colorEffectiveStreamProfiles_.push_back({ OB_SENSOR_COLOR, OB_FORMAT_MJPG, 640, 480, 6 });

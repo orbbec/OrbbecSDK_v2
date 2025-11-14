@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DeviceConfig>
+    <!--
+        DevList: List of all supported devices.
+        Each child node represents a specific device model.
+        Node name (e.g., Gemini2R, Gemini330) must match the corresponding
+        device container in the rest of this configuration (e.g., G330Device).
+    -->
+    <DevList>
+        <Gemini2R>
+            <VID>0x2BC5</VID>
+            <PID>0x06d0</PID>
+            <Name>Gemini 2R</Name>
+            <Manufacturer>Orbbec</Manufacturer>
+        </Gemini2R>
+        <Gemini2RL>
+            <VID>0x2BC5</VID>
+            <PID>0x06d1</PID>
+            <Name>Gemini 2RL</Name>
+            <Manufacturer>Orbbec</Manufacturer>
+        </Gemini2RL>
+        <Gemini335>
+            <VID>0x2BC5</VID>
+            <PID>0x0800</PID>
+            <Name>Gemini 335</Name>
+            <Manufacturer>Orbbec</Manufacturer>
+        </Gemini335>
+        <Gemini330>
+            <VID>0x2BC5</VID>
+            <PID>0x0801</PID>
+            <Name>Gemini 330</Name>
+            <Manufacturer>Orbbec</Manufacturer>
+        </Gemini330>
+        <Geminidm330>
+            <VID>0x2BC5</VID>
+            <PID>0x0802</PID>
+            <Name>Gemini dm330</Name>
+            <Manufacturer>Orbbec</Manufacturer>
+        </Geminidm330>
+        <Gemini336>
+            <VID>0x2BC5</VID>
+            <PID>0x0803</PID>
+            <Name>Gemini 336</Name>
+            <Manufacturer>Orbbec</Manufacturer>
+        </Gemini336>
+        <Gemini335L>
+            <VID>0x2BC5</VID>
+            <PID>0x0804</PID>
+            <Name>Gemini 335L</Name>
+            <Manufacturer>Orbbec</Manufacturer>
+        </Gemini335L>
+        <Gemini330L>
+            <VID>0x2BC5</VID>
+            <PID>0x0805</PID>
+            <Name>Gemini 330L</Name>
+            <Manufacturer>Orbbec</Manufacturer>
+        </Gemini330L>
+        <Geminidm330L>
+            <VID>0x2BC5</VID>
+            <PID>0x0806</PID>
+            <Name>Gemini dm330L</Name>
+            <Manufacturer>Orbbec</Manufacturer>
+        </Geminidm330L>
+        <Gemini336L>
+            <VID>0x2BC5</VID>
+            <PID>0x0807</PID>
+            <Name>Gemini 336L</Name>
+            <Manufacturer>Orbbec</Manufacturer>
+        </Gemini336L>
+        <Gemini335Lg>
+            <VID>0x2BC5</VID>
+            <PID>0x080B</PID>
+            <Name>Gemini 335Lg</Name>
+            <Manufacturer>Orbbec</Manufacturer>
+        </Gemini335Lg>
+        <Gemini330Lg>
+            <VID>0x2BC5</VID>
+            <PID>0x080C</PID>
+            <Name>Gemini 330Lg</Name>
+            <Manufacturer>Orbbec</Manufacturer>
+        </Gemini330Lg>
+        <Gemini336Lg>
+            <VID>0x2BC5</VID>
+            <PID>0x080D</PID>
+            <Name>Gemini 336Lg</Name>
+            <Manufacturer>Orbbec</Manufacturer>
+        </Gemini336Lg>
+        <Gemini335Le>
+            <VID>0x2BC5</VID>
+            <PID>0x080E</PID>
+            <Name>Gemini 335Le</Name>
+            <Manufacturer>Orbbec</Manufacturer>
+        </Gemini335Le>
+        <Gemini330Le>
+            <VID>0x2BC5</VID>
+            <PID>0x080F</PID>
+            <Name>Gemini 330Le</Name>
+            <Manufacturer>Orbbec</Manufacturer>
+        </Gemini330Le>
+        <Gemini336Le>
+            <VID>0x2BC5</VID>
+            <PID>0x0810</PID>
+            <Name>Gemini 336Le</Name>
+            <Manufacturer>Orbbec</Manufacturer>
+        </Gemini336Le>
+        <Gemini338>
+            <VID>0x2BC5</VID>
+            <PID>0x0818</PID>
+            <Name>Gemini 338</Name>
+            <Manufacturer>Orbbec</Manufacturer>
+        </Gemini338>
+        <DaBaiA>
+            <VID>0x2BC5</VID>
+            <PID>0x0A12</PID>
+            <Name>DaBai A</Name>
+            <Manufacturer>Orbbec</Manufacturer>
+        </DaBaiA>
+        <DaBaiAL>
+            <VID>0x2BC5</VID>
+            <PID>0x0A13</PID>
+            <Name>DaBai AL</Name>
+            <Manufacturer>Orbbec</Manufacturer>
+        </DaBaiAL>
+        <Gemini345>
+            <VID>0x2BC5</VID>
+            <PID>0x0812</PID>
+            <Name>Gemini 345</Name>
+            <Manufacturer>Orbbec</Manufacturer>
+        </Gemini345>
+        <Gemini345Lg>
+            <VID>0x2BC5</VID>
+            <PID>0x0813</PID>
+            <Name>Gemini 345Lg</Name>
+            <Manufacturer>Orbbec</Manufacturer>
+        </Gemini345Lg>
+        <CAM-5330>
+            <VID>0x2BC5</VID>
+            <PID>0x0816</PID>
+            <Name>CAM-5330</Name>
+            <Manufacturer>Orbbec</Manufacturer>
+        </CAM-5330>
+        <CAM-5530>
+            <VID>0x2BC5</VID>
+            <PID>0x0817</PID>
+            <Name>CAM-5530</Name>
+            <Manufacturer>Orbbec</Manufacturer>
+        </CAM-5530>
+        <Gemini435Le>
+            <VID>0x2BC5</VID>
+            <PID>0x0815</PID>
+            <Name>Gemini435Le</Name>
+            <Manufacturer>Orbbec</Manufacturer>
+        </Gemini435Le>
+        <!-- More devices can be added here -->
+    </DevList>
+
+    <!--
+        Device containers for specific categories.
+        Each <Device> element must match a node name in <DevList>.
+        These containers are used to group devices by series or feature.
+    -->
+    <G330DeviceList>
+        <!-- G330 series devices -->
+        <Device>Gemini2R</Device>
+        <Device>Gemini2RL</Device>
+        <Device>Gemini335</Device>
+        <Device>Gemini330</Device>
+        <Device>Geminidm330</Device>
+        <Device>Gemini336</Device>
+        <Device>Gemini335L</Device>
+        <Device>Gemini330L</Device>
+        <Device>Geminidm330L</Device>
+        <Device>Gemini336L</Device>
+        <Device>Gemini335Lg</Device>
+        <Device>Gemini330Lg</Device>
+        <Device>Gemini336Lg</Device>
+        <Device>Gemini335Le</Device>
+        <Device>Gemini330Le</Device>
+        <Device>Gemini336Le</Device>
+        <Device>Gemini338</Device>
+        <Device>DaBaiA</Device>
+        <Device>DaBaiAL</Device>
+        <Device>Gemini345</Device>
+        <Device>Gemini345Lg</Device>
+        <Device>CAM-5330</Device>
+        <Device>CAM-5530</Device>
+        <!-- More devices can be added here -->
+    </G330DeviceList>
+
+    <G330DeviceLongBaseList>
+        <!-- G330L series devices -->
+        <Device>Gemini2RL</Device>
+        <Device>Gemini335L</Device>
+        <Device>Gemini330L</Device>
+        <Device>Geminidm330L</Device>
+        <Device>Gemini336L</Device>
+        <Device>Gemini335Lg</Device>
+        <Device>Gemini330Lg</Device>
+        <Device>Gemini336Lg</Device>
+        <Device>Gemini335Le</Device>
+        <Device>Gemini330Le</Device>
+        <Device>Gemini336Le</Device>
+        <Device>CAM-5530</Device>
+        <!-- More devices can be added here -->
+    </G330DeviceLongBaseList>
+    
+    <G335LeDeviceList>
+        <!-- G335Le series devices -->
+        <Device>Gemini335Le</Device>
+        <!-- More devices can be added here -->
+    </G335LeDeviceList>
+    <G435LeDeviceList>
+        <!-- G435Le series devices -->
+        <Device>Gemini435Le</Device>
+        <!-- More devices can be added here -->
+    </G435LeDeviceList>
+    <DaBaiAList>
+        <!-- DaBaiA series devices -->
+        <Device>DaBaiA</Device>
+        <Device>DaBaiAL</Device>
+        <Device>Gemini345</Device>
+        <Device>Gemini345Lg</Device>
+        <!-- More devices can be added here -->
+    </DaBaiAList>
+
+    <!--
+        GVCPConfig: Mapping of manufacturer names to Vendor ID (VID)
+        Used for network devices (GVCP protocol) to resolve the VID from the manufacturer name.
+    -->
+    <GVCPConfigList>
+        <Manufacturer name="Orbbec" vid="0x2BC5"></Manufacturer>
+        <!-- More manufacturers can be added here -->
+    </GVCPConfigList>
+</DeviceConfig>

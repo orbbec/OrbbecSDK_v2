@@ -42,7 +42,10 @@ void PlaybackDevice::init() {
     initSensorList();
     initProperties();
 
-    if(isDeviceInSeries(G330DevPids, deviceInfo_->pid_)) {
+    auto vid = deviceInfo_->vid_;
+    auto pid = deviceInfo_->pid_;
+
+    if(isDeviceInContainer(G330DevPids, vid, pid)) {
         registerComponent(OB_DEV_COMPONENT_COLOR_FRAME_METADATA_CONTAINER, [this]() {
             std::shared_ptr<FrameMetadataParserContainer> container;
 #ifdef __linux__
@@ -67,7 +70,7 @@ void PlaybackDevice::init() {
             return container;
         });
     }
-    else if(deviceInfo_->pid_ == OB_DEVICE_G435LE_PID) {
+    else if(isDeviceInContainer(G435LeDevPids, vid, pid)) {
         registerComponent(OB_DEV_COMPONENT_COLOR_FRAME_METADATA_CONTAINER, [this]() {
             std::shared_ptr<FrameMetadataParserContainer> container;
             container = std::make_shared<G435LeColorFrameMetadataParserContainer>(this);
@@ -88,7 +91,7 @@ void PlaybackDevice::init() {
     auto depthWorkModeManager = std::make_shared<PlaybackDepthWorkModeManager>(this, port_);
     registerComponent(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER, depthWorkModeManager);
 
-    if(isDeviceInSeries(G330DevPids, deviceInfo_->pid_) || isDeviceInSeries(FemtoMegaDevPids, deviceInfo_->pid_)
+    if(isDeviceInContainer(G330DevPids, vid, pid) || (vid == ORBBEC_DEVICE_VID && isDeviceInSeries(FemtoMegaDevPids, deviceInfo_->pid_))
        || isDeviceInSeries(FemtoBoltDevPids, deviceInfo_->pid_)) {
         // preset manager
         auto presetManager = std::make_shared<PlaybackPresetManager>(this);
@@ -101,7 +104,7 @@ void PlaybackDevice::init() {
 
         if(interleaveEnable.intValue > 0) {
             std::shared_ptr<IFrameInterleaveManager> devFrameInterleaveManager;
-            if(isDeviceInSeries(G330DevPids, deviceInfo_->pid_)) {
+            if(isDeviceInContainer(G330DevPids, vid, pid)) {
                 devFrameInterleaveManager = std::make_shared<G330FrameInterleaveManager>(this);
             }
             else {
@@ -124,6 +127,9 @@ void PlaybackDevice::fetchExtensionInfo() {
 }
 
 void PlaybackDevice::initSensorList() {
+    auto vid = deviceInfo_->vid_;
+    auto pid = deviceInfo_->pid_;
+
     registerComponent(OB_DEV_COMPONENT_FRAME_PROCESSOR_FACTORY, [this]() {
         std::shared_ptr<FrameProcessorFactory> factory;
         TRY_EXECUTE({ factory = std::make_shared<FrameProcessorFactory>(this); })
@@ -134,11 +140,12 @@ void PlaybackDevice::initSensorList() {
         OB_DEV_COMPONENT_DEPTH_SENSOR,
         [this]() {
             std::shared_ptr<VideoSensor> sensor;
-            if(isDeviceInSeries(FemtoMegaDevPids, deviceInfo_->pid_) || isDeviceInSeries(FemtoBoltDevPids, deviceInfo_->pid_)) {
+            auto                         vid = deviceInfo_->vid_;
+            if((vid == ORBBEC_DEVICE_VID) && (isDeviceInSeries(FemtoMegaDevPids, deviceInfo_->pid_) || isDeviceInSeries(FemtoBoltDevPids, deviceInfo_->pid_))) {
                 sensor = std::make_shared<VideoSensor>(this, OB_SENSOR_DEPTH, port_);
                 sensor->setStreamProfileList(port_->getStreamProfileList(OB_SENSOR_DEPTH));
             }
-            else if(isDeviceInSeries(OpenniMonocularPids, deviceInfo_->pid_)) {
+            else if((vid == ORBBEC_DEVICE_VID) && isDeviceInSeries(OpenniMonocularPids, deviceInfo_->pid_)) {
                 sensor = std::make_shared<OpenNIDisparitySensor>(this, OB_SENSOR_DEPTH, port_);
                 sensor->setStreamProfileList(port_->getStreamProfileList(OB_SENSOR_DEPTH));
                 sensor->updateFormatFilterConfig({});  // for call convertProfileAsDisparityBasedProfile
@@ -158,7 +165,7 @@ void PlaybackDevice::initSensorList() {
                     propServer->setPropertyValueT<int>(OB_PROP_DEPTH_PRECISION_LEVEL_INT, value.intValue);
                 }
             }
-            else if(isDeviceInSeries(OpenniDW2Pids, deviceInfo_->pid_)) {
+            else if((vid == ORBBEC_DEVICE_VID) && isDeviceInSeries(OpenniDW2Pids, deviceInfo_->pid_)) {
                 sensor = std::make_shared<DW2DisparitySensor>(this, OB_SENSOR_DEPTH, port_);
                 sensor->setStreamProfileList(port_->getStreamProfileList(OB_SENSOR_DEPTH));
                 sensor->updateFormatFilterConfig({});  // for call convertProfileAsDisparityBasedProfile
@@ -181,7 +188,7 @@ void PlaybackDevice::initSensorList() {
                     propServer->setPropertyValueT<int>(OB_PROP_DEPTH_PRECISION_LEVEL_INT, value.intValue);
                 }
             }
-            else if(isDeviceInSeries(OpenniMaxPids, deviceInfo_->pid_)) {
+            else if((vid == ORBBEC_DEVICE_VID) && isDeviceInSeries(OpenniMaxPids, deviceInfo_->pid_)) {
                 sensor = std::make_shared<MaxDisparitySensor>(this, OB_SENSOR_DEPTH, port_);
                 sensor->setStreamProfileList(port_->getStreamProfileList(OB_SENSOR_DEPTH));
                 sensor->updateFormatFilterConfig({});  // for call convertProfileAsDisparityBasedProfile
@@ -218,7 +225,7 @@ void PlaybackDevice::initSensorList() {
                 std::dynamic_pointer_cast<DisparityBasedSensor>(sensor)->markOutputDisparityFrame(!hwD2D);
 
                 // init depth unit property
-                if(isDeviceInSeries(G330DevPids, deviceInfo_->pid_)) {
+                if(isDeviceInContainer(G330DevPids, vid, deviceInfo_->pid_)) {
                     // G330 specific
                     if(port_->isPropertySupported(OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT)) {
                         OBPropertyValue value{};
@@ -402,7 +409,7 @@ void PlaybackDevice::initSensorList() {
         return sensor;
     });
 
-    if(deviceInfo_->pid_ == OB_DEVICE_G435LE_PID) {
+    if(isDeviceInContainer(G435LeDevPids, vid, pid)) {
         registerComponent(OB_DEV_COMPONENT_CONFIDENCE_SENSOR, [this]() {
             auto sensor = std::make_shared<VideoSensor>(this, OB_SENSOR_CONFIDENCE, port_);
             sensor->setStreamProfileList(port_->getStreamProfileList(OB_SENSOR_CONFIDENCE));
@@ -549,7 +556,7 @@ void PlaybackDevice::initProperties() {
 
 std::vector<std::shared_ptr<IFilter>> PlaybackDevice::createRecommendedPostProcessingFilters(OBSensorType type) {
     auto filterStrategyFactory = FilterCreationStrategyFactory::getInstance();  // namespace playback
-    auto filterStrategy        = filterStrategyFactory->create(deviceInfo_->pid_);
+    auto filterStrategy        = filterStrategyFactory->create(deviceInfo_->vid_, deviceInfo_->pid_);
     if(filterStrategy) {
         return filterStrategy->createFilters(type);
     }

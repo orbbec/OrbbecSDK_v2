@@ -116,17 +116,23 @@ void RecordDevice::writeVersionProperty() {
 }
 
 void RecordDevice::writeFilterProperty() {
-    if(std::find(FemtoBoltDevPids.begin(), FemtoBoltDevPids.end(), device_->getInfo()->pid_) == FemtoBoltDevPids.end()
-       && std::find(FemtoMegaDevPids.begin(), FemtoMegaDevPids.end(), device_->getInfo()->pid_) == FemtoMegaDevPids.end()) {
-        // filter property
-        writePropertyT<bool>(OB_PROP_DISPARITY_TO_DEPTH_BOOL);
-        writePropertyT<bool>(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL);
-        writePropertyT<bool>(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL);
-        writePropertyT<int>(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_SPECKLE_SIZE_INT);
-        writePropertyT<int>(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT);
+    auto devInfo = device_->getInfo();
+    auto vid     = devInfo->vid_;
+    auto pid     = devInfo->pid_;
+
+    if(vid == ORBBEC_DEVICE_VID) {
+        if(std::find(FemtoBoltDevPids.begin(), FemtoBoltDevPids.end(), pid) == FemtoBoltDevPids.end()
+           && std::find(FemtoMegaDevPids.begin(), FemtoMegaDevPids.end(), pid) == FemtoMegaDevPids.end()) {
+            // filter property
+            writePropertyT<bool>(OB_PROP_DISPARITY_TO_DEPTH_BOOL);
+            writePropertyT<bool>(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL);
+            writePropertyT<bool>(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL);
+            writePropertyT<int>(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_SPECKLE_SIZE_INT);
+            writePropertyT<int>(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT);
+        }
     }
 
-    if(std::find(G330DevPids.begin(), G330DevPids.end(), device_->getInfo()->pid_) != G330DevPids.end()) {
+    if(isDeviceInContainer(G330DevPids, vid, pid)) {
         writePropertyT<float>(OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT);
     }
     else {
@@ -161,8 +167,10 @@ void RecordDevice::writeFrameGeometryProperty() {
 }
 
 void RecordDevice::writeMetadataProperty() {
-    if(device_->getInfo()->backendType_ == OB_UVC_BACKEND_TYPE_V4L2
-       && std::find(G330DevPids.begin(), G330DevPids.end(), device_->getInfo()->pid_) != G330DevPids.end()) {
+    auto devInfo = device_->getInfo();
+    auto vid     = devInfo->vid_;
+    auto pid     = devInfo->pid_;
+    if(devInfo->backendType_ == OB_UVC_BACKEND_TYPE_V4L2 && isDeviceInContainer(G330DevPids, vid, pid)) {
         // color sensor property
         // writePropertyT<bool>(OB_PROP_COLOR_AUTO_EXPOSURE_BOOL);
         // writePropertyT<int>(OB_PROP_COLOR_AUTO_EXPOSURE_PRIORITY_INT);
@@ -196,8 +204,7 @@ void RecordDevice::writeMetadataProperty() {
         }
     }
 
-    const auto pid = device_->getInfo()->pid_;
-    if(std::find(G330DevPids.begin(), G330DevPids.end(), pid) != G330DevPids.end() || pid == OB_DEVICE_G435LE_PID) {
+    if(isDeviceInContainer(G330DevPids, vid, pid) || isDeviceInContainer(G435LeDevPids, vid, pid)) {
         if(device_->isComponentExists(OB_DEV_COMPONENT_FRAME_INTERLEAVE_MANAGER)) {
             writePropertyT<int>(OB_PROP_FRAME_INTERLEAVE_CONFIG_INDEX_INT);
             writePropertyT<bool>(OB_PROP_FRAME_INTERLEAVE_ENABLE_BOOL);
@@ -287,9 +294,14 @@ void RecordDevice::writeMultiDeviceSyncConfigProperty() {
 }
 
 void RecordDevice::writeOpenNIDepthProcessorParams() {
-    if(isDeviceInSeries(OpenniDW2Pids, device_->getInfo()->pid_) || isDeviceInSeries(OpenniMaxPids, device_->getInfo()->pid_)) {
-        OpenNIFrameProcessParam processParam = std::dynamic_pointer_cast<OpenNIDeviceBase>(device_)->getFrameProcessParam();
-        writer_->writeProperty(OB_OPENNI_DEPTH_PROCESSOR_PARAM, reinterpret_cast<uint8_t *>(&processParam), sizeof(OpenNIFrameProcessParam));
+    auto devInfo = device_->getInfo();
+    auto vid     = devInfo->vid_;
+    auto pid     = devInfo->pid_;
+    if(vid == ORBBEC_DEVICE_VID) {
+        if(isDeviceInSeries(OpenniDW2Pids, pid) || isDeviceInSeries(OpenniMaxPids, pid)) {
+            OpenNIFrameProcessParam processParam = std::dynamic_pointer_cast<OpenNIDeviceBase>(device_)->getFrameProcessParam();
+            writer_->writeProperty(OB_OPENNI_DEPTH_PROCESSOR_PARAM, reinterpret_cast<uint8_t *>(&processParam), sizeof(OpenNIFrameProcessParam));
+        }
     }
 }
 

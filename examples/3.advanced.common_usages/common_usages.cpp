@@ -10,10 +10,6 @@
 #include <string>
 #include <iomanip>
 
-const std::map<std::string, int> gemini_330_list = { { "Gemini 335", 0x0800 }, { "Gemini 335L", 0x0804 },  { "Gemini 336", 0x0803 }, { "Gemini 336L", 0x0807 },
-                                                     { "Gemini 330", 0x0801 }, { "Gemini 330L", 0x0805 },  { "DabaiA", 0x0A12 },    { "DabaiAL", 0x0A13 },
-                                                     { "Gemini 345", 0x0812 }, { "Gemini 345Lg", 0x0813 }, { "CAM-5330", 0x0816 },  { "CAM-5530", 0x0817 },{"Gemini 338",0x0818} };
-
 const std::map<std::string, int> openni_device_list = { { "Astra Mini S Pro", 0x065e }, { "Astra Mini Pro", 0x065b }, { "DaBai Max", 0x069a },
                                                         { "DaBai Max Pro", 0x069e },    { "Gemini UW", 0x06aa },      { "DaBai DW2", 0x069f },
                                                         { "Gemini EW Lite", 0x06a7 },   { "DaBai DCW2", 0x06a0 },     { "Gemini EW", 0x06a6 },
@@ -24,17 +20,6 @@ const std::map<OBSensorType, std::string> sensorTypeToStringMap = { { OB_SENSOR_
                                                                     { OB_SENSOR_IR, "IR profile: " },
                                                                     { OB_SENSOR_IR_LEFT, "Left IR profile: " },
                                                                     { OB_SENSOR_IR_RIGHT, "Right IR profile: " } };
-
-bool isGemini330Series(int pid) {
-    bool find = false;
-    for(auto it = gemini_330_list.begin(); it != gemini_330_list.end(); ++it) {
-        if(it->second == pid) {
-            find = true;
-            break;
-        }
-    }
-    return find;
-}
 
 bool isOpenniDeviceSeries(int pid) {
     bool find = false;
@@ -110,7 +95,7 @@ int main(void) try {
 
     irRightMirrorSupport = device->isPropertySupported(OB_PROP_IR_RIGHT_MIRROR_BOOL, OB_PERMISSION_READ_WRITE);
     printUsage();
-    
+
     auto inputWatchThread = std::thread([]{
         while(true) {
             std::string cmd;
@@ -126,7 +111,7 @@ int main(void) try {
         }
     });
     inputWatchThread.detach();
-    
+
     while(win->run()) {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
@@ -134,7 +119,7 @@ int main(void) try {
     if(pipeline) {
         pipeline->stop();
     }
-    
+
     // destruct all global variables here before exiting main
     irProfile.reset();
     depthProfile.reset();
@@ -145,7 +130,7 @@ int main(void) try {
     align.reset();
     ctx.reset();
     win.reset();
-    
+
     return 0;
 }
 
@@ -396,22 +381,25 @@ void switchLaser() {
     std::unique_lock<std::recursive_mutex> lk(deviceMutex);
     if(device) {
         try {
-            auto         pid        = device->getDeviceInfo()->getPid();
             OBPropertyID propertyId = OB_PROP_LASER_BOOL;
-            if(isGemini330Series(pid)) {
+            if(device->isPropertySupported(OB_PROP_LASER_BOOL, OB_PERMISSION_READ)) {
+                propertyId = OB_PROP_LASER_BOOL;
+            }
+            else if(device->isPropertySupported(OB_PROP_LASER_CONTROL_INT, OB_PERMISSION_READ)) {
                 propertyId = OB_PROP_LASER_CONTROL_INT;
             }
-
-            if(device->isPropertySupported(propertyId, OB_PERMISSION_READ)) {
-                bool value = device->getBoolProperty(propertyId);
-                if(device->isPropertySupported(propertyId, OB_PERMISSION_WRITE)) {
-                    device->setBoolProperty(propertyId, !value);
-                    if(!value) {
-                        std::cout << "laser turn on!" << std::endl;
-                    }
-                    else {
-                        std::cout << "laser turn off!" << std::endl;
-                    }
+            else {
+                std::cerr << "Laser switch property is not supported." << std::endl;
+                return;
+            }
+            bool value = device->getBoolProperty(propertyId);
+            if(device->isPropertySupported(propertyId, OB_PERMISSION_WRITE)) {
+                device->setBoolProperty(propertyId, !value);
+                if(!value) {
+                    std::cout << "laser turn on!" << std::endl;
+                }
+                else {
+                    std::cout << "laser turn off!" << std::endl;
                 }
             }
             else {
@@ -762,8 +750,9 @@ void setDepthGainValue(bool increase) {
                 int value = device->getIntProperty(OB_PROP_DEPTH_GAIN_INT);
                 std::cout << "Depth current gain:" << value << std::endl;
                 if(device->isPropertySupported(OB_PROP_DEPTH_GAIN_INT, OB_PERMISSION_WRITE)) {
+                    auto vid = device->getDeviceInfo()->getVid();
                     auto pid = device->getDeviceInfo()->getPid();
-                    if(isOpenniDeviceSeries(pid)) {
+                    if(isOpenniDeviceSeries(pid) && (vid == 0x2BC5)) {
                         if(increase) {
                             value ++;
                             if(value > valueRange.max) {

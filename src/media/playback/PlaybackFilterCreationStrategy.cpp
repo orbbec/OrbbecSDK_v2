@@ -21,26 +21,31 @@ std::shared_ptr<FilterCreationStrategyFactory> FilterCreationStrategyFactory::ge
     return instance;
 }
 
-std::shared_ptr<IFilterCreationStrategy> FilterCreationStrategyFactory::create(uint16_t pid) {
+std::shared_ptr<IFilterCreationStrategy> FilterCreationStrategyFactory::create(uint16_t vid, uint16_t pid) {
     // Note: G330DevPids contains the pid of DaBaiA, so it needs to ensure the order, this point needs to be optimized subsequently.
-    if(std::find(DaBaiADevPids.begin(), DaBaiADevPids.end(), pid) != DaBaiADevPids.end()) {
+    if(isDeviceInContainer(DaBaiADevPids, vid, pid)) {
         return std::make_shared<DaBaiAFilterStrategy>();
     }
-    else if(std::find(G330DevPids.begin(), G330DevPids.end(), pid) != G330DevPids.end()) {
+    else if(isDeviceInContainer(G330DevPids, vid, pid)) {
         return std::make_shared<Gemini330FilterStrategy>();
     }
-    else if(0x0671 == pid) {
-        return std::make_shared<Gemini2XLFilterStrategy>();
-    }
-    else if(std::find(Gemini2DevPids.begin(), Gemini2DevPids.end(), pid) != Gemini2DevPids.end()) {
+    else if(isDeviceInContainer(G435LeDevPids, vid, pid)) {
         return std::make_shared<Gemini2FilterStrategy>();
     }
-    else if(std::find(Astra2DevPids.begin(), Astra2DevPids.end(), pid) != Astra2DevPids.end()) {
-        return std::make_shared<Astra2FilterStrategy>();
-    }
-    else if(std::find(FemtoMegaDevPids.begin(), FemtoMegaDevPids.end(), pid) != FemtoMegaDevPids.end()
-            || std::find(FemtoBoltDevPids.begin(), FemtoBoltDevPids.end(), pid) != FemtoBoltDevPids.end()) {
-        return std::make_shared<DefaultFilterStrategy>();
+    else if(vid == ORBBEC_DEVICE_VID) {
+        if(0x0671 == pid) {
+            return std::make_shared<Gemini2XLFilterStrategy>();
+        }
+        else if((std::find(Gemini2DevPids.begin(), Gemini2DevPids.end(), pid) != Gemini2DevPids.end())) {
+            return std::make_shared<Gemini2FilterStrategy>();
+        }
+        else if(std::find(Astra2DevPids.begin(), Astra2DevPids.end(), pid) != Astra2DevPids.end()) {
+            return std::make_shared<Astra2FilterStrategy>();
+        }
+        else if(std::find(FemtoMegaDevPids.begin(), FemtoMegaDevPids.end(), pid) != FemtoMegaDevPids.end()
+                || std::find(FemtoBoltDevPids.begin(), FemtoBoltDevPids.end(), pid) != FemtoBoltDevPids.end()) {
+            return std::make_shared<DefaultFilterStrategy>();
+        }
     }
     return nullptr;
 }

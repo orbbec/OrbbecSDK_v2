@@ -14,21 +14,25 @@ namespace libobsensor {
 
 PlaybackPresetManager::PlaybackPresetManager(IDevice *owner) : DeviceComponentBase(owner) {
     auto devInfo = owner->getInfo();
+    auto vid     = devInfo->vid_;
+    auto pid     = devInfo->pid_;
     if(!devInfo) {
         throw invalid_value_exception("Device info is null");
     }
 
-    if(std::find(DaBaiADevPids.begin(), DaBaiADevPids.end(), devInfo->pid_) != DaBaiADevPids.end()) {
+    if(isDeviceInContainer(DaBaiADevPids, vid, pid)) {
         playbackDeviceType_ = OB_PLAYBACK_DEVICE_TYPE_DABAI_A;
     }
-    else if(std::find(FemtoMegaDevPids.begin(), FemtoMegaDevPids.end(), devInfo->pid_) != FemtoMegaDevPids.end()) {
-        playbackDeviceType_ = OB_PLAYBACK_DEVICE_TYPE_MEGA;
-    }
-    else if(std::find(FemtoBoltDevPids.begin(), FemtoBoltDevPids.end(), devInfo->pid_) != FemtoBoltDevPids.end()) {
-        playbackDeviceType_ = OB_PLAYBACK_DEVICE_TYPE_MEGA;
-    }
-    else if(std::find(G330DevPids.begin(), G330DevPids.end(), devInfo->pid_) != G330DevPids.end()) {
+    else if(isDeviceInContainer(G330DevPids, vid, pid)) {
         playbackDeviceType_ = OB_PLAYBACK_DEVICE_TYPE_GEMINI330;
+    }
+    else if(vid == ORBBEC_DEVICE_VID) {
+        if(std::find(FemtoMegaDevPids.begin(), FemtoMegaDevPids.end(), devInfo->pid_) != FemtoMegaDevPids.end()) {
+            playbackDeviceType_ = OB_PLAYBACK_DEVICE_TYPE_MEGA;
+        }
+        else if(std::find(FemtoBoltDevPids.begin(), FemtoBoltDevPids.end(), devInfo->pid_) != FemtoBoltDevPids.end()) {
+            playbackDeviceType_ = OB_PLAYBACK_DEVICE_TYPE_MEGA;
+        }
     }
     else {
         throw invalid_value_exception(utils::string::to_string() << "device Info " << devInfo->pid_);

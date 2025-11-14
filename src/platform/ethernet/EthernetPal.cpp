@@ -123,7 +123,7 @@ void EthernetPal::updateSourcePortInfoList(const std::vector<GVCPDeviceInfo> &ad
     // Only re-query port information for newly online devices
     for(auto &&info: added) {
         sourcePortInfoList_.push_back(std::make_shared<NetSourcePortInfo>(SOURCE_PORT_NET_VENDOR, info.netInterfaceName, info.localMac, info.localIp, info.ip,
-                                                                          DEFAULT_CMD_PORT, info.mac, info.sn, info.pid, info.mask, info.gateway,
+                                                                          DEFAULT_CMD_PORT, info.mac, info.sn, info.vid, info.pid, info.mask, info.gateway,
                                                                           info.localSubnetLength, info.localGateway));
     }
 

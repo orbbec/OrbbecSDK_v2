@@ -29,6 +29,8 @@ private:
     void initProperties();
     void initSensorStreamProfile(std::shared_ptr<ISensor> sensor);
 
+    void fetchDeviceInfo() override;
+
     std::shared_ptr<const StreamProfile> loadDefaultStreamProfile(OBSensorType sensorType);
     void                                 loadDefaultDepthPostProcessingConfig();  // todo: declare in base class
 

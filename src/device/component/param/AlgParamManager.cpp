@@ -28,7 +28,8 @@ bool findBestMatchedD2CProfile(const std::vector<OBD2CProfile> &d2cProfileList, 
         }
 
         auto streamType = profile->getType();
-        if((streamType == OB_STREAM_DEPTH || streamType == OB_STREAM_IR || streamType == OB_STREAM_IR_LEFT || streamType == OB_STREAM_IR_RIGHT || streamType == OB_STREAM_CONFIDENCE)
+        if((streamType == OB_STREAM_DEPTH || streamType == OB_STREAM_IR || streamType == OB_STREAM_IR_LEFT || streamType == OB_STREAM_IR_RIGHT
+            || streamType == OB_STREAM_CONFIDENCE)
            && static_cast<uint32_t>(d2cProfile.depthWidth) == profile->getWidth() && static_cast<uint32_t>(d2cProfile.depthHeight) == profile->getHeight()) {
             found  = true;
             result = d2cProfile;
@@ -52,7 +53,8 @@ bool findBestMatchedD2CProfile(const std::vector<OBD2CProfile> &d2cProfileList, 
             }
 
             auto streamType = profile->getType();
-            if((streamType == OB_STREAM_DEPTH || streamType == OB_STREAM_IR || streamType == OB_STREAM_IR_LEFT || streamType == OB_STREAM_IR_RIGHT || streamType == OB_STREAM_CONFIDENCE)
+            if((streamType == OB_STREAM_DEPTH || streamType == OB_STREAM_IR || streamType == OB_STREAM_IR_LEFT || streamType == OB_STREAM_IR_RIGHT
+                || streamType == OB_STREAM_CONFIDENCE)
                && (float)d2cProfile.depthWidth / d2cProfile.depthHeight == ratio) {
                 found  = true;
                 result = d2cProfile;
@@ -166,9 +168,10 @@ void AlgParamManagerBase::bindIntrinsic(std::vector<std::shared_ptr<const Stream
             OBCameraDistortion distortion = { 0 };
             OBD2CProfile       d2cProfile{};
             auto               vsp = sp->as<VideoStreamProfile>();
-
             if(!findBestMatchedD2CProfile(d2cProfileList_, vsp, d2cProfile)) {
-                if(getOwner()->getInfo()->pid_ == OB_DEVICE_G435LE_PID) {
+                auto vid = getOwner()->getInfo()->vid_;
+                auto pid = getOwner()->getInfo()->pid_;
+                if(isDeviceInContainer(G435LeDevPids, vid, pid)) {
                     break;
                 };
                 throw libobsensor::unsupported_operation_exception("Can not find matched camera param!");

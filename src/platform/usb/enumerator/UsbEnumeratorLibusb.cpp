@@ -365,13 +365,14 @@ const std::vector<UsbInterfaceInfo> &UsbEnumeratorLibusb::queryUsbInterfaces() {
             continue;
         }
 
-        if(desc.idVendor != ORBBEC_USB_VID) {  // filter out non-orbbec devices
+        const auto &allowedVids = libobsensor::supportedUsbVids;
+        if(std::find(allowedVids.begin(), allowedVids.end(), desc.idVendor) == allowedVids.end()) {
             continue;
         }
 
 #if defined(OS_MACOS)
         // filter out Femto Bolt device
-        if(desc.idProduct == 0x066B) {
+        if((desc.idProduct == 0x066B) && (desc.idVendor = ORBBEC_DEVICE_VID)) {
             LOG_WARN("Femto Bolt is unavailable on macOS duo to Depth Engine");
             continue;
         }

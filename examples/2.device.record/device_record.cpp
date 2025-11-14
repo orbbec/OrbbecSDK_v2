@@ -10,8 +10,6 @@
 #include <thread>
 #include <atomic>
 
-#define IS_ASTRA_MINI_DEVICE(pid) (pid == 0x069d || pid == 0x065b || pid == 0x065e)
-
 std::atomic<bool> isPaused{false};
 
 void handleKeyPress(ob_smpl::CVWindow &win, std::shared_ptr<ob::RecordDevice> recorder, int key);
@@ -34,7 +32,10 @@ int main(void) try {
     }
 
     // Acquire first available device
-    auto device = deviceList->getDevice(0);
+    auto device  = deviceList->getDevice(0);
+    auto devInfo = device->getDeviceInfo();
+    auto pid     = devInfo->getPid();
+    auto vid     = devInfo->getVid();
 
     // Create a pipeline the specified device
     auto pipe = std::make_shared<ob::Pipeline>(device);
@@ -53,7 +54,7 @@ int main(void) try {
     auto sensorList = device->getSensorList();
     for(uint32_t i = 0; i < sensorList->getCount(); i++) {
         auto sensorType = sensorList->getSensorType(i);
-        if(IS_ASTRA_MINI_DEVICE(device->getDeviceInfo()->getPid())) {
+        if(IS_ASTRA_MINI_DEVICE(vid, pid)) {
             if(sensorType == OB_SENSOR_IR) {
                 continue;
             }
@@ -109,11 +110,11 @@ void handleKeyPress(ob_smpl::CVWindow& win, std::shared_ptr<ob::RecordDevice> re
             recorder->pause();
             isPaused.store(true);
             win.addLog("[PAUSED] Recording paused");
-		}
-		else {
+        }
+        else {
             recorder->resume();
             isPaused.store(false);
             win.addLog("[RESUMED] Recording resumed");
-		}
+        }
     }
 }

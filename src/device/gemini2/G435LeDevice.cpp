@@ -712,7 +712,7 @@ void G435LeDevice::initProperties() {
         propertyServer->registerProperty(OB_PROP_SDK_ACCEL_FRAME_TRANSFORMED_BOOL, "rw", "rw", filterStateProperty);
         propertyServer->registerProperty(OB_PROP_SDK_GYRO_FRAME_TRANSFORMED_BOOL, "rw", "rw", filterStateProperty);
     }
- 
+
     propertyServer->aliasProperty(OB_PROP_LASER_CONTROL_INT, OB_PROP_LASER_BOOL);
     propertyServer->aliasProperty(OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL, OB_PROP_IR_AUTO_EXPOSURE_BOOL);
     propertyServer->aliasProperty(OB_PROP_DEPTH_GAIN_INT, OB_PROP_IR_GAIN_INT);
@@ -723,7 +723,7 @@ void G435LeDevice::initProperties() {
 
     auto baseLinePropertyAccessor = std::make_shared<BaselinePropertyAccessor>(this);
     propertyServer->registerProperty(OB_STRUCT_BASELINE_CALIBRATION_PARAM, "r", "r", baseLinePropertyAccessor);
-    
+
     auto g435LeDisp2DepthPropertyAccessor = std::make_shared<G435LeDisp2DepthPropertyAccessor>(this);
     propertyServer->registerProperty(OB_PROP_DISPARITY_TO_DEPTH_BOOL, "rw", "rw", g435LeDisp2DepthPropertyAccessor);      // hw
     propertyServer->registerProperty(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL, "rw", "rw", g435LeDisp2DepthPropertyAccessor);  // sw
@@ -954,11 +954,17 @@ void G435LeDevice::fetchDeviceInfo() {
     deviceInfo_->type_                = static_cast<uint16_t>(version.deviceType);
     deviceInfo_->supportedSdkVersion_ = version.sdkVersion;
 
-    // remove the prefix "Orbbec " from the device name if contained
-    if(deviceInfo_->name_.find("Orbbec ") == 0) {
-        deviceInfo_->name_ = deviceInfo_->name_.substr(7);
+    std::string manufacturerName;
+    auto        vid = deviceInfo_->vid_;
+    auto        pid = deviceInfo_->pid_;
+    auto        it  = std::find_if(G435LeDeviceInfoList.begin(), G435LeDeviceInfoList.end(),
+                                   [vid, pid](const DeviceInfoEntry &entry) { return entry.vid_ == vid && entry.pid_ == pid; });
+
+    if(it != G435LeDeviceInfoList.end()) {
+        manufacturerName = std::string(it->manufacturer_);
     }
-    deviceInfo_->fullName_ = "Orbbec " + deviceInfo_->name_;
+
+    deviceInfo_->fullName_ = manufacturerName + " " + deviceInfo_->name_;
 
     // mark the device as a multi-sensor device with same clock at default
     extensionInfo_["AllSensorsUsingSameClock"] = "true";

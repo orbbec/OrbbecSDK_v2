@@ -8,8 +8,6 @@
 
 #include <thread>
 
-#define IS_GEMINI_435LE(pid) (pid == 0x0815)
-
 int main(void) try {
 
     // Create a pipeline with default device.
@@ -17,8 +15,11 @@ int main(void) try {
 
     // This example only supports Gemini 435Le device
     auto device = pipe.getDevice();
-    if(!IS_GEMINI_435LE(device->getDeviceInfo()->getPid())) {
-        std::cout << "This example only supports Gemini 435Le device." << std::endl;
+    try {
+        device->getSensor(OB_SENSOR_CONFIDENCE);
+    }
+    catch(...) {
+        std::cout << "This sample requires a device with a confidence sensor." << std::endl;
         std::cout << "\nPress any key to exit.";
         ob_smpl::waitForKeyPressed();
         return 0;

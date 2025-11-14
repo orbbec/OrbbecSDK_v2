@@ -28,17 +28,13 @@
 #include "DevicePids.hpp"
 #include <algorithm>
 
-
 namespace libobsensor {
 
-constexpr uint8_t INTERFACE_IR    = 2;
+constexpr uint8_t INTERFACE_IR = 2;
 
-OpenNIDeviceBase::OpenNIDeviceBase(const std::shared_ptr<const IDeviceEnumInfo> &info) : DeviceBase(info) {
-}
+OpenNIDeviceBase::OpenNIDeviceBase(const std::shared_ptr<const IDeviceEnumInfo> &info) : DeviceBase(info) {}
 
-OpenNIDeviceBase::~OpenNIDeviceBase() noexcept {
-
-}
+OpenNIDeviceBase::~OpenNIDeviceBase() noexcept {}
 
 void OpenNIDeviceBase::init() {
     initSensorList();
@@ -66,7 +62,7 @@ void OpenNIDeviceBase::initSensorList() {
     });
 
     const auto &sourcePortInfoList = enumInfo_->getSourcePortInfoList();
-    auto irPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(), [](const std::shared_ptr<const SourcePortInfo> &portInfo) {
+    auto        irPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(), [](const std::shared_ptr<const SourcePortInfo> &portInfo) {
         return portInfo->portType == SOURCE_PORT_USB_UVC && std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->infIndex == INTERFACE_IR;
     });
 
@@ -173,7 +169,7 @@ void OpenNIDeviceBase::initProperties() {
             propertyServer->registerProperty(OB_STRUCT_VERSION, "", "r", vendorPropertyAccessor_);
             propertyServer->registerProperty(OB_STRUCT_DEVICE_SERIAL_NUMBER, "r", "r", vendorPropertyAccessor_);
             propertyServer->registerProperty(OB_PROP_SDK_DEPTH_FRAME_UNPACK_BOOL, "", "rw", vendorPropertyAccessor_);
-            propertyServer->registerProperty(OB_PROP_SDK_IR_FRAME_UNPACK_BOOL, "", "rw", vendorPropertyAccessor_); 
+            propertyServer->registerProperty(OB_PROP_SDK_IR_FRAME_UNPACK_BOOL, "", "rw", vendorPropertyAccessor_);
             propertyServer->registerProperty(OB_PROP_DEVICE_RESET_BOOL, "", "w", vendorPropertyAccessor_);
             propertyServer->registerProperty(OB_PROP_STOP_DEPTH_STREAM_BOOL, "", "w", vendorPropertyAccessor_);
             propertyServer->registerProperty(OB_PROP_STOP_IR_STREAM_BOOL, "", "w", vendorPropertyAccessor_);

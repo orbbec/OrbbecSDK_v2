@@ -11,8 +11,6 @@
 #include <atomic>
 #include <map>
 
-#define IS_ASTRA_MINI_DEVICE(pid) (pid == 0x069d || pid == 0x065b || pid == 0x065e)
-
 int main(void) try {
     std::cout << "Please enter the output filename (with .bag extension) and press Enter to start recording: ";
     std::string filePath;
@@ -31,7 +29,10 @@ int main(void) try {
     }
 
     // Acquire first available device
-    auto device = deviceList->getDevice(0);
+    auto device  = deviceList->getDevice(0);
+    auto devInfo = device->getDeviceInfo();
+    auto pid     = devInfo->getPid();
+    auto vid     = devInfo->getVid();
 
     // Create a pipeline the specified device
     auto pipe = std::make_shared<ob::Pipeline>(device);
@@ -53,7 +54,7 @@ int main(void) try {
         auto sensor      = sensorList->getSensor(i);
         auto sensorType  = sensor->getType();
         auto profileList = sensor->getStreamProfileList();  // Get profileList to create Sensor object in advance
-        if(IS_ASTRA_MINI_DEVICE(device->getDeviceInfo()->getPid())) {
+        if(IS_ASTRA_MINI_DEVICE(vid, pid)) {
             if(sensorType == OB_SENSOR_IR) {
                 continue;
             }

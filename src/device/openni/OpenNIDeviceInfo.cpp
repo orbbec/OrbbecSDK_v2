@@ -11,6 +11,7 @@
 #include "AstraMiniDevice.hpp"
 #include "exception/ObException.hpp"
 #include "SourcePortInfo.hpp"
+#include "common/CommonFields.hpp"
 #if defined(BUILD_USB_PAL)
 #include "usb/UsbPortGroup.hpp"
 #endif
@@ -84,14 +85,14 @@ std::shared_ptr<IDevice> OpenNIDeviceInfo::createDevice() const {
 #if defined(BUILD_USB_PAL)
 std::vector<std::shared_ptr<IDeviceEnumInfo>> OpenNIDeviceInfo::pickDevices(const SourcePortInfoList infoList) {
     std::vector<std::shared_ptr<IDeviceEnumInfo>> OpenNIDeviceInfos;
-    auto                                          uvcRemainder   = FilterUSBPortInfoByPid(infoList, OpenniRgbPids);
-    auto                                          depthRemainder = FilterUSBPortInfoByPid(infoList, OpenNIDevPids);
+    auto                                          uvcRemainder   = FilterUSBPortInfoByVidPid(infoList, ORBBEC_DEVICE_VID, OpenniRgbPids);
+    auto                                          depthRemainder = FilterUSBPortInfoByVidPid(infoList, ORBBEC_DEVICE_VID, OpenNIDevPids);
 
     auto groups = utils::groupVector<std::shared_ptr<const SourcePortInfo>>(depthRemainder, GroupUSBSourcePortByUrl);
     auto iter   = groups.begin();
     while(iter != groups.end()) {
         if(iter->size() >= 2) {
-            auto item = iter->begin();
+            auto item          = iter->begin();
             auto depthPortInfo = std::dynamic_pointer_cast<const USBSourcePortInfo>(*item);
             if(utils::isMatchDeviceByPid(depthPortInfo->pid, OpenniAstraPids)) {
                 auto info = std::make_shared<OpenNIDeviceInfo>(*iter);
@@ -103,18 +104,18 @@ std::vector<std::shared_ptr<IDeviceEnumInfo>> OpenNIDeviceInfo::pickDevices(cons
                     continue;
                 }
 
-               auto rgbDevicePid = mapItem->second;
-               for(auto uvcInfoIter = uvcRemainder.begin(); uvcInfoIter != uvcRemainder.end();) {
-                   auto uvcPortInfo = std::dynamic_pointer_cast<const USBSourcePortInfo>(*uvcInfoIter);
-                   if((rgbDevicePid == uvcPortInfo->pid) && (depthPortInfo->hubId == uvcPortInfo->hubId)) {
-                       iter->push_back(*uvcInfoIter);
-                       uvcInfoIter = uvcRemainder.erase(uvcInfoIter);
-                       break;
-                   }
-                   uvcInfoIter++;
-               }
-               auto info = std::make_shared<OpenNIDeviceInfo>(*iter);
-               OpenNIDeviceInfos.push_back(info);
+                auto rgbDevicePid = mapItem->second;
+                for(auto uvcInfoIter = uvcRemainder.begin(); uvcInfoIter != uvcRemainder.end();) {
+                    auto uvcPortInfo = std::dynamic_pointer_cast<const USBSourcePortInfo>(*uvcInfoIter);
+                    if((rgbDevicePid == uvcPortInfo->pid) && (depthPortInfo->hubId == uvcPortInfo->hubId)) {
+                        iter->push_back(*uvcInfoIter);
+                        uvcInfoIter = uvcRemainder.erase(uvcInfoIter);
+                        break;
+                    }
+                    uvcInfoIter++;
+                }
+                auto info = std::make_shared<OpenNIDeviceInfo>(*iter);
+                OpenNIDeviceInfos.push_back(info);
             }
         }
 

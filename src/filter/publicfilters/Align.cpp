@@ -10,6 +10,7 @@
 #include "IDevice.hpp"
 #include "AlignImpl.hpp"
 #include "AlignImplGeneric.hpp"
+#include "common/CommonFields.hpp"
 
 namespace libobsensor {
 
@@ -230,8 +231,9 @@ void Align::alignFrames(const std::shared_ptr<const Frame> from, std::shared_ptr
             auto device     = lazySensor->device;
             auto deviceInfo = device->getInfo();
             auto pid        = deviceInfo->pid_;
+            auto vid        = deviceInfo->vid_;
 
-            if(IS_FEMTO_MEGA_SERIES(pid) && matchTargetRes_) {
+            if((vid == ORBBEC_DEVICE_VID) && IS_FEMTO_MEGA_SERIES(pid) && matchTargetRes_) {
                 useScale = true;
             }
         }

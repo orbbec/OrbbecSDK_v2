@@ -208,22 +208,24 @@ const std::vector<uint8_t> &PlaybackFilterPropertyAccessor::getStructureData(uin
 PlaybackFrameTransformPropertyAccessor::PlaybackFrameTransformPropertyAccessor(const std::shared_ptr<ISourcePort> &backend, IDevice *owner)
     : port_(backend), owner_(owner) {
     auto pid = owner_->getInfo()->pid_;
-    if(std::find(G330DevPids.begin(), G330DevPids.end(), pid) != G330DevPids.end()
-       || std::find(DaBaiADevPids.begin(), DaBaiADevPids.end(), pid) != DaBaiADevPids.end() || pid == 0x0815) {
+    auto vid = owner_->getInfo()->vid_;
+    if(isDeviceInContainer(G330DevPids, vid, pid) || isDeviceInContainer(DaBaiADevPids, vid, pid) || isDeviceInContainer(G435LeDevPids, vid, pid)) {
         accessor_ = std::make_shared<StereoFrameTransformPropertyAccessor>(owner_);  // Gemini330, Gemini435Led, DaBaiA
     }
-    else if(pid == 0x0808 || pid == 0x0809) {
-        accessor_ = std::make_shared<G210FrameTransformPropertyAccessor>(owner_);  // Gemini210
-    }
-    else if(pid == 0x0670 || pid == 0x0673) {
-        accessor_ = std::make_shared<G2FrameTransformPropertyAccessor>(owner_);  // Gemini2
-    }
-    else if(std::find(Astra2DevPids.begin(), Astra2DevPids.end(), pid) != Astra2DevPids.end()) {
-        accessor_ = std::make_shared<Astra2FrameTransformPropertyAccessor>(owner_);  // Astar2
-    }
-    else if(std::find(FemtoBoltDevPids.begin(), FemtoBoltDevPids.end(), pid) != FemtoBoltDevPids.end()
-            || std::find(FemtoMegaDevPids.begin(), FemtoMegaDevPids.end(), pid) != FemtoMegaDevPids.end()) {
-        accessor_ = std::make_shared<MonocularFrameTransformPropertyAccessor>(owner_);  // Femto
+    else if(vid == ORBBEC_DEVICE_VID) {
+        if(pid == 0x0808 || pid == 0x0809) {
+            accessor_ = std::make_shared<G210FrameTransformPropertyAccessor>(owner_);  // Gemini210
+        }
+        else if(pid == 0x0670 || pid == 0x0673) {
+            accessor_ = std::make_shared<G2FrameTransformPropertyAccessor>(owner_);  // Gemini2
+        }
+        else if(std::find(Astra2DevPids.begin(), Astra2DevPids.end(), pid) != Astra2DevPids.end()) {
+            accessor_ = std::make_shared<Astra2FrameTransformPropertyAccessor>(owner_);  // Astar2
+        }
+        else if(std::find(FemtoBoltDevPids.begin(), FemtoBoltDevPids.end(), pid) != FemtoBoltDevPids.end()
+                || std::find(FemtoMegaDevPids.begin(), FemtoMegaDevPids.end(), pid) != FemtoMegaDevPids.end()) {
+            accessor_ = std::make_shared<MonocularFrameTransformPropertyAccessor>(owner_);  // Femto
+        }
     }
     else {
         LOG_ERROR("Unsupport PlaybackFrameTransformPropertyAccessor, pid: {}", pid);
@@ -236,9 +238,9 @@ void PlaybackFrameTransformPropertyAccessor::initFrameTransformProperty() {
     }
 
     auto                  playPort_ = std::dynamic_pointer_cast<PlaybackDevicePort>(port_);
-    std::vector<uint32_t> list      = { OB_PROP_COLOR_MIRROR_BOOL, OB_PROP_COLOR_FLIP_BOOL,    OB_PROP_COLOR_ROTATE_INT,     OB_PROP_DEPTH_FLIP_BOOL,
-                                        OB_PROP_DEPTH_MIRROR_BOOL, OB_PROP_DEPTH_ROTATE_INT,   OB_PROP_IR_FLIP_BOOL,         OB_PROP_IR_MIRROR_BOOL,
-                                        OB_PROP_IR_ROTATE_INT,     OB_PROP_IR_RIGHT_FLIP_BOOL, OB_PROP_IR_RIGHT_MIRROR_BOOL, OB_PROP_IR_RIGHT_ROTATE_INT,
+    std::vector<uint32_t> list      = { OB_PROP_COLOR_MIRROR_BOOL,    OB_PROP_COLOR_FLIP_BOOL,        OB_PROP_COLOR_ROTATE_INT,     OB_PROP_DEPTH_FLIP_BOOL,
+                                        OB_PROP_DEPTH_MIRROR_BOOL,    OB_PROP_DEPTH_ROTATE_INT,       OB_PROP_IR_FLIP_BOOL,         OB_PROP_IR_MIRROR_BOOL,
+                                        OB_PROP_IR_ROTATE_INT,        OB_PROP_IR_RIGHT_FLIP_BOOL,     OB_PROP_IR_RIGHT_MIRROR_BOOL, OB_PROP_IR_RIGHT_ROTATE_INT,
                                         OB_PROP_CONFIDENCE_FLIP_BOOL, OB_PROP_CONFIDENCE_MIRROR_BOOL, OB_PROP_CONFIDENCE_ROTATE_INT };
 
     for(auto propertyId: list) {

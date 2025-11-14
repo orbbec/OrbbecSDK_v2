@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "common/DeviceSeriesInfo.hpp"
+
 #include <string>
 #include <sstream>
 #include <vector>

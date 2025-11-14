@@ -43,9 +43,9 @@ int select_index(const char *prompt, int min_value, int max_value) {  // todo: t
 
 // Enumerates stream information.
 void enumerate_stream_info(ob_sensor *sensor) {
-    ob_error *error = NULL;
-ob_stream_profile_list *stream_profile_list = NULL;
-uint32_t stream_profile_count;
+    ob_error               *error               = NULL;
+    ob_stream_profile_list *stream_profile_list = NULL;
+    uint32_t                stream_profile_count;
 
     // Get sensor type.
     ob_sensor_type sensor_type = ob_sensor_get_type(sensor, &error);

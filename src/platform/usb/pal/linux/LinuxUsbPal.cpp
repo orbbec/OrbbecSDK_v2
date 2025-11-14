@@ -41,13 +41,13 @@ public:
     }
     void start(deviceChangedCallback callback) override {
         callback_ = callback;
-        auto rc   = libusb_hotplug_register_callback(NULL, LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED, 0, 0x2BC5, LIBUSB_HOTPLUG_MATCH_ANY, LIBUSB_HOTPLUG_MATCH_ANY,
-                                                     deviceArrivalCallback, this, &hp[0]);
+        auto rc   = libusb_hotplug_register_callback(NULL, LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED, 0, LIBUSB_HOTPLUG_MATCH_ANY, LIBUSB_HOTPLUG_MATCH_ANY,
+                                                     LIBUSB_HOTPLUG_MATCH_ANY, deviceArrivalCallback, this, &hp[0]);
         if(LIBUSB_SUCCESS != rc) {
             LOG_WARN("register libusb hotplug failed!");
         }
-        rc = libusb_hotplug_register_callback(NULL, LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT, 0, 0x2BC5, LIBUSB_HOTPLUG_MATCH_ANY, LIBUSB_HOTPLUG_MATCH_ANY,
-                                              deviceRemovedCallback, this, &hp[1]);
+        rc = libusb_hotplug_register_callback(NULL, LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT, 0, LIBUSB_HOTPLUG_MATCH_ANY, LIBUSB_HOTPLUG_MATCH_ANY,
+                                              LIBUSB_HOTPLUG_MATCH_ANY, deviceRemovedCallback, this, &hp[1]);
         if(LIBUSB_SUCCESS != rc) {
             LOG_WARN("register libusb hotplug failed!");
         }
@@ -87,9 +87,28 @@ std::string parseDevicePath(libusb_device *usbDevice) {
     return usb_bus + "-" + port_path.str() + "-" + usb_dev;
 }
 
+bool checkDevice(libusb_device *device) {
+    struct libusb_device_descriptor desc;
+    auto                            res = libusb_get_device_descriptor(device, &desc);
+    if(res != LIBUSB_SUCCESS) {
+        LOG_WARN("Failed to retrieve USB descriptor for device. libusb_get_device_descriptor returned {}", res);
+        return false;
+    }
+    const auto &allowedVids = libobsensor::supportedUsbVids;
+    if(std::find(allowedVids.begin(), allowedVids.end(), desc.idVendor) == allowedVids.end()) {
+        return false;
+    }
+    return true;
+}
+
 int deviceArrivalCallback(libusb_context *ctx, libusb_device *device, libusb_hotplug_event event, void *user_data) {
     (void)ctx;
     (void)event;
+
+    if(!checkDevice(device)) {
+        return 0;
+    }
+
     auto watcher = (LibusbDeviceWatcher *)user_data;
     LOG_DEBUG("Device arrival event occurred");
     (void)watcher->callback_(OB_DEVICE_ARRIVAL, parseDevicePath(device));
@@ -99,6 +118,11 @@ int deviceArrivalCallback(libusb_context *ctx, libusb_device *device, libusb_hot
 int deviceRemovedCallback(libusb_context *ctx, libusb_device *device, libusb_hotplug_event event, void *user_data) {
     (void)ctx;
     (void)event;
+
+    if(!checkDevice(device)) {
+        return 0;
+    }
+
     auto watcher = (LibusbDeviceWatcher *)user_data;
     LOG_DEBUG("Device removed event occurred");
     (void)watcher->callback_(OB_DEVICE_REMOVED, parseDevicePath(device));
@@ -156,7 +180,8 @@ std::shared_ptr<ISourcePort> LinuxUsbPal::getSourcePort(std::shared_ptr<const So
     case SOURCE_PORT_USB_UVC: {
         auto usbPortInfo = std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo);
         auto backend     = uvcBackendType_;
-        if(isMatchDeviceByPid(usbPortInfo->pid, FemtoMegaDevPids)) {  // if the device is femto mega, force to use v4l2
+        if((usbPortInfo->vid == ORBBEC_DEVICE_VID)
+           && isMatchDeviceByPid(usbPortInfo->pid, FemtoMegaDevPids)) {  // if the device is femto mega, force to use v4l2
             backend = OB_UVC_BACKEND_TYPE_V4L2;
         }
         if(usbPortInfo->connSpec == "GMSL2") {
@@ -258,7 +283,8 @@ std::shared_ptr<ISourcePort> LinuxUsbPal::getUvcSourcePort(std::shared_ptr<const
         backend = OB_UVC_BACKEND_TYPE_V4L2;
     }
     else {
-        if(isMatchDeviceByPid(usbPortInfo->pid, FemtoMegaDevPids)) {  // if the device is femto mega, force to use v4l2
+        if((usbPortInfo->vid == ORBBEC_DEVICE_VID)
+           && isMatchDeviceByPid(usbPortInfo->pid, FemtoMegaDevPids)) {  // if the device is femto mega, force to use v4l2
             backend = OB_UVC_BACKEND_TYPE_V4L2;
         }
 

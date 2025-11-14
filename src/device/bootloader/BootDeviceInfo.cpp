@@ -20,29 +20,26 @@ BootDeviceInfo::BootDeviceInfo(const SourcePortInfoList groupedInfoList) {
     if(IS_USB_PORT(firstPortInfo->portType)) {
         auto portInfo = std::dynamic_pointer_cast<const USBSourcePortInfo>(groupedInfoList.front());
 
-        name_ = "Bootloader device";
-
-        fullName_ = "Orbbec " + name_;
-
         pid_                = portInfo->pid;
         vid_                = portInfo->vid;
         uid_                = portInfo->uid;
         deviceSn_           = portInfo->serial;
         connectionType_     = portInfo->connSpec;
         sourcePortInfoList_ = groupedInfoList;
+        name_               = "Bootloader device";
+        fullName_           = name_;
     }
     else if(IS_NET_PORT(firstPortInfo->portType)) {
         auto portInfo = std::dynamic_pointer_cast<const NetSourcePortInfo>(groupedInfoList.front());
-        name_         = "Bootloader device";
-
-        fullName_ = "Orbbec " + name_;
 
         pid_                = portInfo->pid;
-        vid_                = 0x2BC5;
+        vid_                = portInfo->vid;
         uid_                = portInfo->mac;
         deviceSn_           = portInfo->serialNumber;
         connectionType_     = "Ethernet";
         sourcePortInfoList_ = groupedInfoList;
+        name_               = "Bootloader device";
+        fullName_           = name_;
     }
     else {
         throw invalid_value_exception("Invalid port type");
@@ -58,7 +55,7 @@ std::shared_ptr<IDevice> BootDeviceInfo::createDevice() const {
 #if defined(BUILD_USB_PAL)
 std::vector<std::shared_ptr<IDeviceEnumInfo>> BootDeviceInfo::pickDevices(const SourcePortInfoList infoList) {
     std::vector<std::shared_ptr<IDeviceEnumInfo>> BootDeviceInfos;
-    auto                                          remainder = FilterUSBPortInfoByPid(infoList, BootDevPids);
+    auto                                          remainder = FilterUSBPortInfoByVidPid(infoList, ORBBEC_DEVICE_VID, BootDevPids);
     auto                                          groups    = utils::groupVector<std::shared_ptr<const SourcePortInfo>>(remainder, GroupUSBSourcePortByUrl);
     auto                                          iter      = groups.begin();
     while(iter != groups.end()) {
@@ -76,7 +73,7 @@ std::vector<std::shared_ptr<IDeviceEnumInfo>> BootDeviceInfo::pickDevices(const 
 #if defined(BUILD_NET_PAL)
 std::vector<std::shared_ptr<IDeviceEnumInfo>> BootDeviceInfo::pickNetDevices(const SourcePortInfoList infoList) {
     std::vector<std::shared_ptr<IDeviceEnumInfo>> G330DeviceInfos;
-    auto                                          remainder = FilterNetPortInfoByPid(infoList, BootDevPids);
+    auto                                          remainder = FilterNetPortInfoByVidPid(infoList, ORBBEC_DEVICE_VID, BootDevPids);
     auto                                          groups    = utils::groupVector<std::shared_ptr<const SourcePortInfo>>(remainder, GroupNetSourcePortByMac);
     auto                                          iter      = groups.begin();
     while(iter != groups.end()) {

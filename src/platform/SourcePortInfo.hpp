@@ -44,7 +44,7 @@ struct SourcePortInfo {
 
 struct NetSourcePortInfo : public SourcePortInfo {
     NetSourcePortInfo(SourcePortType portType, std::string netInterfaceName, std::string localMac, std::string localAddress, std::string address, uint16_t port,
-                      std::string mac, std::string serialNumber, uint32_t pid, std::string mask = "unknown", std::string gateway = "unknown",
+                      std::string mac, std::string serialNumber, uint32_t vid, uint32_t pid, std::string mask = "unknown", std::string gateway = "unknown",
                       uint8_t localSubnetLength = 0, std::string localGateway = "unknown")
         : SourcePortInfo(portType),
           netInterfaceName(netInterfaceName),
@@ -55,6 +55,7 @@ struct NetSourcePortInfo : public SourcePortInfo {
           mac(mac),
           serialNumber(serialNumber),
           pid(pid),
+          vid(vid),
           mask(mask),
           gateway(gateway),
           localSubnetLength(localSubnetLength),
@@ -69,7 +70,7 @@ struct NetSourcePortInfo : public SourcePortInfo {
         auto netCmpInfo = std::dynamic_pointer_cast<const NetSourcePortInfo>(cmpInfo);
         return (netInterfaceName == netCmpInfo->netInterfaceName) && (localMac == netCmpInfo->localMac) && (localAddress == netCmpInfo->localAddress)
                && (address == netCmpInfo->address) && (port == netCmpInfo->port) && (mac == netCmpInfo->mac) && (serialNumber == netCmpInfo->serialNumber)
-               && (pid == netCmpInfo->pid);
+               && (pid == netCmpInfo->pid) && (vid == netCmpInfo->vid);
     }
 
     std::string netInterfaceName;
@@ -80,6 +81,7 @@ struct NetSourcePortInfo : public SourcePortInfo {
     std::string mac;
     std::string serialNumber;
     uint32_t    pid;
+    uint32_t    vid;
     std::string mask;
     std::string gateway;
     uint8_t     localSubnetLength;
@@ -104,7 +106,7 @@ struct ShmStreamPortInfo : public SourcePortInfo {  // shared memory stream port
 };
 
 struct USBSourcePortInfo : public SourcePortInfo {
-    USBSourcePortInfo() : SourcePortInfo(SOURCE_PORT_USB_VENDOR){};
+    USBSourcePortInfo() : SourcePortInfo(SOURCE_PORT_USB_VENDOR) {};
     explicit USBSourcePortInfo(SourcePortType type) : SourcePortInfo(type) {}
     ~USBSourcePortInfo() noexcept override = default;
 
@@ -133,8 +135,8 @@ struct USBSourcePortInfo : public SourcePortInfo {
 
 struct RTPStreamPortInfo : public NetSourcePortInfo {
     RTPStreamPortInfo(std::string netInterfaceName, std::string localMac, std::string localAddress, std::string address, uint16_t port, uint16_t vendorPort,
-                      OBStreamType streamType, std::string mac = "unknown", std::string serialNumber = "unknown", uint32_t pid = 0)
-        : NetSourcePortInfo(SOURCE_PORT_NET_RTP, netInterfaceName, localMac, localAddress, address, port, mac, serialNumber, pid),
+                      OBStreamType streamType, std::string mac = "unknown", std::string serialNumber = "unknown", uint32_t vid = 0, uint32_t pid = 0)
+        : NetSourcePortInfo(SOURCE_PORT_NET_RTP, netInterfaceName, localMac, localAddress, address, port, mac, serialNumber, vid, pid),
           vendorPort(vendorPort),
           streamType(streamType) {}
 
@@ -153,8 +155,8 @@ struct RTPStreamPortInfo : public NetSourcePortInfo {
 
 struct RTSPStreamPortInfo : public NetSourcePortInfo {
     RTSPStreamPortInfo(std::string netInterfaceName, std::string localMac, std::string localAdress, std::string address, uint16_t port, uint16_t vendorPort,
-                       OBStreamType streamType, std::string mac = "unknown", std::string serialNumber = "unknown", uint32_t pid = 0)
-        : NetSourcePortInfo(SOURCE_PORT_NET_RTSP, netInterfaceName, localMac, localAdress, address, port, mac, serialNumber, pid),
+                       OBStreamType streamType, std::string mac = "unknown", std::string serialNumber = "unknown", uint32_t vid = 0, uint32_t pid = 0)
+        : NetSourcePortInfo(SOURCE_PORT_NET_RTSP, netInterfaceName, localMac, localAdress, address, port, mac, serialNumber, vid, pid),
           vendorPort(vendorPort),
           streamType(streamType) {}
 
@@ -172,4 +174,4 @@ struct RTSPStreamPortInfo : public NetSourcePortInfo {
 };
 
 typedef std::vector<std::shared_ptr<const SourcePortInfo>> SourcePortInfoList;
-} // namespace libobsensor
+}  // namespace libobsensor

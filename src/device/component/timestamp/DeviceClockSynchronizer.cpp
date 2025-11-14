@@ -3,6 +3,7 @@
 
 #include "DeviceClockSynchronizer.hpp"
 #include "InternalTypes.hpp"
+#include "common/CommonFields.hpp"
 
 const std::vector<uint16_t> Mx6600DevPids = {
     0x0660,  // astra2
@@ -85,20 +86,23 @@ void DeviceClockSynchronizer::timerSyncWithHost() {
     const uint32_t MAX_REPEAT_TIME            = 10;
     uint8_t        repeated                   = 0;
     uint64_t       rtt                        = 0;
+    auto           owner                      = getOwner();
+    auto           devInfo                    = owner->getInfo();
+    bool           isMX6600Device             = false;
+
+    if(devInfo->vid_ == ORBBEC_DEVICE_VID) {
+        isMX6600Device = std::find(Mx6600DevPids.begin(), Mx6600DevPids.end(), devInfo->pid_) != Mx6600DevPids.end();
+    }
 
     while(repeated < MAX_REPEAT_TIME) {
         {
-            auto         owner          = getOwner();
             auto         propertyServer = owner->getPropertyServer();
             auto         now            = utils::getNowTimesUs();
             OBDeviceTime devTsp;
             devTsp.time = static_cast<uint64_t>(static_cast<double>(now) / 1000000 * deviceClockFreqOut_);
             devTsp.rtt  = static_cast<uint64_t>(static_cast<double>(rtt) / 1000000 * deviceClockFreqOut_);
 
-            auto pid    = owner->getInfo()->pid_;
-            bool exists = std::find(Mx6600DevPids.begin(), Mx6600DevPids.end(), pid) != Mx6600DevPids.end();
-
-            if(exists) {
+            if(isMX6600Device) {
                 if(devTsp.rtt == 0) {
                     devTsp.rtt = 1;
                 }
@@ -114,7 +118,6 @@ void DeviceClockSynchronizer::timerSyncWithHost() {
             continue;
         }
         {
-            auto     owner          = getOwner();
             auto     propertyServer = owner->getPropertyServer();
             uint64_t now            = utils::getNowTimesUs();
             auto     devTsp         = propertyServer->getStructureDataT<OBDeviceTime>(OB_STRUCT_DEVICE_TIME);

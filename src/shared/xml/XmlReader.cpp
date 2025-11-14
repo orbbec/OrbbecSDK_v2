@@ -2,8 +2,6 @@
 // Licensed under the MIT License.
 
 #include "XmlReader.hpp"
-#include "tinyxml2.hpp"
-
 #include "logger/Logger.hpp"
 #include "exception/ObException.hpp"
 #include "utils/Utils.hpp"
@@ -170,4 +168,40 @@ bool XmlReader::getStringValue(const std::string &nodePathName, std::string &t) 
     return true;
 }
 
+bool XmlReader::getAttributeValue(const std::string &nodePathName, const std::string &attrName, std::string &value) {
+    if(nodePathName.empty()) {
+        return false;
+    }
+
+    auto                     nodeList = utils::string::split(nodePathName, ".");
+    auto                     current  = rootXMLElement_;
+    libobsensor::XMLElement *target   = nullptr;
+    for(size_t i = 0; i < nodeList.size(); ++i) {
+        libobsensor::XMLElement *child = current->FirstChildElement(nodeList[i].c_str());
+        if(!child) {
+            target = nullptr;
+            break;
+        }
+
+        if(i < nodeList.size() - 1) {
+            current = child;
+        }
+
+        if(i == nodeList.size() - 1) {
+            target = child;
+        }
+    }
+
+    if(!target || target == rootXMLElement_) {
+        return false;
+    }
+
+    const char *attr = target->Attribute(attrName.c_str());
+    if(!attr) {
+        return false;
+    }
+
+    value = attr;
+    return true;
+}
 }  // namespace libobsensor

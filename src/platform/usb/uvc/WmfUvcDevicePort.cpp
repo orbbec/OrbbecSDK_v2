@@ -1,7 +1,7 @@
 // Copyright (c) Orbbec Inc. All Rights Reserved.
 // Licensed under the MIT License.
 
-#if(_MSC_FULL_VER < 180031101)
+#if (_MSC_FULL_VER < 180031101)
 #error At least Visual Studio 2013 Update 4 is required to compile this backend
 #endif
 
@@ -535,8 +535,8 @@ bool WmfUvcDevicePort::setXu(uint8_t ctrl, const uint8_t *data, uint32_t len) {
 
     ULONG bytes_received = 0;
 
-    // The library will first use the GET_LEN command to obtain the protocol data length and then send the data of the corresponding length based on the GET_LEN return value.
-    // Therefore, when len < GET_LEN(), an error will be returned; when len > GET_LEN(), only the first GET_LEN() bytes of data will be sent.
+    // The library will first use the GET_LEN command to obtain the protocol data length and then send the data of the corresponding length based on the GET_LEN
+    // return value. Therefore, when len < GET_LEN(), an error will be returned; when len > GET_LEN(), only the first GET_LEN() bytes of data will be sent.
     auto hr = xuKsControl_->KsProperty(reinterpret_cast<PKSPROPERTY>(&node), sizeof(KSP_NODE), (void *)data, len, &bytes_received);
 
     return LOG_HR(hr);
@@ -557,8 +557,8 @@ bool WmfUvcDevicePort::getXu(uint8_t ctrl, uint8_t *data, uint32_t *len) {
 
     ULONG bytes_received = 0;
 
-    // The library will first use the GET_LEN command to get the protocol data length, and the data length that the device can return must be less than or equal to GET_LEN().
-    // If XU_MAX_DATA_LENGTH < GET_LEN(), an error will be returned.
+    // The library will first use the GET_LEN command to get the protocol data length, and the data length that the device can return must be less than or equal
+    // to GET_LEN(). If XU_MAX_DATA_LENGTH < GET_LEN(), an error will be returned.
     auto hr = xuKsControl_->KsProperty(reinterpret_cast<PKSPROPERTY>(&node), sizeof(node), data, XU_MAX_DATA_LENGTH, &bytes_received);
     *len    = bytes_received;
 
@@ -566,6 +566,8 @@ bool WmfUvcDevicePort::getXu(uint8_t ctrl, uint8_t *data, uint32_t *len) {
 }
 
 void WmfUvcDevicePort::foreachUvcDevice(const USBDeviceInfoEnumCallback &action) {
+    const auto &allowedVids = libobsensor::supportedUsbVids;
+
     for(const auto &attributes_params_set: attributes_params) {
         CComPtr<IMFAttributes> pAttributes = nullptr;
         CHECK_HR(MFCreateAttributes(&pAttributes, 1));
@@ -595,7 +597,8 @@ void WmfUvcDevicePort::foreachUvcDevice(const USBDeviceInfoEnumCallback &action)
 
             uint16_t    vid, pid, infIndex;
             std::string uid, guid;
-            if(parse_usb_path_multiple_interface(vid, pid, infIndex, uid, symbolicLink, guid) && vid == ORBBEC_USB_VID) {
+            if(parse_usb_path_multiple_interface(vid, pid, infIndex, uid, symbolicLink, guid)
+               && std::find(allowedVids.begin(), allowedVids.end(), vid) != allowedVids.end()) {
                 UsbInterfaceInfo info;
                 // info.url = ""
                 info.uid      = uid;
@@ -869,7 +872,7 @@ void WmfUvcDevicePort::playProfile(std::shared_ptr<const VideoStreamProfile> pro
             CHECK_HR(streamReader_->SetStreamSelection(mfp.index, TRUE));
             {
                 std::lock_guard<std::mutex> lock(streamsMutex_);
-                auto                       &stream = streams_[mfp.index];  // Characteristic of std::map: if the key does not exist, it will be automatically created
+                auto &stream = streams_[mfp.index];  // Characteristic of std::map: if the key does not exist, it will be automatically created
                 if(streams_[mfp.index].streaming) {
                     throw std::runtime_error("Camera already streaming via this stream index!");
                 }
@@ -1083,7 +1086,7 @@ STDMETHODIMP WmfUvcDevicePort::OnReadSample(HRESULT hrStatus, DWORD streamIndex,
                     callback = stream.callback;
                     buffer->Unlock();
                 }
-                if (callback) {
+                if(callback) {
                     TRY_EXECUTE({ callback(videoFrame); });
                 }
             }
@@ -1105,4 +1108,3 @@ STDMETHODIMP WmfUvcDevicePort::OnFlush(DWORD streamIndex) {
 }
 
 }  // namespace libobsensor
-

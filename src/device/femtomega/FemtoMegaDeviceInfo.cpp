@@ -72,7 +72,8 @@ std::shared_ptr<IDevice> FemtoMegaDeviceInfo::createDevice() const {
         if(IS_OB_FEMTO_MEGA_I_PID(pid_)) {
             // for Femto Mega i
             device = std::make_shared<FemtoMegaINetDevice>(shared_from_this());
-        } else {
+        }
+        else {
             device = std::make_shared<FemtoMegaNetDevice>(shared_from_this());
         }
     }
@@ -85,7 +86,7 @@ std::shared_ptr<IDevice> FemtoMegaDeviceInfo::createDevice() const {
 #if defined(BUILD_USB_PAL)
 std::vector<std::shared_ptr<IDeviceEnumInfo>> FemtoMegaDeviceInfo::pickDevices(const SourcePortInfoList infoList) {
     std::vector<std::shared_ptr<IDeviceEnumInfo>> femtoMegaDeviceInfos;
-    auto                                          remainder = FilterUSBPortInfoByPid(infoList, FemtoMegaDevPids);
+    auto                                          remainder = FilterUSBPortInfoByVidPid(infoList, ORBBEC_DEVICE_VID, FemtoMegaDevPids);
     auto                                          groups    = utils::groupVector<std::shared_ptr<const SourcePortInfo>>(remainder, GroupUSBSourcePortByUrl);
     auto                                          iter      = groups.begin();
     while(iter != groups.end()) {
@@ -103,7 +104,7 @@ std::vector<std::shared_ptr<IDeviceEnumInfo>> FemtoMegaDeviceInfo::pickDevices(c
 #if defined(BUILD_NET_PAL)
 std::vector<std::shared_ptr<IDeviceEnumInfo>> FemtoMegaDeviceInfo::pickNetDevices(const SourcePortInfoList infoList) {
     std::vector<std::shared_ptr<IDeviceEnumInfo>> femtoMegaDeviceInfos;
-    auto                                          remainder = FilterNetPortInfoByPid(infoList, FemtoMegaDevPids);
+    auto                                          remainder = FilterNetPortInfoByVidPid(infoList, ORBBEC_DEVICE_VID, FemtoMegaDevPids);
     auto                                          groups    = utils::groupVector<std::shared_ptr<const SourcePortInfo>>(remainder, GroupNetSourcePortByMac);
     auto                                          iter      = groups.begin();
     while(iter != groups.end()) {
@@ -112,17 +113,16 @@ std::vector<std::shared_ptr<IDeviceEnumInfo>> FemtoMegaDeviceInfo::pickNetDevice
             auto portInfo = std::dynamic_pointer_cast<const NetSourcePortInfo>(iter->front());
             iter->emplace_back(std::make_shared<RTSPStreamPortInfo>(portInfo->netInterfaceName, portInfo->localMac, portInfo->localAddress, portInfo->address,
                                                                     static_cast<uint16_t>(8888), portInfo->port, OB_STREAM_COLOR, portInfo->mac,
-                                                                    portInfo->serialNumber, portInfo->pid));
+                                                                    portInfo->serialNumber, portInfo->vid, portInfo->pid));
             iter->emplace_back(std::make_shared<RTSPStreamPortInfo>(portInfo->netInterfaceName, portInfo->localMac, portInfo->localAddress, portInfo->address,
                                                                     static_cast<uint16_t>(8554), portInfo->port, OB_STREAM_DEPTH, portInfo->mac,
-                                                                    portInfo->serialNumber, portInfo->pid));
+                                                                    portInfo->serialNumber, portInfo->vid, portInfo->pid));
             iter->emplace_back(std::make_shared<RTSPStreamPortInfo>(portInfo->netInterfaceName, portInfo->localMac, portInfo->localAddress, portInfo->address,
                                                                     static_cast<uint16_t>(8554), portInfo->port, OB_STREAM_IR, portInfo->mac,
-                                                                    portInfo->serialNumber, portInfo->pid));
+                                                                    portInfo->serialNumber, portInfo->vid, portInfo->pid));
             iter->emplace_back(std::make_shared<NetDataStreamPortInfo>(portInfo->netInterfaceName, portInfo->localMac, portInfo->localAddress,
                                                                        portInfo->address, static_cast<uint16_t>(8900), portInfo->port, portInfo->mac,
-                                                                       portInfo->serialNumber,
-                                                                       portInfo->pid));  // imu data stream
+                                                                       portInfo->serialNumber, portInfo->vid, portInfo->pid));  // imu data stream
 
             auto deviceEnumInfo = std::make_shared<FemtoMegaDeviceInfo>(*iter);
             femtoMegaDeviceInfos.push_back(deviceEnumInfo);

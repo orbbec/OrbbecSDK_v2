@@ -8,6 +8,7 @@
 #pragma once
 
 #include <libobsensor/h/ObTypes.h>
+#include "tinyxml2.hpp"
 
 #include <stdarg.h>
 #include <algorithm>
@@ -44,6 +45,7 @@ public:
     bool        getFloatValue(const std::string &nodePathName, float &t);
     bool        getDoubleValue(const std::string &nodePathName, double &t);
     bool        getStringValue(const std::string &nodePathName, std::string &t);
+    bool        getAttributeValue(const std::string &nodePathName, const std::string &attrName, std::string &value);
     XMLElement *getRootElement() const;
 
 private:

@@ -36,19 +36,19 @@
 #include "utils/StringUtils.hpp"
 
 #if defined(__ANDROID__) && (__ANDROID_API__ < 24)
-    #ifdef __cplusplus
-    extern "C" {
-    #endif
-    #include "ifaddrs_add.h"
-    #ifdef __cplusplus
-    }
-    #endif
-#endif // __ANDROID__ and API < 24
+#ifdef __cplusplus
+extern "C" {
+#endif
+#include "ifaddrs_add.h"
+#ifdef __cplusplus
+}
+#endif
+#endif  // __ANDROID__ and API < 24
 
 namespace libobsensor {
 
 GVCPClient::GVCPClient() {
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+#if (defined(WIN32) || defined(_WIN32) || defined(WINCE))
     WSADATA wsaData;
     if(WSAStartup(MAKEWORD(2, 2), &wsaData)) {
         throw libobsensor::invalid_value_exception(utils::string::to_string() << "Failed to initialize WinSock! err_code=" << GET_LAST_ERROR());
@@ -59,7 +59,7 @@ GVCPClient::GVCPClient() {
 
 GVCPClient::~GVCPClient() {
     std::lock_guard<std::mutex> lck(queryMtx_);
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+#if (defined(WIN32) || defined(_WIN32) || defined(WINCE))
     WSACleanup();
 #endif
     closeClientSockets();
@@ -192,7 +192,7 @@ std::string getGateway(const std::string &ifName) {
 #endif  // __linux__ || __ANDROID__
 
 int GVCPClient::openClientSockets() {
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+#if (defined(WIN32) || defined(_WIN32) || defined(WINCE))
     DWORD                                                                   ret;
     DWORD                                                                   size = 0;
     std::unique_ptr<IP_ADAPTER_ADDRESSES, void (*)(IP_ADAPTER_ADDRESSES *)> adapterAddresses(nullptr, [](IP_ADAPTER_ADDRESSES *p) { free(p); });
@@ -309,7 +309,7 @@ int GVCPClient::openClientSockets() {
             std::strncpy(ifr.ifr_name, ifa->ifa_name, IFNAMSIZ - 1);
 
             if(ioctl(socket, SIOCGIFHWADDR, &ifr) >= 0) {
-                unsigned char     *mac = reinterpret_cast<unsigned char *>(ifr.ifr_hwaddr.sa_data);
+                unsigned char *mac = reinterpret_cast<unsigned char *>(ifr.ifr_hwaddr.sa_data);
 #endif
                 std::ostringstream macAddressStream;
                 for(int i = 0; i < 6; ++i) {
@@ -354,7 +354,7 @@ void GVCPClient::closeClientSockets() {
 }
 
 SOCKET GVCPClient::openClientRecvSocket(SOCKET srcSock) {
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+#if (defined(WIN32) || defined(_WIN32) || defined(WINCE))
     // for windows, do nothing
     (void)(srcSock);
     return INVALID_SOCKET;
@@ -387,7 +387,7 @@ SOCKET GVCPClient::openClientSocket(SOCKADDR_IN addr) {
 
     // Set broadcast options
     int bBroadcast = 1;
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+#if (defined(WIN32) || defined(_WIN32) || defined(WINCE))
     int err = setsockopt(sock, SOL_SOCKET, SO_BROADCAST, (char *)&bBroadcast, sizeof(bBroadcast));
 #else
     // int     err = setsockopt(sock, SOL_SOCKET, SO_BROADCAST | SO_REUSEADDR, (char *)&bBroadcast, sizeof(bBroadcast));
@@ -402,7 +402,7 @@ SOCKET GVCPClient::openClientSocket(SOCKADDR_IN addr) {
 #endif
 
 // Set receive timeout options
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+#if (defined(WIN32) || defined(_WIN32) || defined(WINCE))
     uint32_t dwTimeout = 5000;
 #else
     TIMEVAL dwTimeout;
@@ -414,8 +414,8 @@ SOCKET GVCPClient::openClientSocket(SOCKADDR_IN addr) {
         throw libobsensor::invalid_value_exception(utils::string::to_string() << "Failed to set socket timeout option! err_code=" << GET_LAST_ERROR());
     }
 
-#if(defined(__linux__) || defined(OS_IOS) || defined(OS_MACOS) || defined(__ANDROID__))
-    //addr.sin_addr.s_addr = inet_addr("0.0.0.0");
+#if (defined(__linux__) || defined(OS_IOS) || defined(OS_MACOS) || defined(__ANDROID__))
+    // addr.sin_addr.s_addr = inet_addr("0.0.0.0");
 #endif
     std::string ip = inet_ntoa(addr.sin_addr);
     LOG_INTVL(LOG_INTVL_OBJECT_TAG + "GVCP bind", MAX_LOG_INTERVAL, spdlog::level::debug, "bind {}:{}", ip, ntohs(addr.sin_port));
@@ -466,7 +466,7 @@ int GVCPClient::recvAndParseGVCPResponse(SOCKET sock, const GVCPSocketInfo &sock
         // auto devMode  = ntohl(ackPayload->dwDevMode);
         // auto supIpSet = ntohl(ackPayload->dwSupIpSet);
         // auto curIpSet = ntohl(ackPayload->dwCurIpSet);
-        auto curPID   = ntohl(ackPayload->dwPID);
+        auto curPID = ntohl(ackPayload->dwPID);
 
         // Get Mac address
         char macStr[18];
@@ -488,13 +488,16 @@ int GVCPClient::recvAndParseGVCPResponse(SOCKET sock, const GVCPSocketInfo &sock
         char     gatewayStr[INET_ADDRSTRLEN];
         inet_ntop(AF_INET, &gateway, gatewayStr, INET_ADDRSTRLEN);
 
-        // LOG_INTVL(LOG_INTVL_OBJECT_TAG + "GVCP get ack info", DEF_MIN_LOG_INTVL, spdlog::level::info, "{},{}, {},{}, {},{}, {}, {}, {}, {}, {}, {}, {}, {}, {}",
+        // LOG_INTVL(LOG_INTVL_OBJECT_TAG + "GVCP get ack info", DEF_MIN_LOG_INTVL, spdlog::level::info, "{},{}, {},{}, {},{}, {}, {}, {}, {}, {}, {}, {}, {},
+        // {}",
         //           specVer, devMode, std::string(macStr), supIpSet, curIpSet, curPID, std::string(curIPStr), std::string(subMaskStr), std::string(gatewayStr),
         //           std::string(ackPayload->szFacName), std::string(ackPayload->szModelName), std::string(ackPayload->szDevVer),
         //           std::string(ackPayload->szFacInfo), std::string(ackPayload->szSerial), std::string(ackPayload->szUserName));
 
         // Filter non-Orbbec devices
-        if(strcmp(ackPayload->szFacName, "Orbbec") != 0) {
+        std::string deviceManufacturer = ackPayload->szFacName;
+        auto        it                 = libobsensor::manufacturerVidMap.find(deviceManufacturer);
+        if(it == manufacturerVidMap.end()) {
             return 0;
         }
 
@@ -511,13 +514,17 @@ int GVCPClient::recvAndParseGVCPResponse(SOCKET sock, const GVCPSocketInfo &sock
         info.sn                = ackPayload->szSerial;
         info.name              = ackPayload->szModelName;
         info.pid               = curPID;
-        // info.manufacturer = ackPayload->szFacName;
+        // info.manufacturer      = ackPayload->szFacName;
         // info.version      = ackPayload->szDevVer;
 
         if(info.pid == 0x0000 && info.name == "OI-BC300I") {
             // TODO: Treat OI-BC300I (pid=0x0000) as Femto Mega I (pid=0x06c0) for compatibility
             info.pid = 0x06c0;
         }
+
+        auto vidIter = libobsensor::manufacturerVidMap.find(ackPayload->szFacName);
+        info.vid     = (vidIter != manufacturerVidMap.end()) ? vidIter->second : 0x0000;
+
         std::lock_guard<std::mutex> lock(devInfoListMtx_);
         devInfoList_.push_back(info);
         return 1;
@@ -578,7 +585,7 @@ void GVCPClient::sendGVCPDiscovery(GVCPSocketInfo socketInfo) {
         FD_SET(socketInfo.sock, &readfs);
         if(socketInfo.sockRecv > 0) {
             FD_SET(socketInfo.sockRecv, &readfs);
-            if (socketInfo.sockRecv > socketInfo.sock) {
+            if(socketInfo.sockRecv > socketInfo.sock) {
                 nfds = static_cast<int>(socketInfo.sockRecv) + 1;
             }
         }
@@ -735,7 +742,7 @@ bool GVCPClient::sendGVCPForceIP(GVCPSocketInfo socketInfo, std::string mac, con
 }
 
 void GVCPClient::checkAndUpdateSockets() {
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+#if (defined(WIN32) || defined(_WIN32) || defined(WINCE))
     DWORD                                                                   ret;
     DWORD                                                                   size = 0;
     std::unique_ptr<IP_ADAPTER_ADDRESSES, void (*)(IP_ADAPTER_ADDRESSES *)> adapterAddresses(nullptr, [](IP_ADAPTER_ADDRESSES *p) { free(p); });
@@ -893,7 +900,7 @@ void GVCPClient::checkAndUpdateSockets() {
                 std::strncpy(ifr.ifr_name, ifa->ifa_name, IFNAMSIZ - 1);
 
                 if(ioctl(sock, SIOCGIFHWADDR, &ifr) >= 0) {
-                    unsigned char     *mac = reinterpret_cast<unsigned char *>(ifr.ifr_hwaddr.sa_data);
+                    unsigned char *mac = reinterpret_cast<unsigned char *>(ifr.ifr_hwaddr.sa_data);
 #endif
                     std::ostringstream macAddressStream;
                     for(int i = 0; i < 6; ++i) {

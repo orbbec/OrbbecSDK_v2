@@ -1962,7 +1962,7 @@ const std::vector<UsbInterfaceInfo> ObV4lGmslDevicePort::queryDevicesInfo() {
         }
 
         UsbInterfaceInfo info{};
-        info.vid              = GMSL_VID_ORBBEC;
+        info.vid              = (devInfo.vid != 0) ? devInfo.vid : GMSL_VID_ORBBEC;
         info.pid              = devInfo.pid;
         info.infName          = devName;
         info.infUrl           = video_path;

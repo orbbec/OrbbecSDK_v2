@@ -12,6 +12,7 @@ cmrc_add_resource_library(
     PREFIX
     config
     ./OrbbecSDKConfig.xml
+    ./DeviceInfoConfig.xml
 )
 
 add_library(ob::env_config_rc ALIAS env_config_rc)

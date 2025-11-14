@@ -91,9 +91,10 @@ void G330Device::init() {
     fetchExtensionInfo();
 
     videoFrameTimestampCalculatorCreator_ = [this]() {
+        auto vid          = deviceInfo_->vid_;
+        auto pid          = deviceInfo_->pid_;
         auto metadataType = OB_FRAME_METADATA_TYPE_TIMESTAMP;
-        auto iter         = std::find(G330LDevPids.begin(), G330LDevPids.end(), deviceInfo_->pid_);
-        if(iter == G330LDevPids.end()) {
+        if(!isDeviceInContainer(G330LDevPids, vid, pid)) {
             metadataType = OB_FRAME_METADATA_TYPE_SENSOR_TIMESTAMP;
         }
         return std::make_shared<FrameTimestampCalculatorOverMetadata>(this, metadataType, frameTimeFreq_);
@@ -238,6 +239,22 @@ void G330Device::init() {
     });
 
     fetchDeviceErrorState();
+}
+
+void G330Device::fetchDeviceInfo() {
+    DeviceBase::fetchDeviceInfo();
+    deviceInfo_->name_ = enumInfo_->getName();
+
+    std::string manufacturerName;
+    auto        vid = deviceInfo_->vid_;
+    auto        pid = deviceInfo_->pid_;
+    auto        it  = std::find_if(G330DeviceInfoList.begin(), G330DeviceInfoList.end(),
+                                   [vid, pid](const DeviceInfoEntry &entry) { return entry.vid_ == vid && entry.pid_ == pid; });
+
+    if(it != G330DeviceInfoList.end()) {
+        manufacturerName = std::string(it->manufacturer_);
+    }
+    deviceInfo_->fullName_ = manufacturerName + " " + deviceInfo_->name_;
 }
 
 std::shared_ptr<const StreamProfile> G330Device::loadDefaultStreamProfile(OBSensorType sensorType) {
@@ -1348,9 +1365,10 @@ void G330NetDevice::init() {
     fetchAllProfileList();
 
     videoFrameTimestampCalculatorCreator_ = [this]() {
+        auto vid          = deviceInfo_->vid_;
+        auto pid          = deviceInfo_->pid_;
         auto metadataType = OB_FRAME_METADATA_TYPE_TIMESTAMP;
-        auto iter         = std::find(G330LDevPids.begin(), G330LDevPids.end(), deviceInfo_->pid_);
-        if(iter == G330LDevPids.end()) {
+        if(!isDeviceInContainer(G330LDevPids, vid, pid)) {
             metadataType = OB_FRAME_METADATA_TYPE_SENSOR_TIMESTAMP;
         }
         return std::make_shared<FrameTimestampCalculatorOverMetadata>(this, metadataType, frameTimeFreq_);
@@ -1495,7 +1513,6 @@ void G330NetDevice::fetchDeviceInfo() {
     deviceInfo->gateway_              = netPortInfo->gateway;
     deviceInfo_                       = deviceInfo;
     deviceInfo_->name_                = enumInfo_->getName();
-    deviceInfo_->fullName_            = "Orbbec " + deviceInfo_->name_;
     deviceInfo_->fwVersion_           = version.firmwareVersion;
     deviceInfo_->deviceSn_            = version.serialNumber;
     deviceInfo_->asicName_            = version.depthChip;
@@ -1507,12 +1524,24 @@ void G330NetDevice::fetchDeviceInfo() {
     deviceInfo_->uid_                 = enumInfo_->getUid();
     deviceInfo_->connectionType_      = enumInfo_->getConnectionType();
 
+    std::string manufacturerName;
+    auto        vid = deviceInfo_->vid_;
+    auto        pid = deviceInfo_->pid_;
+    auto        it  = std::find_if(G330DeviceInfoList.begin(), G330DeviceInfoList.end(),
+                                   [vid, pid](const DeviceInfoEntry &entry) { return entry.vid_ == vid && entry.pid_ == pid; });
+
+    if(it != G330DeviceInfoList.end()) {
+        manufacturerName = std::string(it->manufacturer_);
+    }
+
+    deviceInfo_->fullName_ = manufacturerName + " " + deviceInfo_->name_;
+
     netBandwidth_ = G335LE_1000M_NET_BAND_WIDTH;
     netBandwidth_ = propServer->getPropertyValueT<int>(OB_PROP_NETWORK_BANDWIDTH_TYPE_INT);
     LOG_DEBUG("The network bandwidth read from device is {}.", netBandwidth_);
 
     linkSpeed_ = netBandwidth_;
-#if(!defined(WIN32) && !defined(_WIN32) && !defined(WINCE))
+#if (!defined(WIN32) && !defined(_WIN32) && !defined(WINCE))
     std::string   path = "/sys/class/net/" + netPortInfo->netInterfaceName + "/speed";
     std::ifstream file(path);
     if(file.is_open()) {

@@ -126,8 +126,9 @@ void VideoSensor::onBackendFrameCallback(std::shared_ptr<Frame> frame) {
 
     LOG_FREQ_CALC(DEBUG, 5000, "{} backend frame callback, frameRate={freq}fps", sensorType_);
     auto deviceInfo = owner_->getInfo();
+    auto vid        = deviceInfo->vid_;
     auto pid        = deviceInfo->pid_;
-    if(isPidInPidList(pid, FemtoBoltDevPids) || isPidInPidList(pid, FemtoMegaDevPids)) {
+    if((vid == ORBBEC_DEVICE_VID) && (isPidInPidList(pid, FemtoBoltDevPids) || isPidInPidList(pid, FemtoMegaDevPids))) {
         auto videoFrame = frame->as<VideoFrame>();
         videoFrame->setPixelType(OB_PIXEL_TOF_DEPTH);
     }

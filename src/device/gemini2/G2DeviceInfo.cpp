@@ -23,7 +23,7 @@
 namespace libobsensor {
 
 const std::map<int, std::string> G2DeviceNameMap = {
-    { 0x0670, "Gemini2" }, { 0x0673, "Gemini2 L" }, { 0x0671, "Gemini2 XL" }, { 0x0808, "Gemini 215" }, { 0x0809, "Gemini 210" }, { 0x0815, "Gemini 435Le" } 
+    { 0x0670, "Gemini2" }, { 0x0673, "Gemini2 L" }, { 0x0671, "Gemini2 XL" }, { 0x0808, "Gemini 215" }, { 0x0809, "Gemini 210" }
 };
 
 G2DeviceInfo::G2DeviceInfo(const SourcePortInfoList groupedInfoList) {
@@ -50,18 +50,30 @@ G2DeviceInfo::G2DeviceInfo(const SourcePortInfoList groupedInfoList) {
     }
     else if(IS_NET_PORT(firstPortInfo->portType)) {
         auto portInfo = std::dynamic_pointer_cast<const NetSourcePortInfo>(groupedInfoList.front());
+        auto vid      = portInfo->vid;
+        auto pid      = portInfo->pid;
 
-        auto iter = G2DeviceNameMap.find(portInfo->pid);
-        if(iter != G2DeviceNameMap.end()) {
-            name_ = iter->second;
+        auto iter = std::find_if(G435LeDeviceInfoList.begin(), G435LeDeviceInfoList.end(),
+                                 [vid, pid](const DeviceInfoEntry &entry) { return entry.vid_ == vid && entry.pid_ == pid; });
+
+        if(iter != G435LeDeviceInfoList.end()) {
+            name_     = iter->deviceName_;
+            fullName_ = std::string(iter->manufacturer_) + " " + name_;
         }
         else {
-            name_ = "Gemini2 series device";
+            auto iter2 = G2DeviceNameMap.find(portInfo->pid);
+            if(iter2 != G2DeviceNameMap.end() && (portInfo->vid == ORBBEC_DEVICE_VID)) {
+                name_ = iter2->second;
+            }
+            else {
+                name_ = "Gemini2 series device";
+            }
+
+            fullName_ = "Orbbec " + name_;
         }
 
-        fullName_           = "Orbbec " + name_;
         pid_                = portInfo->pid;
-        vid_                = 0x2BC5;
+        vid_                = portInfo->vid;
         uid_                = portInfo->mac;
         deviceSn_           = portInfo->serialNumber;
         connectionType_     = "Ethernet";
@@ -75,19 +87,22 @@ G2DeviceInfo::G2DeviceInfo(const SourcePortInfoList groupedInfoList) {
 G2DeviceInfo::~G2DeviceInfo() noexcept {}
 
 std::shared_ptr<IDevice> G2DeviceInfo::createDevice() const {
-    if(pid_ == 0x0671) {
-        if(IS_NET_PORT(sourcePortInfoList_.front()->portType)) {
-            return std::make_shared<G2XLNetDevice>(shared_from_this());
-        }
-        return std::make_shared<G2XLUSBDevice>(shared_from_this());
-    } else if(pid_ == 0x0815) {
+    if(isDeviceInContainer(G435LeDevPids, vid_, pid_)) {
         if(IS_NET_PORT(sourcePortInfoList_.front()->portType)) {
             return std::make_shared<G435LeDevice>(shared_from_this());
         }
         return std::make_shared<G435LeDevice>(shared_from_this());
     }
-    else if(pid_ == 0x0808 || pid_ == 0x0809) {
-        return std::make_shared<G210Device>(shared_from_this());
+    else if(vid_ == ORBBEC_DEVICE_VID) {
+        if(pid_ == 0x0671) {
+            if(IS_NET_PORT(sourcePortInfoList_.front()->portType)) {
+                return std::make_shared<G2XLNetDevice>(shared_from_this());
+            }
+            return std::make_shared<G2XLUSBDevice>(shared_from_this());
+        }
+        else if(pid_ == 0x0808 || pid_ == 0x0809) {
+            return std::make_shared<G210Device>(shared_from_this());
+        }
     }
     return std::make_shared<G2Device>(shared_from_this());
 }
@@ -95,7 +110,7 @@ std::shared_ptr<IDevice> G2DeviceInfo::createDevice() const {
 #if defined(BUILD_USB_PAL)
 std::vector<std::shared_ptr<IDeviceEnumInfo>> G2DeviceInfo::pickDevices(const SourcePortInfoList infoList) {
     std::vector<std::shared_ptr<IDeviceEnumInfo>> G2DeviceInfos;
-    auto                                          remainder = FilterUSBPortInfoByPid(infoList, Gemini2DevPids);
+    auto                                          remainder = FilterUSBPortInfoByVidPid(infoList, ORBBEC_DEVICE_VID, Gemini2DevPids);
     auto                                          groups    = utils::groupVector<std::shared_ptr<const SourcePortInfo>>(remainder, GroupUSBSourcePortByUrl);
     auto                                          iter      = groups.begin();
     while(iter != groups.end()) {
@@ -113,30 +128,33 @@ std::vector<std::shared_ptr<IDeviceEnumInfo>> G2DeviceInfo::pickDevices(const So
 #if defined(BUILD_NET_PAL)
 std::vector<std::shared_ptr<IDeviceEnumInfo>> G2DeviceInfo::pickNetDevices(const SourcePortInfoList infoList) {
     std::vector<std::shared_ptr<IDeviceEnumInfo>> gemini2DeviceInfos;
-    auto                                          remainder = FilterNetPortInfoByPid(infoList, Gemini2DevPids);
-    auto                                          groups    = utils::groupVector<std::shared_ptr<const SourcePortInfo>>(remainder, GroupNetSourcePortByMac);
-    auto                                          iter      = groups.begin();
+    auto                                          remainder       = FilterNetPortInfoByVidPid(infoList, ORBBEC_DEVICE_VID, Gemini2DevPids);
+    auto                                          G435LeRemainder = FilterNetPortInfoByVidPid(infoList, G435LeDevPids);
+
+    remainder.insert(remainder.end(), G435LeRemainder.begin(), G435LeRemainder.end());
+    auto groups = utils::groupVector<std::shared_ptr<const SourcePortInfo>>(remainder, GroupNetSourcePortByMac);
+    auto iter   = groups.begin();
     while(iter != groups.end()) {
         if(iter->size() >= 1) {
             auto portInfo = std::dynamic_pointer_cast<const NetSourcePortInfo>(iter->front());
             iter->emplace_back(std::make_shared<RTSPStreamPortInfo>(portInfo->netInterfaceName, portInfo->localMac, portInfo->localAddress, portInfo->address,
                                                                     static_cast<uint16_t>(8888), portInfo->port, OB_STREAM_COLOR, portInfo->mac,
-                                                                    portInfo->serialNumber, portInfo->pid));
+                                                                    portInfo->serialNumber, portInfo->vid, portInfo->pid));
             iter->emplace_back(std::make_shared<RTSPStreamPortInfo>(portInfo->netInterfaceName, portInfo->localMac, portInfo->localAddress, portInfo->address,
                                                                     static_cast<uint16_t>(8554), portInfo->port, OB_STREAM_DEPTH, portInfo->mac,
-                                                                    portInfo->serialNumber, portInfo->pid));
+                                                                    portInfo->serialNumber, portInfo->vid, portInfo->pid));
             iter->emplace_back(std::make_shared<RTSPStreamPortInfo>(portInfo->netInterfaceName, portInfo->localMac, portInfo->localAddress, portInfo->address,
                                                                     static_cast<uint16_t>(8555), portInfo->port, OB_STREAM_IR_LEFT, portInfo->mac,
-                                                                    portInfo->serialNumber, portInfo->pid));
+                                                                    portInfo->serialNumber, portInfo->vid, portInfo->pid));
             iter->emplace_back(std::make_shared<RTSPStreamPortInfo>(portInfo->netInterfaceName, portInfo->localMac, portInfo->localAddress, portInfo->address,
                                                                     static_cast<uint16_t>(8556), portInfo->port, OB_STREAM_IR_RIGHT, portInfo->mac,
-                                                                    portInfo->serialNumber, portInfo->pid));
+                                                                    portInfo->serialNumber, portInfo->vid, portInfo->pid));
             iter->emplace_back(std::make_shared<NetDataStreamPortInfo>(portInfo->netInterfaceName, portInfo->localMac, portInfo->localAddress,
                                                                        portInfo->address, static_cast<uint16_t>(8900), portInfo->port, portInfo->mac,
-                                                                       portInfo->serialNumber, portInfo->pid));
+                                                                       portInfo->serialNumber, portInfo->vid, portInfo->pid));
             iter->emplace_back(std::make_shared<RTSPStreamPortInfo>(portInfo->netInterfaceName, portInfo->localMac, portInfo->localAddress, portInfo->address,
                                                                     static_cast<uint16_t>(8557), portInfo->port, OB_STREAM_CONFIDENCE, portInfo->mac,
-                                                                    portInfo->serialNumber, portInfo->pid));
+                                                                    portInfo->serialNumber, portInfo->vid, portInfo->pid));
 
             auto deviceEnumInfo = std::make_shared<G2DeviceInfo>(*iter);
             gemini2DeviceInfos.push_back(deviceEnumInfo);

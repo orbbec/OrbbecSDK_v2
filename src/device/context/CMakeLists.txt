@@ -7,4 +7,6 @@ target_sources(
     ${OB_TARGET_DEVICE}
     PRIVATE ${CMAKE_CURRENT_LIST_DIR}/Context.cpp
             ${CMAKE_CURRENT_LIST_DIR}/Context.hpp
+            ${CMAKE_CURRENT_LIST_DIR}/DynamicLibraryManager.cpp
+            ${CMAKE_CURRENT_LIST_DIR}/DynamicLibraryManager.hpp
 )

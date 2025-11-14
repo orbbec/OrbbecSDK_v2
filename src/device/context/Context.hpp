@@ -15,6 +15,7 @@
 #include "stream/StreamExtrinsicsManager.hpp"
 #include "FilterFactory.hpp"
 #include "Platform.hpp"
+#include "DynamicLibraryManager.hpp"
 
 namespace libobsensor {
 class Context {
@@ -39,6 +40,7 @@ private:
     void logExtensionsCommitHashes();
 #endif
     std::shared_ptr<EnvConfig>               envConfig_;
+    std::shared_ptr<DevInfoConfig>           devInfoConfig_;
     std::shared_ptr<Logger>                  logger_;
     std::shared_ptr<IDeviceManager>          deviceManager_;
     std::shared_ptr<FrameMemoryPool>         frameMemoryPool_;
@@ -46,6 +48,7 @@ private:
     std::shared_ptr<StreamExtrinsicsManager> streamExtrinsicsManager_;
     std::shared_ptr<FilterFactory>           filterFactory_;
     std::shared_ptr<Platform>                platform_;
+    std::shared_ptr<DynamicLibraryManager>   dynamicLibraryManager_;
 };
 }  // namespace libobsensor
 

@@ -4,6 +4,7 @@
 #pragma once
 #include "libobsensor/h/ObTypes.h"
 #include "ethernet/socket/SocketTypes.hpp"
+#include "common/DeviceSeriesInfo.hpp"
 
 #include <vector>
 #include <string>
@@ -96,6 +97,7 @@ struct GVCPDeviceInfo {
     std::string sn                = "unknown";
     std::string name              = "unknown";
     uint32_t    pid               = 0;
+    uint32_t    vid               = 0;
     // std::string version      = "";
     // std::string manufacturer = "";
 

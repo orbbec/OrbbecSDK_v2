@@ -67,7 +67,7 @@ DeviceEnumInfoList NetDeviceEnumerator::queryDeviceList() {
             value.intValue = 0;
             vendorPropAccessor->getPropertyValue(OB_PROP_DEVICE_PID_INT, &value);
             auto newInfo = std::make_shared<NetSourcePortInfo>(info->portType, info->netInterfaceName, info->localMac, info->localAddress, info->address,
-                                                               info->port, info->mac, info->serialNumber, value.intValue);
+                                                               info->port, info->mac, info->serialNumber, info->vid, value.intValue);
             sourcePortInfoList.push_back(newInfo);
         })
         CATCH_EXCEPTION_AND_LOG(DEBUG, "Get device pid failed! address:{}, port:{}", info->address, info->port);
@@ -88,9 +88,6 @@ DeviceEnumInfoList NetDeviceEnumerator::getDeviceInfoList() {
 
 DeviceEnumInfoList NetDeviceEnumerator::deviceInfoMatch(const SourcePortInfoList infoList) {
     DeviceEnumInfoList deviceInfoList;
-    auto               bootDevices = BootDeviceInfo::pickNetDevices(infoList);
-    deviceInfoList.insert(deviceInfoList.end(), bootDevices.begin(), bootDevices.end());
-
     auto               megaDevices = FemtoMegaDeviceInfo::pickNetDevices(infoList);
     deviceInfoList.insert(deviceInfoList.end(), megaDevices.begin(), megaDevices.end());
 
@@ -99,6 +96,9 @@ DeviceEnumInfoList NetDeviceEnumerator::deviceInfoMatch(const SourcePortInfoList
 
     auto g2Devices = G2DeviceInfo::pickNetDevices(infoList);
     deviceInfoList.insert(deviceInfoList.end(), g2Devices.begin(), g2Devices.end());
+
+    auto bootDevices = BootDeviceInfo::pickNetDevices(infoList);
+    deviceInfoList.insert(deviceInfoList.end(), bootDevices.begin(), bootDevices.end());
 
     return deviceInfoList;
 }
@@ -120,10 +120,10 @@ bool NetDeviceEnumerator::checkDeviceActivity(std::shared_ptr<const IDeviceEnumI
     }
 
     // check the last active of the device
-    std::string    mac           = info ? info->mac : "unknown";
-    std::string    ip            = info ? info->address : "unknown";
-    auto           elapsed       = deviceActivityManager_->getElapsedSinceLastActive(dev->getUid());
-    const int64_t  timeThreshold = 2000;  // 2s
+    std::string   mac           = info ? info->mac : "unknown";
+    std::string   ip            = info ? info->address : "unknown";
+    auto          elapsed       = deviceActivityManager_->getElapsedSinceLastActive(dev->getUid());
+    const int64_t timeThreshold = 2000;  // 2s
     if(elapsed < 0) {
         LOG_DEBUG("Can't find activity of the device, it might be offline. Name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", elapsed, dev->getName(),
                   dev->getPid(), dev->getDeviceSn(), mac, ip);
@@ -178,7 +178,11 @@ bool NetDeviceEnumerator::handleDeviceRemoved(std::string devUid) {
 
         // Continue device check via PID acquisition to confirm online status
         // TODO: Busy devices may be misjudged as offline due to temporary unresponsiveness
-        if(info->pid == OB_DEVICE_G335LE_PID || info->pid == OB_FEMTO_MEGA_PID || IS_OB_FEMTO_MEGA_I_PID(info->pid) || info->pid == OB_DEVICE_G435LE_PID) {
+        auto vid = info->vid;
+        auto pid = info->pid;
+        if(isDeviceInContainer(G335LeDevPids, vid, pid)
+           || ((info->vid == ORBBEC_DEVICE_VID) && (info->pid == OB_FEMTO_MEGA_PID || IS_OB_FEMTO_MEGA_I_PID(info->pid)))
+           || isDeviceInContainer(G435LeDevPids, vid, pid)) {
             bool disconnected = true;
             BEGIN_TRY_EXECUTE({
                 auto            sourcePort         = Platform::getInstance()->getNetSourcePort(info);
@@ -224,7 +228,7 @@ bool NetDeviceEnumerator::handleDeviceRemoved(std::string devUid) {
                 it = deviceInfoList_.erase(it);
             }
             else {
-                auto &item = *it;
+                auto &item    = *it;
                 firstPortInfo = item->getSourcePortInfoList().front();
                 info          = std::dynamic_pointer_cast<const NetSourcePortInfo>(firstPortInfo);
                 LOG_DEBUG("  - Name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", item->getName(), item->getPid(), item->getDeviceSn(), info->mac,
@@ -267,7 +271,7 @@ bool NetDeviceEnumerator::handleDeviceArrival(std::string devUid) {
     {
         std::unique_lock<std::recursive_mutex> lock(deviceInfoListMutex_);
         LOG_DEBUG("Current net device list: ({})", deviceInfoList_.size());
-        for(auto &&item: deviceInfoList_) { 
+        for(auto &&item: deviceInfoList_) {
             auto firstPortInfo = item->getSourcePortInfoList().front();
             auto info          = std::dynamic_pointer_cast<const NetSourcePortInfo>(firstPortInfo);
             LOG_DEBUG("  - Name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", item->getName(), item->getPid(), item->getDeviceSn(), info->mac, info->address);
@@ -299,9 +303,9 @@ bool NetDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType
 }
 
 std::shared_ptr<const IDeviceEnumInfo> NetDeviceEnumerator::queryNetDevice(std::string address, uint16_t port) {
-    auto info = std::make_shared<NetSourcePortInfo>(SOURCE_PORT_NET_VENDOR,  //
-                                            "Unknown", "Unknown", "Unknown", address, static_cast<uint16_t>(8090), address + ":" + std::to_string(port), "Unknown", 0);
-
+    auto info               = std::make_shared<NetSourcePortInfo>(SOURCE_PORT_NET_VENDOR,  //
+                                                                  "Unknown", "Unknown", "Unknown", address, static_cast<uint16_t>(8090), address + ":" + std::to_string(port),
+                                                                  "Unknown", ORBBEC_DEVICE_VID, 0);
     auto sourcePort         = Platform::getInstance()->getNetSourcePort(info);
     auto vendorPropAccessor = std::make_shared<VendorPropertyAccessor>(nullptr, sourcePort);
 
@@ -316,7 +320,7 @@ std::shared_ptr<const IDeviceEnumInfo> NetDeviceEnumerator::queryNetDevice(std::
         info->pid = OB_FEMTO_MEGA_PID;
     });
 
-    if(info->pid == OB_DEVICE_G335LE_PID) {
+    if(isDeviceInContainer(G335LeDevPids, info->vid, info->pid)) {
         throw invalid_value_exception("No supported G335Le found for address: " + address + ":" + std::to_string(port));
     }
 

@@ -6,8 +6,6 @@
 #include "utils.hpp"
 #include "utils_opencv.hpp"
 
-#define IS_ASTRA_MINI_DEVICE(pid) (pid == 0x069d || pid == 0x065b || pid == 0x065e)
-
 int main(void) try {
 
     // Create a pipeline.
@@ -17,7 +15,10 @@ int main(void) try {
     std::shared_ptr<ob::Config> config = std::make_shared<ob::Config>();
 
     // Get device from pipeline.
-    auto device = pipe.getDevice();
+    auto device  = pipe.getDevice();
+    auto devInfo = device->getDeviceInfo();
+    auto pid     = devInfo->getPid();
+    auto vid     = devInfo->getVid();
 
     // Get sensorList from device.
     auto sensorList = device->getSensorList();
@@ -33,7 +34,7 @@ int main(void) try {
             continue;
         }
 
-        if(IS_ASTRA_MINI_DEVICE(device->getDeviceInfo()->getPid())) {
+        if(IS_ASTRA_MINI_DEVICE(vid, pid)) {
             if(sensorType == OB_SENSOR_COLOR) {
                 continue;
             }
