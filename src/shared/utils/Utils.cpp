@@ -141,5 +141,15 @@ bool checkIpConfig(const ob_net_ip_config &config) {
     return true;
 }
 
+std::string getSDKLibraryName() {
+#ifdef OB_SDK_LIBRARY_NAME
+    std::string sdkLibraryName = OB_SDK_LIBRARY_NAME;
+    if(!sdkLibraryName.empty()) {
+        return sdkLibraryName;
+    }
+#endif
+    return "OrbbecSDK";
+}
+
 }  // namespace utils
 }  // namespace libobsensor

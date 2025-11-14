@@ -26,6 +26,11 @@ EnvConfig::EnvConfig(const std::string &configFile) {
     // add external config file
     auto extConfigFile = configFile;
     if(extConfigFile.empty()) {
+        std::string sdkLibName = utils::getSDKLibraryName();
+        if(!sdkLibName.empty()) {
+            defaultConfigFile_ = sdkLibName + "Config.xml";
+        }
+
 #ifndef __ANDROID__
         auto currentWorkDir = utils::getCurrentWorkDirectory();
         if(currentWorkDir == "") {
@@ -33,7 +38,7 @@ EnvConfig::EnvConfig(const std::string &configFile) {
         }
         extConfigFile = utils::joinPaths(currentWorkDir, defaultConfigFile_);
 #else
-        extConfigFile = defaultConfigFile_;
+        extConfigFile = defaultConfigPath_ + defaultConfigFile_;
 #endif
     }
     if(utils::fileExists(extConfigFile.c_str())) {

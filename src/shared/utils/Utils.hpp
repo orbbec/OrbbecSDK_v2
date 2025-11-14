@@ -136,5 +136,7 @@ int getJpgHeadLength(const uint8_t *data, uint32_t size);
 
 bool checkIpConfig(const ob_net_ip_config &config);
 
+std::string getSDKLibraryName();
+
 }  // namespace utils
 }  // namespace libobsensor

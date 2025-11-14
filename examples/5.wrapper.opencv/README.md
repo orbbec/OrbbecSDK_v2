@@ -1,6 +1,6 @@
-# OpenCV Example for OpenOrbbecSDK
+# OpenCV Example
 
-The examples in this folder are intended to enhance the existing SDK samples by showing how OrbbecSDK cameras can be integrated with OpenCV for computer vision applications.
+The examples in this folder are intended to enhance the existing SDK samples by showing how cameras using this SDK can be integrated with OpenCV for computer vision applications.
 
 ## Project Structure
 

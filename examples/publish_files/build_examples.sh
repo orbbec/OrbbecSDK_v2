@@ -97,7 +97,7 @@ make install
 cd $project_dir
 rm -rf build
 
-echo "OrbbecSDK examples built successfully!"
+echo "Examples built successfully!"
 echo "The executable files located in: $project_dir/bin"
 
 cd $current_dir

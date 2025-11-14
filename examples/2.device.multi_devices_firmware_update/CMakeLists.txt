@@ -7,7 +7,7 @@ project(ob_multi_devices_firmware_update)
 add_executable(${PROJECT_NAME} multi_devices_firmware_update.cpp)
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 11)
-target_link_libraries(${PROJECT_NAME} ob::OrbbecSDK ob::examples::utils)
+target_link_libraries(${PROJECT_NAME} ob::${OB_SDK_LIB_NAME} ob::examples::utils)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "examples")
 if(MSVC)

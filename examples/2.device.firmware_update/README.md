@@ -4,7 +4,7 @@
 
 This sample demonstrates how to use the SDK to update the firmware of a connected device. It includes functions to list connected devices, select a device, and update its firmware.
 
-> Note: This sample are not suiltable for Femto Mega, Femto Mega i, and Femto Bolt devices.
+> Note: This sample are not suiltable for Femto Mega, Femto Mega I, and Femto Bolt devices.
 > For these devices, please refer to the this repo:[https://github.com/orbbec/OrbbecFirmware](https://github.com/orbbec/OrbbecFirmware)
 
 ### Knowledge

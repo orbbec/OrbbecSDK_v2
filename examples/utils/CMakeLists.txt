@@ -16,7 +16,7 @@ if(${OpenCV_FOUND})
         ${CMAKE_CURRENT_LIST_DIR}/utils_opencv.cpp
         ${CMAKE_CURRENT_LIST_DIR}/utils_opencv.hpp
     )
-    target_link_libraries(ob_examples_utils PUBLIC ${OpenCV_LIBS} ob::OrbbecSDK)
+    target_link_libraries(ob_examples_utils PUBLIC ${OpenCV_LIBS} ob::${OB_SDK_LIB_NAME})
     target_include_directories(ob_examples_utils PUBLIC ${OpenCV_INCLUDE_DIRS})
 endif()
 

@@ -4,30 +4,71 @@
 # Get current directory for return here later
 $current_dir = Get-Location
 
-# Set platform
+# Default args
+$defaultLibName = "OrbbecSDK"
 $platform = "x64"
 $targetArch = "x64"
 $fullPlatform = "win_x64"
 $buildType = "Release"
+$sdkLibName = "OrbbecSDK"
 
-if ($args.Length -eq 1) {
-    if ($args[0] -eq "x64") {
-        $platform = "x64"
-        $fullPlatform = "win_x64"
-        $targetArch = "x64"
-    }
-    elseif ($args[0] -eq "x86") {
-        $platform = "Win32"
-        $fullPlatform = "win_x86"
-        $targetArch = "x86"
-        # build release with debug info
-        $buildType = "RelWithDebInfo"
-    }
-    else {
-        Write-Output "Invalid argument, please use x64 or x86"
+# User args
+foreach ($arg in $args) {
+    if ($arg -match "^--?([^=]+)=(.+)") {
+        $key = $matches[1].ToLower()
+        $value = $matches[2]
+        
+        switch ($key) {
+            "arch" {
+                if ($value -ieq "x64") { 
+                    $platform = "x64"
+                    $fullPlatform = "win_x64"
+                    $targetArch = "x64"
+                }
+                elseif ($value -ieq "x86") {
+                    $platform = "Win32"
+                    $fullPlatform = "win_x86"
+                    $targetArch = "x86"
+                    # x86 build release with debug info
+                    $buildType = "RelWithDebInfo"
+                }
+                else {
+                    Write-Output "Invalid arch argument, please use --arch=x64 or --arch=x86"
+                    exit 1
+                }
+            }
+            "config" {
+                if ($value -ieq "Debug") {
+                    $buildType = "Debug"
+                }
+                elseif ($value -ieq "Release") {
+                    $buildType = "Release"
+                }
+                elseif ($value -ieq "RelWithDebInfo") {
+                    $buildType = "RelWithDebInfo"
+                }
+                else {
+                    Write-Output "Invalid build config argument, please use --config=Debug, --config=Release or --config=RelWithDebInfo"
+                    exit 1
+                }
+            }
+            "libName" { $sdkLibName = $value }
+            default {
+                Write-Output "Ignore the current unsupported parameter. key=$key,value=$value"
+            }
+        }
+    } else {
+        Write-Output "Invalid parameter format: $arg"
+        Write-Output "Please use -key=value format (e.g., --arch=x64 --config=Release --libName=OrbbecSDK)"
         exit 1
     }
 }
+
+Write-Output "Build Configuration:"
+Write-Output ">>>>> arch: $targetArch"
+Write-Output ">>>>> build config: $buildType"
+Write-Output ">>>>> SDK library name: $sdkLibName"
+Write-Output ""
 
 $SCRIPT_DIR = Split-Path -Path $MyInvocation.MyCommand.Definition -Parent
 $PROJECT_ROOT = "$SCRIPT_DIR/../../"
@@ -42,7 +83,7 @@ $match = [regex]::Match($content, $verPattern)
 $version = $match.Groups[1].Value
 $timestamp = Get-Date -Format "yyyyMMddHHmm"
 $git_hash = $(git rev-parse --short HEAD)
-$package_name = "OrbbecSDK_v${version}_${timestamp}_${git_hash}_${fullPlatform}"
+$package_name = "${sdkLibName}_v${version}_${timestamp}_${git_hash}_${fullPlatform}"
 
 # check visual studio 2017 or 2019 or 2022 is installed
 $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
@@ -135,8 +176,59 @@ if (-not $opencvPath -or -not (Test-Path $opencvLibPath)) {
 }
 
 # build and install
-cmake -G "$cmake_generator" -A "$platform" -T "v141,host=${targetArch}" -DCMAKE_BUILD_TYPE=$buildType -DCMAKE_INSTALL_PREFIX="${install_dir}" ..
+cmake -G "$cmake_generator" `
+    -A "$platform" `
+    -T "v141,host=${targetArch}" `
+    -DCMAKE_BUILD_TYPE=$buildType `
+    -DCMAKE_INSTALL_PREFIX="${install_dir}" `
+    -DOPEN_SDK_LIB_NAME="$sdkLibName" `
+    ..
 cmake --build . --config $buildType --target install
+if ($LASTEXITCODE -ne 0) { 
+    Write-Host "Build $sdkLibName failed, exiting..."
+    Set-Location  $current_dir
+    exit $LASTEXITCODE
+}
+
+Write-Output "$sdkLibName install directory: ${install_dir}"
+
+# Define a function to process file contents
+function Remove-CopyrightAndLicensedLines {
+    param (
+        [string]$directoryPath  # Directory path to process
+    )
+
+    # Get all files in the directory
+    $files = Get-ChildItem -Path $directoryPath -Recurse -File
+
+    foreach ($file in $files) {
+        # Read the file contents
+        $fileContent = Get-Content -Path $file.FullName -Encoding UTF8
+        $modifiedContent = @()
+
+        # Iterate through each line and remove comment lines containing 'Copyright' or 'Licensed'
+        foreach ($line in $fileContent) {
+            if (($line.TrimStart().StartsWith("//") -or $line.TrimStart().StartsWith("#")) -and ($line -match "Copyright" -or $line -match "Licensed")) {
+                continue  # Skip comment lines
+            }
+            $modifiedContent += $line  # Keep non-comment lines
+        }
+
+        # If content has been modified, save the file without BOM
+        if ($modifiedContent.Count -ne $fileContent.Count) {
+            # Use UTF8Encoding without BOM
+            $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+            [System.IO.File]::WriteAllLines($file.FullName, $modifiedContent, $utf8NoBom)
+            Write-Host "Modified file: $($file.FullName)"
+        }
+    }
+}
+
+if ($sdkLibName -ne ${defaultLibName}) {
+    # Call the function to process 'examples' and 'include' directories
+    Remove-CopyrightAndLicensedLines "$install_dir\examples"
+    Remove-CopyrightAndLicensedLines "$install_dir\include"
+}
 
 # create zip file
 $zip_file = "${package_name}.zip"
@@ -145,7 +237,7 @@ Add-Type -assembly "system.io.compression.filesystem"
 [io.compression.zipfile]::CreateFromDirectory("${install_dir}", "${zip_file_path}")
 Write-Output  "Package zip file created at ${zip_file_path}"
 
-Write-Output  "OrbbecSDK for ${fullPlatform} build and install completed"
+Write-Output  "$sdkLibName for ${fullPlatform} build and install completed"
 
 # return to current_dir
 Set-Location  $current_dir

@@ -52,7 +52,7 @@ The log level and other logging parameters can be configured via the XML configu
 
 Additionally, the original configuration file can be located in the source directory at:
 ```bash
-    OrbbecSDK_v2/src/shared/environment/OrbbecSDKConfig.xml
+    OpenOrbbecSDK/src/shared/environment/OrbbecSDKConfig.xml
 ```
 **To ensure proper loading, place the `OrbbecSDKConfig.xml` file in the same directory as your executable.**
 
@@ -94,9 +94,9 @@ Open the `OrbbecSDKConfig.xml` file and locate the `<Log>` node. The configurati
 - Enabling asynchronous logging (`<Async>true</Async>`) can reduce blocking during log output but may result in log loss if the program exits abnormally.
 
 ## Run Sample
-If you are on Windows, you can switch to the directory `OrbbecSDK_v2/build/win_XX/bin` to find the `ob_logger.exe`.
+If you are on Windows, you can switch to the directory `build/win_XX/bin` to find the `ob_logger.exe`.
 
-If you are on linux, you can switch to the directory `OrbbecSDK_v2/build/linux_XX/bin` to find the `ob_logger`.
+If you are on linux, you can switch to the directory `build/linux_XX/bin` to find the `ob_logger`.
 
 ### Result
 ![result](/docs/resource/logger.jpg)

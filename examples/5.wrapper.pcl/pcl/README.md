@@ -2,7 +2,7 @@
 
 ## Overview
 
-Use OrbbecSDK to acquire point cloud data and convert the acquired point cloud data to PCL library point cloud data
+Acquire point cloud data and convert the acquired point cloud data to PCL library point cloud data
 
 
 ## Code overview

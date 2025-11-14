@@ -107,7 +107,7 @@ public:
      * @param[in] config The new IP configuration.
      * @return bool true if the configuration command was processed successfully, false otherwise.
      *
-     * @note This applies to all Orbbec GigE Vision devices
+     * @note This applies to all GigE Vision devices
      */
     bool forceIp(const char *macAddress, const OBNetIpConfig &config) {
         ob_error *error = nullptr;
@@ -207,7 +207,6 @@ public:
      * @brief Set the log file name for file output
      *
      * @param[in] fileName Log file name. Must not be empty.
-     * @param[out] error Pointer to an error object that will be set if an error occurs.
      *
      * @note Other settings, such as log level and output directory, remain unchanged.
      */

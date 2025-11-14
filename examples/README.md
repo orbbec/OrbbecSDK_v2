@@ -1,12 +1,12 @@
-# Examples Code for Orbbec cameras
+# Examples Code 
 
 ## Introduction
 
-There are several examples codes for users learn how to use Orbbec cameras. Here is a brief introduction to each sample code:
+Here is a brief introduction to each sample code:
 
 | Level    | Sample                                                  | Description                                                                                                                                                                                                             |
 | -------- | ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| basic    | [quick_start](0.basic.quick_start)                      | Quick show how to use the SDK to get frames from the Orbbec RGB-D camera device.                                                                                                                                        |
+| basic    | [quick_start](0.basic.quick_start)                      | Quick show how to use the SDK to get frames from the RGB-D camera device.                                                                                                                                        |
 | basic    | [enumerate](0.basic.enumerate)                          | Use the SDK interface to obtain camera-related information, including model, various sensors, and sensor-related configurations.                                                                                        |
 | stream   | [depth](1.stream.depth)                                 | Use the SDK interface to obtain the depth stream of the camera and display it in the window.                                                                                                                            |
 | stream   | [color](1.stream.color)                                 | Use the SDK interface to obtain the camera's color stream and display it in the window.                                                                                                                                 |
@@ -17,13 +17,13 @@ There are several examples codes for users learn how to use Orbbec cameras. Here
 | stream   | [callback](1.stream.callback)                           | In this sample, users can obtain depth, RGB, and IR images. This sample also supports performing user-defined operations such as data acquisition, data processing, and data modification within the callback function. |
 | device   | [control](2.device.control)                             | The SDK can be used to modify camera-related parameters, including laser switch, laser level intensity, white balance switch, etc.                                                                                      |
 | device   | [firmware_update](2.device.firmware_update)                             | This sample shows how to read a BIN file to perform firmware upgrades on the device. |
-| device   | [multi_devices_firmware_update](2.device.multi_devices_firmware_update) | This sample shows how to upgrade multiple Orbbec cameras connected to your system in a row. |
+| device   | [multi_devices_firmware_update](2.device.multi_devices_firmware_update) | This sample shows how to upgrade multiple cameras connected to your system in a row. |
 | device   | [optional_depth_presets_update](2.device.optional_depth_presets_update) | This sample shows how to read a BIN file to perform optional depth presets upgrades on the device. |
-| device   | [device_forceip](2.device.forceip)                      | This example shows how to configure a new IP for an Orbbec GigE network device using the ForceIP command (as defined by the GigE Vision standard).                                                                      |
+| device   | [device_forceip](2.device.forceip)                      | This example shows how to configure a new IP for an GigE network device using the ForceIP command (as defined by the GigE Vision standard).                                                                      |
 | device   | [hot_plugin](2.device.hot_plugin)                       | Use SDK to handle the settings of device unplug callback and process the acquired code stream after unplugging.                                                                                                         |
 | device   | [device_playback](2.device.playback)                       | This example shows how to use the SDK to get frame data from a recorded Rosbag package.|
-| device   | [device_record](2.device.record)                        | This example shows how to record video stream data from an Orbbec camera into a Rosbag format packet.                                                                                                                   |
-| device   | [device_record_nogui](2.device.record.nogui)            | This example shows how to record video stream data from an Orbbec camera into a Rosbag format packet. It is a command-line (CLI) tool that records streams directly without rendering video frames.            |
+| device   | [device_record](2.device.record)                        | This example shows how to record video stream data from an camera into a Rosbag format packet.                                                                                                                   |
+| device   | [device_record_nogui](2.device.record.nogui)            | This example shows how to record video stream data from an camera into a Rosbag format packet. It is a command-line (CLI) tool that records streams directly without rendering video frames.            |
 | advanced | [sync_align](3.advanced.sync_align)                     | Use the SDK interface to demonstrate the synchronization and alignment of sensor data streams, display the aligned image.                                                                                               |
 | advanced | [hw_d2c_align](3.advanced.hw_d2c_align)                 | Use the SDK interface to demonstrate the application of hardware depth-to-color alignment.                                                                                                                              |
 | advanced | [post_processing](3.advanced.post_processing)           | Use the SDK interface to  demonstrate post-processing operations, display post-processed images.                                                                                                                        |
@@ -44,9 +44,9 @@ The listed examples at previous section are written in C++ language. Here is a b
 
 | Level  | Sample                                      | Description                                                                                     |
 | ------ | ------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| basic  | [c_quick_start](c_examples/0.c_quick_start) | This is a quick start guide to start device streams using the Orbbec SDK C API.                 |
-| stream | [c_enumerate](c_examples/1.c_enumerate)     | This is a enumerate guide to get device streams profile information using the Orbbec SDK C API. |
-| stream | [c_depth](c_examples/2.c_depth)             | This is a depth guide to get depth stream and depth image by using the Orbbec SDK C API.        |
+| basic  | [c_quick_start](c_examples/0.c_quick_start) | This is a quick start guide to start device streams using the SDK C API.                 |
+| stream | [c_enumerate](c_examples/1.c_enumerate)     | This is a enumerate guide to get device streams profile information using the SDK C API. |
+| stream | [c_depth](c_examples/2.c_depth)             | This is a depth guide to get depth stream and depth image by using the SDK C API.        |
 
 ## Append
 
@@ -94,7 +94,7 @@ The CVWindow class leverages OpenCV to create a flexible and customizable graphi
 
 ### The Error Handling in the examples code
 
-When using the Orbbec SDK, if an error occurs, the SDK reports the error by throwing an exception of type ob::Error. The ob::Error exception class typically contains detailed information about the error, which can help developers diagnose the problem.
+If an error occurs, the SDK reports the error by throwing an exception of type ob::Error. The ob::Error exception class typically contains detailed information about the error, which can help developers diagnose the problem.
 The example uses a 'try' block to wrap the entire main function.If an exception of type ob::Error is thrown, the program will catch it and print the error message to the console.
 Here is the information that can be obtained from an ob::Error:
 

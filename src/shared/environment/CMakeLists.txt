@@ -26,9 +26,13 @@ add_custom_command(
 )
 
 if(OB_IS_MAIN_PROJECT)
-    install(FILES ${CMAKE_CURRENT_LIST_DIR}/OrbbecSDKConfig.xml DESTINATION shared)
-    install(FILES ${CMAKE_CURRENT_LIST_DIR}/OrbbecSDKConfig.md DESTINATION shared)
+    install(FILES ${CMAKE_CURRENT_LIST_DIR}/OrbbecSDKConfig.xml DESTINATION shared RENAME ${OB_SDK_LIB_NAME}Config.xml)
+    if(NOT OB_BUILD_OEM)
+        install(FILES ${CMAKE_CURRENT_LIST_DIR}/OrbbecSDKConfig.md DESTINATION shared)
+    endif()
 
-    install(FILES ${CMAKE_CURRENT_LIST_DIR}/OrbbecSDKConfig.xml DESTINATION ${OB_EXTENSIONS_INSTALL_RPEFIX})
-    install(FILES ${CMAKE_CURRENT_LIST_DIR}/OrbbecSDKConfig.md DESTINATION ${OB_EXTENSIONS_INSTALL_RPEFIX})
+    install(FILES ${CMAKE_CURRENT_LIST_DIR}/OrbbecSDKConfig.xml DESTINATION ${OB_EXTENSIONS_INSTALL_RPEFIX} RENAME ${OB_SDK_LIB_NAME}Config.xml)
+    if(NOT OB_BUILD_OEM)
+        install(FILES ${CMAKE_CURRENT_LIST_DIR}/OrbbecSDKConfig.md DESTINATION ${OB_EXTENSIONS_INSTALL_RPEFIX})
+    endif()
 endif()

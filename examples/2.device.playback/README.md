@@ -2,7 +2,7 @@
 
 ## Overview
 
-This example demonstrates how to use the SDK to read and visualize data from a ROS bag file (.bag) with Orbbec camera streams.
+This example demonstrates how to use the SDK to read and visualize data from a ROS bag file (.bag).
 
 ### Knowledge
 

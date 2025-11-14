@@ -3,7 +3,7 @@
 
 cmake_minimum_required(VERSION 3.10)
 
-project(orbbec_sdk_exampes)
+project(sdk_exampes)
 
 set(CMAKE_CXX_STANDARD 11)
 

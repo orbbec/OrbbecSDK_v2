@@ -13,12 +13,64 @@ cd $PROJECT_ROOT
 
 FOLDER_NAME=$(basename "$PROJECT_ROOT")
 
-# get arch from arg
-ARCH=$1
+# Default args
+SDK_LIB_NAME="OrbbecSDK"
+BUILD_TYPE="Release"
+ARCH=$(uname -m)
 
-if [ "$ARCH" == "" ]; then
-    ARCH=$(uname -m)
-fi
+# User args
+for arg in "$@"; do
+    if [[ "$arg" =~ ^--?([^=]+)=(.+)$ ]]; then
+        key="${BASH_REMATCH[1],,}"
+        value="${BASH_REMATCH[2]}"
+
+        case "$key" in
+            arch)
+                val_lower="${value,,}"
+                case "$val_lower" in
+                    x86_64|x64)
+                        ARCH=x86_64
+                        ;;
+                    aarch64|arm64)
+                        ARCH=aarch64
+                        ;;
+                    *)
+                        echo "Invalid arch argument, please use --arch=x86_64, --arch=x64 or --arch=aarch64, --arch=arm64"
+                        exit 1
+                        ;;
+                esac
+                ;;
+            config)
+                val_lower="${value,,}"
+                case "$val_lower" in
+                debug)
+                    BUILD_TYPE="Debug"
+                    ;;
+                release)
+                    BUILD_TYPE="Release"
+                    ;;
+                relwithdebinfo)
+                    BUILD_TYPE="RelWithDebInfo"
+                    ;;
+                *)
+                    echo "Invalid build config argument, please use --config=Debug, --config=Release or --config=RelWithDebInfo"
+                    exit 1
+                    ;;
+                esac
+                ;;
+            libname)
+                SDK_LIB_NAME="$value"
+                ;;
+            *)
+                echo "Ignore the current unsupported parameter. key=$key,value=$value"
+                ;;
+        esac
+    else
+        echo "Invalid parameter format: $arg"
+        echo "Please use -key=value format (e.g., --arch=x86_64 --config=Release --libName=OrbbecSDK)"
+        exit 1
+    fi
+done
 
 if [ "$ARCH" != "x86_64" ] && [ "$ARCH" != "aarch64" ] && [ "$ARCH" != "arm64" ]  && [ "$ARCH" != "arm" ]; then
     echo "Invalid architecture: $ARCH, supported architectures are x86_64, aarch64, and arm"
@@ -32,8 +84,7 @@ elif [ "$ARCH" == "aarch64" ]; then
     platform="linux/arm64"
 fi
 
-echo "Building openorbbecsdk for linux $ARCH via docker"
-
+echo "Building $SDK_LIB_NAME for linux $ARCH via docker"
 
 # check if cross compiling
 if [ "$ARCH" != $(uname -m) ]; then
@@ -69,7 +120,7 @@ if [ -t 1 ]; then
 fi
 
 # Define a unique container name using architecture, current timestamp, and shell PID
-CONTAINER_NAME="OrbbecSDK_Linux_${ARCH}_$(date +%s)_$$"
+CONTAINER_NAME="${SDK_LIB_NAME}_Linux_${ARCH}_$(date +%s)_$$"
 # Cleanup function to remove container associated with the current build
 cleanup() {
     echo "Cleaning up docker container $CONTAINER_NAME"
@@ -85,13 +136,14 @@ docker run --rm -u $USER_ID:$GROUP_ID \
     $TTY_OPT \
     --entrypoint /bin/bash \
     openorbbecsdk-env.$ARCH \
-    -c "cd /workspace/$FOLDER_NAME && bash ./scripts/build/build_linux.sh" &
+    -c "cd /workspace/$FOLDER_NAME && bash ./scripts/build/build_linux.sh \
+    --config=$BUILD_TYPE --libName=$SDK_LIB_NAME" &
 DOCKER_PID=$!
 wait $DOCKER_PID
 EXIT_CODE=$?
 if [ $EXIT_CODE -ne 0 ]; then
-    echo "Failed to build openorbbecsdk for linux $ARCH via docker. Exit code: $EXIT_CODE"
+    echo "Failed to build $SDK_LIB_NAME for linux $ARCH via docker. Exit code: $EXIT_CODE"
     exit $EXIT_CODE
 fi
 
-echo "Done building openorbbecsdk for linux $ARCH via docker"
+echo "Done building $SDK_LIB_NAME for linux $ARCH via docker"

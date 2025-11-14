@@ -7,7 +7,7 @@ project(ob_quick_start)
 add_executable(${PROJECT_NAME} quick_start.cpp)
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 11)
-target_link_libraries(${PROJECT_NAME} ob::OrbbecSDK ob::examples::utils)
+target_link_libraries(${PROJECT_NAME} ob::${OB_SDK_LIB_NAME} ob::examples::utils)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "examples")
 if(MSVC)

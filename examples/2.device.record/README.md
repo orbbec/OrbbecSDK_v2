@@ -2,7 +2,7 @@
 
 ## Overview
 
-This example demonstrates how to use the SDK to record video/sensor stream data from an Orbbec camera and output a ROS bag file (.bag).
+This example demonstrates how to use the SDK to record video/sensor stream data and output a ROS bag file (.bag).
 
 ### Knowledge
 

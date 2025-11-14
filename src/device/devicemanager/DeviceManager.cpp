@@ -128,7 +128,7 @@ std::shared_ptr<IDevice> DeviceManager::createNetDevice(std::string address, uin
 #else
     utils::unusedVar(address);
     utils::unusedVar(port);
-    throw libobsensor::unsupported_operation_exception("The OrbbecSDK library currently compiled does not support network functions."
+    throw libobsensor::unsupported_operation_exception("The library currently compiled does not support network functions. "
                                                        "Please turn on the CMAKE \"BUILD_NET_PAL\" option and recompile.");
 #endif
 }

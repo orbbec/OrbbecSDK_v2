@@ -83,6 +83,8 @@ private:
     void logMessage(OBLogSeverity severity, const char *module, const char *message, const char *file, const char *func, int line);
 
 private:
+    std::string sdkLibName_;
+
     spdlog::sink_ptr consoleSink_;
     spdlog::sink_ptr fileSink_;
     spdlog::sink_ptr callbackSink_;

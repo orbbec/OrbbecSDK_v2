@@ -14,7 +14,7 @@ add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${HEADER_FILES} utils/cJSON.c)
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 11)
 
 find_package(Threads REQUIRED)
-target_link_libraries(${PROJECT_NAME} ob::OrbbecSDK ob::examples::utils Threads::Threads)
+target_link_libraries(${PROJECT_NAME} ob::${OB_SDK_LIB_NAME} ob::examples::utils Threads::Threads)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "examples")
 if(MSVC)

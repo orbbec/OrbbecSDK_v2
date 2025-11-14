@@ -21,7 +21,7 @@ Metadata is used to describe the various properties and states of a frame.
     ob::Pipeline pipe;
 
     // Start the pipeline with default config.
-    // Modify the default configuration by the configuration file: "OrbbecSDKConfig.xml"
+    // Modify the default configuration by the configuration file: "*SDKConfig.xml"
     pipe.start();
     ```
 

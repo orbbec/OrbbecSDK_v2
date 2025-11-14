@@ -7,6 +7,7 @@
 
 #include "exception/ObException.hpp"
 #include "environment/EnvConfig.hpp"
+#include "utils/Utils.hpp"
 
 #include "LogCallbackSink.hpp"
 #ifdef __ANDROID__
@@ -46,7 +47,7 @@ const std::map<spdlog::level::level_enum, OBLogSeverity> SpdlogLevelToOBLogSever
 };
 
 #ifdef __ANDROID__
-const char *OB_DEFAULT_LOG_FILE_PATH = "/sdcard/Orbbec/Log/";
+const char *OB_DEFAULT_LOG_FILE_PATH = "/sdcard/3DCamera/Log/";
 #else
 const char *OB_DEFAULT_LOG_FILE_PATH = "Log/";
 #endif
@@ -168,7 +169,7 @@ void Logger::createConsoleSink() {
     if(config_.consoleLogSeverity != OB_LOG_SEVERITY_OFF) {
         if(!consoleSink_) {
 #ifdef __ANDROID__
-            consoleSink_ = std::make_shared<spdlog::sinks::android_sink_mt>("OrbbecSDK");
+            consoleSink_ = std::make_shared<spdlog::sinks::android_sink_mt>(sdkLibName_);
 #else
             consoleSink_ = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
 #endif
@@ -213,14 +214,14 @@ void Logger::updateDefaultSpdLogger() {
         spdlog::init_thread_pool(1024, 1);  // queue with 1k items and 1 threads, multiple threads will cause the log output order to be disordered
 
         // Asynchronous logger
-        spdLogger = std::make_shared<spdlog::async_logger>("OrbbecSDK", sinks.begin(), sinks.end(),  //
+        spdLogger = std::make_shared<spdlog::async_logger>(sdkLibName_, sinks.begin(), sinks.end(),  //
                                                            spdlog::thread_pool(), spdlog::async_overflow_policy::block);
 
         spdlog::flush_every(std::chrono::seconds(1));  // Set to flush the log every 1 second
     }
     else {
         // Synchronize logger
-        spdLogger = std::make_shared<spdlog::logger>("OrbbecSDK", sinks.begin(), sinks.end());
+        spdLogger = std::make_shared<spdlog::logger>(sdkLibName_, sinks.begin(), sinks.end());
     }
 
     spdlog::set_default_logger(spdLogger);
@@ -235,6 +236,10 @@ void Logger::loadEnvConfig() {
     int  globalLogLevel  = -1;
     int  fileLogLevel    = -1;
     int  consoleLogLevel = -1;
+
+    std::string defaultLogFileName = OB_DEFAULT_LOG_FILE_NAME;
+    sdkLibName_                    = utils::getSDKLibraryName();
+    defaultLogFileName = sdkLibName_ + ".log.txt";
 
     // log level
     if(!envConfig->getIntValue("Log.LogLevel", globalLogLevel)) {
@@ -270,7 +275,7 @@ void Logger::loadEnvConfig() {
         std::string fileName;
         envConfig->getStringValue("Log.FileName", fileName);
         if(fileName.empty()) {
-            fileName = OB_DEFAULT_LOG_FILE_NAME;
+            fileName = defaultLogFileName;
         }
         config_.fileLogFileName = fileName;
     }

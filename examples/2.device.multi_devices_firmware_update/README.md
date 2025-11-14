@@ -2,7 +2,7 @@
 
 ## Overview
 
-If you want to upgrade multiple Orbbec cameras connected to your system, this sample might be helpful for you. For detailed information about firmware upgrades, please refer to the [2.device.firmware_update](../2.device.firmware_update/README.md).
+If you want to upgrade multiple cameras connected to your system, this sample might be helpful for you. For detailed information about firmware upgrades, please refer to the [2.device.firmware_update](../2.device.firmware_update/README.md).
 
 > Note: This sample are not suiltable for Femto Mega, Femto Mega i, and Femto Bolt devices.
 > For these devices, please refer to the this repo:[https://github.com/orbbec/OrbbecFirmware](https://github.com/orbbec/OrbbecFirmware)

@@ -77,7 +77,7 @@ OB_EXPORT void ob_enable_net_device_enumeration(ob_context *context, bool enable
  *
  * @return bool true if the configuration command was processed successfully, false otherwise.
  *
- * @note This applies to all Orbbec GigE Vision devices
+ * @note This applies to all GigE Vision devices
  */
 OB_EXPORT bool ob_force_ip_config(const char *macAddress, ob_net_ip_config config, ob_error **error);
 

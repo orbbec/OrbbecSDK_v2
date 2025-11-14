@@ -12,7 +12,7 @@ add_executable(ob_benchmark ${SOURCE_FILES} ${HEADER_FILES})
 set_property(TARGET ob_benchmark PROPERTY CXX_STANDARD 11)
 
 find_package(Threads REQUIRED)
-target_link_libraries(ob_benchmark ob::OrbbecSDK Threads::Threads)
+target_link_libraries(ob_benchmark ob::${OB_SDK_LIB_NAME} Threads::Threads)
 
 target_include_directories(ob_benchmark PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 if(MSVC)

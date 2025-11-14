@@ -23,6 +23,8 @@ if(OB_ENABLE_BOLT_OPENGL_COMPAT)
     endif()
 endif()
 
+add_definitions(-DOB_SDK_LIBRARY_NAME=\"${OB_SDK_LIB_NAME}\")
+
 # modules
 add_subdirectory(shared) # utils, logger, etc.
 add_subdirectory(core) # core library
@@ -39,37 +41,39 @@ if(MSVC)
 endif()
 
 # only support shared library for now
-add_library(OrbbecSDK SHARED "" ${ORBBEC_VERSIONINFO_RC})
+add_library(${OB_SDK_LIB_NAME} SHARED "" ${ORBBEC_VERSIONINFO_RC})
 include(GenerateExportHeader)
-generate_export_header(OrbbecSDK BASE_NAME OB EXPORT_FILE_NAME ${OB_PUBLIC_HEADERS_DIR}/libobsensor/h/Export.h)
+generate_export_header(${OB_SDK_LIB_NAME} BASE_NAME OB EXPORT_FILE_NAME ${OB_PUBLIC_HEADERS_DIR}/libobsensor/h/Export.h)
 
 file(GLOB_RECURSE SOURCE_FILES ${CMAKE_CURRENT_LIST_DIR}/impl/*.cpp ${CMAKE_CURRENT_LIST_DIR}/context/*.cpp)
 file(GLOB_RECURSE HEADER_FILES ${CMAKE_CURRENT_LIST_DIR}/impl/*.hpp ${CMAKE_CURRENT_LIST_DIR}/context/*.hpp)
 
-target_sources(OrbbecSDK PRIVATE ${SOURCE_FILES} ${HEADER_FILES})
-target_link_libraries(OrbbecSDK PRIVATE ob::shared ob::core ob::filter ob::platform ob::device ob::pipeline ob::media)
-target_include_directories(OrbbecSDK PRIVATE ${CMAKE_CURRENT_LIST_DIR})
+
+target_sources(${OB_SDK_LIB_NAME} PRIVATE ${SOURCE_FILES} ${HEADER_FILES})
+target_link_libraries(${OB_SDK_LIB_NAME} PRIVATE ob::shared ob::core ob::filter ob::platform ob::device ob::pipeline ob::media)
+target_include_directories(${OB_SDK_LIB_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 target_include_directories(
-    OrbbecSDK PUBLIC "$<BUILD_INTERFACE:${OB_PUBLIC_HEADERS_DIR}>" "$<INSTALL_INTERFACE:include>"
+    ${OB_SDK_LIB_NAME} PUBLIC "$<BUILD_INTERFACE:${OB_PUBLIC_HEADERS_DIR}>" "$<INSTALL_INTERFACE:include>"
 )
 
 if(UNIX)
     find_package(Threads REQUIRED)
-    target_link_libraries(OrbbecSDK PRIVATE Threads::Threads)
+    target_link_libraries(${OB_SDK_LIB_NAME} PRIVATE Threads::Threads)
 endif()
 
 # Link OpenGL libraries if found
 if(OPENGL_gl_LIBRARY)
-    target_link_libraries(OrbbecSDK PRIVATE ${OPENGL_gl_LIBRARY})
+    target_link_libraries(${OB_SDK_LIB_NAME} PRIVATE ${OPENGL_gl_LIBRARY})
 endif()
 
-add_library(ob::OrbbecSDK ALIAS OrbbecSDK)
-ob_source_group(ob::OrbbecSDK)
+add_library(ob::${OB_SDK_LIB_NAME} ALIAS ${OB_SDK_LIB_NAME})
+ob_source_group(ob::${OB_SDK_LIB_NAME})
+
 
 if(OB_IS_MAIN_PROJECT)
     install(
-        TARGETS OrbbecSDK
-        EXPORT OrbbecSDKConfig
+        TARGETS ${OB_SDK_LIB_NAME}
+        EXPORT ${OB_SDK_LIB_NAME}Config
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib
@@ -83,20 +87,20 @@ if(OB_IS_MAIN_PROJECT)
         PATTERN "*.hpp"
     )
 
-    install(EXPORT OrbbecSDKConfig NAMESPACE ob:: DESTINATION lib)
+    install(EXPORT ${OB_SDK_LIB_NAME}Config NAMESPACE ob:: DESTINATION lib)
 
     include(CMakePackageConfigHelpers)
     write_basic_package_version_file(
-        "${CMAKE_CURRENT_BINARY_DIR}/OrbbecSDKConfigVersion.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/${OB_SDK_LIB_NAME}Version.cmake"
         VERSION "${PROJECT_VERSION}"
         COMPATIBILITY SameMajorVersion
     )
     install(
-        FILES "${CMAKE_CURRENT_BINARY_DIR}/OrbbecSDKConfigVersion.cmake"
+        FILES "${CMAKE_CURRENT_BINARY_DIR}/${OB_SDK_LIB_NAME}Version.cmake"
         DESTINATION lib
     )
     if(MSVC)
-        install(FILES $<TARGET_PDB_FILE:OrbbecSDK> DESTINATION bin OPTIONAL)
+        install(FILES $<TARGET_PDB_FILE:${OB_SDK_LIB_NAME}> DESTINATION bin OPTIONAL)
     endif()
 endif()
 

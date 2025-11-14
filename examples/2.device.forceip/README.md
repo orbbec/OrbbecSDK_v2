@@ -13,7 +13,7 @@ The Context class serves as the entry point to the SDK. It provides functionalit
 1. Query device list and select a device
 
     ```cpp
-    // Create a Context object to interact with Orbbec devices
+    // Create a Context object
     ob::Context context;
     // Query the list of connected devices
     auto deviceList = context.queryDeviceList();

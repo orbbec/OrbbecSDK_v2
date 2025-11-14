@@ -2,7 +2,7 @@
 
 ## Overview
 
-This example shows how to capture synchronized color and depth frames from an Orbbec camera using the Orbbec SDK and render them in real time with Open3D's visualizer.
+This example shows how to capture synchronized color and depth frames and render them in real time with Open3D's visualizer.
 
 ### About Open3D
 Open3D is an open-source library designed for 3D data processing. It provides:

@@ -3,7 +3,25 @@
 
 cmake_minimum_required(VERSION 3.10)
 
-project(OrbbecSDK VERSION 2.5.5 LANGUAGES CXX C)
+if(DEFINED OPEN_SDK_LIB_NAME)
+    set(OB_SDK_LIB_NAME "${OPEN_SDK_LIB_NAME}")
+    message(STATUS "Using SDK library name: ${OB_SDK_LIB_NAME}")
+else()
+    set(OB_SDK_LIB_NAME "OrbbecSDK")
+    message(STATUS "Using default SDK library name: ${OB_SDK_LIB_NAME}")
+endif()
+
+project(${OB_SDK_LIB_NAME} VERSION 2.5.5 LANGUAGES CXX C)
+
+# Check OB_SDK_LIB_NAME and set OB_BUILD_OEM accordingly
+if(${OB_SDK_LIB_NAME} STREQUAL "OrbbecSDK")
+    set(OB_BUILD_OEM FALSE)
+else()
+    set(OB_BUILD_OEM TRUE)
+    # Turn off OB_BUILD_DOCS for OEM building
+    message(STATUS "Turn off OB_BUILD_DOCS for OEM building")
+    set(OB_BUILD_DOCS OFF CACHE BOOL "Build api document and install doc" FORCE)
+endif()
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
@@ -55,7 +73,14 @@ endif()
 if(OB_INSTALL_EXAMPLES_SOURCE AND OB_IS_MAIN_PROJECT)
     install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/examples/ DESTINATION examples/src PATTERN "*publish_files*" EXCLUDE )
     if(EXISTS ${CMAKE_CURRENT_LIST_DIR}/examples/publish_files)
-        install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/examples/publish_files/CMakeLists.txt DESTINATION examples)
+        file(READ ${CMAKE_CURRENT_SOURCE_DIR}/examples/publish_files/CMakeLists.txt ORIGINAL_CONTENT)
+        string(REPLACE "OrbbecSDK" "${OPEN_SDK_LIB_NAME}" MODIFIED_CONTENT "${ORIGINAL_CONTENT}")
+        string(REPLACE "set(CMAKE_CXX_STANDARD 11)"
+            "set(CMAKE_CXX_STANDARD 11)\nset(OB_SDK_LIB_NAME \"${OB_SDK_LIB_NAME}\")"
+            MODIFIED_CONTENT "${MODIFIED_CONTENT}")
+        file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/CMakeLists_modified.txt "${MODIFIED_CONTENT}")
+        install(FILES ${CMAKE_CURRENT_BINARY_DIR}/CMakeLists_modified.txt DESTINATION examples RENAME CMakeLists.txt)
+
         if(UNIX)
             if(APPLE)
                 install(PROGRAMS ${CMAKE_CURRENT_SOURCE_DIR}/examples/publish_files/build_examples_macos.sh DESTINATION . RENAME build_examples.sh)

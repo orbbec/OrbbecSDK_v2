@@ -53,7 +53,7 @@ sudo  chmod  777  /dev/camsync
 
 ### 2.**Running Configuration and Triggering Program**
 
-The program is located in the Example/bin directory of the orbbecsdk.
+The program is located in the Example/bin directory.
 
 Sample Configuration: 30FPS and Trigger Source Frequency of 3000
 
