@@ -237,11 +237,11 @@ int main(void) {
     ob_device_list *dev_list = NULL;
     uint32_t        dev_count;
 
-    // Get OrbbecSDK version.
+    // Get sdk version.
     int major_version = ob_get_major_version();
     int minor_version = ob_get_minor_version();
     int patch_version = ob_get_patch_version();
-    printf("Orbbec SDK version: %d.%d.%d\n", major_version, minor_version, patch_version);
+    printf("SDK version: %d.%d.%d\n", major_version, minor_version, patch_version);
 
     // Create context.
     ctx = ob_create_context(&error);
