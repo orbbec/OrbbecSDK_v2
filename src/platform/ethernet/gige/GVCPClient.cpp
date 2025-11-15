@@ -514,6 +514,7 @@ int GVCPClient::recvAndParseGVCPResponse(SOCKET sock, const GVCPSocketInfo &sock
         info.sn                = ackPayload->szSerial;
         info.name              = ackPayload->szModelName;
         info.pid               = curPID;
+        info.vid               = it->second;
         // info.manufacturer      = ackPayload->szFacName;
         // info.version      = ackPayload->szDevVer;
 
@@ -521,9 +522,6 @@ int GVCPClient::recvAndParseGVCPResponse(SOCKET sock, const GVCPSocketInfo &sock
             // TODO: Treat OI-BC300I (pid=0x0000) as Femto Mega I (pid=0x06c0) for compatibility
             info.pid = 0x06c0;
         }
-
-        auto vidIter = libobsensor::manufacturerVidMap.find(ackPayload->szFacName);
-        info.vid     = (vidIter != manufacturerVidMap.end()) ? vidIter->second : 0x0000;
 
         std::lock_guard<std::mutex> lock(devInfoListMtx_);
         devInfoList_.push_back(info);
