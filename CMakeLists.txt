@@ -74,7 +74,7 @@ if(OB_INSTALL_EXAMPLES_SOURCE AND OB_IS_MAIN_PROJECT)
     install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/examples/ DESTINATION examples/src PATTERN "*publish_files*" EXCLUDE )
     if(EXISTS ${CMAKE_CURRENT_LIST_DIR}/examples/publish_files)
         file(READ ${CMAKE_CURRENT_SOURCE_DIR}/examples/publish_files/CMakeLists.txt ORIGINAL_CONTENT)
-        string(REPLACE "OrbbecSDK" "${OPEN_SDK_LIB_NAME}" MODIFIED_CONTENT "${ORIGINAL_CONTENT}")
+        string(REPLACE "OrbbecSDK" "${OB_SDK_LIB_NAME}" MODIFIED_CONTENT "${ORIGINAL_CONTENT}")
         string(REPLACE "set(CMAKE_CXX_STANDARD 11)"
             "set(CMAKE_CXX_STANDARD 11)\nset(OB_SDK_LIB_NAME \"${OB_SDK_LIB_NAME}\")"
             MODIFIED_CONTENT "${MODIFIED_CONTENT}")
