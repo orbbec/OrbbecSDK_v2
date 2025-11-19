@@ -178,8 +178,8 @@ void LiDARStreamer::startStream(std::shared_ptr<const StreamProfile> profile, Mu
         LOG_DEBUG("LiDARStreamer start backend stream finished...");
     })
     CATCH_EXCEPTION_AND_EXECUTE({
-        frame_.reset();
         backend_->stopStream();
+        frame_.reset();
         callback_ = nullptr;
         running_  = false;
         throw;
