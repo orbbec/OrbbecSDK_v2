@@ -78,6 +78,7 @@ void LiDARDevice::fetchDeviceInfo() {
         LOG_ERROR("fetch LiDAR deviceInfo error!");
         deviceInfo_->fwVersion_ = "unknown";
         deviceInfo_->deviceSn_  = enumInfo_->getDeviceSn();
+        throw;
     })
 
     deviceInfo_->asicName_            = "unknown";  // TODO
