@@ -24,7 +24,8 @@ FemtoBoltDeviceInfo::FemtoBoltDeviceInfo(const SourcePortInfoList groupedInfoLis
 
 FemtoBoltDeviceInfo::~FemtoBoltDeviceInfo() noexcept {}
 
-std::shared_ptr<IDevice> FemtoBoltDeviceInfo::createDevice() const {
+std::shared_ptr<IDevice> FemtoBoltDeviceInfo::createDevice(OBDeviceAccessMode accessMode) const {
+    (void)accessMode;  // access control is unsupported
     return std::make_shared<FemtoBoltDevice>(shared_from_this());
 }
 

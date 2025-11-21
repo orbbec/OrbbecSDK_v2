@@ -62,7 +62,8 @@ OpenNIDeviceInfo::OpenNIDeviceInfo(const SourcePortInfoList groupedInfoList) {
 
 OpenNIDeviceInfo::~OpenNIDeviceInfo() noexcept {}
 
-std::shared_ptr<IDevice> OpenNIDeviceInfo::createDevice() const {
+std::shared_ptr<IDevice> OpenNIDeviceInfo::createDevice(OBDeviceAccessMode accessMode) const {
+    (void)accessMode;  // access control is unsupported
     if(pid_ == OB_DEVICE_DABAI_DC1_PID) {
         return std::make_shared<DaBaiDevice>(shared_from_this());
     }

@@ -60,6 +60,9 @@ public:
 
     virtual bool isPlaybackDevice() const = 0;
 
+    virtual bool               hasAccessControl() const = 0;
+    virtual OBDeviceAccessMode getAccessMode() const    = 0;
+
     // device info
     virtual std::shared_ptr<const DeviceInfo> getInfo() const                                         = 0;
     virtual const std::string                &getSn() const                                           = 0;

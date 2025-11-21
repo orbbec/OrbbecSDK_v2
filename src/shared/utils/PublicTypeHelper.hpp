@@ -75,3 +75,4 @@ std::ostream &operator<<(std::ostream &os, const OBDEIRTransformParam &params);
 std::ostream &operator<<(std::ostream &os, const OBPlaybackStatus &status);
 std::ostream &operator<<(std::ostream &os, const OBMultiDeviceSyncConfig &config);
 std::ostream &operator<<(std::ostream &os, const OBDeviceSyncConfig &config);
+std::ostream &operator<<(std::ostream &os, const OBDeviceAccessMode &mode);

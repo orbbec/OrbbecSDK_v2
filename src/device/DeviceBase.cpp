@@ -36,8 +36,8 @@ const std::map<OBSensorType, DeviceComponentId> SensorTypeToComponentIdMap = {
 
 DeviceBase::DeviceBase() : ctx_(Context::getInstance()), isDeactivated_(false), isFirmwareUpdating_(false) {}
 
-DeviceBase::DeviceBase(const std::shared_ptr<const IDeviceEnumInfo> &info)
-    : enumInfo_(info), ctx_(Context::getInstance()), isDeactivated_(false), isFirmwareUpdating_(false) {
+DeviceBase::DeviceBase(const std::shared_ptr<const IDeviceEnumInfo> &info, OBDeviceAccessMode accessMode)
+    : enumInfo_(info), accessMode_(accessMode), ctx_(Context::getInstance()), isDeactivated_(false), isFirmwareUpdating_(false) {
     deviceInfo_                  = std::make_shared<DeviceInfo>();
     deviceInfo_->name_           = enumInfo_->getName();
     deviceInfo_->pid_            = enumInfo_->getPid();
@@ -540,7 +540,25 @@ std::shared_ptr<ISourcePort> DeviceBase::getSourcePort(std::shared_ptr<const Sou
     return platform->getSourcePort(sourcePortInfo);
 }
 
+bool DeviceBase::hasWriteAccess() const {
+    if(!hasAccessControl_) {
+        // Allowed when the device does not support access control
+        return true;
+    }
+
+    if(accessMode_ == OB_DEVICE_ACCESS_DENIED || accessMode_ == OB_DEVICE_MONITOR_ACCESS) {
+        return false;
+    }
+    return true;
+}
+
 void DeviceBase::updateFirmware(const std::vector<uint8_t> &firmware, DeviceFwUpdateCallback updateCallback, bool async) {
+    if(!hasWriteAccess()) {
+        std::ostringstream oss;
+        oss << "The current access mode is " << accessMode_ << " and does not allow write operations";
+        throw access_denied_exception(oss.str());
+    }
+
     if(hasAnySensorStreamActivated()) {
         throw libobsensor::wrong_api_call_sequence_exception("Device is streaming, please stop all sensors before updating firmware!");
     }
@@ -558,6 +576,12 @@ bool DeviceBase::isFirmwareUpdating() const {
 }
 
 void DeviceBase::updateOptionalDepthPresets(const char filePathList[][OB_PATH_MAX], uint8_t pathCount, DeviceFwUpdateCallback updateCallback) {
+    if(!hasWriteAccess()) {
+        std::ostringstream oss;
+        oss << "The current access mode is " << accessMode_ << " and does not allow write operations";
+        throw access_denied_exception(oss.str());
+    }
+
     if(hasAnySensorStreamActivated()) {
         throw libobsensor::wrong_api_call_sequence_exception("Device is streaming, please stop all sensors before updating preset!");
     }

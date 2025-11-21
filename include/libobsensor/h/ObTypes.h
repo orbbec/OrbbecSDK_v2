@@ -109,6 +109,7 @@ typedef enum {
     OB_EXCEPTION_TYPE_IO,                      /**< SDK access IO exception error */
     OB_EXCEPTION_TYPE_MEMORY,                  /**< SDK access and use memory errors. For example, the frame fails to allocate memory */
     OB_EXCEPTION_TYPE_UNSUPPORTED_OPERATION,   /**< Unsupported operation type error by SDK or device */
+    OB_EXCEPTION_TYPE_ACCESS_DENIED,           /**< Device access denied */
 } OBExceptionType,
     ob_exception_type;
 
@@ -1808,6 +1809,18 @@ typedef enum {
 #define START_OF_EXPOSURE OB_START_OF_EXPOSURE
 #define MIDDLE_OF_EXPOSURE OB_MIDDLE_OF_EXPOSURE
 #define END_OF_EXPOSURE OB_END_OF_EXPOSURE
+
+/**
+ * @brief Device access mode for GigE network device
+ */
+typedef enum {
+    OB_DEVICE_ACCESS_DENIED    = 0,  ///< No access. This value is only used as a return value
+    OB_DEVICE_EXCLUSIVE_ACCESS = 1,  ///< Exclusive access: full read/write, no other application allowed; can preempt existing monitor access
+    OB_DEVICE_CONTROL_ACCESS   = 2,  ///< Control access: read/write allowed; other applications permitted read-only monitor access
+    OB_DEVICE_MONITOR_ACCESS   = 3,  ///< Monitor access: read-only; no write or control privileges
+    OB_DEVICE_DEFAULT_ACCESS   = 4,  ///< Default access: control access for capable devices, ignored otherwise
+} ob_device_access_mode,
+    OBDeviceAccessMode;
 
 /**
  * @brief Callback for file transfer

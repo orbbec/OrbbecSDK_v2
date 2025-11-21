@@ -89,7 +89,7 @@ DeviceManager::~DeviceManager() noexcept {
     LOG_DEBUG("DeviceManager Destructors done");
 }
 
-std::shared_ptr<IDevice> DeviceManager::createNetDevice(std::string address, uint16_t port) {
+std::shared_ptr<IDevice> DeviceManager::createNetDevice(std::string address, uint16_t port, OBDeviceAccessMode accessMode) {
 #if defined(BUILD_NET_PAL)
     LOG_DEBUG("DeviceManager createNetDevice.... address={0}, port={1}", address, port);
     DeviceEnumInfoList deviceInfoList;
@@ -103,7 +103,7 @@ std::shared_ptr<IDevice> DeviceManager::createNetDevice(std::string address, uin
             LOG_INFO("\t- Name: {0}, PID: 0x{1:04x}, SN/ID: {2}, Connection: {3}, MAC:{4}, ip:{5}", info->getName(), info->getPid(), info->getDeviceSn(),
                      info->getConnectionType(), netPortInfo->mac, netPortInfo->address);
             if(netPortInfo->address == address && netPortInfo->port == port) {
-                return createDevice(info);
+                return createDevice(info, accessMode);
             }
         }
     }
@@ -113,7 +113,7 @@ std::shared_ptr<IDevice> DeviceManager::createNetDevice(std::string address, uin
         throw libobsensor::invalid_value_exception("Failed to query Net Device, address=" + address + ", port=" + std::to_string(port));
     }
     isCustomConnectedDevice_ = true;
-    auto device              = createDevice(deviceInfo);
+    auto device              = createDevice(deviceInfo, accessMode);
     isCustomConnectedDevice_ = false;
     {
         std::unique_lock<std::mutex> lock(customConnectedDevicesMutex_);
@@ -133,8 +133,8 @@ std::shared_ptr<IDevice> DeviceManager::createNetDevice(std::string address, uin
 #endif
 }
 
-std::shared_ptr<IDevice> DeviceManager::createDevice(const std::shared_ptr<const IDeviceEnumInfo> &info) {
-    LOG_DEBUG("DeviceManager createDevice...");
+std::shared_ptr<IDevice> DeviceManager::createDevice(const std::shared_ptr<const IDeviceEnumInfo> &info, OBDeviceAccessMode accessMode) {
+    LOG_DEBUG("DeviceManager createDevice with access mode: {}...", accessMode);
 
     // check if the device has been created
     {
@@ -148,6 +148,13 @@ std::shared_ptr<IDevice> DeviceManager::createDevice(const std::shared_ptr<const
                     break;
                 }
                 auto devInfo = dev->getInfo();
+                if(dev->hasAccessControl() && dev->getAccessMode() != accessMode) {
+                    auto               currentAccessMode = dev->getAccessMode();
+                    std::ostringstream oss;
+                    oss << "Device has already been created with access mode: " << currentAccessMode << ", but acquire with new access mode : " << accessMode
+                        << "! Name: " << devInfo->name_ << ", SN/ID: " << devInfo->deviceSn_ << ", FW : " << devInfo->fwVersion_;
+                    throw libobsensor::access_denied_exception(oss.str());
+                }
                 LOG_DEBUG("Device has already been created, return existing device! Name: {0}, PID: 0x{1:04x}, SN/ID: {2}, FW: {3}", devInfo->name_,
                           devInfo->pid_, devInfo->deviceSn_, devInfo->fwVersion_);
                 return dev;
@@ -156,7 +163,11 @@ std::shared_ptr<IDevice> DeviceManager::createDevice(const std::shared_ptr<const
     }
 
     // create device
-    auto device = info->createDevice();
+    auto device = info->createDevice(accessMode);
+    if(!device->hasAccessControl()) {
+        LOG_DEBUG("Access control is not supported on this device. Access mode '{}' was ignored", accessMode);
+    }
+
     // remove activity for the device
     deviceActivityManager_->removeActivity(info->getUid());
     // register callback for reboot

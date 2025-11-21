@@ -16,7 +16,7 @@ public:
     LiDARDeviceInfo(const SourcePortInfoList groupedInfoList);
     ~LiDARDeviceInfo() noexcept override;
 
-    std::shared_ptr<IDevice>                             createDevice() const override;
+    std::shared_ptr<IDevice>                             createDevice(OBDeviceAccessMode accessMode) const override;
     static std::vector<std::shared_ptr<IDeviceEnumInfo>> pickNetDevices(const SourcePortInfoList infoList);
 };
 

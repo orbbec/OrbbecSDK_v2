@@ -75,10 +75,10 @@ G330DeviceInfo::G330DeviceInfo(const SourcePortInfoList groupedInfoList) {
 
 G330DeviceInfo::~G330DeviceInfo() noexcept {}
 
-std::shared_ptr<IDevice> G330DeviceInfo::createDevice() const {
+std::shared_ptr<IDevice> G330DeviceInfo::createDevice(OBDeviceAccessMode accessMode) const {
     if(connectionType_ == "Ethernet") {
 #if defined(BUILD_NET_PAL)
-        return std::make_shared<G330NetDevice>(shared_from_this());
+        return std::make_shared<G330NetDevice>(shared_from_this(), accessMode);
 #else
         LOG_ERROR("Ethernet pal not supported, please rebuild with BUILD_NET_PAL=ON");
         return nullptr;

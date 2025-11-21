@@ -54,6 +54,7 @@ public:
 
 private:
     void                      appendToPropertyMap(uint32_t propertyId, OBPermissionType userPerms, OBPermissionType intPerms);
+    inline void               checkAccessMode(PropertyOperationType op);
     inline const std::string &GetCurrentSN() const;
 
 private:

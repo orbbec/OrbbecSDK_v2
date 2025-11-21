@@ -8,6 +8,7 @@
 
 #if defined(BUILD_NET_PAL)
 #include "ethernet/RTPStreamPort.hpp"
+#include "accesscontroller/GigECcpController.hpp"
 #endif
 
 #include <map>
@@ -46,13 +47,14 @@ private:
 
 class G330NetDevice : public DeviceBase {
 public:
-    G330NetDevice(const std::shared_ptr<const IDeviceEnumInfo> &info);
+    G330NetDevice(const std::shared_ptr<const IDeviceEnumInfo> &info, OBDeviceAccessMode accessMode);
     virtual ~G330NetDevice() noexcept override;
 
     std::vector<std::shared_ptr<IFilter>> createRecommendedPostProcessingFilters(OBSensorType type) override;
 
 private:
     void init() override;
+    void checkAndAcquireCCP();
     void initSensorList();
     void initProperties();
     void initSensorStreamProfileList(std::shared_ptr<ISensor> sensor);
@@ -70,6 +72,7 @@ private:
     const uint64_t                                              deviceTimeFreq_ = 1000;     // in ms
     const uint64_t                                              frameTimeFreq_  = 1000000;  // in us
     std::function<std::shared_ptr<IFrameTimestampCalculator>()> videoFrameTimestampCalculatorCreator_;
+    std::shared_ptr<GigECcpController>                          ccpController_;
 
     StreamProfileList allNetProfileList_;
 

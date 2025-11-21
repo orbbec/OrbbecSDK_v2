@@ -1357,12 +1357,15 @@ public:
      * @attention If the device has already been acquired and created elsewhere, repeated acquisition will throw an exception
      *
      * @param[in] index the index of the device to create
+     * @param[in] accessMode Device access mode. @ref ob_device_access_mode.
+     *                       If the device does not support setting the Access Mode, the default OB_DEVICE_DEFAULT_ACCESS is used.
+     *                       Applies only on first device creation or after release and re-creation; subsequent calls ignore it.
      *
      * @return std::shared_ptr<Device> the device object
      */
-    std::shared_ptr<Device> getDevice(uint32_t index) const {
+    std::shared_ptr<Device> getDevice(uint32_t index, OBDeviceAccessMode accessMode = OB_DEVICE_DEFAULT_ACCESS) const {
         ob_error *error  = nullptr;
-        auto      device = ob_device_list_get_device(impl_, index, &error);
+        auto      device = ob_device_list_get_device_ex(impl_, index, accessMode, &error);
         Error::handle(&error);
         return std::make_shared<Device>(device);
     }
@@ -1373,12 +1376,15 @@ public:
      * @attention If the device has already been acquired and created elsewhere, repeated acquisition will throw an exception
      *
      * @param[in] serialNumber the serial number of the device to create
+     * @param[in] accessMode Device access mode. @ref ob_device_access_mode.
+     *                       If the device does not support setting the Access Mode, the default OB_DEVICE_DEFAULT_ACCESS is used.
+     *                       Applies only on first device creation or after release and re-creation; subsequent calls ignore it.
      *
      * @return std::shared_ptr<Device> the device object
      */
-    std::shared_ptr<Device> getDeviceBySN(const char *serialNumber) const {
+    std::shared_ptr<Device> getDeviceBySN(const char *serialNumber, OBDeviceAccessMode accessMode = OB_DEVICE_DEFAULT_ACCESS) const {
         ob_error *error  = nullptr;
-        auto      device = ob_device_list_get_device_by_serial_number(impl_, serialNumber, &error);
+        auto      device = ob_device_list_get_device_by_serial_number_ex(impl_, serialNumber, accessMode, &error);
         Error::handle(&error);
         return std::make_shared<Device>(device);
     }
@@ -1393,12 +1399,15 @@ public:
      * @attention If the device has been acquired and created elsewhere, repeated acquisition will throw an exception
      *
      * @param[in] uid The uid of the device to be created
+     * @param[in] accessMode Device access mode. @ref ob_device_access_mode.
+     *                       If the device does not support setting the Access Mode, the default OB_DEVICE_DEFAULT_ACCESS is used.
+     *                       Applies only on first device creation or after release and re-creation; subsequent calls ignore it.
      *
      * @return std::shared_ptr<Device> returns the device object
      */
-    std::shared_ptr<Device> getDeviceByUid(const char *uid) const {
+    std::shared_ptr<Device> getDeviceByUid(const char *uid, OBDeviceAccessMode accessMode = OB_DEVICE_DEFAULT_ACCESS) const {
         ob_error *error  = nullptr;
-        auto      device = ob_device_list_get_device_by_uid(impl_, uid, &error);
+        auto      device = ob_device_list_get_device_by_uid_ex(impl_, uid, accessMode, &error);
         Error::handle(&error);
         return std::make_shared<Device>(device);
     }

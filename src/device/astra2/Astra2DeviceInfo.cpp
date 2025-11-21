@@ -37,7 +37,8 @@ Astra2DeviceInfo::Astra2DeviceInfo(const SourcePortInfoList groupedInfoList) {
 
 Astra2DeviceInfo::~Astra2DeviceInfo() noexcept {}
 
-std::shared_ptr<IDevice> Astra2DeviceInfo::createDevice() const {
+std::shared_ptr<IDevice> Astra2DeviceInfo::createDevice(OBDeviceAccessMode accessMode) const {
+    (void)accessMode;  // access control is unsupported
     return std::make_shared<Astra2Device>(shared_from_this());
 }
 

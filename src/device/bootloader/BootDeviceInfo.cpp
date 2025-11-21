@@ -48,7 +48,8 @@ BootDeviceInfo::BootDeviceInfo(const SourcePortInfoList groupedInfoList) {
 
 BootDeviceInfo::~BootDeviceInfo() noexcept {}
 
-std::shared_ptr<IDevice> BootDeviceInfo::createDevice() const {
+std::shared_ptr<IDevice> BootDeviceInfo::createDevice(OBDeviceAccessMode accessMode) const {
+    (void)accessMode;  // access control is unsupported
     return std::make_shared<BootDevice>(shared_from_this());
 }
 

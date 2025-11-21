@@ -88,6 +88,11 @@ public:
     not_implemented_exception(const std::string &msg) noexcept : recoverable_exception(msg, OB_EXCEPTION_TYPE_NOT_IMPLEMENTED) {}
 };
 
+class access_denied_exception : public recoverable_exception {
+public:
+    access_denied_exception(const std::string &msg) noexcept : recoverable_exception(msg, OB_EXCEPTION_TYPE_ACCESS_DENIED) {}
+};
+
 #define BEGIN_TRY_EXECUTE(statement) \
     try {                            \
         statement;                   \

@@ -11,16 +11,16 @@ class IDeviceEnumInfo {
 public:
     virtual ~IDeviceEnumInfo() = default;
 
-    virtual int                             getPid() const                = 0;
-    virtual int                             getVid() const                = 0;
-    virtual const std::string              &getUid() const                = 0;
-    virtual const std::string              &getConnectionType() const     = 0;
-    virtual const std::string              &getName() const               = 0;
-    virtual const std::string              &getFullName() const           = 0;
-    virtual const std::string              &getDeviceSn() const           = 0;
-    virtual const SourcePortInfoList       &getSourcePortInfoList() const = 0;
-    virtual std::shared_ptr<IDevice>        createDevice() const          = 0;
-    virtual std::shared_ptr<IDeviceManager> getDeviceManager() const      = 0;
+    virtual int                             getPid() const                                    = 0;
+    virtual int                             getVid() const                                    = 0;
+    virtual const std::string              &getUid() const                                    = 0;
+    virtual const std::string              &getConnectionType() const                         = 0;
+    virtual const std::string              &getName() const                                   = 0;
+    virtual const std::string              &getFullName() const                               = 0;
+    virtual const std::string              &getDeviceSn() const                               = 0;
+    virtual const SourcePortInfoList       &getSourcePortInfoList() const                     = 0;
+    virtual std::shared_ptr<IDevice>        createDevice(OBDeviceAccessMode accessMode) const = 0;
+    virtual std::shared_ptr<IDeviceManager> getDeviceManager() const                          = 0;
 
     virtual bool operator==(const IDeviceEnumInfo &other) const = 0;
 };
@@ -39,9 +39,9 @@ class IDeviceManager {
 public:
     virtual ~IDeviceManager() = default;
 
-    virtual std::shared_ptr<IDevice> createDevice(const std::shared_ptr<const IDeviceEnumInfo> &info)            = 0;
-    virtual std::shared_ptr<IDevice> createNetDevice(std::string address, uint16_t port)                         = 0;
-    virtual bool                     forceIpConfig(std::string deviceUid, const OBNetIpConfig &config)           = 0;
+    virtual std::shared_ptr<IDevice> createDevice(const std::shared_ptr<const IDeviceEnumInfo> &info, OBDeviceAccessMode accessMode) = 0;
+    virtual std::shared_ptr<IDevice> createNetDevice(std::string address, uint16_t port, OBDeviceAccessMode accessMode)              = 0;
+    virtual bool                     forceIpConfig(std::string deviceUid, const OBNetIpConfig &config)                               = 0;
 
     virtual DeviceEnumInfoList getDeviceInfoList()                                      = 0;
     virtual void               setDeviceChangedCallback(DeviceChangedCallback callback) = 0;

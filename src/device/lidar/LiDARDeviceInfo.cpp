@@ -45,7 +45,8 @@ LiDARDeviceInfo::LiDARDeviceInfo(const SourcePortInfoList groupedInfoList) {
 
 LiDARDeviceInfo::~LiDARDeviceInfo() noexcept {}
 
-std::shared_ptr<IDevice> LiDARDeviceInfo::createDevice() const {
+std::shared_ptr<IDevice> LiDARDeviceInfo::createDevice(OBDeviceAccessMode accessMode) const {
+    (void)accessMode;  // access control is unsupported
     std::shared_ptr<IDevice> device;
     if(connectionType_ == "Ethernet") {
         if(IS_OB_LIDAR_MULTI_LINE(pid_)) {

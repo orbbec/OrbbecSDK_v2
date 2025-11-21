@@ -456,8 +456,8 @@ int GVCPClient::recvAndParseGVCPResponse(SOCKET sock, const GVCPSocketInfo &sock
     uint16_t reqID  = ntohs(ackHeader->wReqID);
 
     if(status == GEV_STATUS_SUCCESS && ack == GVCP_DISCOVERY_ACK && reqID == GVCP_REQUEST_ID) {
-        gvcp_ack_payload *ackPayload = reinterpret_cast<gvcp_ack_payload *>(recvBuf + sizeof(gvcp_ack_header));
-        if(respLen < sizeof(gvcp_ack_payload)) {
+        gvcp_discover_ack_payload *ackPayload = reinterpret_cast<gvcp_discover_ack_payload *>(recvBuf + sizeof(gvcp_ack_header));
+        if(respLen < sizeof(gvcp_discover_ack_payload)) {
             LOG_INTVL(LOG_INTVL_OBJECT_TAG + "GVCP parse gvcp payload", MAX_LOG_INTERVAL, spdlog::level::debug, "invalid payload len: {}", respLen);
             return 0;
         }
@@ -545,7 +545,7 @@ void GVCPClient::sendGVCPDiscovery(GVCPSocketInfo socketInfo) {
 
     // device discovery
     gvcp_cmd_header cmdHeader;
-    cmdHeader.cMsgKeyCode = GVCP_VERSION;
+    cmdHeader.cMsgKeyCode = GVCP_KEY_CODE;
     cmdHeader.cFlag       = GVCP_DISCOVERY_FLAGS;
     cmdHeader.wCmd        = htons(GVCP_DISCOVERY_CMD);
     cmdHeader.wLen        = htons(0);
@@ -624,7 +624,7 @@ bool GVCPClient::sendGVCPForceIP(GVCPSocketInfo socketInfo, std::string mac, con
     destAddr.sin_port        = htons(GVCP_PORT);
 
     gvcp_cmd_header cmdHeader = {};
-    cmdHeader.cMsgKeyCode     = GVCP_VERSION;
+    cmdHeader.cMsgKeyCode     = GVCP_KEY_CODE;
     cmdHeader.cFlag           = GVCP_FORCEIP_FLAGS;
     cmdHeader.wCmd            = htons(GVCP_FORCEIP_CMD);
     cmdHeader.wLen            = htons(sizeof(gvcp_forceip_payload));

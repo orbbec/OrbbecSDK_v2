@@ -66,7 +66,7 @@ HANDLE_EXCEPTIONS_AND_RETURN(false, macAddress)
 ob_device *ob_create_net_device(ob_context *context, const char *address, uint16_t port, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(context);
     auto deviceMgr  = context->context->getDeviceManager();
-    auto device     = deviceMgr->createNetDevice(address, port);
+    auto device     = deviceMgr->createNetDevice(address, port, OB_DEVICE_DEFAULT_ACCESS);
     auto devImpl    = new ob_device();
     devImpl->device = device;
     return devImpl;

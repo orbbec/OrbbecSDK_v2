@@ -184,29 +184,40 @@ const char *ob_device_list_get_device_local_gateway(const ob_device_list *list, 
 }
 HANDLE_EXCEPTIONS_AND_RETURN(nullptr, list, index)
 
-ob_device *ob_device_list_get_device(const ob_device_list *list, uint32_t index, ob_error **error) BEGIN_API_CALL {
+ob_device *ob_device_list_get_device(const ob_device_list *list, uint32_t index, ob_error **error) {
+    return ob_device_list_get_device_ex(list, index, OB_DEVICE_DEFAULT_ACCESS, error);
+}
+
+ob_device *ob_device_list_get_device_ex(const ob_device_list *list, uint32_t index, ob_device_access_mode accessMode, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(list);
     VALIDATE_UNSIGNED_INDEX(index, list->list.size());
+    VALIDATE_NOT_EQUAL(accessMode, OB_DEVICE_ACCESS_DENIED);
     auto &info      = list->list[index];
     auto  deviceMgr = info->getDeviceManager();
     VALIDATE_NOT_NULL(deviceMgr);
 
-    auto device  = deviceMgr->createDevice(info);
+    auto device  = deviceMgr->createDevice(info, accessMode);
     auto impl    = new ob_device();
     impl->device = device;
     return impl;
 }
-HANDLE_EXCEPTIONS_AND_RETURN(nullptr, list, index)
+HANDLE_EXCEPTIONS_AND_RETURN(nullptr, list, index, accessMode)
 
-ob_device *ob_device_list_get_device_by_serial_number(const ob_device_list *list, const char *serial_number, ob_error **error) BEGIN_API_CALL {
+ob_device *ob_device_list_get_device_by_serial_number(const ob_device_list *list, const char *serial_number, ob_error **error) {
+    return ob_device_list_get_device_by_serial_number_ex(list, serial_number, OB_DEVICE_DEFAULT_ACCESS, error);
+}
+
+ob_device *ob_device_list_get_device_by_serial_number_ex(const ob_device_list *list, const char *serial_number, ob_device_access_mode accessMode,
+                                                         ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(list);
     VALIDATE_NOT_NULL(serial_number);
+    VALIDATE_NOT_EQUAL(accessMode, OB_DEVICE_ACCESS_DENIED);
     for(auto &info: list->list) {
         if(info->getDeviceSn() == serial_number) {
             auto deviceMgr = info->getDeviceManager();
             VALIDATE_NOT_NULL(deviceMgr);
 
-            auto device  = deviceMgr->createDevice(info);
+            auto device  = deviceMgr->createDevice(info, accessMode);
             auto impl    = new ob_device();
             impl->device = device;
             return impl;
@@ -214,11 +225,16 @@ ob_device *ob_device_list_get_device_by_serial_number(const ob_device_list *list
     }
     throw libobsensor::invalid_value_exception("Device not found by serial number: " + std::string(serial_number));
 }
-HANDLE_EXCEPTIONS_AND_RETURN(nullptr, list, serial_number)
+HANDLE_EXCEPTIONS_AND_RETURN(nullptr, list, serial_number, accessMode)
 
-ob_device *ob_device_list_get_device_by_uid(const ob_device_list *list, const char *uid, ob_error **error) BEGIN_API_CALL {
+ob_device *ob_device_list_get_device_by_uid(const ob_device_list *list, const char *uid, ob_error **error) {
+    return ob_device_list_get_device_by_uid_ex(list, uid, OB_DEVICE_DEFAULT_ACCESS, error);
+}
+
+ob_device *ob_device_list_get_device_by_uid_ex(const ob_device_list *list, const char *uid, ob_device_access_mode accessMode, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(list);
     VALIDATE_NOT_NULL(uid);
+    VALIDATE_NOT_EQUAL(accessMode, OB_DEVICE_ACCESS_DENIED);
     for(auto &info: list->list) {
         auto deviceUid = info->getUid();
         if(deviceUid == uid
@@ -230,7 +246,7 @@ ob_device *ob_device_list_get_device_by_uid(const ob_device_list *list, const ch
             auto deviceMgr = info->getDeviceManager();
             VALIDATE_NOT_NULL(deviceMgr);
 
-            auto device  = deviceMgr->createDevice(info);
+            auto device  = deviceMgr->createDevice(info, accessMode);
             auto impl    = new ob_device();
             impl->device = device;
             return impl;
@@ -238,7 +254,7 @@ ob_device *ob_device_list_get_device_by_uid(const ob_device_list *list, const ch
     }
     throw libobsensor::invalid_value_exception("Device not found by UID: " + std::string(uid));
 }
-HANDLE_EXCEPTIONS_AND_RETURN(nullptr, list, uid)
+HANDLE_EXCEPTIONS_AND_RETURN(nullptr, list, uid, accessMode)
 
 void ob_delete_device(ob_device *device, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(device);
@@ -473,12 +489,10 @@ void ob_device_update_optional_depth_presets(ob_device *device, const char file_
     VALIDATE_NOT_NULL(file_path_list);
     VALIDATE_GE(path_count, 0);
     VALIDATE_NOT_NULL(callback);
-    
+
     device->device->updateOptionalDepthPresets(
         file_path_list, path_count,
-        [callback, user_data](ob_fw_update_state status, const char *message, uint8_t percent) {
-            callback(status, message, percent, user_data);
-        });
+        [callback, user_data](ob_fw_update_state status, const char *message, uint8_t percent) { callback(status, message, percent, user_data); });
 }
 HANDLE_EXCEPTIONS_NO_RETURN(device, file_path_list, path_count, callback, user_data)
 

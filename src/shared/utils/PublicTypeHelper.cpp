@@ -1037,3 +1037,29 @@ std::ostream &operator<<(std::ostream &os, const OBDeviceSyncConfig &config) {
        << ", deviceId: " << config.deviceId << "}";
     return os;
 }
+
+std::ostream &operator<<(std::ostream &os, const OBDeviceAccessMode &mode) {
+    switch(mode) {
+    case OB_DEVICE_ACCESS_DENIED:
+        os << "access denied";
+        break;
+    case OB_DEVICE_EXCLUSIVE_ACCESS:
+        os << "exclusive access";
+        break;
+    case OB_DEVICE_CONTROL_ACCESS:
+        os << "control access";
+        break;
+    case OB_DEVICE_MONITOR_ACCESS:
+        os << "monitor access";
+        break;
+    case OB_DEVICE_DEFAULT_ACCESS:
+        os << "default access";
+        break;
+    default:
+        os << "unknown access";
+        break;
+    }
+
+    os << "(" << static_cast<uint32_t>(mode) << ")";
+    return os;
+}

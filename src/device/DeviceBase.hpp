@@ -25,7 +25,7 @@ private:
     };
 
 public:
-    DeviceBase(const std::shared_ptr<const IDeviceEnumInfo> &info);
+    DeviceBase(const std::shared_ptr<const IDeviceEnumInfo> &info, OBDeviceAccessMode accessMode = OB_DEVICE_DEFAULT_ACCESS);
     DeviceBase();  // declared for playback device
 
     virtual ~DeviceBase() noexcept override;
@@ -34,8 +34,17 @@ public:
     void reboot() override;
     void deactivate() override;
 
-    virtual bool isPlaybackDevice() const override {
+    bool isPlaybackDevice() const override {
         return isPlaybackDevice_.load();
+    }
+    bool hasAccessControl() const override {
+        return hasAccessControl_.load();
+    }
+    OBDeviceAccessMode getAccessMode() const override {
+        if(hasAccessControl_.load()) {
+            return accessMode_.load();
+        }
+        return OB_DEVICE_DEFAULT_ACCESS;
     }
 
     std::shared_ptr<const DeviceInfo> getInfo() const override;
@@ -88,6 +97,7 @@ protected:
     virtual void        fetchDeviceInfo();
     virtual void        fetchExtensionInfo();
     DeviceComponentLock tryLockResource();
+    bool                hasWriteAccess() const;
 
     std::shared_ptr<ISourcePort> getSourcePort(std::shared_ptr<const SourcePortInfo> sourcePortInfo) const;
 
@@ -105,6 +115,8 @@ protected:
     std::map<std::string, std::string>           extensionInfo_;
     uint64_t                                     deviceErrorState_ = 0;
     std::atomic<bool>                            isPlaybackDevice_{ false };
+    std::atomic<bool>                            hasAccessControl_{ false };
+    std::atomic<OBDeviceAccessMode>              accessMode_{ OB_DEVICE_DEFAULT_ACCESS };
 
 private:
     std::shared_ptr<Context> ctx_;  // handle the lifespan of the context

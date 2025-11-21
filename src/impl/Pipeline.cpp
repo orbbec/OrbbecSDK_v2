@@ -22,7 +22,7 @@ ob_pipeline *ob_create_pipeline(ob_error **error) BEGIN_API_CALL {
         throw libobsensor::camera_disconnected_exception("No device found");
     }
     const auto &devInfo  = deviceList.front();
-    auto        dev      = devMgr->createDevice(devInfo);
+    auto        dev      = devMgr->createDevice(devInfo, OB_DEVICE_DEFAULT_ACCESS);
     auto        pipeline = std::make_shared<libobsensor::Pipeline>(dev);
 
     auto impl      = new ob_pipeline();

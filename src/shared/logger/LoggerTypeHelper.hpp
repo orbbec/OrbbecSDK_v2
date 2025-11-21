@@ -1,3 +1,6 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
 #pragma once
 
 #include <sstream>
@@ -37,3 +40,4 @@ OB_LOG_FORMATTER(OBExceptionType)
 OB_LOG_FORMATTER(OBPlaybackStatus)
 OB_LOG_FORMATTER(OBMultiDeviceSyncConfig)
 OB_LOG_FORMATTER(OBDeviceSyncConfig)
+OB_LOG_FORMATTER(OBDeviceAccessMode)

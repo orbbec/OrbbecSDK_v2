@@ -123,6 +123,35 @@ void PropertyServer::aliasProperty(uint32_t aliasId, uint32_t propertyId) {
     }
 }
 
+void PropertyServer::checkAccessMode(PropertyOperationType operationType) {
+    auto owner = getOwner();
+    if(owner == nullptr || !owner->hasAccessControl()) {
+        // do nothing
+        return;
+    }
+
+    switch(owner->getAccessMode()) {
+    case OB_DEVICE_EXCLUSIVE_ACCESS:
+    case OB_DEVICE_CONTROL_ACCESS:
+        // R/W is allowed
+        break;
+    case OB_DEVICE_MONITOR_ACCESS:
+        // ReadOnly
+        if(operationType == PROP_OP_WRITE || operationType == PROP_OP_READ_WRITE) {
+            throw access_denied_exception("The current access mode is monitor access and does not allow write operations");
+        }
+        break;
+    case OB_DEVICE_ACCESS_DENIED:
+        // access denied
+        throw access_denied_exception("The current access mode is access denied and property read/write operations are not permitted");
+        break;
+    case OB_DEVICE_DEFAULT_ACCESS:
+    default:
+        // ignore
+        break;
+    }
+}
+
 bool PropertyServer::isPropertySupported(uint32_t propertyId, PropertyOperationType operationType, PropertyAccessType accessType) const {
     auto it = properties_.find(propertyId);
     if(it == properties_.end()) {
@@ -155,6 +184,8 @@ void PropertyServer::setPropertyValue(uint32_t propertyId, OBPropertyValue value
     if(!isPropertySupported(propertyId, PROP_OP_WRITE, accessType)) {
         throw invalid_value_exception("Property not writable");
     }
+    // check current access mode
+    checkAccessMode(PROP_OP_WRITE);
 
     auto  it       = properties_.find(propertyId);
     auto &accessor = it->second.accessor;
@@ -180,6 +211,8 @@ void PropertyServer::getPropertyValue(uint32_t propertyId, OBPropertyValue *valu
     if(!isPropertySupported(propertyId, PROP_OP_READ, accessType)) {
         throw invalid_value_exception(utils::string::to_string() << "Property not readable: " << propertyId);
     }
+    // check current access mode
+    checkAccessMode(PROP_OP_READ);
 
     auto  it       = properties_.find(propertyId);
     auto &accessor = it->second.accessor;
@@ -210,6 +243,8 @@ void PropertyServer::getPropertyRange(uint32_t propertyId, OBPropertyRange *rang
     if(!isPropertySupported(propertyId, PROP_OP_READ, accessType)) {
         throw invalid_value_exception(utils::string::to_string() << "Property not readable: " << propertyId);
     }
+    // check current access mode
+    checkAccessMode(PROP_OP_READ);
 
     auto  it       = properties_.find(propertyId);
     auto &accessor = it->second.accessor;
@@ -231,6 +266,8 @@ void PropertyServer::setStructureData(uint32_t propertyId, const std::vector<uin
     if(!isPropertySupported(propertyId, PROP_OP_WRITE, accessType)) {
         throw invalid_value_exception("Property not writable");
     }
+    // check current access mode
+    checkAccessMode(PROP_OP_WRITE);
 
     auto  it       = properties_.find(propertyId);
     auto &accessor = it->second.accessor;
@@ -256,6 +293,8 @@ const std::vector<uint8_t> &PropertyServer::getStructureData(uint32_t propertyId
     if(!isPropertySupported(propertyId, PROP_OP_READ, accessType)) {
         throw invalid_value_exception(utils::string::to_string() << "Property not readable: " << propertyId);
     }
+    // check current access mode
+    checkAccessMode(PROP_OP_READ);
 
     auto  it       = properties_.find(propertyId);
     auto &accessor = it->second.accessor;
@@ -283,6 +322,8 @@ void PropertyServer::getRawData(uint32_t propertyId, GetDataCallback callback, P
     if(!isPropertySupported(propertyId, PROP_OP_READ, accessType)) {
         throw invalid_value_exception(utils::string::to_string() << "Property not readable: " << propertyId);
     }
+    // check current access mode
+    checkAccessMode(PROP_OP_READ);
 
     auto  it       = properties_.find(propertyId);
     auto &accessor = it->second.accessor;
@@ -309,6 +350,8 @@ uint16_t PropertyServer::getCmdVersionProtoV1_1(uint32_t propertyId, PropertyAcc
     if(!isPropertySupported(propertyId, PROP_OP_READ, accessType)) {
         throw invalid_value_exception(utils::string::to_string() << "Property not readable: " << propertyId);
     }
+    // check current access mode
+    checkAccessMode(PROP_OP_READ);
 
     auto  it       = properties_.find(propertyId);
     auto &accessor = it->second.accessor;
@@ -333,6 +376,8 @@ const std::vector<uint8_t> &PropertyServer::getStructureDataProtoV1_1(uint32_t p
     if(!isPropertySupported(propertyId, PROP_OP_READ, accessType)) {
         throw invalid_value_exception(utils::string::to_string() << "Property not readable: " << propertyId);
     }
+    // check current access mode
+    checkAccessMode(PROP_OP_READ);
 
     auto  it       = properties_.find(propertyId);
     auto &accessor = it->second.accessor;
@@ -359,6 +404,8 @@ void PropertyServer::setStructureDataProtoV1_1(uint32_t propertyId, const std::v
     if(!isPropertySupported(propertyId, PROP_OP_WRITE, accessType)) {
         throw invalid_value_exception("Property not writable");
     }
+    // check current access mode
+    checkAccessMode(PROP_OP_WRITE);
 
     auto  it       = properties_.find(propertyId);
     auto &accessor = it->second.accessor;
@@ -384,6 +431,8 @@ const std::vector<uint8_t> &PropertyServer::getStructureDataListProtoV1_1(uint32
     if(!isPropertySupported(propertyId, PROP_OP_READ, accessType)) {
         throw invalid_value_exception(utils::string::to_string() << "Property not readable: " << propertyId);
     }
+    // check current access mode
+    checkAccessMode(PROP_OP_READ);
 
     auto  it       = properties_.find(propertyId);
     auto &accessor = it->second.accessor;

@@ -66,7 +66,8 @@ FemtoMegaDeviceInfo::FemtoMegaDeviceInfo(const SourcePortInfoList groupedInfoLis
 
 FemtoMegaDeviceInfo::~FemtoMegaDeviceInfo() noexcept {}
 
-std::shared_ptr<IDevice> FemtoMegaDeviceInfo::createDevice() const {
+std::shared_ptr<IDevice> FemtoMegaDeviceInfo::createDevice(OBDeviceAccessMode accessMode) const {
+    (void)accessMode;  // access control is unsupported
     std::shared_ptr<IDevice> device;
     if(connectionType_ == "Ethernet") {
         if(IS_OB_FEMTO_MEGA_I_PID(pid_)) {

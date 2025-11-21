@@ -1347,7 +1347,7 @@ void G330Device::loadDefaultDepthPostProcessingConfig() {
 //====================================================================================================================================
 //=========================================================G330NetDevice==============================================================
 
-G330NetDevice::G330NetDevice(const std::shared_ptr<const IDeviceEnumInfo> &info) : DeviceBase(info) {
+G330NetDevice::G330NetDevice(const std::shared_ptr<const IDeviceEnumInfo> &info, OBDeviceAccessMode accessMode) : DeviceBase(info, accessMode) {
     LOG_INFO("Create {} net device.", info->getName());
     init();
 
@@ -1355,9 +1355,12 @@ G330NetDevice::G330NetDevice(const std::shared_ptr<const IDeviceEnumInfo> &info)
     checkAndStartHeartbeat();
 }
 
-G330NetDevice::~G330NetDevice() noexcept {}
+G330NetDevice::~G330NetDevice() noexcept {
+    ccpController_.reset();
+}
 
 void G330NetDevice::init() {
+    checkAndAcquireCCP();
     initSensorList();
     initProperties();
     fetchDeviceInfo();
@@ -1500,6 +1503,16 @@ void G330NetDevice::init() {
     }
 
     fetchDeviceErrorState();
+}
+
+void G330NetDevice::checkAndAcquireCCP() {
+    ccpController_ = std::make_shared<GigECcpController>(enumInfo_);
+    if(!ccpController_->isSupported()) {
+        return;
+    }
+    ccpController_->acquireControl(accessMode_);
+    hasAccessControl_ = true;
+    accessMode_       = ccpController_->getState();
 }
 
 void G330NetDevice::fetchDeviceInfo() {
