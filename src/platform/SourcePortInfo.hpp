@@ -44,24 +44,7 @@ struct SourcePortInfo {
 };
 
 struct NetSourcePortInfo : public SourcePortInfo {
-    NetSourcePortInfo(SourcePortType portType, std::string netInterfaceName, std::string localMac, std::string localAddress, std::string address, uint16_t port,
-                      std::string mac, std::string serialNumber, uint32_t vid, uint32_t pid, std::string mask = "unknown", std::string gateway = "unknown",
-                      uint8_t localSubnetLength = 0, std::string localGateway = "unknown")
-        : SourcePortInfo(portType),
-          netInterfaceName(netInterfaceName),
-          localMac(localMac),
-          localAddress(localAddress),
-          address(address),
-          port(port),
-          mac(mac),
-          serialNumber(serialNumber),
-          pid(pid),
-          vid(vid),
-          mask(mask),
-          gateway(gateway),
-          localSubnetLength(localSubnetLength),
-          localGateway(localGateway) {}
-
+    NetSourcePortInfo(SourcePortType portType) : SourcePortInfo(portType) {}
     ~NetSourcePortInfo() noexcept override = default;
 
     bool equal(std::shared_ptr<const SourcePortInfo> cmpInfo) const override {
@@ -74,19 +57,19 @@ struct NetSourcePortInfo : public SourcePortInfo {
                && (pid == netCmpInfo->pid) && (vid == netCmpInfo->vid);
     }
 
-    std::string netInterfaceName;
-    std::string localMac;
-    std::string localAddress;
-    std::string address;
-    uint16_t    port;
-    std::string mac;
-    std::string serialNumber;
-    uint32_t    pid;
-    uint32_t    vid;
-    std::string mask;
-    std::string gateway;
-    uint8_t     localSubnetLength;
-    std::string localGateway;
+    std::string netInterfaceName  = "unknown";
+    std::string localMac          = "unknown";
+    std::string localAddress      = "0.0.0.0";
+    std::string address           = "0.0.0.0";
+    uint16_t    port              = 0;
+    std::string mac               = "unknown";
+    std::string serialNumber      = "unknown";
+    uint32_t    pid               = 0;
+    uint32_t    vid               = 0;
+    std::string mask              = "unknown";
+    std::string gateway           = "unknown";
+    uint8_t     localSubnetLength = 0;
+    std::string localGateway      = "unknown";
 };
 
 struct ShmStreamPortInfo : public SourcePortInfo {  // shared memory stream port
@@ -135,11 +118,11 @@ struct USBSourcePortInfo : public SourcePortInfo {
 };
 
 struct RTPStreamPortInfo : public NetSourcePortInfo {
-    RTPStreamPortInfo(std::string netInterfaceName, std::string localMac, std::string localAddress, std::string address, uint16_t port, uint16_t vendorPort,
-                      OBStreamType streamType, std::string mac = "unknown", std::string serialNumber = "unknown", uint32_t vid = 0, uint32_t pid = 0)
-        : NetSourcePortInfo(SOURCE_PORT_NET_RTP, netInterfaceName, localMac, localAddress, address, port, mac, serialNumber, vid, pid),
-          vendorPort(vendorPort),
-          streamType(streamType) {}
+    RTPStreamPortInfo(const NetSourcePortInfo &portInfo, uint16_t newPort, uint16_t vendorPort, OBStreamType streamType)
+        : NetSourcePortInfo(portInfo), vendorPort(vendorPort), streamType(streamType) {
+        port     = newPort;
+        portType = SOURCE_PORT_NET_RTP;
+    }
 
     virtual bool equal(std::shared_ptr<const SourcePortInfo> cmpInfo) const override {
         if(cmpInfo->portType != portType) {
@@ -155,11 +138,11 @@ struct RTPStreamPortInfo : public NetSourcePortInfo {
 };
 
 struct RTSPStreamPortInfo : public NetSourcePortInfo {
-    RTSPStreamPortInfo(std::string netInterfaceName, std::string localMac, std::string localAdress, std::string address, uint16_t port, uint16_t vendorPort,
-                       OBStreamType streamType, std::string mac = "unknown", std::string serialNumber = "unknown", uint32_t vid = 0, uint32_t pid = 0)
-        : NetSourcePortInfo(SOURCE_PORT_NET_RTSP, netInterfaceName, localMac, localAdress, address, port, mac, serialNumber, vid, pid),
-          vendorPort(vendorPort),
-          streamType(streamType) {}
+    RTSPStreamPortInfo(const NetSourcePortInfo &portInfo, uint16_t newPort, uint16_t vendorPort, OBStreamType streamType)
+        : NetSourcePortInfo(portInfo), vendorPort(vendorPort), streamType(streamType) {
+        port     = newPort;
+        portType = SOURCE_PORT_NET_RTSP;
+    }
 
     virtual bool equal(std::shared_ptr<const SourcePortInfo> cmpInfo) const override {
         if(cmpInfo->portType != portType) {

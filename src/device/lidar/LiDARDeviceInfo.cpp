@@ -69,10 +69,8 @@ std::vector<std::shared_ptr<IDeviceEnumInfo>> LiDARDeviceInfo::pickNetDevices(co
         if(iter->size() >= 1) {
             auto portInfo = std::dynamic_pointer_cast<const NetSourcePortInfo>(iter->front());
 
-            iter->emplace_back(std::make_shared<LiDARDataStreamPortInfo>(portInfo->address, portInfo->port, portInfo->port, OB_STREAM_LIDAR, portInfo->mac,
-                                                                         portInfo->serialNumber, portInfo->vid, portInfo->pid));  // lidar data stream
-            iter->emplace_back(std::make_shared<LiDARDataStreamPortInfo>(portInfo->address, (uint16_t)8000u, portInfo->port, OB_STREAM_ACCEL, portInfo->mac,
-                                                                         portInfo->serialNumber, portInfo->vid, portInfo->pid));  // imu data stream
+            iter->emplace_back(std::make_shared<LiDARDataStreamPortInfo>(*portInfo, portInfo->port, portInfo->port, OB_STREAM_LIDAR));   // lidar data stream
+            iter->emplace_back(std::make_shared<LiDARDataStreamPortInfo>(*portInfo, (uint16_t)8000u, portInfo->port, OB_STREAM_ACCEL));  // imu data stream
             auto deviceEnumInfo = std::make_shared<LiDARDeviceInfo>(*iter);
             LiDARDeviceInfos.push_back(deviceEnumInfo);
         }

@@ -13,10 +13,11 @@
 namespace libobsensor {
 
 struct LiDARDataStreamPortInfo : public NetSourcePortInfo {
-    LiDARDataStreamPortInfo(std::string address, uint16_t port, uint16_t vendorPort, OBStreamType streamType, std::string mac = "unknown",
-                          std::string serialNumber = "unknown",
-                          uint32_t vid = ORBBEC_DEVICE_VID, uint32_t pid = 0)
-        : NetSourcePortInfo(SOURCE_PORT_NET_LIDAR_VENDOR_STREAM, "unknown", "unknown", "unknown", address, port, mac, serialNumber, vid, pid), vendorPort(vendorPort), streamType(streamType) {}
+    LiDARDataStreamPortInfo(const NetSourcePortInfo &portInfo, uint16_t newPort, uint16_t vendorPort, OBStreamType streamType)
+        : NetSourcePortInfo(portInfo), vendorPort(vendorPort), streamType(streamType) {
+        port     = newPort;
+        portType = SOURCE_PORT_NET_LIDAR_VENDOR_STREAM;
+    }
 
     virtual bool equal(std::shared_ptr<const SourcePortInfo> cmpInfo) const override {
         if(!NetSourcePortInfo::equal(cmpInfo)) {

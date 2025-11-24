@@ -64,8 +64,8 @@ DeviceEnumInfoList NetDeviceEnumerator::queryDeviceList() {
         // try fetch pid from device via vendor property
         auto pid = NetDeviceEnumerator::getDevicePid(info, OB_FEMTO_MEGA_PID);
         if(pid != 0) {
-            auto newInfo = std::make_shared<NetSourcePortInfo>(info->portType, info->netInterfaceName, info->localMac, info->localAddress, info->address,
-                                                               info->port, info->mac, info->serialNumber, info->vid, pid);
+            auto newInfo = std::make_shared<NetSourcePortInfo>(*info);
+            newInfo->pid = pid;
             sourcePortInfoList.push_back(newInfo);
         }
     }
@@ -334,11 +334,16 @@ bool NetDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType
 }
 
 std::shared_ptr<const IDeviceEnumInfo> NetDeviceEnumerator::queryNetDevice(std::string address, uint16_t port) {
-    auto info = std::make_shared<NetSourcePortInfo>(SOURCE_PORT_NET_VENDOR, "Unknown", "Unknown", "Unknown", address, port,
-                                                    address + ":" + std::to_string(port), "Unknown", ORBBEC_DEVICE_VID, 0);
-
-    info->pid = NetDeviceEnumerator::getDevicePid(info, OB_FEMTO_MEGA_PID);
-
+    auto info              = std::make_shared<NetSourcePortInfo>(SOURCE_PORT_NET_VENDOR);
+    info->netInterfaceName = "Unknown";
+    info->localMac         = "Unknown";
+    info->localAddress     = "Unknown";
+    info->address          = address;
+    info->port             = port;
+    info->mac              = address + ":" + std::to_string(port);
+    info->serialNumber     = "Unknown";
+    info->pid              = NetDeviceEnumerator::getDevicePid(info, OB_FEMTO_MEGA_PID);
+    info->vid              = ORBBEC_DEVICE_VID;
 
     if(isDeviceInContainer(G335LeDevPids, info->vid, info->pid)) {
         throw invalid_value_exception("No supported G335Le found for address: " + address + ":" + std::to_string(port));

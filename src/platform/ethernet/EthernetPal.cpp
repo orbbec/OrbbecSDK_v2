@@ -189,7 +189,17 @@ void EthernetPal::updateMDNSDeviceSourceInfo(const std::vector<MDNSDeviceInfo> &
     std::lock_guard<std::mutex> lock(sourcePortInfoMetux_);
     // Only re-query port information for newly online devices
     for(auto &&info: added) {
-        sourcePortInfoList_.push_back(std::make_shared<NetSourcePortInfo>(SOURCE_PORT_NET_VENDOR, "unknown", "unknown", "unknown", info.ip, info.port, info.mac, info.sn, ORBBEC_DEVICE_VID, info.pid));
+        auto portInfo              = std::make_shared<NetSourcePortInfo>(SOURCE_PORT_NET_VENDOR);
+        portInfo->netInterfaceName = "unknown";
+        portInfo->localMac         = "unknown";
+        portInfo->localAddress     = "unknown";
+        portInfo->address          = info.ip;
+        portInfo->port             = info.port;
+        portInfo->mac              = info.mac;
+        portInfo->serialNumber     = info.sn;
+        portInfo->pid              = info.pid;
+        portInfo->vid              = ORBBEC_DEVICE_VID;
+        sourcePortInfoList_.push_back(portInfo);
     }
 
     // Delete devices that have been offline from the list
@@ -211,9 +221,21 @@ void EthernetPal::updateSourcePortInfoList(const std::vector<GVCPDeviceInfo> &ad
     std::lock_guard<std::mutex> lock(sourcePortInfoMetux_);
     // Only re-query port information for newly online devices
     for(auto &&info: added) {
-        sourcePortInfoList_.push_back(std::make_shared<NetSourcePortInfo>(SOURCE_PORT_NET_VENDOR, info.netInterfaceName, info.localMac, info.localIp, info.ip,
-                                                                          DEFAULT_CMD_PORT, info.mac, info.sn, info.vid, info.pid, info.mask, info.gateway,
-                                                                          info.localSubnetLength, info.localGateway));
+        auto portInfo               = std::make_shared<NetSourcePortInfo>(SOURCE_PORT_NET_VENDOR);
+        portInfo->netInterfaceName  = info.netInterfaceName;
+        portInfo->localMac          = info.localMac;
+        portInfo->localAddress      = info.localIp;
+        portInfo->address           = info.ip;
+        portInfo->port              = DEFAULT_CMD_PORT;
+        portInfo->mac               = info.mac;
+        portInfo->serialNumber      = info.sn;
+        portInfo->pid               = info.pid;
+        portInfo->vid               = info.vid;
+        portInfo->mask              = info.mask;
+        portInfo->gateway           = info.gateway;
+        portInfo->localSubnetLength = info.localSubnetLength;
+        portInfo->localGateway      = info.localGateway;
+        sourcePortInfoList_.push_back(portInfo);
     }
 
     // Delete devices that have been offline from the list
