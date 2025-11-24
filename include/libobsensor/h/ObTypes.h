@@ -1742,15 +1742,18 @@ typedef enum {
  * @brief Intra-camera Sync Reference based on the exposure start time, the exposure middle time, or the exposure end time.
  */
 typedef enum {
-    START_OF_EXPOSURE = 0, /**< start of exposure */
-    MIDDLE_OF_EXPOSURE,    /**< middle of exposure */
-    END_OF_EXPOSURE,       /**< end of exposure  */
+    OB_START_OF_EXPOSURE = 0, /**< start of exposure */
+    OB_MIDDLE_OF_EXPOSURE,    /**< middle of exposure */
+    OB_END_OF_EXPOSURE,       /**< end of exposure  */
 } ob_intra_camera_sync_reference,
     OBIntraCameraSyncReference;
 
 // For compatibility
 #define OB_FRAME_METADATA_TYPE_LASER_POWER_MODE OB_FRAME_METADATA_TYPE_LASER_POWER_LEVEL
 #define OB_FRAME_METADATA_TYPE_EMITTER_MODE OB_FRAME_METADATA_TYPE_LASER_STATUS
+#define START_OF_EXPOSURE OB_START_OF_EXPOSURE
+#define MIDDLE_OF_EXPOSURE OB_MIDDLE_OF_EXPOSURE
+#define END_OF_EXPOSURE OB_END_OF_EXPOSURE
 
 /**
  * @brief Callback for file transfer

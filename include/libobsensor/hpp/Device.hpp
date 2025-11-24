@@ -1062,7 +1062,7 @@ public:
      *
      * @return const char* the gateway address of the device, such as "192.168.1.1"
      */
-    const char *getDevicegateway() const {
+    const char *getDeviceGateway() const {
         ob_error   *error      = nullptr;
         const char *subnetMask = ob_device_info_get_gateway(impl_, &error);
         Error::handle(&error);
@@ -1071,6 +1071,10 @@ public:
 
 public:
     // The following interfaces are deprecated and are retained here for compatibility purposes.
+    const char *getDevicegateway() {
+        return getDeviceGateway();
+    }
+
     const char *name() const {
         return getName();
     }
