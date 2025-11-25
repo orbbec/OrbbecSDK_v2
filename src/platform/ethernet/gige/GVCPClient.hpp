@@ -27,7 +27,7 @@ struct GVCPDeviceInfo {
     std::string name              = "unknown";
     uint32_t    pid               = 0;
     uint32_t    vid               = 0;
-    // std::string version      = "";
+    std::string devVersion        = "0.0.0.0";
     // std::string manufacturer = "";
 
     virtual bool operator==(const GVCPDeviceInfo &other) const {

@@ -17,7 +17,17 @@ namespace libobsensor {
 
 class GigECcpController : public IDeviceAccessController {
 public:
-    GigECcpController(const std::shared_ptr<const IDeviceEnumInfo> &info);
+    /**
+     * @brief Construction
+     *
+     * @param[in] info Enumeration info of the device.
+     * @param[in] minVersion The The minimum firmware version for access control, in "a.b.c" format.
+     *                       Empty or invalid strings are treated as 0.0.0 (all versions supported).
+     *
+     * @throws access_denied_exception if the acquisition fails.
+     *         unsupported_operation_exception if the device doesn't support CCP
+     */
+    GigECcpController(const std::shared_ptr<const IDeviceEnumInfo> &info, const std::string &minVersion);
     virtual ~GigECcpController() override;
 
     bool isSupported() const override {
@@ -32,16 +42,17 @@ public:
     void releaseControl() override;
 
 private:
-    void checkCcpCapability();
+    int32_t getFirmwareVersionInt(const std::string &version);
+    bool checkCcpCapability(const std::string &minVersion);
 
 private:
-    std::atomic<OBDeviceAccessMode>              accessMode_{ OB_DEVICE_ACCESS_DENIED };
-    bool                                         ccpSupported_{ false };
-    const std::shared_ptr<const IDeviceEnumInfo> enumInfo_;
-    std::shared_ptr<GVCPTransmit>                gvcpTransmit_;
-    std::thread                                  keepaliveThread_;
-    std::condition_variable                      keepaliveCv_;
-    std::atomic<bool>                            keepaliveStopped_{ false };
+    std::atomic<OBDeviceAccessMode>          accessMode_{ OB_DEVICE_ACCESS_DENIED };
+    bool                                     ccpSupported_{ false };
+    std::shared_ptr<const NetSourcePortInfo> portInfo_;
+    std::shared_ptr<GVCPTransmit>            gvcpTransmit_;
+    std::thread                              keepaliveThread_;
+    std::condition_variable                  keepaliveCv_;
+    std::atomic<bool>                        keepaliveStopped_{ false };
 };
 
 }  // namespace libobsensor

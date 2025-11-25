@@ -70,6 +70,7 @@ struct NetSourcePortInfo : public SourcePortInfo {
     std::string gateway           = "unknown";
     uint8_t     localSubnetLength = 0;
     std::string localGateway      = "unknown";
+    std::string devVersion        = "0.0.0.0";  // firmware or hardware version depending on device
 };
 
 struct ShmStreamPortInfo : public SourcePortInfo {  // shared memory stream port

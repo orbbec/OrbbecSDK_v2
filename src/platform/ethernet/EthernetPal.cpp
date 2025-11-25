@@ -235,6 +235,7 @@ void EthernetPal::updateSourcePortInfoList(const std::vector<GVCPDeviceInfo> &ad
         portInfo->gateway           = info.gateway;
         portInfo->localSubnetLength = info.localSubnetLength;
         portInfo->localGateway      = info.localGateway;
+        portInfo->devVersion        = info.devVersion;
         sourcePortInfoList_.push_back(portInfo);
     }
 

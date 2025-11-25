@@ -9,13 +9,13 @@
 
 namespace libobsensor {
 
-GigECcpController::GigECcpController(const std::shared_ptr<const IDeviceEnumInfo> &info) : enumInfo_(info) {
+GigECcpController::GigECcpController(const std::shared_ptr<const IDeviceEnumInfo> &info, const std::string &minVersion) {
     // create gvcp transmitor
-    auto portInfo    = enumInfo_->getSourcePortInfoList().front();
+    auto portInfo    = info->getSourcePortInfoList().front();
     auto netPortInfo = std::dynamic_pointer_cast<const NetSourcePortInfo>(portInfo);
     gvcpTransmit_    = std::make_shared<GVCPTransmit>(netPortInfo);
-    // checkCcpCapability
-    checkCcpCapability();
+    portInfo_        = netPortInfo;
+    ccpSupported_    = checkCcpCapability(minVersion);
 }
 
 GigECcpController::~GigECcpController() {
@@ -27,14 +27,81 @@ GigECcpController::~GigECcpController() {
     TRY_EXECUTE({ releaseControl(); });
 }
 
-void GigECcpController::checkCcpCapability() {
+int32_t GigECcpController::getFirmwareVersionInt(const std::string &version) {
+    int    dotCount     = 0;
+    char   buf[16]      = { 0 };
+    size_t bufIndex     = 0;
+    int    calFwVersion = 0;
+    auto   size         = version.size();
+    for(size_t i = 0; i < size; i++) {
+        const char c = version[i];
+        if(isdigit(c) && bufIndex < sizeof(buf)) {
+            buf[bufIndex] = c;
+            bufIndex++;
+        }
+        if('.' == c) {
+            buf[sizeof(buf) - 1] = '\0';
+            if(strlen(buf) > 0) {
+                int value = atoi(buf);
+                // The version number has only two digits
+                if(value >= 100) {
+                    LOG_ERROR("bad fwVersion: {}", version);
+                    return false;
+                }
+
+                if(dotCount == 0) {  // Major version number
+                    calFwVersion += 10000 * value;
+                }
+                else if(dotCount == 1) {  // minor version number
+                    calFwVersion += 100 * value;
+                }
+                else if(dotCount == 2) {  // Test version number
+                    calFwVersion += value;
+                }
+                else {
+                    LOG_ERROR("bad fwVersion: {}", version);
+                    return false;
+                }
+
+                dotCount++;
+                bufIndex = 0;
+                memset(buf, 0, sizeof(buf));
+            }
+        }
+    }
+    buf[sizeof(buf) - 1] = '\0';
+    if(strlen(buf) > 0 && strlen(buf) <= 2 && dotCount == 2) {
+        int value = atoi(buf);
+        calFwVersion += value;
+    }
+    // If the version number cannot be determined, then fix logic is given priority
+    if(calFwVersion == 0 || dotCount < 2) {
+        LOG_ERROR("bad fwVersion: {}, parse digital version failed", version);
+        return 0;
+    }
+    return calFwVersion;
+}
+
+bool GigECcpController::checkCcpCapability(const std::string &minVersion) {
+    auto currentVerion = getFirmwareVersionInt(portInfo_->devVersion);
+    if(currentVerion > 0) {
+        auto tempVersion = getFirmwareVersionInt(minVersion);
+        if(currentVerion < tempVersion) {
+            LOG_WARN("Current firmware version is {}, which is < the minimum required version {}. CCP is not supported", portInfo_->devVersion, minVersion);
+            return false;
+        }
+    }
+
     // Read GVCP capability register
     auto res = gvcpTransmit_->readRegister(GVCP_CAPABILITY_REGISTER);
     if(res.first != GEV_STATUS_SUCCESS) {
-        ccpSupported_ = false;
-        return;
+        if(res.first == GEV_STATUS_ACCESS_DENIED) {
+            return true;
+        }
+        LOG_ERROR("Failed to read GVCP_CAPABILITY_REGISTER (error status: {}). Assuming CCP unsupported.", res.first);
+        return false;
     }
-    ccpSupported_ = true;
+    return true;
 }
 
 void GigECcpController::acquireControl(OBDeviceAccessMode accessMode) {
