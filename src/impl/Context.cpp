@@ -73,6 +73,17 @@ ob_device *ob_create_net_device(ob_context *context, const char *address, uint16
 }
 HANDLE_EXCEPTIONS_AND_RETURN(nullptr, context, address, port)
 
+ob_device *ob_create_net_device_ex(ob_context *context, const char *address, uint16_t port, ob_device_access_mode accessMode, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(context);
+    VALIDATE_NOT_EQUAL(accessMode, OB_DEVICE_ACCESS_DENIED);
+    auto deviceMgr  = context->context->getDeviceManager();
+    auto device     = deviceMgr->createNetDevice(address, port, accessMode);
+    auto devImpl    = new ob_device();
+    devImpl->device = device;
+    return devImpl;
+}
+HANDLE_EXCEPTIONS_AND_RETURN(nullptr, context, address, port)
+
 void ob_set_device_changed_callback(ob_context *context, ob_device_changed_callback callback, void *user_data, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(context);
     auto deviceMgr = context->context->getDeviceManager();
