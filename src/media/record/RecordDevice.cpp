@@ -104,10 +104,6 @@ void RecordDevice::stopRecord() {
     writeOpenNIDepthProcessorParams();
 }
 
-bool RecordDevice::isDeviceInSeries(const std::vector<uint16_t> &pids, const uint16_t &pid) {
-    return std::find(pids.begin(), pids.end(), pid) != pids.end() ? true : false;
-}
-
 void RecordDevice::writeVersionProperty() {
     double               version = utils::getBagFileVersion();
     std::vector<uint8_t> data(sizeof(version));
@@ -298,7 +294,7 @@ void RecordDevice::writeOpenNIDepthProcessorParams() {
     auto vid     = devInfo->vid_;
     auto pid     = devInfo->pid_;
     if(vid == ORBBEC_DEVICE_VID) {
-        if(isDeviceInSeries(OpenniDW2Pids, pid) || isDeviceInSeries(OpenniMaxPids, pid)) {
+        if(isDeviceInOrbbecSeries(OpenniDW2Pids, vid, pid) || isDeviceInOrbbecSeries(OpenniMaxPids, vid, pid)) {
             OpenNIFrameProcessParam processParam = std::dynamic_pointer_cast<OpenNIDeviceBase>(device_)->getFrameProcessParam();
             writer_->writeProperty(OB_OPENNI_DEPTH_PROCESSOR_PARAM, reinterpret_cast<uint8_t *>(&processParam), sizeof(OpenNIFrameProcessParam));
         }

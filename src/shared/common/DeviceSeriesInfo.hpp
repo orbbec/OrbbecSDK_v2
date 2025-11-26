@@ -28,11 +28,8 @@ extern std::unordered_map<std::string, std::vector<DeviceInfoEntry>> allDeviceIn
 extern std::vector<uint16_t>                     supportedUsbVids;
 extern std::unordered_map<std::string, uint16_t> manufacturerVidMap;
 
-template <typename Container> bool isDeviceInContainer(const Container &deviceContainer, uint32_t vid, uint32_t pid) {
-    return std::find_if(deviceContainer.begin(), deviceContainer.end(),
-                        [vid, pid](const typename Container::value_type &device) { return device.vid_ == vid && device.pid_ == pid; })
-           != deviceContainer.end();
-}
+bool isDeviceInContainer(const std::vector<DeviceIdentifier> &deviceContainer, const uint32_t &vid, const uint32_t &pid);
+bool isDeviceInOrbbecSeries(const std::vector<uint16_t> &deviceContainer, const uint32_t &vid, const uint32_t &pid);
 
 class DeviceSeriesInfoManager {
 public:

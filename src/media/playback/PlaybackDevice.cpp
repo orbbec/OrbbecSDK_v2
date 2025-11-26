@@ -91,8 +91,8 @@ void PlaybackDevice::init() {
     auto depthWorkModeManager = std::make_shared<PlaybackDepthWorkModeManager>(this, port_);
     registerComponent(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER, depthWorkModeManager);
 
-    if(isDeviceInContainer(G330DevPids, vid, pid) || (vid == ORBBEC_DEVICE_VID && isDeviceInSeries(FemtoMegaDevPids, deviceInfo_->pid_))
-       || isDeviceInSeries(FemtoBoltDevPids, deviceInfo_->pid_)) {
+    if(isDeviceInContainer(G330DevPids, vid, pid) || isDeviceInOrbbecSeries(FemtoMegaDevPids, vid, pid)
+       || isDeviceInOrbbecSeries(FemtoBoltDevPids, vid, pid)) {
         // preset manager
         auto presetManager = std::make_shared<PlaybackPresetManager>(this);
         registerComponent(OB_DEV_COMPONENT_PRESET_MANAGER, presetManager);
@@ -141,11 +141,12 @@ void PlaybackDevice::initSensorList() {
         [this]() {
             std::shared_ptr<VideoSensor> sensor;
             auto                         vid = deviceInfo_->vid_;
-            if((vid == ORBBEC_DEVICE_VID) && (isDeviceInSeries(FemtoMegaDevPids, deviceInfo_->pid_) || isDeviceInSeries(FemtoBoltDevPids, deviceInfo_->pid_))) {
+            auto                         pid = deviceInfo_->pid_;
+            if(isDeviceInOrbbecSeries(FemtoMegaDevPids, vid, pid) || isDeviceInOrbbecSeries(FemtoBoltDevPids, vid, pid)) {
                 sensor = std::make_shared<VideoSensor>(this, OB_SENSOR_DEPTH, port_);
                 sensor->setStreamProfileList(port_->getStreamProfileList(OB_SENSOR_DEPTH));
             }
-            else if((vid == ORBBEC_DEVICE_VID) && isDeviceInSeries(OpenniMonocularPids, deviceInfo_->pid_)) {
+            else if(isDeviceInOrbbecSeries(OpenniMonocularPids, vid, pid)) {
                 sensor = std::make_shared<OpenNIDisparitySensor>(this, OB_SENSOR_DEPTH, port_);
                 sensor->setStreamProfileList(port_->getStreamProfileList(OB_SENSOR_DEPTH));
                 sensor->updateFormatFilterConfig({});  // for call convertProfileAsDisparityBasedProfile
@@ -165,7 +166,7 @@ void PlaybackDevice::initSensorList() {
                     propServer->setPropertyValueT<int>(OB_PROP_DEPTH_PRECISION_LEVEL_INT, value.intValue);
                 }
             }
-            else if((vid == ORBBEC_DEVICE_VID) && isDeviceInSeries(OpenniDW2Pids, deviceInfo_->pid_)) {
+            else if(isDeviceInOrbbecSeries(OpenniDW2Pids, vid, pid)) {
                 sensor = std::make_shared<DW2DisparitySensor>(this, OB_SENSOR_DEPTH, port_);
                 sensor->setStreamProfileList(port_->getStreamProfileList(OB_SENSOR_DEPTH));
                 sensor->updateFormatFilterConfig({});  // for call convertProfileAsDisparityBasedProfile
@@ -188,7 +189,7 @@ void PlaybackDevice::initSensorList() {
                     propServer->setPropertyValueT<int>(OB_PROP_DEPTH_PRECISION_LEVEL_INT, value.intValue);
                 }
             }
-            else if((vid == ORBBEC_DEVICE_VID) && isDeviceInSeries(OpenniMaxPids, deviceInfo_->pid_)) {
+            else if(isDeviceInOrbbecSeries(OpenniMaxPids, vid, pid)) {
                 sensor = std::make_shared<MaxDisparitySensor>(this, OB_SENSOR_DEPTH, port_);
                 sensor->setStreamProfileList(port_->getStreamProfileList(OB_SENSOR_DEPTH));
                 sensor->updateFormatFilterConfig({});  // for call convertProfileAsDisparityBasedProfile
@@ -225,7 +226,7 @@ void PlaybackDevice::initSensorList() {
                 std::dynamic_pointer_cast<DisparityBasedSensor>(sensor)->markOutputDisparityFrame(!hwD2D);
 
                 // init depth unit property
-                if(isDeviceInContainer(G330DevPids, vid, deviceInfo_->pid_)) {
+                if(isDeviceInContainer(G330DevPids, vid, pid)) {
                     // G330 specific
                     if(port_->isPropertySupported(OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT)) {
                         OBPropertyValue value{};
@@ -603,10 +604,6 @@ uint64_t PlaybackDevice::getPosition() const {
 
 std::vector<OBSensorType> PlaybackDevice::getSensorTypeList() const {
     return sensorTypeList_;
-}
-
-bool PlaybackDevice::isDeviceInSeries(const std::vector<uint16_t> &pids, const uint16_t &pid) {
-    return std::find(pids.begin(), pids.end(), pid) != pids.end() ? true : false;
 }
 
 void PlaybackDevice::setPlaybackStatusCallback(const PlaybackStatusCallback callback) {

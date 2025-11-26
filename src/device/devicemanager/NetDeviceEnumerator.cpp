@@ -180,8 +180,7 @@ bool NetDeviceEnumerator::handleDeviceRemoved(std::string devUid) {
         // TODO: Busy devices may be misjudged as offline due to temporary unresponsiveness
         auto vid = info->vid;
         auto pid = info->pid;
-        if(isDeviceInContainer(G335LeDevPids, vid, pid)
-           || ((info->vid == ORBBEC_DEVICE_VID) && (info->pid == OB_FEMTO_MEGA_PID || IS_OB_FEMTO_MEGA_I_PID(info->pid)))
+        if(isDeviceInContainer(G335LeDevPids, vid, pid) || (isDeviceInOrbbecSeries(FemtoMegaDevPids, vid, pid))
            || isDeviceInContainer(G435LeDevPids, vid, pid)) {
             bool disconnected = true;
             BEGIN_TRY_EXECUTE({

@@ -44,8 +44,6 @@ private:
     void initSensorList();
     void initProperties();
 
-    bool isDeviceInSeries(const std::vector<uint16_t> &pids, const uint16_t &pid);
-
     void registerPropertyCondition(std::shared_ptr<PropertyServer> server, uint32_t propertyId, const std::string &userPermsStr, const std::string &intPermsStr,
                                    std::shared_ptr<IPropertyAccessor> accessor, ConditionCheckHandler condition = nullptr, bool skipSupportCheck = false);
 

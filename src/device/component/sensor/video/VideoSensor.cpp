@@ -116,9 +116,6 @@ void VideoSensor::start(std::shared_ptr<const StreamProfile> sp, FrameCallback c
     })
 }
 
-bool isPidInPidList(int pid, const std::vector<uint16_t> &pidList) {
-    return std::find(pidList.begin(), pidList.end(), pid) != pidList.end();
-}
 void VideoSensor::onBackendFrameCallback(std::shared_ptr<Frame> frame) {
     if(streamState_ != STREAM_STATE_STREAMING && streamState_ != STREAM_STATE_STARTING) {
         return;
@@ -128,7 +125,7 @@ void VideoSensor::onBackendFrameCallback(std::shared_ptr<Frame> frame) {
     auto deviceInfo = owner_->getInfo();
     auto vid        = deviceInfo->vid_;
     auto pid        = deviceInfo->pid_;
-    if((vid == ORBBEC_DEVICE_VID) && (isPidInPidList(pid, FemtoBoltDevPids) || isPidInPidList(pid, FemtoMegaDevPids))) {
+    if(isDeviceInOrbbecSeries(FemtoBoltDevPids, vid, pid) || isDeviceInOrbbecSeries(FemtoMegaDevPids, vid, pid)) {
         auto videoFrame = frame->as<VideoFrame>();
         videoFrame->setPixelType(OB_PIXEL_TOF_DEPTH);
     }

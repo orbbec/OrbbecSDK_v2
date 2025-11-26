@@ -149,4 +149,16 @@ void DeviceSeriesInfoManager::LoadXmlConfig() {
     handleCategory(CATEGORY_G435LE_DEVICE, G435LeDevPids, G435LeDeviceInfoList);
 }
 
+bool isDeviceInContainer(const std::vector<DeviceIdentifier> &deviceContainer, const uint32_t &vid, const uint32_t &pid) {
+    return std::find_if(deviceContainer.begin(), deviceContainer.end(),
+                        [vid, pid](const DeviceIdentifier &device) { return device.vid_ == vid && device.pid_ == pid; })
+           != deviceContainer.end();
+}
+
+bool isDeviceInOrbbecSeries(const std::vector<uint16_t> &deviceContainer, const uint32_t &vid, const uint32_t &pid) {
+    if(vid != ORBBEC_DEVICE_VID) {
+        return false;
+    }
+    return std::find(deviceContainer.begin(), deviceContainer.end(), pid) != deviceContainer.end();
+}
 }  // namespace libobsensor
