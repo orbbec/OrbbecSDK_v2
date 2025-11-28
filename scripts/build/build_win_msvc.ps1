@@ -85,11 +85,11 @@ $timestamp = Get-Date -Format "yyyyMMddHHmm"
 $git_hash = $(git rev-parse --short HEAD)
 $package_name = "${sdkLibName}_v${version}_${timestamp}_${git_hash}_${fullPlatform}"
 
-# check visual studio 2017 or 2019 or 2022 is installed
+# check visual studio 2017 or 2019 or 2022 or 2026 is installed
 $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
 $vsversion = & $vswhere -version "[15.0,)" -property installationVersion
 if ($vsversion.Length -eq 0) {
-    Write-Output  "Visual Studio 2017 or 2019 or 2022 is not installed"
+    Write-Output  "Visual Studio 2017 or 2019 or 2022 or 2026 is not installed"
     exit 1
 }
 $vsversion = ($vsversion | Select-object -First 1).ToString().Trim()
@@ -99,6 +99,7 @@ switch($vsversion){
   15 {$year = "2017"}
   16 {$year = "2019"}
   17 {$year = "2022"}
+  18 {$year = "2026"}
   default {
       Write-Output "Unknown Visual Studio version: $vsversion"
       exit 1
