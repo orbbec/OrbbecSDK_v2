@@ -125,18 +125,18 @@ bool NetDeviceEnumerator::checkDeviceActivity(std::shared_ptr<const IDeviceEnumI
     auto          elapsed       = deviceActivityManager_->getElapsedSinceLastActive(dev->getUid());
     const int64_t timeThreshold = 2000;  // 2s
     if(elapsed < 0) {
-        LOG_DEBUG("Can't find activity of the device, it might be offline. Name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", elapsed, dev->getName(),
-                  dev->getPid(), dev->getDeviceSn(), mac, ip);
+        LOG_DEBUG("Can't find activity of the device, it might be offline. Name: {}, PID: 0x{:04X}, SN/ID: {}, MAC: {}, IP: {}", dev->getName(), dev->getPid(),
+                  dev->getDeviceSn(), mac, ip);
         return false;
     }
     else if(elapsed <= timeThreshold) {
         // If the device is active within the allowed elapsed time threshold, consider it online
-        LOG_DEBUG("The device responded {} ms ago and is considered online. Name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", elapsed, dev->getName(),
+        LOG_DEBUG("The device responded {} ms ago and is considered online. Name: {}, PID: 0x{:04X}, SN/ID: {}, MAC: {}, IP: {}", elapsed, dev->getName(),
                   dev->getPid(), dev->getDeviceSn(), mac, ip);
         return true;
     }
     else {
-        LOG_DEBUG("The device responded {} ms ago, it might be offline. Name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", elapsed, dev->getName(),
+        LOG_DEBUG("The device responded {} ms ago, it might be offline. Name: {}, PID: 0x{:04X}, SN/ID: {}, MAC: {}, IP: {}", elapsed, dev->getName(),
                   dev->getPid(), dev->getDeviceSn(), mac, ip);
         return false;
     }
