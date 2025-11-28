@@ -14,7 +14,7 @@ namespace libobsensor {
 class LiDARDeviceInfo : public DeviceEnumInfoBase, public std::enable_shared_from_this<LiDARDeviceInfo> {
 public:
     LiDARDeviceInfo(const SourcePortInfoList groupedInfoList);
-    ~LiDARDeviceInfo() noexcept;
+    ~LiDARDeviceInfo() noexcept override;
 
     std::shared_ptr<IDevice>                             createDevice() const override;
     static std::vector<std::shared_ptr<IDeviceEnumInfo>> pickNetDevices(const SourcePortInfoList infoList);

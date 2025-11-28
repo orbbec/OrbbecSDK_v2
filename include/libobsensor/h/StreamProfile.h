@@ -58,7 +58,7 @@ OB_EXPORT ob_stream_profile *ob_create_accel_stream_profile(ob_accel_full_scale_
  * @param[in] sample_rate Gyro sample rate
  * @param[out] error Pointer to an error object that will be set if an error occurs.
  *
- * @return ob_stream_profile* return the accel stream profile object
+ * @return ob_stream_profile* return the gyro stream profile object
  */
 OB_EXPORT ob_stream_profile *ob_create_gyro_stream_profile(ob_gyro_full_scale_range full_scale_range, ob_gyro_sample_rate sample_rate, ob_error **error);
 
@@ -68,7 +68,7 @@ OB_EXPORT ob_stream_profile *ob_create_gyro_stream_profile(ob_gyro_full_scale_ra
  * @param[in] scan_rate The scan rate of LiDAR
  * @param[in] format The format of the LiDAR stream
  * @param[out] error Pointer to an error object that will be set if an error occurs.
- * @return ob_stream_profile* return the accel stream profile object
+ * @return ob_stream_profile* return the LiDAR stream profile object
  */
 OB_EXPORT ob_stream_profile *ob_create_lidar_stream_profile(ob_lidar_scan_rate scan_rate, ob_format format, ob_error **error);
 
@@ -444,8 +444,8 @@ OB_EXPORT ob_stream_profile *ob_stream_profile_list_get_gyro_stream_profile(cons
  * @attention The stream profile returned by this function should be deleted by calling @ref ob_delete_stream_profile() when it is no longer needed.
  *
  * @param[in] profile_list Resolution list.
- * @param scan_rate[in] The scan rate of LiDAR. If you don't need to add matching conditions, you can pass OB_LIDAR_SCAN_ANY.
- * @param format[in] The format of the LiDAR stream. If you don't need to add matching conditions, you can pass OB_FORMAT_ANY.
+ * @param[in] scan_rate The scan rate of LiDAR. If you don't need to add matching conditions, you can pass OB_LIDAR_SCAN_ANY.
+ * @param[in] format The format of the LiDAR stream. If you don't need to add matching conditions, you can pass OB_FORMAT_ANY.
  * @param[out] error Pointer to an error object that will be set if an error occurs.
  * @return The matching profile.
  */

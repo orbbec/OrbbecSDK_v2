@@ -22,7 +22,7 @@ public:
     LiDARStreamer(IDevice *owner, const std::shared_ptr<IDataStreamPort> &backend);
     LiDARStreamer(IDevice *owner, const std::shared_ptr<IDataStreamPort> &backend, std::vector<std::pair<std::string, std::shared_ptr<IFilter>>> filters);
 
-    virtual ~LiDARStreamer() noexcept;
+    virtual ~LiDARStreamer() noexcept override;
 
     virtual void     startStream(std::shared_ptr<const StreamProfile> profile, MutableFrameCallback callback) override;
     virtual void     stopStream(std::shared_ptr<const StreamProfile> profile) override;

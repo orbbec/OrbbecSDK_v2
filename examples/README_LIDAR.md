@@ -1,6 +1,6 @@
 ## Introduction
 
-There are several examples codes for users learn how to use Orbbec LiDARs. Here is a brief introduction to each sample code:
+There are several examples codes for users learn how to use LiDARs. Here is a brief introduction to each sample code:
 
 | Level | Sample                                                       | Description                                                  |
 | ----- | ------------------------------------------------------------ | ------------------------------------------------------------ |
@@ -16,8 +16,8 @@ The listed examples at previous section are written in C++ language. Here is a b
 
 | Level | Sample                                                    | Description                                                  |
 | ----- | --------------------------------------------------------- | ------------------------------------------------------------ |
-| lidar | [c_lidar_quick_start](lidar_examples/0.c_lidar_quick_start) | This C language sample demonstrates how to quickly obtain LiDAR point cloud data using the Orbbec SDK C API and save it to a PLY file when triggered by user input. |
-| lidar | [c_lidar_stream](lidar_examples/1.c_lidar_stream)         | This C language sample demonstrates how to configure and stream LiDAR and IMU sensor data using the Orbbec SDK C API, providing interactive sensor selection and real-time data monitoring. |
+| lidar | [c_lidar_quick_start](lidar_examples/0.c_lidar_quick_start) | This C language sample demonstrates how to quickly obtain LiDAR point cloud data using the SDK C API and save it to a PLY file when triggered by user input. |
+| lidar | [c_lidar_stream](lidar_examples/1.c_lidar_stream)         | This C language sample demonstrates how to configure and stream LiDAR and IMU sensor data using the SDK C API, providing interactive sensor selection and real-time data monitoring. |
 
 ## Append
 
@@ -33,7 +33,7 @@ It contains functions to get the current system timestamp and wait for keystroke
 
 ### The Error Handling in the examples code
 
-When using the Orbbec SDK, if an error occurs, the SDK reports the error by throwing an exception of type ob::Error. The ob::Error exception class typically contains detailed information about the error, which can help developers diagnose the problem.
+When using the SDK, if an error occurs, the SDK reports the error by throwing an exception of type ob::Error. The ob::Error exception class typically contains detailed information about the error, which can help developers diagnose the problem.
 The example uses a 'try' block to wrap the entire main function.If an exception of type ob::Error is thrown, the program will catch it and print the error message to the console.
 Here is the information that can be obtained from an ob::Error:
 

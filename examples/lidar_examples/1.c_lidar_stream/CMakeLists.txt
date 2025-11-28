@@ -6,7 +6,7 @@ project(ob_lidar_stream_c C)
 
 add_executable(${PROJECT_NAME} lidar_stream.c)
 
-target_link_libraries(${PROJECT_NAME} ob::OrbbecSDK ob::examples::utils)
+target_link_libraries(${PROJECT_NAME} ob::${OB_SDK_LIB_NAME} ob::examples::utils)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "lidar_examples")
 if(MSVC)

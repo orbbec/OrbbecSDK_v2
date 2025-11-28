@@ -20,7 +20,7 @@ namespace libobsensor {
 class MS600Streamer : public ILiDARStreamer {
 public:
     MS600Streamer(IDevice *owner, const std::shared_ptr<IDataStreamPort> &backend);
-    virtual ~MS600Streamer() noexcept;
+    virtual ~MS600Streamer() noexcept override;
 
     virtual void     startStream(std::shared_ptr<const StreamProfile> profile, MutableFrameCallback callback) override;
     virtual void     stopStream(std::shared_ptr<const StreamProfile> profile) override;

@@ -86,12 +86,12 @@ The program provides an interactive interface to monitor and modify LiDAR device
 
 ```shell
 Device list:
-0. name: Orbbec_LiDAR_ME450, vid: 0x2bc5, pid: 0x1302, uid: 0x20:4b:5e:00:43:09, sn: T0H6851001Z
-1. name: Orbbec_LiDAR_ME450, vid: 0x2bc5, pid: 0x1302, uid: 0x20:4b:5e:13:64:30, sn: T0H6851000Z
+0. name: LiDAR ME450, vid: 0x2bc5, pid: 0x1302, uid: 0x20:4b:5e:00:43:09, sn: T0H6851001Z
+1. name: LiDAR ME450, vid: 0x2bc5, pid: 0x1302, uid: 0x20:4b:5e:13:64:30, sn: T0H6851000Z
 Select a device: 1
 
 ------------------------------------------------------------------------
-Current Device:  name: Orbbec_LiDAR_ME450, vid: 0x2bc5, pid: 0x1302, uid: 0x20:4b:5e:13:64:30
+Current Device:  name: LiDAR ME450, vid: 0x2bc5, pid: 0x1302, uid: 0x20:4b:5e:13:64:30
 Input "?" to get all properties.
 Input "exit" to exit the program.
 ?

@@ -164,8 +164,8 @@ public:
      * If no parameters are specified, the stream will be enabled with default settings.
      * Users who wish to set custom full-scale ranges or sample rates should refer to the product manual, as available settings vary by device model.
      *
-     * @param scanRate The scan rate of the LiDAR (default is OB_LIDAR_SCAN_ANY, which selects the default scan rate).
-     * @param format The stream format (default is OB_FORMAT_ANY, which selects the default format).
+     * @param[in] scanRate The scan rate of the LiDAR (default is OB_LIDAR_SCAN_ANY, which selects the default scan rate).
+     * @param[in] format The stream format (default is OB_FORMAT_ANY, which selects the default format).
      */
     void enableLiDARStream(OBLiDARScanRate scanRate = OB_LIDAR_SCAN_ANY, OBFormat format = OB_FORMAT_ANY) const {
         ob_error *error = nullptr;

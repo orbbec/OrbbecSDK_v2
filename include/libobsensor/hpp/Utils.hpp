@@ -190,11 +190,10 @@ public:
     /**
      * @brief Save LiDAR point cloud to PLY file.
      *
-     * @param fileName Point cloud save path
-     * @param frame LiDAR point cloud frame
-     * @param saveBinary Binary or textual,true: binary, false: textual
-     * @return true if successful
-     * @return false if failed
+     * @param[in] fileName Point cloud save path
+     * @param[in] frame LiDAR point cloud frame
+     * @param[in] saveBinary Binary or textual,true: binary, false: textual
+     * @return bool save LiDAR point cloud result
      */
     static bool saveLiDARPointcloudToPly(const char *fileName, std::shared_ptr<ob::LiDARPointsFrame> frame, bool saveBinary) {
         ob_error *error       = NULL;

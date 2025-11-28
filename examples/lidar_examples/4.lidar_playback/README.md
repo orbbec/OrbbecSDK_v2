@@ -27,11 +27,8 @@ This sample demonstrates how to play back recorded LiDAR and IMU sensor data fro
 
     ```cpp
     playback->setPlaybackStatusChangeCallback([&](OBPlaybackStatus status) {
-        if(status == OB_PLAYBACK_STOPPED && !exited) {
-            pipe->stop();
-            std::cout << "Replay again" << std::endl;
-            pipe->start(config, frameCallback);
-        }
+        playStatus = status;
+        replayCv.notify_all();
     });
     ```
 
@@ -130,5 +127,7 @@ frame index: 130, tsp: 1758807588598443, format: GYRO
 frame index: 150, tsp: 1758807589018829, format: ACCEL
 frame index: 150, tsp: 1758807589018829, format: GYRO
 frame index: 71, tsp: 1758807589436271, format: LIDAR_SPHERE_POINT
+Replay monitor thread exists
+exit
 ```
 

@@ -13,7 +13,7 @@ namespace libobsensor {
 class LiDARPointFilter : public IFilterBase {
 public:
     LiDARPointFilter();
-    ~LiDARPointFilter();
+    ~LiDARPointFilter() noexcept override;
 
     void               updateConfig(std::vector<std::string> &params) override;
     const std::string &getConfigSchema() const override;

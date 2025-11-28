@@ -545,8 +545,8 @@ public:
      * @brief Match the corresponding LiDAR stream profile based on the passed-in parameters. If multiple Match are found, the first one in the list is
      * returned by default. Throws an exception if no matching profile is found.
      *
-     * @param scanRate The scan rate of LiDAR. Pass OB_LIDAR_SCAN_ANY if no matching condition is required.
-     * @param format The type of the stream. Pass OB_FORMAT_ANY if no matching condition is required.
+     * @param[in] scanRate The scan rate of LiDAR. Pass OB_LIDAR_SCAN_ANY if no matching condition is required.
+     * @param[in] format The type of the stream. Pass OB_FORMAT_ANY if no matching condition is required.
      */
     std::shared_ptr<LiDARStreamProfile> getLiDARStreamProfile(OBLiDARScanRate scanRate, OBFormat format) const {
         ob_error *error   = nullptr;

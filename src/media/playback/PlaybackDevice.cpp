@@ -143,6 +143,9 @@ void PlaybackDevice::initSensorList() {
             [this]() {
                 auto sensor = std::make_shared<LiDARSensor>(this, port_, port_);
                 sensor->setStreamProfileList(port_->getStreamProfileList(OB_SENSOR_LIDAR));
+
+                // disable timestamp anomaly detection for playback device
+                sensor->enableTimestampAnomalyDetection(false);
                 return sensor;
             },
             true);

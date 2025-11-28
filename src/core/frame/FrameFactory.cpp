@@ -103,6 +103,7 @@ std::shared_ptr<Frame> FrameFactory::createFrameFromUserBuffer(OBFrameType frame
         sp    = StreamProfileFactory::createGyroStreamProfile(OB_GYRO_FS_16dps, OB_SAMPLE_RATE_1_5625_HZ);
         break;
     case OB_FRAME_LIDAR_POINTS:
+        // TODO: OB_LIDAR_SCAN_ANY is invalid here, need to get the real scan rate from user or device
         frame = std::make_shared<LiDARPointsFrame>(buffer, bufferSize, bufferReclaimFunc);
         sp    = StreamProfileFactory::createLiDARStreamProfile(OB_LIDAR_SCAN_ANY, format);
         break;
@@ -135,6 +136,7 @@ std::shared_ptr<Frame> FrameFactory::createFrameFromUserBuffer(OBFrameType frame
         sp = StreamProfileFactory::createGyroStreamProfile(OB_GYRO_FS_16dps, OB_SAMPLE_RATE_1_5625_HZ);
         break;
     case OB_FRAME_LIDAR_POINTS:
+        // TODO: OB_LIDAR_SCAN_ANY is invalid here, need to get the real scan rate from user or device
         sp = StreamProfileFactory::createLiDARStreamProfile(OB_LIDAR_SCAN_ANY, format);
         break;
     default:

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This C language sample demonstrates how to configure and stream LiDAR and IMU sensor data using the Orbbec SDK C API, providing interactive sensor selection and real-time data monitoring.
+This C language sample demonstrates how to configure and stream LiDAR and IMU sensor data using the SDK C API, providing interactive sensor selection and real-time data monitoring.
 
 ### Knowledge
 
@@ -137,12 +137,12 @@ This sample serves as a foundation for building C applications that require flex
 
 ```shell
 Device List:
-0. name: Orbbec_LiDAR_ME450, vid: 0x2bc5, pid: 0x1302, uid: 0x20:4b:5e:00:43:09, sn: T0H6851001Z
-1. name: Orbbec_LiDAR_ME450, vid: 0x2bc5, pid: 0x1302, uid: 0x20:4b:5e:13:64:30, sn: T0H6851000Z
+0. name: LiDAR ME450, vid: 0x2bc5, pid: 0x1302, uid: 0x20:4b:5e:00:43:09, sn: T0H6851001Z
+1. name: LiDAR ME450, vid: 0x2bc5, pid: 0x1302, uid: 0x20:4b:5e:13:64:30, sn: T0H6851000Z
 Select a device: 1
 
 ------------------------------------------------------------------------
-Current Device: name: Orbbec_LiDAR_ME450, vid: 0x2bc5, pid: 0x1302, uid: 0x20:4b:5e:13:64:30, sn: T0H6851000Z
+Current Device: name: LiDAR ME450, vid: 0x2bc5, pid: 0x1302, uid: 0x20:4b:5e:13:64:30, sn: T0H6851000Z
 LiDAR IP Address: 192.168.1.100
 
 Sensor list:

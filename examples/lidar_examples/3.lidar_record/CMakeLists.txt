@@ -7,7 +7,7 @@ project(ob_lidar_record)
 add_executable(${PROJECT_NAME} lidar_record.cpp)
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 11)
-target_link_libraries(${PROJECT_NAME} ob::OrbbecSDK ob::examples::utils)
+target_link_libraries(${PROJECT_NAME} ob::${OB_SDK_LIB_NAME} ob::examples::utils)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "lidar_examples")
 if(MSVC)

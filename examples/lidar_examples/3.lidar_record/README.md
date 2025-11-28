@@ -102,8 +102,8 @@ The program creates a complete sensor data recording with:
 
 ```shell
 Device list:
-0. name: Orbbec_LiDAR_ME450, vid: 0x2bc5, pid: 0x1302, uid: 0x20:4b:5e:00:43:09, sn: T0H6851001Z
-1. name: Orbbec_LiDAR_ME450, vid: 0x2bc5, pid: 0x1302, uid: 0x20:4b:5e:13:64:30, sn: T0H6851000Z
+0. name: LiDAR ME450, vid: 0x2bc5, pid: 0x1302, uid: 0x20:4b:5e:00:43:09, sn: T0H6851001Z
+1. name: LiDAR ME450, vid: 0x2bc5, pid: 0x1302, uid: 0x20:4b:5e:13:64:30, sn: T0H6851000Z
 Select a device: 1
 
 ------------------------------------------------------------------------

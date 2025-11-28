@@ -186,6 +186,7 @@ std::shared_ptr<ISourcePort> EthernetPal::getSourcePort(std::shared_ptr<const So
 }
 
 void EthernetPal::updateMDNSDeviceSourceInfo(const std::vector<MDNSDeviceInfo> &added, const std::vector<MDNSDeviceInfo> &removed) {
+    std::lock_guard<std::mutex> lock(sourcePortInfoMetux_);
     // Only re-query port information for newly online devices
     for(auto &&info: added) {
         sourcePortInfoList_.push_back(std::make_shared<NetSourcePortInfo>(SOURCE_PORT_NET_VENDOR, "unknown", "unknown", "unknown", info.ip, info.port, info.mac, info.sn, ORBBEC_DEVICE_VID, info.pid));

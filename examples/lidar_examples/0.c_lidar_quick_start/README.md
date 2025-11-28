@@ -2,11 +2,11 @@
 
 ## Overview
 
-This C language sample demonstrates how to quickly obtain LiDAR point cloud data using the Orbbec SDK C API and save it to a PLY file when triggered by user input.
+This C language sample demonstrates how to quickly obtain LiDAR point cloud data using the SDK C API and save it to a PLY file when triggered by user input.
 
 ### Knowledge
 
-- **C API** provides a C-language interface for the Orbbec SDK functionality
+- **C API** provides a C-language interface for the SDK functionality
 - **Pipeline** manages data streams similar to the C++ version
 - **Error Handling** uses `ob_error` structure for comprehensive error reporting
 - **Memory Management** requires explicit deletion of frames and pipelines

@@ -15,7 +15,7 @@ namespace libobsensor {
 class LiDARStreamProfileFilter : public DeviceComponentBase, public IStreamProfileFilter {
 public:
     LiDARStreamProfileFilter(IDevice *owner);
-    virtual ~LiDARStreamProfileFilter() noexcept = default;
+    virtual ~LiDARStreamProfileFilter() noexcept override = default;
 
     StreamProfileList filter(const StreamProfileList &profiles) const override;
 };

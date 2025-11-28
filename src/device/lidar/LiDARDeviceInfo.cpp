@@ -25,14 +25,14 @@ LiDARDeviceInfo::LiDARDeviceInfo(const SourcePortInfoList groupedInfoList) {
         auto iter = std::find_if(LiDARDeviceNameMap.begin(), LiDARDeviceNameMap.end(),
                                  [portInfo](const std::pair<std::string, uint32_t> &pair) { return portInfo->pid == pair.second; });
         if(iter != LiDARDeviceNameMap.end()) {
-            name_ = "LiDAR_" + iter->first;
+            name_ = "LiDAR " + iter->first;
         }
         else {
-            name_ = "LiDAR_series_device";
+            name_ = "LiDAR series device";
         }
-        fullName_           = "Orbbec_" + name_;
+        fullName_           = "Orbbec " + name_;
         pid_                = portInfo->pid;
-        vid_                = 0x2BC5;
+        vid_                = portInfo->vid;
         uid_                = portInfo->mac;
         deviceSn_           = portInfo->serialNumber;
         connectionType_     = "Ethernet";

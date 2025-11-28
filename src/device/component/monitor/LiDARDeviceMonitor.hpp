@@ -4,6 +4,7 @@
 #include "IDeviceMonitor.hpp"
 #include "ISourcePort.hpp"
 #include "DeviceComponentBase.hpp"
+#include "DeviceActivityRecorder.hpp"
 
 #include <map>
 
@@ -16,7 +17,7 @@ namespace libobsensor {
 class LiDARDeviceMonitor : public IDeviceMonitor, public DeviceComponentBase {
 public:
     LiDARDeviceMonitor(IDevice *owner, std::shared_ptr<ISourcePort> sourcePort);
-    virtual ~LiDARDeviceMonitor() noexcept;
+    virtual ~LiDARDeviceMonitor() noexcept override;
 
     OBDeviceState getCurrentDeviceState() const override;
     int           registerStateChangedCallback(DeviceStateChangedCallback callback) override;
@@ -30,7 +31,8 @@ public:
     void sendAndReceiveData(const uint8_t *sendData, uint32_t sendDataSize, uint8_t *receiveData, uint32_t *receiveDataSize) override;
 
 private:
-    std::shared_ptr<IVendorDataPort> vendorDataPort_;
+    std::shared_ptr<IVendorDataPort>         vendorDataPort_;
+    std::shared_ptr<IDeviceActivityRecorder> activityRecorder_;
 };
 
 }  // namespace libobsensor

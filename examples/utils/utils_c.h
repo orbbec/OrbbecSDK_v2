@@ -4,6 +4,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <stdlib.h>
 #include <libobsensor/ObSensor.h>
 
 #ifdef __cplusplus

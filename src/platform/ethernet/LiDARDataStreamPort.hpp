@@ -33,7 +33,7 @@ struct LiDARDataStreamPortInfo : public NetSourcePortInfo {
 class LiDARDataStreamPort : public IDataStreamPort {
 public:
     LiDARDataStreamPort(std::shared_ptr<const LiDARDataStreamPortInfo> portInfo);
-    virtual ~LiDARDataStreamPort() noexcept;
+    virtual ~LiDARDataStreamPort() noexcept override;
 
     std::shared_ptr<const SourcePortInfo> getSourcePortInfo() const override {
         return portInfo_;

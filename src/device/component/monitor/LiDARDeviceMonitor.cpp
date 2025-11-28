@@ -12,6 +12,11 @@ LiDARDeviceMonitor::LiDARDeviceMonitor(IDevice *owner, std::shared_ptr<ISourcePo
     if(!vendorDataPort_) {
         throw std::runtime_error("LiDARDeviceMonitor: data port must be a vendor data port!");
     }
+
+    auto activityRecorder = owner->getComponentT<IDeviceActivityRecorder>(OB_DEV_COMPONENT_DEVICE_ACTIVITY_RECORDER, false);
+    if(activityRecorder) {
+        activityRecorder_ = activityRecorder.get();
+    }
 }
 
 LiDARDeviceMonitor::~LiDARDeviceMonitor() noexcept {
@@ -55,6 +60,11 @@ void LiDARDeviceMonitor::resumeHeartbeat() {
 void LiDARDeviceMonitor::sendAndReceiveData(const uint8_t *sendData, uint32_t sendDataSize, uint8_t *receiveData, uint32_t *receiveDataSize) {
     auto recvLen     = vendorDataPort_->sendAndReceive(sendData, sendDataSize, receiveData, *receiveDataSize);
     *receiveDataSize = recvLen;
+
+    // update active time
+    if(activityRecorder_) {
+        activityRecorder_->touch(DeviceActivity::Command);
+    }
 }
 
 }  // namespace libobsensor

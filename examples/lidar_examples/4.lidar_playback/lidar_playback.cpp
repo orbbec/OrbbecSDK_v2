@@ -8,6 +8,7 @@
 #include <thread>
 #include <atomic>
 #include <algorithm>
+#include <condition_variable>
 #include <cctype>
 
 bool getRosbagPath(std::string &rosbagPath);
@@ -42,14 +43,15 @@ int main(void) try {
         frameCount++;
     };
 
+
+    std::mutex                    replayMutex;
+    std::condition_variable       replayCv;
+    std::atomic<OBPlaybackStatus> playStatus(OB_PLAYBACK_STOPPED);
+
     // Set playback status change callback, when the playback stops, start the pipeline again with the same config
     playback->setPlaybackStatusChangeCallback([&](OBPlaybackStatus status) {
-        if(status == OB_PLAYBACK_STOPPED && !exited) {
-            pipe->stop();
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            std::cout << "Replay again" << std::endl;
-            pipe->start(config, frameCallback);
-        }
+        playStatus = status;
+        replayCv.notify_all();
     });
 
     auto sensorList = playback->getSensorList();
@@ -62,6 +64,29 @@ int main(void) try {
 
     // Start the pipeline with the config
     pipe->start(config, frameCallback);
+
+    auto replayThread = std::thread([&] {
+        do {
+            std::unique_lock<std::mutex> lock(replayMutex);
+            replayCv.wait(lock, [&]() { return (exited.load() || playStatus.load() == OB_PLAYBACK_STOPPED); });
+            if(exited) {
+                break;
+            }
+            if(playStatus == OB_PLAYBACK_STOPPED) {
+                pipe->stop();
+                // wait 1s and play again
+                replayCv.wait_for(lock, std::chrono::milliseconds(1000), [&]() { return exited.load(); });
+                if(exited) {
+                    break;
+                }
+                playStatus = OB_PLAYBACK_UNKNOWN;
+                std::cout << "Replay again" << std::endl;
+                pipe->start(config, frameCallback);
+            }
+        } while(!exited);
+        pipe->stop();
+        std::cout << "Replay monitor thread exists" << std::endl;
+    });
 
     while(true) {
         auto key = ob_smpl::waitForKeyPressed(1);
@@ -81,9 +106,15 @@ int main(void) try {
         }
     }
 
-    exited = true;
-
+    // stop
     pipe->stop();
+    exited = true;
+    replayCv.notify_all();
+    if(replayThread.joinable()) {
+        replayThread.join();
+    }
+
+    std::cout << "exit" << std::endl;
     return 0;
 }
 catch(ob::Error &e) {

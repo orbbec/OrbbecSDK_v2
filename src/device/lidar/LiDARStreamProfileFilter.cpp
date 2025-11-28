@@ -30,7 +30,7 @@ StreamProfileList LiDARStreamProfileFilter::filter(const StreamProfileList &prof
             continue;
         }
         auto format = profile->getFormat();
-        if((format == OB_FORMAT_LIDAR_CALIBRATION )) {
+        if(format == OB_FORMAT_LIDAR_CALIBRATION ) {
             // for calibration mode
             if(!isCalibrationMode) {
                 continue;

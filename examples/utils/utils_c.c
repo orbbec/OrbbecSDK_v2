@@ -136,15 +136,18 @@ char ob_smpl_wait_for_key_press(uint32_t timeout_ms) {
 #endif
 
 bool ob_smpl_is_lidar_device(ob_device *device) {
+    ob_error       *error       = NULL;
+    ob_sensor_list *sensorList  = NULL;
+    uint32_t        sensorCount = 0;
+
     if(device == NULL) {
         return false;
     }
 
-    ob_error       *error      = NULL;
-    ob_sensor_list *sensorList = ob_device_get_sensor_list(device, &error);
+    sensorList = ob_device_get_sensor_list(device, &error);
     CHECK_OB_ERROR_EXIT(&error);
 
-    uint32_t sensorCount = ob_sensor_list_get_count(sensorList, &error);
+    sensorCount = ob_sensor_list_get_count(sensorList, &error);
     CHECK_OB_ERROR_EXIT(&error);
 
     for(uint32_t index = 0; index < sensorCount; index++) {

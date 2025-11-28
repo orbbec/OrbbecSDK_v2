@@ -48,18 +48,26 @@ int select_index(const char *prompt, int min_value, int max_value) {
 
 int main(void) {
     // Used to return SDK interface error information.
-    ob_error *error = NULL;
+    ob_error       *error       = NULL;
+    ob_context     *context     = NULL;
+    ob_device_list *deviceList  = NULL;
+    ob_device      *device      = NULL;
+    int             deviceCount = 0;
+    ob_pipeline    *pipe        = NULL;
+    ob_device_info *device_info = NULL;
+    ob_config      *config      = NULL;
+    uint32_t        data_size   = 64;
+    uint8_t         data[64]    = { 0 };
 
     // Create a context
-    ob_context *context = ob_create_context(&error);
+    context = ob_create_context(&error);
     CHECK_OB_ERROR_EXIT(&error);
 
     // Query the list of connected devices
-    ob_device_list *deviceList = ob_query_device_list(context, &error);
+    deviceList = ob_query_device_list(context, &error);
     CHECK_OB_ERROR_EXIT(&error);
 
-    ob_device *device      = NULL;
-    int        deviceCount = ob_device_list_get_count(deviceList, &error);
+    deviceCount = ob_device_list_get_count(deviceList, &error);
     CHECK_OB_ERROR_EXIT(&error);
     if(deviceCount <= 0) {
         printf("Device Not Found\n");
@@ -75,7 +83,7 @@ int main(void) {
     }
 
     // Create a pipeline to manage the streams
-    ob_pipeline *pipe = ob_create_pipeline_with_device(device, &error);
+    pipe = ob_create_pipeline_with_device(device, &error);
     CHECK_OB_ERROR_EXIT(&error);
 
     // Check LiDAR device
@@ -85,20 +93,19 @@ int main(void) {
     }
 
     // Get properties of the device
-    ob_device_info *device_info = ob_device_get_device_info(device, &error);
+    device_info = ob_device_get_device_info(device, &error);
     CHECK_OB_ERROR_EXIT(&error);
     printf("\n------------------------------------------------------------------------\n");
     printf("Current Device: name: %s, vid: 0x%04x, pid: 0x%04x, uid: 0x%s, sn: %s\n", ob_device_info_get_name(device_info, &error),
-           ob_device_info_get_vid(device_info, &error), ob_device_info_get_pid(device_info, &error), ob_device_info_get_uid(device_info, &error),
-           ob_device_info_get_serial_number(device_info, &error));
+           (unsigned int)ob_device_info_get_vid(device_info, &error), (unsigned int)ob_device_info_get_pid(device_info, &error),
+           ob_device_info_get_uid(device_info, &error), ob_device_info_get_serial_number(device_info, &error));
     CHECK_OB_ERROR_EXIT(&error);
+
     //  Delete device info
     ob_delete_device_info(device_info, &error);
     CHECK_OB_ERROR_EXIT(&error);
 
     // Get serial number
-    uint32_t data_size = 64;
-    uint8_t  data[64]  = { 0 };
     ob_device_get_structured_data(device, OB_RAW_DATA_LIDAR_IP_ADDRESS, data, &data_size, &error);
     CHECK_OB_ERROR_EXIT(&error);
     printf("LiDAR IP Address: %d.%d.%d.%d\n\n", data[3], data[2], data[1], data[0]);
@@ -108,7 +115,7 @@ int main(void) {
     CHECK_OB_ERROR_EXIT(&error);
 
     // Create a configuration for the pipeline
-    ob_config *config = ob_create_config(&error);
+    config = ob_create_config(&error);
     CHECK_OB_ERROR_EXIT(&error);
 
     // Set frame aggregate output mode to require all types of frames
@@ -154,8 +161,9 @@ int main(void) {
 uint32_t frame_count = 0;
 // Frame callback function
 void frame_callback(ob_frame *frameset, void *user_data) {
-    (void)user_data;
     ob_error *error = NULL;
+    uint32_t  count = 0;
+    (void)user_data;
 
     // If frameset is NULL, return directly.
     if(!frameset) {
@@ -166,16 +174,19 @@ void frame_callback(ob_frame *frameset, void *user_data) {
     // Print frame information every 50 frames
     if(frame_count % 50 == 0) {
         // Get the number of frames in the frameset
-        uint32_t count = ob_frameset_get_count(frameset, &error);
+        count = ob_frameset_get_count(frameset, &error);
         CHECK_OB_ERROR_EXIT(&error);
 
         for(uint32_t i = 0; i < count; i++) {
             // Get each frame in the frameset
-            ob_frame *frame = ob_frameset_get_frame_by_index(frameset, i, &error);
+            ob_frame     *frame      = NULL;
+            ob_frame_type frame_type = OB_FRAME_UNKNOWN;
+
+            frame = ob_frameset_get_frame_by_index(frameset, i, &error);
             CHECK_OB_ERROR_EXIT(&error);
 
             // check frame type
-            ob_frame_type frame_type = ob_frame_get_type(frame, &error);
+            frame_type = ob_frame_get_type(frame, &error);
             CHECK_OB_ERROR_EXIT(&error);
 
             switch(frame_type) {
@@ -185,16 +196,20 @@ void frame_callback(ob_frame *frameset, void *user_data) {
                 break;
             case OB_FRAME_ACCEL: {
                 // Handle accelerometer frame
+                uint64_t index       = 0;
+                uint64_t timestamp   = 0;
+                float    temperature = 0;
+
                 const ob_float_3d value = ob_accel_frame_get_value(frame, &error);
                 CHECK_OB_ERROR_EXIT(&error);
 
-                uint64_t index = ob_frame_get_index(frame, &error);
+                index = ob_frame_get_index(frame, &error);
                 CHECK_OB_ERROR_EXIT(&error);
 
-                uint64_t timestamp = ob_frame_get_timestamp_us(frame, &error);
+                timestamp = ob_frame_get_timestamp_us(frame, &error);
                 CHECK_OB_ERROR_EXIT(&error);
 
-                float temperature = ob_accel_frame_get_temperature(frame, &error);
+                temperature = ob_accel_frame_get_temperature(frame, &error);
                 CHECK_OB_ERROR_EXIT(&error);
 
                 print_imu_value(&value, index, timestamp, temperature, frame_type, "m/s^2");
@@ -203,16 +218,19 @@ void frame_callback(ob_frame *frameset, void *user_data) {
             }
             case OB_FRAME_GYRO: {
                 // Handle gyroscope frame
-                const ob_float_3d value = ob_gyro_frame_get_value(frame, &error);
+                uint64_t          index       = 0;
+                uint64_t          timestamp   = 0;
+                float             temperature = 0;
+                const ob_float_3d value       = ob_gyro_frame_get_value(frame, &error);
                 CHECK_OB_ERROR_EXIT(&error);
 
-                uint64_t index = ob_frame_get_index(frame, &error);
+                index = ob_frame_get_index(frame, &error);
                 CHECK_OB_ERROR_EXIT(&error);
 
-                uint64_t timestamp = ob_frame_get_timestamp_us(frame, &error);
+                timestamp = ob_frame_get_timestamp_us(frame, &error);
                 CHECK_OB_ERROR_EXIT(&error);
 
-                float temperature = ob_gyro_frame_get_temperature(frame, &error);
+                temperature = ob_gyro_frame_get_temperature(frame, &error);
                 CHECK_OB_ERROR_EXIT(&error);
 
                 print_imu_value(&value, index, timestamp, temperature, frame_type, "rad/s");
@@ -257,14 +275,17 @@ void print_imu_value(const ob_float_3d *value, uint64_t index, uint64_t timestam
 
 // Print LiDAR point cloud frame information
 void print_lidar_point_cloud_info(ob_frame *point_cloud_frame) {
+    ob_error   *error             = NULL;
+    ob_format   point_cloud_type  = OB_FORMAT_UNKNOWN;
+    const float min_point_value   = 1e-6f;
+    uint32_t    valid_point_count = 0;
+
     if(point_cloud_frame == NULL) {
         printf("LiDAR point cloud frame is NULL\n");
         return;
     }
 
-    ob_error *error = NULL;
-
-    ob_format point_cloud_type = ob_frame_get_format(point_cloud_frame, &error);
+    point_cloud_type = ob_frame_get_format(point_cloud_frame, &error);
     CHECK_OB_ERROR_EXIT(&error);
 
     // Check if the point cloud format is valid
@@ -273,18 +294,19 @@ void print_lidar_point_cloud_info(ob_frame *point_cloud_frame) {
         return;
     }
 
-    const float min_point_value   = 1e-6f;
-    uint32_t    valid_point_count = 0;
-
     if(point_cloud_type == OB_FORMAT_LIDAR_SPHERE_POINT) {
         // Convert spherical coordinates to Cartesian coordinates and count valid points
-        const ob_lidar_sphere_point *points = (const ob_lidar_sphere_point *)ob_frame_data(point_cloud_frame, &error);
+        uint32_t                     point_count = 0;
+        const ob_lidar_sphere_point *points      = (const ob_lidar_sphere_point *)ob_frame_data(point_cloud_frame, &error);
         CHECK_OB_ERROR_EXIT(&error);
 
-        uint32_t point_count = (uint32_t)(ob_frame_data_size(point_cloud_frame, &error) / sizeof(ob_lidar_sphere_point));
+        point_count = (uint32_t)(ob_frame_data_size(point_cloud_frame, &error) / sizeof(ob_lidar_sphere_point));
         CHECK_OB_ERROR_EXIT(&error);
 
         for(uint32_t i = 0; i < point_count; ++i) {
+            float  x         = 0;
+            float  y         = 0;
+            float  z         = 0;
             double theta_rad = points[i].theta * M_PI / 180.0f;
             double phi_rad   = points[i].phi * M_PI / 180.0f;
             float  distance  = points[i].distance;
@@ -293,9 +315,9 @@ void print_lidar_point_cloud_info(ob_frame *point_cloud_frame) {
                 continue;
 
             // Spherical to Cartesian conversion
-            float x = (float)(distance * cos(theta_rad) * cos(phi_rad));
-            float y = (float)(distance * sin(theta_rad) * cos(phi_rad));
-            float z = (float)(distance * sin(phi_rad));
+            x = (float)(distance * cos(theta_rad) * cos(phi_rad));
+            y = (float)(distance * sin(theta_rad) * cos(phi_rad));
+            z = (float)(distance * sin(phi_rad));
 
             if(isfinite(x) && isfinite(y) && isfinite(z))
                 valid_point_count++;
@@ -303,10 +325,11 @@ void print_lidar_point_cloud_info(ob_frame *point_cloud_frame) {
     }
     else if(point_cloud_type == OB_FORMAT_LIDAR_POINT) {
         // Count valid points
-        const ob_lidar_point *points = (const ob_lidar_point *)ob_frame_data(point_cloud_frame, &error);
+        uint32_t              point_count = 0;
+        const ob_lidar_point *points      = (const ob_lidar_point *)ob_frame_data(point_cloud_frame, &error);
         CHECK_OB_ERROR_EXIT(&error);
 
-        uint32_t point_count = (uint32_t)(ob_frame_data_size(point_cloud_frame, &error) / sizeof(ob_lidar_point));
+        point_count = (uint32_t)(ob_frame_data_size(point_cloud_frame, &error) / sizeof(ob_lidar_point));
         CHECK_OB_ERROR_EXIT(&error);
 
         for(uint32_t i = 0; i < point_count; ++i) {
@@ -320,21 +343,24 @@ void print_lidar_point_cloud_info(ob_frame *point_cloud_frame) {
     }
     else if(point_cloud_type == OB_FORMAT_LIDAR_SCAN) {
         // Convert polar coordinates to Cartesian coordinates and count valid points
-        const ob_lidar_scan_point *points = (const ob_lidar_scan_point *)ob_frame_data(point_cloud_frame, &error);
+        uint32_t                   point_count = 0;
+        const ob_lidar_scan_point *points      = (const ob_lidar_scan_point *)ob_frame_data(point_cloud_frame, &error);
         CHECK_OB_ERROR_EXIT(&error);
 
-        uint32_t point_count = (uint32_t)(ob_frame_data_size(point_cloud_frame, &error) / sizeof(ob_lidar_scan_point));
+        point_count = (uint32_t)(ob_frame_data_size(point_cloud_frame, &error) / sizeof(ob_lidar_scan_point));
         CHECK_OB_ERROR_EXIT(&error);
 
         for(uint32_t i = 0; i < point_count; ++i) {
+            float  x         = 0;
+            float  y         = 0;
             double angle_rad = points[i].angle * M_PI / 180.0f;
             float  distance  = points[i].distance;
             if(distance < min_point_value)
                 continue;
 
             // Polar to Cartesian conversion
-            float x = (float)(distance * cos(angle_rad));
-            float y = (float)(distance * sin(angle_rad));
+            x = (float)(distance * cos(angle_rad));
+            y = (float)(distance * sin(angle_rad));
             if(isfinite(x) && isfinite(y))
                 valid_point_count++;
         }
@@ -368,6 +394,7 @@ void print_lidar_point_cloud_info(ob_frame *point_cloud_frame) {
 
 // Select a device, the name, pid, vid, uid of the device will be printed here, and the corresponding device object will be created after selection
 ob_device *selectDevice(ob_device_list *deviceList, ob_error *error) {
+    int devIndex = 0;
     int devCount = ob_device_list_get_count(deviceList, &error);
     CHECK_OB_ERROR_EXIT(&error);
     printf("Device List:\n");
@@ -378,9 +405,9 @@ ob_device *selectDevice(ob_device_list *deviceList, ob_error *error) {
         const char *uid  = ob_device_list_get_device_uid(deviceList, i, &error);
         const char *sn   = ob_device_list_get_device_serial_number(deviceList, i, &error);
         CHECK_OB_ERROR_EXIT(&error);
-        printf("%d. name: %s, vid: 0x%04x, pid: 0x%04x, uid: %s, sn: %s\n", i, name, vid, pid, uid, sn);
+        printf("%d. name: %s, vid: 0x%04x, pid: 0x%04x, uid: %s, sn: %s\n", i, name, (unsigned int)vid, (unsigned int)pid, uid, sn);
     }
-    int devIndex = select_index("Select a device", 0, devCount - 1);
+    devIndex = select_index("Select a device", 0, devCount - 1);
 
     return ob_device_list_get_device(deviceList, devIndex, &error);
 }
@@ -388,14 +415,17 @@ ob_device *selectDevice(ob_device_list *deviceList, ob_error *error) {
 void select_sensors_and_streams(ob_device *device, ob_config *config) {
 
     // error handling
-    ob_error *error = NULL;
+    ob_error       *error           = NULL;
+    ob_sensor_list *sensor_list     = NULL;
+    uint32_t        sensor_count    = 0;
+    int             sensor_selected = 0;
 
     // Get sensor list
-    ob_sensor_list *sensor_list = ob_device_get_sensor_list(device, &error);
+    sensor_list = ob_device_get_sensor_list(device, &error);
     CHECK_OB_ERROR_EXIT(&error);
 
     // Get sensor count
-    uint32_t sensor_count = ob_sensor_list_get_count(sensor_list, &error);
+    sensor_count = ob_sensor_list_get_count(sensor_list, &error);
     CHECK_OB_ERROR_EXIT(&error);
 
     printf("Sensor list:\n");
@@ -407,7 +437,7 @@ void select_sensors_and_streams(ob_device *device, ob_config *config) {
 
     printf(" - %u. all sensors\n", sensor_count);
     // Select a sensor
-    int sensor_selected = select_index("Select a sensor to enable", 0, sensor_count);
+    sensor_selected = select_index("Select a sensor to enable", 0, sensor_count);
     if(sensor_selected == -1) {
         ob_delete_sensor_list(sensor_list, &error);
         CHECK_OB_ERROR_EXIT(&error);
@@ -416,34 +446,42 @@ void select_sensors_and_streams(ob_device *device, ob_config *config) {
 
     // Check if the selected sensor index is valid
     for(uint32_t i = 0; i < sensor_count; i++) {
+        ob_sensor              *sensor           = NULL;
+        ob_sensor_type          type             = OB_SENSOR_UNKNOWN;
+        ob_stream_profile_list *profile_list     = NULL;
+        uint32_t                profile_count    = 0;
+        int                     profile_selected = 0;
 
         if(sensor_selected != (int)sensor_count && sensor_selected != (int)i) {
             continue;
         }
 
         // Get sensor from sensor list
-        ob_sensor *sensor = ob_sensor_list_get_sensor(sensor_list, i, &error);
+        sensor = ob_sensor_list_get_sensor(sensor_list, i, &error);
         CHECK_OB_ERROR_EXIT(&error);
         // Get sensor type from sensor
-        ob_sensor_type type = ob_sensor_get_type(sensor, &error);
+        type = ob_sensor_get_type(sensor, &error);
         CHECK_OB_ERROR_EXIT(&error);
 
         // Get stream profile list from sensor
-        ob_stream_profile_list *profile_list = ob_sensor_get_stream_profile_list(sensor, &error);
+        profile_list = ob_sensor_get_stream_profile_list(sensor, &error);
         CHECK_OB_ERROR_EXIT(&error);
 
         // Get stream profile count from stream profile list
-        uint32_t profile_count = ob_stream_profile_list_get_count(profile_list, &error);
+        profile_count = ob_stream_profile_list_get_count(profile_list, &error);
         CHECK_OB_ERROR_EXIT(&error);
 
         printf("Stream profile list for sensor %s:\n", ob_sensor_type_to_string(type));
         for(uint32_t j = 0; j < profile_count; j++) {
+            ob_stream_profile *profile = NULL;
+            ob_format          format  = OB_FORMAT_UNKNOWN;
+
             // Get stream profile from profile list
-            ob_stream_profile *profile = ob_stream_profile_list_get_profile(profile_list, j, &error);
+            profile = ob_stream_profile_list_get_profile(profile_list, j, &error);
             CHECK_OB_ERROR_EXIT(&error);
 
             // Get stream profile information
-            ob_format format = ob_stream_profile_get_format(profile, &error);
+            format = ob_stream_profile_get_format(profile, &error);
             CHECK_OB_ERROR_EXIT(&error);
 
             if(type == OB_SENSOR_LIDAR) {
@@ -477,7 +515,7 @@ void select_sensors_and_streams(ob_device *device, ob_config *config) {
         }
 
         // Select a stream profile
-        int profile_selected = select_index("Select a stream profile to enable", 0, profile_count - 1);
+        profile_selected = select_index("Select a stream profile to enable", 0, profile_count - 1);
 
         // Check if the selected stream profile index is valid
         if(profile_selected >= 0 && profile_selected < (int)profile_count) {

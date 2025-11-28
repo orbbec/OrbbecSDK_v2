@@ -17,7 +17,7 @@ namespace libobsensor {
 class MS600Device : public LiDARDeviceBase {
 public:
     MS600Device(const std::shared_ptr<const IDeviceEnumInfo> &info);
-    virtual ~MS600Device() noexcept;
+    virtual ~MS600Device() noexcept override;
 
 private:
     void init() override;

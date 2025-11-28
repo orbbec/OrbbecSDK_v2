@@ -15,13 +15,13 @@ namespace libobsensor {
  */
 class ILiDARStreamer : public IStreamer, public IDeviceComponent {
 public:
-    virtual ~ILiDARStreamer() = default;
+    ~ILiDARStreamer() override = default;
 
     // IStreamer
-    virtual void startStream(std::shared_ptr<const StreamProfile> profile, MutableFrameCallback callback) = 0;
-    virtual void stopStream(std::shared_ptr<const StreamProfile> profile)                                 = 0;
+    void startStream(std::shared_ptr<const StreamProfile> profile, MutableFrameCallback callback) override = 0;
+    void stopStream(std::shared_ptr<const StreamProfile> profile) override                                 = 0;
     // IDeviceComponent
-    virtual IDevice *getOwner() const = 0;
+    IDevice *getOwner() const override = 0;
 };
 
 }  // namespace libobsensor

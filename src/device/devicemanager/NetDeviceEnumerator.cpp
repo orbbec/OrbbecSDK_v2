@@ -134,11 +134,11 @@ DeviceEnumInfoList NetDeviceEnumerator::deviceInfoMatch(const SourcePortInfoList
     auto g2Devices = G2DeviceInfo::pickNetDevices(infoList);
     deviceInfoList.insert(deviceInfoList.end(), g2Devices.begin(), g2Devices.end());
 
-    auto bootDevices = BootDeviceInfo::pickNetDevices(infoList);
-    deviceInfoList.insert(deviceInfoList.end(), bootDevices.begin(), bootDevices.end());
-
     auto lidarDevices = LiDARDeviceInfo::pickNetDevices(infoList);
     deviceInfoList.insert(deviceInfoList.end(), lidarDevices.begin(), lidarDevices.end());
+
+    auto bootDevices = BootDeviceInfo::pickNetDevices(infoList);
+    deviceInfoList.insert(deviceInfoList.end(), bootDevices.begin(), bootDevices.end());
 
     return deviceInfoList;
 }
@@ -224,10 +224,8 @@ bool NetDeviceEnumerator::handleDeviceRemoved(std::string devUid) {
         bool isLiDAR = isDeviceInOrbbecSeries(LiDARDevPids, vid, pid);
         if(isDeviceInContainer(G335LeDevPids, vid, pid) || (isDeviceInOrbbecSeries(FemtoMegaDevPids, vid, pid)) || isDeviceInContainer(G435LeDevPids, vid, pid)
            || isLiDAR) {
-
-            auto devPid       = getDevicePid(info, 0, !isLiDAR, isLiDAR);
-            bool disconnected = (devPid == 0);  // get pid failed
-            if(disconnected) {
+            auto devPid = getDevicePid(info, 0, !isLiDAR, isLiDAR);
+            if(devPid == 0) {
                 // check device activity again
                 if(checkDeviceActivity(removedDevice, info)) {
                     // If the device is active within the allowed elapsed time threshold, consider it online

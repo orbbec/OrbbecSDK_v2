@@ -11,14 +11,16 @@
 int main(void) {
 
     // Used to return SDK interface error information.
-    ob_error *error = NULL;
+    ob_error    *error    = NULL;
+    ob_pipeline *pipe     = NULL;
+    ob_device   *device   = NULL;
 
     // Create a pipeline to manage the streams
-    ob_pipeline *pipe = ob_create_pipeline(&error);
+    pipe = ob_create_pipeline(&error);
     CHECK_OB_ERROR_EXIT(&error);
 
     // Get the device from the pipeline
-    ob_device *device = ob_pipeline_get_device(pipe, &error);
+    device = ob_pipeline_get_device(pipe, &error);
     CHECK_OB_ERROR_EXIT(&error);
 
     // Check LiDAR device
@@ -28,7 +30,7 @@ int main(void) {
     }
 
     // Start Pipeline with default configuration
-    // Modify the default configuration by the configuration file: "OrbbecSDKConfig.xml"
+    // Modify the default configuration by the configuration file: "*SDKConfig.xml"
     ob_pipeline_start(pipe, &error);
     CHECK_OB_ERROR_EXIT(&error);
 
@@ -39,7 +41,10 @@ int main(void) {
 
     // Main loop, continuously wait for frames and print their index and rate.
     while(true) {
-        char key = ob_smpl_wait_for_key_press(10);
+        ob_frame *frame  = NULL;
+        ob_frame *frameset = NULL;
+        bool      result = false;
+        char      key    = ob_smpl_wait_for_key_press(10);
         if(key == ESC_KEY) {
             break;
         }
@@ -47,7 +52,7 @@ int main(void) {
         if(key == 'r' || key == 'R') {
             printf("Save LiDAR PointCloud to ply file, this will take some time...\n");
             // Wait for frameset from pipeline, with a timeout of 1000 milliseconds.
-            ob_frame *frameset = ob_pipeline_wait_for_frameset(pipe, 1000, &error);
+            frameset = ob_pipeline_wait_for_frameset(pipe, 1000, &error);
             CHECK_OB_ERROR_EXIT(&error);
 
             // If frameset is NULL, timeout occurred, continue to next iteration.
@@ -55,11 +60,11 @@ int main(void) {
                 continue;
             }
 
-            ob_frame *frame = ob_frameset_get_frame(frameset, OB_FRAME_LIDAR_POINTS, &error);
+            frame = ob_frameset_get_frame(frameset, OB_FRAME_LIDAR_POINTS, &error);
             CHECK_OB_ERROR_EXIT(&error);
 
             // Save point cloud data to ply file
-            bool result = ob_save_lidar_pointcloud_to_ply("LiDARPoints.ply", frame, false, &error);
+            result = ob_save_lidar_pointcloud_to_ply("LiDARPoints.ply", frame, false, &error);
             CHECK_OB_ERROR_EXIT(&error);
             if(!result) {
                 printf("Failed to save LiDARPoints.ply\n");
@@ -69,6 +74,10 @@ int main(void) {
             }
 
             printf("LiDARPoints.ply Saved\n");
+
+            // Delete the frame
+            ob_delete_frame(frame, &error);
+            CHECK_OB_ERROR_EXIT(&error);
 
             // Delete the frameset
             ob_delete_frame(frameset, &error);

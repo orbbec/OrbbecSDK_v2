@@ -892,7 +892,7 @@ public:
      * @attention The internal frame object should not be deleted by the caller.
      * @attention Please use the FrameFactory to create a Frame object.
      *
-     * @param impl The pointer to the internal frame object.
+     * @param[in] impl The pointer to the internal frame object.
      */
     explicit LiDARPointsFrame(const ob_frame *impl) : Frame(impl){};
     ~LiDARPointsFrame() noexcept override = default;
