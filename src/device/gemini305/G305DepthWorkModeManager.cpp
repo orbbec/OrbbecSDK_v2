@@ -54,10 +54,9 @@ void G305DepthWorkModeManager::switchDepthWorkMode(const OBDepthWorkMode_Interna
 
     propServer->setStructureDataProtoV1_1_T<OBDepthWorkMode_Internal, 0>(OB_STRUCT_CURRENT_DEPTH_ALG_MODE, targetDepthMode);
     currentWorkMode_ = targetDepthMode;
-    LOG_DEBUG("switchDepthWorkMode done with mode: {1}", currentWorkMode_.name, targetDepthMode.name);
 
-    // refresh device error state after depth work mode changed
-    TRY_EXECUTE({ owner->fetchDeviceErrorState(); });
+    LOG_DEBUG("Device depth work mode have been switch to: {}, device will be reinitialize to apply the new mode.", targetDepthMode.name);
+    owner->reset();
 }
 
 void G305DepthWorkModeManager::fetchDepthWorkModeList() {
