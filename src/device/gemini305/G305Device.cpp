@@ -102,8 +102,9 @@ void G305Device::init() {
     registerComponent(OB_DEV_COMPONENT_SENSOR_STREAM_STRATEGY, sensorStreamStrategy);
 
     static const std::vector<OBMultiDeviceSyncMode> supportedSyncModes = {
-        OB_MULTI_DEVICE_SYNC_MODE_FREE_RUN,         OB_MULTI_DEVICE_SYNC_MODE_STANDALONE,          OB_MULTI_DEVICE_SYNC_MODE_PRIMARY,
-        OB_MULTI_DEVICE_SYNC_MODE_SECONDARY_SYNCED, OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_TRIGGERING, OB_MULTI_DEVICE_SYNC_MODE_HARDWARE_TRIGGERING
+        OB_MULTI_DEVICE_SYNC_MODE_STANDALONE,          OB_MULTI_DEVICE_SYNC_MODE_PRIMARY,
+        OB_MULTI_DEVICE_SYNC_MODE_SECONDARY_SYNCED,    OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_TRIGGERING,
+        OB_MULTI_DEVICE_SYNC_MODE_HARDWARE_TRIGGERING, OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_SYNCED
     };
     auto deviceSyncConfigurator = std::make_shared<DeviceSyncConfigurator>(this, supportedSyncModes);
     registerComponent(OB_DEV_COMPONENT_DEVICE_SYNC_CONFIGURATOR, deviceSyncConfigurator);
@@ -1168,11 +1169,6 @@ void G305Device::initSensorListGMSL() {
                 auto formatConverter = getSensorFrameFilter("FrameUnpacker", OB_SENSOR_IR_RIGHT, false);
                 if(formatConverter) {
                     formatFilterConfigs.push_back({ FormatFilterPolicy::REPLACE, OB_FORMAT_Y12, OB_FORMAT_Y16, formatConverter });
-                }
-
-                auto formatConverter = getSensorFrameFilter("FrameUnpacker", OB_SENSOR_IR_RIGHT, false);
-                if(formatConverter) {
-                    formatFilterConfigs.push_back({ FormatFilterPolicy::REPLACE, OB_FORMAT_YV12, OB_FORMAT_Y16, formatConverter });
                 }
 
                 sensor->updateFormatFilterConfig(formatFilterConfigs);
