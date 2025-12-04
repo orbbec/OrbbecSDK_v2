@@ -32,6 +32,7 @@ private:
     std::shared_ptr<const StreamProfile> loadDefaultStreamProfile(OBSensorType sensorType);
     void                                 updateSensorStreamProfile();
     void                                 fixSensorList();
+    void                                 updateDownSampleConfig(std::vector<std::shared_ptr<const StreamProfile>> streamProfileList, OBSensorType sensorType);
 
 private:
     const uint64_t                                              deviceTimeFreq_ = 1000;     // in ms

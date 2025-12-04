@@ -86,6 +86,7 @@ protected:
 class VideoStreamProfile : public StreamProfile {
 public:
     VideoStreamProfile(std::shared_ptr<LazySensor> owner, OBStreamType type, OBFormat format, uint32_t width, uint32_t height, uint32_t fps);
+    VideoStreamProfile(std::shared_ptr<LazySensor> owner, OBStreamType type, OBFormat format, OBDownSampleConfig downSampleConfig, uint32_t fps);
     VideoStreamProfile(std::shared_ptr<const VideoStreamProfile> other) = delete;
 
     ~VideoStreamProfile() noexcept override = default;
@@ -95,10 +96,8 @@ public:
     void               setHeight(uint32_t height);
     uint32_t           getHeight() const;
     uint32_t           getFps() const;
-    void               setOriginalWidth(uint32_t originalWidth);
-    uint32_t           getOriginalWidth() const;
-    void               setOriginalHeight(uint32_t originalHeight);
-    uint32_t           getOriginalHeight() const;
+    void               setDownSampleConfig(OBDownSampleConfig downSampleConfig);
+    OBDownSampleConfig getDownSampleConfig() const;
     OBCameraIntrinsic  getIntrinsic() const;
     void               bindIntrinsic(const OBCameraIntrinsic &intrinsic);
     OBCameraDistortion getDistortion() const;
@@ -110,11 +109,11 @@ public:
     std::ostream                  &operator<<(std::ostream &os) const override;
 
 protected:
-    uint32_t width_;
-    uint32_t height_;
-    uint32_t fps_;
-    uint32_t originalWidth_{ 0 };
-    uint32_t originalHeight_{ 0 };
+    uint32_t           width_;
+    uint32_t           height_;
+    OBDownSampleConfig downSampleConfig_{ 0, 0, 0 };
+    uint32_t           fps_;
+
 };
 
 class DisparityBasedStreamProfile : public VideoStreamProfile {
@@ -182,6 +181,10 @@ protected:
 std::ostream &operator<<(std::ostream &os, const std::shared_ptr<const StreamProfile> &streamProfile);
 
 std::vector<std::shared_ptr<const VideoStreamProfile>> matchVideoStreamProfile(const StreamProfileList &profileList, uint32_t width, uint32_t height,
+                                                                               uint32_t fps, OBFormat format,
+                                                                               OBDownSampleConfig downSampleConfig = { 0, 0, 0 });
+
+std::vector<std::shared_ptr<const VideoStreamProfile>> matchVideoStreamProfile(const StreamProfileList &profileList, OBDownSampleConfig downSampleConfig,
                                                                                uint32_t fps, OBFormat format);
 
 std::vector<std::shared_ptr<const AccelStreamProfile>> matchAccelStreamProfile(const StreamProfileList &profileList, OBAccelFullScaleRange fullScaleRange,

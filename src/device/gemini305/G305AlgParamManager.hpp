@@ -22,6 +22,13 @@ typedef struct {
                                    ///< the availability of that downsampling factor.
 } OBPresetResolutionMask;
 
+struct Resolution {
+    uint32_t width;
+    uint32_t height;
+    bool     operator<(const Resolution &other) const {
+        return std::tie(width, height) < std::tie(other.width, other.height);
+    }
+};
 class G305AlgParamManager : public DisparityAlgParamManagerBase, public IPresetResolutionConfigListManager {
 public:
     G305AlgParamManager(IDevice *owner);

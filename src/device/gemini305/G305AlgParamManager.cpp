@@ -15,9 +15,10 @@ namespace libobsensor {
 
 bool G305AlgParamManager::findBestMatchedCameraParam(const std::vector<OBCameraParam>                &cameraParamList,
                                                      const std::shared_ptr<const VideoStreamProfile> &profile, OBCameraParam &result) {
-    bool found  = false;
-    auto width  = profile->getOriginalWidth() == 0 ? profile->getWidth() : profile->getOriginalWidth();
-    auto height = profile->getOriginalHeight() == 0 ? profile->getHeight() : profile->getOriginalHeight();
+    bool found            = false;
+    auto downSampleConfig = profile->getDownSampleConfig();
+    auto width            = downSampleConfig.originWidth == 0 ? profile->getWidth() : downSampleConfig.originWidth;
+    auto height           = downSampleConfig.originHeight == 0 ? profile->getHeight() : downSampleConfig.originHeight;
 
     // match same resolution
     for(auto &param: cameraParamList) {
@@ -200,14 +201,6 @@ void G305AlgParamManager::registerBasicExtrinsics() {
     basicStreamProfileList_.emplace_back(rightIrBasicStreamProfile);
 }
 
-struct Resolution {
-    uint32_t width;
-    uint32_t height;
-    bool     operator<(const Resolution &other) const {
-        return std::tie(width, height) < std::tie(other.width, other.height);
-    }
-};
-
 void G305AlgParamManager::fixD2CParmaList() {
     std::vector<Resolution> appendColorResolutions;
     std::vector<Resolution> depthResolutions;
@@ -248,8 +241,8 @@ void G305AlgParamManager::fixD2CParmaList() {
         OBCameraIntrinsic colorIntrinsic = colorAlignParam.rgbIntrinsic;
         int               colorScale     = colorIntrinsic.width / colorProfile->getWidth();
         auto              colorRatio     = 1.f / colorScale;
-        int               colorDx        = (colorIntrinsic.width - colorScale * colorProfile->getWidth()) >> 1;  // delta_w/2
-        int               colorDy        = (colorIntrinsic.height - colorScale * colorProfile->getHeight()) >> 1;
+        int               colorDx        = ((colorIntrinsic.width - colorScale * colorProfile->getWidth()) >> 1) - colorScale + 1;  // delta_w/2
+        int               colorDy        = ((colorIntrinsic.height - colorScale * colorProfile->getHeight()) >> 1) - colorScale + 1;
         colorIntrinsic.fx *= colorRatio;
         colorIntrinsic.fy *= colorRatio;
         colorIntrinsic.cx     = (colorIntrinsic.cx - colorDx) * colorRatio;
@@ -267,8 +260,8 @@ void G305AlgParamManager::fixD2CParmaList() {
             OBCameraIntrinsic depthIntrinsic = depthAlignParam.depthIntrinsic;
             int               depthScale     = depthIntrinsic.width / depthRes.width;
             auto              depthRatio     = 1.f / depthScale;
-            int               depthDx        = (depthIntrinsic.width - depthScale * depthRes.width) >> 1;  // delta_w/2
-            int               depthDy        = (depthIntrinsic.height - depthScale * depthRes.height) >> 1;
+            int               depthDx        = ((depthIntrinsic.width - depthScale * depthRes.width) >> 1) - depthScale + 1;  // delta_w/2
+            int               depthDy        = ((depthIntrinsic.height - depthScale * depthRes.height) >> 1) - depthScale + 1;
             depthIntrinsic.fx *= depthRatio;
             depthIntrinsic.fy *= depthRatio;
             depthIntrinsic.cx     = (depthIntrinsic.cx - depthDx) * depthRatio;
@@ -409,12 +402,13 @@ void G305AlgParamManager::bindIntrinsic(std::vector<std::shared_ptr<const Stream
         default:
             break;
         }
-        auto originWidth  = vsp->getOriginalWidth() == 0 ? vsp->getWidth() : vsp->getOriginalWidth();
-        auto originHeight = vsp->getOriginalHeight() == 0 ? vsp->getHeight() : vsp->getOriginalHeight();
-        int  scale        = originWidth / vsp->getWidth();
-        auto ratio        = 1.f / scale;
-        int  dx           = (originWidth - scale * vsp->getWidth()) >> 1;  // delta_w/2
-        int  dy           = (originHeight - scale * vsp->getHeight()) >> 1;
+        auto downSampleConfig = vsp->getDownSampleConfig();
+        auto originWidth      = downSampleConfig.scaleFactor == 0 ? vsp->getWidth() : downSampleConfig.originWidth;
+        auto originHeight     = downSampleConfig.scaleFactor == 0 ? vsp->getHeight() : downSampleConfig.originHeight;
+        int  scale            = originWidth / vsp->getWidth();
+        auto ratio            = 1.f / scale;
+        int  dx               = ((originWidth - scale * vsp->getWidth()) >> 1) - scale + 1;  // delta_w/2
+        int  dy               = ((originHeight - scale * vsp->getHeight()) >> 1) - scale + 1;
         intrinsic.fx *= ratio;
         intrinsic.fy *= ratio;
         intrinsic.cx     = (intrinsic.cx - dx) * ratio;

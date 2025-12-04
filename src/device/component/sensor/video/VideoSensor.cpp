@@ -69,7 +69,27 @@ void VideoSensor::start(std::shared_ptr<const StreamProfile> sp, FrameCallback c
             strategy->markStreamActivated(sp);
         }
     }
-
+    {
+        auto owner               = getOwner();
+        auto propServer          = owner->getPropertyServer();
+        auto isSupportDecamation = propServer->isPropertySupported(OB_STRUCT_PRESET_RESOLUTION_CONFIG, PROP_OP_READ_WRITE, PROP_ACCESS_INTERNAL);
+        if(isSupportDecamation) {
+            auto                     prestResConfig     = propServer->getStructureDataT<OBPresetResolutionConfig>(OB_STRUCT_PRESET_RESOLUTION_CONFIG);
+            auto                     videoStreamProfile = sp->as<VideoStreamProfile>();
+            auto                     sensorType         = videoStreamProfile->getType();
+            auto                     downSampleConfig = videoStreamProfile->getDownSampleConfig();
+            prestResConfig.width                      = static_cast<int16_t>(downSampleConfig.originWidth);
+            prestResConfig.height                     = static_cast<int16_t>(downSampleConfig.originHeight);
+            if(sensorType == OB_STREAM_DEPTH) {
+                prestResConfig.depthDecimationFactor = downSampleConfig.scaleFactor;
+                propServer->setStructureDataT<OBPresetResolutionConfig>(OB_STRUCT_PRESET_RESOLUTION_CONFIG, prestResConfig);
+            }
+            else if(sensorType == OB_STREAM_IR_LEFT || sensorType == OB_STREAM_IR_RIGHT) {
+                prestResConfig.irDecimationFactor = downSampleConfig.scaleFactor;
+                propServer->setStructureDataT<OBPresetResolutionConfig>(OB_STRUCT_PRESET_RESOLUTION_CONFIG, prestResConfig);
+            }
+        }
+    }
     activatedStreamProfile_ = sp;
     frameCallback_          = callback;
     updateStreamState(STREAM_STATE_STARTING);

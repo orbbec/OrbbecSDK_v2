@@ -591,17 +591,6 @@ void G305Device::initProperties() {
 
     propertyServer->registerProperty(OB_STRUCT_PRESET_RESOLUTION_CONFIG, "rw", "rw", vendorPropertyAccessor.get());
     propertyServer->registerProperty(OB_RAW_PRESET_RESOLUTION_CONFIG_LIST, "", "rw", vendorPropertyAccessor.get());
-    propertyServer->registerAccessCallback(OB_STRUCT_PRESET_RESOLUTION_CONFIG,
-                                           [&](uint32_t propertyId, const uint8_t *data, size_t, PropertyOperationType operationType) {
-                                               if(operationType == PROP_OP_WRITE && propertyId == OB_STRUCT_PRESET_RESOLUTION_CONFIG) {
-                                                   const OBPresetResolutionConfig *config = reinterpret_cast<const OBPresetResolutionConfig *>(data);
-                                                   // update stream profile filter config
-                                                   auto streamProfileFilter = getComponentT<G305StreamProfileFilter>(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER);
-                                                   streamProfileFilter->onPresetResolutionConfigChanged(config);
-                                                   // update stream profile
-                                                   updateSensorStreamProfile();
-                                               }
-                                           });
 
     propertyServer->registerProperty(OB_RAW_DATA_PRESET_RESOLUTION_MASK_LIST, "", "r", vendorPropertyAccessor.get());
 }
@@ -612,8 +601,6 @@ void G305Device::initSensorList() {
         TRY_EXECUTE({ factory = std::make_shared<FrameProcessorFactory>(this); })
         return factory;
     });
-
-    registerComponent(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER, [this]() { return std::make_shared<G305StreamProfileFilter>(this); });
 
     const auto &sourcePortInfoList = enumInfo_->getSourcePortInfoList();
 
@@ -658,8 +645,6 @@ void G305Device::initSensorList() {
                 auto hwD2D = propServer->getPropertyValueT<bool>(OB_PROP_DISPARITY_TO_DEPTH_BOOL);
                 sensor->markOutputDisparityFrame(!hwD2D);
 
-                auto streamProfileFilter = getComponentT<G305StreamProfileFilter>(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER);
-                sensor->setStreamProfileFilter(streamProfileFilter.get());
                 initSensorStreamProfile(sensor);
 
                 sensor->registerStreamStateChangedCallback([&](OBStreamState state, const std::shared_ptr<const StreamProfile> &sp) {
@@ -718,8 +703,6 @@ void G305Device::initSensorList() {
                     sensor->setFrameProcessor(frameProcessor.get());
                 }
 
-                auto streamProfileFilter = getComponentT<G305StreamProfileFilter>(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER);
-                sensor->setStreamProfileFilter(streamProfileFilter.get());
                 initSensorStreamProfile(sensor);
 
                 return sensor;
@@ -770,8 +753,6 @@ void G305Device::initSensorList() {
                     sensor->setFrameProcessor(frameProcessor.get());
                 }
 
-                auto streamProfileFilter = getComponentT<G305StreamProfileFilter>(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER);
-                sensor->setStreamProfileFilter(streamProfileFilter.get());
                 initSensorStreamProfile(sensor);
 
                 return sensor;
@@ -1030,8 +1011,6 @@ void G305Device::initSensorListGMSL() {
                 auto hwD2D = propServer->getPropertyValueT<bool>(OB_PROP_DISPARITY_TO_DEPTH_BOOL);
                 sensor->markOutputDisparityFrame(!hwD2D);
 
-                auto streamProfileFilter = getComponentT<G305StreamProfileFilter>(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER);
-                sensor->setStreamProfileFilter(streamProfileFilter.get());
                 initSensorStreamProfile(sensor);
 
                 sensor->registerStreamStateChangedCallback([&](OBStreamState state, const std::shared_ptr<const StreamProfile> &sp) {
@@ -1287,6 +1266,7 @@ void G305Device::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
 
     // bind params: extrinsics, intrinsics, etc.
     auto profiles = sensor->getStreamProfileList();
+    updateDownSampleConfig(profiles, sensor->getSensorType());
     {
         auto algParamManager = getComponentT<G305AlgParamManager>(OB_DEV_COMPONENT_ALG_PARAM_MANAGER);
         algParamManager->bindStreamProfileParams(profiles);
@@ -1441,6 +1421,103 @@ void G305Device::fixSensorList() {
     else {
         deregisterSensor(OB_SENSOR_COLOR_LEFT);
         deregisterSensor(OB_SENSOR_COLOR_RIGHT);
+    }
+}
+
+void G305Device::updateDownSampleConfig(std::vector<std::shared_ptr<const StreamProfile>> streamProfileList, OBSensorType sensorType) {
+    if(sensorType == OB_SENSOR_COLOR_LEFT || sensorType == OB_SENSOR_COLOR_RIGHT || sensorType == OB_SENSOR_COLOR) {
+        return;
+    }
+
+    auto propServer = getPropertyServer();  // Auto-lock when getting propertyServer
+    if(!propServer->isPropertySupported(OB_RAW_DATA_PRESET_RESOLUTION_MASK_LIST, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
+        return;
+    }
+
+    auto presetResolutionMaskList = propServer->getStructureDataListProtoV1_1_T<OBPresetResolutionMask, 0>(OB_RAW_DATA_PRESET_RESOLUTION_MASK_LIST);
+
+    // calc size from origin size and factor
+    auto calcSize = [](int16_t originSize, uint32_t factor) -> uint32_t {
+        if(factor <= 0) {
+            return static_cast<uint32_t>(originSize);
+        }
+
+        // Floor division since originSize, factor >= 0
+        auto size = static_cast<uint32_t>(originSize / factor);
+        // Round to the nearest even integer
+        if(size % 2 != 0) {
+            --size;
+        }
+        return size;
+    };
+
+    std::map<Resolution, std::vector<std::pair<Resolution, uint32_t>>> originResolutionConfig;
+    for(auto presetResolution: presetResolutionMaskList) {
+        uint32_t scaleFactor = 1;
+        if(sensorType == OB_SENSOR_DEPTH) {
+            scaleFactor = static_cast<uint32_t>(presetResolution.depthDecimationFlag);
+        }
+        else if(sensorType == OB_SENSOR_IR_LEFT || sensorType == OB_SENSOR_IR_RIGHT) {
+            scaleFactor = static_cast<uint32_t>(presetResolution.irDecimationFlag);
+        }
+
+        for(uint32_t bit = 1; bit < 32; ++bit) {
+            if(scaleFactor == 0) {
+                break;
+            }
+            auto currscale = scaleFactor % 2;
+            scaleFactor    = scaleFactor >> 1;
+            if(currscale & 0x1) {
+                uint32_t width  = calcSize(presetResolution.width, bit);
+                uint32_t height = calcSize(presetResolution.height, bit);
+                originResolutionConfig[Resolution{ width, height }].push_back(
+                    std::make_pair(Resolution{ static_cast<uint32_t>(presetResolution.width), static_cast<uint32_t>(presetResolution.height) }, bit));
+            }
+        }
+    }
+
+    std::map<Resolution, std::vector<std::shared_ptr<const StreamProfile>>> profileGroups;
+    for(auto &profile: streamProfileList) {
+        auto       videoStreamProfile = profile->as<VideoStreamProfile>();
+        auto       width              = videoStreamProfile->getWidth();
+        auto       height             = videoStreamProfile->getHeight();
+        Resolution res{ width, height };
+        profileGroups[res].push_back(profile);
+    }
+
+    for(auto &kv: profileGroups) {
+        auto &profiles = kv.second;
+        std::sort(profiles.begin(), profiles.end(), [](const std::shared_ptr<const StreamProfile> &a, const std::shared_ptr<const StreamProfile> &b) {
+            auto profileA = a->as<VideoStreamProfile>();
+            auto profileB = b->as<VideoStreamProfile>();
+
+            uint32_t widthA  = profileA->getWidth();
+            uint32_t heightA = profileA->getHeight();
+            uint32_t formatA = static_cast<uint32_t>(profileA->getFormat());
+            uint32_t fpsA    = profileA->getFps();
+
+            uint32_t widthB  = profileB->getWidth();
+            uint32_t heightB = profileB->getHeight();
+            uint32_t formatB = static_cast<uint32_t>(profileB->getFormat());
+            uint32_t fpsB    = profileB->getFps();
+
+            return std::tie(widthA, heightA, formatA, fpsA) < std::tie(widthB, heightB, formatB, fpsB);
+        });
+    }
+
+    for(auto &profileGroup: profileGroups) {
+        auto  res                        = profileGroup.first;
+        auto &profiles                   = profileGroup.second;
+        auto &originResolutionConfigList = originResolutionConfig[res];
+        if(originResolutionConfigList.empty()) {
+            continue;
+        }
+        auto originResolutionNum = originResolutionConfigList.size();
+        for(size_t i = 0; i < profiles.size(); ++i) {
+            auto  videoStreamProfile = std::const_pointer_cast<VideoStreamProfile>(profiles[i]->as<VideoStreamProfile>());
+            auto &ResolutionConfig   = originResolutionConfigList[i % originResolutionNum];
+            videoStreamProfile->setDownSampleConfig({ ResolutionConfig.first.width, ResolutionConfig.first.height, ResolutionConfig.second });
+        }
     }
 }
 

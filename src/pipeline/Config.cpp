@@ -26,6 +26,12 @@ void Config::enableVideoStream(OBStreamType type, uint32_t width, uint32_t heigh
     auto prf = StreamProfileFactory::createVideoStreamProfile(type, format, width, height, fps);
     enableStream(prf);
 }
+
+void Config::enableVideoStream(OBStreamType type, OBDownSampleConfig downSampleConfig, uint32_t fps, OBFormat format) {
+    auto prf = StreamProfileFactory::createVideoStreamProfile(type, format, downSampleConfig, fps);
+    enableStream(prf);
+}
+
 void Config::enableAccelStream(OBAccelFullScaleRange fullScaleRange, ob_accel_sample_rate sampleRate) {
     auto prf = StreamProfileFactory::createAccelStreamProfile(fullScaleRange, sampleRate);
     enableStream(prf);

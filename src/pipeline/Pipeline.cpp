@@ -194,7 +194,8 @@ std::shared_ptr<Config> Pipeline::checkAndSetConfig(std::shared_ptr<const Config
         }
         else {
             auto profile            = sp->as<VideoStreamProfile>();
-            auto matchedProfileList = matchVideoStreamProfile(sensorSpList, profile->getWidth(), profile->getHeight(), profile->getFps(), profile->getFormat());
+            auto matchedProfileList = matchVideoStreamProfile(sensorSpList, profile->getWidth(), profile->getHeight(), profile->getFps(), profile->getFormat(),
+                                                              profile->getDownSampleConfig());
             if(matchedProfileList.empty()) {
                 throw invalid_value_exception(utils::string::to_string() << "No matched profile found for: " << sp);
             }

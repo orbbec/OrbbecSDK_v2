@@ -135,8 +135,8 @@ void G305SensorStreamStrategy::validatePreset(const std::vector<std::shared_ptr<
                 auto width  = vsp->getWidth();
                 auto height = vsp->getHeight();
                 auto format = vsp->getFormat();
-                if(!(((width == 1280 && height == 800) || (width == 640 && height == 400)) && (format == OB_FORMAT_Y12 || format == OB_FORMAT_Y16))) {
-                    throw unsupported_operation_exception("Preset is in Factory Calibration mode, only support IR streams at 1280x800@Y12/Y16 and 640x400@Y12/Y16");
+                if(!(((width == 1280 && height == 800)) && (format == OB_FORMAT_Y12 || format == OB_FORMAT_Y16))) {
+                    throw unsupported_operation_exception("Preset is in Factory Calibration mode, only support IR streams at 1280x800@Y12/Y16");
                 }
             } break;
             case OB_STREAM_DEPTH:

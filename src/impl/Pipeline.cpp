@@ -213,6 +213,12 @@ void ob_config_enable_video_stream(ob_config *config, ob_stream_type stream_type
 }
 HANDLE_EXCEPTIONS_NO_RETURN(config, stream_type, width, height, fps, format)
 
+void ob_config_enable_video_stream_by_down_sample_config(ob_config *config, ob_stream_type stream_type, ob_down_sample_config down_sample_config, uint32_t fps,
+                                                         ob_format format, ob_error **error) BEGIN_API_CALL {
+    config->config->enableVideoStream(stream_type, down_sample_config, fps, format);
+}
+HANDLE_EXCEPTIONS_NO_RETURN(config, stream_type, fps, format)
+
 void ob_config_enable_accel_stream(ob_config *config, ob_accel_full_scale_range full_scale_range, ob_accel_sample_rate sample_rate,
                                    ob_error **error) BEGIN_API_CALL {
     config->config->enableAccelStream(full_scale_range, sample_rate);

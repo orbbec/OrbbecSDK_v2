@@ -208,6 +208,15 @@ ob_camera_distortion ob_video_stream_profile_get_distortion(const ob_stream_prof
 }
 HANDLE_EXCEPTIONS_AND_RETURN(ob_camera_distortion(), profile)
 
+ob_down_sample_config ob_video_stream_profile_get_down_sample_config(const ob_stream_profile *profile, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(profile);
+    if(!profile->profile->is<libobsensor::VideoStreamProfile>()) {
+        throw libobsensor::unsupported_operation_exception("It's not a video stream profile!");
+    }
+    auto videoProfile = profile->profile->as<libobsensor::VideoStreamProfile>();
+    return videoProfile->getDownSampleConfig();
+}
+HANDLE_EXCEPTIONS_AND_RETURN(ob_down_sample_config(), profile)
 void ob_video_stream_profile_set_distortion(ob_stream_profile *profile, ob_camera_distortion distortion, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(profile);
     if(!profile->profile->is<libobsensor::VideoStreamProfile>()) {
@@ -344,6 +353,20 @@ ob_stream_profile *ob_stream_profile_list_get_video_stream_profile(const ob_stre
     return profileImpl;
 }
 HANDLE_EXCEPTIONS_AND_RETURN(nullptr, profile_list, width, height, format, fps)
+
+ob_stream_profile *ob_stream_profile_list_get_video_stream_profile_by_down_sample_config(const ob_stream_profile_list *profile_list,
+                                                                                         ob_down_sample_config down_sample_config, ob_format format, int fps,
+                                                                                         ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(profile_list);
+    auto matchedProfileList = libobsensor::matchVideoStreamProfile(profile_list->profileList, down_sample_config, fps, format);
+    if(matchedProfileList.empty()) {
+        throw libobsensor::invalid_value_exception("Invalid input, No matched video stream profile found!");
+    }
+    auto profileImpl     = new ob_stream_profile();
+    profileImpl->profile = matchedProfileList[0];
+    return profileImpl;
+}
+HANDLE_EXCEPTIONS_AND_RETURN(nullptr, profile_list, format, fps)
 
 ob_stream_profile *ob_stream_profile_list_get_accel_stream_profile(const ob_stream_profile_list *profile_list, ob_accel_full_scale_range full_scale_range,
                                                                    ob_accel_sample_rate sample_rate, ob_error **error) BEGIN_API_CALL {

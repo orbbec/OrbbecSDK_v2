@@ -254,6 +254,19 @@ public:
         Error::handle(&error);
     }
 
+    /**
+     * @brief Get the down-sampling configuration of the stream.
+     * @brief Includes original resolution and scale factor.
+     *
+     * @return OBDownSampleConfig Return the down-sampling configuration.
+     */
+    OBDownSampleConfig getDownSampleConfig() const {
+        ob_error *error            = nullptr;
+        auto      downSampleConfig = ob_video_stream_profile_get_down_sample_config(const_cast<ob_stream_profile_t *>(impl_), &error);
+        Error::handle(&error);
+        return downSampleConfig;
+    }
+
 public:
     // The following interfaces are deprecated and are retained here for compatibility purposes.
     uint32_t fps() const {
@@ -510,6 +523,25 @@ public:
                                                               int fps = OB_FPS_ANY) const {
         ob_error *error   = nullptr;
         auto      profile = ob_stream_profile_list_get_video_stream_profile(impl_, width, height, format, fps, &error);
+        Error::handle(&error);
+        auto vsp = StreamProfileFactory::create(profile);
+        return vsp->as<VideoStreamProfile>();
+    }
+
+    /**
+     * @brief Match the corresponding video stream profile according to the down-sampling configuration.If multiple profiles match, the first one in the list is
+     * returned. Throws an exception when no matching profile is found.
+     *
+     * @param[in] downSampleConfig Down-sampling configuration. The actual resolution is computed fromthe original resolution and scale factor.
+     * @param[in] format Stream format. Pass OB_FORMAT_ANY if no matching condition is required.
+     * @param[in] fps Frame rate. Pass OB_FPS_ANY if no matching condition is required.
+     *
+     * @return std::shared_ptr<VideoStreamProfile> Return the matched video stream profile.
+     */
+    std::shared_ptr<VideoStreamProfile> getVideoStreamProfile(OBDownSampleConfig downSampleConfig, OBFormat format = OB_FORMAT_ANY,
+                                                              int fps = OB_FPS_ANY) const {
+        ob_error *error   = nullptr;
+        auto      profile = ob_stream_profile_list_get_video_stream_profile_by_down_sample_config(impl_, downSampleConfig, format, fps, &error);
         Error::handle(&error);
         auto vsp = StreamProfileFactory::create(profile);
         return vsp->as<VideoStreamProfile>();
