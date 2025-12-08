@@ -61,7 +61,6 @@ template <typename Container> void DynamicLibraryManager::pushToLibrary(std::sha
     using ValueType = typename std::remove_reference<decltype(container)>::type::value_type;
     uint32_t len    = static_cast<uint32_t>(container.size() * sizeof(ValueType));
     func(type, reinterpret_cast<const uint8_t *>(container.data()), len, &error);
-    LOG_DEBUG(" - Set data for type {} in library", type);
 }
 
 template void DynamicLibraryManager::pushToLibrary<std::vector<DeviceIdentifier>>(std::shared_ptr<dylib>, uint16_t, const std::vector<DeviceIdentifier> &);
@@ -70,10 +69,6 @@ template void DynamicLibraryManager::pushToLibrary<std::vector<DeviceInfoEntry>>
 
 void DynamicLibraryManager::setExtensionDeviceInfo() {
     std::vector<std::string> extensions = { "frameprocessor", "firmwareupdater" };
-
-    auto cwd = utils::getCurrentWorkDirectory();
-    LOG_DEBUG("Current working directory: {}", cwd);
-
     std::vector<DeviceIdentifier> pure330;
     std::copy_if(G330DevPids.begin(), G330DevPids.end(), std::back_inserter(pure330), [&](const DeviceIdentifier &dev) {
         return std::find_if(DaBaiADevPids.begin(), DaBaiADevPids.end(), [&](const DeviceIdentifier &d2) { return d2.vid_ == dev.vid_ && d2.pid_ == dev.pid_; })

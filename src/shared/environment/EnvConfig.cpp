@@ -255,4 +255,65 @@ bool DevInfoConfig::getAttributeValue(const std::string &nodePathName, const std
     return false;
 }
 
+bool DevInfoConfig::getChildNodeAttributeList(const std::string &parentPath, const std::string &childNodeName,
+                                              std::vector<std::vector<std::pair<std::string, std::string>>> &outList) {
+    if(parentPath.empty() || childNodeName.empty()) {
+        LOG_ERROR("ParentPath or childNodeName is empty");
+        return false;
+    }
+
+    const auto pathNodes = utils::string::split(parentPath, ".");
+    if(pathNodes.empty()) {
+        LOG_ERROR("PathNodes is empty after split");
+        return false;
+    }
+
+    bool foundAny = false;
+    for(auto &reader: xmlReaders_) {
+        auto *element = reader->getRootElement();
+        if(!element) {
+            continue;
+        }
+
+        for(const auto &node: pathNodes) {
+            element = element->FirstChildElement(node.c_str());
+            if(!element) {
+                break;
+            }
+        }
+
+        if(!element) {
+            continue;
+        }
+
+        for(auto *child = element->FirstChildElement(childNodeName.c_str()); child; child = child->NextSiblingElement(childNodeName.c_str())) {
+            std::vector<std::pair<std::string, std::string>> attrs;
+            attrs.reserve(4);  
+            for(const auto *attr = child->FirstAttribute(); attr; attr = attr->Next()) {
+                if(attr->Name() && attr->Value()) {
+                    attrs.emplace_back(attr->Name(), attr->Value());
+                } else {
+                    LOG_ERROR("Failed to get attribute name or value for child node '{}'.", childNodeName);
+                    return false;
+                }
+            }
+
+            if(!attrs.empty()) {
+                outList.emplace_back(std::move(attrs));
+                foundAny = true;
+            } else {
+                // Node exists but no attributes
+                LOG_ERROR("Node '{}' has no attributes.", childNodeName);
+                return false;
+            }
+        }
+    }
+
+    if(!foundAny) {
+        LOG_ERROR("Could not find any '{}' child node or attributes under path '{}'", childNodeName, parentPath);
+        return false;
+    }
+    return true;
+}
+
 }  // namespace libobsensor

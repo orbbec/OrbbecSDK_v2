@@ -66,8 +66,10 @@ void DeviceSeriesInfoManager::LoadXmlConfig() {
     std::string              baseNode      = NODE_DEVICE_CONFIG_BASE;       // Base node for devices
     std::vector<std::string> devNodes;
     if(!devInfoConfig->getChildNodeNames(baseNode + "." + std::string(NODE_DEVLIST), devNodes)) {
-        LOG_DEBUG("DevList not found!");
-        return;
+        throw std::runtime_error("DevList not found!");
+    }
+    if(devNodes.empty()) {
+        throw std::runtime_error("Device list node found but is empty!");
     }
 
     // Load device info
@@ -77,13 +79,24 @@ void DeviceSeriesInfoManager::LoadXmlConfig() {
     std::string manuFacturerName = "Manufacturer";
     for(auto &dev: devNodes) {
         std::string node = std::string(NODE_DEVLIST) + "." + dev;
-        devInfoConfig->getStringValue(node + "." + std::string(FIELD_VID), vidStr);
-        devInfoConfig->getStringValue(node + "." + std::string(FIELD_PID), pidStr);
-        devInfoConfig->getStringValue(node + "." + std::string(FIELD_NAME), deviceName);
-        devInfoConfig->getStringValue(node + "." + std::string(FIELD_MANUFACTURER), manuFacturerName);
+        if (!devInfoConfig->getStringValue(node + "." + std::string(FIELD_VID), vidStr)) {
+            throw std::runtime_error("Failed to retrieve VID for device node: " + node);
+        }
+
+        if (!devInfoConfig->getStringValue(node + "." + std::string(FIELD_PID), pidStr)) {
+            throw std::runtime_error("Failed to retrieve PID for device node: " + node);
+        }
+
+        if (!devInfoConfig->getStringValue(node + "." + std::string(FIELD_NAME), deviceName)) {
+            throw std::runtime_error("Failed to retrieve DeviceName for device node: " + node);
+        }
+
+        if (!devInfoConfig->getStringValue(node + "." + std::string(FIELD_MANUFACTURER), manuFacturerName)) {
+            throw std::runtime_error("Failed to retrieve Manufacturer for device node: " + node);
+        }
+
         if(vidStr.empty() || pidStr.empty()) {
-            LOG_DEBUG("Invalid device node: {}", dev.c_str());
-            continue;
+            throw std::runtime_error("Invalid device node: " + dev + " (VID/PID is empty)");
         }
 
         uint16_t        vid = static_cast<uint16_t>(std::stoi(vidStr, nullptr, 16));
@@ -99,17 +112,35 @@ void DeviceSeriesInfoManager::LoadXmlConfig() {
         }
     }
 
-    std::vector<std::string> gvcpConfigNodes;
-    if(devInfoConfig->getChildNodeNames(NODE_GVCP_CONFIG, gvcpConfigNodes)) {
-        for(const auto &gvcpNode: gvcpConfigNodes) {
-            std::string node = std::string(NODE_GVCP_CONFIG) + "." + gvcpNode;
-            std::string vidString;
+    std::vector<std::vector<std::pair<std::string, std::string>>> manufacturerAttrList;
+    bool ok = devInfoConfig->getChildNodeAttributeList(std::string(NODE_GVCP_CONFIG), std::string(FIELD_MANUFACTURER), manufacturerAttrList);
+    if(!ok || manufacturerAttrList.empty()) {
+        throw std::runtime_error("Error: Could not retrieve manufacturer list or list is empty.");
+    } else {
+        for(const auto &attrs: manufacturerAttrList) {
             std::string manufacturerName;
-            devInfoConfig->getAttributeValue(node, FIELD_MANUFACTURER_VID, vidString);
-            devInfoConfig->getAttributeValue(node, FIELD_MANUFACTURER_NAME, manufacturerName);
-            if(!vidStr.empty() && !manufacturerName.empty()) {
+            std::string vidString;
+            for(const auto &kv: attrs) {
+                const std::string &key   = kv.first;
+                const std::string &value = kv.second;
+                if(key == FIELD_MANUFACTURER_NAME) {
+                    manufacturerName = value;
+                }
+                else if(key == FIELD_MANUFACTURER_VID) {
+                    vidString = value;
+                }
+            }
+
+            if(manufacturerName.empty() || vidString.empty()) {
+                throw std::runtime_error("Manufacturer entry missing name or vid");
+            }
+
+            try {
                 uint16_t vid                         = static_cast<uint16_t>(std::stoi(vidString, nullptr, 16));
                 manufacturerVidMap[manufacturerName] = vid;
+            }
+            catch(const std::exception &e) {
+                throw std::runtime_error("Error converting VID string '" + vidString + "': " + e.what());
             }
         }
     }
@@ -117,26 +148,33 @@ void DeviceSeriesInfoManager::LoadXmlConfig() {
     auto handleCategory = [&](const std::string &categoryNode, std::vector<DeviceIdentifier> &container, std::vector<DeviceInfoEntry> &deviceInfoEntries) {
         std::vector<std::string> deviceNames;
         if(!devInfoConfig->getChildNodeTextList(categoryNode + "." + std::string(FIELD_DEVICE), deviceNames)) {
-            return;
+            throw std::runtime_error("Failed to get list for category: " + categoryNode);
         }
+
+        if(deviceNames.empty()) {
+            throw std::runtime_error("Category device list is empty: " + categoryNode);
+        }
+
         for(const auto &devName: deviceNames) {
             auto it = allDeviceInfoMap_.find(devName);
-            if(it != allDeviceInfoMap_.end()) {
-                for(const auto &devInfo: it->second) {
-                    auto it2 = std::find_if(container.begin(), container.end(), [&devInfo](const DeviceIdentifier &existingVidPid) {
-                        return existingVidPid.vid_ == devInfo.vid_ && existingVidPid.pid_ == devInfo.pid_;
-                    });
-                    if(it2 != container.end()) {
-                        continue;
-                    }
-                    container.push_back(DeviceIdentifier{ devInfo.vid_, devInfo.pid_ });
-                    DeviceInfoEntry entry{};
-                    entry.vid_ = devInfo.vid_;
-                    entry.pid_ = devInfo.pid_;
-                    std::snprintf(entry.deviceName_, sizeof(entry.deviceName_), "%s", devInfo.deviceName_);
-                    std::snprintf(entry.manufacturer_, sizeof(entry.manufacturer_), "%s", devInfo.manufacturer_);
-                    deviceInfoEntries.push_back(entry);
+            if(it == allDeviceInfoMap_.end()) {
+                throw std::runtime_error("Device name '" + devName + "' listed in category " + categoryNode + " but not found in device info map.");
+            }
+            
+            for(const auto &devInfo: it->second) {
+                auto it2 = std::find_if(container.begin(), container.end(), [&devInfo](const DeviceIdentifier &existingVidPid) {
+                    return existingVidPid.vid_ == devInfo.vid_ && existingVidPid.pid_ == devInfo.pid_;
+                });
+                if(it2 != container.end()) {
+                    continue;
                 }
+                container.push_back(DeviceIdentifier{ devInfo.vid_, devInfo.pid_ });
+                DeviceInfoEntry entry{};
+                entry.vid_ = devInfo.vid_;
+                entry.pid_ = devInfo.pid_;
+                std::snprintf(entry.deviceName_, sizeof(entry.deviceName_), "%s", devInfo.deviceName_);
+                std::snprintf(entry.manufacturer_, sizeof(entry.manufacturer_), "%s", devInfo.manufacturer_);
+                deviceInfoEntries.push_back(entry);
             }
         }
     };

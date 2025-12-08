@@ -60,6 +60,8 @@ public:
     bool getChildNodeNames(const std::string &nodePathName, std::vector<std::string> &childNames);
     bool getChildNodeTextList(const std::string &nodePathName, std::vector<std::string> &texts);
     bool getAttributeValue(const std::string &nodePathName, const std::string &attrName, std::string &value);
+    bool getChildNodeAttributeList(const std::string &parentPath, const std::string &childNodeName,
+                                                  std::vector<std::vector<std::pair<std::string, std::string>>> &outList);
 
 private:
     std::vector<std::shared_ptr<XmlReader>> xmlReaders_;
