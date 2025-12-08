@@ -6,6 +6,7 @@
 #include "utils/PublicTypeHelper.hpp"
 #include "frame/Frame.hpp"
 #include "stream/StreamProfile.hpp"
+#include "logger/LoggerInterval.hpp"
 #include "logger/LoggerHelper.hpp"
 #include "environment/EnvConfig.hpp"
 #include "IDevice.hpp"
@@ -283,7 +284,7 @@ void SensorBase::watchStreamState() {
                         if(oBMultiDeviceSyncConfig.syncMode == OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_TRIGGERING
                            || oBMultiDeviceSyncConfig.syncMode == OB_MULTI_DEVICE_SYNC_MODE_HARDWARE_TRIGGERING) {
                             isTriggeringMode = true;
-                            LOG_DEBUG("Curent mode is not supported stream recovery");
+                            LOG_DEBUG_INTVL_MS(5000, "{} Curent mode is not supported stream recovery", sensorType_);
                         })
             CATCH_EXCEPTION_AND_EXECUTE(
                 recoveryEnabled_ = false;
