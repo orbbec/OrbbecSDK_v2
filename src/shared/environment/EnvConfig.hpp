@@ -37,7 +37,7 @@ private:
     std::vector<std::shared_ptr<XmlReader>> xmlReaders_;
 
 #ifdef __ANDROID__
-    std::string defaultConfigPath_ = "/sdcard/3DCamera/";
+    std::string defaultConfigFile_ = "/sdcard/orbbec/OrbbecSDKConfig.xml";
 #else
     std::string defaultConfigFile_ = "OrbbecSDKConfig.xml";
 #endif
