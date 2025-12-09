@@ -15,11 +15,12 @@
 #include "sensor/video/VideoSensor.hpp"
 #include "stream/StreamProfile.hpp"
 #include "metadata/FrameMedatadaParser.hpp"
+#include "G305DepthWorkModeManager.hpp"
 
 namespace libobsensor {
 template <typename T> class G305MetadataTimestampParser : public IFrameMetadataParser {
 public:
-    G305MetadataTimestampParser(){};
+    G305MetadataTimestampParser() {};
     virtual ~G305MetadataTimestampParser() noexcept override = default;
 
     int64_t getValue(const uint8_t *metadata, size_t dataSize) override {
@@ -40,8 +41,8 @@ public:
 // for depth and ir sensor
 class G305MetadataSensorTimestampParser : public IFrameMetadataParser {
 public:
-    G305MetadataSensorTimestampParser(){};
-    explicit G305MetadataSensorTimestampParser(FrameMetadataModifier exp_to_usec) : exp_to_usec_(exp_to_usec){};
+    G305MetadataSensorTimestampParser() {};
+    explicit G305MetadataSensorTimestampParser(FrameMetadataModifier exp_to_usec) : exp_to_usec_(exp_to_usec) {};
     virtual ~G305MetadataSensorTimestampParser() noexcept override = default;
 
     int64_t getValue(const uint8_t *metadata, size_t dataSize) override {
@@ -65,8 +66,8 @@ private:
 
 class G305ColorMetadataSensorTimestampParser : public IFrameMetadataParser {
 public:
-    G305ColorMetadataSensorTimestampParser(){};
-    explicit G305ColorMetadataSensorTimestampParser(FrameMetadataModifier exp_to_usec) : exp_to_usec_(exp_to_usec){};
+    G305ColorMetadataSensorTimestampParser() {};
+    explicit G305ColorMetadataSensorTimestampParser(FrameMetadataModifier exp_to_usec) : exp_to_usec_(exp_to_usec) {};
     virtual ~G305ColorMetadataSensorTimestampParser() noexcept override = default;
 
     int64_t getValue(const uint8_t *metadata, size_t dataSize) override {
@@ -90,7 +91,7 @@ private:
 
 class G305ScrMetadataParserBase : public IFrameMetadataParser {
 public:
-    G305ScrMetadataParserBase(){};
+    G305ScrMetadataParserBase() {};
     virtual ~G305ScrMetadataParserBase() noexcept override = default;
 
     bool isSupported(const uint8_t *metadata, size_t dataSize) override {
@@ -144,7 +145,7 @@ public:
 
         auto calculatedTimestamp = G305PayloadHeadMetadataTimestampParser::getValue(metadata, dataSize);
         // get frame offset,unit 100us
-        auto    standardUvcMetadata = *(reinterpret_cast<const StandardUvcFramePayloadHeader *>(metadata));
+        auto     standardUvcMetadata = *(reinterpret_cast<const StandardUvcFramePayloadHeader *>(metadata));
         uint16_t rawValue            = (((standardUvcMetadata.scrSourceClock[1] & 0xF8) >> 3) | ((standardUvcMetadata.scrSourceClock[2] & 0x7F) << 5));
         int32_t  frameOffset         = 0;
         // 12bit offset value check sign bit
@@ -188,6 +189,54 @@ public:
         auto fps      = static_cast<uint32_t>(1000000.f / exposure);
 
         auto colorSensor              = device_->getComponentT<VideoSensor>(OB_DEV_COMPONENT_COLOR_SENSOR);
+        auto colorActiveStreamProfile = colorSensor->getActivatedStreamProfile();
+        if(!colorActiveStreamProfile) {
+            return -1;
+        }
+        auto colorCurrentStreamProfileFps = colorActiveStreamProfile->as<VideoStreamProfile>()->getFps();
+        return static_cast<int64_t>((std::min)(fps, colorCurrentStreamProfileFps));
+    }
+
+private:
+    IDevice *device_;
+};
+
+class G305RightColorScrMetadataActualFrameRateParser : public G305ColorScrMetadataExposureParser {
+public:
+    G305RightColorScrMetadataActualFrameRateParser(IDevice *device) : device_(device) {}
+    int64_t getValue(const uint8_t *metadata, size_t dataSize) override {
+        if(!isSupported(metadata, dataSize)) {
+            LOG_WARN_INTVL("Current metadata does not contain color actual frame rate!");
+            return -1;
+        }
+        auto exposure = G305ColorScrMetadataExposureParser::getValue(metadata, dataSize) * 100;  // color exposure unit 100us
+        auto fps      = static_cast<uint32_t>(1000000.f / exposure);
+
+        auto colorSensor              = device_->getComponentT<VideoSensor>(OB_DEV_COMPONENT_RIGHT_COLOR_SENSOR);
+        auto colorActiveStreamProfile = colorSensor->getActivatedStreamProfile();
+        if(!colorActiveStreamProfile) {
+            return -1;
+        }
+        auto colorCurrentStreamProfileFps = colorActiveStreamProfile->as<VideoStreamProfile>()->getFps();
+        return static_cast<int64_t>((std::min)(fps, colorCurrentStreamProfileFps));
+    }
+
+private:
+    IDevice *device_;
+};
+
+class G305LeftColorScrMetadataActualFrameRateParser : public G305ColorScrMetadataExposureParser {
+public:
+    G305LeftColorScrMetadataActualFrameRateParser(IDevice *device) : device_(device) {}
+    int64_t getValue(const uint8_t *metadata, size_t dataSize) override {
+        if(!isSupported(metadata, dataSize)) {
+            LOG_WARN_INTVL("Current metadata does not contain color actual frame rate!");
+            return -1;
+        }
+        auto exposure = G305ColorScrMetadataExposureParser::getValue(metadata, dataSize) * 100;  // color exposure unit 100us
+        auto fps      = static_cast<uint32_t>(1000000.f / exposure);
+
+        auto colorSensor              = device_->getComponentT<VideoSensor>(OB_DEV_COMPONENT_LEFT_COLOR_SENSOR);
         auto colorActiveStreamProfile = colorSensor->getActivatedStreamProfile();
         if(!colorActiveStreamProfile) {
             return -1;
@@ -361,7 +410,7 @@ public:
         }
 
         auto propertyServer = device_->getPropertyServer();
-        if (propertyServer) {
+        if(propertyServer) {
             propertyServer_ = propertyServer.get();
         }
         if(propertyServer_ && propertyServer_->isPropertySupported(propertyId_, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
@@ -372,7 +421,7 @@ public:
                     if(propertyId != static_cast<uint32_t>(propertyId_)) {
                         return;
                     }
-                    auto propertyItem   = propertyServer_->getPropertyItem(propertyId_, PROP_ACCESS_USER);
+                    auto propertyItem = propertyServer_->getPropertyItem(propertyId_, PROP_ACCESS_USER);
                     if(propertyItem.type == OB_STRUCT_PROPERTY) {
                         data_ = parseStructurePropertyValue(type, propertyId, data);
                     }
@@ -476,7 +525,17 @@ private:
     void registerSensorStateCallback() {
         std::vector<DeviceComponentId> compentIds;
         if(propertyId_ == OB_STRUCT_COLOR_AE_ROI && metadataType_ == OB_FRAME_METADATA_TYPE_AE_ROI_LEFT) {
-            compentIds.push_back(OB_DEV_COMPONENT_COLOR_SENSOR);
+            auto        depthWorkModeManager = device_->getComponentT<G305DepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
+            const auto &currentMode          = depthWorkModeManager->getCurrentDepthWorkMode();
+
+            std::string depthWorkModeName(currentMode.name);
+            if(depthWorkModeName.find("Dual Color") != std::string::npos) {
+                compentIds.push_back(OB_DEV_COMPONENT_LEFT_COLOR_SENSOR);
+                compentIds.push_back(OB_DEV_COMPONENT_RIGHT_COLOR_SENSOR);
+            }
+            else {
+                compentIds.push_back(OB_DEV_COMPONENT_COLOR_SENSOR);
+            }
         }
         else if(propertyId_ == OB_STRUCT_DEPTH_AE_ROI && metadataType_ == OB_FRAME_METADATA_TYPE_AE_ROI_LEFT) {
             compentIds.push_back(OB_DEV_COMPONENT_DEPTH_SENSOR);
@@ -510,7 +569,7 @@ private:
 
     FrameMetadataModifier modifier_;
 
-    std::atomic<bool> initPropertyValue_;
+    std::atomic<bool>                initPropertyValue_;
     std::shared_ptr<IPropertyServer> propertyServer_;
 };
 

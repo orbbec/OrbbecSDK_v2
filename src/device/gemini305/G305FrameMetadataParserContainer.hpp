@@ -119,6 +119,80 @@ public:
     };
 };
 
+class G305LeftColorFrameMetadataParserContainerByScr : public FrameMetadataParserContainer {
+public:
+    G305LeftColorFrameMetadataParserContainerByScr(IDevice *owner, const uint64_t deviceTimeFreq, const uint64_t frameTimeFreq)
+        : FrameMetadataParserContainer(owner) {
+        auto device = getOwner();
+
+        registerParser(OB_FRAME_METADATA_TYPE_TIMESTAMP, std::make_shared<G305PayloadHeadMetadataTimestampParser>(device, deviceTimeFreq, frameTimeFreq));
+        registerParser(OB_FRAME_METADATA_TYPE_SENSOR_TIMESTAMP,
+                       std::make_shared<G305PayloadHeadMetadataColorSensorTimestampParser>(device, deviceTimeFreq, frameTimeFreq));
+        registerParser(OB_FRAME_METADATA_TYPE_GAIN, std::make_shared<G305ColorScrMetadataGainParser>());
+        registerParser(OB_FRAME_METADATA_TYPE_EXPOSURE, std::make_shared<G305ColorScrMetadataExposureParser>());
+        registerParser(OB_FRAME_METADATA_TYPE_ACTUAL_FRAME_RATE, std::make_shared<G305LeftColorScrMetadataActualFrameRateParser>(device));
+
+        registerParser(OB_FRAME_METADATA_TYPE_AUTO_EXPOSURE, std::make_shared<G305ColorMetadataParser>(device, OB_FRAME_METADATA_TYPE_AUTO_EXPOSURE));
+        registerParser(OB_FRAME_METADATA_TYPE_AUTO_WHITE_BALANCE, std::make_shared<G305ColorMetadataParser>(device, OB_FRAME_METADATA_TYPE_AUTO_WHITE_BALANCE));
+        registerParser(OB_FRAME_METADATA_TYPE_WHITE_BALANCE, std::make_shared<G305ColorMetadataParser>(device, OB_FRAME_METADATA_TYPE_WHITE_BALANCE));
+        registerParser(OB_FRAME_METADATA_TYPE_BRIGHTNESS, std::make_shared<G305ColorMetadataParser>(device, OB_FRAME_METADATA_TYPE_BRIGHTNESS));
+        registerParser(OB_FRAME_METADATA_TYPE_CONTRAST, std::make_shared<G305ColorMetadataParser>(device, OB_FRAME_METADATA_TYPE_CONTRAST));
+        registerParser(OB_FRAME_METADATA_TYPE_SATURATION, std::make_shared<G305ColorMetadataParser>(device, OB_FRAME_METADATA_TYPE_SATURATION));
+        registerParser(OB_FRAME_METADATA_TYPE_SHARPNESS, std::make_shared<G305ColorMetadataParser>(device, OB_FRAME_METADATA_TYPE_SHARPNESS));
+        registerParser(OB_FRAME_METADATA_TYPE_BACKLIGHT_COMPENSATION,
+                       std::make_shared<G305ColorMetadataParser>(device, OB_FRAME_METADATA_TYPE_BACKLIGHT_COMPENSATION));
+        registerParser(OB_FRAME_METADATA_TYPE_GAMMA, std::make_shared<G305ColorMetadataParser>(device, OB_FRAME_METADATA_TYPE_GAMMA));
+        registerParser(OB_FRAME_METADATA_TYPE_HUE, std::make_shared<G305ColorMetadataParser>(device, OB_FRAME_METADATA_TYPE_HUE));
+        registerParser(OB_FRAME_METADATA_TYPE_POWER_LINE_FREQUENCY,
+                       std::make_shared<G305ColorMetadataParser>(device, OB_FRAME_METADATA_TYPE_POWER_LINE_FREQUENCY));
+        registerParser(OB_FRAME_METADATA_TYPE_LOW_LIGHT_COMPENSATION,
+                       std::make_shared<G305ColorMetadataParser>(device, OB_FRAME_METADATA_TYPE_LOW_LIGHT_COMPENSATION));
+        registerParser(OB_FRAME_METADATA_TYPE_EXPOSURE_PRIORITY,
+                       std::make_shared<G305ColorMetadataParser>(device, OB_FRAME_METADATA_TYPE_LOW_LIGHT_COMPENSATION));
+        registerParser(OB_FRAME_METADATA_TYPE_AE_ROI_LEFT, std::make_shared<G305ColorMetadataParser>(device, OB_FRAME_METADATA_TYPE_AE_ROI_LEFT));
+        registerParser(OB_FRAME_METADATA_TYPE_AE_ROI_TOP, std::make_shared<G305ColorMetadataParser>(device, OB_FRAME_METADATA_TYPE_AE_ROI_TOP));
+        registerParser(OB_FRAME_METADATA_TYPE_AE_ROI_RIGHT, std::make_shared<G305ColorMetadataParser>(device, OB_FRAME_METADATA_TYPE_AE_ROI_RIGHT));
+        registerParser(OB_FRAME_METADATA_TYPE_AE_ROI_BOTTOM, std::make_shared<G305ColorMetadataParser>(device, OB_FRAME_METADATA_TYPE_AE_ROI_BOTTOM));
+    };
+};
+
+class G305RightColorFrameMetadataParserContainerByScr : public FrameMetadataParserContainer {
+public:
+    G305RightColorFrameMetadataParserContainerByScr(IDevice *owner, const uint64_t deviceTimeFreq, const uint64_t frameTimeFreq)
+        : FrameMetadataParserContainer(owner) {
+        auto device = getOwner();
+
+        registerParser(OB_FRAME_METADATA_TYPE_TIMESTAMP, std::make_shared<G305PayloadHeadMetadataTimestampParser>(device, deviceTimeFreq, frameTimeFreq));
+        registerParser(OB_FRAME_METADATA_TYPE_SENSOR_TIMESTAMP,
+                       std::make_shared<G305PayloadHeadMetadataColorSensorTimestampParser>(device, deviceTimeFreq, frameTimeFreq));
+        registerParser(OB_FRAME_METADATA_TYPE_GAIN, std::make_shared<G305ColorScrMetadataGainParser>());
+        registerParser(OB_FRAME_METADATA_TYPE_EXPOSURE, std::make_shared<G305ColorScrMetadataExposureParser>());
+        registerParser(OB_FRAME_METADATA_TYPE_ACTUAL_FRAME_RATE, std::make_shared<G305RightColorScrMetadataActualFrameRateParser>(device));
+
+        registerParser(OB_FRAME_METADATA_TYPE_AUTO_EXPOSURE, std::make_shared<G305ColorMetadataParser>(device, OB_FRAME_METADATA_TYPE_AUTO_EXPOSURE));
+        registerParser(OB_FRAME_METADATA_TYPE_AUTO_WHITE_BALANCE, std::make_shared<G305ColorMetadataParser>(device, OB_FRAME_METADATA_TYPE_AUTO_WHITE_BALANCE));
+        registerParser(OB_FRAME_METADATA_TYPE_WHITE_BALANCE, std::make_shared<G305ColorMetadataParser>(device, OB_FRAME_METADATA_TYPE_WHITE_BALANCE));
+        registerParser(OB_FRAME_METADATA_TYPE_BRIGHTNESS, std::make_shared<G305ColorMetadataParser>(device, OB_FRAME_METADATA_TYPE_BRIGHTNESS));
+        registerParser(OB_FRAME_METADATA_TYPE_CONTRAST, std::make_shared<G305ColorMetadataParser>(device, OB_FRAME_METADATA_TYPE_CONTRAST));
+        registerParser(OB_FRAME_METADATA_TYPE_SATURATION, std::make_shared<G305ColorMetadataParser>(device, OB_FRAME_METADATA_TYPE_SATURATION));
+        registerParser(OB_FRAME_METADATA_TYPE_SHARPNESS, std::make_shared<G305ColorMetadataParser>(device, OB_FRAME_METADATA_TYPE_SHARPNESS));
+        registerParser(OB_FRAME_METADATA_TYPE_BACKLIGHT_COMPENSATION,
+                       std::make_shared<G305ColorMetadataParser>(device, OB_FRAME_METADATA_TYPE_BACKLIGHT_COMPENSATION));
+        registerParser(OB_FRAME_METADATA_TYPE_GAMMA, std::make_shared<G305ColorMetadataParser>(device, OB_FRAME_METADATA_TYPE_GAMMA));
+        registerParser(OB_FRAME_METADATA_TYPE_HUE, std::make_shared<G305ColorMetadataParser>(device, OB_FRAME_METADATA_TYPE_HUE));
+        registerParser(OB_FRAME_METADATA_TYPE_POWER_LINE_FREQUENCY,
+                       std::make_shared<G305ColorMetadataParser>(device, OB_FRAME_METADATA_TYPE_POWER_LINE_FREQUENCY));
+        registerParser(OB_FRAME_METADATA_TYPE_LOW_LIGHT_COMPENSATION,
+                       std::make_shared<G305ColorMetadataParser>(device, OB_FRAME_METADATA_TYPE_LOW_LIGHT_COMPENSATION));
+        registerParser(OB_FRAME_METADATA_TYPE_EXPOSURE_PRIORITY,
+                       std::make_shared<G305ColorMetadataParser>(device, OB_FRAME_METADATA_TYPE_LOW_LIGHT_COMPENSATION));
+        registerParser(OB_FRAME_METADATA_TYPE_AE_ROI_LEFT, std::make_shared<G305ColorMetadataParser>(device, OB_FRAME_METADATA_TYPE_AE_ROI_LEFT));
+        registerParser(OB_FRAME_METADATA_TYPE_AE_ROI_TOP, std::make_shared<G305ColorMetadataParser>(device, OB_FRAME_METADATA_TYPE_AE_ROI_TOP));
+        registerParser(OB_FRAME_METADATA_TYPE_AE_ROI_RIGHT, std::make_shared<G305ColorMetadataParser>(device, OB_FRAME_METADATA_TYPE_AE_ROI_RIGHT));
+        registerParser(OB_FRAME_METADATA_TYPE_AE_ROI_BOTTOM, std::make_shared<G305ColorMetadataParser>(device, OB_FRAME_METADATA_TYPE_AE_ROI_BOTTOM));
+    };
+};
+
 class G305DepthFrameMetadataParserContainerByScr : public FrameMetadataParserContainer {
 public:
     G305DepthFrameMetadataParserContainerByScr(IDevice *owner, const uint64_t deviceTimeFreq, const uint64_t frameTimeFreq)

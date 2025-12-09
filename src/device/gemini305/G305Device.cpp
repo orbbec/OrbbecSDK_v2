@@ -139,7 +139,7 @@ void G305Device::init() {
             auto uvcPort = std::dynamic_pointer_cast<UvcDevicePort>(port);
             auto backend = uvcPort->getBackendType();
             if(backend == OB_UVC_BACKEND_TYPE_V4L2) {
-                container = std::make_shared<G305ColorFrameMetadataParserContainerByScr>(this, deviceTimeFreq_, frameTimeFreq_);
+                container = std::make_shared<G305LeftColorFrameMetadataParserContainerByScr>(this, deviceTimeFreq_, frameTimeFreq_);
                 return container;
             }
         }
@@ -157,7 +157,7 @@ void G305Device::init() {
             auto uvcPort = std::dynamic_pointer_cast<UvcDevicePort>(port);
             auto backend = uvcPort->getBackendType();
             if(backend == OB_UVC_BACKEND_TYPE_V4L2) {
-                container = std::make_shared<G305ColorFrameMetadataParserContainerByScr>(this, deviceTimeFreq_, frameTimeFreq_);
+                container = std::make_shared<G305RightColorFrameMetadataParserContainerByScr>(this, deviceTimeFreq_, frameTimeFreq_);
                 return container;
             }
         }
@@ -535,8 +535,6 @@ void G305Device::initProperties() {
             propertyServer->aliasProperty(OB_PROP_IR_EXPOSURE_INT, OB_PROP_DEPTH_EXPOSURE_INT);
             propertyServer->aliasProperty(OB_PROP_IR_GAIN_INT, OB_PROP_DEPTH_GAIN_INT);
 
-
-
             if(isGmslDevice_) {
                 propertyServer->registerProperty(OB_PROP_DEVICE_REPOWER_BOOL, "w", "w", vendorPropertyAccessor);
             }
@@ -551,7 +549,8 @@ void G305Device::initProperties() {
 
     auto colorAeAccessor = std::make_shared<G305ColorAePropertyAccessor>(this);
     propertyServer->registerProperty(OB_PROP_COLOR_AE_MAX_EXPOSURE_INT, "rw", "rw", colorAeAccessor);
-    propertyServer->registerProperty(OB_PROP_COLOR_EXPOSURE_INT, "rw", "rw", colorAeAccessor);    auto baseLinePropertyAccessor = std::make_shared<BaselinePropertyAccessor>(this);
+    propertyServer->registerProperty(OB_PROP_COLOR_EXPOSURE_INT, "rw", "rw", colorAeAccessor);
+    auto baseLinePropertyAccessor = std::make_shared<BaselinePropertyAccessor>(this);
     propertyServer->registerProperty(OB_STRUCT_BASELINE_CALIBRATION_PARAM, "r", "r", baseLinePropertyAccessor);
 
     registerComponent(OB_DEV_COMPONENT_PROPERTY_SERVER, propertyServer, true);
