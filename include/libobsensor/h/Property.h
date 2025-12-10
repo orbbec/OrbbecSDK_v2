@@ -683,6 +683,11 @@ typedef enum {
     OB_STRUCT_PRESET_RESOLUTION_CONFIG = 1069,
 
     /**
+     * @brief Color sensor synchronized exposure parameter structure
+     */
+    OB_STRUCT_COLOR_SYNCED_EXPOSURE_PARAM = 1077,
+
+    /**
      * @brief Color camera auto exposure
      */
     OB_PROP_COLOR_AUTO_EXPOSURE_BOOL = 2000,

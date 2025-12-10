@@ -32,7 +32,8 @@ void TimestampAnomalyDetector::calculate(std::shared_ptr<Frame> frame) {
     TRY_EXECUTE({
         if(deviceSyncConfigurator_) {
             auto syncConfig = deviceSyncConfigurator_->getSyncConfig();
-            if(syncConfig.syncMode == OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_TRIGGERING || syncConfig.syncMode == OB_MULTI_DEVICE_SYNC_MODE_HARDWARE_TRIGGERING) {
+            if(syncConfig.syncMode == OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_TRIGGERING || syncConfig.syncMode == OB_MULTI_DEVICE_SYNC_MODE_HARDWARE_TRIGGERING
+               || syncConfig.syncMode == OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_SYNCED) {
                 return;
             }
         }

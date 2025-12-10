@@ -241,22 +241,23 @@ void SensorBase::startStreamRecovery() {
         return;
     }
 
-    auto        envConfig    = EnvConfig::getInstance();
-    std::string nodePathName = "Device." + getOwner()->getInfo()->name_ + ".";
-    auto nodePath = nodePathName + utils::obSensorToStr(getSensorType());
-    nodePath      = utils::string::removeSpace(nodePath);
-    int streamFailedRetry = 0;
+    auto        envConfig     = EnvConfig::getInstance();
+    std::string nodePathName  = "Device." + getOwner()->getInfo()->name_ + ".";
+    auto        nodePath      = nodePathName + utils::obSensorToStr(getSensorType());
+    nodePath                  = utils::string::removeSpace(nodePath);
+    int streamFailedRetry     = 0;
     int maxStartStreamDelayMs = 0;
-    int  maxFrameIntervalMs = 0;
-    if(envConfig->getIntValue(nodePath + ".StreamFailedRetry", streamFailedRetry) &&
-        envConfig->getIntValue(nodePath + ".MaxStartStreamDelayMs", maxStartStreamDelayMs) &&
-        envConfig->getIntValue(nodePath + ".MaxFrameIntervalMs", maxFrameIntervalMs)) {  
-        LOG_DEBUG(" Recovery config found for sensor: {}", utils::obSensorToStr(sensorType_));   
-        LOG_DEBUG(" StreamFailedRetry: {}, MaxStartStreamDelayMs: {}, MaxFrameIntervalMs: {}", streamFailedRetry, maxStartStreamDelayMs, maxFrameIntervalMs);               
+    int maxFrameIntervalMs    = 0;
+    if(envConfig->getIntValue(nodePath + ".StreamFailedRetry", streamFailedRetry)
+       && envConfig->getIntValue(nodePath + ".MaxStartStreamDelayMs", maxStartStreamDelayMs)
+       && envConfig->getIntValue(nodePath + ".MaxFrameIntervalMs", maxFrameIntervalMs)) {
+        LOG_DEBUG(" Recovery config found for sensor: {}", utils::obSensorToStr(sensorType_));
+        LOG_DEBUG(" StreamFailedRetry: {}, MaxStartStreamDelayMs: {}, MaxFrameIntervalMs: {}", streamFailedRetry, maxStartStreamDelayMs, maxFrameIntervalMs);
         if(streamFailedRetry > 0) {
             enableStreamRecovery(streamFailedRetry, maxStartStreamDelayMs, maxFrameIntervalMs);
         }
-    } else {
+    }
+    else {
         LOG_INFO(" No recovery config found for sensor: {}", utils::obSensorToStr(sensorType_));
     }
 }
@@ -279,17 +280,15 @@ void SensorBase::watchStreamState() {
         bool isTriggeringMode = false;
         if((streamState_ == STREAM_STATE_STARTING && noStreamTimeoutMs_ > 0) || (streamState_ == STREAM_STATE_STREAMING && streamInterruptTimeoutMs_ > 0)) {
             BEGIN_TRY_EXECUTE(auto configurator =
-                            getOwner()->getComponentT<libobsensor::IDeviceSyncConfigurator>(libobsensor::OB_DEV_COMPONENT_DEVICE_SYNC_CONFIGURATOR);
-                        auto oBMultiDeviceSyncConfig = configurator->getSyncConfig();
-                        if(oBMultiDeviceSyncConfig.syncMode == OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_TRIGGERING
-                           || oBMultiDeviceSyncConfig.syncMode == OB_MULTI_DEVICE_SYNC_MODE_HARDWARE_TRIGGERING) {
-                            isTriggeringMode = true;
-                            LOG_DEBUG_INTVL_MS(5000, "{} Curent mode is not supported stream recovery", sensorType_);
-                        })
-            CATCH_EXCEPTION_AND_EXECUTE(
-                recoveryEnabled_ = false;
-                streamStateCv_.notify_all();
-            )
+                                  getOwner()->getComponentT<libobsensor::IDeviceSyncConfigurator>(libobsensor::OB_DEV_COMPONENT_DEVICE_SYNC_CONFIGURATOR);
+                              auto oBMultiDeviceSyncConfig = configurator->getSyncConfig();
+                              if(oBMultiDeviceSyncConfig.syncMode == OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_TRIGGERING
+                                 || oBMultiDeviceSyncConfig.syncMode == OB_MULTI_DEVICE_SYNC_MODE_HARDWARE_TRIGGERING
+                                 || oBMultiDeviceSyncConfig.syncMode == OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_SYNCED) {
+                                  isTriggeringMode = true;
+                                  LOG_DEBUG_INTVL_MS(5000, "{} Curent mode is not supported stream recovery", sensorType_);
+                              })
+            CATCH_EXCEPTION_AND_EXECUTE(recoveryEnabled_ = false; streamStateCv_.notify_all();)
         }
 
         if(streamState_ == STREAM_STATE_STOPPED || streamState_ == STREAM_STATE_STOPPING || streamState_ == STREAM_STATE_ERROR) {
@@ -365,8 +364,7 @@ void SensorBase::setFrameProcessor(std::shared_ptr<FrameProcessor> frameProcesso
     frameProcessor_ = frameProcessor;
     frameProcessor_->setCallback([this](std::shared_ptr<Frame> frame) {
         LOG_FREQ_CALC(DEBUG, 5000, "{} frameProcessor_ callback frameRate={freq}fps", sensorType_);
-        if (frameCallback_)
-        {
+        if(frameCallback_) {
             frameCallback_(frame);
         }
 
@@ -374,7 +372,7 @@ void SensorBase::setFrameProcessor(std::shared_ptr<FrameProcessor> frameProcesso
     });
 }
 
-void SensorBase::enableTimestampAnomalyDetection(bool enable){
+void SensorBase::enableTimestampAnomalyDetection(bool enable) {
     if(enable) {
         if(owner_->isPlaybackDevice()) {
             LOG_WARN("Sensor {}: the current device is a playback device and does not support timestamp anomaly detection", sensorType_);
@@ -421,16 +419,15 @@ void SensorBase::outputFrame(std::shared_ptr<Frame> frame) {
         });
     }
 
-    if (frameRecordingCallback_) {
+    if(frameRecordingCallback_) {
         frameRecordingCallback_(frame);
     }
-    
+
     if(frameProcessor_) {
         frameProcessor_->pushFrame(frame);
     }
     else {
-        if (frameCallback_)
-        {
+        if(frameCallback_) {
             frameCallback_(frame);
         }
         LOG_FREQ_CALC(INFO, 5000, "{} Streaming... frameRate={freq}fps", sensorType_);

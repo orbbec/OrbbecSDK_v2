@@ -44,7 +44,7 @@ int main(void) try {
             auto deviceInfo = device->getDeviceInfo();
             std::cout << "\n------------------------------------------------------------------------\n";
             std::cout << "Current Device: "
-                      << " name: " << deviceInfo->getName() << ", vid: 0x" << std::hex << deviceInfo->getVid() << ", pid: 0x" << std::setw(4)
+                      << " name: " << deviceInfo->getName() << ", vid: 0x" << std::uppercase<<std::hex << deviceInfo->getVid() << ", pid: 0x" << std::setw(4)
                       << std::setfill('0') << deviceInfo->getPid() << ", uid: 0x" << deviceInfo->getUid() << std::dec << std::endl;
         }
         else {

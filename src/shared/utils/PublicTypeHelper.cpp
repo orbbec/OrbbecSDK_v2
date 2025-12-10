@@ -1017,6 +1017,9 @@ std::ostream &operator<<(std::ostream &os, const OBMultiDeviceSyncConfig &config
     case OB_MULTI_DEVICE_SYNC_MODE_IR_IMU_SYNC:
         os << "IR and IMU";
         break;
+    case OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_SYNCED:
+        os << "software synced";
+        break;
     default:
         os << "unknown(" << config.syncMode << ")";
         break;

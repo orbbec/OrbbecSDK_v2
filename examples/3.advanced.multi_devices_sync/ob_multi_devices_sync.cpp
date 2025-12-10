@@ -40,6 +40,9 @@ std::mutex                                   rebootingDevInfoListMutex;
 std::vector<std::shared_ptr<ob::DeviceInfo>> rebootingDevInfoList;
 std::vector<std::shared_ptr<PipelineHolder>> pipelineHolderList;
 
+bool     MultiDeviceSoftwareSync = false;
+uint64_t reservationTriggerTime  = 0;
+
 bool loadConfigFile();
 int  configMultiDeviceSync();
 int  testMultiDeviceSync();
@@ -197,6 +200,11 @@ void handleKeyPress(ob_smpl::CVWindow &win, int key) {
     else if(key == 'T' || key == 't') {
         // software trigger
         std::cout << "check software trigger mode" << std::endl;
+        if(MultiDeviceSoftwareSync) {
+            std::cout << "software sync trigger..." << std::endl;
+            context.setMultieDeviceSoftSyncTimeCapture(reservationTriggerTime);
+            return;
+        }
         for(auto &dev: streamDevList) {
             auto multiDeviceSyncConfig = dev->getMultiDeviceSyncConfig();
             if(multiDeviceSyncConfig.syncMode == OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_TRIGGERING) {
@@ -221,32 +229,45 @@ int testMultiDeviceSync() {
             std::cerr << "Device list is empty. please check device connection state" << std::endl;
             return -1;
         }
+        if(!MultiDeviceSoftwareSync) {
+            // traverse the device list and create the device
+            std::vector<std::shared_ptr<ob::Device>> primary_devices;
+            std::vector<std::shared_ptr<ob::Device>> secondary_devices;
+            for(auto dev: streamDevList) {
+                auto config = dev->getMultiDeviceSyncConfig();
+                if(config.syncMode == OB_MULTI_DEVICE_SYNC_MODE_PRIMARY) {
+                    primary_devices.push_back(dev);
+                }
+                else {
+                    secondary_devices.push_back(dev);
+                }
+            }
 
-        // traverse the device list and create the device
-        std::vector<std::shared_ptr<ob::Device>> primary_devices;
-        std::vector<std::shared_ptr<ob::Device>> secondary_devices;
-        for(auto dev: streamDevList) {
-            auto config = dev->getMultiDeviceSyncConfig();
-            if(config.syncMode == OB_MULTI_DEVICE_SYNC_MODE_PRIMARY) {
-                primary_devices.push_back(dev);
+            std::cout << "Secondary devices start..." << std::endl;
+            startDeviceStreams(secondary_devices, 0);
+
+            // Delay and wait for 5s to ensure that the initialization of the slave device is completed
+            // std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+
+            if(primary_devices.empty()) {
+                std::cerr << "WARNING primary_devices is empty!!!" << std::endl;
             }
             else {
-                secondary_devices.push_back(dev);
+                std::cout << "Primary device start..." << std::endl;
+                startDeviceStreams(primary_devices, static_cast<int>(secondary_devices.size()));
             }
         }
-
-        std::cout << "Secondary devices start..." << std::endl;
-        startDeviceStreams(secondary_devices, 0);
-
-        // Delay and wait for 5s to ensure that the initialization of the slave device is completed
-        // std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-
-        if(primary_devices.empty()) {
-            std::cerr << "WARNING primary_devices is empty!!!" << std::endl;
-        }
         else {
-            std::cout << "Primary device start..." << std::endl;
-            startDeviceStreams(primary_devices, static_cast<int>(secondary_devices.size()));
+            std::vector<std::shared_ptr<ob::Device>> softwareSyncdevices;
+            for(auto dev: streamDevList) {
+                auto config = dev->getMultiDeviceSyncConfig();
+                if(config.syncMode == OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_SYNCED) {
+                    softwareSyncdevices.push_back(dev);
+                }
+            }
+            std::cout << "All devices start..." << std::endl;
+            startDeviceStreams(softwareSyncdevices, 0);
+
         }
 
         // Start the multi-device time synchronization function
@@ -341,6 +362,14 @@ bool loadConfigFile() {
         cJSON_Delete(rootElem);
         return true;
     }
+    cJSON *softwareSync = cJSON_GetObjectItem(rootElem, "softwareScheduledSync");
+    if(softwareSync && cJSON_IsObject(softwareSync)) {
+        cJSON *status = cJSON_GetObjectItem(softwareSync, "status");
+        cJSON *time   = cJSON_GetObjectItem(softwareSync, "scheduledTriggerUs");
+
+        MultiDeviceSoftwareSync = cJSON_IsTrue(status);
+        reservationTriggerTime  = atoi(time->valuestring);
+    }
 
     cJSON *devicesElem = cJSON_GetObjectItem(rootElem, "devices");
     cJSON_ArrayForEach(deviceElem, devicesElem) {
@@ -408,7 +437,8 @@ OBMultiDeviceSyncMode stringToOBSyncMode(const std::string &modeString) {
         { "OB_MULTI_DEVICE_SYNC_MODE_SECONDARY", OB_MULTI_DEVICE_SYNC_MODE_SECONDARY },
         { "OB_MULTI_DEVICE_SYNC_MODE_SECONDARY_SYNCED", OB_MULTI_DEVICE_SYNC_MODE_SECONDARY_SYNCED },
         { "OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_TRIGGERING", OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_TRIGGERING },
-        { "OB_MULTI_DEVICE_SYNC_MODE_HARDWARE_TRIGGERING", OB_MULTI_DEVICE_SYNC_MODE_HARDWARE_TRIGGERING }
+        { "OB_MULTI_DEVICE_SYNC_MODE_HARDWARE_TRIGGERING", OB_MULTI_DEVICE_SYNC_MODE_HARDWARE_TRIGGERING },
+        { "OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_SYNCED", OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_SYNCED }
     };
     auto it = syncModeMap.find(modeString);
     if(it != syncModeMap.end()) {
@@ -428,7 +458,8 @@ std::string OBSyncModeToString(const OBMultiDeviceSyncMode syncMode) {
         { OB_MULTI_DEVICE_SYNC_MODE_SECONDARY, "OB_MULTI_DEVICE_SYNC_MODE_SECONDARY" },
         { OB_MULTI_DEVICE_SYNC_MODE_SECONDARY_SYNCED, "OB_MULTI_DEVICE_SYNC_MODE_SECONDARY_SYNCED" },
         { OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_TRIGGERING, "OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_TRIGGERING" },
-        { OB_MULTI_DEVICE_SYNC_MODE_HARDWARE_TRIGGERING, "OB_MULTI_DEVICE_SYNC_MODE_HARDWARE_TRIGGERING" }
+        { OB_MULTI_DEVICE_SYNC_MODE_HARDWARE_TRIGGERING, "OB_MULTI_DEVICE_SYNC_MODE_HARDWARE_TRIGGERING" },
+        { OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_SYNCED, "OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_SYNCED" }
     };
 
     auto it = modeToStringMap.find(syncMode);

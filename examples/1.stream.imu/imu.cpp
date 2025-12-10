@@ -26,6 +26,18 @@ int main() try {
     // Create a pipeline with default device.
     ob::Pipeline pipe;
 
+    // Get the device from Pipeline.
+    auto device=pipe.getDevice();
+
+    // Get the sensor of Accel and Gyro.
+    auto accelSensor=device->getSensor(OB_SENSOR_ACCEL);
+    auto gyroSensor=device->getSensor(OB_SENSOR_GYRO);
+
+    if(accelSensor==nullptr || gyroSensor==nullptr) {
+        std::cerr << "Device does not support Accel or Gyro sensor."<<std::endl;
+        std::cout << "\nPress any key to exit.";
+        return 0;
+    }
     // Configure which streams to enable or disable for the Pipeline by creating a Config.
     std::shared_ptr<ob::Config> config = std::make_shared<ob::Config>();
 
