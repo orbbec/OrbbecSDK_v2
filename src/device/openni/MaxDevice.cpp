@@ -215,7 +215,6 @@ void MaxDevice::initProperties() {
 
         if(sensor == OB_SENSOR_DEPTH) {
             propertyServer->registerProperty(OB_PROP_IR_CHANNEL_DATA_SOURCE_INT, "rw", "rw", vendorPropertyAccessor_);
-            propertyServer->registerProperty(OB_PROP_IR_LONG_EXPOSURE_BOOL, "rw", "rw", vendorPropertyAccessor_);
             propertyServer->registerProperty(OB_PROP_DEPTH_LOAD_ENGINE_GROUP_PARAM_INT, "", "w", vendorPropertyAccessor_);
             propertyServer->registerProperty(OB_PROP_TEMPERATURE_COMPENSATION_BOOL, "rw", "rw", vendorPropertyAccessor_);
             auto deviceTempPropertyAccessor = std::make_shared<OpenNITemperatureStructurePropertyAccessor>(this);
@@ -225,6 +224,7 @@ void MaxDevice::initProperties() {
                 propertyServer->registerProperty(OB_PROP_LDP_BOOL, "rw", "rw", vendorPropertyAccessor_);
             }
             if(deviceInfo_->pid_ == OB_DEVICE_MAX_PRO_PID || deviceInfo_->pid_ == OB_DEVICE_GEMINI_UW_PID) {
+                propertyServer->registerProperty(OB_PROP_IR_LONG_EXPOSURE_BOOL, "rw", "rw", vendorPropertyAccessor_);
                 propertyServer->registerProperty(OB_STRUCT_MULTI_DEVICE_SYNC_CONFIG, "rw", "rw", vendorPropertyAccessor_);
             }
             auto heartBeatPropertyAccessor = std::make_shared<OpenNIHeartBeatPropertyAccessor>(this);
