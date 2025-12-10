@@ -6,6 +6,7 @@
 #include "IDeviceClockSynchronizer.hpp"
 #include "IDeviceActivityRecorder.hpp"
 #include "IFrameTimestamp.hpp"
+#include "DeviceBase.hpp"
 
 #if defined(BUILD_USB_PAL)
 #include "UsbDeviceEnumerator.hpp"
@@ -135,6 +136,7 @@ std::shared_ptr<IDevice> DeviceManager::createNetDevice(std::string address, uin
 
 std::shared_ptr<IDevice> DeviceManager::createDevice(const std::shared_ptr<const IDeviceEnumInfo> &info, OBDeviceAccessMode accessMode) {
     LOG_DEBUG("DeviceManager createDevice with access mode: {}...", accessMode);
+    accessMode = DeviceBase::normalizeMode(accessMode);
 
     // check if the device has been created
     {
@@ -148,7 +150,7 @@ std::shared_ptr<IDevice> DeviceManager::createDevice(const std::shared_ptr<const
                     break;
                 }
                 auto devInfo = dev->getInfo();
-                if(dev->hasAccessControl() && dev->getAccessMode() != accessMode) {
+                if(!dev->isAccessModeMatch(accessMode)) {
                     auto               currentAccessMode = dev->getAccessMode();
                     std::ostringstream oss;
                     oss << "Device has already been created with access mode: " << currentAccessMode << ", but acquire with new access mode : " << accessMode

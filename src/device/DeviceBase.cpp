@@ -197,6 +197,14 @@ void DeviceBase::deactivate() {
         LOG_WARN("Device is deactivated or disconnected while there are still sensors streaming!");
     }
 
+    // CRITICAL: Heartbeat must be stopped before deactivating the device
+    TRY_EXECUTE({
+        auto monitor = getComponentT<IDeviceMonitor>(OB_DEV_COMPONENT_DEVICE_MONITOR, false);
+        if(monitor) {
+            monitor->disableHeartbeat();
+        }
+    });
+
     isDeactivated_ = true;
 
     std::vector<ComponentItem> tempComponents;  // using temp to avoid deadlock when deactivating components
@@ -538,6 +546,14 @@ std::shared_ptr<ISourcePort> DeviceBase::getSourcePort(std::shared_ptr<const Sou
     }
 #endif
     return platform->getSourcePort(sourcePortInfo);
+}
+
+OBDeviceAccessMode DeviceBase::normalizeMode(OBDeviceAccessMode mode) {
+    if(mode == OB_DEVICE_DEFAULT_ACCESS) {
+        LOG_DEBUG("Convert access mode from default access to control access");
+        return OB_DEVICE_CONTROL_ACCESS;
+    }
+    return mode;
 }
 
 bool DeviceBase::hasWriteAccess() const {

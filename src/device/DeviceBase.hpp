@@ -37,6 +37,9 @@ public:
     bool isPlaybackDevice() const override {
         return isPlaybackDevice_.load();
     }
+
+    static OBDeviceAccessMode normalizeMode(OBDeviceAccessMode mode);
+
     bool hasAccessControl() const override {
         return hasAccessControl_.load();
     }
@@ -45,6 +48,15 @@ public:
             return accessMode_.load();
         }
         return OB_DEVICE_DEFAULT_ACCESS;
+    }
+    bool isAccessModeMatch(OBDeviceAccessMode newMode) const override {
+        if(!hasAccessControl_.load()) {
+            // access control is unsupported
+            return true;
+        }
+        OBDeviceAccessMode current = DeviceBase::normalizeMode(accessMode_.load());
+        newMode                    = DeviceBase::normalizeMode(newMode);
+        return current == newMode;
     }
 
     std::shared_ptr<const DeviceInfo> getInfo() const override;
