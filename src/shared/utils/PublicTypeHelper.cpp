@@ -393,6 +393,8 @@ const std::map<OBFrameType, std::string> Frame_Str_Map = { { OB_FRAME_UNKNOWN, "
                                                            { OB_FRAME_VIDEO, "Video" },
                                                            { OB_FRAME_IR, "IR" },
                                                            { OB_FRAME_COLOR, "Color" },
+                                                           { OB_FRAME_COLOR_LEFT, "Left Color" },
+                                                           { OB_FRAME_COLOR_RIGHT, "Right Color" },
                                                            { OB_FRAME_DEPTH, "Depth" },
                                                            { OB_FRAME_ACCEL, "Accel" },
                                                            { OB_FRAME_SET, "SET" },
