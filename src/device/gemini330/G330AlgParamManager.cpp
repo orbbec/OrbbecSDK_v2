@@ -414,8 +414,8 @@ void G330AlgParamManager::fixD2CParmaList() {
             OBCameraIntrinsic depthIntrinsic = iter->depthIntrinsic;
             depthIntrinsic.fx                = depthIntrinsic.fx / 3;
             depthIntrinsic.fy                = depthIntrinsic.fy / 3;
-            depthIntrinsic.cx                = (depthIntrinsic.cx - 4) / 3;
-            depthIntrinsic.cy                = (depthIntrinsic.cy - 1) / 3;
+            depthIntrinsic.cx                = (depthIntrinsic.cx - 4-2) / 3;
+            depthIntrinsic.cy                = (depthIntrinsic.cy - 1-2) / 3;
             depthIntrinsic.width             = 424;
             depthIntrinsic.height            = 266;
             auto index                       = calibrationCameraParamList_.size();
