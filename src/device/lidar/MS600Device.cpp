@@ -214,8 +214,22 @@ void MS600Device::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
             }
         }
         if(profileList.size()) {
+            auto defaultProfile = profileList[0];
+            BEGIN_TRY_EXECUTE({
+                auto propertyServer   = getPropertyServer();
+                auto currentScanSpeed = propertyServer->getPropertyValueT<int32_t>(OB_PROP_LIDAR_SCAN_SPEED_INT);
+                auto it               = std::find_if(profileList.begin(), profileList.end(), [&](const std::shared_ptr<const StreamProfile> &profile) {
+                    return profile->as<LiDARStreamProfile>()->getInfo().scanSpeed == currentScanSpeed;
+                });
+                if(it != profileList.end()) {
+                    defaultProfile = *it;
+                }
+            })
+            CATCH_EXCEPTION_AND_EXECUTE({ 
+                LOG_ERROR("fetch LiDAR scan speed error!"); 
+            })
             sensor->setStreamProfileList(profileList);
-            sensor->updateDefaultStreamProfile(profileList[0]);
+            sensor->updateDefaultStreamProfile(defaultProfile);
         }
     }
 }
