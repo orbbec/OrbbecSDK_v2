@@ -95,23 +95,8 @@ VideoStreamProfile::VideoStreamProfile(std::shared_ptr<LazySensor> owner, OBStre
 
 VideoStreamProfile::VideoStreamProfile(std::shared_ptr<LazySensor> owner, OBStreamType type, OBFormat format, OBDownSampleConfig downSampleConfig, uint32_t fps)
     : StreamProfile(owner, type, format), downSampleConfig_{ downSampleConfig }, fps_(fps) {
-    auto calcSize = [](int originSize, int factor) -> uint32_t {
-        if(factor <= 0) {
-            return static_cast<uint32_t>(originSize);
-        }
-
-        // Floor division since originSize, factor >= 0
-        auto size = static_cast<uint32_t>(originSize / factor);
-        // Round to the nearest even integer
-        if(size % 2 != 0) {
-            --size;
-        }
-        return size;
-    };
-    auto width  = calcSize(downSampleConfig_.originWidth, downSampleConfig_.scaleFactor);
-    auto height = calcSize(downSampleConfig_.originHeight, downSampleConfig_.scaleFactor);
-    width_      = width;
-    height_     = height;
+    width_ = downSampleConfig.originWidth;
+    height_ = downSampleConfig.originHeight;
 }
 void VideoStreamProfile::setWidth(uint32_t width) {
     width_ = width;

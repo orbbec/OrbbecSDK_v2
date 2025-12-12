@@ -495,4 +495,21 @@ typedef struct {
     uint8_t  tag;           ///< tag
 } LiDARSpherePoint;
 
+typedef struct {
+    uint8_t left;
+    uint8_t top;
+    uint8_t right;
+    uint8_t bottom;
+} OBPresetResolutionCrop;
+
+typedef struct {
+    int16_t  width;                ///< width
+    int16_t  height;               ///< height
+    uint16_t irDecimationFlag;     ///< ir decimation flag. Bit 0 corresponds to the original resolution, bit 1 to 1/2 resolution, etc. A set bit indicates the
+                                   ///< availability of that downsampling factor.
+    uint16_t depthDecimationFlag;  ///< depth decimation flag. Bit 0 corresponds to the original resolution, bit 1 to 1/2 resolution, etc. A set bit indicates
+                                   ///< the availability of that downsampling factor.
+    OBPresetResolutionCrop crop[4];  ///< preset resolution crop list.
+} OBPresetResolutionMask;
+
 #pragma pack(pop)

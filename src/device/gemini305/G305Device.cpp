@@ -611,7 +611,7 @@ void G305Device::initSensorList() {
             [this, depthPortInfo]() {
                 auto port   = getSourcePort(depthPortInfo);
                 auto sensor = std::make_shared<DisparityBasedSensor>(this, OB_SENSOR_DEPTH, port);
-
+                sensor->fixVideoStreamProfile();
                 sensor->updateFormatFilterConfig({ { FormatFilterPolicy::REMOVE, OB_FORMAT_Y8, OB_FORMAT_ANY, nullptr },
                                                    { FormatFilterPolicy::REMOVE, OB_FORMAT_NV12, OB_FORMAT_ANY, nullptr },
                                                    { FormatFilterPolicy::REMOVE, OB_FORMAT_BGR, OB_FORMAT_ANY, nullptr },
@@ -1430,8 +1430,7 @@ void G305Device::updateDownSampleConfig(std::vector<std::shared_ptr<const Stream
     if(!propServer->isPropertySupported(OB_RAW_DATA_PRESET_RESOLUTION_MASK_LIST, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
         return;
     }
-
-    auto presetResolutionMaskList = propServer->getStructureDataListProtoV1_1_T<OBPresetResolutionMask, 0>(OB_RAW_DATA_PRESET_RESOLUTION_MASK_LIST);
+    auto presetResolutionMaskList = propServer->getStructureDataListProtoV1_1_T<OBPresetResolutionMask, 1>(OB_RAW_DATA_PRESET_RESOLUTION_MASK_LIST);
 
     // calc size from origin size and factor
     auto calcSize = [](int16_t originSize, uint32_t factor) -> uint32_t {
@@ -1457,16 +1456,20 @@ void G305Device::updateDownSampleConfig(std::vector<std::shared_ptr<const Stream
         else if(sensorType == OB_SENSOR_IR_LEFT || sensorType == OB_SENSOR_IR_RIGHT) {
             scaleFactor = static_cast<uint32_t>(presetResolution.irDecimationFlag);
         }
+        std::vector<OBPresetResolutionCrop> cropList;
+        for(int i = 0; i < 4; i++) {
+            cropList.push_back(presetResolution.crop[i]);
+        }
 
-        for(uint32_t bit = 1; bit < 32; ++bit) {
+        for(uint32_t bit = 1; bit <=4; ++bit) {
             if(scaleFactor == 0) {
                 break;
             }
             auto currscale = scaleFactor % 2;
             scaleFactor    = scaleFactor >> 1;
             if(currscale & 0x1) {
-                uint32_t width  = calcSize(presetResolution.width, bit);
-                uint32_t height = calcSize(presetResolution.height, bit);
+                uint32_t width  = calcSize(presetResolution.width - cropList[bit - 1].left - cropList[bit - 1].right, bit);
+                uint32_t height = calcSize(presetResolution.height - cropList[bit - 1].bottom - cropList[bit - 1].top, bit);
                 originResolutionConfig[Resolution{ width, height }].push_back(
                     std::make_pair(Resolution{ static_cast<uint32_t>(presetResolution.width), static_cast<uint32_t>(presetResolution.height) }, bit));
             }

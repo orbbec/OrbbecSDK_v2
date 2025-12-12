@@ -388,4 +388,86 @@ void VideoSensor::setFrameMetadataModifer(std::shared_ptr<IFrameMetadataModifier
     frameMetadataModifier_ = modifier;
 }
 
+void VideoSensor::fixVideoStreamProfile() {
+    std::vector<std::shared_ptr<const StreamProfile>> dstStreamProfile = streamProfileList_;
+    auto                                              owner            = getOwner();
+    auto                                              propServer       = owner->getPropertyServer();
+    if(!propServer->isPropertySupported(OB_RAW_DATA_PRESET_RESOLUTION_MASK_LIST, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
+        return;
+    }
+    auto presetResolutionMaskList = propServer->getStructureDataListProtoV1_1_T<OBPresetResolutionMask, 1>(OB_RAW_DATA_PRESET_RESOLUTION_MASK_LIST);
+
+    // calc size from origin size and factor
+    auto calcSize = [](int16_t originSize, uint32_t factor) -> uint32_t {
+        if(factor <= 0) {
+            return static_cast<uint32_t>(originSize);
+        }
+
+        // Floor division since originSize, factor >= 0
+        auto size = static_cast<uint32_t>(originSize / factor);
+        // Round to the nearest even integer
+        if(size % 2 != 0) {
+            --size;
+        }
+        return size;
+    };
+
+    struct Resolution {
+        uint32_t width;
+        uint32_t height;
+        bool     operator<(const Resolution &other) const {
+            return std::tie(width, height) < std::tie(other.width, other.height);
+        }
+    };
+
+    std::map<Resolution, uint32_t> originResolutionConfig;
+
+    for(auto presetResolution: presetResolutionMaskList) {
+        uint32_t scaleFactor = 1;
+        if(sensorType_ == OB_SENSOR_DEPTH) {
+            scaleFactor = static_cast<uint32_t>(presetResolution.depthDecimationFlag);
+        }
+        else if(sensorType_ == OB_SENSOR_IR_LEFT || sensorType_ == OB_SENSOR_IR_RIGHT) {
+            scaleFactor = static_cast<uint32_t>(presetResolution.irDecimationFlag);
+        }
+
+        std::vector<OBPresetResolutionCrop> cropList;
+        for(int i = 0; i < 4; i++) {
+            cropList.push_back(presetResolution.crop[i]);
+        }
+
+        for(uint32_t bit = 1; bit <= 4 && scaleFactor; ++bit) {
+            if(scaleFactor & 0x1) {
+                uint32_t width  = calcSize(presetResolution.width - cropList[bit - 1].left - cropList[bit - 1].right, bit);
+                uint32_t height = calcSize(presetResolution.height - cropList[bit - 1].top - cropList[bit - 1].bottom, bit);
+                originResolutionConfig[{ width, height }]++;
+            }
+            scaleFactor >>= 1;
+        }
+    }
+
+    std::map<Resolution, std::vector<std::shared_ptr<const StreamProfile>>> profileGroups;
+    for(auto &profile: streamProfileList_) {
+        auto       vp = profile->as<VideoStreamProfile>();
+        Resolution res{ vp->getWidth(), vp->getHeight() };
+        profileGroups[res].push_back(profile);
+    }
+
+    for(auto &group: profileGroups) {
+        auto    &profiles  = group.second;
+        uint32_t needCount = originResolutionConfig[group.first];
+
+        for(uint32_t i = 1; i < needCount; i++) {
+            for(auto &profile: profiles) {
+
+                dstStreamProfile.push_back(profile->clone());
+            }
+        }
+    }
+
+    backendStreamProfileList_.clear();
+    streamProfileList_.clear();
+    setStreamProfileList(dstStreamProfile);
+}
+
 }  // namespace libobsensor

@@ -13,14 +13,6 @@
 
 namespace libobsensor {
 
-typedef struct {
-    int16_t  width;                ///< width
-    int16_t  height;               ///< height
-    uint16_t irDecimationFlag;     ///< ir decimation flag. Bit 0 corresponds to the original resolution, bit 1 to 1/2 resolution, etc. A set bit indicates the
-                                   ///< availability of that downsampling factor.
-    uint16_t depthDecimationFlag;  ///< depth decimation flag. Bit 0 corresponds to the original resolution, bit 1 to 1/2 resolution, etc. A set bit indicates
-                                   ///< the availability of that downsampling factor.
-} OBPresetResolutionMask;
 
 struct Resolution {
     uint32_t width;

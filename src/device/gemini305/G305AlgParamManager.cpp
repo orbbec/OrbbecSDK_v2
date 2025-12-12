@@ -211,13 +211,14 @@ void G305AlgParamManager::fixD2CParmaList() {
     std::vector<Resolution> otherDeviceColorResolutions = { { 1280, 800 }, { 1280, 720 }, { 848, 480 }, { 848, 530 }, { 640, 480 } };
 
     std::map<std::pair<Resolution, int>, Resolution> downDacimationToOrigMap = {
-        { { { 1280, 800 }, 1 }, { 1280, 800 } }, { { { 640, 400 }, 2 }, { 1280, 800 } }, { { { 320, 200 }, 4 }, { 1280, 800 } },
-        { { { 1280, 720 }, 1 }, { 1280, 720 } }, { { { 640, 360 }, 2 }, { 1280, 720 } }, { { { 320, 180 }, 4 }, { 1280, 720 } },
-        { { { 848, 530 }, 1 }, { 848, 530 } },   { { { 424, 264 }, 2 }, { 848, 530 } },  { { { 282, 176 }, 3 }, { 848, 530 } },
-        { { { 212, 132 }, 4 }, { 848, 530 } },   { { { 848, 480 }, 1 }, { 848, 480 } },  { { { 424, 240 }, 2 }, { 848, 480 } },
-        { { { 282, 160 }, 3 }, { 848, 480 } },   { { { 212, 120 }, 4 }, { 848, 480 } },  { { { 640, 480 }, 1 }, { 640, 480 } },
-        { { { 320, 240 }, 2 }, { 640, 480 } },   { { { 160, 120 }, 4 }, { 640, 480 } },  { { { 424, 266 }, 3 }, { 1272, 800 } },
-        { { { 424, 240 }, 3 }, { 1272, 720 } },
+        { { { 1280, 800 }, 1 }, { 1280, 800 } }, { { { 640, 400 }, 2 }, { 1280, 800 } },  { { { 424, 266 }, 3 }, { 1280, 800 } },
+        { { { 320, 200 }, 4 }, { 1280, 800 } },  { { { 1280, 720 }, 1 }, { 1280, 720 } }, { { { 640, 360 }, 2 }, { 1280, 720 } },
+        { { { 424, 240 }, 3 }, { 1280, 720 } },  { { { 320, 180 }, 4 }, { 1280, 720 } },  { { { 848, 530 }, 1 }, { 848, 530 } },
+        { { { 424, 264 }, 2 }, { 848, 530 } },   { { { 282, 176 }, 3 }, { 848, 530 } },   { { { 212, 132 }, 4 }, { 848, 530 } },
+        { { { 848, 480 }, 1 }, { 848, 480 } },   { { { 424, 240 }, 2 }, { 848, 480 } },   { { { 282, 160 }, 3 }, { 848, 480 } },
+        { { { 212, 120 }, 4 }, { 848, 480 } },   { { { 640, 480 }, 1 }, { 640, 480 } },   { { { 320, 240 }, 2 }, { 640, 480 } },
+        { { { 160, 120 }, 4 }, { 640, 480 } }
+
     };
 
     appendColorResolutions.assign(otherDeviceColorResolutions.begin(), otherDeviceColorResolutions.end());
@@ -241,8 +242,8 @@ void G305AlgParamManager::fixD2CParmaList() {
         OBCameraIntrinsic colorIntrinsic = colorAlignParam.rgbIntrinsic;
         int               colorScale     = colorIntrinsic.width / colorProfile->getWidth();
         auto              colorRatio     = 1.f / colorScale;
-        int               colorDx        = ((colorIntrinsic.width - colorScale * colorProfile->getWidth()) >> 1) - colorScale + 1;  // delta_w/2
-        int               colorDy        = ((colorIntrinsic.height - colorScale * colorProfile->getHeight()) >> 1) - colorScale + 1;
+        int               colorDx        = ((colorIntrinsic.width - colorScale * colorProfile->getWidth()) >> 1) + colorScale - 1;  // delta_w/2
+        int               colorDy        = ((colorIntrinsic.height - colorScale * colorProfile->getHeight()) >> 1) + colorScale - 1;
         colorIntrinsic.fx *= colorRatio;
         colorIntrinsic.fy *= colorRatio;
         colorIntrinsic.cx     = (colorIntrinsic.cx - colorDx) * colorRatio;
@@ -260,8 +261,8 @@ void G305AlgParamManager::fixD2CParmaList() {
             OBCameraIntrinsic depthIntrinsic = depthAlignParam.depthIntrinsic;
             int               depthScale     = depthIntrinsic.width / depthRes.width;
             auto              depthRatio     = 1.f / depthScale;
-            int               depthDx        = ((depthIntrinsic.width - depthScale * depthRes.width) >> 1) - depthScale + 1;  // delta_w/2
-            int               depthDy        = ((depthIntrinsic.height - depthScale * depthRes.height) >> 1) - depthScale + 1;
+            int               depthDx        = ((depthIntrinsic.width - depthScale * depthRes.width) >> 1) + depthScale - 1;  // delta_w/2
+            int               depthDy        = ((depthIntrinsic.height - depthScale * depthRes.height) >> 1) + depthScale - 1;
             depthIntrinsic.fx *= depthRatio;
             depthIntrinsic.fy *= depthRatio;
             depthIntrinsic.cx     = (depthIntrinsic.cx - depthDx) * depthRatio;
@@ -407,8 +408,8 @@ void G305AlgParamManager::bindIntrinsic(std::vector<std::shared_ptr<const Stream
         auto originHeight     = downSampleConfig.scaleFactor == 0 ? vsp->getHeight() : downSampleConfig.originHeight;
         int  scale            = originWidth / vsp->getWidth();
         auto ratio            = 1.f / scale;
-        int  dx               = ((originWidth - scale * vsp->getWidth()) >> 1) - scale + 1;  // delta_w/2
-        int  dy               = ((originHeight - scale * vsp->getHeight()) >> 1) - scale + 1;
+        int  dx               = ((originWidth - scale * vsp->getWidth()) >> 1) + scale - 1;  // delta_w/2
+        int  dy               = ((originHeight - scale * vsp->getHeight()) >> 1) + scale - 1;
         intrinsic.fx *= ratio;
         intrinsic.fy *= ratio;
         intrinsic.cx     = (intrinsic.cx - dx) * ratio;
@@ -429,7 +430,7 @@ void G305AlgParamManager::fetchPresetResolutionConfig() {
     }
 
     try {
-        auto presetResolutionMaskList = propServer->getStructureDataListProtoV1_1_T<OBPresetResolutionMask, 0>(OB_RAW_DATA_PRESET_RESOLUTION_MASK_LIST);
+        auto presetResolutionMaskList = propServer->getStructureDataListProtoV1_1_T<OBPresetResolutionMask, 1>(OB_RAW_DATA_PRESET_RESOLUTION_MASK_LIST);
         for(auto &ratio: presetResolutionMaskList) {
             int depthDecimation[16] = { 0 };
             int irDecimation[16]    = { 0 };
