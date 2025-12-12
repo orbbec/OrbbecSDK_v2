@@ -92,9 +92,19 @@ char ob_smpl_wait_for_key_press(uint32_t timeout_ms) {  // Get the current time
     }
 }
 
+int ob_smpl_support_ansi_escape(void) {
+    if(isatty(fileno(stdout)) == 0) {
+        // unsupport
+        return 0;
+    }
+    return 1;
+}
+
 #else  // Windows
 #include <conio.h>
 #include <windows.h>
+#include <io.h>
+#include <stdio.h>
 
 uint64_t ob_smpl_get_current_timestamp_ms() {
     FILETIME      ft;
@@ -133,6 +143,28 @@ char ob_smpl_wait_for_key_press(uint32_t timeout_ms) {
         Sleep(1);
     }
 }
+
+int ob_smpl_support_ansi_escape(void) {
+    if(_isatty(_fileno(stdout)) == 0) {
+        // unsupport
+        return 0;
+    }
+
+    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    if(hOut == INVALID_HANDLE_VALUE) {
+        return 0;
+    }
+
+    DWORD mode = 0;
+    if(!GetConsoleMode(hOut, &mode)) {
+        return 0;
+    }
+    if((mode & ENABLE_VIRTUAL_TERMINAL_PROCESSING) == 0) {
+        return 0;
+    }
+    return 1;
+}
+
 #endif
 
 bool ob_smpl_is_lidar_device(ob_device *device) {

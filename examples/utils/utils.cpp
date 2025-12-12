@@ -35,4 +35,12 @@ bool isLiDARDevice(std::shared_ptr<ob::Device> device) {
 
     return false;
 }
+
+bool supportAnsiEscape() {
+    if(ob_smpl_support_ansi_escape() == 0) {
+        return false;
+    }
+    return true;
+}
+
 }  // namespace ob_smpl

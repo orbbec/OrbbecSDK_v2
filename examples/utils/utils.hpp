@@ -31,5 +31,7 @@ template <typename T> std::string toString(const T a_value, const int n = 6) {
  */
 bool isLiDARDevice(std::shared_ptr<ob::Device> device);
 
+bool supportAnsiEscape();
+
 }  // namespace ob_smpl
 

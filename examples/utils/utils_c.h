@@ -35,6 +35,13 @@ char ob_smpl_wait_for_key_press(uint32_t timeout_ms);
  */
 bool ob_smpl_is_lidar_device(ob_device *device);
 
+/**
+ * @brief Check if stdout supports ANSI escape sequences.
+ *
+ * @return 1 if supported, 0 not supported.
+ */
+int ob_smpl_support_ansi_escape(void);
+
 // Macro to check for error and exit program if there is one.
 #define CHECK_OB_ERROR_EXIT(error)                                \
     if(*error) {                                                  \
