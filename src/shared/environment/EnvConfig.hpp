@@ -42,29 +42,4 @@ private:
     std::string defaultConfigFile_ = "OrbbecSDKConfig.xml";
 #endif
 };
-
-class DevInfoConfig {
-
-    explicit DevInfoConfig();
-
-    static std::mutex                   instanceMutex_;
-    static std::weak_ptr<DevInfoConfig> instanceWeakPtr_;
-
-public:
-    static std::shared_ptr<DevInfoConfig> getInstance();
-
-    ~DevInfoConfig() noexcept = default;
-
-    bool isNodeContained(const std::string &nodePathName);
-    bool getStringValue(const std::string &nodePathName, std::string &t);
-    bool getChildNodeNames(const std::string &nodePathName, std::vector<std::string> &childNames);
-    bool getChildNodeTextList(const std::string &nodePathName, std::vector<std::string> &texts);
-    bool getAttributeValue(const std::string &nodePathName, const std::string &attrName, std::string &value);
-    bool getChildNodeAttributeList(const std::string &parentPath, const std::string &childNodeName,
-                                                  std::vector<std::vector<std::pair<std::string, std::string>>> &outList);
-
-private:
-    std::vector<std::shared_ptr<XmlReader>> xmlReaders_;
-};
-
 }  // namespace libobsensor

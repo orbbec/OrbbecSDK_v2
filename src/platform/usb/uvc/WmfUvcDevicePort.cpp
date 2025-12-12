@@ -597,8 +597,7 @@ void WmfUvcDevicePort::foreachUvcDevice(const USBDeviceInfoEnumCallback &action)
 
             uint16_t    vid, pid, infIndex;
             std::string uid, guid;
-            if(parse_usb_path_multiple_interface(vid, pid, infIndex, uid, symbolicLink, guid)
-               && std::find(allowedVids.begin(), allowedVids.end(), vid) != allowedVids.end()) {
+            if(parse_usb_path_multiple_interface(vid, pid, infIndex, uid, symbolicLink, guid) && (allowedVids.count(vid) > 0)) {
                 UsbInterfaceInfo info;
                 // info.url = ""
                 info.uid      = uid;

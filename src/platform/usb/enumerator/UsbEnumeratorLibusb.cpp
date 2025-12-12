@@ -366,7 +366,7 @@ const std::vector<UsbInterfaceInfo> &UsbEnumeratorLibusb::queryUsbInterfaces() {
         }
 
         const auto &allowedVids = libobsensor::supportedUsbVids;
-        if(std::find(allowedVids.begin(), allowedVids.end(), desc.idVendor) == allowedVids.end()) {
+        if(allowedVids.count(desc.idVendor) == 0) {
             continue;
         }
 

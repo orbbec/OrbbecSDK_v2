@@ -54,4 +54,5 @@ constexpr const char *FIELD_MANUFACTURER_VID  = "vid";
 
 // Default VID
 const uint16_t ORBBEC_DEVICE_VID = 0x2BC5;
+
 }  // namespace libobsensor

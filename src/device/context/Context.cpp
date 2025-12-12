@@ -36,7 +36,6 @@ std::shared_ptr<Context> Context::getInstance(const std::string &configPath) {
 
 Context::Context(const std::string &configFilePath) {
     envConfig_               = EnvConfig::getInstance(configFilePath);
-    devInfoConfig_           = DevInfoConfig::getInstance();
     logger_                  = Logger::getInstance();
     frameMemoryPool_         = FrameMemoryPool::getInstance();
     streamIntrinsicsManager_ = StreamIntrinsicsManager::getInstance();

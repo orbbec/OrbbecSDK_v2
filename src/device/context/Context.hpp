@@ -40,7 +40,6 @@ private:
     void logExtensionsCommitHashes();
 #endif
     std::shared_ptr<EnvConfig>               envConfig_;
-    std::shared_ptr<DevInfoConfig>           devInfoConfig_;
     std::shared_ptr<Logger>                  logger_;
     std::shared_ptr<IDeviceManager>          deviceManager_;
     std::shared_ptr<FrameMemoryPool>         frameMemoryPool_;

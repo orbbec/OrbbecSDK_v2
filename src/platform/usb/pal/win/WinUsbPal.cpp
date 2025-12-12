@@ -226,8 +226,7 @@ SourcePortInfoList WinUsbPal::querySourcePortInfos() {
     const auto &allowedVids = libobsensor::supportedUsbVids;
     const auto &usbInfoList = usbEnumerator_->queryUsbInterfaces();
     for(const auto &info: usbInfoList) {
-        auto iter = std::find(allowedVids.begin(), allowedVids.end(), info.vid);
-        if((iter != allowedVids.end()) && (info.cls == OB_USB_CLASS_HID || info.cls == OB_USB_CLASS_VENDOR_SPECIFIC)) {
+        if((allowedVids.count(info.vid) > 0) && (info.cls == OB_USB_CLASS_HID || info.cls == OB_USB_CLASS_VENDOR_SPECIFIC)) {
             // 1. Filter non orbbec devices 2. Filter uvc class
             auto portInfo      = std::make_shared<USBSourcePortInfo>();
             portInfo->portType = info.cls == OB_USB_CLASS_HID ? SOURCE_PORT_USB_HID : SOURCE_PORT_USB_VENDOR;
@@ -361,7 +360,7 @@ LRESULT CALLBACK WinUsbDeviceWatcher::onWinEvent(HWND hWnd, UINT message, WPARAM
             std::string symbolicLink = wideCharToUTF8(devIntf->dbcc_name);
             if(parseSymbolicLink(symbolicLink, vid, pid, mi, uid, device_guid)) {
                 const auto &allowedVids = libobsensor::supportedUsbVids;
-                if(std::find(allowedVids.begin(), allowedVids.end(), vid) != allowedVids.end()) {
+                if(allowedVids.count(vid) > 0) {
                     auto watcherExtraData = reinterpret_cast<extra_data *>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
                     symbolicLink          = utils::string::toUpper(symbolicLink);
                     if(wParam == DBT_DEVICEARRIVAL) {
