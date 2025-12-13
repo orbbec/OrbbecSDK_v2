@@ -184,6 +184,7 @@ void MS600Device::initSensorList() {
                 auto streamerSharedPtr = streamer.get();
                 auto sensor            = std::make_shared<LiDARSensor>(this, port, streamerSharedPtr);
 
+                sensor->enableTimestampAnomalyDetection(false);
                 initSensorStreamProfile(sensor);
                 return sensor;
             },

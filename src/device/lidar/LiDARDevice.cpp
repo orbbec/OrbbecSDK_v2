@@ -234,6 +234,7 @@ void LiDARDevice::initSensorList() {
                 auto streamerSharedPtr = streamer.get();
                 auto sensor            = std::make_shared<LiDARSensor>(this, port, streamerSharedPtr);
 
+                sensor->enableTimestampAnomalyDetection(false);
                 initSensorStreamProfile(sensor);
                 return sensor;
             },
@@ -267,6 +268,7 @@ void LiDARDevice::initSensorList() {
                 auto imuStreamerSharedPtr = imuStreamer.get();
                 auto sensor               = std::make_shared<LiDARAccelSensor>(this, port, imuStreamerSharedPtr);
 
+                sensor->enableTimestampAnomalyDetection(false);
                 initSensorStreamProfile(sensor);
                 return sensor;
             },
@@ -281,6 +283,7 @@ void LiDARDevice::initSensorList() {
                 auto imuStreamerSharedPtr = imuStreamer.get();
                 auto sensor               = std::make_shared<LiDARGyroSensor>(this, port, imuStreamerSharedPtr);
 
+                sensor->enableTimestampAnomalyDetection(false);
                 initSensorStreamProfile(sensor);
                 return sensor;
             },
