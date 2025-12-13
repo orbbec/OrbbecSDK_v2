@@ -35,7 +35,7 @@ bool ObRTPPacketProcessor::foundStartPacket() {
     return foundStartPacket_;
 }
 
-bool ObRTPPacketProcessor::process(RTPHeader *header, uint8_t *recvData, uint32_t length, uint32_t type) {
+bool ObRTPPacketProcessor::process(RTPHeader *header, uint8_t *recvData, uint32_t length, uint32_t type, OBFormat format) {
     if(fameSequenceNumberCount_ >= maxPacketCount_) {
         LOG_WARN("RTP data buffer overflow!");
         reset();
@@ -65,19 +65,19 @@ bool ObRTPPacketProcessor::process(RTPHeader *header, uint8_t *recvData, uint32_
     }
 
     if(marker == END_RTP_TAG) {
-        OnEndOfFrame(sequenceNumber);
+        OnEndOfFrame(sequenceNumber, format);
     }
 
     return true;
 }
 
-void ObRTPPacketProcessor::OnEndOfFrame(uint16_t sequenceNumber) {
+void ObRTPPacketProcessor::OnEndOfFrame(uint16_t sequenceNumber, OBFormat format) {
     // If the number of received data packets equals the end frame's SN (sequence number),
     // it indicates that all RTP packets for the frame have been successfully received. Otherwise,
     // it means that some RTP packets for the frame are still missing, and you will need to wait
     // for 10ms to receive additional data before proceeding.
     if(fameSequenceNumberCount_ == (uint32_t)(sequenceNumber + 1)) {
-        if(rtpType_ == OB_STREAM_DEPTH) {
+        if(rtpType_ == OB_STREAM_DEPTH && format == OB_FORMAT_Y16) {
             convertBigEndianToLittleEndian(getFrameData(), getFrameDataSize());
         }
         revDataComplete_ = true;

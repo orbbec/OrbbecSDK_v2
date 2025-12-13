@@ -20,7 +20,12 @@ void G330NetDisparitySensor::start(std::shared_ptr<const StreamProfile> sp, Fram
                                                            << linkSpeed_ << "Mb/s! Please check the ethernet connection and reconnect the device.");
     }
 
-    auto currentVSP = sp->as<VideoStreamProfile>();
+    auto currentVSP  = sp->as<VideoStreamProfile>();
+    auto depthFormat = currentVSP->getFormat();
+    if(!isOutputDisparityFrame() && depthFormat == OB_FORMAT_Y12) {
+        throw libobsensor::unsupported_operation_exception(utils::string::to_string() << "Failed to start " << sensorType_
+                                                                                      << " stream: Hardware D2D is not supported for the Y12 depth format.");
+    }
 
     auto rtpStreamPort = std::dynamic_pointer_cast<RTPStreamPort>(backend_);
     uint16_t port = rtpStreamPort->getStreamPort();

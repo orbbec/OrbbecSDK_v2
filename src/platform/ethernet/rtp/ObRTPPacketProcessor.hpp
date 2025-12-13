@@ -1,5 +1,6 @@
 #pragma once
 
+#include "libobsensor/h/ObTypes.h"
 #include <iostream>
 #include <mutex>
 #include <unordered_set>
@@ -37,7 +38,7 @@ public:
 
     ~ObRTPPacketProcessor() noexcept;
 
-    bool process(RTPHeader *header, uint8_t *recvData, uint32_t length, uint32_t type);
+    bool process(RTPHeader *header, uint8_t *recvData, uint32_t length, uint32_t type, OBFormat format);
 
     uint8_t *getFrameData() {
         return rtpBuffer_ + static_cast<size_t>(RTP_FIX_METADATA_OFFSET) + RTP_FIX_METADATA_SIZE;
@@ -76,7 +77,7 @@ public:
 private:
     void OnStartOfFrame();
     bool foundStartPacket();
-    void OnEndOfFrame(uint16_t sequenceNumber);
+    void OnEndOfFrame(uint16_t sequenceNumber, OBFormat format);
     void convertBigEndianToLittleEndian(uint8_t *recvData, uint32_t size);
 
 private:

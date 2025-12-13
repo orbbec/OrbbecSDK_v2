@@ -30,6 +30,8 @@ protected:
 
     void syncDisparityToDepthModeStatus();
 
+    bool isOutputDisparityFrame();
+
 private:
     bool outputDisparityFrame_ = false;
 

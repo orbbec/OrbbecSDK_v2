@@ -153,7 +153,7 @@ void ObRTPUDPClient::frameProcess() {
         if(rtpQueue_.pop(data)) {
             RTPHeader *header = (RTPHeader *)data.data();
             if(currentProfile_ != nullptr) {
-                rtpProcessor_.process(header, data.data(), (uint32_t)data.size(), currentProfile_->getType());
+                rtpProcessor_.process(header, data.data(), (uint32_t)data.size(), currentProfile_->getType(), currentProfile_->getFormat());
                 if(rtpProcessor_.processComplete()) {
                     uint32_t frameDataSize = rtpProcessor_.getFrameDataSize();
                     uint32_t metaDataSize = rtpProcessor_.getMetaDataSize();
@@ -185,7 +185,7 @@ void ObRTPUDPClient::frameProcess() {
             } else {
                 //imu
                 auto frame = FrameFactory::createFrame(OB_FRAME_UNKNOWN, OB_FORMAT_UNKNOWN, OB_UDP_BUFFER_SIZE);
-                frame->updateData(data.data() + 12, data.size()-12);
+                frame->updateData(data.data() + 12, data.size() - 12);
                 frame->setTimeStampUsec(header->timestamp);
                 frame->setSystemTimeStampUsec(utils::getNowTimesUs());
                 frameCallback_(frame);

@@ -46,6 +46,10 @@ void DisparityBasedSensor::markOutputDisparityFrame(bool enable) {
     outputDisparityFrame_ = enable;
 }
 
+bool DisparityBasedSensor::isOutputDisparityFrame() {
+    return outputDisparityFrame_;
+}
+
 void DisparityBasedSensor::setDepthUnit(float unit) {
     depthUnit_ = unit;
 }
