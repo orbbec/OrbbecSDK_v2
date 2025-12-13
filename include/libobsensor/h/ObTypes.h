@@ -1926,6 +1926,13 @@ typedef void(ob_frame_destroy_callback)(uint8_t *buffer, void *user_data);
 typedef void(ob_log_callback)(ob_log_severity severity, const char *message, void *user_data);
 
 typedef void (*ob_playback_status_changed_callback)(ob_playback_status status, void *user_data);
+
+/**
+ * @brief Callback Id
+ */
+typedef uint64_t OBCallbackId, ob_callback_id;
+#define INVALID_CALLBACK_ID (0)
+
 /**
  * @brief Check if the sensor_type is a video sensor
  *

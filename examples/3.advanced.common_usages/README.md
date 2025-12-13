@@ -17,7 +17,7 @@ Device is the device object, which can be used to obtain the device information,
     ```cpp
         // Create ob:Context.
         ctx = std::make_shared<ob::Context>();
-        ctx.setDeviceChangedCallback( []( std::shared_ptr< ob::DeviceList > removedList, std::shared_ptr< ob::DeviceList > addedList ) {
+        auto id = ctx->registerDeviceChangedCallback( []( std::shared_ptr< ob::DeviceList > removedList, std::shared_ptr< ob::DeviceList > addedList ) {
                 DeviceDisconnectCallback( removedList );
                 DeviceConnectCallback( addedList );
             } );

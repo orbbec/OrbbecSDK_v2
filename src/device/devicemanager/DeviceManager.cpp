@@ -45,7 +45,7 @@ std::shared_ptr<DeviceManager> DeviceManager::getInstance() {
     return instance;
 }
 
-DeviceManager::DeviceManager() : destroy_(false), multiDeviceSyncIntervalMs_(0) {
+DeviceManager::DeviceManager() : destroy_(false), callbackId_(INVALID_CALLBACK_ID), multiDeviceSyncIntervalMs_(0) {
     LOG_DEBUG("DeviceManager init ...");
 
     deviceActivityManager_ = std::make_shared<DeviceActivityManager>();
@@ -235,15 +235,29 @@ DeviceEnumInfoList DeviceManager::getDeviceInfoList() {
     return deviceInfoList;
 }
 
-void DeviceManager::setDeviceChangedCallback(DeviceChangedCallback callback) {
+OBCallbackId DeviceManager::registerDeviceChangedCallback(DeviceChangedCallback callback) {
     if(!callback) {
-        LOG_WARN("Device changed callback is nullptr, ignore it!");
-        return;
+        throw libobsensor::invalid_value_exception("Device changed callback is nullptr!");
     }
 
     std::unique_lock<std::mutex> lock(callbackMutex_);
-    devChangedCallbacks_.emplace_back(callback);
-    LOG_DEBUG("Add device changed callback, callback index = {}", devChangedCallbacks_.size() - 1);
+    auto                         callbackId = ++callbackId_;
+    devChangedCallbacks_.emplace(callbackId, std::move(callback));
+    LOG_DEBUG("Add device changed callback, callback id = {}", callbackId);
+    return callbackId;
+}
+
+bool DeviceManager::unregisterDeviceChangedCallback(OBCallbackId id) {
+    std::unique_lock<std::mutex> lock(callbackMutex_);
+    auto                         erasedSize = devChangedCallbacks_.erase(id);
+    if(erasedSize > 0) {
+        LOG_DEBUG("Erase device changed callback, id = {}, erasedSize = {}", id, erasedSize);
+        return true;
+    }
+    else {
+        LOG_DEBUG("Try to erase device changed callback, id = {}, but not found", id);
+        return false;
+    }
 }
 
 void DeviceManager::onDeviceChanged(const DeviceEnumInfoList &removed, const DeviceEnumInfoList &added) {
@@ -268,8 +282,8 @@ void DeviceManager::onDeviceChanged(const DeviceEnumInfoList &removed, const Dev
     printDeviceList("Current device(s) list", deviceInfoList);
 
     std::unique_lock<std::mutex> lock(callbackMutex_);
-    for(auto &callback: devChangedCallbacks_) {
-        callback(removed, added);
+    for(auto &it: devChangedCallbacks_) {
+        it.second(removed, added);
     }
 }
 

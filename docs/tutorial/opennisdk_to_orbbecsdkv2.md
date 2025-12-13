@@ -566,7 +566,7 @@ OpenNI::addDeviceStateChangedListener(devicePrinter);
 ob::Context ctx;
 
 // register device callback
-ctx.setDeviceChangedCallback([](std::shared_ptr<ob::DeviceList> removedList, std::shared_ptr<ob::DeviceList> deviceList) {
+auto id = ctx.registerDeviceChangedCallback([](std::shared_ptr<ob::DeviceList> removedList, std::shared_ptr<ob::DeviceList> deviceList) {
     if（deviceList->deviceCount() > 0）{
 
     }
@@ -575,6 +575,8 @@ ctx.setDeviceChangedCallback([](std::shared_ptr<ob::DeviceList> removedList, std
 
     }
 });
+// unregister device callback
+ctx.unregisterDeviceChangedCallback(id);
 ```
 
 ### 4.12 Get Device Information

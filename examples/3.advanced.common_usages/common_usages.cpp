@@ -75,7 +75,7 @@ int main(void) try {
     align = ob::FilterFactory::createFilter("Align");
 
     // Register device callback
-    ctx->setDeviceChangedCallback([](std::shared_ptr<ob::DeviceList> removedList, std::shared_ptr<ob::DeviceList> addedList) {
+    auto id = ctx->registerDeviceChangedCallback([](std::shared_ptr<ob::DeviceList> removedList, std::shared_ptr<ob::DeviceList> addedList) {
         handleDeviceDisconnected(removedList);
         handleDeviceConnected(addedList);
     });
@@ -120,6 +120,7 @@ int main(void) try {
         pipeline->stop();
     }
 
+    ctx->unregisterDeviceChangedCallback(id);
     // destruct all global variables here before exiting main
     irProfile.reset();
     depthProfile.reset();

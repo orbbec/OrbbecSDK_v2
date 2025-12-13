@@ -41,7 +41,7 @@ int main(void) try {
     ob::Context ctx;
 
     // register device callback
-    ctx.setDeviceChangedCallback([](std::shared_ptr<ob::DeviceList> removedList, std::shared_ptr<ob::DeviceList> deviceList) {
+    auto id = ctx.registerDeviceChangedCallback([](std::shared_ptr<ob::DeviceList> removedList, std::shared_ptr<ob::DeviceList> deviceList) {
         printDeviceList("added", deviceList);
         printDeviceList("removed", removedList);
     });
@@ -70,6 +70,7 @@ int main(void) try {
         }
     }
 
+    ctx.unregisterDeviceChangedCallback(id);
     return 0;
 }
 catch(ob::Error &e) {

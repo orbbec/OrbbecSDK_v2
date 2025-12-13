@@ -1,6 +1,6 @@
 // Copyright (c) Orbbec Inc. All Rights Reserved.
 // Licensed under the MIT License.
-
+#include "libobsensor/h/ObTypes.h"
 #include "libobsensor/h/Context.h"
 
 #include "ImplTypes.hpp"
@@ -31,6 +31,14 @@ NO_ARGS_HANDLE_EXCEPTIONS_AND_RETURN(nullptr)
 
 void ob_delete_context(ob_context *context, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(context);
+    auto deviceMgr = context->context->getDeviceManager();
+    if(deviceMgr) {
+        // cancel all callbacks
+        for(auto id: context->callbackIds) {
+            deviceMgr->unregisterDeviceChangedCallback(id);
+        }
+    }
+
     delete context;
 }
 HANDLE_EXCEPTIONS_NO_RETURN(context)
@@ -85,18 +93,39 @@ ob_device *ob_create_net_device_ex(ob_context *context, const char *address, uin
 HANDLE_EXCEPTIONS_AND_RETURN(nullptr, context, address, port)
 
 void ob_set_device_changed_callback(ob_context *context, ob_device_changed_callback callback, void *user_data, ob_error **error) BEGIN_API_CALL {
+    auto id = ob_register_device_changed_callback(context, callback, user_data, error);
+    (void)id;
+}
+HANDLE_EXCEPTIONS_NO_RETURN(context, callback, user_data)
+
+ob_callback_id ob_register_device_changed_callback(ob_context *context, ob_device_changed_callback callback, void *user_data, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(context);
-    auto deviceMgr = context->context->getDeviceManager();
-    deviceMgr->setDeviceChangedCallback([callback, user_data](std::vector<std::shared_ptr<const libobsensor::IDeviceEnumInfo>> removed,
-                                                              std::vector<std::shared_ptr<const libobsensor::IDeviceEnumInfo>> added) {
+    auto deviceMgr   = context->context->getDeviceManager();
+    auto callback_id = deviceMgr->registerDeviceChangedCallback([callback, user_data](std::vector<std::shared_ptr<const libobsensor::IDeviceEnumInfo>> removed,
+                                                                                      std::vector<std::shared_ptr<const libobsensor::IDeviceEnumInfo>> added) {
         auto removedImpl  = new ob_device_list();
         removedImpl->list = removed;
         auto addedImpl    = new ob_device_list();
         addedImpl->list   = added;
         callback(removedImpl, addedImpl, user_data);
     });
+    context->callbackIds.push_back(callback_id);
+    return callback_id;
 }
-HANDLE_EXCEPTIONS_NO_RETURN(context, callback, user_data)
+HANDLE_EXCEPTIONS_AND_RETURN(0, context, callback, user_data)
+
+void ob_unregister_device_changed_callback(ob_context *context, ob_callback_id callback_id, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(context);
+    auto deviceMgr = context->context->getDeviceManager();
+    if(deviceMgr->unregisterDeviceChangedCallback(callback_id)) {
+        // remove callback id from list
+        auto it = std::find_if(context->callbackIds.begin(), context->callbackIds.end(), [callback_id](ob_callback_id id) { return id == callback_id; });
+        if(it != context->callbackIds.end()) {
+            context->callbackIds.erase(it);
+        }
+    }
+}
+HANDLE_EXCEPTIONS_NO_RETURN(context, callback_id)
 
 void ob_enable_device_clock_sync(ob_context *context, uint64_t repeat_interval_msec, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(context);

@@ -21,7 +21,7 @@ Sensor can be used to obtain different components of the camera and the stream o
 1. Register device callback and execute relevant functions during device unplugging and unplugging
 
     ```cpp
-        ctx.setDeviceChangedCallback( []( std::shared_ptr< ob::DeviceList > removedList, std::shared_ptr< ob::DeviceList > addedList ) {
+        auto id = ctx.registerDeviceChangedCallback( []( std::shared_ptr< ob::DeviceList > removedList, std::shared_ptr< ob::DeviceList > addedList ) {
                 DeviceDisconnectCallback( removedList );
                 DeviceConnectCallback( addedList );
             } );

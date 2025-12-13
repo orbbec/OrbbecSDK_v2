@@ -6,6 +6,7 @@
 #include <string>
 #include <mutex>
 #include <memory>
+#include <vector>
 
 #include "IDeviceManager.hpp"
 #include "logger/Logger.hpp"
@@ -56,6 +57,7 @@ extern "C" {
 #endif
 struct ob_context_t {
     std::shared_ptr<libobsensor::Context> context;
+    std::vector<OBCallbackId>             callbackIds;
 };
 #ifdef __cplusplus
 }

@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 #pragma once
+#include "libobsensor/h/ObTypes.h"
 #include "IDevice.hpp"
 #include "ISourcePort.hpp"
 
@@ -43,8 +44,9 @@ public:
     virtual std::shared_ptr<IDevice> createNetDevice(std::string address, uint16_t port, OBDeviceAccessMode accessMode)              = 0;
     virtual bool                     forceIpConfig(std::string deviceUid, const OBNetIpConfig &config)                               = 0;
 
-    virtual DeviceEnumInfoList getDeviceInfoList()                                      = 0;
-    virtual void               setDeviceChangedCallback(DeviceChangedCallback callback) = 0;
+    virtual DeviceEnumInfoList getDeviceInfoList()                                           = 0;
+    virtual OBCallbackId       registerDeviceChangedCallback(DeviceChangedCallback callback) = 0;
+    virtual bool               unregisterDeviceChangedCallback(OBCallbackId id)              = 0;
 
     virtual void enableNetDeviceEnumeration(bool enable) = 0;
     virtual bool isNetDeviceEnumerationEnable() const    = 0;

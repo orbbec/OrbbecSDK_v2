@@ -12,6 +12,7 @@
 #include <thread>
 #include <condition_variable>
 #include <atomic>
+#include <unordered_map>
 
 namespace libobsensor {
 
@@ -31,7 +32,8 @@ public:
     bool                     forceIpConfig(std::string deviceUid, const OBNetIpConfig &config) override;
 
     DeviceEnumInfoList getDeviceInfoList() override;
-    void               setDeviceChangedCallback(DeviceChangedCallback callback) override;
+    OBCallbackId       registerDeviceChangedCallback(DeviceChangedCallback callback) override;
+    bool               unregisterDeviceChangedCallback(OBCallbackId id) override;
 
     void enableNetDeviceEnumeration(bool enable) override;
     bool isNetDeviceEnumerationEnable() const override;
@@ -50,7 +52,9 @@ private:
     std::mutex callbackMutex_;
     // trying to resolve the multi-node callback issues in ROS1
     // DeviceChangedCallback devChangedCallback_ = nullptr;
-    std::vector<DeviceChangedCallback> devChangedCallbacks_;
+    // std::vector<DeviceChangedCallback> devChangedCallbacks_;
+    std::atomic<OBCallbackId>                               callbackId_;
+    std::unordered_map<OBCallbackId, DeviceChangedCallback> devChangedCallbacks_;
 
     std::map<std::string, std::weak_ptr<IDevice>> createdDevices_;
     std::mutex                                    createdDevicesMutex_;
