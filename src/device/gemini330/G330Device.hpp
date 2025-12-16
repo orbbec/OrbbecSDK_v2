@@ -50,6 +50,7 @@ public:
     G330NetDevice(const std::shared_ptr<const IDeviceEnumInfo> &info, OBDeviceAccessMode accessMode);
     virtual ~G330NetDevice() noexcept override;
 
+    void                                  deactivate() override;
     std::vector<std::shared_ptr<IFilter>> createRecommendedPostProcessingFilters(OBSensorType type) override;
 
 private:

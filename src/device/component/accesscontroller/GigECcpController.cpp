@@ -19,11 +19,6 @@ GigECcpController::GigECcpController(const std::shared_ptr<const IDeviceEnumInfo
 }
 
 GigECcpController::~GigECcpController() {
-    keepaliveStopped_ = true;
-    keepaliveCv_.notify_all();
-    if(keepaliveThread_.joinable()) {
-        keepaliveThread_.join();
-    }
     TRY_EXECUTE({ releaseControl(); });
 }
 
@@ -203,6 +198,12 @@ void GigECcpController::acquireControl(OBDeviceAccessMode accessMode) {
 void GigECcpController::releaseControl() {
     if(!ccpSupported_) {
         return;
+    }
+    // stop heartbeat
+    keepaliveStopped_ = true;
+    keepaliveCv_.notify_all();
+    if(keepaliveThread_.joinable()) {
+        keepaliveThread_.join();
     }
     // restore the CCP to open access
     if((accessMode_ != OB_DEVICE_MONITOR_ACCESS) && (accessMode_ != OB_DEVICE_ACCESS_DENIED)) {

@@ -1359,6 +1359,12 @@ G330NetDevice::~G330NetDevice() noexcept {
     ccpController_.reset();
 }
 
+void G330NetDevice::deactivate() {
+    // clear ccp controller here
+    ccpController_.reset();
+    DeviceBase::deactivate();
+}
+
 void G330NetDevice::init() {
     checkAndAcquireCCP();
     initSensorList();
