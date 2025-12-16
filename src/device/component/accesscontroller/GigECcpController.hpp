@@ -43,7 +43,7 @@ public:
 
 private:
     int32_t getFirmwareVersionInt(const std::string &version);
-    bool checkCcpCapability(const std::string &minVersion);
+    bool    checkCcpCapability(const std::string &minVersion);
 
 private:
     std::atomic<OBDeviceAccessMode>          accessMode_{ OB_DEVICE_ACCESS_DENIED };

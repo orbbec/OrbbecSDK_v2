@@ -185,15 +185,16 @@ std::vector<char> GVCPTransmit::transmit(const void *data, int dataLength) {
             } while(res == SOCKET_ERROR && IS_EINTR(err));
 
             if(res == SOCKET_ERROR) {
-                lastError_ = err = GET_LAST_ERROR();
-                LOG_DEBUG("recvfrom failed! Current count: {}, ip: {}, register: {}, error: {}", attempt, ipAddress_.c_str(), err);
+                lastError_ = err;
+                LOG_DEBUG("recvfrom failed! Current count: {}, ip: {}, error: {}", attempt, ipAddress_.c_str(), err);
                 return {};
             }
             // check response data
             if(res < static_cast<int>(sizeof(gvcp_ack_header))) {
                 LOG_DEBUG("GVCP ack length error! Expected length >= {} but {}. Current count: {}, ip: {}", sizeof(gvcp_ack_header), res, attempt,
                           ipAddress_.c_str());
-                break;
+                lastError_ = EINVAL;
+                return {};
             }
             // ok
             buffer.resize(res);
@@ -230,7 +231,7 @@ std::pair<uint16_t, uint32_t> GVCPTransmit::readRegister(uint32_t registerAddres
         return { GEV_STATUS_ERROR, 0 };
     }
     if(respData.size() != sizeof(gvcp_readreg_ack)) {
-        LOG_DEBUG("Read register error! Expected length is {} but {}. IP: {}, register: {}", sizeof(gvcp_readreg_ack), respData.size(), ipAddress_.c_str(),
+        LOG_DEBUG("Read register error! Expected length is {} but {}. IP: {}, register: {:#04x}", sizeof(gvcp_readreg_ack), respData.size(), ipAddress_.c_str(),
                   registerAddress);
         return { GEV_STATUS_ERROR, 0 };
     }
@@ -241,9 +242,9 @@ std::pair<uint16_t, uint32_t> GVCPTransmit::readRegister(uint32_t registerAddres
     ack->header.wLen    = ntohs(ack->header.wLen);
     ack->header.wReqID  = ntohs(ack->header.wReqID);
     if(ack->header.wAck != GVCP_READREG_ACK || ack->header.wReqID != reqId || ack->header.wLen != 0x04) {
-        LOG_ERROR("Invalid ack header for readreg cmd! status: {:#04x}, ack: {:#04x}, len: {:#04x}, req id: {:#04x}. IP: {}, "
+        LOG_ERROR("Invalid ack header for readreg cmd! status: {:#04x}, ack: {:#04x}, len: {:#04x}, ack reqId: {:#04x}, send reqId: {:#04x}. IP: {}, "
                   "register: {}",
-                  ack->header.wStatus, ack->header.wAck, ack->header.wLen, ack->header.wReqID, ipAddress_.c_str(), registerAddress);
+                  ack->header.wStatus, ack->header.wAck, ack->header.wLen, ack->header.wReqID, reqId, ipAddress_.c_str(), registerAddress);
         return { GEV_STATUS_ERROR, 0 };
     }
 
@@ -269,8 +270,8 @@ uint16_t GVCPTransmit::writeRegister(uint32_t registerAddress, uint32_t value) {
         return GEV_STATUS_ERROR;
     }
     if(respData.size() != sizeof(gvcp_writereg_ack)) {
-        LOG_DEBUG("Write register error! Expected length is {} but {}. IP: {}, register: {}", sizeof(gvcp_writereg_ack), respData.size(), ipAddress_.c_str(),
-                  registerAddress);
+        LOG_DEBUG("Write register error! Expected length is {} but {}. IP: {}, register: {:#04x}", sizeof(gvcp_writereg_ack), respData.size(),
+                  ipAddress_.c_str(), registerAddress);
         return GEV_STATUS_ERROR;
     }
 
@@ -280,9 +281,9 @@ uint16_t GVCPTransmit::writeRegister(uint32_t registerAddress, uint32_t value) {
     ack->header.wLen    = ntohs(ack->header.wLen);
     ack->header.wReqID  = ntohs(ack->header.wReqID);
     if(ack->header.wAck != GVCP_WRITEREG_ACK || ack->header.wReqID != reqId || ack->header.wLen != 0x04) {
-        LOG_ERROR("Invalid ack header for writereg cmd! status: {:#04x}, ack: {:#04x}, len: {:#04x}, req id: {:#04x}. IP: {}, "
-                  "register: {}",
-                  ack->header.wStatus, ack->header.wAck, ack->header.wLen, ack->header.wReqID, ipAddress_.c_str(), registerAddress);
+        LOG_ERROR("Invalid ack header for writereg cmd! status: {:#04x}, ack: {:#04x}, len: {:#04x}, ack reqId: {:#04x}, send reqId: {:#04x}. IP: {}, "
+                  "register: {:#04x}",
+                  ack->header.wStatus, ack->header.wAck, ack->header.wLen, ack->header.wReqID, reqId, ipAddress_.c_str(), registerAddress);
         return GEV_STATUS_ERROR;
     }
 

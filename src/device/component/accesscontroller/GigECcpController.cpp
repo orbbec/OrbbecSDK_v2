@@ -6,8 +6,11 @@
 #include "GigECcpController.hpp"
 #include "logger/Logger.hpp"
 #include "logger/LoggerInterval.hpp"
+#include "logger/LoggerSnWrapper.hpp"
 
 namespace libobsensor {
+
+#define GetCurrentSN() portInfo_->serialNumber
 
 GigECcpController::GigECcpController(const std::shared_ptr<const IDeviceEnumInfo> &info, const std::string &minVersion) {
     // create gvcp transmitor
@@ -131,7 +134,8 @@ void GigECcpController::acquireControl(OBDeviceAccessMode accessMode) {
         auto res = gvcpTransmit_->readRegister(GVCP_CCP_REGISTER);
         if(res.first != GEV_STATUS_SUCCESS || ((res.second & GVCP_CCP_EXCLUSIVE_ACCESS) != 0)) {
             std::ostringstream oss;
-            oss << "The requested 'monitor access' privilege conflicts with the current control channel privilege: " << res.second;
+            oss << "[" << portInfo_->serialNumber
+                << "] The requested 'monitor access' privilege conflicts with the current control channel privilege: " << res.second;
             throw libobsensor::access_denied_exception(oss.str());
         }
         accessMode_ = accessMode;
@@ -143,11 +147,11 @@ void GigECcpController::acquireControl(OBDeviceAccessMode accessMode) {
     if(status != GEV_STATUS_SUCCESS) {
         std::ostringstream oss;
         if(status == GEV_STATUS_ACCESS_DENIED) {
-            oss << "The requested '" << accessMode << "' privilege conflicts with the current control channel privilege";
+            oss << "[" << portInfo_->serialNumber << "] The requested '" << accessMode << "' privilege conflicts with the current control channel privilege";
             throw libobsensor::access_denied_exception(oss.str());
         }
         else {
-            oss << "Failed to acquire the '" << accessMode << "' privilege. Status code: " << status;
+            oss << "[" << portInfo_->serialNumber << "] Failed to acquire the '" << accessMode << "' privilege. Status code: " << status;
             throw libobsensor::io_exception(oss.str());
         }
     }
@@ -160,7 +164,7 @@ void GigECcpController::acquireControl(OBDeviceAccessMode accessMode) {
         auto     res     = gvcpTransmit_->readRegister(GVCP_HEARTBEAT_TIMEOUT_REGISTER);
         if(res.first != GEV_STATUS_SUCCESS) {
             timeout = 1000;  // use default value
-            LOG_WARN("Failt to read hearbeat timeout register, use the default timeout({}) instant. Status code: {:#04x}", timeout, res.first);
+            LOG_WARN("Failed to read hearbeat timeout register, use the default timeout({}) instant. Status code: {:#04x}", timeout, res.first);
         }
         else {
             // By GigE verison 2.2
@@ -180,13 +184,15 @@ void GigECcpController::acquireControl(OBDeviceAccessMode accessMode) {
             // Read CCP register to keepalive
             res = gvcpTransmit_->readRegister(GVCP_CCP_REGISTER);
             if(res.first != GEV_STATUS_SUCCESS) {
-                LOG_INTVL(LOG_INTVL_OBJECT_TAG + "GVCP Keepalive", 3000, spdlog::level::warn,
-                           "Failed to read CCP register, ignore it. Status code: {:#04x}. Ignore", res.first);
+                LOG_INTVL(LOG_INTVL_OBJECT_TAG + "GVCP Keepalive", 3000, spdlog::level::warn, "[{}] CCP register read failed, ignored. Status code: {:#04x}",
+                          portInfo_->serialNumber, res.first);
             }
-            res.second = (res.second & GVCP_CCP_MASK);
-            if(res.second != ccpValue) {
-                LOG_INTVL(LOG_INTVL_OBJECT_TAG + "GVCP Keepalive", 3000, spdlog::level::warn, "Expected CCP register value {:#04x} but got {:#04x}. Ignore",
-                           ccpValue, res.second);
+            else {
+                res.second = (res.second & GVCP_CCP_MASK);
+                if(res.second != ccpValue) {
+                    LOG_INTVL(LOG_INTVL_OBJECT_TAG + "GVCP Keepalive", 3000, spdlog::level::warn,
+                              "[{}] CCP register mismatch: expected {:#04x}, got {:#04x}. Ignored", portInfo_->serialNumber, ccpValue, res.second);
+                }
             }
             keepaliveCv_.wait_for(lock, std::chrono::milliseconds(timeout), [&]() { return keepaliveStopped_.load(); });
         }
