@@ -20,7 +20,7 @@ namespace libobsensor {
  * Only USB devices whose VID is included in this list will be considered
  * valid during enumeration.
  */
-std::unordered_set<uint16_t> supportedUsbVids = {};
+std::unordered_set<uint16_t> supportedUsbVids;
 /**
  * @brief Mapping of manufacturer names to vendor IDs for supported devices.
  *
@@ -31,7 +31,7 @@ std::unordered_set<uint16_t> supportedUsbVids = {};
  * - For USB devices: used to retrieve the manufacturer name from a given VID;
  *   no filtering is performed.
  */
-std::unordered_map<std::string, uint16_t> manufacturerVidMap = {};
+std::unordered_map<std::string, uint16_t> manufacturerVidMap;
 
 // Device VID/PID lists by series
 std::vector<DeviceIdentifier> G330DevPids;    // G330

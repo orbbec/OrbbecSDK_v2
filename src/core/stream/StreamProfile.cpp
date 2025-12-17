@@ -317,9 +317,15 @@ LiDARProfileInfo LiDARStreamProfile::getInfo() const {
     }
     else {
         // For multi-lines LiDAR device
+        struct OBLiDARScanRateHash {
+            size_t operator()(OBLiDARScanRate v) const noexcept {
+                typedef typename std::underlying_type<OBLiDARScanRate>::type UT;
+                return std::hash<UT>()(static_cast<UT>(v));
+            }
+        };
 
         // speed and max data block number
-        using LiDARInfoMap = std::unordered_map<OBLiDARScanRate, std::pair<uint32_t, uint32_t>>;
+        using LiDARInfoMap = std::unordered_map<OBLiDARScanRate, std::pair<uint32_t, uint32_t>, OBLiDARScanRateHash>;
         // std::pair: first scan speed; second: data block num for a circle
         static LiDARInfoMap mapScanRate = {
             { OB_LIDAR_SCAN_5HZ, { 300, 240 } },
