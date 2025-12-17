@@ -116,16 +116,13 @@ void RecordDevice::writeFilterProperty() {
     auto vid     = devInfo->vid_;
     auto pid     = devInfo->pid_;
 
-    if(vid == ORBBEC_DEVICE_VID) {
-        if(std::find(FemtoBoltDevPids.begin(), FemtoBoltDevPids.end(), pid) == FemtoBoltDevPids.end()
-           && std::find(FemtoMegaDevPids.begin(), FemtoMegaDevPids.end(), pid) == FemtoMegaDevPids.end()) {
-            // filter property
-            writePropertyT<bool>(OB_PROP_DISPARITY_TO_DEPTH_BOOL);
-            writePropertyT<bool>(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL);
-            writePropertyT<bool>(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL);
-            writePropertyT<int>(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_SPECKLE_SIZE_INT);
-            writePropertyT<int>(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT);
-        }
+    if(!isDeviceInOrbbecSeries(FemtoBoltDevPids, vid, pid) && !isDeviceInOrbbecSeries(FemtoMegaDevPids, vid, pid)) {
+        // filter property
+        writePropertyT<bool>(OB_PROP_DISPARITY_TO_DEPTH_BOOL);
+        writePropertyT<bool>(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL);
+        writePropertyT<bool>(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL);
+        writePropertyT<int>(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_SPECKLE_SIZE_INT);
+        writePropertyT<int>(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT);
     }
 
     if(isDeviceInContainer(G330DevPids, vid, pid)) {
