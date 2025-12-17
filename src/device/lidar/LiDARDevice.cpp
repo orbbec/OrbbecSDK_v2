@@ -349,23 +349,8 @@ void LiDARDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
             profileList.push_back(profile);
         }
         if(profileList.size()) {
-            auto defaultProfile = profileList[1];
-            BEGIN_TRY_EXECUTE({
-                auto propertyServer = getPropertyServer();
-                auto currentRate    = propertyServer->getPropertyValueT<int32_t>(OB_PROP_LIDAR_IMU_FRAME_RATE_INT);
-                auto it             = std::find_if(profileList.begin(), profileList.end(), [&](const std::shared_ptr<const StreamProfile> &profile) {
-                    auto rateVal = static_cast<int32_t>(utils::mapIMUSampleRateToValue(profile->as<AccelStreamProfile>()->getSampleRate()));
-                    return rateVal == currentRate;
-                });
-                if(it != profileList.end()) {
-                    defaultProfile = *it;
-                }
-            })
-            CATCH_EXCEPTION_AND_EXECUTE({
-                LOG_ERROR("fetch LiDAR imu frame rate error!");
-            })
             sensor->setStreamProfileList(profileList);
-            sensor->updateDefaultStreamProfile(defaultProfile);
+            sensor->updateDefaultStreamProfile(profileList[1]);
         }
     }
     else if(streamType == OB_STREAM_GYRO) {
@@ -386,23 +371,8 @@ void LiDARDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
             profileList.push_back(profile);
         }
         if(profileList.size()) {
-            auto defaultProfile = profileList[1];
-            BEGIN_TRY_EXECUTE({
-                auto propertyServer = getPropertyServer();
-                auto currentRate    = propertyServer->getPropertyValueT<int32_t>(OB_PROP_LIDAR_IMU_FRAME_RATE_INT);
-                auto it             = std::find_if(profileList.begin(), profileList.end(), [&](const std::shared_ptr<const StreamProfile> &profile) {
-                    auto rateVal = static_cast<int32_t>(utils::mapIMUSampleRateToValue(profile->as<GyroStreamProfile>()->getSampleRate()));
-                    return rateVal == currentRate;
-                });
-                if(it != profileList.end()) {
-                    defaultProfile = *it;
-                }
-            })
-            CATCH_EXCEPTION_AND_EXECUTE({
-                LOG_ERROR("fetch LiDAR imu frame rate error!");
-            })
             sensor->setStreamProfileList(profileList);
-            sensor->updateDefaultStreamProfile(defaultProfile);
+            sensor->updateDefaultStreamProfile(profileList[1]);
         }
     }
 }
