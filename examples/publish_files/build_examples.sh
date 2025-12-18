@@ -94,10 +94,10 @@ cmake --build . -- -j$half_cpu_count # build with thread count equal to half of 
 make install
 
 # clean up
-cd $project_dir
+cd "$project_dir"
 rm -rf build
 
 echo "Examples built successfully!"
 echo "The executable files located in: $project_dir/bin"
 
-cd $current_dir
+cd "$current_dir"

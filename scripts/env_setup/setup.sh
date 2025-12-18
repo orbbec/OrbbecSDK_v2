@@ -16,12 +16,15 @@ examples_dir=$project_dir/examples
 
 # build the examples
 if [ -d "$examples_dir" ] && [ -f "$project_dir/build_examples.sh" ]; then
-    $project_dir/build_examples.sh
+    "$project_dir/build_examples.sh"
 fi
 
 # install udev rules
 if [ -d "$shared_dir" ] && [ -f "$shared_dir/install_udev_rules.sh" ]; then
-    $shared_dir/install_udev_rules.sh
+    echo ""
+    echo "Install udev rules file now..."
+    sudo "$shared_dir/install_udev_rules.sh"
 fi
 
-cd $current_dir
+cd "$current_dir"
+
