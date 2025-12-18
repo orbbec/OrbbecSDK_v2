@@ -92,8 +92,20 @@ class ColorFrameProcessor : public FrameProcessor {
 public:
     using FrameProcessor::getPropertyRange;
 
-    ColorFrameProcessor(IDevice *owner, std::shared_ptr<FrameProcessorContext> context, OBSensorType sensorType = OB_SENSOR_COLOR);
+    ColorFrameProcessor(IDevice *owner, std::shared_ptr<FrameProcessorContext> context);
     virtual ~ColorFrameProcessor() noexcept override = default;
+
+    virtual void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
+    virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
+    virtual void getPropertyRange(uint32_t propertyId, OBPropertyRange *range) override;
+};
+
+class ColorLeftFrameProcessor : public FrameProcessor {
+public:
+    using FrameProcessor::getPropertyRange;
+
+    ColorLeftFrameProcessor(IDevice *owner, std::shared_ptr<FrameProcessorContext> context);
+    virtual ~ColorLeftFrameProcessor() noexcept override = default;
 
     virtual void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
     virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;

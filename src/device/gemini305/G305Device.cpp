@@ -366,6 +366,9 @@ void G305Device::initProperties() {
     propertyServer->registerProperty(OB_PROP_COLOR_MIRROR_BOOL, "rw", "rw", frameTransformPropertyAccessor);  // color
     propertyServer->registerProperty(OB_PROP_COLOR_FLIP_BOOL, "rw", "rw", frameTransformPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_COLOR_ROTATE_INT, "rw", "rw", frameTransformPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_COLOR_LEFT_MIRROR_BOOL, "rw", "rw", frameTransformPropertyAccessor);  // left color
+    propertyServer->registerProperty(OB_PROP_COLOR_LEFT_FLIP_BOOL, "rw", "rw", frameTransformPropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_COLOR_LEFT_ROTATE_INT, "rw", "rw", frameTransformPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_COLOR_RIGHT_MIRROR_BOOL, "rw", "rw", frameTransformPropertyAccessor);  // right color
     propertyServer->registerProperty(OB_PROP_COLOR_RIGHT_FLIP_BOOL, "rw", "rw", frameTransformPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_COLOR_RIGHT_ROTATE_INT, "rw", "rw", frameTransformPropertyAccessor);
@@ -827,7 +830,7 @@ void G305Device::initSensorList() {
 
         registerComponent(OB_DEV_COMPONENT_LEFT_COLOR_FRAME_PROCESSOR, [this]() {
             auto factory        = getComponentT<FrameProcessorFactory>(OB_DEV_COMPONENT_FRAME_PROCESSOR_FACTORY);
-            auto frameProcessor = factory->createFrameProcessor(OB_SENSOR_COLOR);
+            auto frameProcessor = factory->createFrameProcessor(OB_SENSOR_COLOR_LEFT);
             return frameProcessor;
         });
     }

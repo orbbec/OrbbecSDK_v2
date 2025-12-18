@@ -589,6 +589,21 @@ typedef enum {
     OB_PROP_COLOR_ROI_BRIGHTNESS_INT = 249,
 
     /**
+     * @brief Left Color sensor rotation, angle{0, 90, 180, 270}
+     */
+    OB_PROP_COLOR_LEFT_ROTATE_INT = 251,
+
+    /**
+     * @brief Left Color mirror
+     */
+    OB_PROP_COLOR_LEFT_MIRROR_BOOL = 252,
+
+    /**
+     * @brief Left Color flip
+     */
+    OB_PROP_COLOR_LEFT_FLIP_BOOL = 253,
+
+    /**
      * @brief Baseline calibration parameters
      */
     OB_STRUCT_BASELINE_CALIBRATION_PARAM = 1002,

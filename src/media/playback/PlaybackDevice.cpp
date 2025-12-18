@@ -673,6 +673,9 @@ void PlaybackDevice::initProperties() {
     registerPropertyCondition(propertyServer, OB_STRUCT_CURRENT_DEPTH_ALG_MODE, "r", "r", vendorAccessor);
 
     // G305 metadata properties
+    registerPropertyCondition(propertyServer, OB_PROP_COLOR_LEFT_MIRROR_BOOL, "rw", "rw", frameTransformAccessor_);
+    registerPropertyCondition(propertyServer, OB_PROP_COLOR_LEFT_FLIP_BOOL, "rw", "rw", frameTransformAccessor_);
+    registerPropertyCondition(propertyServer, OB_PROP_COLOR_LEFT_ROTATE_INT, "rw", "rw", frameTransformAccessor_);
     registerPropertyCondition(propertyServer, OB_PROP_COLOR_RIGHT_MIRROR_BOOL, "rw", "rw", frameTransformAccessor_);
     registerPropertyCondition(propertyServer, OB_PROP_COLOR_RIGHT_FLIP_BOOL, "rw", "rw", frameTransformAccessor_);
     registerPropertyCondition(propertyServer, OB_PROP_COLOR_RIGHT_ROTATE_INT, "rw", "rw", frameTransformAccessor_);

@@ -71,9 +71,11 @@ std::shared_ptr<FrameProcessor> FrameProcessorFactory::createFrameProcessor(OBSe
         case OB_SENSOR_DEPTH: {
             processor = std::make_shared<DepthFrameProcessor>(owner, context_);
         } break;
-        case OB_SENSOR_COLOR:
+        case OB_SENSOR_COLOR:{
+            processor = std::make_shared<ColorFrameProcessor>(owner, context_);
+        } break;
         case OB_SENSOR_COLOR_LEFT: {
-            processor = std::make_shared<ColorFrameProcessor>(owner, context_, sensorType);
+            processor = std::make_shared<ColorLeftFrameProcessor>(owner, context_);
         } break;
         case OB_SENSOR_COLOR_RIGHT: {
             processor = std::make_shared<ColorRightFrameProcessor>(owner, context_);
@@ -419,8 +421,8 @@ void DepthFrameProcessor::getPropertyRange(uint32_t propertyId, OBPropertyRange 
     FrameProcessor::getPropertyRange(configName, range);
 }
 
-ColorFrameProcessor::ColorFrameProcessor(IDevice *owner, std::shared_ptr<FrameProcessorContext> context, OBSensorType sensorType)
-    : FrameProcessor(owner, context, sensorType) {}
+ColorFrameProcessor::ColorFrameProcessor(IDevice *owner, std::shared_ptr<FrameProcessorContext> context)
+    : FrameProcessor(owner, context, OB_SENSOR_COLOR) {}
 
 void ColorFrameProcessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
     std::string configSchemaName = "";
@@ -486,6 +488,82 @@ void ColorFrameProcessor::getPropertyRange(uint32_t propertyId, OBPropertyRange 
         configName = "FrameFlip#255";
     } break;
     case OB_PROP_COLOR_MIRROR_BOOL: {
+        configName = "FrameMirror#255";
+    } break;
+    default:
+        throw invalid_value_exception("Invalid property id");
+    }
+
+    FrameProcessor::getPropertyRange(configName, range);
+}
+
+ColorLeftFrameProcessor::ColorLeftFrameProcessor(IDevice *owner, std::shared_ptr<FrameProcessorContext> context)
+    : FrameProcessor(owner, context, OB_SENSOR_COLOR_LEFT) {}
+
+void ColorLeftFrameProcessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
+    std::string configSchemaName = "";
+    double      configValue      = 0.0;
+
+    switch(propertyId) {
+    case OB_PROP_COLOR_LEFT_MIRROR_BOOL: {
+        configSchemaName = "FrameMirror#255";
+        configValue      = static_cast<double>(value.intValue);
+    } break;
+    case OB_PROP_COLOR_LEFT_FLIP_BOOL: {
+        configSchemaName = "FrameFlip#255";
+        configValue      = static_cast<double>(value.intValue);
+    } break;
+    case OB_PROP_COLOR_LEFT_ROTATE_INT: {
+        configSchemaName = "FrameRotate#0";
+        configValue      = static_cast<double>(value.intValue);
+    } break;
+    default:
+        throw invalid_value_exception("Invalid property id");
+    }
+
+    try {
+        getConfigValue(configSchemaName);
+    }
+    catch(...) {
+        return;
+    }
+
+    setConfigValue(configSchemaName, configValue);
+}
+
+void ColorLeftFrameProcessor::getPropertyValue(uint32_t propertyId, OBPropertyValue *value) {
+    switch(propertyId) {
+    case OB_PROP_COLOR_LEFT_MIRROR_BOOL: {
+        auto getValue   = getConfigValue("FrameMirror#255");
+        value->intValue = static_cast<int32_t>(getValue);
+    } break;
+    case OB_PROP_COLOR_LEFT_FLIP_BOOL: {
+        auto getValue   = getConfigValue("FrameFlip#255");
+        value->intValue = static_cast<int32_t>(getValue);
+    } break;
+    case OB_PROP_COLOR_LEFT_ROTATE_INT: {
+        auto getValue   = getConfigValue("FrameRotate#0");
+        value->intValue = static_cast<int32_t>(getValue);
+    } break;
+    default:
+        throw invalid_value_exception("Invalid property id");
+    }
+}
+
+void ColorLeftFrameProcessor::getPropertyRange(uint32_t propertyId, OBPropertyRange *range) {
+    if(!range) {
+        throw invalid_value_exception("Range point is null");
+    }
+
+    std::string configName = "";
+    switch(propertyId) {
+    case OB_PROP_COLOR_LEFT_ROTATE_INT: {
+        configName = "FrameRotate#0";
+    } break;
+    case OB_PROP_COLOR_LEFT_FLIP_BOOL: {
+        configName = "FrameFlip#255";
+    } break;
+    case OB_PROP_COLOR_LEFT_MIRROR_BOOL: {
         configName = "FrameMirror#255";
     } break;
     default:

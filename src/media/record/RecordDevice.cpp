@@ -142,6 +142,14 @@ void RecordDevice::writeFrameGeometryProperty() {
     writePropertyT<bool>(OB_PROP_COLOR_MIRROR_BOOL);
     writePropertyT<int>(OB_PROP_COLOR_ROTATE_INT);
 
+    writePropertyT<bool>(OB_PROP_COLOR_LEFT_FLIP_BOOL);
+    writePropertyT<bool>(OB_PROP_COLOR_LEFT_MIRROR_BOOL);
+    writePropertyT<int>(OB_PROP_COLOR_LEFT_ROTATE_INT);
+
+    writePropertyT<bool>(OB_PROP_COLOR_RIGHT_FLIP_BOOL);
+    writePropertyT<bool>(OB_PROP_COLOR_RIGHT_MIRROR_BOOL);
+    writePropertyT<int>(OB_PROP_COLOR_RIGHT_ROTATE_INT);
+    
     writePropertyT<bool>(OB_PROP_DEPTH_FLIP_BOOL);
     writePropertyT<bool>(OB_PROP_DEPTH_MIRROR_BOOL);
     writePropertyT<int>(OB_PROP_DEPTH_ROTATE_INT);
