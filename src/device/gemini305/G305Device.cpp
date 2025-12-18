@@ -396,11 +396,6 @@ void G305Device::initProperties() {
             propertyServer->registerProperty(OB_PROP_COLOR_GAMMA_INT, "rw", "rw", uvcPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_COLOR_POWER_LINE_FREQUENCY_INT, "rw", "rw", uvcPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_COLOR_BACKLIGHT_COMPENSATION_INT, "rw", "rw", uvcPropertyAccessor);
-
-            auto vendorPropertyAccessor = std::make_shared<LazySuperPropertyAccessor>([this, &sourcePortInfo]() {
-                auto accessor = getComponentT<IPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
-                return accessor.get();
-            });
         }
         else if(sensor == OB_SENSOR_COLOR_LEFT) {
             auto uvcPropertyAccessor = std::make_shared<LazyPropertyAccessor>([this, &sourcePortInfo]() {
@@ -408,9 +403,6 @@ void G305Device::initProperties() {
                 auto accessor = std::make_shared<UvcPropertyAccessor>(port);
                 return accessor;
             });
-            propertyServer->registerProperty(OB_PROP_COLOR_AUTO_EXPOSURE_BOOL, "rw", "rw", uvcPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_COLOR_GAIN_INT, "rw", "rw", uvcPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_COLOR_AUTO_EXPOSURE_PRIORITY_INT, "rw", "rw", uvcPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_COLOR_SATURATION_INT, "rw", "rw", uvcPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_COLOR_AUTO_WHITE_BALANCE_BOOL, "rw", "rw", uvcPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_COLOR_WHITE_BALANCE_INT, "rw", "rw", uvcPropertyAccessor);
@@ -421,51 +413,9 @@ void G305Device::initProperties() {
             propertyServer->registerProperty(OB_PROP_COLOR_GAMMA_INT, "rw", "rw", uvcPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_COLOR_POWER_LINE_FREQUENCY_INT, "rw", "rw", uvcPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_COLOR_BACKLIGHT_COMPENSATION_INT, "rw", "rw", uvcPropertyAccessor);
-
-            auto vendorPropertyAccessor = std::make_shared<LazySuperPropertyAccessor>([this, &sourcePortInfo]() {
-                auto accessor = getComponentT<IPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
-                return accessor.get();
-            });
-
-            propertyServer->registerProperty(OB_STRUCT_DISP_OFFSET_CONFIG, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_TEMPERATURE_COMPENSATION_BOOL, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_TIMER_RESET_SIGNAL_BOOL, "w", "w", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_TIMER_RESET_TRIGGER_OUT_ENABLE_BOOL, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_TIMER_RESET_DELAY_US_INT, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_SYNC_SIGNAL_TRIGGER_OUT_BOOL, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_CAPTURE_IMAGE_SIGNAL_BOOL, "w", "w", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_CAPTURE_IMAGE_FRAME_NUMBER_INT, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_STRUCT_VERSION, "r", "r", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_STRUCT_DEVICE_TEMPERATURE, "r", "r", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_STRUCT_DEVICE_TIME, "", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_STRUCT_DEVICE_SERIAL_NUMBER, "r", "r", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_STRUCT_ASIC_SERIAL_NUMBER, "r", "r", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_STRUCT_MULTI_DEVICE_SYNC_CONFIG, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_RAW_DATA_ALIGN_CALIB_PARAM, "", "r", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_RAW_DATA_D2C_ALIGN_SUPPORT_PROFILE_LIST, "", "r", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_STRUCT_COLOR_AE_ROI, "rw", "rw", vendorPropertyAccessor);
-
-            // todo: add these properties to the frame processor
-            // propertyServer->registerProperty(OB_PROP_SDK_DEPTH_FRAME_UNPACK_BOOL, "rw", "rw", vendorPropertyAccessor);
-
-            propertyServer->registerProperty(OB_PROP_EXTERNAL_SIGNAL_RESET_BOOL, "rw", "rw", vendorPropertyAccessor);
-            // propertyServer->registerProperty(OB_PROP_GPM_BOOL, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_STRUCT_DEVICE_TIME, "", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_RAW_DATA_DEVICE_EXTENSION_INFORMATION, "", "r", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_DISP_SEARCH_RANGE_MODE_INT, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_SLAVE_DEVICE_SYNC_STATUS_BOOL, "r", "r", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_DEVICE_RESET_BOOL, "", "w", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_STOP_COLOR_STREAM_BOOL, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_ON_CHIP_CALIBRATION_HEALTH_CHECK_FLOAT, "r", "r", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_ON_CHIP_CALIBRATION_ENABLE_BOOL, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_COLOR_EXPOSURE_INT, "rw", "rw", vendorPropertyAccessor);
-
-            if(isGmslDevice_) {
-                propertyServer->registerProperty(OB_PROP_DEVICE_REPOWER_BOOL, "w", "w", vendorPropertyAccessor);
-            }
-            else {
-                propertyServer->registerProperty(OB_PROP_DEVICE_USB2_REPEAT_IDENTIFY_BOOL, "rw", "rw", vendorPropertyAccessor);
-            }
+            propertyServer->registerProperty(OB_PROP_COLOR_AUTO_EXPOSURE_BOOL, "rw", "rw", uvcPropertyAccessor);
+            propertyServer->registerProperty(OB_PROP_COLOR_GAIN_INT, "rw", "rw", uvcPropertyAccessor);
+            propertyServer->registerProperty(OB_PROP_COLOR_AUTO_EXPOSURE_PRIORITY_INT, "rw", "rw", uvcPropertyAccessor); 
         }
         else if(sensor == OB_SENSOR_DEPTH) {
             auto uvcPropertyAccessor = std::make_shared<LazyPropertyAccessor>([this, &sourcePortInfo]() {
@@ -526,11 +476,10 @@ void G305Device::initProperties() {
             propertyServer->registerProperty(OB_PROP_STOP_DEPTH_STREAM_BOOL, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_ON_CHIP_CALIBRATION_HEALTH_CHECK_FLOAT, "r", "r", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_ON_CHIP_CALIBRATION_ENABLE_BOOL, "rw", "rw", vendorPropertyAccessor);
+            propertyServer->registerProperty(OB_PROP_COLOR_EXPOSURE_INT, "rw", "rw", vendorPropertyAccessor);  // using vendor property accessor
+            propertyServer->registerProperty(OB_PROP_COLOR_AE_MAX_EXPOSURE_INT, "rw", "rw", vendorPropertyAccessor); 
+            propertyServer->registerProperty(OB_STRUCT_COLOR_SYNCED_EXPOSURE_PARAM, "rw", "rw", vendorPropertyAccessor); 
 
-            propertyServer->aliasProperty(OB_PROP_COLOR_AUTO_EXPOSURE_BOOL, OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL);
-            propertyServer->aliasProperty(OB_PROP_COLOR_EXPOSURE_INT, OB_PROP_DEPTH_EXPOSURE_INT);
-            propertyServer->aliasProperty(OB_PROP_COLOR_GAIN_INT, OB_PROP_DEPTH_GAIN_INT);
-            propertyServer->aliasProperty(OB_PROP_COLOR_AUTO_EXPOSURE_PRIORITY_INT, OB_PROP_DEPTH_AUTO_EXPOSURE_PRIORITY_INT);
             propertyServer->aliasProperty(OB_PROP_IR_AUTO_EXPOSURE_BOOL, OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL);
             propertyServer->aliasProperty(OB_PROP_IR_EXPOSURE_INT, OB_PROP_DEPTH_EXPOSURE_INT);
             propertyServer->aliasProperty(OB_PROP_IR_GAIN_INT, OB_PROP_DEPTH_GAIN_INT);
@@ -546,10 +495,7 @@ void G305Device::initProperties() {
 
     auto heartbeatPropertyAccessor = std::make_shared<HeartbeatPropertyAccessor>(this);
     propertyServer->registerProperty(OB_PROP_HEARTBEAT_BOOL, "rw", "rw", heartbeatPropertyAccessor);
-
-    auto colorAeAccessor = std::make_shared<G305ColorAePropertyAccessor>(this);
-    propertyServer->registerProperty(OB_PROP_COLOR_AE_MAX_EXPOSURE_INT, "rw", "rw", colorAeAccessor);
-    propertyServer->registerProperty(OB_PROP_COLOR_EXPOSURE_INT, "rw", "rw", colorAeAccessor);
+  
     auto baseLinePropertyAccessor = std::make_shared<BaselinePropertyAccessor>(this);
     propertyServer->registerProperty(OB_STRUCT_BASELINE_CALIBRATION_PARAM, "r", "r", baseLinePropertyAccessor);
 
@@ -1414,10 +1360,36 @@ void G305Device::fixSensorList() {
         deregisterSensor(OB_SENSOR_IR_LEFT);
         deregisterSensor(OB_SENSOR_IR_RIGHT);
         deregisterSensor(OB_SENSOR_COLOR);
+        deregisterComponent(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR);
+        deregisterComponent(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR);
+        deregisterComponent(OB_DEV_COMPONENT_LEFT_IR_FRAME_PROCESSOR);
+        deregisterComponent(OB_DEV_COMPONENT_RIGHT_IR_FRAME_PROCESSOR);
+        deregisterComponent(OB_DEV_COMPONENT_DEPTH_FRAME_METADATA_CONTAINER);
+        deregisterComponent(OB_DEV_COMPONENT_COLOR_FRAME_METADATA_CONTAINER);
     }
     else {
         deregisterSensor(OB_SENSOR_COLOR_LEFT);
         deregisterSensor(OB_SENSOR_COLOR_RIGHT);
+        deregisterComponent(OB_DEV_COMPONENT_LEFT_COLOR_FRAME_PROCESSOR);
+        deregisterComponent(OB_DEV_COMPONENT_RIGHT_COLOR_FRAME_PROCESSOR);
+        deregisterComponent(OB_DEV_COMPONENT_LEFT_COLOR_FRAME_METADATA_CONTAINER);
+        deregisterComponent(OB_DEV_COMPONENT_RIGHT_COLOR_FRAME_METADATA_CONTAINER);
+    }
+
+    auto propertyServer = getPropertyServer();
+        auto sensors = getSensorTypeList();
+    for(auto &sensor: sensors) {
+        if(sensor == OB_SENSOR_COLOR) {
+            propertyServer->aliasProperty(OB_PROP_COLOR_AUTO_EXPOSURE_BOOL, OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL);
+            propertyServer->aliasProperty(OB_PROP_COLOR_EXPOSURE_INT, OB_PROP_DEPTH_EXPOSURE_INT);
+            propertyServer->aliasProperty(OB_PROP_COLOR_GAIN_INT, OB_PROP_DEPTH_GAIN_INT);
+            propertyServer->aliasProperty(OB_PROP_COLOR_AUTO_EXPOSURE_PRIORITY_INT, OB_PROP_DEPTH_AUTO_EXPOSURE_PRIORITY_INT);
+            propertyServer->aliasProperty(OB_PROP_COLOR_AE_MAX_EXPOSURE_INT, OB_PROP_IR_AE_MAX_EXPOSURE_INT);
+
+            auto colorAeAccessor = std::make_shared<G305ColorAePropertyAccessor>(this);
+            propertyServer->registerProperty(OB_PROP_COLOR_AE_MAX_EXPOSURE_INT, "rw", "rw", colorAeAccessor);
+            propertyServer->registerProperty(OB_PROP_COLOR_EXPOSURE_INT, "rw", "rw", colorAeAccessor);
+        }
     }
 }
 
