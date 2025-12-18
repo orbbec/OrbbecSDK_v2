@@ -143,17 +143,23 @@ DeviceEnumInfoList UsbDeviceEnumerator::queryRemovedDevice(std::string rmDevUid)
 }
 
 DeviceEnumInfoList UsbDeviceEnumerator::queryArrivalDevice() {
-    std::unique_lock<std::recursive_mutex> lock(deviceInfoListMutex_);
+    auto currentDeviceInfoListTemp = deviceInfoList_;
     auto                                   portInfoList = platform_->queryUsbSourcePortInfos();
+    std::unique_lock<std::recursive_mutex> lock(deviceInfoListMutex_);
     if(portInfoList != currentUsbPortInfoList_) {
-        currentUsbPortInfoList_ = portInfoList;
         LOG_DEBUG("Current usb device port list:");
-        for(const auto &item: currentUsbPortInfoList_) {
+        for(const auto &item: portInfoList) {
             auto portInfo = std::dynamic_pointer_cast<const USBSourcePortInfo>(item);
             LOG_DEBUG(" - {0} | {1}", portInfo->infUrl, portInfo->infName);
         }
         DeviceEnumInfoList curList = usbDeviceInfoMatch(portInfoList);
-        return utils::subtract_sets(curList, deviceInfoList_);
+
+        auto addDevList = utils::subtract_sets(curList, currentDeviceInfoListTemp);
+        for(const auto &item: addDevList) {
+            currentUsbPortInfoList_.insert(currentUsbPortInfoList_.end(), item->getSourcePortInfoList().begin(), item->getSourcePortInfoList().end());
+        }
+
+        return addDevList;
     }
     return {};
 }
@@ -205,10 +211,9 @@ void UsbDeviceEnumerator::deviceArrivalHandleThreadFunc() {
             break;
         }
         DeviceEnumInfoList addedDevList;
+        addedDevList = queryArrivalDevice();
         {
             std::unique_lock<std::recursive_mutex> lock(deviceInfoListMutex_);
-
-            addedDevList = queryArrivalDevice();
             for(auto &item: addedDevList) {
                 deviceInfoList_.emplace_back(item);
             }
