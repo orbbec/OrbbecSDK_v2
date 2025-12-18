@@ -34,6 +34,7 @@
 #include "logger/LoggerInterval.hpp"
 #include "logger/LoggerHelper.hpp"
 #include "utils/StringUtils.hpp"
+#include "utils/Utils.hpp"
 
 #if defined(__ANDROID__) && (__ANDROID_API__ < 24)
 #ifdef __cplusplus
@@ -116,6 +117,38 @@ void GVCPTransmit::deInit() {
     ipAddress_ = "";
 }
 
+void GVCPTransmit::clearSocketReceiveBuffer() {
+    char         buf[2048];
+    utils::Timer timer;
+    uint64_t     elapsed = 0;
+
+    do {
+        struct timeval timeout;
+        timeout.tv_sec  = 0;
+        timeout.tv_usec = 0;  // return immediately
+
+        auto   sock = sock_;
+        auto   nfds = static_cast<int>(sock) + 1;
+        fd_set readfs;
+
+        FD_ZERO(&readfs);
+        FD_SET(sock, &readfs);
+        auto res = select(nfds, &readfs, 0, 0, &timeout);
+        if(res <= 0) {
+            // no any data
+            break;
+        }
+
+        // read data and discard
+        res = recvfrom(sock, buf, sizeof(buf), 0, NULL, NULL);
+        if(res > 0) {
+            LOG_DEBUG("Discarding {} bytes of leftover data before sending. IP: {}", res, ipAddress_);
+        }
+        elapsed = timer.touchMs(false);
+        // Loop until timeout to avoid blocking indefinitely
+    } while(elapsed < 1000);
+}
+
 std::vector<char> GVCPTransmit::transmit(const void *data, int dataLength) {
     if(data == nullptr || dataLength < static_cast<int>(sizeof(gvcp_cmd_header))) {
         lastError_ = EINVAL;
@@ -126,6 +159,9 @@ std::vector<char> GVCPTransmit::transmit(const void *data, int dataLength) {
     destAddr.sin_family      = AF_INET;
     destAddr.sin_addr.s_addr = inet_addr(ipAddress_.c_str());
     destAddr.sin_port        = htons(GVCP_PORT);
+
+    // Clear socket buffer to prevent processing stale ACKs
+    clearSocketReceiveBuffer();
 
     int     res     = 0;
     uint8_t attempt = 0;

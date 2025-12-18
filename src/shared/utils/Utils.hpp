@@ -34,31 +34,44 @@ public:
      * @brief Reset the timer to now
      */
     void reset() {
-        last_ = std::chrono::steady_clock::now();
+        start_ = last_ = std::chrono::steady_clock::now();
     }
 
     /**
      * @brief Returns milliseconds elapsed since last call and resets timer
      */
-    uint64_t touchMs() {
+    uint64_t touchMs(bool sinceLastTouch = true) {
         auto now  = std::chrono::steady_clock::now();
-        auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_).count();
-        last_     = now;
-        return static_cast<uint64_t>(diff);
+        auto diff = std::chrono::milliseconds::zero();
+        if(sinceLastTouch) {
+            diff  = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_);
+            last_ = now;
+        }
+        else {
+            diff = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_);
+        }
+        return static_cast<uint64_t>(diff.count());
     }
 
     /**
      * @brief Returns microseconds elapsed since last call and resets timer
      */
-    uint64_t touchUs() {
+    uint64_t touchUs(bool sinceLastTouch = true) {
         auto now  = std::chrono::steady_clock::now();
-        auto diff = std::chrono::duration_cast<std::chrono::microseconds>(now - last_).count();
-        last_     = now;
-        return static_cast<uint64_t>(diff);
+        auto diff = std::chrono::microseconds::zero();
+        if(sinceLastTouch) {
+            diff  = std::chrono::duration_cast<std::chrono::microseconds>(now - last_);
+            last_ = now;
+        }
+        else {
+            diff = std::chrono::duration_cast<std::chrono::microseconds>(now - start_);
+        }
+        return static_cast<uint64_t>(diff.count());
     }
 
 private:
     std::chrono::steady_clock::time_point last_;
+    std::chrono::steady_clock::time_point start_;
 };
 
 #pragma pack(push, 1)

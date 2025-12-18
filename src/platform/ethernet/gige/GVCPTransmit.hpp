@@ -63,6 +63,11 @@ private:
     void deInit();
 
     /**
+     * @brief Discard all data in the socket receive buffer
+     */
+    void clearSocketReceiveBuffer();
+
+    /**
      * @brief Transmit a GVCP packet and receive the response.
      *
      * @param[in] data Pointer to the data buffer to send. The buffer must begin with a valid GVCP command header
@@ -74,7 +79,11 @@ private:
      */
     std::vector<char> transmit(const void *data, int dataLength);
 
-    // Get request id
+    /**
+     * @brief Get request id
+     *
+     * @return new request id
+     */
     uint16_t getReqId() {
         ++reqId_;
         if(reqId_ == 0) {
