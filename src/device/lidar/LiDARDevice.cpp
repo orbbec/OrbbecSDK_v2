@@ -302,7 +302,7 @@ void LiDARDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
 
     // hardcoded here
     if(streamType == OB_STREAM_LIDAR) {
-        const std::vector<OBLiDARScanRate> scanRates = { OB_LIDAR_SCAN_20HZ, OB_LIDAR_SCAN_15HZ, OB_LIDAR_SCAN_10HZ };
+        const std::vector<OBLiDARScanRate> scanRates = { OB_LIDAR_SCAN_20HZ };
         const std::vector<OBFormat>        formats   = { OB_FORMAT_LIDAR_SPHERE_POINT, OB_FORMAT_LIDAR_POINT, OB_FORMAT_LIDAR_CALIBRATION };
         StreamProfileList                  profileList;
 
