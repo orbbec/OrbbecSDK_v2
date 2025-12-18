@@ -1,6 +1,6 @@
 # obsensor_metadata_win10
 
-This document introduces the process for getting metadata from Orbbec cameras with UVC protocal on Windows system. The following process has been verified on Windows 10 and Windows 11.
+This document introduces the process for getting metadata from cameras with UVC protocal on Windows system. The following process has been verified on Windows 10 and Windows 11.
 
 ## Registering Metadata Using a Script
 
