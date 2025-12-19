@@ -938,21 +938,6 @@ typedef enum {
      */
     OB_PROP_COLOR_DENOISING_LEVEL_INT = 5525,
 
-    /**
-     * @brief Right Color sensor rotation, angle{0, 90, 180, 270}
-     */
-    OB_PROP_COLOR_RIGHT_ROTATE_INT = 5526,
-
-    /**
-     * @brief Right Color mirror
-     */
-    OB_PROP_COLOR_RIGHT_MIRROR_BOOL = 5527,
-
-    /**
-     * @brief Right Color flip
-     */
-    OB_PROP_COLOR_RIGHT_FLIP_BOOL = 5528,
-
     /*
      * @brief LiDAR: set/get IP address
      */

@@ -46,9 +46,9 @@ std::shared_ptr<IFilterCreationStrategy> FilterCreationStrategyFactory::create(u
                 || std::find(FemtoBoltDevPids.begin(), FemtoBoltDevPids.end(), pid) != FemtoBoltDevPids.end()) {
             return std::make_shared<DefaultFilterStrategy>();
         }
-    }
-    else if(std::find(G305DevPids.begin(), G305DevPids.end(), pid) != G305DevPids.end()) {
-        return std::make_shared<Gemini305FilterStrategy>(); 
+        else if(std::find(G305DevPids.begin(), G305DevPids.end(), pid) != G305DevPids.end()) {
+            return std::make_shared<Gemini305FilterStrategy>();
+        }
     }
     return nullptr;
 }

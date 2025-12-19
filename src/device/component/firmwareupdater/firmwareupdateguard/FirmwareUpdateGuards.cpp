@@ -42,12 +42,13 @@ std::shared_ptr<IFirmwareUpdateGuard> FirmwareUpdateGuardFactory::create() {
             guard->addGuard(std::make_shared<HeardbeatGuard>(getOwner()));
             return guard;
         }
+        else if(std::find(G305DevPids.begin(), G305DevPids.end(), pid) != G305DevPids.end()) {
+            guard->addGuard(std::make_shared<GlobalTimestampGuard>(getOwner()));
+            guard->addGuard(std::make_shared<HeardbeatGuard>(getOwner()));
+            return guard;
+        }
     }
-    else if(std::find(G305DevPids.begin(), G305DevPids.end(), pid) != G305DevPids.end()) {
-        guard->addGuard(std::make_shared<GlobalTimestampGuard>(getOwner()));
-        guard->addGuard(std::make_shared<HeardbeatGuard>(getOwner()));
-        return guard;
-    }
+
     // FemtoBolt and FemtoMega upgrade differently than other devices, no need to add any guards for them
     LOG_DEBUG("Create update guard: Unsupported device pid: {}", pid);
     return guard;

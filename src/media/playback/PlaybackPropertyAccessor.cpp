@@ -226,9 +226,9 @@ PlaybackFrameTransformPropertyAccessor::PlaybackFrameTransformPropertyAccessor(c
                 || std::find(FemtoMegaDevPids.begin(), FemtoMegaDevPids.end(), pid) != FemtoMegaDevPids.end()) {
             accessor_ = std::make_shared<MonocularFrameTransformPropertyAccessor>(owner_);  // Femto
         }
-    }
-    if(std::find(G305DevPids.begin(), G305DevPids.end(), pid) != G305DevPids.end()) {
-        accessor_ = std::make_shared<StereoFrameTransformPropertyAccessor>(owner_);  // Gemini305
+        else if(std::find(G305DevPids.begin(), G305DevPids.end(), pid) != G305DevPids.end()) {
+            accessor_ = std::make_shared<StereoFrameTransformPropertyAccessor>(owner_);  // Gemini305
+        }
     }
     else {
         LOG_ERROR("Unsupport PlaybackFrameTransformPropertyAccessor, pid: {}", pid);

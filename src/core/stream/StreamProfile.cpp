@@ -94,10 +94,7 @@ VideoStreamProfile::VideoStreamProfile(std::shared_ptr<LazySensor> owner, OBStre
     : StreamProfile(owner, type, format), width_(width), height_(height), fps_(fps) {}
 
 VideoStreamProfile::VideoStreamProfile(std::shared_ptr<LazySensor> owner, OBStreamType type, OBFormat format, OBDownSampleConfig downSampleConfig, uint32_t fps)
-    : StreamProfile(owner, type, format), downSampleConfig_{ downSampleConfig }, fps_(fps) {
-    width_ = downSampleConfig.originWidth;
-    height_ = downSampleConfig.originHeight;
-}
+    : StreamProfile(owner, type, format), width_(0), height_(0), downSampleConfig_(downSampleConfig), fps_(fps) {}
 void VideoStreamProfile::setWidth(uint32_t width) {
     width_ = width;
 }
@@ -151,7 +148,7 @@ uint32_t VideoStreamProfile::getMaxFrameDataSize() const {
 }
 
 std::shared_ptr<StreamProfile> VideoStreamProfile::clone() const {
-    auto sp = std::make_shared<VideoStreamProfile>(owner_.lock(), type_, format_, width_, height_, fps_);
+    auto sp            = std::make_shared<VideoStreamProfile>(owner_.lock(), type_, format_, width_, height_, fps_);
     auto intrinsicsMgr = StreamIntrinsicsManager::getInstance();
     if(intrinsicsMgr->containsVideoStreamIntrinsics(shared_from_this())) {
         auto intrinsic = intrinsicsMgr->getVideoStreamIntrinsics(shared_from_this());
@@ -226,7 +223,7 @@ OBAccelIntrinsic AccelStreamProfile::getIntrinsic() const {
 }
 
 std::shared_ptr<StreamProfile> AccelStreamProfile::clone() const {
-    auto sp = std::make_shared<AccelStreamProfile>(owner_.lock(), fullScaleRange_, sampleRate_);
+    auto sp            = std::make_shared<AccelStreamProfile>(owner_.lock(), fullScaleRange_, sampleRate_);
     auto intrinsicsMgr = StreamIntrinsicsManager::getInstance();
     if(intrinsicsMgr->containsAccelStreamIntrinsics(shared_from_this())) {
         auto intrinsic = intrinsicsMgr->getAccelStreamIntrinsics(shared_from_this());
@@ -263,7 +260,7 @@ OBGyroIntrinsic GyroStreamProfile::getIntrinsic() const {
 }
 
 std::shared_ptr<StreamProfile> GyroStreamProfile::clone() const {
-    auto sp = std::make_shared<GyroStreamProfile>(owner_.lock(), fullScaleRange_, sampleRate_);
+    auto sp            = std::make_shared<GyroStreamProfile>(owner_.lock(), fullScaleRange_, sampleRate_);
     auto intrinsicsMgr = StreamIntrinsicsManager::getInstance();
     if(intrinsicsMgr->containsGyroStreamIntrinsics(shared_from_this())) {
         auto intrinsic = intrinsicsMgr->getGyroStreamIntrinsics(shared_from_this());
@@ -427,17 +424,18 @@ std::vector<std::shared_ptr<const VideoStreamProfile>> matchVideoStreamProfile(c
 
             // Get the profile that matches the user's items of interest
 
-            if((width == OB_WIDTH_ANY || videoProfile->getWidth() == width) && (height == OB_HEIGHT_ANY || videoProfile->getHeight() == height)
-               && (format == OB_FORMAT_ANY || videoProfile->getFormat() == format) && (fps == OB_FPS_ANY || videoProfile->getFps() == fps)) {
-                if(downSampleScale == 0) {
+            if(downSampleScale == 0) {
+                if((width == OB_WIDTH_ANY || videoProfile->getWidth() == width) && (height == OB_HEIGHT_ANY || videoProfile->getHeight() == height)
+                   && (format == OB_FORMAT_ANY || videoProfile->getFormat() == format) && (fps == OB_FPS_ANY || videoProfile->getFps() == fps)) {
                     matchProfileList.push_back(videoProfile);
                 }
-                else {
-                    auto profileDownSampleConfig = videoProfile->getDownSampleConfig();
-                    if(downSampleConfig.originWidth == profileDownSampleConfig.originWidth
-                       && downSampleConfig.originHeight == profileDownSampleConfig.originHeight && downSampleScale == profileDownSampleConfig.scaleFactor) {
-                        matchProfileList.push_back(videoProfile);
-                    }
+            }
+            else {
+                auto profileDownSampleConfig = videoProfile->getDownSampleConfig();
+                if(downSampleConfig.originWidth == profileDownSampleConfig.originWidth && downSampleConfig.originHeight == profileDownSampleConfig.originHeight
+                   && downSampleScale == profileDownSampleConfig.scaleFactor && videoProfile->getFormat() == format
+                   &&videoProfile->getFps() == fps) {
+                    matchProfileList.push_back(videoProfile);
                 }
             }
         }

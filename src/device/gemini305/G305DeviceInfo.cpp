@@ -45,7 +45,8 @@ G305DeviceInfo::G305DeviceInfo(const SourcePortInfoList groupedInfoList) {
 
 G305DeviceInfo::~G305DeviceInfo() noexcept {}
 
-std::shared_ptr<IDevice> G305DeviceInfo::createDevice() const {
+std::shared_ptr<IDevice> G305DeviceInfo::createDevice(OBDeviceAccessMode accessMode) const {
+    (void)accessMode;  // access control is unsupported
     return std::make_shared<G305Device>(shared_from_this());
 }
 
