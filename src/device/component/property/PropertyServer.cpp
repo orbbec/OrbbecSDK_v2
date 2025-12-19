@@ -478,4 +478,26 @@ OBPropertyItem PropertyServer::getPropertyItem(uint32_t propertyId, PropertyAcce
     return retItem;
 }
 
+void PropertyServer::unregisterProperty(uint32_t propertyId) {
+    auto rmPropertyId = properties_.find(propertyId);
+    if(rmPropertyId == properties_.end()) {
+        return;
+    }
+    properties_.erase(propertyId);
+
+    auto infoIter = OBPropertyBaseInfoMap.find(propertyId);
+    if(infoIter == OBPropertyBaseInfoMap.end()) {
+        LOG_WARN("Not added to property map, property not found in OBPropertyBaseInfoMap, id={}", propertyId);
+        // throw not_implemented_exception(msg);
+    }
+    else {
+        auto obPropertyId = static_cast<OBPropertyID>(propertyId);
+        userPropertiesVec_.erase(
+            std::remove_if(userPropertiesVec_.begin(), userPropertiesVec_.end(), [obPropertyId](const OBPropertyItem &it) { return it.id == obPropertyId; }),
+            userPropertiesVec_.end());
+        innerPropertiesVec_.erase(
+            std::remove_if(innerPropertiesVec_.begin(), innerPropertiesVec_.end(), [obPropertyId](const OBPropertyItem &it) { return it.id == obPropertyId; }),
+            innerPropertiesVec_.end());
+    }
+}
 }  // namespace libobsensor

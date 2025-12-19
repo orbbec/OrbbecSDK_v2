@@ -1286,11 +1286,17 @@ std::shared_ptr<const StreamProfile> G305Device::loadDefaultStreamProfile(OBSens
             defFormat     = OB_FORMAT_Y8;
             defStreamType = OB_STREAM_IR;
             break;
-        case OB_SENSOR_COLOR:
-        case OB_SENSOR_COLOR_LEFT:
-        case OB_SENSOR_COLOR_RIGHT: {
+        case OB_SENSOR_COLOR: {
             defFormat     = OB_FORMAT_YUYV;
             defStreamType = OB_STREAM_COLOR;
+        } break;
+        case OB_SENSOR_COLOR_LEFT: {
+            defFormat     = OB_FORMAT_YUYV;
+            defStreamType = OB_STREAM_COLOR_LEFT;
+        } break;
+        case OB_SENSOR_COLOR_RIGHT: {
+            defFormat     = OB_FORMAT_YUYV;
+            defStreamType = OB_STREAM_COLOR_RIGHT;
         } break;
         default:
             break;
@@ -1320,6 +1326,20 @@ std::shared_ptr<const StreamProfile> G305Device::loadDefaultStreamProfile(OBSens
         case OB_SENSOR_COLOR: {
             defFormat     = OB_FORMAT_YUYV;
             defStreamType = OB_STREAM_COLOR;
+            defWidth      = 1280;
+            defHeight     = 800;
+
+        } break;
+        case OB_SENSOR_COLOR_LEFT: {
+            defFormat     = OB_FORMAT_YUYV;
+            defStreamType = OB_STREAM_COLOR_RIGHT;
+            defWidth      = 1280;
+            defHeight     = 800;
+
+        } break;
+        case OB_SENSOR_COLOR_RIGHT: {
+            defFormat     = OB_FORMAT_YUYV;
+            defStreamType = OB_STREAM_COLOR_RIGHT;
             defWidth      = 1280;
             defHeight     = 800;
 
@@ -1355,7 +1375,7 @@ void G305Device::updateSensorStreamProfile() {
 void G305Device::fixSensorList() {
     auto        depthWorkModeManager = getComponentT<G305DepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
     const auto &currentMode          = depthWorkModeManager->getCurrentDepthWorkMode();
-
+    auto        propertyServer       = getPropertyServer();
     // deregister unsupported sensors according to depth work mode option code
     std::string depthWorkModeName(currentMode.name);
     if(depthWorkModeName.find("Dual Color") != std::string::npos) {
@@ -1369,6 +1389,20 @@ void G305Device::fixSensorList() {
         deregisterComponent(OB_DEV_COMPONENT_RIGHT_IR_FRAME_PROCESSOR);
         deregisterComponent(OB_DEV_COMPONENT_DEPTH_FRAME_METADATA_CONTAINER);
         deregisterComponent(OB_DEV_COMPONENT_COLOR_FRAME_METADATA_CONTAINER);
+        propertyServer->unregisterProperty(OB_PROP_DEPTH_MIRROR_BOOL);
+        propertyServer->unregisterProperty(OB_PROP_DEPTH_FLIP_BOOL);
+        propertyServer->unregisterProperty(OB_PROP_DEPTH_ROTATE_INT);
+        propertyServer->unregisterProperty(OB_PROP_IR_MIRROR_BOOL);
+        propertyServer->unregisterProperty(OB_PROP_IR_FLIP_BOOL);
+        propertyServer->unregisterProperty(OB_PROP_IR_ROTATE_INT);
+        propertyServer->unregisterProperty(OB_PROP_IR_RIGHT_MIRROR_BOOL);
+        propertyServer->unregisterProperty(OB_PROP_IR_RIGHT_FLIP_BOOL);
+        propertyServer->unregisterProperty(OB_PROP_IR_RIGHT_ROTATE_INT);
+        propertyServer->unregisterProperty(OB_PROP_COLOR_MIRROR_BOOL);
+        propertyServer->unregisterProperty(OB_PROP_COLOR_FLIP_BOOL);
+        propertyServer->unregisterProperty(OB_PROP_COLOR_ROTATE_INT);
+
+        propertyServer->unregisterProperty(OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT);
     }
     else {
         deregisterSensor(OB_SENSOR_COLOR_LEFT);
@@ -1377,10 +1411,15 @@ void G305Device::fixSensorList() {
         deregisterComponent(OB_DEV_COMPONENT_RIGHT_COLOR_FRAME_PROCESSOR);
         deregisterComponent(OB_DEV_COMPONENT_LEFT_COLOR_FRAME_METADATA_CONTAINER);
         deregisterComponent(OB_DEV_COMPONENT_RIGHT_COLOR_FRAME_METADATA_CONTAINER);
+        propertyServer->unregisterProperty(OB_PROP_COLOR_LEFT_MIRROR_BOOL);
+        propertyServer->unregisterProperty(OB_PROP_COLOR_LEFT_FLIP_BOOL);
+        propertyServer->unregisterProperty(OB_PROP_COLOR_LEFT_ROTATE_INT);
+        propertyServer->unregisterProperty(OB_PROP_COLOR_RIGHT_MIRROR_BOOL);
+        propertyServer->unregisterProperty(OB_PROP_COLOR_RIGHT_FLIP_BOOL);
+        propertyServer->unregisterProperty(OB_PROP_COLOR_RIGHT_ROTATE_INT);
     }
 
-    auto propertyServer = getPropertyServer();
-        auto sensors = getSensorTypeList();
+    auto sensors = getSensorTypeList();
     for(auto &sensor: sensors) {
         if(sensor == OB_SENSOR_COLOR) {
             propertyServer->aliasProperty(OB_PROP_COLOR_AUTO_EXPOSURE_BOOL, OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL);
@@ -1436,7 +1475,7 @@ void G305Device::updateDownSampleConfig(std::vector<std::shared_ptr<const Stream
             cropList.push_back(presetResolution.crop[i]);
         }
 
-        for(uint32_t bit = 1; bit <=4; ++bit) {
+        for(uint32_t bit = 1; bit <= 4; ++bit) {
             if(scaleFactor == 0) {
                 break;
             }
