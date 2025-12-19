@@ -20,6 +20,7 @@
 #include "utils/PublicTypeHelper.hpp"
 #include "monitor/LiDARDeviceMonitor.hpp"
 #include "FilterFactory.hpp"
+#include "LiDARAlgParamManager.hpp"
 #include <sstream>
 #include <iomanip>
 
@@ -49,6 +50,9 @@ void LiDARDevice::init() {
         return activityRecorder;
     },
     false);
+
+    auto algParamManager = std::make_shared<LiDARAlgParamManager>(this);
+    registerComponent(OB_DEV_COMPONENT_ALG_PARAM_MANAGER, algParamManager);
 }
 
 void LiDARDevice::fetchDeviceInfo() {
@@ -162,6 +166,8 @@ void LiDARDevice::initProperties() {
     propertyServer->registerProperty(OB_PROP_LIDAR_APD_HIGH_VOLTAGE_INT, "", "r", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_IMU_STREAM_PORT_INT, "", "w", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_LIDAR_IMU_FRAME_RATE_INT, "", "rw", vendorPropertyAccessor);
+    propertyServer->registerProperty(OB_RAW_DATA_IMU_CALIB_PARAM, "", "r", vendorPropertyAccessor);
+    
 
     // register property server
     registerComponent(OB_DEV_COMPONENT_PROPERTY_SERVER, propertyServer, true);
@@ -329,6 +335,9 @@ void LiDARDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
             })
             sensor->setStreamProfileList(profileList);
             sensor->updateDefaultStreamProfile(defaultProfile);
+
+            auto algParamManager = getComponentT<LiDARAlgParamManager>(OB_DEV_COMPONENT_ALG_PARAM_MANAGER);
+            algParamManager->bindExtrinsic(profileList);
         }
     }
     else if(streamType == OB_STREAM_ACCEL) {
@@ -342,15 +351,14 @@ void LiDARDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
         getImuFullScaleRange(accelRange, gyroRange);
         for(auto rate: rates) {
             auto profile = StreamProfileFactory::createAccelStreamProfile(lazySensor, accelRange, rate);
-            // TODO: bind IMU Accel Intrinsic
-            OBAccelIntrinsic intrinsic = { 0 };
-            profile->bindIntrinsic(intrinsic);
-
             profileList.push_back(profile);
         }
         if(profileList.size()) {
             sensor->setStreamProfileList(profileList);
             sensor->updateDefaultStreamProfile(profileList[1]);
+
+            auto algParamManager = getComponentT<LiDARAlgParamManager>(OB_DEV_COMPONENT_ALG_PARAM_MANAGER);
+            algParamManager->bindStreamProfileParams(profileList);
         }
     }
     else if(streamType == OB_STREAM_GYRO) {
@@ -364,15 +372,13 @@ void LiDARDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
         getImuFullScaleRange(accelRange, gyroRange);
         for(auto rate: rates) {
             auto profile = StreamProfileFactory::createGyroStreamProfile(lazySensor, gyroRange, rate);
-            // TODO: bind IMU Gyro Intrinsic
-            OBGyroIntrinsic intrinsic = { 0 };
-            profile->bindIntrinsic(intrinsic);
-
             profileList.push_back(profile);
         }
         if(profileList.size()) {
             sensor->setStreamProfileList(profileList);
             sensor->updateDefaultStreamProfile(profileList[1]);
+            auto algParamManager = getComponentT<LiDARAlgParamManager>(OB_DEV_COMPONENT_ALG_PARAM_MANAGER);
+            algParamManager->bindStreamProfileParams(profileList);
         }
     }
 }

@@ -53,6 +53,8 @@ enum HpOpCode {
     OPCODE_SET_IMU_UDP_PORT = 0x0112,
     // set IMU stream output data rate(frame rate)
     OPCODE_SET_IMU_FRAME_RATE = 0x0113,
+    // set IMU calibration param
+    OPCODE_SET_IMU_CALIB_PARAM = 0x0114,
 
     // set mems fov size
     OPCODE_SET_MEMS_FOV_SIZE = 0x0170,
@@ -123,6 +125,8 @@ enum HpOpCode {
     OPCODE_GET_IMU_FRAME_RATE = 0x0222,
     // get IMU full scale range
     OPCODE_GET_IMU_FULL_SCALE_RANGE = 0x0223,
+    // get IMU calibration param
+    OPCODE_GET_IMU_CALIB_PARAM = 0x0224,
 
     // get mems fov size
     OPCODE_GET_MEMS_FOV_SIZE = 0x0270,

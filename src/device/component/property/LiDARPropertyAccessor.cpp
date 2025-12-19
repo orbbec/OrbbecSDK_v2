@@ -72,6 +72,8 @@ const std::unordered_map<uint32_t, LiDAROpCode> LiDAROperationInfomap = {
       { HpOpCode::OPCODE_SET_IMU_FRAME_RATE, HpOpCode::OPCODE_GET_IMU_FRAME_RATE, OB_INT_PROPERTY } },  // IMU stream output data rate(frame rate)
     { OB_STRUCT_LIDAR_IMU_FULL_SCALE_RANGE,
       { HpOpCode::OPCODE_UNSUPPORTED, HpOpCode::OPCODE_GET_IMU_FULL_SCALE_RANGE, OB_STRUCT_PROPERTY } },  // get IMU full scale range
+    { OB_RAW_DATA_IMU_CALIB_PARAM,
+      { HpOpCode::OPCODE_SET_IMU_CALIB_PARAM, HpOpCode::OPCODE_GET_IMU_CALIB_PARAM, OB_STRUCT_PROPERTY } },  // get IMU calibration param
 };
 
 LiDARPropertyAccessor::LiDARPropertyAccessor(IDevice *owner, const std::shared_ptr<ISourcePort> &backend)
