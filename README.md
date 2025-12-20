@@ -300,15 +300,24 @@ Orbbec Viewer is an all-in-one graphical user interface (GUI) built on the Orbbe
 
 [Orbbec SDK v2 API User Guide](https://orbbec.github.io/docs/OrbbecSDKv2_API_User_Guide/), this document provides an overview of key features in the Orbbec SDK v2 and demonstrates how to use its most commonly used APIs. For more detailed APIs, please refer to [Orbbec_SDK_API_Reference.html](https://orbbec.github.io/docs/OrbbecSDKv2/index.html)
 
-### 2.5 Performance tuning
+### 2.5 Camera Parameters and Value Ranges
+
+For common depth, IR, and color camera parameters and their value ranges, refer to [orbbec_camera_params.md](docs/tutorial/orbbec_camera_params.md)
+
+### 2.6 Camera Distortion
+
+For each device's Original depth and color distortions, as well as depth distortion after D2C, color distortion after C2C, and point cloud distortion, refer to [orbbec_camera_distortion.md](docs/tutorial/orbbec_camera_distortion.md).
+
+
+### 2.7 Performance tuning
 
 For different use cases, the SDK can be tuned to achieve optimal performance. Please refer to the [performance tuning guide](docs/tutorial/performance_tuning.md) for more information.
 
-### 2.6 Building from Source
+### 2.8 Building from Source
 
 If you would like to modify the SDK itself, you can build the SDK from source. Please refer to the [build guide](docs/tutorial/building_orbbec_sdk.md) for more information.
 
-### 2.7 FAQ
+### 2.9 FAQ
 
 Most frequently asked questions can be found in the [FAQ](docs/FAQ.md) file.
 
