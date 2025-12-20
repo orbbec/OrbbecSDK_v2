@@ -302,7 +302,7 @@ Orbbec Viewer is an all-in-one graphical user interface (GUI) built on the Orbbe
 
 ### 2.5 Camera Parameters and Value Ranges
 
-For common depth, IR, and color camera parameters and their value ranges, refer to [orbbec_camera_params.md](docs/tutorial/orbbec_camera_params.md)
+For common depth, IR, and color camera parameters and their value ranges, refer to [orbbec_camera_params.html](https://orbbec.github.io/OrbbecSDK_v2/docs/tutorial/orbbec_camera_params.html)
 
 ### 2.6 Camera Distortion
 

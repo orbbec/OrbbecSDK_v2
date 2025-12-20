@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orbbec Camera Parameters</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #24292e;
+            background-color: #f6f8fa;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 95%;
+            margin: 0 auto;
+        }
+        
+        header {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e1e4e8;
+        }
+        
+        h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            color: #24292e;
+        }
+        
+        .description {
+            color: #586069;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        
+        .warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 6px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            color: #856404;
+            font-size: 14px;
+        }
+        
+        .table-container {
+            position: relative;
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+            background-color: white;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+        
+        .table-wrapper {
+            overflow: auto;
+            max-height: 80vh;
+            position: relative;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            min-width: 1800px;
+        }
+        
+        thead {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        tbody tr:first-child th {
+            border-top: none;
+        }
+        
+        th, td {
+            padding: 10px 12px;
+            border: 1px solid #e1e4e8;
+            text-align: left;
+            vertical-align: top;
+            background-color: white;
+            font-size: 13px;
+            line-height: 1.4;
+            white-space: normal;
+            word-wrap: break-word;
+        }
+        
+        th {
+            background-color: #f6f8fa;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            border-bottom: 2px solid #e1e4e8;
+        }
+        
+        /* 冻结第一列 */
+        th:first-child,
+        td:first-child {
+            position: sticky;
+            left: 0;
+            z-index: 20;
+            min-width: 150px;
+            background-color: #f6f8fa;
+            border-right: 2px solid #e1e4e8;
+        }
+        
+        /* 冻结第二列 */
+        th:nth-child(2),
+        td:nth-child(2) {
+            position: sticky;
+            left: 150px; /* 第一列的宽度 */
+            z-index: 15;
+            min-width: 200px;
+            background-color: white;
+            border-right: 1px solid #e1e4e8;
+        }
+        
+        /* 表头第一列的样式 */
+        thead th:first-child {
+            z-index: 110;
+        }
+        
+        /* 表头第二列的样式 */
+        thead th:nth-child(2) {
+            z-index: 105;
+            left: 150px;
+        }
+        
+        /* 悬停效果 */
+        tbody tr:hover {
+            background-color: #f6f8fa;
+        }
+        
+        tbody tr:hover td:first-child,
+        tbody tr:hover td:nth-child(2) {
+            background-color: #e1e4e8;
+        }
+        
+        /* 参数分组标题行 */
+        .section-header {
+            background-color: #f0f7ff !important;
+            font-weight: bold;
+            border-top: 2px solid #0366d6 !important;
+        }
+        
+        .section-header td:first-child {
+            background-color: #f0f7ff !important;
+        }
+        
+        .section-header td:nth-child(2) {
+            background-color: #f0f7ff !important;
+        }
+        
+        .color-section .section-header {
+            background-color: #f0f7ff !important;
+            border-left: 4px solid #0366d6;
+        }
+        
+        .depth-section .section-header {
+            background-color: #f6f0ff !important;
+            border-left: 4px solid #6f42c1;
+        }
+        
+        .ir-section .section-header {
+            background-color: #f0fff4 !important;
+            border-left: 4px solid #28a745;
+        }
+        
+        /* 多值参数样式 - 新增 */
+        .multi-value {
+            line-height: 1.8 !important;
+        }
+        
+        .multi-value br {
+            display: block;
+            margin-bottom: 4px;
+            content: "";
+        }
+        
+        /* 确保包含换行的单元格有更好的显示 */
+        td br {
+            display: block;
+            margin-bottom: 4px;
+        }
+        
+        /* 滚动条样式 */
+        .table-wrapper::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        
+        .table-wrapper::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 5px;
+        }
+        
+        .table-wrapper::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 5px;
+        }
+        
+        .table-wrapper::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .search-box {
+            padding: 8px 12px;
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+            width: 300px;
+            font-size: 14px;
+        }
+        
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .filter-btn {
+            padding: 6px 12px;
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+            background-color: white;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        
+        .filter-btn:hover {
+            background-color: #f6f8fa;
+        }
+        
+        .filter-btn.active {
+            background-color: #0366d6;
+            color: white;
+            border-color: #0366d6;
+        }
+        
+        footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #e1e4e8;
+            color: #586069;
+            font-size: 14px;
+            text-align: center;
+        }
+        
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .search-box {
+                width: 100%;
+            }
+            
+            .filter-buttons {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Orbbec Camera Parameters</h1>
+            <p class="description">The following are common parameters and value ranges for Orbbec Camera's depth, IR, and color features.</p>
+            <p class="description">Value ranges may vary with firmware versions. If this document differs from actual values, use OrbbecViewer readings as the reference.</p>
+        </header>
+        
+        <div class="controls">
+            <input type="text" class="search-box" placeholder="Search parameters..." id="searchInput">
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="color">Color</button>
+                <button class="filter-btn" data-filter="depth">Depth</button>
+                <button class="filter-btn" data-filter="ir">IR</button>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <div class="table-wrapper">
+                <table id="cameraParamsTable">
+                    <thead>
+                        <tr>
+                            <th>OB Parameter</th>
+                            <th>OB Description</th>
+                            <th>Gemini 335/336</th>
+                            <th>Gemini 335L/336L<br>335Lg/335Le</th>
+                            <th>Gemini 435Le</th>
+                            <th>Gemini 2</th>
+                            <th>Gemini 2L</th>
+                            <th>Femto Bolt</th>
+                            <th>Femto Mega</th>
+                            <th>Femto Mega I</th>
+                            <th>Gemini 345Lg</th>
+                            <th>Gemini 345</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Color Parameters Section -->
+                        <tr class="section-header color-section" id="color-section">
+                            <td colspan="12" style="font-size: 16px; color: #0366d6;">
+                                <strong>Color Parameters</strong>
+                            </td>
+                        </tr>
+                        
+                        <tr class="color-param">
+                            <td>Color Mirror</td>
+                            <td>Inverting images or data horizontally</td>
+                            <td class="multi-value">true: Mirror<br>false: Normal</td>
+                            <td class="multi-value">true: Mirror<br>false: Normal</td>
+                            <td class="multi-value">true: Mirror<br>false: Normal</td>
+                            <td class="multi-value">true: Mirror<br>false: Normal</td>
+                            <td class="multi-value">true: Mirror<br>false: Normal</td>
+                            <td class="multi-value">true: Mirror<br>false: Normal</td>
+                            <td class="multi-value">true: Mirror<br>false: Normal</td>
+                            <td class="multi-value">true: Mirror<br>false: Normal</td>
+                            <td class="multi-value">true: Mirror<br>false: Normal</td>
+                            <td class="multi-value">true: Mirror<br>false: Normal</td>
+                        </tr>
+                        <tr class="color-param">
+                            <td>Color Flip</td>
+                            <td>Inverting images or data vertically</td>
+                            <td class="multi-value">true: Flip<br>false: Normal</td>
+                            <td class="multi-value">true: Flip<br>false: Normal</td>
+                            <td class="multi-value">true: Flip<br>false: Normal</td>
+                            <td class="multi-value">true: Flip<br>false: Normal</td>
+                            <td class="multi-value">true: Flip<br>false: Normal</td>
+                            <td class="multi-value">true: Flip<br>false: Normal</td>
+                            <td class="multi-value">true: Flip<br>false: Normal</td>
+                            <td class="multi-value">true: Flip<br>false: Normal</td>
+                            <td class="multi-value">true: Flip<br>false: Normal</td>
+                            <td class="multi-value">true: Flip<br>false: Normal</td>
+                        </tr>
+                        <tr class="color-param">
+                            <td>Color Rotate</td>
+                            <td>Turning an image by a specific angle</td>
+                            <td class="multi-value">0: 0°<br>1: 90°<br>2: 180°<br>3: 270°</td>
+                            <td class="multi-value">0: 0°<br>1: 90°<br>2: 180°<br>3: 270°</td>
+                            <td class="multi-value">0: 0°<br>1: 90°<br>2: 180°<br>3: 270°</td>
+                            <td class="multi-value">0: 0°<br>1: 90°<br>2: 180°<br>3: 270°</td>
+                            <td class="multi-value">0: 0°<br>1: 90°<br>2: 180°<br>3: 270°</td>
+                            <td class="multi-value">0: 0°<br>1: 90°<br>2: 180°<br>3: 270°</td>
+                            <td class="multi-value">0: 0°<br>1: 90°<br>2: 180°<br>3: 270°</td>
+                            <td class="multi-value">0: 0°<br>1: 90°<br>2: 180°<br>3: 270°</td>
+                            <td class="multi-value">0: 0°<br>1: 90°<br>2: 180°<br>3: 270°</td>
+                            <td class="multi-value">0: 0°<br>1: 90°<br>2: 180°<br>3: 270°</td>
+                        </tr>
+                        <tr class="color-param">
+                            <td>Color Auto Exposure Priority</td>
+                            <td>It must be used in Free Run mode. When enabled, exposure is prioritized, allowing the frame rate to be reduced.</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                        </tr>
+                        <tr class="color-param">
+                            <td>Color Auto Exposure</td>
+                            <td>Enables or disables automatic exposure adjustment.</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                        </tr>
+                        <tr class="color-param">
+                            <td>Color AE Max Exposure</td>
+                            <td>Maximum correction value for AE exposure that limits the corresponding frame rate.</td>
+                            <td>1 - 1665 (unit:100us)</td>
+                            <td>1 - 1999 (unit:100us)</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                        </tr>
+                        <tr class="color-param">
+                            <td>Color AE ROI</td>
+                            <td>AE ROI allows the user to specify a rectangular region. AE then performs exposure control based on the brightness of this region, enabling the target object to achieve a appropriate brightness.</td>
+                            <td>ROI smaller than image resolution</td>
+                            <td>ROI smaller than image resolution</td>
+                            <td>ROI smaller than image resolution</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                        </tr>
+                        <tr class="color-param">
+                            <td>Color Exposure</td>
+                            <td>Sets the absolute exposure time when auto-exposure is disabled.</td>
+                            <td>1 - 1665 (unit:100us)</td>
+                            <td>1 - 1999 (unit:100us)</td>
+                            <td>0 - 33333 (unit: 1us)</td>
+                            <td>0 - 33000 (unit: 1us)</td>
+                            <td>0 - 30000 (unit: 1us)</td>
+                            <td>1 - 300 (unit:100us)</td>
+                            <td>1 - 2000 (unit:100us)</td>
+                            <td>1 - 1000 (unit:100us)</td>
+                            <td>10 - 318 (unit:100us)</td>
+                            <td>10 - 318 (unit:100us)</td>
+                        </tr>
+                        <tr class="color-param">
+                            <td>Color Gain</td>
+                            <td>Sets the amount of gain applied to the frame if auto-exposure is disabled.</td>
+                            <td>0 - 128 (unit: 1/16 db)</td>
+                            <td>0 - 128 (unit: 1/16 db)</td>
+                            <td>1 - 16 (unit: 1db)</td>
+                            <td>1 - 255 (unit:1/16db)</td>
+                            <td>1 - 255 (unit:1/16db)</td>
+                            <td>0 - 80 (unit: 0.3db)</td>
+                            <td>1 - 240 (unit: 0.3db)</td>
+                            <td>1 - 240 (unit: 0.3db)</td>
+                            <td>1 - 43 (unit:1db)</td>
+                            <td>1 - 43 (unit:1db)</td>
+                        </tr>
+                        <tr class="color-param">
+                            <td>Color Brightness</td>
+                            <td>Sets the amount of brightness applied when auto-exposure is enabled.</td>
+                            <td>-64 - 64</td>
+                            <td>-64 - 64</td>
+                            <td>0 - 100</td>
+                            <td>1 - 255</td>
+                            <td>1 - 255</td>
+                            <td>1 - 20</td>
+                            <td>0 - 128</td>
+                            <td>0 - 128</td>
+                            <td>-50 - 50</td>
+                            <td>-50 - 50</td>
+                        </tr>
+                        <tr class="color-param">
+                            <td>Color Auto White Balance</td>
+                            <td>Enables or disables the AWB algorithm.</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                            <td>None</td>
+                            <td>None</td>
+                        </tr>
+                        <tr class="color-param">
+                            <td>Color White Balance/ K</td>
+                            <td>Sets the white balance when AWB is disabled.</td>
+                            <td>2800 - 6500</td>
+                            <td>2800 - 6500</td>
+                            <td>0 - 6800</td>
+                            <td>2800 - 6800</td>
+                            <td>2800 - 6800</td>
+                            <td>2000 - 11000</td>
+                            <td>2000 - 11000</td>
+                            <td>2000 - 11000</td>
+                            <td>None</td>
+                            <td>None</td>
+                        </tr>
+                        <tr class="color-param">
+                            <td>Color Sharpness</td>
+                            <td>Sets the amount of sharpening adjustment applied to the frame.</td>
+                            <td>0 - 100</td>
+                            <td>0 - 100</td>
+                            <td>0 - 100</td>
+                            <td>0 - 255</td>
+                            <td>0 - 255</td>
+                            <td>1 - 40</td>
+                            <td>1 - 15</td>
+                            <td>1 - 15</td>
+                            <td>0 - 100</td>
+                            <td>0 - 100</td>
+                        </tr>
+                        <tr class="color-param">
+                            <td>Color Gamma</td>
+                            <td>Adjusts gamma correction applied to image frames. Lower gamma values make the scene appear brighter.</td>
+                            <td>100 - 500</td>
+                            <td>100 - 500</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                        </tr>
+                        <tr class="color-param">
+                            <td>Color Saturation</td>
+                            <td>Sets the amount of saturation adjustment applied to the frame.</td>
+                            <td>0 - 100</td>
+                            <td>0 - 100</td>
+                            <td>0 - 100</td>
+                            <td>0 - 255</td>
+                            <td>0 - 255</td>
+                            <td>1 - 255</td>
+                            <td>1 - 80</td>
+                            <td>1 - 80</td>
+                            <td>0 - 100</td>
+                            <td>0 - 100</td>
+                        </tr>
+                        <tr class="color-param">
+                            <td>Color Contrast</td>
+                            <td>Sets the amount of contrast adjustment applied to the frame.</td>
+                            <td>0 - 100</td>
+                            <td>0 - 100</td>
+                            <td>0 - 100</td>
+                            <td>0 - 255</td>
+                            <td>0 - 255</td>
+                            <td>1 - 99</td>
+                            <td>1 - 60</td>
+                            <td>1 - 60</td>
+                            <td>0 - 100</td>
+                            <td>0 - 100</td>
+                        </tr>
+                        <tr class="color-param">
+                            <td>Color Hue</td>
+                            <td>Sets the amount of hue adjustment applied to the frame.</td>
+                            <td>-180 - 180</td>
+                            <td>-180 - 180</td>
+                            <td>0 - 100</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>-64 - 63</td>
+                            <td>-64 - 63</td>
+                        </tr>
+                        <tr class="color-param">
+                            <td>Color Backlight Compensation</td>
+                            <td>Sets a weighting amount based on brightness to the frame.</td>
+                            <td>0 - 6</td>
+                            <td>0 - 6</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td class="multi-value">0 - 1</td>
+                            <td class="multi-value">0 - 1</td>
+                        </tr>
+                        <tr class="color-param">
+                            <td>Color Powerline Frequency</td>
+                            <td>Specified based on the local power line frequency for flicker avoidance.</td>
+                            <td class="multi-value">0: Disable<br>1: 50Hz<br>2: 60Hz<br>3: Auto</td>
+                            <td class="multi-value">0: Disable<br>1: 50Hz<br>2: 60Hz<br>3: Auto</td>
+                            <td class="multi-value">0: Disable<br>1: 50Hz<br>2: 60Hz</td>
+                            <td class="multi-value">0: Disable<br>1: 50Hz<br>2: 60Hz</td>
+                            <td class="multi-value">0: Disable<br>1: 50Hz<br>2: 60Hz</td>
+                            <td class="multi-value">0: Disable<br>1: 50Hz<br>2: 60Hz</td>
+                            <td class="multi-value">0: Disable<br>1: 50Hz<br>2: 60Hz</td>
+                            <td class="multi-value">0: Disable<br>1: 50Hz<br>2: 60Hz</td>
+                            <td class="multi-value">0: Disable<br>1: 50Hz<br>2: 60Hz</td>
+                            <td class="multi-value">0: Disable<br>1: 50Hz<br>2: 60Hz</td>
+                        </tr>
+                        <tr class="color-param">
+                            <td>Denoising Level</td>
+                            <td>Adjusts the intensity of noise reduction applied to image frames. Higher levels provide smoother images but may reduce fine details.</td>
+                            <td class="multi-value">0: Auto<br>1 - 8</td>
+                            <td class="multi-value">0: Auto<br>1 - 8</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                        </tr>
+                        
+                        <!-- Depth Parameters Section -->
+                        <tr class="section-header depth-section" id="depth-section">
+                            <td colspan="12" style="font-size: 16px; color: #6f42c1;">
+                                <strong>Depth Parameters</strong>
+                            </td>
+                        </tr>
+                        
+                        <tr class="depth-param">
+                            <td>Laser Switch</td>
+                            <td>Enables or disables the laser emitter used for depth sensing.</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                        </tr>
+                        <tr class="depth-param">
+                            <td>Depth Mirror</td>
+                            <td>Inverts the depth image horizontally.</td>
+                            <td class="multi-value">true: Mirror<br>false: Normal</td>
+                            <td class="multi-value">true: Mirror<br>false: Normal</td>
+                            <td class="multi-value">true: Mirror<br>false: Normal</td>
+                            <td class="multi-value">true: Mirror<br>false: Normal</td>
+                            <td class="multi-value">true: Mirror<br>false: Normal</td>
+                            <td class="multi-value">true: Mirror<br>false: Normal</td>
+                            <td class="multi-value">true: Mirror<br>false: Normal</td>
+                            <td class="multi-value">true: Mirror<br>false: Normal</td>
+                            <td class="multi-value">true: Mirror<br>false: Normal</td>
+                            <td class="multi-value">true: Mirror<br>false: Normal</td>
+                        </tr>
+                        <tr class="depth-param">
+                            <td>Depth Flip</td>
+                            <td>Inverts the depth image vertically.</td>
+                            <td class="multi-value">true: Flip<br>false: Normal</td>
+                            <td class="multi-value">true: Flip<br>false: Normal</td>
+                            <td class="multi-value">true: Flip<br>false: Normal</td>
+                            <td class="multi-value">true: Flip<br>false: Normal</td>
+                            <td class="multi-value">true: Flip<br>false: Normal</td>
+                            <td class="multi-value">true: Flip<br>false: Normal</td>
+                            <td class="multi-value">true: Flip<br>false: Normal</td>
+                            <td class="multi-value">true: Flip<br>false: Normal</td>
+                            <td class="multi-value">true: Flip<br>false: Normal</td>
+                            <td class="multi-value">true: Flip<br>false: Normal</td>
+                        </tr>
+                        <tr class="depth-param">
+                            <td>Depth Rotate</td>
+                            <td>Rotates the depth image by a specified angle.</td>
+                            <td class="multi-value">0: 0°<br>1: 90°<br>2: 180°<br>3: 270°</td>
+                            <td class="multi-value">0: 0°<br>1: 90°<br>2: 180°<br>3: 270°</td>
+                            <td class="multi-value">0: 0°<br>1: 90°<br>2: 180°<br>3: 270°</td>
+                            <td class="multi-value">0: 0°<br>1: 90°<br>2: 180°<br>3: 270°</td>
+                            <td class="multi-value">0: 0°<br>1: 90°<br>2: 180°<br>3: 270°</td>
+                            <td class="multi-value">0: 0°<br>1: 90°<br>2: 180°<br>3: 270°</td>
+                            <td class="multi-value">0: 0°<br>1: 90°<br>2: 180°<br>3: 270°</td>
+                            <td class="multi-value">0: 0°<br>1: 90°<br>2: 180°<br>3: 270°</td>
+                            <td class="multi-value">0: 0°<br>1: 90°<br>2: 180°<br>3: 270°</td>
+                            <td class="multi-value">0: 0°<br>1: 90°<br>2: 180°<br>3: 270°</td>
+                        </tr>
+                        <tr class="depth-param">
+                            <td>Depth Auto Exposure Priority</td>
+                            <td>When enabled, exposure is prioritized, allowing the frame rate to be reduced</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                        </tr>
+                        <tr class="depth-param">
+                            <td>Depth Auto Exposure</td>
+                            <td>Enables or disables automatic exposure control for the depth camera.</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                        </tr>
+                        <tr class="depth-param">
+                            <td>Depth AE Max Exposure</td>
+                            <td>Maximum correction value for AE exposure that limits the corresponding frame rate.</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>1 - 199000</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                        </tr>
+                        <tr class="depth-param">
+                            <td>Depth Exposure</td>
+                            <td>Sets the fixed exposure time when depth auto exposure is disabled.</td>
+                            <td>1 - 165000 (unit:1us)</td>
+                            <td>1 - 199000 (unit:1us)</td>
+                            <td>0 - 199000 (unit: 1us)</td>
+                            <td>200 - 5000 (unit:1us)</td>
+                            <td>200 - 10000 (unit:1us)</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>1 - 18000 (unit:1us)</td>
+                            <td>1 - 10000 (unit:1us)</td>
+                        </tr>
+                        <tr class="depth-param">
+                            <td>Depth Gain</td>
+                            <td>Adjusts the gain applied to the depth image when auto exposure is disabled.</td>
+                            <td>16 - 248 (unit:1/16 db)</td>
+                            <td>16 - 248 (unit:1/16 db)</td>
+                            <td>0 - 248 (unit:1db)</td>
+                            <td>1000 - 15000 (unit:1/1000db)</td>
+                            <td>1000 - 15000 (unit:1/1000db)</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>1 - 244 (unit:1db)</td>
+                            <td>1 - 244 (unit:1db)</td>
+                        </tr>
+                        
+                        <!-- IR Parameters Section -->
+                        <tr class="section-header ir-section" id="ir-section">
+                            <td colspan="12" style="font-size: 16px; color: #28a745;">
+                                <strong>IR Parameters</strong>
+                            </td>
+                        </tr>
+                        
+                        <tr class="ir-param">
+                            <td>IR Mirror</td>
+                            <td>Inverts the infrared image horizontally.</td>
+                            <td class="multi-value">true: Mirror<br>false: Normal</td>
+                            <td class="multi-value">true: Mirror<br>false: Normal</td>
+                            <td class="multi-value">true: Mirror<br>false: Normal</td>
+                            <td class="multi-value">true: Mirror<br>false: Normal</td>
+                            <td class="multi-value">true: Mirror<br>false: Normal</td>
+                            <td class="multi-value">true: Mirror<br>false: Normal</td>
+                            <td class="multi-value">true: Mirror<br>false: Normal</td>
+                            <td class="multi-value">true: Mirror<br>false: Normal</td>
+                            <td class="multi-value">true: Mirror<br>false: Normal</td>
+                            <td class="multi-value">true: Mirror<br>false: Normal</td>
+                        </tr>
+                        <tr class="ir-param">
+                            <td>IR Flip</td>
+                            <td>Inverts the infrared image vertically.</td>
+                            <td class="multi-value">true: Flip<br>false: Normal</td>
+                            <td class="multi-value">true: Flip<br>false: Normal</td>
+                            <td class="multi-value">true: Flip<br>false: Normal</td>
+                            <td class="multi-value">true: Flip<br>false: Normal</td>
+                            <td class="multi-value">true: Flip<br>false: Normal</td>
+                            <td class="multi-value">true: Flip<br>false: Normal</td>
+                            <td class="multi-value">true: Flip<br>false: Normal</td>
+                            <td class="multi-value">true: Flip<br>false: Normal</td>
+                            <td class="multi-value">true: Flip<br>false: Normal</td>
+                            <td class="multi-value">true: Flip<br>false: Normal</td>
+                        </tr>
+                        <tr class="ir-param">
+                            <td>IR Rotate</td>
+                            <td>Rotates the infrared image by a specified angle.</td>
+                            <td class="multi-value">0: 0°<br>1: 90°<br>2: 180°<br>3: 270°</td>
+                            <td class="multi-value">0: 0°<br>1: 90°<br>2: 180°<br>3: 270°</td>
+                            <td class="multi-value">0: 0°<br>1: 90°<br>2: 180°<br>3: 270°</td>
+                            <td class="multi-value">0: 0°<br>1: 90°<br>2: 180°<br>3: 270°</td>
+                            <td class="multi-value">0: 0°<br>1: 90°<br>2: 180°<br>3: 270°</td>
+                            <td class="multi-value">0: 0°<br>1: 90°<br>2: 180°<br>3: 270°</td>
+                            <td class="multi-value">0: 0°<br>1: 90°<br>2: 180°<br>3: 270°</td>
+                            <td class="multi-value">0: 0°<br>1: 90°<br>2: 180°<br>3: 270°</td>
+                            <td class="multi-value">0: 0°<br>1: 90°<br>2: 180°<br>3: 270°</td>
+                            <td class="multi-value">0: 0°<br>1: 90°<br>2: 180°<br>3: 270°</td>
+                        </tr>
+                        <tr class="ir-param">
+                            <td>IR Auto Exposure</td>
+                            <td>Enables or disables automatic exposure control for the infrared camera.</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                            <td class="multi-value">false: Disable<br>true: Enable</td>
+                        </tr>
+                        <tr class="ir-param">
+                            <td>IR AE Max Exposure</td>
+                            <td>Defines the maximum correction value for auto exposure, limiting the corresponding frame rate.</td>
+                            <td>1 - 166000 (unit:1us)</td>
+                            <td>1 - 199000 (unit:1us)</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                        </tr>
+                        <tr class="ir-param">
+                            <td>Mean Intensity Set Point</td>
+                            <td>Defines the target average brightness value that the auto-exposure algorithm attempts to achieve. A higher value results in a brighter image.</td>
+                            <td>0 - 255</td>
+                            <td>0 - 255</td>
+                            <td>0 - 255</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>0 - 255</td>
+                            <td>0 - 255</td>
+                        </tr>
+                        <tr class="ir-param">
+                            <td>IR Exposure</td>
+                            <td>Sets the fixed exposure time when auto exposure is disabled.</td>
+                            <td>1 - 165000 (unit:1us)</td>
+                            <td>1 - 199000 (unit:1us)</td>
+                            <td>0 - 199000 (unit:1us)</td>
+                            <td>200 - 5000 (unit:1us)</td>
+                            <td>200 - 10000 (unit:1us)</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>1 - 18000 (unit:1us)</td>
+                            <td>1 - 10000 (unit:1us)</td>
+                        </tr>
+                        <tr class="ir-param">
+                            <td>IR Gain</td>
+                            <td>Adjusts the gain applied to the infrared image when auto exposure is disabled.</td>
+                            <td>16 - 248 (unit:1/16 db)</td>
+                            <td>16 - 248 (unit:1/16 db)</td>
+                            <td>0 - 248 (unit 1db)</td>
+                            <td>1000 - 15000 (unit:1/1000db)</td>
+                            <td>1000 - 15000 (unit:1/1000db)</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>None</td>
+                            <td>1 - 244 (unit:1db)</td>
+                            <td>1 - 244 (unit:1db)</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 搜索功能
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const rows = document.querySelectorAll('#cameraParamsTable tbody tr');
+            
+            rows.forEach(row => {
+                if (row.classList.contains('section-header')) {
+                    // 保持分组标题行可见
+                    row.style.display = '';
+                    return;
+                }
+                
+                const text = row.textContent.toLowerCase();
+                if (text.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+        
+        // 筛选功能
+        document.querySelectorAll('.filter-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                // 移除所有按钮的active类
+                document.querySelectorAll('.filter-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                
+                // 为当前按钮添加active类
+                this.classList.add('active');
+                
+                const filter = this.getAttribute('data-filter');
+                const rows = document.querySelectorAll('#cameraParamsTable tbody tr');
+                
+                rows.forEach(row => {
+                    if (row.classList.contains('section-header')) {
+                        // 默认显示分组标题
+                        row.style.display = '';
+                        return;
+                    }
+                    
+                    if (filter === 'all') {
+                        row.style.display = '';
+                    } else {
+                        // 按参数类型筛选
+                        if (row.classList.contains(filter + '-param')) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    }
+                });
+                
+                // 确保分组标题在筛选后仍然显示
+                const sectionHeaders = document.querySelectorAll('.section-header');
+                sectionHeaders.forEach(header => {
+                    const nextRows = [];
+                    let nextRow = header.nextElementSibling;
+                    while (nextRow && !nextRow.classList.contains('section-header')) {
+                        if (nextRow.style.display !== 'none') {
+                            nextRows.push(nextRow);
+                        }
+                        nextRow = nextRow.nextElementSibling;
+                    }
+                    
+                    // 如果分组下没有可见行，隐藏分组标题
+                    if (nextRows.length === 0) {
+                        header.style.display = 'none';
+                    } else {
+                        header.style.display = '';
+                    }
+                });
+            });
+        });
+        
+        // 高亮搜索词并保持换行
+        function highlightText(element, searchTerm) {
+            if (!searchTerm) return;
+            
+            const regex = new RegExp(`(${searchTerm})`, 'gi');
+            const originalHTML = element.innerHTML;
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = originalHTML;
+            
+            // 递归高亮文本节点
+            function highlightNodes(node) {
+                if (node.nodeType === Node.TEXT_NODE) {
+                    const text = node.textContent;
+                    if (regex.test(text)) {
+                        const span = document.createElement('span');
+                        span.innerHTML = text.replace(regex, '<mark style="background-color: yellow;">$1</mark>');
+                        node.parentNode.replaceChild(span, node);
+                    }
+                } else if (node.nodeType === Node.ELEMENT_NODE && node.tagName !== 'MARK') {
+                    // 处理子节点
+                    const childNodes = Array.from(node.childNodes);
+                    childNodes.forEach(child => highlightNodes(child));
+                }
+            }
+            
+            highlightNodes(tempDiv);
+            element.innerHTML = tempDiv.innerHTML;
+            
+            // 恢复换行符
+            preserveLineBreaks(element);
+        }
+        
+        // 保持换行符
+        function preserveLineBreaks(element) {
+            // 确保多值单元格的换行符正确显示
+            if (element.classList.contains('multi-value')) {
+                element.innerHTML = element.innerHTML.replace(/<br>/g, '<br>');
+            }
+        }
+        
+        // 监听搜索输入以高亮文本
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.trim();
+            if (searchTerm.length > 2) {
+                document.querySelectorAll('#cameraParamsTable td').forEach(td => {
+                    const originalText = td.textContent;
+                    // 保存原始的HTML结构
+                    const originalHTML = td.innerHTML;
+                    td.innerHTML = originalHTML;
+                    highlightText(td, searchTerm);
+                });
+            } else if (searchTerm.length === 0) {
+                // 清空搜索框时恢复原始状态
+                document.querySelectorAll('#cameraParamsTable td').forEach(td => {
+                    if (td.classList.contains('multi-value')) {
+                        // 恢复多值单元格的原始HTML
+                        const content = td.textContent;
+                        td.innerHTML = content.replace(/\n/g, '<br>');
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
