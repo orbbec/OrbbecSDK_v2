@@ -134,17 +134,26 @@
             <Manufacturer>Orbbec</Manufacturer>
         </Gemini345Lg>
         <CAM-5330>
+            <!-- OEM device based on G336 -->
             <VID>0x2BC5</VID>
             <PID>0x0816</PID>
             <Name>CAM-5330</Name>
-            <Manufacturer>Orbbec</Manufacturer>
+            <Manufacturer>Advantech</Manufacturer>
         </CAM-5330>
         <CAM-5530>
+            <!-- OEM device based on G336L -->
             <VID>0x2BC5</VID>
             <PID>0x0817</PID>
             <Name>CAM-5530</Name>
-            <Manufacturer>Orbbec</Manufacturer>
+            <Manufacturer>Advantech</Manufacturer>
         </CAM-5530>
+        <CAM-5530b>
+            <!-- OEM device based on G335Lg -->
+            <VID>0x2BC5</VID>
+            <PID>0x0819</PID>
+            <Name>CAM-5530</Name>
+            <Manufacturer>Advantech</Manufacturer>
+        </CAM-5530b>
         <Gemini435Le>
             <VID>0x2BC5</VID>
             <PID>0x0815</PID>
@@ -184,6 +193,7 @@
         <Device>Gemini345Lg</Device>
         <Device>CAM-5330</Device>
         <Device>CAM-5530</Device>
+        <Device>CAM-5530b</Device>
         <!-- More devices can be added here -->
     </G330DeviceList>
 
@@ -201,6 +211,7 @@
         <Device>Gemini330Le</Device>
         <Device>Gemini336Le</Device>
         <Device>CAM-5530</Device>
+        <Device>CAM-5530b</Device>
         <!-- More devices can be added here -->
     </G330DeviceLongBaseList>
     

@@ -193,12 +193,6 @@ bool DeviceInfoConfig::readDeviceInfoList(std::unordered_map<std::string, Device
         std::snprintf(entry.manufacturer_, sizeof(entry.manufacturer_), "%s", manufacturer.c_str());
 
         // Check if duplicate
-        auto iter = devInfoList.find(deviceName);
-        if(iter != devInfoList.end()) {
-            LOG_WARN("Device node duplication detected - duplicate device name: {}, vid: {}, pid: {}, manufacture: {}", deviceName, vidStr, pidStr,
-                     manufacturer);
-            continue;
-        }
         uint32_t key = (static_cast<uint32_t>(entry.vid_) << 16) | static_cast<uint32_t>(entry.pid_);
         if(vidPidSet.count(key)) {
             LOG_WARN("Device node duplication detected - duplicate device vid: {}, pid: {}, name: {}, manufacture: {}", vidStr, pidStr, deviceName,
