@@ -11,7 +11,7 @@ else()
     message(STATUS "Using default SDK library name: ${OB_SDK_LIB_NAME}")
 endif()
 
-project(${OB_SDK_LIB_NAME} VERSION 2.6.2 LANGUAGES CXX C)
+project(${OB_SDK_LIB_NAME} VERSION 2.6.3 LANGUAGES CXX C)
 
 # Check OB_SDK_LIB_NAME and set OB_BUILD_OEM accordingly
 if(${OB_SDK_LIB_NAME} STREQUAL "OrbbecSDK")
