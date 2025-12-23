@@ -73,6 +73,8 @@ LiDARImuStreamer::LiDARImuStreamer(IDevice *owner, const std::shared_ptr<IDataSt
         throw invalid_value_exception("The IMU stream port isn't LiDARDataStreamPort!");
     }
 
+    firmwareVersionInt_ = owner_->getFirmwareVersionInt();
+
     LOG_DEBUG("LiDARImuStreamer created");
 }
 
@@ -310,6 +312,7 @@ void LiDARImuStreamer::parseIMUData(std::shared_ptr<Frame> frame) {
         frameData->value.y = originData->accelY;
         frameData->value.z = originData->accelZ;
         frameData->temp    = temperature;
+        convertAccelUnit(accelFrame);
 
         accelFrame->setNumber(frameIndex);
         accelFrame->setTimeStampUsec(timestamp);
@@ -324,6 +327,7 @@ void LiDARImuStreamer::parseIMUData(std::shared_ptr<Frame> frame) {
         frameData->value.y = originData->gyroY;
         frameData->value.z = originData->gyroZ;
         frameData->temp    = temperature;
+        convertGyroUnit(gyroFrame);
 
         gyroFrame->setNumber(frameIndex);
         gyroFrame->setTimeStampUsec(timestamp);
@@ -352,6 +356,32 @@ void LiDARImuStreamer::outputFrame(std::shared_ptr<Frame> accelFrame, std::share
 
 IDevice *LiDARImuStreamer::getOwner() const {
     return owner_;
+}
+
+void LiDARImuStreamer::convertAccelUnit(std::shared_ptr<Frame> frame) {
+    if (firmwareVersionInt_ >= 1000007) {
+        return;
+    }
+
+    const float GRAVITY = 9.80665f;
+    auto frameData = (AccelFrame::Data*)frame->getData();
+    frameData->value.x = frameData->value.x * GRAVITY;
+    frameData->value.y = frameData->value.y * GRAVITY;
+    frameData->value.z = frameData->value.z * GRAVITY;
+}
+
+void LiDARImuStreamer::convertGyroUnit(std::shared_ptr<Frame> frame) {
+    if (firmwareVersionInt_ >= 1000007) {
+        return;
+    }
+
+    constexpr float MY_PI = 3.14159265358979323846f;
+    constexpr float DEG_2_RAD = MY_PI / 180.0f;
+
+    auto frameData = (GyroFrame::Data*)frame->getData();
+    frameData->value.x = frameData->value.x * DEG_2_RAD;
+    frameData->value.y = frameData->value.y * DEG_2_RAD;
+    frameData->value.z = frameData->value.z * DEG_2_RAD;
 }
 
 }  // namespace libobsensor

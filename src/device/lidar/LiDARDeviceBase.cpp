@@ -43,7 +43,7 @@ int LiDARDeviceBase::getFirmwareVersionInt() {
                 }
                 else {
                     LOG_ERROR("bad fwVersion: {}", deviceInfo_->fwVersion_);
-                    return false;
+                    return 0;
                 }
 
                 dotCount++;
