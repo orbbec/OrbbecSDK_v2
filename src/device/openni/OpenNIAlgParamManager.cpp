@@ -41,11 +41,40 @@ void OpenNIAlgParamManager::fetchParamFromDevice() {
                 disparityParam_.minDisparity = 80.0f;
             }
 
-            OBCalibrationParamContent content = {};
+            std::vector<uint8_t>      data;
+            uint32_t                  size       = 0;
+            OBCalibrationParamContent content    = {};
+            auto                      propServer = owner->getPropertyServer();
 
-            std::vector<uint8_t> data;
-            uint32_t             size       = 0;
-            auto                 propServer = owner->getPropertyServer();
+            // Read disparityParam
+            propServer->getRawData(
+                OB_RAW_DATA_DUAL_CAMERA_PARAMS_0,
+                [&](OBDataTranState state, OBDataChunk *dataChunk) {
+                    if(state == DATA_TRAN_STAT_TRANSFERRING) {
+                        if(size == 0) {
+                            size = dataChunk->fullDataSize;
+                            data.resize(size);
+                        }
+                        memcpy(data.data() + dataChunk->offset, dataChunk->data, dataChunk->size);
+                    }
+                },
+                PROP_ACCESS_INTERNAL);
+            if(size > 0) {
+                memcpy(&content, data.data(), size);
+            }
+            disparityParam_.baseline     = content.HOST.virCam.bl;
+            disparityParam_.zpd          = 0;
+            disparityParam_.fx           = content.HOST.virCam.fx;
+            disparityParam_.zpps         = 0;
+            disparityParam_.bitSize      = 12;
+            disparityParam_.dispIntPlace = 8;
+            disparityParam_.unit         = 1;
+            disparityParam_.dispOffset   = 0;
+            disparityParam_.invalidDisp  = 0;
+            disparityParam_.packMode     = OB_DISP_PACK_OPENNI;
+            disparityParam_.isDualCamera = true;
+
+            // Read camera params
             propServer->getRawData(
                 groupIndex,
                 [&](OBDataTranState state, OBDataChunk *dataChunk) {
@@ -62,17 +91,6 @@ void OpenNIAlgParamManager::fetchParamFromDevice() {
                 memcpy(&content, data.data(), size);
             }
             depthCalibParamList_.push_back(content);
-            disparityParam_.baseline     = content.HOST.virCam.bl;
-            disparityParam_.zpd          = 0;
-            disparityParam_.fx           = content.HOST.virCam.fx;
-            disparityParam_.zpps         = 0;
-            disparityParam_.bitSize      = 12;
-            disparityParam_.dispIntPlace = 8;
-            disparityParam_.unit         = 1;
-            disparityParam_.dispOffset   = 0;
-            disparityParam_.invalidDisp  = 0;
-            disparityParam_.packMode     = OB_DISP_PACK_OPENNI;
-            disparityParam_.isDualCamera = true;
 
             // CameraParam
             OBCameraParam param = {};
