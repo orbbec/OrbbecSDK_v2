@@ -3,6 +3,8 @@
 > [!IMPORTANT]
 > Welcome to Orbbec's latest open-source Orbbec SDK! Before you begin using this version of the SDK, it's crucial to check the [device support list](#12-supported-devices) to verify that your device is supported to ensure compatibility.
 
+-  **LiDAR** devices are supported in **OrbbecSDK v2.6.2 and later** , For detailed instructions on using the LiDAR, please refer to the [LiDAR_README.md](LiDAR_README.md).
+
 Here is the device support list of OrbbecSDK v1 (v1.x) and Orbbec SDK v2 (v2.x):
 
 <table border="1" style="border-collapse: collapse; text-align: left; width: 100%;">
@@ -126,6 +128,17 @@ Here is the device support list of OrbbecSDK v1 (v1.x) and Orbbec SDK v2 (v2.x):
       <td>full maintenance</td>
       <td>recommended for new designs</td>
     </tr>
+        <tr>
+      <td rowspan="2" style="text-align: center; font-weight: bold;">LiDAR</td>
+      <td>Pulsar ME450</td>
+      <td>not supported</td>
+      <td>recommended for new designs</td>
+    </tr>
+    <tr>
+      <td>Pulsar SL450</td>
+      <td>not supported</td>
+      <td>recommended for new designs</td>
+    </tr>
   </tbody>
 </table>
 
@@ -228,6 +241,8 @@ After upgrading to the UVC protocol, these devices will have a firmware major ve
 | Gemini 210        | 1.0.9                        |        1.0.9                      |
 | Astra mini Pro        | 2.0.03                        |        2.0.03                        |
 | Astra mini S Pro        | 2.0.03                        |        2.0.03                        |
+| Pulsar SL450      | 2.2.4.5                      | 2.2.4.5                          |
+| Pulsar ME450      | 1.0.0.6                      | 1.0.0.6                          |
 
 
 For optimal performance, we strongly recommend updating to the latest firmware version. This ensures that you benefit from the most recent enhancements and bug fixes.
@@ -370,6 +385,7 @@ sudo apt-get install zenity
 ### 3.3 DepthQualityTool
 [Depth Quality Tool](https://github.com/orbbec/OrbbecTools/releases/tag/DepthQualityTool) enables users to evaluate the camera’s depth quality across key metrics: Depth Accuracy, Spatial Precision, Temporal Precision, and Fill Rate.
 Users can easily view and interpret these metrics in real time or record the data for offline analysis.
+
 
 ## 4. Contributing
 

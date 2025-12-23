@@ -3,6 +3,10 @@
 ## Overview
 This sample demonstrates how to use the SDK context class to query connected devices, configure the network IP of a selected device using the ForceIP command (as defined by the GigE Vision standard)
 
+- Notes:
+For the Gemini 335Le and Gemini 435Le, the Force IP feature temporarily assigns an IP to the camera, which will be lost after the camera reboots.
+
+
 ### Knowledge
 The Context class serves as the entry point to the SDK. It provides functionality to:
 1. Query connected device lists

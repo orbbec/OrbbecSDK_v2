@@ -18,41 +18,49 @@ This sample demonstrates how to record LiDAR and IMU sensor data to a bag file f
     auto deviceList = context.queryDeviceList();
     auto device = selectDevice(deviceList);
     ```
-    
-2. **Recording setup**
+
+2. **Frame counting with thread-safe monitoring**
+
+    ```cpp
+    std::mutex                      frameMutex;
+    std::map<OBFrameType, uint64_t> frameCountMap;
+    pipe->start(config, [&](std::shared_ptr<ob::FrameSet> frameSet) {
+        if(frameSet == nullptr) {
+            return;
+        }
+
+        std::lock_guard<std::mutex> lock(frameMutex);
+        auto                        count = frameSet->getCount();
+        for(uint32_t i = 0; i < count; i++) {
+            auto frame = frameSet->getFrameByIndex(i);
+            if(frame) {
+                auto type = frame->getType();
+                frameCountMap[type]++;
+            }
+        }
+    });
+    ```
+
+3. **Recording setup**
 
     ```cpp
     // Initialize recording with user-specified filename
     auto recordDevice = std::make_shared<ob::RecordDevice>(device, filePath);
     ```
 
-3. **Frame counting with thread-safe monitoring**
-
-    ```cpp
-    std::mutex frameMutex;
-    std::map<OBFrameType, uint64_t> frameCountMap;
-    
-    pipe->start(config, [&](std::shared_ptr<ob::FrameSet> frameSet) {
-        std::lock_guard<std::mutex> lock(frameMutex);
-        for(uint32_t i = 0; i < frameSet->getCount(); i++) {
-            auto frame = frameSet->getFrameByIndex(i);
-            frameCountMap[frame->getType()]++;
-        }
-    });
-    ```
-
 4. **Real-time FPS calculation and display**
 
     ```cpp
-    auto currentTime = ob_smpl::getNowTimesMs();
-    if(currentTime > startTime + waitTime) {
-        uint64_t duration = currentTime - startTime;
-        for(const auto &item: tempCountMap) {
-            auto name = ob::TypeHelper::convertOBFrameTypeToString(item.first);
-            float rate = item.second / (duration / 1000.0f);
-            std::cout << name << "=" << rate;
-        }
+    std::cout << "Recording... Current FPS: ";
+    for(const auto &item: tempCountMap) {
+        auto  name = ob::TypeHelper::convertOBFrameTypeToString(item.first);
+        float rate = item.second / (duration / 1000.0f);
+
+        std::cout << std::fixed << std::setprecision(2) << std::showpoint;
+        std::cout << seperate << name << "=" << rate;
+        seperate = ", ";
     }
+    std::cout << std::endl;
     ```
 
 5. **Safe recording termination**

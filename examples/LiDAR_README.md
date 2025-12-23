@@ -29,12 +29,12 @@ It contains functions to wait for a key press with an optional timeout, get the 
 
 ***utils_c***
 
-It contains functions to get the current system timestamp and wait for keystrokes from the user, as well as a macro to check for and handle errors. These capabilities can be used in scenarios such as time measurement, user interaction, and error handling.This is done with C.
+It contains functions to get the current system timestamp and wait for keystrokes from the user, as well as a macro to check for and handle errors. These capabilities can be used in scenarios such as time measurement, user interaction, and error handling. This is done with C.
 
 ### The Error Handling in the examples code
 
 When using the SDK, if an error occurs, the SDK reports the error by throwing an exception of type ob::Error. The ob::Error exception class typically contains detailed information about the error, which can help developers diagnose the problem.
-The example uses a 'try' block to wrap the entire main function.If an exception of type ob::Error is thrown, the program will catch it and print the error message to the console.
+The example uses a 'try' block to wrap the entire main function. If an exception of type ob::Error is thrown, the program will catch it and print the error message to the console.
 Here is the information that can be obtained from an ob::Error:
 
 **Function Name (getFunction()):**
@@ -47,7 +47,7 @@ Provides information about the arguments passed to the function when the excepti
 Returns a string describing the nature of the error. This is often the most important piece of information, as it directly explains what went wrong.
 
 **Exception Type (getExceptionType()):**
-Specifies the type of the exception. This can help categorize the error and determine appropriate handling strategies.Read the comments of the OBExceptionType enum in the libobsensor/h/ObTypes.h file for more information.
+Specifies the type of the exception. This can help categorize the error and determine appropriate handling strategies. Read the comments of the OBExceptionType enum in the libobsensor/h/ObTypes.h file for more information.
 
 **Example Code** in C++
 
