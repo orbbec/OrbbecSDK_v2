@@ -231,7 +231,7 @@ After upgrading to the UVC protocol, these devices will have a firmware major ve
 | Gemini 336        | 1.2.20                       |       1.6.00                        |
 | Gemini 336L       | 1.2.20                       |        1.6.00                       |
 | Gemini 335Lg      | 1.3.46                       |        1.6.00                       |
-| Femto Bolt        | 1.1.2                  |              1.1.2                       |
+| Femto Bolt        | 1.1.2                  |              1.1.3                       |
 | Femto Mega        | 1.3.0                  |              1.3.1                       |
 | Femto Mega I        | 2.0.4                  |            2.0.4                     |
 | Astra 2           | 2.8.20                       |         2.8.20                      |
@@ -313,7 +313,7 @@ Orbbec Viewer is an all-in-one graphical user interface (GUI) built on the Orbbe
 
 ### 2.4 API Reference
 
-[Orbbec SDK v2 API User Guide](https://orbbec.github.io/docs/OrbbecSDKv2_API_User_Guide/), this document provides an overview of key features in the Orbbec SDK v2 and demonstrates how to use its most commonly used APIs. For more detailed APIs, please refer to [Orbbec_SDK_API_Reference.html](https://orbbec.github.io/docs/OrbbecSDKv2/index.html)
+[Orbbec SDK v2 API User Guide](https://orbbec.github.io/docs/OrbbecSDKv2_API_User_Guide/), this document provides an overview of key features in the Orbbec SDK v2 and demonstrates how to use its most commonly used APIs. For more detailed APIs, please refer to [Orbbec SDK v2 API Reference](https://orbbec.github.io/docs/OrbbecSDKv2/index.html)
 
 ### 2.5 Camera Parameters and Value Ranges
 
