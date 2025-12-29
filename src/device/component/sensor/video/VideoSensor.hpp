@@ -35,7 +35,6 @@ public:
     void stop() override;
 
     virtual void updateFormatFilterConfig(const std::vector<FormatFilterConfig> &configs);
-     void         fixVideoStreamProfile();
     void         setStreamProfileList(const StreamProfileList &profileList) override;
     void         setFrameMetadataModifer(std::shared_ptr<IFrameMetadataModifier> modifier);
     void         setFrameProcessor(std::shared_ptr<FrameProcessor> frameProcessor);

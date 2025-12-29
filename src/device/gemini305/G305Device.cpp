@@ -560,7 +560,7 @@ void G305Device::initSensorList() {
             [this, depthPortInfo]() {
                 auto port   = getSourcePort(depthPortInfo);
                 auto sensor = std::make_shared<DisparityBasedSensor>(this, OB_SENSOR_DEPTH, port);
-                sensor->fixVideoStreamProfile();
+                fixSensorStreamProfile(sensor);
                 sensor->updateFormatFilterConfig({ { FormatFilterPolicy::REMOVE, OB_FORMAT_Y8, OB_FORMAT_ANY, nullptr },
                                                    { FormatFilterPolicy::REMOVE, OB_FORMAT_NV12, OB_FORMAT_ANY, nullptr },
                                                    { FormatFilterPolicy::REMOVE, OB_FORMAT_BGR, OB_FORMAT_ANY, nullptr },
@@ -619,7 +619,7 @@ void G305Device::initSensorList() {
             [this, depthPortInfo]() {
                 auto port   = getSourcePort(depthPortInfo);
                 auto sensor = std::make_shared<VideoSensor>(this, OB_SENSOR_IR_LEFT, port);
-
+                fixSensorStreamProfile(sensor);
                 std::vector<FormatFilterConfig> formatFilterConfigs = {
                     { FormatFilterPolicy::REMOVE, OB_FORMAT_Z16, OB_FORMAT_ANY, nullptr },  //
                     { FormatFilterPolicy::REMOVE, OB_FORMAT_BA81, OB_FORMAT_ANY, nullptr },
@@ -667,7 +667,7 @@ void G305Device::initSensorList() {
             [this, depthPortInfo]() {
                 auto port   = getSourcePort(depthPortInfo);
                 auto sensor = std::make_shared<VideoSensor>(this, OB_SENSOR_IR_RIGHT, port);
-
+                fixSensorStreamProfile(sensor);
                 std::vector<FormatFilterConfig> formatFilterConfigs = {
                     { FormatFilterPolicy::REMOVE, OB_FORMAT_Z16, OB_FORMAT_ANY, nullptr },   //
                     { FormatFilterPolicy::REMOVE, OB_FORMAT_Y8, OB_FORMAT_ANY, nullptr },    //
@@ -917,8 +917,7 @@ void G305Device::initSensorListGMSL() {
             [this, depthPortInfo]() {
                 auto port   = getSourcePort(depthPortInfo);
                 auto sensor = std::make_shared<DisparityBasedSensor>(this, OB_SENSOR_DEPTH, port);
-                sensor->fixVideoStreamProfile();
-
+                fixSensorStreamProfile(sensor);
                 sensor->updateFormatFilterConfig({ { FormatFilterPolicy::REMOVE, OB_FORMAT_Y8, OB_FORMAT_ANY, nullptr },
                                                    { FormatFilterPolicy::REMOVE, OB_FORMAT_NV12, OB_FORMAT_ANY, nullptr },
                                                    { FormatFilterPolicy::REMOVE, OB_FORMAT_MJPG, OB_FORMAT_ANY, nullptr },
@@ -1014,8 +1013,7 @@ void G305Device::initSensorListGMSL() {
             [this, leftIrPortInfo]() {
                 auto port   = getSourcePort(leftIrPortInfo);
                 auto sensor = std::make_shared<VideoSensor>(this, OB_SENSOR_IR_LEFT, port);
-                sensor->fixVideoStreamProfile();
-
+                fixSensorStreamProfile(sensor);
                 std::vector<FormatFilterConfig> formatFilterConfigs = {
                     { FormatFilterPolicy::REMOVE, OB_FORMAT_Z16, OB_FORMAT_ANY, nullptr },   //
                     { FormatFilterPolicy::REMOVE, OB_FORMAT_MJPG, OB_FORMAT_ANY, nullptr },  //
@@ -1083,8 +1081,7 @@ void G305Device::initSensorListGMSL() {
             [this, rightIrPortInfo]() {
                 auto port   = getSourcePort(rightIrPortInfo);
                 auto sensor = std::make_shared<VideoSensor>(this, OB_SENSOR_IR_RIGHT, port);
-                sensor->fixVideoStreamProfile();
-
+                fixSensorStreamProfile(sensor);
                 std::vector<FormatFilterConfig> formatFilterConfigs = { { FormatFilterPolicy::REMOVE, OB_FORMAT_Z16, OB_FORMAT_ANY, nullptr },   //
                                                                         { FormatFilterPolicy::REMOVE, OB_FORMAT_MJPG, OB_FORMAT_ANY, nullptr },  //
                                                                         { FormatFilterPolicy::REMOVE, OB_FORMAT_Y10, OB_FORMAT_ANY, nullptr },   //
@@ -1594,21 +1591,6 @@ void G305Device::updateDownSampleConfig(std::vector<std::shared_ptr<const Stream
     }
     auto presetResolutionMaskList = propServer->getStructureDataListProtoV1_1_T<OBPresetResolutionMask, 1>(OB_RAW_DATA_PRESET_RESOLUTION_MASK_LIST);
 
-    // calc size from origin size and factor
-    auto calcSize = [](int16_t originSize, uint32_t factor) -> uint32_t {
-        if(factor <= 0) {
-            return static_cast<uint32_t>(originSize);
-        }
-
-        // Floor division since originSize, factor >= 0
-        auto size = static_cast<uint32_t>(originSize / factor);
-        // Round to the nearest even integer
-        if(size % 2 != 0) {
-            --size;
-        }
-        return size;
-    };
-
     std::map<Resolution, std::vector<std::pair<Resolution, uint32_t>>> originResolutionConfig;
     for(auto presetResolution: presetResolutionMaskList) {
         uint32_t scaleFactor = 1;
@@ -1623,64 +1605,176 @@ void G305Device::updateDownSampleConfig(std::vector<std::shared_ptr<const Stream
             cropList.push_back(presetResolution.crop[i]);
         }
 
-        for(uint32_t bit = 1; bit <= 4; ++bit) {
-            if(scaleFactor == 0) {
-                break;
+            for(uint32_t bit = 1; bit <= 4 && scaleFactor; ++bit) {
+            if(scaleFactor & 0x1) {
+                    uint32_t width  = calcDownSampleSize(presetResolution.width - cropList[bit - 1].left - cropList[bit - 1].right, bit);
+                uint32_t height = calcDownSampleSize(presetResolution.height - cropList[bit - 1].top - cropList[bit - 1].bottom, bit);
+                originResolutionConfig[{ width, height }].push_back(
+                    { { static_cast<uint32_t>(presetResolution.width), static_cast<uint32_t>(presetResolution.height) }, bit });
             }
-            auto currscale = scaleFactor % 2;
-            scaleFactor    = scaleFactor >> 1;
-            if(currscale & 0x1) {
-                uint32_t width  = calcSize(presetResolution.width - cropList[bit - 1].left - cropList[bit - 1].right, bit);
-                uint32_t height = calcSize(presetResolution.height - cropList[bit - 1].bottom - cropList[bit - 1].top, bit);
-                originResolutionConfig[Resolution{ width, height }].push_back(
-                    std::make_pair(Resolution{ static_cast<uint32_t>(presetResolution.width), static_cast<uint32_t>(presetResolution.height) }, bit));
-            }
+            scaleFactor >>= 1;
         }
     }
 
-    std::map<Resolution, std::vector<std::shared_ptr<const StreamProfile>>> profileGroups;
+    std::map<Resolution, std::set<ResolutionFps>>                              fpsProfileGroups;
+    std::map<ResolutionFps, std::vector<std::shared_ptr<const StreamProfile>>> profileGroups;
+
     for(auto &profile: streamProfileList) {
-        auto       videoStreamProfile = profile->as<VideoStreamProfile>();
-        auto       width              = videoStreamProfile->getWidth();
-        auto       height             = videoStreamProfile->getHeight();
-        Resolution res{ width, height };
-        profileGroups[res].push_back(profile);
+        auto          vp = profile->as<VideoStreamProfile>();
+        Resolution    res{ vp->getWidth(), vp->getHeight() };
+        ResolutionFps resFps{ res, vp->getFps() };
+        fpsProfileGroups[res].insert(resFps);
+        profileGroups[resFps].push_back(profile);
     }
 
-    for(auto &kv: profileGroups) {
-        auto &profiles = kv.second;
-        std::sort(profiles.begin(), profiles.end(), [](const std::shared_ptr<const StreamProfile> &a, const std::shared_ptr<const StreamProfile> &b) {
-            auto profileA = a->as<VideoStreamProfile>();
-            auto profileB = b->as<VideoStreamProfile>();
+    for(auto &originResolutions: originResolutionConfig) {
+        auto res = originResolutions.first;
 
-            uint32_t widthA  = profileA->getWidth();
-            uint32_t heightA = profileA->getHeight();
-            uint32_t formatA = static_cast<uint32_t>(profileA->getFormat());
-            uint32_t fpsA    = profileA->getFps();
+        std::map<uint32_t, int>                     fpsGroup;
+        std::map<uint32_t, std::vector<Resolution>> resolutionGroups;
 
-            uint32_t widthB  = profileB->getWidth();
-            uint32_t heightB = profileB->getHeight();
-            uint32_t formatB = static_cast<uint32_t>(profileB->getFormat());
-            uint32_t fpsB    = profileB->getFps();
-
-            return std::tie(widthA, heightA, formatA, fpsA) < std::tie(widthB, heightB, formatB, fpsB);
-        });
-    }
-
-    for(auto &profileGroup: profileGroups) {
-        auto  res                        = profileGroup.first;
-        auto &profiles                   = profileGroup.second;
-        auto &originResolutionConfigList = originResolutionConfig[res];
-        if(originResolutionConfigList.empty()) {
-            continue;
+        for(auto originResolution: originResolutionConfig[res]) {
+            for(auto curResolution: fpsProfileGroups[originResolution.first]) {
+                fpsGroup[curResolution.fps]++;
+                resolutionGroups[curResolution.fps].push_back(originResolution.first);
+            }
         }
-        auto originResolutionNum = originResolutionConfigList.size();
-        for(size_t i = 0; i < profiles.size(); ++i) {
-            auto  videoStreamProfile = std::const_pointer_cast<VideoStreamProfile>(profiles[i]->as<VideoStreamProfile>());
-            auto &ResolutionConfig   = originResolutionConfigList[i % originResolutionNum];
-            videoStreamProfile->setDownSampleConfig({ ResolutionConfig.first.width, ResolutionConfig.first.height, ResolutionConfig.second });
+
+        for(auto fpsProfile: fpsProfileGroups[res]) {
+            auto curFps = fpsProfile.fps;
+            auto resNum = resolutionGroups[curFps].size();
+            if(resNum == 1) {
+                Resolution targetRes{0,0};
+                uint32_t targetDownScale=0 ;
+                for(auto originResolutionConfigs: originResolutionConfig[res]) {
+                    if(originResolutionConfigs.first.width == resolutionGroups[curFps][0].width
+                       && originResolutionConfigs.first.height == resolutionGroups[curFps][0].height) {
+                        targetRes       = originResolutionConfigs.first;
+                        targetDownScale = originResolutionConfigs.second;
+                    }
+                }
+                for(size_t i = 0; i < profileGroups[fpsProfile].size(); i++) {
+                    auto videoProfile = std::const_pointer_cast<VideoStreamProfile>(profileGroups[fpsProfile][i]->as<VideoStreamProfile>());
+                    videoProfile->setDownSampleConfig({ targetRes.width, targetRes.height, targetDownScale });
+                }
+            }
+            else {
+                for(size_t i = 0; i < profileGroups[fpsProfile].size(); i++) {
+                    auto  target = resolutionGroups[curFps][i];
+                    auto &vec    = originResolutionConfig[res];
+                    auto  it     = std::find_if(vec.begin(), vec.end(), [&](const std::pair<Resolution, uint32_t> &cv) {
+                        return cv.first.width == target.width && cv.first.height == target.height;
+                    });
+                    if(it == vec.end()) {
+                        continue;
+                    }
+
+                    auto videoProfile = std::const_pointer_cast<VideoStreamProfile>(profileGroups[fpsProfile][i]->as<VideoStreamProfile>());
+
+                    videoProfile->setDownSampleConfig({ it->first.width, it->first.height, it->second });
+                }
+            }
         }
     }
+}
+
+void G305Device::fixSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
+
+        auto dstStreamProfile = sensor->getStreamProfileList();
+        auto sensorType       = sensor->getSensorType();
+        if(sensorType == OB_SENSOR_COLOR || sensorType == OB_SENSOR_COLOR_LEFT || sensorType == OB_SENSOR_COLOR_RIGHT) {
+            return;
+        }
+
+        auto propServer = getPropertyServer();
+        if(!propServer->isPropertySupported(OB_RAW_DATA_PRESET_RESOLUTION_MASK_LIST, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
+            return;
+        }
+
+        auto presetResolutionMaskList = propServer->getStructureDataListProtoV1_1_T<OBPresetResolutionMask, 1>(OB_RAW_DATA_PRESET_RESOLUTION_MASK_LIST);
+
+        std::map<Resolution, std::vector<std::pair<Resolution, uint32_t>>> originResolutionConfig;
+
+        for(auto presetResolution: presetResolutionMaskList) {
+            uint32_t scaleFactor = 1;
+            if(sensorType == OB_SENSOR_DEPTH) {
+                scaleFactor = static_cast<uint32_t>(presetResolution.depthDecimationFlag);
+            }
+            else if(sensorType == OB_SENSOR_IR_LEFT || sensorType == OB_SENSOR_IR_RIGHT) {
+                scaleFactor = static_cast<uint32_t>(presetResolution.irDecimationFlag);
+            }
+
+            std::vector<OBPresetResolutionCrop> cropList;
+            for(int i = 0; i < 4; i++) {
+                cropList.push_back(presetResolution.crop[i]);
+            }
+
+            for(uint32_t bit = 1; bit <= 4 && scaleFactor; ++bit) {
+                if(scaleFactor & 0x1) {
+                    uint32_t width  = calcDownSampleSize(presetResolution.width - cropList[bit - 1].left - cropList[bit - 1].right, bit);
+                    uint32_t height = calcDownSampleSize(presetResolution.height - cropList[bit - 1].top - cropList[bit - 1].bottom, bit);
+                    originResolutionConfig[{ width, height }].push_back(
+                        { { static_cast<uint32_t>(presetResolution.width), static_cast<uint32_t>(presetResolution.height) }, bit });
+                }
+                scaleFactor >>= 1;
+            }
+        }
+
+        std::map<Resolution, std::set<ResolutionFps>>                              fpsProfileGroups;
+        std::map<ResolutionFps, std::vector<std::shared_ptr<const StreamProfile>>> profileGroups;
+        std::vector<std::shared_ptr<const StreamProfile>>                          newStreamProfile;
+
+        for(auto &profile: dstStreamProfile) {
+            auto          vp = profile->as<VideoStreamProfile>();
+            Resolution    res{ vp->getWidth(), vp->getHeight() };
+            ResolutionFps resFps{ res, vp->getFps() };
+            fpsProfileGroups[res].insert(resFps);
+            profileGroups[resFps].push_back(profile);
+        }
+
+        for(auto &originResolutions: originResolutionConfig) {
+            auto res                 = originResolutions.first;
+            auto originResolutionNum = originResolutions.second.size();
+            if(originResolutionNum <= 1) {
+                continue;
+            }
+
+            std::map<uint32_t, int> fpsGroup;
+
+            for(auto originResolution: originResolutionConfig[res]) {
+                for(auto curResolution: fpsProfileGroups[originResolution.first]) {
+                    fpsGroup[curResolution.fps]++;
+                }
+            }
+
+            for(auto fpsProfile: fpsProfileGroups[res]) {
+                auto curFps    = fpsProfile.fps;
+                int  needCount = fpsGroup[curFps];
+                for(int i = 1; i < needCount; ++i) {
+                    for(auto curProfile: profileGroups[fpsProfile]) {
+                        auto newProfile = curProfile->clone();
+                        newStreamProfile.push_back(newProfile);
+                    }
+                }
+            }
+        }
+        if(!newStreamProfile.empty()) {
+            sensor->setStreamProfileList(newStreamProfile);
+        }
+}
+
+uint32_t G305Device::calcDownSampleSize(int16_t originSize, uint32_t factor) {
+    if(factor <= 0) {
+        return static_cast<uint32_t>(originSize);
+    }
+
+    // Floor division since originSize, factor >= 0
+    auto size = static_cast<uint32_t>(originSize / factor);
+    // Round to the nearest even integer
+    if(size % 2 != 0) {
+        --size;
+    }
+    return size;
 }
 
 }  // namespace libobsensor
