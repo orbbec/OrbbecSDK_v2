@@ -101,6 +101,30 @@ void PlaybackDevice::init() {
             return container;
         });
 
+        registerComponent(OB_DEV_COMPONENT_LEFT_COLOR_FRAME_METADATA_CONTAINER, [this]() {
+            std::shared_ptr<FrameMetadataParserContainer> container;
+#ifdef __linux__
+            if(port_->getDeviceInfo()->backendType_ == OB_UVC_BACKEND_TYPE_V4L2) {
+                container = std::make_shared<G305LeftColorFrameMetadataParserContainerByScr>(this, G330DeviceTimeFreq_, G330FrameTimeFreq_);
+                return container;
+            }
+#endif
+            container = std::make_shared<G305ColorFrameMetadataParserContainer>(this);
+            return container;
+        });
+
+        registerComponent(OB_DEV_COMPONENT_RIGHT_COLOR_FRAME_METADATA_CONTAINER, [this]() {
+            std::shared_ptr<FrameMetadataParserContainer> container;
+#ifdef __linux__
+            if(port_->getDeviceInfo()->backendType_ == OB_UVC_BACKEND_TYPE_V4L2) {
+                container = std::make_shared<G305RightColorFrameMetadataParserContainerByScr>(this, G330DeviceTimeFreq_, G330FrameTimeFreq_);
+                return container;
+            }
+#endif
+            container = std::make_shared<G305ColorFrameMetadataParserContainer>(this);
+            return container;
+        });
+
         registerComponent(OB_DEV_COMPONENT_DEPTH_FRAME_METADATA_CONTAINER, [this]() {
             std::shared_ptr<FrameMetadataParserContainer> container;
 #ifdef __linux__
