@@ -49,6 +49,8 @@ $MultiPinDevices = "USB\VID_2BC5&PID_06D0&MI_00", #  Gemini 2 R  // 3 pin for de
                  "USB\VID_2BC5&PID_0818&MI_00",
                  "USB\VID_2BC5&PID_0840&MI_00",
                  "USB\VID_2BC5&PID_0841&MI_00",
+                 "USB\VID_2BC5&PID_0842&MI_00",
+                 "USB\VID_2BC5&PID_0843&MI_00"
 #Inhibit system warnings and erros, such as permissions or missing values
 $ErrorActionPreference = "silentlycontinue"
 

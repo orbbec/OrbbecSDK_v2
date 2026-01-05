@@ -146,6 +146,8 @@ const std::vector<uint16_t> OpenniMaxPids = {
 const std::vector<uint16_t> G305DevPids = {
     0x0840,  // Gemini 305
     0x0841,  // Gmeini 305
+    0x0842,  // Gemini 305g
+    0x0843   // Gemini 301g
 };
 
 #define LIDAR_PID_ME450_OLD 0x5555
