@@ -1562,13 +1562,13 @@ typedef struct {
 } OBDispOffsetConfig, ob_disp_offset_config;
 
 /**
- * @details Defines the original resolution and scaling factor for down-sampling.
+ * @details Defines the original resolution and hardware decimation factor for down-sampling.
  */
 typedef struct {
     uint32_t originWidth;
     uint32_t originHeight;
-    uint32_t scaleFactor;
-} OBDownSampleConfig, ob_down_sample_config;
+    uint32_t decimationFactor;
+} OBHardwareDecimationConfig, ob_hardware_decimation_config;
 
 /**
  * @brief Frame metadata types

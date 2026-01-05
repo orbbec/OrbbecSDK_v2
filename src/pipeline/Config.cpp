@@ -27,7 +27,7 @@ void Config::enableVideoStream(OBStreamType type, uint32_t width, uint32_t heigh
     enableStream(prf);
 }
 
-void Config::enableVideoStream(OBStreamType type, OBDownSampleConfig downSampleConfig, uint32_t fps, OBFormat format) {
+void Config::enableVideoStream(OBStreamType type, OBHardwareDecimationConfig downSampleConfig, uint32_t fps, OBFormat format) {
     auto prf = StreamProfileFactory::createVideoStreamProfile(type, format, downSampleConfig, fps);
     enableStream(prf);
 }

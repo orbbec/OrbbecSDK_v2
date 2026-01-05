@@ -41,6 +41,8 @@ void G305DepthWorkModeManager::switchDepthWorkMode(const std::string &modeName) 
 void G305DepthWorkModeManager::switchDepthWorkMode(const OBDepthWorkMode_Internal &targetDepthMode) {
     auto owner      = getOwner();
     auto propServer = owner->getPropertyServer();  // get property server first to lock resource to avoid start stream at the same time
+    std::string currentModeName = currentWorkMode_.name;
+    std::string targetModeName  = targetDepthMode.name;
 
     if(owner->hasAnySensorStreamActivated()) {
         throw unsupported_operation_exception(utils::string::to_string()
@@ -56,7 +58,12 @@ void G305DepthWorkModeManager::switchDepthWorkMode(const OBDepthWorkMode_Interna
     currentWorkMode_ = targetDepthMode;
 
     LOG_DEBUG("Device depth work mode have been switch to: {}, device will be reinitialize to apply the new mode.", targetDepthMode.name);
-    owner->reset();
+
+    if((currentModeName != "Dual Color Stremas" && targetModeName == "Dual Color Streams")
+       || (targetModeName != "Dual Color Stremas" && currentModeName == "Dual Color Streams")) {
+        owner->reset();
+    }
+    
 }
 
 void G305DepthWorkModeManager::fetchDepthWorkModeList() {

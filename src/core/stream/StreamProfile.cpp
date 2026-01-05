@@ -93,7 +93,8 @@ std::ostream &StreamProfile::operator<<(std::ostream &os) const {
 VideoStreamProfile::VideoStreamProfile(std::shared_ptr<LazySensor> owner, OBStreamType type, OBFormat format, uint32_t width, uint32_t height, uint32_t fps)
     : StreamProfile(owner, type, format), width_(width), height_(height), fps_(fps) {}
 
-VideoStreamProfile::VideoStreamProfile(std::shared_ptr<LazySensor> owner, OBStreamType type, OBFormat format, OBDownSampleConfig downSampleConfig, uint32_t fps)
+VideoStreamProfile::VideoStreamProfile(std::shared_ptr<LazySensor> owner, OBStreamType type, OBFormat format, OBHardwareDecimationConfig downSampleConfig,
+                                       uint32_t fps)
     : StreamProfile(owner, type, format), width_(0), height_(0), downSampleConfig_(downSampleConfig), fps_(fps) {}
 void VideoStreamProfile::setWidth(uint32_t width) {
     width_ = width;
@@ -115,11 +116,11 @@ uint32_t VideoStreamProfile::getFps() const {
     return fps_;
 }
 
-void VideoStreamProfile::setDownSampleConfig(OBDownSampleConfig downSampleConfig) {
+void VideoStreamProfile::setDownSampleConfig(OBHardwareDecimationConfig downSampleConfig) {
     downSampleConfig_ = downSampleConfig;
 }
 
-OBDownSampleConfig VideoStreamProfile::getDownSampleConfig() const {
+OBHardwareDecimationConfig VideoStreamProfile::getDownSampleConfig() const {
     return downSampleConfig_;
 }
 
@@ -414,9 +415,9 @@ std::ostream &operator<<(std::ostream &os, const std::shared_ptr<const StreamPro
 }
 
 std::vector<std::shared_ptr<const VideoStreamProfile>> matchVideoStreamProfile(const StreamProfileList &profileList, uint32_t width, uint32_t height,
-                                                                               uint32_t fps, OBFormat format, OBDownSampleConfig downSampleConfig) {
+                                                                               uint32_t fps, OBFormat format, OBHardwareDecimationConfig downSampleConfig) {
     std::vector<std::shared_ptr<const VideoStreamProfile>> matchProfileList;
-    auto                                                   downSampleScale = downSampleConfig.scaleFactor;
+    auto                                                   downSampleScale = downSampleConfig.decimationFactor;
 
     for(auto profile: profileList) {
         if(profile->is<VideoStreamProfile>()) {
@@ -433,7 +434,7 @@ std::vector<std::shared_ptr<const VideoStreamProfile>> matchVideoStreamProfile(c
             else {
                 auto profileDownSampleConfig = videoProfile->getDownSampleConfig();
                 if(downSampleConfig.originWidth == profileDownSampleConfig.originWidth && downSampleConfig.originHeight == profileDownSampleConfig.originHeight
-                   && downSampleScale == profileDownSampleConfig.scaleFactor && videoProfile->getFormat() == format
+                   && downSampleScale == profileDownSampleConfig.decimationFactor && videoProfile->getFormat() == format
                    &&videoProfile->getFps() == fps) {
                     matchProfileList.push_back(videoProfile);
                 }
@@ -443,7 +444,7 @@ std::vector<std::shared_ptr<const VideoStreamProfile>> matchVideoStreamProfile(c
     return matchProfileList;
 }
 
-std::vector<std::shared_ptr<const VideoStreamProfile>> matchVideoStreamProfile(const StreamProfileList &profileList, OBDownSampleConfig downSampleConfig,
+std::vector<std::shared_ptr<const VideoStreamProfile>> matchVideoStreamProfile(const StreamProfileList &profileList, OBHardwareDecimationConfig downSampleConfig,
                                                                                uint32_t fps, OBFormat format) {
     std::vector<std::shared_ptr<const VideoStreamProfile>> matchProfileList;
 
@@ -453,7 +454,7 @@ std::vector<std::shared_ptr<const VideoStreamProfile>> matchVideoStreamProfile(c
             auto profileDownSampleConfig = videoProfile->getDownSampleConfig();
             if((format == OB_FORMAT_ANY || videoProfile->getFormat() == format) && (fps == OB_FPS_ANY || videoProfile->getFps() == fps)
                && downSampleConfig.originWidth == profileDownSampleConfig.originWidth && downSampleConfig.originHeight == profileDownSampleConfig.originHeight
-               && downSampleConfig.scaleFactor == profileDownSampleConfig.scaleFactor) {
+               && downSampleConfig.decimationFactor == profileDownSampleConfig.decimationFactor) {
                 matchProfileList.push_back(videoProfile);
             }
         }

@@ -236,8 +236,9 @@ OB_EXPORT void ob_config_enable_video_stream(ob_config *config, ob_stream_type s
  * @param[in] format The format of the video stream
  * @param[out] error Pointer to an error object that will be set if an error occurs.
  */
-OB_EXPORT void ob_config_enable_video_stream_by_down_sample_config(ob_config *config, ob_stream_type stream_type, ob_down_sample_config down_sample_config,
-                                                                   uint32_t fps, ob_format format, ob_error **error);
+OB_EXPORT void ob_config_enable_video_stream_by_down_sample_config(ob_config *config, ob_stream_type stream_type,
+                                                                   ob_hardware_decimation_config down_sample_config, uint32_t fps, ob_format format,
+                                                                   ob_error **error);
 
 /**
  * @brief Enable accelerometer stream with specified parameters
@@ -351,6 +352,23 @@ OB_EXPORT ob_camera_param ob_pipeline_get_camera_param(ob_pipeline *pipeline, ob
  */
 OB_EXPORT ob_camera_param ob_pipeline_get_camera_param_with_profile(ob_pipeline *pipeline, uint32_t colorWidth, uint32_t colorHeight, uint32_t depthWidth,
                                                                     uint32_t depthHeight, ob_error **error);
+
+/**
+ * @brief Get the current camera parameters with down-sampled depth profile
+ *
+ * @param[in] pipeline pipeline object
+ * @param[in] colorWidth color width
+ * @param[in] colorHeight color height
+ * @param[in] originDepthWidth original depth width before down-sampling
+ * @param[in] originDepthHeight original depth height before down-sampling
+ * @param[in] decimationFactor depth down-sampling factor
+ * @param[out] error Log error messages
+ *
+ * @return ob_camera_param returns camera internal parameters
+ */
+OB_EXPORT ob_camera_param ob_pipeline_get_camera_param_with_down_sample_profile(ob_pipeline *pipeline, uint32_t colorWidth, uint32_t colorHeight,
+                                                                                uint32_t originDepthWidth, uint32_t originDepthHeight,
+                                                                                uint32_t decimationFactor, ob_error **error);
 
 /**
  * @brief Get device calibration parameters with the specified configuration

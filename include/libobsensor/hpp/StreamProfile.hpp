@@ -106,7 +106,7 @@ public:
      */
     void bindExtrinsicTo(const OBStreamType &targetStreamType, const OBExtrinsic &extrinsic) {
         ob_error *error = nullptr;
-        ob_stream_profile_set_extrinsic_to_type(const_cast<ob_stream_profile_t *>(impl_),targetStreamType,extrinsic, &error);
+        ob_stream_profile_set_extrinsic_to_type(const_cast<ob_stream_profile_t *>(impl_), targetStreamType, extrinsic, &error);
         Error::handle(&error);
     }
 
@@ -258,9 +258,9 @@ public:
      * @brief Get the down-sampling configuration of the stream.
      * @brief Includes original resolution and scale factor.
      *
-     * @return OBDownSampleConfig Return the down-sampling configuration.
+     * @return OBHardwareDecimationConfig Return the down-sampling configuration.
      */
-    OBDownSampleConfig getDownSampleConfig() const {
+    OBHardwareDecimationConfig getDownSampleConfig() const {
         ob_error *error            = nullptr;
         auto      downSampleConfig = ob_video_stream_profile_get_down_sample_config(const_cast<ob_stream_profile_t *>(impl_), &error);
         Error::handle(&error);
@@ -538,7 +538,7 @@ public:
      *
      * @return std::shared_ptr<VideoStreamProfile> Return the matched video stream profile.
      */
-    std::shared_ptr<VideoStreamProfile> getVideoStreamProfile(OBDownSampleConfig downSampleConfig, OBFormat format = OB_FORMAT_ANY,
+    std::shared_ptr<VideoStreamProfile> getVideoStreamProfile(OBHardwareDecimationConfig downSampleConfig, OBFormat format = OB_FORMAT_ANY,
                                                               int fps = OB_FPS_ANY) const {
         ob_error *error   = nullptr;
         auto      profile = ob_stream_profile_list_get_video_stream_profile_by_down_sample_config(impl_, downSampleConfig, format, fps, &error);

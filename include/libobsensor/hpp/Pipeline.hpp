@@ -133,7 +133,8 @@ public:
      * @param[in] fps The video stream frame rate (default is OB_FPS_ANY, which selects the default frame rate).
      * @param[in] format The video stream format (default is OB_FORMAT_ANY, which selects the default format).
      */
-    void enableVideoStream(OBSensorType sensorType, OBDownSampleConfig downSampleConfig, uint32_t fps = OB_FPS_ANY, OBFormat format = OB_FORMAT_ANY) const {
+    void enableVideoStream(OBSensorType sensorType, OBHardwareDecimationConfig downSampleConfig, uint32_t fps = OB_FPS_ANY,
+                           OBFormat format = OB_FORMAT_ANY) const {
         auto      streamType = ob::TypeHelper::convertSensorTypeToStreamType(sensorType);
         ob_error *error      = nullptr;
         ob_config_enable_video_stream_by_down_sample_config(impl_, streamType, downSampleConfig, fps, format, &error);
@@ -466,6 +467,13 @@ public:
     OBCameraParam getCameraParamWithProfile(uint32_t colorWidth, uint32_t colorHeight, uint32_t depthWidth, uint32_t depthHeight) {
         ob_error     *error       = nullptr;
         OBCameraParam cameraParam = ob_pipeline_get_camera_param_with_profile(impl_, colorWidth, colorHeight, depthWidth, depthHeight, &error);
+        Error::handle(&error);
+        return cameraParam;
+    }
+
+    OBCameraParam getCameraParamWithProfile(uint32_t colorWidth, uint32_t colorHeight, uint32_t depthWidth, uint32_t depthHeight, uint32_t decimationFactor) {
+        ob_error     *error       = nullptr;
+        OBCameraParam cameraParam = ob_pipeline_get_camera_param_with_down_sample_profile(impl_, colorWidth, colorHeight, depthWidth, depthHeight, decimationFactor, &error);
         Error::handle(&error);
         return cameraParam;
     }

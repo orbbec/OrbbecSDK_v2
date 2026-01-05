@@ -253,9 +253,9 @@ OB_EXPORT ob_camera_distortion ob_video_stream_profile_get_distortion(const ob_s
  * @param[in]  profile  Stream profile object.
  * @param[out] error    Pointer to an error object that will be set if an error occurs.
  *
- * @return ob_down_sample_config  The down-sampling configuration of the stream.
+ * @return ob_hardware_decimation_config  The down-sampling configuration of the stream.
  */
-OB_EXPORT ob_down_sample_config ob_video_stream_profile_get_down_sample_config(const ob_stream_profile *profile, ob_error **error);
+OB_EXPORT ob_hardware_decimation_config ob_video_stream_profile_get_down_sample_config(const ob_stream_profile *profile, ob_error **error);
 
 /**
  * @brief Set the distortion of the video stream profile
@@ -428,8 +428,8 @@ OB_EXPORT ob_stream_profile *ob_stream_profile_list_get_video_stream_profile(con
  * @return The matched stream profile.
  */
 OB_EXPORT ob_stream_profile *ob_stream_profile_list_get_video_stream_profile_by_down_sample_config(const ob_stream_profile_list *profile_list,
-                                                                                                   ob_down_sample_config down_sample_config, ob_format format,
-                                                                                                   int fps, ob_error **error);
+                                                                                                   ob_hardware_decimation_config down_sample_config,
+                                                                                                   ob_format format, int fps, ob_error **error);
 
 /**
  * @brief Match the corresponding ob_stream_profile through the passed parameters. If there are multiple matches,

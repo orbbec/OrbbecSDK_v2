@@ -33,7 +33,7 @@ Pipeline::Pipeline(std::shared_ptr<IDevice> dev) : device_(dev), config_(nullptr
 
     outputFrameQueue_ = std::make_shared<FrameQueue<const Frame>>(maxFrameQueueSize_);
 
-    frameAggregator_  = std::make_shared<FrameAggregator>(maxFrameDelay_);
+    frameAggregator_ = std::make_shared<FrameAggregator>(maxFrameDelay_);
     frameAggregator_->setCallback([&](std::shared_ptr<const Frame> frame) { outputFrame(frame); });
 
     TRY_EXECUTE(enableFrameSync());
@@ -142,8 +142,8 @@ void Pipeline::loadFrameQueueSizeConfig() {
 void Pipeline::loadMaxFrameDelayConfig() {
     auto envConfig = EnvConfig::getInstance();
 
-    std::string nodePath                    = "Device." + device_->getInfo()->name_;
-    nodePath                                = utils::string::removeSpace(nodePath);
+    std::string nodePath = "Device." + device_->getInfo()->name_;
+    nodePath             = utils::string::removeSpace(nodePath);
     envConfig->getFloatValue(nodePath + ".MaxFrameDelay", maxFrameDelay_);
     LOG_DEBUG("loadMaxFrameDelayConfig() config max frame delay: {}", maxFrameDelay_);
 }
@@ -430,7 +430,7 @@ OBCameraParam Pipeline::getCameraParam() {
     return curCameraParam;
 }
 
-OBCameraParam Pipeline::getCameraParam(uint32_t colorWidth, uint32_t colorHeight, uint32_t depthWidth, uint32_t depthHeight) {
+OBCameraParam Pipeline::getCameraParam(uint32_t colorWidth, uint32_t colorHeight, uint32_t depthWidth, uint32_t depthHeight, uint32_t decimationFactor) {
     OBCameraParam curCameraParam = {};
     if(!device_) {
         return curCameraParam;
@@ -451,8 +451,16 @@ OBCameraParam Pipeline::getCameraParam(uint32_t colorWidth, uint32_t colorHeight
     }
     auto colorStreamProfile = matchedColorProfileList.front();
 
-    auto depthSensorSpList       = depthSensor->getStreamProfileList();
-    auto matchedDepthProfileList = matchVideoStreamProfile(depthSensorSpList, depthWidth, depthHeight, OB_FPS_ANY, OB_FORMAT_ANY);
+    auto                                                   depthSensorSpList = depthSensor->getStreamProfileList();
+    std::vector<std::shared_ptr<const VideoStreamProfile>> matchedDepthProfileList;
+    if(decimationFactor == 0) {
+        matchedDepthProfileList = matchVideoStreamProfile(depthSensorSpList, depthWidth, depthHeight, OB_FPS_ANY, OB_FORMAT_ANY);
+    }
+    else {
+        OBHardwareDecimationConfig downSampleConfig = { depthWidth, depthHeight, decimationFactor };
+        matchedDepthProfileList                     = matchVideoStreamProfile(depthSensorSpList, downSampleConfig, OB_FPS_ANY, OB_FORMAT_ANY);
+    }
+
     if(matchedDepthProfileList.empty()) {
         throw invalid_value_exception(utils::string::to_string() << "No matched depth profile found");
     }
@@ -593,7 +601,8 @@ void Pipeline::checkHardwareD2CConfig() {
         auto depthVideoStreamProfile = depthProfile->as<VideoStreamProfile>();
         auto calibrationCameraParams = algParamManager->getCalibrationCameraParamList();
         auto d2cProfileList          = algParamManager->getD2CProfileList();
-        depthFrameProcessor->setHardwareD2CProcessParams(colorVideoStreamProfile,depthVideoStreamProfile, calibrationCameraParams,d2cProfileList, config_->getDepthScaleAfterAlignRequire());
+        depthFrameProcessor->setHardwareD2CProcessParams(colorVideoStreamProfile, depthVideoStreamProfile, calibrationCameraParams, d2cProfileList,
+                                                         config_->getDepthScaleAfterAlignRequire());
         enableHardwareD2C(true);
     }
 }

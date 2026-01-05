@@ -1523,7 +1523,7 @@ void G305Device::fixSensorList() {
     auto        propertyServer       = getPropertyServer();
     // deregister unsupported sensors according to depth work mode option code
     std::string depthWorkModeName(currentMode.name);
-    if(depthWorkModeName.find("Dual Color") != std::string::npos) {
+    if(depthWorkModeName.find("Dual Color Streams") != std::string::npos) {
         deregisterSensor(OB_SENSOR_DEPTH);
         deregisterSensor(OB_SENSOR_IR_LEFT);
         deregisterSensor(OB_SENSOR_IR_RIGHT);
