@@ -171,6 +171,12 @@ void SensorBase::restartStream() {
 }
 
 void SensorBase::updateStreamState(OBStreamState state) {
+    std::map<uint32_t, StreamStateChangedCallback> stateChangedCallbacks;
+    {
+        // Copy callback to prevent potential crash
+        std::unique_lock<std::mutex> lock(streamStateCallbackMutex_);
+        stateChangedCallbacks = streamStateChangedCallbacks_;
+    }
     std::unique_lock<std::mutex> lock(streamStateMutex_);
     if(onRecovering_) {
         return;
@@ -181,7 +187,7 @@ void SensorBase::updateStreamState(OBStreamState state) {
             return;
         }
         streamState_.store(state);
-        for(auto &callback: streamStateChangedCallbacks_) {
+        for(auto &callback: stateChangedCallbacks) {
             callback.second(state, activatedStreamProfile_);  // call the callback function
         }
         if(state == STREAM_STATE_STARTING) {

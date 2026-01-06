@@ -7,6 +7,8 @@ namespace libobsensor {
 #include <string>
 #include <vector>
 
+constexpr const char kCustomPresetName[] = "Custom";
+
 class IPresetManager {
 public:
     virtual ~IPresetManager() = default;

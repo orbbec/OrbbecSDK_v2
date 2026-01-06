@@ -127,8 +127,10 @@ void G330Device::init() {
             });
     }
 
-    auto presetManager = std::make_shared<G330PresetManager>(this);
-    registerComponent(OB_DEV_COMPONENT_PRESET_MANAGER, presetManager);
+    registerComponent(OB_DEV_COMPONENT_PRESET_MANAGER, [this]() {
+        auto presetManager = std::make_shared<G330PresetManager>(this);
+        return presetManager;
+    });
 
     auto fwVersion = getFirmwareVersionInt();
     if(fwVersion > 10370) {
@@ -1647,8 +1649,10 @@ void G330NetDevice::init() {
             });
     }
 
-    auto presetManager = std::make_shared<G330PresetManager>(this);
-    registerComponent(OB_DEV_COMPONENT_PRESET_MANAGER, presetManager);
+    registerComponent(OB_DEV_COMPONENT_PRESET_MANAGER, [this]() {
+        auto presetManager = std::make_shared<G330PresetManager>(this);
+        return presetManager;
+    });
 
     auto sensorStreamStrategy = std::make_shared<G330SensorStreamStrategy>(this);
     registerComponent(OB_DEV_COMPONENT_SENSOR_STREAM_STRATEGY, sensorStreamStrategy);

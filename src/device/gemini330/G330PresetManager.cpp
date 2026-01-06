@@ -7,7 +7,7 @@
 #include "exception/ObException.hpp"
 #include "utils/Utils.hpp"
 #include "G330DepthWorkModeManager.hpp"
-
+#include "preset/PresetDefinitions.hpp"
 #include <json/json.h>
 
 namespace libobsensor {
@@ -21,12 +21,11 @@ G330PresetManager::G330PresetManager(IDevice *owner) : DeviceComponentBase(owner
     }
 
     if(availablePresets_.size() > 1) {
-        currentPreset_ = availablePresets_[0];
-        depthWorkModeManager->switchDepthWorkMode(currentPreset_.c_str());
+        currentPresetName_ = availablePresets_[0];
+        depthWorkModeManager->switchDepthWorkMode(currentPresetName_.c_str());
     }
 
     auto propServer = owner->getPropertyServer();
-
     propServer->registerAccessCallback(
         {
             OB_PROP_LASER_CONTROL_INT,
@@ -51,13 +50,25 @@ G330PresetManager::G330PresetManager(IDevice *owner) : DeviceComponentBase(owner
             OB_PROP_COLOR_GAMMA_INT,
             OB_PROP_COLOR_BACKLIGHT_COMPENSATION_INT,
             OB_PROP_COLOR_POWER_LINE_FREQUENCY_INT,
+            OB_PROP_FRAME_INTERLEAVE_ENABLE_BOOL,
+            OB_PROP_FRAME_INTERLEAVE_CONFIG_INDEX_INT,
+            OB_PROP_IR_AE_MAX_EXPOSURE_INT,
+            OB_STRUCT_DEPTH_AE_ROI,
+            OB_STRUCT_COLOR_AE_ROI,
+            OB_PROP_DISPARITY_TO_DEPTH_BOOL,
+            OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL,
+            OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL,
+            OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT,
+            OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_SPECKLE_SIZE_INT,
+            OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL,
+            OB_PROP_HW_NOISE_REMOVE_FILTER_THRESHOLD_FLOAT,
         },
         [&](uint32_t, const uint8_t *, size_t, PropertyOperationType operationType) {
             if(operationType == PROP_OP_WRITE) {
-                currentPreset_ = "Custom";
+                currentPresetName_ = kCustomPresetName;
             }
         });
-    storeCurrentParamsAsCustomPreset("Custom");
+    storeCurrentParamsAsCustomPreset(kCustomPresetName);
 }
 
 void G330PresetManager::loadPreset(const std::string &presetName) {
@@ -66,8 +77,8 @@ void G330PresetManager::loadPreset(const std::string &presetName) {
     }
 
     // store current parameters to  "Custom"
-    if(currentPreset_ == "Custom") {
-        storeCurrentParamsAsCustomPreset("Custom");
+    if(currentPresetName_ == kCustomPresetName) {
+        storeCurrentParamsAsCustomPreset(kCustomPresetName);
     }
 
     auto iter = customPresets_.find(presetName);
@@ -80,12 +91,12 @@ void G330PresetManager::loadPreset(const std::string &presetName) {
         auto depthWorkModeManager = owner->getComponentT<G330DepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
 
         depthWorkModeManager->switchDepthWorkMode(presetName.c_str());
-        currentPreset_ = presetName;
+        currentPresetName_ = presetName;
     }
 }
 
 const std::string &G330PresetManager::getCurrentPresetName() const {
-    return currentPreset_;
+    return currentPresetName_;
 }
 
 const std::vector<std::string> &G330PresetManager::getAvailablePresetList() const {
@@ -99,8 +110,8 @@ void G330PresetManager::loadPresetFromJsonData(const std::string &presetName, co
         THROW_INVALID_PARAM_EXCEPTION("Invalid JSON data");
     }
     // store current parameters to  "Custom"
-    if(currentPreset_ == "Custom") {
-        storeCurrentParamsAsCustomPreset("Custom");
+    if(currentPresetName_ == kCustomPresetName) {
+        storeCurrentParamsAsCustomPreset(kCustomPresetName);
     }
     loadPresetFromJsonValue(presetName, root);
 }
@@ -110,41 +121,38 @@ void G330PresetManager::loadPresetFromJsonFile(const std::string &filePath) {
     std::ifstream ifs(filePath);
     ifs >> root;
     // store current parameters to  "Custom"
-    if(currentPreset_ == "Custom") {
-        storeCurrentParamsAsCustomPreset("Custom");
+    if(currentPresetName_ == kCustomPresetName) {
+        storeCurrentParamsAsCustomPreset(kCustomPresetName);
     }
     loadPresetFromJsonValue(filePath, root);
 }
 
-void G330PresetManager::loadPresetFromJsonValue(const std::string &presetName, const Json::Value &root) {
-    G330Preset preset{};
-    preset.depthWorkMode              = root["depth_alg_mode"].asString();
-    preset.laserState                 = root["laser_state"].asInt();
-    preset.laserPowerLevel            = root["laser_power_level"].asInt();
-    preset.depthAutoExposure          = root["depth_auto_exposure"].asBool();
-    preset.depthExposureTime          = root["depth_exposure_time"].asInt();
-    preset.depthGain                  = root["depth_gain"].asInt();
-    preset.depthBrightness            = root["target_mean_intensity"].asInt();
-    preset.colorAutoExposure          = root["color_auto_exposure"].asBool();
-    preset.colorExposureTime          = root["color_exposure_time"].asInt();
-    preset.colorAutoWhiteBalance      = root["color_auto_white_balance"].asBool();
-    preset.colorWhiteBalance          = root["color_white_balance"].asInt();
-    preset.colorGain                  = root["color_gain"].asInt();
-    preset.colorContrast              = root["color_contrast"].asInt();
-    preset.colorSaturation            = root["color_saturation"].asInt();
-    preset.colorSharpness             = root["color_sharpness"].asInt();
-    preset.colorBrightness            = root["color_brightness"].asInt();
-    preset.colorHue                   = root["color_hue"].asInt();
-    preset.colorGamma                 = root["color_gamma"].asInt();
-    preset.colorBacklightCompensation = root["color_backlight_compensation"].asBool();
-    preset.colorPowerLineFrequency    = root["color_power_line_frequency"].asInt();
+std::shared_ptr<IPresetEngine> G330PresetManager::getPresetEngine(const Json::Value &root) {
+    if(root.isObject() && root.isMember(kApiVersion)) {
+        return getCurrentPresetEngine();
+    }
+    if(presetEngineV1_ == nullptr) {
+        presetEngineV1_ = std::make_shared<G330PresetEngineV1>(getOwner());
+        presetEngineV1_->init();
+    }
+    return presetEngineV1_;
+}
 
-    loadCustomPreset(presetName, preset);
+std::shared_ptr<IPresetEngine> G330PresetManager::getCurrentPresetEngine() {
+    if(presetEngine_ == nullptr) {
+        presetEngine_ = std::make_shared<G330PresetEngine>(getOwner());
+        presetEngine_->init();
+    }
+    return presetEngine_;
+}
+
+void G330PresetManager::loadPresetFromJsonValue(const std::string &presetName, const Json::Value &root) {
+    loadCustomPreset(presetName, root);
 
     if(customPresets_.find(presetName) == customPresets_.end()) {
         availablePresets_.emplace_back(presetName);
     }
-    customPresets_[presetName] = preset;
+    customPresets_[presetName] = root;
 }
 
 Json::Value G330PresetManager::exportSettingsAsPresetJsonValue(const std::string &presetName) {
@@ -153,31 +161,7 @@ Json::Value G330PresetManager::exportSettingsAsPresetJsonValue(const std::string
     if(iter == customPresets_.end()) {
         THROW_INVALID_PARAM_EXCEPTION("Invalid preset name: " + presetName);
     }
-    auto &preset = iter->second;
-
-    Json::Value root;
-    root["depth_alg_mode"]               = preset.depthWorkMode;
-    root["laser_state"]                  = preset.laserState;
-    root["laser_power_level"]            = preset.laserPowerLevel;
-    root["depth_auto_exposure"]          = preset.depthAutoExposure;
-    root["depth_exposure_time"]          = preset.depthExposureTime;
-    root["depth_gain"]                   = preset.depthGain;
-    root["target_mean_intensity"]        = preset.depthBrightness;
-    root["color_auto_exposure"]          = preset.colorAutoExposure;
-    root["color_exposure_time"]          = preset.colorExposureTime;
-    root["color_auto_white_balance"]     = preset.colorAutoWhiteBalance;
-    root["color_white_balance"]          = preset.colorWhiteBalance;
-    root["color_gain"]                   = preset.colorGain;
-    root["color_contrast"]               = preset.colorContrast;
-    root["color_saturation"]             = preset.colorSaturation;
-    root["color_sharpness"]              = preset.colorSharpness;
-    root["color_brightness"]             = preset.colorBrightness;
-    root["color_hue"]                    = preset.colorHue;
-    root["color_gamma"]                  = preset.colorGamma;
-    root["color_backlight_compensation"] = preset.colorBacklightCompensation;
-    root["color_power_line_frequency"]   = preset.colorPowerLineFrequency;
-
-    return root;
+    return iter->second;
 }
 
 const std::vector<uint8_t> &G330PresetManager::exportSettingsAsPresetJsonData(const std::string &presetName) {
@@ -198,7 +182,7 @@ void G330PresetManager::exportSettingsAsPresetJsonFile(const std::string &filePa
 
     std::ofstream             ofs(filePath);
     Json::StreamWriterBuilder builder;
-    // builder.settings_["indentation"]             = "    ";
+    builder.settings_["indentation"]             = "  ";
     builder.settings_["enableYAMLCompatibility"] = true;
     builder.settings_["dropNullPlaceholders"]    = true;
     auto writer                                  = builder.newStreamWriter();
@@ -214,7 +198,7 @@ void G330PresetManager::fetchPreset() {
 
     // clear data
     availablePresets_.clear();
-    currentPreset_.clear();
+    currentPresetName_.clear();
     tmpJsonData_.clear();
     customPresets_.clear();
 
@@ -224,93 +208,27 @@ void G330PresetManager::fetchPreset() {
     }
 
     if(availablePresets_.size() > 1) {
-        currentPreset_ = availablePresets_[0];
-        depthWorkModeManager->switchDepthWorkMode(currentPreset_.c_str());
+        currentPresetName_ = availablePresets_[0];
+        depthWorkModeManager->switchDepthWorkMode(currentPresetName_.c_str());
     }
-    storeCurrentParamsAsCustomPreset("Custom");
+    storeCurrentParamsAsCustomPreset(kCustomPresetName);
 }
 
-template <typename T> void setPropertyValue(IDevice *dev, uint32_t propertyId, T value) {
-    // get and release property server on this scope to avoid handle device resource lock for an extended duration
-    auto propServer = dev->getPropertyServer();
-    return propServer->setPropertyValueT<T>(propertyId, value);
-}
+void G330PresetManager::loadCustomPreset(const std::string &presetName, const Json::Value &preset) {
+    auto presetEngine = getPresetEngine(preset);
+    presetEngine->importJson(preset);
 
-void G330PresetManager::loadCustomPreset(const std::string &presetName, const G330Preset &preset) {
-
-    auto owner = getOwner();
-
-    {
-        auto depthWorkModeManager = owner->getComponentT<G330DepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
-        depthWorkModeManager->switchDepthWorkMode(preset.depthWorkMode.c_str());
-    }
-
-    setPropertyValue(owner, OB_PROP_LASER_CONTROL_INT, preset.laserState);
-    setPropertyValue(owner, OB_PROP_LASER_POWER_LEVEL_CONTROL_INT, preset.laserPowerLevel);
-    setPropertyValue(owner, OB_PROP_IR_EXPOSURE_INT, preset.depthExposureTime);
-    setPropertyValue(owner, OB_PROP_IR_GAIN_INT, preset.depthGain);
-    setPropertyValue(owner, OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL, (bool)preset.depthAutoExposure);
-    setPropertyValue(owner, OB_PROP_IR_BRIGHTNESS_INT, preset.depthBrightness);
-    setPropertyValue(owner, OB_PROP_COLOR_AUTO_EXPOSURE_BOOL, (bool)preset.colorAutoExposure);
-    if(!preset.colorAutoExposure) {
-        setPropertyValue(owner, OB_PROP_COLOR_EXPOSURE_INT, preset.colorExposureTime);
-        setPropertyValue(owner, OB_PROP_COLOR_GAIN_INT, preset.colorGain);
-    }
-    setPropertyValue(owner, OB_PROP_COLOR_AUTO_WHITE_BALANCE_BOOL, (bool)preset.colorAutoWhiteBalance);
-    if(!preset.colorAutoWhiteBalance) {
-        setPropertyValue(owner, OB_PROP_COLOR_WHITE_BALANCE_INT, preset.colorWhiteBalance);
-    }
-    setPropertyValue(owner, OB_PROP_COLOR_CONTRAST_INT, preset.colorContrast);
-    setPropertyValue(owner, OB_PROP_COLOR_SATURATION_INT, preset.colorSaturation);
-    setPropertyValue(owner, OB_PROP_COLOR_SHARPNESS_INT, preset.colorSharpness);
-    setPropertyValue(owner, OB_PROP_COLOR_BRIGHTNESS_INT, preset.colorBrightness);
-    setPropertyValue(owner, OB_PROP_COLOR_HUE_INT, preset.colorHue);
-    setPropertyValue(owner, OB_PROP_COLOR_GAMMA_INT, preset.colorGamma);
-    setPropertyValue(owner, OB_PROP_COLOR_BACKLIGHT_COMPENSATION_INT, (bool)preset.colorBacklightCompensation);
-    setPropertyValue(owner, OB_PROP_COLOR_POWER_LINE_FREQUENCY_INT, (int)preset.colorPowerLineFrequency);
-
-    currentPreset_ = presetName;
-}
-
-template <typename T> T getPropertyValue(IDevice *dev, uint32_t propertyId) {
-    // get and release property server on this scope to avoid handle device resource lock for an extended duration
-    auto propServer = dev->getPropertyServer();
-    return propServer->getPropertyValueT<T>(propertyId);
+    currentPresetName_ = presetName;
 }
 
 void G330PresetManager::storeCurrentParamsAsCustomPreset(const std::string &presetName) {
-    G330Preset preset{};
-    auto       owner = getOwner();
-
-    preset.laserState                 = getPropertyValue<int>(owner, OB_PROP_LASER_CONTROL_INT);
-    preset.laserPowerLevel            = getPropertyValue<int>(owner, OB_PROP_LASER_POWER_LEVEL_CONTROL_INT);
-    preset.depthAutoExposure          = getPropertyValue<bool>(owner, OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL);
-    preset.depthExposureTime          = getPropertyValue<int>(owner, OB_PROP_IR_EXPOSURE_INT);
-    preset.depthGain                  = getPropertyValue<int>(owner, OB_PROP_IR_GAIN_INT);
-    preset.depthBrightness            = getPropertyValue<int>(owner, OB_PROP_IR_BRIGHTNESS_INT);
-    preset.colorAutoExposure          = getPropertyValue<bool>(owner, OB_PROP_COLOR_AUTO_EXPOSURE_BOOL);
-    preset.colorExposureTime          = getPropertyValue<int>(owner, OB_PROP_COLOR_EXPOSURE_INT);
-    preset.colorAutoWhiteBalance      = getPropertyValue<bool>(owner, OB_PROP_COLOR_AUTO_WHITE_BALANCE_BOOL);
-    preset.colorWhiteBalance          = getPropertyValue<int>(owner, OB_PROP_COLOR_WHITE_BALANCE_INT);
-    preset.colorGain                  = getPropertyValue<int>(owner, OB_PROP_COLOR_GAIN_INT);
-    preset.colorContrast              = getPropertyValue<int>(owner, OB_PROP_COLOR_CONTRAST_INT);
-    preset.colorSaturation            = getPropertyValue<int>(owner, OB_PROP_COLOR_SATURATION_INT);
-    preset.colorSharpness             = getPropertyValue<int>(owner, OB_PROP_COLOR_SHARPNESS_INT);
-    preset.colorBrightness            = getPropertyValue<int>(owner, OB_PROP_COLOR_BRIGHTNESS_INT);
-    preset.colorHue                   = getPropertyValue<int>(owner, OB_PROP_COLOR_HUE_INT);
-    preset.colorGamma                 = getPropertyValue<int>(owner, OB_PROP_COLOR_GAMMA_INT);
-    preset.colorBacklightCompensation = getPropertyValue<bool>(owner, OB_PROP_COLOR_BACKLIGHT_COMPENSATION_INT);
-    preset.colorPowerLineFrequency    = getPropertyValue<int>(owner, OB_PROP_COLOR_POWER_LINE_FREQUENCY_INT);
-
-    {
-        auto depthWorkModeManager = owner->getComponentT<G330DepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
-        preset.depthWorkMode      = depthWorkModeManager->getCurrentDepthWorkMode().name;
-    }
+    auto presetEngine = getCurrentPresetEngine();
+    auto data         = presetEngine->exportJson();
 
     if(customPresets_.find(presetName) == customPresets_.end()) {
         availablePresets_.emplace_back(presetName);
     }
-    customPresets_[presetName] = preset;
+    customPresets_[presetName] = data;
 }
 
 }  // namespace libobsensor
