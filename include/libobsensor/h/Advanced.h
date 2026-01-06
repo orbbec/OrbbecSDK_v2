@@ -226,15 +226,29 @@ OB_EXPORT bool ob_device_preset_list_has_preset(const ob_device_preset_list *pre
  * @return bool Returns true if the device supports the frame interleave feature.
  */
 OB_EXPORT bool ob_device_is_frame_interleave_supported(const ob_device *device, ob_error **error);
+
 /**
  *
- * @brief load the frame interleave mode according to frame interleavee name.
+ * @brief load the frame interleave mode according to frame interleave name.
  *
  * @param[in] device The device object.
  * @param[in] frame_interleave_name The name should be one of the frame interleave names returned by @ref ob_device_get_available_frame_interleave_list.
  * @param[out] error Pointer to an error object that will be set if an error occurs.
  */
 OB_EXPORT void ob_device_load_frame_interleave(ob_device *device, const char *frame_interleave_name, ob_error **error);
+
+/**
+ *
+ * @brief Get current frame interleave name.
+ *
+ * @param[in] device The device object.
+ * @param[out] error Pointer to an error object that will be set if an error occurs.
+ *
+ * @return const char* return the current frame interleave name.
+ *         Returns an empty string ("") if no interleave is loaded.
+ *         Returns nullptr if an error occurs.
+ */
+OB_EXPORT const char *ob_device_get_current_frame_interleave_name(const ob_device *device, ob_error **error);
 
 /**
  * @brief Get the available frame interleave list.

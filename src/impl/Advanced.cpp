@@ -19,7 +19,7 @@ extern "C" {
 ob_depth_work_mode ob_device_get_current_depth_work_mode(const ob_device *device, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(device);
     auto               workModeMgr = device->device->getComponentT<libobsensor::IDepthWorkModeManager>(libobsensor::OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
-    const auto &       checksum    = workModeMgr->getCurrentDepthWorkMode();
+    const auto        &checksum    = workModeMgr->getCurrentDepthWorkMode();
     ob_depth_work_mode work_mode;
     memcpy(work_mode.checksum, checksum.checksum, sizeof(checksum.checksum));
     memcpy(work_mode.name, checksum.name, sizeof(work_mode.name));
@@ -75,7 +75,7 @@ HANDLE_EXCEPTIONS_AND_RETURN(0, work_mode_list)
 ob_depth_work_mode ob_depth_work_mode_list_get_item(const ob_depth_work_mode_list *work_mode_list, uint32_t index, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(work_mode_list);
     VALIDATE_UNSIGNED_INDEX(index, work_mode_list->workModeList.size());
-    const auto &       workMode = work_mode_list->workModeList.at(index);
+    const auto        &workMode = work_mode_list->workModeList.at(index);
     ob_depth_work_mode impl;
     memcpy(impl.checksum, workMode.checksum, sizeof(workMode.checksum));
     memcpy(impl.name, workMode.name, sizeof(workMode.name));
@@ -211,6 +211,13 @@ void ob_device_load_frame_interleave(ob_device *device, const char *frame_interl
     frameInterleaveMgr->loadFrameInterleave(frame_interleave_name);
 }
 HANDLE_EXCEPTIONS_NO_RETURN(device, frame_interleave_name)
+
+const char *ob_device_get_current_frame_interleave_name(const ob_device *device, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(device);
+    auto frameInterleaveMgr = device->device->getComponentT<libobsensor::IFrameInterleaveManager>(libobsensor::OB_DEV_COMPONENT_FRAME_INTERLEAVE_MANAGER);
+    return frameInterleaveMgr->getCurrentFrameInterleaveName().c_str();
+}
+HANDLE_EXCEPTIONS_AND_RETURN(nullptr, device)
 
 ob_device_frame_interleave_list *ob_device_get_available_frame_interleave_list(ob_device *device, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(device);

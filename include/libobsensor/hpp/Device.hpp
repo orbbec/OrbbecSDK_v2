@@ -840,6 +840,24 @@ public:
     }
 
     /**
+     *
+     * @brief Get current frame interleave name.
+     *
+     * @param[in] device The device object.
+     * @param[out] error Pointer to an error object that will be set if an error occurs.
+     *
+     * @return const char* return the current frame interleave name.
+     *         Returns an empty string ("") if no interleave is loaded.
+     *         Returns nullptr if an error occurs.
+     */
+    OB_EXPORT const char *getCurrentFrameInterleaveName() const {
+        ob_error *error = nullptr;
+        auto      name  = ob_device_get_current_frame_interleave_name(impl_, &error);
+        Error::handle(&error);
+        return name;
+    }
+
+    /**
      * @brief Get available frame interleave list
      *
      * @return DeviceFrameInterleaveList return the available frame interleave list.
