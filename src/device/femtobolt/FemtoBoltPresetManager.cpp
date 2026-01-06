@@ -12,28 +12,33 @@
 namespace libobsensor {
 
 BoltPresetManager::BoltPresetManager(IDevice *owner) : DeviceComponentBase(owner) {
-    currentPreset_  = "Custom";
-    auto propServer = owner->getPropertyServer();
+    currentPreset_ = kCustomPresetName;
 
-    propServer->registerAccessCallback(
-        {
-            OB_PROP_COLOR_AUTO_EXPOSURE_BOOL,
-            OB_PROP_COLOR_EXPOSURE_INT,
-            OB_PROP_COLOR_AUTO_WHITE_BALANCE_BOOL,
-            OB_PROP_COLOR_WHITE_BALANCE_INT,
-            OB_PROP_COLOR_GAIN_INT,
-            OB_PROP_COLOR_CONTRAST_INT,
-            OB_PROP_COLOR_SATURATION_INT,
-            OB_PROP_COLOR_SHARPNESS_INT,
-            OB_PROP_COLOR_BRIGHTNESS_INT,
-            OB_PROP_COLOR_POWER_LINE_FREQUENCY_INT,
-        },
-        [&](uint32_t, const uint8_t *, size_t, PropertyOperationType operationType) {
-            if(operationType == PROP_OP_WRITE) {
-                currentPreset_ = "Custom";
-            }
-        });
-    storeCurrentParamsAsCustomPreset("Custom");
+    if(!owner->isPlaybackDevice()) {
+        auto propServer = owner->getPropertyServer();
+        propServer->registerAccessCallback(
+            {
+                OB_PROP_COLOR_AUTO_EXPOSURE_BOOL,
+                OB_PROP_COLOR_EXPOSURE_INT,
+                OB_PROP_COLOR_AUTO_WHITE_BALANCE_BOOL,
+                OB_PROP_COLOR_WHITE_BALANCE_INT,
+                OB_PROP_COLOR_GAIN_INT,
+                OB_PROP_COLOR_CONTRAST_INT,
+                OB_PROP_COLOR_SATURATION_INT,
+                OB_PROP_COLOR_SHARPNESS_INT,
+                OB_PROP_COLOR_BRIGHTNESS_INT,
+                OB_PROP_COLOR_POWER_LINE_FREQUENCY_INT,
+            },
+            [&](uint32_t, const uint8_t *, size_t, PropertyOperationType operationType) {
+                if(operationType == PROP_OP_WRITE) {
+                    currentPreset_ = kCustomPresetName;
+                }
+            });
+        storeCurrentParamsAsCustomPreset(kCustomPresetName);
+    }
+    else {
+        availablePresets_.emplace_back(currentPreset_);
+    }
 }
 
 void BoltPresetManager::loadPreset(const std::string &presetName) {
@@ -41,9 +46,9 @@ void BoltPresetManager::loadPreset(const std::string &presetName) {
         THROW_INVALID_PARAM_EXCEPTION("Invalid preset name: " + presetName);
     }
 
-    // store current parameters to  "Custom"
-    if(currentPreset_ == "Custom") {
-        storeCurrentParamsAsCustomPreset("Custom");
+    // store current parameters to kCustomPresetName
+    if(currentPreset_ == kCustomPresetName) {
+        storeCurrentParamsAsCustomPreset(kCustomPresetName);
     }
 
     auto iter = customPresets_.find(presetName);
@@ -70,9 +75,9 @@ void BoltPresetManager::loadPresetFromJsonData(const std::string &presetName, co
     if(!reader.parse(std::string((const char *)jsonData.data(), jsonData.size()), root)) {
         THROW_INVALID_PARAM_EXCEPTION("Invalid JSON data");
     }
-    // store current parameters to  "Custom"
-    if(currentPreset_ == "Custom") {
-        storeCurrentParamsAsCustomPreset("Custom");
+    // store current parameters to kCustomPresetName
+    if(currentPreset_ == kCustomPresetName) {
+        storeCurrentParamsAsCustomPreset(kCustomPresetName);
     }
     loadPresetFromJsonValue(presetName, root);
 }
@@ -81,9 +86,9 @@ void BoltPresetManager::loadPresetFromJsonFile(const std::string &filePath) {
     Json::Value   root;
     std::ifstream ifs(filePath);
     ifs >> root;
-    // store current parameters to  "Custom"
-    if(currentPreset_ == "Custom") {
-        storeCurrentParamsAsCustomPreset("Custom");
+    // store current parameters to kCustomPresetName
+    if(currentPreset_ == kCustomPresetName) {
+        storeCurrentParamsAsCustomPreset(kCustomPresetName);
     }
     loadPresetFromJsonValue(filePath, root);
 }
@@ -103,8 +108,10 @@ void BoltPresetManager::loadPresetFromJsonValue(const std::string &presetName, c
 
     loadCustomPreset(presetName, preset);
 
-    if(customPresets_.find(presetName) == customPresets_.end()) {
-        availablePresets_.emplace_back(presetName);
+    if(!getOwner()->isPlaybackDevice()) {
+        if(customPresets_.find(presetName) == customPresets_.end()) {
+            availablePresets_.emplace_back(presetName);
+        }
     }
     customPresets_[presetName] = preset;
 }
@@ -135,8 +142,9 @@ Json::Value BoltPresetManager::exportSettingsAsPresetJsonValue(const std::string
 const std::vector<uint8_t> &BoltPresetManager::exportSettingsAsPresetJsonData(const std::string &presetName) {
     auto                      root = exportSettingsAsPresetJsonValue(presetName);
     Json::StreamWriterBuilder builder;
+    builder.settings_["indentation"]             = "  ";
     builder.settings_["enableYAMLCompatibility"] = true;
-    builder.settings_["dropNullPlaceholders"]    = true;
+    builder.settings_["dropNullPlaceholders"]    = false;  // Keep null for nullvalue
     std::ostringstream oss;
     builder.newStreamWriter()->write(root, &oss);
     tmpJsonData_.clear();
@@ -150,9 +158,9 @@ void BoltPresetManager::exportSettingsAsPresetJsonFile(const std::string &filePa
 
     std::ofstream             ofs(filePath);
     Json::StreamWriterBuilder builder;
-    // builder.settings_["indentation"]             = "    ";
+    builder.settings_["indentation"]             = "  ";
     builder.settings_["enableYAMLCompatibility"] = true;
-    builder.settings_["dropNullPlaceholders"]    = true;
+    builder.settings_["dropNullPlaceholders"]    = false;  // Keep null for nullvalue
     auto writer                                  = builder.newStreamWriter();
     writer->write(root, &ofs);
 }
@@ -210,8 +218,10 @@ void BoltPresetManager::storeCurrentParamsAsCustomPreset(const std::string &pres
     preset.colorBrightness         = getPropertyValue<int>(owner, OB_PROP_COLOR_BRIGHTNESS_INT);
     preset.colorPowerLineFrequency = getPropertyValue<int>(owner, OB_PROP_COLOR_POWER_LINE_FREQUENCY_INT);
 
-    if(customPresets_.find(presetName) == customPresets_.end()) {
-        availablePresets_.emplace_back(presetName);
+    if(!owner->isPlaybackDevice()) {
+        if(customPresets_.find(presetName) == customPresets_.end()) {
+            availablePresets_.emplace_back(presetName);
+        }
     }
     customPresets_[presetName] = preset;
 }

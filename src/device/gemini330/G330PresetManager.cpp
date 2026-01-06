@@ -6,69 +6,72 @@
 #include "InternalTypes.hpp"
 #include "exception/ObException.hpp"
 #include "utils/Utils.hpp"
-#include "G330DepthWorkModeManager.hpp"
+#include "IDepthWorkModeManager.hpp"
 #include "preset/PresetDefinitions.hpp"
+
 #include <json/json.h>
 
 namespace libobsensor {
 
 G330PresetManager::G330PresetManager(IDevice *owner) : DeviceComponentBase(owner) {
-    auto depthWorkModeManager = owner->getComponentT<G330DepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
+    auto depthWorkModeManager = owner->getComponentT<IDepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
     auto depthWorkModeList    = depthWorkModeManager->getDepthWorkModeList();
 
     for(auto &mode: depthWorkModeList) {
         availablePresets_.emplace_back(mode.name);
     }
 
-    if(availablePresets_.size() > 1) {
+    if(availablePresets_.size() > 0) {
         currentPresetName_ = availablePresets_[0];
         depthWorkModeManager->switchDepthWorkMode(currentPresetName_.c_str());
     }
 
-    auto propServer = owner->getPropertyServer();
-    propServer->registerAccessCallback(
-        {
-            OB_PROP_LASER_CONTROL_INT,
-            OB_PROP_LASER_POWER_LEVEL_CONTROL_INT,
-            OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL,
-            OB_PROP_IR_AUTO_EXPOSURE_BOOL,
-            OB_PROP_DEPTH_EXPOSURE_INT,
-            OB_PROP_IR_EXPOSURE_INT,
-            OB_PROP_DEPTH_GAIN_INT,
-            OB_PROP_IR_GAIN_INT,
-            OB_PROP_IR_BRIGHTNESS_INT,
-            OB_PROP_COLOR_AUTO_EXPOSURE_BOOL,
-            OB_PROP_COLOR_EXPOSURE_INT,
-            OB_PROP_COLOR_AUTO_WHITE_BALANCE_BOOL,
-            OB_PROP_COLOR_WHITE_BALANCE_INT,
-            OB_PROP_COLOR_GAIN_INT,
-            OB_PROP_COLOR_CONTRAST_INT,
-            OB_PROP_COLOR_SATURATION_INT,
-            OB_PROP_COLOR_SHARPNESS_INT,
-            OB_PROP_COLOR_BRIGHTNESS_INT,
-            OB_PROP_COLOR_HUE_INT,
-            OB_PROP_COLOR_GAMMA_INT,
-            OB_PROP_COLOR_BACKLIGHT_COMPENSATION_INT,
-            OB_PROP_COLOR_POWER_LINE_FREQUENCY_INT,
-            OB_PROP_FRAME_INTERLEAVE_ENABLE_BOOL,
-            OB_PROP_FRAME_INTERLEAVE_CONFIG_INDEX_INT,
-            OB_PROP_IR_AE_MAX_EXPOSURE_INT,
-            OB_STRUCT_DEPTH_AE_ROI,
-            OB_STRUCT_COLOR_AE_ROI,
-            OB_PROP_DISPARITY_TO_DEPTH_BOOL,
-            OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL,
-            OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL,
-            OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT,
-            OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_SPECKLE_SIZE_INT,
-            OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL,
-            OB_PROP_HW_NOISE_REMOVE_FILTER_THRESHOLD_FLOAT,
-        },
-        [&](uint32_t, const uint8_t *, size_t, PropertyOperationType operationType) {
-            if(operationType == PROP_OP_WRITE) {
-                currentPresetName_ = kCustomPresetName;
-            }
-        });
-    storeCurrentParamsAsCustomPreset(kCustomPresetName);
+    if(!owner->isPlaybackDevice()) {
+        auto propServer = owner->getPropertyServer();
+        propServer->registerAccessCallback(
+            {
+                OB_PROP_LASER_CONTROL_INT,
+                OB_PROP_LASER_POWER_LEVEL_CONTROL_INT,
+                OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL,
+                OB_PROP_IR_AUTO_EXPOSURE_BOOL,
+                OB_PROP_DEPTH_EXPOSURE_INT,
+                OB_PROP_IR_EXPOSURE_INT,
+                OB_PROP_DEPTH_GAIN_INT,
+                OB_PROP_IR_GAIN_INT,
+                OB_PROP_IR_BRIGHTNESS_INT,
+                OB_PROP_COLOR_AUTO_EXPOSURE_BOOL,
+                OB_PROP_COLOR_EXPOSURE_INT,
+                OB_PROP_COLOR_AUTO_WHITE_BALANCE_BOOL,
+                OB_PROP_COLOR_WHITE_BALANCE_INT,
+                OB_PROP_COLOR_GAIN_INT,
+                OB_PROP_COLOR_CONTRAST_INT,
+                OB_PROP_COLOR_SATURATION_INT,
+                OB_PROP_COLOR_SHARPNESS_INT,
+                OB_PROP_COLOR_BRIGHTNESS_INT,
+                OB_PROP_COLOR_HUE_INT,
+                OB_PROP_COLOR_GAMMA_INT,
+                OB_PROP_COLOR_BACKLIGHT_COMPENSATION_INT,
+                OB_PROP_COLOR_POWER_LINE_FREQUENCY_INT,
+                OB_PROP_FRAME_INTERLEAVE_ENABLE_BOOL,
+                OB_PROP_FRAME_INTERLEAVE_CONFIG_INDEX_INT,
+                OB_PROP_IR_AE_MAX_EXPOSURE_INT,
+                OB_STRUCT_DEPTH_AE_ROI,
+                OB_STRUCT_COLOR_AE_ROI,
+                OB_PROP_DISPARITY_TO_DEPTH_BOOL,
+                OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL,
+                OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL,
+                OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT,
+                OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_SPECKLE_SIZE_INT,
+                OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL,
+                OB_PROP_HW_NOISE_REMOVE_FILTER_THRESHOLD_FLOAT,
+            },
+            [&](uint32_t, const uint8_t *, size_t, PropertyOperationType operationType) {
+                if(operationType == PROP_OP_WRITE) {
+                    currentPresetName_ = kCustomPresetName;
+                }
+            });
+        storeCurrentParamsAsCustomPreset(kCustomPresetName);
+    }
 }
 
 void G330PresetManager::loadPreset(const std::string &presetName) {
@@ -76,7 +79,7 @@ void G330PresetManager::loadPreset(const std::string &presetName) {
         THROW_INVALID_PARAM_EXCEPTION("Invalid preset name: " + presetName);
     }
 
-    // store current parameters to  "Custom"
+    // store current parameters to kCustomPresetName
     if(currentPresetName_ == kCustomPresetName) {
         storeCurrentParamsAsCustomPreset(kCustomPresetName);
     }
@@ -88,7 +91,7 @@ void G330PresetManager::loadPreset(const std::string &presetName) {
     }
     else {
         auto owner                = getOwner();
-        auto depthWorkModeManager = owner->getComponentT<G330DepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
+        auto depthWorkModeManager = owner->getComponentT<IDepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
 
         depthWorkModeManager->switchDepthWorkMode(presetName.c_str());
         currentPresetName_ = presetName;
@@ -109,7 +112,7 @@ void G330PresetManager::loadPresetFromJsonData(const std::string &presetName, co
     if(!reader.parse(std::string((const char *)jsonData.data(), jsonData.size()), root)) {
         THROW_INVALID_PARAM_EXCEPTION("Invalid JSON data");
     }
-    // store current parameters to  "Custom"
+    // store current parameters to kCustomPresetName
     if(currentPresetName_ == kCustomPresetName) {
         storeCurrentParamsAsCustomPreset(kCustomPresetName);
     }
@@ -120,7 +123,7 @@ void G330PresetManager::loadPresetFromJsonFile(const std::string &filePath) {
     Json::Value   root;
     std::ifstream ifs(filePath);
     ifs >> root;
-    // store current parameters to  "Custom"
+    // store current parameters to kCustomPresetName
     if(currentPresetName_ == kCustomPresetName) {
         storeCurrentParamsAsCustomPreset(kCustomPresetName);
     }
@@ -149,8 +152,10 @@ std::shared_ptr<IPresetEngine> G330PresetManager::getCurrentPresetEngine() {
 void G330PresetManager::loadPresetFromJsonValue(const std::string &presetName, const Json::Value &root) {
     loadCustomPreset(presetName, root);
 
-    if(customPresets_.find(presetName) == customPresets_.end()) {
-        availablePresets_.emplace_back(presetName);
+    if(!getOwner()->isPlaybackDevice()) {
+        if(customPresets_.find(presetName) == customPresets_.end()) {
+            availablePresets_.emplace_back(presetName);
+        }
     }
     customPresets_[presetName] = root;
 }
@@ -167,8 +172,9 @@ Json::Value G330PresetManager::exportSettingsAsPresetJsonValue(const std::string
 const std::vector<uint8_t> &G330PresetManager::exportSettingsAsPresetJsonData(const std::string &presetName) {
     auto                      root = exportSettingsAsPresetJsonValue(presetName);
     Json::StreamWriterBuilder builder;
+    builder.settings_["indentation"]             = "  ";
     builder.settings_["enableYAMLCompatibility"] = true;
-    builder.settings_["dropNullPlaceholders"]    = true;
+    builder.settings_["dropNullPlaceholders"]    = false;  // Keep null for nullvalue
     std::ostringstream oss;
     builder.newStreamWriter()->write(root, &oss);
     tmpJsonData_.clear();
@@ -184,14 +190,14 @@ void G330PresetManager::exportSettingsAsPresetJsonFile(const std::string &filePa
     Json::StreamWriterBuilder builder;
     builder.settings_["indentation"]             = "  ";
     builder.settings_["enableYAMLCompatibility"] = true;
-    builder.settings_["dropNullPlaceholders"]    = true;
+    builder.settings_["dropNullPlaceholders"]    = false;  // Keep null for nullvalue
     auto writer                                  = builder.newStreamWriter();
     writer->write(root, &ofs);
 }
 
 void G330PresetManager::fetchPreset() {
     auto owner                = getOwner();
-    auto depthWorkModeManager = owner->getComponentT<G330DepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
+    auto depthWorkModeManager = owner->getComponentT<IDepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
 
     // refetch list
     depthWorkModeManager->fetchDepthWorkModeList();
@@ -207,7 +213,7 @@ void G330PresetManager::fetchPreset() {
         availablePresets_.emplace_back(mode.name);
     }
 
-    if(availablePresets_.size() > 1) {
+    if(availablePresets_.size() > 0) {
         currentPresetName_ = availablePresets_[0];
         depthWorkModeManager->switchDepthWorkMode(currentPresetName_.c_str());
     }
@@ -225,8 +231,10 @@ void G330PresetManager::storeCurrentParamsAsCustomPreset(const std::string &pres
     auto presetEngine = getCurrentPresetEngine();
     auto data         = presetEngine->exportJson();
 
-    if(customPresets_.find(presetName) == customPresets_.end()) {
-        availablePresets_.emplace_back(presetName);
+    if(!getOwner()->isPlaybackDevice()) {
+        if(customPresets_.find(presetName) == customPresets_.end()) {
+            availablePresets_.emplace_back(presetName);
+        }
     }
     customPresets_[presetName] = data;
 }

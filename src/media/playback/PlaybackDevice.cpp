@@ -28,9 +28,14 @@
 #include "FilterFactory.hpp"
 #include "PlaybackFrameInterleaveManager.hpp"
 #include "gemini330/G330FrameInterleaveManager.hpp"
+#include "gemini330/G330PresetManager.hpp"
+#include "gemini330/DaBaiAPresetManager.hpp"
+#include "femtomega/FemtoMegaPresetManager.hpp"
+#include "femtobolt/FemtoBoltPresetManager.hpp"
 #include "gemini2/G435LeFrameInterleaveManager.hpp"
 #include "gemini305/G305FrameMetadataParserContainer.hpp"
 #include "gemini305/G305FrameInterleaveManager.hpp"
+#include "gemini305/G305PresetManager.hpp"
 
 namespace libobsensor {
 using namespace playback;
@@ -139,10 +144,32 @@ void PlaybackDevice::init() {
         registerComponent(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER, depthWorkModeManager);
     }
 
-    if(isDeviceInContainer(G330DevPids, vid, pid) || isDeviceInOrbbecSeries(FemtoMegaDevPids, vid, pid) || isDeviceInOrbbecSeries(FemtoBoltDevPids, vid, pid)
-       || isDeviceInOrbbecSeries(G305DevPids, vid, pid)) {
-        // preset manager
-        auto presetManager = std::make_shared<PlaybackPresetManager>(this);
+    // preset manager
+    std::shared_ptr<IPresetManager> delegateManager;
+    if(isDeviceInContainer(G330DevPids, vid, pid)) {
+        if(isDeviceInContainer(DaBaiADevPids, vid, pid)) {
+            // DabaiA
+            delegateManager = std::make_shared<DaBaiAPresetManager>(this);
+        }
+        else {
+            // 330 others
+            delegateManager = std::make_shared<G330PresetManager>(this);
+        }
+    }
+    else if(isDeviceInOrbbecSeries(FemtoMegaDevPids, vid, pid)) {
+        // Mega
+        delegateManager = std::make_shared<MegaPresetManager>(this);
+    }
+    else if(isDeviceInOrbbecSeries(FemtoBoltDevPids, vid, pid)) {
+        // Bolt
+        delegateManager = std::make_shared<BoltPresetManager>(this);
+    }
+    else if(isDeviceInOrbbecSeries(G305DevPids, vid, pid)) {
+        // G305
+        delegateManager = std::make_shared<G305PresetManager>(this);
+    }
+    if(delegateManager) {
+        auto presetManager = std::make_shared<PlaybackPresetManager>(this, delegateManager);
         registerComponent(OB_DEV_COMPONENT_PRESET_MANAGER, presetManager);
     }
 
@@ -174,12 +201,14 @@ void PlaybackDevice::init() {
             if(isDeviceInContainer(G330DevPids, vid, pid)) {
                 devFrameInterleaveManager = std::make_shared<G330FrameInterleaveManager>(this);
             }
-            else {
+            else if(isDeviceInContainer(G435LeDevPids, vid, pid)) {
                 devFrameInterleaveManager = std::make_shared<G435LeFrameInterleaveManager>(this);
             }
 
-            auto frameInterleaveManagerProxy = std::make_shared<libobsensor::PlaybackFrameInterleaveManager>(devFrameInterleaveManager);
-            registerComponent(OB_DEV_COMPONENT_FRAME_INTERLEAVE_MANAGER, frameInterleaveManagerProxy);
+            if(devFrameInterleaveManager) {
+                auto frameInterleaveManagerProxy = std::make_shared<libobsensor::PlaybackFrameInterleaveManager>(devFrameInterleaveManager);
+                registerComponent(OB_DEV_COMPONENT_FRAME_INTERLEAVE_MANAGER, frameInterleaveManagerProxy);
+            }
         }
     }
 }

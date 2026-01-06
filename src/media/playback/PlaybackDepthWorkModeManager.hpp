@@ -19,9 +19,7 @@ public:
     virtual std::vector<OBDepthWorkMode_Internal> getDepthWorkModeList() const override;
     virtual const OBDepthWorkMode_Internal       &getCurrentDepthWorkMode() const override;
     virtual void                                  switchDepthWorkMode(const std::string &name) override;
-
-private:
-    void fetchCurrentDepthWorkMode();
+    void                                          fetchDepthWorkModeList() override;
 
 private:
     std::shared_ptr<PlaybackDevicePort> port_;

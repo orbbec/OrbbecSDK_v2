@@ -9,26 +9,7 @@
 namespace libobsensor {
 
 G2DepthWorkModeManager::G2DepthWorkModeManager(IDevice *owner) : DeviceComponentBase(owner) {
-
-    auto propServer = owner->getPropertyServer();
-
-    depthWorkModeList_ = propServer->getStructureDataListProtoV1_1_T<OBDepthWorkMode_Internal, 0>(OB_RAW_DATA_DEPTH_ALG_MODE_LIST);
-
-    auto        envConfig            = EnvConfig::getInstance();
-    std::string nodePath             = "Device." + getOwner()->getInfo()->name_;
-    nodePath                         = utils::string::removeSpace(nodePath);
-    bool isSupportFactoryCalibration = false;
-    envConfig->getBooleanValue(nodePath + ".SupportFactoryCalibration", isSupportFactoryCalibration);
-    if(!isSupportFactoryCalibration) {
-        // remove factory Calibration mode
-        depthWorkModeList_.erase(std::remove_if(depthWorkModeList_.begin(), depthWorkModeList_.end(),
-                                                [](const OBDepthWorkMode_Internal &mode) {  //
-                                                    return strncmp(mode.name, "Factory Calibration", sizeof(mode.name)) == 0;
-                                                }),
-                                 depthWorkModeList_.end());
-    }
-
-    currentWorkMode_ = propServer->getStructureDataProtoV1_1_T<OBDepthWorkMode_Internal, 0>(OB_STRUCT_CURRENT_DEPTH_ALG_MODE);
+    fetchDepthWorkModeList();
 }
 
 std::vector<OBDepthWorkMode_Internal> G2DepthWorkModeManager::getDepthWorkModeList() const {
@@ -79,6 +60,29 @@ void G2DepthWorkModeManager::switchDepthWorkMode(const OBDepthWorkMode_Internal 
 
     LOG_INFO("Device depth work mode have been switch to: {}, device will be reinitialize to apply the new mode.", targetDepthMode.name);
     owner->reset();
+}
+
+void G2DepthWorkModeManager::fetchDepthWorkModeList() {
+    auto owner      = getOwner();
+    auto propServer = owner->getPropertyServer();
+
+    depthWorkModeList_ = propServer->getStructureDataListProtoV1_1_T<OBDepthWorkMode_Internal, 0>(OB_RAW_DATA_DEPTH_ALG_MODE_LIST);
+
+    auto        envConfig            = EnvConfig::getInstance();
+    std::string nodePath             = "Device." + getOwner()->getInfo()->name_;
+    nodePath                         = utils::string::removeSpace(nodePath);
+    bool isSupportFactoryCalibration = false;
+    envConfig->getBooleanValue(nodePath + ".SupportFactoryCalibration", isSupportFactoryCalibration);
+    if(!isSupportFactoryCalibration) {
+        // remove factory Calibration mode
+        depthWorkModeList_.erase(std::remove_if(depthWorkModeList_.begin(), depthWorkModeList_.end(),
+                                                [](const OBDepthWorkMode_Internal &mode) {  //
+                                                    return strncmp(mode.name, "Factory Calibration", sizeof(mode.name)) == 0;
+                                                }),
+                                 depthWorkModeList_.end());
+    }
+
+    currentWorkMode_ = propServer->getStructureDataProtoV1_1_T<OBDepthWorkMode_Internal, 0>(OB_STRUCT_CURRENT_DEPTH_ALG_MODE);
 }
 
 }  // namespace libobsensor

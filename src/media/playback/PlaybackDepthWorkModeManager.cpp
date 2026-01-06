@@ -7,7 +7,7 @@
 namespace libobsensor {
 PlaybackDepthWorkModeManager::PlaybackDepthWorkModeManager(IDevice *owner, std::shared_ptr<PlaybackDevicePort> port)
     : DeviceComponentBase(owner), port_(port), currentDepthWorkMode_({ { 0 }, { 0 }, 0 }) {
-    fetchCurrentDepthWorkMode();
+    fetchDepthWorkModeList();
 }
 
 std::vector<OBDepthWorkMode_Internal> PlaybackDepthWorkModeManager::getDepthWorkModeList() const {
@@ -21,7 +21,7 @@ const OBDepthWorkMode_Internal &PlaybackDepthWorkModeManager::getCurrentDepthWor
     return currentDepthWorkMode_;
 }
 
-void PlaybackDepthWorkModeManager::fetchCurrentDepthWorkMode() {
+void PlaybackDepthWorkModeManager::fetchDepthWorkModeList() {
     auto data = port_->getRecordedStructData(OB_STRUCT_CURRENT_DEPTH_ALG_MODE);
 
     if(data.size() != sizeof(OBDepthWorkMode_Internal)) {

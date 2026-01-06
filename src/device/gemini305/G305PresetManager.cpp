@@ -27,35 +27,37 @@ G305PresetManager::G305PresetManager(IDevice *owner) : DeviceComponentBase(owner
         depthWorkModeManager->switchDepthWorkMode(currentPreset_.c_str());
     }
 
-    propServer->registerAccessCallback(
-        {
-            OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL,
-            OB_PROP_IR_AUTO_EXPOSURE_BOOL,
-            OB_PROP_DEPTH_EXPOSURE_INT,
-            OB_PROP_IR_EXPOSURE_INT,
-            OB_PROP_DEPTH_GAIN_INT,
-            OB_PROP_IR_GAIN_INT,
-            OB_PROP_IR_BRIGHTNESS_INT,
-            OB_PROP_COLOR_AUTO_EXPOSURE_BOOL,
-            OB_PROP_COLOR_EXPOSURE_INT,
-            OB_PROP_COLOR_AUTO_WHITE_BALANCE_BOOL,
-            OB_PROP_COLOR_WHITE_BALANCE_INT,
-            OB_PROP_COLOR_GAIN_INT,
-            OB_PROP_COLOR_CONTRAST_INT,
-            OB_PROP_COLOR_SATURATION_INT,
-            OB_PROP_COLOR_SHARPNESS_INT,
-            OB_PROP_COLOR_BRIGHTNESS_INT,
-            OB_PROP_COLOR_HUE_INT,
-            OB_PROP_COLOR_GAMMA_INT,
-            OB_PROP_COLOR_BACKLIGHT_COMPENSATION_INT,
-            OB_PROP_COLOR_POWER_LINE_FREQUENCY_INT,
-        },
-        [&](uint32_t, const uint8_t *, size_t, PropertyOperationType operationType) {
-            if(operationType == PROP_OP_WRITE) {
-                currentPreset_ = "Custom";
-            }
-        });
-    storeCurrentParamsAsCustomPreset("Custom");
+    if(!owner->isPlaybackDevice()) {
+        propServer->registerAccessCallback(
+            {
+                OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL,
+                OB_PROP_IR_AUTO_EXPOSURE_BOOL,
+                OB_PROP_DEPTH_EXPOSURE_INT,
+                OB_PROP_IR_EXPOSURE_INT,
+                OB_PROP_DEPTH_GAIN_INT,
+                OB_PROP_IR_GAIN_INT,
+                OB_PROP_IR_BRIGHTNESS_INT,
+                OB_PROP_COLOR_AUTO_EXPOSURE_BOOL,
+                OB_PROP_COLOR_EXPOSURE_INT,
+                OB_PROP_COLOR_AUTO_WHITE_BALANCE_BOOL,
+                OB_PROP_COLOR_WHITE_BALANCE_INT,
+                OB_PROP_COLOR_GAIN_INT,
+                OB_PROP_COLOR_CONTRAST_INT,
+                OB_PROP_COLOR_SATURATION_INT,
+                OB_PROP_COLOR_SHARPNESS_INT,
+                OB_PROP_COLOR_BRIGHTNESS_INT,
+                OB_PROP_COLOR_HUE_INT,
+                OB_PROP_COLOR_GAMMA_INT,
+                OB_PROP_COLOR_BACKLIGHT_COMPENSATION_INT,
+                OB_PROP_COLOR_POWER_LINE_FREQUENCY_INT,
+            },
+            [&](uint32_t, const uint8_t *, size_t, PropertyOperationType operationType) {
+                if(operationType == PROP_OP_WRITE) {
+                    currentPreset_ = kCustomPresetName;
+                }
+            });
+        storeCurrentParamsAsCustomPreset(kCustomPresetName);
+    }
 }
 
 void G305PresetManager::loadPreset(const std::string &presetName) {
@@ -63,9 +65,9 @@ void G305PresetManager::loadPreset(const std::string &presetName) {
         THROW_INVALID_PARAM_EXCEPTION("Invalid preset name: " + presetName);
     }
 
-    // store current parameters to  "Custom"
-    if(currentPreset_ == "Custom") {
-        storeCurrentParamsAsCustomPreset("Custom");
+    // store current parameters to  kCustomPresetName
+    if(currentPreset_ == kCustomPresetName) {
+        storeCurrentParamsAsCustomPreset(kCustomPresetName);
     }
 
     auto iter = customPresets_.find(presetName);
@@ -96,9 +98,9 @@ void G305PresetManager::loadPresetFromJsonData(const std::string &presetName, co
     if(!reader.parse(std::string((const char *)jsonData.data(), jsonData.size()), root)) {
         THROW_INVALID_PARAM_EXCEPTION("Invalid JSON data");
     }
-    // store current parameters to  "Custom"
-    if(currentPreset_ == "Custom") {
-        storeCurrentParamsAsCustomPreset("Custom");
+    // store current parameters to  kCustomPresetName
+    if(currentPreset_ == kCustomPresetName) {
+        storeCurrentParamsAsCustomPreset(kCustomPresetName);
     }
     loadPresetFromJsonValue(presetName, root);
 }
@@ -107,9 +109,9 @@ void G305PresetManager::loadPresetFromJsonFile(const std::string &filePath) {
     Json::Value   root;
     std::ifstream ifs(filePath);
     ifs >> root;
-    // store current parameters to  "Custom"
-    if(currentPreset_ == "Custom") {
-        storeCurrentParamsAsCustomPreset("Custom");
+    // store current parameters to  kCustomPresetName
+    if(currentPreset_ == kCustomPresetName) {
+        storeCurrentParamsAsCustomPreset(kCustomPresetName);
     }
     loadPresetFromJsonValue(filePath, root);
 }
@@ -137,8 +139,10 @@ void G305PresetManager::loadPresetFromJsonValue(const std::string &presetName, c
 
     loadCustomPreset(presetName, preset);
 
-    if(customPresets_.find(presetName) == customPresets_.end()) {
-        availablePresets_.emplace_back(presetName);
+    if(!getOwner()->isPlaybackDevice()) {
+        if(customPresets_.find(presetName) == customPresets_.end()) {
+            availablePresets_.emplace_back(presetName);
+        }
     }
     customPresets_[presetName] = preset;
 }
@@ -179,6 +183,7 @@ Json::Value G305PresetManager::exportSettingsAsPresetJsonValue(const std::string
 const std::vector<uint8_t> &G305PresetManager::exportSettingsAsPresetJsonData(const std::string &presetName) {
     auto                      root = exportSettingsAsPresetJsonValue(presetName);
     Json::StreamWriterBuilder builder;
+    builder.settings_["indentation"]             = "  ";
     builder.settings_["enableYAMLCompatibility"] = true;
     builder.settings_["dropNullPlaceholders"]    = true;
     std::ostringstream oss;
@@ -194,7 +199,7 @@ void G305PresetManager::exportSettingsAsPresetJsonFile(const std::string &filePa
 
     std::ofstream             ofs(filePath);
     Json::StreamWriterBuilder builder;
-    // builder.settings_["indentation"]             = "    ";
+    builder.settings_["indentation"]             = "  ";
     builder.settings_["enableYAMLCompatibility"] = true;
     builder.settings_["dropNullPlaceholders"]    = true;
     auto writer                                  = builder.newStreamWriter();
@@ -224,7 +229,7 @@ void G305PresetManager::fetchPreset() {
         currentPreset_            = currentDepthWorkMode.name;
         depthWorkModeManager->switchDepthWorkMode(currentPreset_.c_str());
     }
-    storeCurrentParamsAsCustomPreset("Custom");
+    storeCurrentParamsAsCustomPreset(kCustomPresetName);
 }
 
 template <typename T> void setPropertyValue(IDevice *dev, uint32_t propertyId, T value) {
@@ -300,8 +305,10 @@ void G305PresetManager::storeCurrentParamsAsCustomPreset(const std::string &pres
         preset.depthWorkMode      = depthWorkModeManager->getCurrentDepthWorkMode().name;
     }
 
-    if(customPresets_.find(presetName) == customPresets_.end()) {
-        availablePresets_.emplace_back(presetName);
+    if(!owner->isPlaybackDevice()) {
+        if(customPresets_.find(presetName) == customPresets_.end()) {
+            availablePresets_.emplace_back(presetName);
+        }
     }
     customPresets_[presetName] = preset;
 }

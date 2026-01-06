@@ -8,18 +8,7 @@
 namespace libobsensor {
 
 Astra2DepthWorkModeManager::Astra2DepthWorkModeManager(IDevice *owner) : DeviceComponentBase(owner) {
-
-    auto propServer = owner->getPropertyServer();
-
-    depthWorkModeList_ = propServer->getStructureDataListProtoV1_1_T<OBDepthWorkMode_Internal, 0>(OB_RAW_DATA_DEPTH_ALG_MODE_LIST);
-    // remove factory Calibration mode
-    depthWorkModeList_.erase(std::remove_if(depthWorkModeList_.begin(), depthWorkModeList_.end(),
-                                            [](const OBDepthWorkMode_Internal &mode) {  //
-                                                return strncmp(mode.name, "Factory Calibration", sizeof(mode.name)) == 0;
-                                            }),
-                             depthWorkModeList_.end());
-
-    currentWorkMode_ = propServer->getStructureDataProtoV1_1_T<OBDepthWorkMode_Internal, 0>(OB_STRUCT_CURRENT_DEPTH_ALG_MODE);
+    fetchDepthWorkModeList();
 }
 
 std::vector<OBDepthWorkMode_Internal> Astra2DepthWorkModeManager::getDepthWorkModeList() const {
@@ -70,6 +59,21 @@ void Astra2DepthWorkModeManager::switchDepthWorkMode(const OBDepthWorkMode_Inter
 
     LOG_INFO("Device depth work mode have been switch to: {1}, device will be reinitialize to apply the new mode.", targetDepthMode.name);
     owner->reset();
+}
+
+void Astra2DepthWorkModeManager::fetchDepthWorkModeList() {
+    auto owner      = getOwner();
+    auto propServer = owner->getPropertyServer();
+
+    depthWorkModeList_ = propServer->getStructureDataListProtoV1_1_T<OBDepthWorkMode_Internal, 0>(OB_RAW_DATA_DEPTH_ALG_MODE_LIST);
+    // remove factory Calibration mode
+    depthWorkModeList_.erase(std::remove_if(depthWorkModeList_.begin(), depthWorkModeList_.end(),
+                                            [](const OBDepthWorkMode_Internal &mode) {  //
+                                                return strncmp(mode.name, "Factory Calibration", sizeof(mode.name)) == 0;
+                                            }),
+                             depthWorkModeList_.end());
+
+    currentWorkMode_ = propServer->getStructureDataProtoV1_1_T<OBDepthWorkMode_Internal, 0>(OB_STRUCT_CURRENT_DEPTH_ALG_MODE);
 }
 
 }  // namespace libobsensor
