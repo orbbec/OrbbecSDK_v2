@@ -18,6 +18,17 @@ public:
     void                            loadFrameInterleave(const std::string &frameInterleaveName) override;
     const std::vector<std::string> &getAvailableFrameInterleaveList() const override;
 
+    const std::string &getCurrentFrameInterleaveName() const override {
+        return currentFrameInterleave_;
+    }
+
+    int32_t getParamCount() const override {
+        return kDefaultFrameInterleaveCount;
+    }
+
+    const FrameInterleaveParam &getParam(const std::string &frameInterleaveName, int32_t index) const override;
+    void                        updateParam(const std::string &frameInterleaveName, const FrameInterleaveParam &param, int32_t index) override;
+
 private:
     void updateFrameInterleaveParam(uint32_t propertyId);
 
@@ -27,8 +38,8 @@ private:
 
     int currentIndex_;
 
-    FrameInterleaveParam hdr_[2];
-    FrameInterleaveParam hdrDefault_[2];
+    FrameInterleaveParam hdr_[kDefaultFrameInterleaveCount];
+    FrameInterleaveParam hdrDefault_[kDefaultFrameInterleaveCount];
 };
 
 }  // namespace libobsensor

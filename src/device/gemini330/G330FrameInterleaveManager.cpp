@@ -38,7 +38,7 @@ G330FrameInterleaveManager::G330FrameInterleaveManager(IDevice *owner) : DeviceC
     laserInterleaveDefault_[1].depthMaxExposure  = 30000;
     laserInterleaveDefault_[1].laserSwitch       = 0;
 
-    memcpy(laserInterleave_, laserInterleaveDefault_, sizeof(hdrDefault_));
+    memcpy(laserInterleave_, laserInterleaveDefault_, sizeof(laserInterleaveDefault_));
 
     auto propServer = owner->getPropertyServer();
 
@@ -100,6 +100,38 @@ void G330FrameInterleaveManager::loadFrameInterleave(const std::string &frameInt
 
 const std::vector<std::string> &G330FrameInterleaveManager::getAvailableFrameInterleaveList() const {
     return availableFrameInterleaves_;
+}
+
+const FrameInterleaveParam &G330FrameInterleaveManager::getParam(const std::string &frameInterleaveName, int32_t index) const {
+    if(index < 0 || index >= kDefaultFrameInterleaveCount) {
+        THROW_INVALID_PARAM_EXCEPTION("Invalid parameter index, expected range: [0, " + std::to_string(kDefaultFrameInterleaveCount) + ")");
+    }
+
+    if(frameInterleaveName == hdr_interleave) {
+        return hdr_[index];
+    }
+    else if(frameInterleaveName == laser_interleave) {
+        return laserInterleave_[index];
+    }
+    else {
+        throw std::invalid_argument("Invalid frame interleave name: " + frameInterleaveName);
+    }
+}
+
+void G330FrameInterleaveManager::updateParam(const std::string &frameInterleaveName, const FrameInterleaveParam &param, int32_t index) {
+    if(index < 0 || index >= kDefaultFrameInterleaveCount) {
+        THROW_INVALID_PARAM_EXCEPTION("Invalid parameter index, expected range: [0, " + std::to_string(kDefaultFrameInterleaveCount) + ")");
+    }
+
+    if(frameInterleaveName == hdr_interleave) {
+        hdr_[index] = param;
+    }
+    else if(frameInterleaveName == laser_interleave) {
+        laserInterleave_[index] = param;
+    }
+    else {
+        throw std::invalid_argument("Invalid frame interleave name: " + frameInterleaveName);
+    }
 }
 
 void G330FrameInterleaveManager::updateFrameInterleaveParam(uint32_t propertyId) {

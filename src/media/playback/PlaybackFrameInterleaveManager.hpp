@@ -17,6 +17,10 @@ public:
 
     void                            loadFrameInterleave(const std::string &frameInterleaveName) override;
     const std::vector<std::string> &getAvailableFrameInterleaveList() const override;
+    const std::string              &getCurrentFrameInterleaveName() const override;
+    int32_t                         getParamCount() const override;
+    const FrameInterleaveParam     &getParam(const std::string &frameInterleaveName, int32_t index) const override;
+    void                            updateParam(const std::string &frameInterleaveName, const FrameInterleaveParam &param, int32_t index) override;
 
 private:
     std::shared_ptr<IFrameInterleaveManager> deviceFrameInterleaveManager_;

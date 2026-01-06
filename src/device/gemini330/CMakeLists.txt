@@ -13,6 +13,8 @@ target_sources(
     ${CMAKE_CURRENT_LIST_DIR}/G330MetadataParser.hpp
     ${CMAKE_CURRENT_LIST_DIR}/G330AlgParamManager.cpp
     ${CMAKE_CURRENT_LIST_DIR}/G330AlgParamManager.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/G330PresetEngine.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/G330PresetEngine.hpp
     ${CMAKE_CURRENT_LIST_DIR}/G330PresetManager.cpp
     ${CMAKE_CURRENT_LIST_DIR}/G330PresetManager.hpp
     ${CMAKE_CURRENT_LIST_DIR}/G330DepthWorkModeManager.cpp
@@ -27,14 +29,6 @@ target_sources(
     ${CMAKE_CURRENT_LIST_DIR}/G330FrameInterleaveManager.cpp
     ${CMAKE_CURRENT_LIST_DIR}/G330MetadataModifier.cpp
     ${CMAKE_CURRENT_LIST_DIR}/G330MetadataModifier.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/DabaiADevice.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/DabaiADevice.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/DabaiAMetadataModifier.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/DabaiAMetadataModifier.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/DaBaiAAlgParamManager.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/DaBaiAAlgParamManager.hpp
-    ${CMAKE_CURRENT_LIST_DIR}/DaBaiAPresetManager.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/DaBaiAPresetManager.hpp
 
     ${CMAKE_CURRENT_LIST_DIR}/DabaiADevice.cpp
     ${CMAKE_CURRENT_LIST_DIR}/DabaiADevice.hpp

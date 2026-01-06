@@ -61,7 +61,7 @@ void G305FrameInterleaveManager::loadFrameInterleave(const std::string &frameInt
     }
     currentFrameInterleave_ = frameInterleaveName;
     auto owner              = getOwner();
-    for(int i = 1; i >= 0; i--) {
+    for(int i = kDefaultFrameInterleaveCount - 1; i >= 0; i--) {
         setPropertyValue(owner, OB_PROP_FRAME_INTERLEAVE_CONFIG_INDEX_INT, i);
 
         auto setProperties = [&](const FrameInterleaveParam *interleave, int sequenceId) {
@@ -82,6 +82,32 @@ const std::vector<std::string> &G305FrameInterleaveManager::getAvailableFrameInt
     return availableFrameInterleaves_;
 }
 
+const FrameInterleaveParam &G305FrameInterleaveManager::getParam(const std::string &frameInterleaveName, int32_t index) const {
+    if(index < 0 || index >= kDefaultFrameInterleaveCount) {
+        THROW_INVALID_PARAM_EXCEPTION("Invalid parameter index, expected range: [0, " + std::to_string(kDefaultFrameInterleaveCount) + ")");
+    }
+
+    if(frameInterleaveName == hdr_interleave) {
+        return hdr_[index];
+    }
+    else {
+        throw std::invalid_argument("Invalid frame interleave name: " + frameInterleaveName);
+    }
+}
+
+void G305FrameInterleaveManager::updateParam(const std::string &frameInterleaveName, const FrameInterleaveParam &param, int32_t index) {
+    if(index < 0 || index >= kDefaultFrameInterleaveCount) {
+        THROW_INVALID_PARAM_EXCEPTION("Invalid parameter index, expected range: [0, " + std::to_string(kDefaultFrameInterleaveCount) + ")");
+    }
+
+    if(frameInterleaveName == hdr_interleave) {
+        hdr_[index] = param;
+    }
+    else {
+        throw std::invalid_argument("Invalid frame interleave name: " + frameInterleaveName);
+    }
+}
+
 void G305FrameInterleaveManager::updateFrameInterleaveParam(uint32_t propertyId) {
     auto owner = getOwner();
 
@@ -97,7 +123,7 @@ void G305FrameInterleaveManager::updateFrameInterleaveParam(uint32_t propertyId)
         // std::cout << "current index:" << currentIndex_ << std::endl;
     }
 
-    if(currentIndex_ < 0 || currentIndex_ > 1) {
+    if(currentIndex_ < 0 || currentIndex_ >= kDefaultFrameInterleaveCount) {
         return;
     }
 

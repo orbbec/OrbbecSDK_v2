@@ -1,0 +1,628 @@
+// Copyright (c) Orbbec Inc. All Rights Reserved.
+// Licensed under the MIT License.
+
+#include "PresetHandler.hpp"
+#include "IDepthWorkModeManager.hpp"
+#include "PresetDefinitions.hpp"
+#include "IDeviceMonitor.hpp"
+#include "logger/Logger.hpp"
+#include "exception/ObException.hpp"
+#include "PresetDefinitions.hpp"
+
+namespace libobsensor {
+
+// FrameInterleaveHandler
+FrameInterleaveHandler::FrameInterleaveHandler(IDevice *owner)
+    : owner_(owner),
+      paramsKeyList_{ { kInterleaveDepthExposureKey, &FrameInterleaveParam::depthExposureTime },
+                      { kInterleaveDepthGainKey, &FrameInterleaveParam::depthGain },
+                      { kInterleaveDepthBrightnessKey, &FrameInterleaveParam::depthBrightness },
+                      { kInterleaveDepthAeMaxExposureKey, &FrameInterleaveParam::depthMaxExposure },
+                      { kInterleaveLaserControlKey, &FrameInterleaveParam::laserSwitch } } {
+    auto manager = owner_->getComponentT<IFrameInterleaveManager>(OB_DEV_COMPONENT_FRAME_INTERLEAVE_MANAGER, false);
+    if(manager) {
+        frameInterleaveManager_ = manager.get();
+    }
+}
+
+bool FrameInterleaveHandler::onPreChildrenSet(const Json::Value &value) {
+    // clear data
+    enable_          = false;
+    currentIndex_    = -1;
+    currentModeName_ = "";
+    params_.clear();
+
+    if(frameInterleaveManager_ == nullptr) {
+        LOG_WARN("The current device doesn't contain the frame interleave manager component");
+        return false;
+    }
+    enable_ = jsonmodel::JsonTraits<bool>::from(value[kEnableKey]);
+    return enable_;
+}
+
+void FrameInterleaveHandler::onSetChild(const std::string &k, const Json::Value &v, const Json::Value &parent) {
+    utils::unusedVar(parent);
+    // Save all values
+    if(k == kEnableKey) {
+        enable_ = jsonmodel::JsonTraits<bool>::from(v);
+    }
+    else if(k == kInterleaveModeKey) {
+        currentModeName_ = jsonmodel::JsonTraits<std::string>::from(v);
+    }
+    else if(k == kInterleaveConfigIndexKey) {
+        currentIndex_ = jsonmodel::JsonTraits<int>::from(v);
+    }
+    else if(k == kInterleaveParmas) {
+        if(!v.isArray()) {
+            THROW_INVALID_PARAM_EXCEPTION("Invalid value of key in fram interleave: '" + k + "'");
+        }
+        params_.clear();
+        for(Json::ArrayIndex i = 0; i < v.size(); ++i) {
+            const Json::Value   &item = v[i];
+            FrameInterleaveParam param{};
+            for(auto &keyMap: paramsKeyList_) {
+                const auto &key                   = keyMap.first;
+                int FrameInterleaveParam::*member = keyMap.second;
+                if(!item.isMember(key)) {
+                    THROW_INVALID_PARAM_EXCEPTION("Missing required field in frame interleave params: " + key);
+                }
+                param.*member = jsonmodel::JsonTraits<int>::from(item[key]);
+            }
+            params_.push_back(std::move(param));
+        }
+    }
+    else {
+        THROW_INVALID_PARAM_EXCEPTION("Invalid key of frame interleave: '" + k + "'");
+    }
+}
+
+void FrameInterleaveHandler::onPostChildrenSet() {
+    if(frameInterleaveManager_ == nullptr) {
+        LOG_WARN("The current device doesn't contain the frame interleave manager component");
+        return;
+    }
+    // Set all values
+    auto propServer = owner_->getPropertyServer();
+    propServer->setPropertyValueT<bool>(OB_PROP_FRAME_INTERLEAVE_ENABLE_BOOL, enable_);
+    if(enable_) {
+        if(!currentModeName_.empty()) {
+            // update params
+            int32_t index = 0;
+            for(const auto &param: params_) {
+                frameInterleaveManager_->updateParam(currentModeName_, param, index++);
+            }
+            // load
+            frameInterleaveManager_->loadFrameInterleave(currentModeName_);
+        }
+        // update index
+        propServer->setPropertyValueT<int>(OB_PROP_FRAME_INTERLEAVE_CONFIG_INDEX_INT, currentIndex_);
+    }
+}
+
+std::vector<std::string> FrameInterleaveHandler::onPreChildrenGet() {
+    // clear data
+    enable_          = false;
+    currentIndex_    = -1;
+    currentModeName_ = "";
+    params_.clear();
+
+    if(frameInterleaveManager_ == nullptr) {
+        LOG_WARN("The current device doesn't contain the frame interleave manager component");
+        return {};
+    }
+    // Get all values
+    auto propServer = owner_->getPropertyServer();
+    enable_         = propServer->getPropertyValueT<bool>(OB_PROP_FRAME_INTERLEAVE_ENABLE_BOOL);
+    if(enable_) {
+        currentIndex_    = propServer->getPropertyValueT<int>(OB_PROP_FRAME_INTERLEAVE_CONFIG_INDEX_INT);
+        currentModeName_ = frameInterleaveManager_->getCurrentFrameInterleaveName();
+        if(!currentModeName_.empty()) {
+            auto count = frameInterleaveManager_->getParamCount();
+            for(int32_t i = 0; i < count; i++) {
+                auto param = frameInterleaveManager_->getParam(currentModeName_, i);
+                params_.push_back(param);
+            }
+        }
+    }
+    // No any extra child nodes
+    return {};
+}
+
+Json::Value FrameInterleaveHandler::onGetChild(const std::string &k) {
+    if(k == kEnableKey) {
+        return jsonmodel::JsonTraits<bool>::to(enable_);
+    }
+    else if(k == kInterleaveModeKey) {
+        return jsonmodel::JsonTraits<std::string>::to(currentModeName_);
+    }
+    else if(k == kInterleaveConfigIndexKey) {
+        return jsonmodel::JsonTraits<int>::to(currentIndex_);
+    }
+    else if(k == kInterleaveParmas) {
+        if(params_.empty()) {
+            return Json::Value(Json::arrayValue);
+        }
+
+        Json::Value paramNode(Json::arrayValue);
+        for(const auto &param: params_) {
+            Json::Value object(Json::objectValue);
+            object[kInterleaveDepthExposureKey]      = jsonmodel::JsonTraits<int>::to(param.depthExposureTime);
+            object[kInterleaveDepthGainKey]          = jsonmodel::JsonTraits<int>::to(param.depthGain);
+            object[kInterleaveDepthBrightnessKey]    = jsonmodel::JsonTraits<int>::to(param.depthBrightness);
+            object[kInterleaveDepthAeMaxExposureKey] = jsonmodel::JsonTraits<int>::to(param.depthMaxExposure);
+            object[kInterleaveLaserControlKey]       = jsonmodel::JsonTraits<int>::to(param.laserSwitch);
+
+            paramNode.append(object);
+        }
+        return paramNode;
+    }
+    else {
+        THROW_INVALID_PARAM_EXCEPTION("Invalid key of frame interleave: '" + k + "'");
+    }
+}
+
+// RoiHandler
+RoiHandler::RoiHandler(IDevice *owner, uint32_t propertyId, OBSensorType sensorType)
+    : owner_(owner),
+      propertyId_(propertyId),
+      sensorType_(sensorType),
+      valueMap_{ { kLeftKey, &roi_.x0_left }, { kRightKey, &roi_.x1_right }, { kTopKey, &roi_.y0_top }, { kBottomKey, &roi_.y1_bottom } } {}
+
+RoiHandler::~RoiHandler() {
+    stopSetting();
+}
+
+bool RoiHandler::onPreChildrenSet(const Json::Value &value) {
+    utils::unusedVar(value);
+    stopSetting();
+    writeSupported_ = true;
+    auto propServer = owner_->getPropertyServer();
+    if(!propServer->isPropertySupported(propertyId_, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
+        writeSupported_ = false;
+        return false;
+    }
+    return true;
+}
+
+void RoiHandler::onSetChild(const std::string &k, const Json::Value &v, const Json::Value &parent) {
+    utils::unusedVar(parent);
+    if(v.isNull()) {
+        writeSupported_ = false;
+        return;
+    }
+
+    // Save all values
+    auto it = valueMap_.find(k);
+    if(it == valueMap_.end()) {
+        THROW_INVALID_PARAM_EXCEPTION("Invalid key of ROI: '" + k + "'");
+    }
+    auto data = jsonmodel::JsonTraits<int>::from(v);
+    if(data < std::numeric_limits<int16_t>::min() || data > std::numeric_limits<int16_t>::max()) {
+        THROW_INVALID_PARAM_EXCEPTION("Invalid value of ROI. '" + k + "': " + std::to_string(data));
+    }
+    *(it->second) = static_cast<int16_t>(data);
+}
+
+void RoiHandler::onPostChildrenSet() {
+    if(!writeSupported_) {
+        LOG_WARN("Unsupported ROI properties, skipping setting");
+        return;
+    }
+
+    auto sensor = owner_->getSensor(sensorType_);
+    if(!sensor) {
+        LOG_WARN("Sensor not found for ROI property '{}', skipping setting", propertyId_);
+        return;
+    }
+
+    if(sensor->isStreamActivated()) {
+        setRoiProperties();
+    }
+    else {
+        needSetting_    = true;
+        needUnregister_ = true;
+        callbackToken_  = sensor->registerStreamStateChangedCallback([this](OBStreamState state, const std::shared_ptr<const StreamProfile> &profile) {
+            utils::unusedVar(profile);
+            if(state == STREAM_STATE_STREAMING) {
+                if(!needSetting_) {
+                    return;
+                }
+                settingThread_ = std::thread([&]() {
+                    needSetting_ = false;
+                    setRoiProperties();
+                    unregisterStreamCallback();
+                });
+            }
+        });
+    }
+}
+
+void RoiHandler::stopSetting() {
+    unregisterStreamCallback();
+    if(settingThread_.joinable()) {
+        settingThread_.join();
+    }
+}
+
+void RoiHandler::unregisterStreamCallback() {
+    if(needUnregister_) {
+        TRY_EXECUTE({
+            auto sensor = owner_->getSensor(sensorType_);
+            sensor->unregisterStreamStateChangedCallback(callbackToken_);
+            needUnregister_ = false;
+        });
+    }
+}
+
+void RoiHandler::setRoiProperties() {
+    auto propServer = owner_->getPropertyServer();
+    TRY_EXECUTE({ propServer->setStructureDataT<AE_ROI>(propertyId_, roi_); });
+}
+
+std::vector<std::string> RoiHandler::onPreChildrenGet() {
+    auto propServer = owner_->getPropertyServer();
+    if(propServer->isPropertySupported(propertyId_, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
+        roi_           = propServer->getStructureDataT<AE_ROI>(propertyId_);
+        readSupported_ = true;
+    }
+    else {
+        readSupported_ = false;
+        roi_.x0_left = roi_.x1_right = roi_.y0_top = roi_.y1_bottom = 0;
+        LOG_WARN("Unsupported property '{}', skipping getting, return nullvalue", propertyId_);
+    }
+    // No any extra child nodes
+    return {};
+}
+
+Json::Value RoiHandler::onGetChild(const std::string &k) {
+    if(!readSupported_) {
+        return Json::Value(Json::nullValue);
+    }
+
+    auto it = valueMap_.find(k);
+    if(it == valueMap_.end()) {
+        THROW_INVALID_PARAM_EXCEPTION("Invalid key of ROI: '" + k + "'");
+    }
+    return jsonmodel::JsonTraits<int>::to(*(it->second));
+}
+
+// D2DHandler
+constexpr const char kDisable[]  = "disable";
+constexpr const char kHardware[] = "hardware";
+constexpr const char kSoftware[] = "software";
+D2DHandler::D2DHandler(IDevice *owner)
+    : owner_(owner), valueMap_{ { kDisable, Mode::Disable }, { kHardware, Mode::Hardware }, { kSoftware, Mode::Software } } {}
+
+void D2DHandler::set(const std::string &k, const Json::Value &v) {
+    utils::unusedVar(k);
+    auto mode = toString(v);
+    auto it   = valueMap_.find(mode);
+    if(it == valueMap_.end()) {
+        THROW_INVALID_PARAM_EXCEPTION("Invalid value of '" + k + "': " + mode);
+    }
+    auto propServer = owner_->getPropertyServer();
+    switch(it->second) {
+    case Mode::Hardware:
+        propServer->setPropertyValueT<bool>(OB_PROP_DISPARITY_TO_DEPTH_BOOL, true);
+        propServer->setPropertyValueT<bool>(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL, false);
+        break;
+    case Mode::Software:
+        propServer->setPropertyValueT<bool>(OB_PROP_DISPARITY_TO_DEPTH_BOOL, false);
+        propServer->setPropertyValueT<bool>(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL, true);
+        break;
+    case Mode::Disable:
+    default:
+        propServer->setPropertyValueT<bool>(OB_PROP_DISPARITY_TO_DEPTH_BOOL, false);
+        propServer->setPropertyValueT<bool>(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL, false);
+        break;
+    }
+}
+
+Json::Value D2DHandler::get(const std::string &k) {
+    utils::unusedVar(k);
+    auto        propServer = owner_->getPropertyServer();
+    auto        hardware   = propServer->getPropertyValueT<bool>(OB_PROP_DISPARITY_TO_DEPTH_BOOL);
+    std::string mode;
+    if(hardware) {
+        // hardware first
+        mode = kHardware;
+    }
+    else {
+        auto software = propServer->getPropertyValueT<bool>(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL);
+        if(software) {
+            mode = kSoftware;
+        }
+        else {
+            mode = kDisable;
+        }
+    }
+
+    return jsonmodel::JsonTraits<std::string>::to(mode);
+}
+
+// SoftwareNoiseRemovalFilterHandler
+bool SoftwareNoiseRemovalFilterHandler::onPreChildrenSet(const Json::Value &value) {
+    enable_ = jsonmodel::JsonTraits<bool>::from(value[kEnableKey]);
+    return enable_;
+}
+
+void SoftwareNoiseRemovalFilterHandler::onSetChild(const std::string &k, const Json::Value &v, const Json::Value &parent) {
+    utils::unusedVar(parent);
+    // Save all values
+    if(k == kEnableKey) {
+        enable_ = jsonmodel::JsonTraits<bool>::from(v);
+    }
+    else if(k == kNoiseRemovalFilterMinDifferenceKey) {
+        minDiff_ = jsonmodel::JsonTraits<int>::from(v);
+    }
+    else if(k == kNoiseRemovalFilterMaxSizeKey) {
+        maxSize_ = jsonmodel::JsonTraits<int>::from(v);
+    }
+    else {
+        THROW_INVALID_PARAM_EXCEPTION("Invalid key of software noise removal filter: '" + k + "'");
+    }
+}
+
+void SoftwareNoiseRemovalFilterHandler::onPostChildrenSet() {
+    // Set all values
+    auto propServer = owner_->getPropertyServer();
+    propServer->setPropertyValueT<bool>(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL, enable_);
+    if(enable_) {
+        propServer->setPropertyValueT<int>(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT, minDiff_);
+        propServer->setPropertyValueT<int>(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_SPECKLE_SIZE_INT, maxSize_);
+    }
+}
+
+std::vector<std::string> SoftwareNoiseRemovalFilterHandler::onPreChildrenGet() {
+    // Get all values
+    auto propServer = owner_->getPropertyServer();
+    enable_         = propServer->getPropertyValueT<bool>(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL);
+    minDiff_        = propServer->getPropertyValueT<int>(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT);
+    maxSize_        = propServer->getPropertyValueT<int>(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_SPECKLE_SIZE_INT);
+
+    // No any extra child nodes
+    return {};
+}
+
+Json::Value SoftwareNoiseRemovalFilterHandler::onGetChild(const std::string &k) {
+    if(k == kEnableKey) {
+        return jsonmodel::JsonTraits<bool>::to(enable_);
+    }
+    else if(k == kNoiseRemovalFilterMinDifferenceKey) {
+        return jsonmodel::JsonTraits<int>::to(minDiff_);
+    }
+    else if(k == kNoiseRemovalFilterMaxSizeKey) {
+        return jsonmodel::JsonTraits<int>::to(maxSize_);
+    }
+    else {
+        THROW_INVALID_PARAM_EXCEPTION("Invalid key of software noise removal filter: '" + k + "'");
+    }
+}
+
+// HardwareNoiseRemovalFilterHandler
+bool HardwareNoiseRemovalFilterHandler::onPreChildrenSet(const Json::Value &value) {
+    enable_ = jsonmodel::JsonTraits<bool>::from(value[kEnableKey]);
+    return enable_;
+}
+
+void HardwareNoiseRemovalFilterHandler::onSetChild(const std::string &k, const Json::Value &v, const Json::Value &parent) {
+    utils::unusedVar(parent);
+    // Save all values
+    if(k == kEnableKey) {
+        enable_ = jsonmodel::JsonTraits<bool>::from(v);
+    }
+    else if(k == kNoiseRemovalFilterThresholdKey) {
+        threshold_ = jsonmodel::JsonTraits<float>::from(v);
+    }
+    else {
+        THROW_INVALID_PARAM_EXCEPTION("Invalid key of hardware noise removal filter: '" + k + "'");
+    }
+}
+
+void HardwareNoiseRemovalFilterHandler::onPostChildrenSet() {
+    // Set all values
+    auto propServer = owner_->getPropertyServer();
+    propServer->setPropertyValueT<bool>(OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL, enable_);
+    if(enable_) {
+        propServer->setPropertyValueT<float>(OB_PROP_HW_NOISE_REMOVE_FILTER_THRESHOLD_FLOAT, threshold_);
+    }
+}
+
+std::vector<std::string> HardwareNoiseRemovalFilterHandler::onPreChildrenGet() {
+    // Get all values
+    auto propServer = owner_->getPropertyServer();
+    enable_         = propServer->getPropertyValueT<bool>(OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL);
+    threshold_      = propServer->getPropertyValueT<float>(OB_PROP_HW_NOISE_REMOVE_FILTER_THRESHOLD_FLOAT);
+
+    // No any extra child nodes
+    return {};
+}
+
+Json::Value HardwareNoiseRemovalFilterHandler::onGetChild(const std::string &k) {
+    if(k == kEnableKey) {
+        return jsonmodel::JsonTraits<bool>::to(enable_);
+    }
+    else if(k == kNoiseRemovalFilterThresholdKey) {
+        return jsonmodel::JsonTraits<float>::to(threshold_);
+    }
+    else {
+        THROW_INVALID_PARAM_EXCEPTION("Invalid key of hardware noise removal filter: '" + k + "'");
+    }
+}
+
+// DisparitySearchHandler
+DisparitySearchHandler::~DisparitySearchHandler() {
+    stopSetting();
+}
+
+void DisparitySearchHandler::stopSetting() {
+    unregisterStreamCallback();
+    if(settingThread_.joinable()) {
+        settingThread_.join();
+    }
+}
+
+void DisparitySearchHandler::unregisterStreamCallback() {
+    if(needUnregister_) {
+        TRY_EXECUTE({
+            auto sensor = owner_->getSensor(OB_SENSOR_DEPTH);
+            sensor->unregisterStreamStateChangedCallback(callbackToken_);
+            needUnregister_ = false;
+        });
+    }
+}
+
+void DisparitySearchHandler::setDisparitySearchProperties() {
+    TRY_EXECUTE({
+        auto propServer = owner_->getPropertyServer();
+        propServer->setPropertyValueT<int>(OB_PROP_DISP_SEARCH_RANGE_MODE_INT, rangeMode_);
+        propServer->setPropertyValueT<int>(OB_PROP_DISP_SEARCH_OFFSET_INT, searchOffset_);
+    });
+}
+
+bool DisparitySearchHandler::onPreChildrenSet(const Json::Value &value) {
+    utils::unusedVar(value);
+    stopSetting();
+    // clear data
+    rangeMode_    = 0;
+    searchOffset_ = 0;
+    // check permission
+    writeSupported_ = true;
+    auto propServer = owner_->getPropertyServer();
+    if(!propServer->isPropertySupported(OB_PROP_DISP_SEARCH_RANGE_MODE_INT, PROP_OP_WRITE, PROP_ACCESS_INTERNAL)
+       || !propServer->isPropertySupported(OB_PROP_DISP_SEARCH_OFFSET_INT, PROP_OP_WRITE, PROP_ACCESS_INTERNAL)) {
+        writeSupported_ = false;
+        return false;
+    }
+    return true;
+}
+
+void DisparitySearchHandler::onSetChild(const std::string &k, const Json::Value &v, const Json::Value &parent) {
+    utils::unusedVar(parent);
+    if(v.isNull()) {
+        writeSupported_ = false;
+        return;
+    }
+
+    // Save all values
+    if(k == kDisparitySearchRangeModeKey) {
+        rangeMode_ = jsonmodel::JsonTraits<int>::from(v);
+    }
+    else if(k == kDisparitySearchOffsetKey) {
+        searchOffset_ = jsonmodel::JsonTraits<int>::from(v);
+    }
+    else {
+        THROW_INVALID_PARAM_EXCEPTION("Invalid key of disparity search: '" + k + "'");
+    }
+}
+
+void DisparitySearchHandler::onPostChildrenSet() {
+    if(!writeSupported_) {
+        LOG_WARN("Unsupported disparity search properties, skipping setting");
+        return;
+    }
+
+    // Set all values when depth stream is on
+    auto sensor = owner_->getSensor(OB_SENSOR_DEPTH);
+    if(sensor->isStreamActivated()) {
+        setDisparitySearchProperties();
+    }
+    else {
+        // depth stream is off, start a thread to set to prevent potential deadlock when stream is on
+        needSetting_    = true;
+        needUnregister_ = true;
+        callbackToken_  = sensor->registerStreamStateChangedCallback([this](OBStreamState state, const std::shared_ptr<const StreamProfile> &profile) {
+            utils::unusedVar(profile);
+            if(state == STREAM_STATE_STREAMING) {
+                if(!needSetting_) {
+                    return;
+                }
+                settingThread_ = std::thread([&]() {
+                    needSetting_ = false;
+                    // set properties
+                    setDisparitySearchProperties();
+                    // unregister callback
+                    unregisterStreamCallback();
+                });
+            }
+        });
+    }
+}
+
+std::vector<std::string> DisparitySearchHandler::onPreChildrenGet() {
+    // clear data
+    rangeMode_    = 0;
+    searchOffset_ = 0;
+    // check permission
+    readSupported_  = true;
+    auto propServer = owner_->getPropertyServer();
+    if(!propServer->isPropertySupported(OB_PROP_DISP_SEARCH_RANGE_MODE_INT, PROP_OP_READ, PROP_ACCESS_INTERNAL)
+       || !propServer->isPropertySupported(OB_PROP_DISP_SEARCH_OFFSET_INT, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
+        readSupported_ = false;
+        return {};
+    }
+    // Get all values
+    rangeMode_    = propServer->getPropertyValueT<int>(OB_PROP_DISP_SEARCH_RANGE_MODE_INT);
+    searchOffset_ = propServer->getPropertyValueT<int>(OB_PROP_DISP_SEARCH_OFFSET_INT);
+    // No any extra child nodes
+    return {};
+}
+
+Json::Value DisparitySearchHandler::onGetChild(const std::string &k) {  // Save all values
+    if(!readSupported_) {
+        return Json::Value(Json::nullValue);
+    }
+
+    if(k == kDisparitySearchRangeModeKey) {
+        return jsonmodel::JsonTraits<int>::to(rangeMode_);
+    }
+    else if(k == kDisparitySearchOffsetKey) {
+        return jsonmodel::JsonTraits<int>::to(searchOffset_);
+    }
+    else {
+        THROW_INVALID_PARAM_EXCEPTION("Invalid key of disparity search: '" + k + "'");
+    }
+}
+
+// DepthWorkModeHandler
+void DepthWorkModeHandler::set(const std::string &k, const Json::Value &v) {
+    utils::unusedVar(k);
+    auto value                = jsonmodel::JsonTraits<std::string>::from(v);
+    auto depthWorkModeManager = owner_->getComponentT<IDepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
+    depthWorkModeManager->switchDepthWorkMode(value);
+}
+
+Json::Value DepthWorkModeHandler::get(const std::string &k) {
+    utils::unusedVar(k);
+    auto depthWorkModeManager = owner_->getComponentT<IDepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
+    auto workMode             = depthWorkModeManager->getCurrentDepthWorkMode();
+    return jsonmodel::JsonTraits<std::string>::to(workMode.name);
+}
+
+// HeartbeatHandler
+void HeartbeatHandler::set(const std::string &k, const Json::Value &v) {
+    utils::unusedVar(k);
+    auto monitor = owner_->getComponentT<IDeviceMonitor>(OB_DEV_COMPONENT_DEVICE_MONITOR, false);
+    if(!monitor) {
+        LOG_WARN("Device monitor not available, skipping heartbeat setting");
+        return;
+    }
+    bool enabled = jsonmodel::JsonTraits<bool>::from(v);
+    if(enabled) {
+        monitor->enableHeartbeat();
+    }
+    else {
+        monitor->disableHeartbeat();
+    }
+}
+
+Json::Value HeartbeatHandler::get(const std::string &k) {
+    utils::unusedVar(k);
+    auto monitor = owner_->getComponentT<IDeviceMonitor>(OB_DEV_COMPONENT_DEVICE_MONITOR, false);
+    if(!monitor) {
+        return Json::Value(Json::nullValue);
+    }
+    return jsonmodel::JsonTraits<bool>::to(monitor->isHeartbeatEnabled());
+}
+
+}  // namespace libobsensor
