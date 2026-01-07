@@ -451,6 +451,11 @@ bool DeviceBase::hasAnySensorStreamActivated() {
 }
 
 std::vector<std::shared_ptr<IFilter>> DeviceBase::createRecommendedPostProcessingFilters(OBSensorType type) {
+    auto it = recommendedPostFilters_.find(type);
+    if(it != recommendedPostFilters_.end()) {
+        return it->second;
+    }
+
     if(type == OB_SENSOR_DEPTH) {
         auto                                  filterFactory = FilterFactory::getInstance();
         std::vector<std::shared_ptr<IFilter>> depthFilterList;
@@ -458,6 +463,7 @@ std::vector<std::shared_ptr<IFilter>> DeviceBase::createRecommendedPostProcessin
             auto ThresholdFilter = filterFactory->createFilter("ThresholdFilter");
             depthFilterList.push_back(ThresholdFilter);
         }
+        recommendedPostFilters_[type] = depthFilterList;
         return depthFilterList;
     }
     return {};

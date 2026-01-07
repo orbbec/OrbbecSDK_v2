@@ -135,6 +135,9 @@ protected:
     std::atomic<bool>                            hasAccessControl_{ false };
     std::atomic<OBDeviceAccessMode>              accessMode_{ OB_DEVICE_DEFAULT_ACCESS };
 
+    // Post processing filter list
+    std::map<OBSensorType, std::vector<std::shared_ptr<IFilter>>> recommendedPostFilters_;
+
 private:
     std::shared_ptr<Context> ctx_;  // handle the lifespan of the context
 

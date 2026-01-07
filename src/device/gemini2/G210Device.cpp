@@ -496,7 +496,12 @@ void G210Device::initProperties() {
 }
 
 std::vector<std::shared_ptr<IFilter>> G210Device::createRecommendedPostProcessingFilters(OBSensorType type) {
-    utils::unusedVar(type);
+    // first: find from cache
+    auto it = recommendedPostFilters_.find(type);
+    if(it != recommendedPostFilters_.end()) {
+        return it->second;
+    }
+    // Create new if no found
     return {};
 }
 

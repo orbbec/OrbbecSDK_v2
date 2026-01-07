@@ -102,6 +102,12 @@ std::vector<std::shared_ptr<IFilter>> G2XLDeviceBase::createRecommendedPostProce
     if(type != OB_SENSOR_DEPTH) {
         return {};
     }
+    // first: find from cache
+    auto it = recommendedPostFilters_.find(type);
+    if(it != recommendedPostFilters_.end()) {
+        return it->second;
+    }
+    // Create new if no found
     auto                                  filterFactory = FilterFactory::getInstance();
     std::vector<std::shared_ptr<IFilter>> depthFilterList;
 
@@ -147,6 +153,7 @@ std::vector<std::shared_ptr<IFilter>> G2XLDeviceBase::createRecommendedPostProce
         depthFilterList.push_back(ThresholdFilter);
     }
 
+    recommendedPostFilters_[type] = depthFilterList;
     return depthFilterList;
 }
 

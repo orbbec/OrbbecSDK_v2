@@ -758,10 +758,18 @@ void PlaybackDevice::initProperties() {
 }
 
 std::vector<std::shared_ptr<IFilter>> PlaybackDevice::createRecommendedPostProcessingFilters(OBSensorType type) {
+    // first: find from cache
+    auto it = recommendedPostFilters_.find(type);
+    if(it != recommendedPostFilters_.end()) {
+        return it->second;
+    }
+    // Create new if no found
     auto filterStrategyFactory = FilterCreationStrategyFactory::getInstance();  // namespace playback
     auto filterStrategy        = filterStrategyFactory->create(deviceInfo_->vid_, deviceInfo_->pid_, this);
     if(filterStrategy) {
-        return filterStrategy->createFilters(type);
+        auto filters                  = filterStrategy->createFilters(type);
+        recommendedPostFilters_[type] = filters;
+        return filters;
     }
     return {};
 }

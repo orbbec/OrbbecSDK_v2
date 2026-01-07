@@ -1276,11 +1276,12 @@ void G330Device::initProperties() {
 }
 
 std::vector<std::shared_ptr<IFilter>> G330Device::createRecommendedPostProcessingFilters(OBSensorType type) {
-    auto filterIter = sensorFilterListMap_.find(type);
-    if(filterIter != sensorFilterListMap_.end()) {
-        return filterIter->second;
+    // first: find from cache
+    auto it = recommendedPostFilters_.find(type);
+    if(it != recommendedPostFilters_.end()) {
+        return it->second;
     }
-
+    // Create new if no found
     auto filterFactory = FilterFactory::getInstance();
     if(type == OB_SENSOR_DEPTH) {
         // activate depth frame processor library
@@ -1404,7 +1405,7 @@ std::vector<std::shared_ptr<IFilter>> G330Device::createRecommendedPostProcessin
             dtFilter->enable(true);
             depthFilterList.push_back(dtFilter);
         }
-        sensorFilterListMap_[OB_SENSOR_DEPTH] = depthFilterList;
+        recommendedPostFilters_[type] = depthFilterList;
         return depthFilterList;
     }
     else if(type == OB_SENSOR_COLOR) {
@@ -1417,7 +1418,7 @@ std::vector<std::shared_ptr<IFilter>> G330Device::createRecommendedPostProcessin
             decimationFilter->enable(false);
             colorFilterList.push_back(decimationFilter);
         }
-        sensorFilterListMap_[OB_SENSOR_COLOR] = colorFilterList;
+        recommendedPostFilters_[type] = colorFilterList;
         return colorFilterList;
     }
     else if(type == OB_SENSOR_IR_LEFT) {
@@ -1427,9 +1428,9 @@ std::vector<std::shared_ptr<IFilter>> G330Device::createRecommendedPostProcessin
             auto sequenceIdFilter = filterFactory->createFilter("SequenceIdFilter");
             sequenceIdFilter->enable(false);
             leftIRFilterList.push_back(sequenceIdFilter);
-            sensorFilterListMap_[OB_SENSOR_IR_LEFT] = leftIRFilterList;
-            return leftIRFilterList;
         }
+        recommendedPostFilters_[type] = leftIRFilterList;
+        return leftIRFilterList;
     }
     else if(type == OB_SENSOR_IR_RIGHT) {
         getComponentT<FrameProcessor>(OB_DEV_COMPONENT_RIGHT_IR_FRAME_PROCESSOR, false);
@@ -1438,9 +1439,9 @@ std::vector<std::shared_ptr<IFilter>> G330Device::createRecommendedPostProcessin
             auto sequenceIdFilter = filterFactory->createFilter("SequenceIdFilter");
             sequenceIdFilter->enable(false);
             rightIRFilterList.push_back(sequenceIdFilter);
-            sensorFilterListMap_[OB_SENSOR_IR_RIGHT] = rightIRFilterList;
-            return rightIRFilterList;
         }
+        recommendedPostFilters_[type] = rightIRFilterList;
+        return rightIRFilterList;
     }
 
     return {};
@@ -1486,8 +1487,8 @@ void G330Device::updateDepthPostProcessingFilterList() {
     auto depthPostFilterParamsManager = getComponentT<DepthPostFilterParamsManager>(OB_DEV_COMPONENT_DEPTH_POST_FILTER_PARAMS_MANAGER, false);
     if(depthPostFilterParamsManager) {
         // Update recommended filters
-        auto filterIter = sensorFilterListMap_.find(OB_SENSOR_DEPTH);
-        if(filterIter != sensorFilterListMap_.end()) {
+        auto filterIter = recommendedPostFilters_.find(OB_SENSOR_DEPTH);
+        if(filterIter != recommendedPostFilters_.end()) {
             std::vector<std::shared_ptr<IFilter>> newDepthFilterList;
             std::vector<std::shared_ptr<IFilter>> depthFilterList = filterIter->second;
             for(const auto &filter: depthFilterList) {
@@ -1519,7 +1520,7 @@ void G330Device::updateDepthPostProcessingFilterList() {
                 }
                 newDepthFilterList.push_back(filter);
             }
-            sensorFilterListMap_[OB_SENSOR_DEPTH] = newDepthFilterList;
+            recommendedPostFilters_[OB_SENSOR_DEPTH] = newDepthFilterList;
         }
 
         // Update NoiseRemovalFilter
@@ -2415,11 +2416,12 @@ void G330NetDevice::initProperties() {
 }
 
 std::vector<std::shared_ptr<IFilter>> G330NetDevice::createRecommendedPostProcessingFilters(OBSensorType type) {
-    auto filterIter = sensorFilterListMap_.find(type);
-    if(filterIter != sensorFilterListMap_.end()) {
-        return filterIter->second;
+    // first: find from cache
+    auto it = recommendedPostFilters_.find(type);
+    if(it != recommendedPostFilters_.end()) {
+        return it->second;
     }
-
+    // Create new if no found
     auto filterFactory = FilterFactory::getInstance();
     if(type == OB_SENSOR_DEPTH) {
         // activate depth frame processor library
@@ -2543,8 +2545,7 @@ std::vector<std::shared_ptr<IFilter>> G330NetDevice::createRecommendedPostProces
             dtFilter->enable(true);
             depthFilterList.push_back(dtFilter);
         }
-
-        sensorFilterListMap_[OB_SENSOR_DEPTH] = depthFilterList;
+        recommendedPostFilters_[type] = depthFilterList;
         return depthFilterList;
     }
     else if(type == OB_SENSOR_COLOR) {
@@ -2557,7 +2558,7 @@ std::vector<std::shared_ptr<IFilter>> G330NetDevice::createRecommendedPostProces
             decimationFilter->enable(false);
             colorFilterList.push_back(decimationFilter);
         }
-        sensorFilterListMap_[OB_SENSOR_COLOR] = colorFilterList;
+        recommendedPostFilters_[type] = colorFilterList;
         return colorFilterList;
     }
     else if(type == OB_SENSOR_IR_LEFT) {
@@ -2567,9 +2568,9 @@ std::vector<std::shared_ptr<IFilter>> G330NetDevice::createRecommendedPostProces
             auto sequenceIdFilter = filterFactory->createFilter("SequenceIdFilter");
             sequenceIdFilter->enable(false);
             leftIRFilterList.push_back(sequenceIdFilter);
-            sensorFilterListMap_[OB_SENSOR_IR_LEFT] = leftIRFilterList;
-            return leftIRFilterList;
         }
+        recommendedPostFilters_[type] = leftIRFilterList;
+        return leftIRFilterList;
     }
     else if(type == OB_SENSOR_IR_RIGHT) {
         getComponentT<FrameProcessor>(OB_DEV_COMPONENT_RIGHT_IR_FRAME_PROCESSOR, false);
@@ -2578,9 +2579,9 @@ std::vector<std::shared_ptr<IFilter>> G330NetDevice::createRecommendedPostProces
             auto sequenceIdFilter = filterFactory->createFilter("SequenceIdFilter");
             sequenceIdFilter->enable(false);
             rightIRFilterList.push_back(sequenceIdFilter);
-            sensorFilterListMap_[OB_SENSOR_IR_RIGHT] = rightIRFilterList;
-            return rightIRFilterList;
         }
+        recommendedPostFilters_[type] = rightIRFilterList;
+        return rightIRFilterList;
     }
 
     return {};
@@ -2590,8 +2591,8 @@ void G330NetDevice::updateDepthPostProcessingFilterList() {
     auto depthPostFilterParamsManager = getComponentT<DepthPostFilterParamsManager>(OB_DEV_COMPONENT_DEPTH_POST_FILTER_PARAMS_MANAGER, false);
     if(depthPostFilterParamsManager) {
         // Update recommended filters
-        auto filterIter = sensorFilterListMap_.find(OB_SENSOR_DEPTH);
-        if(filterIter != sensorFilterListMap_.end()) {
+        auto filterIter = recommendedPostFilters_.find(OB_SENSOR_DEPTH);
+        if(filterIter != recommendedPostFilters_.end()) {
             std::vector<std::shared_ptr<IFilter>> newDepthFilterList;
             std::vector<std::shared_ptr<IFilter>> depthFilterList = filterIter->second;
             for(const auto &filter: depthFilterList) {
@@ -2623,7 +2624,7 @@ void G330NetDevice::updateDepthPostProcessingFilterList() {
                 }
                 newDepthFilterList.push_back(filter);
             }
-            sensorFilterListMap_[OB_SENSOR_DEPTH] = newDepthFilterList;
+            recommendedPostFilters_[OB_SENSOR_DEPTH] = newDepthFilterList;
         }
 
         // Update NoiseRemovalFilter

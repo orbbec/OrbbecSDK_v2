@@ -518,6 +518,12 @@ void Astra2Device::initProperties() {
 }
 
 std::vector<std::shared_ptr<IFilter>> Astra2Device::createRecommendedPostProcessingFilters(OBSensorType type) {
+    // first: find from cache
+    auto it = recommendedPostFilters_.find(type);
+    if(it != recommendedPostFilters_.end()) {
+        return it->second;
+    }
+    // Create new if no found
     auto filterFactory = FilterFactory::getInstance();
     if(type == OB_SENSOR_DEPTH) {
         std::vector<std::shared_ptr<IFilter>> depthFilterList;
@@ -564,6 +570,7 @@ std::vector<std::shared_ptr<IFilter>> Astra2Device::createRecommendedPostProcess
                 filter->enable(false);
             }
         }
+        recommendedPostFilters_[type] = depthFilterList;
         return depthFilterList;
     }
     else if(type == OB_SENSOR_COLOR) {
@@ -573,6 +580,7 @@ std::vector<std::shared_ptr<IFilter>> Astra2Device::createRecommendedPostProcess
             decimationFilter->enable(false);
             colorFilterList.push_back(decimationFilter);
         }
+        recommendedPostFilters_[type] = colorFilterList;
         return colorFilterList;
     }
 

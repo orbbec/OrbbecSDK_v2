@@ -36,8 +36,6 @@ private:
     const uint64_t                                              frameTimeFreq_  = 1000000;  // in us
     std::function<std::shared_ptr<IFrameTimestampCalculator>()> videoFrameTimestampCalculatorCreator_;
     bool                                                        isGmslDevice_;
-
-    std::map<OBSensorType, std::vector<std::shared_ptr<IFilter>>> sensorFilterListMap_;
 };
 
 }  // namespace libobsensor
