@@ -55,7 +55,7 @@ static const uint8_t INTERFACE_DEPTH    = 2;
 static const uint8_t INTERFACE_RIGHT_IR = 6;
 static const uint8_t COMPAT_VERSION     = 1;  // 1:Supports embedding metadata into color data streams in MJPEG format.​
 
-G435LeDeviceBase::G435LeDeviceBase(const std::shared_ptr<const IDeviceEnumInfo> &info) : DeviceBase(info) {}
+G435LeDeviceBase::G435LeDeviceBase(const std::shared_ptr<const IDeviceEnumInfo> &info, OBDeviceAccessMode accessMode) : DeviceBase(info, accessMode) {}
 G435LeDeviceBase::~G435LeDeviceBase() noexcept {}
 
 void G435LeDeviceBase::init() {
@@ -263,7 +263,7 @@ void G435LeDeviceBase::updateDefaultStreamProfile(std::shared_ptr<libobsensor::I
     }
 }
 
-G435LeDevice::G435LeDevice(const std::shared_ptr<const IDeviceEnumInfo> &info) : G435LeDeviceBase(info) {
+G435LeDevice::G435LeDevice(const std::shared_ptr<const IDeviceEnumInfo> &info, OBDeviceAccessMode accessMode) : G435LeDeviceBase(info, accessMode) {
     init();
 
     // check and start heartbeat after initialization is complete
@@ -272,6 +272,7 @@ G435LeDevice::G435LeDevice(const std::shared_ptr<const IDeviceEnumInfo> &info) :
 G435LeDevice::~G435LeDevice() noexcept {}
 
 void G435LeDevice::init() {
+    checkAndAcquireCCP();
     initSensorList();
     initProperties();
     G435LeDeviceBase::init();
@@ -331,15 +332,19 @@ void G435LeDevice::initSensorList() {
                 }
 
                 auto propServer = getPropertyServer();
+                BEGIN_TRY_EXECUTE({ propServer->setPropertyValueT<bool>(OB_PROP_DISPARITY_TO_DEPTH_BOOL, true); })
+                CATCH_EXCEPTION_AND_EXECUTE({ LOG_ERROR("Set disparity to depth failed!"); })
 
-                propServer->setPropertyValueT<bool>(OB_PROP_DISPARITY_TO_DEPTH_BOOL, true);
-                propServer->setPropertyValueT<bool>(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL, false);
+                BEGIN_TRY_EXECUTE({ propServer->setPropertyValueT<bool>(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL, false); })
+                CATCH_EXCEPTION_AND_EXECUTE({ LOG_ERROR("Set SDK disparity to depth failed!"); })
+
                 sensor->markOutputDisparityFrame(false);
 
                 auto depthPrecisionRange = propServer->getPropertyRangeT<int32_t>(OB_PROP_DEPTH_PRECISION_LEVEL_INT);
                 LOG_DEBUG("Depth precision level range: min={}, max={}, def={}, cur={}", depthPrecisionRange.min, depthPrecisionRange.max,
                           depthPrecisionRange.def, depthPrecisionRange.cur);
-                propServer->setPropertyValueT(OB_PROP_DEPTH_PRECISION_LEVEL_INT, depthPrecisionRange.def);
+                BEGIN_TRY_EXECUTE({ propServer->setPropertyValueT(OB_PROP_DEPTH_PRECISION_LEVEL_INT, depthPrecisionRange.def); })
+                CATCH_EXCEPTION_AND_EXECUTE({ LOG_ERROR("Set depth precision level failed!"); })
                 sensor->setDepthUnit(utils::depthPrecisionLevelToUnit((OBDepthPrecisionLevel)depthPrecisionRange.def));
 
                 initSensorStreamProfile(sensor);
@@ -972,4 +977,13 @@ void G435LeDevice::fetchDeviceInfo() {
     extensionInfo_["MCUVersion"]               = version.subSystemVersion;
 }
 
+void G435LeDevice::checkAndAcquireCCP() {
+    ccpController_ = std::make_shared<GigECcpController>(enumInfo_, "1.3.12");
+    if(!ccpController_->isSupported()) {
+        return;
+    }
+    ccpController_->acquireControl(accessMode_);
+    hasAccessControl_ = true;
+    accessMode_       = ccpController_->getState();
+}
 }  // namespace libobsensor

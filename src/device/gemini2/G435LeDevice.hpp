@@ -5,6 +5,7 @@
 #include "DeviceBase.hpp"
 #include "IDeviceManager.hpp"
 #include "frameprocessor/FrameProcessor.hpp"
+#include "accesscontroller/GigECcpController.hpp"
 
 #include <map>
 #include <memory>
@@ -12,7 +13,7 @@
 namespace libobsensor {
 class G435LeDeviceBase : public DeviceBase {
 public:
-    G435LeDeviceBase(const std::shared_ptr<const IDeviceEnumInfo> &info);
+    G435LeDeviceBase(const std::shared_ptr<const IDeviceEnumInfo> &info, OBDeviceAccessMode accessMode);
     virtual ~G435LeDeviceBase() noexcept override;
 
     void init() override;
@@ -30,7 +31,7 @@ protected:
 
 class G435LeDevice : public G435LeDeviceBase {
 public:
-    G435LeDevice(const std::shared_ptr<const IDeviceEnumInfo> &info);
+    G435LeDevice(const std::shared_ptr<const IDeviceEnumInfo> &info, OBDeviceAccessMode accessMode);
     virtual ~G435LeDevice() noexcept override;
 
 private:
@@ -41,10 +42,12 @@ private:
     void updateSensorStreamProfile();
 
     void fetchDeviceInfo() override;
+    void checkAndAcquireCCP();
 
 private:
-    const uint64_t frameTimeFreq_      = 1000;
-    const uint64_t colorframeTimeFreq_ = 90000;
+    const uint64_t                     frameTimeFreq_      = 1000;
+    const uint64_t                     colorframeTimeFreq_ = 90000;
+    std::shared_ptr<GigECcpController> ccpController_;
 };
 
 }  // namespace libobsensor

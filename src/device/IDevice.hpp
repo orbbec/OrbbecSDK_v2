@@ -118,6 +118,9 @@ public:
     // register callback for device reboot
     virtual void registerRebootCallback(DeviceRebootCallback callback) = 0;
 
+    // check if device has write access
+    virtual bool hasWriteAccess() const = 0;
+
 public:
     // templated functions
     template <typename T> DeviceComponentPtr<T> getComponentT(DeviceComponentId compId, bool throwExIfNotFound = true) {

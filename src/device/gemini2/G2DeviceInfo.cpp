@@ -89,10 +89,7 @@ G2DeviceInfo::~G2DeviceInfo() noexcept {}
 std::shared_ptr<IDevice> G2DeviceInfo::createDevice(OBDeviceAccessMode accessMode) const {
     (void)accessMode;  // access control is unsupported
     if(isDeviceInContainer(G435LeDevPids, vid_, pid_)) {
-        if(IS_NET_PORT(sourcePortInfoList_.front()->portType)) {
-            return std::make_shared<G435LeDevice>(shared_from_this());
-        }
-        return std::make_shared<G435LeDevice>(shared_from_this());
+        return std::make_shared<G435LeDevice>(shared_from_this(), accessMode);
     }
     else if(vid_ == ORBBEC_DEVICE_VID) {
         if(pid_ == 0x0671) {

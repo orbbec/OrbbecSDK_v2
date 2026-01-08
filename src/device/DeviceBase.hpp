@@ -104,12 +104,13 @@ public:
 
     void registerRebootCallback(DeviceRebootCallback callback) override;
 
+    bool hasWriteAccess() const override;
+
 protected:
     // implement on subclass, and must be called to initialize the device info on construction
     virtual void        fetchDeviceInfo();
     virtual void        fetchExtensionInfo();
     DeviceComponentLock tryLockResource();
-    bool                hasWriteAccess() const;
 
     std::shared_ptr<ISourcePort> getSourcePort(std::shared_ptr<const SourcePortInfo> sourcePortInfo) const;
 

@@ -436,6 +436,12 @@ void SensorBase::outputFrame(std::shared_ptr<Frame> frame) {
 void SensorBase::validateDeviceState(const std::shared_ptr<const StreamProfile> &profile) {
     auto device = getOwner();
 
+    if(!device->hasWriteAccess()) {
+        std::ostringstream oss;
+        oss << "The current access mode is " << device->getAccessMode() << " and does not allow write operations";
+        throw access_denied_exception(oss.str());
+    }
+
     // check if device firmware upgrade is in progress
     if(device->isFirmwareUpdating()) {
         throw libobsensor::wrong_api_call_sequence_exception("Device firmware is currently upgrading, stream cannot be started now!");
