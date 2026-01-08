@@ -27,49 +27,64 @@ G330PresetManager::G330PresetManager(IDevice *owner) : DeviceComponentBase(owner
     }
 
     if(!owner->isPlaybackDevice()) {
-        auto propServer = owner->getPropertyServer();
-        propServer->registerAccessCallback(
-            {
-                OB_PROP_LASER_CONTROL_INT,
-                OB_PROP_LASER_POWER_LEVEL_CONTROL_INT,
-                OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL,
-                OB_PROP_IR_AUTO_EXPOSURE_BOOL,
-                OB_PROP_DEPTH_EXPOSURE_INT,
-                OB_PROP_IR_EXPOSURE_INT,
-                OB_PROP_DEPTH_GAIN_INT,
-                OB_PROP_IR_GAIN_INT,
-                OB_PROP_IR_BRIGHTNESS_INT,
-                OB_PROP_COLOR_AUTO_EXPOSURE_BOOL,
-                OB_PROP_COLOR_EXPOSURE_INT,
-                OB_PROP_COLOR_AUTO_WHITE_BALANCE_BOOL,
-                OB_PROP_COLOR_WHITE_BALANCE_INT,
-                OB_PROP_COLOR_GAIN_INT,
-                OB_PROP_COLOR_CONTRAST_INT,
-                OB_PROP_COLOR_SATURATION_INT,
-                OB_PROP_COLOR_SHARPNESS_INT,
-                OB_PROP_COLOR_BRIGHTNESS_INT,
-                OB_PROP_COLOR_HUE_INT,
-                OB_PROP_COLOR_GAMMA_INT,
-                OB_PROP_COLOR_BACKLIGHT_COMPENSATION_INT,
-                OB_PROP_COLOR_POWER_LINE_FREQUENCY_INT,
-                OB_PROP_FRAME_INTERLEAVE_ENABLE_BOOL,
-                OB_PROP_FRAME_INTERLEAVE_CONFIG_INDEX_INT,
-                OB_PROP_IR_AE_MAX_EXPOSURE_INT,
-                OB_STRUCT_DEPTH_AE_ROI,
-                OB_STRUCT_COLOR_AE_ROI,
-                OB_PROP_DISPARITY_TO_DEPTH_BOOL,
-                OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL,
-                OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL,
-                OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT,
-                OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_SPECKLE_SIZE_INT,
-                OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL,
-                OB_PROP_HW_NOISE_REMOVE_FILTER_THRESHOLD_FLOAT,
-            },
-            [&](uint32_t, const uint8_t *, size_t, PropertyOperationType operationType) {
-                if(operationType == PROP_OP_WRITE) {
-                    currentPresetName_ = kCustomPresetName;
-                }
-            });
+        auto                  propServer = owner->getPropertyServer();
+        std::vector<uint32_t> propertyIds{ OB_PROP_LASER_CONTROL_INT,
+                                           OB_PROP_LASER_POWER_LEVEL_CONTROL_INT,
+                                           OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL,
+                                           OB_PROP_IR_AUTO_EXPOSURE_BOOL,
+                                           OB_PROP_DEPTH_EXPOSURE_INT,
+                                           OB_PROP_IR_EXPOSURE_INT,
+                                           OB_PROP_DEPTH_GAIN_INT,
+                                           OB_PROP_IR_GAIN_INT,
+                                           OB_PROP_IR_BRIGHTNESS_INT,
+                                           OB_PROP_COLOR_AUTO_EXPOSURE_BOOL,
+                                           OB_PROP_COLOR_EXPOSURE_INT,
+                                           OB_PROP_COLOR_AUTO_WHITE_BALANCE_BOOL,
+                                           OB_PROP_COLOR_WHITE_BALANCE_INT,
+                                           OB_PROP_COLOR_GAIN_INT,
+                                           OB_PROP_COLOR_CONTRAST_INT,
+                                           OB_PROP_COLOR_SATURATION_INT,
+                                           OB_PROP_COLOR_SHARPNESS_INT,
+                                           OB_PROP_COLOR_BRIGHTNESS_INT,
+                                           OB_PROP_COLOR_HUE_INT,
+                                           OB_PROP_COLOR_GAMMA_INT,
+                                           OB_PROP_COLOR_BACKLIGHT_COMPENSATION_INT,
+                                           OB_PROP_COLOR_POWER_LINE_FREQUENCY_INT,
+                                           OB_PROP_FRAME_INTERLEAVE_ENABLE_BOOL,
+                                           OB_PROP_FRAME_INTERLEAVE_CONFIG_INDEX_INT,
+                                           OB_PROP_IR_AE_MAX_EXPOSURE_INT,
+                                           OB_STRUCT_DEPTH_AE_ROI,
+                                           OB_STRUCT_COLOR_AE_ROI,
+                                           OB_PROP_DISPARITY_TO_DEPTH_BOOL,
+                                           OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL,
+                                           OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL,
+                                           OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT,
+                                           OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_SPECKLE_SIZE_INT,
+                                           OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL,
+                                           OB_PROP_HW_NOISE_REMOVE_FILTER_THRESHOLD_FLOAT,
+                                           OB_PROP_DEPTH_AUTO_EXPOSURE_PRIORITY_INT,
+                                           OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT,
+                                           OB_PROP_LDP_BOOL,
+                                           OB_PROP_DEPTH_FLIP_BOOL,
+                                           OB_PROP_DEPTH_MIRROR_BOOL,
+                                           OB_PROP_DEPTH_ROTATE_INT,
+                                           OB_PROP_COLOR_AUTO_EXPOSURE_PRIORITY_INT,
+                                           OB_PROP_COLOR_DENOISING_LEVEL_INT,
+                                           OB_PROP_COLOR_AE_MAX_EXPOSURE_INT,
+                                           OB_PROP_COLOR_FLIP_BOOL,
+                                           OB_PROP_COLOR_MIRROR_BOOL,
+                                           OB_PROP_COLOR_ROTATE_INT,
+                                           OB_PROP_IR_FLIP_BOOL,
+                                           OB_PROP_IR_MIRROR_BOOL,
+                                           OB_PROP_IR_ROTATE_INT,
+                                           OB_PROP_IR_RIGHT_FLIP_BOOL,
+                                           OB_PROP_IR_RIGHT_MIRROR_BOOL,
+                                           OB_PROP_IR_RIGHT_ROTATE_INT };
+        propServer->registerAccessCallback(propertyIds, [&](uint32_t, const uint8_t *, size_t, PropertyOperationType operationType) {
+            if(operationType == PROP_OP_WRITE) {
+                currentPresetName_ = kCustomPresetName;
+            }
+        });
         storeCurrentParamsAsCustomPreset(kCustomPresetName);
     }
 }

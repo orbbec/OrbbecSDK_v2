@@ -32,7 +32,8 @@ void PropertyServer::registerProperty(uint32_t propertyId, OBPermissionType user
 void PropertyServer::registerAccessCallback(uint32_t propertyId, PropertyAccessCallback callback) {
     auto it = properties_.find(propertyId);
     if(it == properties_.end()) {
-        THROW_INVALID_PARAM_EXCEPTION("Property not found to register callback, propertyId: " + std::to_string(propertyId));
+        LOG_WARN("Property not found to register callback, propertyId: {}", propertyId);
+        return;
     }
     it->second.accessCallbacks.push_back(callback);
 }
