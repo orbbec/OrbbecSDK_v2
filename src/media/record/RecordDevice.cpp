@@ -173,29 +173,11 @@ void RecordDevice::writeMetadataProperty() {
     auto devInfo = device_->getInfo();
     auto vid     = devInfo->vid_;
     auto pid     = devInfo->pid_;
-    if(devInfo->backendType_ == OB_UVC_BACKEND_TYPE_V4L2 && (isDeviceInContainer(G330DevPids, vid, pid) || isDeviceInOrbbecSeries(G305DevPids, vid, pid))) {
-        // color sensor property
-        // writePropertyT<bool>(OB_PROP_COLOR_AUTO_EXPOSURE_BOOL);
-        // writePropertyT<int>(OB_PROP_COLOR_AUTO_EXPOSURE_PRIORITY_INT);
-        // writePropertyT<bool>(OB_PROP_COLOR_AUTO_WHITE_BALANCE_BOOL);
-        // writePropertyT<int>(OB_PROP_COLOR_WHITE_BALANCE_INT);
-        // writePropertyT<int>(OB_PROP_COLOR_BRIGHTNESS_INT);
-        // writePropertyT<int>(OB_PROP_COLOR_CONTRAST_INT);
-        // writePropertyT<int>(OB_PROP_COLOR_SATURATION_INT);
-        // writePropertyT<int>(OB_PROP_COLOR_SHARPNESS_INT);
-        writePropertyT<int>(OB_PROP_COLOR_BACKLIGHT_COMPENSATION_INT);
-        // writePropertyT<int>(OB_PROP_COLOR_HUE_INT);
-        // writePropertyT<int>(OB_PROP_COLOR_GAMMA_INT);
-        // writePropertyT<int>(OB_PROP_COLOR_POWER_LINE_FREQUENCY_INT);
 
-        // depth sensor property
-        // writePropertyT<bool>(OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL);
-        writePropertyT<int>(OB_PROP_DEPTH_AUTO_EXPOSURE_PRIORITY_INT);
-
-        // depth & color struct property
+    // depth & color struct property
+    {
         std::vector<std::pair<OBPropertyID, PropertyAccessType>> propertyList = { { OB_STRUCT_DEPTH_AE_ROI, PROP_ACCESS_USER },
                                                                                   { OB_STRUCT_COLOR_AE_ROI, PROP_ACCESS_USER },
-                                                                                  { OB_STRUCT_DEPTH_HDR_CONFIG, PROP_ACCESS_USER },
                                                                                   { OB_STRUCT_DEVICE_TIME, PROP_ACCESS_INTERNAL } };
 
         auto server = device_->getPropertyServer();
@@ -222,15 +204,18 @@ void RecordDevice::writeMetadataProperty() {
     }
 
     writePropertyT<int>(OB_PROP_DISP_SEARCH_RANGE_MODE_INT);
+    writePropertyT<int>(OB_PROP_DISP_SEARCH_OFFSET_INT);
 }
 
 void RecordDevice::writeExposureAndGainProperty() {
     // laser
     writePropertyT<int>(OB_PROP_LASER_CONTROL_INT);
     writePropertyT<int>(OB_PROP_LASER_POWER_LEVEL_CONTROL_INT);
+    writePropertyT<bool>(OB_PROP_LDP_BOOL);
 
     // depth property
     writePropertyT<bool>(OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL);
+    writePropertyT<int>(OB_PROP_DEPTH_AUTO_EXPOSURE_PRIORITY_INT);
     writePropertyT<int>(OB_PROP_DEPTH_EXPOSURE_INT);
     writePropertyT<int>(OB_PROP_DEPTH_GAIN_INT);
 

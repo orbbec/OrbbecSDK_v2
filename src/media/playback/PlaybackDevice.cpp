@@ -668,6 +668,7 @@ void PlaybackDevice::initProperties() {
     // laser
     registerPropertyCondition(propertyServer, OB_PROP_LASER_CONTROL_INT, "r", "r", vendorAccessor);
     registerPropertyCondition(propertyServer, OB_PROP_LASER_POWER_LEVEL_CONTROL_INT, "r", "r", vendorAccessor);
+    registerPropertyCondition(propertyServer, OB_PROP_LDP_BOOL, "r", "r", vendorAccessor);
 
     // G305 device properties
     registerPropertyCondition(propertyServer, OB_PROP_DEVICE_AE_STRATEGY_INT, "r", "r", vendorAccessor);
@@ -714,6 +715,7 @@ void PlaybackDevice::initProperties() {
     registerPropertyCondition(propertyServer, OB_STRUCT_DEPTH_AE_ROI, "r", "r", vendorAccessor);
     registerPropertyCondition(propertyServer, OB_STRUCT_DEVICE_TIME, "r", "r", vendorAccessor);
     registerPropertyCondition(propertyServer, OB_PROP_DISP_SEARCH_RANGE_MODE_INT, "r", "r", vendorAccessor);
+    registerPropertyCondition(propertyServer, OB_PROP_DISP_SEARCH_OFFSET_INT, "r", "r", vendorAccessor);
 
     // Interleave config property
     registerPropertyCondition(propertyServer, OB_PROP_FRAME_INTERLEAVE_ENABLE_BOOL, "r", "r", vendorAccessor);
