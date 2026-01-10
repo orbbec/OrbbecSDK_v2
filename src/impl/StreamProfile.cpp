@@ -121,7 +121,7 @@ void ob_stream_profile_set_extrinsic_to_type(ob_stream_profile *source, const ob
     auto noneConstProfile = std::const_pointer_cast<libobsensor::StreamProfile>(source->profile);
     noneConstProfile->bindExtrinsicTo(type, extrinsic);
 }
-HANDLE_EXCEPTIONS_NO_RETURN(source , type /*, extrinsic*/)  // TODO: add ob_extrinsic operator<<
+HANDLE_EXCEPTIONS_NO_RETURN(source, type /*, extrinsic*/)  // TODO: add ob_extrinsic operator<<
 
 uint32_t ob_video_stream_profile_get_fps(const ob_stream_profile *profile, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(profile);
@@ -208,13 +208,13 @@ ob_camera_distortion ob_video_stream_profile_get_distortion(const ob_stream_prof
 }
 HANDLE_EXCEPTIONS_AND_RETURN(ob_camera_distortion(), profile)
 
-ob_hardware_decimation_config ob_video_stream_profile_get_down_sample_config(const ob_stream_profile *profile, ob_error **error) BEGIN_API_CALL {
+ob_hardware_decimation_config ob_video_stream_profile_get_decimation_config(const ob_stream_profile *profile, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(profile);
     if(!profile->profile->is<libobsensor::VideoStreamProfile>()) {
         throw libobsensor::unsupported_operation_exception("It's not a video stream profile!");
     }
     auto videoProfile = profile->profile->as<libobsensor::VideoStreamProfile>();
-    return videoProfile->getDownSampleConfig();
+    return videoProfile->getDecimationConfig();
 }
 HANDLE_EXCEPTIONS_AND_RETURN(ob_hardware_decimation_config(), profile)
 void ob_video_stream_profile_set_distortion(ob_stream_profile *profile, ob_camera_distortion distortion, ob_error **error) BEGIN_API_CALL {
@@ -354,11 +354,11 @@ ob_stream_profile *ob_stream_profile_list_get_video_stream_profile(const ob_stre
 }
 HANDLE_EXCEPTIONS_AND_RETURN(nullptr, profile_list, width, height, format, fps)
 
-ob_stream_profile *ob_stream_profile_list_get_video_stream_profile_by_down_sample_config(const ob_stream_profile_list *profile_list,
-                                                                                         ob_hardware_decimation_config down_sample_config, ob_format format,
-                                                                                         int fps, ob_error **error) BEGIN_API_CALL {
+ob_stream_profile *ob_stream_profile_list_get_video_stream_profile_by_decimation_config(const ob_stream_profile_list *profile_list,
+                                                                                        ob_hardware_decimation_config decimation_config, ob_format format,
+                                                                                        int fps, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(profile_list);
-    auto matchedProfileList = libobsensor::matchVideoStreamProfile(profile_list->profileList, down_sample_config, fps, format);
+    auto matchedProfileList = libobsensor::matchVideoStreamProfile(profile_list->profileList, decimation_config, fps, format);
     if(matchedProfileList.empty()) {
         throw libobsensor::invalid_value_exception("Invalid input, No matched video stream profile found!");
     }

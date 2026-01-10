@@ -16,9 +16,9 @@ namespace libobsensor {
 bool G305AlgParamManager::findBestMatchedCameraParam(const std::vector<OBCameraParam>                &cameraParamList,
                                                      const std::shared_ptr<const VideoStreamProfile> &profile, OBCameraParam &result) {
     bool found            = false;
-    auto downSampleConfig = profile->getDownSampleConfig();
-    auto width            = downSampleConfig.originWidth == 0 ? profile->getWidth() : downSampleConfig.originWidth;
-    auto height           = downSampleConfig.originHeight == 0 ? profile->getHeight() : downSampleConfig.originHeight;
+    auto decimationConfig = profile->getDecimationConfig();
+    auto width            = decimationConfig.originWidth == 0 ? profile->getWidth() : decimationConfig.originWidth;
+    auto height           = decimationConfig.originHeight == 0 ? profile->getHeight() : decimationConfig.originHeight;
 
     // match same resolution
     for(auto &param: cameraParamList) {
@@ -403,11 +403,11 @@ void G305AlgParamManager::bindIntrinsic(std::vector<std::shared_ptr<const Stream
         default:
             break;
         }
-        auto downSampleConfig = vsp->getDownSampleConfig();
-        auto originWidth      = downSampleConfig.decimationFactor == 0 ? vsp->getWidth() : downSampleConfig.originWidth;
-        auto originHeight     = downSampleConfig.decimationFactor == 0 ? vsp->getHeight() : downSampleConfig.originHeight;
-        int  scale            = originWidth / vsp->getWidth();
-        auto ratio            = 1.f / scale;
+        auto  decimationConfig = vsp->getDecimationConfig();
+        auto  originWidth      = decimationConfig.decimationFactor == 0 ? vsp->getWidth() : decimationConfig.originWidth;
+        auto  originHeight     = decimationConfig.decimationFactor == 0 ? vsp->getHeight() : decimationConfig.originHeight;
+        int   scale            = originWidth / vsp->getWidth();
+        auto  ratio            = 1.f / scale;
         float dx               = (((int)originWidth - scale * (int)vsp->getWidth()) / 2.f) + scale - 1;  // delta_w/2
         float dy               = (((int)originHeight - scale * (int)vsp->getHeight()) / 2.f) + scale - 1;
         intrinsic.fx *= ratio;

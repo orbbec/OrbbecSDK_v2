@@ -70,12 +70,12 @@ void G305SensorStreamStrategy::validateISPFirmwareVersion(const std::vector<std:
     for(auto profile: profiles) {
         auto streamType = profile->getType();
 
-        if (streamType == OB_STREAM_COLOR) {
+        if(streamType == OB_STREAM_COLOR) {
             rgbEnable = true;
             break;
         }
     }
-    if (rgbEnable) {
+    if(rgbEnable) {
         bool        needUpgrade = false;
         std::string ispFwVer    = getOwner()->getExtensionInfo(ISP_FW_VER_KEY);
         std::string ispNeedVer  = getOwner()->getExtensionInfo(ISP_NEED_VER_KEY);
@@ -127,7 +127,7 @@ void G305SensorStreamStrategy::validatePreset(const std::vector<std::shared_ptr<
     if(strncmp(currentDepthMode.name, FactoryMode, strlen(FactoryMode) + 1) == 0) {
         // Factory Calibration mode
         for(auto profile: profiles) {
-            auto        streamType  = profile->getType();
+            auto streamType = profile->getType();
             switch(streamType) {
             case OB_STREAM_IR_LEFT:
             case OB_STREAM_IR_RIGHT: {

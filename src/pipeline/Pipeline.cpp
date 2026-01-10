@@ -195,7 +195,7 @@ std::shared_ptr<Config> Pipeline::checkAndSetConfig(std::shared_ptr<const Config
         else {
             auto profile            = sp->as<VideoStreamProfile>();
             auto matchedProfileList = matchVideoStreamProfile(sensorSpList, profile->getWidth(), profile->getHeight(), profile->getFps(), profile->getFormat(),
-                                                              profile->getDownSampleConfig());
+                                                              profile->getDecimationConfig());
             if(matchedProfileList.empty()) {
                 throw invalid_value_exception(utils::string::to_string() << "No matched profile found for: " << sp);
             }
@@ -457,8 +457,8 @@ OBCameraParam Pipeline::getCameraParam(uint32_t colorWidth, uint32_t colorHeight
         matchedDepthProfileList = matchVideoStreamProfile(depthSensorSpList, depthWidth, depthHeight, OB_FPS_ANY, OB_FORMAT_ANY);
     }
     else {
-        OBHardwareDecimationConfig downSampleConfig = { depthWidth, depthHeight, decimationFactor };
-        matchedDepthProfileList                     = matchVideoStreamProfile(depthSensorSpList, downSampleConfig, OB_FPS_ANY, OB_FORMAT_ANY);
+        OBHardwareDecimationConfig decimationConfig = { depthWidth, depthHeight, decimationFactor };
+        matchedDepthProfileList                     = matchVideoStreamProfile(depthSensorSpList, decimationConfig, OB_FPS_ANY, OB_FORMAT_ANY);
     }
 
     if(matchedDepthProfileList.empty()) {

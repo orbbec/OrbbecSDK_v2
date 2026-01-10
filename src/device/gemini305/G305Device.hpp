@@ -46,9 +46,9 @@ private:
     std::shared_ptr<const StreamProfile> loadDefaultStreamProfile(OBSensorType sensorType);
     void                                 updateSensorStreamProfile();
     void                                 fixSensorList();
-    void                                 updateDownSampleConfig(std::vector<std::shared_ptr<const StreamProfile>> streamProfileList, OBSensorType sensorType);
+    void                                 updateDecimationConfig(std::vector<std::shared_ptr<const StreamProfile>> streamProfileList, OBSensorType sensorType);
     void                                 fixSensorStreamProfile(std::shared_ptr<ISensor> sensor);
-    static uint32_t                      calcDownSampleSize(int16_t originSize, uint32_t factor);
+    static uint32_t                      calcDecimationSize(int16_t originSize, uint32_t factor);
 
 private:
     const uint64_t                                              deviceTimeFreq_ = 1000;     // in ms

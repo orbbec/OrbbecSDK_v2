@@ -22,9 +22,9 @@ public:
     ~StreamProfileBackendLifeSpan();
 
 private:
-    std::shared_ptr<Logger>                      logger_;
-    std::shared_ptr<StreamIntrinsicsManager>     intrinsicsManager_;
-    std::shared_ptr<StreamExtrinsicsManager>     extrinsicsManager_;
+    std::shared_ptr<Logger>                  logger_;
+    std::shared_ptr<StreamIntrinsicsManager> intrinsicsManager_;
+    std::shared_ptr<StreamExtrinsicsManager> extrinsicsManager_;
 };
 
 class StreamProfile : public std::enable_shared_from_this<StreamProfile>, private StreamProfileBackendLifeSpan {
@@ -51,11 +51,11 @@ public:
     virtual std::shared_ptr<StreamProfile> clone() const;
     virtual std::shared_ptr<StreamProfile> clone(OBFormat newFormat) const;
 
-    template <typename T> bool               is() const {
+    template <typename T> bool is() const {
         return std::dynamic_pointer_cast<const T>(shared_from_this()) != nullptr;
     }
 
-    template <typename T> bool               is() {
+    template <typename T> bool is() {
         return std::dynamic_pointer_cast<T>(shared_from_this()) != nullptr;
     }
 
@@ -86,34 +86,33 @@ protected:
 class VideoStreamProfile : public StreamProfile {
 public:
     VideoStreamProfile(std::shared_ptr<LazySensor> owner, OBStreamType type, OBFormat format, uint32_t width, uint32_t height, uint32_t fps);
-    VideoStreamProfile(std::shared_ptr<LazySensor> owner, OBStreamType type, OBFormat format, OBHardwareDecimationConfig downSampleConfig, uint32_t fps);
+    VideoStreamProfile(std::shared_ptr<LazySensor> owner, OBStreamType type, OBFormat format, OBHardwareDecimationConfig decimationConfig, uint32_t fps);
     VideoStreamProfile(std::shared_ptr<const VideoStreamProfile> other) = delete;
 
     ~VideoStreamProfile() noexcept override = default;
 
-    void               setWidth(uint32_t width);
-    uint32_t           getWidth() const;
-    void               setHeight(uint32_t height);
-    uint32_t           getHeight() const;
-    uint32_t           getFps() const;
-    void               setDownSampleConfig(OBHardwareDecimationConfig downSampleConfig);
-    OBHardwareDecimationConfig getDownSampleConfig() const;
-    OBCameraIntrinsic  getIntrinsic() const;
-    void               bindIntrinsic(const OBCameraIntrinsic &intrinsic);
-    OBCameraDistortion getDistortion() const;
-    void               bindDistortion(const OBCameraDistortion &distortion);
-    uint32_t           getMaxFrameDataSize() const;
+    void                       setWidth(uint32_t width);
+    uint32_t                   getWidth() const;
+    void                       setHeight(uint32_t height);
+    uint32_t                   getHeight() const;
+    uint32_t                   getFps() const;
+    void                       setDecimationConfig(OBHardwareDecimationConfig decimationConfig);
+    OBHardwareDecimationConfig getDecimationConfig() const;
+    OBCameraIntrinsic          getIntrinsic() const;
+    void                       bindIntrinsic(const OBCameraIntrinsic &intrinsic);
+    OBCameraDistortion         getDistortion() const;
+    void                       bindDistortion(const OBCameraDistortion &distortion);
+    uint32_t                   getMaxFrameDataSize() const;
 
     std::shared_ptr<StreamProfile> clone() const override;
     bool                           operator==(const VideoStreamProfile &other) const;
     std::ostream                  &operator<<(std::ostream &os) const override;
 
 protected:
-    uint32_t           width_;
-    uint32_t           height_;
-    OBHardwareDecimationConfig downSampleConfig_{ 0, 0, 0 };
-    uint32_t           fps_;
-
+    uint32_t                   width_;
+    uint32_t                   height_;
+    OBHardwareDecimationConfig decimationConfig_{ 0, 0, 0 };
+    uint32_t                   fps_;
 };
 
 class DisparityBasedStreamProfile : public VideoStreamProfile {
@@ -172,7 +171,7 @@ public:
     LiDARProfileInfo               getInfo() const;
     OBLiDARScanRate                getScanRate() const;
     std::shared_ptr<StreamProfile> clone() const override;
-    std::ostream &                 operator<<(std::ostream &os) const override;
+    std::ostream                  &operator<<(std::ostream &os) const override;
 
 protected:
     OBLiDARScanRate scanRate_;
@@ -182,10 +181,10 @@ std::ostream &operator<<(std::ostream &os, const std::shared_ptr<const StreamPro
 
 std::vector<std::shared_ptr<const VideoStreamProfile>> matchVideoStreamProfile(const StreamProfileList &profileList, uint32_t width, uint32_t height,
                                                                                uint32_t fps, OBFormat format,
-                                                                               OBHardwareDecimationConfig downSampleConfig = { 0, 0, 0 });
+                                                                               OBHardwareDecimationConfig decimationConfig = { 0, 0, 0 });
 
-std::vector<std::shared_ptr<const VideoStreamProfile>> matchVideoStreamProfile(const StreamProfileList &profileList, OBHardwareDecimationConfig downSampleConfig,
-                                                                               uint32_t fps, OBFormat format);
+std::vector<std::shared_ptr<const VideoStreamProfile>> matchVideoStreamProfile(const StreamProfileList   &profileList,
+                                                                               OBHardwareDecimationConfig decimationConfig, uint32_t fps, OBFormat format);
 
 std::vector<std::shared_ptr<const AccelStreamProfile>> matchAccelStreamProfile(const StreamProfileList &profileList, OBAccelFullScaleRange fullScaleRange,
                                                                                OBAccelSampleRate sampleRate);

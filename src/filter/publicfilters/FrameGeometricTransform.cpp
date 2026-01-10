@@ -149,7 +149,7 @@ void yuyvImageRotate(uint8_t *src, uint8_t *dst, uint32_t width, uint32_t height
     libyuv::I420ToYUY2(src_y, src_stride_y, src_u, src_stride_u, src_v, src_stride_v, dst_yuy2, dst_stride_yuy2, dst_width, dst_height);
 }
 
-void uyvyImageRotate(uint8_t * src, uint8_t * dst, uint32_t width, uint32_t height, uint32_t rotateDegree) {
+void uyvyImageRotate(uint8_t *src, uint8_t *dst, uint32_t width, uint32_t height, uint32_t rotateDegree) {
     libyuv::RotationMode rotationMode;
     switch(rotateDegree) {
     case 90:
@@ -238,7 +238,8 @@ std::shared_ptr<Frame> FrameMirror::process(std::shared_ptr<const Frame> frame) 
     }
 
     if(frame->getFormat() != OB_FORMAT_Y16 && frame->getFormat() != OB_FORMAT_Y8 && frame->getFormat() != OB_FORMAT_YUYV && frame->getFormat() != OB_FORMAT_RGB
-       && frame->getFormat() != OB_FORMAT_BGR && frame->getFormat() != OB_FORMAT_RGBA && frame->getFormat() != OB_FORMAT_BGRA && frame->getFormat() != OB_FORMAT_Y12C4 && frame->getFormat() != OB_FORMAT_UYVY) {
+       && frame->getFormat() != OB_FORMAT_BGR && frame->getFormat() != OB_FORMAT_RGBA && frame->getFormat() != OB_FORMAT_BGRA
+       && frame->getFormat() != OB_FORMAT_Y12C4 && frame->getFormat() != OB_FORMAT_UYVY) {
         LOG_WARN_INTVL("FrameMirror unsupported to process this format: {}", frame->getFormat());
         return std::const_pointer_cast<Frame>(frame);
     }
@@ -261,7 +262,7 @@ std::shared_ptr<Frame> FrameMirror::process(std::shared_ptr<const Frame> frame) 
         imageMirror<uint16_t>((uint16_t *)videoFrame->getData(), (uint16_t *)outFrame->getData(), videoFrame->getWidth(), videoFrame->getHeight());
         break;
     case OB_FORMAT_YUYV:
-        if(frameType == OB_FRAME_COLOR || frameType == OB_FRAME_COLOR_LEFT || frameType == OB_FRAME_COLOR_RIGHT) {
+        if(is_color_frame(frameType)) {
             mirrorYUYVImage((uint8_t *)videoFrame->getData(), (uint8_t *)outFrame->getData(), videoFrame->getWidth(), videoFrame->getHeight());
         }
         else {
@@ -269,7 +270,7 @@ std::shared_ptr<Frame> FrameMirror::process(std::shared_ptr<const Frame> frame) 
         }
         break;
     case OB_FORMAT_UYVY:
-        if(frameType == OB_FRAME_COLOR || frameType == OB_FRAME_COLOR_LEFT || frameType == OB_FRAME_COLOR_RIGHT) {
+        if(is_color_frame(frameType)) {
             mirrorUYVYImage((uint8_t *)videoFrame->getData(), (uint8_t *)outFrame->getData(), videoFrame->getWidth(), videoFrame->getHeight());
         }
         break;
@@ -361,7 +362,8 @@ std::shared_ptr<Frame> FrameFlip::process(std::shared_ptr<const Frame> frame) {
     }
 
     if(frame->getFormat() != OB_FORMAT_Y16 && frame->getFormat() != OB_FORMAT_Y8 && frame->getFormat() != OB_FORMAT_YUYV && frame->getFormat() != OB_FORMAT_BGR
-       && frame->getFormat() != OB_FORMAT_RGB && frame->getFormat() != OB_FORMAT_RGBA && frame->getFormat() != OB_FORMAT_BGRA && frame->getFormat() != OB_FORMAT_Y12C4 && frame->getFormat() != OB_FORMAT_UYVY) {
+       && frame->getFormat() != OB_FORMAT_RGB && frame->getFormat() != OB_FORMAT_RGBA && frame->getFormat() != OB_FORMAT_BGRA
+       && frame->getFormat() != OB_FORMAT_Y12C4 && frame->getFormat() != OB_FORMAT_UYVY) {
         LOG_WARN_INTVL("FrameFlip unsupported to process this format:{}", frame->getFormat());
         return std::const_pointer_cast<Frame>(frame);
     }
@@ -484,7 +486,8 @@ std::shared_ptr<Frame> FrameRotate::process(std::shared_ptr<const Frame> frame) 
     }
 
     if(frame->getFormat() != OB_FORMAT_Y16 && frame->getFormat() != OB_FORMAT_Y8 && frame->getFormat() != OB_FORMAT_YUYV && frame->getFormat() != OB_FORMAT_RGB
-       && frame->getFormat() != OB_FORMAT_BGR && frame->getFormat() != OB_FORMAT_RGBA && frame->getFormat() != OB_FORMAT_BGRA && frame->getFormat() != OB_FORMAT_Y12C4 && frame->getFormat() != OB_FORMAT_UYVY) {
+       && frame->getFormat() != OB_FORMAT_BGR && frame->getFormat() != OB_FORMAT_RGBA && frame->getFormat() != OB_FORMAT_BGRA
+       && frame->getFormat() != OB_FORMAT_Y12C4 && frame->getFormat() != OB_FORMAT_UYVY) {
         LOG_WARN_INTVL("FrameRotate unsupported to process this format: {}", frame->getFormat());
         return std::const_pointer_cast<Frame>(frame);
     }

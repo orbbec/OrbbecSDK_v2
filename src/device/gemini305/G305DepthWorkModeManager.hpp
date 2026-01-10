@@ -15,7 +15,7 @@ public:
     virtual ~G305DepthWorkModeManager() noexcept override = default;
 
     std::vector<OBDepthWorkMode_Internal> getDepthWorkModeList() const override;
-    const OBDepthWorkMode_Internal &      getCurrentDepthWorkMode() const override;
+    const OBDepthWorkMode_Internal       &getCurrentDepthWorkMode() const override;
     void                                  switchDepthWorkMode(const std::string &modeName) override;
     void                                  fetchDepthWorkModeList();
 

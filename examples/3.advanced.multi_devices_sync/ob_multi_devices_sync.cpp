@@ -24,7 +24,7 @@
 #define CONFIG_FILE "./MultiDeviceSyncConfig.json"
 #define KEY_ESC 27
 
-static bool     quitStreamPreview      = false;
+static bool quitStreamPreview = false;
 
 typedef struct DeviceConfigInfo_t {
     std::string             deviceSN;
@@ -40,13 +40,12 @@ std::mutex                                   rebootingDevInfoListMutex;
 std::vector<std::shared_ptr<ob::DeviceInfo>> rebootingDevInfoList;
 std::vector<std::shared_ptr<PipelineHolder>> pipelineHolderList;
 
-bool     MultiDeviceSoftwareSync = false;
+bool     multiDeviceSoftwareSync = false;
 uint64_t reservationTriggerTime  = 0;
 
 bool loadConfigFile();
 int  configMultiDeviceSync();
 int  testMultiDeviceSync();
-
 
 std::string           OBSyncModeToString(const OBMultiDeviceSyncMode syncMode);
 OBMultiDeviceSyncMode stringToOBSyncMode(const std::string &modeString);
@@ -200,7 +199,7 @@ void handleKeyPress(ob_smpl::CVWindow &win, int key) {
     else if(key == 'T' || key == 't') {
         // software trigger
         std::cout << "check software trigger mode" << std::endl;
-        if(MultiDeviceSoftwareSync) {
+        if(multiDeviceSoftwareSync) {
             std::cout << "software sync trigger..." << std::endl;
             context.setMultieDeviceSoftSyncTimeCapture(reservationTriggerTime);
             return;
@@ -229,7 +228,7 @@ int testMultiDeviceSync() {
             std::cerr << "Device list is empty. please check device connection state" << std::endl;
             return -1;
         }
-        if(!MultiDeviceSoftwareSync) {
+        if(!multiDeviceSoftwareSync) {
             // traverse the device list and create the device
             std::vector<std::shared_ptr<ob::Device>> primary_devices;
             std::vector<std::shared_ptr<ob::Device>> secondary_devices;
@@ -267,7 +266,6 @@ int testMultiDeviceSync() {
             }
             std::cout << "All devices start..." << std::endl;
             startDeviceStreams(softwareSyncdevices, 0);
-
         }
 
         // Start the multi-device time synchronization function
@@ -327,8 +325,8 @@ int testMultiDeviceSync() {
 }
 
 std::shared_ptr<PipelineHolder> createPipelineHolder(std::shared_ptr<ob::Device> device, OBSensorType sensorType, int deviceIndex) {
-    auto pipeline    = std::make_shared<ob::Pipeline>(device);
-    auto holder         = std::make_shared<PipelineHolder>(pipeline, sensorType, device->getDeviceInfo()->serialNumber(), deviceIndex);
+    auto pipeline = std::make_shared<ob::Pipeline>(device);
+    auto holder   = std::make_shared<PipelineHolder>(pipeline, sensorType, device->getDeviceInfo()->serialNumber(), deviceIndex);
     return holder;
 }
 
@@ -367,7 +365,7 @@ bool loadConfigFile() {
         cJSON *status = cJSON_GetObjectItem(softwareSync, "status");
         cJSON *time   = cJSON_GetObjectItem(softwareSync, "scheduledTriggerUs");
 
-        MultiDeviceSoftwareSync = cJSON_IsTrue(status);
+        multiDeviceSoftwareSync = cJSON_IsTrue(status);
         reservationTriggerTime  = atoi(time->valuestring);
     }
 

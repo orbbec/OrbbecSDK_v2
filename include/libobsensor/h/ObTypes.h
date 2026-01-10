@@ -128,20 +128,20 @@ typedef struct ob_error {
  * @brief Enumeration value describing the sensor type
  */
 typedef enum {
-    OB_SENSOR_UNKNOWN     = 0,         /**< Unknown type sensor */
-    OB_SENSOR_IR          = 1,         /**< IR */
-    OB_SENSOR_COLOR       = 2,         /**< Color */
-    OB_SENSOR_DEPTH       = 3,         /**< Depth */
-    OB_SENSOR_ACCEL       = 4,         /**< Accel */
-    OB_SENSOR_GYRO        = 5,         /**< Gyro */
-    OB_SENSOR_IR_LEFT     = 6,         /**< left IR for stereo camera*/
-    OB_SENSOR_IR_RIGHT    = 7,         /**< Right IR for stereo camera*/
-    OB_SENSOR_RAW_PHASE   = 8,         /**< Raw Phase */
-    OB_SENSOR_CONFIDENCE  = 9,         /**< Confidence */
-    OB_SENSOR_LIDAR       = 10,        /**< LiDAR */
-    OB_SENSOR_COLOR_LEFT  = 11,        /**< Left Color */
-    OB_SENSOR_COLOR_RIGHT = 12,        /**< Right Color */
-    OB_SENSOR_TYPE_COUNT,              /**The total number of sensor types, is not a valid sensor type */
+    OB_SENSOR_UNKNOWN     = 0,  /**< Unknown type sensor */
+    OB_SENSOR_IR          = 1,  /**< IR */
+    OB_SENSOR_COLOR       = 2,  /**< Color */
+    OB_SENSOR_DEPTH       = 3,  /**< Depth */
+    OB_SENSOR_ACCEL       = 4,  /**< Accel */
+    OB_SENSOR_GYRO        = 5,  /**< Gyro */
+    OB_SENSOR_IR_LEFT     = 6,  /**< left IR for stereo camera*/
+    OB_SENSOR_IR_RIGHT    = 7,  /**< Right IR for stereo camera*/
+    OB_SENSOR_RAW_PHASE   = 8,  /**< Raw Phase */
+    OB_SENSOR_CONFIDENCE  = 9,  /**< Confidence */
+    OB_SENSOR_LIDAR       = 10, /**< LiDAR */
+    OB_SENSOR_COLOR_LEFT  = 11, /**< Left Color */
+    OB_SENSOR_COLOR_RIGHT = 12, /**< Right Color */
+    OB_SENSOR_TYPE_COUNT,       /**The total number of sensor types, is not a valid sensor type */
 } OBSensorType,
     ob_sensor_type;
 
@@ -149,21 +149,21 @@ typedef enum {
  * @brief Enumeration value describing the type of data stream
  */
 typedef enum {
-    OB_STREAM_UNKNOWN     = -1,        /**< Unknown type stream */
-    OB_STREAM_VIDEO       = 0,         /**< Video stream (infrared, color, depth streams are all video streams) */
-    OB_STREAM_IR          = 1,         /**< IR stream */
-    OB_STREAM_COLOR       = 2,         /**< color stream */
-    OB_STREAM_DEPTH       = 3,         /**< depth stream */
-    OB_STREAM_ACCEL       = 4,         /**< Accelerometer data stream */
-    OB_STREAM_GYRO        = 5,         /**< Gyroscope data stream */
-    OB_STREAM_IR_LEFT     = 6,         /**< Left IR stream for stereo camera */
-    OB_STREAM_IR_RIGHT    = 7,         /**< Right IR stream for stereo camera */
-    OB_STREAM_RAW_PHASE   = 8,         /**< RawPhase Stream */
-    OB_STREAM_CONFIDENCE  = 9,         /**< Confidence Stream*/
-    OB_STREAM_LIDAR       = 10,        /**< LiDAR Stream for LiDAR device*/
-    OB_STREAM_COLOR_LEFT  = 11,        /**< Left Color stream */
-    OB_STREAM_COLOR_RIGHT = 12,        /**< Right Color stream */
-    OB_STREAM_TYPE_COUNT,              /**< The total number of stream type,is not a valid stream type */
+    OB_STREAM_UNKNOWN     = -1, /**< Unknown type stream */
+    OB_STREAM_VIDEO       = 0,  /**< Video stream (infrared, color, depth streams are all video streams) */
+    OB_STREAM_IR          = 1,  /**< IR stream */
+    OB_STREAM_COLOR       = 2,  /**< color stream */
+    OB_STREAM_DEPTH       = 3,  /**< depth stream */
+    OB_STREAM_ACCEL       = 4,  /**< Accelerometer data stream */
+    OB_STREAM_GYRO        = 5,  /**< Gyroscope data stream */
+    OB_STREAM_IR_LEFT     = 6,  /**< Left IR stream for stereo camera */
+    OB_STREAM_IR_RIGHT    = 7,  /**< Right IR stream for stereo camera */
+    OB_STREAM_RAW_PHASE   = 8,  /**< RawPhase Stream */
+    OB_STREAM_CONFIDENCE  = 9,  /**< Confidence Stream*/
+    OB_STREAM_LIDAR       = 10, /**< LiDAR Stream for LiDAR device*/
+    OB_STREAM_COLOR_LEFT  = 11, /**< Left Color stream */
+    OB_STREAM_COLOR_RIGHT = 12, /**< Right Color stream */
+    OB_STREAM_TYPE_COUNT,       /**< The total number of stream type,is not a valid stream type */
 } OBStreamType,
     ob_stream_type;
 
@@ -171,23 +171,23 @@ typedef enum {
  * @brief Enumeration value describing the type of frame
  */
 typedef enum {
-    OB_FRAME_UNKNOWN      = -1,       /**< Unknown frame type */
-    OB_FRAME_VIDEO        = 0,        /**< Video frame */
-    OB_FRAME_IR           = 1,        /**< IR frame */
-    OB_FRAME_COLOR        = 2,        /**< Color frame */
-    OB_FRAME_DEPTH        = 3,        /**< Depth frame */
-    OB_FRAME_ACCEL        = 4,        /**< Accelerometer data frame */
-    OB_FRAME_SET          = 5,        /**< Frame collection (internally contains a variety of data frames) */
-    OB_FRAME_POINTS       = 6,        /**< Point cloud frame */
-    OB_FRAME_GYRO         = 7,        /**< Gyroscope data frame */
-    OB_FRAME_IR_LEFT      = 8,        /**< Left IR frame for stereo camera */
-    OB_FRAME_IR_RIGHT     = 9,        /**< Right IR frame for stereo camera */
-    OB_FRAME_RAW_PHASE    = 10,       /**< Raw Phase frame*/
-    OB_FRAME_CONFIDENCE   = 11,       /**< Confidence frame*/
-    OB_FRAME_LIDAR_POINTS = 12,       /**< LiDAR point3d cloud frame*/
-    OB_FRAME_COLOR_LEFT   = 13,       /**< Left Color frame */
-    OB_FRAME_COLOR_RIGHT  = 14,       /**< Right Color frame */
-    OB_FRAME_TYPE_COUNT,              /**< The total number of frame types, is not a valid frame type */
+    OB_FRAME_UNKNOWN      = -1, /**< Unknown frame type */
+    OB_FRAME_VIDEO        = 0,  /**< Video frame */
+    OB_FRAME_IR           = 1,  /**< IR frame */
+    OB_FRAME_COLOR        = 2,  /**< Color frame */
+    OB_FRAME_DEPTH        = 3,  /**< Depth frame */
+    OB_FRAME_ACCEL        = 4,  /**< Accelerometer data frame */
+    OB_FRAME_SET          = 5,  /**< Frame collection (internally contains a variety of data frames) */
+    OB_FRAME_POINTS       = 6,  /**< Point cloud frame */
+    OB_FRAME_GYRO         = 7,  /**< Gyroscope data frame */
+    OB_FRAME_IR_LEFT      = 8,  /**< Left IR frame for stereo camera */
+    OB_FRAME_IR_RIGHT     = 9,  /**< Right IR frame for stereo camera */
+    OB_FRAME_RAW_PHASE    = 10, /**< Raw Phase frame*/
+    OB_FRAME_CONFIDENCE   = 11, /**< Confidence frame*/
+    OB_FRAME_LIDAR_POINTS = 12, /**< LiDAR point3d cloud frame*/
+    OB_FRAME_COLOR_LEFT   = 13, /**< Left Color frame */
+    OB_FRAME_COLOR_RIGHT  = 14, /**< Right Color frame */
+    OB_FRAME_TYPE_COUNT,        /**< The total number of frame types, is not a valid frame type */
 } OBFrameType,
     ob_frame_type;
 
@@ -1535,13 +1535,13 @@ typedef enum {
  * @brief  Configuration Item for the filter
  */
 typedef struct {
-    const char *            name;  ///< Name of the configuration item
+    const char             *name;  ///< Name of the configuration item
     OBFilterConfigValueType type;  ///< Value type of the configuration item
     double                  min;   ///< Minimum value casted to double
     double                  max;   ///< Maximum value casted to double
     double                  step;  ///< Step value casted to double
     double                  def;   ///< Default value casted to double
-    const char *            desc;  ///< Description of the configuration item
+    const char             *desc;  ///< Description of the configuration item
 } OBFilterConfigSchemaItem, ob_filter_config_schema_item;
 
 /**
@@ -1562,7 +1562,7 @@ typedef struct {
 } OBDispOffsetConfig, ob_disp_offset_config;
 
 /**
- * @details Defines the original resolution and hardware decimation factor for down-sampling.
+ * @details Defines the original resolution and hardware decimation factor.
  */
 typedef struct {
     uint32_t originWidth;

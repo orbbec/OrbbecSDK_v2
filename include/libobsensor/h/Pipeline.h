@@ -225,20 +225,20 @@ OB_EXPORT void ob_config_enable_video_stream(ob_config *config, ob_stream_type s
                                              ob_error **error);
 
 /**
- * @brief Enable a video stream using a down-sample configuration.
+ * @brief Enable a video stream using a decimation configuration.
  *
  * @attention The stream_type should be a video stream type, such as OB_STREAM_IR, OB_STREAM_DEPTH, etc.
  *
  * @param[in] config The pipeline configuration object
  * @param[in] stream_type The type of the stream to be enabled
- * @param[in] down_sample_config The down-sample configuration for the stream
+ * @param[in] decimation_config The decimation configuration for the stream
  * @param[in] fps The frame rate of the video stream
  * @param[in] format The format of the video stream
  * @param[out] error Pointer to an error object that will be set if an error occurs.
  */
-OB_EXPORT void ob_config_enable_video_stream_by_down_sample_config(ob_config *config, ob_stream_type stream_type,
-                                                                   ob_hardware_decimation_config down_sample_config, uint32_t fps, ob_format format,
-                                                                   ob_error **error);
+OB_EXPORT void ob_config_enable_video_stream_by_decimation_config(ob_config *config, ob_stream_type stream_type,
+                                                                  ob_hardware_decimation_config decimation_config, uint32_t fps, ob_format format,
+                                                                  ob_error **error);
 
 /**
  * @brief Enable accelerometer stream with specified parameters
@@ -354,21 +354,21 @@ OB_EXPORT ob_camera_param ob_pipeline_get_camera_param_with_profile(ob_pipeline 
                                                                     uint32_t depthHeight, ob_error **error);
 
 /**
- * @brief Get the current camera parameters with down-sampled depth profile
+ * @brief Get the current camera parameters with decimation depth profile
  *
  * @param[in] pipeline pipeline object
  * @param[in] colorWidth color width
  * @param[in] colorHeight color height
- * @param[in] originDepthWidth original depth width before down-sampling
- * @param[in] originDepthHeight original depth height before down-sampling
- * @param[in] decimationFactor depth down-sampling factor
+ * @param[in] originDepthWidth original depth width before decimation
+ * @param[in] originDepthHeight original depth height before decimation
+ * @param[in] decimationFactor depth decimation factor
  * @param[out] error Log error messages
  *
  * @return ob_camera_param returns camera internal parameters
  */
-OB_EXPORT ob_camera_param ob_pipeline_get_camera_param_with_down_sample_profile(ob_pipeline *pipeline, uint32_t colorWidth, uint32_t colorHeight,
-                                                                                uint32_t originDepthWidth, uint32_t originDepthHeight,
-                                                                                uint32_t decimationFactor, ob_error **error);
+OB_EXPORT ob_camera_param ob_pipeline_get_camera_param_with_decimation_profile(ob_pipeline *pipeline, uint32_t colorWidth, uint32_t colorHeight,
+                                                                               uint32_t originDepthWidth, uint32_t originDepthHeight, uint32_t decimationFactor,
+                                                                               ob_error **error);
 
 /**
  * @brief Get device calibration parameters with the specified configuration

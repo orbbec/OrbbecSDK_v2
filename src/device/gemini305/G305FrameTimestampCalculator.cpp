@@ -73,7 +73,8 @@ uint64_t G305FrameTimestampCalculatorBaseDeviceTime::calculate(uint64_t srcTimes
             else {
                 baseDevTime_ = devTime_ - calculateLeftoverTimestamp;
             }
-        } else {
+        }
+        else {
             baseDevTime_ = 0;
         }
     }
@@ -92,4 +93,3 @@ void G305FrameTimestampCalculatorBaseDeviceTime::clear() {
 }
 
 }  // namespace libobsensor
-

@@ -167,9 +167,9 @@ ob_camera_param ob_pipeline_get_camera_param_with_profile(ob_pipeline *pipeline,
 }
 HANDLE_EXCEPTIONS_AND_RETURN(ob_camera_param(), pipeline, colorWidth, colorHeight, depthWidth, depthHeight)
 
-ob_camera_param ob_pipeline_get_camera_param_with_down_sample_profile(ob_pipeline *pipeline, uint32_t colorWidth, uint32_t colorHeight,
-                                                                      uint32_t originDepthWidth, uint32_t originDepthHeight, uint32_t decimationFactor,
-                                                                      ob_error **error) BEGIN_API_CALL {
+ob_camera_param ob_pipeline_get_camera_param_with_decimation_profile(ob_pipeline *pipeline, uint32_t colorWidth, uint32_t colorHeight,
+                                                                     uint32_t originDepthWidth, uint32_t originDepthHeight, uint32_t decimationFactor,
+                                                                     ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(pipeline);
     return pipeline->pipeline->getCameraParam(colorWidth, colorHeight, originDepthWidth, originDepthHeight, decimationFactor);
 }
@@ -221,9 +221,9 @@ void ob_config_enable_video_stream(ob_config *config, ob_stream_type stream_type
 }
 HANDLE_EXCEPTIONS_NO_RETURN(config, stream_type, width, height, fps, format)
 
-void ob_config_enable_video_stream_by_down_sample_config(ob_config *config, ob_stream_type stream_type, ob_hardware_decimation_config down_sample_config,
-                                                         uint32_t fps, ob_format format, ob_error **error) BEGIN_API_CALL {
-    config->config->enableVideoStream(stream_type, down_sample_config, fps, format);
+void ob_config_enable_video_stream_by_decimation_config(ob_config *config, ob_stream_type stream_type, ob_hardware_decimation_config decimation_config,
+                                                        uint32_t fps, ob_format format, ob_error **error) BEGIN_API_CALL {
+    config->config->enableVideoStream(stream_type, decimation_config, fps, format);
 }
 HANDLE_EXCEPTIONS_NO_RETURN(config, stream_type, fps, format)
 

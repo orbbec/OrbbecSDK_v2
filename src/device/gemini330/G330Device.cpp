@@ -1944,6 +1944,9 @@ void G330NetDevice::initProperties() {
     propertyServer->registerProperty(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL, "rw", "rw", d2dPropertyAccessor);  // sw
     propertyServer->registerProperty(OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT, "rw", "rw", d2dPropertyAccessor);
 
+    auto netPerformanceModePropertyAccessor = std::make_shared<G330NetPerformanceModePropertyAccessor>(this);
+    propertyServer->registerProperty(OB_PROP_DEVICE_PERFORMANCE_MODE_INT, "rw", "rw", netPerformanceModePropertyAccessor);
+
     auto privatePropertyAccessor = std::make_shared<PrivateFilterPropertyAccessor>(this);
     propertyServer->registerProperty(OB_PROP_DEPTH_SOFT_FILTER_BOOL, "rw", "rw", privatePropertyAccessor);
     propertyServer->registerProperty(OB_PROP_DEPTH_MAX_DIFF_INT, "rw", "rw", privatePropertyAccessor);

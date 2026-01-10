@@ -100,8 +100,7 @@ Device is the device object, which can be used to obtain the device information,
         for(uint32_t index = 0; index < streamProfileList->getCount(); index++) {
             // Get the stream profile.
             auto profile = streamProfileList->getProfile(index);
-            if(sensorType == OB_SENSOR_IR || sensorType == OB_SENSOR_COLOR || sensorType == OB_SENSOR_COLOR_LEFT || sensorType == OB_SENSOR_COLOR_RIGHT || sensorType == OB_SENSOR_DEPTH || sensorType == OB_SENSOR_IR_LEFT
-            || sensorType == OB_SENSOR_IR_RIGHT) {
+            if(ob_is_video_sensor_type(sensorType)) {
                 printStreamProfile(profile, index);
             }
             else if(sensorType == OB_SENSOR_ACCEL) {

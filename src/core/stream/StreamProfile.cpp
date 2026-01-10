@@ -58,7 +58,7 @@ void StreamProfile::bindExtrinsicTo(std::shared_ptr<const StreamProfile> targetS
     extrinsicsMgr->registerExtrinsics(shared_from_this(), targetStreamProfile, extrinsic);
 }
 
-void StreamProfile::bindExtrinsicTo(const OBStreamType &type, const OBExtrinsic &extrinsic){
+void StreamProfile::bindExtrinsicTo(const OBStreamType &type, const OBExtrinsic &extrinsic) {
     auto extrinsicsMgr = StreamExtrinsicsManager::getInstance();
     extrinsicsMgr->registerExtrinsics(shared_from_this(), type, extrinsic);
 }
@@ -68,7 +68,7 @@ void StreamProfile::bindSameExtrinsicTo(std::shared_ptr<const StreamProfile> tar
     extrinsicsMgr->registerSameExtrinsics(shared_from_this(), targetStreamProfile);
 }
 
-std::shared_ptr<StreamProfile> StreamProfile::clone() const{
+std::shared_ptr<StreamProfile> StreamProfile::clone() const {
     auto sp = std::make_shared<StreamProfile>(owner_.lock(), type_, format_);
     sp->bindSameExtrinsicTo(shared_from_this());
     return sp;
@@ -93,9 +93,9 @@ std::ostream &StreamProfile::operator<<(std::ostream &os) const {
 VideoStreamProfile::VideoStreamProfile(std::shared_ptr<LazySensor> owner, OBStreamType type, OBFormat format, uint32_t width, uint32_t height, uint32_t fps)
     : StreamProfile(owner, type, format), width_(width), height_(height), fps_(fps) {}
 
-VideoStreamProfile::VideoStreamProfile(std::shared_ptr<LazySensor> owner, OBStreamType type, OBFormat format, OBHardwareDecimationConfig downSampleConfig,
+VideoStreamProfile::VideoStreamProfile(std::shared_ptr<LazySensor> owner, OBStreamType type, OBFormat format, OBHardwareDecimationConfig decimationConfig,
                                        uint32_t fps)
-    : StreamProfile(owner, type, format), width_(0), height_(0), downSampleConfig_(downSampleConfig), fps_(fps) {}
+    : StreamProfile(owner, type, format), width_(0), height_(0), decimationConfig_(decimationConfig), fps_(fps) {}
 void VideoStreamProfile::setWidth(uint32_t width) {
     width_ = width;
 }
@@ -116,12 +116,12 @@ uint32_t VideoStreamProfile::getFps() const {
     return fps_;
 }
 
-void VideoStreamProfile::setDownSampleConfig(OBHardwareDecimationConfig downSampleConfig) {
-    downSampleConfig_ = downSampleConfig;
+void VideoStreamProfile::setDecimationConfig(OBHardwareDecimationConfig decimationConfig) {
+    decimationConfig_ = decimationConfig;
 }
 
-OBHardwareDecimationConfig VideoStreamProfile::getDownSampleConfig() const {
-    return downSampleConfig_;
+OBHardwareDecimationConfig VideoStreamProfile::getDecimationConfig() const {
+    return decimationConfig_;
 }
 
 OBCameraIntrinsic VideoStreamProfile::getIntrinsic() const {
@@ -178,7 +178,7 @@ void DisparityBasedStreamProfile::bindDisparityParam(const OBDisparityParam &par
 }
 
 std::shared_ptr<StreamProfile> DisparityBasedStreamProfile::clone() const {
-    auto sp = std::make_shared<DisparityBasedStreamProfile>(owner_.lock(), type_, format_, width_, height_, fps_);
+    auto sp            = std::make_shared<DisparityBasedStreamProfile>(owner_.lock(), type_, format_, width_, height_, fps_);
     auto intrinsicsMgr = StreamIntrinsicsManager::getInstance();
     if(intrinsicsMgr->containsVideoStreamIntrinsics(shared_from_this())) {
         auto intrinsic = intrinsicsMgr->getVideoStreamIntrinsics(shared_from_this());
@@ -415,9 +415,9 @@ std::ostream &operator<<(std::ostream &os, const std::shared_ptr<const StreamPro
 }
 
 std::vector<std::shared_ptr<const VideoStreamProfile>> matchVideoStreamProfile(const StreamProfileList &profileList, uint32_t width, uint32_t height,
-                                                                               uint32_t fps, OBFormat format, OBHardwareDecimationConfig downSampleConfig) {
+                                                                               uint32_t fps, OBFormat format, OBHardwareDecimationConfig decimationConfig) {
     std::vector<std::shared_ptr<const VideoStreamProfile>> matchProfileList;
-    auto                                                   downSampleScale = downSampleConfig.decimationFactor;
+    auto                                                   decimationScale = decimationConfig.decimationFactor;
 
     for(auto profile: profileList) {
         if(profile->is<VideoStreamProfile>()) {
@@ -425,17 +425,16 @@ std::vector<std::shared_ptr<const VideoStreamProfile>> matchVideoStreamProfile(c
 
             // Get the profile that matches the user's items of interest
 
-            if(downSampleScale == 0) {
+            if(decimationScale == 0) {
                 if((width == OB_WIDTH_ANY || videoProfile->getWidth() == width) && (height == OB_HEIGHT_ANY || videoProfile->getHeight() == height)
                    && (format == OB_FORMAT_ANY || videoProfile->getFormat() == format) && (fps == OB_FPS_ANY || videoProfile->getFps() == fps)) {
                     matchProfileList.push_back(videoProfile);
                 }
             }
             else {
-                auto profileDownSampleConfig = videoProfile->getDownSampleConfig();
-                if(downSampleConfig.originWidth == profileDownSampleConfig.originWidth && downSampleConfig.originHeight == profileDownSampleConfig.originHeight
-                   && downSampleScale == profileDownSampleConfig.decimationFactor && videoProfile->getFormat() == format
-                   &&videoProfile->getFps() == fps) {
+                auto profileDecimationConfig = videoProfile->getDecimationConfig();
+                if(decimationConfig.originWidth == profileDecimationConfig.originWidth && decimationConfig.originHeight == profileDecimationConfig.originHeight
+                   && decimationScale == profileDecimationConfig.decimationFactor && videoProfile->getFormat() == format && videoProfile->getFps() == fps) {
                     matchProfileList.push_back(videoProfile);
                 }
             }
@@ -444,17 +443,17 @@ std::vector<std::shared_ptr<const VideoStreamProfile>> matchVideoStreamProfile(c
     return matchProfileList;
 }
 
-std::vector<std::shared_ptr<const VideoStreamProfile>> matchVideoStreamProfile(const StreamProfileList &profileList, OBHardwareDecimationConfig downSampleConfig,
-                                                                               uint32_t fps, OBFormat format) {
+std::vector<std::shared_ptr<const VideoStreamProfile>> matchVideoStreamProfile(const StreamProfileList   &profileList,
+                                                                               OBHardwareDecimationConfig decimationConfig, uint32_t fps, OBFormat format) {
     std::vector<std::shared_ptr<const VideoStreamProfile>> matchProfileList;
 
     for(auto profile: profileList) {
         if(profile->is<VideoStreamProfile>()) {
             auto videoProfile            = profile->as<VideoStreamProfile>();
-            auto profileDownSampleConfig = videoProfile->getDownSampleConfig();
+            auto profileDecimationConfig = videoProfile->getDecimationConfig();
             if((format == OB_FORMAT_ANY || videoProfile->getFormat() == format) && (fps == OB_FPS_ANY || videoProfile->getFps() == fps)
-               && downSampleConfig.originWidth == profileDownSampleConfig.originWidth && downSampleConfig.originHeight == profileDownSampleConfig.originHeight
-               && downSampleConfig.decimationFactor == profileDownSampleConfig.decimationFactor) {
+               && decimationConfig.originWidth == profileDecimationConfig.originWidth && decimationConfig.originHeight == profileDecimationConfig.originHeight
+               && decimationConfig.decimationFactor == profileDecimationConfig.decimationFactor) {
                 matchProfileList.push_back(videoProfile);
             }
         }

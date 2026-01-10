@@ -74,19 +74,19 @@ void VideoSensor::start(std::shared_ptr<const StreamProfile> sp, FrameCallback c
         auto propServer          = owner->getPropertyServer();
         auto isSupportDecamation = propServer->isPropertySupported(OB_STRUCT_PRESET_RESOLUTION_CONFIG, PROP_OP_READ_WRITE, PROP_ACCESS_INTERNAL);
         auto videoStreamProfile  = sp->as<VideoStreamProfile>();
-        auto downSampleConfig    = videoStreamProfile->getDownSampleConfig();
+        auto decimationConfig    = videoStreamProfile->getDecimationConfig();
 
-        if(downSampleConfig.decimationFactor!=0&&isSupportDecamation) {
-            auto                     prestResConfig     = propServer->getStructureDataT<OBPresetResolutionConfig>(OB_STRUCT_PRESET_RESOLUTION_CONFIG);
-            auto                     sensorType         = videoStreamProfile->getType();
-            prestResConfig.width                      = static_cast<int16_t>(downSampleConfig.originWidth);
-            prestResConfig.height                     = static_cast<int16_t>(downSampleConfig.originHeight);
-            if(sensorType == OB_STREAM_DEPTH ) {
-                prestResConfig.depthDecimationFactor = downSampleConfig.decimationFactor;
+        if(decimationConfig.decimationFactor != 0 && isSupportDecamation) {
+            auto prestResConfig   = propServer->getStructureDataT<OBPresetResolutionConfig>(OB_STRUCT_PRESET_RESOLUTION_CONFIG);
+            auto sensorType       = videoStreamProfile->getType();
+            prestResConfig.width  = static_cast<int16_t>(decimationConfig.originWidth);
+            prestResConfig.height = static_cast<int16_t>(decimationConfig.originHeight);
+            if(sensorType == OB_STREAM_DEPTH) {
+                prestResConfig.depthDecimationFactor = decimationConfig.decimationFactor;
                 propServer->setStructureDataT<OBPresetResolutionConfig>(OB_STRUCT_PRESET_RESOLUTION_CONFIG, prestResConfig);
             }
             else if(sensorType == OB_STREAM_IR_LEFT || sensorType == OB_STREAM_IR_RIGHT) {
-                prestResConfig.irDecimationFactor = downSampleConfig.decimationFactor;
+                prestResConfig.irDecimationFactor = decimationConfig.decimationFactor;
                 propServer->setStructureDataT<OBPresetResolutionConfig>(OB_STRUCT_PRESET_RESOLUTION_CONFIG, prestResConfig);
             }
         }

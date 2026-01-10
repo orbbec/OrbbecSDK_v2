@@ -49,8 +49,8 @@ std::shared_ptr<VideoStreamProfile> createVideoStreamProfile(std::shared_ptr<Laz
     return std::make_shared<VideoStreamProfile>(owner, type, format, width, height, fps);
 }
 
-std::shared_ptr<VideoStreamProfile> createVideoStreamProfile(OBStreamType type, OBFormat format, OBHardwareDecimationConfig downSampleConfig, uint32_t fps) {
-    return std::make_shared<VideoStreamProfile>(std::shared_ptr<LazySensor>(), type, format, downSampleConfig, fps);
+std::shared_ptr<VideoStreamProfile> createVideoStreamProfile(OBStreamType type, OBFormat format, OBHardwareDecimationConfig decimationConfig, uint32_t fps) {
+    return std::make_shared<VideoStreamProfile>(std::shared_ptr<LazySensor>(), type, format, decimationConfig, fps);
 }
 
 std::shared_ptr<DisparityBasedStreamProfile> createDisparityBasedStreamProfile(std::shared_ptr<const VideoStreamProfile> videoProfile) {

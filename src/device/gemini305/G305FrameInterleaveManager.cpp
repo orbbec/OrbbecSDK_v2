@@ -5,7 +5,7 @@
 #include "utils/Utils.hpp"
 
 namespace libobsensor {
-const std::string hdr_interleave   = "Depth from HDR";
+const std::string hdr_interleave = "Depth from HDR";
 G305FrameInterleaveManager::G305FrameInterleaveManager(IDevice *owner) : DeviceComponentBase(owner) {
     availableFrameInterleaves_.emplace_back(hdr_interleave);
 

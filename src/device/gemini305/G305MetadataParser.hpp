@@ -118,8 +118,8 @@ public:
         uint64_t transformedTimestamp = ((presentationTime >> 24) & 0xFF) * 1000000 + ((presentationTime & 0xFFFFFF) << 8) / 1000;
         auto     calculatedTimestamp  = timestampCalculator_->calculate(transformedTimestamp);
 
-        uint16_t rawValue             = (((standardUvcMetadata.scrSourceClock[1] & 0xF8) >> 3) | ((standardUvcMetadata.scrSourceClock[2] & 0x7F) << 5));
-        int32_t  frameOffset          = 0;
+        uint16_t rawValue    = (((standardUvcMetadata.scrSourceClock[1] & 0xF8) >> 3) | ((standardUvcMetadata.scrSourceClock[2] & 0x7F) << 5));
+        int32_t  frameOffset = 0;
         // 12bit offset value check sign bit
         if(rawValue & 0x800) {
             rawValue    = ((~rawValue) & 0xFFF) + 1;
@@ -167,11 +167,11 @@ public:
             frameOffset = -static_cast<int32_t>(rawValue);
         }
         else {
-            frameOffset = static_cast<int32_t>(rawValue) ;
+            frameOffset = static_cast<int32_t>(rawValue);
         }
 
-        uint32_t exposure = (standardUvcMetadata.scrSourceClock[0] | ((standardUvcMetadata.scrSourceClock[1] & 0x07) << 8));
-        calculatedTimestamp = calculatedTimestamp + frameOffset - exposure/2;
+        uint32_t exposure   = (standardUvcMetadata.scrSourceClock[0] | ((standardUvcMetadata.scrSourceClock[1] & 0x07) << 8));
+        calculatedTimestamp = calculatedTimestamp + frameOffset - exposure / 2;
 
         return calculatedTimestamp;
     }

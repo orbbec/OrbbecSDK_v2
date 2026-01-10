@@ -240,29 +240,29 @@ OB_EXPORT void ob_video_stream_profile_set_intrinsic(ob_stream_profile *profile,
 /**
  * @brief Get the distortion of the video stream profile
  *
- * @param[in]  profile Stream profile object
- * @param[out] error   Pointer to an error object that will be set if an error occurs.
+ * @param[in] profile Stream profile object
+ * @param[out] error Pointer to an error object that will be set if an error occurs.
  *
  * @return ob_camera_distortion Return the distortion of the stream
  */
 OB_EXPORT ob_camera_distortion ob_video_stream_profile_get_distortion(const ob_stream_profile *profile, ob_error **error);
 
 /**
- * @brief Get the down-sampling configuration of the video stream profile.
+ * @brief Get the decimation configuration of the video stream profile.
  *
- * @param[in]  profile  Stream profile object.
- * @param[out] error    Pointer to an error object that will be set if an error occurs.
+ * @param[in] profile Stream profile object.
+ * @param[out] error Pointer to an error object that will be set if an error occurs.
  *
- * @return ob_hardware_decimation_config  The down-sampling configuration of the stream.
+ * @return ob_hardware_decimation_config Return the decimation configuration of the stream.
  */
-OB_EXPORT ob_hardware_decimation_config ob_video_stream_profile_get_down_sample_config(const ob_stream_profile *profile, ob_error **error);
+OB_EXPORT ob_hardware_decimation_config ob_video_stream_profile_get_decimation_config(const ob_stream_profile *profile, ob_error **error);
 
 /**
  * @brief Set the distortion of the video stream profile
  *
  * @param[in] profile Stream profile object
- * @param[in]  distortion The distortion of the stream
- * @param[out] error   Pointer to an error object that will be set if an error occurs.
+ * @param[in] distortion The distortion of the stream
+ * @param[out] error Pointer to an error object that will be set if an error occurs.
  */
 OB_EXPORT void ob_video_stream_profile_set_distortion(ob_stream_profile *profile, ob_camera_distortion distortion, ob_error **error);
 
@@ -414,22 +414,22 @@ OB_EXPORT ob_stream_profile *ob_stream_profile_list_get_video_stream_profile(con
                                                                              ob_format format, int fps, ob_error **error);
 
 /**
- * @brief Match the corresponding ob_stream_profile based on the provided down-sampling configuration.If multiple profiles match, the first profile in the list
+ * @brief Match the corresponding ob_stream_profile based on the provided decimation configuration. If multiple profiles match, the first profile in the list
  * is returned by default. If no matched profile is found, an error will be returned.
  *
  * @attention The stream profile returned by this function should be released with @ref ob_delete_stream_profile() when it is no longer needed.
  *
- * @param[in] profile_list        The list of stream profiles.
- * @param[in] down_sample_config  Down-sampling configuration. The actual resolution is determined by original resolution and the scale factor.
- * @param[in] format              Stream format. If no matching condition is required, pass OB_FORMAT_ANY.
- * @param[in] fps                 Frame rate. If no matching condition is required, pass OB_FPS_ANY.
- * @param[out] error              Pointer to an error object that will be set if an error occurs.
+ * @param[in] profile_list The list of stream profiles.
+ * @param[in] decimation_config Decimation configuration. The actual resolution is determined by original resolution and the scale factor.
+ * @param[in] format Stream format. If no matching condition is required, pass OB_FORMAT_ANY.
+ * @param[in] fps Frame rate. If no matching condition is required, pass OB_FPS_ANY.
+ * @param[out] error Pointer to an error object that will be set if an error occurs.
  *
  * @return The matched stream profile.
  */
-OB_EXPORT ob_stream_profile *ob_stream_profile_list_get_video_stream_profile_by_down_sample_config(const ob_stream_profile_list *profile_list,
-                                                                                                   ob_hardware_decimation_config down_sample_config,
-                                                                                                   ob_format format, int fps, ob_error **error);
+OB_EXPORT ob_stream_profile *ob_stream_profile_list_get_video_stream_profile_by_decimation_config(const ob_stream_profile_list *profile_list,
+                                                                                                  ob_hardware_decimation_config decimation_config,
+                                                                                                  ob_format format, int fps, ob_error **error);
 
 /**
  * @brief Match the corresponding ob_stream_profile through the passed parameters. If there are multiple matches,

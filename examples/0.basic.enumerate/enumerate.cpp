@@ -64,8 +64,7 @@ void enumerateStreamProfiles(std::shared_ptr<ob::Sensor> sensor) {
     for(uint32_t index = 0; index < streamProfileList->getCount(); index++) {
         // Get the stream profile.
         auto profile = streamProfileList->getProfile(index);
-        if(sensorType == OB_SENSOR_IR || sensorType == OB_SENSOR_COLOR || sensorType == OB_SENSOR_COLOR_LEFT || sensorType == OB_SENSOR_COLOR_RIGHT
-           || sensorType == OB_SENSOR_DEPTH || sensorType == OB_SENSOR_IR_LEFT || sensorType == OB_SENSOR_IR_RIGHT || sensorType == OB_SENSOR_CONFIDENCE) {
+        if(ob_is_video_sensor_type(sensorType)) {
             printStreamProfile(profile, index);
         }
         else if(sensorType == OB_SENSOR_ACCEL) {
@@ -138,7 +137,8 @@ int main(void) try {
             // Get device information from device
             deviceInfo = device->getDeviceInfo();
             std::cout << "  " << index << "- device name: " << deviceInfo->getName() << ", device pid: 0x" << std::hex << std::setw(4) << std::setfill('0')
-                      << deviceInfo->getPid() << std::dec << " ,device SN: " << deviceInfo->getSerialNumber() << ", connection type:" << deviceInfo->getConnectionType() << std::endl;
+                      << deviceInfo->getPid() << std::dec << " ,device SN: " << deviceInfo->getSerialNumber()
+                      << ", connection type:" << deviceInfo->getConnectionType() << std::endl;
         }
 
         std::cout << "Select a device to enumerate its sensors (Input device index or \'ESC\' to exit program):" << std::endl;

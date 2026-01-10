@@ -17,15 +17,14 @@ void G305GMSLMetadataModifier::modify(std::shared_ptr<Frame> frame) {
 
     switch(frame->getType()) {
     case OB_FRAME_COLOR:
-    case OB_FRAME_COLOR_LEFT: 
+    case OB_FRAME_COLOR_LEFT:
     case OB_FRAME_COLOR_RIGHT: {
-            // Copy metadata from the frame data without clearing the metadata area
-            const uint16_t *frameDataBuffer = reinterpret_cast<const uint16_t *>(frame->getData());
-            for(int i = 0; i < metadataSize; i++) {
-                metadataBuffer[i + 12] = static_cast<uint8_t>(frameDataBuffer[i] >> 8);
-            }
+        // Copy metadata from the frame data without clearing the metadata area
+        const uint16_t *frameDataBuffer = reinterpret_cast<const uint16_t *>(frame->getData());
+        for(int i = 0; i < metadataSize; i++) {
+            metadataBuffer[i + 12] = static_cast<uint8_t>(frameDataBuffer[i] >> 8);
         }
-        break;
+    } break;
     case OB_FRAME_DEPTH: {
         // Copy metadata from the frame data and clear the metadata area
         auto            frameData       = frame->getDataMutable();

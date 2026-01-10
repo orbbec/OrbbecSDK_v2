@@ -92,7 +92,7 @@ public:
     virtual void registerProperty(uint32_t propertyId, const std::string &userPerms, const std::string &intPerms,
                                   std::shared_ptr<IPropertyAccessor> accessor)                                                                             = 0;
     virtual void unregisterAllProperties()                                                                                                                 = 0;
-    virtual void unregisterProperty(uint32_t propertyId)                                                                                                 = 0;
+    virtual void unregisterProperty(uint32_t propertyId)                                                                                                   = 0;
     virtual void aliasProperty(uint32_t aliasId, uint32_t propertyId)                                                                                      = 0;
 
     virtual bool isPropertySupported(uint32_t propertyId, PropertyOperationType operationType, PropertyAccessType accessType) const = 0;

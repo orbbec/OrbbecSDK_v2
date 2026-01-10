@@ -125,19 +125,19 @@ public:
     }
 
     /**
-     * @brief Enable a video stream to be used in the pipeline with down-sample configuration.
+     * @brief Enable a video stream to be used in the pipeline with decimation configuration.
      * @brief Will convert sensor type to stream type automatically.
      *
      * @param[in] sensorType The sensor type to be enabled.
-     * @param[in] downSampleConfig The down-sample configuration for this stream.
+     * @param[in] decimationConfig The decimation configuration for this stream.
      * @param[in] fps The video stream frame rate (default is OB_FPS_ANY, which selects the default frame rate).
      * @param[in] format The video stream format (default is OB_FORMAT_ANY, which selects the default format).
      */
-    void enableVideoStream(OBSensorType sensorType, OBHardwareDecimationConfig downSampleConfig, uint32_t fps = OB_FPS_ANY,
+    void enableVideoStream(OBSensorType sensorType, OBHardwareDecimationConfig decimationConfig, uint32_t fps = OB_FPS_ANY,
                            OBFormat format = OB_FORMAT_ANY) const {
         auto      streamType = ob::TypeHelper::convertSensorTypeToStreamType(sensorType);
         ob_error *error      = nullptr;
-        ob_config_enable_video_stream_by_down_sample_config(impl_, streamType, downSampleConfig, fps, format, &error);
+        ob_config_enable_video_stream_by_decimation_config(impl_, streamType, decimationConfig, fps, format, &error);
         Error::handle(&error);
     }
 
@@ -472,8 +472,9 @@ public:
     }
 
     OBCameraParam getCameraParamWithProfile(uint32_t colorWidth, uint32_t colorHeight, uint32_t depthWidth, uint32_t depthHeight, uint32_t decimationFactor) {
-        ob_error     *error       = nullptr;
-        OBCameraParam cameraParam = ob_pipeline_get_camera_param_with_down_sample_profile(impl_, colorWidth, colorHeight, depthWidth, depthHeight, decimationFactor, &error);
+        ob_error     *error = nullptr;
+        OBCameraParam cameraParam =
+            ob_pipeline_get_camera_param_with_decimation_profile(impl_, colorWidth, colorHeight, depthWidth, depthHeight, decimationFactor, &error);
         Error::handle(&error);
         return cameraParam;
     }
