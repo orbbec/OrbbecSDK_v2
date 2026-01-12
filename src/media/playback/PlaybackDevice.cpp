@@ -52,26 +52,23 @@ void PlaybackDevice::init() {
     auto pid = deviceInfo_->pid_;
 
     if(isDeviceInContainer(G330DevPids, vid, pid)) {
-        registerComponent(OB_DEV_COMPONENT_COLOR_FRAME_METADATA_CONTAINER, [this]() {
+        bool isGmslDevice = port_->getDeviceInfo()->connectionType_ == "GMSL2";
+        registerComponent(OB_DEV_COMPONENT_COLOR_FRAME_METADATA_CONTAINER, [this, isGmslDevice]() {
             std::shared_ptr<FrameMetadataParserContainer> container;
-#ifdef __linux__
-            if(port_->getDeviceInfo()->backendType_ == OB_UVC_BACKEND_TYPE_V4L2) {
+            if(port_->getDeviceInfo()->backendType_ == OB_UVC_BACKEND_TYPE_V4L2 && !isGmslDevice) {
                 container = std::make_shared<G330ColorFrameMetadataParserContainerByScr>(this, G330DeviceTimeFreq_, G330FrameTimeFreq_);
                 return container;
             }
-#endif
             container = std::make_shared<G330ColorFrameMetadataParserContainer>(this);
             return container;
         });
 
-        registerComponent(OB_DEV_COMPONENT_DEPTH_FRAME_METADATA_CONTAINER, [this]() {
+        registerComponent(OB_DEV_COMPONENT_DEPTH_FRAME_METADATA_CONTAINER, [this, isGmslDevice]() {
             std::shared_ptr<FrameMetadataParserContainer> container;
-#ifdef __linux__
-            if(port_->getDeviceInfo()->backendType_ == OB_UVC_BACKEND_TYPE_V4L2) {
+            if(port_->getDeviceInfo()->backendType_ == OB_UVC_BACKEND_TYPE_V4L2 && !isGmslDevice) {
                 container = std::make_shared<G330DepthFrameMetadataParserContainerByScr>(this, G330DeviceTimeFreq_, G330FrameTimeFreq_);
                 return container;
             }
-#endif
             container = std::make_shared<G330DepthFrameMetadataParserContainer>(this);
             return container;
         });
