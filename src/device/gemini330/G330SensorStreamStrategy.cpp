@@ -104,7 +104,7 @@ void G330SensorStreamStrategy::validateDepthAndIrStream(const std::vector<std::s
                 return false;
             }
             auto cmpVsp = sp->as<VideoStreamProfile>();
-            return cmpVsp->getWidth() != vsp->getWidth() && cmpVsp->getHeight() != vsp->getHeight() && cmpVsp->getFps() != vsp->getFps();
+            return cmpVsp->getWidth() != vsp->getWidth() || cmpVsp->getHeight() != vsp->getHeight() || cmpVsp->getFps() != vsp->getFps();
         });
         if(iter != tempStartedStreamList.end()) {
             throw unsupported_operation_exception(utils::string::to_string()
