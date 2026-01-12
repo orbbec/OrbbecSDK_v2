@@ -17,6 +17,17 @@ Here is the device support list of OrbbecSDK v1 (v1.x) and Orbbec SDK v2 (v2.x):
     </tr>
   </thead>
   <tbody>
+    <tr>
+      <td rowspan="2" style="text-align: center; font-weight: bold;">Gemini 340</td>
+      <td>Gemini 345</td>
+      <td>not supported</td>
+      <td>recommended for new designs</td>
+    </tr>
+    <tr>
+      <td>Gemini 345Lg</td>
+      <td>not supported</td>
+      <td>recommended for new designs</td>
+    </tr>
       <tr>
       <td style="text-align: center; font-weight: bold;">Gemini 435Le</td>
       <td>Gemini 435Le</td>
@@ -222,6 +233,8 @@ After upgrading to the UVC protocol, these devices will have a firmware major ve
 
 | **Products List** | **Minimal Firmware Version** | **Recommended Firmware Version**    |
 |-------------------|------------------------------|-------------------------------|
+| Gemini 345        | 1.7.04                     |        1.7.12                   |
+| Gemini 345Lg        | 1.7.04                     |        1.7.12                   |
 | Gemini 435Le        | 1.2.4                     |        1.3.6                   |
 | Gemini 335Le        | 1.5.31                     |        1.6.00                     |
 | Gemini 330        | 1.2.20                       |        1.6.00                       |
