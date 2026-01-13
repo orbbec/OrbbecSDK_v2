@@ -52,7 +52,6 @@ public:
     virtual bool isNetDeviceEnumerationEnable() const    = 0;
 
     virtual void enableDeviceClockSync(uint64_t repeatInterval) = 0;
-    virtual void setMultiDeviceSoftSync(uint64_t softSyncTime)  = 0;
 };
 
 }  // namespace libobsensor

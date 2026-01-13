@@ -28,7 +28,6 @@ public:
     void                    setSyncConfig(const OBMultiDeviceSyncConfig &deviceSyncConfig) override;
     uint16_t                getSupportedSyncModeBitmap() override;
     void                    triggerCapture() override;
-    void                    triggerTimeCapture(uint64_t systemTime, uint64_t triggerTimeInterval, LinearFuncParam param);
 
 private:
     const std::vector<OBMultiDeviceSyncMode> supportedSyncModes_;

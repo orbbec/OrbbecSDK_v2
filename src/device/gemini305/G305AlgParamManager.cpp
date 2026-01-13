@@ -404,8 +404,8 @@ void G305AlgParamManager::bindIntrinsic(std::vector<std::shared_ptr<const Stream
             break;
         }
         auto  decimationConfig = vsp->getDecimationConfig();
-        auto  originWidth      = decimationConfig.decimationFactor == 0 ? vsp->getWidth() : decimationConfig.originWidth;
-        auto  originHeight     = decimationConfig.decimationFactor == 0 ? vsp->getHeight() : decimationConfig.originHeight;
+        auto  originWidth      = decimationConfig.factor == 0 ? vsp->getWidth() : decimationConfig.originWidth;
+        auto  originHeight     = decimationConfig.factor == 0 ? vsp->getHeight() : decimationConfig.originHeight;
         int   scale            = originWidth / vsp->getWidth();
         auto  ratio            = 1.f / scale;
         float dx               = (((int)originWidth - scale * (int)vsp->getWidth()) / 2.f) + scale - 1;  // delta_w/2

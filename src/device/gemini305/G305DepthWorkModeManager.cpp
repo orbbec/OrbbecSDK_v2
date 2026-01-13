@@ -40,7 +40,6 @@ void G305DepthWorkModeManager::switchDepthWorkMode(const std::string &modeName) 
 
 void G305DepthWorkModeManager::switchDepthWorkMode(const OBDepthWorkMode_Internal &targetDepthMode) {
     auto        owner           = getOwner();
-    auto        propServer      = owner->getPropertyServer();  // get property server first to lock resource to avoid start stream at the same time
     std::string currentModeName = currentWorkMode_.name;
     std::string targetModeName  = targetDepthMode.name;
 
@@ -54,14 +53,20 @@ void G305DepthWorkModeManager::switchDepthWorkMode(const OBDepthWorkMode_Interna
         return;
     }
 
-    propServer->setStructureDataProtoV1_1_T<OBDepthWorkMode_Internal, 0>(OB_STRUCT_CURRENT_DEPTH_ALG_MODE, targetDepthMode);
+    {
+        auto propServer = owner->getPropertyServer();  // get property server first to lock resource to avoid start stream at the same time
+        propServer->setStructureDataProtoV1_1_T<OBDepthWorkMode_Internal, 0>(OB_STRUCT_CURRENT_DEPTH_ALG_MODE, targetDepthMode);
+    }
     currentWorkMode_ = targetDepthMode;
 
     LOG_DEBUG("Device depth work mode have been switch to: {}, device will be reinitialize to apply the new mode.", targetDepthMode.name);
 
-    if((currentModeName != "Dual Color Stremas" && targetModeName == "Dual Color Streams")
-       || (targetModeName != "Dual Color Stremas" && currentModeName == "Dual Color Streams")) {
+    if((currentModeName != kDoubleRgbMode && targetModeName == kDoubleRgbMode) || (targetModeName != kDoubleRgbMode && currentModeName == kDoubleRgbMode)) {
         owner->reset();
+    }
+    else {
+        // refresh device error state after depth work mode changed
+        TRY_EXECUTE({ owner->fetchDeviceErrorState(); });
     }
 }
 

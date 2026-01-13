@@ -78,10 +78,6 @@ void G305Device::init() {
 
     videoFrameTimestampCalculatorCreator_ = [this]() {
         auto metadataType = OB_FRAME_METADATA_TYPE_TIMESTAMP;
-        auto iter         = std::find(G305DevPids.begin(), G305DevPids.end(), deviceInfo_->pid_);
-        if(iter == G305DevPids.end()) {
-            metadataType = OB_FRAME_METADATA_TYPE_SENSOR_TIMESTAMP;
-        }
         return std::make_shared<FrameTimestampCalculatorOverMetadata>(this, metadataType, frameTimeFreq_);
     };
 
@@ -480,7 +476,7 @@ void G305Device::initProperties() {
             propertyServer->registerProperty(OB_PROP_ON_CHIP_CALIBRATION_ENABLE_BOOL, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_COLOR_EXPOSURE_INT, "rw", "rw", vendorPropertyAccessor);  // using vendor property accessor
             propertyServer->registerProperty(OB_PROP_COLOR_AE_MAX_EXPOSURE_INT, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_STRUCT_COLOR_SYNCED_EXPOSURE_PARAM, "rw", "rw", vendorPropertyAccessor);
+            //propertyServer->registerProperty(OB_STRUCT_COLOR_SYNCED_EXPOSURE_PARAM, "rw", "rw", vendorPropertyAccessor);
 
             propertyServer->aliasProperty(OB_PROP_IR_AUTO_EXPOSURE_BOOL, OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL);
             propertyServer->aliasProperty(OB_PROP_IR_EXPOSURE_INT, OB_PROP_DEPTH_EXPOSURE_INT);
@@ -527,16 +523,14 @@ void G305Device::initProperties() {
     propertyServer->registerProperty(OB_STRUCT_DEVICE_ERROR_STATE, "", "r", vendorPropertyAccessor.get());
     propertyServer->registerProperty(OB_PROP_INTRA_CAMERA_SYNC_REFERENCE_INT, "rw", "rw", vendorPropertyAccessor.get());
     propertyServer->registerProperty(OB_PROP_COLOR_DENOISING_LEVEL_INT, "rw", "rw", vendorPropertyAccessor.get());
-    propertyServer->registerProperty(OB_STRUCT_SOFTWARE_SYNCED_TARGET_TIME, "w", "w", vendorPropertyAccessor.get());
+    //propertyServer->registerProperty(OB_STRUCT_SOFTWARE_SYNCED_TARGET_TIME, "w", "w", vendorPropertyAccessor.get());
     propertyServer->registerProperty(OB_STRUCT_PRESET_RESOLUTION_CONFIG, "rw", "rw", vendorPropertyAccessor.get());
 
     auto hwNoiseRemovePropertyAccessor = std::make_shared<G305HWNoiseRemovePropertyAccessor>(this);
     propertyServer->registerProperty(OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL, "rw", "rw", hwNoiseRemovePropertyAccessor);
     propertyServer->registerProperty(OB_PROP_HW_NOISE_REMOVE_FILTER_THRESHOLD_FLOAT, "rw", "rw", hwNoiseRemovePropertyAccessor);
 
-    propertyServer->registerProperty(OB_STRUCT_PRESET_RESOLUTION_CONFIG, "rw", "rw", vendorPropertyAccessor.get());
     propertyServer->registerProperty(OB_RAW_PRESET_RESOLUTION_CONFIG_LIST, "", "rw", vendorPropertyAccessor.get());
-
     propertyServer->registerProperty(OB_RAW_DATA_PRESET_RESOLUTION_MASK_LIST, "", "r", vendorPropertyAccessor.get());
 }
 
@@ -1517,8 +1511,7 @@ void G305Device::fixSensorList() {
     const auto &currentMode          = depthWorkModeManager->getCurrentDepthWorkMode();
     auto        propertyServer       = getPropertyServer();
     // deregister unsupported sensors according to depth work mode option code
-    std::string depthWorkModeName(currentMode.name);
-    if(depthWorkModeName.find("Dual Color Streams") != std::string::npos) {
+    if(std::strcmp(currentMode.name, kDoubleRgbMode) == 0) {
         deregisterSensor(OB_SENSOR_DEPTH);
         deregisterSensor(OB_SENSOR_IR_LEFT);
         deregisterSensor(OB_SENSOR_IR_RIGHT);

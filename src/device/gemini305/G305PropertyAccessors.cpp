@@ -226,6 +226,8 @@ void G305ColorAePropertyAccessor::setPropertyValue(uint32_t propertyId, const OB
         colorExposureInt.intValue = value.intValue * 100;
         vendorPropertyAccessor->setPropertyValue(OB_PROP_DEPTH_EXPOSURE_INT, colorExposureInt);
     } break;
+    default: {
+    } break;
     }
 }
 
@@ -242,6 +244,8 @@ void G305ColorAePropertyAccessor::getPropertyValue(uint32_t propertyId, OBProper
     case OB_PROP_COLOR_EXPOSURE_INT: {
         vendorPropertyAccessor->getPropertyValue(OB_PROP_DEPTH_EXPOSURE_INT, value);
         value->intValue /= 100;
+    } break;
+    default: {
     } break;
     }
 }
@@ -261,6 +265,8 @@ void G305ColorAePropertyAccessor::getPropertyRange(uint32_t propertyId, OBProper
         vendorPropertyAccessor->getPropertyRange(OB_PROP_DEPTH_EXPOSURE_INT, range);
         range->max.intValue /= 100;
         range->def.intValue /= 100;
+    } break;
+    default: {
     } break;
     }
 }

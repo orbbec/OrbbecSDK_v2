@@ -358,7 +358,7 @@ ob_stream_profile *ob_stream_profile_list_get_video_stream_profile_by_decimation
                                                                                         ob_hardware_decimation_config decimation_config, ob_format format,
                                                                                         int fps, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(profile_list);
-    auto matchedProfileList = libobsensor::matchVideoStreamProfile(profile_list->profileList, decimation_config, fps, format);
+    auto matchedProfileList = libobsensor::matchVideoStreamProfile(profile_list->profileList, fps, format, decimation_config);
     if(matchedProfileList.empty()) {
         throw libobsensor::invalid_value_exception("Invalid input, No matched video stream profile found!");
     }

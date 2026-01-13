@@ -9,6 +9,8 @@
 
 namespace libobsensor {
 
+constexpr const char *kDoubleRgbMode = "Dual Color Streams";
+
 class G305DepthWorkModeManager : public IDepthWorkModeManager, public DeviceComponentBase {
 public:
     G305DepthWorkModeManager(IDevice *owner);

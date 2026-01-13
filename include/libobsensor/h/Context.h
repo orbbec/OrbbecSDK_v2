@@ -163,15 +163,6 @@ OB_EXPORT void ob_unregister_device_changed_callback(ob_context *context, ob_cal
 OB_EXPORT void ob_enable_device_clock_sync(ob_context *context, uint64_t repeat_interval_msec, ob_error **error);
 
 /**
- * @brief Trigger data acquisition on all devices configured for software synchronization, ensuring they capture data based on the same system time.
- *
- * @param[in] context Pointer to the context object
- * @param[in] softSyncTime The time to synchronize, in microseconds. If the value is 0, synchronization is performed immediately.
- * @param[out] error Pointer to an error object that will be populated if an error occurs during execution
- */
-OB_EXPORT void ob_multie_device_soft_sync_capture(ob_context *context, uint64_t softSyncTime, ob_error **error);
-
-/**
  * @brief Free idle memory from the internal frame memory pool
  *
  * @param[in] context Pointer to the context object

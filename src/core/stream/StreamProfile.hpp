@@ -86,7 +86,7 @@ protected:
 class VideoStreamProfile : public StreamProfile {
 public:
     VideoStreamProfile(std::shared_ptr<LazySensor> owner, OBStreamType type, OBFormat format, uint32_t width, uint32_t height, uint32_t fps);
-    VideoStreamProfile(std::shared_ptr<LazySensor> owner, OBStreamType type, OBFormat format, OBHardwareDecimationConfig decimationConfig, uint32_t fps);
+    VideoStreamProfile(std::shared_ptr<LazySensor> owner, OBStreamType type, OBFormat format, const OBHardwareDecimationConfig &decimationConfig, uint32_t fps);
     VideoStreamProfile(std::shared_ptr<const VideoStreamProfile> other) = delete;
 
     ~VideoStreamProfile() noexcept override = default;
@@ -96,7 +96,7 @@ public:
     void                       setHeight(uint32_t height);
     uint32_t                   getHeight() const;
     uint32_t                   getFps() const;
-    void                       setDecimationConfig(OBHardwareDecimationConfig decimationConfig);
+    void                       setDecimationConfig(const OBHardwareDecimationConfig &decimationConfig);
     OBHardwareDecimationConfig getDecimationConfig() const;
     OBCameraIntrinsic          getIntrinsic() const;
     void                       bindIntrinsic(const OBCameraIntrinsic &intrinsic);
@@ -181,10 +181,10 @@ std::ostream &operator<<(std::ostream &os, const std::shared_ptr<const StreamPro
 
 std::vector<std::shared_ptr<const VideoStreamProfile>> matchVideoStreamProfile(const StreamProfileList &profileList, uint32_t width, uint32_t height,
                                                                                uint32_t fps, OBFormat format,
-                                                                               OBHardwareDecimationConfig decimationConfig = { 0, 0, 0 });
+                                                                               const OBHardwareDecimationConfig &decimationConfig = { 0, 0, 0 });
 
-std::vector<std::shared_ptr<const VideoStreamProfile>> matchVideoStreamProfile(const StreamProfileList   &profileList,
-                                                                               OBHardwareDecimationConfig decimationConfig, uint32_t fps, OBFormat format);
+std::vector<std::shared_ptr<const VideoStreamProfile>> matchVideoStreamProfile(const StreamProfileList &profileList, uint32_t fps, OBFormat format,
+                                                                               const OBHardwareDecimationConfig &decimationConfig);
 
 std::vector<std::shared_ptr<const AccelStreamProfile>> matchAccelStreamProfile(const StreamProfileList &profileList, OBAccelFullScaleRange fullScaleRange,
                                                                                OBAccelSampleRate sampleRate);

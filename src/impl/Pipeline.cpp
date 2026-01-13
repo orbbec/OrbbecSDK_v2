@@ -167,14 +167,6 @@ ob_camera_param ob_pipeline_get_camera_param_with_profile(ob_pipeline *pipeline,
 }
 HANDLE_EXCEPTIONS_AND_RETURN(ob_camera_param(), pipeline, colorWidth, colorHeight, depthWidth, depthHeight)
 
-ob_camera_param ob_pipeline_get_camera_param_with_decimation_profile(ob_pipeline *pipeline, uint32_t colorWidth, uint32_t colorHeight,
-                                                                     uint32_t originDepthWidth, uint32_t originDepthHeight, uint32_t decimationFactor,
-                                                                     ob_error **error) BEGIN_API_CALL {
-    VALIDATE_NOT_NULL(pipeline);
-    return pipeline->pipeline->getCameraParam(colorWidth, colorHeight, originDepthWidth, originDepthHeight, decimationFactor);
-}
-HANDLE_EXCEPTIONS_AND_RETURN(ob_camera_param(), pipeline, colorWidth, colorHeight, originDepthWidth, originDepthHeight, decimationFactor)
-
 ob_calibration_param ob_pipeline_get_calibration_param(ob_pipeline *pipeline, ob_config *config, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(pipeline);
     return pipeline->pipeline->getCalibrationParam(config ? config->config : nullptr);

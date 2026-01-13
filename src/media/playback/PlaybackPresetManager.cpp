@@ -40,6 +40,10 @@ PlaybackPresetManager::PlaybackPresetManager(IDevice *owner) : DeviceComponentBa
             throw invalid_value_exception(utils::string::to_string() << "device Info " << devInfo->pid_);
         }
     }
+    else {
+        throw invalid_value_exception(utils::string::to_string() << "device Info " << devInfo->pid_);
+    }
+
     if(playbackDeviceType_ == OB_PLAYBACK_DEVICE_TYPE_DABAI_A || playbackDeviceType_ == OB_PLAYBACK_DEVICE_TYPE_GEMINI330
        || playbackDeviceType_ == OB_PLAYBACK_DEVICE_TYPE_GEMINI305) {
         auto depthWorkModeManager = owner->getComponentT<PlaybackDepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
@@ -169,12 +173,51 @@ Json::Value PlaybackPresetManager::exportSettingsAsPresetJsonValueMega() {
     return root;
 }
 
+Json::Value PlaybackPresetManager::exportSettingsAsPresetJsonValueG305() {
+    auto        owner = getOwner();
+    std::string depthWorkMode;
+    Json::Value root;
+
+    // Depth work mode
+    {
+        auto depthWorkModeManager = owner->getComponentT<PlaybackDepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
+        depthWorkMode             = depthWorkModeManager->getCurrentDepthWorkMode().name;
+    }
+
+    auto propServer                      = owner->getPropertyServer();
+    root["depth_alg_mode"]               = depthWorkMode;
+    root["exposure_mode"]                = propServer->getPropertyValueT<int>(OB_PROP_COLOR_AE_MODE_INT);
+    root["sport_mode"]                   = propServer->getPropertyValueT<bool>(OB_PROP_COLOR_FAST_AE_BOOL);
+    root["depth_auto_exposure"]          = propServer->getPropertyValueT<bool>(OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL);
+    root["depth_exposure_time"]          = propServer->getPropertyValueT<int>(OB_PROP_IR_EXPOSURE_INT);
+    root["depth_gain"]                   = propServer->getPropertyValueT<int>(OB_PROP_IR_GAIN_INT);
+    root["target_mean_intensity"]        = propServer->getPropertyValueT<int>(OB_PROP_IR_BRIGHTNESS_INT);
+    root["color_auto_exposure"]          = propServer->getPropertyValueT<bool>(OB_PROP_COLOR_AUTO_EXPOSURE_BOOL);
+    root["color_exposure_time"]          = propServer->getPropertyValueT<int>(OB_PROP_COLOR_EXPOSURE_INT);
+    root["color_auto_white_balance"]     = propServer->getPropertyValueT<bool>(OB_PROP_COLOR_AUTO_WHITE_BALANCE_BOOL);
+    root["color_white_balance"]          = propServer->getPropertyValueT<int>(OB_PROP_COLOR_WHITE_BALANCE_INT);
+    root["color_gain"]                   = propServer->getPropertyValueT<int>(OB_PROP_COLOR_GAIN_INT);
+    root["color_contrast"]               = propServer->getPropertyValueT<int>(OB_PROP_COLOR_CONTRAST_INT);
+    root["color_saturation"]             = propServer->getPropertyValueT<int>(OB_PROP_COLOR_SATURATION_INT);
+    root["color_sharpness"]              = propServer->getPropertyValueT<int>(OB_PROP_COLOR_SHARPNESS_INT);
+    root["color_brightness"]             = propServer->getPropertyValueT<int>(OB_PROP_COLOR_BRIGHTNESS_INT);
+    root["color_hue"]                    = propServer->getPropertyValueT<int>(OB_PROP_COLOR_HUE_INT);
+    root["color_gamma"]                  = propServer->getPropertyValueT<int>(OB_PROP_COLOR_GAMMA_INT);
+    root["color_backlight_compensation"] = propServer->getPropertyValueT<bool>(OB_PROP_COLOR_BACKLIGHT_COMPENSATION_INT);
+    root["color_power_line_frequency"]   = propServer->getPropertyValueT<int>(OB_PROP_COLOR_POWER_LINE_FREQUENCY_INT);
+
+    return root;
+}
+
 Json::Value PlaybackPresetManager::exportSettingsAsPresetJsonValue() {
     if(playbackDeviceType_ == OB_PLAYBACK_DEVICE_TYPE_DABAI_A) {
         return exportSettingsAsPresetJsonValueDaBaiA();
     }
     else if(playbackDeviceType_ == OB_PLAYBACK_DEVICE_TYPE_GEMINI330) {
         return exportSettingsAsPresetJsonValueG300();
+    }
+    else if(playbackDeviceType_ == OB_PLAYBACK_DEVICE_TYPE_GEMINI305) {
+        return exportSettingsAsPresetJsonValueG305();
     }
     else {
         return exportSettingsAsPresetJsonValueMega();

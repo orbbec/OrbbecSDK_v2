@@ -69,28 +69,36 @@ void VideoSensor::start(std::shared_ptr<const StreamProfile> sp, FrameCallback c
             strategy->markStreamActivated(sp);
         }
     }
-    {
-        auto owner               = getOwner();
-        auto propServer          = owner->getPropertyServer();
-        auto isSupportDecamation = propServer->isPropertySupported(OB_STRUCT_PRESET_RESOLUTION_CONFIG, PROP_OP_READ_WRITE, PROP_ACCESS_INTERNAL);
-        auto videoStreamProfile  = sp->as<VideoStreamProfile>();
-        auto decimationConfig    = videoStreamProfile->getDecimationConfig();
 
-        if(decimationConfig.decimationFactor != 0 && isSupportDecamation) {
-            auto prestResConfig   = propServer->getStructureDataT<OBPresetResolutionConfig>(OB_STRUCT_PRESET_RESOLUTION_CONFIG);
-            auto sensorType       = videoStreamProfile->getType();
-            prestResConfig.width  = static_cast<int16_t>(decimationConfig.originWidth);
-            prestResConfig.height = static_cast<int16_t>(decimationConfig.originHeight);
-            if(sensorType == OB_STREAM_DEPTH) {
-                prestResConfig.depthDecimationFactor = decimationConfig.decimationFactor;
-                propServer->setStructureDataT<OBPresetResolutionConfig>(OB_STRUCT_PRESET_RESOLUTION_CONFIG, prestResConfig);
-            }
-            else if(sensorType == OB_STREAM_IR_LEFT || sensorType == OB_STREAM_IR_RIGHT) {
-                prestResConfig.irDecimationFactor = decimationConfig.decimationFactor;
-                propServer->setStructureDataT<OBPresetResolutionConfig>(OB_STRUCT_PRESET_RESOLUTION_CONFIG, prestResConfig);
+    if(sensorType_ == OB_SENSOR_DEPTH || isIRSensor(sensorType_)) {
+        auto owner      = getOwner();
+        auto deviceInfo = owner->getInfo();
+        auto vid        = deviceInfo->vid_;
+        auto pid        = deviceInfo->pid_;
+        if(!isDeviceInContainer(G435LeDevPids, vid, pid)) {
+            auto propServer          = owner->getPropertyServer();
+            auto isSupportDecamation = propServer->isPropertySupported(OB_STRUCT_PRESET_RESOLUTION_CONFIG, PROP_OP_READ_WRITE, PROP_ACCESS_INTERNAL);
+            auto videoStreamProfile  = sp->as<VideoStreamProfile>();
+            auto decimationConfig    = videoStreamProfile->getDecimationConfig();
+
+            if(decimationConfig.factor != 0 && isSupportDecamation) {
+                OBPresetResolutionConfig presetResolutionConfig{};
+                presetResolutionConfig.width  = static_cast<int16_t>(decimationConfig.originWidth);
+                presetResolutionConfig.height = static_cast<int16_t>(decimationConfig.originHeight);
+                if(sensorType_ == OB_SENSOR_DEPTH) {
+                    presetResolutionConfig.depthDecimationFactor = decimationConfig.factor;
+                    presetResolutionConfig.irDecimationFactor    = 0;
+                    propServer->setStructureDataT<OBPresetResolutionConfig>(OB_STRUCT_PRESET_RESOLUTION_CONFIG, presetResolutionConfig);
+                }
+                else if(isIRSensor(sensorType_)) {
+                    presetResolutionConfig.irDecimationFactor    = decimationConfig.factor;
+                    presetResolutionConfig.depthDecimationFactor = 0;
+                    propServer->setStructureDataT<OBPresetResolutionConfig>(OB_STRUCT_PRESET_RESOLUTION_CONFIG, presetResolutionConfig);
+                }
             }
         }
     }
+
     activatedStreamProfile_ = sp;
     frameCallback_          = callback;
     updateStreamState(STREAM_STATE_STARTING);
@@ -263,9 +271,8 @@ void VideoSensor::trySendStopStreamVendorCmd() {
             break;
         case OB_SENSOR_COLOR:
         case OB_SENSOR_COLOR_LEFT:
-            propertyId = OB_PROP_STOP_COLOR_STREAM_BOOL;
-            break;
         case OB_SENSOR_COLOR_RIGHT:
+            propertyId = OB_PROP_STOP_COLOR_STREAM_BOOL;
             break;
         case OB_SENSOR_IR_RIGHT:
             propertyId = OB_PROP_STOP_IR_RIGHT_STREAM_BOOL;

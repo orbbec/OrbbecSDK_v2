@@ -183,7 +183,7 @@ public:
     }
 
     void unregisterDeviceChangedCallback(OBCallbackId id) {
-        ob_error *error       = nullptr;
+        ob_error *error = nullptr;
         ob_unregister_device_changed_callback(impl_, id, &error);
         {
             std::unique_lock<std::mutex> lock(callbackMtx_);
@@ -202,17 +202,6 @@ public:
     void enableDeviceClockSync(uint64_t repeatIntervalMsec) const {
         ob_error *error = nullptr;
         ob_enable_device_clock_sync(impl_, repeatIntervalMsec, &error);
-        Error::handle(&error);
-    }
-
-    /**
-     * @brief Trigger data acquisition on all devices configured for software synchronization, ensuring they capture data based on the same system time.
-     *
-     * @param[in] softSyncTime The time to synchronize, in microseconds. If the value is 0, synchronization is performed immediately.
-     */
-    void setMultieDeviceSoftSyncTimeCapture(uint64_t softSyncTime) const {
-        ob_error *error = nullptr;
-        ob_multie_device_soft_sync_capture(impl_, softSyncTime, &error);
         Error::handle(&error);
     }
 

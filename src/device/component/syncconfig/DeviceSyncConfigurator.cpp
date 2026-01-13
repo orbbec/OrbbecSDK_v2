@@ -117,17 +117,6 @@ void DeviceSyncConfigurator::triggerCapture() {
     propertyServer->setPropertyValueT(OB_PROP_CAPTURE_IMAGE_SIGNAL_BOOL, true);
 }
 
-void DeviceSyncConfigurator::triggerTimeCapture(uint64_t systemTime, uint64_t triggerTimeInterval, LinearFuncParam param) {
-    const double         rawDeviceTime = (systemTime + triggerTimeInterval - param.constantB) / param.coefficientA;
-    OBDeviceSoftSyncTime deviceSoftSyncTime{ static_cast<uint64_t>(std::llround(rawDeviceTime)) };
-    std::vector<uint8_t> data(sizeof(deviceSoftSyncTime));
-    memcpy(data.data(), &deviceSoftSyncTime, sizeof(deviceSoftSyncTime));
-    auto owner          = getOwner();
-    auto propertyServer = owner->getPropertyServer();
-    propertyServer->setStructureData(OB_STRUCT_SOFTWARE_SYNCED_TARGET_TIME, data, PROP_ACCESS_INTERNAL);
-    LOG_DEBUG("softwrae sync: systemTime:{0},triggerTimeInterval:{1},deviceTime:{2}", systemTime, triggerTimeInterval, deviceSoftSyncTime.deviceTriggerTime);
-}
-
 const std::map<OBMultiDeviceSyncMode, OBSyncMode> DefaultSyncModeMapV2ToV1 = {
     { OB_MULTI_DEVICE_SYNC_MODE_FREE_RUN, OB_SYNC_MODE_CLOSE },  //
     { OB_MULTI_DEVICE_SYNC_MODE_STANDALONE, OB_SYNC_MODE_STANDALONE },

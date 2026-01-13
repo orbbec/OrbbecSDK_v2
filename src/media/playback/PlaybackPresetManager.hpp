@@ -43,6 +43,7 @@ private:
     Json::Value exportSettingsAsPresetJsonValueDaBaiA();
     Json::Value exportSettingsAsPresetJsonValueG300();
     Json::Value exportSettingsAsPresetJsonValueMega();
+    Json::Value exportSettingsAsPresetJsonValueG305();
 
 private:
     OBPlaybackDeviceType     playbackDeviceType_ = OB_PLAYBACK_DEVICE_TYPE_OTHER;

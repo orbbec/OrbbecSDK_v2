@@ -206,7 +206,7 @@ void RecordDevice::writeMetadataProperty() {
         }
     }
 
-    if(isDeviceInContainer(G330DevPids, vid, pid) || isDeviceInContainer(G435LeDevPids, vid, pid)) {
+    if(isDeviceInContainer(G330DevPids, vid, pid) || isDeviceInContainer(G435LeDevPids, vid, pid) || isDeviceInOrbbecSeries(G305DevPids, vid, pid)) {
         if(device_->isComponentExists(OB_DEV_COMPONENT_FRAME_INTERLEAVE_MANAGER)) {
             writePropertyT<int>(OB_PROP_FRAME_INTERLEAVE_CONFIG_INDEX_INT);
             writePropertyT<bool>(OB_PROP_FRAME_INTERLEAVE_ENABLE_BOOL);

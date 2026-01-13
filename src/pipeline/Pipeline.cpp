@@ -430,7 +430,7 @@ OBCameraParam Pipeline::getCameraParam() {
     return curCameraParam;
 }
 
-OBCameraParam Pipeline::getCameraParam(uint32_t colorWidth, uint32_t colorHeight, uint32_t depthWidth, uint32_t depthHeight, uint32_t decimationFactor) {
+OBCameraParam Pipeline::getCameraParam(uint32_t colorWidth, uint32_t colorHeight, uint32_t depthWidth, uint32_t depthHeight) {
     OBCameraParam curCameraParam = {};
     if(!device_) {
         return curCameraParam;
@@ -452,14 +452,8 @@ OBCameraParam Pipeline::getCameraParam(uint32_t colorWidth, uint32_t colorHeight
     auto colorStreamProfile = matchedColorProfileList.front();
 
     auto                                                   depthSensorSpList = depthSensor->getStreamProfileList();
-    std::vector<std::shared_ptr<const VideoStreamProfile>> matchedDepthProfileList;
-    if(decimationFactor == 0) {
-        matchedDepthProfileList = matchVideoStreamProfile(depthSensorSpList, depthWidth, depthHeight, OB_FPS_ANY, OB_FORMAT_ANY);
-    }
-    else {
-        OBHardwareDecimationConfig decimationConfig = { depthWidth, depthHeight, decimationFactor };
-        matchedDepthProfileList                     = matchVideoStreamProfile(depthSensorSpList, decimationConfig, OB_FPS_ANY, OB_FORMAT_ANY);
-    }
+    std::vector<std::shared_ptr<const VideoStreamProfile>> matchedDepthProfileList =
+        matchVideoStreamProfile(depthSensorSpList, depthWidth, depthHeight, OB_FPS_ANY, OB_FORMAT_ANY);
 
     if(matchedDepthProfileList.empty()) {
         throw invalid_value_exception(utils::string::to_string() << "No matched depth profile found");

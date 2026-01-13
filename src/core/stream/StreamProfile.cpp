@@ -93,8 +93,8 @@ std::ostream &StreamProfile::operator<<(std::ostream &os) const {
 VideoStreamProfile::VideoStreamProfile(std::shared_ptr<LazySensor> owner, OBStreamType type, OBFormat format, uint32_t width, uint32_t height, uint32_t fps)
     : StreamProfile(owner, type, format), width_(width), height_(height), fps_(fps) {}
 
-VideoStreamProfile::VideoStreamProfile(std::shared_ptr<LazySensor> owner, OBStreamType type, OBFormat format, OBHardwareDecimationConfig decimationConfig,
-                                       uint32_t fps)
+VideoStreamProfile::VideoStreamProfile(std::shared_ptr<LazySensor> owner, OBStreamType type, OBFormat format,
+                                       const OBHardwareDecimationConfig &decimationConfig, uint32_t fps)
     : StreamProfile(owner, type, format), width_(0), height_(0), decimationConfig_(decimationConfig), fps_(fps) {}
 void VideoStreamProfile::setWidth(uint32_t width) {
     width_ = width;
@@ -116,7 +116,7 @@ uint32_t VideoStreamProfile::getFps() const {
     return fps_;
 }
 
-void VideoStreamProfile::setDecimationConfig(OBHardwareDecimationConfig decimationConfig) {
+void VideoStreamProfile::setDecimationConfig(const OBHardwareDecimationConfig &decimationConfig) {
     decimationConfig_ = decimationConfig;
 }
 
@@ -415,9 +415,10 @@ std::ostream &operator<<(std::ostream &os, const std::shared_ptr<const StreamPro
 }
 
 std::vector<std::shared_ptr<const VideoStreamProfile>> matchVideoStreamProfile(const StreamProfileList &profileList, uint32_t width, uint32_t height,
-                                                                               uint32_t fps, OBFormat format, OBHardwareDecimationConfig decimationConfig) {
+                                                                               uint32_t fps, OBFormat format,
+                                                                               const OBHardwareDecimationConfig &decimationConfig) {
     std::vector<std::shared_ptr<const VideoStreamProfile>> matchProfileList;
-    auto                                                   decimationScale = decimationConfig.decimationFactor;
+    auto                                                   decimationScale = decimationConfig.factor;
 
     for(auto profile: profileList) {
         if(profile->is<VideoStreamProfile>()) {
@@ -434,7 +435,7 @@ std::vector<std::shared_ptr<const VideoStreamProfile>> matchVideoStreamProfile(c
             else {
                 auto profileDecimationConfig = videoProfile->getDecimationConfig();
                 if(decimationConfig.originWidth == profileDecimationConfig.originWidth && decimationConfig.originHeight == profileDecimationConfig.originHeight
-                   && decimationScale == profileDecimationConfig.decimationFactor && videoProfile->getFormat() == format && videoProfile->getFps() == fps) {
+                   && decimationScale == profileDecimationConfig.factor && videoProfile->getFormat() == format && videoProfile->getFps() == fps) {
                     matchProfileList.push_back(videoProfile);
                 }
             }
@@ -443,8 +444,8 @@ std::vector<std::shared_ptr<const VideoStreamProfile>> matchVideoStreamProfile(c
     return matchProfileList;
 }
 
-std::vector<std::shared_ptr<const VideoStreamProfile>> matchVideoStreamProfile(const StreamProfileList   &profileList,
-                                                                               OBHardwareDecimationConfig decimationConfig, uint32_t fps, OBFormat format) {
+std::vector<std::shared_ptr<const VideoStreamProfile>> matchVideoStreamProfile(const StreamProfileList &profileList, uint32_t fps, OBFormat format,
+                                                                               const OBHardwareDecimationConfig &decimationConfig) {
     std::vector<std::shared_ptr<const VideoStreamProfile>> matchProfileList;
 
     for(auto profile: profileList) {
@@ -453,7 +454,7 @@ std::vector<std::shared_ptr<const VideoStreamProfile>> matchVideoStreamProfile(c
             auto profileDecimationConfig = videoProfile->getDecimationConfig();
             if((format == OB_FORMAT_ANY || videoProfile->getFormat() == format) && (fps == OB_FPS_ANY || videoProfile->getFps() == fps)
                && decimationConfig.originWidth == profileDecimationConfig.originWidth && decimationConfig.originHeight == profileDecimationConfig.originHeight
-               && decimationConfig.decimationFactor == profileDecimationConfig.decimationFactor) {
+               && decimationConfig.factor == profileDecimationConfig.factor) {
                 matchProfileList.push_back(videoProfile);
             }
         }

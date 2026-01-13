@@ -354,23 +354,6 @@ OB_EXPORT ob_camera_param ob_pipeline_get_camera_param_with_profile(ob_pipeline 
                                                                     uint32_t depthHeight, ob_error **error);
 
 /**
- * @brief Get the current camera parameters with decimation depth profile
- *
- * @param[in] pipeline pipeline object
- * @param[in] colorWidth color width
- * @param[in] colorHeight color height
- * @param[in] originDepthWidth original depth width before decimation
- * @param[in] originDepthHeight original depth height before decimation
- * @param[in] decimationFactor depth decimation factor
- * @param[out] error Log error messages
- *
- * @return ob_camera_param returns camera internal parameters
- */
-OB_EXPORT ob_camera_param ob_pipeline_get_camera_param_with_decimation_profile(ob_pipeline *pipeline, uint32_t colorWidth, uint32_t colorHeight,
-                                                                               uint32_t originDepthWidth, uint32_t originDepthHeight, uint32_t decimationFactor,
-                                                                               ob_error **error);
-
-/**
  * @brief Get device calibration parameters with the specified configuration
  *
  * @param[in] pipeline pipeline object

@@ -46,7 +46,7 @@ void G305SensorStreamStrategy::validateStream(const std::shared_ptr<const Stream
 }
 
 void G305SensorStreamStrategy::validateStream(const std::vector<std::shared_ptr<const StreamProfile>> &profiles) {
-    if(getOwner()->getFirmwareVersionInt() >= 10325) {
+    if(getOwner()->getFirmwareVersionInt() >= 10001) {
         validateISPFirmwareVersion(profiles);
     }
 
@@ -98,14 +98,17 @@ void G305SensorStreamStrategy::validateDepthAndIrStream(const std::vector<std::s
             continue;
         }
         auto vsp  = profile->as<VideoStreamProfile>();
-        auto iter = std::find_if(tempStartedStreamList.begin(), tempStartedStreamList.end(), [vsp](const std::shared_ptr<const StreamProfile> &sp) {
-            auto cmpStreamType = sp->getType();
-            if(cmpStreamType != OB_STREAM_DEPTH && cmpStreamType != OB_STREAM_IR_LEFT && cmpStreamType != OB_STREAM_IR_RIGHT) {
-                return false;
-            }
-            auto cmpVsp = sp->as<VideoStreamProfile>();
-            return cmpVsp->getWidth() != vsp->getWidth() && cmpVsp->getHeight() != vsp->getHeight() && cmpVsp->getFps() != vsp->getFps();
-        });
+        auto decimationConfig= vsp->getDecimationConfig();
+        auto iter =
+            std::find_if(tempStartedStreamList.begin(), tempStartedStreamList.end(), [vsp, decimationConfig](const std::shared_ptr<const StreamProfile> &sp) {
+                auto cmpStreamType = sp->getType();
+                if(cmpStreamType != OB_STREAM_DEPTH && cmpStreamType != OB_STREAM_IR_LEFT && cmpStreamType != OB_STREAM_IR_RIGHT) {
+                    return false;
+                }
+                auto cmpVsp              = sp->as<VideoStreamProfile>();
+                auto cmpDecimationConfig = cmpVsp->getDecimationConfig();
+                return decimationConfig.originWidth != cmpDecimationConfig.originWidth || decimationConfig.originHeight != cmpDecimationConfig.originHeight || cmpVsp->getFps() != vsp->getFps();
+            });
         if(iter != tempStartedStreamList.end()) {
             throw unsupported_operation_exception(utils::string::to_string()
                                                   << "The depth/ir streams must have the same resolution and frame rate. " << profile);

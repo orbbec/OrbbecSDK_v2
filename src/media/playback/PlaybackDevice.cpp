@@ -29,6 +29,7 @@
 #include "gemini330/G330FrameInterleaveManager.hpp"
 #include "gemini2/G435LeFrameInterleaveManager.hpp"
 #include "gemini305/G305FrameMetadataParserContainer.hpp"
+#include "gemini305/G305FrameInterleaveManager.hpp"
 
 namespace libobsensor {
 using namespace playback;
@@ -89,50 +90,43 @@ void PlaybackDevice::init() {
         });
     }
     else if(isDeviceInOrbbecSeries(G305DevPids, vid, pid)) {
-        registerComponent(OB_DEV_COMPONENT_COLOR_FRAME_METADATA_CONTAINER, [this]() {
+        bool isGmslDevice = port_->getDeviceInfo()->connectionType_ == "GMSL2";
+        registerComponent(OB_DEV_COMPONENT_COLOR_FRAME_METADATA_CONTAINER, [this, isGmslDevice]() {
             std::shared_ptr<FrameMetadataParserContainer> container;
-#ifdef __linux__
-            if(port_->getDeviceInfo()->backendType_ == OB_UVC_BACKEND_TYPE_V4L2) {
+            if(port_->getDeviceInfo()->backendType_ == OB_UVC_BACKEND_TYPE_V4L2 && !isGmslDevice) {
                 container = std::make_shared<G305ColorFrameMetadataParserContainerByScr>(this, G330DeviceTimeFreq_, G330FrameTimeFreq_);
                 return container;
             }
-#endif
             container = std::make_shared<G305ColorFrameMetadataParserContainer>(this);
             return container;
         });
 
-        registerComponent(OB_DEV_COMPONENT_LEFT_COLOR_FRAME_METADATA_CONTAINER, [this]() {
+        registerComponent(OB_DEV_COMPONENT_LEFT_COLOR_FRAME_METADATA_CONTAINER, [this, isGmslDevice]() {
             std::shared_ptr<FrameMetadataParserContainer> container;
-#ifdef __linux__
-            if(port_->getDeviceInfo()->backendType_ == OB_UVC_BACKEND_TYPE_V4L2) {
+            if(port_->getDeviceInfo()->backendType_ == OB_UVC_BACKEND_TYPE_V4L2 && !isGmslDevice) {
                 container = std::make_shared<G305LeftColorFrameMetadataParserContainerByScr>(this, G330DeviceTimeFreq_, G330FrameTimeFreq_);
                 return container;
             }
-#endif
             container = std::make_shared<G305ColorFrameMetadataParserContainer>(this);
             return container;
         });
 
-        registerComponent(OB_DEV_COMPONENT_RIGHT_COLOR_FRAME_METADATA_CONTAINER, [this]() {
+        registerComponent(OB_DEV_COMPONENT_RIGHT_COLOR_FRAME_METADATA_CONTAINER, [this, isGmslDevice]() {
             std::shared_ptr<FrameMetadataParserContainer> container;
-#ifdef __linux__
-            if(port_->getDeviceInfo()->backendType_ == OB_UVC_BACKEND_TYPE_V4L2) {
+            if(port_->getDeviceInfo()->backendType_ == OB_UVC_BACKEND_TYPE_V4L2 && !isGmslDevice) {
                 container = std::make_shared<G305RightColorFrameMetadataParserContainerByScr>(this, G330DeviceTimeFreq_, G330FrameTimeFreq_);
                 return container;
             }
-#endif
             container = std::make_shared<G305ColorFrameMetadataParserContainer>(this);
             return container;
         });
 
-        registerComponent(OB_DEV_COMPONENT_DEPTH_FRAME_METADATA_CONTAINER, [this]() {
+        registerComponent(OB_DEV_COMPONENT_DEPTH_FRAME_METADATA_CONTAINER, [this, isGmslDevice]() {
             std::shared_ptr<FrameMetadataParserContainer> container;
-#ifdef __linux__
-            if(port_->getDeviceInfo()->backendType_ == OB_UVC_BACKEND_TYPE_V4L2) {
+            if(port_->getDeviceInfo()->backendType_ == OB_UVC_BACKEND_TYPE_V4L2 && !isGmslDevice) {
                 container = std::make_shared<G305DepthFrameMetadataParserContainerByScr>(this, G330DeviceTimeFreq_, G330FrameTimeFreq_);
                 return container;
             }
-#endif
             container = std::make_shared<G305DepthFrameMetadataParserContainer>(this);
             return container;
         });
@@ -162,6 +156,9 @@ void PlaybackDevice::init() {
             std::shared_ptr<IFrameInterleaveManager> devFrameInterleaveManager;
             if(isDeviceInContainer(G330DevPids, vid, pid)) {
                 devFrameInterleaveManager = std::make_shared<G330FrameInterleaveManager>(this);
+            }
+            else if(isDeviceInOrbbecSeries(G305DevPids, vid, pid)) {
+                devFrameInterleaveManager = std::make_shared<G305FrameInterleaveManager>(this);
             }
             else {
                 devFrameInterleaveManager = std::make_shared<G435LeFrameInterleaveManager>(this);

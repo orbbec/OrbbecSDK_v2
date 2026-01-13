@@ -1565,9 +1565,9 @@ typedef struct {
  * @details Defines the original resolution and hardware decimation factor.
  */
 typedef struct {
-    uint32_t originWidth;
-    uint32_t originHeight;
-    uint32_t decimationFactor;
+    uint32_t originWidth;   ///< Origin width
+    uint32_t originHeight;  ///< Origin height
+    uint32_t factor;        ///< Decimation factor
 } OBHardwareDecimationConfig, ob_hardware_decimation_config;
 
 /**

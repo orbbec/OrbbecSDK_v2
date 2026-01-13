@@ -471,14 +471,6 @@ public:
         return cameraParam;
     }
 
-    OBCameraParam getCameraParamWithProfile(uint32_t colorWidth, uint32_t colorHeight, uint32_t depthWidth, uint32_t depthHeight, uint32_t decimationFactor) {
-        ob_error     *error = nullptr;
-        OBCameraParam cameraParam =
-            ob_pipeline_get_camera_param_with_decimation_profile(impl_, colorWidth, colorHeight, depthWidth, depthHeight, decimationFactor, &error);
-        Error::handle(&error);
-        return cameraParam;
-    }
-
     OBCalibrationParam getCalibrationParam(std::shared_ptr<Config> config) {
         ob_error          *error            = nullptr;
         OBCalibrationParam calibrationParam = ob_pipeline_get_calibration_param(impl_, config->getImpl(), &error);

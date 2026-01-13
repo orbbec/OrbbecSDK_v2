@@ -21,7 +21,7 @@ G305PresetManager::G305PresetManager(IDevice *owner) : DeviceComponentBase(owner
     }
 
     auto propServer = owner->getPropertyServer();
-    if(availablePresets_.size() > 1) {
+    if(availablePresets_.size() > 0) {
         auto currentDepthWorkMode = propServer->getStructureDataProtoV1_1_T<OBDepthWorkMode_Internal, 0>(OB_STRUCT_CURRENT_DEPTH_ALG_MODE);
         currentPreset_            = currentDepthWorkMode.name;
         depthWorkModeManager->switchDepthWorkMode(currentPreset_.c_str());
@@ -216,9 +216,10 @@ void G305PresetManager::fetchPreset() {
     for(auto &mode: depthWorkModeList) {
         availablePresets_.emplace_back(mode.name);
     }
-
-    if(availablePresets_.size() > 1) {
-        currentPreset_ = availablePresets_[0];
+    if(availablePresets_.size() > 0) {
+        auto propServer           = owner->getPropertyServer();
+        auto currentDepthWorkMode = propServer->getStructureDataProtoV1_1_T<OBDepthWorkMode_Internal, 0>(OB_STRUCT_CURRENT_DEPTH_ALG_MODE);
+        currentPreset_            = currentDepthWorkMode.name;
         depthWorkModeManager->switchDepthWorkMode(currentPreset_.c_str());
     }
     storeCurrentParamsAsCustomPreset("Custom");
