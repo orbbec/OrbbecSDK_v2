@@ -88,7 +88,8 @@ public:
         : FrameMetadataParserContainer(owner) {
         auto device = getOwner();
 
-        registerParser(OB_FRAME_METADATA_TYPE_TIMESTAMP, std::make_shared<G305PayloadHeadMetadataTimestampParser>(device, deviceTimeFreq, frameTimeFreq));
+        registerParser(OB_FRAME_METADATA_TYPE_TIMESTAMP,
+                       std::make_shared<G305PayloadHeadMetadataColorDeviceTimestampParser>(device, deviceTimeFreq, frameTimeFreq));
         registerParser(OB_FRAME_METADATA_TYPE_SENSOR_TIMESTAMP,
                        std::make_shared<G305PayloadHeadMetadataColorSensorTimestampParser>(device, deviceTimeFreq, frameTimeFreq));
         registerParser(OB_FRAME_METADATA_TYPE_GAIN, std::make_shared<G305ColorScrMetadataGainParser>());
@@ -125,7 +126,8 @@ public:
         : FrameMetadataParserContainer(owner) {
         auto device = getOwner();
 
-        registerParser(OB_FRAME_METADATA_TYPE_TIMESTAMP, std::make_shared<G305PayloadHeadMetadataTimestampParser>(device, deviceTimeFreq, frameTimeFreq));
+        registerParser(OB_FRAME_METADATA_TYPE_TIMESTAMP,
+                       std::make_shared<G305PayloadHeadMetadataColorDeviceTimestampParser>(device, deviceTimeFreq, frameTimeFreq));
         registerParser(OB_FRAME_METADATA_TYPE_SENSOR_TIMESTAMP,
                        std::make_shared<G305PayloadHeadMetadataColorSensorTimestampParser>(device, deviceTimeFreq, frameTimeFreq));
         registerParser(OB_FRAME_METADATA_TYPE_GAIN, std::make_shared<G305ColorScrMetadataGainParser>());
@@ -162,9 +164,10 @@ public:
         : FrameMetadataParserContainer(owner) {
         auto device = getOwner();
 
-        registerParser(OB_FRAME_METADATA_TYPE_TIMESTAMP, std::make_shared<G305PayloadHeadMetadataTimestampParser>(device, deviceTimeFreq, frameTimeFreq));
+        registerParser(OB_FRAME_METADATA_TYPE_TIMESTAMP,
+                       std::make_shared<G305PayloadHeadMetadataColorRightDeviceTimestampParser>(device, deviceTimeFreq, frameTimeFreq));
         registerParser(OB_FRAME_METADATA_TYPE_SENSOR_TIMESTAMP,
-                       std::make_shared<G305PayloadHeadMetadataColorSensorTimestampParser>(device, deviceTimeFreq, frameTimeFreq));
+                       std::make_shared<G305PayloadHeadMetadataColorRightSensorTimestampParser>(device, deviceTimeFreq, frameTimeFreq));
         registerParser(OB_FRAME_METADATA_TYPE_GAIN, std::make_shared<G305ColorScrMetadataGainParser>());
         registerParser(OB_FRAME_METADATA_TYPE_EXPOSURE, std::make_shared<G305ColorScrMetadataExposureParser>());
         registerParser(OB_FRAME_METADATA_TYPE_ACTUAL_FRAME_RATE, std::make_shared<G305RightColorScrMetadataActualFrameRateParser>(device));
@@ -199,7 +202,8 @@ public:
         : FrameMetadataParserContainer(owner) {
         auto device     = getOwner();
         auto propServer = device->getPropertyServer();
-        registerParser(OB_FRAME_METADATA_TYPE_TIMESTAMP, std::make_shared<G305PayloadHeadMetadataTimestampParser>(device, deviceTimeFreq, frameTimeFreq));
+        registerParser(OB_FRAME_METADATA_TYPE_TIMESTAMP,
+                       std::make_shared<G305PayloadHeadMetadataDepthDeviceTimestampParser>(device, deviceTimeFreq, frameTimeFreq));
         registerParser(OB_FRAME_METADATA_TYPE_SENSOR_TIMESTAMP,
                        std::make_shared<G305PayloadHeadMetadataDepthSensorTimestampParser>(device, deviceTimeFreq, frameTimeFreq));
         registerParser(OB_FRAME_METADATA_TYPE_GAIN, std::make_shared<G305DepthScrMetadataGainParser>());

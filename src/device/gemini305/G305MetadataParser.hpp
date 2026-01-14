@@ -100,14 +100,13 @@ public:
     }
 };
 
-class G305PayloadHeadMetadataTimestampParser : public G305ScrMetadataParserBase {
+class G305PayloadHeadMetadataColorDeviceTimestampParser : public G305ScrMetadataParserBase {
 public:
-    G305PayloadHeadMetadataTimestampParser(IDevice *device, uint64_t deviceTimeFreq, uint64_t frameTimeFreq)
+    G305PayloadHeadMetadataColorDeviceTimestampParser(IDevice *device, uint64_t deviceTimeFreq, uint64_t frameTimeFreq)
         : device_(device), deviceTimeFreq_(deviceTimeFreq), frameTimeFreq_(frameTimeFreq) {
         timestampCalculator_ = std::make_shared<G305FrameTimestampCalculatorBaseDeviceTime>(device, deviceTimeFreq_, frameTimeFreq_);
     }
-    virtual ~G305PayloadHeadMetadataTimestampParser() noexcept override = default;
-
+    virtual ~G305PayloadHeadMetadataColorDeviceTimestampParser() noexcept override = default;
     int64_t getValue(const uint8_t *metadata, size_t dataSize) override {
         if(!isSupported(metadata, dataSize)) {
             LOG_WARN_INTVL("Current metadata does not contain timestamp!");
@@ -129,7 +128,36 @@ public:
             frameOffset = static_cast<int32_t>(rawValue);
         }
 
-        calculatedTimestamp += frameOffset;
+        calculatedTimestamp -= frameOffset;
+        return calculatedTimestamp;
+    }
+
+private:
+    IDevice *device_;
+
+    uint64_t deviceTimeFreq_;
+
+    uint64_t frameTimeFreq_;
+
+    std::shared_ptr<G305FrameTimestampCalculatorBaseDeviceTime> timestampCalculator_;
+};
+
+class G305PayloadHeadMetadataColorRightDeviceTimestampParser : public G305ScrMetadataParserBase {
+public:
+    G305PayloadHeadMetadataColorRightDeviceTimestampParser(IDevice *device, uint64_t deviceTimeFreq, uint64_t frameTimeFreq)
+        : device_(device), deviceTimeFreq_(deviceTimeFreq), frameTimeFreq_(frameTimeFreq) {
+        timestampCalculator_ = std::make_shared<G305FrameTimestampCalculatorBaseDeviceTime>(device, deviceTimeFreq_, frameTimeFreq_);
+    }
+    virtual ~G305PayloadHeadMetadataColorRightDeviceTimestampParser() noexcept override = default;
+    int64_t getValue(const uint8_t *metadata, size_t dataSize) override {
+        if(!isSupported(metadata, dataSize)) {
+            LOG_WARN_INTVL("Current metadata does not contain timestamp!");
+            return -1;
+        }
+        auto     standardUvcMetadata  = *(reinterpret_cast<const StandardUvcFramePayloadHeader *>(metadata));
+        uint64_t presentationTime     = standardUvcMetadata.dwPresentationTime;
+        uint64_t transformedTimestamp = ((presentationTime >> 24) & 0xFF) * 1000000 + ((presentationTime & 0xFFFFFF) << 8) / 1000;
+        auto     calculatedTimestamp  = timestampCalculator_->calculate(transformedTimestamp);
 
         return calculatedTimestamp;
     }
@@ -144,10 +172,72 @@ private:
     std::shared_ptr<G305FrameTimestampCalculatorBaseDeviceTime> timestampCalculator_;
 };
 
-class G305PayloadHeadMetadataColorSensorTimestampParser : public G305PayloadHeadMetadataTimestampParser {
+class G305PayloadHeadMetadataDepthDeviceTimestampParser : public G305ScrMetadataParserBase {
+public:
+    G305PayloadHeadMetadataDepthDeviceTimestampParser(IDevice *device, uint64_t deviceTimeFreq, uint64_t frameTimeFreq)
+        : device_(device), deviceTimeFreq_(deviceTimeFreq), frameTimeFreq_(frameTimeFreq) {
+        timestampCalculator_ = std::make_shared<G305FrameTimestampCalculatorBaseDeviceTime>(device, deviceTimeFreq_, frameTimeFreq_);
+    }
+    virtual ~G305PayloadHeadMetadataDepthDeviceTimestampParser() noexcept override = default;
+    int64_t getValue(const uint8_t *metadata, size_t dataSize) override {
+        if(!isSupported(metadata, dataSize)) {
+            LOG_WARN_INTVL("Current metadata does not contain timestamp!");
+            return -1;
+        }
+        auto     standardUvcMetadata  = *(reinterpret_cast<const StandardUvcFramePayloadHeader *>(metadata));
+        uint64_t presentationTime     = standardUvcMetadata.dwPresentationTime;
+        uint64_t transformedTimestamp = ((presentationTime >> 24) & 0xFF) * 1000000 + ((presentationTime & 0xFFFFFF) << 8) / 1000;
+        auto     calculatedTimestamp  = timestampCalculator_->calculate(transformedTimestamp);
+
+        return calculatedTimestamp;
+    }
+
+private:
+    IDevice *device_;
+
+    uint64_t deviceTimeFreq_;
+
+    uint64_t frameTimeFreq_;
+
+    std::shared_ptr<G305FrameTimestampCalculatorBaseDeviceTime> timestampCalculator_;
+};
+
+class G305PayloadHeadMetadataColorRightSensorTimestampParser : public G305PayloadHeadMetadataColorRightDeviceTimestampParser {
+public:
+    G305PayloadHeadMetadataColorRightSensorTimestampParser(IDevice *device, uint64_t deviceTimeFreq, uint64_t frameTimeFreq)
+        : G305PayloadHeadMetadataColorRightDeviceTimestampParser(device, deviceTimeFreq, frameTimeFreq) {}
+    virtual ~G305PayloadHeadMetadataColorRightSensorTimestampParser() noexcept override = default;
+    int64_t getValue(const uint8_t *metadata, size_t dataSize) override {
+        if(!isSupported(metadata, dataSize)) {
+            LOG_WARN_INTVL("Current metadata does not contain color sensor timestamp!");
+            return -1;
+        }
+
+        auto calculatedTimestamp = G305PayloadHeadMetadataColorRightDeviceTimestampParser::getValue(metadata, dataSize);
+        // get frame offset,unit 100us
+        auto     standardUvcMetadata = *(reinterpret_cast<const StandardUvcFramePayloadHeader *>(metadata));
+        uint16_t rawValue            = (((standardUvcMetadata.scrSourceClock[1] & 0xF8) >> 3) | ((standardUvcMetadata.scrSourceClock[2] & 0x7F) << 5));
+        int32_t  frameOffset         = 0;
+        // 12bit offset value check sign bit
+        if(rawValue & 0x800) {
+            rawValue    = ((~rawValue) & 0xFFF) + 1;
+            frameOffset = -static_cast<int32_t>(rawValue);
+        }
+        else {
+            frameOffset = static_cast<int32_t>(rawValue);
+        }
+
+        uint32_t exposure   = (standardUvcMetadata.scrSourceClock[0] | ((standardUvcMetadata.scrSourceClock[1] & 0x07) << 8));
+        calculatedTimestamp = calculatedTimestamp + frameOffset - exposure / 2;
+
+        return calculatedTimestamp;
+    }
+};
+
+class G305PayloadHeadMetadataColorSensorTimestampParser : public G305PayloadHeadMetadataColorDeviceTimestampParser {
 public:
     G305PayloadHeadMetadataColorSensorTimestampParser(IDevice *device, uint64_t deviceTimeFreq, uint64_t frameTimeFreq)
-        : G305PayloadHeadMetadataTimestampParser(device, deviceTimeFreq, frameTimeFreq) {}
+        : G305PayloadHeadMetadataColorDeviceTimestampParser(device, deviceTimeFreq, frameTimeFreq) {}
     virtual ~G305PayloadHeadMetadataColorSensorTimestampParser() noexcept override = default;
 
     int64_t getValue(const uint8_t *metadata, size_t dataSize) override {
@@ -156,7 +246,7 @@ public:
             return -1;
         }
 
-        auto calculatedTimestamp = G305PayloadHeadMetadataTimestampParser::getValue(metadata, dataSize);
+        auto calculatedTimestamp = G305PayloadHeadMetadataColorDeviceTimestampParser::getValue(metadata, dataSize);
         // get frame offset,unit 100us
         auto     standardUvcMetadata = *(reinterpret_cast<const StandardUvcFramePayloadHeader *>(metadata));
         uint16_t rawValue            = (((standardUvcMetadata.scrSourceClock[1] & 0xF8) >> 3) | ((standardUvcMetadata.scrSourceClock[2] & 0x7F) << 5));
@@ -277,10 +367,10 @@ public:
     }
 };
 
-class G305PayloadHeadMetadataDepthSensorTimestampParser : public G305PayloadHeadMetadataTimestampParser {
+class G305PayloadHeadMetadataDepthSensorTimestampParser : public G305PayloadHeadMetadataDepthDeviceTimestampParser {
 public:
     G305PayloadHeadMetadataDepthSensorTimestampParser(IDevice *device, uint64_t deviceTimeFreq, uint64_t frameTimeFreq)
-        : G305PayloadHeadMetadataTimestampParser(device, deviceTimeFreq, frameTimeFreq) {}
+        : G305PayloadHeadMetadataDepthDeviceTimestampParser(device, deviceTimeFreq, frameTimeFreq) {}
     virtual ~G305PayloadHeadMetadataDepthSensorTimestampParser() noexcept override = default;
 
     int64_t getValue(const uint8_t *metadata, size_t dataSize) override {
@@ -289,7 +379,7 @@ public:
             return -1;
         }
 
-        auto calculatedTimestamp = G305PayloadHeadMetadataTimestampParser::getValue(metadata, dataSize);
+        auto calculatedTimestamp = G305PayloadHeadMetadataDepthDeviceTimestampParser::getValue(metadata, dataSize);
         // get depth exposure,unit 1us
         auto     standardUvcMetadata = *(reinterpret_cast<const StandardUvcFramePayloadHeader *>(metadata));
         uint32_t exposure =
