@@ -38,7 +38,12 @@ public:
     void enableNetDeviceEnumeration(bool enable) override;
     bool isNetDeviceEnumerationEnable() const override;
 
-    void enableDeviceClockSync(uint64_t repeatInterval) override;
+    void  enableDeviceClockSync(void *caller, uint64_t repeatInterval) override;
+    void  disableDeviceClockSync() override;
+    void *getDeviceClockSyncCaller() override {
+        return multiDeviceSyncCaller_.load();
+    }
+
 private:
     void onDeviceChanged(const DeviceEnumInfoList &removed, const DeviceEnumInfoList &added);
 
@@ -61,6 +66,8 @@ private:
     std::thread             multiDeviceSyncThread_;
     std::condition_variable multiDeviceSyncCv_;
     uint64_t                multiDeviceSyncIntervalMs_;  // unit: ms
+    std::atomic<bool>       multiDeviceSyncStop_{ false };
+    std::atomic<void *>     multiDeviceSyncCaller_{ nullptr };
 
     std::vector<std::shared_ptr<IDeviceEnumerator>> deviceEnumerators_;
 

@@ -33,6 +33,11 @@ void ob_delete_context(ob_context *context, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(context);
     auto deviceMgr = context->context->getDeviceManager();
     if(deviceMgr) {
+        // stop clock sync if enabled by self
+        auto caller = deviceMgr->getDeviceClockSyncCaller();
+        if(caller == context) {
+            deviceMgr->disableDeviceClockSync();
+        }
         // cancel all callbacks
         for(auto id: context->callbackIds) {
             deviceMgr->unregisterDeviceChangedCallback(id);
@@ -130,7 +135,7 @@ HANDLE_EXCEPTIONS_NO_RETURN(context, callback_id)
 void ob_enable_device_clock_sync(ob_context *context, uint64_t repeat_interval_msec, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(context);
     auto deviceMgr = context->context->getDeviceManager();
-    deviceMgr->enableDeviceClockSync(repeat_interval_msec);
+    deviceMgr->enableDeviceClockSync(context, repeat_interval_msec);
 }
 HANDLE_EXCEPTIONS_NO_RETURN(context, repeat_interval_msec)
 

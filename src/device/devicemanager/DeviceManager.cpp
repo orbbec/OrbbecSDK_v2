@@ -82,12 +82,7 @@ DeviceManager::~DeviceManager() noexcept {
     LOG_DEBUG("DeviceManager destroy ...");
     destroy_ = true;
 
-    multiDeviceSyncIntervalMs_ = 0;
-    multiDeviceSyncCv_.notify_all();
-    if(multiDeviceSyncThread_.joinable()) {
-        multiDeviceSyncThread_.join();
-    }
-
+    disableDeviceClockSync();
     stopDeviceActivitySync();
     LOG_DEBUG("DeviceManager Destructors done");
 }
@@ -291,17 +286,14 @@ void DeviceManager::onDeviceChanged(const DeviceEnumInfoList &removed, const Dev
     }
 }
 
-void DeviceManager::enableDeviceClockSync(uint64_t repeatInterval) {
+void DeviceManager::enableDeviceClockSync(void *caller, uint64_t repeatInterval) {
     LOG_DEBUG("Enable multi-device clock sync, repeatInterval={0}ms", repeatInterval);
 
     // stop previous thread
-    multiDeviceSyncIntervalMs_ = 0;
-    multiDeviceSyncCv_.notify_all();
-    if(multiDeviceSyncThread_.joinable()) {
-        multiDeviceSyncThread_.join();
-    }
+    disableDeviceClockSync();
 
     // create new thread
+    multiDeviceSyncStop_       = false;
     multiDeviceSyncIntervalMs_ = repeatInterval;
     multiDeviceSyncThread_     = std::thread([this]() {
         do {
@@ -326,6 +318,17 @@ void DeviceManager::enableDeviceClockSync(uint64_t repeatInterval) {
             multiDeviceSyncCv_.wait_for(lock, std::chrono::milliseconds(multiDeviceSyncIntervalMs_));
         } while(multiDeviceSyncIntervalMs_ > 0 && !destroy_);
     });
+    multiDeviceSyncCaller_.store(caller);
+}
+
+void DeviceManager::disableDeviceClockSync() {
+    multiDeviceSyncStop_       = true;
+    multiDeviceSyncIntervalMs_ = 0;
+    multiDeviceSyncCv_.notify_all();
+    if(multiDeviceSyncThread_.joinable()) {
+        multiDeviceSyncThread_.join();
+    }
+    multiDeviceSyncCaller_ = nullptr;
 }
 
 void DeviceManager::enableNetDeviceEnumeration(bool enable) {
@@ -361,7 +364,7 @@ bool DeviceManager::isNetDeviceEnumerationEnable() const {
 
 void DeviceManager::startDeviceActivitySync() {
     deviceActivitySyncStopped_ = false;
-    deviceActivitySyncThread_ = std::thread([this]() {
+    deviceActivitySyncThread_  = std::thread([this]() {
         std::mutex                   mutex;
         std::unique_lock<std::mutex> lock(mutex);
         while(!deviceActivitySyncStopped_) {

@@ -51,7 +51,16 @@ public:
     virtual void enableNetDeviceEnumeration(bool enable) = 0;
     virtual bool isNetDeviceEnumerationEnable() const    = 0;
 
-    virtual void enableDeviceClockSync(uint64_t repeatInterval) = 0;
+    /**
+     * @brief Start device clock synchronization
+     *
+     * @details Preemptive. A new call overrides any existing session
+     * @param[in] caller Unique identifier (e.g., object pointer)
+     * @param[in] repeatInterval Interval in ms. 0 for one-shot (sync), >0 for periodic (async)
+     */
+    virtual void  enableDeviceClockSync(void *caller, uint64_t repeatInterval) = 0;
+    virtual void  disableDeviceClockSync()                                     = 0;
+    virtual void *getDeviceClockSyncCaller()                                   = 0;
 };
 
 }  // namespace libobsensor
