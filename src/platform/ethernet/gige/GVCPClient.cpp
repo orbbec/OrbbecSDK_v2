@@ -518,7 +518,7 @@ int GVCPClient::recvAndParseGVCPResponse(SOCKET sock, const GVCPSocketInfo &sock
         info.devVersion        = ackPayload->szDevVer;
         // info.manufacturer      = ackPayload->szFacName;
 
-        if(info.pid == 0x0000 && info.name == "OI-BC300I") {
+        if(info.vid == ORBBEC_DEVICE_VID && info.pid == 0x0000 && info.name == "OI-BC300I") {
             // TODO: Treat OI-BC300I (pid=0x0000) as Femto Mega I (pid=0x06c0) for compatibility
             info.pid = 0x06c0;
         }

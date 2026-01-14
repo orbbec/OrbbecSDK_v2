@@ -46,36 +46,21 @@ NetDeviceEnumerator::~NetDeviceEnumerator() noexcept {
 }
 
 DeviceEnumInfoList NetDeviceEnumerator::queryDeviceList() {
-    SourcePortInfoList sourcePortInfoList;
-    auto               portInfoList = platform_->queryNetSourcePort();
+    auto portInfoList = platform_->queryNetSourcePort();
 
     if(portInfoList.empty()) {
         LOG_DEBUG("No net source port found!");
         return {};
     }
 
+    LOG_DEBUG("Current net source port list:");
     for(const auto &portInfo: portInfoList) {
         auto info = std::dynamic_pointer_cast<const NetSourcePortInfo>(portInfo);
-        if(info->pid != 0) {
-            sourcePortInfoList.push_back(info);
-            continue;
-        }
-
-        // try fetch pid from device via vendor property
-        auto pid = NetDeviceEnumerator::getDevicePid(info, OB_FEMTO_MEGA_PID);
-        if(pid != 0) {
-            auto newInfo = std::make_shared<NetSourcePortInfo>(*info);
-            newInfo->pid = pid;
-            sourcePortInfoList.push_back(newInfo);
-        }
+        // Informational only: devices with pid=0 are not filtered here
+        LOG_INFO(" - mac: {}, ip: {}, port: {}, sn: {}, pid: 0x{:04X}", info->mac, info->address, info->port, info->serialNumber, info->pid);
     }
-
-    LOG_DEBUG("Current net source port list:");
-    for(const auto &item: sourcePortInfoList) {
-        auto info = std::dynamic_pointer_cast<const NetSourcePortInfo>(item);
-        LOG_DEBUG(" - mac:{}, ip:{}, port:{}", info->mac, info->address, info->port);
-    }
-    return deviceInfoMatch(sourcePortInfoList);
+    // Filter the device info list here
+    return deviceInfoMatch(portInfoList);
 }
 
 uint16_t NetDeviceEnumerator::getDevicePid(std::shared_ptr<const NetSourcePortInfo> info, uint16_t defaultPid, bool tryCamera, bool tryLiDAR) {
