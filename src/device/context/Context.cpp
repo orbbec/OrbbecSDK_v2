@@ -57,6 +57,10 @@ Context::Context(const std::string &configFilePath) {
 
 Context::~Context() noexcept {}
 
+std::shared_ptr<IDeviceManager> Context::tryGetDeviceManager() {
+    return deviceManager_;
+}
+
 std::shared_ptr<IDeviceManager> Context::getDeviceManager() {
     if(deviceManager_ == nullptr) {
         bool enumerateNetDevice = true;

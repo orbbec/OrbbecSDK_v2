@@ -31,7 +31,8 @@ public:
 
     static std::shared_ptr<Context> getInstance(const std::string &configPath = "");
 
-    std::shared_ptr<IDeviceManager>  getDeviceManager();
+    std::shared_ptr<IDeviceManager>  tryGetDeviceManager();  // Get if exist, no create
+    std::shared_ptr<IDeviceManager>  getDeviceManager();     // Create if not exist
     std::shared_ptr<Logger>          getLogger() const;
     std::shared_ptr<FrameMemoryPool> getFrameMemoryPool() const;
     std::shared_ptr<Platform>        getPlatform() const;

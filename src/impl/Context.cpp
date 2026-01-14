@@ -31,7 +31,7 @@ NO_ARGS_HANDLE_EXCEPTIONS_AND_RETURN(nullptr)
 
 void ob_delete_context(ob_context *context, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(context);
-    auto deviceMgr = context->context->getDeviceManager();
+    auto deviceMgr = context->context->tryGetDeviceManager();  // Don't use getDeviceManager here
     if(deviceMgr) {
         // stop clock sync if enabled by self
         auto caller = deviceMgr->getDeviceClockSyncCaller();
