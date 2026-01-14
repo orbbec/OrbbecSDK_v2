@@ -36,6 +36,7 @@ public:
     const std::string &getConfigSchema() const override;
 
 private:
+    bool                   hasIntrinsicChanged(const OBCameraIntrinsic &cached, const OBCameraIntrinsic &target);
     std::shared_ptr<Frame> createDepthPointCloud(std::shared_ptr<const Frame> frame);
     std::shared_ptr<Frame> createRGBDPointCloud(std::shared_ptr<const Frame> frame);
 
@@ -44,7 +45,6 @@ private:
     PointCloudFilter::OBPointCloudDistortionType getDistortionType(OBCameraDistortion colorDistortion, OBCameraDistortion depthDistortion);
 
     void updateOutputProfile(const std::shared_ptr<const Frame> frame);
-
 
 protected:
     OBFormat               pointFormat_;
@@ -55,13 +55,17 @@ protected:
 
     std::shared_ptr<FormatConverter> formatConverter_;
 
+    // data for depth
+    OBCameraIntrinsic      depthDstIntrinsic_{};
     uint32_t               depthTablesDataSize_;
-    uint32_t               rgbdTablesDataSize_;
     std::shared_ptr<float> depthTablesData_;
-    std::shared_ptr<float> rgbdTablesData_;
     OBXYTables             depthXyTables_;
-    OBXYTables             rgbdXyTables_;
-
+    // data for rgbd
+    OBCameraIntrinsic          rgbdDstIntrinsic_{};
+    OBPointCloudDistortionType rgbdDistortionType_{ OBPointCloudDistortionType::OB_POINT_CLOUD_UN_DISTORTION_TYPE };
+    uint32_t                   rgbdTablesDataSize_;
+    std::shared_ptr<float>     rgbdTablesData_;
+    OBXYTables                 rgbdXyTables_;
 
     std::map<std::tuple<std::string, uint8_t>, std::shared_ptr<VideoStreamProfile>> registeredProfiles_;
     std::shared_ptr<const VideoStreamProfile>                                       sourceStreamProfile_;

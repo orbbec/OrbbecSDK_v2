@@ -9,6 +9,7 @@
 #include "libobsensor/h/ObTypes.h"
 #include "utils/CoordinateUtil.hpp"
 #include "utils/Utils.hpp"
+#include <cstddef>
 
 namespace libobsensor {
 
@@ -19,13 +20,13 @@ PointCloudFilter::PointCloudFilter()
       isColorDataNormalization_(false),
       isOutputZeroPoint_(true),
       depthTablesDataSize_(0),
-      rgbdTablesDataSize_(0),
       depthTablesData_(nullptr),
+      rgbdTablesDataSize_(0),
       rgbdTablesData_(nullptr),
       decimationFactor_(1),
       patchSize_(1),
       optionsChanged_(false),
-      recalcProfile_(false){
+      recalcProfile_(false) {
 
     depthXyTables_.xTable = nullptr;
     depthXyTables_.yTable = nullptr;
@@ -122,6 +123,16 @@ const std::string &PointCloudFilter::getConfigSchema() const {
     return schema;
 }
 
+bool PointCloudFilter::hasIntrinsicChanged(const OBCameraIntrinsic &cached, const OBCameraIntrinsic &target) {
+    const float eps        = 1e-6f;
+    auto        floatEqual = [eps](float a, float b) { return std::fabs(a - b) <= eps; };
+
+    if(cached.width != target.width || cached.height != target.height) {
+        return true;
+    }
+    return !(floatEqual(cached.fx, target.fx) && floatEqual(cached.fy, target.fy) && floatEqual(cached.cx, target.cx) && floatEqual(cached.cy, target.cy));
+}
+
 std::shared_ptr<Frame> PointCloudFilter::createDepthPointCloud(std::shared_ptr<const Frame> frame) {
     std::shared_ptr<const Frame> depthFrame;
     if(frame->is<FrameSet>()) {
@@ -150,23 +161,19 @@ std::shared_ptr<Frame> PointCloudFilter::createDepthPointCloud(std::shared_ptr<c
     }
     memset((void *)pointFrame->getData(), 0, pointFrame->getDataSize());
 
-    auto frameSize = depthWidth * depthHeight * 2;
-    if(depthTablesData_ && depthTablesDataSize_ != frameSize) {
-        depthTablesData_.reset();
-        depthTablesData_ = nullptr;
-    }
-
-    if(depthTablesData_ == nullptr) {
-        depthTablesDataSize_              = frameSize;
-        depthTablesData_                  = std::shared_ptr<float>(new float[depthTablesDataSize_], std::default_delete<float[]>());
-        OBCameraIntrinsic  depthIntrinsic = depthVideoStreamProfile->getIntrinsic();
-        OBCameraDistortion depthDisto     = depthVideoStreamProfile->getDistortion();
+    // Create xytables
+    OBCameraIntrinsic depthIntrinsic = depthVideoStreamProfile->getIntrinsic();
+    if(depthTablesData_ == nullptr || hasIntrinsicChanged(depthDstIntrinsic_, depthIntrinsic)) {
+        depthTablesDataSize_          = depthWidth * depthHeight * 2;
+        depthTablesData_              = std::shared_ptr<float>(new float[depthTablesDataSize_], std::default_delete<float[]>());
+        OBCameraDistortion depthDisto = depthVideoStreamProfile->getDistortion();
         if(!CoordinateUtil::transformationInitXYTables(depthIntrinsic, depthDisto, reinterpret_cast<float *>(depthTablesData_.get()), &depthTablesDataSize_,
                                                        &depthXyTables_)) {
             LOG_ERROR_INTVL("Init transformation coordinate tables failed!");
             depthTablesData_.reset();
             return nullptr;
         }
+        depthDstIntrinsic_ = depthIntrinsic;
     }
 
     updateOutputProfile(depthFrame);
@@ -310,14 +317,9 @@ std::shared_ptr<Frame> PointCloudFilter::createRGBDPointCloud(std::shared_ptr<co
         return nullptr;
     }
 
-    auto frameSize = dstWidth * dstHeight * 2;
-    if(rgbdTablesData_ && rgbdTablesDataSize_ != frameSize) {
-        rgbdTablesData_.reset();
-        rgbdTablesData_ = nullptr;
-    }
-
-    if(rgbdTablesData_ == nullptr) {
-        rgbdTablesDataSize_ = frameSize;
+    // Create xytables
+    if(rgbdTablesData_ == nullptr || rgbdDistortionType_ != distortionType || hasIntrinsicChanged(rgbdDstIntrinsic_, dstIntrinsic)) {
+        rgbdTablesDataSize_ = dstWidth * dstHeight * 2;
         rgbdTablesData_     = std::shared_ptr<float>(new float[rgbdTablesDataSize_], std::default_delete<float[]>());
         if(distortionType == OBPointCloudDistortionType::OB_POINT_CLOUD_ZERO_DISTORTION_TYPE) {
             memset(&dstDistortion, 0, sizeof(OBCameraDistortion));
@@ -327,6 +329,7 @@ std::shared_ptr<Frame> PointCloudFilter::createRGBDPointCloud(std::shared_ptr<co
             if(!CoordinateUtil::transformationInitAddDistortionUVTables(dstIntrinsic, dstDistortion, reinterpret_cast<float *>(rgbdTablesData_.get()),
                                                                         &rgbdTablesDataSize_, &rgbdXyTables_)) {
                 LOG_ERROR_INTVL("Init add distortion transformation coordinate tables failed!");
+                rgbdTablesData_.reset();
                 return nullptr;
             }
         }
@@ -334,9 +337,12 @@ std::shared_ptr<Frame> PointCloudFilter::createRGBDPointCloud(std::shared_ptr<co
             if(!CoordinateUtil::transformationInitXYTables(dstIntrinsic, dstDistortion, reinterpret_cast<float *>(rgbdTablesData_.get()), &rgbdTablesDataSize_,
                                                            &rgbdXyTables_)) {
                 LOG_ERROR_INTVL("Init transformation coordinate tables failed!");
+                rgbdTablesData_.reset();
                 return nullptr;
             }
         }
+        rgbdDstIntrinsic_   = dstIntrinsic;
+        rgbdDistortionType_ = distortionType;
     }
 
     updateOutputProfile(depthFrame);
@@ -360,7 +366,6 @@ std::shared_ptr<Frame> PointCloudFilter::createRGBDPointCloud(std::shared_ptr<co
                                                             depthFrame->getFormat() == OB_FORMAT_Y12C4, decimationFactor_, width);
     }
 
-    
     if(!isOutputZeroPoint_) {
         pointFrame->setDataSize(validPointCount * sizeof(OBColorPoint));
     }
@@ -393,13 +398,14 @@ std::shared_ptr<Frame> PointCloudFilter::process(std::shared_ptr<const Frame> fr
 PointCloudFilter::OBPointCloudDistortionType PointCloudFilter::getDistortionType(OBCameraDistortion colorDistortion, OBCameraDistortion depthDistortion) {
     OBPointCloudDistortionType type;
     OBCameraDistortion         zeroDistortion;
+    constexpr size_t           sizeToCompare = offsetof(OBCameraDistortion, model);
+
     memset(&zeroDistortion, 0, sizeof(OBCameraDistortion));
 
-    if(memcmp(&colorDistortion, &depthDistortion, sizeof(OBCameraDistortion)) == 0) {
+    if(memcmp(&colorDistortion, &depthDistortion, sizeToCompare) == 0) {
         type = OBPointCloudDistortionType::OB_POINT_CLOUD_UN_DISTORTION_TYPE;
     }
-    else if((memcmp(&depthDistortion, &zeroDistortion, sizeof(OBCameraDistortion)) == 0)
-            && (memcmp(&colorDistortion, &zeroDistortion, sizeof(OBCameraDistortion)) != 0)) {
+    else if((memcmp(&depthDistortion, &zeroDistortion, sizeToCompare) == 0) && (memcmp(&colorDistortion, &zeroDistortion, sizeToCompare) != 0)) {
         type = OBPointCloudDistortionType::OB_POINT_CLOUD_ADD_DISTORTION_TYPE;
     }
     else {
