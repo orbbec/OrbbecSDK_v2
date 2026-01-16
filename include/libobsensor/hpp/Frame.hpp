@@ -875,10 +875,10 @@ public:
  * @brief The LiDARPointsFrame class is used to obtain LiDAR point cloud data.
  *
  * @note The pointcloud data format can be obtained from the @ref Frame::getFormat() function. Witch can be one of the following formats:
- * - @ref OB_FORMAT_LIDAR_POINT: @ref OBLiDARPoint
- * - @ref OB_FORMAT_LIDAR_SPHERE_POINT: @ref OBLiDARSpherePoint
- * - @ref OB_FORMAT_LIDAR_SCAN: @ref OBLiDARScanPoint
- * - @ref OB_FORMAT_LIDAR_CALIBRATION: LiDAR calibration mode point cloud, raw data
+ * - @ref OB_FORMAT_LIDAR_POINT : @ref OBLiDARPoint
+ * - @ref OB_FORMAT_LIDAR_SPHERE_POINT : @ref OBLiDARSpherePoint
+ * - @ref OB_FORMAT_LIDAR_SCAN : @ref OBLiDARScanPoint
+ * - @ref OB_FORMAT_LIDAR_CALIBRATION : LiDAR calibration mode point cloud, raw data
  * - The pointcloud data holds a set of points. To find the number of points, divide the dataSize by the structure
  * size of the corresponding point type.
  */
