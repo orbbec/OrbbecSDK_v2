@@ -199,6 +199,13 @@ std::shared_ptr<Config> Pipeline::checkAndSetConfig(std::shared_ptr<const Config
             if(matchedProfileList.empty()) {
                 throw invalid_value_exception(utils::string::to_string() << "No matched profile found for: " << sp);
             }
+            auto matchedProfile   = matchedProfileList.front();
+            auto decimationConfig = matchedProfile->getDecimationConfig();
+            if(decimationConfig.factor != 0) {
+                auto curVideoStreamProfile = std::const_pointer_cast<VideoStreamProfile>(profile);
+                curVideoStreamProfile->setHeight(matchedProfile->getHeight());
+                curVideoStreamProfile->setWidth(matchedProfile->getWidth());
+            }
             config->enableStream(matchedProfileList.front());
         }
     }
