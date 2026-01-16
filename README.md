@@ -134,10 +134,15 @@ Here is the device support list of OrbbecSDK v1 (v1.x) and Orbbec SDK v2 (v2.x):
       <td>not supported</td>
     </tr>
     <tr>
-      <td style="text-align: center; font-weight: bold;">Astra Mini</td>
-      <td>Astra Mini (S) Pro</td>
+      <td rowspan="2" style="text-align: center; font-weight: bold;">Astra Mini</td>
+      <td>Astra Mini Pro</td>
       <td>full maintenance</td>
       <td>recommended for new designs</td>
+    <tr>
+      <td>Astra Mini S Pro</td>
+      <td>full maintenance</td>
+      <td>recommended for new designs</td>
+    </tr>
     </tr>
         <tr>
       <td rowspan="2" style="text-align: center; font-weight: bold;">LiDAR</td>
