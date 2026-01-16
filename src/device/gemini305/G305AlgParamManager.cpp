@@ -243,7 +243,9 @@ void G305AlgParamManager::fixD2CParmaList() {
         int               colorScale     = colorIntrinsic.width / colorProfile->getWidth();
         auto              colorRatio     = 1.f / colorScale;
         float             colorDx        = (((int)colorIntrinsic.width - colorScale * (int)colorProfile->getWidth()) / 2.f) + colorScale - 1;  // delta_w/2
-        float             colorDy        = (((int)colorIntrinsic.height - colorScale * (int)colorProfile->getHeight()) / 2.f) + colorScale - 1;
+        float             colorBase      = ((int)colorIntrinsic.height - colorScale * (int)colorProfile->getHeight()) / 2.f;
+        colorBase                        = colorBase < 0.f ? 0.f : colorBase;
+        float colorDy                    = colorBase + colorScale - 1.f;
         colorIntrinsic.fx *= colorRatio;
         colorIntrinsic.fy *= colorRatio;
         colorIntrinsic.cx     = (colorIntrinsic.cx - colorDx) * colorRatio;
@@ -262,7 +264,9 @@ void G305AlgParamManager::fixD2CParmaList() {
             int               depthScale     = depthIntrinsic.width / depthRes.width;
             auto              depthRatio     = 1.f / depthScale;
             float             depthDx        = (((int)depthIntrinsic.width - depthScale * (int)depthRes.width) / 2.f) + depthScale - 1;  // delta_w/2
-            float             depthDy        = (((int)depthIntrinsic.height - depthScale * (int)depthRes.height) / 2.f) + depthScale - 1;
+            float             depthBase      = ((int)depthIntrinsic.height - depthScale * (int)depthRes.height) / 2.f;
+            depthBase                        = depthBase < 0.f ? 0.f : depthBase;
+            float depthDy                    = depthBase + depthScale - 1.f;
             depthIntrinsic.fx *= depthRatio;
             depthIntrinsic.fy *= depthRatio;
             depthIntrinsic.cx     = (depthIntrinsic.cx - depthDx) * depthRatio;
@@ -409,7 +413,9 @@ void G305AlgParamManager::bindIntrinsic(std::vector<std::shared_ptr<const Stream
         int   scale            = originWidth / vsp->getWidth();
         auto  ratio            = 1.f / scale;
         float dx               = (((int)originWidth - scale * (int)vsp->getWidth()) / 2.f) + scale - 1;  // delta_w/2
-        float dy               = (((int)originHeight - scale * (int)vsp->getHeight()) / 2.f) + scale - 1;
+        float dyBase           = (originHeight - scale * vsp->getHeight()) * 0.5f;
+        dyBase                 = dyBase < 0.f ? 0.f : dyBase;
+        float dy               = dyBase + scale - 1.f;
         intrinsic.fx *= ratio;
         intrinsic.fy *= ratio;
         intrinsic.cx     = (intrinsic.cx - dx) * ratio;
