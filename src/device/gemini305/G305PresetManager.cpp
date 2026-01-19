@@ -153,6 +153,8 @@ Json::Value G305PresetManager::exportSettingsAsPresetJsonValue(const std::string
 
     Json::Value root;
     root["depth_alg_mode"]               = preset.depthWorkMode;
+    root["auto_exposure_reference"]      = preset.aeReference;
+    root["auto_exposure_strategy"]       = preset.aeStrategy;
     root["depth_auto_exposure"]          = preset.depthAutoExposure;
     root["depth_exposure_time"]          = preset.depthExposureTime;
     root["depth_gain"]                   = preset.depthGain;

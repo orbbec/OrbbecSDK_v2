@@ -20,6 +20,10 @@ namespace libobsensor {
 struct G305Preset {
     // device/global
     std::string depthWorkMode;
+    
+    //ae configuration
+    int aeReference;
+    int aeStrategy;
 
     // depth and infrared sensor
     int depthAutoExposure;

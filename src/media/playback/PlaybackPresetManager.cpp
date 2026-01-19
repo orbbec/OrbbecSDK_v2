@@ -149,7 +149,7 @@ Json::Value PlaybackPresetManager::exportSettingsAsPresetJsonValueG300() {
     root["color_brightness"]             = propServer->getPropertyValueT<int>(OB_PROP_COLOR_BRIGHTNESS_INT);
     root["color_hue"]                    = propServer->getPropertyValueT<int>(OB_PROP_COLOR_HUE_INT);
     root["color_gamma"]                  = propServer->getPropertyValueT<int>(OB_PROP_COLOR_GAMMA_INT);
-    root["color_backlight_compensation"] = propServer->getPropertyValueT<bool>(OB_PROP_COLOR_BACKLIGHT_COMPENSATION_INT);
+    root["color_backlight_compensation"] = propServer->getPropertyValueT<int>(OB_PROP_COLOR_BACKLIGHT_COMPENSATION_INT);
     root["color_power_line_frequency"]   = propServer->getPropertyValueT<int>(OB_PROP_COLOR_POWER_LINE_FREQUENCY_INT);
 
     return root;
@@ -186,7 +186,7 @@ Json::Value PlaybackPresetManager::exportSettingsAsPresetJsonValueG305() {
 
     auto propServer                      = owner->getPropertyServer();
     root["depth_alg_mode"]               = depthWorkMode;
-    root["auto_exposure_reference"]               = propServer->getPropertyValueT<int>(OB_PROP_DEVICE_AE_REFERENCE_INT);
+    root["auto_exposure_reference"]      = propServer->getPropertyValueT<int>(OB_PROP_DEVICE_AE_REFERENCE_INT);
     root["auto_exposure_strategy"]       = propServer->getPropertyValueT<int>(OB_PROP_DEVICE_AE_STRATEGY_INT);
     root["depth_auto_exposure"]          = propServer->getPropertyValueT<bool>(OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL);
     root["depth_exposure_time"]          = propServer->getPropertyValueT<int>(OB_PROP_IR_EXPOSURE_INT);
