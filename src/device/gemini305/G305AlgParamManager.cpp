@@ -413,7 +413,7 @@ void G305AlgParamManager::bindIntrinsic(std::vector<std::shared_ptr<const Stream
         int   scale            = originWidth / vsp->getWidth();
         auto  ratio            = 1.f / scale;
         float dx               = (((int)originWidth - scale * (int)vsp->getWidth()) / 2.f) + scale - 1;  // delta_w/2
-        float dyBase           = (originHeight - scale * vsp->getHeight()) * 0.5f;
+        float dyBase           = ((int)originHeight - scale * (int)vsp->getHeight()) / 2.f;
         dyBase                 = dyBase < 0.f ? 0.f : dyBase;
         float dy               = dyBase + scale - 1.f;
         intrinsic.fx *= ratio;
