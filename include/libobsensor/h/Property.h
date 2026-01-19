@@ -572,16 +572,18 @@ typedef enum {
     OB_PROP_COLOR_RIGHT_FLIP_BOOL = 244,
 
     /**
-     * @brief Color AE mode
+     * @brief Device AE reference source
      * - 0: Depth based
      * - 1: Color based
      */
-    OB_PROP_COLOR_AE_MODE_INT = 247,
-    
+    OB_PROP_DEVICE_AE_REFERENCE_INT = 247,
+
     /**
-     * @brief COLOR FAST AE
+     * @brief Device AE strategy
+     * - 0: Default
+     * - 1: Motion
      */
-    OB_PROP_COLOR_FAST_AE_BOOL = 248,
+    OB_PROP_DEVICE_AE_STRATEGY_INT = 248,
 
     /**
      * @brief Color camera ROI brightness adjustment

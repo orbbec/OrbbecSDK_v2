@@ -186,8 +186,8 @@ Json::Value PlaybackPresetManager::exportSettingsAsPresetJsonValueG305() {
 
     auto propServer                      = owner->getPropertyServer();
     root["depth_alg_mode"]               = depthWorkMode;
-    root["exposure_mode"]                = propServer->getPropertyValueT<int>(OB_PROP_COLOR_AE_MODE_INT);
-    root["sport_mode"]                   = propServer->getPropertyValueT<bool>(OB_PROP_COLOR_FAST_AE_BOOL);
+    root["auto_exposure_reference"]               = propServer->getPropertyValueT<int>(OB_PROP_DEVICE_AE_REFERENCE_INT);
+    root["auto_exposure_strategy"]       = propServer->getPropertyValueT<int>(OB_PROP_DEVICE_AE_STRATEGY_INT);
     root["depth_auto_exposure"]          = propServer->getPropertyValueT<bool>(OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL);
     root["depth_exposure_time"]          = propServer->getPropertyValueT<int>(OB_PROP_IR_EXPOSURE_INT);
     root["depth_gain"]                   = propServer->getPropertyValueT<int>(OB_PROP_IR_GAIN_INT);

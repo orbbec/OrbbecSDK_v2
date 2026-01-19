@@ -501,8 +501,8 @@ void G305Device::initProperties() {
     auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
     propertyServer->registerProperty(OB_PROP_FRAME_INTERLEAVE_CONFIG_INDEX_INT, "rw", "rw", vendorPropertyAccessor.get());
     propertyServer->registerProperty(OB_PROP_FRAME_INTERLEAVE_ENABLE_BOOL, "rw", "rw", vendorPropertyAccessor.get());
-    propertyServer->registerProperty(OB_PROP_COLOR_AE_MODE_INT, "rw", "rw", vendorPropertyAccessor.get());
-    propertyServer->registerProperty(OB_PROP_COLOR_FAST_AE_BOOL, "rw", "rw", vendorPropertyAccessor.get());
+    propertyServer->registerProperty(OB_PROP_DEVICE_AE_REFERENCE_INT, "rw", "rw", vendorPropertyAccessor.get());
+    propertyServer->registerProperty(OB_PROP_DEVICE_AE_STRATEGY_INT, "rw", "rw", vendorPropertyAccessor.get());
 
     auto frameInterleaveManager = std::make_shared<G305FrameInterleaveManager>(this);
     registerComponent(OB_DEV_COMPONENT_FRAME_INTERLEAVE_MANAGER, frameInterleaveManager);

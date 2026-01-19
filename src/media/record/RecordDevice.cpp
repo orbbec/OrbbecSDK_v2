@@ -234,8 +234,8 @@ void RecordDevice::writeExposureAndGainProperty() {
     writePropertyT<int>(OB_PROP_DEPTH_GAIN_INT);
 
     // color property
-    writePropertyT<bool>(OB_PROP_COLOR_FAST_AE_BOOL);
-    writePropertyT<int>(OB_PROP_COLOR_AE_MODE_INT);
+    writePropertyT<int>(OB_PROP_DEVICE_AE_REFERENCE_INT);
+    writePropertyT<int>(OB_PROP_DEVICE_AE_STRATEGY_INT);
     writePropertyT<bool>(OB_PROP_COLOR_AUTO_EXPOSURE_BOOL);
     writePropertyT<bool>(OB_PROP_COLOR_AUTO_WHITE_BALANCE_BOOL);
     writePropertyT<int>(OB_PROP_COLOR_POWER_LINE_FREQUENCY_INT);

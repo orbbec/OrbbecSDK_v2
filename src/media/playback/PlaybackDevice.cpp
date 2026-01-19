@@ -625,8 +625,8 @@ void PlaybackDevice::initProperties() {
     registerPropertyCondition(propertyServer, OB_PROP_LASER_POWER_LEVEL_CONTROL_INT, "r", "r", vendorAccessor);
 
     // G305 device properties
-    registerPropertyCondition(propertyServer, OB_PROP_COLOR_FAST_AE_BOOL, "r", "r", vendorAccessor);
-    registerPropertyCondition(propertyServer, OB_PROP_COLOR_AE_MODE_INT, "r", "r", vendorAccessor);
+    registerPropertyCondition(propertyServer, OB_PROP_DEVICE_AE_STRATEGY_INT, "r", "r", vendorAccessor);
+    registerPropertyCondition(propertyServer, OB_PROP_DEVICE_AE_REFERENCE_INT, "r", "r", vendorAccessor);
     // Exposure properties
     // Depth sensor properties
     registerPropertyCondition(propertyServer, OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL, "r", "r", vendorAccessor);
