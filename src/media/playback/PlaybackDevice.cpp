@@ -154,9 +154,6 @@ void PlaybackDevice::init() {
             if(isDeviceInContainer(G330DevPids, vid, pid)) {
                 devFrameInterleaveManager = std::make_shared<G330FrameInterleaveManager>(this);
             }
-            else if(isDeviceInOrbbecSeries(G305DevPids, vid, pid)) {
-                devFrameInterleaveManager = std::make_shared<G305FrameInterleaveManager>(this);
-            }
             else {
                 devFrameInterleaveManager = std::make_shared<G435LeFrameInterleaveManager>(this);
             }

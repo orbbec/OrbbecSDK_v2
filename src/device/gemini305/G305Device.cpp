@@ -441,7 +441,7 @@ void G305Device::initProperties() {
             propertyServer->registerProperty(OB_RAW_DATA_DEPTH_CALIB_PARAM, "", "r", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_RAW_DATA_ALIGN_CALIB_PARAM, "", "r", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_RAW_DATA_D2C_ALIGN_SUPPORT_PROFILE_LIST, "", "r", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_STRUCT_DEPTH_HDR_CONFIG, "rw", "rw", vendorPropertyAccessor);
+            //propertyServer->registerProperty(OB_STRUCT_DEPTH_HDR_CONFIG, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_STRUCT_COLOR_AE_ROI, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_STRUCT_DEPTH_AE_ROI, "rw", "rw", vendorPropertyAccessor);
 
@@ -504,8 +504,8 @@ void G305Device::initProperties() {
     propertyServer->registerProperty(OB_PROP_DEVICE_AE_REFERENCE_INT, "rw", "rw", vendorPropertyAccessor.get());
     propertyServer->registerProperty(OB_PROP_DEVICE_AE_STRATEGY_INT, "rw", "rw", vendorPropertyAccessor.get());
 
-    auto frameInterleaveManager = std::make_shared<G305FrameInterleaveManager>(this);
-    registerComponent(OB_DEV_COMPONENT_FRAME_INTERLEAVE_MANAGER, frameInterleaveManager);
+    // auto frameInterleaveManager = std::make_shared<G305FrameInterleaveManager>(this);
+    // registerComponent(OB_DEV_COMPONENT_FRAME_INTERLEAVE_MANAGER, frameInterleaveManager);
     propertyServer->registerProperty(OB_DEVICE_AUTO_CAPTURE_ENABLE_BOOL, "rw", "rw", vendorPropertyAccessor.get());
     propertyServer->registerProperty(OB_DEVICE_AUTO_CAPTURE_INTERVAL_TIME_INT, "rw", "rw", vendorPropertyAccessor.get());
     propertyServer->registerProperty(OB_STRUCT_DEVICE_ERROR_STATE, "", "r", vendorPropertyAccessor.get());
