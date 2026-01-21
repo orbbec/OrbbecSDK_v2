@@ -284,13 +284,17 @@ std::vector<OBSensorType> RosReader::getSensorTypeList() const {
     return sensorTypesList;
 }
 
+inline orbbecRosbag::Time toRosTime(const std::chrono::nanoseconds &time, const double startTimeSec) {
+    auto timeAsSecs = std::chrono::duration_cast<std::chrono::duration<double>>(time);
+    return orbbecRosbag::Time(timeAsSecs.count() + startTimeSec);
+}
+
 void RosReader::seekToTime(const std::chrono::nanoseconds &seekTime) {
     std::lock_guard<std::mutex> lock(readMutex_);
     if(seekTime > totalDuration_) {
         throw invalid_value_exception("Seek time is greater than total duration");
     }
-    auto seekTimeAsSecs    = std::chrono::duration_cast<std::chrono::duration<double>>(seekTime);
-    auto seekTimeAsRostime = orbbecRosbag::Time(seekTimeAsSecs.count() + startTime_.toSec());
+    auto seekTimeAsRostime = toRosTime(seekTime, startTime_.toSec());
     sensorView_.reset(new rosbag::View(file_, FalseQuery()));
     for(auto topic: enabledStreamsTopics_) {
         sensorView_->addQuery(file_, rosbag::TopicQuery(topic), seekTimeAsRostime);
@@ -313,6 +317,21 @@ bool RosReader::getIsEndOfFile() {
     return sensorIterator_ == sensorView_->end();
 }
 
+std::shared_ptr<Frame> RosReader::createFrame(const rosbag::MessageInstance &msg) {
+    if(msg.isType<sensor_msgs::Image>()) {
+        return createVideoFrame(msg);
+    }
+    else if(msg.isType<sensor_msgs::Imu>()) {
+        return createImuFrame(msg);
+    }
+    else if(msg.isType<sensor_msgs::PointCloud2>()) {
+        // TODO: if there is other point cloud frame, we need to add it
+        return createLiDARPointCloud(msg);
+    }
+
+    return nullptr;
+}
+
 std::shared_ptr<Frame> RosReader::readNextData() {
     std::lock_guard<std::mutex> lock(readMutex_);
     if(!sensorView_) {
@@ -325,18 +344,34 @@ std::shared_ptr<Frame> RosReader::readNextData() {
     rosbag::MessageInstance nextMsg = *sensorIterator_;
     ++sensorIterator_;
 
-    if(nextMsg.isType<sensor_msgs::Image>()) {
-        return createVideoFrame(nextMsg);
-    }
-    else if(nextMsg.isType<sensor_msgs::Imu>()) {
-        return createImuFrame(nextMsg);
-    }
-    else if(nextMsg.isType<sensor_msgs::PointCloud2>()) {
-        // TODO: if there is other point cloud frame, we need to add it
-        return createLiDARPointCloud(nextMsg);
-    }
+    return createFrame(nextMsg);
+}
 
-    return nullptr;
+std::vector<std::shared_ptr<Frame>> RosReader::readLastDatas(const std::chrono::nanoseconds &startTime, const std::chrono::nanoseconds &endTime) {
+    std::vector<std::shared_ptr<Frame>> result;
+    rosbag::View                        view(file_, FalseQuery());
+    auto                                rosStartTime = toRosTime(startTime, startTime_.toSec());
+    auto                                rosEndTime   = toRosTime(endTime, startTime_.toSec());
+
+    for(auto topic: enabledStreamsTopics_) {
+        view.addQuery(file_, rosbag::TopicQuery(topic), rosStartTime, rosEndTime);
+    }
+    std::map<std::string, orbbecRosbag::Time> last_frames;
+    for(auto &&m: view) {
+        if(m.isType<sensor_msgs::Image>() || m.isType<sensor_msgs::Imu>()) {
+            auto id         = m.getTopic();
+            last_frames[id] = m.getTime();
+        }
+    }
+    for(auto &&kvp: last_frames) {
+        rosbag::View currenView(file_, rosbag::TopicQuery(kvp.first), kvp.second, kvp.second);
+        auto         msg   = currenView.begin();
+        auto         frame = createFrame(*msg);
+        if(frame) {
+            result.push_back(frame);
+        }
+    }
+    return result;
 }
 
 std::shared_ptr<Frame> RosReader::createImuFrame(const rosbag::MessageInstance &msg) {

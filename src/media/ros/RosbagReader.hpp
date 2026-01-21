@@ -53,6 +53,8 @@ public:
     virtual std::shared_ptr<Frame> readNextData() override;
     virtual void                   seekToTime(const std::chrono::nanoseconds &seekTime) override;
 
+    virtual std::vector<std::shared_ptr<Frame>> readLastDatas(const std::chrono::nanoseconds &startTime, const std::chrono::nanoseconds &endTime) override;
+
     virtual void stop() override;
 
 private:
@@ -64,6 +66,7 @@ private:
     void                   querySreamProfileList();
     void                   queryProperty();
     void                   bindStreamProfileExtrinsic();
+    std::shared_ptr<Frame> createFrame(const rosbag::MessageInstance &msg);
 
 private:
     std::string                                            filePath_;

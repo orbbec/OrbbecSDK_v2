@@ -31,6 +31,8 @@ public:
     virtual std::shared_ptr<Frame> readNextData()                                       = 0;
     virtual void                   seekToTime(const std::chrono::nanoseconds &seekTime) = 0;
 
+    virtual std::vector<std::shared_ptr<Frame>> readLastDatas(const std::chrono::nanoseconds &startTime, const std::chrono::nanoseconds &endTime) = 0;
+
     virtual void stop() = 0;
 };
 

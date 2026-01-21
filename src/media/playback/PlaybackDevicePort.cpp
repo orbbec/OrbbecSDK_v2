@@ -258,7 +258,27 @@ uint64_t PlaybackDevicePort::getPosition() const {
 
 void PlaybackDevicePort::seek(uint64_t position) {
     try {
-        reader_->seekToTime(std::chrono::nanoseconds(position * playbackTimeFreq_));
+        auto seekTime = std::chrono::nanoseconds(position * playbackTimeFreq_);
+        reader_->seekToTime(seekTime);
+        if(playbackStatus_.getCurrentState() == OB_PLAYBACK_PAUSED) {
+            // Read last frames for all sensors before the seek time
+            constexpr const std::chrono::nanoseconds preTime(500000000LL);  // 500ms
+            constexpr const std::chrono::nanoseconds minTime(1);            // 1ms
+            auto                                     startTime = seekTime > preTime ? seekTime - preTime : minTime;
+            auto                                     frames    = reader_->readLastDatas(startTime, seekTime);
+            for(auto &&frame: frames) {
+                auto sensorType = utils::mapFrameTypeToSensorType(frame->getType());
+                {
+                    std::lock_guard<std::mutex> lock(playbackMutex_);
+                    if(!activeSensors_.test(sensorType) || !frameQueues_.count(sensorType)) {
+                        continue;
+                    }
+                }
+                auto &frameQueue = getFrameQueue(sensorType);
+                frameQueue->enqueue(frame);
+            }
+        }
+        // Notify the loop thread
         seekOccurred_.store(true);
         std::unique_lock<std::mutex> lock(baseTimestampMutex_);
         needUpdateBaseTime_ = true;
