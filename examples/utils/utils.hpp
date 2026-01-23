@@ -33,5 +33,24 @@ bool isLiDARDevice(std::shared_ptr<ob::Device> device);
 
 bool supportAnsiEscape();
 
-}  // namespace ob_smpl
+/**
+ * @brief Check if the device is a Gemini305 device.
+ *
+ * @param vid The vendor ID of the device.
+ * @param pid The product ID of the device.
+ * @return true if the device is a Gemini305 device.
+ * @return false otherwise.
+ */
+bool isGemini305Device(int vid, int pid);
 
+/**
+ * @brief Check if the device is a Astra Mini device.
+ *
+ * @param vid The vendor ID of the device.
+ * @param pid The product ID of the device.
+ * @return true if the device is a Astra Mini device.
+ * @return false otherwise.
+ */
+bool isAstraMiniDevice(int vid, int pid);
+
+}  // namespace ob_smpl

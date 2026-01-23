@@ -34,7 +34,7 @@ int main(void) try {
             continue;
         }
 
-        if(IS_ASTRA_MINI_DEVICE(vid, pid)) {
+        if(ob_smpl::isAstraMiniDevice(vid, pid)) {
             if(sensorType == OB_SENSOR_COLOR) {
                 continue;
             }

@@ -43,4 +43,12 @@ bool supportAnsiEscape() {
     return true;
 }
 
+bool isGemini305Device(int vid, int pid) {
+    return ob_smpl_is_gemini305_device(vid, pid);
+}
+
+bool isAstraMiniDevice(int vid, int pid) {
+    return ob_smpl_is_astra_mini_device(vid, pid);
+}
+
 }  // namespace ob_smpl

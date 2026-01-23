@@ -7,7 +7,7 @@ extern "C" {
 
 #define ESC_KEY 27
 
-#define IS_ASTRA_MINI_DEVICE(vid, pid) (((vid) == 0x2bc5) && ((pid) == 0x069d || (pid) == 0x065b || (pid) == 0x065e))
+#define OB_DEVICE_VID 0x2bc5
 
 #ifdef __cplusplus
 }

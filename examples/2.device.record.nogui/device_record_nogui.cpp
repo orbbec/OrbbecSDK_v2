@@ -54,7 +54,7 @@ int main(void) try {
         auto sensor      = sensorList->getSensor(i);
         auto sensorType  = sensor->getType();
         auto profileList = sensor->getStreamProfileList();  // Get profileList to create Sensor object in advance
-        if(IS_ASTRA_MINI_DEVICE(vid, pid)) {
+        if(ob_smpl::isAstraMiniDevice(vid, pid)) {
             if(sensorType == OB_SENSOR_IR) {
                 continue;
             }

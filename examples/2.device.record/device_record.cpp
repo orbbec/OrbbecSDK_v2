@@ -54,7 +54,7 @@ int main(void) try {
     auto sensorList = device->getSensorList();
     for(uint32_t i = 0; i < sensorList->getCount(); i++) {
         auto sensorType = sensorList->getSensorType(i);
-        if(IS_ASTRA_MINI_DEVICE(vid, pid)) {
+        if(ob_smpl::isAstraMiniDevice(vid, pid)) {
             if(sensorType == OB_SENSOR_IR) {
                 continue;
             }

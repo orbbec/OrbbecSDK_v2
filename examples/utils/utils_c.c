@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 #include "utils_c.h"
+#include "utils_types.h"
 #include <stdbool.h>
 #include <stdio.h>
 
@@ -199,7 +200,14 @@ bool ob_smpl_is_lidar_device(ob_device *device) {
     return false;
 }
 
+bool ob_smpl_is_gemini305_device(int vid, int pid) {
+    return (vid == OB_DEVICE_VID && (pid == 0x0840 || pid == 0x0841 || pid == 0x0842 || pid == 0x0843));
+}
+
+bool ob_smpl_is_astra_mini_device(int vid, int pid) {
+    return (vid == OB_DEVICE_VID && (pid == 0x069d || pid == 0x065b || pid == 0x065e));
+}
+
 #ifdef __cplusplus
 }
 #endif
-
