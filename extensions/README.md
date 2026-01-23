@@ -7,3 +7,7 @@ This directory contains the binaries file for the Orbbec SDK extensions. The ext
 - frameprocessor： Contains the private frame processor library for the Orbbec SDK.
 - firmwareupdater： Contains the private firmware updater library for the Orbbec SDK.
 - depthengine： Contains the private depth engine library for the Orbbec SDK of the Femto Bolt device.
+
+# license
+
+The license for those files can be found in the LICENSE file in the root directory of the Orbbec SDK v2 repository.
