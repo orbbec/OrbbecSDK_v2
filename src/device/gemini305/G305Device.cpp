@@ -1326,6 +1326,20 @@ void G305Device::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
     auto defaultStreamProfile = loadDefaultStreamProfile(sensor->getSensorType());
     if(defaultStreamProfile != nullptr) {
         sensor->updateDefaultStreamProfile(defaultStreamProfile);
+
+        auto sensorType = sensor->getSensorType();
+        if(sensorType == OB_SENSOR_DEPTH) {
+            auto                     defaultVideoStreamProfile = defaultStreamProfile->as<VideoStreamProfile>();
+            auto                     width                     = defaultVideoStreamProfile->getWidth();
+            auto                     height                    = defaultVideoStreamProfile->getHeight();
+            auto                     propServer                = getPropertyServer();
+            OBPresetResolutionConfig presetResolutionConfig{};
+            presetResolutionConfig.width                 = static_cast<int16_t>(width);
+            presetResolutionConfig.height                = static_cast<int16_t>(height);
+            presetResolutionConfig.depthDecimationFactor = 1;
+            presetResolutionConfig.irDecimationFactor    = 1;
+            propServer->setStructureDataT<OBPresetResolutionConfig>(OB_STRUCT_PRESET_RESOLUTION_CONFIG, presetResolutionConfig);
+        }
     }
 
     // bind params: extrinsics, intrinsics, etc.
