@@ -95,7 +95,7 @@ int uvc_get_ctrl(uvc_device_handle_t *devh, uint8_t unit, uint8_t ctrl, void *da
     unit << 8 | devh->info->ctrl_if.bInterfaceNumber,		// XXX saki
     data,
     len,
-    0 /* timeout */);
+    6000 /* timeout */);
 }
 
 /**
@@ -118,7 +118,7 @@ int uvc_set_ctrl(uvc_device_handle_t *devh, uint8_t unit, uint8_t ctrl, void *da
     unit << 8 | devh->info->ctrl_if.bInterfaceNumber,		// XXX saki
     data,
     len,
-    0 /* timeout */);
+    6000 /* timeout */);
 }
 
 /***** INTERFACE CONTROLS *****/
