@@ -10,4 +10,4 @@ This directory contains the binaries file for the Orbbec SDK extensions. The ext
 
 # license
 
-The license for those files can be found in the LICENSE file in the root directory of the Orbbec SDK v2 repository.
+The license for those files can be found in license.txt in extensions directory.
