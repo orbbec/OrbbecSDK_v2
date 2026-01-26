@@ -13,6 +13,7 @@ public:
     virtual ~HDRMerge() noexcept override;
 
     void               updateConfig(std::vector<std::string> &params) override;
+    void               setConfigData(void *data, uint32_t size) override;
     const std::string &getConfigSchema() const override;
     void               reset() override;
 

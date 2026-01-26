@@ -8,6 +8,7 @@
 #include "frame/FrameMemoryPool.hpp"
 #include "stream/StreamProfile.hpp"
 #include "libobsensor/h/ObTypes.h"
+#include "utils/Utils.hpp"
 #include <libyuv.h>
 #include <turbojpeg.h>
 
@@ -34,6 +35,11 @@ void FormatConverter::updateConfig(std::vector<std::string> &params) {
     catch(const std::exception &e) {
         throw invalid_value_exception("FormatConverter config error: " + std::string(e.what()));
     }
+}
+
+void FormatConverter::setConfigData(void *data, uint32_t size) {
+    utils::unusedVar(data);
+    utils::unusedVar(size);
 }
 
 const std::string &FormatConverter::getConfigSchema() const {

@@ -119,7 +119,8 @@ public:
     virtual void registerRebootCallback(DeviceRebootCallback callback) = 0;
 
     // check if device has write access
-    virtual bool hasWriteAccess() const = 0;
+    virtual bool hasWriteAccess() const                = 0;
+    virtual void updateDepthPostProcessingFilterList() = 0;
 
 public:
     // templated functions

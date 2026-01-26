@@ -39,6 +39,20 @@ void PrivFilterCppWrapper::updateConfig(std::vector<std::string> &params) {
     }
 }
 
+void PrivFilterCppWrapper::setConfigData(void *data, uint32_t size) {
+    ob_error *error = nullptr;
+    if(data == nullptr || size == 0) {
+        LOG_WARN("Private filter set config data is null or size is 0.");
+        return;
+    }
+    
+    privFilterCtx_->set_config_data(privFilterCtx_->filter, data, size, &error);
+    if(error) {
+        LOG_WARN("Private filter {} set config data failed: {}", name_, error->message);
+        delete error;
+    }
+}
+
 const std::string &PrivFilterCppWrapper::getConfigSchema() const {
     return configSchema_;
 }

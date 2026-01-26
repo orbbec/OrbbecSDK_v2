@@ -70,6 +70,7 @@ private:
     void writeExposureAndGainProperty();
     void writeCalibrationParamProperty();
     void writeDepthWorkModeProperty();
+    void writeDepthPostFilterParamProperty();
     void writeMultiDeviceSyncConfigProperty();
     void writeOpenNIDepthProcessorParams();
     void writeAllProperties();

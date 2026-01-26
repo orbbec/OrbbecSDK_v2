@@ -13,6 +13,7 @@
 #include "Platform.hpp"
 #include "IDeviceMonitor.hpp"
 #include "utils/DeviceTypeHelper.hpp"
+#include "component/comprehensivefilter/DepthPostFilterParamsManager.hpp"
 
 #ifdef __linux__
 #include "usb/uvc/UvcDevicePort.hpp"
@@ -624,6 +625,14 @@ void DeviceBase::updateOptionalDepthPresets(const char filePathList[][OB_PATH_MA
         if(presetMgr) {
             presetMgr->fetchPreset();
         }
+        // update depth post filter params
+        auto depthPostrFilterParamsManager = getComponentT<libobsensor::DepthPostFilterParamsManager>(OB_DEV_COMPONENT_DEPTH_POST_FILTER_PARAMS_MANAGER, false);
+        if(depthPostrFilterParamsManager) {
+            TRY_EXECUTE({
+                depthPostrFilterParamsManager->fetchParamFromDevice();
+                updateDepthPostProcessingFilterList();
+            });
+        }
     }
 }
 
@@ -694,6 +703,8 @@ void DeviceBase::checkAndStartHeartbeat() {
         }
     }
 }
+
+void DeviceBase::updateDepthPostProcessingFilterList() {}
 
 void DeviceBase::registerRebootCallback(DeviceRebootCallback callback) {
     if(callback) {

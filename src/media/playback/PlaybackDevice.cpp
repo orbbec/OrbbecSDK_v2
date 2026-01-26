@@ -7,6 +7,7 @@
 #include "PlaybackDepthWorkModeManager.hpp"
 #include "PlaybackPresetManager.hpp"
 #include "PlaybackDeviceSyncConfigurator.hpp"
+#include "PlaybackDepthPostFilterParamsManager.hpp"
 #include "exception/ObException.hpp"
 #include "DevicePids.hpp"
 #include "component/frameprocessor/FrameProcessor.hpp"
@@ -143,6 +144,21 @@ void PlaybackDevice::init() {
         // preset manager
         auto presetManager = std::make_shared<PlaybackPresetManager>(this);
         registerComponent(OB_DEV_COMPONENT_PRESET_MANAGER, presetManager);
+    }
+
+    auto fwVersion                = getFirmwareVersionInt();
+    bool isSupportDepthPostFilter = false;
+    if(isDeviceInContainer(DaBaiADevPids, vid, pid) && fwVersion > 10800) {
+        isSupportDepthPostFilter = true;
+    }
+    if(isSupportDepthPostFilter) {
+        auto propertyServer         = getComponentT<PropertyServer>(OB_DEV_COMPONENT_PROPERTY_SERVER).get();
+        auto vendorPropertyAccessor = getComponentT<PlaybackVendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR).get();
+        registerPropertyCondition(propertyServer, OB_RAW_DATA_DEPTH_POST_FILTER_PARAMS, "", "r", vendorPropertyAccessor);
+
+        // depth post filter param
+        auto depthEngineParamsManager = std::make_shared<PlaybackDepthPostFilterParamsManager>(this, port_);
+        registerComponent(OB_DEV_COMPONENT_DEPTH_POST_FILTER_PARAMS_MANAGER, depthEngineParamsManager);
     }
 
     if(port_->isPropertySupported(OB_PROP_FRAME_INTERLEAVE_ENABLE_BOOL)) {
@@ -708,7 +724,7 @@ void PlaybackDevice::initProperties() {
 
 std::vector<std::shared_ptr<IFilter>> PlaybackDevice::createRecommendedPostProcessingFilters(OBSensorType type) {
     auto filterStrategyFactory = FilterCreationStrategyFactory::getInstance();  // namespace playback
-    auto filterStrategy        = filterStrategyFactory->create(deviceInfo_->vid_, deviceInfo_->pid_);
+    auto filterStrategy        = filterStrategyFactory->create(deviceInfo_->vid_, deviceInfo_->pid_, this);
     if(filterStrategy) {
         return filterStrategy->createFilters(type);
     }

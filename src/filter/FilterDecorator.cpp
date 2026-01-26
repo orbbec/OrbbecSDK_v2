@@ -289,6 +289,10 @@ void FilterDecorator::updateConfig(std::vector<std::string> &params) {
     updateConfigCache(params);
 }
 
+void FilterDecorator::setConfigData(void *data, uint32_t size) {
+    baseFilter_->setConfigData(data, size);
+}
+
 const std::string &FilterDecorator::getConfigSchema() const {
     return baseFilter_->getConfigSchema();
 }

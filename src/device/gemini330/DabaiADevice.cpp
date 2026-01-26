@@ -34,6 +34,7 @@
 #include "firmwareupdater/FirmwareUpdater.hpp"
 #include "frameprocessor/FrameProcessor.hpp"
 #include "firmwareupdater/firmwareupdateguard/FirmwareUpdateGuards.hpp"
+#include "comprehensivefilter/DepthPostFilterParamsManager.hpp"
 
 #include "G330MetadataParser.hpp"
 #include "G330MetadataTypes.hpp"
@@ -183,6 +184,13 @@ void DabaiADevice::init() {
                 }
             }
         });
+
+    TRY_EXECUTE({
+        if(getFirmwareVersionInt() > 10800) {
+            auto depthPostrFilterParamsManager = std::make_shared<DepthPostFilterParamsManager>(this);
+            registerComponent(OB_DEV_COMPONENT_DEPTH_POST_FILTER_PARAMS_MANAGER, depthPostrFilterParamsManager);
+        }
+    })
 }
 
 std::shared_ptr<const StreamProfile> DabaiADevice::loadDefaultStreamProfile(OBSensorType sensorType) {
@@ -360,6 +368,20 @@ void DabaiADevice::initSensorList() {
         registerComponent(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR, [this]() {
             auto factory        = getComponentT<FrameProcessorFactory>(OB_DEV_COMPONENT_FRAME_PROCESSOR_FACTORY);
             auto frameProcessor = factory->createFrameProcessor(OB_SENSOR_DEPTH);
+
+            auto depthPostrFilterParamsManager = getComponentT<DepthPostFilterParamsManager>(OB_DEV_COMPONENT_DEPTH_POST_FILTER_PARAMS_MANAGER, false);
+            if(depthPostrFilterParamsManager && frameProcessor) {
+                auto noiseRmFilterParams = depthPostrFilterParamsManager->getNoiseRemovalFilterUpdateParams();
+                int  paramSize           = static_cast<int>(noiseRmFilterParams.size());
+                for(int i = 0; i < paramSize; i++) {
+                    std::string filterConfigName = "NoiseRemovalFilter#";
+                    std::string configSchemaName = filterConfigName.append(std::to_string(i));
+                    frameProcessor->setConfigValue(configSchemaName, noiseRmFilterParams[i]);
+                }
+                OBPropertyValue value;
+                value.intValue = depthPostrFilterParamsManager->isNoiseRemovalFilterEnable() ? 1 : 0;
+                frameProcessor->setPropertyValue(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL, value);
+            }
             return frameProcessor;
         });
 
@@ -370,7 +392,7 @@ void DabaiADevice::initSensorList() {
                 auto sensor = std::make_shared<VideoSensor>(this, OB_SENSOR_IR_LEFT, port);
 
                 std::vector<FormatFilterConfig> formatFilterConfigs = {
-                    { FormatFilterPolicy::REMOVE, OB_FORMAT_Z16, OB_FORMAT_ANY, nullptr },  //
+                    { FormatFilterPolicy::REMOVE, OB_FORMAT_Z16, OB_FORMAT_ANY, nullptr },
                     { FormatFilterPolicy::REMOVE, OB_FORMAT_BA81, OB_FORMAT_ANY, nullptr },
                     { FormatFilterPolicy::REMOVE, OB_FORMAT_YV12, OB_FORMAT_ANY, nullptr },
                     { FormatFilterPolicy::REPLACE, OB_FORMAT_NV12, OB_FORMAT_Y12, nullptr },
@@ -668,6 +690,19 @@ void                 DabaiADevice::initSensorListGMSL() {
         registerComponent(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR, [this]() {
             auto factory        = getComponentT<FrameProcessorFactory>(OB_DEV_COMPONENT_FRAME_PROCESSOR_FACTORY);
             auto frameProcessor = factory->createFrameProcessor(OB_SENSOR_DEPTH);
+
+            auto depthPostrFilterParamsManager = getComponentT<DepthPostFilterParamsManager>(OB_DEV_COMPONENT_DEPTH_POST_FILTER_PARAMS_MANAGER, false);
+            if(depthPostrFilterParamsManager && frameProcessor) {
+                auto        noiseRmFilterParams = depthPostrFilterParamsManager->getNoiseRemovalFilterUpdateParams();
+                std::string filterConfigName    = "NoiseRemovalFilter#";
+                for(size_t i = 0; i < noiseRmFilterParams.size(); i++) {
+                    std::string configSchemaName = filterConfigName.append(std::to_string(i));
+                    frameProcessor->setConfigValue(configSchemaName, noiseRmFilterParams[i]);
+                }
+                OBPropertyValue value;
+                value.intValue = depthPostrFilterParamsManager->isNoiseRemovalFilterEnable() ? 1 : 0;
+                frameProcessor->setPropertyValue(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL, value);
+            }
             return frameProcessor;
         });
 
@@ -704,10 +739,10 @@ void                 DabaiADevice::initSensorListGMSL() {
                 auto sensor = std::make_shared<VideoSensor>(this, OB_SENSOR_IR_LEFT, port);
 
                 std::vector<FormatFilterConfig> formatFilterConfigs = {
-                    { FormatFilterPolicy::REMOVE, OB_FORMAT_Z16, OB_FORMAT_ANY, nullptr },   //
-                    { FormatFilterPolicy::REMOVE, OB_FORMAT_MJPG, OB_FORMAT_ANY, nullptr },  //
-                    { FormatFilterPolicy::REMOVE, OB_FORMAT_Y10, OB_FORMAT_ANY, nullptr },   //
-                    { FormatFilterPolicy::REMOVE, OB_FORMAT_Y14, OB_FORMAT_ANY, nullptr },   //
+                    { FormatFilterPolicy::REMOVE, OB_FORMAT_Z16, OB_FORMAT_ANY, nullptr },
+                    { FormatFilterPolicy::REMOVE, OB_FORMAT_MJPG, OB_FORMAT_ANY, nullptr },
+                    { FormatFilterPolicy::REMOVE, OB_FORMAT_Y10, OB_FORMAT_ANY, nullptr },
+                    { FormatFilterPolicy::REMOVE, OB_FORMAT_Y14, OB_FORMAT_ANY, nullptr },
                     { FormatFilterPolicy::REMOVE, OB_FORMAT_BA81, OB_FORMAT_ANY, nullptr },
                     { FormatFilterPolicy::REMOVE, OB_FORMAT_NV12, OB_FORMAT_ANY, nullptr },
                     { FormatFilterPolicy::REMOVE, OB_FORMAT_UYVY, OB_FORMAT_ANY, nullptr },
@@ -765,10 +800,10 @@ void                 DabaiADevice::initSensorListGMSL() {
                 auto port   = getSourcePort(rightIrPortInfo);
                 auto sensor = std::make_shared<VideoSensor>(this, OB_SENSOR_IR_RIGHT, port);
 
-                std::vector<FormatFilterConfig> formatFilterConfigs = { { FormatFilterPolicy::REMOVE, OB_FORMAT_Z16, OB_FORMAT_ANY, nullptr },  //
-                                                                        { FormatFilterPolicy::REMOVE, OB_FORMAT_MJPG, OB_FORMAT_ANY, nullptr },  //
-                                                                        { FormatFilterPolicy::REMOVE, OB_FORMAT_Y10, OB_FORMAT_ANY, nullptr },  //
-                                                                        { FormatFilterPolicy::REMOVE, OB_FORMAT_Y14, OB_FORMAT_ANY, nullptr },  //
+                std::vector<FormatFilterConfig> formatFilterConfigs = { { FormatFilterPolicy::REMOVE, OB_FORMAT_Z16, OB_FORMAT_ANY, nullptr },
+                                                                        { FormatFilterPolicy::REMOVE, OB_FORMAT_MJPG, OB_FORMAT_ANY, nullptr },
+                                                                        { FormatFilterPolicy::REMOVE, OB_FORMAT_Y10, OB_FORMAT_ANY, nullptr },
+                                                                        { FormatFilterPolicy::REMOVE, OB_FORMAT_Y14, OB_FORMAT_ANY, nullptr },
                                                                         { FormatFilterPolicy::REMOVE, OB_FORMAT_BA81, OB_FORMAT_ANY, nullptr },
                                                                         { FormatFilterPolicy::REMOVE, OB_FORMAT_NV12, OB_FORMAT_ANY, nullptr },
                                                                         { FormatFilterPolicy::REMOVE, OB_FORMAT_UYVY, OB_FORMAT_ANY, nullptr },
@@ -879,7 +914,7 @@ void                 DabaiADevice::initSensorListGMSL() {
     }
 
     auto imuPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(), [](const std::shared_ptr<const SourcePortInfo> &portInfo) {
-        return portInfo->portType == SOURCE_PORT_USB_HID;  //
+        return portInfo->portType == SOURCE_PORT_USB_HID;
     });
 
     if(imuPortInfoIter != sourcePortInfoList.end()) {
@@ -1025,6 +1060,7 @@ void DabaiADevice::initProperties() {
             propertyServer->registerProperty(OB_RAW_DATA_D2C_ALIGN_SUPPORT_PROFILE_LIST, "", "r", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_RAW_DATA_DE_IR_RECTIFY_PARAMS, "", "r", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_RAW_DATA_DE_IR_TRANSFORM_PARAMS, "", "r", vendorPropertyAccessor);
+            propertyServer->registerProperty(OB_RAW_DATA_DEPTH_POST_FILTER_PARAMS, "", "r", vendorPropertyAccessor);
             // propertyServer->registerProperty(OB_STRUCT_COLOR_AE_ROI, "rw", "rw", vendorPropertyAccessor);
             // propertyServer->registerProperty(OB_STRUCT_DEPTH_AE_ROI, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_RAW_DATA_IMU_CALIB_PARAM, "", "rw", vendorPropertyAccessor);
@@ -1100,36 +1136,76 @@ void DabaiADevice::initProperties() {
 }
 
 std::vector<std::shared_ptr<IFilter>> DabaiADevice::createRecommendedPostProcessingFilters(OBSensorType type) {
+    auto filterIter = sensorFilterListMap_.find(type);
+    if(filterIter != sensorFilterListMap_.end()) {
+        return filterIter->second;
+    }
+
     auto filterFactory = FilterFactory::getInstance();
     if(type == OB_SENSOR_DEPTH) {
         std::vector<std::shared_ptr<IFilter>> depthFilterList;
 
+        auto depthPostrFilterParamsManager = getComponentT<DepthPostFilterParamsManager>(OB_DEV_COMPONENT_DEPTH_POST_FILTER_PARAMS_MANAGER, false);
+
         if(filterFactory->isFilterCreatorExists("DecimationFilter")) {
             auto decimationFilter = filterFactory->createFilter("DecimationFilter");
+            decimationFilter->enable(false);
             depthFilterList.push_back(decimationFilter);
         }
 
         if(filterFactory->isFilterCreatorExists("SpatialAdvancedFilter")) {
             auto spatFilter = filterFactory->createFilter("SpatialAdvancedFilter");
             // magnitude, alpha, disp_diff, radius
-            std::vector<std::string> params = { "1", "0.5", "160", "1" };
-            spatFilter->updateConfig(params);
+            if(depthPostrFilterParamsManager) {
+                spatFilter->updateConfig(depthPostrFilterParamsManager->getSpatialAdvancedFilterUpdateParams());
+                spatFilter->enable(depthPostrFilterParamsManager->isSpatialAdvancedFilterEnable());
+            }
+            else {
+                std::vector<std::string> params = { "1", "0.5", "160", "1" };
+                spatFilter->updateConfig(params);
+                spatFilter->enable(false);
+            }
             depthFilterList.push_back(spatFilter);
         }
 
         if(filterFactory->isFilterCreatorExists("TemporalFilter")) {
             auto tempFilter = filterFactory->createFilter("TemporalFilter");
-            // diff_scale, weight
-            std::vector<std::string> params = { "0.1", "0.4" };
-            tempFilter->updateConfig(params);
+            if(depthPostrFilterParamsManager) {
+                tempFilter->updateConfig(depthPostrFilterParamsManager->getTemporalFilterUpdateParams());
+                tempFilter->enable(depthPostrFilterParamsManager->isTemporalFilterEnable());
+            }
+            else {
+                // diff_scale, weight
+                std::vector<std::string> params = { "0.1", "0.4" };
+                tempFilter->updateConfig(params);
+                tempFilter->enable(false);
+            }
             depthFilterList.push_back(tempFilter);
         }
 
         if(filterFactory->isFilterCreatorExists("HoleFillingFilter")) {
-            auto                     hfFilter = filterFactory->createFilter("HoleFillingFilter");
-            std::vector<std::string> params   = { "2" };
-            hfFilter->updateConfig(params);
+            auto hfFilter = filterFactory->createFilter("HoleFillingFilter");
+            if(depthPostrFilterParamsManager) {
+                hfFilter->updateConfig(depthPostrFilterParamsManager->getHoleFillingFilterUpdateParams());
+                hfFilter->enable(depthPostrFilterParamsManager->isHoleFillingFilterEnable());
+            }
+            else {
+                std::vector<std::string> params = { "2" };
+                hfFilter->updateConfig(params);
+                hfFilter->enable(false);
+            }
             depthFilterList.push_back(hfFilter);
+        }
+
+        if(depthPostrFilterParamsManager) {
+            if(filterFactory->isFilterCreatorExists("FalsePositiveFilter")) {
+                auto falsePositiveFilter = filterFactory->createFilter("FalsePositiveFilter");
+                auto filterData          = depthPostrFilterParamsManager->getFPFilterParams();
+                falsePositiveFilter->setConfigData(filterData, sizeof(FalsePositiveFilterParams));
+                falsePositiveFilter->updateConfig(depthPostrFilterParamsManager->getFPFilterUpdateParams());
+                falsePositiveFilter->enable(depthPostrFilterParamsManager->isFPFilterEnable());
+                depthFilterList.push_back(falsePositiveFilter);
+            }
         }
 
         if(filterFactory->isFilterCreatorExists("DisparityTransform")) {
@@ -1138,16 +1214,12 @@ std::vector<std::shared_ptr<IFilter>> DabaiADevice::createRecommendedPostProcess
         }
 
         if(filterFactory->isFilterCreatorExists("ThresholdFilter")) {
-            auto ThresholdFilter = filterFactory->createFilter("ThresholdFilter");
-            depthFilterList.push_back(ThresholdFilter);
+            auto thresholdFilter = filterFactory->createFilter("ThresholdFilter");
+            thresholdFilter->enable(false);
+            depthFilterList.push_back(thresholdFilter);
         }
 
-        for(size_t i = 0; i < depthFilterList.size(); i++) {
-            auto filter = depthFilterList[i];
-            if(filter->getName() != "DisparityTransform") {
-                filter->enable(false);
-            }
-        }
+        sensorFilterListMap_[OB_SENSOR_DEPTH] = depthFilterList;
         return depthFilterList;
     }
     else if(type == OB_SENSOR_COLOR) {
@@ -1157,10 +1229,60 @@ std::vector<std::shared_ptr<IFilter>> DabaiADevice::createRecommendedPostProcess
             decimationFilter->enable(false);
             colorFilterList.push_back(decimationFilter);
         }
+        sensorFilterListMap_[OB_SENSOR_COLOR] = colorFilterList;
         return colorFilterList;
     }
 
     return {};
+}
+
+void DabaiADevice::updateDepthPostProcessingFilterList() {
+    auto depthPostrFilterParamsManager = getComponentT<DepthPostFilterParamsManager>(OB_DEV_COMPONENT_DEPTH_POST_FILTER_PARAMS_MANAGER, false);
+    if(depthPostrFilterParamsManager) {
+        // Update recommended filters
+        auto filterIter = sensorFilterListMap_.find(OB_SENSOR_DEPTH);
+        if(filterIter != sensorFilterListMap_.end()) {
+            std::vector<std::shared_ptr<IFilter>> newDepthFilterList;
+            std::vector<std::shared_ptr<IFilter>> depthFilterList = filterIter->second;
+            for(const auto &filter: depthFilterList) {
+                if(filter->getName() == "SpatialAdvancedFilter") {
+                    filter->updateConfig(depthPostrFilterParamsManager->getSpatialAdvancedFilterUpdateParams());
+                    filter->enable(depthPostrFilterParamsManager->isSpatialAdvancedFilterEnable());
+                }
+                if(filter->getName() == "TemporalFilter") {
+                    filter->updateConfig(depthPostrFilterParamsManager->getTemporalFilterUpdateParams());
+                    filter->enable(depthPostrFilterParamsManager->isTemporalFilterEnable());
+                }
+                if(filter->getName() == "HoleFillingFilter") {
+                    filter->updateConfig(depthPostrFilterParamsManager->getHoleFillingFilterUpdateParams());
+                    filter->enable(depthPostrFilterParamsManager->isHoleFillingFilterEnable());
+                }
+                if(filter->getName() == "FalsePositiveFilter") {
+                    auto filterData = depthPostrFilterParamsManager->getFPFilterParams();
+                    filter->setConfigData(filterData, sizeof(FalsePositiveFilterParams));
+                    filter->updateConfig(depthPostrFilterParamsManager->getFPFilterUpdateParams());
+                    filter->enable(depthPostrFilterParamsManager->isFPFilterEnable());
+                }
+                newDepthFilterList.push_back(filter);
+            }
+            sensorFilterListMap_[OB_SENSOR_DEPTH] = newDepthFilterList;
+        }
+
+        // Update NoiseRemovalFilter
+        auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR, false);
+        if(frameProcessor) {
+            auto noiseRmFilterParams = depthPostrFilterParamsManager->getNoiseRemovalFilterUpdateParams();
+            int  paramSize           = static_cast<int>(noiseRmFilterParams.size());
+            for(int i = 0; i < paramSize; i++) {
+                std::string filterConfigName = "NoiseRemovalFilter#";
+                std::string configSchemaName = filterConfigName.append(std::to_string(i));
+                frameProcessor->setConfigValue(configSchemaName, noiseRmFilterParams[i]);
+            }
+            OBPropertyValue value;
+            value.intValue = depthPostrFilterParamsManager->isNoiseRemovalFilterEnable() ? 1 : 0;
+            frameProcessor->setPropertyValue(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL, value);
+        }
+    }
 }
 
 void DabaiADevice::loadDefaultDepthPostProcessingConfig() {

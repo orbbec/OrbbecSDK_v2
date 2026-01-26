@@ -101,15 +101,20 @@ void PointCloudFilter::updateConfig(std::vector<std::string> &params) {
         if(decimateValue >= 1 && decimateValue <= 8) {
             if(decimateValue != decimationFactor_) {
                 uint8_t controlVal = static_cast<uint8_t>(decimateValue);
-                patchSize_        = controlVal;
-                decimationFactor_ = controlVal;
-                optionsChanged_   = true;
+                patchSize_         = controlVal;
+                decimationFactor_  = controlVal;
+                optionsChanged_    = true;
             }
         }
     }
     catch(const std::exception &e) {
         throw invalid_value_exception("PointCloudFilter config error: " + std::string(e.what()));
     }
+}
+
+void PointCloudFilter::setConfigData(void *data, uint32_t size) {
+    utils::unusedVar(data);
+    utils::unusedVar(size);
 }
 
 const std::string &PointCloudFilter::getConfigSchema() const {
@@ -186,7 +191,8 @@ std::shared_ptr<Frame> PointCloudFilter::createDepthPointCloud(std::shared_ptr<c
 
     uint32_t validPointCount = 0;
     CoordinateUtil::transformationDepthToPointCloud(&depthXyTables_, depthFrame->getData(), (void *)pointFrame->getData(), isOutputZeroPoint_, &validPointCount,
-                                                    positionDataScale_, coordinateSystemType_, depthFrame->getFormat() == OB_FORMAT_Y12C4, decimationFactor_, width);
+                                                    positionDataScale_, coordinateSystemType_, depthFrame->getFormat() == OB_FORMAT_Y12C4, decimationFactor_,
+                                                    width);
 
     if(!isOutputZeroPoint_) {
         pointFrame->setDataSize(validPointCount * sizeof(OBPoint));
@@ -355,14 +361,14 @@ std::shared_ptr<Frame> PointCloudFilter::createRGBDPointCloud(std::shared_ptr<co
 
     uint32_t validPointCount = 0;
     if(distortionType == OBPointCloudDistortionType::OB_POINT_CLOUD_ADD_DISTORTION_TYPE) {
-        CoordinateUtil::transformationDepthToRGBDPointCloudByUVTables(dstIntrinsic, &rgbdXyTables_, depthFrame->getData(), colorData,
-                                                                      (void *)pointFrame->getData(), isOutputZeroPoint_, &validPointCount, 
-                                                                      positionDataScale_, coordinateSystemType_, isColorDataNormalization_, depthFrame->getFormat() == OB_FORMAT_Y12C4, decimationFactor_, width);
+        CoordinateUtil::transformationDepthToRGBDPointCloudByUVTables(
+            dstIntrinsic, &rgbdXyTables_, depthFrame->getData(), colorData, (void *)pointFrame->getData(), isOutputZeroPoint_, &validPointCount,
+            positionDataScale_, coordinateSystemType_, isColorDataNormalization_, depthFrame->getFormat() == OB_FORMAT_Y12C4, decimationFactor_, width);
     }
     else {
-        CoordinateUtil::transformationDepthToRGBDPointCloud(&rgbdXyTables_, depthFrame->getData(), colorData, (void *)pointFrame->getData(), 
-                                                            isOutputZeroPoint_,&validPointCount,positionDataScale_,
-                                                            coordinateSystemType_, isColorDataNormalization_, colorVideoFrame->getWidth(), colorVideoFrame->getHeight(),
+        CoordinateUtil::transformationDepthToRGBDPointCloud(&rgbdXyTables_, depthFrame->getData(), colorData, (void *)pointFrame->getData(), isOutputZeroPoint_,
+                                                            &validPointCount, positionDataScale_, coordinateSystemType_, isColorDataNormalization_,
+                                                            colorVideoFrame->getWidth(), colorVideoFrame->getHeight(),
                                                             depthFrame->getFormat() == OB_FORMAT_Y12C4, decimationFactor_, width);
     }
 
@@ -414,11 +420,10 @@ PointCloudFilter::OBPointCloudDistortionType PointCloudFilter::getDistortionType
     return type;
 }
 
-
 void PointCloudFilter::updateOutputProfile(const std::shared_ptr<const Frame> frame) {
     auto streamProfile = frame->getStreamProfile()->as<VideoStreamProfile>();
     if(optionsChanged_ || !sourceStreamProfile_ || !(*(streamProfile) == *(sourceStreamProfile_))) {
-        optionsChanged_       = false;
+        optionsChanged_      = false;
         sourceStreamProfile_ = streamProfile->clone()->as<VideoStreamProfile>();
         std::stringstream oss;
         *sourceStreamProfile_ << oss;

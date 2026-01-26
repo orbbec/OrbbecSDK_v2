@@ -13,6 +13,7 @@ public:
     virtual ~FormatConverter() noexcept override;
 
     void                   updateConfig(std::vector<std::string> &params) override;
+    void                   setConfigData(void *data, uint32_t size) override;
     const std::string     &getConfigSchema() const override;
     void                   reset() override;
     std::shared_ptr<Frame> process(std::shared_ptr<const Frame> frame) override;

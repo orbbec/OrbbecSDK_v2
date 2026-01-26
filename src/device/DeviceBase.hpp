@@ -105,6 +105,7 @@ public:
     void registerRebootCallback(DeviceRebootCallback callback) override;
 
     bool hasWriteAccess() const override;
+    void updateDepthPostProcessingFilterList() override;
 
 protected:
     // implement on subclass, and must be called to initialize the device info on construction

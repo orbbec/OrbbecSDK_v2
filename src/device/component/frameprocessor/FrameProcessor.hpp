@@ -48,7 +48,8 @@ public:
     virtual ~FrameProcessor() noexcept override;
 
     const std::string &getConfigSchema() const override;
-    void updateConfig(std::vector<std::string> &params) override;
+    void               updateConfig(std::vector<std::string> &params) override;
+    void               setConfigData(void *data, uint32_t size) override;
 
     OBSensorType getSensorType() {
         return sensorType_;

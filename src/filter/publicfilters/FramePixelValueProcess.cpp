@@ -5,6 +5,7 @@
 #include "exception/ObException.hpp"
 #include "logger/LoggerInterval.hpp"
 #include "frame/FrameFactory.hpp"
+#include "utils/Utils.hpp"
 
 namespace libobsensor {
 
@@ -84,6 +85,11 @@ void PixelValueScaler::updateConfig(std::vector<std::string> &params) {
     }
 }
 
+void PixelValueScaler::setConfigData(void *data, uint32_t size) {
+    utils::unusedVar(data);
+    utils::unusedVar(size);
+}
+
 const std::string &PixelValueScaler::getConfigSchema() const {
     // csv format: name，type， min，max，step，default，description
     static const std::string schema = "scale, float, 0.01, 100.0, 0.01, 1.0, value scale factor";
@@ -137,6 +143,11 @@ void ThresholdFilter::updateConfig(std::vector<std::string> &params) {
     catch(const std::exception &e) {
         throw invalid_value_exception("ThresholdFilter config error: " + std::string(e.what()));
     }
+}
+
+void ThresholdFilter::setConfigData(void *data, uint32_t size) {
+    utils::unusedVar(data);
+    utils::unusedVar(size);
 }
 
 const std::string &ThresholdFilter::getConfigSchema() const {
@@ -212,6 +223,11 @@ void PixelValueOffset::updateConfig(std::vector<std::string> &params) {
     catch(const std::exception &e) {
         throw invalid_value_exception("PixelValueOffset config error: " + std::string(e.what()));
     }
+}
+
+void PixelValueOffset::setConfigData(void *data, uint32_t size) {
+    utils::unusedVar(data);
+    utils::unusedVar(size);
 }
 
 const std::string &PixelValueOffset::getConfigSchema() const {

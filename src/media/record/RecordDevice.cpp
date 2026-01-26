@@ -11,6 +11,7 @@
 #include "IDeviceSyncConfigurator.hpp"
 #include "openni/OpenNIDisparitySensor.hpp"
 #include "openni/OpenNIDeviceBase.hpp"
+#include "comprehensivefilter/DepthPostFilterParamsManager.hpp"
 
 namespace libobsensor {
 
@@ -95,6 +96,7 @@ void RecordDevice::writeAllProperties() {
     writeExposureAndGainProperty();
     writeCalibrationParamProperty();
     writeDepthWorkModeProperty();
+    writeDepthPostFilterParamProperty();
     writeMultiDeviceSyncConfigProperty();
 }
 
@@ -284,6 +286,17 @@ void RecordDevice::writeDepthWorkModeProperty() {
     if(propertyServer && propertyServer->isPropertySupported(OB_STRUCT_CURRENT_DEPTH_ALG_MODE, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
         auto depthMode = propertyServer->getStructureDataProtoV1_1_T<OBDepthWorkMode_Internal, 0>(OB_STRUCT_CURRENT_DEPTH_ALG_MODE);
         writer_->writeProperty(OB_STRUCT_CURRENT_DEPTH_ALG_MODE, reinterpret_cast<uint8_t *>(&depthMode), sizeof(OBDepthWorkMode_Internal));
+    }
+}
+
+void RecordDevice::writeDepthPostFilterParamProperty() {
+    // depth post filter param
+    auto depthPostFilterParamsMgr = device_->getComponentT<DepthPostFilterParamsManager>(OB_DEV_COMPONENT_DEPTH_POST_FILTER_PARAMS_MANAGER, false);
+    auto propertyServer    = device_->getComponentT<IPropertyServer>(OB_DEV_COMPONENT_PROPERTY_SERVER, false);
+    if(depthPostFilterParamsMgr && propertyServer) {
+        auto     rawData  = depthPostFilterParamsMgr->getRawData();
+        uint32_t dataSize = static_cast<uint32_t>(rawData.size());
+        writer_->writeProperty(OB_RAW_DATA_DEPTH_POST_FILTER_PARAMS, reinterpret_cast<uint8_t *>(rawData.data()), dataSize);
     }
 }
 

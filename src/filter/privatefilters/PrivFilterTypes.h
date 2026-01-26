@@ -10,7 +10,7 @@
 extern "C" {
 #endif
 
-typedef struct ob_priv_filter_t ob_priv_filter;
+typedef struct ob_priv_filter_t         ob_priv_filter;
 typedef struct ob_priv_filter_context_t ob_priv_filter_context;
 
 /**
@@ -37,6 +37,18 @@ typedef const char *(*pfunc_ob_priv_filter_get_config_schema)(const ob_priv_filt
  * @param[out] error Pointer to an error object that will be set if an error occurs
  */
 typedef void (*pfunc_ob_priv_filter_update_config)(ob_priv_filter *filter, size_t argc, const char **argv, ob_error **error);
+
+/**
+ * @brief Function pointer type for the set config data function of the filter
+ *
+ * @attention For users, the passed in data and size must match the configuration param.
+ *
+ * @param[in] filter The filter object to update the configuration for
+ * @param[in] data The configure parameter raw data.
+ * @param[in] size Configure the size of parameter raw data.
+ * @param[out] error Pointer to an error object that will be set if an error occurs
+ */
+typedef void (*pfunc_ob_priv_filter_set_config_data)(ob_priv_filter *filter, const void *data, size_t size, ob_error **error);
 
 /**
  * @brief Function pointer type for the reset function of the filter
@@ -83,6 +95,7 @@ struct ob_priv_filter_context_t {
     pfunc_ob_priv_filter_reset             reset;              //< Reset the filter to its initial state (stop threads, clear buffers, etc.)
     pfunc_ob_priv_filter_get_config_schema get_config_schema;  //< Get the configuration schema of the filter
     pfunc_ob_priv_filter_update_config     update_config;      //< Update the filter's configuration
+    pfunc_ob_priv_filter_set_config_data   set_config_data;    //< Set the filter's configuration data
     pfunc_ob_priv_filter_process           process;            //< Process a frame through the filter
 };
 

@@ -7,6 +7,7 @@
 #include "logger/LoggerInterval.hpp"
 #include "exception/ObException.hpp"
 #include "libobsensor/h/ObTypes.h"
+#include "utils/Utils.hpp"
 
 namespace libobsensor {
 
@@ -18,6 +19,11 @@ void IMUFrameReversion::updateConfig(std::vector<std::string> &params) {
     if(params.size() != 0) {
         throw unsupported_operation_exception("IMUFrameReversion update config error: unsupported operation.");
     }
+}
+
+void IMUFrameReversion::setConfigData(void *data, uint32_t size) {
+    utils::unusedVar(data);
+    utils::unusedVar(size);
 }
 
 const std::string &IMUFrameReversion::getConfigSchema() const {

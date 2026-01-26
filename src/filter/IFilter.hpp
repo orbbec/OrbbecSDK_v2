@@ -21,6 +21,7 @@ public:
 
     // Config
     virtual void               updateConfig(std::vector<std::string> &params) = 0;
+    virtual void               setConfigData(void *data, uint32_t size)       = 0;
     virtual const std::string &getConfigSchema() const                        = 0;
 
     virtual void reset() = 0;  // Stop thread, clean memory, reset status

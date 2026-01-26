@@ -6,6 +6,7 @@
 #include "logger/LoggerInterval.hpp"
 #include "frame/FrameFactory.hpp"
 #include "libobsensor/h/ObTypes.h"
+#include "utils/Utils.hpp"
 
 namespace libobsensor {
 
@@ -29,6 +30,11 @@ void SequenceIdFilter::updateConfig(std::vector<std::string> &params) {
     catch(const std::exception &e) {
         throw invalid_value_exception("SequenceIdFilter config error: " + std::string(e.what()));
     }
+}
+
+void SequenceIdFilter::setConfigData(void *data, uint32_t size) {
+    utils::unusedVar(data);
+    utils::unusedVar(size);
 }
 
 const std::string &SequenceIdFilter::getConfigSchema() const {

@@ -176,6 +176,11 @@ void FrameProcessor::updateConfig(std::vector<std::string> &params) {
     }
 }
 
+void FrameProcessor::setConfigData(void *data, uint32_t size) {
+    utils::unusedVar(data);
+    utils::unusedVar(size);
+}
+
 void FrameProcessor::getPropertyRange(const std::string &configName, OBPropertyRange *range) {
     double                   value = getConfigValue(configName);
     OBFilterConfigSchemaItem item  = getConfigSchemaItem(configName);

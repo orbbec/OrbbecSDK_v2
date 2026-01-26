@@ -512,4 +512,209 @@ typedef struct {
     OBPresetResolutionCrop crop[4];  ///< preset resolution crop list.
 } OBPresetResolutionMask;
 
+// Comprehensive Filter
+typedef enum NoiseRemoveType {
+    NR_LUT     = 0,  // SPLIT
+    NR_OVERALL = 1,  // NON_SPLIT
+} NoiseRemoveType;
+
+typedef struct NoiseRemoveFilterParams {
+    bool            enabled;
+    uint16_t        width;
+    uint16_t        height;
+    uint16_t        max_size;
+    uint16_t        min_diff;  // based on disparity, fraction:8
+    uint8_t         fraction_bit_size;
+    NoiseRemoveType type;
+} NoiseRemoveFilterParams;
+
+typedef struct SpatialFastFilterParams {
+    bool    enabled;
+    uint8_t win_size;
+} SpatialFastFilterParams;
+
+typedef struct SpatialModerateFilterParams {
+    bool     enabled;
+    uint8_t  win_size;
+    uint8_t  magnitude;
+    uint16_t disp_diff;
+} SpatialModerateFilterParams;
+
+typedef struct SpatialAdvancedFilterParams {
+    bool     enabled;
+    uint8_t  magnitude;
+    uint8_t  radius;
+    float    alpha;
+    uint16_t disp_diff;
+} SpatialAdvancedFilterParams;
+
+typedef struct TemporalFilterParams {
+    bool  enabled;
+    float diff_scale;
+    float weight;
+} TemporalFilterParams;
+
+typedef enum HoleFillingType {
+    HOLE_FILL_TOP     = 0,
+    HOLE_FILL_NEAREST = 1,  // "max" means farest for depth, and nearest for disparity
+    HOLE_FILL_FAREST  = 2,
+} HoleFillingType;
+
+typedef struct HoleFillingFilterParams {
+    bool            enabled;
+    HoleFillingType hole_filling_mode;
+} HoleFillingFilterParams;
+
+typedef enum EdgeNoiseRemoveType {
+    MG_FILTER  = 0,
+    MGH_FILTER = 1,  // horizontal MG
+    MGA_FILTER = 2,  // asym MG
+    MGC_FILTER = 3,
+} EdgeNoiseRemoveType;
+
+typedef struct EdgeNoiseRemoveFilterParams {
+    bool                enabled;
+    bool                enable_vertical_direction;
+    EdgeNoiseRemoveType type;
+    uint16_t            width;
+    uint16_t            height;
+    uint16_t            margin_x_th;
+    uint16_t            margin_y_th;
+    uint16_t            limit_x_th;
+    uint16_t            limit_y_th;
+} EdgeNoiseRemoveFilterParams;
+
+// Based on the original speckleFilter filtering parameters
+typedef struct GlobalFilterParams {
+    uint16_t width;
+    uint16_t height;
+    uint16_t new_val;
+    uint16_t max_size;
+    uint16_t depth_gap;
+    uint16_t array[20];
+} GlobalParams;
+
+// Pre-rotation image parameters
+typedef struct RotImageParams {
+    bool    is_rot_enable;
+    uint8_t clock_rot_90_times;
+} RotImageParams;
+
+// Filtering parameters for horizontally misgrown noise starting from the edges of the object
+typedef struct EdgeBleedNoiseParams {
+    bool     is_edgeBleedNoise_enable;
+    uint16_t bleed_num;
+    uint16_t set_both_ends_num;
+    uint16_t max_depth;
+    float    min_x_ratio;
+    float    max_x_ratio;
+    float    min_y_ratio;
+    float    max_y_ratio;
+    float    max_x_zero_ratio;
+} EdgeBleedNoiseParams;
+
+// Weak texture noise filtering parameters
+typedef struct TextureSparsityNoiseParams {
+    bool     is_textureSparsityNoise_enable;
+    uint16_t max_size;
+    uint16_t max_depth;
+    float    min_x_ratio;
+    float    max_x_ratio;
+    float    min_y_ratio;
+    float    max_y_ratio;
+    float    max_x_ratio_extra;
+    float    max_w_ratio;
+    float    max_h_ratio;
+    float    size_ratio_0;
+    float    size_ratio_1;
+    float    size_ratio_2;
+    float    size_ratio_3;
+    float    down_break_ratio_0;
+    float    down_break_ratio_1;
+    float    down_break_ratio_2;
+    float    down_break_ratio_3;
+    float    non_up_non_zero_ratio_0;
+    float    non_up_non_zero_ratio_1;
+    float    non_up_non_zero_ratio_2;
+    float    non_up_non_zero_ratio_3;
+} TextureSparsityNoiseParams;
+
+// Repeating texture noise filtering parameters
+typedef struct PatternAmbiguityNoiseParams {
+    bool     is_patternAmbiguityNoise_enable;
+    uint16_t max_size;
+    uint16_t max_depth;
+    uint16_t max_bg_depth;
+    float    min_x_ratio;
+    float    max_x_ratio;
+    float    min_y_ratio;
+    float    max_y_ratio;
+    float    conti_ratio;
+    float    search_ratio;
+    uint16_t score_array[20];
+} PatternAmbiguityNoiseParams;
+
+// Subsurface noise filtering parameters
+typedef struct GroundBelowNoiseParams {
+    bool     is_groundBelowNoise_enable;
+    uint16_t max_size;
+    float    min_y_ratio;
+    float    fx;
+    float    fy;
+    float    cx;
+    float    cy;
+    float    coef_a;
+    float    coef_b;
+    float    coef_c;
+    float    coef_d;
+} GroundBelowNoiseParams;
+
+// Local area noise judgment parameters
+typedef struct BoxSelectedNoiseParams {
+    bool     is_boxSelectedNoise_enable;
+    uint16_t max_size;
+    float    min_x_ratio;
+    float    max_x_ratio;
+    float    min_y_ratio;
+    float    max_y_ratio;
+} BoxSelectedNoiseParams;
+
+// FalsePositive filter params
+typedef struct FalsePositiveFilterParams {
+    bool                        enabled;
+    GlobalParams                global_params;
+    RotImageParams              rot_image_params;
+    EdgeBleedNoiseParams        edge_bleed_params;
+    TextureSparsityNoiseParams  texture_sparsity_params;
+    PatternAmbiguityNoiseParams pattern_ambiguity_params;
+    GroundBelowNoiseParams      ground_below_params;
+    BoxSelectedNoiseParams      box_select_params;
+} FalsePositiveFilterParams;
+
+typedef struct DepthPostFilterHeader {
+    uint8_t  magic[4];  // must be 'D','P','A','H',meaning Depth PostFilter Algorithm Header
+    uint32_t header_size;
+    uint32_t data_size;
+    uint32_t version;
+    uint32_t checksum;
+    uint8_t  reversed[4];
+} DepthPostFilterHeader;
+
+typedef struct DepthPostFilterParams {
+    DepthPostFilterHeader       header;
+    uint8_t                     post_filter_desc[8];
+    NoiseRemoveFilterParams     noise_rem_params;
+    SpatialFastFilterParams     spat_fast_filter_params;
+    SpatialModerateFilterParams spat_mod_filter_params;
+    SpatialAdvancedFilterParams spat_adv_filter_params;
+    TemporalFilterParams        temp_filter_params;
+    HoleFillingFilterParams     hole_fill_filter_params;
+    EdgeNoiseRemoveFilterParams edge_noise_rem_filter_params;
+    FalsePositiveFilterParams   fp_filter_params;
+} DepthPostFilterParams;
+
+enum PostFilterParamsVersion {
+    POSTFILTER_PARAMS_VERSION_0102 = 0x0102,
+};
+
 #pragma pack(pop)

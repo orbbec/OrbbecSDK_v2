@@ -7,6 +7,7 @@
 #include "frame/FrameFactory.hpp"
 #include "stream/StreamProfile.hpp"
 #include "InternalTypes.hpp"
+#include "utils/Utils.hpp"
 
 namespace libobsensor {
 
@@ -44,6 +45,11 @@ void LiDARPointFilter::updateConfig(std::vector<std::string> &params) {
     catch(const std::exception &e) {
         throw invalid_value_exception("LiDARPointFilter config error: " + std::string(e.what()));
     }
+}
+
+void LiDARPointFilter::setConfigData(void *data, uint32_t size) {
+    utils::unusedVar(data);
+    utils::unusedVar(size);
 }
 
 const std::string &LiDARPointFilter::getConfigSchema() const {

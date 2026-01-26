@@ -33,6 +33,7 @@ public:
     void reset() override;
 
     void               updateConfig(std::vector<std::string> &params) override;
+    void               setConfigData(void *data, uint32_t size) override;
     const std::string &getConfigSchema() const override;
 
 private:

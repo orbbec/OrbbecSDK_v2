@@ -63,6 +63,7 @@ public:
 
     virtual void                   reset() override;
     virtual void                   updateConfig(std::vector<std::string> &params) override;
+    virtual void                   setConfigData(void *data, uint32_t size) override;
     virtual const std::string     &getConfigSchema() const override;
     virtual std::shared_ptr<Frame> process(std::shared_ptr<const Frame> frame) override;
 

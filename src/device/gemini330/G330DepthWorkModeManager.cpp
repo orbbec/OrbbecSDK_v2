@@ -3,6 +3,7 @@
 
 #include "G330DepthWorkModeManager.hpp"
 #include "property/InternalProperty.hpp"
+#include "component/comprehensivefilter/DepthPostFilterParamsManager.hpp"
 #include "logger/Logger.hpp"
 
 namespace libobsensor {
@@ -55,6 +56,14 @@ void G330DepthWorkModeManager::switchDepthWorkMode(const OBDepthWorkMode_Interna
     propServer->setStructureDataProtoV1_1_T<OBDepthWorkMode_Internal, 0>(OB_STRUCT_CURRENT_DEPTH_ALG_MODE, targetDepthMode);
     currentWorkMode_ = targetDepthMode;
     LOG_DEBUG("switchDepthWorkMode done with mode: {1}", currentWorkMode_.name, targetDepthMode.name);
+
+    auto depthPostrFilterParamsManager = owner->getComponentT<DepthPostFilterParamsManager>(OB_DEV_COMPONENT_DEPTH_POST_FILTER_PARAMS_MANAGER, false);
+    if(depthPostrFilterParamsManager) {
+        TRY_EXECUTE({
+            depthPostrFilterParamsManager->fetchParamFromDevice();
+            owner->updateDepthPostProcessingFilterList();
+        });
+    }
 
     // refresh device error state after depth work mode changed
     TRY_EXECUTE({ owner->fetchDeviceErrorState(); });

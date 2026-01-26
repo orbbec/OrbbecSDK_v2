@@ -7,6 +7,7 @@
 #include "frame/FrameFactory.hpp"
 #include "stream/StreamProfile.hpp"
 #include "InternalTypes.hpp"
+#include "utils/Utils.hpp"
 
 namespace libobsensor {
 
@@ -48,6 +49,11 @@ void IMUCorrector::updateConfig(std::vector<std::string> &params) {
     if(params.size() != 0) {
         throw unsupported_operation_exception("IMUCorrector update config error: unsupported operation.");
     }
+}
+
+void IMUCorrector::setConfigData(void *data, uint32_t size) {
+    utils::unusedVar(data);
+    utils::unusedVar(size);
 }
 
 const std::string &IMUCorrector::getConfigSchema() const {

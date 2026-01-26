@@ -74,6 +74,7 @@ typedef enum {
     OB_RAW_DATA_DE_IR_TRANSFORM_PARAMS                   = 4059, /**< DE-IR transform parameters*/
     OB_RAW_PRESET_RESOLUTION_CONFIG_LIST                 = 4061, /**< Resolution ratio configuration list*/
     OB_RAW_DATA_PRESET_RESOLUTION_MASK_LIST              = 4062, /**< Resolution ratio mask list*/
+    OB_RAW_DATA_DEPTH_POST_FILTER_PARAMS                 = 4063, /**< Comprehensive filter parameters*/
     OB_PROP_DEVICE_LOG_SEVERITY_LEVEL_INT                = 5003, /**< Device log level*/
     OB_STRUCT_DEVICE_ERROR_STATE                         = 5524, /**< Device error state*/
 

@@ -6,6 +6,7 @@
 #include "frame/FrameFactory.hpp"
 #include "libobsensor/h/ObTypes.h"
 #include "utils/CameraParamProcess.hpp"
+#include "utils/Utils.hpp"
 #include <libyuv.h>
 #include <turbojpeg.h>
 
@@ -222,6 +223,11 @@ void FrameMirror::updateConfig(std::vector<std::string> &params) {
     }
 }
 
+void FrameMirror::setConfigData(void *data, uint32_t size) {
+    utils::unusedVar(data);
+    utils::unusedVar(size);
+}
+
 const std::string &FrameMirror::getConfigSchema() const {
     static const std::string schema = "";  // empty schema
     return schema;
@@ -346,6 +352,11 @@ void FrameFlip::updateConfig(std::vector<std::string> &params) {
     }
 }
 
+void FrameFlip::setConfigData(void *data, uint32_t size) {
+    utils::unusedVar(data);
+    utils::unusedVar(size);
+}
+
 const std::string &FrameFlip::getConfigSchema() const {
     static const std::string schema = "";  // empty schema
     return schema;
@@ -457,6 +468,11 @@ void FrameRotate::updateConfig(std::vector<std::string> &params) {
     catch(const std::exception &e) {
         throw invalid_value_exception("Frame rotate config error: " + std::string(e.what()));
     }
+}
+
+void FrameRotate::setConfigData(void *data, uint32_t size) {
+    utils::unusedVar(data);
+    utils::unusedVar(size);
 }
 
 const std::string &FrameRotate::getConfigSchema() const {

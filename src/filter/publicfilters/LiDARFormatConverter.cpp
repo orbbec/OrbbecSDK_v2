@@ -7,6 +7,7 @@
 #include "frame/FrameFactory.hpp"
 #include "stream/StreamProfile.hpp"
 #include "InternalTypes.hpp"
+#include "utils/Utils.hpp"
 
 static inline void convertToCartesianCoordinate(const OBLiDARSpherePoint *sphere, OBLiDARPoint *point) {
 
@@ -35,6 +36,11 @@ void LiDARFormatConverter::updateConfig(std::vector<std::string> &params) {
     if(params.size() != 0) {
         throw unsupported_operation_exception("IMUCorrector update config error: unsupported operation.");
     }
+}
+
+void LiDARFormatConverter::setConfigData(void *data, uint32_t size) {
+    utils::unusedVar(data);
+    utils::unusedVar(size);
 }
 
 const std::string &LiDARFormatConverter::getConfigSchema() const {

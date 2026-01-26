@@ -65,6 +65,11 @@ void Align::updateConfig(std::vector<std::string> &params) {
     }
 }
 
+void Align::setConfigData(void *data, uint32_t size) {
+    utils::unusedVar(data);
+    utils::unusedVar(size);
+}
+
 const std::string &Align::getConfigSchema() const {
     // csv format: name, type, min, max, step, default, description
     static const std::string schema = "AlignType, integer, 1, 7, 1, 2, align to the type of data stream\n"

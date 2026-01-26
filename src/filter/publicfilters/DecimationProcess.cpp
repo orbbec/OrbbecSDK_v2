@@ -6,6 +6,7 @@
 #include "logger/LoggerInterval.hpp"
 #include "frame/FrameFactory.hpp"
 #include "libobsensor/h/ObTypes.h"
+#include "utils/Utils.hpp"
 
 namespace libobsensor {
 
@@ -234,6 +235,11 @@ void DecimationFilter::updateConfig(std::vector<std::string> &params) {
     catch(const std::exception &e) {
         throw invalid_value_exception("DecimationFilter config error: " + std::string(e.what()));
     }
+}
+
+void DecimationFilter::setConfigData(void *data, uint32_t size) {
+    utils::unusedVar(data);
+    utils::unusedVar(size);
 }
 
 const std::string &DecimationFilter::getConfigSchema() const {

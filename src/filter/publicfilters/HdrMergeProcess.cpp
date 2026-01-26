@@ -7,6 +7,7 @@
 #include "frame/FrameFactory.hpp"
 #include "libobsensor/h/ObTypes.h"
 #include "utils/PublicTypeHelper.hpp"
+#include "utils/Utils.hpp"
 
 namespace libobsensor {
 
@@ -144,6 +145,11 @@ void HDRMerge::updateConfig(std::vector<std::string> &params) {
     if(params.size() != 0) {
         throw unsupported_operation_exception("HDRMerge update config error: unsupported operation.");
     }
+}
+
+void HDRMerge::setConfigData(void *data, uint32_t size) {
+    utils::unusedVar(data);
+    utils::unusedVar(size);
 }
 
 const std::string &HDRMerge::getConfigSchema() const {
