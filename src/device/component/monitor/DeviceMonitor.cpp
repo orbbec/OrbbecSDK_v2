@@ -71,9 +71,9 @@ void DeviceMonitor::stop() {
 void DeviceMonitor::heartbeatAndFetchState() {
     bool emitNextHeartBeatImmediately = false;
     do {
-        auto     req          = protocol::initHeartbeatAndStateReq(hbSendData_.data());
+        protocol::initHeartbeatAndStateReq(hbSendData_.data());
         uint16_t respDataSize = 1024;  // excepted size
-        auto     res          = protocol::execute(vendorDataPort_, hbSendData_.data(), sizeof(req), hbRecvData_.data(), &respDataSize);
+        auto     res = protocol::execute(vendorDataPort_, hbSendData_.data(), sizeof(protocol::HeartbeatAndStateReq), hbRecvData_.data(), &respDataSize);
         if(!protocol::checkStatus(res, false)) {
             utils::sleepMs(50);
             if(!heartbeatAndFetchStateThreadStarted_) {
