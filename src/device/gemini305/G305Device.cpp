@@ -1011,11 +1011,6 @@ void G305Device::initSensorListGMSL() {
                     // { FormatFilterPolicy::REPLACE, OB_FORMAT_NV12, OB_FORMAT_Y12, nullptr },
                 };
 
-                auto formatConverter = getSensorFrameFilter("FrameUnpacker", OB_SENSOR_IR_LEFT, false);
-                if(formatConverter) {
-                    formatFilterConfigs.push_back({ FormatFilterPolicy::REPLACE, OB_FORMAT_YUYV, OB_FORMAT_Y16, formatConverter });
-                }
-
                 sensor->updateFormatFilterConfig(formatFilterConfigs);
                 auto depthMdParserContainer = getComponentT<IFrameMetadataParserContainer>(OB_DEV_COMPONENT_DEPTH_FRAME_METADATA_CONTAINER);
                 sensor->setFrameMetadataParserContainer(depthMdParserContainer.get());
@@ -1073,11 +1068,6 @@ void G305Device::initSensorListGMSL() {
                                                                         { FormatFilterPolicy::REMOVE, OB_FORMAT_YUYV, OB_FORMAT_ANY, nullptr },
                                                                         { FormatFilterPolicy::REMOVE, OB_FORMAT_BGR, OB_FORMAT_ANY, nullptr },
                                                                         { FormatFilterPolicy::REMOVE, OB_FORMAT_BGRA, OB_FORMAT_ANY, nullptr } };
-
-                auto formatConverter = getSensorFrameFilter("FrameUnpacker", OB_SENSOR_IR_RIGHT, false);
-                if(formatConverter) {
-                    formatFilterConfigs.push_back({ FormatFilterPolicy::REPLACE, OB_FORMAT_Y12, OB_FORMAT_Y16, formatConverter });
-                }
 
                 sensor->updateFormatFilterConfig(formatFilterConfigs);
                 auto depthMdParserContainer = getComponentT<IFrameMetadataParserContainer>(OB_DEV_COMPONENT_DEPTH_FRAME_METADATA_CONTAINER);
