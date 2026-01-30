@@ -122,6 +122,7 @@ std::shared_ptr<IDevice> DeviceManager::createNetDevice(std::string address, uin
     }
 
     device->activateDeviceAccessor();
+    device->loadDefaultPostProcessingConfig();
     return device;
 #else
     utils::unusedVar(address);
@@ -181,9 +182,11 @@ std::shared_ptr<IDevice> DeviceManager::createDevice(const std::shared_ptr<const
         createdDevices_.insert({ info->getUid(), device });
     }
 
-    // activate device accessor
     if(!isCustomConnectedDevice_) {
+        // activate device accessor
         device->activateDeviceAccessor();
+        // load default post processing config
+        device->loadDefaultPostProcessingConfig();
     }
 
     auto devInfo = device->getInfo();
@@ -311,7 +314,7 @@ void DeviceManager::enableDeviceClockSync(void *caller, uint64_t repeatInterval)
                             // ensure fitting after time sync
                             auto globalTspFitter = dev->getComponentT<IGlobalTimestampFitter>(libobsensor::OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER);
                             globalTspFitter->reFitting(false);
-                        });
+                            });
                     }
                 }
             }

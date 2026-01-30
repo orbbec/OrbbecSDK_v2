@@ -689,6 +689,10 @@ void DeviceBase::activateDeviceAccessor() {
     }
 }
 
+void DeviceBase::loadDefaultPostProcessingConfig() {
+    // To be overridden by derived device implementations
+}
+
 void DeviceBase::checkAndStartHeartbeat() {
     auto        envConfig = EnvConfig::getInstance();
     std::string key       = std::string("Device.") + utils::string::removeSpace(deviceInfo_->name_) + std::string(".DefaultHeartBeat");

@@ -358,7 +358,6 @@ void DabaiADevice::initSensorList() {
                         algParamManager->bindDisparityParam({ sp });
                     }
                 });
-                loadDefaultDepthPostProcessingConfig();
                 return sensor;
             },
             true);
@@ -1234,6 +1233,10 @@ std::vector<std::shared_ptr<IFilter>> DabaiADevice::createRecommendedPostProcess
     }
 
     return {};
+}
+
+void DabaiADevice::loadDefaultPostProcessingConfig() {
+    loadDefaultDepthPostProcessingConfig();
 }
 
 void DabaiADevice::updateDepthPostProcessingFilterList() {

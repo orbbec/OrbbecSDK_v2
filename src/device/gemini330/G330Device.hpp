@@ -22,6 +22,7 @@ public:
     virtual ~G330Device() noexcept override;
 
     std::vector<std::shared_ptr<IFilter>> createRecommendedPostProcessingFilters(OBSensorType type) override;
+    void                                  loadDefaultPostProcessingConfig() override;
 
 private:
     void init() override;
@@ -33,7 +34,7 @@ private:
     void fetchDeviceInfo() override;
 
     std::shared_ptr<const StreamProfile> loadDefaultStreamProfile(OBSensorType sensorType);
-    void                                 loadDefaultDepthPostProcessingConfig();  // todo: declare in base class
+    void                                 loadDefaultDepthPostProcessingConfig();
 
 private:
     const uint64_t                                              deviceTimeFreq_ = 1000;     // in ms
@@ -52,6 +53,7 @@ public:
 
     void                                  deactivate() override;
     std::vector<std::shared_ptr<IFilter>> createRecommendedPostProcessingFilters(OBSensorType type) override;
+    void                                  loadDefaultPostProcessingConfig() override;
 
 private:
     void init() override;
@@ -66,7 +68,7 @@ private:
     void fetchAllProfileList();
 
     std::shared_ptr<const StreamProfile> loadDefaultStreamProfile(OBSensorType sensorType);
-    void                                 loadDefaultDepthPostProcessingConfig();  // todo: declare in base class
+    void                                 loadDefaultDepthPostProcessingConfig();
 
 private:
     std::shared_ptr<const SourcePortInfo>                       vendorPortInfo_;

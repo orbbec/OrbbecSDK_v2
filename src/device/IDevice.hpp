@@ -113,6 +113,9 @@ public:
     // activate device accessor
     virtual void activateDeviceAccessor() = 0;
 
+    // load default post processing config
+    virtual void loadDefaultPostProcessingConfig() = 0;
+
     virtual int getFirmwareVersionInt() = 0;
 
     // register callback for device reboot

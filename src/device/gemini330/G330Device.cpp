@@ -429,7 +429,6 @@ void G330Device::initSensorList() {
                     }
                 });
 
-                loadDefaultDepthPostProcessingConfig();
                 return sensor;
             },
             true);
@@ -745,7 +744,6 @@ void                 G330Device::initSensorListGMSL() {
                         algParamManager->bindDisparityParam({ sp });
                     }
                 });
-                loadDefaultDepthPostProcessingConfig();
                 return sensor;
             },
             true);
@@ -1317,6 +1315,10 @@ std::vector<std::shared_ptr<IFilter>> G330Device::createRecommendedPostProcessin
     return {};
 }
 
+void G330Device::loadDefaultPostProcessingConfig() {
+    loadDefaultDepthPostProcessingConfig();
+}
+
 void G330Device::loadDefaultDepthPostProcessingConfig() {
     auto envConfig = EnvConfig::getInstance();
 
@@ -1691,7 +1693,6 @@ void G330NetDevice::initSensorList() {
                     }
                 });
 
-                loadDefaultDepthPostProcessingConfig();
                 return sensor;
             },
             true);
@@ -2291,6 +2292,10 @@ std::shared_ptr<const StreamProfile> G330NetDevice::loadDefaultStreamProfile(OBS
     }
 
     return defaultStreamProfile;
+}
+
+void G330NetDevice::loadDefaultPostProcessingConfig() {
+    loadDefaultDepthPostProcessingConfig();
 }
 
 void G330NetDevice::loadDefaultDepthPostProcessingConfig() {

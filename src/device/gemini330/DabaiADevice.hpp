@@ -17,6 +17,7 @@ public:
     virtual ~DabaiADevice() noexcept override;
 
     std::vector<std::shared_ptr<IFilter>> createRecommendedPostProcessingFilters(OBSensorType type) override;
+    void                                  loadDefaultPostProcessingConfig() override;
 
     void updateDepthPostProcessingFilterList() override;
 

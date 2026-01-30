@@ -341,6 +341,10 @@ std::vector<std::shared_ptr<IFilter>> G305Device::createRecommendedPostProcessin
     return {};
 }
 
+void G305Device::loadDefaultPostProcessingConfig() {
+    loadDefaultDepthPostProcessingConfig();
+}
+
 void G305Device::initProperties() {
     auto propertyServer = std::make_shared<PropertyServer>(this);
 
@@ -582,7 +586,6 @@ void G305Device::initSensorList() {
                     }
                 });
 
-                loadDefaultDepthPostProcessingConfig();
                 return sensor;
             },
             true);
@@ -950,7 +953,6 @@ void G305Device::initSensorListGMSL() {
                     }
                 });
 
-                loadDefaultDepthPostProcessingConfig();
                 return sensor;
             },
             true);

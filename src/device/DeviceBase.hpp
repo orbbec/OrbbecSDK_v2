@@ -100,6 +100,7 @@ public:
     static std::map<std::string, std::string> parseExtensionInfo(std::string extensionInfo);
 
     void activateDeviceAccessor() override;
+    void loadDefaultPostProcessingConfig() override;
     int  getFirmwareVersionInt() override;
 
     void registerRebootCallback(DeviceRebootCallback callback) override;
