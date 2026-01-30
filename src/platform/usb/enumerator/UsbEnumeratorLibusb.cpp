@@ -7,6 +7,8 @@
 #include "logger/LoggerInterval.hpp"
 #include "utils/Utils.hpp"
 #include "exception/ObException.hpp"
+#include <thread>
+#include <chrono>
 
 #ifdef __ANDROID__
 #include "usb/pal/android/AndroidUsbDeviceManager.hpp"
@@ -394,10 +396,25 @@ const std::vector<UsbInterfaceInfo> &UsbEnumeratorLibusb::queryUsbInterfaces() {
         libusb_device_handle *handle = nullptr;
         auto                  rst    = libusb_open(device, &handle);
         if(rst != LIBUSB_SUCCESS) {
-            LOG_WARN("Failed to open USB device: error={}", libusb_strerror(rst));
-            continue;
+            LOG_WARN("Failed to open USB device: error={}. Try again", libusb_strerror(rst));
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            rst = libusb_open(device, &handle);
+            if(rst != LIBUSB_SUCCESS) {
+                LOG_WARN("Failed to open USB device ({}), skipping, info.serial and infName may be empty", libusb_strerror(rst));
+                auto infs = queryInterfaces(device, desc);
+                for(auto &inf: infs) {
+#ifdef WIN32
+                    std::string toupperSNStr;
+                    if(findSN2Toupper(inf.url, toupperSNStr)) {
+                        inf.serial = toupperSNStr;
+                    }
+#endif
+                    tempInfoList.push_back(inf);
+                }
+                continue;
+            }
         }
-
+        // libusb_open succeeded
         std::string serial = getStringDesc(handle, desc.iSerialNumber);
         if(serial.empty()) {
             LOG_ERROR("Failed to query USB device serial number");
