@@ -174,9 +174,9 @@ void G2XLDeviceBase::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
         algParamManager->bindStreamProfileParams(profiles);
     }
 
-    LOG_INFO("Sensor {} created! Found {} stream profiles.", sensorType, profiles.size());
+    LOG_DEBUG("Sensor {} created! Found {} stream profiles.", sensorType, profiles.size());
     for(auto &profile: profiles) {
-        LOG_INFO(" - {}", profile);
+        LOG_DEBUG(" - {}", profile);
     }
 }
 
@@ -454,7 +454,7 @@ void G2XLUSBDevice::initSensorList() {
 
 void G2XLUSBDevice::initProperties() {
     auto propertyServer = std::make_shared<PropertyServer>(this);
-    
+
     auto g435LeDisp2DepthPropertyAccessor = std::make_shared<G435LeDisp2DepthPropertyAccessor>(this);
     propertyServer->registerProperty(OB_PROP_DISPARITY_TO_DEPTH_BOOL, "rw", "rw", g435LeDisp2DepthPropertyAccessor);      // hw
     propertyServer->registerProperty(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL, "rw", "rw", g435LeDisp2DepthPropertyAccessor);  // sw

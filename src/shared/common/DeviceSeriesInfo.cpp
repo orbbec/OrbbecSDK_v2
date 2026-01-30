@@ -81,7 +81,7 @@ void DeviceSeriesInfoManager::loadXmlConfig(const std::string &configFileName, b
     std::function<void(DeviceInfoConfig &)> throwError = [](DeviceInfoConfig &config) {
         throw libobsensor::invalid_value_exception("Error: " + config.getLastError());
     };
-    std::function<void(DeviceInfoConfig &)> ignoreError = [](DeviceInfoConfig &config) { LOG_WARN("Ignore error: {}", config.getLastError()); };
+    std::function<void(DeviceInfoConfig &)> ignoreError = [](DeviceInfoConfig &config) { LOG_DEBUG("Ignore error: {}", config.getLastError()); };
     std::function<void(DeviceInfoConfig &)> errHandle   = isExternalConfig ? ignoreError : throwError;
 
     // Load config

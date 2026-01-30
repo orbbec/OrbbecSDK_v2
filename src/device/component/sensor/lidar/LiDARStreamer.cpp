@@ -138,7 +138,7 @@ LiDARStreamer::~LiDARStreamer() noexcept {
 }
 
 void LiDARStreamer::startStream(std::shared_ptr<const StreamProfile> profile, MutableFrameCallback callback) {
-    LOG_INFO("Try to start stream: {}", profile);
+    LOG_DEBUG("Try to start stream: {}", profile);
 
     // check if stream is already running
     {
@@ -521,10 +521,10 @@ uint8_t LiDARStreamer::calculateReflectivity(const float &distance, const uint16
     const float &hpLthFactor = highPowerFactors_.lowThresh;
     const float &hpMthFactor = highPowerFactors_.mediumThresh;
 
-    float pulseWidth     = static_cast<float>(pulseWidthIn);
-    float(*tableData)[2] = nullptr;
-    int   tableSize      = 0;
-    float recPower       = 0;
+    float pulseWidth      = static_cast<float>(pulseWidthIn);
+    float (*tableData)[2] = nullptr;
+    int   tableSize       = 0;
+    float recPower        = 0;
 
     switch(targetFlag) {
     case 0x0:  // low power low threshold

@@ -363,9 +363,9 @@ void G330Device::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
     }
 
     auto sensorType = sensor->getSensorType();
-    LOG_INFO("Sensor {} created! Found {} stream profiles.", sensorType, profiles.size());
+    LOG_DEBUG("Sensor {} created! Found {} stream profiles.", sensorType, profiles.size());
     for(auto &profile: profiles) {
-        LOG_INFO(" - {}", profile);
+        LOG_DEBUG(" - {}", profile);
     }
 }
 
@@ -1356,7 +1356,6 @@ void G330Device::loadDefaultDepthPostProcessingConfig() {
 //=========================================================G330NetDevice==============================================================
 
 G330NetDevice::G330NetDevice(const std::shared_ptr<const IDeviceEnumInfo> &info, OBDeviceAccessMode accessMode) : DeviceBase(info, accessMode) {
-    LOG_INFO("Create {} net device.", info->getName());
     init();
 
     // check and start heartbeat after initialization is complete
@@ -2344,9 +2343,9 @@ void G330NetDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
     }
 
     auto sensorType = sensor->getSensorType();
-    LOG_INFO("Sensor {} created! Found {} stream profiles.", sensorType, profiles.size());
+    LOG_DEBUG("Sensor {} created! Found {} stream profiles.", sensorType, profiles.size());
     for(auto &profile: profiles) {
-        LOG_INFO(" - {}", profile);
+        LOG_DEBUG(" - {}", profile);
     }
 }
 

@@ -293,9 +293,9 @@ void DabaiADevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
     }
 
     auto sensorType = sensor->getSensorType();
-    LOG_INFO("Sensor {} created! Found {} stream profiles.", sensorType, profiles.size());
+    LOG_DEBUG("Sensor {} created! Found {} stream profiles.", sensorType, profiles.size());
     for(auto &profile: profiles) {
-        LOG_INFO(" - {}", profile);
+        LOG_DEBUG(" - {}", profile);
     }
 }
 
@@ -912,9 +912,8 @@ void                 DabaiADevice::initSensorListGMSL() {
         });
     }
 
-    auto imuPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(), [](const std::shared_ptr<const SourcePortInfo> &portInfo) {
-        return portInfo->portType == SOURCE_PORT_USB_HID;
-    });
+    auto imuPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(),
+                                                        [](const std::shared_ptr<const SourcePortInfo> &portInfo) { return portInfo->portType == SOURCE_PORT_USB_HID; });
 
     if(imuPortInfoIter != sourcePortInfoList.end()) {
         auto imuPortInfo = *imuPortInfoIter;

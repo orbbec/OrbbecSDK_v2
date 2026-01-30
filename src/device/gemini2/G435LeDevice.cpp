@@ -196,9 +196,9 @@ void G435LeDeviceBase::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) 
         algParamManager->bindStreamProfileParams(profiles);
     }
 
-    LOG_INFO("Sensor {} created! Found {} stream profiles.", sensorType, profiles.size());
+    LOG_DEBUG("Sensor {} created! Found {} stream profiles.", sensorType, profiles.size());
     for(auto &profile: profiles) {
-        LOG_INFO(" - {}", profile);
+        LOG_DEBUG(" - {}", profile);
     }
 }
 
@@ -234,7 +234,7 @@ void G435LeDeviceBase::updateDefaultStreamProfile(std::shared_ptr<libobsensor::I
 
     uint32_t maxFps = 0;
 
-    for(auto &profile: profiles){
+    for(auto &profile: profiles) {
         auto vspProfile = profile->as<VideoStreamProfile>();
         if(vspProfile == nullptr) {
             continue;
@@ -467,7 +467,8 @@ void G435LeDevice::initSensorList() {
                 auto colorMdParserContainer = getComponentT<IFrameMetadataParserContainer>(OB_DEV_COMPONENT_COLOR_FRAME_METADATA_CONTAINER);
                 sensor->setFrameMetadataParserContainer(colorMdParserContainer.get());
 
-                auto frameTimestampCalculator = std::make_shared<G435LeFrameTimestampCalculatorDeviceTime>(this, deviceTimeFreq_, colorframeTimeFreq_, frameTimeFreq_);
+                auto frameTimestampCalculator =
+                    std::make_shared<G435LeFrameTimestampCalculatorDeviceTime>(this, deviceTimeFreq_, colorframeTimeFreq_, frameTimeFreq_);
                 sensor->setFrameTimestampCalculator(frameTimestampCalculator);
 
                 auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, colorframeTimeFreq_);
@@ -638,7 +639,7 @@ void G435LeDevice::initProperties() {
     propertyServer->registerProperty(OB_PROP_LDP_BOOL, "rw", "rw", vendorPropertyAccessor);
 
     propertyServer->registerProperty(OB_PROP_LASER_BOOL, "rw", "rw", vendorPropertyAccessor);
-    //propertyServer->registerProperty(OB_PROP_DEPTH_HOLEFILTER_BOOL, "rw", "rw", vendorPropertyAccessor);
+    // propertyServer->registerProperty(OB_PROP_DEPTH_HOLEFILTER_BOOL, "rw", "rw", vendorPropertyAccessor);
     // propertyServer->registerProperty(OB_PROP_LDP_STATUS_BOOL, "r", "r", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_DEPTH_ALIGN_HARDWARE_BOOL, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_LASER_POWER_LEVEL_CONTROL_INT, "rw", "rw", vendorPropertyAccessor);
@@ -649,7 +650,7 @@ void G435LeDevice::initProperties() {
     propertyServer->aliasProperty(OB_PROP_SYNC_SIGNAL_TRIGGER_OUT_BOOL, OB_PROP_TIMER_RESET_TRIGGER_OUT_ENABLE_BOOL);
     propertyServer->registerProperty(OB_PROP_TIMER_RESET_DELAY_US_INT, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_CAPTURE_IMAGE_SIGNAL_BOOL, "rw", "rw", vendorPropertyAccessor);
-    //propertyServer->registerProperty(OB_PROP_DEPTH_MIRROR_MODULE_STATUS_BOOL, "", "r", vendorPropertyAccessor);
+    // propertyServer->registerProperty(OB_PROP_DEPTH_MIRROR_MODULE_STATUS_BOOL, "", "r", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_CAPTURE_IMAGE_FRAME_NUMBER_INT, "rw", "rw", vendorPropertyAccessor);
 
     propertyServer->registerProperty(OB_STRUCT_VERSION, "", "r", vendorPropertyAccessor);
@@ -665,10 +666,10 @@ void G435LeDevice::initProperties() {
     propertyServer->registerProperty(OB_RAW_DATA_ALIGN_CALIB_PARAM, "", "r", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_RAW_DATA_D2C_ALIGN_SUPPORT_PROFILE_LIST, "", "r", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_SDK_DEPTH_FRAME_UNPACK_BOOL, "", "rw", vendorPropertyAccessor);
-    //propertyServer->registerProperty(OB_PROP_IR_CHANNEL_DATA_SOURCE_INT, "rw", "rw", vendorPropertyAccessor);
-    //propertyServer->registerProperty(OB_PROP_DEPTH_RM_FILTER_BOOL, "rw", "rw", vendorPropertyAccessor);
+    // propertyServer->registerProperty(OB_PROP_IR_CHANNEL_DATA_SOURCE_INT, "rw", "rw", vendorPropertyAccessor);
+    // propertyServer->registerProperty(OB_PROP_DEPTH_RM_FILTER_BOOL, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_WATCHDOG_BOOL, "rw", "rw", vendorPropertyAccessor);
-    //propertyServer->registerProperty(OB_PROP_EXTERNAL_SIGNAL_RESET_BOOL, "rw", "rw", vendorPropertyAccessor);
+    // propertyServer->registerProperty(OB_PROP_EXTERNAL_SIGNAL_RESET_BOOL, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_LASER_POWER_ACTUAL_LEVEL_INT, "r", "r", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_STRUCT_DEVICE_TIME, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_GYRO_ODR_INT, "rw", "rw", vendorPropertyAccessor);
@@ -681,7 +682,7 @@ void G435LeDevice::initProperties() {
     propertyServer->registerProperty(OB_STRUCT_GET_ACCEL_PRESETS_FULL_SCALE_LIST, "", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_STRUCT_GET_GYRO_PRESETS_ODR_LIST, "", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_STRUCT_GET_GYRO_PRESETS_FULL_SCALE_LIST, "", "rw", vendorPropertyAccessor);
-    //propertyServer->registerProperty(OB_PROP_DEVICE_USB2_REPEAT_IDENTIFY_BOOL, "rw", "rw", vendorPropertyAccessor);
+    // propertyServer->registerProperty(OB_PROP_DEVICE_USB2_REPEAT_IDENTIFY_BOOL, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_DEVICE_RESET_BOOL, "", "w", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_STOP_DEPTH_STREAM_BOOL, "", "w", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_STOP_IR_STREAM_BOOL, "", "w", vendorPropertyAccessor);
@@ -690,13 +691,13 @@ void G435LeDevice::initProperties() {
     propertyServer->registerProperty(OB_PROP_DEVICE_COMMUNICATION_TYPE_INT, "", "w", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_STRUCT_DEVICE_IP_ADDR_CONFIG, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_RAW_DATA_DEVICE_EXTENSION_INFORMATION, "", "r", vendorPropertyAccessor);
-    //propertyServer->registerProperty(OB_PROP_DEBUG_ESGM_CONFIDENCE_FLOAT, "rw", "rw", vendorPropertyAccessor);
+    // propertyServer->registerProperty(OB_PROP_DEBUG_ESGM_CONFIDENCE_FLOAT, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_STRUCT_COLOR_AE_ROI, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_STRUCT_DEPTH_AE_ROI, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_IR_BRIGHTNESS_INT, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_IR_AE_MAX_EXPOSURE_INT, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_TEMPERATURE_COMPENSATION_BOOL, "rw", "rw", vendorPropertyAccessor);
-    //ropertyServer->registerProperty(OB_PROP_DEPTH_WITH_CONFIDENCE_STREAM_ENABLE_BOOL, "rw", "rw", vendorPropertyAccessor);
+    // ropertyServer->registerProperty(OB_PROP_DEPTH_WITH_CONFIDENCE_STREAM_ENABLE_BOOL, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_CONFIDENCE_STREAM_FILTER_THRESHOLD_INT, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_CONFIDENCE_STREAM_FILTER_BOOL, "rw", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_DEPTH_AUTO_EXPOSURE_PRIORITY_INT, "rw", "rw", vendorPropertyAccessor);
@@ -743,19 +744,19 @@ void G435LeDevice::initProperties() {
     registerComponent(OB_DEV_COMPONENT_PROPERTY_SERVER, propertyServer, true);
 
     auto frameTransformPropertyAccessor = std::make_shared<StereoFrameTransformPropertyAccessor>(this);
-    propertyServer->registerProperty(OB_PROP_DEPTH_MIRROR_BOOL, "rw", "rw", frameTransformPropertyAccessor); // depth
+    propertyServer->registerProperty(OB_PROP_DEPTH_MIRROR_BOOL, "rw", "rw", frameTransformPropertyAccessor);  // depth
     propertyServer->registerProperty(OB_PROP_DEPTH_FLIP_BOOL, "rw", "rw", frameTransformPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_DEPTH_ROTATE_INT, "rw", "rw", frameTransformPropertyAccessor);
-    propertyServer->registerProperty(OB_PROP_COLOR_MIRROR_BOOL, "rw", "rw", frameTransformPropertyAccessor); // color
+    propertyServer->registerProperty(OB_PROP_COLOR_MIRROR_BOOL, "rw", "rw", frameTransformPropertyAccessor);  // color
     propertyServer->registerProperty(OB_PROP_COLOR_FLIP_BOOL, "rw", "rw", frameTransformPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_COLOR_ROTATE_INT, "rw", "rw", frameTransformPropertyAccessor);
-    propertyServer->registerProperty(OB_PROP_IR_MIRROR_BOOL, "rw", "rw", frameTransformPropertyAccessor); // left ir
+    propertyServer->registerProperty(OB_PROP_IR_MIRROR_BOOL, "rw", "rw", frameTransformPropertyAccessor);  // left ir
     propertyServer->registerProperty(OB_PROP_IR_FLIP_BOOL, "rw", "rw", frameTransformPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_IR_ROTATE_INT, "rw", "rw", frameTransformPropertyAccessor);
-    propertyServer->registerProperty(OB_PROP_IR_RIGHT_MIRROR_BOOL, "rw", "rw", frameTransformPropertyAccessor); // right ir
+    propertyServer->registerProperty(OB_PROP_IR_RIGHT_MIRROR_BOOL, "rw", "rw", frameTransformPropertyAccessor);  // right ir
     propertyServer->registerProperty(OB_PROP_IR_RIGHT_FLIP_BOOL, "rw", "rw", frameTransformPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_IR_RIGHT_ROTATE_INT, "rw", "rw", frameTransformPropertyAccessor);
-    propertyServer->registerProperty(OB_PROP_CONFIDENCE_MIRROR_BOOL, "rw", "rw", frameTransformPropertyAccessor); //confidence
+    propertyServer->registerProperty(OB_PROP_CONFIDENCE_MIRROR_BOOL, "rw", "rw", frameTransformPropertyAccessor);  // confidence
     propertyServer->registerProperty(OB_PROP_CONFIDENCE_FLIP_BOOL, "rw", "rw", frameTransformPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_CONFIDENCE_ROTATE_INT, "rw", "rw", frameTransformPropertyAccessor);
 
@@ -801,7 +802,6 @@ void G435LeDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
         streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y12C4, 640, 480, 20));
         streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y12C4, 1280, 800, 5));
         streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_Y12C4, 1280, 800, 10));
-
     }
     else if(streamType == OB_STREAM_COLOR) {
         streamProfileList.emplace_back(StreamProfileFactory::createVideoStreamProfile(streamType, OB_FORMAT_MJPG, 1280, 800, 5));

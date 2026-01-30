@@ -22,6 +22,7 @@
 #include "libobsensor/h/Property.h"
 #include "utils/Utils.hpp"
 #include "logger/Logger.hpp"
+#include "logger/LoggerInterval.hpp"
 #include "exception/ObException.hpp"
 #include "frame/FrameFactory.hpp"
 
@@ -134,12 +135,11 @@ int getGmslDeviceInfoFromFW(const std::string &dev_name, void *data, bool &metad
         ctrlMetadata.id = G2R_CAMERA_CID_GET_METADATA_PLACE;
         ret             = ioctl(fd, VIDIOC_G_CTRL, &ctrlMetadata);
         if(ret < 0) {
-            LOG_WARN("ioctl failed on getting metadata place(retry: {}). Ignore it. error: {}", retry, strerror(errno));
             ++retry;
             ret = 0;
             continue;
         }
-        LOG_DEBUG("Device: {}, metadata place: {}", dev_name, ctrlMetadata.value);
+        LOG_DEBUG("Device: {}, metadata place: {}. Retry count: {}", dev_name, ctrlMetadata.value, retry);
         metadataPrepended = ctrlMetadata.value == 1;
         ret               = 0;
         break;
@@ -225,7 +225,7 @@ int checkVideoIndex(const std::string &dev_name) {
 
 std::vector<std::shared_ptr<V4lDeviceInfoGmsl>> ObV4lGmslDevicePort::queryRelatedDevices(std::shared_ptr<const USBSourcePortInfo> portInfo) {
     std::vector<std::shared_ptr<V4lDeviceInfoGmsl>> devs;
-    DIR *                                           dir = opendir("/sys/class/video4linux");
+    DIR                                            *dir = opendir("/sys/class/video4linux");
     if(!dir) {
         LOG_DEBUG("Failed to open /sys/class/video4linux, possibly no device connected");
         return devs;
@@ -578,7 +578,7 @@ void cropDepthImage(const uint8_t *src, uint8_t *dst, int srcWidth, int srcHeigh
     for(int y = 0; y < cropHeight; y++) {
         // Calculate the source and destination pointers of the current row
         const uint8_t *srcRow = src + y * srcWidth;
-        uint8_t *      dstRow = dst + y * cropWidth;
+        uint8_t       *dstRow = dst + y * cropWidth;
 
         // Copy the pixels of the current row (except the rightmost 32 columns)
         // memcpy(dstRow, srcRow, dstBytesPerRow);
@@ -603,7 +603,7 @@ void cropDepthImage16(const uint16_t *src, uint16_t *dst, int srcWidth, int srcH
     for(int y = 0; y < cropHeight; y++) {
         // Calculate the source and destination pointers of the current row
         const uint16_t *srcRow = src + y * srcWidth;
-        uint16_t *      dstRow = dst + y * cropWidth;
+        uint16_t       *dstRow = dst + y * cropWidth;
 
         // Copy the pixels of the current row (except the rightmost 32 columns)
         // memcpy(dstRow, srcRow, dstBytesPerRow);
@@ -677,10 +677,10 @@ void ObV4lGmslDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandleGmsl> devHa
             int val = select(max_fd + 1, &fds, nullptr, nullptr, &remaining);
             if(val < 0) {
                 if(errno == EINTR) {
-                    LOG_DEBUG("select interrupted: {}", strerror(errno));
+                    LOG_INTVL(LOG_INTVL_OBJECT_TAG + "captureLoop", 5000, spdlog::level::debug, "select interrupted: {}", strerror(errno));
                 }
                 else {
-                    LOG_DEBUG("select failed: {}", strerror(errno));
+                    LOG_INTVL(LOG_INTVL_OBJECT_TAG + "captureLoop", 5000, spdlog::level::debug, "select failed: {}", strerror(errno));
                 }
                 continue;
             }
@@ -706,7 +706,8 @@ void ObV4lGmslDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandleGmsl> devHa
                 buf.type   = LOCAL_V4L2_BUF_TYPE_META_CAPTURE_GMSL;
                 buf.memory = USE_MEMORY_MMAP ? V4L2_MEMORY_MMAP : V4L2_MEMORY_USERPTR;
                 if(xioctlGmsl(devHandle->metadataFd, VIDIOC_DQBUF, &buf) < 0) {
-                    LOG_DEBUG("VIDIOC_DQBUF failed, {}, {}", strerror(errno), devHandle->metadataInfo->name);
+                    LOG_INTVL(LOG_INTVL_OBJECT_TAG + "captureLoop", 5000, spdlog::level::err, "devHandle->metadataFd VIDIOC_DQBUF failed, {}, {}",
+                              strerror(errno), devHandle->metadataInfo->name);
                 }
 
                 if((buf.bytesused) && (!(buf.flags & V4L2_BUF_FLAG_ERROR))) {
@@ -717,7 +718,8 @@ void ObV4lGmslDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandleGmsl> devHa
 
                 if(devHandle->isCapturing) {
                     if(xioctlGmsl(devHandle->metadataFd, VIDIOC_QBUF, &buf) < 0) {
-                        LOG_ERROR("devHandle->metadataFd VIDIOC_QBUF, errno: {0}, {1}, {3}", strerror(errno), errno, __LINE__);
+                        LOG_INTVL(LOG_INTVL_OBJECT_TAG + "captureLoop", 5000, spdlog::level::err, "devHandle->metadataFd VIDIOC_QBUF failed, {}, {}",
+                                  strerror(errno), devHandle->metadataInfo->name);
                     }
                 }
             }
@@ -730,7 +732,8 @@ void ObV4lGmslDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandleGmsl> devHa
                 buf.memory = USE_MEMORY_MMAP ? V4L2_MEMORY_MMAP : V4L2_MEMORY_USERPTR;
                 // reader buffer
                 if(xioctlGmsl(devHandle->fd, VIDIOC_DQBUF, &buf) < 0) {
-                    LOG_DEBUG("VIDIOC_DQBUF failed, {}, {}", strerror(errno), devHandle->metadataInfo->name);
+                    LOG_INTVL(LOG_INTVL_OBJECT_TAG + "captureLoop", 5000, spdlog::level::err, "devHandle->fd VIDIOC_DQBUF failed, {}, {}", strerror(errno),
+                              devHandle->info->name);
                 }
 
                 if((buf.bytesused) && (!(buf.flags & V4L2_BUF_FLAG_ERROR))) {
@@ -789,7 +792,8 @@ void ObV4lGmslDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandleGmsl> devHa
 
                 if(devHandle->isCapturing) {
                     if(xioctlGmsl(devHandle->fd, VIDIOC_QBUF, &buf) < 0) {
-                        LOG_ERROR(" VIDIOC_QBUF, strerrno:{}, errno:{}", strerror(errno), errno);
+                        LOG_INTVL(LOG_INTVL_OBJECT_TAG + "captureLoop", 5000, spdlog::level::err, "devHandle->fd VIDIOC_QBUF failed, {}, {}", strerror(errno),
+                                  devHandle->info->name);
                     }
                 }
             }
@@ -889,7 +893,7 @@ uint32_t phaseProfileFormatToFourccGmsl(std::shared_ptr<const VideoStreamProfile
     int      formatFourcc    = 0;
     OBFormat format          = profile->getFormat();
     auto     foundFormatIter = std::find_if(v4lFourccMapGmsl.begin(), v4lFourccMapGmsl.end(),
-                                        [&](const std::pair<uint32_t, uint32_t> &item) { return item.second == utils::obFormatToUvcFourcc(format); });
+                                            [&](const std::pair<uint32_t, uint32_t> &item) { return item.second == utils::obFormatToUvcFourcc(format); });
     if(foundFormatIter != v4lFourccMapGmsl.end()) {
         return (const utils::big_endian<int> &)(foundFormatIter->first);
     }
@@ -1617,9 +1621,7 @@ bool ObV4lGmslDevicePort::setXuExt(uint32_t ctrl, const uint8_t *data, uint32_t 
 
     if(G2R_CAMERA_CID_SET_DATA == ctrl) {
         // struct v4l2_ext_control xctrl { cid, G2R_RW_DATA_LEN, 0, 0 };
-        struct v4l2_ext_control xctrl {
-            cid, G2R_RW_DATA_LEN, 0, 0
-        };
+        struct v4l2_ext_control xctrl{ cid, G2R_RW_DATA_LEN, 0, 0 };
         xctrl.p_u8 = const_cast<uint8_t *>(data);
 
 #if 0
@@ -1684,10 +1686,8 @@ bool ObV4lGmslDevicePort::getXuExt(uint32_t ctrl, uint8_t *data, uint32_t *len, 
 
     auto                    fd  = deviceHandles_.front()->fd;
     auto                    cid = ctrl;  // CIDFromOBPropertyID(ctrl);
-    struct v4l2_ext_control control {
-        cid, G2R_RW_DATA_LEN, 0, 0
-    };
-    std::vector<uint8_t> dataRecvBuf(MAX_I2C_PACKET_SIZE, 0);
+    struct v4l2_ext_control control{ cid, G2R_RW_DATA_LEN, 0, 0 };
+    std::vector<uint8_t>    dataRecvBuf(MAX_I2C_PACKET_SIZE, 0);
     control.p_u8 = dataRecvBuf.data();
     v4l2_ext_controls ext{ control.id & 0xffff0000, 1, 0, 0, 0, &control };
 
@@ -1797,7 +1797,7 @@ int ObV4lGmslDevicePort::resetGmslDriver() {
     LOG_DEBUG("-Entry ObV4lGmslDevicePort::rebootFirmware");
     auto fd = deviceHandles_.front()->fd;
 
-    struct v4l2_ext_control control {};
+    struct v4l2_ext_control control{};
     memset(&control, 0, sizeof(control));
     control.id    = G2R_CAMERA_CID_RESET_POWER;
     control.value = 1;

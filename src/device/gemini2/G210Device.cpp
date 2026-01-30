@@ -127,9 +127,9 @@ void G210Device::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
         algParamManager->bindStreamProfileParams(profiles);
     }
 
-    LOG_INFO("Sensor {} created! Found {} stream profiles.", sensorType, profiles.size());
+    LOG_DEBUG("Sensor {} created! Found {} stream profiles.", sensorType, profiles.size());
     for(auto &profile: profiles) {
-        LOG_INFO(" - {}", profile);
+        LOG_DEBUG(" - {}", profile);
     }
 }
 

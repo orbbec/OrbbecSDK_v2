@@ -103,7 +103,7 @@ MS600Streamer::~MS600Streamer() noexcept {
 }
 
 void MS600Streamer::startStream(std::shared_ptr<const StreamProfile> profile, MutableFrameCallback callback) {
-    LOG_INFO("Try to start stream: {}", profile);
+    LOG_DEBUG("Try to start stream: {}", profile);
 
     // check if stream is already running
     {

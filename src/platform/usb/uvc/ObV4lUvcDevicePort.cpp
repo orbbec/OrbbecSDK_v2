@@ -15,6 +15,7 @@
 #include "ObV4lUvcDevicePort.hpp"
 
 #include "logger/Logger.hpp"
+#include "logger/LoggerInterval.hpp"
 #include "exception/ObException.hpp"
 #include "utils/Utils.hpp"
 #include "stream/StreamProfile.hpp"
@@ -398,7 +399,7 @@ void ObV4lUvcDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandle> devHandle)
         int max_fd = std::max({ devHandle->fd, devHandle->metadataFd, devHandle->stopPipeFd[0], devHandle->stopPipeFd[1] });
 
         if(devHandle->metadataFd >= 0) {
-            for (uint32_t  i = 0; i < MAX_BUFFER_COUNT; i++) {
+            for(uint32_t i = 0; i < MAX_BUFFER_COUNT; i++) {
                 v4l2_buffer buf = {};
                 buf.type        = LOCAL_V4L2_BUF_TYPE_META_CAPTURE;
                 buf.memory      = V4L2_MEMORY_MMAP;
@@ -408,7 +409,7 @@ void ObV4lUvcDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandle> devHandle)
         }
 
         if(devHandle->fd >= 0) {
-            for (uint32_t  i = 0; i < MAX_BUFFER_COUNT; i++) {
+            for(uint32_t i = 0; i < MAX_BUFFER_COUNT; i++) {
                 v4l2_buffer buf = {};
                 buf.type        = V4L2_BUF_TYPE_VIDEO_CAPTURE;
                 buf.memory      = V4L2_MEMORY_MMAP;
@@ -442,10 +443,10 @@ void ObV4lUvcDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandle> devHandle)
             int            val       = select(max_fd + 1, &fds, nullptr, nullptr, &remaining);
             if(val < 0) {
                 if(errno == EINTR) {
-                    LOG_DEBUG("select interrupted: {}", strerror(errno));
+                    LOG_INTVL(LOG_INTVL_OBJECT_TAG + "captureLoop", 5000, spdlog::level::debug, "select interrupted: {}", strerror(errno));
                 }
                 else {
-                    LOG_DEBUG("select failed: {}", strerror(errno));
+                    LOG_INTVL(LOG_INTVL_OBJECT_TAG + "captureLoop", 5000, spdlog::level::debug, "select failed: {}", strerror(errno));
                 }
                 continue;
             }
@@ -466,7 +467,8 @@ void ObV4lUvcDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandle> devHandle)
                 buf.type        = LOCAL_V4L2_BUF_TYPE_META_CAPTURE;
                 buf.memory      = V4L2_MEMORY_MMAP;
                 if(xioctl(devHandle->metadataFd, VIDIOC_DQBUF, &buf) < 0) {
-                    LOG_DEBUG("VIDIOC_DQBUF failed, {}, {}", strerror(errno), devHandle->metadataInfo->name);
+                    LOG_INTVL(LOG_INTVL_OBJECT_TAG + "captureLoop", 5000, spdlog::level::err, "devHandle->metadataFd VIDIOC_DQBUF failed, {}, {}",
+                              strerror(errno), devHandle->metadataInfo->name);
                 }
                 if(buf.bytesused) {
                     devHandle->metadataBuffers[buf.index].actual_length = buf.bytesused;
@@ -484,7 +486,8 @@ void ObV4lUvcDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandle> devHandle)
                 buf.memory      = V4L2_MEMORY_MMAP;
                 // reader buffer
                 if(xioctl(devHandle->fd, VIDIOC_DQBUF, &buf) < 0) {
-                    LOG_DEBUG("VIDIOC_DQBUF failed, {}, {}", strerror(errno), devHandle->info->name);
+                    LOG_INTVL(LOG_INTVL_OBJECT_TAG + "captureLoop", 5000, spdlog::level::err, "devHandle->fd VIDIOC_DQBUF failed, {}, {}", strerror(errno),
+                              devHandle->info->name);
                 }
 
                 if(buf.bytesused) {
@@ -696,7 +699,7 @@ void ObV4lUvcDevicePort::startStream(std::shared_ptr<const StreamProfile> profil
     devHandle->canStartCapture = false;
     devHandle->profile         = videoProfile;
     devHandle->frameCallback   = callback;
-    devHandle->captureThread   = std::make_shared<std::thread>([devHandle]() { captureLoop(devHandle); });
+    devHandle->captureThread   = std::make_shared<std::thread>([this, devHandle]() { captureLoop(devHandle); });
 
     // stream on
     v4l2_buf_type bufType = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -925,7 +928,7 @@ UvcControlRange ObV4lUvcDevicePort::getXuRange(uint8_t control, int len) {
     std::lock_guard<std::recursive_mutex> lock(ctrlMutex_);
     auto                                  fd = deviceHandles_.front()->fd;
     UvcControlRange                       range;
-    struct uvc_xu_control_query           xquery {};
+    struct uvc_xu_control_query           xquery{};
     memset(&xquery, 0, sizeof(xquery));
     __u16 size   = 0;
     xquery.query = UVC_GET_LEN;
@@ -1046,7 +1049,7 @@ bool ObV4lUvcDevicePort::setXu(uint8_t ctrl, const uint8_t *data, uint32_t len) 
 
 void ObV4lUvcDevicePort::subscribeToCtrlEvent(uint32_t ctrl_id) const {
     auto                           fd = deviceHandles_.front()->fd;
-    struct v4l2_event_subscription event_subscription {};
+    struct v4l2_event_subscription event_subscription{};
     event_subscription.flags = V4L2_EVENT_SUB_FL_ALLOW_FEEDBACK;
     event_subscription.type  = V4L2_EVENT_CTRL;
     event_subscription.id    = ctrl_id;
@@ -1058,7 +1061,7 @@ void ObV4lUvcDevicePort::subscribeToCtrlEvent(uint32_t ctrl_id) const {
 
 void ObV4lUvcDevicePort::unsubscribeFromCtrlEvent(uint32_t ctrl_id) const {
     auto                           fd = deviceHandles_.front()->fd;
-    struct v4l2_event_subscription event_subscription {};
+    struct v4l2_event_subscription event_subscription{};
     event_subscription.flags = V4L2_EVENT_SUB_FL_ALLOW_FEEDBACK;
     event_subscription.type  = V4L2_EVENT_CTRL;
     event_subscription.id    = ctrl_id;
@@ -1070,7 +1073,7 @@ void ObV4lUvcDevicePort::unsubscribeFromCtrlEvent(uint32_t ctrl_id) const {
 
 bool ObV4lUvcDevicePort::pendForCtrlStatusEvent() const {
     auto              fd = deviceHandles_.front()->fd;
-    struct v4l2_event event {};
+    struct v4l2_event event{};
     memset(&event, 0, sizeof(event));
     // Poll registered events and verify that set control event raised (wait max of 10 * 2 = 20 [ms])
     static int MAX_POLL_RETRIES = 10;

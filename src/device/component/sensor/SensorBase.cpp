@@ -210,7 +210,7 @@ void SensorBase::updateStreamState(OBStreamState state) {
         }
     }
     if(oldState != state) {
-        LOG_DEBUG("Stream state changed to {}@{}", STREAM_STATE_STR(state), sensorType_);
+        LOG_INFO("Stream state changed to {}@{}", STREAM_STATE_STR(state), sensorType_);
     }
     streamStateCv_.notify_all();
 }
@@ -258,7 +258,7 @@ void SensorBase::startStreamRecovery() {
         }
     }
     else {
-        LOG_INFO(" No recovery config found for sensor: {}", utils::obSensorToStr(sensorType_));
+        LOG_DEBUG(" No recovery config found for sensor: {}", utils::obSensorToStr(sensorType_));
     }
 }
 

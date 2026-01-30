@@ -31,7 +31,7 @@ OBMultiDeviceSyncConfig DeviceSyncConfigurator::getSyncConfig() {
         return currentMultiDevSyncConfig_;
     }
     auto owner          = getOwner();
-    auto propertyServer = owner->getPropertyServer(); // Auto-lock when getting propertyServer
+    auto propertyServer = owner->getPropertyServer();  // Auto-lock when getting propertyServer
     // double check after get propertyServer
     if(isSyncConfigInit_) {
         return currentMultiDevSyncConfig_;
@@ -66,13 +66,13 @@ OBMultiDeviceSyncConfig DeviceSyncConfigurator::getSyncConfig() {
     syncConfig.framesPerTrigger = configInternal.framesPerTrigger;
 
     currentMultiDevSyncConfig_ = syncConfig;
-    isSyncConfigInit_ = true;
+    isSyncConfigInit_          = true;
     return syncConfig;
 }
 
 void DeviceSyncConfigurator::setSyncConfig(const OBMultiDeviceSyncConfig &deviceSyncConfig) {
     auto owner          = getOwner();
-    auto propertyServer = owner->getPropertyServer(); // Auto-lock when getting propertyServer
+    auto propertyServer = owner->getPropertyServer();  // Auto-lock when getting propertyServer
 
     if(isSyncConfigInit_ && 0 == memcmp(&currentMultiDevSyncConfig_, &deviceSyncConfig, sizeof(OBMultiDeviceSyncConfig))) {
         LOG_DEBUG("New sync config is same as current device sync config, the upgrade process would not execute!");
@@ -96,7 +96,7 @@ void DeviceSyncConfigurator::setSyncConfig(const OBMultiDeviceSyncConfig &device
     internalConfig.triggerOutDelayUs    = deviceSyncConfig.triggerOutDelayUs;
     internalConfig.framesPerTrigger     = deviceSyncConfig.framesPerTrigger;
 
-    LOG_INFO("MultiDeviceSyncConfig: {}", deviceSyncConfig);
+    LOG_DEBUG("MultiDeviceSyncConfig: {}", deviceSyncConfig);
     propertyServer->setStructureDataProtoV1_1_T<OBMultiDeviceSyncConfigInternal, 1>(OB_STRUCT_MULTI_DEVICE_SYNC_CONFIG, internalConfig);
 
     currentMultiDevSyncConfig_ = deviceSyncConfig;
@@ -162,7 +162,7 @@ OBMultiDeviceSyncConfig DeviceSyncConfiguratorOldProtocol::getSyncConfig() {
     }
     // read from device
     OBMultiDeviceSyncConfig syncConfig{};
-    auto configInternal = propertyServer->getStructureDataT<OBDeviceSyncConfig>(OB_STRUCT_MULTI_DEVICE_SYNC_CONFIG);
+    auto                    configInternal = propertyServer->getStructureDataT<OBDeviceSyncConfig>(OB_STRUCT_MULTI_DEVICE_SYNC_CONFIG);
 
     bool triggerSignalOutEnable = true;
     if(propertyServer->isPropertySupported(OB_PROP_SYNC_SIGNAL_TRIGGER_OUT_BOOL, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
@@ -215,7 +215,7 @@ void DeviceSyncConfiguratorOldProtocol::setSyncConfig(const OBMultiDeviceSyncCon
     v1SyncConfig.deviceId                       = 0;
     v1SyncConfig.mcuTriggerFrequency            = 0;
 
-    LOG_INFO("MultiDeviceSyncConfig: {}", v1SyncConfig);
+    LOG_DEBUG("MultiDeviceSyncConfig: {}", v1SyncConfig);
     propertyServer->setStructureDataT<OBDeviceSyncConfig>(OB_STRUCT_MULTI_DEVICE_SYNC_CONFIG, v1SyncConfig);
     if(propertyServer->isPropertySupported(OB_PROP_SYNC_SIGNAL_TRIGGER_OUT_BOOL, PROP_OP_WRITE, PROP_ACCESS_INTERNAL)) {
         propertyServer->setPropertyValueT<bool>(OB_PROP_SYNC_SIGNAL_TRIGGER_OUT_BOOL, v2SyncConfig.triggerOutEnable);

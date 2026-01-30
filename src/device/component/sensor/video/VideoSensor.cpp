@@ -150,7 +150,7 @@ void VideoSensor::onBackendFrameCallback(std::shared_ptr<Frame> frame) {
         return;
     }
 
-    LOG_FREQ_CALC(DEBUG, 5000, "{} backend frame callback, frameRate={freq}fps", sensorType_);
+    LOG_FREQ_CALC(INFO, 5000, "{} backend frame callback, frameRate={freq}fps", sensorType_);
     auto deviceInfo = owner_->getInfo();
     auto vid        = deviceInfo->vid_;
     auto pid        = deviceInfo->pid_;

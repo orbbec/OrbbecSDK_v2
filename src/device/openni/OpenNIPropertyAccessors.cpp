@@ -117,13 +117,11 @@ const std::vector<uint8_t> &OpenNIDisp2DepthPropertyAccessor::getStructureData(u
     if(propertyId == OB_STRUCT_DEPTH_PRECISION_SUPPORT_LIST) {
         static std::vector<uint16_t> swD2DSupportList = { OB_PRECISION_1MM, OB_PRECISION_0MM8, OB_PRECISION_0MM4, OB_PRECISION_0MM2, OB_PRECISION_0MM1 };
         static std::vector<uint8_t>  swD2DSupportListBytes(reinterpret_cast<uint8_t *>(swD2DSupportList.data()),
-                                                          reinterpret_cast<uint8_t *>(swD2DSupportList.data()) + swD2DSupportList.size() * 2);
+                                                           reinterpret_cast<uint8_t *>(swD2DSupportList.data()) + swD2DSupportList.size() * 2);
         return swD2DSupportListBytes;
     }
     throw invalid_value_exception(utils::string::to_string() << "unsupported property id:" << propertyId);
 }
-
-
 
 OpenNIFrameTransformPropertyAccessor::OpenNIFrameTransformPropertyAccessor(IDevice *owner) : owner_(owner) {}
 
@@ -202,12 +200,10 @@ void OpenNIFrameTransformPropertyAccessor::getPropertyRange(uint32_t propertyId,
     }
 }
 
-
 OpenNIHeartBeatPropertyAccessor::OpenNIHeartBeatPropertyAccessor(IDevice *owner)
     : owner_(owner),
       heartBeatStatus_(false),
-      heartBeatRunning_(false){
-    BEGIN_TRY_EXECUTE({
+      heartBeatRunning_(false){ BEGIN_TRY_EXECUTE({
           OBPropertyValue value;
           auto            commandPort = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
           commandPort->getPropertyValue(OB_PROP_WATCHDOG_BOOL, &value);
@@ -216,13 +212,9 @@ OpenNIHeartBeatPropertyAccessor::OpenNIHeartBeatPropertyAccessor(IDevice *owner)
               // start watch dog
               startFeedingWatchDog();
           }
-    })
-    CATCH_EXCEPTION_AND_EXECUTE({
-        LOG_ERROR("Get watch dog status failed!");
-    })
-}
+      }) CATCH_EXCEPTION_AND_EXECUTE({ LOG_ERROR("Get watch dog status failed!"); }) }
 
-OpenNIHeartBeatPropertyAccessor::~OpenNIHeartBeatPropertyAccessor() noexcept {
+      OpenNIHeartBeatPropertyAccessor::~OpenNIHeartBeatPropertyAccessor() noexcept {
     stopFeedingWatchDog();
     BEGIN_TRY_EXECUTE({
         if(heartBeatStatus_) {
@@ -232,9 +224,7 @@ OpenNIHeartBeatPropertyAccessor::~OpenNIHeartBeatPropertyAccessor() noexcept {
             commandPort->setPropertyValue(OB_PROP_WATCHDOG_BOOL, value);
         }
     })
-    CATCH_EXCEPTION_AND_EXECUTE({ 
-        LOG_WARN("Set watch dog status failed!");
-    })
+    CATCH_EXCEPTION_AND_EXECUTE({ LOG_WARN("Set watch dog status failed!"); })
 }
 
 void OpenNIHeartBeatPropertyAccessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
@@ -286,7 +276,7 @@ void OpenNIHeartBeatPropertyAccessor::startFeedingWatchDog() {
         while(heartBeatRunning_) {
             std::unique_lock<std::mutex> lock(heartBeatMutex_);
             OBPropertyValue              value;
-            value.intValue = 1;
+            value.intValue   = 1;
             auto commandPort = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
             commandPort->setPropertyValue(OB_PROP_DEVICE_KEEP_ALIVE_INT, value);
             heartBeatCV_.wait_for(lock, std::chrono::milliseconds(OB_DEFAULT_HEARTBEAT_TIMEOUT));
@@ -305,11 +295,7 @@ void OpenNIHeartBeatPropertyAccessor::stopFeedingWatchDog() {
     }
 }
 
-
-
-OpenNITemperatureStructurePropertyAccessor::OpenNITemperatureStructurePropertyAccessor(IDevice *owner)
-    : owner_(owner){
-}
+OpenNITemperatureStructurePropertyAccessor::OpenNITemperatureStructurePropertyAccessor(IDevice *owner) : owner_(owner) {}
 
 void OpenNITemperatureStructurePropertyAccessor::setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) {
     utils::unusedVar(data);

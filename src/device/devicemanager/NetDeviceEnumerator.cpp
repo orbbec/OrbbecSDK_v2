@@ -57,7 +57,7 @@ DeviceEnumInfoList NetDeviceEnumerator::queryDeviceList() {
     for(const auto &portInfo: portInfoList) {
         auto info = std::dynamic_pointer_cast<const NetSourcePortInfo>(portInfo);
         // Informational only: devices with pid=0 are not filtered here
-        LOG_INFO(" - mac: {}, ip: {}, port: {}, sn: {}, pid: 0x{:04X}", info->mac, info->address, info->port, info->serialNumber, info->pid);
+        LOG_DEBUG(" - mac: {}, ip: {}, port: {}, sn: {}, pid: 0x{:04X}", info->mac, info->address, info->port, info->serialNumber, info->pid);
     }
     // Filter the device info list here
     return deviceInfoMatch(portInfoList);
@@ -83,7 +83,7 @@ uint16_t NetDeviceEnumerator::getDevicePid(std::shared_ptr<const NetSourcePortIn
     }
 
     // check if is LiDAR device
-    if (tryLiDAR) {
+    if(tryLiDAR) {
         BEGIN_TRY_EXECUTE({
             OBPropertyValue value;
             value.intValue = 0;
@@ -287,7 +287,7 @@ bool NetDeviceEnumerator::handleDeviceArrival(std::string devUid) {
     {
         std::unique_lock<std::recursive_mutex> lock(deviceInfoListMutex_);
         LOG_DEBUG("Current net device list: ({})", deviceInfoList_.size());
-        for(auto &&item: deviceInfoList_) { 
+        for(auto &&item: deviceInfoList_) {
             auto firstPortInfo = item->getSourcePortInfoList().front();
             auto info          = std::dynamic_pointer_cast<const NetSourcePortInfo>(firstPortInfo);
             LOG_DEBUG("  - Name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", item->getName(), item->getPid(), item->getDeviceSn(), info->mac, info->address);

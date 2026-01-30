@@ -149,8 +149,8 @@ protected:
     int resetGmslDriver();
 
 private:
-    void        stopStream(std::shared_ptr<V4lDeviceHandleGmsl> deviceHandle);
-    static void captureLoop(std::shared_ptr<V4lDeviceHandleGmsl> deviceHandle);
+    void stopStream(std::shared_ptr<V4lDeviceHandleGmsl> deviceHandle);
+    void captureLoop(std::shared_ptr<V4lDeviceHandleGmsl> deviceHandle);
 
     bool setPuRaw(uint32_t propertyId, int32_t value);
 

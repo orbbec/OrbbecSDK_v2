@@ -338,7 +338,7 @@ void FemtoMegaINetDevice::initSensorList() {
 void FemtoMegaINetDevice::initProperties() {
     const auto &sourcePortInfoList = enumInfo_->getSourcePortInfoList();
     auto        vendorPortInfoIter = std::find_if(sourcePortInfoList.begin(), sourcePortInfoList.end(),
-                                           [](const std::shared_ptr<const SourcePortInfo> &portInfo) { return portInfo->portType == SOURCE_PORT_NET_VENDOR; });
+                                                  [](const std::shared_ptr<const SourcePortInfo> &portInfo) { return portInfo->portType == SOURCE_PORT_NET_VENDOR; });
 
     if(vendorPortInfoIter == sourcePortInfoList.end()) {
         return;
@@ -514,9 +514,9 @@ void FemtoMegaINetDevice::initSensorStreamProfile(std::shared_ptr<ISensor> senso
         algParamManager->bindStreamProfileParams(profiles);
     }
 
-    LOG_INFO("Sensor {} created! Found {} stream profiles.", sensorType, profiles.size());
+    LOG_DEBUG("Sensor {} created! Found {} stream profiles.", sensorType, profiles.size());
     for(auto &profile: profiles) {
-        LOG_INFO(" - {}", profile);
+        LOG_DEBUG(" - {}", profile);
     }
 }
 

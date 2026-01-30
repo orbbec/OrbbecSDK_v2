@@ -40,13 +40,13 @@ typedef struct {
 } ImuDataHeader;
 
 typedef struct {
-    float  gyroX;
-    float  gyroY;
-    float  gyroZ;
-    float  accelX;
-    float  accelY;
-    float  accelZ;
-}OriginImuData;
+    float gyroX;
+    float gyroY;
+    float gyroZ;
+    float accelX;
+    float accelY;
+    float accelZ;
+} OriginImuData;
 
 #pragma pack(pop)
 
@@ -88,7 +88,7 @@ LiDARImuStreamer::~LiDARImuStreamer() noexcept {
 }
 
 void LiDARImuStreamer::startStream(std::shared_ptr<const StreamProfile> sp, MutableFrameCallback callback) {
-    LOG_INFO("Try to start stream: {}", sp);
+    LOG_DEBUG("Try to start stream: {}", sp);
     {
         std::lock_guard<std::mutex> lock(cbMtx_);
         if(sp->is<AccelStreamProfile>()) {
@@ -97,7 +97,7 @@ void LiDARImuStreamer::startStream(std::shared_ptr<const StreamProfile> sp, Muta
                 return;
             }
             auto accel = sp->as<AccelStreamProfile>();
-            if (running_) {
+            if(running_) {
                 // imu stream has already been started
                 if(accel->getSampleRate() != gyroStreamProfile_->getSampleRate()) {
                     throw unsupported_operation_exception("The IMU stream has already been started with other sample rate.");
@@ -272,7 +272,7 @@ void LiDARImuStreamer::parseIMUData(std::shared_ptr<Frame> frame) {
         LOG_WARN("This LiDAR block data will be dropped because data size({}) is not equal to {}!", dataSize, dataBlockSize);
         return;
     }
-    
+
     // convert to host order
     header->dataLen          = ntohs(header->dataLen);
     header->dataBlockNum     = ntohs(header->dataBlockNum);
@@ -288,13 +288,13 @@ void LiDARImuStreamer::parseIMUData(std::shared_ptr<Frame> frame) {
         LOG_WARN("This LiDAR block data will be dropped because magic is invalid!");
         return;
     }
-    
+
     std::shared_ptr<const AccelStreamProfile> accelStreamProfile;
     std::shared_ptr<const GyroStreamProfile>  gyroStreamProfile;
     {
         std::lock_guard<std::mutex> lock(cbMtx_);
         accelStreamProfile = accelStreamProfile_;
-        gyroStreamProfile = gyroStreamProfile_;
+        gyroStreamProfile  = gyroStreamProfile_;
     }
 
     // move data ptr
@@ -303,7 +303,7 @@ void LiDARImuStreamer::parseIMUData(std::shared_ptr<Frame> frame) {
     std::shared_ptr<Frame> accelFrame;
     std::shared_ptr<Frame> gyroFrame;
     auto                   frameIndex = ++frameIndex_;
-    auto                   timestamp  = utils::getNowTimesUs(); // TODO 20250708: timestamp in header is invalid now, use system time
+    auto                   timestamp  = utils::getNowTimesUs();  // TODO 20250708: timestamp in header is invalid now, use system time
     if(accelStreamProfile) {
         accelFrame     = FrameFactory::createFrameFromStreamProfile(accelStreamProfile);
         auto frameData = (AccelFrame::Data *)accelFrame->getData();
@@ -359,26 +359,26 @@ IDevice *LiDARImuStreamer::getOwner() const {
 }
 
 void LiDARImuStreamer::convertAccelUnit(std::shared_ptr<Frame> frame) {
-    if (firmwareVersionInt_ >= 1000007) {
+    if(firmwareVersionInt_ >= 1000007) {
         return;
     }
 
-    const float GRAVITY = 9.80665f;
-    auto frameData = (AccelFrame::Data*)frame->getData();
-    frameData->value.x = frameData->value.x * GRAVITY;
-    frameData->value.y = frameData->value.y * GRAVITY;
-    frameData->value.z = frameData->value.z * GRAVITY;
+    const float GRAVITY   = 9.80665f;
+    auto        frameData = (AccelFrame::Data *)frame->getData();
+    frameData->value.x    = frameData->value.x * GRAVITY;
+    frameData->value.y    = frameData->value.y * GRAVITY;
+    frameData->value.z    = frameData->value.z * GRAVITY;
 }
 
 void LiDARImuStreamer::convertGyroUnit(std::shared_ptr<Frame> frame) {
-    if (firmwareVersionInt_ >= 1000007) {
+    if(firmwareVersionInt_ >= 1000007) {
         return;
     }
 
-    constexpr float MY_PI = 3.14159265358979323846f;
+    constexpr float MY_PI     = 3.14159265358979323846f;
     constexpr float DEG_2_RAD = MY_PI / 180.0f;
 
-    auto frameData = (GyroFrame::Data*)frame->getData();
+    auto frameData     = (GyroFrame::Data *)frame->getData();
     frameData->value.x = frameData->value.x * DEG_2_RAD;
     frameData->value.y = frameData->value.y * DEG_2_RAD;
     frameData->value.z = frameData->value.z * DEG_2_RAD;

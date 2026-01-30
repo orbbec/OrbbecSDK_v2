@@ -25,7 +25,7 @@ bool DeviceInfoConfig::loadConfigFile(const std::string &configPath, bool isExte
         try {
             if(utils::fileExists(path.c_str())) {
                 xmlReader_ = std::make_shared<XmlReader>(path);
-                LOG_INFO("External config file was found, path: {}", path.c_str());
+                LOG_DEBUG("External config file was found, path: {}", path.c_str());
             }
             else {
                 lastErrorMessage_ = "External config file doesn't exist: " + path;
