@@ -692,9 +692,10 @@ void                 DabaiADevice::initSensorListGMSL() {
 
             auto depthPostrFilterParamsManager = getComponentT<DepthPostFilterParamsManager>(OB_DEV_COMPONENT_DEPTH_POST_FILTER_PARAMS_MANAGER, false);
             if(depthPostrFilterParamsManager && frameProcessor) {
-                auto        noiseRmFilterParams = depthPostrFilterParamsManager->getNoiseRemovalFilterUpdateParams();
-                std::string filterConfigName    = "NoiseRemovalFilter#";
-                for(size_t i = 0; i < noiseRmFilterParams.size(); i++) {
+                auto noiseRmFilterParams = depthPostrFilterParamsManager->getNoiseRemovalFilterUpdateParams();
+                int  paramSize           = static_cast<int>(noiseRmFilterParams.size());
+                for(int i = 0; i < paramSize; i++) {
+                    std::string filterConfigName = "NoiseRemovalFilter#";
                     std::string configSchemaName = filterConfigName.append(std::to_string(i));
                     frameProcessor->setConfigValue(configSchemaName, noiseRmFilterParams[i]);
                 }
