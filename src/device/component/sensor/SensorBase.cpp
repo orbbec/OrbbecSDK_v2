@@ -463,11 +463,11 @@ void SensorBase::validateDeviceState(const std::shared_ptr<const StreamProfile> 
         case OB_STREAM_COLOR:
         case OB_STREAM_COLOR_LEFT:
         case OB_STREAM_COLOR_RIGHT:
-            flag |= OB_ERROR_RGB_SENSOR;
+            flag |= DEVICE_ERROR_RGB_SENSOR;
             break;
         case OB_STREAM_ACCEL:
         case OB_STREAM_GYRO:
-            flag |= OB_ERROR_IMU_SENSOR;
+            flag |= DEVICE_ERROR_IMU_SENSOR;
             break;
         case OB_STREAM_DEPTH:
         case OB_STREAM_IR:
@@ -484,7 +484,7 @@ void SensorBase::validateDeviceState(const std::shared_ptr<const StreamProfile> 
                     break;
                 }
             }
-            flag |= OB_ERROR_IRL_SENSOR | OB_ERROR_IRR_SENSOR | OB_ERROR_CFG_PARAM;
+            flag |= DEVICE_ERROR_IRL_SENSOR | DEVICE_ERROR_IRR_SENSOR | DEVICE_ERROR_CFG_PARAM;
         } break;
         default:
             break;
