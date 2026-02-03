@@ -248,6 +248,13 @@ void DeviceBase::reboot() {
 void DeviceBase::reset() {
     deactivate();
     isDeactivated_ = false;
+    
+#ifdef OS_MACOS
+    // macOS: allow time for libusb/IOKit to fully release UVC interfaces before
+    // reopening the device; otherwise libusb_claim_interface may fail with
+    // an access denied error.
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+#endif
     init();
 }
 
