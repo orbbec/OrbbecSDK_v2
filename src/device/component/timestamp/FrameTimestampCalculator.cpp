@@ -177,7 +177,12 @@ void G435LeFrameTimestampCalculatorDeviceTime::calculate(std::shared_ptr<Frame> 
         directCalculator_->calculate(frame);
     }
     else {
-        baseCalculator_->calculate(frame);
+        if(frame->hasMetadata(OB_FRAME_METADATA_TYPE_TIMESTAMP)) {
+            frame->setTimeStampUsec(frame->getMetadataValue(OB_FRAME_METADATA_TYPE_TIMESTAMP));
+        }
+        else {
+            baseCalculator_->calculate(frame);
+        }
     }
 }
 
