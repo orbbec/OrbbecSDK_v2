@@ -99,6 +99,9 @@ void VendorTCPClient::checkLocalIP() {
             }
         }
     }
+#else
+    // TODO
+    isValidIP_ = true;
 #endif
 }
 
@@ -155,7 +158,6 @@ void VendorTCPClient::socketConnect() {
                                                                               << ", port=" << port_ << ", err_code=" << rst);
     }
 
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
     if(isValidIP_) {
         LOG_DEBUG("bind local address {}", localAddress_);
         struct sockaddr_in localAddr;
@@ -176,7 +178,6 @@ void VendorTCPClient::socketConnect() {
         }
         LOG_DEBUG("bind local address success!");
     }
-#endif
 
     struct sockaddr_in serverAddr;
     serverAddr.sin_family = AF_INET;                                       // ipv4

@@ -65,6 +65,17 @@ GVCPClient::~GVCPClient() {
     closeClientSockets();
 }
 
+static bool isSameSubnet(const std::string& localIp, const std::string &devIp, uint8_t subnetLength) {
+    uint32_t a = inet_addr(localIp.c_str());
+    uint32_t b = inet_addr(devIp.c_str());
+    if(subnetLength >= 32) {
+        return a == b;
+    }
+
+    uint32_t mask = htonl(~((1U << (32 - subnetLength)) - 1));
+    return (a & mask) == (b & mask);
+}
+
 std::vector<GVCPDeviceInfo> GVCPClient::queryNetDeviceList() {
     std::lock_guard<std::mutex> lck(queryMtx_);
 
@@ -94,6 +105,28 @@ std::vector<GVCPDeviceInfo> GVCPClient::queryNetDeviceList() {
             iter++;
         }
     }
+    // devInfoList_ remove duplication from different virtual netinterface bind to the same physical netinterface
+    if(devInfoList_.size() > 1) {
+        // devInfoList_ to map
+        std::map<std::string, std::vector<GVCPDeviceInfo>> groups;
+        for(auto &info: devInfoList_) {
+            groups[info.mac].push_back(info);
+        }
+        devInfoList_.clear();
+        for(auto &infos: groups) {
+            GVCPDeviceInfo *best = nullptr;
+            for(auto &info: infos.second) {
+                if(isSameSubnet(info.localIp, info.ip, info.localSubnetLength)) {
+                    best = &info;
+                    break;
+                }
+            }
+            if(!best) {
+                best = &infos.second[0];
+            }
+            devInfoList_.push_back(*best);
+        }
+    }
 
     // Compare two std::vector:
     // 1. elements are unique in both vectors
@@ -115,7 +148,7 @@ std::vector<GVCPDeviceInfo> GVCPClient::queryNetDeviceList() {
     if(!compare(tmpList, devInfoList_)) {
         LOG_DEBUG("queryNetDevice completed ({}):", devInfoList_.size());
         for(auto &&info: devInfoList_) {
-            LOG_DEBUG("\t- mac:{}, ip:{}, sn:{}, pid:0x{:04x}", info.mac, info.ip, info.sn, info.pid);
+            LOG_DEBUG("\t- mac:{}, ip:{}, sn:{}, pid:0x{:04x}, localIp: {}", info.mac, info.ip, info.sn, info.pid, info.localIp);
         }
     }
 
