@@ -400,6 +400,11 @@ const std::vector<UsbInterfaceInfo> &UsbEnumeratorLibusb::queryUsbInterfaces() {
             std::this_thread::sleep_for(std::chrono::milliseconds(50));
             rst = libusb_open(device, &handle);
             if(rst != LIBUSB_SUCCESS) {
+                if(rst == LIBUSB_ERROR_NO_DEVICE) {
+                    // device may have been disconnected
+                    LOG_ERROR("Failed to open USB device: error={}.", libusb_strerror(rst));
+                    continue;
+                }
                 LOG_WARN("Failed to open USB device ({}), skipping, info.serial and infName may be empty", libusb_strerror(rst));
                 auto infs = queryInterfaces(device, desc);
                 for(auto &inf: infs) {

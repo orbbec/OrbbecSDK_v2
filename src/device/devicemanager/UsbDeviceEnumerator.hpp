@@ -7,27 +7,29 @@
 #include "Platform.hpp"
 
 #include <memory>
+#include <unordered_set>
 
 namespace libobsensor {
 class UsbDeviceEnumerator : public IDeviceEnumerator, public std::enable_shared_from_this<IDeviceEnumerator> {
 public:
     UsbDeviceEnumerator(DeviceChangedCallback callback);
     ~UsbDeviceEnumerator() noexcept override;
-    DeviceEnumInfoList       getDeviceInfoList() override;
-    void                     setDeviceChangedCallback(DeviceChangedCallback callback) override;
+    DeviceEnumInfoList getDeviceInfoList() override;
+    void               setDeviceChangedCallback(DeviceChangedCallback callback) override;
 
 private:
     bool               onPlatformDeviceChanged(OBDeviceChangedType changeType, std::string devUid);
-    DeviceEnumInfoList queryRemovedDevice(std::string rmDevUid);
+    DeviceEnumInfoList queryRemovedDevice(std::unordered_set<std::string> deviceRemovalUidSet);
     DeviceEnumInfoList queryArrivalDevice();
 
     void deviceArrivalHandleThreadFunc();
+    void deviceRemovalHandleThreadFunc();
 
     static DeviceEnumInfoList usbDeviceInfoMatch(const SourcePortInfoList infoList);
 
 private:
     std::shared_ptr<Platform> platform_;
-    bool                   destroy_ = false;
+    bool                      destroy_ = false;
 
     std::shared_ptr<IDeviceWatcher> deviceWatcher_;
 
@@ -38,6 +40,12 @@ private:
     bool                    newUsbPortArrival_ = false;
     std::condition_variable newUsbPortArrivalCV_;
     std::thread             deviceArrivalHandleThread_;
+
+    // removal thread
+    std::condition_variable         deviceRemovalCV_;
+    std::mutex                      deviceRemovalMutex_;
+    std::unordered_set<std::string> deviceRemovalUidSet_;
+    std::thread                     deviceRemovalHandleThread_;
 
     DeviceEnumInfoList   deviceInfoList_;
     std::recursive_mutex deviceInfoListMutex_;
