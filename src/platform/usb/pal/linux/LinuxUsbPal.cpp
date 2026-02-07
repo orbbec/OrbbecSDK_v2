@@ -342,6 +342,30 @@ std::shared_ptr<IDeviceWatcher> LinuxUsbPal::createDeviceWatcher() const {
 }
 
 SourcePortInfoList LinuxUsbPal::querySourcePortInfos() {
+    SourcePortInfoList portInfoList = queryUsbSourcePortInfos();
+
+#if defined(BUILD_GMSL_PAL)
+    const auto &usbInfoList = ObV4lGmslDevicePort::queryDevicesInfo();
+    for(const auto &info: usbInfoList) {
+        auto portInfo      = std::make_shared<USBSourcePortInfo>(cvtUsbClassToPortType(info.cls));
+        portInfo->url      = info.url;
+        portInfo->uid      = info.uid;
+        portInfo->vid      = info.vid;
+        portInfo->pid      = info.pid;
+        portInfo->serial   = info.serial;
+        portInfo->connSpec = usbSpecToString(static_cast<UsbSpec>(info.conn_spec));
+        portInfo->infUrl   = info.infUrl;
+        portInfo->infIndex = info.infIndex;
+        portInfo->infName  = info.infName;
+        portInfo->hubId    = info.hubId;
+        portInfo->infFlag  = info.infFlag;
+        portInfoList.push_back(portInfo);
+    }
+#endif
+    return portInfoList;
+}
+
+SourcePortInfoList LinuxUsbPal::queryUsbSourcePortInfos() {
     SourcePortInfoList portInfoList;
 
     const auto &interfaceInfoList = usbEnumerator_->queryUsbInterfaces();
@@ -362,26 +386,6 @@ SourcePortInfoList LinuxUsbPal::querySourcePortInfos() {
         portInfoList.push_back(portInfo);
     }
 
-#if defined(BUILD_GMSL_PAL)
-    const auto &usbInfoList1 = ObV4lGmslDevicePort::queryDevicesInfo();
-    if(usbInfoList1.size() > 0) {
-        for(const auto &info: usbInfoList1) {
-            auto portInfo      = std::make_shared<USBSourcePortInfo>(cvtUsbClassToPortType(info.cls));
-            portInfo->url      = info.url;
-            portInfo->uid      = info.uid;
-            portInfo->vid      = info.vid;
-            portInfo->pid      = info.pid;
-            portInfo->serial   = info.serial;
-            portInfo->connSpec = usbSpecToString(static_cast<UsbSpec>(info.conn_spec));
-            portInfo->infUrl   = info.infUrl;
-            portInfo->infIndex = info.infIndex;
-            portInfo->infName  = info.infName;
-            portInfo->hubId    = info.hubId;
-            portInfo->infFlag  = info.infFlag;
-            portInfoList.push_back(portInfo);
-        }
-    }
-#endif
     return portInfoList;
 }
 

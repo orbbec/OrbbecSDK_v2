@@ -67,12 +67,18 @@ std::shared_ptr<IDeviceWatcher> Platform::createUsbDeviceWatcher() const {
     return pal->second->createDeviceWatcher();
 }
 
-SourcePortInfoList Platform::queryUsbSourcePortInfos() {
+SourcePortInfoList Platform::queryUsbSourcePortInfos(bool includeGmsl) {
     auto pal = palMap_.find("usb");
     if(pal == palMap_.end()) {
         throw pal_exception("Usb pal is not exist, please check the build config that you have enabled BUILD_USB_PAL");
     }
+#if defined(OS_LINUX)
+    auto linuxUsbPal = std::dynamic_pointer_cast<LinuxUsbPal>(pal->second);
+    return includeGmsl ? linuxUsbPal->querySourcePortInfos() : linuxUsbPal->queryUsbSourcePortInfos();
+#else
+    utils::unusedVar(includeGmsl);
     return pal->second->querySourcePortInfos();
+#endif
 }
 
 std::shared_ptr<ISourcePort> Platform::getUsbSourcePort(std::shared_ptr<const SourcePortInfo> portInfo) {
@@ -149,28 +155,28 @@ std::shared_ptr<ISourcePort> Platform::getNetSourcePort(std::shared_ptr<const So
     return pal->second->getSourcePort(portInfo);
 }
 
-SourcePortInfoList Platform::queryGmslSourcePort() {
-    auto pal = palMap_.find("gmsl");
-    if(pal == palMap_.end()) {
-        throw pal_exception("Gmsl pal is not exist, please check the build config that you have enabled BUILD_GMSL_PAL");
-    }
-    return pal->second->querySourcePortInfos();
-}
+// SourcePortInfoList Platform::queryGmslSourcePort() {
+//     auto pal = palMap_.find("gmsl");
+//     if(pal == palMap_.end()) {
+//         throw pal_exception("Gmsl pal is not exist, please check the build config that you have enabled BUILD_GMSL_PAL");
+//     }
+//     return pal->second->querySourcePortInfos();
+// }
 
-std::shared_ptr<ISourcePort> Platform::getGmslSourcePort(std::shared_ptr<const SourcePortInfo> portInfo) {
-    auto pal = palMap_.find("gmsl");
-    if(pal == palMap_.end()) {
-        throw pal_exception("Gmsl pal is not exist, please check the build config that you have enabled BUILD_GMSL_PAL");
-    }
-    return pal->second->getSourcePort(portInfo);
-}
+// std::shared_ptr<ISourcePort> Platform::getGmslSourcePort(std::shared_ptr<const SourcePortInfo> portInfo) {
+//     auto pal = palMap_.find("gmsl");
+//     if(pal == palMap_.end()) {
+//         throw pal_exception("Gmsl pal is not exist, please check the build config that you have enabled BUILD_GMSL_PAL");
+//     }
+//     return pal->second->getSourcePort(portInfo);
+// }
 
-std::shared_ptr<IDeviceWatcher> Platform::createGmslDeviceWatcher() {
-    auto pal = palMap_.find("gmsl");
-    if(pal == palMap_.end()) {
-        throw pal_exception("Gmsl pal is not exist, please check the build config that you have enabled BUILD_GMSL_PAL");
-    }
-    return pal->second->createDeviceWatcher();
-}
+// std::shared_ptr<IDeviceWatcher> Platform::createGmslDeviceWatcher() {
+//     auto pal = palMap_.find("gmsl");
+//     if(pal == palMap_.end()) {
+//         throw pal_exception("Gmsl pal is not exist, please check the build config that you have enabled BUILD_GMSL_PAL");
+//     }
+//     return pal->second->createDeviceWatcher();
+// }
 
 }  // namespace libobsensor

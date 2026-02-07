@@ -25,6 +25,7 @@ public:
 public:
     std::shared_ptr<IDeviceWatcher> createDeviceWatcher() const override;
     SourcePortInfoList              querySourcePortInfos() override;
+    SourcePortInfoList              queryUsbSourcePortInfos();
 
 private:
     void loadXmlConfig();

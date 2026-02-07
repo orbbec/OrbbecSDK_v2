@@ -20,7 +20,7 @@ public:
 private:
     bool               onPlatformDeviceChanged(OBDeviceChangedType changeType, std::string devUid);
     DeviceEnumInfoList queryRemovedDevice(std::unordered_set<std::string> deviceRemovalUidSet);
-    DeviceEnumInfoList queryArrivalDevice();
+    DeviceEnumInfoList queryArrivalDevice(bool includeGmsl);
 
     void deviceArrivalHandleThreadFunc();
     void deviceRemovalHandleThreadFunc();
