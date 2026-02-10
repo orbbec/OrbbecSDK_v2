@@ -10,16 +10,18 @@
 namespace libobsensor {
 namespace protocol {
 
-bool checkStatus(HpStatus stat, bool throwException) {
+bool checkStatus(uint32_t propertyId, HpStatus stat, bool throwException) {
     std::string retMsg;
     switch(stat.statusCode) {
     case HP_STATUS_OK:
         break;
     case HP_STATUS_DEVICE_RESPONSE_WARNING:
-        LOG_WARN("Request failed, device response with warning, errorCode: {0}, msg:{1}", static_cast<int>(stat.respErrorCode), stat.msg);
+        LOG_WARN("Request failed, device response with warning, errorCode: {0}, msg:{1}, propertyId: {2}", static_cast<int>(stat.respErrorCode), stat.msg,
+                 propertyId);
         return false;
     case HP_STATUS_DEVICE_RESPONSE_ERROR:
-        retMsg = std::string("Request failed, device response with error, errorCode: ") + std::to_string(stat.respErrorCode) + ", msg: " + stat.msg;
+        retMsg = std::string("Request failed, device response with error, errorCode: ") + std::to_string(stat.respErrorCode) + ", msg: " + stat.msg
+                 + ", propertyId: " + std::to_string(propertyId);
         if(throwException) {
             throw io_exception(retMsg);
         }
@@ -29,17 +31,19 @@ bool checkStatus(HpStatus stat, bool throwException) {
         }
         break;
     case HP_STATUS_DEVICE_RESPONSE_ERROR_UNKNOWN:
+        retMsg = std::string("Request failed, device response with unknown error! propertyId: ") + std::to_string(propertyId);
         if(throwException) {
-            throw io_exception("Request failed, device response with unknown error!");
+            throw io_exception(retMsg);
         }
         else {
-            LOG_ERROR("Request failed, device response with unknown error!");
+            LOG_ERROR(retMsg);
             return false;
         }
         break;
 
     default:
-        retMsg = std::string("Request failed, statusCode: ") + std::to_string(stat.statusCode) + ", msg: " + stat.msg;
+        retMsg = std::string("Request failed, statusCode: ") + std::to_string(stat.statusCode) + ", msg: " + stat.msg
+                 + ", propertyId: " + std::to_string(propertyId);
         if(throwException) {
             throw io_exception(retMsg);
         }

@@ -281,7 +281,7 @@ HeartbeatAndStateResp         *parseHeartbeatAndStateResp(uint8_t *dataBuf, uint
 
 HpStatus execute(const std::shared_ptr<IVendorDataPort> &dataPort, uint8_t *reqData, uint16_t reqDataSize, uint8_t *respData, uint16_t *respDataSize,
                  uint16_t expectedRespLen = 0);
-bool     checkStatus(HpStatus stat, bool throwException = true);
+bool     checkStatus(uint32_t propertyId, HpStatus stat, bool throwException = true);
 
 }  // namespace protocol
 }  // namespace libobsensor

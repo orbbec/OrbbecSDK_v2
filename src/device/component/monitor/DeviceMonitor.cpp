@@ -74,7 +74,7 @@ void DeviceMonitor::heartbeatAndFetchState() {
         protocol::initHeartbeatAndStateReq(hbSendData_.data());
         uint16_t respDataSize = 1024;  // excepted size
         auto     res = protocol::execute(vendorDataPort_, hbSendData_.data(), sizeof(protocol::HeartbeatAndStateReq), hbRecvData_.data(), &respDataSize);
-        if(!protocol::checkStatus(res, false)) {
+        if(!protocol::checkStatus(0, res, false)) {
             utils::sleepMs(50);
             if(!heartbeatAndFetchStateThreadStarted_) {
                 break;
@@ -237,7 +237,7 @@ void DeviceMonitor::sendAndReceiveData(const uint8_t *sendData, uint32_t sendDat
     std::lock_guard<std::mutex> lock(commMutex_);
     auto                        recvLen = vendorDataPort_->sendAndReceive(sendData, sendDataSize, receiveData, *receiveDataSize);
     *receiveDataSize                    = recvLen;
-    
+
     // update active time
     if(activityRecorder_) {
         activityRecorder_->touch(DeviceActivity::Command);
