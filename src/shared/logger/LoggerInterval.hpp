@@ -42,9 +42,8 @@ extern std::atomic<bool>                                        logIntvlRecordMa
 extern std::map<std::string, std::shared_ptr<ObLogIntvlRecord>> logIntvlRecordMap;
 extern std::mutex                                               logIntvlRecordMapMtx;
 
-template <typename... Args>
-void log_intvl_invoke(std::shared_ptr<ObLogIntvlRecord> record, uint64_t minIntvlMsec, spdlog::source_loc src_loc, spdlog::level::level_enum level,
-                      std::string fmt, Args &&...args) {
+inline void log_intvl_invoke(std::shared_ptr<ObLogIntvlRecord> record, uint64_t minIntvlMsec, spdlog::source_loc src_loc, spdlog::level::level_enum level,
+                             std::string msg) {
     std::unique_lock<std::mutex> lock(record->mtx);
     record->cv.wait_for(lock, std::chrono::milliseconds(record->interval));
     if(record->count > 0) {
@@ -58,8 +57,9 @@ void log_intvl_invoke(std::shared_ptr<ObLogIntvlRecord> record, uint64_t minIntv
         auto us    = std::chrono::duration_cast<std::chrono::microseconds>(record->lastLogTime.time_since_epoch()).count() % 1000000;
         auto usStr = fmt::format("{:06d}", us);
 
-        fmt = fmt + " [**" + std::to_string(record->count) + " logs in " + std::to_string(duration) + "ms, last: " + timestampStr + "." + usStr.data() + "**]";
-        spdlog::default_logger_raw()->log(src_loc, level, fmt, std::forward<Args>(args)...);
+        std::string final_msg =
+            msg + " [**" + std::to_string(record->count) + " logs in " + std::to_string(duration) + "ms, last: " + timestampStr + "." + usStr + "**]";
+        spdlog::default_logger_raw()->log(src_loc, level, "{}", final_msg);
 
         uint64_t avgInterval = duration / record->count;
         if(avgInterval < record->interval) {  // Reduce log output frequency
@@ -86,6 +86,15 @@ void log_intvl(std::shared_ptr<ObLogIntvlRecord> record, uint64_t minIntvlMsec, 
         spdlog::default_logger_raw()->log(src_loc, level, fmt, std::forward<Args>(args)...);
     }
     else {
+        std::string msg;
+        try {
+            msg = fmt::vformat(fmt, fmt::make_format_args(args...));
+        }
+        catch(const std::exception &e) {
+            spdlog::default_logger_raw()->error("Log format error: {}", e.what());
+            return;
+        }
+
         std::unique_lock<std::mutex> lock(record->mtx);
         auto                         nowTime = std::chrono::system_clock::now();
         record->lastLogTime                  = nowTime;
@@ -125,8 +134,9 @@ void log_intvl(std::shared_ptr<ObLogIntvlRecord> record, uint64_t minIntvlMsec, 
             if(record->invokeThread.joinable()) {
                 record->invokeThread.join();
             }
-            auto func            = std::bind(std::move(log_intvl_invoke<Args &...>), record, minIntvlMsec, src_loc, level, fmt, std::forward<Args>(args)...);
-            record->invokeThread = std::thread(func);
+
+            record->invokeThread =
+                std::thread([record, minIntvlMsec, src_loc, level, msg]() mutable { log_intvl_invoke(record, minIntvlMsec, src_loc, level, msg); });
         }
     }
 }
