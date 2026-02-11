@@ -7,6 +7,7 @@
 #include "common/DeviceSeriesInfo.hpp"
 #include "SourcePortInfo.hpp"
 #include "GVCPTypes.hpp"
+#include "GVCPRuntimeConfig.hpp"
 #include <vector>
 #include <string>
 #include <mutex>
@@ -99,6 +100,8 @@ private:
     int32_t     lastError_  = 0;
     uint32_t    timeoutMs_  = 200;
     uint8_t     retryCount_ = 3;
+
+    std::shared_ptr<GVCPRuntimeConfig> runtimeConfig_;
 };
 
 }  // namespace libobsensor

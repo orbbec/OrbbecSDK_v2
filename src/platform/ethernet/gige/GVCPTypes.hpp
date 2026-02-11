@@ -10,7 +10,8 @@ namespace libobsensor {
 #define GVCP_KEY_CODE (0x42)  // GVCP Hard-coded key code value used for message validation
 #define GVCP_DISCOVERY_FLAGS (0x11)
 #define GVCP_FORCEIP_FLAGS (0x11)
-#define GVCP_PORT (3956)  // GVCP protocol port number
+#define GVCP_PORT (3956)          // GVCP protocol port number
+#define GVCP_CUSTOM_PORT (49152)  // Custom GVCP protocol port number
 #define GVCP_REQUEST_ID (0x0001)
 #define GVCP_MAX_PACK_SIZE (548)  // Total 576 = 20(IP header without options) + 8(UDP header) + 8(GVCP header) + 540(Max. GVCP payload)
 

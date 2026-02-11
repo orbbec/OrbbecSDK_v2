@@ -43,6 +43,8 @@ public:
     virtual std::shared_ptr<IDevice> createDevice(const std::shared_ptr<const IDeviceEnumInfo> &info, OBDeviceAccessMode accessMode) = 0;
     virtual std::shared_ptr<IDevice> createNetDevice(std::string address, uint16_t port, OBDeviceAccessMode accessMode)              = 0;
     virtual bool                     forceIpConfig(std::string deviceUid, const OBNetIpConfig &config)                               = 0;
+    virtual void                     setGvcpPortscheme(OBGvcpPortScheme scheme)                                                      = 0;
+    virtual OBGvcpPortScheme         getGvcpPortscheme() const                                                                       = 0;
 
     virtual DeviceEnumInfoList getDeviceInfoList()                                           = 0;
     virtual OBCallbackId       registerDeviceChangedCallback(DeviceChangedCallback callback) = 0;

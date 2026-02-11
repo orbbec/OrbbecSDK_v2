@@ -10,6 +10,7 @@
 #include "RTSPStreamPort.hpp"
 #include "NetDataStreamPort.hpp"
 #include "gige/GVCPClient.hpp"
+#include "gige/GVCPRuntimeConfig.hpp"
 #include "mDNS/MDNSDiscovery.hpp"
 
 #include <vector>
@@ -32,14 +33,18 @@ public:
     SourcePortInfoList              querySourcePortInfos() override;
     std::shared_ptr<IDeviceWatcher> createDeviceWatcher() const override;
 
+    void             setGvcpPortscheme(OBGvcpPortScheme scheme);
+    OBGvcpPortScheme getGvcpPortscheme() const;
+
     static bool forceIpConfig(std::string macAddress, const OBNetIpConfig &config);
 
 private:
+    void queryGvcpDevice(bool singleShot);
     void updateSourcePortInfoList(const std::vector<GVCPDeviceInfo> &added, const std::vector<GVCPDeviceInfo> &removed);
     void updateMDNSDeviceSourceInfo(const std::vector<MDNSDeviceInfo> &added, const std::vector<MDNSDeviceInfo> &removed);
 
 private:
-    std::mutex         sourcePortInfoMetux_;
+    std::mutex         sourcePortInfoMutex_;
     SourcePortInfoList sourcePortInfoList_;
 
     std::mutex                                                                  sourcePortMapMutex_;
@@ -50,7 +55,10 @@ private:
     std::thread                 deviceWatchThread_;
     std::atomic<bool>           stopWatch_{ false };
     std::vector<GVCPDeviceInfo> netDevInfoList_;
+    std::mutex                  gvcpMutex_;
     std::condition_variable     condVar_;
+
+    std::shared_ptr<GVCPRuntimeConfig> gvcpRuntimeConfig_;
 
     // mDNS
     std::vector<MDNSDeviceInfo>    mdnsDevInfoList_;

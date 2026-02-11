@@ -13,6 +13,10 @@
 #endif
 #endif
 
+#if defined(BUILD_NET_PAL)
+#include "ethernet/EthernetPal.hpp"
+#endif
+
 namespace libobsensor {
 
 std::mutex              Platform::instanceMutex_;
@@ -178,5 +182,33 @@ std::shared_ptr<ISourcePort> Platform::getNetSourcePort(std::shared_ptr<const So
 //     }
 //     return pal->second->createDeviceWatcher();
 // }
+
+void Platform::setGvcpPortscheme(OBGvcpPortScheme scheme) {
+#if defined(BUILD_NET_PAL)
+    auto pal = palMap_.find("net");
+    if(pal == palMap_.end()) {
+        throw pal_exception("Net pal is not exist, please check the build config that you have enabled BUILD_NET_PAL");
+    }
+
+    auto ethernetPal = std::dynamic_pointer_cast<EthernetPal>(pal->second);
+    ethernetPal->setGvcpPortscheme(scheme);
+#else
+    utils::unusedVar(protocol);
+#endif
+}
+
+OBGvcpPortScheme Platform::getGvcpPortscheme() const {
+#if defined(BUILD_NET_PAL)
+    auto pal = palMap_.find("net");
+    if(pal == palMap_.end()) {
+        throw pal_exception("Net pal is not exist, please check the build config that you have enabled BUILD_NET_PAL");
+    }
+
+    auto ethernetPal = std::dynamic_pointer_cast<EthernetPal>(pal->second);
+    return ethernetPal->getGvcpPortscheme();
+#else
+    utils::unusedVar(protocol);
+#endif
+}
 
 }  // namespace libobsensor

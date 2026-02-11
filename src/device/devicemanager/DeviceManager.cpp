@@ -205,6 +205,36 @@ bool DeviceManager::forceIpConfig(std::string deviceUid, const OBNetIpConfig &co
 #endif
 }
 
+void DeviceManager::setGvcpPortscheme(OBGvcpPortScheme scheme) {
+#if defined(BUILD_NET_PAL)
+    std::shared_ptr<NetDeviceEnumerator> netEnumerator;
+    for(auto &enumerator: deviceEnumerators_) {
+        netEnumerator = std::dynamic_pointer_cast<NetDeviceEnumerator>(enumerator);
+        if(netEnumerator) {
+            netEnumerator->setGvcpPortscheme(scheme);
+            return;
+        }
+    }
+    throw libobsensor::wrong_api_call_sequence_exception("Network device enumeration is disabled, please enable it first");
+#else
+    utils::unusedVar(scheme);
+#endif
+}
+
+OBGvcpPortScheme DeviceManager::getGvcpPortscheme() const {
+#if defined(BUILD_NET_PAL)
+    std::shared_ptr<NetDeviceEnumerator> netEnumerator;
+    for(auto &enumerator: deviceEnumerators_) {
+        netEnumerator = std::dynamic_pointer_cast<NetDeviceEnumerator>(enumerator);
+        if(netEnumerator) {
+            return netEnumerator->getGvcpPortscheme();
+        }
+    }
+    LOG_DEBUG("Network device enumeration is disabled now, return the default scheme");
+    return OB_GVCP_PORT_SCHEME_STANDARD;
+#endif
+}
+
 DeviceEnumInfoList DeviceManager::getDeviceInfoList() {
     DeviceEnumInfoList deviceInfoList;
     for(auto &enumerator_: deviceEnumerators_) {

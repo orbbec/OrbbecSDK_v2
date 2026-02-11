@@ -7,6 +7,7 @@
 #include "IDeviceWatcher.hpp"
 #include "Platform.hpp"
 #include "DeviceActivityManager.hpp"
+#include <atomic>
 
 namespace libobsensor {
 class NetDeviceEnumerator : public IDeviceEnumerator {
@@ -17,6 +18,9 @@ public:
     virtual void               setDeviceChangedCallback(DeviceChangedCallback callback) override;
 
     static std::shared_ptr<const IDeviceEnumInfo> queryNetDevice(std::string address, uint16_t port);
+
+    void             setGvcpPortscheme(OBGvcpPortScheme scheme);
+    OBGvcpPortScheme getGvcpPortscheme() const;
 
 private:
     static DeviceEnumInfoList deviceInfoMatch(const SourcePortInfoList infoList);
@@ -38,6 +42,7 @@ private:
 
     std::recursive_mutex deviceInfoListMutex_;
     DeviceEnumInfoList   deviceInfoList_;
+    std::atomic<bool>    isGvcpPortChanging_{ false };
 
     std::shared_ptr<IDeviceWatcher>        deviceWatcher_;
     std::shared_ptr<DeviceActivityManager> deviceActivityManager_;

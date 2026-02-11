@@ -5,7 +5,8 @@
 #include "libobsensor/h/ObTypes.h"
 #include "ethernet/socket/SocketTypes.hpp"
 #include "common/DeviceSeriesInfo.hpp"
-#include "GVCPTransmit.hpp"
+#include "GVCPTypes.hpp"
+#include "GVCPRuntimeConfig.hpp"
 #include <vector>
 #include <string>
 #include <mutex>
@@ -73,7 +74,7 @@ private:
      * @return < 0: error
      *         other: device count
      */
-    int  recvAndParseGVCPResponse(SOCKET sock, const GVCPSocketInfo &socketInfo);
+    int  recvAndParseGVCPResponse(SOCKET sock, const GVCPSocketInfo &socketInfo, uint16_t dstPort);
     void sendGVCPDiscovery(GVCPSocketInfo socketInfo);
     bool sendGVCPForceIP(GVCPSocketInfo socketInfo, std::string mac, const OBNetIpConfig &config);
 
@@ -93,6 +94,8 @@ private:
     std::vector<GVCPDeviceInfo> devInfoList_;
     std::mutex                  queryMtx_;
     std::mutex                  devInfoListMtx_;
+
+    std::shared_ptr<GVCPRuntimeConfig> runtimeConfig_;
 
 #ifndef WIN32
     std::set<std::string> ipAddressStrSet_;

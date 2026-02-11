@@ -19,6 +19,8 @@ namespace utils {
 
 uint64_t getNowTimesMs();
 uint64_t getNowTimesUs();
+uint64_t getSteadyTimeMs();
+uint64_t getSteadyTimeUs();
 void     sleepMs(uint64_t msec);
 
 /**

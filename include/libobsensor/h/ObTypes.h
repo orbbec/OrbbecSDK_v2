@@ -125,6 +125,15 @@ typedef struct ob_error {
 } ob_error;
 
 /**
+ * @brief GVCP port scheme
+ */
+typedef enum {
+    OB_GVCP_PORT_SCHEME_STANDARD = 0, /**< Standard GVCP port (3956) */
+    OB_GVCP_PORT_SCHEME_B        = 1, /**< Vendor-defined GVCP port scheme */
+} OBGvcpPortScheme,
+    ob_gvcp_port_scheme;
+
+/**
  * @brief Enumeration value describing the sensor type
  */
 typedef enum {

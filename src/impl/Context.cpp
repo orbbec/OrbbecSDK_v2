@@ -76,6 +76,20 @@ bool ob_force_ip_config(const char *macAddress, ob_net_ip_config config, ob_erro
 }
 HANDLE_EXCEPTIONS_AND_RETURN(false, macAddress)
 
+void ob_set_gvcp_port_scheme(ob_context *context, ob_gvcp_port_scheme scheme, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(context);
+    auto deviceMgr = context->context->getDeviceManager();
+    deviceMgr->setGvcpPortscheme(scheme);
+}
+HANDLE_EXCEPTIONS_NO_RETURN(context, scheme)
+
+ob_gvcp_port_scheme ob_get_gvcp_port_scheme(ob_context *context, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(context);
+    auto deviceMgr = context->context->getDeviceManager();
+    return deviceMgr->getGvcpPortscheme();
+}
+HANDLE_EXCEPTIONS_AND_RETURN(OB_GVCP_PORT_SCHEME_STANDARD, context)
+
 ob_device *ob_create_net_device(ob_context *context, const char *address, uint16_t port, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(context);
     auto deviceMgr  = context->context->getDeviceManager();

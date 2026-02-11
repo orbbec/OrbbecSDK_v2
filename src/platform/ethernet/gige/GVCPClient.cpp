@@ -48,6 +48,8 @@ extern "C" {
 namespace libobsensor {
 
 GVCPClient::GVCPClient() {
+    runtimeConfig_ = GVCPRuntimeConfig::getInstance();
+
 #if (defined(WIN32) || defined(_WIN32) || defined(WINCE))
     WSADATA wsaData;
     if(WSAStartup(MAKEWORD(2, 2), &wsaData)) {
@@ -460,7 +462,7 @@ SOCKET GVCPClient::openClientSocket(SOCKADDR_IN addr) {
     return sock;
 }
 
-int GVCPClient::recvAndParseGVCPResponse(SOCKET sock, const GVCPSocketInfo &socketInfo) {
+int GVCPClient::recvAndParseGVCPResponse(SOCKET sock, const GVCPSocketInfo &socketInfo, uint16_t dstPort) {
     char recvBuf[1024] = { 0 };
 
     // Receive data
@@ -471,6 +473,12 @@ int GVCPClient::recvAndParseGVCPResponse(SOCKET sock, const GVCPSocketInfo &sock
     if(err == SOCKET_ERROR || err < 0) {
         LOG_INTVL(LOG_INTVL_OBJECT_TAG + "GVCP recvfrom", DEF_MIN_LOG_INTVL, spdlog::level::err, "recvfrom failed with error: {}", GET_LAST_ERROR());
         return err;
+    }
+
+    if(dstPort != ntohs(srcAddr.sin_port)) {
+        LOG_INTVL(LOG_INTVL_OBJECT_TAG + "GVCP parse response port", MAX_LOG_INTERVAL, spdlog::level::debug,
+                  "GVCP response port mismatch: expected dst_port={}, received src_port={}", dstPort, ntohs(srcAddr.sin_port));
+        return 0;
     }
 
     uint32_t respLen = static_cast<uint32_t>(err);
@@ -570,11 +578,12 @@ int GVCPClient::recvAndParseGVCPResponse(SOCKET sock, const GVCPSocketInfo &sock
 void GVCPClient::sendGVCPDiscovery(GVCPSocketInfo socketInfo) {
     // LOG_TRACE("send gvcp discovery {}", socketInfo.sock);
     gvcp_discover_cmd discoverCmd;
+    auto              gvcpPort = runtimeConfig_->getGvcpPort();
 
     SOCKADDR_IN destAddr;
     destAddr.sin_family      = AF_INET;
     destAddr.sin_addr.s_addr = INADDR_BROADCAST;  // Broadcast address
-    destAddr.sin_port        = htons(GVCP_PORT);
+    destAddr.sin_port        = htons(gvcpPort);
 
     // device discovery
     gvcp_cmd_header cmdHeader;
@@ -624,7 +633,7 @@ void GVCPClient::sendGVCPDiscovery(GVCPSocketInfo socketInfo) {
         res = select(nfds, &readfs, 0, 0, &timeout);
         if(res > 0) {
             if(FD_ISSET(socketInfo.sock, &readfs)) {
-                err = recvAndParseGVCPResponse(socketInfo.sock, socketInfo);
+                err = recvAndParseGVCPResponse(socketInfo.sock, socketInfo, gvcpPort);
                 if(err == SOCKET_ERROR) {
                     if(failedCount-- < 0) {
                         LOG_WARN("GVCP recvfrom failed!!!");
@@ -633,7 +642,7 @@ void GVCPClient::sendGVCPDiscovery(GVCPSocketInfo socketInfo) {
                 }
             }
             if(socketInfo.sockRecv > 0 && FD_ISSET(socketInfo.sockRecv, &readfs)) {
-                err = recvAndParseGVCPResponse(socketInfo.sockRecv, socketInfo);
+                err = recvAndParseGVCPResponse(socketInfo.sockRecv, socketInfo, gvcpPort);
                 if(err == SOCKET_ERROR) {
                     if(failedCount-- < 0) {
                         LOG_WARN("GVCP recvfrom failed!!!");
@@ -654,7 +663,7 @@ bool GVCPClient::sendGVCPForceIP(GVCPSocketInfo socketInfo, std::string mac, con
     SOCKADDR_IN destAddr;
     destAddr.sin_family      = AF_INET;
     destAddr.sin_addr.s_addr = INADDR_BROADCAST;  // Broadcast address
-    destAddr.sin_port        = htons(GVCP_PORT);
+    destAddr.sin_port        = htons(runtimeConfig_->getGvcpPort());
 
     gvcp_cmd_header cmdHeader = {};
     cmdHeader.cMsgKeyCode     = GVCP_KEY_CODE;

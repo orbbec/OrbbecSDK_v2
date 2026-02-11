@@ -35,6 +35,7 @@
 #include "logger/LoggerHelper.hpp"
 #include "utils/StringUtils.hpp"
 #include "utils/Utils.hpp"
+#include "GVCPRuntimeConfig.hpp"
 
 #if defined(__ANDROID__) && (__ANDROID_API__ < 24)
 #ifdef __cplusplus
@@ -56,6 +57,8 @@ namespace libobsensor {
 
 GVCPTransmit::GVCPTransmit(std::shared_ptr<const NetSourcePortInfo> portInfo, uint32_t timeoutMs, uint8_t retryCount)
     : timeoutMs_(timeoutMs), retryCount_(retryCount) {
+    runtimeConfig_ = GVCPRuntimeConfig::getInstance();
+
     init(portInfo, timeoutMs);
 }
 
@@ -158,7 +161,7 @@ std::vector<char> GVCPTransmit::transmit(const void *data, int dataLength) {
     SOCKADDR_IN destAddr;
     destAddr.sin_family      = AF_INET;
     destAddr.sin_addr.s_addr = inet_addr(ipAddress_.c_str());
-    destAddr.sin_port        = htons(GVCP_PORT);
+    destAddr.sin_port        = htons(runtimeConfig_->getGvcpPort());
 
     // Clear socket buffer to prevent processing stale ACKs
     clearSocketReceiveBuffer();

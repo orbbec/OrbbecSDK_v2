@@ -47,6 +47,9 @@ public:
     // std::shared_ptr<ISourcePort>    getGmslSourcePort(std::shared_ptr<const SourcePortInfo> portInfo);
     // std::shared_ptr<IDeviceWatcher> createGmslDeviceWatcher();
 
+    void             setGvcpPortscheme(OBGvcpPortScheme scheme);
+    OBGvcpPortScheme getGvcpPortscheme() const;
+
 private:
     std::map<std::string, std::shared_ptr<IPal>> palMap_;
 };
