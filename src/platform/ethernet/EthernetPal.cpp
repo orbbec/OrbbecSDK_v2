@@ -9,6 +9,7 @@
 #include "RTPStreamPort.hpp"
 #include "logger/Logger.hpp"
 #include "gige/GVCPRuntimeConfig.hpp"
+#include <future>
 
 namespace libobsensor {
 
@@ -257,25 +258,42 @@ void EthernetPal::updateSourcePortInfoList(const std::vector<GVCPDeviceInfo> &ad
     }
 }
 
-SourcePortInfoList EthernetPal::querySourcePortInfos() {
-    if(!deviceWatchThread_.joinable()) {
-        // watcher thread is not runnig
-        auto list       = GVCPClient::instance().queryNetDeviceList();
+void EthernetPal::ensureDiscoveryIfNeeded() {
+    // 1. Start GVCP query asynchronously if the watcher thread is not running
+    std::future<std::vector<GVCPDeviceInfo>> gvcpFuture;
+    bool                                     shouldQueryGVCP = !deviceWatchThread_.joinable();
+    if(shouldQueryGVCP) {
+        gvcpFuture = std::async(std::launch::async, []() { return GVCPClient::instance().queryNetDeviceList(); });
+    }
+
+    // 2. Start mDNS query asynchronously if the watcher thread is not running
+    std::future<std::vector<MDNSDeviceInfo>> mdnsFuture;
+    bool                                     shouldQueryMDNS = !mdnsWatchThread_.joinable();
+    if(shouldQueryMDNS) {
+        mdnsFuture = std::async(std::launch::async, [this]() { return mdnsDiscovery_->queryDeviceList(); });
+    }
+
+    // 3. Collect GVCP results and update
+    if(shouldQueryGVCP) {
+        auto list       = gvcpFuture.get();  // Waits for GVCP task to complete
         auto added      = utils::subtract_sets(list, netDevInfoList_);
         auto removed    = utils::subtract_sets(netDevInfoList_, list);
         netDevInfoList_ = list;
         updateSourcePortInfoList(added, removed);
     }
 
-    if(!mdnsWatchThread_.joinable()) {
-        // mDNS watcher thread is not runnig
-        auto list        = mdnsDiscovery_->queryDeviceList();
+    // 4. Collect mDNS results and update
+    if(shouldQueryMDNS) {
+        auto list        = mdnsFuture.get();  // Waits for mDNS task to complete
         auto added       = utils::subtract_sets(list, mdnsDevInfoList_);
         auto removed     = utils::subtract_sets(mdnsDevInfoList_, list);
         mdnsDevInfoList_ = list;
-
         updateMDNSDeviceSourceInfo(added, removed);
     }
+}
+
+SourcePortInfoList EthernetPal::querySourcePortInfos() {
+    ensureDiscoveryIfNeeded();
 
     std::lock_guard<std::mutex> lock(sourcePortInfoMutex_);
     return sourcePortInfoList_;

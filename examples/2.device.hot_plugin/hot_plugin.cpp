@@ -8,8 +8,22 @@
 #include <iomanip>
 #include <iostream>
 
+struct StreamStateGuard {
+    std::ios          &ios;
+    std::ios::fmtflags flags;
+    char               fill;
+
+    explicit StreamStateGuard(std::ios &s) : ios(s), flags(s.flags()), fill(s.fill()) {}
+
+    ~StreamStateGuard() {
+        ios.flags(flags);
+        ios.fill(fill);
+    }
+};
+
 void printDeviceList(const std::string &prompt, std::shared_ptr<ob::DeviceList> deviceList) {
-    auto count = deviceList->getCount();
+    StreamStateGuard guard(std::cout);
+    auto             count = deviceList->getCount();
     if(count == 0) {
         return;
     }
@@ -36,24 +50,97 @@ void rebootDevices(std::shared_ptr<ob::DeviceList> deviceList) {
     }
 }
 
+class Timer {
+public:
+    Timer() {
+        reset();
+    }
+
+    /**
+     * @brief Reset the timer to now
+     */
+    void reset() {
+        start_ = last_ = std::chrono::steady_clock::now();
+    }
+
+    /**
+     * @brief Returns milliseconds elapsed since last call and resets timer
+     */
+    uint64_t touchMs(bool sinceLastTouch = true) {
+        auto now  = std::chrono::steady_clock::now();
+        auto diff = std::chrono::milliseconds::zero();
+        if(sinceLastTouch) {
+            diff  = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_);
+            last_ = now;
+        }
+        else {
+            diff = std::chrono::duration_cast<std::chrono::milliseconds>(now - start_);
+        }
+        return static_cast<uint64_t>(diff.count());
+    }
+
+    /**
+     * @brief Returns microseconds elapsed since last call and resets timer
+     */
+    uint64_t touchUs(bool sinceLastTouch = true) {
+        auto now  = std::chrono::steady_clock::now();
+        auto diff = std::chrono::microseconds::zero();
+        if(sinceLastTouch) {
+            diff  = std::chrono::duration_cast<std::chrono::microseconds>(now - last_);
+            last_ = now;
+        }
+        else {
+            diff = std::chrono::duration_cast<std::chrono::microseconds>(now - start_);
+        }
+        return static_cast<uint64_t>(diff.count());
+    }
+
+private:
+    std::chrono::steady_clock::time_point last_;
+    std::chrono::steady_clock::time_point start_;
+};
+
 int main(void) try {
     // create context
+    Timer       timer;
     ob::Context ctx;
+    std::cout << "create context: " << timer.touchMs() << std::endl;
 
     // register device callback
+    timer.reset();
     auto id = ctx.registerDeviceChangedCallback([](std::shared_ptr<ob::DeviceList> removedList, std::shared_ptr<ob::DeviceList> deviceList) {
         printDeviceList("added", deviceList);
         printDeviceList("removed", removedList);
     });
+    std::cout << "registerDeviceChangedCallback: " << timer.touchMs() << std::endl;
+
+    timer.reset();
+    ctx.setGvcpPortScheme(OB_GVCP_PORT_SCHEME_B);
+    std::cout << "setGvcpPortScheme: " << timer.touchMs() << std::endl;
+    // std::this_thread::sleep_for(std::chrono::milliseconds(1100));
 
     // query current device list
+    timer.reset();
     auto currentList = ctx.queryDeviceList();
+    std::cout << "queryDeviceList: " << timer.touchMs() << std::endl;
+    printDeviceList("connected", currentList);
+
+    timer.reset();
+    ctx.setGvcpPortScheme(OB_GVCP_PORT_SCHEME_STANDARD);
+    std::cout << "setGvcpPortScheme: " << timer.touchMs() << std::endl;
+    // std::this_thread::sleep_for(std::chrono::milliseconds(1100));
+
+    // query current device list
+    timer.reset();
+    currentList = ctx.queryDeviceList();
+    std::cout << "queryDeviceList: " << timer.touchMs() << std::endl;
     printDeviceList("connected", currentList);
 
     std::cout << "Press 'r' to reboot the connected devices to trigger the device disconnect and reconnect event, or manually unplug and plugin the device."
               << std::endl;
     std::cout << "Press 'Esc' to exit." << std::endl << std::endl;
 
+    auto scheme = ctx.getGvcpPortScheme();
     // main loop, wait for key press
     while(true) {
         auto key = ob_smpl::waitForKeyPressed(100);
@@ -67,6 +154,23 @@ int main(void) try {
 
             std::cout << "Rebooting devices..." << std::endl;
             rebootDevices(currentList);
+        }
+        else if(key == 's' || key == 'S') {
+            currentList    = ctx.queryDeviceList();
+            auto lastCount = currentList->getCount();
+            scheme         = scheme == OB_GVCP_PORT_SCHEME_B ? OB_GVCP_PORT_SCHEME_STANDARD : OB_GVCP_PORT_SCHEME_B;
+            timer.reset();
+            ctx.setGvcpPortScheme(scheme);
+            std::cout << "setGvcpPortScheme to " << scheme << " with time: " << timer.touchMs() << std::endl;
+            // update device list
+            timer.reset();
+            currentList = ctx.queryDeviceList();
+            while(lastCount == currentList->getCount()) {
+                currentList = ctx.queryDeviceList();
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                continue;
+            }
+            std::cout << "continue..." << std::endl;
         }
     }
 

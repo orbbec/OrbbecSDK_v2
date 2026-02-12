@@ -42,6 +42,7 @@ private:
     void queryGvcpDevice(bool singleShot);
     void updateSourcePortInfoList(const std::vector<GVCPDeviceInfo> &added, const std::vector<GVCPDeviceInfo> &removed);
     void updateMDNSDeviceSourceInfo(const std::vector<MDNSDeviceInfo> &added, const std::vector<MDNSDeviceInfo> &removed);
+    void ensureDiscoveryIfNeeded();
 
 private:
     std::mutex         sourcePortInfoMutex_;
