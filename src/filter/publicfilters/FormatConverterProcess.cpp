@@ -26,14 +26,14 @@ FormatConverter::~FormatConverter() noexcept {
 
 void FormatConverter::updateConfig(std::vector<std::string> &params) {
     if(params.size() != 1) {
-        throw invalid_value_exception("FormatConverter config error: params size not match");
+        THROW_INVALID_PARAM_EXCEPTION("FormatConverter config error: params size not match");
     }
     try {
         int convertType = std::stoi(params[0]);
         convertType_    = (OBConvertFormat)convertType;
     }
     catch(const std::exception &e) {
-        throw invalid_value_exception("FormatConverter config error: " + std::string(e.what()));
+        THROW_INVALID_PARAM_EXCEPTION("FormatConverter config error: " + std::string(e.what()));
     }
 }
 
@@ -76,7 +76,7 @@ void FormatConverter::setConversion(OBFormat srcFormat, OBFormat dstFormat) {
             return;
         }
     }
-    throw invalid_value_exception("FormatConverter config error: invalid format conversion");
+    THROW_INVALID_PARAM_EXCEPTION("FormatConverter config error: invalid format conversion");
 }
 
 std::shared_ptr<Frame> FormatConverter::process(std::shared_ptr<const Frame> frame) {
@@ -465,8 +465,7 @@ void FormatConverter::allocateTempDataBufIfNeeded(const size_t preferSize) {
         tempDataBuf_ = static_cast<uint8_t *>(mmap(nullptr, preferSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0));
         if(tempDataBuf_ == MAP_FAILED) {
             tempDataBuf_ = nullptr;
-            LOG_ERROR("mmap failed! size: ", preferSize, ", errno: ", errno, ", msg: ", strerror(errno));
-            throw std::bad_alloc();
+            THROW_MEMORY_EXCEPTION(utils::string::to_string() << "mmap failed! size: " << preferSize << ", errno: " << errno << ", msg: " << strerror(errno));
         }
 #else
         tempDataBuf_ = new uint8_t[preferSize];

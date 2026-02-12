@@ -414,8 +414,8 @@ void G330AlgParamManager::fixD2CParmaList() {
             OBCameraIntrinsic depthIntrinsic = iter->depthIntrinsic;
             depthIntrinsic.fx                = depthIntrinsic.fx / 3;
             depthIntrinsic.fy                = depthIntrinsic.fy / 3;
-            depthIntrinsic.cx                = (depthIntrinsic.cx - 4-2) / 3;
-            depthIntrinsic.cy                = (depthIntrinsic.cy - 1-2) / 3;
+            depthIntrinsic.cx                = (depthIntrinsic.cx - 4 - 2) / 3;
+            depthIntrinsic.cy                = (depthIntrinsic.cy - 1 - 2) / 3;
             depthIntrinsic.width             = 424;
             depthIntrinsic.height            = 266;
             auto index                       = calibrationCameraParamList_.size();
@@ -451,7 +451,7 @@ void G330AlgParamManager::bindIntrinsic(std::vector<std::shared_ptr<const Stream
             OBCameraParam      param{};
             auto               vsp = sp->as<VideoStreamProfile>();
             if(!findBestMatchedCameraParam(calibrationCameraParamList_, vsp, param)) {
-                // throw libobsensor::unsupported_operation_exception("Can not find matched camera param!");
+                // THROW_UNSUPPORTED_OPERATION_EXCEPTION("Can not find matched camera param!");
                 continue;
             }
             switch(sp->getType()) {

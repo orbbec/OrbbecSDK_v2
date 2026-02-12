@@ -144,7 +144,7 @@ void LiDARStreamer::startStream(std::shared_ptr<const StreamProfile> profile, Mu
     {
         std::lock_guard<std::mutex> lock(mutex_);
         if(running_) {
-            throw unsupported_operation_exception(utils::string::to_string() << "The LiDAR stream has already been started.");
+            THROW_UNSUPPORTED_OPERATION_EXCEPTION(utils::string::to_string() << "The LiDAR stream has already been started.");
             return;
         }
         // check stream profile and convert to scan profile
@@ -248,18 +248,18 @@ void LiDARStreamer::trySendStartStreamVendorCmd() {
     case OB_FORMAT_LIDAR_SPHERE_POINT:
         // support by multi-lines LiDAR
         if(isCalibrationMode) {
-            throw invalid_value_exception("Invalid LiDAR format");
+            THROW_INVALID_DATA_EXCEPTION("Invalid LiDAR format");
         }
         break;
     case OB_FORMAT_LIDAR_CALIBRATION:
         // support by multi-lines LiDAR
         if(!isCalibrationMode) {
-            throw invalid_value_exception("Invalid LiDAR format");
+            THROW_INVALID_DATA_EXCEPTION("Invalid LiDAR format");
         }
         break;
     case OB_FORMAT_LIDAR_SCAN:  // support by single-line LiDAR
     default:
-        throw invalid_value_exception("Invalid LiDAR format");
+        THROW_INVALID_DATA_EXCEPTION("Invalid LiDAR format");
         break;
     }
 
@@ -470,7 +470,7 @@ std::shared_ptr<IFilter> LiDARStreamer::getFormatConverter() {
         }
     }
 
-    throw invalid_value_exception("Not found the LiDARFormatConverter");
+    THROW_ITEM_NOT_FOUND_EXCEPTION("Not found the LiDARFormatConverter");
 }
 
 std::shared_ptr<IFilter> LiDARStreamer::getPointFilter() {
@@ -480,7 +480,7 @@ std::shared_ptr<IFilter> LiDARStreamer::getPointFilter() {
         }
     }
 
-    throw invalid_value_exception("Not found the LiDARPointFilter");
+    THROW_ITEM_NOT_FOUND_EXCEPTION("Not found the LiDARPointFilter");
 }
 
 uint8_t LiDARStreamer::calculateReflectivity(const float &distance, const uint16_t &pulseWidthIn, const uint16_t &targetFlag) {

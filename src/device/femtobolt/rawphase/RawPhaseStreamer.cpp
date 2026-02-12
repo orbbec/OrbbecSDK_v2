@@ -13,7 +13,7 @@
 #ifdef OB_BOLT_OPENGL_COMPAT
 #ifdef __linux__
 #include <GL/glx.h>
-#elif(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+#elif (defined(WIN32) || defined(_WIN32) || defined(WINCE))
 #include <GL/gl.h>
 #include <GL/wglext.h>
 #define glXGetCurrentContext wglGetCurrentContext
@@ -64,7 +64,7 @@ RawPhaseStreamer::RawPhaseStreamer(IDevice *owner, const std::shared_ptr<IVideoS
     : owner_(owner), backend_(backend), running_(false), depthEngineLoader_(std::make_shared<DepthEngineLoadFactory>()) {
     auto global = depthEngineLoader_->getGlobalContext();
     if(global == nullptr || global->loaded == false) {
-        throw io_exception("Failed to load depth engine");
+        THROW_IO_EXCEPTION("Failed to load depth engine");
     }
     backendProfileMap_.insert({ { 320, 288 }, { 7680, 434 } });
     backendProfileMap_.insert({ { 640, 576 }, { 7680, 434 } });
@@ -141,7 +141,7 @@ void RawPhaseStreamer::startStream(std::shared_ptr<const StreamProfile> sp, Muta
             auto cbVsp = cb.first->as<VideoStreamProfile>();
             auto spVsp = sp->as<VideoStreamProfile>();
             if(cbVsp->getWidth() != spVsp->getWidth() || cbVsp->getHeight() != spVsp->getHeight() || cbVsp->getFps() != spVsp->getFps()) {
-                throw invalid_value_exception("Start stream failed, the stream profile is different from the previous stream profile");
+                THROW_INVALID_PARAM_EXCEPTION("Start stream failed, the stream profile is different from the previous stream profile");
             }
         }
         callbacks_[sp] = callback;
@@ -160,7 +160,7 @@ void RawPhaseStreamer::startStream(std::shared_ptr<const StreamProfile> sp, Muta
                      [resolution](const std::pair<std::pair<uint32_t, uint32_t>, std::pair<uint32_t, uint32_t>> &pair) { return pair.first == resolution; });
 
     if(iter == backendProfileMap_.end()) {
-        throw invalid_value_exception("Start stream failed, stream profile not found");
+        THROW_ITEM_NOT_FOUND_EXCEPTION("Start stream failed, stream profile not found");
     }
     auto &pair   = iter->second;
     auto  realSp = StreamProfileFactory::createVideoStreamProfile(profile->getType(), profile->getFormat(), pair.first, pair.second, profile->getFps());
@@ -187,7 +187,7 @@ void RawPhaseStreamer::stopStream(std::shared_ptr<const StreamProfile> sp) {
         std::lock_guard<std::mutex> lock(cbMtx_);
         auto                        iter = callbacks_.find(sp);
         if(iter == callbacks_.end()) {
-            throw invalid_value_exception("Stop stream failed, stream profile not found");
+            THROW_INVALID_PARAM_EXCEPTION("Stop stream failed, stream profile not found");
         }
 
         callbacks_.erase(iter);
@@ -430,7 +430,7 @@ void RawPhaseStreamer::startDepthEngineThread(std::shared_ptr<const StreamProfil
     std::unique_lock<std::mutex> depthEngineLock(depthEngineMutex_);
     depthEngineCV_.wait_for(depthEngineLock, std::chrono::seconds(5), [&]() { return depthEngineReady_; });
     if(!depthEngineReady_) {
-        throw io_exception("Depth engine thread start failed, timeout!");
+        THROW_IO_EXCEPTION("Depth engine thread start failed, timeout!");
     }
 
 #ifdef OB_BOLT_OPENGL_COMPAT
@@ -460,7 +460,7 @@ void RawPhaseStreamer::initDepthEngine(std::shared_ptr<const StreamProfile> prof
                                                                                                deInputType, nullptr, nullptr, nullptr);
 
     if(K4A_DEPTH_ENGINE_RESULT_SUCCEEDED != retCode) {
-        throw io_exception(utils::string::to_string() << "Depth engine create and initialize failed,retCode" << retCode);
+        THROW_IO_EXCEPTION(utils::string::to_string() << "Depth engine create and initialize failed,retCode" << retCode);
     }
 
     LOG_DEBUG("Depth engine init succeed!");
@@ -477,7 +477,7 @@ void RawPhaseStreamer::deinitDepthEngine() {
 void RawPhaseStreamer::initNvramData() {
     auto global = depthEngineLoader_->getGlobalContext();
     if(!global->loaded) {
-        throw io_exception("Failed to load depth engine plugin");
+        THROW_IO_EXCEPTION("Failed to load depth engine plugin");
     }
     LOG_INFO("Succeed to load depth engine plugin");
 
@@ -490,7 +490,7 @@ void RawPhaseStreamer::initNvramData() {
         }
     }
     if(!firmwareDataProfile) {
-        throw io_exception("Can not find firmware data profile.");
+        THROW_IO_EXCEPTION("Can not find firmware data profile.");
     }
 
     {
@@ -528,7 +528,7 @@ void RawPhaseStreamer::waitNvramDataReady() {
     std::unique_lock<std::mutex> lk(nvramMutex_);
     auto                         state = nvramCV_.wait_for(lk, std::chrono::seconds(10), [this] { return !nvramData_.empty(); });
     if(!state) {
-        throw io_exception("Failed to get NVRAM data, timeout!");
+        THROW_IO_EXCEPTION("Failed to get NVRAM data, timeout!");
     }
     LOG_DEBUG("NVRAM data is ready!");
 }

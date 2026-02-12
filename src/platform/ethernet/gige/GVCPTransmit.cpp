@@ -71,7 +71,7 @@ void GVCPTransmit::init(std::shared_ptr<const NetSourcePortInfo> portInfo, uint3
     SOCKET sockFd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);  // ipv4, udp(Streaming)
     if(sockFd == INVALID_SOCKET) {
         auto err = GET_LAST_ERROR();
-        throw libobsensor::io_exception(utils::string::to_string() << "create socket failed! ip=" << portInfo->address << ", err_code=" << err);
+        THROW_IO_EXCEPTION(utils::string::to_string() << "create socket failed! ip=" << portInfo->address << ", err_code=" << err);
     }
 
     // timeout
@@ -95,7 +95,7 @@ void GVCPTransmit::init(std::shared_ptr<const NetSourcePortInfo> portInfo, uint3
     if(bind(sockFd, (sockaddr *)&localAddr, sizeof(localAddr)) < 0) {
         auto err = GET_LAST_ERROR();
         closesocket(sockFd);
-        throw libobsensor::invalid_value_exception(utils::string::to_string() << "bind to " << portInfo->localAddress << " failed! err_code=" << err);
+        THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "bind to " << portInfo->localAddress << " failed! err_code=" << err);
     }
 
     // set to blocking mode
@@ -104,8 +104,7 @@ void GVCPTransmit::init(std::shared_ptr<const NetSourcePortInfo> portInfo, uint3
     if(rst < 0) {
         auto err = GET_LAST_ERROR();
         closesocket(sockFd);
-        throw libobsensor::invalid_value_exception(utils::string::to_string()
-                                                   << "ioctlsocket to blocking mode failed! addr=" << portInfo->address << ", err_code=" << err);
+        THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "ioctlsocket to blocking mode failed! addr=" << portInfo->address << ", err_code=" << err);
     }
     // ok
     sock_      = sockFd;

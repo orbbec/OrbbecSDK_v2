@@ -63,14 +63,15 @@ bool ob_smpl_is_gemini305_device(int vid, int pid);
 bool ob_smpl_is_astra_mini_device(int vid, int pid);
 
 // Macro to check for error and exit program if there is one.
-#define CHECK_OB_ERROR_EXIT(error)                                \
-    if(*error) {                                                  \
-        const char *error_message = ob_error_get_message(*error); \
-        fprintf(stderr, "Error: %s\n", error_message);            \
-        ob_delete_error(*error);                                  \
-        *error = NULL;                                            \
-        exit(-1);                                                 \
-    }                                                             \
+#define CHECK_OB_ERROR_EXIT(error)                                               \
+    if(*error) {                                                                 \
+        const char *error_message = ob_error_get_message(*error);                \
+        ob_status   status        = ob_error_get_status(*error);                 \
+        fprintf(stderr, "Error: %s (status: %d)\n", error_message, (int)status); \
+        ob_delete_error(*error);                                                 \
+        *error = NULL;                                                           \
+        exit(-1);                                                                \
+    }                                                                            \
     *error = NULL;
 
 #ifdef __cplusplus

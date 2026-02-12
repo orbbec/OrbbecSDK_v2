@@ -184,7 +184,7 @@ BaselinePropertyAccessor::BaselinePropertyAccessor(IDevice *owner) : owner_(owne
 void BaselinePropertyAccessor::setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) {
     utils::unusedVar(propertyId);
     utils::unusedVar(data);
-    throw unsupported_operation_exception("Baseline params readonly!");
+    THROW_UNSUPPORTED_OPERATION_EXCEPTION("Baseline params readonly!");
 }
 
 const std::vector<uint8_t> &BaselinePropertyAccessor::getStructureData(uint32_t propertyId) {
@@ -246,7 +246,7 @@ void StereoFrameTransformPropertyAccessor::setPropertyValue(uint32_t propertyId,
         processor->setPropertyValue(propertyId, value);
     } break;
     default:
-        throw invalid_value_exception("Invalid property id");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property id");
     }
 }
 
@@ -295,7 +295,7 @@ void StereoFrameTransformPropertyAccessor::getPropertyValue(uint32_t propertyId,
         processor->getPropertyValue(propertyId, value);
     } break;
     default:
-        throw invalid_value_exception("Invalid property id");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property id");
     }
 }
 
@@ -344,7 +344,7 @@ void StereoFrameTransformPropertyAccessor::getPropertyRange(uint32_t propertyId,
         processor->getPropertyRange(propertyId, range);
     } break;
     default:
-        throw invalid_value_exception("Invalid property id");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property id");
     }
 }
 
@@ -371,7 +371,7 @@ void MonocularFrameTransformPropertyAccessor::setPropertyValue(uint32_t property
         processor->setPropertyValue(propertyId, value);
     } break;
     default: {
-        throw invalid_value_exception("Invalid property id");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property id");
     }
     }
 }
@@ -403,7 +403,7 @@ void MonocularFrameTransformPropertyAccessor::getPropertyValue(uint32_t property
         processor->getPropertyValue(propertyId, value);
     } break;
     default: {
-        throw invalid_value_exception("Invalid property id");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property id");
     }
     }
 }
@@ -435,7 +435,7 @@ void MonocularFrameTransformPropertyAccessor::getPropertyRange(uint32_t property
         processor->getPropertyRange(propertyId, range);
     } break;
     default: {
-        throw invalid_value_exception("Invalid property id");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property id");
     }
     }
 }

@@ -7,24 +7,24 @@
 #include "utils/Utils.hpp"
 
 namespace libobsensor {
-XmlReader::XmlReader(const std::string& filePath) {
+XmlReader::XmlReader(const std::string &filePath) {
     doc_ = std::make_shared<XMLDocument>();
     if(filePath.empty()) {
-        throw invalid_value_exception("XmlReader::XmlReader: filePath is empty!");
+        THROW_INVALID_PARAM_EXCEPTION("XmlReader::XmlReader: filePath is empty!");
     }
 
     if(!utils::fileExists(filePath.c_str())) {
-        throw invalid_value_exception("XmlReader::XmlReader: file not exist!");
+        THROW_INVALID_PARAM_EXCEPTION("XmlReader::XmlReader: file not exist!");
     }
 
     auto rc = doc_->LoadFile(filePath.c_str());
     if(rc != 0) {
-        throw invalid_value_exception(utils::string::to_string() << "XmlReader::XmlReader: load file failed!, rc=" << rc);
+        THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "XmlReader::XmlReader: load file failed!, rc=" << rc);
     }
 
     rootXMLElement_ = doc_->RootElement();
     if(!rootXMLElement_) {
-        throw invalid_value_exception("XmlReader::XmlReader: root element is null!");
+        THROW_INVALID_PARAM_EXCEPTION("XmlReader::XmlReader: root element is null!");
     }
 }
 
@@ -32,17 +32,17 @@ XmlReader::XmlReader(const char *buffer, size_t size) {
     doc_ = std::make_shared<XMLDocument>();
 
     if(!buffer || size == 0) {
-        throw invalid_value_exception("XmlReader::XmlReader: buffer is null or size is 0!");
+        THROW_INVALID_PARAM_EXCEPTION("XmlReader::XmlReader: buffer is null or size is 0!");
     }
 
     auto rc = doc_->Parse(buffer, size);
     if(rc != 0) {
-        throw invalid_value_exception(utils::string::to_string() << "XmlReader::XmlReader: parse buffer failed!, rc=" << rc);
+        THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "XmlReader::XmlReader: parse buffer failed!, rc=" << rc);
     }
 
     rootXMLElement_ = doc_->RootElement();
     if(!rootXMLElement_) {
-        throw invalid_value_exception("XmlReader::XmlReader: root element is null!");
+        THROW_INVALID_PARAM_EXCEPTION("XmlReader::XmlReader: root element is null!");
     }
 }
 
@@ -84,7 +84,7 @@ bool XmlReader::getTextOfLeafNode(const std::string &nodePathName, std::string &
 }
 
 bool XmlReader::isNodeContained(const std::string &nodePathName) {
-    if (nodePathName.empty()) {
+    if(nodePathName.empty()) {
         return false;
     }
     auto nodeList = utils::string::split(nodePathName, ".");
@@ -93,9 +93,9 @@ bool XmlReader::isNodeContained(const std::string &nodePathName) {
     }
 
     XMLElement *currentElement = rootXMLElement_;
-    for (const auto &nodeName : nodeList) {
+    for(const auto &nodeName: nodeList) {
         currentElement = currentElement->FirstChildElement(nodeName.c_str());
-        if (!currentElement) {
+        if(!currentElement) {
             return false;
         }
     }

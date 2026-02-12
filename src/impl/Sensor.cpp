@@ -52,7 +52,7 @@ HANDLE_EXCEPTIONS_NO_RETURN(sensor)
 void ob_sensor_switch_profile(ob_sensor *sensor, ob_stream_profile *profile, ob_error **error) BEGIN_API_CALL {
     auto innerSensor = sensor->device->getSensor(sensor->type);
     if(innerSensor->isStreamActivated()) {
-        throw libobsensor::invalid_value_exception("sensor stream is not started!");
+        THROW_WRONG_API_CALL_SEQUENCE_EXCEPTION("sensor stream is not started!");
     }
     innerSensor->stop();
     innerSensor->start(profile->profile, innerSensor->getFrameCallback());
@@ -97,7 +97,7 @@ ob_sensor *ob_sensor_list_get_sensor_by_type(const ob_sensor_list *sensor_list, 
             return implSensor;
         }
     }
-    throw libobsensor::invalid_value_exception("Sensor type not found in sensor list");
+    THROW_INVALID_PARAM_EXCEPTION("Sensor type not found in sensor list");
 }
 HANDLE_EXCEPTIONS_AND_RETURN(nullptr, sensor_list, sensorType)
 

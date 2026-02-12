@@ -109,7 +109,7 @@ void MS600Streamer::startStream(std::shared_ptr<const StreamProfile> profile, Mu
     {
         std::lock_guard<std::mutex> lock(mutex_);
         if(running_) {
-            throw unsupported_operation_exception(utils::string::to_string() << "The LiDAR stream has already been started.");
+            THROW_UNSUPPORTED_OPERATION_EXCEPTION(utils::string::to_string() << "The LiDAR stream has already been started.");
             return;
         }
         // check stream profile and convert to scan profile
@@ -192,7 +192,7 @@ void MS600Streamer::trySendStartStreamVendorCmd() {
 
     // format
     if(profileInfo_.format != OB_FORMAT_LIDAR_SCAN) {
-        throw invalid_value_exception("Invalid LiDAR format");
+        THROW_INVALID_DATA_EXCEPTION("Invalid LiDAR format");
     }
 
     // speed

@@ -34,7 +34,7 @@ LiDARFormatConverter::LiDARFormatConverter() {}
 
 void LiDARFormatConverter::updateConfig(std::vector<std::string> &params) {
     if(params.size() != 0) {
-        throw unsupported_operation_exception("IMUCorrector update config error: unsupported operation.");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("IMUCorrector update config error: unsupported operation.");
     }
 }
 
@@ -54,7 +54,7 @@ std::shared_ptr<Frame> LiDARFormatConverter::process(std::shared_ptr<const Frame
     }
 
     if(frame->getFormat() != OB_FORMAT_LIDAR_POINT) {
-        throw invalid_value_exception("Invalid target format, only support OB_FORMAT_LIDAR_POINT");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid target format, only support OB_FORMAT_LIDAR_POINT");
     }
 
     const auto &dataSize   = frame->getDataSize();

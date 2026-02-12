@@ -74,14 +74,14 @@ PixelValueScaler::~PixelValueScaler() noexcept {}
 
 void PixelValueScaler::updateConfig(std::vector<std::string> &params) {
     if(params.size() != 1) {
-        throw invalid_value_exception("PixelValueScaler config error: params size not match");
+        THROW_INVALID_PARAM_EXCEPTION("PixelValueScaler config error: params size not match");
     }
     try {
         std::lock_guard<std::mutex> scaleLock(mtx_);
         scale_ = std::stof(params[0]);
     }
     catch(const std::exception &e) {
-        throw invalid_value_exception("PixelValueScaler config error: " + std::string(e.what()));
+        THROW_INVALID_PARAM_EXCEPTION("PixelValueScaler config error: " + std::string(e.what()));
     }
 }
 
@@ -126,7 +126,7 @@ ThresholdFilter::~ThresholdFilter() noexcept {}
 
 void ThresholdFilter::updateConfig(std::vector<std::string> &params) {
     if(params.size() != 2) {
-        throw invalid_value_exception("ThresholdFilter config error: params size not match");
+        THROW_INVALID_PARAM_EXCEPTION("ThresholdFilter config error: params size not match");
     }
     try {
         std::lock_guard<std::mutex> cutOffLock(mtx_);
@@ -141,7 +141,7 @@ void ThresholdFilter::updateConfig(std::vector<std::string> &params) {
         }
     }
     catch(const std::exception &e) {
-        throw invalid_value_exception("ThresholdFilter config error: " + std::string(e.what()));
+        THROW_INVALID_PARAM_EXCEPTION("ThresholdFilter config error: " + std::string(e.what()));
     }
 }
 
@@ -164,7 +164,7 @@ std::shared_ptr<Frame> ThresholdFilter::process(std::shared_ptr<const Frame> fra
 
     std::lock_guard<std::mutex>       cutOffLock(mtx_);
     std::shared_ptr<const DepthFrame> depth;
-    if (frame->is<FrameSet>()) {
+    if(frame->is<FrameSet>()) {
         auto fset = frame->as<FrameSet>();
         auto df   = fset->getFrame(OB_FRAME_DEPTH);
         if(!df) {
@@ -200,7 +200,7 @@ std::shared_ptr<Frame> ThresholdFilter::process(std::shared_ptr<const Frame> fra
     }
 
     if(frame->is<FrameSet>()) {
-        auto frameSet = FrameFactory::createFrameFromOtherFrame(frame);
+        auto frameSet    = FrameFactory::createFrameFromOtherFrame(frame);
         auto outFrameSet = frameSet->as<FrameSet>();
         outFrameSet->pushFrame(std::move(outFrame));
         return frameSet;
@@ -214,14 +214,14 @@ PixelValueOffset::~PixelValueOffset() noexcept {}
 
 void PixelValueOffset::updateConfig(std::vector<std::string> &params) {
     if(params.size() != 1) {
-        throw invalid_value_exception("PixelValueOffset config error: params size not match");
+        THROW_INVALID_PARAM_EXCEPTION("PixelValueOffset config error: params size not match");
     }
     try {
         std::lock_guard<std::mutex> offsetLock(mtx_);
         offset_ = static_cast<int8_t>(std::stoi(params[0]));
     }
     catch(const std::exception &e) {
-        throw invalid_value_exception("PixelValueOffset config error: " + std::string(e.what()));
+        THROW_INVALID_PARAM_EXCEPTION("PixelValueOffset config error: " + std::string(e.what()));
     }
 }
 
@@ -264,4 +264,3 @@ std::shared_ptr<Frame> PixelValueOffset::process(std::shared_ptr<const Frame> fr
 }
 
 }  // namespace libobsensor
-

@@ -190,12 +190,12 @@ void ob_align_filter_set_align_to_stream_profile(ob_filter *filter, const ob_str
     VALIDATE_NOT_NULL(align_to_stream_profile);
     auto filterDecorator = std::dynamic_pointer_cast<libobsensor::FilterDecorator>(filter->filter);
     if(!filterDecorator) {
-        throw libobsensor::invalid_value_exception("filter is not a filter decorator");
+        THROW_INVALID_PARAM_EXCEPTION("filter is not a filter decorator");
     }
     auto baseFilter = filterDecorator->getBaseFilter();
     auto align      = std::dynamic_pointer_cast<libobsensor::Align>(baseFilter);
     if(!align) {
-        throw libobsensor::invalid_value_exception("base filter is not an align filter");
+        THROW_INVALID_PARAM_EXCEPTION("base filter is not an align filter");
     }
     auto vsp = align_to_stream_profile->profile->as<const libobsensor::VideoStreamProfile>();
     align->setAlignToStreamProfile(vsp);

@@ -495,7 +495,7 @@ ObV4lGmslDevicePort::ObV4lGmslDevicePort(std::shared_ptr<const USBSourcePortInfo
 
     auto devs = queryRelatedDevices(portInfo_);
     if(devs.empty()) {
-        throw camera_disconnected_exception("No v4l device found for port: " + portInfo_->infUrl);
+        THROW_DEVICE_UNAVAILABLE_EXCEPTION("No v4l device found for port: " + portInfo_->infUrl);
     }
 
     std::shared_ptr<V4lDeviceHandleGmsl> devHandle = nullptr;
@@ -518,7 +518,7 @@ ObV4lGmslDevicePort::ObV4lGmslDevicePort(std::shared_ptr<const USBSourcePortInfo
             devHandle->metadataPrependedMode = (*iter)->metadataPrependedMode;
             int fd                           = open(devHandle->info->name.c_str(), O_RDWR | O_NONBLOCK, 0);
             if(fd < 0) {
-                throw io_exception("Failed to open: " + devHandle->info->name);
+                THROW_IO_EXCEPTION("Failed to open: " + devHandle->info->name);
             }
             devHandle->fd = fd;
             LOG_DEBUG("Opened video device:{}, fd:{}", devHandle->info->name, fd);
@@ -527,7 +527,7 @@ ObV4lGmslDevicePort::ObV4lGmslDevicePort(std::shared_ptr<const USBSourcePortInfo
         iter++;
     }
     if(deviceHandles_.empty()) {
-        throw camera_disconnected_exception("No v4l device found for port: " + portInfo_->infUrl);
+        THROW_DEVICE_UNAVAILABLE_EXCEPTION("No v4l device found for port: " + portInfo_->infUrl);
     }
 
     LOG_DEBUG("V4L device port created for {} with {} v4l2 device", portInfo_->infUrl, deviceHandles_.size());
@@ -617,7 +617,7 @@ void writeBufferToFile(const char *buf, std::size_t size, const std::string &fil
 
     if(!file.is_open()) {
         // If the file fails to open, throw an exception or handle the error
-        throw std::runtime_error("Unable to open the file: " + filename);
+        THROW_IO_EXCEPTION("Unable to open the file: " + filename);
     }
 
     // Write the data in buf to the file
@@ -925,22 +925,23 @@ void ObV4lGmslDevicePort::startStream(std::shared_ptr<const StreamProfile> profi
         return false;
     });
     if(!devHandle) {
-        throw pal_exception("No v4l device found for profile: width=" + std::to_string(videoProfile->getWidth())
-                            + ", height=" + std::to_string(videoProfile->getHeight()) + ", fps=" + std::to_string(videoProfile->getFps())
-                            + ", format=" + std::to_string(videoProfile->getFormat()));
+        THROW_PAL_EXCEPTION("No v4l device found for profile: width=" + std::to_string(videoProfile->getWidth())
+                                + ", height=" + std::to_string(videoProfile->getHeight()) + ", fps=" + std::to_string(videoProfile->getFps())
+                                + ", format=" + std::to_string(videoProfile->getFormat()),
+                            OB_ERROR_ITEM_NOT_FOUND);
     }
     if(devHandle->isCapturing) {
-        throw pal_exception("V4l device is already capturing");
+        THROW_WRONG_API_CALL_SEQUENCE_EXCEPTION("V4l device is already capturing");
     }
 
     if(devHandle->metadataFd >= 0) {
         v4l2_format fmt = {};
         fmt.type        = LOCAL_V4L2_BUF_TYPE_META_CAPTURE_GMSL;
         if(xioctlGmsl(devHandle->metadataFd, VIDIOC_G_FMT, &fmt) < 0) {
-            throw io_exception("Failed to get metadata format! " + devHandle->metadataInfo->name + ", " + strerror(errno));
+            THROW_IO_EXCEPTION("Failed to get metadata format! " + devHandle->metadataInfo->name + ", " + strerror(errno));
         }
         if(fmt.type != LOCAL_V4L2_BUF_TYPE_META_CAPTURE_GMSL) {
-            throw io_exception("Invalid metadata type!" + devHandle->metadataInfo->name + ", " + strerror(errno));
+            THROW_IO_EXCEPTION("Invalid metadata type!" + devHandle->metadataInfo->name + ", " + strerror(errno));
         }
 
         const std::vector<uint32_t> requires_formats   = { LOCAL_V4L2_META_FMT_D4XX_GMSL, V4L2_META_FMT_UVC };
@@ -956,7 +957,7 @@ void ObV4lGmslDevicePort::startStream(std::shared_ptr<const StreamProfile> profi
         }
 
         if(!set_format_success) {
-            throw io_exception("Failed to set metadata format!" + devHandle->metadataInfo->name + ", " + strerror(errno));
+            THROW_IO_EXCEPTION("Failed to set metadata format!" + devHandle->metadataInfo->name + ", " + strerror(errno));
         }
 
         struct v4l2_requestbuffers req = { 0 };
@@ -964,7 +965,7 @@ void ObV4lGmslDevicePort::startStream(std::shared_ptr<const StreamProfile> profi
         req.type                       = LOCAL_V4L2_BUF_TYPE_META_CAPTURE_GMSL;
         req.memory                     = USE_MEMORY_MMAP ? V4L2_MEMORY_MMAP : V4L2_MEMORY_USERPTR;
         if(xioctlGmsl(devHandle->metadataFd, VIDIOC_REQBUFS, &req) < 0) {
-            throw io_exception("Failed to request metadata buffers!" + devHandle->metadataInfo->name + ", " + strerror(errno));
+            THROW_IO_EXCEPTION("Failed to request metadata buffers!" + devHandle->metadataInfo->name + ", " + strerror(errno));
         }
         for(uint32_t i = 0; i < req.count && i < MAX_BUFFER_COUNT_GMSL; i++) {
             struct v4l2_buffer buf = {};
@@ -973,7 +974,7 @@ void ObV4lGmslDevicePort::startStream(std::shared_ptr<const StreamProfile> profi
             buf.memory = USE_MEMORY_MMAP ? V4L2_MEMORY_MMAP : V4L2_MEMORY_USERPTR;
             buf.index  = i;  // only one buffer
             if(xioctlGmsl(devHandle->metadataFd, VIDIOC_QUERYBUF, &buf) < 0) {
-                throw io_exception("Failed to query metadata buffer!" + devHandle->metadataInfo->name + ", " + strerror(errno));
+                THROW_IO_EXCEPTION("Failed to query metadata buffer!" + devHandle->metadataInfo->name + ", " + strerror(errno));
             }
 
             if(USE_MEMORY_MMAP) {
@@ -1005,12 +1006,12 @@ void ObV4lGmslDevicePort::startStream(std::shared_ptr<const StreamProfile> profi
         if(xioctlGmsl(devHandle->metadataFd, VIDIOC_STREAMON, &bufType) < 0) {
             auto err = errno;
             stopStream(devHandle);
-            throw io_exception("Failed to stream on metadata!" + devHandle->metadataInfo->name + ", " + strerror(err));
+            THROW_IO_EXCEPTION("Failed to stream on metadata!" + devHandle->metadataInfo->name + ", " + strerror(err));
         }
     }
 
     if(devHandle->fd < 0) {
-        throw camera_disconnected_exception("Invalid video file descriptor");
+        THROW_DEVICE_DISCONNECTED_EXCEPTION("Invalid video file descriptor");
     }
 
     v4l2_format fmt    = {};
@@ -1024,12 +1025,12 @@ void ObV4lGmslDevicePort::startStream(std::shared_ptr<const StreamProfile> profi
     if(xioctlGmsl(devHandle->fd, VIDIOC_S_FMT, &fmt) < 0) {
         auto err = errno;
         stopStream(devHandle);
-        throw io_exception("Failed to set format!" + devHandle->info->name + ", " + strerror(err));
+        THROW_IO_EXCEPTION("Failed to set format!" + devHandle->info->name + ", " + strerror(err));
     }
     if(xioctlGmsl(devHandle->fd, VIDIOC_G_FMT, &fmt) < 0) {
         auto err = errno;
         stopStream(devHandle);
-        throw io_exception("Failed to get format!" + devHandle->info->name + ", " + strerror(err));
+        THROW_IO_EXCEPTION("Failed to get format!" + devHandle->info->name + ", " + strerror(err));
     }
     LOG_DEBUG("Video node was successfully configured to {0} format, fd {1}, name: {2}", fourccToStringGmsl(fmt.fmt.pix.pixelformat), devHandle->fd,
               devHandle->info->name);
@@ -1056,12 +1057,12 @@ void ObV4lGmslDevicePort::startStream(std::shared_ptr<const StreamProfile> profi
     if(xioctlGmsl(devHandle->fd, VIDIOC_S_PARM, &streamparm) < 0) {
         auto err = errno;
         stopStream(devHandle);
-        throw io_exception("Failed to set streamparm!" + devHandle->info->name + ", " + strerror(err));
+        THROW_IO_EXCEPTION("Failed to set streamparm!" + devHandle->info->name + ", " + strerror(err));
     }
     if(xioctlGmsl(devHandle->fd, VIDIOC_G_PARM, &streamparm) < 0) {
         auto err = errno;
         stopStream(devHandle);
-        throw io_exception("Failed to get streamparm!" + devHandle->info->name + ", " + strerror(err));
+        THROW_IO_EXCEPTION("Failed to get streamparm!" + devHandle->info->name + ", " + strerror(err));
     }
 #endif
 
@@ -1072,7 +1073,7 @@ void ObV4lGmslDevicePort::startStream(std::shared_ptr<const StreamProfile> profi
     if(xioctlGmsl(devHandle->fd, VIDIOC_REQBUFS, &req) < 0) {
         auto err = errno;
         stopStream(devHandle);
-        throw io_exception("Failed to request buffers!" + devHandle->info->name + ", " + strerror(err));
+        THROW_IO_EXCEPTION("Failed to request buffers!" + devHandle->info->name + ", " + strerror(err));
     }
     for(uint32_t i = 0; i < req.count && i < MAX_BUFFER_COUNT_GMSL; i++) {
         struct v4l2_buffer buf = {};
@@ -1083,7 +1084,7 @@ void ObV4lGmslDevicePort::startStream(std::shared_ptr<const StreamProfile> profi
         if(xioctlGmsl(devHandle->fd, VIDIOC_QUERYBUF, &buf) < 0) {
             auto err = errno;
             stopStream(devHandle);
-            throw io_exception("Failed to query buffer!" + devHandle->info->name + ", " + strerror(err));
+            THROW_IO_EXCEPTION("Failed to query buffer!" + devHandle->info->name + ", " + strerror(err));
         }
 
         if(USE_MEMORY_MMAP) {
@@ -1115,7 +1116,7 @@ void ObV4lGmslDevicePort::startStream(std::shared_ptr<const StreamProfile> profi
     if(pipe(devHandle->stopPipeFd) < 0) {
         auto err = errno;
         stopStream(devHandle);
-        throw io_exception("Failed to create stop pipe!" + devHandle->info->name + ", " + strerror(err));
+        THROW_IO_EXCEPTION("Failed to create stop pipe!" + devHandle->info->name + ", " + strerror(err));
     }
 
     // NOTE: Ensure the thread is started before calling Stream On.
@@ -1135,7 +1136,7 @@ void ObV4lGmslDevicePort::startStream(std::shared_ptr<const StreamProfile> profi
         lk.unlock();
         auto err = errno;
         stopStream(devHandle);
-        throw io_exception("Failed to stream on!" + devHandle->info->name + ", " + strerror(err));
+        THROW_IO_EXCEPTION("Failed to stream on!" + devHandle->info->name + ", " + strerror(err));
     }
     lk.unlock();
     LOG_DEBUG("-VIDIOC_STREAMON success-");
@@ -1670,7 +1671,7 @@ bool ObV4lGmslDevicePort::setXuExt(uint32_t ctrl, const uint8_t *data, uint32_t 
             }
 
             if(throwIfError) {
-                throw io_exception("set ctrl:" + std::to_string(ctrl) + "xioctlGmsl(VIDIOC_S_EXT_CTRLS) failed! err:" + strerror(errno));
+                THROW_IO_EXCEPTION("set ctrl:" + std::to_string(ctrl) + "xioctlGmsl(VIDIOC_S_EXT_CTRLS) failed! err:" + strerror(errno));
             }
             return false;
         }
@@ -1793,7 +1794,7 @@ bool ObV4lGmslDevicePort::getXuExt(uint32_t ctrl, uint8_t *data, uint32_t *len, 
         return false;
     }
     if(throwIfError) {
-        throw io_exception("set ctrl:" + std::to_string(ctrl) + "xioctlGmsl(VIDIOC_G_EXT_CTRLS) failed! err:" + strerror(errno)
+        THROW_IO_EXCEPTION("set ctrl:" + std::to_string(ctrl) + "xioctlGmsl(VIDIOC_G_EXT_CTRLS) failed! err:" + strerror(errno)
                            + " tries:" + std::to_string(tries));
     }
     return false;

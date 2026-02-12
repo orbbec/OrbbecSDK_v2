@@ -10,7 +10,6 @@
 
 namespace libobsensor {
 
-
 AstraMiniSensorStreamStrategy::AstraMiniSensorStreamStrategy(IDevice *owner) : DeviceComponentBase(owner) {}
 
 AstraMiniSensorStreamStrategy::~AstraMiniSensorStreamStrategy() noexcept {}
@@ -21,7 +20,7 @@ void AstraMiniSensorStreamStrategy::markStreamActivated(const std::shared_ptr<co
     auto                        iter       = std::find_if(activatedStreamList_.begin(), activatedStreamList_.end(),
                                                           [streamType](const std::shared_ptr<const StreamProfile> &sp) { return sp->getType() == streamType; });
     if(iter != activatedStreamList_.end()) {
-        throw unsupported_operation_exception(utils::string::to_string() << "The " << streamType << " has already been started.");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION(utils::string::to_string() << "The " << streamType << " has already been started.");
     }
 
     activatedStreamList_.push_back(profile);
@@ -33,7 +32,7 @@ void AstraMiniSensorStreamStrategy::markStreamDeactivated(const std::shared_ptr<
     auto                        iter       = std::find_if(activatedStreamList_.begin(), activatedStreamList_.end(),
                                                           [streamType](const std::shared_ptr<const StreamProfile> &sp) { return sp->getType() == streamType; });
     if(iter == activatedStreamList_.end()) {
-        throw unsupported_operation_exception(utils::string::to_string() << "The " << streamType << " has not been started.");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION(utils::string::to_string() << "The " << streamType << " has not been started.");
     }
     activatedStreamList_.erase(iter);
 }
@@ -47,12 +46,11 @@ void AstraMiniSensorStreamStrategy::validateStream(const std::vector<std::shared
         std::lock_guard<std::mutex> lock(startedStreamListMutex_);
         for(auto profile: profiles) {
             auto streamType = profile->getType();
-            auto iter       = std::find_if(activatedStreamList_.begin(), activatedStreamList_.end(),[streamType](const std::shared_ptr<const StreamProfile> &sp) {
-                    return sp->getType() == streamType;
-            });
+            auto iter       = std::find_if(activatedStreamList_.begin(), activatedStreamList_.end(),
+                                           [streamType](const std::shared_ptr<const StreamProfile> &sp) { return sp->getType() == streamType; });
 
             if(iter != activatedStreamList_.end()) {
-                throw unsupported_operation_exception(utils::string::to_string() << "The " << streamType << " has already been started.");
+                THROW_UNSUPPORTED_OPERATION_EXCEPTION(utils::string::to_string() << "The " << streamType << " has already been started.");
             }
         }
 
@@ -69,11 +67,10 @@ void AstraMiniSensorStreamStrategy::validateStream(const std::vector<std::shared
             });
 
             if(iter != activatedStreamList_.end()) {
-                throw unsupported_operation_exception(utils::string::to_string() << "IR and Color cannot be started simultaneously.");
+                THROW_UNSUPPORTED_OPERATION_EXCEPTION(utils::string::to_string() << "IR and Color cannot be started simultaneously.");
             }
         }
     }
 }
-
 
 }  // namespace libobsensor

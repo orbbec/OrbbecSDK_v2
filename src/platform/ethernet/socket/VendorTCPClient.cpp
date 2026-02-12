@@ -6,7 +6,7 @@
 #include "utils/Utils.hpp"
 #include "exception/ObException.hpp"
 
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+#if (defined(WIN32) || defined(_WIN32) || defined(WINCE))
 #include <windows.h>
 #include <iphlpapi.h>
 #include <iostream>
@@ -31,24 +31,24 @@ VendorTCPClient::VendorTCPClient(std::string localAddress, std::string localMac,
       CONNECT_TIMEOUT_MS(connectTimeout),
       COMM_TIMEOUT_MS(commTimeout) {
     LOG_DEBUG("VendorTCPClient create localAddress:{}, localMac:{}", localAddress_, localMac_);
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+#if (defined(WIN32) || defined(_WIN32) || defined(WINCE))
     WSADATA wsaData;
     int     rst = WSAStartup(MAKEWORD(2, 2), &wsaData);
     if(rst != 0) {
-        throw libobsensor::invalid_value_exception(utils::string::to_string() << "Failed to load Winsock! err_code=" << GET_LAST_ERROR());
+        THROW_IO_EXCEPTION(utils::string::to_string() << "Failed to load Winsock! err_code=" << GET_LAST_ERROR());
     }
     checkLocalIP();
 #endif
 // Due to network configuration changes causing socket connection pipeline errors, macOS throws a SIGPIPE exception to the application, leading to a crash (this
 // does not occur on Linux). This exception needs to be filtered out.
-#if(defined(OS_IOS) || defined(OS_MACOS))
+#if (defined(OS_IOS) || defined(OS_MACOS))
     signal(SIGPIPE, SIG_IGN);
 #endif
     socketConnect();
 }
 
 void VendorTCPClient::checkLocalIP() {
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+#if (defined(WIN32) || defined(_WIN32) || defined(WINCE))
     unsigned int a, b, c, d;
     if(sscanf(localAddress_.c_str(), "%u.%u.%u.%u", &a, &b, &c, &d) == 4) {
         if((a == 10) ||                         // 10.0.0.0 - 10.255.255.255
@@ -105,9 +105,9 @@ void VendorTCPClient::checkLocalIP() {
 #endif
 }
 
-VendorTCPClient::~VendorTCPClient() noexcept{
+VendorTCPClient::~VendorTCPClient() noexcept {
     socketClose();
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+#if (defined(WIN32) || defined(_WIN32) || defined(WINCE))
     WSACleanup();
 #endif
 }
@@ -170,15 +170,15 @@ void VendorTCPClient::socketConnect() {
     int rst;
     socketFd_ = socket(AF_INET, SOCK_STREAM, 0);  // ipv4, tcp(Streaming)
     if(socketFd_ == INVALID_SOCKET) {
-        throw libobsensor::io_exception(utils::string::to_string() << "create socket failed! err_code=" << GET_LAST_ERROR());
+        THROW_IO_EXCEPTION(utils::string::to_string() << "create socket failed! err_code=" << GET_LAST_ERROR());
     }
 
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+#if (defined(WIN32) || defined(_WIN32) || defined(WINCE))
     uint32_t commTimeout = COMM_TIMEOUT_MS;
 #else
     TIMEVAL commTimeout;
-    //commTimeout.tv_sec  = COMM_TIMEOUT_MS / 1000;
-    //commTimeout.tv_usec = COMM_TIMEOUT_MS % 1000 * 1000;
+    // commTimeout.tv_sec  = COMM_TIMEOUT_MS / 1000;
+    // commTimeout.tv_usec = COMM_TIMEOUT_MS % 1000 * 1000;
     commTimeout.tv_sec  = 2;
     commTimeout.tv_usec = 0;
 #endif
@@ -188,8 +188,8 @@ void VendorTCPClient::socketConnect() {
 
     // Add SO_LINGER configuration here
     struct linger linger_opt;
-    linger_opt.l_onoff  = 1;   // Enable SO_LINGER
-    linger_opt.l_linger = 0;   // Set linger timeout to 0 seconds
+    linger_opt.l_onoff  = 1;  // Enable SO_LINGER
+    linger_opt.l_linger = 0;  // Set linger timeout to 0 seconds
     if(setsockopt(socketFd_, SOL_SOCKET, SO_LINGER, (char *)&linger_opt, sizeof(linger_opt)) < 0) {
         LOG_WARN("Failed to set SO_LINGER option");
     }
@@ -208,8 +208,8 @@ void VendorTCPClient::socketConnect() {
     if(rst < 0) {
         rst = GET_LAST_ERROR();
         socketClose();
-        throw libobsensor::invalid_value_exception(utils::string::to_string() << "VendorTCPClient: ioctlsocket to non-blocking mode failed! addr=" << address_
-                                                                              << ", port=" << port_ << ", err_code=" << rst);
+        THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "VendorTCPClient: ioctlsocket to non-blocking mode failed! addr=" << address_
+                                                                 << ", port=" << port_ << ", err_code=" << rst);
     }
 
     if(isValidIP_) {
@@ -220,15 +220,15 @@ void VendorTCPClient::socketConnect() {
         if(inet_pton(AF_INET, localAddress_.c_str(), &localAddr.sin_addr) <= 0) {
             rst = GET_LAST_ERROR();
             socketClose();
-            throw libobsensor::invalid_value_exception(utils::string::to_string()
-                                                       << "VendorTCPClient: Invalid local ip address! addr=" << localAddress_ << ", err_code=" << rst);
+            THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string()
+                                          << "VendorTCPClient: Invalid local ip address! addr=" << localAddress_ << ", err_code=" << rst);
         }
 
         if(bind(socketFd_, (struct sockaddr *)&localAddr, sizeof(localAddr)) < 0) {
             rst = GET_LAST_ERROR();
             socketClose();
-            throw libobsensor::invalid_value_exception(utils::string::to_string()
-                                                       << "VendorTCPClient: local ip bind failed! addr=" << localAddress_ << ", err_code=" << rst);
+            THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string()
+                                          << "VendorTCPClient: local ip bind failed! addr=" << localAddress_ << ", err_code=" << rst);
         }
         LOG_DEBUG("bind local address success!");
     }
@@ -239,28 +239,28 @@ void VendorTCPClient::socketConnect() {
     if(inet_pton(AF_INET, address_.c_str(), &serverAddr.sin_addr) <= 0) {  // address string to sin_addr
         rst = GET_LAST_ERROR();
         socketClose();
-        throw libobsensor::invalid_value_exception("Invalid address! err_code=" + std::to_string(rst));
+        THROW_INVALID_PARAM_EXCEPTION("Invalid address! err_code=" + std::to_string(rst));
     }
 
     rst = connect(socketFd_, (struct sockaddr *)&serverAddr, sizeof(serverAddr));
     if(rst < 0) {
         rst = GET_LAST_ERROR();
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+#if (defined(WIN32) || defined(_WIN32) || defined(WINCE))
         if(rst != WSAEWOULDBLOCK) {
 #else
         if(rst != EINPROGRESS) {  // EINPROGRESS due to non-blocking mode
 #endif
             socketClose();
-            throw libobsensor::invalid_value_exception(utils::string::to_string() << "VendorTCPClient: Connect to server failed! addr=" << address_
-                                                                                  << ", port=" << port_ << ", err_code=" << rst);
+            THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string()
+                                          << "VendorTCPClient: Connect to server failed! addr=" << address_ << ", port=" << port_ << ", err_code=" << rst);
         }
     }
 
     // Check if connect is ready
     if(!checkConnectReady(socketFd_, CONNECT_TIMEOUT_MS)) {
         socketClose();
-        throw libobsensor::invalid_value_exception(utils::string::to_string() << "VendorTCPClient: Connect to server failed! addr=" << address_
-                                                                              << ", port=" << port_ << ", err=socket is not ready & timeout");
+        THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "VendorTCPClient: Connect to server failed! addr=" << address_ << ", port=" << port_
+                                                                 << ", err=socket is not ready & timeout");
     }
 
     // Restore to blocking mode
@@ -268,8 +268,8 @@ void VendorTCPClient::socketConnect() {
     rst  = ioctlsocket(socketFd_, FIONBIO, &mode);
     if(rst < 0) {
         socketClose();
-        throw libobsensor::invalid_value_exception(utils::string::to_string() << "VendorTCPClient: ioctlsocket to blocking mode failed! addr=" << address_
-                                                                              << ", port=" << port_ << ", err_code=" << GET_LAST_ERROR());
+        THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "VendorTCPClient: ioctlsocket to blocking mode failed! addr=" << address_
+                                                                 << ", port=" << port_ << ", err_code=" << GET_LAST_ERROR());
     }
     LOG_DEBUG("TCP client socket created!, addr={0}, port={1}, socket={2}", address_, port_, socketFd_);
 }
@@ -306,7 +306,7 @@ int VendorTCPClient::read(uint8_t *data, const uint32_t dataLen) {
 
             if(rst < 0) {
                 rst = GET_LAST_ERROR();
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+#if (defined(WIN32) || defined(_WIN32) || defined(WINCE))
                 if((rst == WSAECONNRESET || rst == WSAENOTCONN || rst == WSAETIMEDOUT) && retry >= 1) {
 #else
                 if((rst == EAGAIN || rst == EWOULDBLOCK) && retry >= 1) {
@@ -318,8 +318,7 @@ int VendorTCPClient::read(uint8_t *data, const uint32_t dataLen) {
                     return -1;
                 }
                 else {
-                    throw libobsensor::io_exception(utils::string::to_string()
-                                                    << "VendorTCPClient read data failed! socket=" << socketFd_ << ", err_code=" << rst);
+                    THROW_IO_EXCEPTION(utils::string::to_string() << "VendorTCPClient read data failed! socket=" << socketFd_ << ", err_code=" << rst);
                 }
             }
             else {
@@ -345,7 +344,7 @@ void VendorTCPClient::write(const uint8_t *data, const uint32_t dataLen) {
 
             if(rst < 0) {
                 rst = GET_LAST_ERROR();
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+#if (defined(WIN32) || defined(_WIN32) || defined(WINCE))
                 if((rst == WSAECONNRESET || rst == WSAENOTCONN || rst == WSAETIMEDOUT) && retry >= 1) {
 #else
                 if((rst == EAGAIN || rst == EWOULDBLOCK) && retry >= 1) {
@@ -356,8 +355,7 @@ void VendorTCPClient::write(const uint8_t *data, const uint32_t dataLen) {
                     socketReconnect();
                 }
                 else {
-                    throw libobsensor::io_exception(utils::string::to_string()
-                                                    << "VendorTCPClient write data failed! socket=" << socketFd_ << ", err_code=" << rst);
+                    THROW_IO_EXCEPTION(utils::string::to_string() << "VendorTCPClient write data failed! socket=" << socketFd_ << ", err_code=" << rst);
                 }
                 continue;
             }
@@ -380,6 +378,4 @@ void VendorTCPClient::flush() {
     }
 }
 
-
 }  // namespace libobsensor
-

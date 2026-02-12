@@ -104,7 +104,7 @@ bool GigECcpController::checkCcpCapability(const std::string &minVersion) {
 
 void GigECcpController::acquireControl(OBDeviceAccessMode accessMode) {
     if(!ccpSupported_) {
-        throw libobsensor::unsupported_operation_exception("The current device doesn't support GigE CCP");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("The current device doesn't support GigE CCP");
     }
 
     uint16_t ccpValue = 0;
@@ -125,7 +125,7 @@ void GigECcpController::acquireControl(OBDeviceAccessMode accessMode) {
     default:
         std::ostringstream oss;
         oss << "Unsupported or invalid access mode: " << accessMode;
-        throw libobsensor::unsupported_operation_exception(oss.str());
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION(oss.str());
         break;
     }
 
@@ -136,7 +136,7 @@ void GigECcpController::acquireControl(OBDeviceAccessMode accessMode) {
             std::ostringstream oss;
             oss << "[" << portInfo_->serialNumber
                 << "] The requested 'monitor access' privilege conflicts with the current control channel privilege: " << res.second;
-            throw libobsensor::access_denied_exception(oss.str());
+            THROW_ACCESS_DENIED_EXCEPTION(oss.str());
         }
         accessMode_ = accessMode;
         return;
@@ -148,11 +148,11 @@ void GigECcpController::acquireControl(OBDeviceAccessMode accessMode) {
         std::ostringstream oss;
         if(status == GEV_STATUS_ACCESS_DENIED) {
             oss << "[" << portInfo_->serialNumber << "] The requested '" << accessMode << "' privilege conflicts with the current control channel privilege";
-            throw libobsensor::access_denied_exception(oss.str());
+            THROW_ACCESS_DENIED_EXCEPTION(oss.str());
         }
         else {
             oss << "[" << portInfo_->serialNumber << "] Failed to acquire the '" << accessMode << "' privilege. Status code: " << status;
-            throw libobsensor::io_exception(oss.str());
+            THROW_IO_EXCEPTION(oss.str());
         }
     }
     accessMode_ = accessMode;
@@ -185,13 +185,13 @@ void GigECcpController::acquireControl(OBDeviceAccessMode accessMode) {
             res = gvcpTransmit_->readRegister(GVCP_CCP_REGISTER);
             if(res.first != GEV_STATUS_SUCCESS) {
                 LOG_INTVL(LOG_INTVL_OBJECT_TAG + "GVCP Keepalive", 3000, spdlog::level::warn, "[{}] CCP register read failed, ignored. Status code: {:#04x}",
-                          portInfo_->serialNumber, res.first);
+                           portInfo_->serialNumber, res.first);
             }
             else {
                 res.second = (res.second & GVCP_CCP_MASK);
                 if(res.second != ccpValue) {
                     LOG_INTVL(LOG_INTVL_OBJECT_TAG + "GVCP Keepalive", 3000, spdlog::level::warn,
-                              "[{}] CCP register mismatch: expected {:#04x}, got {:#04x}. Ignored", portInfo_->serialNumber, ccpValue, res.second);
+                               "[{}] CCP register mismatch: expected {:#04x}, got {:#04x}. Ignored", portInfo_->serialNumber, ccpValue, res.second);
                 }
             }
             keepaliveCv_.wait_for(lock, std::chrono::milliseconds(timeout), [&]() { return keepaliveStopped_.load(); });

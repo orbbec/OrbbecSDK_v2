@@ -185,7 +185,7 @@ std::shared_ptr<ISourcePort> EthernetPal::getSourcePort(std::shared_ptr<const So
         port = std::make_shared<RTPStreamPort>(std::dynamic_pointer_cast<const RTPStreamPortInfo>(portInfo));
         break;
     default:
-        throw invalid_value_exception("Invalid port type!");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid port type!");
     }
     sourcePortMap_.insert(std::make_pair(portInfo, port));
     return port;

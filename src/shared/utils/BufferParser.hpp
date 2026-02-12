@@ -10,17 +10,17 @@
 namespace libobsensor {
 template <typename T> std::vector<T> parseBuffer(const uint8_t *data, const uint16_t dataSize) {
     if(dataSize <= 4) {
-        throw invalid_value_exception(utils::string::to_string() << "Data size error, must large than 4! size=" << dataSize);
+        THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "Data size error, must large than 4! size=" << dataSize);
     }
 
     uint16_t itemSize = *(uint16_t *)(data);
     if(itemSize < sizeof(T)) {
-        throw invalid_value_exception(utils::string::to_string() << "itemSize less than sizeof(T)! itemSize=" << itemSize);
+        THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "itemSize less than sizeof(T)! itemSize=" << itemSize);
     }
 
     uint16_t itemNum = *(uint16_t *)(data + 2);
     if(itemNum <= 0) {
-        throw invalid_value_exception(utils::string::to_string() << "itemNum error! itemNum=" << itemNum);
+        THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "itemNum error! itemNum=" << itemNum);
     }
 
     std::vector<T> outputVec;

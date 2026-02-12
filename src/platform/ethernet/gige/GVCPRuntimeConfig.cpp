@@ -69,7 +69,7 @@ void GVCPRuntimeConfig::setGvcpPortscheme(OBGvcpPortScheme scheme) {
         gvcpPort_       = GVCP_CUSTOM_PORT;
         break;
     default:
-        throw libobsensor::invalid_value_exception(utils::string::to_string() << "Invalid GVCP port scheme: " << scheme);
+        THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "Invalid GVCP port scheme: " << scheme);
         break;
     }
 }

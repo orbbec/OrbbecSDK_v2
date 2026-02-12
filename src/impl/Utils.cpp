@@ -164,7 +164,7 @@ ob_frame *transformation_depth_frame_to_color_camera(ob_device *device, ob_frame
     auto profileList        = sensor->getStreamProfileList();
     auto matchedProfileList = matchVideoStreamProfile(profileList, target_color_camera_width, target_color_camera_height, OB_FPS_ANY, OB_FORMAT_ANY);
     if(matchedProfileList.empty()) {
-        throw std::runtime_error("Error:No matched color stream profile");
+        THROW_ITEM_NOT_FOUND_EXCEPTION("Error:No matched color stream profile");
     }
 
     // Create a color frame from the streamprofile
@@ -183,7 +183,7 @@ ob_frame *transformation_depth_frame_to_color_camera(ob_device *device, ob_frame
 
     // Take out the depth frame from frameset
     if(!resultFrameSet->is<libobsensor::FrameSet>()) {
-        throw libobsensor::unsupported_operation_exception("Error: not a frameset");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("Error: not a frameset");
     }
     auto resultFrame = resultFrameSet->as<libobsensor::FrameSet>()->getFrame(OB_FRAME_DEPTH);
     if(resultFrame == nullptr) {

@@ -49,7 +49,7 @@ void Align::updateConfig(std::vector<std::string> &params) {
     // AlignType, TargetDistortion, GapFillCopy, matchTargetRes
     std::lock_guard<std::recursive_mutex> lock(alignMutex_);
     if(params.size() != 4) {
-        throw invalid_value_exception("Align config error: params size not match");
+        THROW_INVALID_PARAM_EXCEPTION("Align config error: params size not match");
     }
     try {
         int align_to_stream = std::stoi(params[0]);
@@ -61,7 +61,7 @@ void Align::updateConfig(std::vector<std::string> &params) {
         matchTargetRes_      = bool(std::stoi(params[3]));
     }
     catch(const std::exception &e) {
-        throw invalid_value_exception("Align config error: " + std::string(e.what()));
+        THROW_INVALID_PARAM_EXCEPTION("Align config error: " + std::string(e.what()));
     }
 }
 

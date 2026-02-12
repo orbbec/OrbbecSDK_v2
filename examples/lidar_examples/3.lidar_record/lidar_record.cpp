@@ -146,8 +146,8 @@ int main(void) try {
     return 0;
 }
 catch(ob::Error &e) {
-    std::cerr << "Function: " << e.getFunction() << "\nArgs: " << e.getArgs() << "\nMessage: " << e.what() << "\nException Type: " << e.getExceptionType()
-              << std::endl;
+    std::cerr << "Function: " << e.getFunction() << "\nArgs: " << e.getArgs() << "\nMessage: " << e.what() << "\nStatus: " << e.getStatus()
+              << "\nException Type: " << e.getExceptionType() << std::endl;
     std::cout << "\nPress any key to exit.";
     ob_smpl::waitForKeyPressed();
     exit(EXIT_FAILURE);

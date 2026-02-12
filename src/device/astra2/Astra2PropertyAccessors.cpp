@@ -127,9 +127,9 @@ void Astra2Disp2DepthPropertyAccessor::markOutputDisparityFrame(bool enable) {
 void Astra2Disp2DepthPropertyAccessor::setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) {
     utils::unusedVar(data);
     if(propertyId == OB_STRUCT_DEPTH_PRECISION_SUPPORT_LIST) {
-        throw invalid_value_exception("OB_STRUCT_DEPTH_PRECISION_SUPPORT_LIST is read-only");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("OB_STRUCT_DEPTH_PRECISION_SUPPORT_LIST is read-only");
     }
-    throw invalid_value_exception(utils::string::to_string() << "unsupported property id:" << propertyId);
+    THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "unsupported property id:" << propertyId);
 }
 
 const std::vector<uint8_t> &Astra2Disp2DepthPropertyAccessor::getStructureData(uint32_t propertyId) {
@@ -147,7 +147,7 @@ const std::vector<uint8_t> &Astra2Disp2DepthPropertyAccessor::getStructureData(u
             return swD2DSupportListBytes;
         }
     }
-    throw invalid_value_exception(utils::string::to_string() << "unsupported property id:" << propertyId);
+    THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "unsupported property id:" << propertyId);
 }
 
 Astra2TempPropertyAccessor::Astra2TempPropertyAccessor(IDevice *owner) : owner_(owner) {}
@@ -155,7 +155,7 @@ Astra2TempPropertyAccessor::Astra2TempPropertyAccessor(IDevice *owner) : owner_(
 void Astra2TempPropertyAccessor::setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) {
     utils::unusedVar(propertyId);
     utils::unusedVar(data);
-    throw unsupported_operation_exception("Temperature params readonly!");
+    THROW_UNSUPPORTED_OPERATION_EXCEPTION("Temperature params readonly!");
 }
 
 const std::vector<uint8_t> &Astra2TempPropertyAccessor::getStructureData(uint32_t propertyId) {
@@ -208,7 +208,7 @@ void Astra2FrameTransformPropertyAccessor::setPropertyValue(uint32_t propertyId,
         }
     } break;
     default: {
-        throw invalid_value_exception("Invalid property id");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property id");
     }
     }
 }
@@ -244,7 +244,7 @@ void Astra2FrameTransformPropertyAccessor::getPropertyValue(uint32_t propertyId,
         }
     } break;
     default: {
-        throw invalid_value_exception("Invalid property id");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property id");
     }
     }
 }
@@ -280,7 +280,7 @@ void Astra2FrameTransformPropertyAccessor::getPropertyRange(uint32_t propertyId,
         }
     } break;
     default: {
-        throw invalid_value_exception("Invalid property id");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property id");
     }
     }
 }

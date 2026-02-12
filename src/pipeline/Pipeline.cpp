@@ -9,6 +9,7 @@
 #include "logger/LoggerInterval.hpp"
 #include "logger/LoggerHelper.hpp"
 #include "utils/Utils.hpp"
+#include "exception/ObException.hpp"
 #include "IAlgParamManager.hpp"
 #include "frameprocessor/FrameProcessor.hpp"
 
@@ -25,7 +26,7 @@ Pipeline::Pipeline(std::shared_ptr<IDevice> dev) : device_(dev), config_(nullptr
     LOG_DEBUG("Pipeline init ...");
     auto sensorTypeList = device_->getSensorTypeList();
     if(sensorTypeList.empty()) {
-        throw std::runtime_error("This device has no valid sensor!");
+        THROW_ITEM_NOT_FOUND_EXCEPTION("This device has no valid sensor!");
     }
 
     loadFrameQueueSizeConfig();
@@ -64,7 +65,7 @@ void Pipeline::applyConfig(std::shared_ptr<const Config> cfg) {
 
 void Pipeline::switchConfig(std::shared_ptr<const Config> cfg) {
     if(!cfg) {
-        throw libobsensor::invalid_value_exception("Null pointer config!");
+        THROW_INVALID_PARAM_EXCEPTION("Null pointer config!");
     }
 
     if(config_ && *cfg == *config_) {
@@ -165,14 +166,14 @@ std::shared_ptr<Config> Pipeline::checkAndSetConfig(std::shared_ptr<const Config
         auto sensorType = utils::mapStreamTypeToSensorType(streamType);
         auto sensor     = device_->getSensor(sensorType);
         if(!sensor) {
-            throw invalid_value_exception(utils::string::to_string() << "No matched sensor found for:" << sensorType);
+            THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "No matched sensor found for:" << sensorType);
         }
         auto sensorSpList = sensor->getStreamProfileList();
         if(sensorType == OB_SENSOR_ACCEL) {
             auto profile            = sp->as<AccelStreamProfile>();
             auto matchedProfileList = matchAccelStreamProfile(sensorSpList, profile->getFullScaleRange(), profile->getSampleRate());
             if(matchedProfileList.empty()) {
-                throw invalid_value_exception(utils::string::to_string() << "No matched profile found for:" << sp);
+                THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "No matched profile found for:" << sp);
             }
             config->enableStream(matchedProfileList.front());
         }
@@ -180,7 +181,7 @@ std::shared_ptr<Config> Pipeline::checkAndSetConfig(std::shared_ptr<const Config
             auto profile            = sp->as<GyroStreamProfile>();
             auto matchedProfileList = matchGyroStreamProfile(sensorSpList, profile->getFullScaleRange(), profile->getSampleRate());
             if(matchedProfileList.empty()) {
-                throw invalid_value_exception(utils::string::to_string() << "No matched profile found for:" << sp);
+                THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "No matched profile found for:" << sp);
             }
             config->enableStream(matchedProfileList.front());
         }
@@ -188,7 +189,7 @@ std::shared_ptr<Config> Pipeline::checkAndSetConfig(std::shared_ptr<const Config
             auto profile            = sp->as<LiDARStreamProfile>();
             auto matchedProfileList = matchLiDARStreamProfile(sensorSpList, profile->getScanRate(), profile->getFormat());
             if(matchedProfileList.empty()) {
-                throw invalid_value_exception(utils::string::to_string() << "No matched profile found for:" << sp);
+                THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "No matched profile found for:" << sp);
             }
             config->enableStream(matchedProfileList.front());
         }
@@ -197,7 +198,7 @@ std::shared_ptr<Config> Pipeline::checkAndSetConfig(std::shared_ptr<const Config
             auto matchedProfileList = matchVideoStreamProfile(sensorSpList, profile->getWidth(), profile->getHeight(), profile->getFps(), profile->getFormat(),
                                                               profile->getDecimationConfig());
             if(matchedProfileList.empty()) {
-                throw invalid_value_exception(utils::string::to_string() << "No matched profile found for: " << sp);
+                THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "No matched profile found for: " << sp);
             }
             auto matchedProfile   = matchedProfileList.front();
             auto decimationConfig = matchedProfile->getDecimationConfig();
@@ -211,7 +212,7 @@ std::shared_ptr<Config> Pipeline::checkAndSetConfig(std::shared_ptr<const Config
     }
     enabledStreamProfiles = config->getEnabledStreamProfileList();
     if(enabledStreamProfiles.empty()) {
-        throw invalid_value_exception("No any enabled stream profile");
+        THROW_INVALID_PARAM_EXCEPTION("No any enabled stream profile");
     }
     LOG_INFO("Check and set config done!");
     return config;
@@ -261,7 +262,7 @@ void Pipeline::startStream() {
         auto sensorType = utils::mapStreamTypeToSensorType(streamType);
         auto sensor     = device_->getSensor(sensorType);
         if(!sensor) {
-            throw std::runtime_error("No sensor matched!");
+            THROW_ITEM_NOT_FOUND_EXCEPTION("No sensor matched!");
         }
         sensor->start(sp, [&](std::shared_ptr<const Frame> frame) { onFrameCallback(frame); });
 
@@ -444,17 +445,17 @@ OBCameraParam Pipeline::getCameraParam(uint32_t colorWidth, uint32_t colorHeight
     }
     auto colorSensor = device_->getSensor(OB_SENSOR_COLOR);
     if(!colorSensor) {
-        throw invalid_value_exception(utils::string::to_string() << "No matched color sensor found");
+        THROW_INVALID_DATA_EXCEPTION(utils::string::to_string() << "No matched color sensor found");
     }
     auto depthSensor = device_->getSensor(OB_SENSOR_DEPTH);
     if(!depthSensor) {
-        throw invalid_value_exception(utils::string::to_string() << "No matched depth sensor found");
+        THROW_INVALID_DATA_EXCEPTION(utils::string::to_string() << "No matched depth sensor found");
     }
 
     auto colorSensorSpList       = colorSensor->getStreamProfileList();
     auto matchedColorProfileList = matchVideoStreamProfile(colorSensorSpList, colorWidth, colorHeight, OB_FPS_ANY, OB_FORMAT_ANY);
     if(matchedColorProfileList.empty()) {
-        throw invalid_value_exception(utils::string::to_string() << "No matched color profile found");
+        THROW_INVALID_DATA_EXCEPTION(utils::string::to_string() << "No matched color profile found");
     }
     auto colorStreamProfile = matchedColorProfileList.front();
 
@@ -463,7 +464,7 @@ OBCameraParam Pipeline::getCameraParam(uint32_t colorWidth, uint32_t colorHeight
         matchVideoStreamProfile(depthSensorSpList, depthWidth, depthHeight, OB_FPS_ANY, OB_FORMAT_ANY);
 
     if(matchedDepthProfileList.empty()) {
-        throw invalid_value_exception(utils::string::to_string() << "No matched depth profile found");
+        THROW_INVALID_DATA_EXCEPTION(utils::string::to_string() << "No matched depth profile found");
     }
     auto depthStreamProfile = matchedDepthProfileList.front();
 

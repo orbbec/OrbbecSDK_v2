@@ -24,7 +24,7 @@ void G330SensorStreamStrategy::markStreamActivated(const std::shared_ptr<const S
     auto                        iter       = std::find_if(activatedStreamList_.begin(), activatedStreamList_.end(),
                                                           [streamType](const std::shared_ptr<const StreamProfile> &sp) { return sp->getType() == streamType; });
     if(iter != activatedStreamList_.end()) {
-        throw unsupported_operation_exception(utils::string::to_string() << "The " << streamType << " has already been started.");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION(utils::string::to_string() << "The " << streamType << " has already been started.");
     }
 
     activatedStreamList_.push_back(profile);
@@ -36,7 +36,7 @@ void G330SensorStreamStrategy::markStreamDeactivated(const std::shared_ptr<const
     auto                        iter       = std::find_if(activatedStreamList_.begin(), activatedStreamList_.end(),
                                                           [streamType](const std::shared_ptr<const StreamProfile> &sp) { return sp->getType() == streamType; });
     if(iter == activatedStreamList_.end()) {
-        throw unsupported_operation_exception(utils::string::to_string() << "The " << streamType << " has not been started.");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION(utils::string::to_string() << "The " << streamType << " has not been started.");
     }
     activatedStreamList_.erase(iter);
 }
@@ -57,7 +57,7 @@ void G330SensorStreamStrategy::validateStream(const std::vector<std::shared_ptr<
             auto iter       = std::find_if(activatedStreamList_.begin(), activatedStreamList_.end(),
                                            [streamType](const std::shared_ptr<const StreamProfile> &sp) { return sp->getType() == streamType; });
             if(iter != activatedStreamList_.end()) {
-                throw unsupported_operation_exception(utils::string::to_string() << "The " << streamType << " has already been started.");
+                THROW_UNSUPPORTED_OPERATION_EXCEPTION(utils::string::to_string() << "The " << streamType << " has already been started.");
             }
         }
     }
@@ -70,12 +70,12 @@ void G330SensorStreamStrategy::validateISPFirmwareVersion(const std::vector<std:
     for(auto profile: profiles) {
         auto streamType = profile->getType();
 
-        if (streamType == OB_STREAM_COLOR) {
+        if(streamType == OB_STREAM_COLOR) {
             rgbEnable = true;
             break;
         }
     }
-    if (rgbEnable) {
+    if(rgbEnable) {
         bool        needUpgrade = false;
         std::string ispFwVer    = getOwner()->getExtensionInfo(ISP_FW_VER_KEY);
         std::string ispNeedVer  = getOwner()->getExtensionInfo(ISP_NEED_VER_KEY);
@@ -84,7 +84,7 @@ void G330SensorStreamStrategy::validateISPFirmwareVersion(const std::vector<std:
         }
 
         if(needUpgrade) {
-            throw unsupported_operation_exception("unexpected isp firmware version, please update your camera firmware before streaming data.");
+            THROW_UNSUPPORTED_OPERATION_EXCEPTION("unexpected isp firmware version, please update your camera firmware before streaming data.");
         }
     }
 }
@@ -107,7 +107,7 @@ void G330SensorStreamStrategy::validateDepthAndIrStream(const std::vector<std::s
             return cmpVsp->getWidth() != vsp->getWidth() || cmpVsp->getHeight() != vsp->getHeight() || cmpVsp->getFps() != vsp->getFps();
         });
         if(iter != tempStartedStreamList.end()) {
-            throw unsupported_operation_exception(utils::string::to_string()
+            THROW_UNSUPPORTED_OPERATION_EXCEPTION(utils::string::to_string()
                                                   << "The depth/ir streams must have the same resolution and frame rate. " << profile);
         }
         tempStartedStreamList.push_back(profile);
@@ -127,7 +127,7 @@ void G330SensorStreamStrategy::validatePreset(const std::vector<std::shared_ptr<
     if(strncmp(currentDepthMode.name, FactoryMode, strlen(FactoryMode) + 1) == 0) {
         // Factory Calibration mode
         for(auto profile: profiles) {
-            auto        streamType  = profile->getType();
+            auto streamType = profile->getType();
             switch(streamType) {
             case OB_STREAM_IR_LEFT:
             case OB_STREAM_IR_RIGHT: {
@@ -136,11 +136,12 @@ void G330SensorStreamStrategy::validatePreset(const std::vector<std::shared_ptr<
                 auto height = vsp->getHeight();
                 auto format = vsp->getFormat();
                 if(!(((width == 1280 && height == 800) || (width == 640 && height == 400)) && (format == OB_FORMAT_Y12 || format == OB_FORMAT_Y16))) {
-                    throw unsupported_operation_exception("Preset is in Factory Calibration mode, only support IR streams at 1280x800@Y12/Y16 and 640x400@Y12/Y16");
+                    THROW_UNSUPPORTED_OPERATION_EXCEPTION(
+                        "Preset is in Factory Calibration mode, only support IR streams at 1280x800@Y12/Y16 and 640x400@Y12/Y16");
                 }
             } break;
             case OB_STREAM_DEPTH:
-                throw unsupported_operation_exception("Preset is in Factory Calibration mode, dose not support Depth stream");
+                THROW_UNSUPPORTED_OPERATION_EXCEPTION("Preset is in Factory Calibration mode, dose not support Depth stream");
                 break;
             default:
                 break;
@@ -156,7 +157,7 @@ void G330SensorStreamStrategy::validatePreset(const std::vector<std::shared_ptr<
             case OB_STREAM_IR_RIGHT: {
                 auto format = profile->getFormat();
                 if(format == OB_FORMAT_Y12 || format == OB_FORMAT_Y16) {
-                    throw unsupported_operation_exception("The current preset is not in Factory Calibration mode; IR Y12/Y16 formats are not supported");
+                    THROW_UNSUPPORTED_OPERATION_EXCEPTION("The current preset is not in Factory Calibration mode; IR Y12/Y16 formats are not supported");
                 }
             } break;
             default:

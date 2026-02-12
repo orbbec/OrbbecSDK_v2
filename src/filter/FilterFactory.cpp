@@ -40,7 +40,7 @@ FilterFactory::~FilterFactory() noexcept {}
 std::shared_ptr<IFilter> FilterFactory::createFilter(const std::string &filterName) {
     auto iter = filterCreators_.find(filterName);
     if(iter == filterCreators_.end()) {
-        throw invalid_value_exception("Invalid filter name, cannot find filter creator for filter name: " + filterName);
+        THROW_INVALID_PARAM_EXCEPTION("Invalid filter name, cannot find filter creator for filter name: " + filterName);
     }
     return iter->second->create();
 }
@@ -48,7 +48,7 @@ std::shared_ptr<IFilter> FilterFactory::createFilter(const std::string &filterNa
 std::shared_ptr<IFilter> FilterFactory::createPrivateFilter(const std::string &filterName, const std::string &activationKey) {
     auto iter = filterCreators_.find(filterName);
     if(iter == filterCreators_.end()) {
-        throw invalid_value_exception("Invalid filter name, cannot find filter creator for filter name: " + filterName);
+        THROW_INVALID_PARAM_EXCEPTION("Invalid filter name, cannot find filter creator for filter name: " + filterName);
     }
     auto privFilterCreator = std::dynamic_pointer_cast<IPrivFilterCreator>(iter->second);
     if(!privFilterCreator) {
@@ -65,7 +65,7 @@ bool FilterFactory::isFilterCreatorExists(const std::string &filterName) {
 std::shared_ptr<IFilterCreator> FilterFactory::getFilterCreator(const std::string &filterName) {
     auto iter = filterCreators_.find(filterName);
     if(iter == filterCreators_.end()) {
-        throw invalid_value_exception("Invalid filter name, cannot find filter creator for filter name: " + filterName);
+        THROW_INVALID_PARAM_EXCEPTION("Invalid filter name, cannot find filter creator for filter name: " + filterName);
     }
     return iter->second;
 }

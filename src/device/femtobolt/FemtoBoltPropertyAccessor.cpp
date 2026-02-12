@@ -47,7 +47,7 @@ FemtoBoltTempPropertyAccessor::FemtoBoltTempPropertyAccessor(IDevice *owner) : o
 void FemtoBoltTempPropertyAccessor::setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) {
     utils::unusedVar(propertyId);
     utils::unusedVar(data);
-    throw unsupported_operation_exception("Temperature params readonly!");
+    THROW_UNSUPPORTED_OPERATION_EXCEPTION("Temperature params readonly!");
 }
 
 const std::vector<uint8_t> &FemtoBoltTempPropertyAccessor::getStructureData(uint32_t propertyId) {

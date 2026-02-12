@@ -19,7 +19,7 @@ ob_pipeline *ob_create_pipeline(ob_error **error) BEGIN_API_CALL {
     auto devMgr     = ctx->getDeviceManager();
     auto deviceList = devMgr->getDeviceInfoList();
     if(deviceList.empty()) {
-        throw libobsensor::camera_disconnected_exception("No device found");
+        THROW_DEVICE_DISCONNECTED_EXCEPTION("No device found");
     }
     const auto &devInfo  = deviceList.front();
     auto        dev      = devMgr->createDevice(devInfo, OB_DEVICE_DEFAULT_ACCESS);

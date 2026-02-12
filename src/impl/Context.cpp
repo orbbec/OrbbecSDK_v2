@@ -86,7 +86,7 @@ bool ob_force_ip_config(const char *macAddress, ob_net_ip_config config, ob_erro
     }
 
     if(!libobsensor::utils::checkIpConfig(config, allowZeroGateWay)) {
-        throw libobsensor::invalid_value_exception("Invalid IP configuration");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid IP configuration");
         // return false;
     }
 

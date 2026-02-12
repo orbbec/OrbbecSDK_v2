@@ -28,13 +28,13 @@ OBMultiDeviceSyncConfig PlaybackDeviceSyncConfigurator::getSyncConfig() {
     else {
         currentMultiDevSyncConfig_ = {};
     }
-    isSyncConfigInit_          = true;
+    isSyncConfigInit_ = true;
     return currentMultiDevSyncConfig_;
 }
 
 void PlaybackDeviceSyncConfigurator::setSyncConfig(const OBMultiDeviceSyncConfig &deviceSyncConfig) {
     (void)deviceSyncConfig;
-    throw unsupported_operation_exception("Playback device doesn't support setSyncConfig");
+    THROW_UNSUPPORTED_OPERATION_EXCEPTION("Playback device doesn't support setSyncConfig");
 }
 
 uint16_t PlaybackDeviceSyncConfigurator::getSupportedSyncModeBitmap() {
@@ -46,7 +46,7 @@ uint16_t PlaybackDeviceSyncConfigurator::getSupportedSyncModeBitmap() {
 }
 
 void PlaybackDeviceSyncConfigurator::triggerCapture() {
-    throw unsupported_operation_exception("Playback device doesn't support triggerCapture");
+    THROW_UNSUPPORTED_OPERATION_EXCEPTION("Playback device doesn't support triggerCapture");
 }
 
 }  // namespace libobsensor

@@ -12,7 +12,7 @@ LiDARSensor::LiDARSensor(IDevice *owner, const std::shared_ptr<ISourcePort> &bac
     : SensorBase(owner, OB_SENSOR_LIDAR, backend), streamer_(streamer) {
     auto port = std::dynamic_pointer_cast<IDataStreamPort>(backend_);
     if(!port) {
-        throw invalid_value_exception("Backend is not a valid IDataStreamPort");
+        THROW_INVALID_PARAM_EXCEPTION("Backend is not a valid IDataStreamPort");
     }
     LOG_DEBUG("LiDARSensor created @{}", sensorType_);
 }
@@ -25,8 +25,8 @@ LiDARSensor::~LiDARSensor() noexcept {
 }
 
 void LiDARSensor::start(std::shared_ptr<const StreamProfile> sp, FrameCallback callback) {
-    if ( isStreamActivated()) {
-        throw unsupported_operation_exception(utils::string::to_string() << "The LiDAR stream has already been started.");
+    if(isStreamActivated()) {
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION(utils::string::to_string() << "The LiDAR stream has already been started.");
     }
 
     activatedStreamProfile_ = sp;

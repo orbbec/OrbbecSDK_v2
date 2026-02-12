@@ -82,7 +82,7 @@ int main() try {
         catch(ob::Error &e) {
             // If the update fails, will throw an exception.
             std::cerr << "\nThe update was interrupted! An error occurred! " << std::endl;
-            std::cerr << "Error message: " << e.what() << "\n" << std::endl;
+            std::cerr << "Error message: " << e.what() << " (status: " << e.getStatus() << ")" << "\n" << std::endl;
             std::cout << "Press any key to exit." << std::endl;
             ob_smpl::waitForKeyPressed();
             delete[] filePaths;
@@ -103,7 +103,8 @@ int main() try {
     }
 }
 catch(ob::Error &e) {
-    std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\ntype:" << e.getExceptionType() << std::endl;
+    std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\nstatus:" << e.getStatus()
+              << "\ntype:" << e.getExceptionType() << std::endl;
     std::cout << "\nPress any key to exit.";
     ob_smpl::waitForKeyPressed();
     exit(EXIT_FAILURE);
@@ -280,7 +281,7 @@ static void printPreset(std::shared_ptr<ob::Device> device) {
     catch(ob::Error &e) {
         // If the update fails, will throw an exception.
         std::cerr << "\nThe device doesn't support preset! " << std::endl;
-        std::cerr << "error: " << e.what() << "\n" << std::endl;
+        std::cerr << "error: " << e.what() << " (status: " << e.getStatus() << ")" << "\n" << std::endl;
         return;
     }
 

@@ -219,7 +219,7 @@ FrameMirror::~FrameMirror() noexcept {}
 
 void FrameMirror::updateConfig(std::vector<std::string> &params) {
     if(params.size() != 0) {
-        throw unsupported_operation_exception("Frame mirror update config error: unsupported operation.");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("Frame mirror update config error: unsupported operation.");
     }
 }
 
@@ -325,7 +325,7 @@ std::shared_ptr<Frame> FrameMirror::process(std::shared_ptr<const Frame> frame) 
         }
     }
     catch(libobsensor_exception &error) {
-        LOG_WARN_INTVL("Frame mirror camera intrinsic conversion failed{0}, exception type: {1}", error.get_message(), error.get_exception_type());
+        LOG_WARN_INTVL("Frame mirror camera intrinsic conversion failed{0}, exception type: {1}", error.getMessage(), error.getExceptionType());
     }
 
     return outFrame;
@@ -348,7 +348,7 @@ FrameFlip::~FrameFlip() noexcept {}
 
 void FrameFlip::updateConfig(std::vector<std::string> &params) {
     if(params.size() != 0) {
-        throw unsupported_operation_exception("Frame flip update config error: unsupported operation.");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("Frame flip update config error: unsupported operation.");
     }
 }
 
@@ -432,7 +432,7 @@ std::shared_ptr<Frame> FrameFlip::process(std::shared_ptr<const Frame> frame) {
         }
     }
     catch(libobsensor_exception &error) {
-        LOG_WARN_INTVL("Frame flip camera intrinsic conversion failed{0}, exception type: {1}", error.get_message(), error.get_exception_type());
+        LOG_WARN_INTVL("Frame flip camera intrinsic conversion failed{0}, exception type: {1}", error.getMessage(), error.getExceptionType());
     }
 
     return outFrame;
@@ -455,7 +455,7 @@ FrameRotate::~FrameRotate() noexcept {}
 
 void FrameRotate::updateConfig(std::vector<std::string> &params) {
     if(params.size() != 1) {
-        throw invalid_value_exception("Frame rotate config error: params size not match");
+        THROW_INVALID_PARAM_EXCEPTION("Frame rotate config error: params size not match");
     }
     try {
         int rotateDegree = static_cast<int>(std::stoi(params[0]));
@@ -466,7 +466,7 @@ void FrameRotate::updateConfig(std::vector<std::string> &params) {
         }
     }
     catch(const std::exception &e) {
-        throw invalid_value_exception("Frame rotate config error: " + std::string(e.what()));
+        THROW_INVALID_PARAM_EXCEPTION("Frame rotate config error: " + std::string(e.what()));
     }
 }
 
@@ -569,7 +569,7 @@ std::shared_ptr<Frame> FrameRotate::process(std::shared_ptr<const Frame> frame) 
         }
     }
     catch(libobsensor_exception &error) {
-        LOG_WARN_INTVL("Frame rotate camera intrinsic conversion failed{0}, exception type: {1}", error.get_message(), error.get_exception_type());
+        LOG_WARN_INTVL("Frame rotate camera intrinsic conversion failed{0}, exception type: {1}", error.getMessage(), error.getExceptionType());
     }
 
     return outFrame;

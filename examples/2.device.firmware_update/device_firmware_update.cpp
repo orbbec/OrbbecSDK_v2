@@ -21,7 +21,7 @@ namespace {
 constexpr uint32_t MS_PER_SECOND            = 1000;
 constexpr uint32_t MAX_RECONNECT_TIMEOUT_MS = 15000;
 constexpr uint32_t POLL_INTERVAL_MS         = 1000;
-}
+}  // namespace
 
 struct CmdArgs {
     bool        listOnly = false;
@@ -65,7 +65,7 @@ int main(int argc, char *argv[]) try {
         }
         catch(ob::Error &e) {
             std::cerr << "Failed to get device, ignoring it." << std::endl;
-            std::cerr << "Error message: " << e.what() << std::endl;
+            std::cerr << "Error message: " << e.what() << " (status: " << e.getStatus() << ")" << std::endl;
         }
     }
     if(devices.empty()) {
@@ -131,7 +131,7 @@ int main(int argc, char *argv[]) try {
             cv.notify_one();
         }
         catch(ob::Error &e) {
-            (void)e;
+            std::cerr << "Device changed callback getDeviceBySN failed: " << e.what() << " (status: " << e.getStatus() << ")" << std::endl;
         }
     });
 
@@ -208,7 +208,8 @@ int main(int argc, char *argv[]) try {
     return 0;
 }
 catch(ob::Error &e) {
-    std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\ntype:" << e.getExceptionType() << std::endl;
+    std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\nstatus:" << e.getStatus()
+              << "\ntype:" << e.getExceptionType() << std::endl;
     std::cout << "\nPress any key to exit.";
     ob_smpl::waitForKeyPressed();
     exit(EXIT_FAILURE);
@@ -408,7 +409,7 @@ void updateFirmware(std::shared_ptr<ob::Device> device, const std::string &firmw
         // If the update fails, will throw an exception.
         std::cout << std::endl;
         std::cerr << "Error: The upgrade was interrupted! An error occurred! " << std::endl;
-        std::cerr << "       Error message: " << e.what() << std::endl;
+        std::cerr << "       Error message: " << e.what() << " (status: " << e.getStatus() << ")" << std::endl;
         std::cout << "\nPress any key to exit." << std::endl;
         ob_smpl::waitForKeyPressed();
         exit(EXIT_FAILURE);

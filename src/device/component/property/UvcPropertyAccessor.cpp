@@ -49,20 +49,20 @@ uint32_t convertToUvcCompatibleID(uint32_t propertyId) {
         return propertyId;
 
     default:
-        throw unsupported_operation_exception("Unsupported property requestId!");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("Unsupported property requestId!");
     }
 }
 
 UvcPropertyAccessor::UvcPropertyAccessor(const std::shared_ptr<ISourcePort> &backend) : backend_(backend) {
     auto uvcPort = std::dynamic_pointer_cast<UvcDevicePort>(backend_);
     if(!uvcPort) {
-        throw invalid_value_exception("UvcPropertyAccessor backend must be UvcDevicePort");
+        THROW_INVALID_PARAM_EXCEPTION("UvcPropertyAccessor backend must be UvcDevicePort");
     }
 }
 
 void UvcPropertyAccessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
-    auto    uvcDevicePort = std::dynamic_pointer_cast<UvcDevicePort>(backend_);
-    int32_t val;
+    auto            uvcDevicePort = std::dynamic_pointer_cast<UvcDevicePort>(backend_);
+    int32_t         val;
     OBPropertyValue fixValue;
 
     switch(propertyId) {

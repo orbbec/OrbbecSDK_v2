@@ -126,7 +126,7 @@ HANDLE_EXCEPTIONS_NO_RETURN(source, type /*, extrinsic*/)  // TODO: add ob_extri
 uint32_t ob_video_stream_profile_get_fps(const ob_stream_profile *profile, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(profile);
     if(!profile->profile->is<libobsensor::VideoStreamProfile>()) {
-        throw libobsensor::unsupported_operation_exception("It's not a video stream profile!");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("It's not a video stream profile!");
     }
     auto videoProfile = profile->profile->as<libobsensor::VideoStreamProfile>();
     return videoProfile->getFps();
@@ -136,7 +136,7 @@ HANDLE_EXCEPTIONS_AND_RETURN(0, profile)
 uint32_t ob_video_stream_profile_get_width(const ob_stream_profile *profile, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(profile);
     if(!profile->profile->is<libobsensor::VideoStreamProfile>()) {
-        throw libobsensor::unsupported_operation_exception("It's not a video stream profile!");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("It's not a video stream profile!");
     }
     auto videoProfile = profile->profile->as<libobsensor::VideoStreamProfile>();
     return videoProfile->getWidth();
@@ -147,7 +147,7 @@ void ob_video_stream_profile_set_width(ob_stream_profile *profile, uint32_t widt
     VALIDATE_NOT_NULL(profile);
     VALIDATE_GE(width, 1);
     if(!profile->profile->is<libobsensor::VideoStreamProfile>()) {
-        throw libobsensor::unsupported_operation_exception("It's not a video stream profile!");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("It's not a video stream profile!");
     }
     auto videoProfile          = profile->profile->as<libobsensor::VideoStreamProfile>();
     auto noneConstVideoProfile = std::const_pointer_cast<libobsensor::VideoStreamProfile>(videoProfile);
@@ -158,7 +158,7 @@ HANDLE_EXCEPTIONS_NO_RETURN(profile, width)
 uint32_t ob_video_stream_profile_get_height(const ob_stream_profile *profile, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(profile);
     if(!profile->profile->is<libobsensor::VideoStreamProfile>()) {
-        throw libobsensor::unsupported_operation_exception("It's not a video stream profile!");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("It's not a video stream profile!");
     }
     auto videoProfile = profile->profile->as<libobsensor::VideoStreamProfile>();
     return videoProfile->getHeight();
@@ -169,7 +169,7 @@ void ob_video_stream_profile_set_height(ob_stream_profile *profile, uint32_t hei
     VALIDATE_NOT_NULL(profile);
     VALIDATE_GE(height, 1);
     if(!profile->profile->is<libobsensor::VideoStreamProfile>()) {
-        throw libobsensor::unsupported_operation_exception("It's not a video stream profile!");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("It's not a video stream profile!");
     }
     auto videoProfile          = profile->profile->as<libobsensor::VideoStreamProfile>();
     auto noneConstVideoProfile = std::const_pointer_cast<libobsensor::VideoStreamProfile>(videoProfile);
@@ -180,7 +180,7 @@ HANDLE_EXCEPTIONS_NO_RETURN(profile, height)
 ob_camera_intrinsic ob_video_stream_profile_get_intrinsic(const ob_stream_profile *profile, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(profile);
     if(!profile->profile->is<libobsensor::VideoStreamProfile>()) {
-        throw libobsensor::unsupported_operation_exception("It's not a video stream profile!");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("It's not a video stream profile!");
     }
     auto videoProfile = profile->profile->as<libobsensor::VideoStreamProfile>();
     return videoProfile->getIntrinsic();
@@ -190,7 +190,7 @@ HANDLE_EXCEPTIONS_AND_RETURN(ob_camera_intrinsic(), profile)
 void ob_video_stream_profile_set_intrinsic(ob_stream_profile *profile, ob_camera_intrinsic intrinsic, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(profile);
     if(!profile->profile->is<libobsensor::VideoStreamProfile>()) {
-        throw libobsensor::unsupported_operation_exception("It's not a video stream profile!");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("It's not a video stream profile!");
     }
     auto noneConstProfile = std::const_pointer_cast<libobsensor::StreamProfile>(profile->profile);
     auto videoProfile     = noneConstProfile->as<libobsensor::VideoStreamProfile>();
@@ -201,7 +201,7 @@ HANDLE_EXCEPTIONS_NO_RETURN(profile /*, intrinsic*/)  // TODO: add ob_camera_int
 ob_camera_distortion ob_video_stream_profile_get_distortion(const ob_stream_profile *profile, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(profile);
     if(!profile->profile->is<libobsensor::VideoStreamProfile>()) {
-        throw libobsensor::unsupported_operation_exception("It's not a video stream profile!");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("It's not a video stream profile!");
     }
     auto videoProfile = profile->profile->as<libobsensor::VideoStreamProfile>();
     return videoProfile->getDistortion();
@@ -211,7 +211,7 @@ HANDLE_EXCEPTIONS_AND_RETURN(ob_camera_distortion(), profile)
 ob_hardware_decimation_config ob_video_stream_profile_get_decimation_config(const ob_stream_profile *profile, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(profile);
     if(!profile->profile->is<libobsensor::VideoStreamProfile>()) {
-        throw libobsensor::unsupported_operation_exception("It's not a video stream profile!");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("It's not a video stream profile!");
     }
     auto videoProfile = profile->profile->as<libobsensor::VideoStreamProfile>();
     return videoProfile->getDecimationConfig();
@@ -220,7 +220,7 @@ HANDLE_EXCEPTIONS_AND_RETURN(ob_hardware_decimation_config(), profile)
 void ob_video_stream_profile_set_distortion(ob_stream_profile *profile, ob_camera_distortion distortion, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(profile);
     if(!profile->profile->is<libobsensor::VideoStreamProfile>()) {
-        throw libobsensor::unsupported_operation_exception("It's not a video stream profile!");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("It's not a video stream profile!");
     }
     auto noneConstProfile = std::const_pointer_cast<libobsensor::StreamProfile>(profile->profile);
     auto videoProfile     = noneConstProfile->as<libobsensor::VideoStreamProfile>();
@@ -231,7 +231,7 @@ HANDLE_EXCEPTIONS_NO_RETURN(profile /*, distortion*/)  // TODO: add ob_camera_di
 ob_disparity_param ob_disparity_based_stream_profile_get_disparity_param(const ob_stream_profile *profile, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(profile);
     if(!profile->profile->is<libobsensor::DisparityBasedStreamProfile>()) {
-        throw libobsensor::unsupported_operation_exception("It's not a disparity based stream profile!");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("It's not a disparity based stream profile!");
     }
     auto disparityProfile = profile->profile->as<libobsensor::DisparityBasedStreamProfile>();
     return disparityProfile->getDisparityParam();
@@ -241,7 +241,7 @@ HANDLE_EXCEPTIONS_AND_RETURN(ob_disparity_param(), profile)
 void ob_disparity_based_stream_profile_set_disparity_param(ob_stream_profile *profile, ob_disparity_param disparity_param, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(profile);
     if(!profile->profile->is<libobsensor::DisparityBasedStreamProfile>()) {
-        throw libobsensor::unsupported_operation_exception("It's not a disparity based stream profile!");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("It's not a disparity based stream profile!");
     }
     auto noneConstProfile = std::const_pointer_cast<libobsensor::StreamProfile>(profile->profile);
     auto videoProfile     = noneConstProfile->as<libobsensor::DisparityBasedStreamProfile>();
@@ -252,7 +252,7 @@ HANDLE_EXCEPTIONS_NO_RETURN(profile /*,disparity_param*/)
 ob_accel_full_scale_range ob_accel_stream_profile_get_full_scale_range(const ob_stream_profile *profile, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(profile);
     if(!profile->profile->is<libobsensor::AccelStreamProfile>()) {
-        throw libobsensor::unsupported_operation_exception("It's not an accel stream profile!");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("It's not an accel stream profile!");
     }
     auto accelProfile = profile->profile->as<libobsensor::AccelStreamProfile>();
     return accelProfile->getFullScaleRange();
@@ -262,7 +262,7 @@ HANDLE_EXCEPTIONS_AND_RETURN(ob_accel_full_scale_range(), profile)
 ob_accel_sample_rate ob_accel_stream_profile_get_sample_rate(const ob_stream_profile *profile, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(profile);
     if(!profile->profile->is<libobsensor::AccelStreamProfile>()) {
-        throw libobsensor::unsupported_operation_exception("It's not an accel stream profile!");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("It's not an accel stream profile!");
     }
     auto accelProfile = profile->profile->as<libobsensor::AccelStreamProfile>();
     return accelProfile->getSampleRate();
@@ -272,7 +272,7 @@ HANDLE_EXCEPTIONS_AND_RETURN(ob_accel_sample_rate(), profile)
 ob_accel_intrinsic ob_accel_stream_profile_get_intrinsic(const ob_stream_profile *profile, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(profile);
     if(!profile->profile->is<libobsensor::AccelStreamProfile>()) {
-        throw libobsensor::unsupported_operation_exception("It's not an accel stream profile!");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("It's not an accel stream profile!");
     }
     auto accelProfile = profile->profile->as<libobsensor::AccelStreamProfile>();
     return accelProfile->getIntrinsic();
@@ -282,7 +282,7 @@ HANDLE_EXCEPTIONS_AND_RETURN(ob_accel_intrinsic(), profile)
 void ob_accel_stream_profile_set_intrinsic(ob_stream_profile *profile, ob_accel_intrinsic intrinsic, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(profile);
     if(!profile->profile->is<libobsensor::AccelStreamProfile>()) {
-        throw libobsensor::unsupported_operation_exception("It's not an accel stream profile!");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("It's not an accel stream profile!");
     }
     auto noneConstProfile = std::const_pointer_cast<libobsensor::StreamProfile>(profile->profile);
     auto accelProfile     = noneConstProfile->as<libobsensor::AccelStreamProfile>();
@@ -293,7 +293,7 @@ HANDLE_EXCEPTIONS_NO_RETURN(profile /*, intrinsic*/)  // TODO: add ob_accel_intr
 ob_gyro_full_scale_range ob_gyro_stream_profile_get_full_scale_range(const ob_stream_profile *profile, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(profile);
     if(!profile->profile->is<libobsensor::GyroStreamProfile>()) {
-        throw libobsensor::unsupported_operation_exception("It's not a gyro stream profile!");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("It's not a gyro stream profile!");
     }
     auto gyroProfile = profile->profile->as<libobsensor::GyroStreamProfile>();
     return gyroProfile->getFullScaleRange();
@@ -303,7 +303,7 @@ HANDLE_EXCEPTIONS_AND_RETURN(ob_gyro_full_scale_range(), profile)
 ob_gyro_sample_rate ob_gyro_stream_profile_get_sample_rate(const ob_stream_profile *profile, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(profile);
     if(!profile->profile->is<libobsensor::GyroStreamProfile>()) {
-        throw libobsensor::unsupported_operation_exception("It's not a gyro stream profile!");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("It's not a gyro stream profile!");
     }
     auto gyroProfile = profile->profile->as<libobsensor::GyroStreamProfile>();
     return gyroProfile->getSampleRate();
@@ -313,7 +313,7 @@ HANDLE_EXCEPTIONS_AND_RETURN(ob_gyro_sample_rate(), profile)
 ob_gyro_intrinsic ob_gyro_stream_get_intrinsic(const ob_stream_profile *profile, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(profile);
     if(!profile->profile->is<libobsensor::GyroStreamProfile>()) {
-        throw libobsensor::unsupported_operation_exception("It's not a gyro stream profile!");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("It's not a gyro stream profile!");
     }
     auto gyroProfile = profile->profile->as<libobsensor::GyroStreamProfile>();
     return gyroProfile->getIntrinsic();
@@ -323,7 +323,7 @@ HANDLE_EXCEPTIONS_AND_RETURN(ob_gyro_intrinsic(), profile)
 void ob_gyro_stream_set_intrinsic(ob_stream_profile *profile, ob_gyro_intrinsic intrinsic, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(profile);
     if(!profile->profile->is<libobsensor::GyroStreamProfile>()) {
-        throw libobsensor::unsupported_operation_exception("It's not a gyro stream profile!");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("It's not a gyro stream profile!");
     }
     auto noneConstProfile = std::const_pointer_cast<libobsensor::StreamProfile>(profile->profile);
     auto gyroProfile      = noneConstProfile->as<libobsensor::GyroStreamProfile>();
@@ -334,7 +334,7 @@ HANDLE_EXCEPTIONS_NO_RETURN(profile /*, intrinsic*/)  // TODO: add ob_gyro_intri
 ob_lidar_scan_rate ob_lidar_stream_profile_get_scan_rate(const ob_stream_profile *profile, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(profile);
     if(!profile->profile->is<libobsensor::LiDARStreamProfile>()) {
-        throw libobsensor::unsupported_operation_exception("It's not a LiDAR stream profile!");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("It's not a LiDAR stream profile!");
     }
     auto lidarProfile = profile->profile->as<libobsensor::LiDARStreamProfile>();
     return lidarProfile->getScanRate();
@@ -346,7 +346,7 @@ ob_stream_profile *ob_stream_profile_list_get_video_stream_profile(const ob_stre
     VALIDATE_NOT_NULL(profile_list);
     auto matchedProfileList = libobsensor::matchVideoStreamProfile(profile_list->profileList, width, height, fps, format);
     if(matchedProfileList.empty()) {
-        throw libobsensor::invalid_value_exception("Invalid input, No matched video stream profile found!");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid input, No matched video stream profile found!");
     }
     auto profileImpl     = new ob_stream_profile();
     profileImpl->profile = matchedProfileList[0];
@@ -360,7 +360,7 @@ ob_stream_profile *ob_stream_profile_list_get_video_stream_profile_by_decimation
     VALIDATE_NOT_NULL(profile_list);
     auto matchedProfileList = libobsensor::matchVideoStreamProfile(profile_list->profileList, fps, format, decimation_config);
     if(matchedProfileList.empty()) {
-        throw libobsensor::invalid_value_exception("Invalid input, No matched video stream profile found!");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid input, No matched video stream profile found!");
     }
     auto profileImpl     = new ob_stream_profile();
     profileImpl->profile = matchedProfileList[0];
@@ -373,7 +373,7 @@ ob_stream_profile *ob_stream_profile_list_get_accel_stream_profile(const ob_stre
     VALIDATE_NOT_NULL(profile_list);
     auto matchedProfileList = libobsensor::matchAccelStreamProfile(profile_list->profileList, full_scale_range, sample_rate);
     if(matchedProfileList.empty()) {
-        throw libobsensor::invalid_value_exception("Invalid input, No matched accel stream profile found!");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid input, No matched accel stream profile found!");
     }
     auto profileImpl     = new ob_stream_profile();
     profileImpl->profile = matchedProfileList[0];
@@ -386,7 +386,7 @@ ob_stream_profile *ob_stream_profile_list_get_gyro_stream_profile(const ob_strea
     VALIDATE_NOT_NULL(profile_list);
     auto matchedProfileList = libobsensor::matchGyroStreamProfile(profile_list->profileList, full_scale_range, sample_rate);
     if(matchedProfileList.empty()) {
-        throw libobsensor::invalid_value_exception("Invalid input, No matched gyro stream profile found!");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid input, No matched gyro stream profile found!");
     }
     auto profileImpl     = new ob_stream_profile();
     profileImpl->profile = matchedProfileList[0];
@@ -399,7 +399,7 @@ ob_stream_profile *ob_stream_profile_list_get_lidar_stream_profile(const ob_stre
     VALIDATE_NOT_NULL(profile_list);
     auto matchedProfileList = libobsensor::matchLiDARStreamProfile(profile_list->profileList, scan_rate, format);
     if(matchedProfileList.empty()) {
-        throw libobsensor::invalid_value_exception("Invalid input, No matched LiDAR stream profile found!");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid input, No matched LiDAR stream profile found!");
     }
     auto profileImpl     = new ob_stream_profile();
     profileImpl->profile = matchedProfileList[0];
@@ -411,7 +411,7 @@ ob_stream_profile *ob_stream_profile_list_get_profile(const ob_stream_profile_li
     VALIDATE_NOT_NULL(profile_list);
     auto innerProfiles = profile_list->profileList;
     if(index < 0 || static_cast<size_t>(index) >= innerProfiles.size()) {
-        throw libobsensor::invalid_value_exception("ob_stream_profile_list_get_profile: index out of range!");
+        THROW_INVALID_PARAM_EXCEPTION("ob_stream_profile_list_get_profile: index out of range!");
     }
     auto innerProfile    = innerProfiles[index];
     auto profileImpl     = new ob_stream_profile();

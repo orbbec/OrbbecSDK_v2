@@ -15,10 +15,9 @@ SequenceIdFilter::~SequenceIdFilter() noexcept {}
 
 void SequenceIdFilter::updateConfig(std::vector<std::string> &params) {
     if(params.size() != 1) {
-        throw invalid_value_exception("SequenceIdFilter config error: params size not match");
+        THROW_INVALID_PARAM_EXCEPTION("SequenceIdFilter config error: params size not match");
     }
     try {
-
         int select_sequence_id = std::stoi(params[0]);
         if(select_sequence_id >= -1 && select_sequence_id <= 1) {
             if(select_sequence_id != selectedID_) {
@@ -28,7 +27,7 @@ void SequenceIdFilter::updateConfig(std::vector<std::string> &params) {
         }
     }
     catch(const std::exception &e) {
-        throw invalid_value_exception("SequenceIdFilter config error: " + std::string(e.what()));
+        THROW_INVALID_PARAM_EXCEPTION("SequenceIdFilter config error: " + std::string(e.what()));
     }
 }
 
@@ -80,4 +79,3 @@ std::shared_ptr<Frame> SequenceIdFilter::process(std::shared_ptr<const Frame> fr
 }
 
 }  // namespace libobsensor
-

@@ -78,9 +78,7 @@ template <typename Container, typename Equal> void merge_unique_into(Container &
 // It populates the global device information map, series containers,
 // supporting both internal and external XML configurations.
 void DeviceSeriesInfoManager::loadXmlConfig(const std::string &configFileName, bool isExternalConfig) {
-    std::function<void(DeviceInfoConfig &)> throwError = [](DeviceInfoConfig &config) {
-        throw libobsensor::invalid_value_exception("Error: " + config.getLastError());
-    };
+    std::function<void(DeviceInfoConfig &)> throwError  = [](DeviceInfoConfig &config) { THROW_INVALID_PARAM_EXCEPTION("Error: " + config.getLastError()); };
     std::function<void(DeviceInfoConfig &)> ignoreError = [](DeviceInfoConfig &config) { LOG_DEBUG("Ignore error: {}", config.getLastError()); };
     std::function<void(DeviceInfoConfig &)> errHandle   = isExternalConfig ? ignoreError : throwError;
 

@@ -53,7 +53,7 @@ GVCPClient::GVCPClient() {
 #if (defined(WIN32) || defined(_WIN32) || defined(WINCE))
     WSADATA wsaData;
     if(WSAStartup(MAKEWORD(2, 2), &wsaData)) {
-        throw libobsensor::invalid_value_exception(utils::string::to_string() << "Failed to initialize WinSock! err_code=" << GET_LAST_ERROR());
+        THROW_IO_EXCEPTION(utils::string::to_string() << "Failed to initialize WinSock! err_code=" << GET_LAST_ERROR());
     }
 #endif
     openClientSockets();
@@ -417,7 +417,7 @@ SOCKET GVCPClient::openClientSocket(SOCKADDR_IN addr) {
     // Create socket
     SOCKET sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if(sock == INVALID_SOCKET) {
-        throw libobsensor::invalid_value_exception(utils::string::to_string() << "Failed to create socket! err_code=" << GET_LAST_ERROR());
+        THROW_IO_EXCEPTION(utils::string::to_string() << "Failed to create socket! err_code=" << GET_LAST_ERROR());
     }
 
     // Set broadcast options
@@ -428,11 +428,11 @@ SOCKET GVCPClient::openClientSocket(SOCKADDR_IN addr) {
     // int     err = setsockopt(sock, SOL_SOCKET, SO_BROADCAST | SO_REUSEADDR, (char *)&bBroadcast, sizeof(bBroadcast));
     int err = setsockopt(sock, SOL_SOCKET, SO_BROADCAST, (char *)&bBroadcast, sizeof(bBroadcast));
     if(err == SOCKET_ERROR) {
-        throw libobsensor::invalid_value_exception(utils::string::to_string() << "Failed to set socket boardcast option! err_code=" << GET_LAST_ERROR());
+        THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "Failed to set socket boardcast option! err_code=" << GET_LAST_ERROR());
     }
     err = setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *)&bBroadcast, sizeof(bBroadcast));
     if(err == SOCKET_ERROR) {
-        throw libobsensor::invalid_value_exception(utils::string::to_string() << "Failed to set socket reuseaddr option! err_code=" << GET_LAST_ERROR());
+        THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "Failed to set socket reuseaddr option! err_code=" << GET_LAST_ERROR());
     }
 #endif
 
@@ -446,7 +446,7 @@ SOCKET GVCPClient::openClientSocket(SOCKADDR_IN addr) {
 #endif
     err = setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&dwTimeout, sizeof(dwTimeout));
     if(err == SOCKET_ERROR) {
-        throw libobsensor::invalid_value_exception(utils::string::to_string() << "Failed to set socket timeout option! err_code=" << GET_LAST_ERROR());
+        THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "Failed to set socket timeout option! err_code=" << GET_LAST_ERROR());
     }
 
 #if (defined(__linux__) || defined(OS_IOS) || defined(OS_MACOS) || defined(__ANDROID__))

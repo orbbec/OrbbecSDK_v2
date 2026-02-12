@@ -28,8 +28,8 @@ UsageEnvironment &operator<<(UsageEnvironment &env, const MediaSubsession &subse
     return env << subsession.mediumName() << "/" << subsession.codecName();
 }
 
-ObRTSPClient *ObRTSPClient::createNew(std::shared_ptr<const StreamProfile> profile, UsageEnvironment &env, char const *rtspURL, MutableFrameCallback callback, int verbosityLevel,
-                                      portNumBits tunnelOverHTTPPortNum, int socketNumToServer) {
+ObRTSPClient *ObRTSPClient::createNew(std::shared_ptr<const StreamProfile> profile, UsageEnvironment &env, char const *rtspURL, MutableFrameCallback callback,
+                                      int verbosityLevel, portNumBits tunnelOverHTTPPortNum, int socketNumToServer) {
     return new ObRTSPClient(profile, env, rtspURL, callback, verbosityLevel, tunnelOverHTTPPortNum, socketNumToServer);
 }
 
@@ -78,7 +78,7 @@ void ObRTSPClient::startStream() {
             TRY_EXECUTE(stopStream());
         }
 
-        throw libobsensor::camera_disconnected_exception(msg);
+        THROW_DEVICE_DISCONNECTED_EXCEPTION(msg);
     }
 
     envir() << "ObRTSPClient stream started! rtspURL = " << url() << "\n";
@@ -96,7 +96,7 @@ void ObRTSPClient::stopStream() {
             if(commandState_ == CMD_TIMEOUT && !errorMsg_.length()) {
                 errorMsg_ = utils::string::to_string() << "Wait command respones failed! Timeout! state=TEARDOWN";
             }
-            throw libobsensor::camera_disconnected_exception(errorMsg_);
+            THROW_DEVICE_DISCONNECTED_EXCEPTION(errorMsg_);
         }
         envir() << "ObRTSPClient: stream stoped! rtspURL = " << url() << "\n";
     }
@@ -362,4 +362,3 @@ void ObRTSPClient::streamStopEventHandler(void *clientData) {
 }
 
 }  // namespace libobsensor
-

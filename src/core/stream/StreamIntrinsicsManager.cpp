@@ -25,10 +25,10 @@ StreamIntrinsicsManager::~StreamIntrinsicsManager() noexcept = default;
 
 void StreamIntrinsicsManager::registerVideoStreamIntrinsics(const std::shared_ptr<const StreamProfile> &profile, const OBCameraIntrinsic &intrinsics) {
     if(!profile) {
-        throw invalid_value_exception("Input stream profile is null.");
+        THROW_INVALID_PARAM_EXCEPTION("Input stream profile is null.");
     }
     if(!profile->is<const VideoStreamProfile>()) {
-        throw invalid_value_exception("Input stream profile is not a video stream profile.");
+        THROW_INVALID_PARAM_EXCEPTION("Input stream profile is not a video stream profile.");
     }
     std::lock_guard<std::mutex> lock(mutex_);
     // remove expired stream profiles
@@ -53,10 +53,10 @@ void StreamIntrinsicsManager::registerVideoStreamIntrinsics(const std::shared_pt
 
 OBCameraIntrinsic StreamIntrinsicsManager::getVideoStreamIntrinsics(const std::shared_ptr<const StreamProfile> &profile) {
     if(!profile) {
-        throw invalid_value_exception("Input stream profile is null.");
+        THROW_INVALID_PARAM_EXCEPTION("Input stream profile is null.");
     }
     if(!profile->is<const VideoStreamProfile>()) {
-        throw invalid_value_exception("Input stream profile is not a video stream profile.");
+        THROW_INVALID_PARAM_EXCEPTION("Input stream profile is not a video stream profile.");
     }
 
     std::lock_guard<std::mutex> lock(mutex_);
@@ -65,15 +65,15 @@ OBCameraIntrinsic StreamIntrinsicsManager::getVideoStreamIntrinsics(const std::s
             return pair.second;
         }
     }
-    throw invalid_value_exception("Intrinsics for the input stream profile is not found.");
+    THROW_INVALID_PARAM_EXCEPTION("Intrinsics for the input stream profile is not found.");
 }
 
 bool StreamIntrinsicsManager::containsVideoStreamIntrinsics(const std::shared_ptr<const StreamProfile> &profile) {
     if(!profile) {
-        throw invalid_value_exception("Input stream profile is null.");
+        THROW_INVALID_PARAM_EXCEPTION("Input stream profile is null.");
     }
     if(!profile->is<const VideoStreamProfile>()) {
-        throw invalid_value_exception("Input stream profile is not a video stream profile.");
+        THROW_INVALID_PARAM_EXCEPTION("Input stream profile is not a video stream profile.");
     }
 
     std::lock_guard<std::mutex> lock(mutex_);
@@ -87,10 +87,10 @@ bool StreamIntrinsicsManager::containsVideoStreamIntrinsics(const std::shared_pt
 
 void StreamIntrinsicsManager::registerVideoStreamDistortion(const std::shared_ptr<const StreamProfile> &profile, const OBCameraDistortion &distortion) {
     if(!profile) {
-        throw invalid_value_exception("Input stream profile is null.");
+        THROW_INVALID_PARAM_EXCEPTION("Input stream profile is null.");
     }
     if(!profile->is<const VideoStreamProfile>()) {
-        throw invalid_value_exception("Input stream profile is not a video stream profile.");
+        THROW_INVALID_PARAM_EXCEPTION("Input stream profile is not a video stream profile.");
     }
     std::lock_guard<std::mutex> lock(mutex_);
     // remove expired stream profiles
@@ -108,10 +108,10 @@ void StreamIntrinsicsManager::registerVideoStreamDistortion(const std::shared_pt
 
 OBCameraDistortion StreamIntrinsicsManager::getVideoStreamDistortion(const std::shared_ptr<const StreamProfile> &profile) {
     if(!profile) {
-        throw invalid_value_exception("Input stream profile is null.");
+        THROW_INVALID_PARAM_EXCEPTION("Input stream profile is null.");
     }
     if(!profile->is<const VideoStreamProfile>()) {
-        throw invalid_value_exception("Input stream profile is not a video stream profile.");
+        THROW_INVALID_PARAM_EXCEPTION("Input stream profile is not a video stream profile.");
     }
 
     std::lock_guard<std::mutex> lock(mutex_);
@@ -120,15 +120,15 @@ OBCameraDistortion StreamIntrinsicsManager::getVideoStreamDistortion(const std::
             return pair.second;
         }
     }
-    throw invalid_value_exception("Distortion for the input stream profile is not found.");
+    THROW_INVALID_PARAM_EXCEPTION("Distortion for the input stream profile is not found.");
 }
 
 bool StreamIntrinsicsManager::containsVideoStreamDistortion(const std::shared_ptr<const StreamProfile> &profile) {
     if(!profile) {
-        throw invalid_value_exception("Input stream profile is null.");
+        THROW_INVALID_PARAM_EXCEPTION("Input stream profile is null.");
     }
     if(!profile->is<const VideoStreamProfile>()) {
-        throw invalid_value_exception("Input stream profile is not a video stream profile.");
+        THROW_INVALID_PARAM_EXCEPTION("Input stream profile is not a video stream profile.");
     }
 
     std::lock_guard<std::mutex> lock(mutex_);
@@ -142,10 +142,10 @@ bool StreamIntrinsicsManager::containsVideoStreamDistortion(const std::shared_pt
 
 void StreamIntrinsicsManager::registerGyroStreamIntrinsics(const std::shared_ptr<const StreamProfile> &profile, const OBGyroIntrinsic &intrinsics) {
     if(!profile) {
-        throw invalid_value_exception("Input stream profile is null.");
+        THROW_INVALID_PARAM_EXCEPTION("Input stream profile is null.");
     }
     if(!profile->is<const GyroStreamProfile>()) {
-        throw invalid_value_exception("Input stream profile is not a gyro stream profile.");
+        THROW_INVALID_PARAM_EXCEPTION("Input stream profile is not a gyro stream profile.");
     }
     std::lock_guard<std::mutex> lock(mutex_);
     // remove expired stream profiles
@@ -163,10 +163,10 @@ void StreamIntrinsicsManager::registerGyroStreamIntrinsics(const std::shared_ptr
 
 OBGyroIntrinsic StreamIntrinsicsManager::getGyroStreamIntrinsics(const std::shared_ptr<const StreamProfile> &profile) {
     if(!profile) {
-        throw invalid_value_exception("Input stream profile is null.");
+        THROW_INVALID_PARAM_EXCEPTION("Input stream profile is null.");
     }
     if(!profile->is<const GyroStreamProfile>()) {
-        throw invalid_value_exception("Input stream profile is not a gyro stream profile.");
+        THROW_INVALID_PARAM_EXCEPTION("Input stream profile is not a gyro stream profile.");
     }
 
     std::lock_guard<std::mutex> lock(mutex_);
@@ -175,15 +175,15 @@ OBGyroIntrinsic StreamIntrinsicsManager::getGyroStreamIntrinsics(const std::shar
             return pair.second;
         }
     }
-    throw invalid_value_exception("Intrinsics for the input stream profile is not found.");
+    THROW_INVALID_PARAM_EXCEPTION("Intrinsics for the input stream profile is not found.");
 }
 
 bool StreamIntrinsicsManager::containsGyroStreamIntrinsics(const std::shared_ptr<const StreamProfile> &profile) {
     if(!profile) {
-        throw invalid_value_exception("Input stream profile is null.");
+        THROW_INVALID_PARAM_EXCEPTION("Input stream profile is null.");
     }
     if(!profile->is<const GyroStreamProfile>()) {
-        throw invalid_value_exception("Input stream profile is not a gyro stream profile.");
+        THROW_INVALID_PARAM_EXCEPTION("Input stream profile is not a gyro stream profile.");
     }
 
     std::lock_guard<std::mutex> lock(mutex_);
@@ -197,10 +197,10 @@ bool StreamIntrinsicsManager::containsGyroStreamIntrinsics(const std::shared_ptr
 
 void StreamIntrinsicsManager::registerAccelStreamIntrinsics(const std::shared_ptr<const StreamProfile> &profile, const OBAccelIntrinsic &intrinsics) {
     if(!profile) {
-        throw invalid_value_exception("Input stream profile is null.");
+        THROW_INVALID_PARAM_EXCEPTION("Input stream profile is null.");
     }
     if(!profile->is<const AccelStreamProfile>()) {
-        throw invalid_value_exception("Input stream profile is not a accel stream profile.");
+        THROW_INVALID_PARAM_EXCEPTION("Input stream profile is not a accel stream profile.");
     }
     std::lock_guard<std::mutex> lock(mutex_);
     // remove expired stream profiles
@@ -218,10 +218,10 @@ void StreamIntrinsicsManager::registerAccelStreamIntrinsics(const std::shared_pt
 
 OBAccelIntrinsic StreamIntrinsicsManager::getAccelStreamIntrinsics(const std::shared_ptr<const StreamProfile> &profile) {
     if(!profile) {
-        throw invalid_value_exception("Input stream profile is null.");
+        THROW_INVALID_PARAM_EXCEPTION("Input stream profile is null.");
     }
     if(!profile->is<const AccelStreamProfile>()) {
-        throw invalid_value_exception("Input stream profile is not a accel stream profile.");
+        THROW_INVALID_PARAM_EXCEPTION("Input stream profile is not a accel stream profile.");
     }
 
     std::lock_guard<std::mutex> lock(mutex_);
@@ -230,15 +230,15 @@ OBAccelIntrinsic StreamIntrinsicsManager::getAccelStreamIntrinsics(const std::sh
             return pair.second;
         }
     }
-    throw invalid_value_exception("Intrinsics for the input stream profile is not found.");
+    THROW_INVALID_PARAM_EXCEPTION("Intrinsics for the input stream profile is not found.");
 }
 
 bool StreamIntrinsicsManager::containsAccelStreamIntrinsics(const std::shared_ptr<const StreamProfile> &profile) {
     if(!profile) {
-        throw invalid_value_exception("Input stream profile is null.");
+        THROW_INVALID_PARAM_EXCEPTION("Input stream profile is null.");
     }
     if(!profile->is<const AccelStreamProfile>()) {
-        throw invalid_value_exception("Input stream profile is not a accel stream profile.");
+        THROW_INVALID_PARAM_EXCEPTION("Input stream profile is not a accel stream profile.");
     }
 
     std::lock_guard<std::mutex> lock(mutex_);
@@ -253,10 +253,10 @@ bool StreamIntrinsicsManager::containsAccelStreamIntrinsics(const std::shared_pt
 void StreamIntrinsicsManager::registerDisparityBasedStreamDisparityParam(const std::shared_ptr<const StreamProfile> &profile,
                                                                          const OBDisparityParam                     &disparityParam) {
     if(!profile) {
-        throw invalid_value_exception("Input stream profile is null.");
+        THROW_INVALID_PARAM_EXCEPTION("Input stream profile is null.");
     }
     if(!profile->is<const DisparityBasedStreamProfile>()) {
-        throw invalid_value_exception("Input stream profile is not a disparity based stream profile.");
+        THROW_INVALID_PARAM_EXCEPTION("Input stream profile is not a disparity based stream profile.");
     }
     std::lock_guard<std::mutex> lock(mutex_);
     // remove expired stream profiles
@@ -274,10 +274,10 @@ void StreamIntrinsicsManager::registerDisparityBasedStreamDisparityParam(const s
 
 OBDisparityParam StreamIntrinsicsManager::getDisparityBasedStreamDisparityParam(const std::shared_ptr<const StreamProfile> &profile) {
     if(!profile) {
-        throw invalid_value_exception("Input stream profile is null.");
+        THROW_INVALID_PARAM_EXCEPTION("Input stream profile is null.");
     }
     if(!profile->is<const DisparityBasedStreamProfile>()) {
-        throw invalid_value_exception("Input stream profile is not a disparity based stream profile.");
+        THROW_INVALID_PARAM_EXCEPTION("Input stream profile is not a disparity based stream profile.");
     }
 
     std::lock_guard<std::mutex> lock(mutex_);
@@ -286,15 +286,15 @@ OBDisparityParam StreamIntrinsicsManager::getDisparityBasedStreamDisparityParam(
             return pair.second;
         }
     }
-    throw invalid_value_exception("Disparity parameter for the input stream profile is not found.");
+    THROW_INVALID_PARAM_EXCEPTION("Disparity parameter for the input stream profile is not found.");
 }
 
 bool StreamIntrinsicsManager::containsDisparityBasedStreamDisparityParam(const std::shared_ptr<const StreamProfile> &profile) {
     if(!profile) {
-        throw invalid_value_exception("Input stream profile is null.");
+        THROW_INVALID_PARAM_EXCEPTION("Input stream profile is null.");
     }
     if(!profile->is<const DisparityBasedStreamProfile>()) {
-        throw invalid_value_exception("Input stream profile is not a disparity based stream profile.");
+        THROW_INVALID_PARAM_EXCEPTION("Input stream profile is not a disparity based stream profile.");
     }
 
     std::lock_guard<std::mutex> lock(mutex_);

@@ -172,7 +172,7 @@ std::shared_ptr<ISourcePort> MacUsbPal::getSourcePort(std::shared_ptr<const Sour
         auto url    = std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->url;
         auto usbDev = usbEnumerator_->openUsbDevice(url);
         if(usbDev == nullptr) {
-            throw libobsensor::camera_disconnected_exception("usbEnumerator openUsbDevice failed!");
+            THROW_DEVICE_UNAVAILABLE_EXCEPTION("usbEnumerator openUsbDevice failed!");
         }
         port = std::make_shared<VendorUsbDevicePort>(usbDev, std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo));
         LOG_DEBUG("Vendor device have been create! url: {}", url);
@@ -182,7 +182,7 @@ std::shared_ptr<ISourcePort> MacUsbPal::getSourcePort(std::shared_ptr<const Sour
         auto usbPortInfo = std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo);
         auto usbDev      = usbEnumerator_->openUsbDevice(std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->url);
         if(usbDev == nullptr) {
-            throw libobsensor::camera_disconnected_exception("usbEnumerator openUsbDevice failed!");
+            THROW_DEVICE_UNAVAILABLE_EXCEPTION("usbEnumerator openUsbDevice failed!");
         }
         port = std::make_shared<ObLibuvcDevicePort>(usbDev, std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo));
         LOG_DEBUG("UVC device have been create with LibUVC backend! dev: {}, inf: {}", usbPortInfo->url, usbPortInfo->infUrl);
@@ -192,7 +192,7 @@ std::shared_ptr<ISourcePort> MacUsbPal::getSourcePort(std::shared_ptr<const Sour
         auto usbPortInfo = std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo);
         auto usbDev      = usbEnumerator_->openUsbDevice(std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->url);
         if(usbDev == nullptr) {
-            throw libobsensor::camera_disconnected_exception("usbEnumerator openUsbDevice failed!");
+            THROW_DEVICE_UNAVAILABLE_EXCEPTION("usbEnumerator openUsbDevice failed!");
         }
         port = std::make_shared<HidDevicePort>(usbDev, std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo));
         LOG_DEBUG("HID device have been create with HID backend! dev: {}, inf: {}", usbPortInfo->url, usbPortInfo->infUrl);
@@ -200,7 +200,7 @@ std::shared_ptr<ISourcePort> MacUsbPal::getSourcePort(std::shared_ptr<const Sour
     }
 
     default:
-        throw libobsensor::invalid_value_exception("unsupported source port type!");
+        THROW_INVALID_PARAM_EXCEPTION("unsupported source port type!");
         break;
     }
     if(port != nullptr) {

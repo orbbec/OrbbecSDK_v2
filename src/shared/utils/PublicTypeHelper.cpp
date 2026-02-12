@@ -68,7 +68,7 @@ bool getBytesPerPixelNoexcept(OBFormat format, float &bytesPerPixel) {
 float getBytesPerPixel(OBFormat format) {
     float bytesPerPixel = 0.0f;
     if(!getBytesPerPixelNoexcept(format, bytesPerPixel)) {
-        throw invalid_value_exception("Unsupported image format or invalid encoding detected. Unable to determine the byte-per-pixel value.");
+        THROW_INVALID_PARAM_EXCEPTION("Unsupported image format or invalid encoding detected. Unable to determine the byte-per-pixel value.");
     }
 
     return bytesPerPixel;
@@ -527,7 +527,7 @@ std::map<OBFrameMetadataType, std::string> Metadata_Str_Map = { { OB_FRAME_METAD
 const std::string &obFormatToStr(OBFormat type) {
     auto it = Format_Str_Map.find(type);
     if(it == Format_Str_Map.end()) {
-        throw invalid_value_exception("Unregistered stream type");
+        THROW_INVALID_PARAM_EXCEPTION("Unregistered stream type");
     }
     return it->second;
 }
@@ -535,7 +535,7 @@ const std::string &obFormatToStr(OBFormat type) {
 const std::string &obFrameToStr(OBFrameType type) {
     auto it = Frame_Str_Map.find(type);
     if(it == Frame_Str_Map.end()) {
-        throw invalid_value_exception("Unregistered frame type");
+        THROW_INVALID_PARAM_EXCEPTION("Unregistered frame type");
     }
     return it->second;
 }
@@ -543,7 +543,7 @@ const std::string &obFrameToStr(OBFrameType type) {
 const std::string &obStreamToStr(OBStreamType type) {
     auto it = Stream_Str_Map.find(type);
     if(it == Stream_Str_Map.end()) {
-        throw invalid_value_exception("Unregistered stream type");
+        THROW_INVALID_PARAM_EXCEPTION("Unregistered stream type");
     }
     return it->second;
 }
@@ -551,7 +551,7 @@ const std::string &obStreamToStr(OBStreamType type) {
 const std::string &obSensorToStr(OBSensorType type) {
     auto it = Sensor_Str_Map.find(type);
     if(it == Sensor_Str_Map.end()) {
-        throw invalid_value_exception("Unregistered sensor type");
+        THROW_INVALID_PARAM_EXCEPTION("Unregistered sensor type");
     }
     return it->second;
 }
@@ -559,7 +559,7 @@ const std::string &obSensorToStr(OBSensorType type) {
 const std::string &obImuRateToStr(OBIMUSampleRate type) {
     auto it = ImuRate_Str_Map.find(type);
     if(it == ImuRate_Str_Map.end()) {
-        throw invalid_value_exception("Unregistered imu rate type");
+        THROW_INVALID_PARAM_EXCEPTION("Unregistered imu rate type");
     }
     return it->second;
 }
@@ -567,7 +567,7 @@ const std::string &obImuRateToStr(OBIMUSampleRate type) {
 const std::string &GyroFullScaleRangeToStr(OBGyroFullScaleRange type) {
     auto it = GyroFullScaleRange_STR_MAP.find(type);
     if(it == GyroFullScaleRange_STR_MAP.end()) {
-        throw invalid_value_exception("Unregistered gyro full scale range name");
+        THROW_INVALID_PARAM_EXCEPTION("Unregistered gyro full scale range name");
     }
     return it->second;
 }
@@ -575,7 +575,7 @@ const std::string &GyroFullScaleRangeToStr(OBGyroFullScaleRange type) {
 const std::string &AccelFullScaleRangeToStr(OBAccelFullScaleRange type) {
     auto it = AccelFullScaleRange_Str_Map.find(type);
     if(it == AccelFullScaleRange_Str_Map.end()) {
-        throw invalid_value_exception("Unregistered acc full scale range name");
+        THROW_INVALID_PARAM_EXCEPTION("Unregistered acc full scale range name");
     }
     return it->second;
 }
@@ -583,7 +583,7 @@ const std::string &AccelFullScaleRangeToStr(OBAccelFullScaleRange type) {
 const std::string &LiDARScanRateToStr(OBLiDARScanRate scanRate) {
     auto it = LiDARScanRate_Str_Map.find(scanRate);
     if(it == LiDARScanRate_Str_Map.end()) {
-        throw invalid_value_exception("Unregistered LiDAR scan rate name");
+        THROW_INVALID_PARAM_EXCEPTION("Unregistered LiDAR scan rate name");
     }
     return it->second;
 }
@@ -591,7 +591,7 @@ const std::string &LiDARScanRateToStr(OBLiDARScanRate scanRate) {
 const std::string &MetaDataToStr(OBFrameMetadataType type) {
     auto it = Metadata_Str_Map.find(type);
     if(it == Metadata_Str_Map.end()) {
-        throw invalid_value_exception("Unregistered metadata name");
+        THROW_INVALID_PARAM_EXCEPTION("Unregistered metadata name");
     }
     return it->second;
 }
@@ -603,7 +603,7 @@ OBFormat strToOBFormat(const std::string str) {
             return it->first;
         }
     }
-    throw invalid_value_exception("Unregistered format type");
+    THROW_INVALID_PARAM_EXCEPTION("Unregistered format type");
 }
 
 OBFrameType strToOBFrame(const std::string str) {
@@ -612,7 +612,7 @@ OBFrameType strToOBFrame(const std::string str) {
             return it->first;
         }
     }
-    throw invalid_value_exception("Unregistered frame type");
+    THROW_INVALID_PARAM_EXCEPTION("Unregistered frame type");
 }
 
 OBStreamType strToOBStream(const std::string str) {
@@ -621,7 +621,7 @@ OBStreamType strToOBStream(const std::string str) {
             return it->first;
         }
     }
-    throw invalid_value_exception("Unregistered stream type");
+    THROW_INVALID_PARAM_EXCEPTION("Unregistered stream type");
 }
 
 OBSensorType strToOBSensor(const std::string str) {
@@ -630,7 +630,7 @@ OBSensorType strToOBSensor(const std::string str) {
             return it->first;
         }
     }
-    throw invalid_value_exception("Unregistered sensor type");
+    THROW_INVALID_PARAM_EXCEPTION("Unregistered sensor type");
 }
 
 OBIMUSampleRate strToObImuRate(const std::string str) {
@@ -639,7 +639,7 @@ OBIMUSampleRate strToObImuRate(const std::string str) {
             return it->first;
         }
     }
-    throw invalid_value_exception("Unregistered Imu rate type");
+    THROW_INVALID_PARAM_EXCEPTION("Unregistered Imu rate type");
 }
 
 OBGyroFullScaleRange strToGyroFullScaleRange(const std::string str) {
@@ -648,7 +648,7 @@ OBGyroFullScaleRange strToGyroFullScaleRange(const std::string str) {
             return it->first;
         }
     }
-    throw invalid_value_exception("Unregistered gyro full scale range type");
+    THROW_INVALID_PARAM_EXCEPTION("Unregistered gyro full scale range type");
 }
 
 OBAccelFullScaleRange strToAccelFullScaleRange(const std::string str) {
@@ -657,7 +657,7 @@ OBAccelFullScaleRange strToAccelFullScaleRange(const std::string str) {
             return it->first;
         }
     }
-    throw invalid_value_exception("Unregistered accel full scale range type");
+    THROW_INVALID_PARAM_EXCEPTION("Unregistered accel full scale range type");
 }
 
 float depthPrecisionLevelToUnit(OBDepthPrecisionLevel precision) {
@@ -679,7 +679,7 @@ float depthPrecisionLevelToUnit(OBDepthPrecisionLevel precision) {
     default:
         break;
     }
-    throw invalid_value_exception("Unregistered depth precision level");
+    THROW_INVALID_PARAM_EXCEPTION("Unregistered depth precision level");
 }
 
 bool areAlmostEqual(float a, float b, float epsilon = 1e-5f) {
@@ -707,7 +707,7 @@ OBDepthPrecisionLevel depthUnitToPrecisionLevel(float unit) {
     else if(areAlmostEqual(0.05f, unit)) {
         return OB_PRECISION_0MM05;
     }
-    throw invalid_value_exception("Unsupported unit to depth precision level");
+    THROW_INVALID_PARAM_EXCEPTION("Unsupported unit to depth precision level");
 }
 
 }  // namespace utils

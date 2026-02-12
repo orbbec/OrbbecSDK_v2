@@ -403,7 +403,8 @@ int main(int argc, char *argv[]) try {
     return 0;
 }
 catch(ob::Error &e) {
-    std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\ntype:" << e.getExceptionType() << std::endl;
+    std::cerr << "function:" << e.getFunction() << "\nArgs: " << e.getArgs() << "\nMessage: " << e.what() << "\nStatus: " << e.getStatus()
+              << "\nException Type: " << e.getExceptionType() << std::endl;
     std::cout << "\nPress any key to exit.";
     obSmpl::waitForKeyPressed();
     exit(EXIT_FAILURE);

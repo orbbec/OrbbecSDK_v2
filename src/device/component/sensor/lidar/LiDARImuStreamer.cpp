@@ -70,7 +70,7 @@ LiDARImuStreamer::LiDARImuStreamer(IDevice *owner, const std::shared_ptr<IDataSt
     : owner_(owner), backend_(nullptr), running_(false), frameIndex_(0) {
     backend_ = std::dynamic_pointer_cast<LiDARDataStreamPort>(backend);
     if(backend_ == nullptr) {
-        throw invalid_value_exception("The IMU stream port isn't LiDARDataStreamPort!");
+        THROW_INVALID_PARAM_EXCEPTION("The IMU stream port isn't LiDARDataStreamPort!");
     }
 
     firmwareVersionInt_ = owner_->getFirmwareVersionInt();
@@ -93,14 +93,14 @@ void LiDARImuStreamer::startStream(std::shared_ptr<const StreamProfile> sp, Muta
         std::lock_guard<std::mutex> lock(cbMtx_);
         if(sp->is<AccelStreamProfile>()) {
             if(accelStreamProfile_) {
-                throw unsupported_operation_exception("The IMU accel stream has already been started.");
+                THROW_UNSUPPORTED_OPERATION_EXCEPTION("The IMU accel stream has already been started.");
                 return;
             }
             auto accel = sp->as<AccelStreamProfile>();
             if(running_) {
                 // imu stream has already been started
                 if(accel->getSampleRate() != gyroStreamProfile_->getSampleRate()) {
-                    throw unsupported_operation_exception("The IMU stream has already been started with other sample rate.");
+                    THROW_UNSUPPORTED_OPERATION_EXCEPTION("The IMU stream has already been started with other sample rate.");
                     return;
                 }
                 // save and return immediately
@@ -115,14 +115,14 @@ void LiDARImuStreamer::startStream(std::shared_ptr<const StreamProfile> sp, Muta
         }
         else if(sp->is<GyroStreamProfile>()) {
             if(gyroStreamProfile_) {
-                throw unsupported_operation_exception("The IMU gyro stream has already been started.");
+                THROW_UNSUPPORTED_OPERATION_EXCEPTION("The IMU gyro stream has already been started.");
                 return;
             }
             auto gyro = sp->as<GyroStreamProfile>();
             if(running_) {
                 // imu stream has already been started
                 if(gyro->getSampleRate() != accelStreamProfile_->getSampleRate()) {
-                    throw unsupported_operation_exception("The IMU stream has already been started with other sample rate.");
+                    THROW_UNSUPPORTED_OPERATION_EXCEPTION("The IMU stream has already been started with other sample rate.");
                     return;
                 }
                 // save and return immediately
@@ -135,7 +135,7 @@ void LiDARImuStreamer::startStream(std::shared_ptr<const StreamProfile> sp, Muta
             gyroStreamProfile_ = gyro;
         }
         else {
-            throw unsupported_operation_exception("The profile is not valid IMU profile");
+            THROW_UNSUPPORTED_OPERATION_EXCEPTION("The profile is not valid IMU profile");
             return;
         }
         running_ = true;
@@ -241,7 +241,7 @@ void LiDARImuStreamer::trySendStartStreamVendorCmd() {
     }
 
     if(frameRate == 0) {
-        throw invalid_value_exception("The IMU frame rate is invalid");
+        THROW_INVALID_DATA_EXCEPTION("The IMU frame rate is invalid");
     }
     // set stream port
     value.intValue = backend_->getSocketPort();

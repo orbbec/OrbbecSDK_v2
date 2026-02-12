@@ -59,14 +59,14 @@ std::shared_ptr<ISourcePort> Platform::getSourcePort(std::shared_ptr<const Sourc
         return getNetSourcePort(portInfo);
     }
     else {
-        throw pal_exception("Invalid port type!");
+        THROW_PAL_EXCEPTION("Invalid port type!", OB_ERROR_INVALID_PARAMETER);
     }
 }
 
 std::shared_ptr<IDeviceWatcher> Platform::createUsbDeviceWatcher() const {
     auto pal = palMap_.find("usb");
     if(pal == palMap_.end()) {
-        throw pal_exception("Usb pal is not exist, please check the build config that you have enabled BUILD_USB_PAL");
+        THROW_PAL_EXCEPTION("Usb pal is not exist, please check the build config that you have enabled BUILD_USB_PAL", OB_ERROR_ITEM_NOT_FOUND);
     }
     return pal->second->createDeviceWatcher();
 }
@@ -74,7 +74,7 @@ std::shared_ptr<IDeviceWatcher> Platform::createUsbDeviceWatcher() const {
 SourcePortInfoList Platform::queryUsbSourcePortInfos(bool includeGmsl) {
     auto pal = palMap_.find("usb");
     if(pal == palMap_.end()) {
-        throw pal_exception("Usb pal is not exist, please check the build config that you have enabled BUILD_USB_PAL");
+        THROW_PAL_EXCEPTION("Usb pal is not exist, please check the build config that you have enabled BUILD_USB_PAL", OB_ERROR_ITEM_NOT_FOUND);
     }
 #if defined(OS_LINUX)
     auto linuxUsbPal = std::dynamic_pointer_cast<LinuxUsbPal>(pal->second);
@@ -88,7 +88,7 @@ SourcePortInfoList Platform::queryUsbSourcePortInfos(bool includeGmsl) {
 std::shared_ptr<ISourcePort> Platform::getUsbSourcePort(std::shared_ptr<const SourcePortInfo> portInfo) {
     auto pal = palMap_.find("usb");
     if(pal == palMap_.end()) {
-        throw pal_exception("Usb pal is not exist, please check the build config that you have enabled BUILD_USB_PAL");
+        THROW_PAL_EXCEPTION("Usb pal is not exist, please check the build config that you have enabled BUILD_USB_PAL", OB_ERROR_ITEM_NOT_FOUND);
     }
     return pal->second->getSourcePort(portInfo);
 }
@@ -97,7 +97,7 @@ std::shared_ptr<ISourcePort> Platform::getUsbSourcePort(std::shared_ptr<const So
 std::shared_ptr<ISourcePort> Platform::getUvcSourcePort(std::shared_ptr<const SourcePortInfo> portInfo, OBUvcBackendType backendTypeHint) {
     auto pal = palMap_.find("usb");
     if(pal == palMap_.end()) {
-        throw pal_exception("Usb pal is not exist, please check the build config that you have enabled BUILD_USB_PAL");
+        THROW_PAL_EXCEPTION("Usb pal is not exist, please check the build config that you have enabled BUILD_USB_PAL", OB_ERROR_ITEM_NOT_FOUND);
     }
 #if defined(BUILD_USB_PAL)
     std::shared_ptr<ISourcePort> sourcePort;
@@ -119,7 +119,7 @@ std::shared_ptr<ISourcePort> Platform::getUvcSourcePort(std::shared_ptr<const So
 void Platform::setUvcBackendType(OBUvcBackendType backendType) {
     auto pal = palMap_.find("usb");
     if(pal == palMap_.end()) {
-        throw pal_exception("Usb pal is not exist, please check the build config that you have enabled BUILD_USB_PAL");
+        THROW_PAL_EXCEPTION("Usb pal is not exist, please check the build config that you have enabled BUILD_USB_PAL", OB_ERROR_ITEM_NOT_FOUND);
     }
 #if defined(BUILD_USB_PAL)
 #if defined(__ANDROID__)
@@ -138,7 +138,7 @@ void Platform::setUvcBackendType(OBUvcBackendType backendType) {
 SourcePortInfoList Platform::queryNetSourcePort() {
     auto pal = palMap_.find("net");
     if(pal == palMap_.end()) {
-        throw pal_exception("Net pal is not exist, please check the build config that you have enabled BUILD_NET_PAL");
+        THROW_PAL_EXCEPTION("Net pal is not exist, please check the build config that you have enabled BUILD_NET_PAL", OB_ERROR_ITEM_NOT_FOUND);
     }
     return pal->second->querySourcePortInfos();
 }
@@ -146,7 +146,7 @@ SourcePortInfoList Platform::queryNetSourcePort() {
 std::shared_ptr<IDeviceWatcher> Platform::createNetDeviceWatcher() {
     auto pal = palMap_.find("net");
     if(pal == palMap_.end()) {
-        throw pal_exception("Net pal is not exist, please check the build config that you have enabled BUILD_NET_PAL");
+        THROW_PAL_EXCEPTION("Net pal is not exist, please check the build config that you have enabled BUILD_NET_PAL", OB_ERROR_ITEM_NOT_FOUND);
     }
     return pal->second->createDeviceWatcher();
 }
@@ -154,7 +154,7 @@ std::shared_ptr<IDeviceWatcher> Platform::createNetDeviceWatcher() {
 std::shared_ptr<ISourcePort> Platform::getNetSourcePort(std::shared_ptr<const SourcePortInfo> portInfo) {
     auto pal = palMap_.find("net");
     if(pal == palMap_.end()) {
-        throw pal_exception("Net pal is not exist, please check the build config that you have enabled BUILD_NET_PAL");
+        THROW_PAL_EXCEPTION("Net pal is not exist, please check the build config that you have enabled BUILD_NET_PAL", OB_ERROR_ITEM_NOT_FOUND);
     }
     return pal->second->getSourcePort(portInfo);
 }
@@ -187,7 +187,7 @@ void Platform::setGvcpPortscheme(OBGvcpPortScheme scheme) {
 #if defined(BUILD_NET_PAL)
     auto pal = palMap_.find("net");
     if(pal == palMap_.end()) {
-        throw pal_exception("Net pal is not exist, please check the build config that you have enabled BUILD_NET_PAL");
+        THROW_PAL_EXCEPTION("Net pal is not exist, please check the build config that you have enabled BUILD_NET_PAL", OB_ERROR_ITEM_NOT_FOUND);
     }
 
     auto ethernetPal = std::dynamic_pointer_cast<EthernetPal>(pal->second);
@@ -201,7 +201,7 @@ OBGvcpPortScheme Platform::getGvcpPortscheme() const {
 #if defined(BUILD_NET_PAL)
     auto pal = palMap_.find("net");
     if(pal == palMap_.end()) {
-        throw pal_exception("Net pal is not exist, please check the build config that you have enabled BUILD_NET_PAL");
+        THROW_PAL_EXCEPTION("Net pal is not exist, please check the build config that you have enabled BUILD_NET_PAL", OB_ERROR_ITEM_NOT_FOUND);
     }
 
     auto ethernetPal = std::dynamic_pointer_cast<EthernetPal>(pal->second);
@@ -215,7 +215,7 @@ bool Platform::forceIpConfig(std::string deviceUid, const OBNetIpConfig &config)
 #if defined(BUILD_NET_PAL)
     auto pal = palMap_.find("net");
     if(pal == palMap_.end()) {
-        throw pal_exception("Net pal is not exist, please check the build config that you have enabled BUILD_NET_PAL");
+        THROW_PAL_EXCEPTION("Net pal is not exist, please check the build config that you have enabled BUILD_NET_PAL", OB_ERROR_ITEM_NOT_FOUND);
     }
     auto ethernetPal = std::dynamic_pointer_cast<EthernetPal>(pal->second);
     return ethernetPal->forceIpConfig(deviceUid, config);

@@ -12,7 +12,7 @@
 namespace libobsensor {
 
 BoltPresetManager::BoltPresetManager(IDevice *owner) : DeviceComponentBase(owner) {
-    currentPreset_         = "Custom";
+    currentPreset_  = "Custom";
     auto propServer = owner->getPropertyServer();
 
     propServer->registerAccessCallback(
@@ -38,7 +38,7 @@ BoltPresetManager::BoltPresetManager(IDevice *owner) : DeviceComponentBase(owner
 
 void BoltPresetManager::loadPreset(const std::string &presetName) {
     if(std::find(availablePresets_.begin(), availablePresets_.end(), presetName) == availablePresets_.end()) {
-        throw std::invalid_argument("Invalid preset name: " + presetName);
+        THROW_INVALID_PARAM_EXCEPTION("Invalid preset name: " + presetName);
     }
 
     // store current parameters to  "Custom"
@@ -68,7 +68,7 @@ void BoltPresetManager::loadPresetFromJsonData(const std::string &presetName, co
     Json::Value  root;
     Json::Reader reader;
     if(!reader.parse(std::string((const char *)jsonData.data(), jsonData.size()), root)) {
-        throw std::invalid_argument("Invalid JSON data");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid JSON data");
     }
     // store current parameters to  "Custom"
     if(currentPreset_ == "Custom") {
@@ -90,16 +90,16 @@ void BoltPresetManager::loadPresetFromJsonFile(const std::string &filePath) {
 
 void BoltPresetManager::loadPresetFromJsonValue(const std::string &presetName, const Json::Value &root) {
     BoltPreset preset{};
-    preset.colorAutoExposure          = root["color_auto_exposure"].asBool();
-    preset.colorExposureTime          = root["color_exposure_time"].asInt();
-    preset.colorAutoWhiteBalance      = root["color_auto_white_balance"].asBool();
-    preset.colorWhiteBalance          = root["color_white_balance"].asInt();
-    preset.colorGain                  = root["color_gain"].asInt();
-    preset.colorContrast              = root["color_contrast"].asInt();
-    preset.colorSaturation            = root["color_saturation"].asInt();
-    preset.colorSharpness             = root["color_sharpness"].asInt();
-    preset.colorBrightness            = root["color_brightness"].asInt();
-    preset.colorPowerLineFrequency    = root["color_power_line_frequency"].asInt();
+    preset.colorAutoExposure       = root["color_auto_exposure"].asBool();
+    preset.colorExposureTime       = root["color_exposure_time"].asInt();
+    preset.colorAutoWhiteBalance   = root["color_auto_white_balance"].asBool();
+    preset.colorWhiteBalance       = root["color_white_balance"].asInt();
+    preset.colorGain               = root["color_gain"].asInt();
+    preset.colorContrast           = root["color_contrast"].asInt();
+    preset.colorSaturation         = root["color_saturation"].asInt();
+    preset.colorSharpness          = root["color_sharpness"].asInt();
+    preset.colorBrightness         = root["color_brightness"].asInt();
+    preset.colorPowerLineFrequency = root["color_power_line_frequency"].asInt();
 
     loadCustomPreset(presetName, preset);
 
@@ -113,21 +113,21 @@ Json::Value BoltPresetManager::exportSettingsAsPresetJsonValue(const std::string
     storeCurrentParamsAsCustomPreset(presetName);
     auto iter = customPresets_.find(presetName);
     if(iter == customPresets_.end()) {
-        throw std::invalid_argument("Invalid preset name: " + presetName);
+        THROW_INVALID_PARAM_EXCEPTION("Invalid preset name: " + presetName);
     }
     auto &preset = iter->second;
 
     Json::Value root;
-    root["color_auto_exposure"]          = preset.colorAutoExposure;
-    root["color_exposure_time"]          = preset.colorExposureTime;
-    root["color_auto_white_balance"]     = preset.colorAutoWhiteBalance;
-    root["color_white_balance"]          = preset.colorWhiteBalance;
-    root["color_gain"]                   = preset.colorGain;
-    root["color_contrast"]               = preset.colorContrast;
-    root["color_saturation"]             = preset.colorSaturation;
-    root["color_sharpness"]              = preset.colorSharpness;
-    root["color_brightness"]             = preset.colorBrightness;
-    root["color_power_line_frequency"]   = preset.colorPowerLineFrequency;
+    root["color_auto_exposure"]        = preset.colorAutoExposure;
+    root["color_exposure_time"]        = preset.colorExposureTime;
+    root["color_auto_white_balance"]   = preset.colorAutoWhiteBalance;
+    root["color_white_balance"]        = preset.colorWhiteBalance;
+    root["color_gain"]                 = preset.colorGain;
+    root["color_contrast"]             = preset.colorContrast;
+    root["color_saturation"]           = preset.colorSaturation;
+    root["color_sharpness"]            = preset.colorSharpness;
+    root["color_brightness"]           = preset.colorBrightness;
+    root["color_power_line_frequency"] = preset.colorPowerLineFrequency;
 
     return root;
 }
@@ -199,17 +199,16 @@ void BoltPresetManager::storeCurrentParamsAsCustomPreset(const std::string &pres
     BoltPreset preset{};
     auto       owner = getOwner();
 
-    preset.colorAutoExposure          = getPropertyValue<bool>(owner, OB_PROP_COLOR_AUTO_EXPOSURE_BOOL);
-    preset.colorExposureTime          = getPropertyValue<int>(owner, OB_PROP_COLOR_EXPOSURE_INT);
-    preset.colorAutoWhiteBalance      = getPropertyValue<bool>(owner, OB_PROP_COLOR_AUTO_WHITE_BALANCE_BOOL);
-    preset.colorWhiteBalance          = getPropertyValue<int>(owner, OB_PROP_COLOR_WHITE_BALANCE_INT);
-    preset.colorGain                  = getPropertyValue<int>(owner, OB_PROP_COLOR_GAIN_INT);
-    preset.colorContrast              = getPropertyValue<int>(owner, OB_PROP_COLOR_CONTRAST_INT);
-    preset.colorSaturation            = getPropertyValue<int>(owner, OB_PROP_COLOR_SATURATION_INT);
-    preset.colorSharpness             = getPropertyValue<int>(owner, OB_PROP_COLOR_SHARPNESS_INT);
-    preset.colorBrightness            = getPropertyValue<int>(owner, OB_PROP_COLOR_BRIGHTNESS_INT);
-    preset.colorPowerLineFrequency    = getPropertyValue<int>(owner, OB_PROP_COLOR_POWER_LINE_FREQUENCY_INT);
-
+    preset.colorAutoExposure       = getPropertyValue<bool>(owner, OB_PROP_COLOR_AUTO_EXPOSURE_BOOL);
+    preset.colorExposureTime       = getPropertyValue<int>(owner, OB_PROP_COLOR_EXPOSURE_INT);
+    preset.colorAutoWhiteBalance   = getPropertyValue<bool>(owner, OB_PROP_COLOR_AUTO_WHITE_BALANCE_BOOL);
+    preset.colorWhiteBalance       = getPropertyValue<int>(owner, OB_PROP_COLOR_WHITE_BALANCE_INT);
+    preset.colorGain               = getPropertyValue<int>(owner, OB_PROP_COLOR_GAIN_INT);
+    preset.colorContrast           = getPropertyValue<int>(owner, OB_PROP_COLOR_CONTRAST_INT);
+    preset.colorSaturation         = getPropertyValue<int>(owner, OB_PROP_COLOR_SATURATION_INT);
+    preset.colorSharpness          = getPropertyValue<int>(owner, OB_PROP_COLOR_SHARPNESS_INT);
+    preset.colorBrightness         = getPropertyValue<int>(owner, OB_PROP_COLOR_BRIGHTNESS_INT);
+    preset.colorPowerLineFrequency = getPropertyValue<int>(owner, OB_PROP_COLOR_POWER_LINE_FREQUENCY_INT);
 
     if(customPresets_.find(presetName) == customPresets_.end()) {
         availablePresets_.emplace_back(presetName);

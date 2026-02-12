@@ -138,7 +138,8 @@ int main(void) try {
 }
 
 catch(ob::Error &e) {
-    std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\ntype:" << e.getExceptionType() << std::endl;
+    std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\nstatus:" << e.getStatus()
+              << "\ntype:" << e.getExceptionType() << std::endl;
     std::cout << "\nPress any key to exit.";
     ob_smpl::waitForKeyPressed();
     exit(EXIT_FAILURE);
@@ -230,7 +231,8 @@ void turnOffHwD2d() {
         }
     }
     catch(ob::Error &e) {
-        std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\ntype:" << e.getExceptionType() << std::endl;
+        std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\nstatus:" << e.getStatus()
+                  << "\ntype:" << e.getExceptionType() << std::endl;
         exit(EXIT_FAILURE);
     }
 }
@@ -246,7 +248,8 @@ void setDepthUnit() {
         }
     }
     catch(ob::Error &e) {
-        std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\ntype:" << e.getExceptionType() << std::endl;
+        std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\nstatus:" << e.getStatus()
+                  << "\ntype:" << e.getExceptionType() << std::endl;
         exit(EXIT_FAILURE);
     }
 }
@@ -259,7 +262,8 @@ void setDepthSoftFilter() {
         }
     }
     catch(ob::Error &e) {
-        std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\ntype:" << e.getExceptionType() << std::endl;
+        std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\nstatus:" << e.getStatus()
+                  << "\ntype:" << e.getExceptionType() << std::endl;
         exit(EXIT_FAILURE);
     }
 }
@@ -304,8 +308,8 @@ void startStream() {
                 }
             }
             catch(ob::Error &e) {
-                std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\ntype:" << e.getExceptionType()
-                          << std::endl;
+                std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\nstatus:" << e.getStatus()
+                          << "\ntype:" << e.getExceptionType() << std::endl;
                 exit(EXIT_FAILURE);
             }
         }
@@ -373,8 +377,8 @@ void getCameraParams() {
             }
         }
         catch(ob::Error &e) {
-            std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\ntype:" << e.getExceptionType()
-                      << std::endl;
+            std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\nstatus:" << e.getStatus()
+                      << "\ntype:" << e.getExceptionType() << std::endl;
             exit(EXIT_FAILURE);
         }
     }
@@ -410,8 +414,8 @@ void switchLaser() {
             }
         }
         catch(ob::Error &e) {
-            std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\ntype:" << e.getExceptionType()
-                      << std::endl;
+            std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\nstatus:" << e.getStatus()
+                      << "\ntype:" << e.getExceptionType() << std::endl;
             exit(EXIT_FAILURE);
         }
     }
@@ -441,8 +445,8 @@ void switchLDP() {
             }
         }
         catch(ob::Error &e) {
-            std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\ntype:" << e.getExceptionType()
-                      << std::endl;
+            std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\nstatus:" << e.getStatus()
+                      << "\ntype:" << e.getExceptionType() << std::endl;
             exit(EXIT_FAILURE);
         }
     }
@@ -461,8 +465,8 @@ void getLDPStatus() {
             }
         }
         catch(ob::Error &e) {
-            std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\ntype:" << e.getExceptionType()
-                      << std::endl;
+            std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\nstatus:" << e.getStatus()
+                      << "\ntype:" << e.getExceptionType() << std::endl;
             exit(EXIT_FAILURE);
         }
     }
@@ -489,8 +493,8 @@ void switchDepthAE() {
             }
         }
         catch(ob::Error &e) {
-            std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\ntype:" << e.getExceptionType()
-                      << std::endl;
+            std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\nstatus:" << e.getStatus()
+                      << "\ntype:" << e.getExceptionType() << std::endl;
             exit(EXIT_FAILURE);
         }
     }
@@ -516,8 +520,8 @@ void switchColorAE() {
             }
         }
         catch(ob::Error &e) {
-            std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\ntype:" << e.getExceptionType()
-                      << std::endl;
+            std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\nstatus:" << e.getStatus()
+                      << "\ntype:" << e.getExceptionType() << std::endl;
             exit(EXIT_FAILURE);
         }
     }
@@ -545,8 +549,8 @@ void switchDepthMirror() {
             }
         }
         catch(ob::Error &e) {
-            std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\ntype:" << e.getExceptionType()
-                      << std::endl;
+            std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\nstatus:" << e.getStatus()
+                      << "\ntype:" << e.getExceptionType() << std::endl;
             exit(EXIT_FAILURE);
         }
     }
@@ -573,8 +577,8 @@ void switchIRMirror() {
             }
         }
         catch(ob::Error &e) {
-            std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\ntype:" << e.getExceptionType()
-                      << std::endl;
+            std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\nstatus:" << e.getStatus()
+                      << "\ntype:" << e.getExceptionType() << std::endl;
             exit(EXIT_FAILURE);
         }
     }
@@ -601,8 +605,8 @@ void switchIRRightMirror() {
             }
         }
         catch(ob::Error &e) {
-            std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\ntype:" << e.getExceptionType()
-                      << std::endl;
+            std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\nstatus:" << e.getStatus()
+                      << "\ntype:" << e.getExceptionType() << std::endl;
             exit(EXIT_FAILURE);
         }
     }
@@ -629,8 +633,8 @@ void switchColorMirror() {
             }
         }
         catch(ob::Error &e) {
-            std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\ntype:" << e.getExceptionType()
-                      << std::endl;
+            std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\nstatus:" << e.getStatus()
+                      << "\ntype:" << e.getExceptionType() << std::endl;
             exit(EXIT_FAILURE);
         }
     }
@@ -682,8 +686,8 @@ void setDepthExposureValue(bool increase) {
             }
         }
         catch(ob::Error &e) {
-            std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\ntype:" << e.getExceptionType()
-                      << std::endl;
+            std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\nstatus:" << e.getStatus()
+                      << "\ntype:" << e.getExceptionType() << std::endl;
             exit(EXIT_FAILURE);
         }
     }
@@ -737,8 +741,8 @@ void setColorExposureValue(bool increase) {
             }
         }
         catch(ob::Error &e) {
-            std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\ntype:" << e.getExceptionType()
-                      << std::endl;
+            std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\nstatus:" << e.getStatus()
+                      << "\ntype:" << e.getExceptionType() << std::endl;
             exit(EXIT_FAILURE);
         }
     }
@@ -797,8 +801,8 @@ void setDepthGainValue(bool increase) {
             }
         }
         catch(ob::Error &e) {
-            std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\ntype:" << e.getExceptionType()
-                      << std::endl;
+            std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\nstatus:" << e.getStatus()
+                      << "\ntype:" << e.getExceptionType() << std::endl;
             exit(EXIT_FAILURE);
         }
     }
@@ -841,8 +845,8 @@ void setColorGainValue(bool increase) {
             }
         }
         catch(ob::Error &e) {
-            std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\ntype:" << e.getExceptionType()
-                      << std::endl;
+            std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\nstatus:" << e.getStatus()
+                      << "\ntype:" << e.getExceptionType() << std::endl;
             exit(EXIT_FAILURE);
         }
     }

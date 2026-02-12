@@ -101,7 +101,8 @@ int main(void) try {
     return exitValue;
 }
 catch(ob::Error &e) {
-    std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\ntype:" << e.getExceptionType() << std::endl;
+    std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\nstatus:" << e.getStatus()
+              << "\ntype:" << e.getExceptionType() << std::endl;
     std::cout << "\nPress any key to exit.";
     ob_smpl::waitForKeyPressed();
     exit(EXIT_FAILURE);
@@ -158,7 +159,8 @@ int configMultiDeviceSync() {
     }
     catch(ob::Error &e) {
         std::cerr << "configMultiDeviceSync failed! \n";
-        std::cerr << "function:" << e.getName() << "\nargs:" << e.getArgs() << "\nmessage:" << e.getMessage() << "\ntype:" << e.getExceptionType() << std::endl;
+        std::cerr << "function:" << e.getName() << "\nargs:" << e.getArgs() << "\nmessage:" << e.getMessage() << "\nstatus:" << e.getStatus()
+                  << "\ntype:" << e.getExceptionType() << std::endl;
         return -1;
     }
 }
@@ -296,7 +298,8 @@ int testMultiDeviceSync() {
         return 0;
     }
     catch(ob::Error &e) {
-        std::cerr << "function:" << e.getName() << "\nargs:" << e.getArgs() << "\nmessage:" << e.getMessage() << "\ntype:" << e.getExceptionType() << std::endl;
+        std::cerr << "function:" << e.getName() << "\nargs:" << e.getArgs() << "\nmessage:" << e.getMessage() << "\nstatus:" << e.getStatus()
+                  << "\ntype:" << e.getExceptionType() << std::endl;
         std::cout << "\nPress any key to exit.";
         ob_smpl::waitForKeyPressed();
         exit(EXIT_FAILURE);

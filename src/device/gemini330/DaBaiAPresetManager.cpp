@@ -59,7 +59,7 @@ DaBaiAPresetManager::DaBaiAPresetManager(IDevice *owner) : DeviceComponentBase(o
 
 void DaBaiAPresetManager::loadPreset(const std::string &presetName) {
     if(std::find(availablePresets_.begin(), availablePresets_.end(), presetName) == availablePresets_.end()) {
-        throw std::invalid_argument("Invalid preset name: " + presetName);
+        THROW_INVALID_PARAM_EXCEPTION("Invalid preset name: " + presetName);
     }
 
     // store current parameters to  "Custom"
@@ -93,7 +93,7 @@ void DaBaiAPresetManager::loadPresetFromJsonData(const std::string &presetName, 
     Json::Value  root;
     Json::Reader reader;
     if(!reader.parse(std::string((const char *)jsonData.data(), jsonData.size()), root)) {
-        throw std::invalid_argument("Invalid JSON data");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid JSON data");
     }
     // store current parameters to  "Custom"
     if(currentPreset_ == "Custom") {
@@ -145,7 +145,7 @@ Json::Value DaBaiAPresetManager::exportSettingsAsPresetJsonValue(const std::stri
     storeCurrentParamsAsCustomPreset(presetName);
     auto iter = customPresets_.find(presetName);
     if(iter == customPresets_.end()) {
-        throw std::invalid_argument("Invalid preset name: " + presetName);
+        THROW_INVALID_PARAM_EXCEPTION("Invalid preset name: " + presetName);
     }
     auto &preset = iter->second;
 

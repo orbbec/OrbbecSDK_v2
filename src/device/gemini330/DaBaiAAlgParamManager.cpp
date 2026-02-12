@@ -557,7 +557,7 @@ void DaBaiAAlgParamManager::bindIntrinsic(std::vector<std::shared_ptr<const Stre
             case OB_STREAM_DEPTH: {
                 OBCameraParam param{};
                 if(!findBestMatchedCameraParam(calibrationCameraParamList_, vsp, param)) {
-                    // throw libobsensor::unsupported_operation_exception("Can not find matched camera param!");
+                    // THROW_UNSUPPORTED_OPERATION_EXCEPTION("Can not find matched camera param!");
                     continue;
                 }
                 if(sp->getType() == OB_STREAM_COLOR) {

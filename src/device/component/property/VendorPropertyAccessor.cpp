@@ -18,7 +18,7 @@ VendorPropertyAccessor::VendorPropertyAccessor(IDevice *owner, const std::shared
       structListDataTransferPacketSize_(DEFAULT_CMD_MAX_DATA_SIZE) {
     auto port = std::dynamic_pointer_cast<IVendorDataPort>(backend_);
     if(!port) {
-        throw invalid_value_exception("VendorPropertyAccessor backend must be IVendorDataPort");
+        THROW_INVALID_PARAM_EXCEPTION("VendorPropertyAccessor backend must be IVendorDataPort");
     }
 }
 

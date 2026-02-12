@@ -130,9 +130,9 @@ void G2Disp2DepthPropertyAccessor::markOutputDisparityFrame(bool enable) {
 void G2Disp2DepthPropertyAccessor::setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) {
     utils::unusedVar(data);
     if(propertyId == OB_STRUCT_DEPTH_PRECISION_SUPPORT_LIST) {
-        throw invalid_value_exception("OB_STRUCT_DEPTH_PRECISION_SUPPORT_LIST is read-only");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("OB_STRUCT_DEPTH_PRECISION_SUPPORT_LIST is read-only");
     }
-    throw invalid_value_exception(utils::string::to_string() << "unsupported property id:" << propertyId);
+    THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "unsupported property id:" << propertyId);
 }
 
 const std::vector<uint8_t> &G2Disp2DepthPropertyAccessor::getStructureData(uint32_t propertyId) {
@@ -149,7 +149,7 @@ const std::vector<uint8_t> &G2Disp2DepthPropertyAccessor::getStructureData(uint3
             return swD2DSupportListBytes;
         }
     }
-    throw invalid_value_exception(utils::string::to_string() << "unsupported property id:" << propertyId);
+    THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "unsupported property id:" << propertyId);
 }
 
 G210Disp2DepthPropertyAccessor::G210Disp2DepthPropertyAccessor(IDevice *owner) : G2Disp2DepthPropertyAccessor(owner) {
@@ -276,7 +276,7 @@ void G2FrameTransformPropertyAccessor::setPropertyValue(uint32_t propertyId, con
         }
     } break;
     default: {
-        throw invalid_value_exception("Invalid property id");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property id");
     }
     }
 }
@@ -334,7 +334,7 @@ void G2FrameTransformPropertyAccessor::getPropertyValue(uint32_t propertyId, OBP
         }
     } break;
     default: {
-        throw invalid_value_exception("Invalid property identifier");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property identifier");
     }
     }
 }
@@ -394,7 +394,7 @@ void G2FrameTransformPropertyAccessor::getPropertyRange(uint32_t propertyId, OBP
         }
     } break;
     default:
-        throw invalid_value_exception("Invalid property id");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property id");
     }
 }
 
@@ -439,7 +439,7 @@ const std::vector<uint8_t> &G435LeDisp2DepthPropertyAccessor::getStructureData(u
             return G2Disp2DepthPropertyAccessor::getStructureData(propertyId);
         }
     }
-    throw invalid_value_exception(utils::string::to_string() << "unsupported property id:" << propertyId);
+    THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "unsupported property id:" << propertyId);
 }
 
 G210FrameTransformPropertyAccessor::G210FrameTransformPropertyAccessor(IDevice *owner) : owner_(owner) {}
@@ -463,7 +463,7 @@ void G210FrameTransformPropertyAccessor::setPropertyValue(uint32_t propertyId, c
     case OB_PROP_IR_ROTATE_INT: {
         auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_IR_FRAME_PROCESSOR);
 
-        if (propertyId == OB_PROP_IR_MIRROR_BOOL) {
+        if(propertyId == OB_PROP_IR_MIRROR_BOOL) {
             OBPropertyValue correctValue = value;
             correctValue.intValue        = !correctValue.intValue;
             processor->setPropertyValue(propertyId, correctValue);
@@ -473,7 +473,7 @@ void G210FrameTransformPropertyAccessor::setPropertyValue(uint32_t propertyId, c
         }
     } break;
     default: {
-        throw invalid_value_exception("Invalid property id");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property id");
     }
     }
 }
@@ -504,12 +504,12 @@ void G210FrameTransformPropertyAccessor::getPropertyValue(uint32_t propertyId, O
         auto processor = owner_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_IR_FRAME_PROCESSOR);
         processor->getPropertyValue(propertyId, value);
 
-        if (propertyId == OB_PROP_IR_MIRROR_BOOL) {
+        if(propertyId == OB_PROP_IR_MIRROR_BOOL) {
             value->intValue = !value->intValue;
         }
     } break;
     default: {
-        throw invalid_value_exception("Invalid property id");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property id");
     }
     }
 }
@@ -545,7 +545,7 @@ void G210FrameTransformPropertyAccessor::getPropertyRange(uint32_t propertyId, O
         }
     } break;
     default: {
-        throw invalid_value_exception("Invalid property id");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property id");
     }
     }
 }

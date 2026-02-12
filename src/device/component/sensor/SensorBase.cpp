@@ -359,7 +359,7 @@ void SensorBase::setFrameRecordingCallback(FrameCallback callback) {
 
 void SensorBase::setFrameProcessor(std::shared_ptr<FrameProcessor> frameProcessor) {
     if(isStreamActivated()) {
-        throw wrong_api_call_sequence_exception("Can not update frame processor while streaming");
+        THROW_WRONG_API_CALL_SEQUENCE_EXCEPTION("Can not update frame processor while streaming");
     }
     frameProcessor_ = frameProcessor;
     frameProcessor_->setCallback([this](std::shared_ptr<Frame> frame) {
@@ -444,12 +444,12 @@ void SensorBase::validateDeviceState(const std::shared_ptr<const StreamProfile> 
     if(!device->hasWriteAccess()) {
         std::ostringstream oss;
         oss << "The current access mode is " << device->getAccessMode() << " and does not allow write operations";
-        throw access_denied_exception(oss.str());
+        THROW_ACCESS_DENIED_EXCEPTION(oss.str());
     }
 
     // check if device firmware upgrade is in progress
     if(device->isFirmwareUpdating()) {
-        throw libobsensor::wrong_api_call_sequence_exception("Device firmware is currently upgrading, stream cannot be started now!");
+        THROW_WRONG_API_CALL_SEQUENCE_EXCEPTION("Device firmware is currently upgrading, stream cannot be started now!");
     }
 
     // check device error state
@@ -491,7 +491,7 @@ void SensorBase::validateDeviceState(const std::shared_ptr<const StreamProfile> 
         }
 
         if((errorState & flag) != 0) {
-            throw unsupported_operation_exception(utils::string::to_string() << "Unexpected device state: " << errorState
+            THROW_UNSUPPORTED_OPERATION_EXCEPTION(utils::string::to_string() << "Unexpected device state: " << errorState
                                                                              << ". Please update your camera firmware before streaming data.");
         }
     }

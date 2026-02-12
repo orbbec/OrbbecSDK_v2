@@ -17,7 +17,7 @@ PrivFilterCreator::PrivFilterCreator(std::shared_ptr<PrivFilterPackageContext> p
     if(error) {
         std::string errorMsg = "Failed to get filter vendor specific code: " + std::string(error->message);
         delete error;
-        throw unsupported_operation_exception(errorMsg);
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION(errorMsg);
     }
 }
 
@@ -28,11 +28,11 @@ std::shared_ptr<IFilter> PrivFilterCreator::create() {
     if(error) {
         std::string errorMsg = "Check if private filter library is activated: " + std::string(error->message);
         delete error;
-        throw unsupported_operation_exception(errorMsg);
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION(errorMsg);
     }
 
     if(!activated) {
-        throw unsupported_operation_exception("Private filter library not activated");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("Private filter library not activated");
     }
 
     auto privFilterCtx = pkgCtx_->create_filter(index_, &error);
@@ -40,14 +40,14 @@ std::shared_ptr<IFilter> PrivFilterCreator::create() {
     if(error) {
         std::string errorMsg = "Failed to create private filter: " + std::string(error->message);
         delete error;
-        throw unsupported_operation_exception(errorMsg);
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION(errorMsg);
     }
 
     auto filterName = pkgCtx_->get_filter_name(index_, &error);
     if(error) {
         std::string errorMsg = "Failed to get filter name: " + std::string(error->message);
         delete error;
-        throw unsupported_operation_exception(errorMsg);
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION(errorMsg);
     }
 
     auto pkgCtx              = pkgCtx_;  // Pass the pkgCtx to the deleter of shared_ptr to control the lifetime
@@ -74,7 +74,7 @@ std::shared_ptr<IFilter> PrivFilterCreator::create(const std::string &activation
     if(error) {
         std::string errorMsg = "Check if private filter library is activated: " + std::string(error->message);
         delete error;
-        throw unsupported_operation_exception(errorMsg);
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION(errorMsg);
     }
 
     if(!activated) {
@@ -82,7 +82,7 @@ std::shared_ptr<IFilter> PrivFilterCreator::create(const std::string &activation
         if(error) {
             std::string errorMsg = "Failed to activate private filter library: " + std::string(error->message);
             delete error;
-            throw unsupported_operation_exception(errorMsg);
+            THROW_UNSUPPORTED_OPERATION_EXCEPTION(errorMsg);
         }
     }
 
@@ -90,14 +90,14 @@ std::shared_ptr<IFilter> PrivFilterCreator::create(const std::string &activation
     if(error) {
         std::string errorMsg = "Failed to get filter name: " + std::string(error->message);
         delete error;
-        throw unsupported_operation_exception(errorMsg);
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION(errorMsg);
     }
 
     auto privFilterCtx = pkgCtx_->create_filter(index_, &error);
     if(error) {
         std::string errorMsg = "Failed to create private filter: " + std::string(error->message);
         delete error;
-        throw unsupported_operation_exception(errorMsg);
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION(errorMsg);
     }
 
     auto pkgCtx              = pkgCtx_;  // Pass the pkgCtx to the deleter of shared_ptr to control the lifetime
@@ -152,7 +152,7 @@ std::map<std::string, std::shared_ptr<IFilterCreator>> getCreators() {
         if(error) {
             std::string errorMsg = "Failed to get filter count: " + std::string(error->message);
             delete error;
-            throw unsupported_operation_exception(errorMsg);
+            THROW_UNSUPPORTED_OPERATION_EXCEPTION(errorMsg);
         }
 
         for(size_t i = 0; i < filterCount; i++) {
@@ -160,7 +160,7 @@ std::map<std::string, std::shared_ptr<IFilterCreator>> getCreators() {
             if(error) {
                 std::string errorMsg = "Failed to get filter name: " + std::string(error->message);
                 delete error;
-                throw unsupported_operation_exception(errorMsg);
+                THROW_UNSUPPORTED_OPERATION_EXCEPTION(errorMsg);
             }
 
             auto creator               = std::make_shared<PrivFilterCreator>(pkgCtx_, i);
@@ -184,4 +184,3 @@ std::map<std::string, std::shared_ptr<IFilterCreator>> getCreators() {
 
 }  // namespace PrivFilterCreatorLoader
 }  // namespace libobsensor
-

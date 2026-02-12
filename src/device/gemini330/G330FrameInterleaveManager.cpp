@@ -73,7 +73,7 @@ template <typename T> T getPropertyValue(IDevice *dev, uint32_t propertyId) {
 
 void G330FrameInterleaveManager::loadFrameInterleave(const std::string &frameInterleaveName) {
     if(std::find(availableFrameInterleaves_.begin(), availableFrameInterleaves_.end(), frameInterleaveName) == availableFrameInterleaves_.end()) {
-        throw std::invalid_argument("Invalid frame interleave name: " + frameInterleaveName);
+        THROW_INVALID_PARAM_EXCEPTION("Invalid frame interleave name: " + frameInterleaveName);
     }
     currentFrameInterleave_ = frameInterleaveName;
     auto owner              = getOwner();

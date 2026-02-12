@@ -15,7 +15,7 @@ public:
 
     int64_t getValue(const uint8_t *metadata, size_t dataSize) override {
         if(!isSupported(metadata, dataSize)) {
-            throw unsupported_operation_exception("Current metadata does not contain this structure!");
+            THROW_UNSUPPORTED_OPERATION_EXCEPTION("Current metadata does not contain this structure!");
         }
         auto value = static_cast<int64_t>((*reinterpret_cast<const T *>(metadata)).*field_);
         if(modifier_) {
@@ -31,7 +31,7 @@ public:
 
 private:
     Field T::*field_;
-    
+
     FrameMetadataModifier modifier_;
 };
 
@@ -39,4 +39,4 @@ template <typename T, typename Field>
 std::shared_ptr<StructureMetadataParser<T, Field>> makeStructureMetadataParser(Field T::*field, FrameMetadataModifier mod = nullptr) {
     return std::make_shared<StructureMetadataParser<T, Field>>(field, mod);
 }
-} // namespace libobsensor
+}  // namespace libobsensor

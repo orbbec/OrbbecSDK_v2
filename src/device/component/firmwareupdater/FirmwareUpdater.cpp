@@ -23,15 +23,14 @@ FirmwareUpdater::FirmwareUpdater(IDevice *owner) : DeviceComponentBase(owner) {
                 ctx_->dylib_
                     ->get_function<void(ob_device *, const char filePathList[][OB_PATH_MAX], uint8_t, ob_device_fw_update_callback, void *, ob_error **)>(
                         "ob_device_update_optional_depth_presets_ext");
-            ctx_->read_customer_data_ext = ctx_->dylib_->get_function<void(ob_device *, void *, uint32_t* , ob_error **)>(
-                "ob_device_read_customer_data_ext");
-            ctx_->write_customer_data_ext = ctx_->dylib_->get_function<void(ob_device *, const void *, uint32_t , ob_error **)>(
-                "ob_device_write_customer_data_ext");
+            ctx_->read_customer_data_ext = ctx_->dylib_->get_function<void(ob_device *, void *, uint32_t *, ob_error **)>("ob_device_read_customer_data_ext");
+            ctx_->write_customer_data_ext =
+                ctx_->dylib_->get_function<void(ob_device *, const void *, uint32_t, ob_error **)>("ob_device_write_customer_data_ext");
         }
     }
     catch(const std::exception &e) {
         LOG_WARN("Failed to load firmwareupdater library: {}", e.what());
-        throw std::runtime_error(e.what());
+        THROW_STANDARD_EXCEPTION(e.what());
     }
 }
 
@@ -57,14 +56,14 @@ void FirmwareUpdater::updateFirmwareExt(const std::string &path, DeviceFwUpdateC
     deviceFwUpdateCallback_ = callback;
     deviceFwUpdateCallback_(STAT_FILE_TRANSFER, "Ready to update firmware...", 0);
 
-    updateThread_           = std::thread([this, path, async]() {
+    updateThread_ = std::thread([this, path, async]() {
         ob_error *error  = nullptr;
         auto      device = std::make_shared<ob_device>();
         device->device   = getOwner()->shared_from_this();
 
         std::shared_ptr<IFirmwareUpdateGuard> guard;
         auto factory = device->device->getComponentT<FirmwareUpdateGuardFactory>(OB_DEV_COMPONENT_FIRMWARE_UPDATE_GUARD_FACTORY, false);
-        if (factory) {
+        if(factory) {
             guard = factory->create();
         }
 
@@ -96,7 +95,7 @@ void FirmwareUpdater::updateFirmwareFromRawDataExt(const uint8_t *firmwareData, 
 
         std::shared_ptr<IFirmwareUpdateGuard> guard;
         auto factory = device->device->getComponentT<FirmwareUpdateGuardFactory>(OB_DEV_COMPONENT_FIRMWARE_UPDATE_GUARD_FACTORY, false);
-        if (factory) {
+        if(factory) {
             guard = factory->create();
         }
 
@@ -119,7 +118,7 @@ void FirmwareUpdater::updateOptionalDepthPresetsExt(const char filePathList[][OB
     deviceFwUpdateCallback_ = callback;
     deviceFwUpdateCallback_(STAT_START, "Ready to update custom preset...", 0);
 
-    updateThread_           = std::thread([this, filePathList, pathCount]() {
+    updateThread_ = std::thread([this, filePathList, pathCount]() {
         ob_error *error  = nullptr;
         auto      device = std::make_shared<ob_device>();
         device->device   = getOwner()->shared_from_this();
@@ -132,8 +131,8 @@ void FirmwareUpdater::updateOptionalDepthPresetsExt(const char filePathList[][OB
     updateThread_.join();
 }
 void FirmwareUpdater::writeCustomerDataExt(const uint8_t *customerData, uint32_t customerDataSize, ob_error **error) {
-    auto      device = std::make_shared<ob_device>();
-    device->device   = getOwner()->shared_from_this();
+    auto device    = std::make_shared<ob_device>();
+    device->device = getOwner()->shared_from_this();
     ctx_->write_customer_data_ext(device.get(), customerData, customerDataSize, error);
     if(*error) {
         LOG_ERROR("Firmware update failed: {}", (*error)->message);
@@ -141,8 +140,8 @@ void FirmwareUpdater::writeCustomerDataExt(const uint8_t *customerData, uint32_t
 }
 
 void FirmwareUpdater::readCustomerDataExt(uint8_t *customerData, uint32_t *customerDataSize, ob_error **error) {
-    auto      device = std::make_shared<ob_device>();
-    device->device   = getOwner()->shared_from_this();
+    auto device    = std::make_shared<ob_device>();
+    device->device = getOwner()->shared_from_this();
     ctx_->read_customer_data_ext(device.get(), customerData, customerDataSize, error);
     if(*error) {
         LOG_ERROR("Firmware update failed: {}", (*error)->message);

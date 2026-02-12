@@ -91,7 +91,7 @@ public:
 
     template <typename T> std::shared_ptr<T> as() {
         if(!is<T>()) {
-            throw unsupported_operation_exception("unsupported operation, object's type is not require type");
+            THROW_UNSUPPORTED_OPERATION_EXCEPTION("unsupported operation, object's type is not require type");
         }
 
         return std::dynamic_pointer_cast<T>(shared_from_this());
@@ -99,7 +99,7 @@ public:
 
     template <typename T> std::shared_ptr<const T> as() const {
         if(!is<const T>())
-            throw unsupported_operation_exception("unsupported operation, object's type is not require type");
+            THROW_UNSUPPORTED_OPERATION_EXCEPTION("unsupported operation, object's type is not require type");
 
         return std::dynamic_pointer_cast<const T>(shared_from_this());
     }

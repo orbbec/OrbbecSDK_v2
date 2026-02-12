@@ -23,11 +23,11 @@ void RosReader::initView() try {
     }
     totalDuration_ = std::chrono::nanoseconds(streamingDuration.toNSec());
     if(static_cast<uint64_t>(totalDuration_.count() / 1000) >= INVALID_DURATION) {
-        throw io_exception("The streaming duration is too long, please check the rosbag file.");
+        THROW_IO_EXCEPTION("The streaming duration is too long, please check the rosbag file.");
     }
 }
 catch(const rosbag::BagException &e) {
-    throw io_exception(e.what());
+    THROW_IO_EXCEPTION(e.what());
 }
 
 std::chrono::nanoseconds RosReader::getDuration() {
@@ -292,7 +292,7 @@ inline orbbecRosbag::Time toRosTime(const std::chrono::nanoseconds &time, const 
 void RosReader::seekToTime(const std::chrono::nanoseconds &seekTime) {
     std::lock_guard<std::mutex> lock(readMutex_);
     if(seekTime > totalDuration_) {
-        throw invalid_value_exception("Seek time is greater than total duration");
+        THROW_INVALID_PARAM_EXCEPTION("Seek time is greater than total duration");
     }
     auto seekTimeAsRostime = toRosTime(seekTime, startTime_.toSec());
     sensorView_.reset(new rosbag::View(file_, FalseQuery()));
@@ -399,9 +399,9 @@ std::shared_ptr<Frame> RosReader::createImuFrame(const rosbag::MessageInstance &
 std::shared_ptr<Frame> RosReader::createVideoFrame(const rosbag::MessageInstance &msg) {
     auto                         videoMsgTopic = msg.getTopic();
     sensor_msgs::Image::ConstPtr imagePtr      = msg.instantiate<sensor_msgs::Image>();
-    auto                         frame         = libobsensor::FrameFactory::createVideoFrameFromUserBuffer(
-        RosTopic::getFrameTypeIdentifier(videoMsgTopic), convertStringToFormat(imagePtr->encoding), imagePtr->width, imagePtr->height,
-        (uint8_t *)imagePtr->data.data(), imagePtr->data.size());
+    auto                         frame =
+        libobsensor::FrameFactory::createVideoFrameFromUserBuffer(RosTopic::getFrameTypeIdentifier(videoMsgTopic), convertStringToFormat(imagePtr->encoding),
+                                                                  imagePtr->width, imagePtr->height, (uint8_t *)imagePtr->data.data(), imagePtr->data.size());
 
     frame->updateMetadata(imagePtr->metadata.data(), imagePtr->metadatasize);
     frame->setNumber(imagePtr->number);

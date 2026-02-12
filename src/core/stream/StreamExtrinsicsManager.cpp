@@ -77,7 +77,7 @@ StreamExtrinsicsManager::~StreamExtrinsicsManager() noexcept = default;
 void StreamExtrinsicsManager::registerExtrinsics(const std::shared_ptr<const StreamProfile> &from, const std::shared_ptr<const StreamProfile> &to,
                                                  const OBExtrinsic &extrinsics) {
     if(!from || !to) {
-        throw invalid_value_exception("Invalid stream profile, from or to is null");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid stream profile, from or to is null");
     }
 
     std::unique_lock<std::recursive_mutex> lock(mutex_);
@@ -165,38 +165,40 @@ void StreamExtrinsicsManager::registerExtrinsics(const std::shared_ptr<const Str
     }
 }
 
-void StreamExtrinsicsManager::registerExtrinsics(const std::shared_ptr<const StreamProfile> &from, const OBStreamType &type, const OBExtrinsic &extrinsics){
+void StreamExtrinsicsManager::registerExtrinsics(const std::shared_ptr<const StreamProfile> &from, const OBStreamType &type, const OBExtrinsic &extrinsics) {
     if(!from) {
-        throw invalid_value_exception("Invalid stream profile, from or to is null");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid stream profile, from or to is null");
     }
     auto fromId = getStreamProfileId(from);
     if(fromId == 0) {
-        throw invalid_value_exception("From Stream profile not registered!");
+        THROW_INVALID_PARAM_EXCEPTION("From Stream profile not registered!");
     }
-    
-    //find to ids
+
+    // find to ids
     std::vector<uint64_t> toIds;
-    while(toIds.empty()){
-        for(auto iter : extrinsicsGraph_){
+    while(toIds.empty()) {
+        for(auto iter: extrinsicsGraph_) {
             auto extrinsicList = iter.second;
-            if(iter.first == fromId){
-                for(const auto &extrinsicPair : extrinsicList){
+            if(iter.first == fromId) {
+                for(const auto &extrinsicPair: extrinsicList) {
                     toIds.push_back(extrinsicPair.first);
                 }
                 break;
-            }else{
-                auto foundIter = std::find_if(extrinsicList.begin(),extrinsicList.end(),[fromId](const std::pair<uint64_t,OBExtrinsic>& pair){return pair.first == fromId;});
-                if(foundIter == extrinsicList.end()){
+            }
+            else {
+                auto foundIter = std::find_if(extrinsicList.begin(), extrinsicList.end(),
+                                              [fromId](const std::pair<uint64_t, OBExtrinsic> &pair) { return pair.first == fromId; });
+                if(foundIter == extrinsicList.end()) {
                     continue;
                 }
-                if((memcmp(&foundIter->second, &IdentityExtrinsics, sizeof(OBExtrinsic)) == 0)){
+                if((memcmp(&foundIter->second, &IdentityExtrinsics, sizeof(OBExtrinsic)) == 0)) {
                     fromId = iter.first;
                 }
             }
         }
     }
 
-    //find to stream profile
+    // find to stream profile
     std::shared_ptr<const StreamProfile> to;
     for(auto spIter = streamProfileMap_.begin(); spIter != streamProfileMap_.end();) {
         for(auto weakSp: spIter->second) {
@@ -213,14 +215,14 @@ void StreamExtrinsicsManager::registerExtrinsics(const std::shared_ptr<const Str
                 }
             }
         }
-        
-        if(to){
+
+        if(to) {
             break;
         }
         ++spIter;
     }
     if(!to) {
-        throw invalid_value_exception("To Stream profile not registered!");
+        THROW_INVALID_PARAM_EXCEPTION("To Stream profile not registered!");
     }
 
     registerExtrinsics(from, to, extrinsics);
@@ -259,17 +261,17 @@ bool StreamExtrinsicsManager::hasExtrinsics(std::shared_ptr<const StreamProfile>
 
 OBExtrinsic StreamExtrinsicsManager::getExtrinsics(std::shared_ptr<const StreamProfile> from, std::shared_ptr<const StreamProfile> to) {
     if(!from || !to) {
-        throw invalid_value_exception("Invalid stream profile");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid stream profile");
     }
 
     std::unique_lock<std::recursive_mutex> lock(mutex_);
     auto                                   fromId = getStreamProfileId(from);
     if(fromId == 0) {
-        throw invalid_value_exception("From Stream profile not registered!");
+        THROW_INVALID_PARAM_EXCEPTION("From Stream profile not registered!");
     }
     auto toId = getStreamProfileId(to);
     if(toId == 0) {
-        throw invalid_value_exception("To Stream profile not registered!");
+        THROW_INVALID_PARAM_EXCEPTION("To Stream profile not registered!");
     }
     if(fromId == toId) {
         return IdentityExtrinsics;
@@ -277,7 +279,7 @@ OBExtrinsic StreamExtrinsicsManager::getExtrinsics(std::shared_ptr<const StreamP
 
     std::vector<std::pair<uint64_t, OBExtrinsic>> path = { { fromId, IdentityExtrinsics } };
     if(!searchPath(path, fromId, toId)) {
-        throw invalid_value_exception(utils::string::to_string() << "Can not find path to calculate the extrinsics from" << fromId << "to" << toId);
+        THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "Can not find path to calculate the extrinsics from" << fromId << "to" << toId);
     }
 
     // LOG_TRACE("Extrinsics path:");

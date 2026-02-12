@@ -1,7 +1,7 @@
 // Copyright (c) Orbbec Inc. All Rights Reserved.
 // Licensed under the MIT License.
 
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+#if (defined(WIN32) || defined(_WIN32) || defined(WINCE))
 #define _WINSOCK_DEPRECATED_NO_WARNINGS disable
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -56,8 +56,8 @@ static int query_callback(int sock, const struct sockaddr *from, size_t addrlen,
     (void)ttl;
 
     // char              addrbuffer[64];
-    char              entrybuffer[256] = {0};
-    char              namebuffer[256]  = {0};
+    char              entrybuffer[256] = { 0 };
+    char              namebuffer[256]  = { 0 };
     mdns_record_txt_t txtbuffer[128];
     MDNSAckData      *ack = static_cast<MDNSAckData *>(user_data);
 
@@ -120,17 +120,17 @@ std::shared_ptr<MDNSDiscovery> MDNSDiscovery::getInstance() {
 }
 
 MDNSDiscovery::MDNSDiscovery() {
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+#if (defined(WIN32) || defined(_WIN32) || defined(WINCE))
     WSADATA wsaData;
     if(WSAStartup(MAKEWORD(2, 2), &wsaData)) {
-        throw libobsensor::invalid_value_exception(utils::string::to_string() << "Failed to initialize WinSock! err_code=" << GET_LAST_ERROR());
+        THROW_IO_EXCEPTION(utils::string::to_string() << "Failed to initialize WinSock! err_code=" << GET_LAST_ERROR());
     }
 #endif
 }
 
 MDNSDiscovery::~MDNSDiscovery() {
     closeClientSockets(cachedSockInfos_);
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+#if (defined(WIN32) || defined(_WIN32) || defined(WINCE))
     WSACleanup();
 #endif
 }
@@ -138,7 +138,7 @@ MDNSDiscovery::~MDNSDiscovery() {
 std::vector<MDNSSocketInfo> MDNSDiscovery::openClientSockets() {
     std::vector<MDNSSocketInfo> socks;
 
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+#if (defined(WIN32) || defined(_WIN32) || defined(WINCE))
     DWORD                                                                   ret, size;
     std::unique_ptr<IP_ADAPTER_ADDRESSES, void (*)(IP_ADAPTER_ADDRESSES *)> adapterAddresses(nullptr, [](IP_ADAPTER_ADDRESSES *p) { free(p); });
 

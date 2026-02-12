@@ -264,7 +264,7 @@ void GlobalTimestampFitter::fittingLoop() {
             devTime.rtt      = sysTsp2Usec - sysTsp1Usec;
             if(devTime.rtt > maxValidRtt_) {
                 LOG_DEBUG("Get device time rtt is too large! rtt={}", devTime.rtt);
-                throw std::runtime_error("RTT too large");
+                THROW_INVALID_DATA_EXCEPTION("RTT too large");
             }
             LOG_DEBUG("sys={}, dev={}, rtt={}", sysTspUsec, devTime.time, devTime.rtt);
         }

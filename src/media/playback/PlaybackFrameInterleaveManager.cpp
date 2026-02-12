@@ -14,7 +14,7 @@ PlaybackFrameInterleaveManager::~PlaybackFrameInterleaveManager() {}
 
 void PlaybackFrameInterleaveManager::loadFrameInterleave(const std::string &frameInterleaveName) {
     (void)frameInterleaveName;
-    throw unsupported_operation_exception("Playback device doesn't support loadFrameInterleave");
+    THROW_UNSUPPORTED_OPERATION_EXCEPTION("Playback device doesn't support loadFrameInterleave");
 }
 
 const std::vector<std::string> &PlaybackFrameInterleaveManager::getAvailableFrameInterleaveList() const {

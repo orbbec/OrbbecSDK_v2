@@ -12,7 +12,8 @@
 
 namespace libobsensor {
 
-G330Disp2DepthPropertyAccessor::G330Disp2DepthPropertyAccessor(IDevice *owner) : owner_(owner), hwDisparityToDepthEnabled_(true), swDisparityToDepthEnabled_(false) {}
+G330Disp2DepthPropertyAccessor::G330Disp2DepthPropertyAccessor(IDevice *owner)
+    : owner_(owner), hwDisparityToDepthEnabled_(true), swDisparityToDepthEnabled_(false) {}
 
 void G330Disp2DepthPropertyAccessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
     switch(propertyId) {
@@ -49,7 +50,7 @@ void G330Disp2DepthPropertyAccessor::setPropertyValue(uint32_t propertyId, const
     case OB_PROP_DISP_SEARCH_OFFSET_INT: {
         auto sensor = owner_->getComponentT<ISensor>(OB_DEV_COMPONENT_DEPTH_SENSOR).get();
         if(!sensor->isStreamActivated()) {
-            throw libobsensor::wrong_api_call_sequence_exception("disp search offset can only be set when depth sensor is activated");
+            THROW_WRONG_API_CALL_SEQUENCE_EXCEPTION("disp search offset can only be set when depth sensor is activated");
         }
 
         auto commandPort = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);

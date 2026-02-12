@@ -32,7 +32,7 @@ void PropertyServer::registerProperty(uint32_t propertyId, OBPermissionType user
 void PropertyServer::registerAccessCallback(uint32_t propertyId, PropertyAccessCallback callback) {
     auto it = properties_.find(propertyId);
     if(it == properties_.end()) {
-        throw invalid_value_exception("Property not found to register callback, propertyId: " + std::to_string(propertyId));
+        THROW_INVALID_PARAM_EXCEPTION("Property not found to register callback, propertyId: " + std::to_string(propertyId));
     }
     it->second.accessCallbacks.push_back(callback);
 }
@@ -101,7 +101,7 @@ void PropertyServer::appendToPropertyMap(uint32_t propertyId, OBPermissionType u
 void PropertyServer::aliasProperty(uint32_t aliasId, uint32_t propertyId) {
     auto it = properties_.find(propertyId);
     if(it == properties_.end()) {
-        throw invalid_value_exception("Property not found for aliasing");
+        THROW_ITEM_NOT_FOUND_EXCEPTION("Property not found for aliasing");
     }
 
     auto propertyItem = it->second;
@@ -112,7 +112,7 @@ void PropertyServer::aliasProperty(uint32_t aliasId, uint32_t propertyId) {
     if(infoIter == OBPropertyBaseInfoMap.end()) {
         std::string msg = ", id=";
         msg += std::to_string(aliasId);
-        throw not_implemented_exception(msg);
+        THROW_NOT_IMPLEMENTED_EXCEPTION(msg);
     }
 
     if(it->second.userPermission & 0x3) {
@@ -138,12 +138,12 @@ void PropertyServer::checkAccessMode(PropertyOperationType operationType) {
     case OB_DEVICE_MONITOR_ACCESS:
         // ReadOnly
         if(operationType == PROP_OP_WRITE || operationType == PROP_OP_READ_WRITE) {
-            throw access_denied_exception("The current access mode is monitor access and does not allow write operations");
+            THROW_ACCESS_DENIED_EXCEPTION("The current access mode is monitor access and does not allow write operations");
         }
         break;
     case OB_DEVICE_ACCESS_DENIED:
         // access denied
-        throw access_denied_exception("The current access mode is access denied and property read/write operations are not permitted");
+        THROW_ACCESS_DENIED_EXCEPTION("The current access mode is access denied and property read/write operations are not permitted");
         break;
     case OB_DEVICE_DEFAULT_ACCESS:
     default:
@@ -182,7 +182,7 @@ bool PropertyServer::isPropertySupported(uint32_t propertyId, PropertyOperationT
 void PropertyServer::setPropertyValue(uint32_t propertyId, OBPropertyValue value, PropertyAccessType accessType) {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     if(!isPropertySupported(propertyId, PROP_OP_WRITE, accessType)) {
-        throw invalid_value_exception("Property not writable");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("Property not writable");
     }
     // check current access mode
     checkAccessMode(PROP_OP_WRITE);
@@ -209,7 +209,7 @@ void PropertyServer::setPropertyValue(uint32_t propertyId, OBPropertyValue value
 void PropertyServer::getPropertyValue(uint32_t propertyId, OBPropertyValue *value, PropertyAccessType accessType) {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     if(!isPropertySupported(propertyId, PROP_OP_READ, accessType)) {
-        throw invalid_value_exception(utils::string::to_string() << "Property not readable: " << propertyId);
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION(utils::string::to_string() << "Property not readable: " << propertyId);
     }
     // check current access mode
     checkAccessMode(PROP_OP_READ);
@@ -241,7 +241,7 @@ void PropertyServer::getPropertyValue(uint32_t propertyId, OBPropertyValue *valu
 void PropertyServer::getPropertyRange(uint32_t propertyId, OBPropertyRange *range, PropertyAccessType accessType) {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     if(!isPropertySupported(propertyId, PROP_OP_READ, accessType)) {
-        throw invalid_value_exception(utils::string::to_string() << "Property not readable: " << propertyId);
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION(utils::string::to_string() << "Property not readable: " << propertyId);
     }
     // check current access mode
     checkAccessMode(PROP_OP_READ);
@@ -264,7 +264,7 @@ void PropertyServer::getPropertyRange(uint32_t propertyId, OBPropertyRange *rang
 void PropertyServer::setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data, PropertyAccessType accessType) {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     if(!isPropertySupported(propertyId, PROP_OP_WRITE, accessType)) {
-        throw invalid_value_exception("Property not writable");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("Property not writable");
     }
     // check current access mode
     checkAccessMode(PROP_OP_WRITE);
@@ -277,7 +277,7 @@ void PropertyServer::setStructureData(uint32_t propertyId, const std::vector<uin
     }
     auto structAccessor = std::dynamic_pointer_cast<IStructureDataAccessor>(accessor);
     if(structAccessor == nullptr) {
-        throw invalid_value_exception(utils::string::to_string() << "Property" << propId << " does not support structure data setting");
+        THROW_INVALID_DATA_EXCEPTION(utils::string::to_string() << "Property" << propId << " does not support structure data setting");
     }
     utils::Timer timer;
     structAccessor->setStructureData(propId, data);
@@ -291,7 +291,7 @@ void PropertyServer::setStructureData(uint32_t propertyId, const std::vector<uin
 const std::vector<uint8_t> &PropertyServer::getStructureData(uint32_t propertyId, PropertyAccessType accessType) {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     if(!isPropertySupported(propertyId, PROP_OP_READ, accessType)) {
-        throw invalid_value_exception(utils::string::to_string() << "Property not readable: " << propertyId);
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION(utils::string::to_string() << "Property not readable: " << propertyId);
     }
     // check current access mode
     checkAccessMode(PROP_OP_READ);
@@ -305,10 +305,10 @@ const std::vector<uint8_t> &PropertyServer::getStructureData(uint32_t propertyId
 
     auto structAccessor = std::dynamic_pointer_cast<IStructureDataAccessor>(accessor);
     if(structAccessor == nullptr) {
-        throw invalid_value_exception(utils::string::to_string() << "Property " << propId << " does not support structure data getting");
+        THROW_INVALID_DATA_EXCEPTION(utils::string::to_string() << "Property " << propId << " does not support structure data getting");
     }
     utils::Timer timer;
-    const auto & data = structAccessor->getStructureData(propId);
+    const auto  &data = structAccessor->getStructureData(propId);
     for(auto &callback: it->second.accessCallbacks) {
         callback(propertyId, data.data(), data.size(), PROP_OP_READ);
     }
@@ -320,7 +320,7 @@ const std::vector<uint8_t> &PropertyServer::getStructureData(uint32_t propertyId
 void PropertyServer::getRawData(uint32_t propertyId, GetDataCallback callback, PropertyAccessType accessType) {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     if(!isPropertySupported(propertyId, PROP_OP_READ, accessType)) {
-        throw invalid_value_exception(utils::string::to_string() << "Property not readable: " << propertyId);
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION(utils::string::to_string() << "Property not readable: " << propertyId);
     }
     // check current access mode
     checkAccessMode(PROP_OP_READ);
@@ -333,7 +333,7 @@ void PropertyServer::getRawData(uint32_t propertyId, GetDataCallback callback, P
     }
     auto rawDataAccessor = std::dynamic_pointer_cast<IRawDataAccessor>(accessor);
     if(rawDataAccessor == nullptr) {
-        throw invalid_value_exception(utils::string::to_string() << "Property" << propId << " does not support raw data getting");
+        THROW_INVALID_DATA_EXCEPTION(utils::string::to_string() << "Property" << propId << " does not support raw data getting");
     }
 
     utils::Timer timer;
@@ -348,7 +348,7 @@ void PropertyServer::getRawData(uint32_t propertyId, GetDataCallback callback, P
 uint16_t PropertyServer::getCmdVersionProtoV1_1(uint32_t propertyId, PropertyAccessType accessType) {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     if(!isPropertySupported(propertyId, PROP_OP_READ, accessType)) {
-        throw invalid_value_exception(utils::string::to_string() << "Property not readable: " << propertyId);
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION(utils::string::to_string() << "Property not readable: " << propertyId);
     }
     // check current access mode
     checkAccessMode(PROP_OP_READ);
@@ -361,7 +361,7 @@ uint16_t PropertyServer::getCmdVersionProtoV1_1(uint32_t propertyId, PropertyAcc
     }
     auto structAccessor = std::dynamic_pointer_cast<IStructureDataAccessorV1_1>(accessor);
     if(structAccessor == nullptr) {
-        throw invalid_value_exception(utils::string::to_string() << "Property" << propId << " does not support cmd version getting");
+        THROW_INVALID_DATA_EXCEPTION(utils::string::to_string() << "Property" << propId << " does not support cmd version getting");
     }
 
     utils::Timer timer;
@@ -374,7 +374,7 @@ uint16_t PropertyServer::getCmdVersionProtoV1_1(uint32_t propertyId, PropertyAcc
 const std::vector<uint8_t> &PropertyServer::getStructureDataProtoV1_1(uint32_t propertyId, uint16_t cmdVersion, PropertyAccessType accessType) {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     if(!isPropertySupported(propertyId, PROP_OP_READ, accessType)) {
-        throw invalid_value_exception(utils::string::to_string() << "Property not readable: " << propertyId);
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION(utils::string::to_string() << "Property not readable: " << propertyId);
     }
     // check current access mode
     checkAccessMode(PROP_OP_READ);
@@ -387,10 +387,10 @@ const std::vector<uint8_t> &PropertyServer::getStructureDataProtoV1_1(uint32_t p
     }
     auto structAccessor = std::dynamic_pointer_cast<IStructureDataAccessorV1_1>(accessor);
     if(structAccessor == nullptr) {
-        throw invalid_value_exception(utils::string::to_string() << "Property" << propId << " does not support structure data getting over proto v1.1");
+        THROW_INVALID_DATA_EXCEPTION(utils::string::to_string() << "Property" << propId << " does not support structure data getting over proto v1.1");
     }
     utils::Timer timer;
-    const auto & data = structAccessor->getStructureDataProtoV1_1(propId, cmdVersion);
+    const auto  &data = structAccessor->getStructureDataProtoV1_1(propId, cmdVersion);
     for(auto callback: it->second.accessCallbacks) {
         callback(propertyId, data.data(), data.size(), PROP_OP_READ);
     }
@@ -402,7 +402,7 @@ const std::vector<uint8_t> &PropertyServer::getStructureDataProtoV1_1(uint32_t p
 void PropertyServer::setStructureDataProtoV1_1(uint32_t propertyId, const std::vector<uint8_t> &data, uint16_t cmdVersion, PropertyAccessType accessType) {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     if(!isPropertySupported(propertyId, PROP_OP_WRITE, accessType)) {
-        throw invalid_value_exception("Property not writable");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("Property not writable");
     }
     // check current access mode
     checkAccessMode(PROP_OP_WRITE);
@@ -415,7 +415,7 @@ void PropertyServer::setStructureDataProtoV1_1(uint32_t propertyId, const std::v
     }
     auto structAccessor = std::dynamic_pointer_cast<IStructureDataAccessorV1_1>(accessor);
     if(structAccessor == nullptr) {
-        throw invalid_value_exception(utils::string::to_string() << "Property" << propId << " does not support structure data setting over proto v1.1");
+        THROW_INVALID_DATA_EXCEPTION(utils::string::to_string() << "Property" << propId << " does not support structure data setting over proto v1.1");
     }
     utils::Timer timer;
     structAccessor->setStructureDataProtoV1_1(propId, data, cmdVersion);
@@ -429,7 +429,7 @@ void PropertyServer::setStructureDataProtoV1_1(uint32_t propertyId, const std::v
 const std::vector<uint8_t> &PropertyServer::getStructureDataListProtoV1_1(uint32_t propertyId, uint16_t cmdVersion, PropertyAccessType accessType) {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     if(!isPropertySupported(propertyId, PROP_OP_READ, accessType)) {
-        throw invalid_value_exception(utils::string::to_string() << "Property not readable: " << propertyId);
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION(utils::string::to_string() << "Property not readable: " << propertyId);
     }
     // check current access mode
     checkAccessMode(PROP_OP_READ);
@@ -442,10 +442,10 @@ const std::vector<uint8_t> &PropertyServer::getStructureDataListProtoV1_1(uint32
     }
     auto structAccessor = std::dynamic_pointer_cast<IStructureDataAccessorV1_1>(accessor);
     if(structAccessor == nullptr) {
-        throw invalid_value_exception(utils::string::to_string() << "Property" << propId << " does not support structure data list getting over proto v1.1");
+        THROW_INVALID_DATA_EXCEPTION(utils::string::to_string() << "Property" << propId << " does not support structure data list getting over proto v1.1");
     }
     utils::Timer timer;
-    const auto & data = structAccessor->getStructureDataListProtoV1_1(propId, cmdVersion);
+    const auto  &data = structAccessor->getStructureDataListProtoV1_1(propId, cmdVersion);
     for(auto callback: it->second.accessCallbacks) {
         callback(propertyId, data.data(), data.size(), PROP_OP_READ);
     }

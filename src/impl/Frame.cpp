@@ -129,7 +129,7 @@ HANDLE_EXCEPTIONS_AND_RETURN(uint64_t(0), frame)
 uint32_t ob_video_frame_get_width(const ob_frame *frame, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(frame);
     if(!frame->frame->is<libobsensor::VideoFrame>()) {
-        throw libobsensor::unsupported_operation_exception("It's not a video frame!");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("It's not a video frame!");
     }
     return frame->frame->as<libobsensor::VideoFrame>()->getWidth();
 }
@@ -138,7 +138,7 @@ HANDLE_EXCEPTIONS_AND_RETURN(uint32_t(0), frame)
 uint32_t ob_video_frame_get_height(const ob_frame *frame, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(frame);
     if(!frame->frame->is<libobsensor::VideoFrame>()) {
-        throw libobsensor::unsupported_operation_exception("It's not a video frame!");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("It's not a video frame!");
     }
     return frame->frame->as<libobsensor::VideoFrame>()->getHeight();
 }
@@ -293,12 +293,12 @@ ob_sensor *ob_frame_get_sensor(const ob_frame *frame, ob_error **error) BEGIN_AP
     VALIDATE_NOT_NULL(frame);
     auto innerProfile = frame->frame->getStreamProfile();
     if(!innerProfile) {
-        throw libobsensor::invalid_value_exception("Frame has no owner stream profile!");
+        THROW_INVALID_PARAM_EXCEPTION("Frame has no owner stream profile!");
     }
 
     auto lazySensor = innerProfile->getOwner();
     if(!lazySensor) {
-        throw libobsensor::invalid_value_exception("Frame has no owner sensor!");
+        THROW_INVALID_PARAM_EXCEPTION("Frame has no owner sensor!");
     }
 
     std::shared_ptr<libobsensor::IDevice> device;
@@ -306,7 +306,7 @@ ob_sensor *ob_frame_get_sensor(const ob_frame *frame, ob_error **error) BEGIN_AP
         device = lazySensor->device->shared_from_this();
     }
     catch(...) {
-        throw libobsensor::wrong_api_call_sequence_exception("The device of the frame has been released!");
+        THROW_WRONG_API_CALL_SEQUENCE_EXCEPTION("The device of the frame has been released!");
     }
 
     auto sensorImpl    = new ob_sensor();
@@ -320,12 +320,12 @@ ob_device *ob_frame_get_device(const ob_frame *frame, ob_error **error) BEGIN_AP
     VALIDATE_NOT_NULL(frame);
     auto innerProfile = frame->frame->getStreamProfile();
     if(!innerProfile) {
-        throw libobsensor::invalid_value_exception("Frame has no owner stream profile!");
+        THROW_INVALID_PARAM_EXCEPTION("Frame has no owner stream profile!");
     }
 
     auto lazySensor = innerProfile->getOwner();
     if(!lazySensor) {
-        throw libobsensor::invalid_value_exception("Frame has no owner sensor!");
+        THROW_INVALID_PARAM_EXCEPTION("Frame has no owner sensor!");
     }
 
     std::shared_ptr<libobsensor::IDevice> device;
@@ -333,7 +333,7 @@ ob_device *ob_frame_get_device(const ob_frame *frame, ob_error **error) BEGIN_AP
         device = lazySensor->device->shared_from_this();
     }
     catch(...) {
-        throw libobsensor::wrong_api_call_sequence_exception("The device of the frame has been released!");
+        THROW_WRONG_API_CALL_SEQUENCE_EXCEPTION("The device of the frame has been released!");
     }
 
     auto deviceImpl    = new ob_device();
@@ -378,14 +378,14 @@ ob_sensor_type ob_ir_frame_get_data_source(const ob_frame *frame, ob_error **err
     if(type == OB_FRAME_IR_RIGHT) {
         return OB_SENSOR_IR_RIGHT;
     }
-    throw libobsensor::invalid_value_exception("invalid ir frame type type: " + std::to_string(type));
+    THROW_INVALID_PARAM_EXCEPTION("invalid ir frame type type: " + std::to_string(type));
 }
 HANDLE_EXCEPTIONS_AND_RETURN(OB_SENSOR_UNKNOWN, frame)
 
 ob_accel_value ob_accel_frame_get_value(const ob_frame *frame, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(frame);
     if(!frame->frame->is<libobsensor::AccelFrame>()) {
-        throw libobsensor::unsupported_operation_exception("It's not a accel frame!");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("It's not a accel frame!");
     }
     return frame->frame->as<libobsensor::AccelFrame>()->value();
 }
@@ -394,7 +394,7 @@ HANDLE_EXCEPTIONS_AND_RETURN(ob_accel_value(), frame)
 float ob_accel_frame_get_temperature(const ob_frame *frame, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(frame);
     if(!frame->frame->is<libobsensor::AccelFrame>()) {
-        throw libobsensor::unsupported_operation_exception("It's not a accel frame!");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("It's not a accel frame!");
     }
     return frame->frame->as<libobsensor::AccelFrame>()->temperature();
 }
@@ -403,7 +403,7 @@ HANDLE_EXCEPTIONS_AND_RETURN(0.0f, frame)
 ob_gyro_value ob_gyro_frame_get_value(const ob_frame *frame, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(frame);
     if(!frame->frame->is<libobsensor::GyroFrame>()) {
-        throw libobsensor::unsupported_operation_exception("It's not a gyro frame!");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("It's not a gyro frame!");
     }
     return frame->frame->as<libobsensor::GyroFrame>()->value();
 }
@@ -412,7 +412,7 @@ HANDLE_EXCEPTIONS_AND_RETURN(ob_gyro_value(), frame)
 float ob_gyro_frame_get_temperature(const ob_frame *frame, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(frame);
     if(!frame->frame->is<libobsensor::GyroFrame>()) {
-        throw libobsensor::unsupported_operation_exception("It's not a gyro frame!");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("It's not a gyro frame!");
     }
     return frame->frame->as<libobsensor::GyroFrame>()->temperature();
 }
@@ -421,7 +421,7 @@ HANDLE_EXCEPTIONS_AND_RETURN(0.0f, frame)
 uint32_t ob_frameset_get_count(const ob_frame *frameset, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(frameset);
     if(!frameset->frame->is<libobsensor::FrameSet>()) {
-        throw libobsensor::unsupported_operation_exception("It's not a frameset!");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("It's not a frameset!");
     }
     return frameset->frame->as<libobsensor::FrameSet>()->getCount();
 }
@@ -430,7 +430,7 @@ HANDLE_EXCEPTIONS_AND_RETURN(uint32_t(0), frameset)
 ob_frame *ob_frameset_get_depth_frame(const ob_frame *frameset, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(frameset);
     if(!frameset->frame->is<libobsensor::FrameSet>()) {
-        throw libobsensor::unsupported_operation_exception("It's not a frameset!");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("It's not a frameset!");
     }
     auto innerFrame = frameset->frame->as<libobsensor::FrameSet>()->getFrame(OB_FRAME_DEPTH);
     if(innerFrame == nullptr) {
@@ -445,7 +445,7 @@ HANDLE_EXCEPTIONS_AND_RETURN(nullptr, frameset)
 ob_frame *ob_frameset_get_color_frame(const ob_frame *frameset, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(frameset);
     if(!frameset->frame->is<libobsensor::FrameSet>()) {
-        throw libobsensor::unsupported_operation_exception("It's not a frameset!");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("It's not a frameset!");
     }
     auto innerFrame = frameset->frame->as<libobsensor::FrameSet>()->getFrame(OB_FRAME_COLOR);
     if(innerFrame == nullptr) {
@@ -460,7 +460,7 @@ HANDLE_EXCEPTIONS_AND_RETURN(nullptr, frameset)
 ob_frame *ob_frameset_get_ir_frame(const ob_frame *frameset, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(frameset);
     if(!frameset->frame->is<libobsensor::FrameSet>()) {
-        throw libobsensor::unsupported_operation_exception("It's not a frameset!");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("It's not a frameset!");
     }
     auto innerFrame = frameset->frame->as<libobsensor::FrameSet>()->getFrame(OB_FRAME_IR);
     if(innerFrame == nullptr) {
@@ -475,7 +475,7 @@ HANDLE_EXCEPTIONS_AND_RETURN(nullptr, frameset)
 ob_frame *ob_frameset_get_points_frame(const ob_frame *frameset, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(frameset);
     if(!frameset->frame->is<libobsensor::FrameSet>()) {
-        throw libobsensor::unsupported_operation_exception("It's not a frameset!");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("It's not a frameset!");
     }
     auto innerFrame = frameset->frame->as<libobsensor::FrameSet>()->getFrame(OB_FRAME_POINTS);
     if(innerFrame == nullptr) {
@@ -490,7 +490,7 @@ HANDLE_EXCEPTIONS_AND_RETURN(nullptr, frameset)
 ob_frame *ob_frameset_get_frame(const ob_frame *frameset, ob_frame_type frame_type, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(frameset);
     if(!frameset->frame->is<libobsensor::FrameSet>()) {
-        throw libobsensor::unsupported_operation_exception("It's not a frameset!");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("It's not a frameset!");
     }
     auto innerFrame = frameset->frame->as<libobsensor::FrameSet>()->getFrame(frame_type);
     if(innerFrame == nullptr) {
@@ -505,7 +505,7 @@ HANDLE_EXCEPTIONS_AND_RETURN(nullptr, frameset)
 ob_frame *ob_frameset_get_frame_by_index(const ob_frame *frameset, uint32_t index, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(frameset);
     if(!frameset->frame->is<libobsensor::FrameSet>()) {
-        throw libobsensor::unsupported_operation_exception("It's not a frameset!");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("It's not a frameset!");
     }
     auto innerFrame = frameset->frame->as<libobsensor::FrameSet>()->getFrame(index);
     if(innerFrame == nullptr) {
@@ -529,7 +529,7 @@ HANDLE_EXCEPTIONS_NO_RETURN(frameset, frame)
 uint32_t ob_point_cloud_frame_get_width(const ob_frame *frame, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(frame);
     if(!frame->frame->is<libobsensor::PointsFrame>()) {
-        throw libobsensor::unsupported_operation_exception("It's not a video frame!");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("It's not a video frame!");
     }
     return frame->frame->as<libobsensor::PointsFrame>()->getWidth();
 }
@@ -538,7 +538,7 @@ HANDLE_EXCEPTIONS_AND_RETURN(uint32_t(0), frame)
 uint32_t ob_point_cloud_frame_get_height(const ob_frame *frame, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(frame);
     if(!frame->frame->is<libobsensor::PointsFrame>()) {
-        throw libobsensor::unsupported_operation_exception("It's not a video frame!");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("It's not a video frame!");
     }
     return frame->frame->as<libobsensor::PointsFrame>()->getHeight();
 }

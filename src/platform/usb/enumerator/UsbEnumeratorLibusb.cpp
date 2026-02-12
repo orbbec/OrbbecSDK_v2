@@ -285,7 +285,7 @@ libusb_endpoint_descriptor UsbDeviceLibusb::getEndpointDesc(int interfaceIndex, 
     libusb_device_descriptor desc;
     auto                     ret = libusb_get_device_descriptor(device, &desc);
     if(ret != LIBUSB_SUCCESS) {
-        throw io_exception(utils::string::to_string() << "Failed to read USB device descriptor: error=" << libusb_strerror(ret));
+        THROW_IO_EXCEPTION(utils::string::to_string() << "Failed to read USB device descriptor: error=" << libusb_strerror(ret));
     }
 
     libusb_endpoint_descriptor ep    = { 0 };
@@ -313,7 +313,7 @@ libusb_endpoint_descriptor UsbDeviceLibusb::getEndpointDesc(int interfaceIndex, 
         libusb_free_config_descriptor(config);
     }
     if(!found) {
-        throw io_exception("Can not find interface to get endpoint address");
+        THROW_IO_EXCEPTION("Can not find interface to get endpoint address");
     }
     return ep;
 }
@@ -334,7 +334,7 @@ std::shared_ptr<IUsbEnumerator> IUsbEnumerator::getInstance() {
 UsbEnumeratorLibusb::UsbEnumeratorLibusb() {
     auto sts = libusb_init(&libusbCtx_);
     if(sts != LIBUSB_SUCCESS) {
-        throw libobsensor::pal_exception("libusb_init failed");
+        THROW_PAL_EXCEPTION("libusb_init failed", OB_ERROR_UNKNOWN);
     }
 
     startEventHandleThread();
@@ -465,7 +465,7 @@ std::shared_ptr<IUsbDevice> UsbEnumeratorLibusb::openUsbDevice(const std::string
     } while(retry--);
 
     if(retry == 0) {
-        throw io_exception(utils::string::to_string() << "Can not open device: " << devUrl);
+        THROW_IO_EXCEPTION(utils::string::to_string() << "Can not open device: " << devUrl);
     }
 
     return nullptr;
@@ -522,7 +522,7 @@ std::shared_ptr<libusb_device_handle> UsbEnumeratorLibusb::openLibusbDevice(cons
     libusb_device **devList = nullptr;
     auto            count   = libusb_get_device_list(libusbCtx_, &devList);
     if(count <= 0) {
-        throw invalid_value_exception(utils::string::to_string() << "Get device list return 0, can not open device: " << devUrl);
+        THROW_DEVICE_UNAVAILABLE_EXCEPTION(utils::string::to_string() << "Get device list return 0, can not open device: " << devUrl);
     }
 
     for(int i = 0; i < count; i++) {
@@ -534,7 +534,7 @@ std::shared_ptr<libusb_device_handle> UsbEnumeratorLibusb::openLibusbDevice(cons
             if(rst != LIBUSB_SUCCESS) {
                 libusb_free_device_list(devList, 1);
 
-                throw invalid_value_exception(utils::string::to_string() << "Open device failed: " << libusb_strerror(rst));
+                THROW_DEVICE_UNAVAILABLE_EXCEPTION(utils::string::to_string() << "Open device failed: " << libusb_strerror(rst));
             }
 
             devHandle = std::shared_ptr<libusb_device_handle>(handle, [this, devUrl](libusb_device_handle *handle) {
@@ -551,7 +551,7 @@ std::shared_ptr<libusb_device_handle> UsbEnumeratorLibusb::openLibusbDevice(cons
     libusb_free_device_list(devList, 1);
 
     if(!devHandle) {
-        throw invalid_value_exception(utils::string::to_string() << "Can not open device: " << devUrl);
+        THROW_DEVICE_UNAVAILABLE_EXCEPTION("unsupported source port type!");
     }
 
     return devHandle;

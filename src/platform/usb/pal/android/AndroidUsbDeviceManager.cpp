@@ -125,7 +125,7 @@ std::shared_ptr<IUsbDevice> AndroidUsbDeviceManager::openUsbDevice(const std::st
     }
     else {
         if(!gJVM_) {
-            throw libobsensor::pal_exception("AndroidUsbDeviceManager::openUsbDevice gJVM_ is uninitialized!");
+            THROW_PAL_EXCEPTION("AndroidUsbDeviceManager::openUsbDevice gJVM_ is uninitialized!", OB_ERROR_WRONG_API_CALL_SEQUENCE);
         }
 
         JNIEnv *env;
@@ -150,7 +150,7 @@ std::shared_ptr<IUsbDevice> AndroidUsbDeviceManager::openUsbDevice(const std::st
         }
 
         jstring jDevUrl = env->NewStringUTF(devUrl.c_str());
-        jint fileDsc = env->CallIntMethod(jObjDeviceWatcher_, midOpenUsbDevice, jDevUrl);  // TODO: Change to URL
+        jint    fileDsc = env->CallIntMethod(jObjDeviceWatcher_, midOpenUsbDevice, jDevUrl);  // TODO: Change to URL
         env->DeleteLocalRef(jDevUrl);
         if(needDetach) {
             gJVM_->DetachCurrentThread();
@@ -161,7 +161,7 @@ std::shared_ptr<IUsbDevice> AndroidUsbDeviceManager::openUsbDevice(const std::st
         newHandle.fd  = (intptr_t)fileDsc;
         auto ret      = libusb_wrap_sys_device(getContext(), (intptr_t)fileDsc, &newHandle.deviceHandle);
         if(ret < 0) {
-            throw libobsensor::pal_exception("libusb_wrap_sys_device wrap failed!");
+            THROW_PAL_EXCEPTION("libusb_wrap_sys_device wrap failed!", OB_ERROR_DEVICE_UNAVAILABLE);
         }
         newHandle.device = libusb_get_device(newHandle.deviceHandle);
         libusb_ref_device(newHandle.device);
@@ -252,17 +252,17 @@ void AndroidUsbDeviceManager::addUsbDevice(JNIEnv *env, jobject usbDevInfo) {
     jfieldID                      jfCls        = env->GetFieldID(jcUsbDevInfo, "mCls", "I");
     usbDeviceInfo.uid                          = std::to_string((int)env->GetIntField(usbDevInfo, jfUid));
     jstring jsUrl                              = (jstring)env->GetObjectField(usbDevInfo, jfUrl);
-    if (jsUrl != nullptr) {
+    if(jsUrl != nullptr) {
         const char *szUrl = env->GetStringUTFChars(jsUrl, JNI_FALSE);
-        if (szUrl) {
+        if(szUrl) {
             usbDeviceInfo.url = std::string(szUrl);
             env->ReleaseStringUTFChars(jsUrl, szUrl);
         }
     }
-    usbDeviceInfo.vid                          = env->GetIntField(usbDevInfo, jfVid);
-    usbDeviceInfo.pid                          = env->GetIntField(usbDevInfo, jfPid);
-    usbDeviceInfo.infIndex                     = env->GetIntField(usbDevInfo, jfMiId);
-    jstring jsSerialNum                        = (jstring)env->GetObjectField(usbDevInfo, jfSerialNum);
+    usbDeviceInfo.vid      = env->GetIntField(usbDevInfo, jfVid);
+    usbDeviceInfo.pid      = env->GetIntField(usbDevInfo, jfPid);
+    usbDeviceInfo.infIndex = env->GetIntField(usbDevInfo, jfMiId);
+    jstring jsSerialNum    = (jstring)env->GetObjectField(usbDevInfo, jfSerialNum);
     if(jsSerialNum != nullptr) {
         const char *szSerial = env->GetStringUTFChars(jsSerialNum, JNI_FALSE);
         if(szSerial) {
@@ -287,17 +287,17 @@ void AndroidUsbDeviceManager::removeUsbDevice(JNIEnv *env, jobject usbDevInfo) {
     jfieldID                      jfCls        = env->GetFieldID(jcUsbDevInfo, "mCls", "I");
     usbDeviceInfo.uid                          = std::to_string((int)env->GetIntField(usbDevInfo, jfUid));
     jstring jsUrl                              = (jstring)env->GetObjectField(usbDevInfo, jfUrl);
-    if (jsUrl != nullptr) {
+    if(jsUrl != nullptr) {
         const char *szUrl = env->GetStringUTFChars(jsUrl, JNI_FALSE);
-        if (szUrl) {
+        if(szUrl) {
             usbDeviceInfo.url = std::string(szUrl);
             env->ReleaseStringUTFChars(jsUrl, szUrl);
         }
     }
-    usbDeviceInfo.vid                          = env->GetIntField(usbDevInfo, jfVid);
-    usbDeviceInfo.pid                          = env->GetIntField(usbDevInfo, jfPid);
-    usbDeviceInfo.infIndex                     = env->GetIntField(usbDevInfo, jfMiId);
-    jstring jsSerialNum                        = (jstring)env->GetObjectField(usbDevInfo, jfSerialNum);
+    usbDeviceInfo.vid      = env->GetIntField(usbDevInfo, jfVid);
+    usbDeviceInfo.pid      = env->GetIntField(usbDevInfo, jfPid);
+    usbDeviceInfo.infIndex = env->GetIntField(usbDevInfo, jfMiId);
+    jstring jsSerialNum    = (jstring)env->GetObjectField(usbDevInfo, jfSerialNum);
     if(jsSerialNum != nullptr) {
         const char *szSerial = env->GetStringUTFChars(jsSerialNum, JNI_FALSE);
         if(szSerial) {

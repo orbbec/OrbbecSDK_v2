@@ -45,7 +45,7 @@ void PrivFilterCppWrapper::setConfigData(void *data, uint32_t size) {
         LOG_WARN("Private filter set config data is null or size is 0.");
         return;
     }
-    
+
     privFilterCtx_->set_config_data(privFilterCtx_->filter, data, size, &error);
     if(error) {
         LOG_WARN("Private filter {} set config data failed: {}", name_, error->message);
@@ -81,7 +81,7 @@ std::shared_ptr<Frame> PrivFilterCppWrapper::process(std::shared_ptr<const Frame
 
     if(error) {
         // LOG_WARN("Private filter {} process failed: {}", name_, error->message);
-        throw unrecoverable_exception(std::string(error->message), error->exception_type);
+        THROW_UNRECOVERABLE(std::string(error->message), error->exception_type, error->status);
     }
     return resultFrame;
 }

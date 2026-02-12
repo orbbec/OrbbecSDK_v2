@@ -409,7 +409,7 @@ void G305AlgParamManager::bindIntrinsic(std::vector<std::shared_ptr<const Stream
         OBCameraParam      param{};
         auto               vsp = sp->as<VideoStreamProfile>();
         if(!findBestMatchedCameraParam(calibrationCameraParamList_, vsp, param)) {
-            // throw libobsensor::unsupported_operation_exception("Can not find matched camera param!");
+            // THROW_UNSUPPORTED_OPERATION_EXCEPTION("Can not find matched camera param!");
             continue;
         }
         switch(sp->getType()) {

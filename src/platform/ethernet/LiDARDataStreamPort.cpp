@@ -9,7 +9,8 @@
 
 namespace libobsensor {
 
-LiDARDataStreamPort::LiDARDataStreamPort(std::shared_ptr<const LiDARDataStreamPortInfo> portInfo) : portInfo_(portInfo), isStreaming_(false), callback_(nullptr) {}
+LiDARDataStreamPort::LiDARDataStreamPort(std::shared_ptr<const LiDARDataStreamPortInfo> portInfo)
+    : portInfo_(portInfo), isStreaming_(false), callback_(nullptr) {}
 
 LiDARDataStreamPort::~LiDARDataStreamPort() noexcept {
     stop();
@@ -17,7 +18,7 @@ LiDARDataStreamPort::~LiDARDataStreamPort() noexcept {
 
 void LiDARDataStreamPort::startStream(MutableFrameCallback callback) {
     if(isStreaming_) {
-        throw wrong_api_call_sequence_exception("UDPDataStreamPort::startStream() called when streaming");
+        THROW_WRONG_API_CALL_SEQUENCE_EXCEPTION("UDPDataStreamPort::startStream() called when streaming");
     }
     callback_        = callback;
     auto netPortInfo = std::const_pointer_cast<LiDARDataStreamPortInfo>(portInfo_);
@@ -31,7 +32,7 @@ void LiDARDataStreamPort::startStream(MutableFrameCallback callback) {
         if(ret != 10 || 0 != memcmp(response, "\x01\xFE\x01\x00\x00\x01\x09\x01\x00\x1F", ret) || response[8] != 0x00) {
             // reset the udpClient_
             udpClient_.reset();
-            throw io_exception("UDPDataStreamPort::startStream() failed to connect device");
+            THROW_IO_EXCEPTION("UDPDataStreamPort::startStream() failed to connect device");
         }
     }
     isStreaming_    = true;
@@ -65,7 +66,7 @@ void LiDARDataStreamPort::stop() {
 void LiDARDataStreamPort::readData() {
     const int              PACK_SIZE = 1500;  // max size of UDP packet
     int                    readSize  = 0;
-    uint8_t *              data      = nullptr;
+    uint8_t               *data      = nullptr;
     std::shared_ptr<Frame> frame;
 
     while(isStreaming_.load()) {

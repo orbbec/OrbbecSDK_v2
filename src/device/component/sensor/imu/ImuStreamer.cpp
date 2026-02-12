@@ -80,9 +80,10 @@ void ImuStreamer::startStream(std::shared_ptr<const StreamProfile> sp, MutableFr
             backend_->startStream([this](std::shared_ptr<Frame> frame) { ImuStreamer::parseIMUData(frame); });
             break;
         }
-        catch(const libobsensor::invalid_value_exception &e) {  // Only retry when socket is not ready
+        catch(const libobsensor::libobsensor_exception &e) {  // Only retry when socket is not ready
             LOG_ERROR("ImuStreamer start failed");
-            std::string msg = e.get_message();
+            std::string msg = e.getMessage();
+            // TODO:
             if(msg.find("socket is not ready & timeout") != std::string::npos && --retry > 0) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(500));
                 continue;
@@ -101,7 +102,7 @@ void ImuStreamer::stopStream(std::shared_ptr<const StreamProfile> sp) {
         std::lock_guard<std::mutex> lock(cbMtx_);
         auto                        iter = callbacks_.find(sp);
         if(iter == callbacks_.end()) {
-            throw invalid_value_exception("Stop stream failed, stream profile not found.");
+            THROW_ITEM_NOT_FOUND_EXCEPTION("Stop stream failed, stream profile not found.");
         }
 
         callbacks_.erase(iter);
@@ -146,8 +147,7 @@ void ImuStreamer::parseIMUData(std::shared_ptr<Frame> frame) {
     }
 
     int32_t discardCount = 0;
-    if(ignoreLeadingFrameCount_>0)
-    {
+    if(ignoreLeadingFrameCount_ > 0) {
         discardCount = ignoreLeadingFrameCount_;
         if(ignoreLeadingFrameCount_ > header->groupCount) {
             discardCount = header->groupCount;

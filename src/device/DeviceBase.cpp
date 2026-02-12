@@ -150,7 +150,7 @@ void DeviceBase::fetchExtensionInfo() {
             }
             // retry if empty
             --retryCount;
-        } while(retryCount>=0);
+        } while(retryCount >= 0);
         if(extensionInfo_.empty()) {
             LOG_ERROR("Failed to get ExtensionInfo data!");
         }
@@ -184,7 +184,7 @@ const std::string &DeviceBase::getExtensionInfo(const std::string &infoKey) cons
     if(it != extensionInfo_.end()) {
         return it->second;
     }
-    throw invalid_value_exception(utils::string::to_string() << "Extension info " << infoKey << " not found!");
+    THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "Extension info " << infoKey << " not found!");
 }
 
 uint64_t DeviceBase::getDeviceErrorState() const {
@@ -233,7 +233,7 @@ void DeviceBase::reboot() {
         propServer->setPropertyValueT(OB_PROP_REBOOT_DEVICE_BOOL, true);
     }
     else {
-        throw invalid_value_exception("Device does not support reboot!");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("Device does not support reboot!");
     }
 
     // notify
@@ -248,7 +248,7 @@ void DeviceBase::reboot() {
 void DeviceBase::reset() {
     deactivate();
     isDeactivated_ = false;
-    
+
 #ifdef OS_MACOS
     // macOS: allow time for libusb/IOKit to fully release UVC interfaces before
     // reopening the device; otherwise libusb_claim_interface may fail with
@@ -260,11 +260,11 @@ void DeviceBase::reset() {
 
 DeviceComponentLock DeviceBase::tryLockResource() {
     if(isDeactivated_) {
-        throw libobsensor::wrong_api_call_sequence_exception("Device is deactivated/disconnected!");
+        THROW_WRONG_API_CALL_SEQUENCE_EXCEPTION("Device is deactivated/disconnected!");
     }
     DeviceComponentLock resLock(resourceMutex_, std::defer_lock);
     if(!resLock.try_lock_for(std::chrono::milliseconds(10000))) {
-        throw libobsensor::wrong_api_call_sequence_exception("Resource busy! You can try again later!");
+        THROW_WRONG_API_CALL_SEQUENCE_EXCEPTION("Resource busy! You can try again later!");
     }
     return resLock;
 }
@@ -320,7 +320,7 @@ bool DeviceBase::isComponentCreated(DeviceComponentId compId) const {
 DeviceComponentPtr<IDeviceComponent> DeviceBase::getComponent(DeviceComponentId compId, bool throwExIfNotFound) {
     if(isDeactivated_) {
         if(throwExIfNotFound) {
-            throw libobsensor::wrong_api_call_sequence_exception("Device is deactivated/disconnected!");
+            THROW_WRONG_API_CALL_SEQUENCE_EXCEPTION("Device is deactivated/disconnected!");
         }
         return DeviceComponentPtr<IDeviceComponent>();
     }
@@ -366,7 +366,7 @@ DeviceComponentPtr<IDeviceComponent> DeviceBase::getComponent(DeviceComponentId 
         std::ostringstream oss;
 
         oss << compId << " not found!";
-        throw invalid_value_exception(oss.str());
+        THROW_ITEM_NOT_FOUND_EXCEPTION(oss.str());
     }
     return DeviceComponentPtr<IDeviceComponent>();
 }
@@ -390,7 +390,7 @@ const std::shared_ptr<const SourcePortInfo> &DeviceBase::getSensorPortInfo(OBSen
     if(it != sensorPortInfos_.end()) {
         return it->second;
     }
-    throw invalid_value_exception(utils::string::to_string() << "Sensor type " << type << " not found!");
+    THROW_ITEM_NOT_FOUND_EXCEPTION(utils::string::to_string() << "Sensor type " << type << " not found!");
 }
 
 bool DeviceBase::isSensorExists(OBSensorType type) const {
@@ -473,7 +473,7 @@ std::shared_ptr<IFilter> DeviceBase::getSensorFrameFilter(const std::string &nam
     });
 
     if(throwIfNotFound) {
-        throw invalid_value_exception(utils::string::to_string() << "Filter " << name << " not found!");
+        THROW_ITEM_NOT_FOUND_EXCEPTION(utils::string::to_string() << "Filter " << name << " not found!");
     }
 
     return nullptr;
@@ -582,11 +582,11 @@ void DeviceBase::updateFirmware(const std::vector<uint8_t> &firmware, DeviceFwUp
     if(!hasWriteAccess()) {
         std::ostringstream oss;
         oss << "The current access mode is " << accessMode_ << " and does not allow write operations";
-        throw access_denied_exception(oss.str());
+        THROW_ACCESS_DENIED_EXCEPTION(oss.str());
     }
 
     if(hasAnySensorStreamActivated()) {
-        throw libobsensor::wrong_api_call_sequence_exception("Device is streaming, please stop all sensors before updating firmware!");
+        THROW_WRONG_API_CALL_SEQUENCE_EXCEPTION("Device is streaming, please stop all sensors before updating firmware!");
     }
 
     auto updater = getComponentT<FirmwareUpdater>(OB_DEV_COMPONENT_FIRMWARE_UPDATER, true);
@@ -605,11 +605,11 @@ void DeviceBase::updateOptionalDepthPresets(const char filePathList[][OB_PATH_MA
     if(!hasWriteAccess()) {
         std::ostringstream oss;
         oss << "The current access mode is " << accessMode_ << " and does not allow write operations";
-        throw access_denied_exception(oss.str());
+        THROW_ACCESS_DENIED_EXCEPTION(oss.str());
     }
 
     if(hasAnySensorStreamActivated()) {
-        throw libobsensor::wrong_api_call_sequence_exception("Device is streaming, please stop all sensors before updating preset!");
+        THROW_WRONG_API_CALL_SEQUENCE_EXCEPTION("Device is streaming, please stop all sensors before updating preset!");
     }
 
     auto updater = getComponentT<FirmwareUpdater>(OB_DEV_COMPONENT_FIRMWARE_UPDATER, true);

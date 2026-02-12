@@ -136,7 +136,7 @@ void AlgParamManagerBase::bindExtrinsic(std::vector<std::shared_ptr<const Stream
                 return basicSp->getType() == sp->getType();
             });
         if(basicSpIter == basicStreamProfileList_.end()) {
-            throw libobsensor::unsupported_operation_exception("Can not find basic stream profile to bind extrinsic!");
+            THROW_UNSUPPORTED_OPERATION_EXCEPTION("Can not find basic stream profile to bind extrinsic!");
         }
         extrinsicMgr->registerSameExtrinsics(sp, *basicSpIter);
     }
@@ -174,7 +174,7 @@ void AlgParamManagerBase::bindIntrinsic(std::vector<std::shared_ptr<const Stream
                 if(isDeviceInContainer(G435LeDevPids, vid, pid)) {
                     break;
                 };
-                throw libobsensor::unsupported_operation_exception("Can not find matched camera param!");
+                THROW_UNSUPPORTED_OPERATION_EXCEPTION("Can not find matched camera param!");
             }
 
             auto param            = calibrationCameraParamList_.at(d2cProfile.paramIndex);

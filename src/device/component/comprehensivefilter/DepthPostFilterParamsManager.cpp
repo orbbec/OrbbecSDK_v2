@@ -14,8 +14,8 @@ DepthPostFilterParamsManager::DepthPostFilterParamsManager(IDevice *owner) : Dev
 DepthPostFilterParamsManager::~DepthPostFilterParamsManager() noexcept {}
 
 void DepthPostFilterParamsManager::fetchParamFromDevice() {
-    auto owner      = getOwner();
-    auto propServer = owner->getPropertyServer();
+    auto                 owner      = getOwner();
+    auto                 propServer = owner->getPropertyServer();
     std::vector<uint8_t> data;
     BEGIN_TRY_EXECUTE({
         propServer->getRawData(
@@ -39,14 +39,14 @@ void DepthPostFilterParamsManager::fetchParamFromDevice() {
         posterFilterRawData_ = std::move(data);
     }
     else {
-        throw libobsensor::invalid_value_exception("Invalid data size for depth poster filter.");
+        THROW_INVALID_DATA_EXCEPTION("Invalid data size for depth poster filter.");
     }
 }
 
 void DepthPostFilterParamsManager::parseFilterParams(const uint8_t *data, const uint16_t dataSize) {
     uint16_t headerSize = static_cast<uint16_t>(sizeof(DepthPostFilterHeader));
     if(!data && dataSize < headerSize) {
-        throw libobsensor::invalid_value_exception("Filter params parse error: data size is too small.");
+        THROW_INVALID_PARAM_EXCEPTION("Filter params parse error: data size is too small.");
     }
 
     // check magic
@@ -54,23 +54,23 @@ void DepthPostFilterParamsManager::parseFilterParams(const uint8_t *data, const 
     memcpy(&filterHeader_, data, headerSize);
     const uint8_t headerMagic[4] = { 'D', 'P', 'A', 'H' };
     if(memcmp(filterHeader_.magic, headerMagic, 4) != 0) {
-        throw libobsensor::invalid_value_exception("Filter params parse error: magic check failed.");
+        THROW_INVALID_PARAM_EXCEPTION("Filter params parse error: magic check failed.");
     }
 
     // check header size
     if(filterHeader_.header_size != sizeof(DepthPostFilterHeader)) {
-        throw libobsensor::invalid_value_exception("Filter params parse error: header size check failed.");
+        THROW_INVALID_PARAM_EXCEPTION("Filter params parse error: header size check failed.");
     }
 
     // check total size
     uint32_t totalSize = filterHeader_.header_size + filterHeader_.data_size;
     if(dataSize != totalSize) {
-        throw libobsensor::invalid_value_exception("Filter params parse error: data total size check failed.");
+        THROW_INVALID_PARAM_EXCEPTION("Filter params parse error: data total size check failed.");
     }
 
     // checksum
     if(!calculateChecksum(data, &filterHeader_)) {
-        throw libobsensor::invalid_value_exception("Filter params parse error: checksum verification failed.");
+        THROW_INVALID_PARAM_EXCEPTION("Filter params parse error: checksum verification failed.");
     }
 
     if(filterHeader_.version == POSTFILTER_PARAMS_VERSION_0102) {
@@ -78,13 +78,13 @@ void DepthPostFilterParamsManager::parseFilterParams(const uint8_t *data, const 
         headerVersion_ = "v1.0.2";
     }
     else {
-        throw libobsensor::invalid_value_exception(utils::string::to_string() << "Filter params parse error, got version: " << filterHeader_.version);
+        THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "Filter params parse error, got version: " << filterHeader_.version);
     }
 }
 
 bool DepthPostFilterParamsManager::calculateChecksum(const uint8_t *data, DepthPostFilterHeader *filterHeader) {
     const uint8_t *paramDataStart = data + filterHeader->header_size;
-    uint32_t sum = 0;
+    uint32_t       sum            = 0;
     for(uint32_t i = 0; i < filterHeader->data_size; i++) {
         sum += paramDataStart[i];
     }
@@ -94,7 +94,7 @@ bool DepthPostFilterParamsManager::calculateChecksum(const uint8_t *data, DepthP
 void DepthPostFilterParamsManager::parseFilterParamsV0102(const uint8_t *data, const uint16_t dataSize) {
     uint16_t totalParamsSize = static_cast<uint16_t>(sizeof(DepthPostFilterParams));
     if(dataSize != totalParamsSize) {
-        throw libobsensor::invalid_value_exception("V0102 filter params parse error: data size mismatch.");
+        THROW_INVALID_PARAM_EXCEPTION("V0102 filter params parse error: data size mismatch.");
     }
 
     memset(&depthPostFilterParams_, 0, totalParamsSize);

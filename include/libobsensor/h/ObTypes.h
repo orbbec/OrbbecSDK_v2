@@ -74,10 +74,45 @@ typedef enum {
  * @brief error code
  */
 typedef enum {
-    OB_STATUS_OK    = 0, /**< status ok */
-    OB_STATUS_ERROR = 1, /**< status error */
+    OB_STATUS_OK     = 0, /**< Status OK (success) */
+    OB_STATUS_ERROR  = 1, /**< Status error (legacy failure) */
+    OB_ERROR_UNKNOWN = 1, /**< Alias for OB_STATUS_ERROR */
+
+    // // 00001 ~ 0999: Common errors (reserved range)
+    OB_ERROR_INVALID_PARAMETER       = 100, /**< One or more parameters are invalid */
+    OB_ERROR_INVALID_DATA            = 101, /**< Data is invalid or corrupted */
+    OB_ERROR_INVALID_DATA_LEN        = 102, /**< Data length is invalid */
+    OB_ERROR_BUFFER_TOO_SMALL        = 103, /**< Target buffer is too small to hold data */
+    OB_ERROR_MEMORY                  = 104, /**< Memory allocation or access failure */
+    OB_ERROR_WAIT_TIMEOUT            = 105, /**< Operation timed out */
+    OB_ERROR_NOT_IMPLEMENTED         = 106, /**< Functionality not implemented in SDK */
+    OB_ERROR_UNSUPPORTED_OPERATION   = 107, /**< Functionality not implemented in SDK */
+    OB_ERROR_WRONG_API_CALL_SEQUENCE = 108, /**< API called in an invalid order or state */
+    OB_ERROR_NO_DEVICE               = 109, /**< No available device found */
+    OB_ERROR_DEVICE_CONNECT_FAILED   = 110, /**< Failed to connect to device */
+    OB_ERROR_DEVICE_ACCESS_DENIED    = 111, /**< Access to device denied */
+    OB_ERROR_DEVICE_DISCONNECTED     = 112, /**< Device was disconnected */
+    OB_ERROR_DEVICE_UNAVAILABLE      = 113, /**< Device was unavailable */
+    OB_ERROR_ITEM_NOT_FOUND          = 114, /**< Specified item or component not found */
+    OB_ERROR_IO_FAILURE              = 115, /**< I/O operation failed */
+    OB_ERROR_RESOURCE_BUSY           = 116, /**< Resource is busy or locked by another operation */
+
+    // - Pipeline/Frame
+    OB_ERROR_FRAME_QUEUE_OVERFLOW = 200, /**< Frame queue overflow */
+    OB_ERROR_FRAME_DATA           = 201, /**< Frame data is invalid or corrupted */
+    OB_ERROR_FRAME_DATA_LEN       = 202, /**< Frame data length is invalid */
+
+    // 1000 ~ 1999: Device errors
+    OB_ERROR_DEVICE_UNKNOWN                  = 1000, /**< Unknown device error */
+    OB_ERROR_DEVICE_RESPONSE_BAD_MAGIC       = 1001, /**< Device response has invalid magic number */
+    OB_ERROR_DEVICE_RESPONSE_WRONG_ID        = 1002, /**< Device response contains incorrect ID */
+    OB_ERROR_DEVICE_RESPONSE_WRONG_OPCODE    = 1003, /**< Device response contains incorrect opcode */
+    OB_ERROR_DEVICE_RESPONSE_WRONG_DATA_SIZE = 1004, /**< Device response has incorrect data size */
+    OB_ERROR_DEVICE_RESPONSE_ERROR           = 1005, /**< Device response indicates an error */
+    OB_ERROR_DEVICE_RESPONSE_WARNING         = 1006, /**< Device response indicates a warning */
+
 } OBStatus,
-    ob_status;
+    OBErrorCode, ob_status, ob_error_code;
 
 /**
  * @brief log level, the higher the level, the stronger the log filter
@@ -98,18 +133,22 @@ typedef enum {
  * For detailed error API interface functions and error logs, please refer to the information of ob_error
  */
 typedef enum {
-    OB_EXCEPTION_TYPE_UNKNOWN,             /**< Unknown error, an error not clearly defined by the SDK */
-    OB_EXCEPTION_STD_EXCEPTION,            /** < Standard exception, an error caused by the standard library */
-    OB_EXCEPTION_TYPE_CAMERA_DISCONNECTED, /**< Camera/Device has been disconnected, the camera/device is not available */
-    OB_EXCEPTION_TYPE_PLATFORM,            /**< An error in the SDK adaptation platform layer, which means an error in the implementation of a specific system
-                                              platform */
-    OB_EXCEPTION_TYPE_INVALID_VALUE,       /**< Invalid parameter type exception, need to check input parameter */
+    OB_EXCEPTION_TYPE_UNKNOWN,                 /**< Unknown error, an error not clearly defined by the SDK */
+    OB_EXCEPTION_STD_EXCEPTION,                /**< Standard exception, an error caused by the standard library */
+    OB_EXCEPTION_TYPE_CAMERA_DISCONNECTED,     /**< Camera/Device has been disconnected, the camera/device is not available */
+    OB_EXCEPTION_TYPE_PLATFORM,                /**< An error in the SDK adaptation platform layer, which means an error in the
+                                                 implementation of a specific system platform */
+    OB_EXCEPTION_TYPE_INVALID_VALUE,           /**< Invalid parameter type exception, need to check input parameter */
     OB_EXCEPTION_TYPE_WRONG_API_CALL_SEQUENCE, /**< Wrong API call sequence, the API is called in the wrong order or the wrong parameter is passed */
     OB_EXCEPTION_TYPE_NOT_IMPLEMENTED,         /**< SDK and firmware have not yet implemented this function or feature */
     OB_EXCEPTION_TYPE_IO,                      /**< SDK access IO exception error */
     OB_EXCEPTION_TYPE_MEMORY,                  /**< SDK access and use memory errors. For example, the frame fails to allocate memory */
     OB_EXCEPTION_TYPE_UNSUPPORTED_OPERATION,   /**< Unsupported operation type error by SDK or device */
     OB_EXCEPTION_TYPE_ACCESS_DENIED,           /**< Device access denied */
+    OB_EXCEPTION_TYPE_DEVICE_UNAVAILABLE,      /**< Camera or Device is not available */
+    OB_EXCEPTION_TYPE_INVALID_DATA,            /**< Runtime data is invalid, check data content or size */
+    OB_EXCEPTION_TYPE_NOT_FOUND,               /**< The requested item was not found */
+    OB_EXCEPTION_TYPE_RESOURCE_BUSY,           /**< Resource is busy or locked by another operation */
 } OBExceptionType,
     ob_exception_type;
 

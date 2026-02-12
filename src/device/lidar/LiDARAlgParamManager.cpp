@@ -32,13 +32,13 @@ void LiDARAlgParamManager::bindIntrinsic(std::vector<std::shared_ptr<const Strea
             intrinsicMgr->registerGyroStreamIntrinsics(sp, imuCalibParam.singleIMUParams[0].gyro);
         }
         else {
-            throw invalid_value_exception("Unsupported stream profile type for LiDAR device.");
+            THROW_INVALID_PARAM_EXCEPTION("Unsupported stream profile type for LiDAR device.");
         }
     }
 }
 
 void LiDARAlgParamManager::fetchParamFromDevice() {
-    if (getOwner()->getFirmwareVersionInt() < 1000007) {
+    if(getOwner()->getFirmwareVersionInt() < 1000007) {
         LOG_DEBUG("Use default IMU calibration params");
         imuCalibParam_ = IMUCorrector::getDefaultImuCalibParam();
         return;

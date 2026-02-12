@@ -27,7 +27,7 @@ public:
 
     virtual std::shared_ptr<IFrameMetadataParser> get(OBFrameMetadataType type) override {
         if(!isContained(type)) {
-            throw unsupported_operation_exception(utils::string::to_string() << "Not registered metadata parser for type: " << type);
+            THROW_UNSUPPORTED_OPERATION_EXCEPTION(utils::string::to_string() << "Not registered metadata parser for type: " << type);
         }
         return parsers[type];
     }

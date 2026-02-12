@@ -69,7 +69,7 @@ ObLibuvcDevicePort::ObLibuvcDevicePort(std::shared_ptr<IUsbDevice> usbDev, std::
         std::stringstream ss;
         ss << "uvc_open failed: [Path: " << portInfo->infUrl << ", Return Code: " << res << "]";
         LOG_WARN(ss.str());
-        throw std::runtime_error(ss.str());
+        THROW_IO_EXCEPTION(ss.str());
     }
     else {
         LOG_DEBUG("uvc_open success");
@@ -110,7 +110,7 @@ void ObLibuvcDevicePort::startStream(std::shared_ptr<const StreamProfile> profil
               videoProfile->getHeight(), videoProfile->getFormat());
 
     if(!foundProfile) {
-        throw std::runtime_error("Failed to find supported format!");
+        THROW_PAL_EXCEPTION("Failed to find supported format!", OB_ERROR_ITEM_NOT_FOUND);
     }
 
     // libusb_clear_halt(uvcDevHandle_->usb_devh, selectedUvcProfile.endpointAddress);
@@ -120,13 +120,13 @@ void ObLibuvcDevicePort::startStream(std::shared_ptr<const StreamProfile> profil
                                                             videoProfile->getHeight(), videoProfile->getFps());
     if(res < 0) {
         LOG_ERROR("uvc_get_stream_ctrl_format_size failed!");
-        throw std::runtime_error("uvc_get_stream_ctrl_format_size failed!");
+        THROW_IO_EXCEPTION("uvc_get_stream_ctrl_format_size failed!");
     }
 
     uvc_stream_handle_t *uvcStreamHandle = nullptr;
     uvc_error_t          ret             = uvc_stream_open_ctrl(uvcDevHandle_, &uvcStreamHandle, &ctrl);
     if(ret != UVC_SUCCESS) {
-        throw std::runtime_error("uvc_stream_open_ctrl failed!");
+        THROW_IO_EXCEPTION("uvc_stream_open_ctrl failed!");
     }
 
     {
@@ -153,14 +153,14 @@ void ObLibuvcDevicePort::startStream(std::shared_ptr<const StreamProfile> profil
         }
         std::unique_lock<std::mutex> lock(streamMutex_);
         streamHandles_.erase(streamHandles_.end() - 1);
-        throw std::runtime_error("uvc_stream_start failed with err_code=UVC_ERROR_NO_MEM, try to increase the usbfs buffer size!");
+        THROW_MEMORY_EXCEPTION("uvc_stream_start failed with err_code=UVC_ERROR_NO_MEM, try to increase the usbfs buffer size!");
     }
 
     if(ret != UVC_SUCCESS) {
         std::unique_lock<std::mutex> lock(streamMutex_);
         streamHandles_.erase(streamHandles_.end() - 1);
         uvc_stream_close(uvcStreamHandle);
-        throw std::runtime_error("uvc_stream_start failed!");
+        THROW_IO_EXCEPTION("uvc_stream_start failed!");
     }
 
     LOG_DEBUG("ObLibuvcDevicePort::startStream() done");
@@ -435,7 +435,7 @@ int32_t ObLibuvcDevicePort::uvcCtrlValueTranslate(uvc_req_code action, OBPropert
         break;
 
     default:
-        throw std::runtime_error("Unsupported action translation");
+        THROW_INVALID_PARAM_EXCEPTION("Unsupported action translation");
     }
     return translated_value;
 }
@@ -489,7 +489,7 @@ int32_t ObLibuvcDevicePort::getCtrl(uvc_req_code action, uint8_t control, uint8_
         ret = DW_TO_INT(buffer);
         break;
     default:
-        throw std::runtime_error("unsupported length");
+        THROW_INVALID_PARAM_EXCEPTION("unsupported length");
     }
 
     return ret;
@@ -538,7 +538,7 @@ int ObLibuvcDevicePort::obPropToUvcCS(OBPropertyID propertyId, int &unit) const 
         unit = uvc_get_input_terminals(uvcDevHandle_)->bTerminalID;
         return UVC_CT_FOCUS_ABSOLUTE_CONTROL;
     default:
-        throw pal_exception(utils::string::to_string() << "invalid propertyId : " << propertyId);
+        THROW_PAL_EXCEPTION(utils::string::to_string() << "invalid propertyId : " << propertyId, OB_ERROR_INVALID_PARAMETER);
     }
 }
 

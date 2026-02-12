@@ -4,11 +4,21 @@
 #include "Protocol.hpp"
 #include "logger/Logger.hpp"
 #include "exception/ObException.hpp"
-
+#include <map>
 #include <sstream>
 
 namespace libobsensor {
 namespace protocol {
+
+static std::map<HpStatusCode, OBStatus> deviceErrorToOBStatus = {
+    { HP_STATUS_OK, OB_STATUS_OK },
+    { HP_STATUS_DEVICE_RESPONSE_BAD_MAGIC, OB_ERROR_DEVICE_RESPONSE_BAD_MAGIC },
+    { HP_STATUS_DEVICE_RESPONSE_WRONG_ID, OB_ERROR_DEVICE_RESPONSE_WRONG_ID },
+    { HP_STATUS_DEVICE_RESPONSE_WRONG_OPCODE, OB_ERROR_DEVICE_RESPONSE_WRONG_OPCODE },
+    { HP_STATUS_DEVICE_RESPONSE_WRONG_DATA_SIZE, OB_ERROR_DEVICE_RESPONSE_WRONG_DATA_SIZE },
+    { HP_STATUS_DEVICE_RESPONSE_ERROR, OB_ERROR_DEVICE_RESPONSE_ERROR },
+    { HP_STATUS_DEVICE_RESPONSE_WARNING, OB_ERROR_DEVICE_RESPONSE_WARNING },
+};
 
 bool checkStatus(uint32_t propertyId, HpStatus stat, bool throwException) {
     std::string retMsg;
@@ -23,7 +33,7 @@ bool checkStatus(uint32_t propertyId, HpStatus stat, bool throwException) {
         retMsg = std::string("Request failed, device response with error, errorCode: ") + std::to_string(stat.respErrorCode) + ", msg: " + stat.msg
                  + ", propertyId: " + std::to_string(propertyId);
         if(throwException) {
-            throw io_exception(retMsg);
+            THROW_IO_EXCEPTION_WITH_ERROR(retMsg, OB_ERROR_DEVICE_RESPONSE_ERROR);
         }
         else {
             LOG_ERROR(retMsg);
@@ -33,7 +43,7 @@ bool checkStatus(uint32_t propertyId, HpStatus stat, bool throwException) {
     case HP_STATUS_DEVICE_RESPONSE_ERROR_UNKNOWN:
         retMsg = std::string("Request failed, device response with unknown error! propertyId: ") + std::to_string(propertyId);
         if(throwException) {
-            throw io_exception(retMsg);
+            THROW_IO_EXCEPTION_WITH_ERROR(retMsg, OB_ERROR_DEVICE_UNKNOWN);
         }
         else {
             LOG_ERROR(retMsg);
@@ -45,7 +55,12 @@ bool checkStatus(uint32_t propertyId, HpStatus stat, bool throwException) {
         retMsg = std::string("Request failed, statusCode: ") + std::to_string(stat.statusCode) + ", msg: " + stat.msg
                  + ", propertyId: " + std::to_string(propertyId);
         if(throwException) {
-            throw io_exception(retMsg);
+            OBStatus error = OB_ERROR_DEVICE_UNKNOWN;
+            auto     it    = deviceErrorToOBStatus.find(stat.statusCode);
+            if(it != deviceErrorToOBStatus.end()) {
+                error = it->second;
+            }
+            THROW_IO_EXCEPTION_WITH_ERROR(retMsg, error);
         }
         else {
             LOG_ERROR(retMsg);
@@ -245,7 +260,7 @@ HeartbeatAndStateReq *initHeartbeatAndStateReq(uint8_t *dataBuf) {
 HeartbeatAndStateResp *parseHeartbeatAndStateResp(uint8_t *dataBuf, uint16_t dataSize) {
     auto *resp = reinterpret_cast<HeartbeatAndStateResp *>(dataBuf);
     if(dataSize < sizeof(HeartbeatAndStateResp) - 1) {  // may dose'nt have any msg, subtract 1 byte to avoid overflow
-        throw io_exception("Device response with wrong data size");
+        THROW_IO_EXCEPTION_WITH_ERROR("Device response with wrong data size", OB_ERROR_DEVICE_RESPONSE_WRONG_DATA_SIZE);
     }
     return resp;
 }
@@ -253,7 +268,7 @@ HeartbeatAndStateResp *parseHeartbeatAndStateResp(uint8_t *dataBuf, uint16_t dat
 GetPropertyResp *parseGetPropertyResp(uint8_t *dataBuf, uint16_t dataSize) {
     auto *resp = reinterpret_cast<GetPropertyResp *>(dataBuf);
     if(dataSize < sizeof(GetPropertyResp)) {
-        throw io_exception("Device response with wrong data size");
+        THROW_IO_EXCEPTION_WITH_ERROR("Device response with wrong data size", OB_ERROR_DEVICE_RESPONSE_WRONG_DATA_SIZE);
     }
     return resp;
 }
@@ -261,7 +276,7 @@ GetPropertyResp *parseGetPropertyResp(uint8_t *dataBuf, uint16_t dataSize) {
 SetPropertyResp *parseSetPropertyResp(uint8_t *dataBuf, uint16_t dataSize) {
     auto *resp = reinterpret_cast<SetPropertyResp *>(dataBuf);
     if(dataSize < sizeof(SetPropertyResp)) {
-        throw io_exception("Device response with wrong data size");
+        THROW_IO_EXCEPTION_WITH_ERROR("Device response with wrong data size", OB_ERROR_DEVICE_RESPONSE_WRONG_DATA_SIZE);
     }
     return resp;
 }
@@ -269,7 +284,7 @@ SetPropertyResp *parseSetPropertyResp(uint8_t *dataBuf, uint16_t dataSize) {
 GetStructureDataResp *parseGetStructureDataResp(uint8_t *dataBuf, uint16_t dataSize) {
     auto *resp = reinterpret_cast<GetStructureDataResp *>(dataBuf);
     if(dataSize < sizeof(GetStructureDataResp)) {
-        throw io_exception("Device response with wrong data size");
+        THROW_IO_EXCEPTION_WITH_ERROR("Device response with wrong data size", OB_ERROR_DEVICE_RESPONSE_WRONG_DATA_SIZE);
     }
     return resp;
 }
@@ -281,7 +296,7 @@ int16_t getStructureDataSize(const GetStructureDataResp *resp) {
 SetStructureDataResp *parseSetStructureDataResp(uint8_t *dataBuf, uint16_t dataSize) {
     auto *resp = reinterpret_cast<SetStructureDataResp *>(dataBuf);
     if(dataSize < sizeof(SetStructureDataResp)) {
-        throw io_exception("Device response with wrong data size");
+        THROW_IO_EXCEPTION_WITH_ERROR("Device response with wrong data size", OB_ERROR_DEVICE_RESPONSE_WRONG_DATA_SIZE);
     }
     return resp;
 }
@@ -299,7 +314,7 @@ GetPropertyReq *initGetCmdVersionReq(uint8_t *dataBuf, uint32_t propertyId) {
 GetCmdVerDataResp *parseGetCmdVerDataResp(uint8_t *dataBuf, uint16_t dataSize) {
     auto *resp = reinterpret_cast<GetCmdVerDataResp *>(dataBuf);
     if(dataSize < sizeof(GetCmdVerDataResp)) {
-        throw io_exception("Device response with wrong data size");
+        THROW_IO_EXCEPTION_WITH_ERROR("Device response with wrong data size", OB_ERROR_DEVICE_RESPONSE_WRONG_DATA_SIZE);
     }
     return resp;
 }
@@ -307,7 +322,7 @@ GetCmdVerDataResp *parseGetCmdVerDataResp(uint8_t *dataBuf, uint16_t dataSize) {
 GetRawDataLengthResp *parseGetRawDataLengthResp(uint8_t *dataBuf, uint16_t dataSize) {
     auto *resp = reinterpret_cast<GetRawDataLengthResp *>(dataBuf);
     if(dataSize < sizeof(GetRawDataLengthResp)) {
-        throw io_exception("Device response with wrong data size");
+        THROW_IO_EXCEPTION_WITH_ERROR("Device response with wrong data size", OB_ERROR_DEVICE_RESPONSE_WRONG_DATA_SIZE);
     }
     return resp;
 }
@@ -315,7 +330,7 @@ GetRawDataLengthResp *parseGetRawDataLengthResp(uint8_t *dataBuf, uint16_t dataS
 ReadRawDataResp *parseReadRawDataResp(uint8_t *dataBuf, uint16_t dataSize) {
     auto *resp = reinterpret_cast<ReadRawDataResp *>(dataBuf);
     if(dataSize < sizeof(ReadRawDataResp)) {
-        throw io_exception("Device response with wrong data size");
+        THROW_IO_EXCEPTION_WITH_ERROR("Device response with wrong data size", OB_ERROR_DEVICE_RESPONSE_WRONG_DATA_SIZE);
     }
     return resp;
 }
@@ -346,7 +361,7 @@ SetStructureDataReqV1_1 *initSetStructureDataReqV1_1(uint8_t *dataBuf, uint32_t 
 GetStructureDataRespV1_1 *parseGetStructureDataRespV1_1(uint8_t *dataBuf, uint16_t dataSize) {
     auto *resp = reinterpret_cast<GetStructureDataRespV1_1 *>(dataBuf);
     if(dataSize < sizeof(GetStructureDataRespV1_1)) {
-        throw io_exception("Device response with wrong data size");
+        THROW_IO_EXCEPTION_WITH_ERROR("Device response with wrong data size", OB_ERROR_DEVICE_RESPONSE_WRONG_DATA_SIZE);
     }
     return resp;
 }
@@ -354,7 +369,7 @@ GetStructureDataRespV1_1 *parseGetStructureDataRespV1_1(uint8_t *dataBuf, uint16
 SetStructureDataRespV1_1 *parseSetStructureDataRespV1_1(uint8_t *dataBuf, uint16_t dataSize) {
     auto *resp = reinterpret_cast<SetStructureDataRespV1_1 *>(dataBuf);
     if(dataSize < sizeof(SetStructureDataRespV1_1)) {
-        throw io_exception("Device response with wrong data size");
+        THROW_IO_EXCEPTION_WITH_ERROR("Device response with wrong data size", OB_ERROR_DEVICE_RESPONSE_WRONG_DATA_SIZE);
     }
     return resp;
 }
@@ -362,7 +377,7 @@ SetStructureDataRespV1_1 *parseSetStructureDataRespV1_1(uint8_t *dataBuf, uint16
 StartGetStructureDataListResp *parseStartStructureDataListResp(uint8_t *dataBuf, uint16_t dataSize) {
     auto *resp = reinterpret_cast<StartGetStructureDataListResp *>(dataBuf);
     if(dataSize < sizeof(StartGetStructureDataListResp)) {
-        throw io_exception("Device response with wrong data size");
+        THROW_IO_EXCEPTION_WITH_ERROR("Device response with wrong data size", OB_ERROR_DEVICE_RESPONSE_WRONG_DATA_SIZE);
     }
 
     return resp;

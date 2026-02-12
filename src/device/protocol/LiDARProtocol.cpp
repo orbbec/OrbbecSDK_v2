@@ -154,7 +154,7 @@ bool checkStatus(HpStatus stat, bool throwException) {
     default:
         retMsg = std::string("Request failed, statusCode: ") + std::to_string(stat.statusCode) + ", msg: " + stat.msg;
         if(throwException) {
-            throw io_exception(retMsg);
+            THROW_IO_EXCEPTION(retMsg);
         }
         else {
             LOG_ERROR(retMsg);
@@ -224,8 +224,8 @@ uint16_t initGetIntPropertyReq(std::vector<uint8_t> &dataBuf, uint16_t opCode) {
     if(dataBuf.size() < headerSize + 1) {
         dataBuf.resize(headerSize + 1);
     }
-    auto *   dataPtr = dataBuf.data();
-    auto *   req     = reinterpret_cast<ReqHeader *>(dataPtr);
+    auto    *dataPtr = dataBuf.data();
+    auto    *req     = reinterpret_cast<ReqHeader *>(dataPtr);
     uint8_t *crc     = dataPtr + headerSize;
 
     req->magic       = htons(HP_REQUEST_MAGIC);
@@ -246,8 +246,8 @@ uint16_t initSetIntPropertyReq(std::vector<uint8_t> &dataBuf, uint16_t opCode, u
     if(dataBuf.size() < reqSize) {
         dataBuf.resize(reqSize);
     }
-    auto *   dataPtr = dataBuf.data();
-    auto *   req     = reinterpret_cast<SetIntPropertyReq *>(dataPtr);
+    auto    *dataPtr = dataBuf.data();
+    auto    *req     = reinterpret_cast<SetIntPropertyReq *>(dataPtr);
     uint8_t *crc     = dataPtr + headerSize + dataSize;
 
     req->header.magic       = htons(HP_REQUEST_MAGIC);
@@ -255,7 +255,7 @@ uint16_t initSetIntPropertyReq(std::vector<uint8_t> &dataBuf, uint16_t opCode, u
     req->header.dataSize    = htons(dataSize);
     req->header.opCode      = htons(opCode);
     req->header.opInfo      = 0x0000;
-    req->value              = htonl(value); // to network byte order
+    req->value              = htonl(value);  // to network byte order
     *crc                    = calcCrc8(dataPtr, headerSize + dataSize);
 
     return reqSize;
@@ -273,8 +273,8 @@ uint16_t initSetFloatPropertyReq(std::vector<uint8_t> &dataBuf, uint16_t opCode,
     if(dataBuf.size() < reqSize) {
         dataBuf.resize(reqSize);
     }
-    auto *   dataPtr = dataBuf.data();
-    auto *   req     = reinterpret_cast<SetFloatPropertyReq *>(dataPtr);
+    auto    *dataPtr = dataBuf.data();
+    auto    *req     = reinterpret_cast<SetFloatPropertyReq *>(dataPtr);
     uint8_t *crc     = dataPtr + headerSize + dataSize;
 
     req->header.magic       = htons(HP_REQUEST_MAGIC);
@@ -282,7 +282,7 @@ uint16_t initSetFloatPropertyReq(std::vector<uint8_t> &dataBuf, uint16_t opCode,
     req->header.dataSize    = htons(dataSize);
     req->header.opCode      = htons(opCode);
     req->header.opInfo      = 0x0000;
-    req->value              = value; // float type uses little endian
+    req->value              = value;  // float type uses little endian
     *crc                    = calcCrc8(dataPtr, headerSize + dataSize);
 
     return reqSize;
@@ -295,8 +295,8 @@ uint16_t initGetRawDataReq(std::vector<uint8_t> &dataBuf, uint16_t opCode) {
     if(dataBuf.size() < reqSize) {
         dataBuf.resize(reqSize);
     }
-    auto *   dataPtr = dataBuf.data();
-    auto *   req     = reinterpret_cast<ReqHeader *>(dataPtr);
+    auto    *dataPtr = dataBuf.data();
+    auto    *req     = reinterpret_cast<ReqHeader *>(dataPtr);
     uint8_t *crc     = dataPtr + headerSize;
 
     req->magic       = htons(HP_REQUEST_MAGIC);
@@ -316,8 +316,8 @@ uint16_t initSetRawDataReq(std::vector<uint8_t> &dataBuf, uint16_t opCode, const
     if(dataBuf.size() < reqSize) {
         dataBuf.resize(reqSize);
     }
-    auto *   dataPtr = dataBuf.data();
-    auto *   req     = reinterpret_cast<ReqHeader *>(dataPtr);
+    auto    *dataPtr = dataBuf.data();
+    auto    *req     = reinterpret_cast<ReqHeader *>(dataPtr);
     uint8_t *crc     = dataPtr + headerSize + dataSize;
 
     // header
@@ -336,7 +336,7 @@ uint16_t initSetRawDataReq(std::vector<uint8_t> &dataBuf, uint16_t opCode, const
 GetIntPropertyResp *parseGetIntPropertyResp(uint8_t *dataBuf, uint16_t dataSize) {
     auto *resp = reinterpret_cast<GetIntPropertyResp *>(dataBuf);
     if(dataSize < sizeof(GetIntPropertyResp) || resp->header.dataSize != sizeof(int32_t)) {
-        throw io_exception("Device response with wrong data size");
+        THROW_IO_EXCEPTION("Device response with wrong data size");
     }
     resp->value = ntohl(resp->value);  // to host order
     return resp;
@@ -345,7 +345,7 @@ GetIntPropertyResp *parseGetIntPropertyResp(uint8_t *dataBuf, uint16_t dataSize)
 GetFloatPropertyResp *parseGetFloatPropertyResp(uint8_t *dataBuf, uint16_t dataSize) {
     auto *resp = reinterpret_cast<GetFloatPropertyResp *>(dataBuf);
     if(dataSize < sizeof(GetFloatPropertyResp) || resp->header.dataSize != sizeof(float)) {
-        throw io_exception("Device response with wrong data size");
+        THROW_IO_EXCEPTION("Device response with wrong data size");
     }
     // float data uses little endian, don't convert any more
     return resp;
@@ -354,7 +354,7 @@ GetFloatPropertyResp *parseGetFloatPropertyResp(uint8_t *dataBuf, uint16_t dataS
 GetRawDataResp *parseGetRawDataResp(uint8_t *dataBuf, uint16_t dataSize) {
     auto *resp = reinterpret_cast<GetRawDataResp *>(dataBuf);
     if(dataSize < sizeof(GetRawDataResp)) {
-        throw io_exception("Device response with wrong data size");
+        THROW_IO_EXCEPTION("Device response with wrong data size");
     }
     return resp;
 }

@@ -116,7 +116,8 @@ void PipelineHolder::stopStream() {
     }
     catch(ob::Error &e) {
         std::cerr << "stopping stream failed: " << deviceSN_ << std::endl;
-        std::cerr << "function:" << e.getName() << "\nargs:" << e.getArgs() << "\nmessage:" << e.getMessage() << "\ntype:" << e.getExceptionType() << std::endl;
+        std::cerr << "function:" << e.getName() << "\nargs:" << e.getArgs() << "\nmessage:" << e.getMessage() << "\nstatus:" << e.getStatus()
+                  << "\ntype:" << e.getExceptionType() << std::endl;
     }
 }
 
@@ -129,7 +130,8 @@ void PipelineHolder::release() {
 }
 
 void PipelineHolder::handleStreamError(const ob::Error &e) {
-    std::cerr << "Function: " << e.getName() << "\nArgs: " << e.getArgs() << "\nMessage: " << e.getMessage() << "\nType: " << e.getExceptionType() << std::endl;
+    std::cerr << "Function: " << e.getName() << "\nArgs: " << e.getArgs() << "\nMessage: " << e.getMessage() << "\nstatus:" << e.getStatus()
+              << "\nType: " << e.getExceptionType() << std::endl;
 }
 
 OBFrameType PipelineHolder::mapFrameType(OBSensorType sensorType) {

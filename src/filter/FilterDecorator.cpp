@@ -159,7 +159,7 @@ void FilterExtension::setConfigValue(const std::string &configName, double value
     std::unique_lock<std::recursive_mutex> lock(configMutex_);
     auto                                   schemaVec = getConfigSchemaVec();
     if(schemaVec.empty()) {
-        throw invalid_value_exception(utils::string::to_string() << "Filter@" << name_ << ": config schema is empty, doesn't have any config value");
+        THROW_INVALID_DATA_EXCEPTION(utils::string::to_string() << "Filter@" << name_ << ": config schema is empty, doesn't have any config value");
     }
 
     if(configMap_.empty()) {
@@ -170,10 +170,10 @@ void FilterExtension::setConfigValue(const std::string &configName, double value
     auto it =
         std::find_if(configSchemaVec_.begin(), configSchemaVec_.end(), [&configName](const OBFilterConfigSchemaItem &item) { return item.name == configName; });
     if(it == configSchemaVec_.end()) {
-        throw invalid_value_exception(utils::string::to_string() << "Filter@" << name_ << ": config item " << configName << " doesn't exist");
+        THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "Filter@" << name_ << ": config item " << configName << " doesn't exist");
     }
     if(value < it->min || value > it->max) {
-        throw invalid_value_exception(utils::string::to_string() << "Filter@" << name_ << ": config item " << configName << " value " << value
+        THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "Filter@" << name_ << ": config item " << configName << " value " << value
                                                                  << " out of range [" << it->min << ", " << it->max << "]");
     }
 
@@ -193,7 +193,7 @@ double FilterExtension::getConfigValue(const std::string &configName) {
     std::unique_lock<std::recursive_mutex> lock(configMutex_);
     auto                                   schemaVec = getConfigSchemaVec();
     if(schemaVec.empty()) {
-        throw invalid_value_exception(utils::string::to_string() << "Filter@" << name_ << ": config schema is empty, doesn't have any config value");
+        THROW_INVALID_DATA_EXCEPTION(utils::string::to_string() << "Filter@" << name_ << ": config schema is empty, doesn't have any config value");
     }
 
     if(configMap_.empty()) {
@@ -204,7 +204,7 @@ double FilterExtension::getConfigValue(const std::string &configName) {
 
     auto it = configMap_.find(configName);
     if(it == configMap_.end()) {
-        throw invalid_value_exception(utils::string::to_string() << "Filter@" << name_ << ": config item " << configName << " doesn't exist");
+        THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "Filter@" << name_ << ": config item " << configName << " doesn't exist");
     }
     return it->second;
 }
@@ -251,7 +251,7 @@ void FilterExtension::checkAndUpdateConfig() {
         for(auto &item: configSchemaVec_) {
             auto it = configMap_.find(item.name);
             if(it == configMap_.end()) {
-                throw invalid_value_exception(utils::string::to_string() << "Filter@" << name_ << ": config item " << item.name << " doesn't exist");
+                THROW_INVALID_DATA_EXCEPTION(utils::string::to_string() << "Filter@" << name_ << ": config item " << item.name << " doesn't exist");
             }
             auto valueStr = filterConfigValueToString(it->second, item.type);
             configVec.push_back(valueStr);
@@ -266,7 +266,7 @@ void FilterExtension::updateConfigCache(std::vector<std::string> &params) {
     std::unique_lock<std::recursive_mutex> lock(configMutex_);
     auto                                   schemaVec = getConfigSchemaVec();
     if(schemaVec.empty()) {
-        throw invalid_value_exception(utils::string::to_string() << "Filter@" << name_ << ": config schema is empty, doesn't have any config value");
+        THROW_INVALID_DATA_EXCEPTION(utils::string::to_string() << "Filter@" << name_ << ": config schema is empty, doesn't have any config value");
     }
 
     if(schemaVec.size() == params.size()) {

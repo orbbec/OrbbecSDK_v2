@@ -33,7 +33,7 @@
 // Fatal error message (for example: insufficient system memory prevents normal operation)
 #define LOG_FATAL(...) SPDLOG_LOGGER_CRITICAL(spdlog::default_logger(), __VA_ARGS__)
 
-// External message, only valid when compiled into debug version
+// External message
 #define LOG_EXTERNAL_MSG(loc, level, module, msg)                                  \
     do {                                                                           \
         spdlog::default_logger()->log((loc), (level), "[{}] {}", (module), (msg)); \

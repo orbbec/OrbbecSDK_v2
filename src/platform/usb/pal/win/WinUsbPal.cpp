@@ -166,7 +166,7 @@ std::shared_ptr<ISourcePort> WinUsbPal::getSourcePort(std::shared_ptr<const Sour
     case SOURCE_PORT_USB_VENDOR: {
         auto usbDev = usbEnumerator_->openUsbDevice(std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->url);
         if(usbDev == nullptr) {
-            throw libobsensor::camera_disconnected_exception("usbEnumerator openUsbDevice failed!");
+            THROW_DEVICE_UNAVAILABLE_EXCEPTION("usbEnumerator openUsbDevice failed!");
         }
         port = std::make_shared<VendorUsbDevicePort>(usbDev, std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo));
         break;
@@ -178,14 +178,14 @@ std::shared_ptr<ISourcePort> WinUsbPal::getSourcePort(std::shared_ptr<const Sour
         auto usbPortInfo = std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo);
         auto usbDev      = usbEnumerator_->openUsbDevice(std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo)->url);
         if(usbDev == nullptr) {
-            throw libobsensor::camera_disconnected_exception("usbEnumerator openUsbDevice failed!");
+            THROW_DEVICE_DISCONNECTED_EXCEPTION("usbEnumerator openUsbDevice failed!");
         }
         port = std::make_shared<HidDevicePort>(usbDev, std::dynamic_pointer_cast<const USBSourcePortInfo>(portInfo));
 
         break;
     }
     default:
-        throw libobsensor::invalid_value_exception("unsupported source port type!");
+        THROW_INVALID_PARAM_EXCEPTION("unsupported source port type!");
     }
 
     sourcePortMap_.insert(std::make_pair(portInfo, port));
@@ -271,7 +271,7 @@ WinUsbDeviceWatcher::~WinUsbDeviceWatcher() noexcept {
 void WinUsbDeviceWatcher::start(deviceChangedCallback callback) {
     std::lock_guard<std::mutex> lock(mutex_);
     if(!extraData_.stopped_)
-        throw wrong_api_call_sequence_exception("Cannot start a running device_watcher");
+        THROW_WRONG_API_CALL_SEQUENCE_EXCEPTION("Cannot start a running device_watcher");
     extraData_.stopped_  = false;
     extraData_.callback_ = std::move(callback);
     eventThread_         = std::thread([this]() { run(); });
@@ -298,7 +298,7 @@ void WinUsbDeviceWatcher::run() {
 
     extraData_.hWnd = CreateWindow(winClassName, nullptr, 0, 0, 0, 0, 0, HWND_MESSAGE, nullptr, nullptr, &extraData_);
     if(!extraData_.hWnd)
-        throw wrong_api_call_sequence_exception("CreateWindow failed");
+        THROW_PAL_EXCEPTION("CreateWindow failed", OB_ERROR_UNKNOWN);
 
     MSG msg;
 

@@ -72,7 +72,7 @@ public:
     // async methods
     void start(std::function<void(std::shared_ptr<T>)> callback) {  // start async dequeue
         if(isStarted()) {
-            throw libobsensor::wrong_api_call_sequence_exception("FrameQueue have already started!");
+            THROW_WRONG_API_CALL_SEQUENCE_EXCEPTION("FrameQueue have already started!");
         }
         callback_      = callback;
         stopped_       = false;
@@ -91,7 +91,7 @@ public:
                         break;
                     }
 
-                    if (!queue_.empty()) {
+                    if(!queue_.empty()) {
                         frame = queue_.front();
                         queue_.pop();
                     }
@@ -142,7 +142,7 @@ public:
         callback_ = nullptr;
         stopping_ = false;
         flushing_ = false;
-        stopped_   = true;
+        stopped_  = true;
     }
 
 private:

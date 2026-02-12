@@ -109,7 +109,7 @@ std::shared_ptr<IFrameBufferManager> FrameMemoryPool::createFrameBufferManager(O
         else {
             std::ostringstream oss_msg;
             oss_msg << "Unsupported Frame Type to create buffer manager! frameType: " << type;
-            throw unsupported_operation_exception(oss_msg.str());
+            THROW_UNSUPPORTED_OPERATION_EXCEPTION(oss_msg.str());
         }
         break;
     }

@@ -251,7 +251,7 @@ ob_device *ob_device_list_get_device_by_serial_number_ex(const ob_device_list *l
             return impl;
         }
     }
-    throw libobsensor::invalid_value_exception("Device not found by serial number: " + std::string(serial_number));
+    THROW_INVALID_PARAM_EXCEPTION("Device not found by serial number: " + std::string(serial_number));
 }
 HANDLE_EXCEPTIONS_AND_RETURN(nullptr, list, serial_number, accessMode)
 
@@ -280,7 +280,7 @@ ob_device *ob_device_list_get_device_by_uid_ex(const ob_device_list *list, const
             return impl;
         }
     }
-    throw libobsensor::invalid_value_exception("Device not found by UID: " + std::string(uid));
+    THROW_INVALID_PARAM_EXCEPTION("Device not found by UID: " + std::string(uid));
 }
 HANDLE_EXCEPTIONS_AND_RETURN(nullptr, list, uid, accessMode)
 
@@ -304,7 +304,7 @@ ob_sensor *ob_device_get_sensor(ob_device *device, ob_sensor_type type, ob_error
     auto sensorTypelist = device->device->getSensorTypeList();
     auto iter           = std::find(sensorTypelist.begin(), sensorTypelist.end(), type);
     if(iter == sensorTypelist.end()) {
-        throw libobsensor::invalid_value_exception("Sensor not found by type: " + std::to_string(type));
+        THROW_INVALID_PARAM_EXCEPTION("Sensor not found by type: " + std::to_string(type));
     }
     auto impl    = new ob_sensor();
     impl->device = device->device;
@@ -388,7 +388,7 @@ void ob_device_set_structured_data(ob_device *device, ob_property_id property_id
         auto devInfo     = device->device->getInfo();
         bool allowZeroGW = libobsensor::utils::isAllowZeroGateway(devInfo->vid_, devInfo->pid_);
         if(!libobsensor::utils::checkIpConfig(*config, allowZeroGW)) {
-            throw libobsensor::invalid_value_exception("Invalid IP configuration");
+            THROW_INVALID_PARAM_EXCEPTION("Invalid IP configuration");
             return;
         }
     }
@@ -399,7 +399,7 @@ void ob_device_set_structured_data(ob_device *device, ob_property_id property_id
         auto devInfo     = device->device->getInfo();
         bool allowZeroGW = libobsensor::utils::isAllowZeroGateway(devInfo->vid_, devInfo->pid_);
         if(!libobsensor::utils::checkIpConfig(*config, allowZeroGW)) {
-            throw libobsensor::invalid_value_exception("Invalid IP configuration");
+            THROW_INVALID_PARAM_EXCEPTION("Invalid IP configuration");
             return;
         }
     }
@@ -666,7 +666,7 @@ const char *ob_device_info_get_ip_address(const ob_device_info *info, ob_error *
     VALIDATE_NOT_NULL(info);
     auto netDeviceInfo = std::static_pointer_cast<const libobsensor::NetDeviceInfo>(info->info);
     if(!netDeviceInfo) {
-        throw libobsensor::invalid_value_exception("Not a network device");
+        THROW_INVALID_PARAM_EXCEPTION("Not a network device");
     }
     return netDeviceInfo->ipAddress_.c_str();
 }
@@ -694,7 +694,7 @@ const char *ob_device_info_get_subnet_mask(const ob_device_info *info, ob_error 
     VALIDATE_NOT_NULL(info);
     auto netDeviceInfo = std::static_pointer_cast<const libobsensor::NetDeviceInfo>(info->info);
     if(!netDeviceInfo) {
-        throw libobsensor::invalid_value_exception("Not a network device");
+        THROW_INVALID_PARAM_EXCEPTION("Not a network device");
     }
     return netDeviceInfo->subnetMask_.c_str();
 }
@@ -704,7 +704,7 @@ const char *ob_device_info_get_gateway(const ob_device_info *info, ob_error **er
     VALIDATE_NOT_NULL(info);
     auto netDeviceInfo = std::static_pointer_cast<const libobsensor::NetDeviceInfo>(info->info);
     if(!netDeviceInfo) {
-        throw libobsensor::invalid_value_exception("Not a network device");
+        THROW_INVALID_PARAM_EXCEPTION("Not a network device");
     }
     return netDeviceInfo->gateway_.c_str();
 }

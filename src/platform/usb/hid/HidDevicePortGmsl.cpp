@@ -68,7 +68,8 @@ void imuSleepMs(int mSleepMs) {
 HidDevicePortGmsl::HidDevicePortGmsl(std::shared_ptr<const USBSourcePortInfo> portInfo) : portInfo_(portInfo), isStreaming_(false), frameQueue_(10) {
     imu_fd_ = open(portInfo_->infName.c_str(), O_RDWR);
     if(imu_fd_ < 0) {
-        throw pal_exception(utils::string::to_string() << "HidDevicePortGmsl() openDev failed, errno: " << errno << " " << strerror(errno));
+        THROW_PAL_EXCEPTION(utils::string::to_string() << "HidDevicePortGmsl() openDev failed, errno: " << errno << " " << strerror(errno),
+                            OB_ERROR_DEVICE_CONNECT_FAILED);
     }
     LOG_DEBUG("HidDevicePortGmsl() imu_fd_:{}", imu_fd_);
 }
@@ -94,7 +95,7 @@ void HidDevicePortGmsl::startStream(MutableFrameCallback callback) {
     imuPollInterval = 25;                  // default 25ms
 
     if(isStreaming_) {
-        throw wrong_api_call_sequence_exception("HidDevicePort::startStream() called while streaming");
+        THROW_WRONG_API_CALL_SEQUENCE_EXCEPTION("HidDevicePort::startStream() called while streaming");
     }
     isStreaming_ = true;
     frameQueue_.start(callback);
@@ -177,7 +178,7 @@ void HidDevicePortGmsl::pollData() {
     imuOrigFrameMsg->imuHeader.reserved   = 0;
     imuOrigFrameMsg->reserved             = 0;
 
-    uint8_t imuFrameMaxSize = sizeof(OBImuOriginData) * (IMU_FRAME_MAX_NUM) + sizeof(i2c_msg_header_t) + sizeof(uint16_t);
+    uint8_t              imuFrameMaxSize = sizeof(OBImuOriginData) * (IMU_FRAME_MAX_NUM) + sizeof(i2c_msg_header_t) + sizeof(uint16_t);
     auto                 bufferSize      = std::max(sizeof(i2c_msg_t), static_cast<size_t>(imuFrameMaxSize));
     std::vector<uint8_t> databuf(bufferSize, 0);
     int                  size = getImuData(databuf.data());
@@ -299,4 +300,3 @@ int HidDevicePortGmsl::getImuData(uint8_t *data) {
 }
 
 }  // namespace libobsensor
-

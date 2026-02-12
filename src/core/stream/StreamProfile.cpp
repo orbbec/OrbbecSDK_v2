@@ -321,7 +321,7 @@ LiDARProfileInfo LiDARStreamProfile::getInfo() const {
             info.dataBlockSize   = 344;
         } break;
         default:
-            throw invalid_value_exception("Invalid LiDAR scan rate");
+            THROW_INVALID_PARAM_EXCEPTION("Invalid LiDAR scan rate");
             break;
         }
         info.frameSize = info.pointsNum * info.maxDataBlockNum * sizeof(OBLiDARScanPoint);
@@ -380,12 +380,12 @@ LiDARProfileInfo LiDARStreamProfile::getInfo() const {
         }
         else {
             info.clear();
-            throw invalid_value_exception("Invalid LiDAR format");
+            THROW_INVALID_PARAM_EXCEPTION("Invalid LiDAR format");
         }
 
         auto iter = infoMap->find(scanRate_);
         if(iter == infoMap->end()) {
-            throw invalid_value_exception("Invalid LiDAR scan rate");
+            THROW_INVALID_PARAM_EXCEPTION("Invalid LiDAR scan rate");
         }
         info.scanSpeed       = (*iter).second.first;
         info.maxDataBlockNum = (*iter).second.second;

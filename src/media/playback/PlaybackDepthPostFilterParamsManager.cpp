@@ -22,37 +22,37 @@ void PlaybackDepthPostFilterParamsManager::fetchParamFromDevice() {
         parseFilterParams(depthEngineParamData.data(), dataSize);
     }
     else {
-        throw libobsensor::invalid_value_exception("Invalid data size for depth poster filter.");
+        THROW_INVALID_DATA_EXCEPTION("Invalid data size for depth poster filter.");
     }
 }
 
 void PlaybackDepthPostFilterParamsManager::parseFilterParams(const uint8_t *data, const uint16_t dataSize) {
     uint16_t headerSize = static_cast<uint16_t>(sizeof(DepthPostFilterHeader));
     if(!data && dataSize < headerSize) {
-        throw libobsensor::invalid_value_exception("Filter parameter parse error: data size is too small.");
+        THROW_INVALID_PARAM_EXCEPTION("Filter parameter parse error: data size is too small.");
     }
 
     // check magic
     memcpy(&filterHeader_, data, headerSize);
     const uint8_t headerMagic[4] = { 'D', 'P', 'A', 'H' };
     if(memcmp(filterHeader_.magic, headerMagic, 4) != 0) {
-        throw libobsensor::invalid_value_exception("Filter parameter parse error: magic check failed.");
+        THROW_INVALID_PARAM_EXCEPTION("Filter parameter parse error: magic check failed.");
     }
 
     // check header size
     if(filterHeader_.header_size != sizeof(DepthPostFilterHeader)) {
-        throw libobsensor::invalid_value_exception("Filter parameter parse error: header size check failed.");
+        THROW_INVALID_PARAM_EXCEPTION("Filter parameter parse error: header size check failed.");
     }
 
     // check total size
     uint32_t totalSize = filterHeader_.header_size + filterHeader_.data_size;
     if(dataSize != totalSize) {
-        throw libobsensor::invalid_value_exception("Filter parameter parse error: data total size check failed.");
+        THROW_INVALID_PARAM_EXCEPTION("Filter parameter parse error: data total size check failed.");
     }
 
     // checksum
     if(!calculateChecksum(data, &filterHeader_)) {
-        throw libobsensor::invalid_value_exception("Filter parameter parse error: checksum verification failed.");
+        THROW_INVALID_PARAM_EXCEPTION("Filter parameter parse error: checksum verification failed.");
     }
 
     if(filterHeader_.version == POSTFILTER_PARAMS_VERSION_0102) {
@@ -60,7 +60,7 @@ void PlaybackDepthPostFilterParamsManager::parseFilterParams(const uint8_t *data
         headerVersion_ = "v1.0.2";
     }
     else {
-        throw libobsensor::invalid_value_exception(utils::string::to_string() << "Filter params parse error, got version: " << filterHeader_.version);
+        THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "Filter params parse error, got version: " << filterHeader_.version);
     }
 }
 
@@ -76,7 +76,7 @@ bool PlaybackDepthPostFilterParamsManager::calculateChecksum(const uint8_t *data
 void PlaybackDepthPostFilterParamsManager::parseFilterParamsV0102(const uint8_t *data, const uint16_t dataSize) {
     uint16_t totalParamsSize = static_cast<uint16_t>(sizeof(DepthPostFilterParams));
     if(dataSize != totalParamsSize) {
-        throw libobsensor::invalid_value_exception("V0102 filter parameter parse error: data size mismatch.");
+        THROW_INVALID_PARAM_EXCEPTION("V0102 filter parameter parse error: data size mismatch.");
     }
 
     memcpy(&depthPostFilterParams_, data, totalParamsSize);

@@ -6,11 +6,10 @@
 
 namespace libobsensor {
 
-LiDARDeviceMonitor::LiDARDeviceMonitor(IDevice *owner, std::shared_ptr<ISourcePort> dataPort)
-    : DeviceComponentBase(owner) {
+LiDARDeviceMonitor::LiDARDeviceMonitor(IDevice *owner, std::shared_ptr<ISourcePort> dataPort) : DeviceComponentBase(owner) {
     vendorDataPort_ = std::dynamic_pointer_cast<IVendorDataPort>(dataPort);
     if(!vendorDataPort_) {
-        throw std::runtime_error("LiDARDeviceMonitor: data port must be a vendor data port!");
+        THROW_INVALID_PARAM_EXCEPTION("LiDARDeviceMonitor: data port must be a vendor data port!");
     }
 
     auto activityRecorder = owner->getComponentT<IDeviceActivityRecorder>(OB_DEV_COMPONENT_DEVICE_ACTIVITY_RECORDER, false);
@@ -19,8 +18,7 @@ LiDARDeviceMonitor::LiDARDeviceMonitor(IDevice *owner, std::shared_ptr<ISourcePo
     }
 }
 
-LiDARDeviceMonitor::~LiDARDeviceMonitor() noexcept {
-}
+LiDARDeviceMonitor::~LiDARDeviceMonitor() noexcept {}
 
 OBDeviceState LiDARDeviceMonitor::getCurrentDeviceState() const {
     LOG_ERROR("LiDAR device doesn't support heartbeat and fetching state right now!");
@@ -29,7 +27,7 @@ OBDeviceState LiDARDeviceMonitor::getCurrentDeviceState() const {
 
 int LiDARDeviceMonitor::registerStateChangedCallback(DeviceStateChangedCallback callback) {
     utils::unusedVar(callback);
-    throw libobsensor::not_implemented_exception("LiDAR device doesn't support heartbeat and fetching state right now!");
+    THROW_NOT_IMPLEMENTED_EXCEPTION("LiDAR device doesn't support heartbeat and fetching state right now!");
     return -1;
 }
 
@@ -38,11 +36,11 @@ void LiDARDeviceMonitor::unregisterStateChangedCallback(int callbackId) {
 }
 
 void LiDARDeviceMonitor::enableHeartbeat() {
-    throw libobsensor::not_implemented_exception("LiDAR device doesn't support heartbeat and fetching state right now!");
+    THROW_NOT_IMPLEMENTED_EXCEPTION("LiDAR device doesn't support heartbeat and fetching state right now!");
 }
 
 void LiDARDeviceMonitor::disableHeartbeat() {
-    throw libobsensor::not_implemented_exception("LiDAR device doesn't support heartbeat and fetching state right now!");
+    THROW_NOT_IMPLEMENTED_EXCEPTION("LiDAR device doesn't support heartbeat and fetching state right now!");
 }
 
 bool LiDARDeviceMonitor::isHeartbeatEnabled() const {
@@ -50,11 +48,11 @@ bool LiDARDeviceMonitor::isHeartbeatEnabled() const {
 }
 
 void LiDARDeviceMonitor::pauseHeartbeat() {
-    throw libobsensor::not_implemented_exception("LiDAR device doesn't support heartbeat and fetching state right now!");
+    THROW_NOT_IMPLEMENTED_EXCEPTION("LiDAR device doesn't support heartbeat and fetching state right now!");
 }
 
 void LiDARDeviceMonitor::resumeHeartbeat() {
-    throw libobsensor::not_implemented_exception("LiDAR device doesn't support heartbeat and fetching state right now!");
+    THROW_NOT_IMPLEMENTED_EXCEPTION("LiDAR device doesn't support heartbeat and fetching state right now!");
 }
 
 void LiDARDeviceMonitor::sendAndReceiveData(const uint8_t *sendData, uint32_t sendDataSize, uint8_t *receiveData, uint32_t *receiveDataSize) {
@@ -68,11 +66,11 @@ void LiDARDeviceMonitor::sendAndReceiveData(const uint8_t *sendData, uint32_t se
 }
 
 void LiDARDeviceMonitor::enableFirmwareLog() {
-    throw libobsensor::not_implemented_exception("LiDAR device doesn't support firmware log right now!");
+    THROW_NOT_IMPLEMENTED_EXCEPTION("LiDAR device doesn't support firmware log right now!");
 }
 
 void LiDARDeviceMonitor::disableFirmwareLog() {
-    throw libobsensor::not_implemented_exception("LiDAR device doesn't support firmware log right now!");
+    THROW_NOT_IMPLEMENTED_EXCEPTION("LiDAR device doesn't support firmware log right now!");
 }
 
 bool LiDARDeviceMonitor::isFirmwareLogEnabled() const {

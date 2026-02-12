@@ -31,7 +31,7 @@ void G305DepthWorkModeManager::switchDepthWorkMode(const std::string &modeName) 
             }
             totalNames += mode.name;
         });
-        throw unsupported_operation_exception("Invalid depth mode: " + modeName + ", support depth work mode list: " + totalNames);
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("Invalid depth mode: " + modeName + ", support depth work mode list: " + totalNames);
     }
 
     OBDepthWorkMode_Internal dstMode = *iter;
@@ -44,7 +44,7 @@ void G305DepthWorkModeManager::switchDepthWorkMode(const OBDepthWorkMode_Interna
     std::string targetModeName  = targetDepthMode.name;
 
     if(owner->hasAnySensorStreamActivated()) {
-        throw unsupported_operation_exception(utils::string::to_string()
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION(utils::string::to_string()
                                               << "Cannot switch depth work mode while any stream is started. Please stop all stream first!");
     }
 

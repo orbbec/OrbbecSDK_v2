@@ -121,7 +121,8 @@ int main(void) try {
     return 0;
 }
 catch(ob::Error &e) {
-    std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\ntype:" << e.getExceptionType() << std::endl;
+    std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\nstatus:" << e.getStatus()
+              << "\ntype:" << e.getExceptionType() << std::endl;
     std::cout << "\nPress any key to exit.";
     ob_smpl::waitForKeyPressed();
     exit(EXIT_FAILURE);
@@ -237,7 +238,7 @@ void setPropertyValue(std::shared_ptr<ob::Device> device, OBPropertyItem propert
                 device->setBoolProperty(propertyItem.id, bool_value);
             }
             catch(ob::Error &e) {
-                std::cout << "set bool property fail: " << e.what() << std::endl;
+                std::cout << "set bool property fail: " << e.what() << " (status: " << e.getStatus() << ")" << std::endl;
             }
             std::cout << "property name:" << propertyItem.name << ",set bool value:" << bool_value << std::endl;
             break;
@@ -247,7 +248,7 @@ void setPropertyValue(std::shared_ptr<ob::Device> device, OBPropertyItem propert
                 device->setIntProperty(propertyItem.id, int_value);
             }
             catch(ob::Error &e) {
-                std::cout << "set int property fail: " << e.what() << std::endl;
+                std::cout << "set int property fail: " << e.what() << " (status: " << e.getStatus() << ")" << std::endl;
             }
             std::cout << "property name:" << propertyItem.name << ",set int value:" << int_value << std::endl;
             break;
@@ -257,7 +258,7 @@ void setPropertyValue(std::shared_ptr<ob::Device> device, OBPropertyItem propert
                 device->setFloatProperty(propertyItem.id, float_value);
             }
             catch(ob::Error &e) {
-                std::cout << "set floar property fail: " << e.what() << std::endl;
+                std::cout << "set floar property fail: " << e.what() << " (status: " << e.getStatus() << ")" << std::endl;
             }
             std::cout << "property name:" << propertyItem.name << ",set float value:" << float_value << std::endl;
             break;
@@ -283,7 +284,7 @@ void getPropertyValue(std::shared_ptr<ob::Device> device, OBPropertyItem propert
                 bool_ret = device->getBoolProperty(propertyItem.id);
             }
             catch(ob::Error &e) {
-                std::cout << "get bool property failed: " << e.what() << std::endl;
+                std::cout << "get bool property failed: " << e.what() << " (status: " << e.getStatus() << ")" << std::endl;
             }
             std::cout << "property name:" << propertyItem.name << ",get bool value:" << bool_ret << std::endl;
             break;
@@ -292,7 +293,7 @@ void getPropertyValue(std::shared_ptr<ob::Device> device, OBPropertyItem propert
                 int_ret = device->getIntProperty(propertyItem.id);
             }
             catch(ob::Error &e) {
-                std::cout << "get int property failed: " << e.what() << std::endl;
+                std::cout << "get int property failed: " << e.what() << " (status: " << e.getStatus() << ")" << std::endl;
             }
             std::cout << "property name:" << propertyItem.name << ",get int value:" << int_ret << std::endl;
             break;
@@ -301,7 +302,7 @@ void getPropertyValue(std::shared_ptr<ob::Device> device, OBPropertyItem propert
                 float_ret = device->getFloatProperty(propertyItem.id);
             }
             catch(ob::Error &e) {
-                std::cout << "get float property failed: " << e.what() << std::endl;
+                std::cout << "get float property failed: " << e.what() << " (status: " << e.getStatus() << ")" << std::endl;
             }
             std::cout << "property name:" << propertyItem.name << ",get float value:" << float_ret << std::endl;
             break;

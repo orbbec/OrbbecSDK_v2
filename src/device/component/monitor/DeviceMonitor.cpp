@@ -31,7 +31,7 @@ DeviceMonitor::DeviceMonitor(IDevice *owner, std::shared_ptr<ISourcePort> dataPo
       hbSendData_(MAX_RECV_DATA_SIZE) {
     vendorDataPort_ = std::dynamic_pointer_cast<IVendorDataPort>(dataPort);
     if(!vendorDataPort_) {
-        throw std::runtime_error("DeviceMonitor: data port must be a vendor data port!");
+        THROW_INVALID_PARAM_EXCEPTION("DeviceMonitor: data port must be a vendor data port!");
     }
 
     auto activityRecorder = owner->getComponentT<IDeviceActivityRecorder>(OB_DEV_COMPONENT_DEVICE_ACTIVITY_RECORDER, false);

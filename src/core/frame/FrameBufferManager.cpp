@@ -120,7 +120,7 @@ uint8_t *FrameBufferManagerBase::acquireBuffer() {
             if(bufferPtr == nullptr) {
                 auto msg = std::string("Alloc frame buffer failed! size=") + std::to_string(frameTotalSize_);
                 LOG_FATAL(msg);
-                throw memory_exception(msg);
+                THROW_MEMORY_EXCEPTION(msg);
             }
         }
     }

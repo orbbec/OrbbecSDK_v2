@@ -17,7 +17,7 @@ std::shared_ptr<Frame> FrameFactory::createFrame(OBFrameType frameType, OBFormat
 
     auto frame = bufferManager->acquireFrame();
     if(frame == nullptr) {
-        throw libobsensor::memory_exception("Failed to create frame, out of memory or other memory allocation error.");
+        THROW_MEMORY_EXCEPTION("Failed to create frame, out of memory or other memory allocation error.");
     }
 
     auto streamType = utils::mapFrameTypeToStreamType(frameType);
@@ -56,8 +56,9 @@ std::shared_ptr<Frame> FrameFactory::createFrameFromOtherFrame(std::shared_ptr<c
 }
 
 std::shared_ptr<Frame> FrameFactory::createVideoFrame(OBFrameType frameType, OBFormat frameFormat, uint32_t width, uint32_t height, uint32_t strideBytes) {
-    if(frameType == OB_FRAME_UNKNOWN || frameType == OB_FRAME_ACCEL || frameType == OB_FRAME_GYRO || frameType == OB_FRAME_SET || frameType == OB_FRAME_LIDAR_POINTS ) {
-        throw libobsensor::invalid_value_exception("Invalid frame type for video frame.");
+    if(frameType == OB_FRAME_UNKNOWN || frameType == OB_FRAME_ACCEL || frameType == OB_FRAME_GYRO || frameType == OB_FRAME_SET
+       || frameType == OB_FRAME_LIDAR_POINTS) {
+        THROW_INVALID_PARAM_EXCEPTION("Invalid frame type for video frame.");
     }
 
     std::shared_ptr<IFrameBufferManager> bufferManager;
@@ -71,7 +72,7 @@ std::shared_ptr<Frame> FrameFactory::createVideoFrame(OBFrameType frameType, OBF
 
     auto frame = bufferManager->acquireFrame();
     if(frame == nullptr) {
-        throw libobsensor::memory_exception("Failed to create frame, out of memory or other memory allocation error.");
+        THROW_MEMORY_EXCEPTION("Failed to create frame, out of memory or other memory allocation error.");
     }
 
     auto streamType = utils::mapFrameTypeToStreamType(frameType);
@@ -110,7 +111,7 @@ std::shared_ptr<Frame> FrameFactory::createFrameFromUserBuffer(OBFrameType frame
         sp    = StreamProfileFactory::createLiDARStreamProfile(OB_LIDAR_SCAN_ANY, format);
         break;
     default:
-        throw libobsensor::invalid_value_exception("Invalid frame type for user frame.");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid frame type for user frame.");
         break;
     }
 
@@ -144,7 +145,7 @@ std::shared_ptr<Frame> FrameFactory::createFrameFromUserBuffer(OBFrameType frame
         sp = StreamProfileFactory::createLiDARStreamProfile(OB_LIDAR_SCAN_ANY, format);
         break;
     default:
-        throw libobsensor::invalid_value_exception("Invalid frame type for user frame.");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid frame type for user frame.");
         break;
     }
 
@@ -186,7 +187,7 @@ std::shared_ptr<Frame> FrameFactory::createVideoFrameFromUserBuffer(OBFrameType 
         frame = std::make_shared<ConfidenceFrame>(buffer, bufferSize, bufferReclaimFunc);
         break;
     default:
-        throw libobsensor::invalid_value_exception("Invalid frame type for video frame.");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid frame type for video frame.");
         break;
     }
 
@@ -221,7 +222,7 @@ std::shared_ptr<Frame> FrameFactory::createVideoFrameFromUserBuffer(OBFrameType 
         sp = StreamProfileFactory::createVideoStreamProfile(utils::mapFrameTypeToStreamType(frameType), format, width, height, 0);
         break;
     default:
-        throw libobsensor::invalid_value_exception("Invalid frame type for video frame.");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid frame type for video frame.");
         break;
     }
 
@@ -237,7 +238,7 @@ std::shared_ptr<Frame> FrameFactory::createFrameFromStreamProfile(std::shared_pt
 
     auto frame = bufferManager->acquireFrame();
     if(frame == nullptr) {
-        throw libobsensor::memory_exception("Failed to create frame, out of memory or other memory allocation error.");
+        THROW_MEMORY_EXCEPTION("Failed to create frame, out of memory or other memory allocation error.");
     }
 
     frame->setStreamProfile(sp);
@@ -250,12 +251,12 @@ std::shared_ptr<FrameSet> FrameFactory::createFrameSet() {
 
     auto frame = frameSetBufferManager->acquireFrame();
     if(frame == nullptr) {
-        throw libobsensor::memory_exception("Failed to create frame, out of memory or other memory allocation error.");
+        THROW_MEMORY_EXCEPTION("Failed to create frame, out of memory or other memory allocation error.");
     }
 
     auto frameSet = std::dynamic_pointer_cast<FrameSet>(frame);
     if(frameSet == nullptr) {
-        throw libobsensor::invalid_value_exception("Failed to create frame set.");
+        THROW_INVALID_PARAM_EXCEPTION("Failed to create frame set.");
     }
 
     return frameSet;

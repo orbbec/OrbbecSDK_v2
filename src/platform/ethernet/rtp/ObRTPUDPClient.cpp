@@ -22,18 +22,18 @@ ObRTPUDPClient::~ObRTPUDPClient() noexcept {
 
 void ObRTPUDPClient::socketConnect() {
     // 1.Create udpsocket
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+#if (defined(WIN32) || defined(_WIN32) || defined(WINCE))
     recvSocket_ = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 #else
     recvSocket_ = socket(AF_INET, SOCK_DGRAM, 0);
 #endif
 
     if(recvSocket_ < 0) {
-        throw libobsensor::invalid_value_exception(utils::string::to_string() << "Failed to create udpSocket! err_code=" << GET_LAST_ERROR());
+        THROW_IO_EXCEPTION(utils::string::to_string() << "Failed to create udpSocket! err_code=" << GET_LAST_ERROR());
     }
 
     // 2.set receive timeout
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+#if (defined(WIN32) || defined(_WIN32) || defined(WINCE))
     uint32_t commTimeout = COMM_TIMEOUT_MS;
 #else
     TIMEVAL commTimeout;
@@ -53,7 +53,7 @@ void ObRTPUDPClient::socketConnect() {
     // 4.Bind the socket to a local address and port.
     int bindResult = bind(recvSocket_, (sockaddr *)&serverAddr, sizeof(serverAddr));
     if(bindResult < 0) {
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+#if (defined(WIN32) || defined(_WIN32) || defined(WINCE))
         if(GET_LAST_ERROR() == WSAEADDRINUSE) {
 #else
         if(GET_LAST_ERROR() == EADDRINUSE) {
@@ -64,7 +64,7 @@ void ObRTPUDPClient::socketConnect() {
         }
         else {
             socketClose();
-            throw libobsensor::invalid_value_exception(utils::string::to_string() << "Failed to bind server address! err_code=" << GET_LAST_ERROR());
+            THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "Failed to bind server address! err_code=" << GET_LAST_ERROR());
         }
     }
     LOG_DEBUG("Net device socket open successfully");
@@ -114,7 +114,7 @@ void ObRTPUDPClient::frameReceive() {
         int recvLen = recvfrom(recvSocket_, (char *)buffer.data(), (int)buffer.size(), 0, (sockaddr *)&serverAddr, &serverAddrSize);
         if(recvLen < 0) {
             int error = GET_LAST_ERROR();
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+#if (defined(WIN32) || defined(_WIN32) || defined(WINCE))
             if(error == WSAETIMEDOUT) {
                 LOG_ERROR_INTVL("Receive rtp packet timed out!");
             }
@@ -188,10 +188,10 @@ void ObRTPUDPClient::frameProcess() {
                 rtpProcessor_.process(header, data.data(), (uint32_t)data.size(), currentProfile_->getType(), currentProfile_->getFormat());
                 if(rtpProcessor_.processComplete()) {
                     uint32_t frameDataSize = rtpProcessor_.getFrameDataSize();
-                    uint32_t metaDataSize = rtpProcessor_.getMetaDataSize();
+                    uint32_t metaDataSize  = rtpProcessor_.getMetaDataSize();
                     // LOG_DEBUG("Callback new frame dataSize: {}, number: {}", dataSize, rtpProcessor_.getNumber());
 
-                    auto frame = FrameFactory::createFrameFromStreamProfile(currentProfile_);
+                    auto     frame        = FrameFactory::createFrameFromStreamProfile(currentProfile_);
                     uint32_t expectedSize = static_cast<uint32_t>(frame->getDataSize());
                     if(frameDataSize > expectedSize) {
                         LOG_WARN_INTVL("{} Receive data size({}) >  expected data size! ({})", currentProfile_->getType(), frameDataSize, expectedSize);
@@ -214,8 +214,9 @@ void ObRTPUDPClient::frameProcess() {
                         rtpProcessor_.reset();
                     }
                 }
-            } else {
-                //imu
+            }
+            else {
+                // imu
                 auto frame = FrameFactory::createFrame(OB_FRAME_UNKNOWN, OB_FORMAT_UNKNOWN, OB_UDP_BUFFER_SIZE);
                 frame->updateData(data.data() + 12, data.size() - 12);
                 frame->setTimeStampUsec(header->timestamp);

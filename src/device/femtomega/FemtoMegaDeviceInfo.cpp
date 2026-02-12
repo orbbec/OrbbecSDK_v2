@@ -60,7 +60,7 @@ FemtoMegaDeviceInfo::FemtoMegaDeviceInfo(const SourcePortInfoList groupedInfoLis
         sourcePortInfoList_ = groupedInfoList;
     }
     else {
-        throw invalid_value_exception("Invalid port type");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid port type");
     }
 }
 

@@ -72,7 +72,7 @@ void PointCloudFilter::reset() {
 
 void PointCloudFilter::updateConfig(std::vector<std::string> &params) {
     if(params.size() != 6) {
-        throw invalid_value_exception("PointCloudFilter config error: params size not match");
+        THROW_INVALID_PARAM_EXCEPTION("PointCloudFilter config error: params size not match");
     }
     try {
         OBFormat type = (OBFormat)std::stoi(params[0]);
@@ -108,7 +108,7 @@ void PointCloudFilter::updateConfig(std::vector<std::string> &params) {
         }
     }
     catch(const std::exception &e) {
-        throw invalid_value_exception("PointCloudFilter config error: " + std::string(e.what()));
+        THROW_INVALID_PARAM_EXCEPTION("PointCloudFilter config error: " + std::string(e.what()));
     }
 }
 
@@ -307,7 +307,7 @@ std::shared_ptr<Frame> PointCloudFilter::createRGBDPointCloud(std::shared_ptr<co
         tarFrame = colorFrame;
         break;
     default:
-        throw unsupported_operation_exception("unsupported color format for RgbDepth pointCloud convert!");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("unsupported color format for RgbDepth pointCloud convert!");
     }
 
     uint8_t *colorData = nullptr;

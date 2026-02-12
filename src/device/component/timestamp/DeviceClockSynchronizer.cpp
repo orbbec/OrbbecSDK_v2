@@ -137,7 +137,7 @@ void DeviceClockSynchronizer::timerSyncWithHost() {
     }
 
     if(repeated >= MAX_REPEAT_TIME) {
-        throw io_exception(utils::string::to_string() << "syncDeviceTime failed after retry " << repeated << " times, rtt=" << rtt);
+        THROW_IO_EXCEPTION(utils::string::to_string() << "syncDeviceTime failed after retry " << repeated << " times, rtt=" << rtt);
     }
 }
 

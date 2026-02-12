@@ -11,7 +11,7 @@ namespace libobsensor {
 
 NetDataStreamPort::NetDataStreamPort(std::shared_ptr<const NetDataStreamPortInfo> portInfo) : portInfo_(portInfo), isStreaming_(false) {}
 
-NetDataStreamPort::~NetDataStreamPort() noexcept{
+NetDataStreamPort::~NetDataStreamPort() noexcept {
     isStreaming_ = false;
     if(readDataThread_.joinable()) {
         readDataThread_.join();
@@ -24,7 +24,7 @@ NetDataStreamPort::~NetDataStreamPort() noexcept{
 
 void NetDataStreamPort::startStream(MutableFrameCallback callback) {
     if(isStreaming_) {
-        throw wrong_api_call_sequence_exception("NetDataStreamPort::startStream() called when streaming");
+        THROW_WRONG_API_CALL_SEQUENCE_EXCEPTION("NetDataStreamPort::startStream() called when streaming");
     }
     callback_        = callback;
     auto netPortInfo = std::const_pointer_cast<NetDataStreamPortInfo>(portInfo_);
@@ -36,7 +36,7 @@ void NetDataStreamPort::startStream(MutableFrameCallback callback) {
 
 void NetDataStreamPort::stopStream() {
     if(!isStreaming_) {
-        throw wrong_api_call_sequence_exception("NetDataStreamPort::stopStream() called when not streaming");
+        THROW_WRONG_API_CALL_SEQUENCE_EXCEPTION("NetDataStreamPort::stopStream() called when not streaming");
     }
 
     isStreaming_ = false;
@@ -85,4 +85,3 @@ void NetDataStreamPort::readData() {
 }
 
 }  // namespace libobsensor
-

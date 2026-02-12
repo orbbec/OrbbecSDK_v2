@@ -78,7 +78,7 @@ public:
 
     template <typename T> T *getStaticHeader() const {
         if(staticHeaderSize_ < sizeof(T)) {
-            throw invalid_value_exception("Header size is too small to cast to type T");
+            THROW_INVALID_DATA_EXCEPTION("Header size is too small to cast to type T");
         }
         return reinterpret_cast<T *>(buffer_);
     }
@@ -89,7 +89,7 @@ public:
 
     template <typename T> T *getDynamicHeader() const {
         if(dynamicHeaderSize_ < sizeof(T)) {
-            throw invalid_value_exception("Custom header size is too small to cast to type T");
+            THROW_INVALID_DATA_EXCEPTION("Custom header size is too small to cast to type T");
         }
         return reinterpret_cast<T *>(buffer_ + staticHeaderSize_);
     }
@@ -119,8 +119,7 @@ private:
 
 class ObRTPSink : public MediaSink {
 public:
-    static ObRTPSink *createNew(std::shared_ptr<const StreamProfile> streamProfile,
-                                UsageEnvironment    &env,
+    static ObRTPSink *createNew(std::shared_ptr<const StreamProfile> streamProfile, UsageEnvironment &env,
                                 MediaSubsession     &subsession,  // identifies the kind of data that's being received
                                 MutableFrameCallback callback,
                                 char const          *streamId = NULL);  // identifies the stream itself (optional)
@@ -128,7 +127,8 @@ public:
     virtual ~ObRTPSink() noexcept override;
 
 protected:
-    ObRTPSink(std::shared_ptr<const StreamProfile> streamProfile, UsageEnvironment &env, MediaSubsession &subsession, MutableFrameCallback callback, char const *streamId = NULL);
+    ObRTPSink(std::shared_ptr<const StreamProfile> streamProfile, UsageEnvironment &env, MediaSubsession &subsession, MutableFrameCallback callback,
+              char const *streamId = NULL);
 
 private:
     static void afterGettingFrame(void *clientData, unsigned frameSize, unsigned numTruncatedBytes, struct timeval presentationTime,
@@ -163,4 +163,3 @@ private:
 };
 
 }  // namespace libobsensor
-

@@ -35,7 +35,7 @@ void translate_exception(const char *name, std::string args, ob_error **result) 
     }
     catch(const libobsensor::libobsensor_exception &e) {
         if(result) {
-            *result = ob_create_error_internal(OB_STATUS_ERROR, e.what(), name, args.c_str(), e.get_exception_type());
+            *result = ob_create_error_internal(e.getStatus(), e.what(), name, args.c_str(), e.getExceptionType());
         }
     }
     catch(const std::exception &e) {
@@ -49,7 +49,6 @@ void translate_exception(const char *name, std::string args, ob_error **result) 
         }
     }
 }
-
 
 #ifdef __cplusplus
 }

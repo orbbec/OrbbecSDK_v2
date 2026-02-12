@@ -42,7 +42,7 @@ FrameProcessorFactory::FrameProcessorFactory(IDevice *owner) : DeviceComponentBa
         if(error) {
             // TODO
             delete cDevice;
-            throw std::runtime_error("create frame processor context failed");
+            THROW_STANDARD_EXCEPTION("create frame processor context failed");
         }
 
         if(cDevice) {
@@ -71,7 +71,7 @@ std::shared_ptr<FrameProcessor> FrameProcessorFactory::createFrameProcessor(OBSe
         case OB_SENSOR_DEPTH: {
             processor = std::make_shared<DepthFrameProcessor>(owner, context_);
         } break;
-        case OB_SENSOR_COLOR:{
+        case OB_SENSOR_COLOR: {
             processor = std::make_shared<ColorFrameProcessor>(owner, context_);
         } break;
         case OB_SENSOR_COLOR_LEFT: {
@@ -91,7 +91,7 @@ std::shared_ptr<FrameProcessor> FrameProcessorFactory::createFrameProcessor(OBSe
             processor = std::make_shared<ConfidenceFrameProcessor>(owner, context_);
         } break;
         default: {
-            throw std::runtime_error("unsupported sensor type");
+            THROW_INVALID_PARAM_EXCEPTION("unsupported sensor type");
         }
         }
     })
@@ -107,7 +107,7 @@ FrameProcessor::FrameProcessor(IDevice *owner, std::shared_ptr<FrameProcessorCon
         if(error) {
             auto msg = std::string(error->message);
             delete error;
-            throw std::runtime_error(msg);
+            THROW_STANDARD_EXCEPTION(msg);
         }
     }
 
@@ -227,7 +227,7 @@ void DepthFrameProcessor::setHardwareD2CProcessParams(std::shared_ptr<const Vide
 
     bool valid = d2cProfile.colorWidth != 0 && d2cProfile.colorHeight != 0 && d2cProfile.depthWidth != 0 && d2cProfile.depthHeight != 0;
     if(!valid || static_cast<size_t>(d2cProfile.paramIndex) + 1 > calibrationCameraParams.size()) {
-        throw invalid_value_exception("Current stream profile is not support hardware d2c process");
+        THROW_INVALID_PARAM_EXCEPTION("Current stream profile is not support hardware d2c process");
     }
 
     currentCameraParam = calibrationCameraParams.at(d2cProfile.paramIndex);
@@ -318,7 +318,7 @@ void DepthFrameProcessor::setPropertyValue(uint32_t propertyId, const OBProperty
         configValue      = static_cast<double>(value.intValue);
     } break;
     default: {
-        throw invalid_value_exception("Invalid property id");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property id");
     }
     }
 
@@ -373,13 +373,13 @@ void DepthFrameProcessor::getPropertyValue(uint32_t propertyId, OBPropertyValue 
         value->intValue = static_cast<int32_t>(getValue);
     } break;
     default:
-        throw invalid_value_exception("Invalid property id");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property id");
     }
 }
 
 void DepthFrameProcessor::getPropertyRange(uint32_t propertyId, OBPropertyRange *range) {
     if(!range) {
-        throw invalid_value_exception("Range point is null");
+        THROW_INVALID_PARAM_EXCEPTION("Range point is null");
     }
 
     std::string configName = "";
@@ -420,14 +420,13 @@ void DepthFrameProcessor::getPropertyRange(uint32_t propertyId, OBPropertyRange 
         range->step.intValue = 1;
         return;
     default:
-        throw invalid_value_exception("Invalid property id");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property id");
     }
 
     FrameProcessor::getPropertyRange(configName, range);
 }
 
-ColorFrameProcessor::ColorFrameProcessor(IDevice *owner, std::shared_ptr<FrameProcessorContext> context)
-    : FrameProcessor(owner, context, OB_SENSOR_COLOR) {}
+ColorFrameProcessor::ColorFrameProcessor(IDevice *owner, std::shared_ptr<FrameProcessorContext> context) : FrameProcessor(owner, context, OB_SENSOR_COLOR) {}
 
 void ColorFrameProcessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
     std::string configSchemaName = "";
@@ -447,7 +446,7 @@ void ColorFrameProcessor::setPropertyValue(uint32_t propertyId, const OBProperty
         configValue      = static_cast<double>(value.intValue);
     } break;
     default:
-        throw invalid_value_exception("Invalid property id");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property id");
     }
 
     try {
@@ -475,13 +474,13 @@ void ColorFrameProcessor::getPropertyValue(uint32_t propertyId, OBPropertyValue 
         value->intValue = static_cast<int32_t>(getValue);
     } break;
     default:
-        throw invalid_value_exception("Invalid property id");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property id");
     }
 }
 
 void ColorFrameProcessor::getPropertyRange(uint32_t propertyId, OBPropertyRange *range) {
     if(!range) {
-        throw invalid_value_exception("Range point is null");
+        THROW_INVALID_PARAM_EXCEPTION("Range point is null");
     }
 
     std::string configName = "";
@@ -496,7 +495,7 @@ void ColorFrameProcessor::getPropertyRange(uint32_t propertyId, OBPropertyRange 
         configName = "FrameMirror#255";
     } break;
     default:
-        throw invalid_value_exception("Invalid property id");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property id");
     }
 
     FrameProcessor::getPropertyRange(configName, range);
@@ -523,7 +522,7 @@ void ColorLeftFrameProcessor::setPropertyValue(uint32_t propertyId, const OBProp
         configValue      = static_cast<double>(value.intValue);
     } break;
     default:
-        throw invalid_value_exception("Invalid property id");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property id");
     }
 
     try {
@@ -551,13 +550,13 @@ void ColorLeftFrameProcessor::getPropertyValue(uint32_t propertyId, OBPropertyVa
         value->intValue = static_cast<int32_t>(getValue);
     } break;
     default:
-        throw invalid_value_exception("Invalid property id");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property id");
     }
 }
 
 void ColorLeftFrameProcessor::getPropertyRange(uint32_t propertyId, OBPropertyRange *range) {
     if(!range) {
-        throw invalid_value_exception("Range point is null");
+        THROW_INVALID_PARAM_EXCEPTION("Range point is null");
     }
 
     std::string configName = "";
@@ -572,7 +571,7 @@ void ColorLeftFrameProcessor::getPropertyRange(uint32_t propertyId, OBPropertyRa
         configName = "FrameMirror#255";
     } break;
     default:
-        throw invalid_value_exception("Invalid property id");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property id");
     }
 
     FrameProcessor::getPropertyRange(configName, range);
@@ -599,7 +598,7 @@ void ColorRightFrameProcessor::setPropertyValue(uint32_t propertyId, const OBPro
         configValue      = static_cast<double>(value.intValue);
     } break;
     default:
-        throw invalid_value_exception("Invalid property id");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property id");
     }
 
     try {
@@ -627,13 +626,13 @@ void ColorRightFrameProcessor::getPropertyValue(uint32_t propertyId, OBPropertyV
         value->intValue = static_cast<int32_t>(getValue);
     } break;
     default:
-        throw invalid_value_exception("Invalid property id");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property id");
     }
 }
 
 void ColorRightFrameProcessor::getPropertyRange(uint32_t propertyId, OBPropertyRange *range) {
     if(!range) {
-        throw invalid_value_exception("Range point is null");
+        THROW_INVALID_PARAM_EXCEPTION("Range point is null");
     }
 
     std::string configName = "";
@@ -648,7 +647,7 @@ void ColorRightFrameProcessor::getPropertyRange(uint32_t propertyId, OBPropertyR
         configName = "FrameMirror#255";
     } break;
     default:
-        throw invalid_value_exception("Invalid property id");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property id");
     }
 
     FrameProcessor::getPropertyRange(configName, range);
@@ -675,7 +674,7 @@ void IRFrameProcessor::setPropertyValue(uint32_t propertyId, const OBPropertyVal
         configValue      = static_cast<double>(value.intValue);
     } break;
     default: {
-        throw invalid_value_exception("Invalid property id");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property id");
     }
     }
 
@@ -704,13 +703,13 @@ void IRFrameProcessor::getPropertyValue(uint32_t propertyId, OBPropertyValue *va
         value->intValue = static_cast<int32_t>(getValue);
     } break;
     default:
-        throw invalid_value_exception("Invalid property id");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property id");
     }
 }
 
 void IRFrameProcessor::getPropertyRange(uint32_t propertyId, OBPropertyRange *range) {
     if(!range) {
-        throw invalid_value_exception("Range point is null");
+        THROW_INVALID_PARAM_EXCEPTION("Range point is null");
     }
 
     std::string configName = "";
@@ -725,7 +724,7 @@ void IRFrameProcessor::getPropertyRange(uint32_t propertyId, OBPropertyRange *ra
         configName = "FrameMirror#255";
     } break;
     default:
-        throw invalid_value_exception("Invalid property id");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property id");
     }
 
     FrameProcessor::getPropertyRange(configName, range);
@@ -752,7 +751,7 @@ void IRRightFrameProcessor::setPropertyValue(uint32_t propertyId, const OBProper
         configValue      = static_cast<double>(value.intValue);
     } break;
     default: {
-        throw invalid_value_exception("Invalid property id");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property id");
     }
     }
 
@@ -781,14 +780,14 @@ void IRRightFrameProcessor::getPropertyValue(uint32_t propertyId, OBPropertyValu
         value->intValue = static_cast<int32_t>(getValue);
     } break;
     default: {
-        throw invalid_value_exception("Invalid property id");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property id");
     }
     }
 }
 
 void IRRightFrameProcessor::getPropertyRange(uint32_t propertyId, OBPropertyRange *range) {
     if(!range) {
-        throw invalid_value_exception("Range point is null");
+        THROW_INVALID_PARAM_EXCEPTION("Range point is null");
     }
 
     std::string configName = "";
@@ -803,7 +802,7 @@ void IRRightFrameProcessor::getPropertyRange(uint32_t propertyId, OBPropertyRang
         configName = "FrameMirror#255";
     } break;
     default:
-        throw invalid_value_exception("Invalid property id");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property id");
     }
 
     FrameProcessor::getPropertyRange(configName, range);
@@ -830,7 +829,7 @@ void ConfidenceFrameProcessor::setPropertyValue(uint32_t propertyId, const OBPro
         configValue      = static_cast<double>(value.intValue);
     } break;
     default:
-        throw invalid_value_exception("Invalid property id");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property id");
     }
 
     try {
@@ -858,13 +857,13 @@ void ConfidenceFrameProcessor::getPropertyValue(uint32_t propertyId, OBPropertyV
         value->intValue = static_cast<int32_t>(getValue);
     } break;
     default:
-        throw invalid_value_exception("Invalid property id");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property id");
     }
 }
 
 void ConfidenceFrameProcessor::getPropertyRange(uint32_t propertyId, OBPropertyRange *range) {
     if(!range) {
-        throw invalid_value_exception("Range point is null");
+        THROW_INVALID_PARAM_EXCEPTION("Range point is null");
     }
 
     std::string configName = "";
@@ -879,7 +878,7 @@ void ConfidenceFrameProcessor::getPropertyRange(uint32_t propertyId, OBPropertyR
         configName = "FrameMirror#255";
     } break;
     default:
-        throw invalid_value_exception("Invalid property id");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property id");
     }
 
     FrameProcessor::getPropertyRange(configName, range);

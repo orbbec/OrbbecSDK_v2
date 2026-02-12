@@ -37,13 +37,13 @@ void LiDARPointFilter::updateConfig(std::vector<std::string> &params) {
     // FilterLevel
     std::lock_guard<std::recursive_mutex> lock(paramsMutex_);
     if(params.size() != 1) {
-        throw invalid_value_exception("LiDARPointFilter config error: params size not match");
+        THROW_INVALID_PARAM_EXCEPTION("LiDARPointFilter config error: params size not match");
     }
     try {
         filterLevel_ = std::stoi(params[0]);
     }
     catch(const std::exception &e) {
-        throw invalid_value_exception("LiDARPointFilter config error: " + std::string(e.what()));
+        THROW_INVALID_PARAM_EXCEPTION("LiDARPointFilter config error: " + std::string(e.what()));
     }
 }
 

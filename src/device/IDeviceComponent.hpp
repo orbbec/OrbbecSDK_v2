@@ -34,7 +34,7 @@ public:
 
     T *operator->() const {
         if(ptr_ == nullptr) {
-            throw std::runtime_error("DeviceComponentPtr is nullptr");
+            THROW_INVALID_DATA_EXCEPTION("DeviceComponentPtr is nullptr");
         }
         return ptr_.get();
     }
@@ -51,7 +51,7 @@ public:
     template <typename U> DeviceComponentPtr<U> as() {
         auto uPtr = std::dynamic_pointer_cast<U>(ptr_);
         if(uPtr == nullptr) {
-            throw invalid_value_exception(utils::string::to_string() << "DeviceComponentPtr is not of type " << typeid(U).name());
+            THROW_INVALID_DATA_EXCEPTION(utils::string::to_string() << "DeviceComponentPtr is not of type " << typeid(U).name());
         }
         ptr_ = nullptr;
         return DeviceComponentPtr<U>(uPtr, std::move(lock_));

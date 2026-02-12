@@ -361,12 +361,12 @@ std::shared_ptr<const IDeviceEnumInfo> NetDeviceEnumerator::queryNetDevice(std::
     info->vid              = ORBBEC_DEVICE_VID;
 
     if(isDeviceInContainer(G335LeDevPids, info->vid, info->pid)) {
-        throw invalid_value_exception("No supported G335Le found for address: " + address + ":" + std::to_string(port));
+        THROW_INVALID_DATA_EXCEPTION("G335Le device detected but not supported: " + address + ":" + std::to_string(port));
     }
 
     auto deviceEnumInfoList = deviceInfoMatch({ info });
     if(deviceEnumInfoList.empty()) {
-        throw invalid_value_exception("No supported device found for address: " + address + ":" + std::to_string(port));
+        THROW_INVALID_DATA_EXCEPTION("No supported device found for address: " + address + ":" + std::to_string(port));
     }
 
     return deviceEnumInfoList.front();

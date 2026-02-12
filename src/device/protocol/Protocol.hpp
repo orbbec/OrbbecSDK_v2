@@ -70,13 +70,15 @@ enum HpStatusCode {
 
 // Status code returned by device command response -> used for communication between SDK and device
 enum HpRespErrorCode {
-    HP_RESP_OK = 0,
+    HP_RESP_OK = 0,  // Success
 
     // error
-    HP_RESP_ERROR_INVALID_REQUEST     = 0x0001,
-    HP_RESP_ERROR_UNSUPPORTED_REQUEST = 0x0002,
-    HP_RESP_ERROR_DEVICE_BUSY         = 0x0003,
-    HP_RESP_ERROR_ACCESS_FORBIDDEN    = 0x0004,
+    HP_RESP_ERROR_INVALID_REQUEST     = 0x0001,  // Invalid request command
+    HP_RESP_ERROR_UNSUPPORTED_REQUEST = 0x0002,  // Request command not supported by device
+    HP_RESP_ERROR_DEVICE_BUSY         = 0x0003,  // Device is currently busy
+    HP_RESP_ERROR_ACCESS_FORBIDDEN    = 0x0004,  // Access to the device is forbidden
+    HP_RESP_ERROR_ERROR_COMMAND       = 0x0005,  // Error executing the request command
+    HP_RESP_ERROR_RESOURCE_NOT_FOUND  = 0x0006,  // Specified resource not found
 
     // warning
     HP_RESP_WARNING_REPETITIVE_REQUEST = 0x8000,
@@ -285,4 +287,3 @@ bool     checkStatus(uint32_t propertyId, HpStatus stat, bool throwException = t
 
 }  // namespace protocol
 }  // namespace libobsensor
-

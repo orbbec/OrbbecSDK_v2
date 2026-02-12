@@ -22,7 +22,7 @@ HidDevicePort::HidDevicePort(const std::shared_ptr<IUsbDevice> &usbDevice, std::
     if(libusb_kernel_driver_active(libusbDevHandle, portInfo->infIndex) == 1) {
         auto res = libusb_detach_kernel_driver(libusbDevHandle, portInfo->infIndex);
         if(res != LIBUSB_SUCCESS) {
-            throw io_exception("detach kernel driver failed, error: " + std::string(libusb_strerror(res)));
+            THROW_IO_EXCEPTION("detach kernel driver failed, error: " + std::string(libusb_strerror(res)));
         }
     }
     auto res = libusb_claim_interface(libusbDevHandle, portInfo->infIndex);
@@ -31,7 +31,7 @@ HidDevicePort::HidDevicePort(const std::shared_ptr<IUsbDevice> &usbDevice, std::
         res = libusb_claim_interface(libusbDevHandle, portInfo->infIndex);
     }
     if(res != LIBUSB_SUCCESS) {
-        throw io_exception("claim interface failed, error: " + std::string(libusb_strerror(res)));
+        THROW_IO_EXCEPTION("claim interface failed, error: " + std::string(libusb_strerror(res)));
     }
     LOG_DEBUG("HidDevicePort::HidDevicePort done");
 }
@@ -60,7 +60,7 @@ HidDevicePort::~HidDevicePort() noexcept {
 
 void HidDevicePort::startStream(MutableFrameCallback callback) {
     if(isStreaming_) {
-        throw wrong_api_call_sequence_exception("HidDevicePort::startStream() called while streaming");
+        THROW_WRONG_API_CALL_SEQUENCE_EXCEPTION("HidDevicePort::startStream() called while streaming");
     }
     isStreaming_ = true;
     frameQueue_.start(callback);
@@ -87,7 +87,7 @@ void HidDevicePort::startStream(MutableFrameCallback callback) {
 
 void HidDevicePort::stopStream() {
     if(!isStreaming_) {
-        throw wrong_api_call_sequence_exception("HidDevicePort::stopStream() called while not streaming");
+        THROW_WRONG_API_CALL_SEQUENCE_EXCEPTION("HidDevicePort::stopStream() called while not streaming");
     }
     isStreaming_ = false;
 
@@ -102,4 +102,3 @@ std::shared_ptr<const SourcePortInfo> HidDevicePort::getSourcePortInfo() const {
 }
 
 }  // namespace libobsensor
-

@@ -42,7 +42,7 @@ BootDeviceInfo::BootDeviceInfo(const SourcePortInfoList groupedInfoList) {
         fullName_           = name_;
     }
     else {
-        throw invalid_value_exception("Invalid port type");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid port type");
     }
 }
 

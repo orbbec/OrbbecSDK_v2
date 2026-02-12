@@ -1,7 +1,7 @@
 // Copyright (c) Orbbec Inc. All Rights Reserved.
 // Licensed under the MIT License.
 
-#if(_MSC_FULL_VER < 180031101)
+#if (_MSC_FULL_VER < 180031101)
 #error At least Visual Studio 2013 Update 4 is required to compile this backend
 #endif
 
@@ -81,7 +81,7 @@ bool check(const char *call, HRESULT hr, bool to_throw) {
     std::string descr = utils::string::to_string() << call << " returned: " << hr_to_string(hr);
     if(to_throw) {
         LOG_ERROR(descr);
-        throw pal_exception(descr);
+        THROW_PAL_EXCEPTION(descr, OB_ERROR_UNKNOWN);
     }
     LOG_DEBUG(descr);
     return false;
@@ -89,13 +89,15 @@ bool check(const char *call, HRESULT hr, bool to_throw) {
 
 std::string win_to_utf(const WCHAR *s) {
     auto len = WideCharToMultiByte(CP_UTF8, 0, s, -1, nullptr, 0, nullptr, nullptr);
-    if(len == 0)
-        throw std::runtime_error(utils::string::to_string() << "WideCharToMultiByte(...) returned 0 and GetLastError() is " << GetLastError());
+    if(len == 0) {
+        THROW_STANDARD_EXCEPTION(utils::string::to_string() << "WideCharToMultiByte(...) returned 0 and GetLastError() is " << GetLastError());
+    }
 
     std::string buffer(len - 1, ' ');
     len = WideCharToMultiByte(CP_UTF8, 0, s, -1, &buffer[0], static_cast<int>(buffer.size()) + 1, nullptr, nullptr);
-    if(len == 0)
-        throw std::runtime_error(utils::string::to_string() << "WideCharToMultiByte(...) returned 0 and GetLastError() is " << GetLastError());
+    if(len == 0) {
+        THROW_STANDARD_EXCEPTION(utils::string::to_string() << "WideCharToMultiByte(...) returned 0 and GetLastError() is " << GetLastError());
+    }
 
     return buffer;
 }
@@ -272,8 +274,9 @@ bool handle_node(const std::wstring &targetKey, HANDLE h, ULONG index) {
         return false;
 
     auto alloc = std::malloc(key.ActualLength);
-    if(!alloc)
-        throw std::bad_alloc();
+    if(!alloc) {
+        THROW_MEMORY_EXCEPTION(utils::string::to_string() << "Failed to allocate memory for key data, size=" << key.ActualLength);
+    }
 
     auto pKey = std::shared_ptr<USB_NODE_CONNECTION_DRIVERKEY_NAME>(reinterpret_cast<USB_NODE_CONNECTION_DRIVERKEY_NAME *>(alloc), std::free);
 
@@ -758,4 +761,3 @@ std::string winapi_error::last_error_string(DWORD lastError) {
 }
 
 }  // namespace libobsensor
-

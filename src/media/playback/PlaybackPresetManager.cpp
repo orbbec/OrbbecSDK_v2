@@ -17,7 +17,7 @@ PlaybackPresetManager::PlaybackPresetManager(IDevice *owner) : DeviceComponentBa
     auto vid     = devInfo->vid_;
     auto pid     = devInfo->pid_;
     if(!devInfo) {
-        throw invalid_value_exception("Device info is null");
+        THROW_INVALID_PARAM_EXCEPTION("Device info is null");
     }
 
     if(isDeviceInContainer(DaBaiADevPids, vid, pid)) {
@@ -37,11 +37,11 @@ PlaybackPresetManager::PlaybackPresetManager(IDevice *owner) : DeviceComponentBa
             playbackDeviceType_ = OB_PLAYBACK_DEVICE_TYPE_GEMINI305;
         }
         else {
-            throw invalid_value_exception(utils::string::to_string() << "device Info " << devInfo->pid_);
+            THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "device Info " << devInfo->pid_);
         }
     }
     else {
-        throw invalid_value_exception(utils::string::to_string() << "device Info " << devInfo->pid_);
+        THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "device Info " << devInfo->pid_);
     }
 
     if(playbackDeviceType_ == OB_PLAYBACK_DEVICE_TYPE_DABAI_A || playbackDeviceType_ == OB_PLAYBACK_DEVICE_TYPE_GEMINI330
@@ -226,7 +226,7 @@ Json::Value PlaybackPresetManager::exportSettingsAsPresetJsonValue() {
 
 const std::vector<uint8_t> &PlaybackPresetManager::exportSettingsAsPresetJsonData(const std::string &presetName) {
     if(std::find(availablePresets_.begin(), availablePresets_.end(), presetName) == availablePresets_.end()) {
-        throw invalid_value_exception(utils::string::to_string() << "Invalid preset name: " << presetName);
+        THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "Invalid preset name: " << presetName);
     }
 
     auto                      root = exportSettingsAsPresetJsonValue();

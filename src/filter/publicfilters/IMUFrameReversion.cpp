@@ -17,7 +17,7 @@ IMUFrameReversion::~IMUFrameReversion() noexcept {}
 
 void IMUFrameReversion::updateConfig(std::vector<std::string> &params) {
     if(params.size() != 0) {
-        throw unsupported_operation_exception("IMUFrameReversion update config error: unsupported operation.");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("IMUFrameReversion update config error: unsupported operation.");
     }
 }
 
@@ -62,4 +62,3 @@ std::shared_ptr<Frame> IMUFrameReversion::process(std::shared_ptr<const Frame> f
 }
 
 }  // namespace libobsensor
-

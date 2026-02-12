@@ -36,7 +36,7 @@ PlaybackDevicePort::PlaybackDevicePort(const std::string &filePath)
         }
         else {
             // todo: print the sdk version and the bag file version
-            throw unsupported_operation_exception(utils::createUnsupportedBagFileVersionMessage(version));
+            THROW_UNSUPPORTED_OPERATION_EXCEPTION(utils::createUnsupportedBagFileVersionMessage(version));
         }
     }
 
@@ -75,7 +75,7 @@ PlaybackDevicePort::~PlaybackDevicePort() {
 
 void PlaybackDevicePort::startStream(std::shared_ptr<const StreamProfile> profile, MutableFrameCallback callback) {
     if(!profile) {
-        throw invalid_value_exception("Invalid stream profile, current profile is nullptr");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid stream profile, current profile is nullptr");
     }
 
     auto sensorType = utils::mapStreamTypeToSensorType(profile->getType());

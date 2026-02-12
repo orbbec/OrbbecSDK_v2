@@ -8,7 +8,7 @@
 #include <ntverp.h>
 #if VER_PRODUCTBUILD <= 9600  //(WinSDK 8.1)
 #ifdef ENFORCE_METADATA
-#error( "libobsensor Error!: Featuring UVC Metadata requires WinSDK 10.0.10586.0. \
+#error ( "libobsensor Error!: Featuring UVC Metadata requires WinSDK 10.0.10586.0. \
  Install the required toolset to proceed. Alternatively, uncheck ENFORCE_METADATA propertyId in CMake GUI tool")
 #else
 #pragma message("\nlibobsensor Notification: Featuring UVC Metadata requires WinSDK 10.0.10586.0 toolset. \
@@ -244,7 +244,7 @@ bool WmfUvcDevicePort::getPu(uint32_t propertyId, int32_t &retValue) {
         }
     }
 
-    throw std::runtime_error(utils::string::to_string() << "Unsupported control - " << propertyId);
+    THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "Unsupported control - " << propertyId);
 }
 
 bool WmfUvcDevicePort::setPu(uint32_t propertyId, int32_t tarValue) {
@@ -355,7 +355,7 @@ bool WmfUvcDevicePort::setPu(uint32_t propertyId, int32_t tarValue) {
             return true;
         }
     }
-    throw std::runtime_error(utils::string::to_string() << "Unsupported control - " << propertyId);
+    THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "Unsupported control - " << propertyId);
 }
 
 UvcControlRange WmfUvcDevicePort::getPuRange(uint32_t propertyId) {
@@ -402,7 +402,7 @@ UvcControlRange WmfUvcDevicePort::getPuRange(uint32_t propertyId) {
             return result;
         }
     }
-    throw std::runtime_error("unsupported control");
+    THROW_INVALID_PARAM_EXCEPTION("unsupported control");
 }
 
 uint32_t WmfUvcDevicePort::sendAndReceive(const uint8_t *sendData, uint32_t sendLen, uint8_t *recvData, uint32_t exceptedRecvLen) {
@@ -517,7 +517,7 @@ void WmfUvcDevicePort::initXu() {
 
     CHECK_HR(unknown->QueryInterface(__uuidof(IKsControl), reinterpret_cast<void **>(&xuKsControl_)));
     if(xuKsControl_ == nullptr) {
-        throw std::runtime_error("Extension control can not be initialized!");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("Extension control can not be initialized!");
     }
 }
 
@@ -614,7 +614,7 @@ void WmfUvcDevicePort::foreachUvcDevice(const USBDeviceInfoEnumCallback &action)
 
 WmfUvcDevicePort::WmfUvcDevicePort(std::shared_ptr<const USBSourcePortInfo> portInfo) : portInfo_(portInfo), xuKsControl_(nullptr), xuNodeId_(0) {
     if(!isConnected(portInfo)) {
-        throw std::runtime_error("Camera not connected!");
+        THROW_DEVICE_UNAVAILABLE_EXCEPTION("Camera not connected!");
     }
 
     BEGIN_TRY_EXECUTE({
@@ -871,7 +871,7 @@ void WmfUvcDevicePort::playProfile(std::shared_ptr<const VideoStreamProfile> pro
                 std::lock_guard<std::mutex> lock(streamsMutex_);
                 auto &stream = streams_[mfp.index];  // Characteristic of std::map: if the key does not exist, it will be automatically created
                 if(streams_[mfp.index].streaming) {
-                    throw std::runtime_error("Camera already streaming via this stream index!");
+                    THROW_WRONG_API_CALL_SEQUENCE_EXCEPTION("Camera already streaming via this stream index!");
                 }
                 stream.profile   = profile;
                 stream.callback  = callback;
@@ -896,27 +896,32 @@ void WmfUvcDevicePort::playProfile(std::shared_ptr<const VideoStreamProfile> pro
             return;
         }
         else {
-            throw std::runtime_error("Could not set Media Type. Device may be locked");
+            THROW_RESOURCE_BUSY_EXCEPTION("Could not set Media Type. Device may be locked");
         }
     });
-    if(!found)
-        throw std::runtime_error("Stream profile not found!");
+    if(!found) {
+        THROW_NOT_IMPLEMENTED_EXCEPTION("Stream profile not found!");
+    }
 }
 
 IAMVideoProcAmp *WmfUvcDevicePort::getVideoProc() const {
-    if(powerState_ != kD0)
-        throw std::runtime_error("Device must be powered to query video_proc!");
-    if(!videoProc_.p)
-        throw std::runtime_error("The device does not support adjusting the qualities of an incoming video signal, such as brightness, contrast, hue, "
-                                 "saturation, gamma, and sharpness.");
+    if(powerState_ != kD0) {
+        THROW_WRONG_API_CALL_SEQUENCE_EXCEPTION("Device must be powered to query video_proc!");
+    }
+    if(!videoProc_.p) {
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("The device does not support adjusting the qualities of an incoming video signal, such as brightness, contrast, "
+                                              "hue, saturation, gamma, and sharpness.");
+    }
     return videoProc_.p;
 }
 
 IAMCameraControl *WmfUvcDevicePort::getCameraControl() const {
-    if(powerState_ != kD0)
-        throw std::runtime_error("Device must be powered to query camera_control!");
-    if(!cameraControl_.p)
-        throw std::runtime_error("The device does not support camera settings such as zoom, pan, aperture adjustment, or shutter speed.");
+    if(powerState_ != kD0) {
+        THROW_WRONG_API_CALL_SEQUENCE_EXCEPTION("Device must be powered to query camera_control!");
+    }
+    if(!cameraControl_.p) {
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("The device does not support camera settings such as zoom, pan, aperture adjustment, or shutter speed.");
+    }
     return cameraControl_.p;
 }
 
@@ -994,7 +999,7 @@ void WmfUvcDevicePort::flush(int index) {
 
 void WmfUvcDevicePort::checkConnection() const {
     if(!isConnected(portInfo_)) {
-        throw std::runtime_error("Camera is no longer connected!");
+        THROW_DEVICE_UNAVAILABLE_EXCEPTION("Camera is no longer connected!");
     }
 }
 

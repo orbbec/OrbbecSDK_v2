@@ -116,7 +116,7 @@ std::shared_ptr<IDevice> DeviceManager::createNetDevice(std::string address, uin
 
     auto deviceInfo = NetDeviceEnumerator::queryNetDevice(address, port);
     if(!deviceInfo) {
-        throw libobsensor::invalid_value_exception("Failed to query Net Device, address=" + address + ", port=" + std::to_string(port));
+        THROW_INVALID_PARAM_EXCEPTION("Failed to query Net Device, address=" + address + ", port=" + std::to_string(port));
     }
     isCustomConnectedDevice_ = true;
     auto device              = createDevice(deviceInfo, accessMode);
@@ -135,8 +135,8 @@ std::shared_ptr<IDevice> DeviceManager::createNetDevice(std::string address, uin
 #else
     utils::unusedVar(address);
     utils::unusedVar(port);
-    throw libobsensor::unsupported_operation_exception("The library currently compiled does not support network functions. "
-                                                       "Please turn on the CMAKE \"BUILD_NET_PAL\" option and recompile.");
+    THROW_UNSUPPORTED_OPERATION_EXCEPTION("The library currently compiled does not support network functions. "
+                                          "Please turn on the CMAKE \"BUILD_NET_PAL\" option and recompile.");
 #endif
 }
 
@@ -161,7 +161,7 @@ std::shared_ptr<IDevice> DeviceManager::createDevice(const std::shared_ptr<const
                     std::ostringstream oss;
                     oss << "Device has already been created with access mode: " << currentAccessMode << ", but acquire with new access mode : " << accessMode
                         << "! Name: " << devInfo->name_ << ", SN/ID: " << devInfo->deviceSn_ << ", FW : " << devInfo->fwVersion_;
-                    throw libobsensor::access_denied_exception(oss.str());
+                    THROW_ACCESS_DENIED_EXCEPTION(oss.str());
                 }
                 LOG_DEBUG("Device has already been created, return existing device! Name: {0}, PID: 0x{1:04x}, SN/ID: {2}, FW: {3}", devInfo->name_,
                           devInfo->pid_, devInfo->deviceSn_, devInfo->fwVersion_);
@@ -230,7 +230,7 @@ void DeviceManager::setGvcpPortscheme(OBGvcpPortScheme scheme) {
             return;
         }
     }
-    throw libobsensor::wrong_api_call_sequence_exception("Network device enumeration is disabled, please enable it first");
+    THROW_WRONG_API_CALL_SEQUENCE_EXCEPTION("Network device enumeration is disabled, please enable it first");
 #else
     utils::unusedVar(scheme);
 #endif
@@ -288,7 +288,7 @@ DeviceEnumInfoList DeviceManager::getDeviceInfoList() {
 
 OBCallbackId DeviceManager::registerDeviceChangedCallback(DeviceChangedCallback callback) {
     if(!callback) {
-        throw libobsensor::invalid_value_exception("Device changed callback is nullptr!");
+        THROW_INVALID_PARAM_EXCEPTION("Device changed callback is nullptr!");
     }
 
     std::unique_lock<std::mutex> lock(callbackMutex_);

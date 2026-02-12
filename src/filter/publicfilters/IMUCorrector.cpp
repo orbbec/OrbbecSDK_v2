@@ -47,7 +47,7 @@ IMUCorrector::IMUCorrector() {}
 
 void IMUCorrector::updateConfig(std::vector<std::string> &params) {
     if(params.size() != 0) {
-        throw unsupported_operation_exception("IMUCorrector update config error: unsupported operation.");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("IMUCorrector update config error: unsupported operation.");
     }
 }
 

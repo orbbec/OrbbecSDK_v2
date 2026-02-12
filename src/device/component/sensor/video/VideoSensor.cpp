@@ -25,7 +25,7 @@ VideoSensor::VideoSensor(IDevice *owner, OBSensorType sensorType, const std::sha
     : SensorBase(owner, sensorType, backend), lazySelf_(std::make_shared<LazySensor>(owner, sensorType)) {
     auto vsPort = std::dynamic_pointer_cast<IVideoStreamPort>(backend_);
     if(!vsPort) {
-        throw invalid_value_exception("Backend is not a valid IVideoStreamPort");
+        THROW_INVALID_PARAM_EXCEPTION("Backend is not a valid IVideoStreamPort");
     }
 
     try {
@@ -105,7 +105,7 @@ void VideoSensor::start(std::shared_ptr<const StreamProfile> sp, FrameCallback c
 
     auto backendIter = streamProfileBackendMap_.find(sp);
     if(backendIter == streamProfileBackendMap_.end()) {
-        throw invalid_value_exception("Can not find backend stream profile for activated stream profile");
+        THROW_ITEM_NOT_FOUND_EXCEPTION("Can not find backend stream profile for activated stream profile");
     }
     currentBackendStreamProfile_ = backendIter->second.first;
     currentFormatFilterConfig_   = backendIter->second.second;
@@ -169,10 +169,10 @@ void VideoSensor::onBackendFrameCallback(std::shared_ptr<Frame> frame) {
     // auto fsp   = frame->getStreamProfile();
     // auto owner = fsp->getOwner();
     // if(fsp.get() != currentBackendStreamProfile_.get()) {
-    //     throw invalid_value_exception("Frame's stream profile is not the same as activated stream profile");
+    //     THROW_INVALID_PARAM_EXCEPTION("Frame's stream profile is not the same as activated stream profile");
     // }
     // if(owner.get() != static_cast<void *>(this)) {
-    //     throw invalid_value_exception("Frame's owner is not this VideoSensor");
+    //     THROW_INVALID_PARAM_EXCEPTION("Frame's owner is not this VideoSensor");
     // }
 #endif
 
@@ -295,7 +295,7 @@ void VideoSensor::trySendStopStreamVendorCmd() {
 
 void VideoSensor::updateFormatFilterConfig(const std::vector<FormatFilterConfig> &configs) {
     if(isStreamActivated()) {
-        throw wrong_api_call_sequence_exception("Can not update format filter config while streaming");
+        THROW_WRONG_API_CALL_SEQUENCE_EXCEPTION("Can not update format filter config while streaming");
     }
     formatFilterConfigs_ = configs;
     streamProfileList_.clear();
@@ -391,7 +391,7 @@ void VideoSensor::setFrameProcessor(std::shared_ptr<FrameProcessor> frameProcess
 }
 void VideoSensor::setFrameMetadataModifer(std::shared_ptr<IFrameMetadataModifier> modifier) {
     if(isStreamActivated()) {
-        throw wrong_api_call_sequence_exception("Can not update frame metadata modifier while streaming");
+        THROW_WRONG_API_CALL_SEQUENCE_EXCEPTION("Can not update frame metadata modifier while streaming");
     }
     frameMetadataModifier_ = modifier;
 }

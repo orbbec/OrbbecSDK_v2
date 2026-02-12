@@ -82,7 +82,7 @@ uint8_t *Frame::getDataMutable() const {
 
 void Frame::updateData(const uint8_t *data, size_t dataSize) {
     if(dataSize > dataBufSize_) {
-        throw memory_exception(utils::string::to_string() << "Update data size(" << dataSize << ") > data buffer size! (" << dataBufSize_ << ")");
+        THROW_MEMORY_EXCEPTION(utils::string::to_string() << "Update data size(" << dataSize << ") > data buffer size! (" << dataBufSize_ << ")");
     }
     dataSize_ = dataSize;
     memcpy(const_cast<uint8_t *>(frameData_), data, dataSize);
@@ -114,30 +114,30 @@ void Frame::setGlobalTimeStampUsec(uint64_t ts) {
 
 uint32_t VideoFrame::getFps() const {
     if(!streamProfile_) {
-        throw invalid_value_exception("Error: This frame dose not have a stream profile!");
+        THROW_INVALID_DATA_EXCEPTION("Error: this frame dose not have a stream profile!");
     }
     if(!streamProfile_->is<VideoStreamProfile>()) {
-        throw invalid_value_exception("Error! A VideoFrame contain a non-video stream profile!");
+        THROW_INVALID_DATA_EXCEPTION("Error! A VideoFrame contain a non-video stream profile!");
     }
     return streamProfile_->as<VideoStreamProfile>()->getFps();
 }
 
 uint32_t VideoFrame::getWidth() const {
     if(!streamProfile_) {
-        throw invalid_value_exception("Error: This frame dose not have a stream profile!");
+        THROW_INVALID_DATA_EXCEPTION("Error: this frame dose not have a stream profile!");
     }
     if(!streamProfile_->is<const VideoStreamProfile>()) {
-        throw invalid_value_exception("Error! A VideoFrame contain a non-video stream profile!");
+        THROW_INVALID_DATA_EXCEPTION("Error! A VideoFrame contain a non-video stream profile!");
     }
     return streamProfile_->as<VideoStreamProfile>()->getWidth();
 }
 
 uint32_t VideoFrame::getHeight() const {
     if(!streamProfile_) {
-        throw invalid_value_exception("Error: This frame dose not have a stream profile!");
+        THROW_INVALID_DATA_EXCEPTION("Error: this frame dose not have a stream profile!");
     }
     if(!streamProfile_->is<VideoStreamProfile>()) {
-        throw invalid_value_exception("Error! A VideoFrame contain a non-video stream profile!");
+        THROW_INVALID_DATA_EXCEPTION("Error! A VideoFrame contain a non-video stream profile!");
     }
     return streamProfile_->as<VideoStreamProfile>()->getHeight();
 }
@@ -166,10 +166,10 @@ void Frame::setMetadataSize(size_t metadataSize) {
 void Frame::updateMetadata(const uint8_t *metadata, size_t metadataSize) {
     if(metadataSize > 0 && metadata == nullptr) {
         // In the try_read_metadata() function, metadata may be empty.
-        throw memory_exception("Metadata is null!");
+        THROW_MEMORY_EXCEPTION("Metadata is null!");
     }
     if(metadataSize > sizeof(metadata_)) {
-        throw memory_exception("Metadata size is too large!");
+        THROW_MEMORY_EXCEPTION("Metadata size is too large!");
     }
     memcpy(metadata_, metadata, metadataSize);
     metadataSize_ = metadataSize;
@@ -178,10 +178,10 @@ void Frame::updateMetadata(const uint8_t *metadata, size_t metadataSize) {
 void Frame::appendMetadata(const uint8_t *metadata, size_t metadataSize) {
     if(metadataSize > 0 && metadata == nullptr) {
         // In the try_read_metadata() function, metadata may be empty.
-        throw memory_exception("Metadata is null!");
+        THROW_MEMORY_EXCEPTION("Metadata is null!");
     }
     if(metadataSize_ + metadataSize > sizeof(metadata_)) {
-        throw memory_exception("Metadata size is too large!");
+        THROW_MEMORY_EXCEPTION("Metadata size is too large!");
     }
     memcpy(metadata_ + metadataSize_, metadata, metadataSize);
     metadataSize_ += metadataSize;
@@ -212,12 +212,12 @@ bool Frame::hasMetadata(OBFrameMetadataType type) const {
 
 int64_t Frame::getMetadataValue(OBFrameMetadataType type) const {
     if(!metadataPhasers_) {
-        throw unsupported_operation_exception(utils::string::to_string()
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION(utils::string::to_string()
                                               << "Metadata phasers are not registered! Unsupported to get metadata for type: " << type);
     }
     auto parser = metadataPhasers_->get(type);
     if(!parser->isSupported(metadata_, metadataSize_)) {
-        throw unsupported_operation_exception(utils::string::to_string() << "Current metadata does not contain metadata for type: " << type);
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION(utils::string::to_string() << "Current metadata does not contain metadata for type: " << type);
     }
     return parser->getValue(metadata_, metadataSize_);
 }
@@ -418,7 +418,7 @@ std::shared_ptr<const Frame> FrameSet::getFrame(int index) const {
     size_t                       itemSize = sizeof(std::shared_ptr<const Frame>);
     auto                         itemCnt  = getDataBufSize() / itemSize;
     if(index >= (int)itemCnt) {
-        throw invalid_value_exception("FrameSet::getFrame() index out of range");
+        THROW_INVALID_PARAM_EXCEPTION("FrameSet::getFrame() index out of range");
     }
     auto pItem = getData();
     pItem += itemSize * index;

@@ -43,13 +43,13 @@ void LiDARDevice::init() {
     fetchDeviceInfo();
 
     registerComponent(
-    OB_DEV_COMPONENT_DEVICE_ACTIVITY_RECORDER,
-    [this]() {
-        std::shared_ptr<DeviceActivityRecorder> activityRecorder;
-        TRY_EXECUTE({ activityRecorder = std::make_shared<DeviceActivityRecorder>(this); })
-        return activityRecorder;
-    },
-    false);
+        OB_DEV_COMPONENT_DEVICE_ACTIVITY_RECORDER,
+        [this]() {
+            std::shared_ptr<DeviceActivityRecorder> activityRecorder;
+            TRY_EXECUTE({ activityRecorder = std::make_shared<DeviceActivityRecorder>(this); })
+            return activityRecorder;
+        },
+        false);
 
     auto algParamManager = std::make_shared<LiDARAlgParamManager>(this);
     registerComponent(OB_DEV_COMPONENT_ALG_PARAM_MANAGER, algParamManager);
@@ -167,7 +167,6 @@ void LiDARDevice::initProperties() {
     propertyServer->registerProperty(OB_PROP_IMU_STREAM_PORT_INT, "", "w", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_LIDAR_IMU_FRAME_RATE_INT, "", "rw", vendorPropertyAccessor);
     propertyServer->registerProperty(OB_RAW_DATA_IMU_CALIB_PARAM, "", "r", vendorPropertyAccessor);
-    
 
     // register property server
     registerComponent(OB_DEV_COMPONENT_PROPERTY_SERVER, propertyServer, true);
@@ -330,9 +329,7 @@ void LiDARDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
                     defaultProfile = *it;
                 }
             })
-            CATCH_EXCEPTION_AND_EXECUTE({
-                LOG_ERROR("fetch LiDAR scan speed error!");
-            })
+            CATCH_EXCEPTION_AND_EXECUTE({ LOG_ERROR("fetch LiDAR scan speed error!"); })
             sensor->setStreamProfileList(profileList);
             sensor->updateDefaultStreamProfile(defaultProfile);
 
@@ -388,7 +385,7 @@ void LiDARDevice::getImuFullScaleRange(OBAccelFullScaleRange &accel, OBGyroFullS
     auto data           = propertyServer->getStructureData(OB_STRUCT_LIDAR_IMU_FULL_SCALE_RANGE, PROP_ACCESS_INTERNAL);
 
     if(data.size() != sizeof(uint32_t)) {
-        throw invalid_value_exception("OB_STRUCT_LIDAR_IMU_FULL_SCALE_RANGE response with wrong data size");
+        THROW_INVALID_DATA_EXCEPTION("OB_STRUCT_LIDAR_IMU_FULL_SCALE_RANGE response with wrong data size");
     }
     auto     value      = data.data();
     uint16_t accelValue = (((uint16_t)value[0]) << 8) | value[1];
@@ -418,7 +415,7 @@ void LiDARDevice::getImuFullScaleRange(OBAccelFullScaleRange &accel, OBGyroFullS
         accel = OB_ACCEL_FS_24g;
         break;
     default:
-        throw invalid_value_exception("OB_STRUCT_LIDAR_IMU_FULL_SCALE_RANGE response with invalid accel full scale range");
+        THROW_INVALID_DATA_EXCEPTION("OB_STRUCT_LIDAR_IMU_FULL_SCALE_RANGE response with invalid accel full scale range");
         break;
     }
 
@@ -455,7 +452,7 @@ void LiDARDevice::getImuFullScaleRange(OBAccelFullScaleRange &accel, OBGyroFullS
         gyro = OB_GYRO_FS_2000dps;
         break;
     default:
-        throw invalid_value_exception("OB_STRUCT_LIDAR_IMU_FULL_SCALE_RANGE response with invalid gyro full scale range");
+        THROW_INVALID_DATA_EXCEPTION("OB_STRUCT_LIDAR_IMU_FULL_SCALE_RANGE response with invalid gyro full scale range");
         break;
     }
 }

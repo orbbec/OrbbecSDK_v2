@@ -108,9 +108,9 @@ void OpenNIDisp2DepthPropertyAccessor::markOutputDisparityFrame(bool enable) {
 void OpenNIDisp2DepthPropertyAccessor::setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) {
     utils::unusedVar(data);
     if(propertyId == OB_STRUCT_DEPTH_PRECISION_SUPPORT_LIST) {
-        throw invalid_value_exception("OB_STRUCT_DEPTH_PRECISION_SUPPORT_LIST is read-only");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("OB_STRUCT_DEPTH_PRECISION_SUPPORT_LIST is read-only");
     }
-    throw invalid_value_exception(utils::string::to_string() << "unsupported property id:" << propertyId);
+    THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "unsupported property id:" << propertyId);
 }
 
 const std::vector<uint8_t> &OpenNIDisp2DepthPropertyAccessor::getStructureData(uint32_t propertyId) {
@@ -120,7 +120,7 @@ const std::vector<uint8_t> &OpenNIDisp2DepthPropertyAccessor::getStructureData(u
                                                            reinterpret_cast<uint8_t *>(swD2DSupportList.data()) + swD2DSupportList.size() * 2);
         return swD2DSupportListBytes;
     }
-    throw invalid_value_exception(utils::string::to_string() << "unsupported property id:" << propertyId);
+    THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "unsupported property id:" << propertyId);
 }
 
 OpenNIFrameTransformPropertyAccessor::OpenNIFrameTransformPropertyAccessor(IDevice *owner) : owner_(owner) {}
@@ -146,7 +146,7 @@ void OpenNIFrameTransformPropertyAccessor::setPropertyValue(uint32_t propertyId,
         processor->setPropertyValue(propertyId, value);
     } break;
     default:
-        throw invalid_value_exception("Invalid property id");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property id");
     }
 }
 
@@ -171,7 +171,7 @@ void OpenNIFrameTransformPropertyAccessor::getPropertyValue(uint32_t propertyId,
         processor->getPropertyValue(propertyId, value);
     } break;
     default:
-        throw invalid_value_exception("Invalid property id");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property id");
     }
 }
 
@@ -196,7 +196,7 @@ void OpenNIFrameTransformPropertyAccessor::getPropertyRange(uint32_t propertyId,
         processor->getPropertyRange(propertyId, range);
     } break;
     default:
-        throw invalid_value_exception("Invalid property id");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property id");
     }
 }
 
@@ -241,7 +241,7 @@ void OpenNIHeartBeatPropertyAccessor::setPropertyValue(uint32_t propertyId, cons
         }
     } break;
     default:
-        throw invalid_value_exception("Invalid property id");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property id");
     }
 }
 
@@ -251,7 +251,7 @@ void OpenNIHeartBeatPropertyAccessor::getPropertyValue(uint32_t propertyId, OBPr
         value->intValue = heartBeatStatus_ ? 1 : 0;
     } break;
     default:
-        throw invalid_value_exception("Invalid property id");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property id");
     }
 }
 
@@ -265,7 +265,7 @@ void OpenNIHeartBeatPropertyAccessor::getPropertyRange(uint32_t propertyId, OBPr
         range->step.intValue = 1;
     } break;
     default:
-        throw invalid_value_exception("Invalid property id");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid property id");
     }
 }
 
@@ -300,9 +300,9 @@ OpenNITemperatureStructurePropertyAccessor::OpenNITemperatureStructurePropertyAc
 void OpenNITemperatureStructurePropertyAccessor::setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) {
     utils::unusedVar(data);
     if(propertyId == OB_STRUCT_DEVICE_TEMPERATURE) {
-        throw invalid_value_exception("OB_PROP_TEMPERATURE_COMPENSATION_BOOL is read-only");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("OB_PROP_TEMPERATURE_COMPENSATION_BOOL is read-only");
     }
-    throw invalid_value_exception("OB_PROP_TEMPERATURE_COMPENSATION_BOOL is read-only");
+    THROW_INVALID_PARAM_EXCEPTION("OB_PROP_TEMPERATURE_COMPENSATION_BOOL is read-only");
 }
 
 const std::vector<uint8_t> &OpenNITemperatureStructurePropertyAccessor::getStructureData(uint32_t propertyId) {
@@ -316,7 +316,7 @@ const std::vector<uint8_t> &OpenNITemperatureStructurePropertyAccessor::getStruc
         memcpy(result.data(), &deviceTemp, sizeof(OBDeviceTemperature));
         return result;
     }
-    throw invalid_value_exception(utils::string::to_string() << "unsupported property id:" << propertyId);
+    THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "unsupported property id:" << propertyId);
 }
 
 }  // namespace libobsensor

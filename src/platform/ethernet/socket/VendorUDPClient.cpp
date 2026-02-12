@@ -29,23 +29,23 @@ VendorUDPClient::~VendorUDPClient() noexcept {
 }
 
 void VendorUDPClient::initOsSocket() {
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+#if (defined(WIN32) || defined(_WIN32) || defined(WINCE))
     WSADATA wsaData;
     int     rst = WSAStartup(MAKEWORD(2, 2), &wsaData);
     if(rst != 0) {
-        throw libobsensor::invalid_value_exception(utils::string::to_string() << "Failed to load Winsock! err_code=" << GET_LAST_ERROR());
+        THROW_IO_EXCEPTION(utils::string::to_string() << "Failed to load Winsock! err_code=" << GET_LAST_ERROR());
     }
 #endif
 
     // Due to network configuration changes causing socket connection pipeline errors, macOS throws a SIGPIPE exception to the application, leading to a crash
     // (this does not occur on Linux). This exception needs to be filtered out.
-#if(defined(OS_IOS) || defined(OS_MACOS))
+#if (defined(OS_IOS) || defined(OS_MACOS))
     signal(SIGPIPE, SIG_IGN);
 #endif
 }
 
 void VendorUDPClient::deinitOsSocket() {
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+#if (defined(WIN32) || defined(_WIN32) || defined(WINCE))
     WSACleanup();
 #endif
 }
@@ -53,13 +53,13 @@ void VendorUDPClient::deinitOsSocket() {
 void VendorUDPClient::socketConnect(uint32_t retryCount) {
     int    rst;
     int    errCode = 0;
-    SOCKET sockFd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);  // ipv4, udp(Streaming)
+    SOCKET sockFd  = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);  // ipv4, udp(Streaming)
     if(sockFd == INVALID_SOCKET) {
-        throw libobsensor::io_exception(utils::string::to_string() << "create socket failed! err_code=" << GET_LAST_ERROR());
+        THROW_IO_EXCEPTION(utils::string::to_string() << "create socket failed! err_code=" << GET_LAST_ERROR());
     }
 
     // timeout
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+#if (defined(WIN32) || defined(_WIN32) || defined(WINCE))
     uint32_t commTimeout = commTimeoutMs_;
 #else
     TIMEVAL commTimeout;
@@ -76,7 +76,7 @@ void VendorUDPClient::socketConnect(uint32_t retryCount) {
     serverAddr_.sin_port   = htons(port_);                                  // convert uint16_t from host to network byte sequence
     if(inet_pton(AF_INET, address_.c_str(), &serverAddr_.sin_addr) <= 0) {  // address string to sin_addr
         closesocket(sockFd);
-        throw libobsensor::invalid_value_exception("Invalid address!");
+        THROW_INVALID_PARAM_EXCEPTION("Invalid address!");
     }
 
     struct sockaddr_in localAddr{};
@@ -89,12 +89,12 @@ void VendorUDPClient::socketConnect(uint32_t retryCount) {
         if(errCode == ERR_ADDR_IN_USE && retryCount < maxConnectRetry) {
             // port is in use, try next port
             ++clientPort_;
-            socketConnect(retryCount+1);
+            socketConnect(retryCount + 1);
             return;
         }
         else {
-            throw libobsensor::invalid_value_exception(utils::string::to_string() << "VendorUDPClient: bind to 0.0.0.0 failed! addr=" << address_
-                                                                                  << ", port=" << clientPort_ << ", err_code=" << errCode);
+            THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "VendorUDPClient: bind to 0.0.0.0 failed! addr=" << address_ << ", port=" << clientPort_
+                                                                     << ", err_code=" << errCode);
         }
     }
 
@@ -104,8 +104,8 @@ void VendorUDPClient::socketConnect(uint32_t retryCount) {
     if(rst < 0) {
         errCode = GET_LAST_ERROR();
         closesocket(sockFd);
-        throw libobsensor::invalid_value_exception(utils::string::to_string() << "VendorUDPClient: ioctlsocket to blocking mode failed! addr=" << address_
-                                                                              << ", port=" << clientPort_ << ", err_code=" << errCode);
+        THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "VendorUDPClient: ioctlsocket to blocking mode failed! addr=" << address_
+                                                                 << ", port=" << clientPort_ << ", err_code=" << errCode);
     }
     // ok
     socketFd_ = sockFd;
@@ -133,7 +133,7 @@ int VendorUDPClient::read(uint8_t *data, const uint32_t dataLen) {
 
         if(rst < 0) {
             rst = GET_LAST_ERROR();
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+#if (defined(WIN32) || defined(_WIN32) || defined(WINCE))
             if(rst == WSAETIMEDOUT || rst == WSAEWOULDBLOCK) {
 #else
             if(rst == EAGAIN || rst == EWOULDBLOCK) {
@@ -174,7 +174,7 @@ void VendorUDPClient::write(const uint8_t *data, const uint32_t dataLen) {
         rst = sendto(socketFd_, (const char *)data, dataLen, 0, (struct sockaddr *)&serverAddr_, sizeof(serverAddr_));
         if(rst < 0) {
             rst = GET_LAST_ERROR();
-#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+#if (defined(WIN32) || defined(_WIN32) || defined(WINCE))
             if(rst == WSAETIMEDOUT || rst == WSAEWOULDBLOCK) {
 #else
             if(rst == EAGAIN || rst == EWOULDBLOCK) {
@@ -190,8 +190,7 @@ void VendorUDPClient::write(const uint8_t *data, const uint32_t dataLen) {
         return;
     }
     // error
-    throw libobsensor::io_exception(utils::string::to_string()
-                                     << "VendorUDPClient write data failed! socket=" << socketFd_ << ", err_code=" << rst);
+    THROW_IO_EXCEPTION(utils::string::to_string() << "VendorUDPClient write data failed! socket=" << socketFd_ << ", err_code=" << rst);
     return;
 }
 
