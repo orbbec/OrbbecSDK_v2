@@ -4,12 +4,12 @@
 
 If you want to upgrade multiple cameras connected to your system, this sample might be helpful for you. For detailed information about firmware upgrades, please refer to the [2.device.firmware_update](../2.device.firmware_update/README.md).
 
-> Note: This sample is not suiltable for Femto Mega, Femto Mega I, and Femto Bolt devices.
+> Note: This sample is not suitable for Femto Mega, Femto Mega I, and Femto Bolt devices.
 > For these devices, please refer to the this repository: [https://github.com/orbbec/OrbbecFirmware](https://github.com/orbbec/OrbbecFirmware)
 
 ### Knowledge
 
-Context is the environment context, the first object created during initialization, which can be used to perform some settings, including but not limited to device status change callbacks, log level settings, etc. Context can access multiple Devices.
+Context is the environment context, the first object created during initialization, which can be used to perform some settings, including but not limited to device status change callbacks, log level settings, etc. Context can access multiple devices.
 
 Device is the device object, which can be used to obtain the device information, such as the model, serial number, and various sensors.One actual hardware device corresponds to one Device object.
 
