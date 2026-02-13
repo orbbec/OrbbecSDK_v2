@@ -1,0 +1,132 @@
+End User License Agreement (SDK for Orbbec Hardware)
+
+This End User License Agreement ("EULA") is a legal agreement between you (an individual or entity) and Orbbec Inc. or one of its affiliates (collectively,  "Orbbec", "we", "us" or "our") governing your access to and use of the Orbbec software development kit that includes an open-source library and a proprietary extension library (together, the "SDK"). 
+
+By downloading, installing, accessing or using the SDK, you acknowledge that you have read, understood, and agree to be bound by the terms of this EULA. If you do not agree to these terms, you must not download, install, access, or use the SDK.
+
+1. Definitions
+
+In this EULA:
+
+- "Open-Source Library" means the open-source components included with the SDK, which are licensed under the applicable open-source licenses accompanying those components. 
+
+- "Extension Library" means Orbbec's proprietary software library included in the SDK that provides proprietary features and functionality and is licensed under this EULA. 
+
+- "Orbbec Hardware" means genuine Orbbec-branded camera hardware lawfully obtained and used in accordance with Orbbec's terms and any applicable laws. 
+
+- "You" and "Licensee" mean the individual or entity accepting this EULA and any of your permitted users.
+
+2. License to the Extension Library
+
+Subject to your continued compliance with this EULA, Orbbec grants you a non-exclusive, worldwide, non-transferable (except as expressly permitted under this EULA), royalty-free license to: 
+
+- install and use the Extension Library solely for the purpose of developing, testing, integrating, and operating software or products that interface with or operate in conjunction with Orbbec Hardware; and 
+
+- reproduce and redistribute the Extension Library only as incorporated in or bundled with your own software or products, provided that: the Extension Library is not distributed on a standalone basis, the Extension Library does not constitute the primary value of the distributed software or product; and such redistribution complies with Clause 5 (Distribution Requirements) and Clause 7 (Open-Source Components and Third-Party Software).
+
+Use of the Extension Library is free of charge only for Licensees who own or use genuine Orbbec Hardware and only for so long as such use remains in conjunction with genuine Orbbec Hardware. 
+
+If you do not own or use genuine Orbbec Hardware, you are not permitted to use the Extension Library without Orbbec's prior written consent and a separate license.
+
+3. Open-Source Library
+
+The Open-Source Library is licensed to you under the terms of the applicable open-source licenses accompanying those components. To the extent there is any conflict between this EULA and the applicable open-source licenses for the Open-Source Library, the open-source licenses shall govern your use of those components. 
+
+Orbbec provides the Open-Source Library to you solely on the terms of those licenses and disclaims any additional rights not granted therein.
+
+4. Restrictions (Extension Library Only)
+
+Except with respect to the Open-Source Library, and except to the extent expressly permitted by applicable law that cannot be overridden by contract, you must not, and must not permit any third party to: 
+
+- reverse engineer, decompile, disassemble or otherwise attempt to derive the source code, underlying ideas, algorithms or non-public APIs of the Extension Library; 
+
+- modify, adapt, translate, create derivative works from, or alter the source files or object code of the Extension Library; 
+
+- remove, obscure, or alter any proprietary notices or marks on or in the Extension Library; or 
+
+- use the Extension Library in any manner that circumvents, disables, or interferes with its intended operation with Orbbec Hardware.
+
+Nothing in this EULA limits rights you may have under mandatory laws in your jurisdiction that allow decompilation or interoperability, provided that any such rights are exercised only to the minimum extent permitted and after giving Orbbec prior written notice and a reasonable opportunity to provide the necessary information for interoperability on reasonable terms.
+
+5. Distribution Requirements (Extension Library)
+
+If you reproduce or redistribute the Extension Library as part of or bundled with your software or products: 
+
+- you must include a copy of this EULA or substantially similar license terms that are no less protective of Orbbec's rights and restrictions than this EULA; 
+
+- you must not misrepresent the origin of the Extension Library and must preserve all proprietary notices; 
+
+- you are responsible for ensuring end users comply with terms no less protective than this EULA and for any acts or omissions of your distributors and end users; and 
+
+- you must not charge a separate fee for the Extension Library itself, although you may charge for your own software, products or services that include or integrate the Extension Library.
+
+6. Ownership
+
+The SDK (excluding components of the Open-Source Library licensed under their respective licenses) is licensed, not sold. Orbbec and its licensors retain all right, title and interest in and to the Extension Library, the SDK, and all associated intellectual property rights, except for the limited licenses expressly granted to you under this EULA and the applicable open-source licenses.
+
+7. Open-Source Components and Third-Party Software
+
+The SDK may contain or be provided with third-party software, including open-source components. Your use of such components is subject to the applicable third-party terms accompanying those components. Orbbec provides attributions and license texts for open-source components within the SDK package or a NOTICE file. You must comply with all such terms when using, reproducing, or distributing those components.
+
+8. Transfer and Sublicensing
+
+You may not assign, transfer, sublicense or novate your rights in the Extension Library except as expressly permitted under clause 5, and then only to the extent necessary to allow your distributors and end users to use your software or products that incorporate the Extension Library under terms no less protective than this EULA. Any prohibited assignment or transfer is void.
+
+9. Privacy and Data
+
+The SDK may process device and diagnostic information to enable functionality and improve performance. Any personal data processed by Orbbec will be handled in compliance with applicable data protection laws, including the Personal Information Protection Law of the People's Republic of China (PIPL), the UK GDPR, EU GDPR and, where applicable, US federal and state privacy laws. 
+
+You are responsible for providing any required notices to, and obtaining any required consents from, your users.
+
+10. Updates and Support
+
+Orbbec may, in its discretion, provide updates, upgrades, patches, or new versions of the SDK. Updates may be required for continued functionality. Unless accompanied by a separate license, updates form part of the SDK and are subject to this EULA. 
+Orbbec is under no obligation to provide support, maintenance, or training unless agreed in a separate written contract.
+
+11. Compliance with Laws; Export
+
+You must use the SDK in compliance with all applicable laws and regulations, including export control, sanctions, and technology import/export laws of the People's Republic of China, the United Kingdom, the European Union, the United States and any other applicable jurisdiction. You represent that you are not located in, under the control of, or a national or resident of any country or person subject to comprehensive sanctions or export restrictions that would prohibit your use of the SDK.
+
+12. Term and Termination
+
+This EULA commences when you first download, install, access or use the SDK and continues until terminated. Orbbec may terminate this EULA immediately if you breach any term of this EULA or if required by law. 
+
+Upon termination, you must cease all use of the Extension Library and the SDK and destroy all copies in your possession or control, except that your end users may continue to use your software or products already distributed that include the Extension Library, provided such use complies with this EULA. 
+
+Clauses which by their nature should survive termination shall survive, including clauses 4 to 17.
+
+13. Warranty Disclaimer
+
+To the maximum extent permitted by applicable law, the SDK (including the Extension Library and the Open-Source Library) is provided "as is" and "as available", without warranties or conditions of any kind, whether express, implied, statutory, or otherwise, including implied warranties of merchantability, satisfactory quality, fitness for a particular purpose, and non-infringement. Orbbec does not warrant that the SDK will be error-free, secure, or uninterrupted, or meet your requirements.
+
+14. Limitation of Liability
+
+Nothing in this EULA limits or excludes liability that cannot be limited or excluded under applicable law, including liability for death or personal injury caused by negligence, fraud, or fraudulent misrepresentation. 
+
+Subject to the foregoing, to the maximum extent permitted by law: 
+
+- Orbbec shall not be liable for any indirect, incidental, special, punitive, exemplary or consequential losses, or for loss of profits, revenue, business, goodwill, data, or anticipated savings, in each case whether direct or indirect; and 
+
+- Orbbec's total aggregate liability arising out of or in connection with this EULA or the SDK shall not exceed USD100 or the amount you paid to Orbbec for the SDK in the twelve (12) months preceding the event giving rise to liability, whichever is greater.
+
+These limitations apply whether the claim is based on contract, tort (including negligence), statutory duty, or otherwise, even if Orbbec has been advised of the possibility of such losses.
+
+15. Indemnity
+
+You will indemnify, defend and hold harmless Orbbec and its affiliates, officers, directors and employees from and against any claims, losses, liabilities, damages, costs and expenses (including reasonable legal fees) arising out of or related to your use of the SDK, your distribution of the Extension Library in or with your products, or your breach of this EULA or applicable third-party terms.
+
+16. Governing Law and Jurisdiction
+
+This EULA and any dispute or claim arising out of or in connection with it shall be governed by and construed in accordance with the laws of the People's Republic of China, without regard to its conflict of laws principles.
+
+Any dispute arising out of or in connection with this EULA shall be submitted to the competent courts located in Shenzhen, People's Republic of China, which shall have exclusive jurisdiction.
+
+Notwithstanding the foregoing, mandatory consumer protection laws of your country or state of residence shall apply where required and take precedence over conflicting provisions of this EULA.
+
+17. General
+
+This EULA constitutes the entire agreement between you and Orbbec regarding the SDK and supersedes all prior or contemporaneous agreements on the same subject matter. If any provision is held invalid or unenforceable, it shall be enforced to the maximum extent permissible and the remaining provisions shall remain in full force and effect. No failure or delay to exercise any right shall operate as a waiver. 
+
+This EULA may only be modified by a written agreement signed by authorised representatives of both parties, or by an update to this EULA published by Orbbec with notice accompanying an SDK update. You agree to keep records reasonably sufficient to demonstrate compliance with this EULA and, upon reasonable notice, to certify such compliance to Orbbec.
+
+By installing, accessing or using the SDK, you acknowledge that you have read, understood and agree to be bound by this EULA.
