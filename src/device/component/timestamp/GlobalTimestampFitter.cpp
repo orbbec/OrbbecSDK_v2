@@ -216,13 +216,22 @@ bool GlobalTimestampFitter::ensureFitting() {
                 continue;
             }
             LOG_DEBUG("sys={}, dev={}, rtt={}", sysTspUsec, devTime.time, devTime.rtt);
+
+            // Clearing and refitting when the timestamp is out of order
+            if(!samplingQueue_.empty()) {
+                auto last = samplingQueue_.back().deviceTimestamp;
+                if(devTime.time < last) {
+                    LOG_DEBUG("Device time is out of order, clear queue. Last={}, current={}", last, devTime.time);
+                    samplingQueue_.clear();
+                }
+            }
             needCalculation_ = true;
             calc             = true;
             samplingQueue_.push_back({ sysTspUsec, devTime.time });
             std::this_thread::sleep_for(std::chrono::milliseconds(40));
         }
         if(samplingQueue_.size() < 4) {
-            LOG_ERROR("Error, sampling queue size is too small: {}", samplingQueue_.size());
+            LOG_WARN("Error, sampling queue size is too small: {}", samplingQueue_.size());
             return false;
         }
     }
