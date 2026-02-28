@@ -133,15 +133,16 @@ SPDLOG_INLINE void logger::log_it_(const spdlog::details::log_msg &log_msg,
 }
 
 SPDLOG_INLINE void logger::sink_it_(const details::log_msg &msg) {
+    auto shuld_flush = should_flush_(msg);
     for (auto &sink : sinks_) {
         if (sink->should_log(msg.level)) {
             SPDLOG_TRY { sink->log(msg); }
             SPDLOG_LOGGER_CATCH(msg.source)
+            if (shuld_flush) {
+                SPDLOG_TRY { sink->flush(); }
+                SPDLOG_LOGGER_CATCH(msg.source)
+            }
         }
-    }
-
-    if (should_flush_(msg)) {
-        flush_();
     }
 }
 
