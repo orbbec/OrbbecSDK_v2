@@ -239,7 +239,7 @@ void Logger::loadEnvConfig() {
 
     std::string defaultLogFileName = OB_DEFAULT_LOG_FILE_NAME;
     sdkLibName_                    = utils::getSDKLibraryName();
-    defaultLogFileName = sdkLibName_ + ".log.txt";
+    defaultLogFileName             = sdkLibName_ + ".log.txt";
 
     // log level
     if(!envConfig->getIntValue("Log.LogLevel", globalLogLevel)) {
@@ -393,7 +393,7 @@ void Logger::logMessage(OBLogSeverity severity, const char *module, const char *
     spdlog::level::level_enum level = spdlog::level::debug;
 
     auto iter = OBLogSeverityToSpdlogLevel.find(severity);
-    if(iter == OBLogSeverityToSpdlogLevel.end()) {
+    if(iter != OBLogSeverityToSpdlogLevel.end()) {
         // found
         level = iter->second;
     }
