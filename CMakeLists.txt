@@ -23,8 +23,14 @@ else()
     set(OB_BUILD_DOCS OFF CACHE BOOL "Build api document and install doc" FORCE)
 endif()
 
+# Set CXX standard to C++11
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+
+# Set C standard to C99
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS OFF)
 
 # check if current project is a sub project of other project
 if(OB_BUILD_MAIN_PROJECT)
