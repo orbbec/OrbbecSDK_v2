@@ -629,7 +629,7 @@ private:
     void registerSensorStateCallback() {
         std::vector<DeviceComponentId> compentIds;
         if(propertyId_ == OB_STRUCT_COLOR_AE_ROI && metadataType_ == OB_FRAME_METADATA_TYPE_AE_ROI_LEFT) {
-            auto        depthWorkModeManager = device_->getComponentT<G305DepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
+            auto        depthWorkModeManager = device_->getComponentT<IDepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
             const auto &currentMode          = depthWorkModeManager->getCurrentDepthWorkMode();
 
             std::string depthWorkModeName(currentMode.name);

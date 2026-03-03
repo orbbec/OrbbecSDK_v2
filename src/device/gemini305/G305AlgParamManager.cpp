@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 #include "G305AlgParamManager.hpp"
+#include "G305DepthWorkModeManager.hpp"
 #include "stream/StreamIntrinsicsManager.hpp"
 #include "stream/StreamExtrinsicsManager.hpp"
 #include "stream/StreamProfileFactory.hpp"
@@ -21,34 +22,42 @@ bool G305AlgParamManager::findBestMatchedCameraParam(const std::vector<OBCameraP
     auto height           = decimationConfig.originHeight == 0 ? profile->getHeight() : decimationConfig.originHeight;
 
     // match same resolution
+    // In dual RGB mode:
+    // depth Intrinsic is actually the left RGB intrinsic parameter
+    // rgb Intrinsic is actually the right RGB intrinsic parameter
     for(auto &param: cameraParamList) {
         auto streamType = profile->getType();
-        if((streamType == OB_STREAM_DEPTH || streamType == OB_STREAM_IR || streamType == OB_STREAM_IR_LEFT || streamType == OB_STREAM_IR_RIGHT)
+        if((streamType == OB_STREAM_DEPTH || streamType == OB_STREAM_IR || streamType == OB_STREAM_IR_LEFT || streamType == OB_STREAM_IR_RIGHT
+            || streamType == OB_STREAM_COLOR_LEFT)
            && static_cast<uint32_t>(param.depthIntrinsic.width) == width && static_cast<uint32_t>(param.depthIntrinsic.height) == height) {
             found  = true;
             result = param;
             break;
         }
-        else if((streamType == OB_STREAM_COLOR || streamType == OB_STREAM_COLOR_RIGHT || streamType == OB_STREAM_COLOR_LEFT)
-                && static_cast<uint32_t>(param.rgbIntrinsic.width) == width && static_cast<uint32_t>(param.rgbIntrinsic.height) == height) {
+        else if((streamType == OB_STREAM_COLOR || streamType == OB_STREAM_COLOR_RIGHT) && static_cast<uint32_t>(param.rgbIntrinsic.width) == width
+                && static_cast<uint32_t>(param.rgbIntrinsic.height) == height) {
             found  = true;
             result = param;
             break;
         }
     }
-
+    
+    // In dual RGB mode:
+    // depth Intrinsic is actually the left RGB intrinsic parameter
+    // rgb Intrinsic is actually the right RGB intrinsic parameter
     if(!found) {
         // match same ratio
         float ratio = (float)profile->getWidth() / profile->getHeight();
         for(auto &param: cameraParamList) {
             auto streamType = profile->getType();
-            if((streamType == OB_STREAM_DEPTH || streamType == OB_STREAM_IR || streamType == OB_STREAM_IR_LEFT || streamType == OB_STREAM_IR_RIGHT)
+            if((streamType == OB_STREAM_DEPTH || streamType == OB_STREAM_IR || streamType == OB_STREAM_IR_LEFT || streamType == OB_STREAM_IR_RIGHT
+                || streamType == OB_STREAM_COLOR_LEFT)
                && (float)param.depthIntrinsic.width / param.depthIntrinsic.height == ratio) {
                 found  = true;
                 result = param;
                 break;
             }
-            else if((streamType == OB_STREAM_COLOR || streamType == OB_STREAM_COLOR_RIGHT || streamType == OB_STREAM_COLOR_LEFT)
+            else if((streamType == OB_STREAM_COLOR || streamType == OB_STREAM_COLOR_RIGHT)
                     && (float)param.rgbIntrinsic.width / param.rgbIntrinsic.height == ratio) {
                 found  = true;
                 result = param;
@@ -193,6 +202,11 @@ void G305AlgParamManager::registerBasicExtrinsics() {
         extrinsicMgr->registerExtrinsics(leftIrBasicStreamProfile, rightIrBasicStreamProfile, left_to_right);
     }
 
+    if(!doubleRgbCalibrationCameraParamList_.empty()) {
+        auto cl2crExtrinsic = doubleRgbCalibrationCameraParamList_.front().transform;
+        extrinsicMgr->registerExtrinsics(leftcolorBasicStreamProfile, rightcolorBasicStreamProfile, cl2crExtrinsic);
+    }
+
     basicStreamProfileList_.emplace_back(depthBasicStreamProfile);
     basicStreamProfileList_.emplace_back(colorBasicStreamProfile);
     basicStreamProfileList_.emplace_back(leftcolorBasicStreamProfile);
@@ -202,11 +216,28 @@ void G305AlgParamManager::registerBasicExtrinsics() {
 }
 
 void G305AlgParamManager::fixD2CParmaList() {
-    std::vector<Resolution> appendColorResolutions;
-    std::vector<Resolution> depthResolutions;
+    if(originD2cProfileList_.empty()) {
+        return;
+    }
 
-    auto owner      = getOwner();
-    auto deviceInfo = owner->getInfo();
+    d2cProfileList_ = originD2cProfileList_;
+    for(auto &profile: d2cProfileList_) {
+        profile.alignType = ALIGN_D2C_HW;
+    }
+
+    calibrationCameraParamList_ = originCalibrationCameraParamList_;
+
+    {
+        auto owner                = getOwner();
+        auto propertyServer       = owner->getPropertyServer();
+        auto depthWorkModeManager = owner->getComponentT<G305DepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
+        auto currentDepthWorkMode = depthWorkModeManager->getCurrentDepthWorkMode();
+
+        if(std::strcmp(currentDepthWorkMode.name, kDoubleRgbMode) == 0) {
+            doubleRgbCalibrationCameraParamList_ = originCalibrationCameraParamList_;
+            return;
+        }
+    }
 
     std::vector<Resolution> otherDeviceColorResolutions = { { 1280, 800 }, { 1280, 720 }, { 848, 480 }, { 848, 530 }, { 640, 480 } };
 
@@ -221,18 +252,9 @@ void G305AlgParamManager::fixD2CParmaList() {
 
     };
 
+    std::vector<Resolution> appendColorResolutions;
     appendColorResolutions.assign(otherDeviceColorResolutions.begin(), otherDeviceColorResolutions.end());
 
-    if(originD2cProfileList_.empty()) {
-        return;
-    }
-
-    d2cProfileList_ = originD2cProfileList_;
-    for(auto &profile: d2cProfileList_) {
-        profile.alignType = ALIGN_D2C_HW;
-    }
-
-    calibrationCameraParamList_ = originCalibrationCameraParamList_;
     for(const auto &colorRes: appendColorResolutions) {
         auto          colorProfile = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_COLOR, OB_FORMAT_UNKNOWN, colorRes.width, colorRes.height, 30);
         OBCameraParam colorAlignParam;
@@ -392,11 +414,11 @@ void G305AlgParamManager::bindIntrinsic(std::vector<std::shared_ptr<const Stream
         }
         switch(sp->getType()) {
         case OB_STREAM_COLOR:
-        case OB_STREAM_COLOR_LEFT:
         case OB_STREAM_COLOR_RIGHT:
             intrinsic  = param.rgbIntrinsic;
             distortion = param.rgbDistortion;
             break;
+        case OB_STREAM_COLOR_LEFT:
         case OB_STREAM_DEPTH:
         case OB_STREAM_IR:
         case OB_STREAM_IR_LEFT:

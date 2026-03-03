@@ -114,6 +114,7 @@ void G305Disp2DepthPropertyAccessor::getPropertyRange(uint32_t propertyId, OBPro
         processor->getPropertyValue(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL, &swDisparityEnable);
         if(swDisparityEnable.intValue == 1) {
             processor->getPropertyRange(propertyId, range);
+            range->def.floatValue = 0.1f;
         }
         else {
             auto commandPort = owner_->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);

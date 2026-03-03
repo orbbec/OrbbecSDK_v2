@@ -45,6 +45,7 @@ private:
 private:
     std::vector<OBDepthCalibrationParam>     depthCalibParamList_;
     std::vector<OBCameraParam>               originCalibrationCameraParamList_;
+    std::vector<OBCameraParam>               doubleRgbCalibrationCameraParamList_;
     std::vector<OBD2CProfile>                originD2cProfileList_;
     std::vector<OBD2CColorPreProcessProfile> originD2cColorPreProcessProfileList_;
     // save depth mode filter calibration camera list
