@@ -50,6 +50,8 @@ private:
     std::shared_ptr<FilterFactory>           filterFactory_;
     std::shared_ptr<Platform>                platform_;
     std::shared_ptr<DynamicLibraryManager>   dynamicLibraryManager_;
+
+    std::once_flag devMgrFlag_;
 };
 }  // namespace libobsensor
 

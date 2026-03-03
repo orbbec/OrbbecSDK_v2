@@ -240,6 +240,7 @@ void EthernetPal::updateSourcePortInfoList(const std::vector<GVCPDeviceInfo> &ad
         portInfo->localSubnetLength = info.localSubnetLength;
         portInfo->localGateway      = info.localGateway;
         portInfo->devVersion        = info.devVersion;
+        portInfo->curIpConfig       = utils::parseGevCurIpConfig(info.curIpConfig);
         sourcePortInfoList_.push_back(portInfo);
     }
 

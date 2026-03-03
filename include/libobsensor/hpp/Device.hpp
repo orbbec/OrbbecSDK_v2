@@ -1352,6 +1352,38 @@ public:
     }
 
     /**
+     * @brief Get the name of the host network interface corresponding to the device at the specified index.
+     *
+     * @attention Returns "unknown" for USB devices or non-network devices.
+     *
+     * @param[in] index The index of the device.
+     *
+     * @return const char* The host network interface name (e.g., "eth0", "en0").
+     */
+    const char* getLocalNetInterfaceName(uint32_t index) const {
+        ob_error *error = nullptr;
+        auto netItfName = ob_device_list_get_device_local_net_if_name(impl_, index, &error);
+        Error::handle(&error);
+        return netItfName;
+    }
+
+    /**
+     * @brief Get the current IP configuration mode of the device at the specified index.
+     *
+     * @attention Only valid for Ethernet devices, otherwise it will return OB_IP_SOURCE_NONE.
+     *
+     * @param[in] index The index of the device.
+     *
+     * @return OBCurIpConfig The active IP configuration mode (e.g. DHCP, LLA, or Persistent IP).
+     */
+    OBIpSourceType getIpSourceType(uint32_t index) const {
+        ob_error *error     = nullptr;
+        auto      ipSrcType = ob_device_list_get_device_ip_source_type(impl_, index, &error);
+        Error::handle(&error);
+        return ipSrcType;
+    }
+
+    /**
      * @brief Get the device object at the specified index
      *
      * @attention If the device has already been acquired and created elsewhere, repeated acquisition will throw an exception

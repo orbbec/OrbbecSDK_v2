@@ -506,8 +506,8 @@ int GVCPClient::recvAndParseGVCPResponse(SOCKET sock, const GVCPSocketInfo &sock
         // auto specVer  = ntohl(ackPayload->dwSpecVer);
         // auto devMode  = ntohl(ackPayload->dwDevMode);
         // auto supIpSet = ntohl(ackPayload->dwSupIpSet);
-        // auto curIpSet = ntohl(ackPayload->dwCurIpSet);
-        auto curPID = ntohl(ackPayload->dwPID);
+        auto curIpSet = ntohl(ackPayload->dwCurIpSet);
+        auto curPID   = ntohl(ackPayload->dwPID);
 
         // Get Mac address
         char macStr[18];
@@ -557,6 +557,7 @@ int GVCPClient::recvAndParseGVCPResponse(SOCKET sock, const GVCPSocketInfo &sock
         info.pid               = curPID;
         info.vid               = it->second;
         info.devVersion        = ackPayload->szDevVer;
+        info.curIpConfig       = curIpSet;
         // info.manufacturer      = ackPayload->szFacName;
 
         if(info.vid == ORBBEC_DEVICE_VID && info.pid == 0x0000 && info.name == "OI-BC300I") {

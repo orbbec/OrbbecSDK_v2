@@ -151,6 +151,8 @@ int getJpgHeadLength(const uint8_t *data, uint32_t size);
 
 bool checkIpConfig(const ob_net_ip_config &config);
 
+OBIpSourceType parseGevCurIpConfig(const uint32_t& rawConfigSet);
+
 std::string getSDKLibraryName();
 
 }  // namespace utils

@@ -184,6 +184,34 @@ const char *ob_device_list_get_device_local_gateway(const ob_device_list *list, 
 }
 HANDLE_EXCEPTIONS_AND_RETURN(nullptr, list, index)
 
+ob_ip_source_type ob_device_list_get_device_ip_source_type(const ob_device_list *list, uint32_t index, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(list);
+    VALIDATE_UNSIGNED_INDEX(index, list->list.size());
+    auto &info = list->list[index];
+    if(std::string(info->getConnectionType()) != "Ethernet") {
+        return OB_IP_SOURCE_NONE;
+    }
+
+    auto sourcePort    = info->getSourcePortInfoList().front();
+    auto netSourcePort = std::dynamic_pointer_cast<const libobsensor::NetSourcePortInfo>(sourcePort);
+    return static_cast<ob_ip_source_type>(netSourcePort->curIpConfig);
+}
+HANDLE_EXCEPTIONS_AND_RETURN(OB_IP_SOURCE_NONE, list, index)
+
+const char *ob_device_list_get_device_local_net_if_name(const ob_device_list *list, uint32_t index, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(list);
+    VALIDATE_UNSIGNED_INDEX(index, list->list.size());
+    auto &info = list->list[index];
+    if(std::string(info->getConnectionType()) != "Ethernet") {
+        return "unknown";
+    }
+
+    auto sourcePort    = info->getSourcePortInfoList().front();
+    auto netSourcePort = std::dynamic_pointer_cast<const libobsensor::NetSourcePortInfo>(sourcePort);
+    return netSourcePort->netInterfaceName.c_str();
+}
+HANDLE_EXCEPTIONS_AND_RETURN(nullptr, list, index)
+
 ob_device *ob_device_list_get_device(const ob_device_list *list, uint32_t index, ob_error **error) {
     return ob_device_list_get_device_ex(list, index, OB_DEVICE_DEFAULT_ACCESS, error);
 }

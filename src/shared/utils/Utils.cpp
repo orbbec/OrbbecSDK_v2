@@ -159,5 +159,24 @@ std::string getSDKLibraryName() {
     return "OrbbecSDK";
 }
 
+OBIpSourceType parseGevCurIpConfig(const uint32_t &rawConfigSet) {
+    constexpr uint32_t bitPersistentIp = 0x01;
+    if(rawConfigSet & bitPersistentIp) {
+        return OB_IP_SOURCE_PERSISTENT;
+    }
+
+    constexpr uint32_t bitDHCP = 0x02;
+    if(rawConfigSet & bitDHCP) {
+        return OB_IP_SOURCE_DHCP;
+    }
+
+    constexpr uint32_t bitLLA = 0x04;
+    if(rawConfigSet & bitLLA) {
+        return OB_IP_SOURCE_LLA;
+    }
+
+    return OB_IP_SOURCE_NONE;
+}
+
 }  // namespace utils
 }  // namespace libobsensor

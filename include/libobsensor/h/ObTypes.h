@@ -1870,6 +1870,14 @@ typedef enum {
 } ob_device_access_mode,
     OBDeviceAccessMode;
 
+typedef enum {
+    OB_IP_SOURCE_NONE       = 0,  ///< No IP configuration active (e.g. USB device).
+    OB_IP_SOURCE_LLA        = 1,  ///< LLA (Link-Local Address / Auto IP).
+    OB_IP_SOURCE_DHCP       = 2,  ///< DHCP (Dynamic Host Configuration Protocol).
+    OB_IP_SOURCE_PERSISTENT = 3,  ///< Persistent IP (Static IP stored in memory).
+} ob_ip_source_type,
+    OBIpSourceType;
+
 /**
  * @brief Callback for file transfer
  *

@@ -62,14 +62,19 @@ std::shared_ptr<IDeviceManager> Context::tryGetDeviceManager() {
 }
 
 std::shared_ptr<IDeviceManager> Context::getDeviceManager() {
-    if(deviceManager_ == nullptr) {
+    std::call_once(devMgrFlag_, [this]() {
         bool enumerateNetDevice = true;
-        envConfig_->getBooleanValue("Device.EnumerateNetDevice", enumerateNetDevice);
+        if(envConfig_) {
+            envConfig_->getBooleanValue("Device.EnumerateNetDevice", enumerateNetDevice);
+        }
+
         deviceManager_ = DeviceManager::getInstance();
+
         if(deviceManager_) {
             deviceManager_->enableNetDeviceEnumeration(enumerateNetDevice);
         }
-    }
+    });
+
     return deviceManager_;
 }
 
