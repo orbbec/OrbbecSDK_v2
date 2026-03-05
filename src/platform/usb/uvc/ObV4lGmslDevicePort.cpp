@@ -898,10 +898,15 @@ uint32_t phaseProfileFormatToFourccGmsl(std::shared_ptr<const VideoStreamProfile
         return (const utils::big_endian<int> &)(foundFormatIter->first);
     }
 
-    formatFourcc = utils::obFormatToUvcFourcc(format);
-    if(formatFourcc == 0) {
-        LOG_ERROR("unsupported format {}", profile->getFormat());
-        return 0;
+    if(format == OB_FORMAT_YUYV) {
+        formatFourcc = utils::fourCc2Int('Y', 'U', 'Y', 'V');
+    }
+    else {
+        formatFourcc = utils::obFormatToUvcFourcc(format);
+        if(formatFourcc == 0) {
+            LOG_ERROR("unsupported format {}", profile->getFormat());
+            return 0;
+        }
     }
 
     return (const utils::big_endian<int> &)(formatFourcc);
