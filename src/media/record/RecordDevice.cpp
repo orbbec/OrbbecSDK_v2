@@ -127,7 +127,7 @@ void RecordDevice::writeFilterProperty() {
         writePropertyT<int>(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT);
     }
 
-    if(isDeviceInContainer(G330DevPids, vid, pid)) {
+    if(isDeviceInContainer(G330DevPids, vid, pid) || isDeviceInOrbbecSeries(G305DevPids, vid, pid)) {
         writePropertyT<float>(OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT);
     }
     else {
@@ -151,7 +151,7 @@ void RecordDevice::writeFrameGeometryProperty() {
     writePropertyT<bool>(OB_PROP_COLOR_RIGHT_FLIP_BOOL);
     writePropertyT<bool>(OB_PROP_COLOR_RIGHT_MIRROR_BOOL);
     writePropertyT<int>(OB_PROP_COLOR_RIGHT_ROTATE_INT);
-    
+
     writePropertyT<bool>(OB_PROP_DEPTH_FLIP_BOOL);
     writePropertyT<bool>(OB_PROP_DEPTH_MIRROR_BOOL);
     writePropertyT<int>(OB_PROP_DEPTH_ROTATE_INT);
@@ -173,8 +173,7 @@ void RecordDevice::writeMetadataProperty() {
     auto devInfo = device_->getInfo();
     auto vid     = devInfo->vid_;
     auto pid     = devInfo->pid_;
-    if(devInfo->backendType_ == OB_UVC_BACKEND_TYPE_V4L2
-       && (isDeviceInContainer(G330DevPids, vid, pid) || isDeviceInOrbbecSeries(G305DevPids,vid,pid))) {
+    if(devInfo->backendType_ == OB_UVC_BACKEND_TYPE_V4L2 && (isDeviceInContainer(G330DevPids, vid, pid) || isDeviceInOrbbecSeries(G305DevPids, vid, pid))) {
         // color sensor property
         // writePropertyT<bool>(OB_PROP_COLOR_AUTO_EXPOSURE_BOOL);
         // writePropertyT<int>(OB_PROP_COLOR_AUTO_EXPOSURE_PRIORITY_INT);
@@ -292,7 +291,7 @@ void RecordDevice::writeDepthWorkModeProperty() {
 void RecordDevice::writeDepthPostFilterParamProperty() {
     // depth post filter param
     auto depthPostFilterParamsMgr = device_->getComponentT<DepthPostFilterParamsManager>(OB_DEV_COMPONENT_DEPTH_POST_FILTER_PARAMS_MANAGER, false);
-    auto propertyServer    = device_->getComponentT<IPropertyServer>(OB_DEV_COMPONENT_PROPERTY_SERVER, false);
+    auto propertyServer           = device_->getComponentT<IPropertyServer>(OB_DEV_COMPONENT_PROPERTY_SERVER, false);
     if(depthPostFilterParamsMgr && propertyServer) {
         auto     rawData  = depthPostFilterParamsMgr->getRawData();
         uint32_t dataSize = static_cast<uint32_t>(rawData.size());

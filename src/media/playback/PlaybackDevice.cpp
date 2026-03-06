@@ -323,11 +323,10 @@ void PlaybackDevice::initSensorList() {
                 std::dynamic_pointer_cast<DisparityBasedSensor>(sensor)->markOutputDisparityFrame(!hwD2D);
 
                 // init depth unit property
-                if(isDeviceInContainer(G330DevPids, vid, pid)) {
-                    // G330 specific
+                if(isDeviceInContainer(G330DevPids, vid, pid) || isDeviceInOrbbecSeries(G305DevPids, vid, pid)) {
+                    // G330/G305 specific
                     if(port_->isPropertySupported(OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT)) {
                         OBPropertyValue value{};
-
                         port_->getRecordedPropertyValue(OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT, &value);
                         std::dynamic_pointer_cast<DisparityBasedSensor>(sensor)->setDepthUnit(value.floatValue);
                         propServer->setPropertyValueT<float>(OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT, value.floatValue);
