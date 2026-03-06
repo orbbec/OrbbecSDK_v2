@@ -311,7 +311,28 @@ std::shared_ptr<IPal> createNetPal() {
 }
 
 bool EthernetPal::forceIpConfig(std::string macAddress, const OBNetIpConfig &config) {
-    return GVCPClient::instance().forceIpConfig(macAddress, config);
+    std::unique_lock<std::mutex> lock(gvcpMutex_);
+
+    auto result = GVCPClient::instance().forceIpConfig(macAddress, config);
+    if(result) {
+        for(auto &&info: netDevInfoList_) {
+            if(info.mac == macAddress) {
+                GVCPDeviceInfo removedInfo = info;
+                netDevInfoList_.erase(
+                    std::remove_if(netDevInfoList_.begin(), netDevInfoList_.end(), [macAddress](const GVCPDeviceInfo &info) { return info.mac == macAddress; }),
+                    netDevInfoList_.end());
+                updateSourcePortInfoList({}, { removedInfo });
+                if(callback_) {
+                    LOG_DEBUG("force ip command succeeded, remove device {} from list", removedInfo.mac);
+                    callback_(OB_DEVICE_REMOVED, removedInfo.mac);
+                }
+                break;
+            }
+        }
+        // std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    }
+
+    return result;
 }
 
 void EthernetPal::setGvcpPortscheme(OBGvcpPortScheme scheme) {

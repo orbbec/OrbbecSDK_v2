@@ -197,7 +197,14 @@ std::shared_ptr<IDevice> DeviceManager::createDevice(const std::shared_ptr<const
 
 bool DeviceManager::forceIpConfig(std::string deviceUid, const OBNetIpConfig &config) {
 #if defined(BUILD_NET_PAL)
-    return EthernetPal::forceIpConfig(deviceUid, config);
+    std::shared_ptr<NetDeviceEnumerator> netEnumerator;
+    for(auto &enumerator: deviceEnumerators_) {
+        netEnumerator = std::dynamic_pointer_cast<NetDeviceEnumerator>(enumerator);
+        if(netEnumerator) {
+            return netEnumerator->forceIpConfig(deviceUid, config);
+        }
+    }
+    return false;
 #else
     utils::unusedVar(deviceUid);
     utils::unusedVar(config);

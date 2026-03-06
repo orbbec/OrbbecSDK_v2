@@ -193,7 +193,7 @@ bool NetDeviceEnumerator::handleDeviceRemoved(std::string devUid) {
         LOG_DEBUG("The device has reboot, consider it as offline. Name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", removedDevice->getName(),
                   removedDevice->getPid(), removedDevice->getDeviceSn(), info->mac, info->address);
     }
-    else if(!isGvcpPortChanging_.load()) {
+    else if(!skipOfflineVerification_.load()) {
         // We assume the device has gone offline and perform extra verification
         // check the last active of the device
         if(checkDeviceActivity(removedDevice, info)) {
@@ -345,14 +345,21 @@ std::shared_ptr<const IDeviceEnumInfo> NetDeviceEnumerator::queryNetDevice(std::
 void NetDeviceEnumerator::setGvcpPortscheme(OBGvcpPortScheme scheme) {
     auto current = platform_->getGvcpPortscheme();
     if(current != scheme) {
-        isGvcpPortChanging_.store(true);
+        skipOfflineVerification_.store(true);
         platform_->setGvcpPortscheme(scheme);
-        isGvcpPortChanging_.store(false);
+        skipOfflineVerification_.store(false);
     }
 }
 
 OBGvcpPortScheme NetDeviceEnumerator::getGvcpPortscheme() const {
     return platform_->getGvcpPortscheme();
+}
+
+bool NetDeviceEnumerator::forceIpConfig(std::string deviceUid, const OBNetIpConfig &config) {
+    skipOfflineVerification_.store(true);
+    auto result = platform_->forceIpConfig(deviceUid, config);
+    skipOfflineVerification_.store(false);
+    return result;
 }
 
 }  // namespace libobsensor

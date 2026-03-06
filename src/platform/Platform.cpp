@@ -211,4 +211,19 @@ OBGvcpPortScheme Platform::getGvcpPortscheme() const {
 #endif
 }
 
+bool Platform::forceIpConfig(std::string deviceUid, const OBNetIpConfig &config) {
+#if defined(BUILD_NET_PAL)
+    auto pal = palMap_.find("net");
+    if(pal == palMap_.end()) {
+        throw pal_exception("Net pal is not exist, please check the build config that you have enabled BUILD_NET_PAL");
+    }
+    auto ethernetPal = std::dynamic_pointer_cast<EthernetPal>(pal->second);
+    return ethernetPal->forceIpConfig(deviceUid, config);
+#else
+    utils::unusedVar(deviceUid);
+    utils::unusedVar(config);
+    return false;
+#endif
+}
+
 }  // namespace libobsensor

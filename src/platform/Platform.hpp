@@ -49,6 +49,7 @@ public:
 
     void             setGvcpPortscheme(OBGvcpPortScheme scheme);
     OBGvcpPortScheme getGvcpPortscheme() const;
+    bool             forceIpConfig(std::string deviceUid, const OBNetIpConfig &config);
 
 private:
     std::map<std::string, std::shared_ptr<IPal>> palMap_;

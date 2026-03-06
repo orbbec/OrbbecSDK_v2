@@ -21,6 +21,7 @@ public:
 
     void             setGvcpPortscheme(OBGvcpPortScheme scheme);
     OBGvcpPortScheme getGvcpPortscheme() const;
+    bool             forceIpConfig(std::string deviceUid, const OBNetIpConfig &config);
 
 private:
     static DeviceEnumInfoList deviceInfoMatch(const SourcePortInfoList infoList);
@@ -42,7 +43,7 @@ private:
 
     std::recursive_mutex deviceInfoListMutex_;
     DeviceEnumInfoList   deviceInfoList_;
-    std::atomic<bool>    isGvcpPortChanging_{ false };
+    std::atomic<bool>    skipOfflineVerification_{ false };
 
     std::shared_ptr<IDeviceWatcher>        deviceWatcher_;
     std::shared_ptr<DeviceActivityManager> deviceActivityManager_;
