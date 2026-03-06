@@ -8,9 +8,11 @@
 #include "frame/FrameQueue.hpp"
 #include "Config.hpp"
 #include "FrameAggregator.hpp"
+#include "PipelineStatusCollector.hpp"
 
 namespace libobsensor {
 class Config;
+class ISensor;
 class Pipeline {
 public:
     Pipeline(std::shared_ptr<IDevice> dev);
@@ -25,16 +27,21 @@ public:
 
     StreamProfileList getD2CDepthProfileList(std::shared_ptr<const StreamProfile> colorProfile, OBAlignMode alignMode);
 
-    OBCameraParam getCameraParam();
-    OBCameraParam getCameraParam(uint32_t colorWidth, uint32_t colorHeight, uint32_t depthWidth, uint32_t depthHeight);
+    OBCameraParam      getCameraParam();
+    OBCameraParam      getCameraParam(uint32_t colorWidth, uint32_t colorHeight, uint32_t depthWidth, uint32_t depthHeight);
     OBCalibrationParam getCalibrationParam(std::shared_ptr<Config> cfg);
 
     void enableFrameSync();
     void disableFrameSync();
 
     std::shared_ptr<const Config> getConfig();
-    void switchConfig(std::shared_ptr<const Config> cfg);
-    
+    void                          switchConfig(std::shared_ptr<const Config> cfg);
+
+    // Pipeline status monitoring
+    OBPipelineStatus getStatus();
+    void             enableHealthMonitor(ob_pipeline_status_callback callback, void *userData, uint32_t intervalMs = 3000);
+    void             disableHealthMonitor();
+
 private:
     inline void startStream();
     inline void stopStream();
@@ -68,9 +75,11 @@ private:
 
     std::shared_ptr<FrameAggregator> frameAggregator_;
 
-    int maxFrameQueueSize_ = 10;
-    float maxFrameDelay_ = 0.0f;
+    std::shared_ptr<PipelineStatusCollector> statusCollector_;
+    std::vector<std::shared_ptr<ISensor>>    activeSensors_;
+
+    int   maxFrameQueueSize_ = 10;
+    float maxFrameDelay_     = 0.0f;
 };
 
 }  // namespace libobsensor
-

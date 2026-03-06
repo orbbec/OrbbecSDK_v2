@@ -93,7 +93,7 @@ struct V4L2FrameBufferGmsl {
 
 struct V4lDeviceInfoGmsl {
     std::string     name;
-    v4l2_capability cap;  // capabilities
+    v4l2_capability cap;                    // capabilities
     bool            metadataPrependedMode;  // metadata are stored in frame data
 };
 
@@ -137,6 +137,7 @@ public:
     UvcControlRange getPuRange(uint32_t propertyId) override;
 
     std::shared_ptr<const SourcePortInfo> getSourcePortInfo() const override;
+    uint64_t                              getDriverStatus() const override;
     OBUvcBackendType                      getBackendType() const override;
 
     static std::vector<std::shared_ptr<V4lDeviceInfoGmsl>> queryRelatedDevices(std::shared_ptr<const USBSourcePortInfo> portInfo);

@@ -275,6 +275,26 @@ void ob_config_set_frame_aggregate_output_mode(ob_config *config, ob_frame_aggre
 }
 HANDLE_EXCEPTIONS_NO_RETURN(config, mode)
 
+ob_pipeline_status ob_pipeline_get_status(ob_pipeline *pipeline, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(pipeline);
+    return pipeline->pipeline->getStatus();
+}
+HANDLE_EXCEPTIONS_AND_RETURN(ob_pipeline_status(), pipeline)
+
+void ob_pipeline_enable_health_monitor(ob_pipeline *pipeline, ob_pipeline_status_callback callback, void *user_data, uint32_t interval_ms,
+                                       ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(pipeline);
+    VALIDATE_NOT_NULL(callback);
+    pipeline->pipeline->enableHealthMonitor(callback, user_data, interval_ms);
+}
+HANDLE_EXCEPTIONS_NO_RETURN(pipeline)
+
+void ob_pipeline_disable_health_monitor(ob_pipeline *pipeline, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(pipeline);
+    pipeline->pipeline->disableHealthMonitor();
+}
+HANDLE_EXCEPTIONS_NO_RETURN(pipeline)
+
 #ifdef __cplusplus
 }
 #endif

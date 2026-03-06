@@ -357,6 +357,14 @@ void SensorBase::setFrameRecordingCallback(FrameCallback callback) {
     frameRecordingCallback_ = callback;
 }
 
+uint64_t SensorBase::getAndResetDroppedFrameStatus() {
+    uint64_t status = droppedFrameStatus_.exchange(0, std::memory_order_acq_rel);
+    if(backend_) {
+        status |= backend_->getPortStatus();
+    }
+    return status;
+}
+
 void SensorBase::setFrameProcessor(std::shared_ptr<FrameProcessor> frameProcessor) {
     if(isStreamActivated()) {
         THROW_WRONG_API_CALL_SEQUENCE_EXCEPTION("Can not update frame processor while streaming");
@@ -419,6 +427,7 @@ void SensorBase::outputFrame(std::shared_ptr<Frame> frame) {
         BEGIN_TRY_EXECUTE({ timestampAnomalyDetector_->calculate(frame); })
         CATCH_EXCEPTION_AND_EXECUTE({
             LOG_ERROR("Timestamp anomaly detected, frame: {}, sensor: {}", frame->getTimeStampUsec(), utils::obSensorToStr(sensorType_));
+            droppedFrameStatus_.fetch_or(OB_SDK_STATUS_FRAME_DROP_TIMESTAMP, std::memory_order_relaxed);
             return;
         });
     }

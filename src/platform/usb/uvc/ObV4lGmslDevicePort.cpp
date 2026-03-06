@@ -1303,6 +1303,28 @@ std::shared_ptr<const SourcePortInfo> ObV4lGmslDevicePort::getSourcePortInfo() c
     return portInfo_;
 }
 
+uint64_t ObV4lGmslDevicePort::getDriverStatus() const {
+    if(deviceHandles_.empty() || !deviceHandles_.front()) {
+        return 0;
+    }
+
+    const auto &devHandle = deviceHandles_.front();
+    auto        fd        = devHandle->fd;
+
+    struct v4l2_control          control = { G2R_CAMERA_CID_GET_GMSL_STATUS, 0 };
+    std::unique_lock<std::mutex> lk(mMultiThreadI2CMutex);
+    if(xioctlGmsl(fd, VIDIOC_G_CTRL, &control) < 0) {
+        LOG_DEBUG("getDriverStatus xioctlGmsl(VIDIOC_G_CTRL) failed, {}", strerror(errno));
+        return 0;
+    }
+
+    auto status = static_cast<uint64_t>(static_cast<uint32_t>(control.value));
+    if(status != 0) {
+        LOG_WARN("GMSL driver status is non-zero: 0x{:X}, devName:{}", status, devHandle->info->name);
+    }
+    return status;
+}
+
 #define BASE_WAIT_RESPONSE_TIME_MS 1
 uint32_t ObV4lGmslDevicePort::sendAndReceive(const uint8_t *send, uint32_t sendLen, uint8_t *recv, uint32_t exceptedRecvLen) {
     std::unique_lock<std::mutex> lk(mMultiThreadI2CMutex);

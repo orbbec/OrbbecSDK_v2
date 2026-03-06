@@ -15,6 +15,8 @@
 
 namespace libobsensor {
 
+class IPipelineStatusCollector;
+
 struct SourceFrameQueue {
     std::queue<std::shared_ptr<const Frame>> queue;
     uint32_t                                 maxSyncQueueSize_;
@@ -40,6 +42,8 @@ public:
     void clearFrameQueue(OBFrameType frameType);
     void clearAllFrameQueue();
 
+    void setPipelineStatusCollector(std::shared_ptr<IPipelineStatusCollector> collector);
+
 private:
     void outputFrameset(std::shared_ptr<const FrameSet> frameSet);
     void reset();
@@ -61,5 +65,7 @@ private:
     bool                                    matchingRateFirst_;
     uint32_t                                maxNormalModeQueueSize_;
     float                                   maxFrameDelay_;
+
+    std::shared_ptr<IPipelineStatusCollector> pipelineStatusCollector_;
 };
 }  // namespace libobsensor

@@ -176,22 +176,28 @@ void VideoSensor::onBackendFrameCallback(std::shared_ptr<Frame> frame) {
     // }
 #endif
 
+    auto markDataDrop = [this]() { droppedFrameStatus_.fetch_or(OB_SDK_STATUS_FRAME_DROP_DATA, std::memory_order_relaxed); };
+
     if(format == OB_FORMAT_MJPG && frame->getDataSize() < MIN_VIDEO_FRAME_DATA_SIZE) {
         LOG_WARN_INTVL("[{}] This frame will be dropped because data size less than mini size (1024 byte)! size={} @{}", GetCurrentSN(), dataSize, sensorType_);
+        markDataDrop();
         return;
     }
     else if(format == OB_FORMAT_MJPG && sensorType_ != OB_SENSOR_DEPTH && !utils::checkJpgImageData(frame->getData(), dataSize)) {
         LOG_WARN_INTVL("[{}] This frame will be dropped because jpg format verification failure! @{}", GetCurrentSN(), sensorType_);
+        markDataDrop();
         return;
     }
     else if(maxFrameDataSize < dataSize) {
         LOG_WARN_INTVL("[{}] This frame will be dropped because because the data size is larger than expected! size={}, expected={} @{}", GetCurrentSN(),
                        dataSize, maxFrameDataSize, sensorType_);
+        markDataDrop();
         return;
     }
     else if(IS_FIXED_SIZE_FORMAT(format) && maxFrameDataSize != dataSize) {
         LOG_WARN_INTVL("[{}] This frame will be dropped because the data size does not match the expectation! size={}, expected={} @{}", GetCurrentSN(),
                        dataSize, maxFrameDataSize, sensorType_);
+        markDataDrop();
         return;
     }
 

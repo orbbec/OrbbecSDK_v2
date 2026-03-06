@@ -9,6 +9,24 @@
 #include <mutex>
 #include <thread>
 
+static std::mutex statusMutex;
+static void printPipelineStatus(const std::string &title, OBPipelineStatus status) {
+    std::lock_guard<std::mutex> lock(statusMutex);
+    ob_smpl::StreamStateGuard guard(std::cout);
+    std::cout << "--------------------------------------------------------------------------------" << std::endl;
+    std::cout << "Pipeline status(" << title << "): " << std::endl;
+    if(status.issue & OB_PIPELINE_ISSUE_SDK) {
+        std::cout << "Issue observed in SDK, status: 0x" << std::hex << status.sdkStatus << std::endl;
+    }
+    if(status.issue & OB_PIPELINE_ISSUE_DRIVER) {
+        std::cout << "Issue observed in driver, status: 0x" << std::hex << status.drvStatus << std::endl;
+    }
+    if(status.issue & (OB_PIPELINE_ISSUE_FW | OB_PIPELINE_ISSUE_HW)) {
+        std::cout << "Issue observed in device, status: 0x" << std::hex << status.devStatus << std::endl;
+    }
+    std::cout << "--------------------------------------------------------------------------------\n" << std::endl;
+};
+
 int main(void) try {
 
     // Create a pipeline with default device.
@@ -47,6 +65,8 @@ int main(void) try {
         config->enableStream(sensorType);
     }
 
+    // enable health monitor
+    pipe.enableHealthMonitor([&](OBPipelineStatus status) { printPipelineStatus("video", status); });
     // Start the pipeline with config
     std::mutex                          frameMutex;
     std::shared_ptr<const ob::FrameSet> renderFrameSet;
@@ -67,6 +87,8 @@ int main(void) try {
         imuConfig->enableGyroStream();
         // enable accel stream.
         imuConfig->enableAccelStream();
+        // enable health monitor
+        imuPipeline->enableHealthMonitor([&](OBPipelineStatus status) { printPipelineStatus("imu", status); });
         // start the imu pipeline.
         imuPipeline->start(imuConfig, [&](std::shared_ptr<ob::FrameSet> frameSet) {
             std::lock_guard<std::mutex> lockImu(imuFrameMutex);
@@ -90,6 +112,8 @@ int main(void) try {
         pipe.stop();
 
         if(supportIMU) {
+            // disable health monitor
+            imuPipeline->disableHealthMonitor();
             // Stop the IMU Pipeline, no frame data will be generated.
             imuPipeline->stop();
         }
@@ -107,6 +131,8 @@ int main(void) try {
             win.pushFramesToView(renderFrameSet);
         }
 
+        // disable health monitor
+        pipe.disableHealthMonitor();
         // Stop the Pipeline, no frame data will be generated.
         pipe.stop();
     }

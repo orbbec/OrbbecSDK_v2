@@ -3,6 +3,7 @@
 
 // #pragma once
 #include "FrameAggregator.hpp"
+#include "IPipelineStatusCollector.hpp"
 #include "frame/FrameFactory.hpp"
 #include "logger/Logger.hpp"
 #include "utils/PublicTypeHelper.hpp"
@@ -292,6 +293,9 @@ void FrameAggregator::outputFrameset(std::shared_ptr<const FrameSet> frameSet) {
                               frame->getSystemTimeStampUsec(), frame->getTimeStampUsec(), frame->getNumber());
                 }
             }
+            if(pipelineStatusCollector_) {
+                pipelineStatusCollector_->reportSdkStatus(OB_SDK_STATUS_FRAME_DROP_MATCH);
+            }
         }
     }
 }
@@ -306,6 +310,10 @@ void FrameAggregator::enableFrameSync(FrameSyncMode mode) {
 
 void FrameAggregator::setCallback(FrameCallback callback) {
     FrameSetCallbackFunc_ = callback;
+}
+
+void FrameAggregator::setPipelineStatusCollector(std::shared_ptr<IPipelineStatusCollector> collector) {
+    pipelineStatusCollector_ = std::move(collector);
 }
 
 void FrameAggregator::clearAllFrameQueue() {

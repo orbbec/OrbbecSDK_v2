@@ -34,8 +34,19 @@ Pipeline::Pipeline(std::shared_ptr<IDevice> dev) : device_(dev), config_(nullptr
 
     outputFrameQueue_ = std::make_shared<FrameQueue<const Frame>>(maxFrameQueueSize_);
 
+    statusCollector_ = std::make_shared<PipelineStatusCollector>(device_.get());
+    statusCollector_->setExternalCollector([this]() {
+        for(auto &sensor: activeSensors_) {
+            uint64_t dropStatus = sensor->getAndResetDroppedFrameStatus();
+            if(dropStatus) {
+                statusCollector_->reportSdkStatus(dropStatus);
+            }
+        }
+    });
+
     frameAggregator_ = std::make_shared<FrameAggregator>(maxFrameDelay_);
     frameAggregator_->setCallback([&](std::shared_ptr<const Frame> frame) { outputFrame(frame); });
+    frameAggregator_->setPipelineStatusCollector(statusCollector_);
 
     TRY_EXECUTE(enableFrameSync());
 
@@ -255,6 +266,9 @@ void Pipeline::startStream() {
     LOG_INFO("Try to start streams!");
 
     outputFrameQueue_->reset();  // reset output frame queue before restart streams
+    statusCollector_->reset();
+    statusCollector_->clearActivePorts();
+    activeSensors_.clear();
 
     auto spList = config_->getEnabledStreamProfileList();
     for(const auto &sp: spList) {
@@ -264,10 +278,18 @@ void Pipeline::startStream() {
         if(!sensor) {
             THROW_ITEM_NOT_FOUND_EXCEPTION("No sensor matched!");
         }
+
+        activeSensors_.push_back(sensor.get());
+        auto backend = sensor->getBackend();
+        if(backend) {
+            statusCollector_->addActivePort(backend);
+        }
+
         sensor->start(sp, [&](std::shared_ptr<const Frame> frame) { onFrameCallback(frame); });
 
         LOG_DEBUG("Sensor stream started, sensorType={}", sensor->getSensorType());
     }
+    statusCollector_->resume();
     LOG_INFO("Start streams done!");
 }
 
@@ -277,6 +299,12 @@ void Pipeline::onFrameCallback(std::shared_ptr<const Frame> frame) {
         if(streamState_ == STREAM_STATE_STARTING) {
             streamState_ = STREAM_STATE_STREAMING;
         }
+
+        auto sp = frame->getStreamProfile();
+        if(sp) {
+            statusCollector_->reportFrameReceived(sp->getType());
+        }
+
         frameAggregator_->pushFrame(frame);
     }
     auto frameType = frame->getType();
@@ -294,6 +322,7 @@ void Pipeline::outputFrame(std::shared_ptr<const Frame> frame) {
 
         if(outputFrameQueue_->fulled()) {
             LOG_WARN_INTVL("[{}] Output frameset queue is full, drop oldest frameset!", GetCurrentSN());
+            statusCollector_->reportSdkStatus(OB_SDK_STATUS_FRAME_QUEUE_OVERFLOW);
             outputFrameQueue_->dequeue();
         }
         outputFrameQueue_->enqueue(std::move(frame));
@@ -304,6 +333,7 @@ std::shared_ptr<const Frame> Pipeline::waitForFrame(uint32_t timeout_ms) {
     auto frame = outputFrameQueue_->dequeue(timeout_ms);
     if(!frame) {
         LOG_WARN_INTVL("[{}] Wait for frame timeout, you can try to increase the wait time! current timeout={}", GetCurrentSN(), timeout_ms);
+        statusCollector_->reportSdkStatus(OB_SDK_STATUS_FRAME_WAIT_TIMEOUT);
         return nullptr;
     }
     return frame;
@@ -352,6 +382,11 @@ void Pipeline::stop() {
 
     // clear callback
     pipelineCallback_ = nullptr;
+
+    // reset status collector
+    statusCollector_->reset();
+    statusCollector_->clearActivePorts();
+    activeSensors_.clear();
 
     streamState_ = STREAM_STATE_STOPPED;
     LOG_INFO("Stop pipeline done!");
@@ -616,6 +651,18 @@ void Pipeline::enableHardwareD2C(bool enable) {
         return;
     }
     depthFrameProcessor->enableHardwareD2CProcess(enable);
+}
+
+OBPipelineStatus Pipeline::getStatus() {
+    return statusCollector_->getStatus();
+}
+
+void Pipeline::enableHealthMonitor(ob_pipeline_status_callback callback, void *userData, uint32_t intervalMs) {
+    statusCollector_->enableHealthMonitor(callback, userData, intervalMs);
+}
+
+void Pipeline::disableHealthMonitor() {
+    statusCollector_->disableHealthMonitor();
 }
 
 }  // namespace libobsensor

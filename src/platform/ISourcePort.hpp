@@ -20,6 +20,23 @@ public:
     virtual ~ISourcePort() noexcept = default;
 
     virtual std::shared_ptr<const SourcePortInfo> getSourcePortInfo() const = 0;
+
+    /**
+     * @brief Get driver-level status bits for diagnostics.
+     * @return Driver-specific diagnostic bitmask. 0 means no issues.
+     */
+    virtual uint64_t getDriverStatus() const {
+        return 0;
+    }
+
+    /**
+     * @brief Get SDK-level status bits accumulated by the port (e.g. frame wait errors).
+     * @return SDK status bitmask composed of OB_SDK_STATUS_* values. 0 means no issues.
+     *         Implementations should clear the accumulator on each call.
+     */
+    virtual uint64_t getPortStatus() const {
+        return 0;
+    }
 };
 
 // for vendor command

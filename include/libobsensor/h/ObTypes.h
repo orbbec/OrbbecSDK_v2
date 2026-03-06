@@ -728,6 +728,39 @@ typedef enum {
 typedef uint64_t OBDeviceState, ob_device_state;
 
 /**
+ * @brief Pipeline issue location flags observed during streaming.
+ */
+typedef enum {
+    OB_PIPELINE_ISSUE_NONE   = 0x00, /**< No issue observed */
+    OB_PIPELINE_ISSUE_SDK    = 0x01, /**< Issue observed in SDK */
+    OB_PIPELINE_ISSUE_DRIVER = 0x02, /**< Issue observed in driver */
+    OB_PIPELINE_ISSUE_FW     = 0x04, /**< Issue observed in device firmware */
+    OB_PIPELINE_ISSUE_HW     = 0x08, /**< Issue observed in device hardware */
+} OBPipelineIssue,
+    ob_pipeline_issue;
+
+/**
+ * @brief SDK-defined pipeline status bits observed during streaming.
+ */
+#define OB_SDK_STATUS_FRAME_DROP_DATA (1ULL << 0)      /**< Frame dropped due to data error */
+#define OB_SDK_STATUS_FRAME_DROP_TIMESTAMP (1ULL << 1) /**< Frame dropped due to timestamp error */
+#define OB_SDK_STATUS_FRAME_DROP_MATCH (1ULL << 2)     /**< Frame dropped due to aggregation match failure */
+#define OB_SDK_STATUS_FRAME_QUEUE_OVERFLOW (1ULL << 3) /**< Frame dropped due to queue overflow */
+#define OB_SDK_STATUS_FRAME_WAIT_TIMEOUT (1ULL << 4)   /**< Wait for frame timeout */
+#define OB_SDK_STATUS_STREAM_NO_FRAME (1ULL << 5)      /**< A stream has not received any frame for a prolonged period */
+
+/**
+ * @brief Pipeline status observed during streaming.
+ */
+typedef struct {
+    OBPipelineIssue issue;       /**< Issue location flags */
+    uint64_t        sdkStatus;   /**< SDK-defined bitmask composed of OB_SDK_STATUS_* macros */
+    uint64_t        devStatus;   /**< Device-specific diagnostic bits (not for application logic) */
+    uint64_t        drvStatus;   /**< Driver-specific diagnostic bits (not for application logic) */
+    uint64_t        reserved[3]; /**< Reserved for future use */
+} OBPipelineStatus, ob_pipeline_status;
+
+/**
  * @brief Temperature parameters of the device (unit: Celsius)
  */
 typedef struct {
@@ -2098,7 +2131,21 @@ typedef void(ob_frame_destroy_callback)(uint8_t *buffer, void *user_data);
  */
 typedef void(ob_log_callback)(ob_log_severity severity, const char *message, void *user_data);
 
+/**
+ * @brief Callback for playback status notification
+ *
+ * @param[in] status Playback status
+ * @param[in] user_data User-defined data
+ */
 typedef void (*ob_playback_status_changed_callback)(ob_playback_status status, void *user_data);
+
+/**
+ * @brief Callback for pipeline status notification
+ *
+ * @param[in] status Pipeline status
+ * @param[in] user_data User-defined data
+ */
+typedef void (*ob_pipeline_status_callback)(ob_pipeline_status status, void *user_data);
 
 /**
  * @brief Callback Id

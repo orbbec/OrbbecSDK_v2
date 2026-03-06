@@ -53,6 +53,9 @@ public:
     virtual uint32_t      registerStreamStateChangedCallback(StreamStateChangedCallback callback) = 0;
     virtual void          unregisterStreamStateChangedCallback(uint32_t token)                    = 0;
     virtual void          setFrameRecordingCallback(FrameCallback callback)                       = 0;
+
+    virtual std::shared_ptr<ISourcePort> getBackend() const              = 0;
+    virtual uint64_t                     getAndResetDroppedFrameStatus() = 0;
 };
 
 struct LazySensor {
@@ -80,4 +83,3 @@ struct ob_sensor_list_t {
 #ifdef __cplusplus
 }
 #endif
-
