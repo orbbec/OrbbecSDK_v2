@@ -177,6 +177,7 @@ bool NetDeviceEnumerator::handleDeviceRemoved(std::string devUid) {
         for(auto &&item: deviceInfoList_) {
             if(item->getUid() == devUid) {
                 removedDevice = item;
+                break;
             }
         }
     }
@@ -189,11 +190,32 @@ bool NetDeviceEnumerator::handleDeviceRemoved(std::string devUid) {
     auto firstPortInfo = removedDevice->getSourcePortInfoList().front();
     auto info          = std::dynamic_pointer_cast<const NetSourcePortInfo>(firstPortInfo);
 
-    if(deviceActivityManager_ && deviceActivityManager_->hasDeviceRebooted(removedDevice->getUid())) {
-        LOG_DEBUG("The device has reboot, consider it as offline. Name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", removedDevice->getName(),
-                  removedDevice->getPid(), removedDevice->getDeviceSn(), info->mac, info->address);
-    }
-    else if(!skipOfflineVerification_.load()) {
+    do {
+        if(skipOfflineVerification_.load()) {
+            // skip offline verification
+            break;
+        }
+
+        // Check if device IP is changed
+        auto portInfoList = platform_->queryNetSourcePort();
+        auto it           = std::find_if(portInfoList.begin(), portInfoList.end(), [&](const std::shared_ptr<const SourcePortInfo> &portInfo) {
+            auto netPortInfo = std::dynamic_pointer_cast<const NetSourcePortInfo>(portInfo);
+            return netPortInfo && info->mac == netPortInfo->mac && info->address != netPortInfo->address;
+        });
+        if(it != portInfoList.end()) {
+            // IP changed, skip offline verification
+            LOG_DEBUG("The device IP changed, consider it as offline. Name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", removedDevice->getName(),
+                      removedDevice->getPid(), removedDevice->getDeviceSn(), info->mac, info->address);
+            break;
+        }
+
+        // Continue offline verification: reboot
+        if(deviceActivityManager_ && deviceActivityManager_->hasDeviceRebooted(removedDevice->getUid())) {
+            LOG_DEBUG("The device has reboot, consider it as offline. Name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", removedDevice->getName(),
+                      removedDevice->getPid(), removedDevice->getDeviceSn(), info->mac, info->address);
+            break;
+        }
+
         // We assume the device has gone offline and perform extra verification
         // check the last active of the device
         if(checkDeviceActivity(removedDevice, info)) {
@@ -203,28 +225,23 @@ bool NetDeviceEnumerator::handleDeviceRemoved(std::string devUid) {
 
         // Continue device check via PID acquisition to confirm online status
         // TODO: Busy devices may be misjudged as offline due to temporary unresponsiveness
-        auto vid = info->vid;
-        auto pid = info->pid;
-
-        bool isLiDAR = isDeviceInOrbbecSeries(LiDARDevPids, vid, pid);
-        if(isDeviceInContainer(G335LeDevPids, vid, pid) || (isDeviceInOrbbecSeries(FemtoMegaDevPids, vid, pid)) || isDeviceInContainer(G435LeDevPids, vid, pid)
-           || isLiDAR) {
-            auto devPid = getDevicePid(info, 0, !isLiDAR, isLiDAR);
-            if(devPid == 0) {
-                // check device activity again
-                if(checkDeviceActivity(removedDevice, info)) {
-                    // If the device is active within the allowed elapsed time threshold, consider it online
-                    return false;
-                }
-            }
-            else {
-                // device is still online
-                LOG_DEBUG("Got device PID successfully, consider it online: name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", removedDevice->getName(),
-                          removedDevice->getPid(), removedDevice->getDeviceSn(), info->mac, info->address);
+        bool isLiDAR = isDeviceInOrbbecSeries(LiDARDevPids, info->vid, info->pid);
+        auto devPid  = getDevicePid(info, 0, !isLiDAR, isLiDAR);
+        if(devPid == 0) {
+            // check device activity again
+            if(checkDeviceActivity(removedDevice, info)) {
+                // If the device is active within the allowed elapsed time threshold, consider it online
                 return false;
             }
         }
-    }
+        else {
+            // device is still online
+            LOG_DEBUG("Got device PID successfully, consider it online: name: {}, PID: 0x{:04X}, SN/ID: {}, MAC:{}, IP:{}", removedDevice->getName(),
+                      removedDevice->getPid(), removedDevice->getDeviceSn(), info->mac, info->address);
+            return false;
+        }
+    } while(false);
+
     // device has gone offline
     removedDevs.push_back(removedDevice);
     LOG_WARN("1 net device removed:");
