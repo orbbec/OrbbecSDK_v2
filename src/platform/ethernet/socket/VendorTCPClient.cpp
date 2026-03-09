@@ -112,6 +112,60 @@ VendorTCPClient::~VendorTCPClient() noexcept{
 #endif
 }
 
+bool VendorTCPClient::checkConnectReady(SOCKET socket, uint32_t timeoutMs) {
+    // Lambda: call select once, check writability and connection error via getsockopt.
+    // fd_set must be re-initialized before every select call because select modifies them.
+    auto checkReady = [&](SOCKET sock) -> bool {
+        fd_set write, err;
+        FD_ZERO(&write);
+        FD_ZERO(&err);
+        FD_SET(sock, &write);
+        FD_SET(sock, &err);
+
+        TIMEVAL connTimeout;
+#if(defined(OS_IOS) || defined(OS_MACOS) || defined(__ANDROID__))
+        connTimeout.tv_sec  = 0;
+        connTimeout.tv_usec = 100000;  // 100ms
+#else
+        connTimeout.tv_sec  = timeoutMs / 1000;
+        connTimeout.tv_usec = timeoutMs % 1000 * 1000;
+#endif
+
+#if(defined(WIN32) || defined(_WIN32) || defined(WINCE))
+        auto rst = select(0, NULL, &write, &err, &connTimeout);  // nfds ignored on Windows
+#else
+        auto rst            = select(sock + 1, NULL, &write, &err, &connTimeout);
+#endif
+        if(rst <= 0) {
+            return false;  // timeout or error
+        }
+        if(!FD_ISSET(sock, &write)) {
+            return false;  // connection failed
+        }
+        // Verify the connection actually succeeded (works on all platforms)
+        int       sockErr = 0;
+        socklen_t errLen  = sizeof(sockErr);
+        if(getsockopt(sock, SOL_SOCKET, SO_ERROR, reinterpret_cast<char *>(&sockErr), &errLen) < 0 || sockErr != 0) {
+            return false;
+        }
+        return true;
+    };
+
+#if(defined(OS_IOS) || defined(OS_MACOS) || defined(__ANDROID__))
+    // Since the traditional `fcntl` cannot be used on iOS to set socketFd as non-blocking, leading to select blocking, reduce connTimeout and use polling to
+    // avoid the issue.
+    bool status = false;
+    int  retry  = 5;
+    do {
+        status = checkReady(socket);
+    } while(!status && retry-- > 0);
+
+    return status;
+#else
+    return checkReady(socket);
+#endif
+}
+
 void VendorTCPClient::socketConnect() {
     int rst;
     socketFd_ = socket(AF_INET, SOCK_STREAM, 0);  // ipv4, tcp(Streaming)
@@ -202,44 +256,12 @@ void VendorTCPClient::socketConnect() {
         }
     }
 
-    TIMEVAL connTimeout;
-#if(defined(OS_IOS) || defined(OS_MACOS) || defined(__ANDROID__))
-    connTimeout.tv_sec  = 0;
-    connTimeout.tv_usec = 100000;  // 100ms
-#else
-    connTimeout.tv_sec  = CONNECT_TIMEOUT_MS / 1000;
-    connTimeout.tv_usec = CONNECT_TIMEOUT_MS % 1000 * 1000;
-#endif
-
-    fd_set write, err;
-    FD_ZERO(&write);
-    FD_ZERO(&err);
-    FD_SET(socketFd_, &write);
-    FD_SET(socketFd_, &err);
-
-#if(defined(OS_IOS) || defined(OS_MACOS) || defined(__ANDROID__))
-    // Since the traditional `fcntl` cannot be used on iOS to set socketFd as non-blocking, leading to select blocking, reduce connTimeout and use polling to avoid the issue.
-    bool status = false;
-    int  retry  = 5;
-    do {
-        // check if the socket is ready
-        rst    = select(0, NULL, &write, &err, &connTimeout);
-        status = FD_ISSET(socketFd_, &write);
-    } while(!status && retry-- > 0);
-
-    if(!status) {
-        throw libobsensor::invalid_value_exception(utils::string::to_string() << "VendorTCPClient: Connect to server failed! addr=" << address_
-                                                                              << ", port=" << port_ << ", err=socket is not ready & timeout");
-    }
-#else
-    // check if the socket is ready
-    rst = select(0, NULL, &write, &err, &connTimeout);
-    if(!FD_ISSET(socketFd_, &write)) {
+    // Check if connect is ready
+    if(!checkConnectReady(socketFd_, CONNECT_TIMEOUT_MS)) {
         socketClose();
         throw libobsensor::invalid_value_exception(utils::string::to_string() << "VendorTCPClient: Connect to server failed! addr=" << address_
                                                                               << ", port=" << port_ << ", err=socket is not ready & timeout");
     }
-#endif
 
     // Restore to blocking mode
     mode = 0;  // blocking mode
@@ -265,7 +287,7 @@ void VendorTCPClient::socketClose() {
 }
 
 void VendorTCPClient::socketReconnect() {
-    LOG_INFO("TCP client socket reconnecting...");
+    LOG_INFO("TCP client socket reconnecting... {}", address_);
     socketClose();
     socketConnect();
 }

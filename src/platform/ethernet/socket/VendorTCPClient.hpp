@@ -23,6 +23,7 @@ public:
 
 private:
     void checkLocalIP();
+    bool checkConnectReady(SOCKET socket, uint32_t timeoutMs);
     void socketConnect();
     void socketClose();
 
