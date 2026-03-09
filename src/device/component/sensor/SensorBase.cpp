@@ -176,12 +176,11 @@ void SensorBase::updateStreamState(OBStreamState state) {
         return;
     }
     auto oldState = streamState_.load();
-    if(state == STREAM_STATE_STREAMING && oldState == STREAM_STATE_STOPPING) {
-        return;
-    }
-
-    streamState_.store(state);
     if(oldState != state) {
+        if(state == STREAM_STATE_STREAMING && oldState != STREAM_STATE_STARTING) {
+            return;
+        }
+        streamState_.store(state);
         for(auto &callback: streamStateChangedCallbacks_) {
             callback.second(state, activatedStreamProfile_);  // call the callback function
         }
@@ -208,9 +207,7 @@ void SensorBase::updateStreamState(OBStreamState state) {
                 timestampAnomalyDetector_->setCurrentFps(fps);
             }
         }
-    }
-    if(oldState != state) {
-        LOG_INFO("Stream state changed to {}@{}", STREAM_STATE_STR(state), sensorType_);
+        LOG_INFO("Stream state changed from {} to {}@{}", STREAM_STATE_STR(oldState), STREAM_STATE_STR(state), sensorType_);
     }
     streamStateCv_.notify_all();
 }
