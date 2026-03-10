@@ -69,11 +69,20 @@ uint16_t getExpectedRespSize(HpOpCodes opcode) {
 
 HpStatus validateResp(uint8_t *dataBuf, uint16_t dataSize, uint16_t expectedOpcode, uint16_t requestId) {
     HpStatus    retStatus;
-    RespHeader *header = (RespHeader *)dataBuf;
+    RespHeader *header         = (RespHeader *)dataBuf;
+    const auto  respHeaderSize = sizeof(RespHeader);
 
+    if(dataSize < respHeaderSize) {
+        std::ostringstream ssMsg;
+        ssMsg << "Device response size(" << dataSize << ") < response header size(" << respHeaderSize << ")";
+        retStatus.statusCode    = HP_STATUS_DEVICE_RESPONSE_WRONG_DATA_SIZE;
+        retStatus.respErrorCode = HP_RESP_ERROR_UNKNOWN;
+        retStatus.msg           = ssMsg.str();
+        return retStatus;
+    }
     if(header->magic != HP_RESPONSE_MAGIC) {
         std::ostringstream ssMsg;
-        ssMsg << "Device response with bad magic " << std::hex << ", magic=0x" << header->magic << ", expectOpCode=0x" << HP_RESPONSE_MAGIC;
+        ssMsg << "Device response with bad magic " << std::hex << ", magic=0x" << header->magic << ", expect magic=0x" << HP_RESPONSE_MAGIC;
         retStatus.statusCode    = HP_STATUS_DEVICE_RESPONSE_BAD_MAGIC;
         retStatus.respErrorCode = HP_RESP_ERROR_UNKNOWN;
         retStatus.msg           = ssMsg.str();
