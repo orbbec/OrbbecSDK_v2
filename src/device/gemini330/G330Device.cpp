@@ -1519,6 +1519,10 @@ void G330NetDevice::init() {
         auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
         propertyServer->registerProperty(OB_PROP_COLOR_PRESET_PRIORITY_INT, "rw", "rw", vendorPropertyAccessor.get());
     }
+    if(fwVersion >= 10705) {
+        auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        propertyServer->registerProperty(OB_PROP_DEVICE_NETWORK_LLA_BOOL, "rw", "rw", vendorPropertyAccessor.get());
+    }
 
     fetchDeviceErrorState();
 }

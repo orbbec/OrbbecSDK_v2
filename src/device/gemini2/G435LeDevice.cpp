@@ -84,9 +84,13 @@ void G435LeDeviceBase::init() {
 
     auto propertyServer         = getPropertyServer();
     auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+    auto fwVersion              = getFirmwareVersionInt();
     propertyServer->registerProperty(OB_PROP_FRAME_INTERLEAVE_CONFIG_INDEX_INT, "rw", "rw", vendorPropertyAccessor.get());
     propertyServer->registerProperty(OB_PROP_FRAME_INTERLEAVE_ENABLE_BOOL, "rw", "rw", vendorPropertyAccessor.get());
     propertyServer->registerProperty(OB_PROP_FRAME_INTERLEAVE_LASER_PATTERN_SYNC_DELAY_INT, "rw", "rw", vendorPropertyAccessor.get());
+    if(fwVersion >= 10317) {
+        propertyServer->registerProperty(OB_PROP_DEVICE_NETWORK_LLA_BOOL, "rw", "rw", vendorPropertyAccessor.get());
+    }
 
     registerComponent(OB_DEV_COMPONENT_COLOR_FRAME_METADATA_CONTAINER, [this]() {
         std::shared_ptr<FrameMetadataParserContainer> container;

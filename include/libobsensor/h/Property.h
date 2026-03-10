@@ -611,6 +611,11 @@ typedef enum {
     OB_PROP_COLOR_PRESET_PRIORITY_INT = 255,
 
     /**
+     * @brief LLA (Link Local Address) switch
+     */
+    OB_PROP_DEVICE_NETWORK_LLA_BOOL = 257,
+
+    /**
      * @brief Baseline calibration parameters
      */
     OB_STRUCT_BASELINE_CALIBRATION_PARAM = 1002,
