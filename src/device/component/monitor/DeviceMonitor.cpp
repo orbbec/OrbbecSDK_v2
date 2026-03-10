@@ -4,10 +4,21 @@
 #include "DeviceMonitor.hpp"
 #include "protocol/Protocol.hpp"
 #include "property/InternalProperty.hpp"
+#include "logger/LoggerSnWrapper.hpp"  // Must be included last to override log macros
 
 namespace libobsensor {
 
 const uint16_t MAX_RECV_DATA_SIZE = 1024;
+
+const std::string &DeviceMonitor::GetCurrentSN() const {
+    auto owner = getOwner();
+    if(owner) {
+        return owner->getSn();
+    }
+
+    static std::string unknown = "Unknown";
+    return unknown;
+}
 
 DeviceMonitor::DeviceMonitor(IDevice *owner, std::shared_ptr<ISourcePort> dataPort)
     : DeviceComponentBase(owner),
@@ -106,8 +117,7 @@ void DeviceMonitor::heartbeatAndFetchState() {
         // Callback when firmware returns non-0 status code
         if(0 != devState_ || msgSize) {
             auto msg = std::string(resp->message, msgSize);
-
-            LOG_INFO("Firmware State/Log ({0}):\n{1}", devState_, msg);
+            LOG_INFO("Firmware State/Log ({}):\n{}", devState_, msg);
             std::lock_guard<std::mutex> lock(stateChangedCallbacksMutex_);
             for(auto &callback: stateChangedCallbacks_) {
                 callback.second(devState_, msg);

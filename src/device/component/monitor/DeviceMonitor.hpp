@@ -27,9 +27,10 @@ public:
     void sendAndReceiveData(const uint8_t *sendData, uint32_t sendDataSize, uint8_t *receiveData, uint32_t *receiveDataSize) override;
 
 private:
-    void start();
-    void stop();
-    void heartbeatAndFetchState();
+    void                      start();
+    void                      stop();
+    void                      heartbeatAndFetchState();
+    inline const std::string &GetCurrentSN() const;
 
 private:
     std::shared_ptr<IVendorDataPort> vendorDataPort_;
