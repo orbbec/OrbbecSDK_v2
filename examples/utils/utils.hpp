@@ -53,4 +53,18 @@ bool isGemini305Device(int vid, int pid);
  */
 bool isAstraMiniDevice(int vid, int pid);
 
+class StreamStateGuard {
+public:
+    explicit StreamStateGuard(std::ios &s) : ios(s), flags(s.flags()), fill(s.fill()) {}
+    ~StreamStateGuard() {
+        ios.flags(flags);
+        ios.fill(fill);
+    }
+
+private:
+    std::ios          &ios;
+    std::ios::fmtflags flags;
+    char               fill{ 0 };
+};
+
 }  // namespace ob_smpl
