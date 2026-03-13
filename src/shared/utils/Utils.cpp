@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 #include "Utils.hpp"
+#include "common/DeviceSeriesInfo.hpp"
 
 #ifdef WIN32
 #ifndef WIN32_LEAN_AND_MEAN
@@ -117,7 +118,7 @@ int getJpgHeadLength(const uint8_t *data, uint32_t size) {
     return jpegHeadSize;
 }
 
-bool checkIpConfig(const ob_net_ip_config &config) {
+bool checkIpConfig(const ob_net_ip_config &config, bool allowZeroGateWay) {
     uint32_t ip      = (config.address[3]) | (config.address[2] << 8) | (config.address[1] << 16) | (config.address[0] << 24);
     uint32_t mask    = (config.mask[3]) | (config.mask[2] << 8) | (config.mask[1] << 16) | (config.mask[0] << 24);
     uint32_t gateway = (config.gateway[3]) | (config.gateway[2] << 8) | (config.gateway[1] << 16) | (config.gateway[0] << 24);
@@ -129,13 +130,20 @@ bool checkIpConfig(const ob_net_ip_config &config) {
 
     // ip
     if(ip == 0x00000000 || ip == 0xFFFFFFFF || ((ip & 0xF0000000) == 0xE0000000) || ((ip & 0xF0000000) == 0xF0000000) || ((ip & 0xFF) == 0x00)
-       || ((ip & 0xFF) == 0xFF)) {
+              || ((ip & 0xFF) == 0xFF)) {
         return false;
     }
+
     // subnet mask
     if(mask == 0 || mask == 0xFFFFFFFF || ((~mask) & ((~mask) + 1)) != 0) {
         return false;
     }
+
+    // If allowZeroGateWay is true and gateway is 0, we skip other checks (gateway validation)
+    if(gateway == 0 && allowZeroGateWay) {
+        return true;
+    }
+
     // gateway
     if(gateway == 0x00000000 || gateway == 0xFFFFFFFF || ((gateway & 0xF0000000) == 0xE0000000) || ((gateway & 0xF0000000) == 0xF0000000)
        || ((gateway & 0xFF) == 0x00) || ((gateway & 0xFF) == 0xFF)) {
@@ -176,6 +184,10 @@ OBIpSourceType parseGevCurIpConfig(const uint32_t &rawConfigSet) {
     }
 
     return OB_IP_SOURCE_NONE;
+}
+
+bool isAllowZeroGateway(uint32_t vid, uint32_t pid) {
+    return isDeviceInContainer(G335LeDevPids, vid, pid) || isDeviceInContainer(G435LeDevPids, vid, pid);
 }
 
 }  // namespace utils

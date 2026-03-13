@@ -8,6 +8,8 @@
 #include "context/Context.hpp"
 #include "environment/EnvConfig.hpp"
 #include "shared/utils/Utils.hpp"
+#include "common/DeviceSeriesInfo.hpp"
+#include "platform/SourcePortInfo.hpp"
 
 #ifdef __cplusplus
 extern "C" {
@@ -66,12 +68,28 @@ HANDLE_EXCEPTIONS_NO_RETURN(context, enable)
 
 bool ob_force_ip_config(const char *macAddress, ob_net_ip_config config, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(macAddress);
-    if(!libobsensor::utils::checkIpConfig(config)) {
+    auto ctx    = libobsensor::Context::getInstance();
+    auto devMgr = ctx->getDeviceManager();
+
+    bool allowZeroGateWay = false;
+    auto        deviceList = devMgr->getDeviceInfoList();
+    std::string targetMac  = macAddress;
+    for(const auto &deviceInfo: deviceList) {
+        auto portList = deviceInfo->getSourcePortInfoList();
+        if(!portList.empty()) {
+            auto netInfo = std::dynamic_pointer_cast<const libobsensor::NetSourcePortInfo>(portList.front());
+            if(netInfo && netInfo->mac == targetMac) {
+                allowZeroGateWay = libobsensor::utils::isAllowZeroGateway(netInfo->vid, netInfo->pid);
+                break;
+            }
+        }
+    }
+
+    if(!libobsensor::utils::checkIpConfig(config, allowZeroGateWay)) {
         throw libobsensor::invalid_value_exception("Invalid IP configuration");
         // return false;
     }
-    auto ctx    = libobsensor::Context::getInstance();
-    auto devMgr = ctx->getDeviceManager();
+
     return devMgr->forceIpConfig(macAddress, config);
 }
 HANDLE_EXCEPTIONS_AND_RETURN(false, macAddress)

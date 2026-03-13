@@ -384,8 +384,10 @@ void ob_device_set_structured_data(ob_device *device, ob_property_id property_id
     if(property_id == OB_STRUCT_DEVICE_IP_ADDR_CONFIG) {
         VALIDATE_NOT_NULL(data);
         VALIDATE_EQUAL(data_size, sizeof(ob_net_ip_config));
-        auto config = reinterpret_cast<const ob_net_ip_config *>(data);
-        if(!libobsensor::utils::checkIpConfig(*config)) {
+        auto config      = reinterpret_cast<const ob_net_ip_config *>(data);
+        auto devInfo     = device->device->getInfo();
+        bool allowZeroGW = libobsensor::utils::isAllowZeroGateway(devInfo->vid_, devInfo->pid_);
+        if(!libobsensor::utils::checkIpConfig(*config, allowZeroGW)) {
             throw libobsensor::invalid_value_exception("Invalid IP configuration");
             return;
         }
