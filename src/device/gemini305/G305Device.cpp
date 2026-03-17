@@ -1417,14 +1417,12 @@ std::shared_ptr<const StreamProfile> G305Device::loadDefaultStreamProfile(OBSens
         case OB_SENSOR_COLOR_LEFT: {
             defFormat     = OB_FORMAT_YUYV;
             defStreamType = OB_STREAM_COLOR_LEFT;
-            defWidth      = 1280;
-            defHeight     = 800;
+            defFps        = 15;
         } break;
         case OB_SENSOR_COLOR_RIGHT: {
             defFormat     = OB_FORMAT_YUYV;
             defStreamType = OB_STREAM_COLOR_RIGHT;
-            defWidth      = 1280;
-            defHeight     = 800;
+            defFps        = 15;
         } break;
         default:
             break;
