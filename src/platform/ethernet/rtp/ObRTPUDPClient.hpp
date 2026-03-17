@@ -28,6 +28,7 @@ private:
     void socketConnect();
     void socketClose();
     void frameReceive();
+    void flush();
     void frameProcess();
     
 private:

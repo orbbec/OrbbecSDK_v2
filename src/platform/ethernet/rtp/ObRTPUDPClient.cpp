@@ -146,6 +146,38 @@ void ObRTPUDPClient::frameReceive() {
     LOG_DEBUG("Exit udp data receive thread...");
 }
 
+void ObRTPUDPClient::flush() {
+    char         buf[OB_UDP_BUFFER_SIZE];
+    utils::Timer timer;
+    uint64_t     elapsed = 0;
+
+    do {
+        struct timeval timeout;
+        timeout.tv_sec  = 0;
+        timeout.tv_usec = 0;  // return immediately
+
+        auto   sock = recvSocket_;
+        auto   nfds = static_cast<int>(sock) + 1;
+        fd_set readfs;
+
+        FD_ZERO(&readfs);
+        FD_SET(sock, &readfs);
+        auto res = select(nfds, &readfs, 0, 0, &timeout);
+        if(res <= 0) {
+            // no any data
+            break;
+        }
+
+        // read data and discard
+        res = recvfrom(sock, buf, sizeof(buf), 0, NULL, NULL);
+        if(res > 0) {
+            LOG_DEBUG("Discarding {} bytes of leftover frame data. IP: {}, stream: {}", res, serverIp_, currentProfile_->getType());
+        }
+        elapsed = timer.touchMs(false);
+        // Loop until timeout to avoid blocking indefinitely
+    } while(elapsed < 3000);
+}
+
 void ObRTPUDPClient::frameProcess() {
     LOG_DEBUG("start frame process thread...");
     std::vector<uint8_t> data;
@@ -201,6 +233,7 @@ void ObRTPUDPClient::stop() {
     startReceive_.store(false);
     if(receiverThread_.joinable()) {
         receiverThread_.join();
+        flush();
     }
     rtpQueue_.destroy();
     if(callbackThread_.joinable()) {
