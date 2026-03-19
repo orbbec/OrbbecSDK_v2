@@ -139,7 +139,7 @@ void transformation2dto2d(std::shared_ptr<ob::Frame> colorFrame, std::shared_ptr
                                                                               colorDistortion, extrinsicD2C, &targetPixel);
             
             // Check transformation result and whether the target pixel is within the color frame
-            if(!result || targetPixel.y < 0 || targetPixel.x < 0 || targetPixel.y > colorFrameWidth || targetPixel.x > colorFrameWidth) {
+            if(!result || targetPixel.y < 0 || targetPixel.x < 0 || targetPixel.y > colorFrameHeight || targetPixel.x > colorFrameWidth) {
                 continue;
             }
 
