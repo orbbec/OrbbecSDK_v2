@@ -538,8 +538,14 @@ int GVCPClient::recvAndParseGVCPResponse(SOCKET sock, const GVCPSocketInfo &sock
         // Filter non-Orbbec devices
         std::string deviceManufacturer = ackPayload->szFacName;
         auto        it                 = libobsensor::manufacturerVidMap.find(deviceManufacturer);
+        uint32_t    curVID             = 0;
         if(it == manufacturerVidMap.end()) {
-            return 0;
+            if(!isSupportedOemBootloaderNetworkDevice(deviceManufacturer, curPID, curVID)) {
+                return 0;
+            }
+        }
+        else {
+            curVID = it->second;
         }
 
         GVCPDeviceInfo info;
@@ -555,7 +561,7 @@ int GVCPClient::recvAndParseGVCPResponse(SOCKET sock, const GVCPSocketInfo &sock
         info.sn                = ackPayload->szSerial;
         info.name              = ackPayload->szModelName;
         info.pid               = curPID;
-        info.vid               = it->second;
+        info.vid               = curVID;
         info.devVersion        = ackPayload->szDevVer;
         info.curIpConfig       = curIpSet;
         // info.manufacturer      = ackPayload->szFacName;

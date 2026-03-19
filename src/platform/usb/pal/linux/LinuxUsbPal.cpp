@@ -94,8 +94,7 @@ bool checkDevice(libusb_device *device) {
         LOG_WARN("Failed to retrieve USB descriptor for device. libusb_get_device_descriptor returned {}", res);
         return false;
     }
-    const auto &allowedVids = libobsensor::supportedUsbVids;
-    if(allowedVids.count(desc.idVendor) == 0) {
+    if(!isSupportedDevice(desc.idVendor, desc.idProduct)) {
         return false;
     }
     return true;

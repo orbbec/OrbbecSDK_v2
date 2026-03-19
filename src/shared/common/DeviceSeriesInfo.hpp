@@ -33,6 +33,25 @@ extern std::unordered_map<std::string, uint16_t> manufacturerVidMap;
 bool isDeviceInContainer(const std::vector<DeviceIdentifier> &deviceContainer, const uint32_t &vid, const uint32_t &pid);
 bool isDeviceInOrbbecSeries(const std::vector<uint16_t> &deviceContainer, const uint32_t &vid, const uint32_t &pid);
 
+/**
+ * @brief Check if the device is supported by the library, used for platform enumeration
+ *
+ * @param[in] vid Vendor ID
+ * @param[in] pid Product ID
+ * @return true if the device is supported
+ */
+bool isSupportedDevice(uint32_t vid, uint32_t pid);
+
+/**
+ * @brief Check if the bootloader network device is supported by the library, used for platform enumeration
+ *
+ * @param[in] manufacturer Manufacturer
+ * @param[in] pid Product ID
+ * @param[out] vid Vendor ID parsed from the manufacturer string
+ * @return true if the device is supported
+ */
+bool isSupportedOemBootloaderNetworkDevice(const std::string &manufacturer, uint32_t pid, uint32_t &vid);
+
 class DeviceSeriesInfoManager {
 public:
     // Get singleton instance

@@ -97,8 +97,7 @@ bool checkDevice(libusb_device *device) {
         LOG_WARN("Femto Bolt is unavailable on macOS duo to Depth Engine");
         return false;
     }
-    const auto &allowedVids = libobsensor::supportedUsbVids;
-    if(allowedVids.count(desc.idVendor) == 0) {
+    if(!isSupportedDevice(desc.idVendor, desc.idProduct)) {
         return false;
     }
     return true;

@@ -76,6 +76,9 @@
         system's capabilities and the device's speciality. -->
         <LinuxUVCBackend>Auto</LinuxUVCBackend>
 
+        <!-- GVCP port scheme: Standard = default port, SchemeB = custom port -->
+        <GVCPPortScheme>Standard</GVCPPortScheme>
+        
         <!-- Gemini305 config -->
         <Gemini305>
             <!-- Default backend for Linux UVC devices. If the LinuxUVCBackend is set to "Auto,"

@@ -566,8 +566,6 @@ bool WmfUvcDevicePort::getXu(uint8_t ctrl, uint8_t *data, uint32_t *len) {
 }
 
 void WmfUvcDevicePort::foreachUvcDevice(const USBDeviceInfoEnumCallback &action) {
-    const auto &allowedVids = libobsensor::supportedUsbVids;
-
     for(const auto &attributes_params_set: attributes_params) {
         CComPtr<IMFAttributes> pAttributes = nullptr;
         CHECK_HR(MFCreateAttributes(&pAttributes, 1));
@@ -597,7 +595,7 @@ void WmfUvcDevicePort::foreachUvcDevice(const USBDeviceInfoEnumCallback &action)
 
             uint16_t    vid, pid, infIndex;
             std::string uid, guid;
-            if(parse_usb_path_multiple_interface(vid, pid, infIndex, uid, symbolicLink, guid) && (allowedVids.count(vid) > 0)) {
+            if(parse_usb_path_multiple_interface(vid, pid, infIndex, uid, symbolicLink, guid) && isSupportedDevice(vid, pid)) {
                 UsbInterfaceInfo info;
                 // info.url = ""
                 info.uid      = uid;

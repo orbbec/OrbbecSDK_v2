@@ -169,4 +169,25 @@ bool isDeviceInOrbbecSeries(const std::vector<uint16_t> &deviceContainer, const 
     return std::find(deviceContainer.begin(), deviceContainer.end(), pid) != deviceContainer.end();
 }
 
+bool isSupportedDevice(uint32_t vid, uint32_t pid) {
+    const auto &allowedVids = libobsensor::supportedUsbVids;
+    if(allowedVids.count(static_cast<uint16_t>(vid)) > 0) {
+        return true;
+    }
+    // Whitelist for OEM bootloader identification: only the latest
+    // supported bootloader device (PID 0x0501) is accepted.
+    return vid == ORBBEC_DEVICE_VID && pid == 0x0501;
+}
+
+bool isSupportedOemBootloaderNetworkDevice(const std::string &manufacturer, uint32_t pid, uint32_t &vid) {
+    // Whitelist for OEM bootloader identification: only the latest
+    // supported bootloader device (PID 0x0501) is accepted.
+    if(manufacturer == "Orbbec" && pid == 0x0501) {
+        vid = ORBBEC_DEVICE_VID;
+        return true;
+    }
+    vid = 0;
+    return false;
+}
+
 }  // namespace libobsensor
