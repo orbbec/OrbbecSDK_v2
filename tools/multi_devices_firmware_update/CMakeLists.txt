@@ -7,12 +7,12 @@ project(ob_multi_devices_firmware_update)
 add_executable(${PROJECT_NAME} multi_devices_firmware_update.cpp)
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 11)
-target_link_libraries(${PROJECT_NAME} ob::${OB_SDK_LIB_NAME} ob::examples::utils)
 
-set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER "examples")
+# Link against the SDK only (no dependency on examples/utils)
+target_link_libraries(${PROJECT_NAME} ob::${OB_SDK_LIB_NAME})
+
 if(MSVC)
     set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
 endif()
 
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
-

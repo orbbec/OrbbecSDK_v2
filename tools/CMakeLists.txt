@@ -2,3 +2,4 @@
 # Licensed under the MIT License.
 
 add_subdirectory(benchmark)
+add_subdirectory(multi_devices_firmware_update)
