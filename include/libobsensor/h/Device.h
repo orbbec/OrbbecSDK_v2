@@ -329,6 +329,15 @@ OB_EXPORT void ob_device_set_state_changed_callback(ob_device *device, ob_device
 OB_EXPORT void ob_device_enable_heartbeat(ob_device *device, bool enable, ob_error **error);
 
 /**
+ * @brief Enable or disable the device firmware log.
+ *
+ * @param[in] device The device object.
+ * @param[in] enable Whether to enable the firmware log.
+ * @param[out] error Pointer to an error object that will be set if an error occurs.
+ */
+OB_EXPORT void ob_device_enable_firmware_log(ob_device *device, bool enable, ob_error **error);
+
+/**
  * @brief Send data to the device and receive data from the device.
  * @brief This is a factory and debug function, which can be used to send and receive data from the device. The data format is secret and belongs to the device
  * vendor.

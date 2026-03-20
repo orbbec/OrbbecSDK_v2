@@ -550,6 +550,17 @@ public:
     }
 
     /**
+     * @brief Enable or disable the device firmware log.
+     *
+     * @param[in] enable Whether to enable the firmware log.
+     */
+    void enableFirmwareLog(bool enable) const {
+        ob_error *error = nullptr;
+        ob_device_enable_firmware_log(impl_, enable, &error);
+        Error::handle(&error);
+    }
+
+    /**
      * @brief Get the supported multi device sync mode bitmap of the device.
      * @brief For example, if the return value is 0b00001100, it means the device supports @ref OB_MULTI_DEVICE_SYNC_MODE_PRIMARY and @ref
      * OB_MULTI_DEVICE_SYNC_MODE_SECONDARY. User can check the supported mode by the code:

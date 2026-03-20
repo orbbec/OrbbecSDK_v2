@@ -26,6 +26,7 @@ DeviceMonitor::DeviceMonitor(IDevice *owner, std::shared_ptr<ISourcePort> dataPo
       heartbeatAndFetchStateThreadStarted_(false),
       heartbeatEnabled_(false),
       heartbeatPaused_(false),
+      firmwareLogEnabled_(false),
       hbRecvData_(MAX_RECV_DATA_SIZE),
       hbSendData_(MAX_RECV_DATA_SIZE) {
     vendorDataPort_ = std::dynamic_pointer_cast<IVendorDataPort>(dataPort);
@@ -44,6 +45,10 @@ DeviceMonitor::~DeviceMonitor() noexcept {
         TRY_EXECUTE(disableHeartbeat());
     }
 
+    if(firmwareLogEnabled_) {
+        TRY_EXECUTE(disableFirmwareLog());
+    }
+
     if(heartbeatAndFetchStateThreadStarted_) {
         TRY_EXECUTE(stop());
     }
@@ -52,6 +57,7 @@ DeviceMonitor::~DeviceMonitor() noexcept {
 void DeviceMonitor::start() {
     if(heartbeatAndFetchStateThreadStarted_) {
         LOG_DEBUG("Heartbeat and fetch state thread already started!");
+        return;
     }
     heartbeatAndFetchStateThreadStarted_ = true;
     heartbeatAndFetchStateThread_        = std::thread([this]() {
@@ -142,18 +148,12 @@ int DeviceMonitor::registerStateChangedCallback(DeviceStateChangedCallback callb
     std::lock_guard<std::mutex> lock(stateChangedCallbacksMutex_);
     auto                        callbackId = cbIdCounter_++;
     stateChangedCallbacks_[callbackId]     = callback;
-    if(!heartbeatAndFetchStateThreadStarted_) {
-        start();
-    }
     return callbackId;
 }
 
 void DeviceMonitor::unregisterStateChangedCallback(int callbackId) {
     std::lock_guard<std::mutex> lock(stateChangedCallbacksMutex_);
     stateChangedCallbacks_.erase(callbackId);
-    if(stateChangedCallbacks_.empty() && !heartbeatPaused_ && heartbeatAndFetchStateThreadStarted_) {
-        stop();
-    }
 }
 
 void DeviceMonitor::enableHeartbeat() {
@@ -162,18 +162,19 @@ void DeviceMonitor::enableHeartbeat() {
         return;
     }
 
-    auto owner      = getOwner();
-    auto propServer = owner->getComponentT<IPropertyServer>(OB_DEV_COMPONENT_PROPERTY_SERVER);
-    if(propServer->isPropertySupported(OB_PROP_DEVICE_LOG_SEVERITY_LEVEL_INT, PROP_OP_WRITE, PROP_ACCESS_INTERNAL)) {
-        propServer->setPropertyValueT<int32_t>(OB_PROP_DEVICE_LOG_SEVERITY_LEVEL_INT, OB_LOG_SEVERITY_DEBUG);
-    }
+    auto            owner = getOwner();
     OBPropertyValue value;
     value.intValue    = 1;
     auto propAccessor = owner->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
     propAccessor->setPropertyValue(OB_PROP_HEARTBEAT_BOOL, value);
     heartbeatEnabled_ = true;
     heartbeatPaused_  = false;
-    if(!heartbeatAndFetchStateThreadStarted_) {
+    if(!firmwareLogEnabled_ && !heartbeatAndFetchStateThreadStarted_) {
+        auto propServer = owner->getComponentT<IPropertyServer>(OB_DEV_COMPONENT_PROPERTY_SERVER);
+        if(propServer->isPropertySupported(OB_PROP_DEVICE_LOG_SEVERITY_LEVEL_INT, PROP_OP_WRITE, PROP_ACCESS_INTERNAL)) {
+            propServer->setPropertyValueT<int32_t>(OB_PROP_DEVICE_LOG_SEVERITY_LEVEL_INT, OB_LOG_SEVERITY_DEBUG);
+        }
+
         start();
     }
     LOG_DEBUG("Heartbeat enabled!");
@@ -193,7 +194,7 @@ void DeviceMonitor::disableHeartbeat() {
 
     heartbeatEnabled_ = false;
     heartbeatPaused_  = false;
-    if(heartbeatAndFetchStateThreadStarted_) {
+    if(!firmwareLogEnabled_ && heartbeatAndFetchStateThreadStarted_) {
         stop();
     }
     LOG_DEBUG("Heartbeat disabled!");
@@ -204,7 +205,7 @@ bool DeviceMonitor::isHeartbeatEnabled() const {
 }
 
 void DeviceMonitor::pauseHeartbeat() {
-    if(heartbeatPaused_) {
+    if(heartbeatPaused_ || !heartbeatEnabled_) {
         LOG_DEBUG("Heartbeat already paused!");
         return;
     }
@@ -213,7 +214,7 @@ void DeviceMonitor::pauseHeartbeat() {
     value.intValue    = 0;
     auto propAccessor = owner->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
     propAccessor->setPropertyValue(OB_PROP_HEARTBEAT_BOOL, value);
-    if(heartbeatAndFetchStateThreadStarted_) {
+    if(!firmwareLogEnabled_ && heartbeatAndFetchStateThreadStarted_) {
         stop();
     }
     heartbeatPaused_ = true;
@@ -235,8 +236,7 @@ void DeviceMonitor::resumeHeartbeat() {
         propAccessor->setPropertyValue(OB_PROP_HEARTBEAT_BOOL, value);
     }
 
-    if(heartbeatEnabled_ || !stateChangedCallbacks_.empty()) {
-        // resuming heartbeat thread if heartbeat is enabled or if there are state changed callbacks
+    if(!firmwareLogEnabled_ && !heartbeatAndFetchStateThreadStarted_) {
         start();
     }
     heartbeatPaused_ = false;
@@ -252,6 +252,41 @@ void DeviceMonitor::sendAndReceiveData(const uint8_t *sendData, uint32_t sendDat
     if(activityRecorder_) {
         activityRecorder_->touch(DeviceActivity::Command);
     }
+}
+
+void DeviceMonitor::enableFirmwareLog() {
+    if(firmwareLogEnabled_) {
+        LOG_DEBUG("Firmware log already enabled!");
+        return;
+    }
+
+    if(!heartbeatEnabled_ && !heartbeatAndFetchStateThreadStarted_) {
+        auto owner      = getOwner();
+        auto propServer = owner->getComponentT<IPropertyServer>(OB_DEV_COMPONENT_PROPERTY_SERVER);
+        if(propServer->isPropertySupported(OB_PROP_DEVICE_LOG_SEVERITY_LEVEL_INT, PROP_OP_WRITE, PROP_ACCESS_INTERNAL)) {
+            propServer->setPropertyValueT<int32_t>(OB_PROP_DEVICE_LOG_SEVERITY_LEVEL_INT, OB_LOG_SEVERITY_DEBUG);
+        }
+
+        start();
+    }
+
+    firmwareLogEnabled_ = true;
+    LOG_DEBUG("Firmware log enabled!");
+}
+void DeviceMonitor::disableFirmwareLog() {
+    if(!firmwareLogEnabled_) {
+        LOG_DEBUG("Firmware log already disabled!");
+        return;
+    }
+    firmwareLogEnabled_ = false;
+    if(!heartbeatEnabled_ && heartbeatAndFetchStateThreadStarted_) {
+        stop();
+    }
+    LOG_DEBUG("Firmware log disabled!");
+}
+
+bool DeviceMonitor::isFirmwareLogEnabled() const {
+    return firmwareLogEnabled_;
 }
 
 }  // namespace libobsensor

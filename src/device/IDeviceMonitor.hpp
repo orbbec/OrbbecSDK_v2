@@ -20,11 +20,15 @@ public:
     virtual int           registerStateChangedCallback(DeviceStateChangedCallback callback) = 0;
     virtual void          unregisterStateChangedCallback(int callbackId)                    = 0;
 
-    virtual void enableHeartbeat()  = 0;
-    virtual void disableHeartbeat() = 0;
+    virtual void enableHeartbeat()          = 0;
+    virtual void disableHeartbeat()         = 0;
     virtual bool isHeartbeatEnabled() const = 0;
-    virtual void pauseHeartbeat()   = 0;
-    virtual void resumeHeartbeat()  = 0;
+    virtual void pauseHeartbeat()           = 0;
+    virtual void resumeHeartbeat()          = 0;
+
+    virtual void enableFirmwareLog()          = 0;
+    virtual void disableFirmwareLog()         = 0;
+    virtual bool isFirmwareLogEnabled() const = 0;
 
     // for debug and vendor specific purpose
     virtual void sendAndReceiveData(const uint8_t *sendData, uint32_t sendDataSize, uint8_t *receiveData, uint32_t *receiveDataSize) = 0;

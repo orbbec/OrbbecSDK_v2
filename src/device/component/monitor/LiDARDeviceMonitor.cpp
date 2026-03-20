@@ -67,4 +67,15 @@ void LiDARDeviceMonitor::sendAndReceiveData(const uint8_t *sendData, uint32_t se
     }
 }
 
+void LiDARDeviceMonitor::enableFirmwareLog() {
+    throw libobsensor::not_implemented_exception("LiDAR device doesn't support firmware log right now!");
+}
+
+void LiDARDeviceMonitor::disableFirmwareLog() {
+    throw libobsensor::not_implemented_exception("LiDAR device doesn't support firmware log right now!");
+}
+
+bool LiDARDeviceMonitor::isFirmwareLogEnabled() const {
+    return false;
+}
 }  // namespace libobsensor

@@ -23,6 +23,9 @@ public:
     bool          isHeartbeatEnabled() const override;
     void          pauseHeartbeat() override;
     void          resumeHeartbeat() override;
+    void          enableFirmwareLog() override;
+    void          disableFirmwareLog() override;
+    bool          isFirmwareLogEnabled() const override;
 
     void sendAndReceiveData(const uint8_t *sendData, uint32_t sendDataSize, uint8_t *receiveData, uint32_t *receiveDataSize) override;
 
@@ -44,8 +47,9 @@ private:
     std::thread             heartbeatAndFetchStateThread_;
     std::atomic<bool>       heartbeatAndFetchStateThreadStarted_;
 
-    std::atomic<bool> heartbeatEnabled_;
-    std::atomic<bool> heartbeatPaused_;
+    std::atomic<bool>     heartbeatEnabled_;
+    std::atomic<bool>     heartbeatPaused_;
+    std::atomic<bool>     firmwareLogEnabled_;
 
     std::vector<uint8_t> hbRecvData_;
     std::vector<uint8_t> hbSendData_;

@@ -27,6 +27,9 @@ public:
     bool          isHeartbeatEnabled() const override;
     void          pauseHeartbeat() override;
     void          resumeHeartbeat() override;
+    void          enableFirmwareLog() override;
+    void          disableFirmwareLog() override;
+    bool          isFirmwareLogEnabled() const override;
 
     void sendAndReceiveData(const uint8_t *sendData, uint32_t sendDataSize, uint8_t *receiveData, uint32_t *receiveDataSize) override;
 
