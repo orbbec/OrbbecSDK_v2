@@ -131,9 +131,9 @@ void OpenNIDeviceBase::initProperties() {
     propertyServer->registerProperty(OB_STRUCT_DEPTH_PRECISION_SUPPORT_LIST, "r", "r", d2dPropertyAccessor);
 
     auto privatePropertyAccessor = std::make_shared<PrivateFilterPropertyAccessor>(this);
-    propertyServer->registerProperty(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL, "rw", "rw", privatePropertyAccessor);
-    propertyServer->registerProperty(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT, "rw", "rw", privatePropertyAccessor);
-    propertyServer->registerProperty(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_SPECKLE_SIZE_INT, "rw", "rw", privatePropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_DEPTH_SOFT_FILTER_BOOL, "rw", "rw", privatePropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_DEPTH_MAX_DIFF_INT, "rw", "rw", privatePropertyAccessor);
+    propertyServer->registerProperty(OB_PROP_DEPTH_MAX_SPECKLE_SIZE_INT, "rw", "rw", privatePropertyAccessor);
 
     auto frameTransformPropertyAccessor = std::make_shared<OpenNIFrameTransformPropertyAccessor>(this);
     propertyServer->registerProperty(OB_PROP_DEPTH_MIRROR_BOOL, "rw", "rw", frameTransformPropertyAccessor);
@@ -201,8 +201,44 @@ std::vector<std::shared_ptr<IFilter>> OpenNIDeviceBase::createRecommendedPostPro
     if(filterFactory->isFilterCreatorExists("EdgeNoiseRemovalFilter")) {
         auto enrFilter = filterFactory->createFilter("EdgeNoiseRemovalFilter");
         enrFilter->enable(false);
-        // todo: set default values
+        std::vector<std::string> params = { "6", "0", "120", "120", "1", "1280", "800" };
+        enrFilter->updateConfig(params);
         depthFilterList.push_back(enrFilter);
+    }
+
+    if(filterFactory->isFilterCreatorExists("MgcNoiseRemovalFilter")) {
+        auto mgcNRFilter = filterFactory->createFilter("MgcNoiseRemovalFilter");
+        mgcNRFilter->enable(false);
+        std::vector<std::string> params = { "80", "80", "640", "6", "0", "120", "120", "1280", "800" };
+        mgcNRFilter->updateConfig(params);
+        depthFilterList.push_back(mgcNRFilter);
+    }
+
+    if(filterFactory->isFilterCreatorExists("LutNoiseRemovalFilter")) {
+        auto lutNRFilter = filterFactory->createFilter("LutNoiseRemovalFilter");
+        lutNRFilter->enable(false);
+        std::vector<std::string> params = { "1920", "1920", "1920", "1920", "1920", "200", "200", "1920", "800", "200",
+                                            "200",  "800",  "800",  "800",  "800",  "800", "256", "1280", "800" };
+        lutNRFilter->updateConfig(params);
+        depthFilterList.push_back(lutNRFilter);
+    }
+
+    if(filterFactory->isFilterCreatorExists("SpatialFastFilter")) {
+        auto spatFilter = filterFactory->createFilter("SpatialFastFilter");
+        spatFilter->enable(false);
+        // radius
+        std::vector<std::string> params = { "3" };
+        spatFilter->updateConfig(params);
+        depthFilterList.push_back(spatFilter);
+    }
+
+    if(filterFactory->isFilterCreatorExists("SpatialModerateFilter")) {
+        auto spatFilter = filterFactory->createFilter("SpatialModerateFilter");
+        spatFilter->enable(false);
+        // magnitude, disp_diff, radius
+        std::vector<std::string> params = { "2", "96", "5" };
+        spatFilter->updateConfig(params);
+        depthFilterList.push_back(spatFilter);
     }
 
     if(filterFactory->isFilterCreatorExists("SpatialAdvancedFilter")) {
@@ -235,6 +271,36 @@ std::vector<std::shared_ptr<IFilter>> OpenNIDeviceBase::createRecommendedPostPro
     }
 
     return depthFilterList;
+}
+
+void OpenNIDeviceBase::loadDefaultPostProcessingConfig() {
+    loadDefaultDepthPostProcessingConfig();
+}
+
+void OpenNIDeviceBase::loadDefaultDepthPostProcessingConfig() {
+    auto envConfig = EnvConfig::getInstance();
+
+    try {
+        std::string deviceName = utils::string::removeSpace(deviceInfo_->name_);
+        std::string nodeName   = std::string("Device.") + deviceName + std::string(".DepthPostProcessing");
+        if(envConfig->isNodeContained(nodeName)) {
+            bool swNoiseRmEnable = true;
+            auto propertyServer = getPropertyServer();
+            if(envConfig->getBooleanValue(nodeName + std::string(".SoftwareNoiseRemoveFilter"), swNoiseRmEnable)) {
+                propertyServer->setPropertyValueT(OB_PROP_DEPTH_SOFT_FILTER_BOOL, swNoiseRmEnable, PROP_ACCESS_USER);
+            }
+            else {
+                LOG_DEBUG("Getting depth post processing XML node failed");
+            }
+        }
+        else {
+            LOG_DEBUG("No depth post processing config found for device");
+        }
+    }
+    catch(libobsensor_exception &e) {
+        std::string errorMsg = "Failed to load default depth post processing config: " + std::string(e.what());
+        LOG_WARN(errorMsg);
+    }
 }
 
 OpenNIFrameProcessParam libobsensor::OpenNIDeviceBase::getFrameProcessParam() {

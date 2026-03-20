@@ -7,8 +7,47 @@
 #include "utils_opencv.hpp"
 
 #include <thread>
+#include <atomic>
+#include <fstream>
+#include <ctime>
+#include <iomanip>
+#include <sstream>
+#if defined(_WIN32)
+#include <direct.h>
+#else
+#include <sys/stat.h>
+#endif
 
-bool quit_program = false;  // Flag to signal the program to quit
+bool              quit_program      = false;  // Flag to signal the program to quit
+std::atomic<bool> capture_requested = { false };  // Flag to trigger depth frame capture
+
+static void createDirectories(const std::string &path) {
+    for(size_t i = 1; i <= path.size(); ++i) {
+        if(i == path.size() || path[i] == '/' || path[i] == '\\') {
+            std::string subPath = path.substr(0, i);
+#if defined(_WIN32)
+            _mkdir(subPath.c_str());
+#else
+            mkdir(subPath.c_str(), 0755);
+#endif
+        }
+    }
+}
+
+// Save a depth frame as a raw binary file
+static void saveDepthRaw(const std::string &filePath, std::shared_ptr<const ob::Frame> frame) {
+    if(!frame) {
+        std::cerr << "SaveDepthRaw: null frame, skip." << std::endl;
+        return;
+    }
+    std::ofstream ofs(filePath, std::ios::binary);
+    if(!ofs.is_open()) {
+        std::cerr << "SaveDepthRaw: failed to open " << filePath << std::endl;
+        return;
+    }
+    ofs.write(reinterpret_cast<const char *>(frame->getData()), frame->getDataSize());
+    std::cout << "Saved: " << filePath << " (" << frame->getDataSize() << " bytes)" << std::endl;
+}
 
 void printFiltersInfo(const std::vector<std::shared_ptr<ob::Filter>> &filterList) {
     std::cout << filterList.size() << " post processing filters recommended:" << std::endl;
@@ -35,6 +74,7 @@ void filterControl(const std::vector<std::shared_ptr<ob::Filter>> &filterList) {
         std::cout << "- Enter `[Filter] [Config] [Value]` to set a config value" << std::endl;
         std::cout << "- Enter `L`or `l` to list all available filters" << std::endl;
         std::cout << "- Enter `H` or `h` to print this help message" << std::endl;
+        std::cout << "- Enter `C` or `c` to capture depth frames (before/after processing) as .raw files" << std::endl;
         std::cout << "- Enter `Q` or `q` to quit" << std::endl;
     };
     printHelp();
@@ -54,6 +94,11 @@ void filterControl(const std::vector<std::shared_ptr<ob::Filter>> &filterList) {
         }
         else if(input == "h" || input == "H") {
             printHelp();
+            continue;
+        }
+        else if(input == "c" || input == "C") {
+            capture_requested = true;
+            std::cout << "Capture requested, saving depth frames to Output/Processing/ ..." << std::endl;
             continue;
         }
 
@@ -160,12 +205,12 @@ int main() try {
         }
 
         // Get the depth frame from the frameset
-        auto depthFrame = frameSet->getFrame(OB_FRAME_DEPTH);
-        if(!depthFrame) {
+        auto depthFrameRaw = frameSet->getFrame(OB_FRAME_DEPTH);
+        if(!depthFrameRaw) {
             continue;
         }
 
-        auto processedFrame = depthFrame;
+        auto processedFrame = depthFrameRaw;
         // Apply the recommended filters to the depth frame
         for(auto &filter: filterList) {
             if(filter->isEnabled()) {  // Only apply enabled filters
@@ -173,9 +218,23 @@ int main() try {
             }
         }
 
+        // Check if a capture was requested (triggered by pressing 'C' in the console)
+        if(capture_requested.exchange(false)) {
+            const std::string outDir = "Output/Process";
+            createDirectories(outDir);
+
+            auto depthFrame = depthFrameRaw->as<ob::DepthFrame>();
+            saveDepthRaw(outDir + "/depth_before_" + std::to_string(depthFrame->getWidth()) + "x" + std::to_string(depthFrame->height()) + "_"
+                             + std::to_string(depthFrame->timeStamp()) + ".raw",
+                         depthFrame);
+            saveDepthRaw(outDir + "/depth_after_" + std::to_string(depthFrame->width()) + "x" + std::to_string(depthFrame->height()) + "_"
+                             + std::to_string(depthFrame->timeStamp()) + ".raw",
+                         processedFrame);
+        }
+
         // Push the frames to the window for showing
         // Due to processedFrame type is same as the depthFrame, we should push it with different group id.
-        win.pushFramesToView(depthFrame, 0);
+        win.pushFramesToView(depthFrameRaw, 0);
         win.pushFramesToView(processedFrame, 1);
     }
 

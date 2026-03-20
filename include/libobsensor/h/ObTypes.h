@@ -1108,14 +1108,6 @@ typedef enum OB_EDGE_NOISE_REMOVAL_TYPE {
 } OBEdgeNoiseRemovalType,
     ob_edge_noise_removal_type;
 
-typedef struct {
-    OBEdgeNoiseRemovalType type;
-    uint16_t               marginLeftTh;
-    uint16_t               marginRightTh;
-    uint16_t               marginTopTh;
-    uint16_t               marginBottomTh;
-} OBEdgeNoiseRemovalFilterParams, ob_edge_noise_removal_filter_params;
-
 /**
  * @brief Denoising method
  */
@@ -1130,6 +1122,41 @@ typedef struct {
     uint16_t              disp_diff;
     OBDDONoiseRemovalType type;
 } OBNoiseRemovalFilterParams, ob_noise_removal_filter_params;
+
+typedef struct {
+    int      margin_x_th;       ///< Horizontal threshold settings
+    int      margin_y_th;       ///< Vertical threshold settings
+    int      limit_x_th;        ///< Maximum horizontal threshold
+    int      limit_y_th;        ///< Maximum vertical threshold
+    uint32_t width;             ///< Image width
+    uint32_t height;            ///< Image height
+    bool     enable_direction;  ///< Set to true for horizontal and vertical, false for horizontal only
+} OBEdgeNoiseRemovalFilterParams, ob_edge_noise_removal_filter_params;
+
+/**
+ * @brief Configuration parameters for the MGC noise removal filter
+ */
+typedef struct {
+    int      max_width_left;   ///< Left chamfer threshold settings
+    int      max_width_right;  ///< Right chamfer threshold settings
+    int      max_radius;       ///< Chamfer radius threshold settings
+    int      margin_x_th;      ///< Horizontal threshold settings
+    int      margin_y_th;      ///< Vertical threshold settings
+    int      limit_x_th;       ///< Maximum horizontal threshold
+    int      limit_y_th;       ///< Maximum vertical threshold
+    uint32_t width;            ///< Depth map width the above parameters correspond to
+    uint32_t height;           ///< Depth map height the above parameters correspond to
+} OBMgcNoiseRemovalFilterParams, ob_mgc_noise_removal_filter_params;
+
+/**
+ * @brief Configuration parameters for the LUT noise removal filter
+ */
+typedef struct {
+    uint16_t max_lut[16];  ///< LUT max size of noise pixels (4x4 LUT, 16 entries total)
+    uint16_t min_diff;     ///< Difference threshold between neighbor pixels
+    uint32_t width;        ///< Depth map width the above parameters correspond to
+    uint32_t height;       ///< Depth map height the above parameters correspond to
+} OBLutNoiseRemovalFilterParams, ob_lut_noise_removal_filter_params;
 
 /**
  * @brief Control command protocol version number

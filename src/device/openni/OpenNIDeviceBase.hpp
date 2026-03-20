@@ -20,6 +20,7 @@ public:
     virtual ~OpenNIDeviceBase() noexcept override;
 
     std::vector<std::shared_ptr<IFilter>> createRecommendedPostProcessingFilters(OBSensorType type) override;
+    void                                  loadDefaultPostProcessingConfig() override;
 
     OpenNIFrameProcessParam getFrameProcessParam();
 
@@ -28,6 +29,7 @@ protected:
     virtual void initSensorList();
     virtual void initProperties();
     virtual void initSensorStreamProfile(std::shared_ptr<ISensor> sensor);
+    void         loadDefaultDepthPostProcessingConfig();
 
 protected:
     const uint64_t deviceTimeFreq_ = 1000;     // in ms
