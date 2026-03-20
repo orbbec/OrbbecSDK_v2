@@ -250,7 +250,8 @@ void Align::alignFrames(const std::shared_ptr<const Frame> from, std::shared_ptr
         }
 
         uint16_t *alignedData = reinterpret_cast<uint16_t *>(const_cast<void *>((void *)align->getData()));
-        impl_->initialize(fromIntrin, fromDisto, toIntrin, toDisto, fromToExtrin, depthUnitMm, addTargetDistortion_, gapFillCopy_, useScale, from->getFormat());
+        uint16_t maxValidDepth = from->as<DepthFrame>()->getMaxValidDepthValue();
+        impl_->initialize(fromIntrin, fromDisto, toIntrin, toDisto, fromToExtrin, depthUnitMm, addTargetDistortion_, gapFillCopy_, useScale, from->getFormat(),maxValidDepth); /// TODO
         auto in = reinterpret_cast<const uint16_t *>(from->getData());
         impl_->D2C(in, fromVideoProfile->getWidth(), fromVideoProfile->getHeight(), alignedData, alignVideoProfile->getWidth(), alignVideoProfile->getHeight());
     }
@@ -260,7 +261,8 @@ void Align::alignFrames(const std::shared_ptr<const Frame> from, std::shared_ptr
             return;
         }
         auto depth_other_extrin = alignProfile->getExtrinsicTo(fromProfile);
-        impl_->initialize(toIntrin, toDisto, fromIntrin, fromDisto, depth_other_extrin, depthUnitMm, addTargetDistortion_, gapFillCopy_, false, depth->getFormat());
+        uint16_t maxValidDepth = depth->as<DepthFrame>()->getMaxValidDepthValue();
+        impl_->initialize(toIntrin, toDisto, fromIntrin, fromDisto, depth_other_extrin, depthUnitMm, addTargetDistortion_, gapFillCopy_, false, depth->getFormat(), maxValidDepth); /// TODO
         auto dep = reinterpret_cast<const uint16_t *>(depth->getData());
         auto in  = const_cast<const void *>((const void *)from->getData());
         auto out = const_cast<void *>((void *)align->getData());

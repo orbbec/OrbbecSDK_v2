@@ -52,6 +52,7 @@ void OpenNIDisparitySensor::outputFrame(std::shared_ptr<Frame> frame) {
     auto depthFrame = frame->as<DepthFrame>();
     if(depthFrame) {
         depthFrame->setValueScale(depthUnit_);
+        depthFrame->setMaxValidDepthValue(65535);
     }
 
     VideoSensor::outputFrame(frame);

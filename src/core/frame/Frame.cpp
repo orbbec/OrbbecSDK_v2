@@ -303,11 +303,20 @@ float DepthFrame::getValueScale() const {
     return valueScale_;
 }
 
+void DepthFrame::setMaxValidDepthValue(uint16_t maxDepthValue){
+    maxValidDepthValue_ = maxDepthValue;
+}
+
+uint16_t DepthFrame::getMaxValidDepthValue() const {
+    return maxValidDepthValue_;
+}
+
 void DepthFrame::copyInfoFromOther(std::shared_ptr<const Frame> sourceFrame) {
     VideoFrame::copyInfoFromOther(sourceFrame);
     if(sourceFrame->is<DepthFrame>()) {
-        auto df     = sourceFrame->as<DepthFrame>();
-        valueScale_ = df->valueScale_;
+        auto df             = sourceFrame->as<DepthFrame>();
+        valueScale_         = df->valueScale_;
+        maxValidDepthValue_ = df->maxValidDepthValue_;
     }
 }
 

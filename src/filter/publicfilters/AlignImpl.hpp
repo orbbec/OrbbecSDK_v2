@@ -9,6 +9,7 @@
 #include <utility>
 #include <unordered_map>
 #include <memory>
+#include <vector>
 #include "libobsensor/h/ObTypes.h"
 #include "IAlignImpl.hpp"
 
@@ -56,10 +57,11 @@ public:
      * @param[in] add_target_distortion switch to add distortion of the target frame
      * @param[in] gap_fill_copy switch to fill gaps with copy or nearest-interpolation after alignment
      * @param[in] auto_scale_down switch to automatically scale down resolution of depth frame
+     * @param[in] max_invalid_value max invalud value
      */
     void initialize(OBCameraIntrinsic depth_intrin, OBCameraDistortion depth_disto, OBCameraIntrinsic rgb_intrin, OBCameraDistortion rgb_disto,
                     OBExtrinsic depth_to_rgb, float depth_unit_mm, bool add_target_distortion, bool gap_fill_copy, bool use_scale,
-                    OBFormat depth_format) override;
+                    OBFormat depth_format, uint16_t max_invalid_value) override;
 
     /**
      * @brief Get depth unit in millimeter
@@ -196,6 +198,7 @@ private:
     std::unordered_map<std::pair<int, int>, float *[2], ResHashFunc, ResComp> rot_coeff_ht_y;
     std::unordered_map<std::pair<int, int>, float *[2], ResHashFunc, ResComp> rot_coeff_ht_z;
 
+    uint16_t           max_invalid_value_;        // depth value larger than this will be considered invalid and set to 0 in aligned depth map
     float              depth_unit_mm_;            // depth scale
     bool               add_target_distortion_;    // distort align frame with target coefficent
     bool               need_to_undistort_depth_;  // undistort depth is necessary
@@ -211,6 +214,10 @@ private:
 
     // possible inflection point of the calibrated K6 distortion curve
     float r2_max_loc_;
+    // work buffers — reused across frames to avoid per-call malloc/free
+    std::vector<uint16_t> depth_work_buf_;  // copy of input depth with invalid pixels zeroed
+    std::vector<uint16_t> scale_work_buf_;  // intermediate buffer for D2C post-process scale step
+
     // members for SSE
     bool     use_scale_ = false;
     OBFormat depth_format_;

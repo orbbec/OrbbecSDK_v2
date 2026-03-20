@@ -173,10 +173,14 @@ public:
     void  setValueScale(float valueScale);
     float getValueScale() const;
 
+    void     setMaxValidDepthValue(uint16_t maxDepthValue);
+    uint16_t getMaxValidDepthValue() const;
+
     virtual void copyInfoFromOther(std::shared_ptr<const Frame> sourceFrame) override;
 
 private:
     float valueScale_;
+    uint16_t maxValidDepthValue_ = 65535; 
 };
 
 class ConfidenceFrame : public VideoFrame {

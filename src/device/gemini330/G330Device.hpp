@@ -23,6 +23,7 @@ public:
 
     std::vector<std::shared_ptr<IFilter>> createRecommendedPostProcessingFilters(OBSensorType type) override;
     void                                  loadDefaultPostProcessingConfig() override;
+    uint16_t                              getDepthMaxValidValue(OBFormat format) const override;
 
 private:
     void init() override;
@@ -54,6 +55,7 @@ public:
     void                                  deactivate() override;
     std::vector<std::shared_ptr<IFilter>> createRecommendedPostProcessingFilters(OBSensorType type) override;
     void                                  loadDefaultPostProcessingConfig() override;
+    uint16_t                              getDepthMaxValidValue(OBFormat format) const override;
 
 private:
     void init() override;
@@ -81,6 +83,11 @@ private:
 
     int      netBandwidth_;
     uint32_t linkSpeed_;
+
+    // Cached depth parameters for getDepthMaxValidValue (Gemini 335Le only).
+    // Avoids querying the device on every frame callback.
+    float cachedDepthUnit_ = 1.0f;
+    bool  cachedHwD2D_     = false;
 };
 #endif
 

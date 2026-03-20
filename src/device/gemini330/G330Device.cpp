@@ -62,6 +62,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <cmath>
 
 namespace libobsensor {
 
@@ -1351,6 +1352,53 @@ void G330Device::loadDefaultDepthPostProcessingConfig() {
     }
 }
 
+// Helper: calculate the maximum valid depth pixel value for Gemini 335Le.
+static uint16_t calcG335LeMaxDepthValue(OBFormat format, float depthUnit, bool hwD2D) {
+    uint32_t maxValue = 65535;
+
+    if(hwD2D && format != OB_FORMAT_Y16) {
+        if(format == OB_FORMAT_Y12) {
+            if(depthUnit <= 1.6f) {
+                maxValue = 6552;
+            }
+            else if(depthUnit <= 3.2f) {
+                maxValue = 13104;
+            }
+            else if(depthUnit <= 6.4f) {
+                maxValue = 26208;
+            }
+            else {
+                maxValue = 52416;
+            }
+        }
+        else if(format == OB_FORMAT_Y14) {
+            if(depthUnit <= 0.4f) {
+                maxValue = 6552;
+            }
+            else if(depthUnit <= 0.8f) {
+                maxValue = 13104;
+            }
+            else if(depthUnit <= 1.6f) {
+                maxValue = 26208;
+            }
+            else if(depthUnit <= 3.2f) {
+                maxValue = 52416;
+            }
+            else {
+                maxValue = 65535;
+            }
+        }
+    }
+
+    maxValue = static_cast<uint32_t>(std::floor(maxValue / depthUnit));
+    return maxValue > 65535 ? 65535 : static_cast<uint16_t>(maxValue);
+}
+
+uint16_t G330Device::getDepthMaxValidValue(OBFormat format) const {
+    (void)format;
+    return 65535;
+}
+
 #if defined(BUILD_NET_PAL)
 //====================================================================================================================================
 //=========================================================G330NetDevice==============================================================
@@ -1523,6 +1571,25 @@ void G330NetDevice::init() {
         auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
         propertyServer->registerProperty(OB_PROP_DEVICE_NETWORK_LLA_BOOL, "rw", "rw", vendorPropertyAccessor.get());
     }
+
+    // Cache depth unit and hwD2D to avoid per-frame device queries in getDepthMaxValidValue.
+    // OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT can change dynamically;
+    // OB_PROP_DISPARITY_TO_DEPTH_BOOL does not change during streaming but may change between streams.
+    cachedDepthUnit_ = propertyServer->getPropertyValueT<float>(OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT);
+    cachedHwD2D_     = propertyServer->getPropertyValueT<bool>(OB_PROP_DISPARITY_TO_DEPTH_BOOL);
+    propertyServer->registerAccessCallback(
+        { OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT, OB_PROP_DISPARITY_TO_DEPTH_BOOL },
+        [this](uint32_t propId, const uint8_t *data, size_t dataSize, PropertyOperationType opType) {
+            if(opType != PROP_OP_WRITE || data == nullptr) {
+                return;
+            }
+            if(propId == OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT && dataSize >= sizeof(float)) {
+                cachedDepthUnit_ = *reinterpret_cast<const float *>(data);
+            }
+            else if(propId == OB_PROP_DISPARITY_TO_DEPTH_BOOL && dataSize >= sizeof(uint32_t)) {
+                cachedHwD2D_ = (*reinterpret_cast<const uint32_t *>(data) != 0);
+            }
+        });
 
     fetchDeviceErrorState();
 }
@@ -2331,6 +2398,10 @@ void G330NetDevice::loadDefaultDepthPostProcessingConfig() {
         std::string errorMsg = "Failed to load default depth post processing config: " + std::string(e.what());
         LOG_WARN(errorMsg);
     }
+}
+
+uint16_t G330NetDevice::getDepthMaxValidValue(OBFormat format) const {
+    return calcG335LeMaxDepthValue(format, cachedDepthUnit_, cachedHwD2D_);
 }
 
 void G330NetDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {

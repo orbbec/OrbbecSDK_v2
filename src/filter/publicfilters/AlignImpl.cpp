@@ -110,12 +110,12 @@ AlignImpl::~AlignImpl() {
 }
 
 void AlignImpl::initialize(OBCameraIntrinsic depth_intrin, OBCameraDistortion depth_disto, OBCameraIntrinsic rgb_intrin, OBCameraDistortion rgb_disto,
-                           OBExtrinsic extrin, float depth_unit_mm, bool add_target_distortion, bool gap_fill_copy, bool use_scale, OBFormat depth_format) {
+                           OBExtrinsic extrin, float depth_unit_mm, bool add_target_distortion, bool gap_fill_copy, bool use_scale, OBFormat depth_format, uint16_t max_invalid_value) {
     if(initialized_ && memcmp(&depth_intrin, &depth_intric_, sizeof(OBCameraIntrinsic)) == 0
        && memcmp(&depth_disto, &depth_disto_, sizeof(OBCameraDistortion)) == 0 && memcmp(&rgb_intrin, &rgb_intric_, sizeof(OBCameraIntrinsic)) == 0
        && memcmp(&rgb_disto, &rgb_disto_, sizeof(OBCameraDistortion)) == 0 && memcmp(&extrin, &transform_, sizeof(OBExtrinsic)) == 0
        && depth_unit_mm == depth_unit_mm_ && add_target_distortion == add_target_distortion_ && gap_fill_copy == gap_fill_copy_ && use_scale == use_scale_
-       && depth_format == depth_format_) {
+       && depth_format == depth_format_ && max_invalid_value == max_invalid_value_) {
         return;
     }
     memcpy(&depth_intric_, &depth_intrin, sizeof(OBCameraIntrinsic));
@@ -128,6 +128,7 @@ void AlignImpl::initialize(OBCameraIntrinsic depth_intrin, OBCameraDistortion de
     // since undistorted depth (whether d2c or c2d) is necessory ...
     need_to_undistort_depth_ = ((depth_disto.k1 != 0) || (depth_disto.k2 != 0) || (depth_disto.k3 != 0) || (depth_disto.k4 != 0) || (depth_disto.k5 != 0)
                                 || (depth_disto.k6 != 0) || (depth_disto.p1 != 0) || (depth_disto.p2 != 0));
+    max_invalid_value_       = max_invalid_value;
     depth_unit_mm_           = depth_unit_mm;
     gap_fill_copy_           = gap_fill_copy;
     use_scale_               = use_scale;
@@ -703,7 +704,7 @@ void AlignImpl::LinearDistortedD2CWithoutSSE(const uint16_t *depth_buffer, uint1
 
 inline bool AlignImpl::K3ProcessWithoutSSE(uint16_t depth, const float *coeff_mat_x[2], const float *coeff_mat_y[2], const float *coeff_mat_z[2], int channel,
                                            float *pixelx_f, float *pixely_f, float *dst) {
-    if(depth < EPSILON) {
+    if((depth < EPSILON) || (depth >= max_invalid_value_)) {
         for(int i = 0; i < channel; i++) {
             coeff_mat_x[i] += 1;
             coeff_mat_y[i] += 1;
@@ -719,7 +720,7 @@ inline bool AlignImpl::K3ProcessWithoutSSE(uint16_t depth, const float *coeff_ma
         float dst_y = depth * (*coeff_mat_y[k]++) + scaled_trans_[1];
         float z     = depth * (*coeff_mat_z[k]++) + scaled_trans_[2];
 
-        if(z < EPSILON) {
+        if((z < EPSILON) || (z >= max_invalid_value_)) {
             valid = false;
             break;
         }
@@ -743,7 +744,7 @@ inline bool AlignImpl::K3ProcessWithoutSSE(uint16_t depth, const float *coeff_ma
 
 inline bool AlignImpl::K6ProcessWithoutSSE(uint16_t depth, const float *coeff_mat_x[2], const float *coeff_mat_y[2], const float *coeff_mat_z[2], int channel,
                                            float *pixelx_f, float *pixely_f, float *dst) {
-    if(depth < EPSILON) {
+    if((depth < EPSILON) || (depth >= max_invalid_value_)) {
         for(int i = 0; i < channel; i++) {
             coeff_mat_x[i] += 1;
             coeff_mat_y[i] += 1;
@@ -759,7 +760,7 @@ inline bool AlignImpl::K6ProcessWithoutSSE(uint16_t depth, const float *coeff_ma
         float dst_y = depth * (*coeff_mat_y[k]++) + scaled_trans_[1];
         float z     = depth * (*coeff_mat_z[k]++) + scaled_trans_[2];
 
-        if(z < EPSILON) {
+        if((z < EPSILON) || (z >= max_invalid_value_)) {
             valid = false;
             break;
         }
@@ -790,7 +791,7 @@ inline bool AlignImpl::K6ProcessWithoutSSE(uint16_t depth, const float *coeff_ma
 
 inline bool AlignImpl::KBProcessWithoutSSE(uint16_t depth, const float *coeff_mat_x[2], const float *coeff_mat_y[2], const float *coeff_mat_z[2], int channel,
                                            float *pixelx_f, float *pixely_f, float *dst) {
-    if(depth < EPSILON) {
+    if((depth < EPSILON) || (depth >= max_invalid_value_)) {
         for(int i = 0; i < channel; i++) {
             coeff_mat_x[i] += 1;
             coeff_mat_y[i] += 1;
@@ -806,7 +807,7 @@ inline bool AlignImpl::KBProcessWithoutSSE(uint16_t depth, const float *coeff_ma
         float dst_y = depth * (*coeff_mat_y[k]++) + scaled_trans_[1];
         float z     = depth * (*coeff_mat_z[k]++) + scaled_trans_[2];
 
-        if(z < EPSILON) {
+        if((z < EPSILON) || (z >= max_invalid_value_)) {
             valid = false;
             break;
         }
@@ -830,7 +831,7 @@ inline bool AlignImpl::KBProcessWithoutSSE(uint16_t depth, const float *coeff_ma
 
 inline bool AlignImpl::LinearProcessWithoutSSE(uint16_t depth, const float *coeff_mat_x[2], const float *coeff_mat_y[2], const float *coeff_mat_z[2],
                                                int channel, float *pixelx_f, float *pixely_f, float *dst) {
-    if(depth < EPSILON) {
+    if((depth < EPSILON) || (depth >= max_invalid_value_)) {
         for(int i = 0; i < channel; i++) {
             coeff_mat_x[i] += 1;
             coeff_mat_y[i] += 1;
@@ -846,7 +847,7 @@ inline bool AlignImpl::LinearProcessWithoutSSE(uint16_t depth, const float *coef
         float dst_y = depth * (*coeff_mat_y[k]++) + scaled_trans_[1];
         float z     = depth * (*coeff_mat_z[k]++) + scaled_trans_[2];
 
-        if(z < EPSILON) {
+        if((z < EPSILON) || (z >= max_invalid_value_)) {
             valid = false;
             break;
         }
@@ -1592,17 +1593,30 @@ int AlignImpl::D2C(const uint16_t *depth_buffer, int depth_width, int depth_heig
         coeff_mat_z[i] = finder_z->second[i];
     }
 
+    // Copy input into a work buffer and zero invalid pixels there, so the caller's frame data is never modified.
+    int depthPixelCount = depth_width * depth_height;
+    if(static_cast<int>(depth_work_buf_.size()) < depthPixelCount) {
+        depth_work_buf_.resize(depthPixelCount);
+    }
+    memcpy(depth_work_buf_.data(), depth_buffer, depthPixelCount * sizeof(uint16_t));
+    for(int i = 0; i < depthPixelCount; i++) {
+        if(depth_work_buf_[i] >= max_invalid_value_) {
+            depth_work_buf_[i] = 0;
+        }
+    }
+    const uint16_t *workBuf = depth_work_buf_.data();
+
     if(withSSE) {
         if(add_target_distortion_) {
             switch(rgb_disto_.model) {
             case OB_DISTORTION_BROWN_CONRADY:
-                K3DistortedD2CWithSSE(depth_buffer, out_depth, coeff_mat_x, coeff_mat_y, coeff_mat_z, map);
+                K3DistortedD2CWithSSE(workBuf, out_depth, coeff_mat_x, coeff_mat_y, coeff_mat_z, map);
                 break;
             case OB_DISTORTION_BROWN_CONRADY_K6:
-                K6DistortedD2CWithSSE(depth_buffer, out_depth, coeff_mat_x, coeff_mat_y, coeff_mat_z, map);
+                K6DistortedD2CWithSSE(workBuf, out_depth, coeff_mat_x, coeff_mat_y, coeff_mat_z, map);
                 break;
             case OB_DISTORTION_KANNALA_BRANDT4:
-                KBDistortedD2CWithSSE(depth_buffer, out_depth, coeff_mat_x, coeff_mat_y, coeff_mat_z, map);
+                KBDistortedD2CWithSSE(workBuf, out_depth, coeff_mat_x, coeff_mat_y, coeff_mat_z, map);
                 break;
             default:
                 LOG_ERROR("Distortion model not supported yet");
@@ -1610,20 +1624,20 @@ int AlignImpl::D2C(const uint16_t *depth_buffer, int depth_width, int depth_heig
             }
         }
         else {
-            LinearD2CWithSSE(depth_buffer, out_depth, coeff_mat_x, coeff_mat_y, coeff_mat_z, map);
+            LinearD2CWithSSE(workBuf, out_depth, coeff_mat_x, coeff_mat_y, coeff_mat_z, map);
         }
     }
     else {
         if(add_target_distortion_) {
             switch(rgb_disto_.model) {
             case OB_DISTORTION_BROWN_CONRADY:
-                K3DistortedD2CWithoutSSE(depth_buffer, out_depth, coeff_mat_x, coeff_mat_y, coeff_mat_z, map);
+                K3DistortedD2CWithoutSSE(workBuf, out_depth, coeff_mat_x, coeff_mat_y, coeff_mat_z, map);
                 break;
             case OB_DISTORTION_BROWN_CONRADY_K6:
-                K6DistortedD2CWithoutSSE(depth_buffer, out_depth, coeff_mat_x, coeff_mat_y, coeff_mat_z, map);
+                K6DistortedD2CWithoutSSE(workBuf, out_depth, coeff_mat_x, coeff_mat_y, coeff_mat_z, map);
                 break;
             case OB_DISTORTION_KANNALA_BRANDT4:
-                KBDistortedD2CWithoutSSE(depth_buffer, out_depth, coeff_mat_x, coeff_mat_y, coeff_mat_z, map);
+                KBDistortedD2CWithoutSSE(workBuf, out_depth, coeff_mat_x, coeff_mat_y, coeff_mat_z, map);
                 break;
             default:
                 LOG_ERROR("Distortion model not supported yet");
@@ -1632,21 +1646,19 @@ int AlignImpl::D2C(const uint16_t *depth_buffer, int depth_width, int depth_heig
         }
         else {
             LOG_DEBUG("LinearDistortedD2CWithoutSSE");
-            LinearDistortedD2CWithoutSSE(depth_buffer, out_depth, coeff_mat_x, coeff_mat_y, coeff_mat_z, map);
+            LinearDistortedD2CWithoutSSE(workBuf, out_depth, coeff_mat_x, coeff_mat_y, coeff_mat_z, map);
         }
     }
 
     if(use_scale_) {
         if(out_depth) {
-            uint16_t *out_depth_dst = (uint16_t *)malloc(pixnum * sizeof(uint16_t));
-            if(out_depth_dst == nullptr) {
-                return -1;
+            if(static_cast<int>(scale_work_buf_.size()) < pixnum) {
+                scale_work_buf_.resize(pixnum);
             }
-            memcpy(out_depth_dst, out_depth, pixnum * sizeof(uint16_t));
+            memcpy(scale_work_buf_.data(), out_depth, pixnum * sizeof(uint16_t));
             int pixnumutemp = rgb_temp_width * rgb_temp_height;
             memset(out_depth, 0xff, pixnumutemp * sizeof(uint16_t));
-            D2CPostProcess(out_depth_dst, rgb_intric_.width, rgb_intric_.height, scale, out_depth, rgb_temp_width, rgb_temp_height);
-            free(out_depth_dst);
+            D2CPostProcess(scale_work_buf_.data(), rgb_intric_.width, rgb_intric_.height, scale, out_depth, rgb_temp_width, rgb_temp_height);
         }
 
         rgb_intric_.fx     = rgb_temp_fx;
@@ -1663,7 +1675,7 @@ int AlignImpl::D2C(const uint16_t *depth_buffer, int depth_width, int depth_heig
     pixnum = rgb_intric_.width * rgb_intric_.height;
     if(out_depth) {
         for(int idx = 0; idx < pixnum; idx++) {
-            if(65535 == out_depth[idx]) {
+            if(max_invalid_value_ <= out_depth[idx]) {
                 out_depth[idx] = 0;
             }
         }

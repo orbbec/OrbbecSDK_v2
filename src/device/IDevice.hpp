@@ -125,6 +125,20 @@ public:
     virtual bool hasWriteAccess() const                = 0;
     virtual void updateDepthPostProcessingFilterList() = 0;
 
+    /**
+     * @brief Get the maximum valid depth value for the given depth frame format.
+     *
+     * For most devices this is always 65535. For Gemini 335Le with hardware D2D enabled and Y12/Y14
+     * depth format, the actual maximum depends on the depth unit and format .
+     *
+     * @param format  The depth frame format (e.g. OB_FORMAT_Y12, OB_FORMAT_Y14, OB_FORMAT_Y16).
+     * @return Maximum valid depth pixel value.
+     */
+    virtual uint16_t getDepthMaxValidValue(OBFormat format) const {
+        (void)format;
+        return 65535;
+    }
+
 public:
     // templated functions
     template <typename T> DeviceComponentPtr<T> getComponentT(DeviceComponentId compId, bool throwExIfNotFound = true) {

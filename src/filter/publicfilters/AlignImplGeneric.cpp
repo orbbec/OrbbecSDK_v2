@@ -15,7 +15,7 @@ AlignImplGeneric::~AlignImplGeneric() {}
 
 void AlignImplGeneric::initialize(OBCameraIntrinsic depth_intrin, OBCameraDistortion depth_disto, OBCameraIntrinsic rgb_intrin, OBCameraDistortion rgb_disto,
                                   OBExtrinsic depth_to_rgb, float depth_unit_mm, bool add_target_distortion, bool gap_fill_copy, bool use_scale,
-                                  OBFormat depth_format) {
+                                  OBFormat depth_format, uint16_t max_invalid_value) {
     // TODO
     (void)depth_intrin;
     (void)depth_disto;
@@ -27,6 +27,7 @@ void AlignImplGeneric::initialize(OBCameraIntrinsic depth_intrin, OBCameraDistor
     (void)gap_fill_copy;
     (void)use_scale;
     (void)depth_format;
+    (void)max_invalid_value;
 }
 
 float AlignImplGeneric::getDepthUnit() const {

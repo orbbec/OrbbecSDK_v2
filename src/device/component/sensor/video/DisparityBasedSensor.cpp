@@ -63,6 +63,9 @@ void DisparityBasedSensor::outputFrame(std::shared_ptr<Frame> frame) {
     auto depthFrame = frame->as<DepthFrame>();
     if(depthFrame) {
         depthFrame->setValueScale(depthUnit_);
+        auto     format = currentBackendStreamProfile_->getFormat();
+        uint16_t maxValidDepth = getOwner()->getDepthMaxValidValue(format);
+        depthFrame->setMaxValidDepthValue(maxValidDepth);
     }
 
     VideoSensor::outputFrame(frame);

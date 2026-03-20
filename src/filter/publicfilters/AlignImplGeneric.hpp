@@ -32,10 +32,11 @@ public:
      * @param[in] add_target_distortion switch to add distortion of the target frame
      * @param[in] gap_fill_copy switch to fill gaps with copy or nearest-interpolation after alignment
      * @param[in] auto_scale_down switch to automatically scale down resolution of depth frame
+     * @param[in] max_invalid_value max invalud value
      */
     void initialize(OBCameraIntrinsic depth_intrin, OBCameraDistortion depth_disto, OBCameraIntrinsic rgb_intrin, OBCameraDistortion rgb_disto,
-                    OBExtrinsic depth_to_rgb, float depth_unit_mm, bool add_target_distortion, bool gap_fill_copy, bool use_scale,
-                    OBFormat depth_format) override;
+                    OBExtrinsic depth_to_rgb, float depth_unit_mm, bool add_target_distortion, bool gap_fill_copy, bool use_scale, OBFormat depth_format,
+                    uint16_t max_invalid_value) override;
 
     /**
      * @brief Get depth unit in millimeter
