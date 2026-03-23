@@ -913,8 +913,9 @@ uint32_t phaseProfileFormatToFourccGmsl(std::shared_ptr<const VideoStreamProfile
 }
 
 void ObV4lGmslDevicePort::startStream(std::shared_ptr<const StreamProfile> profile, MutableFrameCallback callback) {
-    std::shared_ptr<V4lDeviceHandleGmsl> devHandle    = nullptr;
-    auto                                 videoProfile = profile->as<VideoStreamProfile>();
+    std::lock_guard<std::recursive_mutex> lock(streamMutex_);
+    std::shared_ptr<V4lDeviceHandleGmsl>  devHandle    = nullptr;
+    auto                                  videoProfile = profile->as<VideoStreamProfile>();
     foreachProfileGmsl(deviceHandles_, [&](std::shared_ptr<V4lDeviceHandleGmsl> handle, std::shared_ptr<VideoStreamProfile> prof) {
         if(prof->getWidth() == videoProfile->getWidth() && prof->getHeight() == videoProfile->getHeight() && prof->getFps() == videoProfile->getFps()
            && prof->getFormat() == videoProfile->getFormat()) {
@@ -1131,6 +1132,7 @@ void ObV4lGmslDevicePort::startStream(std::shared_ptr<const StreamProfile> profi
     v4l2_buf_type                bufType = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     std::unique_lock<std::mutex> lk(mMultiThreadI2CMutex);
     if(xioctlGmsl(devHandle->fd, VIDIOC_STREAMON, &bufType) < 0) {
+        lk.unlock();
         auto err = errno;
         stopStream(devHandle);
         throw io_exception("Failed to stream on!" + devHandle->info->name + ", " + strerror(err));
@@ -1145,6 +1147,7 @@ void ObV4lGmslDevicePort::startStream(std::shared_ptr<const StreamProfile> profi
 }
 
 void ObV4lGmslDevicePort::stopStream(std::shared_ptr<const StreamProfile> profile) {
+    std::lock_guard<std::recursive_mutex> lock(streamMutex_);
     LOG_INFO("-Entry stopStream-");
     if(deviceHandles_.empty()) {
         LOG_DEBUG("-deviceHandles_.empty-");

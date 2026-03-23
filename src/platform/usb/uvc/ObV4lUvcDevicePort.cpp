@@ -556,8 +556,9 @@ uint32_t phaseProfileFormatToFourcc(std::shared_ptr<const VideoStreamProfile> pr
 }
 
 void ObV4lUvcDevicePort::startStream(std::shared_ptr<const StreamProfile> profile, MutableFrameCallback callback) {
-    std::shared_ptr<V4lDeviceHandle> devHandle    = nullptr;
-    auto                             videoProfile = profile->as<VideoStreamProfile>();
+    std::lock_guard<std::recursive_mutex> lock(streamMutex_);
+    std::shared_ptr<V4lDeviceHandle>      devHandle    = nullptr;
+    auto                                  videoProfile = profile->as<VideoStreamProfile>();
     foreachProfile(deviceHandles_, [&](std::shared_ptr<V4lDeviceHandle> handle, std::shared_ptr<VideoStreamProfile> prof) {
         if(prof->getWidth() == videoProfile->getWidth() && prof->getHeight() == videoProfile->getHeight() && prof->getFps() == videoProfile->getFps()
            && prof->getFormat() == videoProfile->getFormat()) {
@@ -714,6 +715,7 @@ void ObV4lUvcDevicePort::startStream(std::shared_ptr<const StreamProfile> profil
 }
 
 void ObV4lUvcDevicePort::stopStream(std::shared_ptr<const StreamProfile> profile) {
+    std::lock_guard<std::recursive_mutex> lock(streamMutex_);
     if(deviceHandles_.empty()) {
         return;
     }

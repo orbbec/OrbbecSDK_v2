@@ -165,6 +165,7 @@ private:
 private:
     std::shared_ptr<const USBSourcePortInfo>          portInfo_ = nullptr;
     std::vector<std::shared_ptr<V4lDeviceHandleGmsl>> deviceHandles_;
+    std::recursive_mutex                              streamMutex_;
 };
 
 }  // namespace libobsensor
