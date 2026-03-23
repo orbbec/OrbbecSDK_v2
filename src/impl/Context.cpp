@@ -46,6 +46,9 @@ void ob_delete_context(ob_context *context, ob_error **error) BEGIN_API_CALL {
         }
     }
 
+    // Release ref before delete to ensure DeviceManager is destroyed before Logger.
+    deviceMgr.reset();
+    
     delete context;
 }
 HANDLE_EXCEPTIONS_NO_RETURN(context)
