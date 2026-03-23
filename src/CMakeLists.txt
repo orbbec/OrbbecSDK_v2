@@ -43,7 +43,8 @@ endif()
 # only support shared library for now
 add_library(${OB_SDK_LIB_NAME} SHARED "" ${ORBBEC_VERSIONINFO_RC})
 include(GenerateExportHeader)
-generate_export_header(${OB_SDK_LIB_NAME} BASE_NAME OB EXPORT_FILE_NAME ${OB_PUBLIC_HEADERS_DIR}/libobsensor/h/Export.h)
+generate_export_header(${OB_SDK_LIB_NAME} BASE_NAME OB EXPORT_FILE_NAME "${CMAKE_CURRENT_BINARY_DIR}/generated/Export.h")
+target_include_directories(shared PUBLIC "${CMAKE_CURRENT_BINARY_DIR}/generated")
 
 file(GLOB_RECURSE SOURCE_FILES ${CMAKE_CURRENT_LIST_DIR}/impl/*.cpp ${CMAKE_CURRENT_LIST_DIR}/context/*.cpp)
 file(GLOB_RECURSE HEADER_FILES ${CMAKE_CURRENT_LIST_DIR}/impl/*.hpp ${CMAKE_CURRENT_LIST_DIR}/context/*.hpp)
@@ -53,7 +54,10 @@ target_sources(${OB_SDK_LIB_NAME} PRIVATE ${SOURCE_FILES} ${HEADER_FILES})
 target_link_libraries(${OB_SDK_LIB_NAME} PRIVATE ob::shared ob::core ob::filter ob::platform ob::device ob::pipeline ob::media)
 target_include_directories(${OB_SDK_LIB_NAME} PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 target_include_directories(
-    ${OB_SDK_LIB_NAME} PUBLIC "$<BUILD_INTERFACE:${OB_PUBLIC_HEADERS_DIR}>" "$<INSTALL_INTERFACE:include>"
+    ${OB_SDK_LIB_NAME} PUBLIC
+    "$<BUILD_INTERFACE:${OB_PUBLIC_HEADERS_DIR}>"
+    "$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/generated>"
+    "$<INSTALL_INTERFACE:include>"
 )
 
 if(UNIX)
@@ -87,6 +91,7 @@ if(OB_IS_MAIN_PROJECT)
         PATTERN "*.hpp"
     )
 
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/generated/Export.h" DESTINATION include/libobsensor/h)
     install(EXPORT ${OB_SDK_LIB_NAME}Config NAMESPACE ob:: DESTINATION lib)
 
     include(CMakePackageConfigHelpers)

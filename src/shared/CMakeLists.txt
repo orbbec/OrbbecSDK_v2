@@ -13,7 +13,7 @@ target_sources(shared PRIVATE ${SOURCE_FILES} ${HEADERS_FILES})
 
 add_subdirectory(${OB_3RDPARTY_DIR}/spdlog spdlog)
 target_link_libraries(shared PUBLIC spdlog::spdlog)
-target_include_directories(shared PUBLIC ${OB_PUBLIC_HEADERS_DIR} ${CMAKE_CURRENT_LIST_DIR})
+target_include_directories(shared PUBLIC ${OB_PUBLIC_HEADERS_DIR} ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
 add_subdirectory(${OB_3RDPARTY_DIR}/tinyxml2 tinyxml2)
 target_link_libraries(shared PUBLIC tinyxml2::tinyxml2)
