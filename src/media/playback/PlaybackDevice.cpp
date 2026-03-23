@@ -662,6 +662,9 @@ void PlaybackDevice::initProperties() {
     registerPropertyCondition(propertyServer, OB_PROP_COLOR_GAMMA_INT, "r", "r", vendorAccessor);
     registerPropertyCondition(propertyServer, OB_PROP_COLOR_HUE_INT, "r", "r", vendorAccessor);
     registerPropertyCondition(propertyServer, OB_PROP_COLOR_BACKLIGHT_COMPENSATION_INT, "r", "r", vendorAccessor);
+    registerPropertyCondition(propertyServer, OB_PROP_COLOR_DENOISING_LEVEL_INT, "r", "r", vendorAccessor);
+    registerPropertyCondition(propertyServer, OB_PROP_COLOR_PRESET_PRIORITY_INT, "r", "r", vendorAccessor);
+    registerPropertyCondition(propertyServer, OB_PROP_COLOR_ANTI_FLICKER_BOOL, "r", "r", vendorAccessor);
     // IR sensor properties
     registerPropertyCondition(propertyServer, OB_PROP_IR_AUTO_EXPOSURE_BOOL, "r", "r", vendorAccessor);
     registerPropertyCondition(propertyServer, OB_PROP_IR_AE_MAX_EXPOSURE_INT, "r", "r", vendorAccessor);
