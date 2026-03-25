@@ -27,22 +27,29 @@ std::vector<std::string> tokenize(const std::string &s, const char separator) {
 
 std::vector<std::string> split(const std::string &s, const std::string &separator) {
     std::vector<std::string> res;
-    if("" == s)
+    if(s.empty()) {
         return res;
-    char *strs = new char[s.length() + 1];
-    strcpy(strs, s.c_str());
-
-    char *d = new char[separator.length() + 1];
-    strcpy(d, separator.c_str());
-
-    char *p = strtok(strs, d);
-    while(p) {
-        std::string str = p;
-        res.push_back(str);
-        p = strtok(NULL, d);
     }
-    delete[] strs;
-    delete[] d;
+
+    if(separator.empty()) {
+        res.push_back(s);
+        return res;
+    }
+
+    if(separator.length() == 1) {
+        res.reserve(std::count(s.begin(), s.end(), separator[0]) + 1);
+    }
+
+    std::string::size_type start = 0;
+    std::string::size_type end   = s.find(separator);
+
+    while(end != std::string::npos) {
+        res.push_back(s.substr(start, end - start));
+        start = end + separator.length();
+        end   = s.find(separator, start);
+    }
+    res.push_back(s.substr(start));
+
     return res;
 }
 
@@ -178,4 +185,3 @@ bool cvt2Double(const std::string &string, double &dst) {
 }  // namespace string
 }  // namespace utils
 }  // namespace libobsensor
-

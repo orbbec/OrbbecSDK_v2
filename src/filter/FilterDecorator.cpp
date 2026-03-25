@@ -118,6 +118,7 @@ double parseFilterConfigValue(const std::string &valueStr, OBFilterConfigValueTy
 }
 
 const std::vector<OBFilterConfigSchemaItem> &FilterExtension::getConfigSchemaVec() {
+    std::unique_lock<std::recursive_mutex> lock(configMutex_);
     if(!configSchemaVec_.empty()) {
         return configSchemaVec_;
     }
@@ -155,7 +156,8 @@ const std::vector<OBFilterConfigSchemaItem> &FilterExtension::getConfigSchemaVec
 }
 
 void FilterExtension::setConfigValue(const std::string &configName, double value) {
-    auto schemaVec = getConfigSchemaVec();
+    std::unique_lock<std::recursive_mutex> lock(configMutex_);
+    auto                                   schemaVec = getConfigSchemaVec();
     if(schemaVec.empty()) {
         throw invalid_value_exception(utils::string::to_string() << "Filter@" << name_ << ": config schema is empty, doesn't have any config value");
     }
@@ -165,7 +167,6 @@ void FilterExtension::setConfigValue(const std::string &configName, double value
             configMap_[item.name] = item.def;
         }
     }
-
     auto it =
         std::find_if(configSchemaVec_.begin(), configSchemaVec_.end(), [&configName](const OBFilterConfigSchemaItem &item) { return item.name == configName; });
     if(it == configSchemaVec_.end()) {
@@ -176,7 +177,6 @@ void FilterExtension::setConfigValue(const std::string &configName, double value
                                                                  << " out of range [" << it->min << ", " << it->max << "]");
     }
 
-    std::unique_lock<std::mutex> lock(configMutex_);
     if(configMap_[configName] != value) {
         configChanged_         = true;
         configMap_[configName] = value;  // store the value in the map, will be applied in the next process() call
@@ -190,7 +190,8 @@ void FilterExtension::setConfigValueSync(const std::string &name, double value) 
 }
 
 double FilterExtension::getConfigValue(const std::string &configName) {
-    auto schemaVec = getConfigSchemaVec();
+    std::unique_lock<std::recursive_mutex> lock(configMutex_);
+    auto                                   schemaVec = getConfigSchemaVec();
     if(schemaVec.empty()) {
         throw invalid_value_exception(utils::string::to_string() << "Filter@" << name_ << ": config schema is empty, doesn't have any config value");
     }
@@ -243,8 +244,8 @@ std::string filterConfigValueToString(double value, OBFilterConfigValueType valu
 }
 
 void FilterExtension::checkAndUpdateConfig() {
+    std::unique_lock<std::recursive_mutex> lock(configMutex_);
     if(configChanged_) {
-        std::unique_lock<std::mutex> lock(configMutex_);
 
         std::vector<std::string> configVec;
         for(auto &item: configSchemaVec_) {
@@ -262,7 +263,8 @@ void FilterExtension::checkAndUpdateConfig() {
 }
 
 void FilterExtension::updateConfigCache(std::vector<std::string> &params) {
-    auto schemaVec = getConfigSchemaVec();
+    std::unique_lock<std::recursive_mutex> lock(configMutex_);
+    auto                                   schemaVec = getConfigSchemaVec();
     if(schemaVec.empty()) {
         throw invalid_value_exception(utils::string::to_string() << "Filter@" << name_ << ": config schema is empty, doesn't have any config value");
     }

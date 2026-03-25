@@ -49,7 +49,7 @@ private:
 
     std::shared_ptr<FrameQueue<const Frame>> srcFrameQueue_;
 
-    std::mutex                            configMutex_;
+    std::recursive_mutex                  configMutex_;
     std::atomic<bool>                     configChanged_;
     std::map<std::string, double>         configMap_;
     std::vector<OBFilterConfigSchemaItem> configSchemaVec_;
