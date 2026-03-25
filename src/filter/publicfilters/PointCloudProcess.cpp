@@ -84,7 +84,7 @@ void PointCloudFilter::updateConfig(std::vector<std::string> &params) {
         }
 
         float scale = std::stof(params[1]);
-        if(scale >= 0.000009 && scale <= 100) {
+        if(scale >= 0.00000001 && scale <= 100) {
             positionDataScale_ = scale;
         }
 
