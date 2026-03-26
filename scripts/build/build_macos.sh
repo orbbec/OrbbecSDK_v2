@@ -222,7 +222,7 @@ if [ "${MERGE_LIB}" != "0" ]; then
     # Compress the installation directory
     cd ${INSTALL_DIR_UNIVERSAL}
     cd ..
-    zip -rpy ${PACKAGE_NAME_UNIVERSAL}.zip ${PACKAGE_NAME_UNIVERSAL} || { echo 'Failed to compress installation directory'; exit 1; }
+    tar -czf ${PACKAGE_NAME_UNIVERSAL}.tar.gz ${PACKAGE_NAME_UNIVERSAL} || { echo 'Failed to compress installation directory'; exit 1; }
 
     echo "Done compressing ${SDK_LIB_NAME} for ${PLATFORM_UNIVERSAL}"
 else
@@ -234,7 +234,7 @@ else
     # Compress the installation directory
     cd ${INSTALL_DIR}
     cd ..
-    zip -rpy ${PACKAGE_NAME}.zip ${PACKAGE_NAME} || { echo 'Failed to compress installation directory'; exit 1; }
+    tar -czf ${PACKAGE_NAME}.tar.gz ${PACKAGE_NAME} || { echo 'Failed to compress installation directory'; exit 1; }
 
     echo "Done compressing ${SDK_LIB_NAME} for ${PLATFORM}"
 fi

@@ -109,7 +109,7 @@ fi
 # Compress the installation directory
 cd $INSTALL_DIR
 cd ..
-zip -rpy ${PACKAGE_NAME}.zip ${PACKAGE_NAME} || { echo 'Failed to compress installation directory'; exit 1; }
+tar -czf ${PACKAGE_NAME}.tar.gz ${PACKAGE_NAME} || { echo 'Failed to compress installation directory'; exit 1; }
 
 echo "Done building and compressing $SDK_LIB_NAME for $PLATFORM"
 echo "Done building $SDK_LIB_NAME for $PLATFORM"
