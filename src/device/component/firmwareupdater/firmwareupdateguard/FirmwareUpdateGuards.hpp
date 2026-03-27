@@ -117,6 +117,7 @@ public:
 protected:
     IDevice *owner_;
     bool     isHeartrateEnabled_;
+    bool     isFirmwareLogEnabled_;
 
     std::shared_ptr<DeviceMonitor> deviceMonitor_;
 };

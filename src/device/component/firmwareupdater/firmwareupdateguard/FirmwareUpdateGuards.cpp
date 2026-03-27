@@ -167,23 +167,25 @@ void GlobalTimestampGuard::postUpdate() {
 }
 
 // HeardbeatGuard
-HeardbeatGuard::HeardbeatGuard(IDevice *owner) : owner_(owner), isHeartrateEnabled_(false) {
+HeardbeatGuard::HeardbeatGuard(IDevice *owner) : owner_(owner), isHeartrateEnabled_(false), isFirmwareLogEnabled_(false) {
     deviceMonitor_ = owner_->getComponentT<DeviceMonitor>(OB_DEV_COMPONENT_DEVICE_MONITOR, false).get();
 }
 
 HeardbeatGuard::HeardbeatGuard(HeardbeatGuard &&other) noexcept {
-    owner_               = other.owner_;
-    isHeartrateEnabled_  = other.isHeartrateEnabled_;
-    deviceMonitor_       = other.deviceMonitor_;
-    other.deviceMonitor_ = nullptr;
+    owner_                 = other.owner_;
+    isHeartrateEnabled_    = other.isHeartrateEnabled_;
+    isFirmwareLogEnabled_  = other.isFirmwareLogEnabled_;
+    deviceMonitor_         = other.deviceMonitor_;
+    other.deviceMonitor_   = nullptr;
 }
 
 HeardbeatGuard &HeardbeatGuard::operator=(HeardbeatGuard &&other) noexcept {
     if(this != &other) {
-        owner_               = other.owner_;
-        isHeartrateEnabled_  = other.isHeartrateEnabled_;
-        deviceMonitor_       = other.deviceMonitor_;
-        other.deviceMonitor_ = nullptr;
+        owner_                 = other.owner_;
+        isHeartrateEnabled_    = other.isHeartrateEnabled_;
+        isFirmwareLogEnabled_  = other.isFirmwareLogEnabled_;
+        deviceMonitor_         = other.deviceMonitor_;
+        other.deviceMonitor_   = nullptr;
     }
     return *this;
 }
@@ -192,15 +194,25 @@ void HeardbeatGuard::preUpdate() {
     if(deviceMonitor_) {
         isHeartrateEnabled_ = deviceMonitor_->isHeartbeatEnabled();
         LOG_DEBUG("HeardbeatGuard: try to disable heartbeat, current state: {}", isHeartrateEnabled_);
-
         TRY_EXECUTE({ deviceMonitor_->disableHeartbeat(); });
+
+        isFirmwareLogEnabled_ = deviceMonitor_->isFirmwareLogEnabled();
+        LOG_DEBUG("HeardbeatGuard: try to disable firmware log, current state: {}", isFirmwareLogEnabled_);
+        TRY_EXECUTE({ deviceMonitor_->disableFirmwareLog(); });
     }
 }
 
 void HeardbeatGuard::postUpdate() {
-    if(deviceMonitor_ && isHeartrateEnabled_) {
-        LOG_DEBUG("HeardbeatGuard: try to restore heartbear, previous state: {}", isHeartrateEnabled_);
-        TRY_EXECUTE({ deviceMonitor_->enableHeartbeat(); });
+    if(deviceMonitor_) {
+        if(isHeartrateEnabled_) {
+            LOG_DEBUG("HeardbeatGuard: try to restore heartbeat, previous state: {}", isHeartrateEnabled_);
+            TRY_EXECUTE({ deviceMonitor_->enableHeartbeat(); });
+        }
+
+        if(isFirmwareLogEnabled_) {
+            LOG_DEBUG("HeardbeatGuard: try to restore firmware log, previous state: {}", isFirmwareLogEnabled_);
+            TRY_EXECUTE({ deviceMonitor_->enableFirmwareLog(); });
+        }
     }
 }
 }  // namespace libobsensor

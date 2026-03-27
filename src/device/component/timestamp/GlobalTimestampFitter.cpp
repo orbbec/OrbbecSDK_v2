@@ -118,7 +118,8 @@ void GlobalTimestampFitter::enable(bool en) {
     }
     enable_ = en;
     if(enable_) {
-        sampleThread_ = std::thread(&GlobalTimestampFitter::fittingLoop, this);
+        sampleLoopExit_ = false;
+        sampleThread_   = std::thread(&GlobalTimestampFitter::fittingLoop, this);
         std::unique_lock<std::mutex> lock(linearFuncParamMutex_);
         linearFuncParamCondVar_.wait_for(lock, std::chrono::milliseconds(1000));
     }
