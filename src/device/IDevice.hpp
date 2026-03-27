@@ -134,7 +134,7 @@ public:
      * @param format  The depth frame format (e.g. OB_FORMAT_Y12, OB_FORMAT_Y14, OB_FORMAT_Y16).
      * @return Maximum valid depth pixel value.
      */
-    virtual uint16_t getDepthMaxValidValue(OBFormat format) const {
+    virtual uint16_t getDepthMaxValidValue(OBFormat format) {
         (void)format;
         return 65535;
     }

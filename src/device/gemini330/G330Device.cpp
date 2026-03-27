@@ -1400,7 +1400,7 @@ static uint16_t calcG335LeMaxDepthValue(OBFormat format, float depthUnit, bool h
     return maxValue > 65535 ? 65535 : static_cast<uint16_t>(maxValue);
 }
 
-uint16_t G330Device::getDepthMaxValidValue(OBFormat format) const {
+uint16_t G330Device::getDepthMaxValidValue(OBFormat format) {
     (void)format;
     return 65535;
 }
@@ -1586,8 +1586,6 @@ void G330NetDevice::init() {
     // Cache depth unit and hwD2D to avoid per-frame device queries in getDepthMaxValidValue.
     // OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT can change dynamically;
     // OB_PROP_DISPARITY_TO_DEPTH_BOOL does not change during streaming but may change between streams.
-    cachedDepthUnit_ = propertyServer->getPropertyValueT<float>(OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT);
-    cachedHwD2D_     = propertyServer->getPropertyValueT<bool>(OB_PROP_DISPARITY_TO_DEPTH_BOOL);
     propertyServer->registerAccessCallback(
         { OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT, OB_PROP_DISPARITY_TO_DEPTH_BOOL },
         [this](uint32_t propId, const uint8_t *data, size_t dataSize, PropertyOperationType opType) {
@@ -2411,7 +2409,13 @@ void G330NetDevice::loadDefaultDepthPostProcessingConfig() {
     }
 }
 
-uint16_t G330NetDevice::getDepthMaxValidValue(OBFormat format) const {
+uint16_t G330NetDevice::getDepthMaxValidValue(OBFormat format) {
+    if(!depthConfigCached_) {
+        auto propServer    = getPropertyServer();
+        cachedDepthUnit_   = propServer->getPropertyValueT<float>(OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT);
+        cachedHwD2D_       = propServer->getPropertyValueT<bool>(OB_PROP_DISPARITY_TO_DEPTH_BOOL);
+        depthConfigCached_ = true;
+    }
     return calcG335LeMaxDepthValue(format, cachedDepthUnit_, cachedHwD2D_);
 }
 
