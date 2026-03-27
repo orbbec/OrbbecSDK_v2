@@ -13,6 +13,16 @@
 #include <cctype>
 #include <mutex>
 #include <condition_variable>
+#include <chrono>
+#include <thread>
+
+// Constants for magic numbers
+namespace {
+constexpr uint32_t MS_PER_SECOND            = 1000;
+constexpr uint32_t MAX_RECONNECT_TIMEOUT_MS = 15000;
+constexpr uint32_t POLL_INTERVAL_MS         = 1000;
+}
+
 struct CmdArgs {
     bool        listOnly = false;
     std::string firmwarePath;
@@ -133,53 +143,53 @@ int main(int argc, char *argv[]) try {
         targetDevice->reboot();
         targetDevice = nullptr;
 
-        // wait the device arrival
-        do {
+        // wait for device to come back online - auto retry with timeout
+        const uint32_t maxWaitTimeMs  = MAX_RECONNECT_TIMEOUT_MS;
+        const uint32_t pollIntervalMs = POLL_INTERVAL_MS;
+        uint32_t       elapsedTime    = 0;
+        bool           reconnected    = false;
+
+        while(elapsedTime < maxWaitTimeMs) {
+            // wait for callback notification (1 second timeout)
             {
                 std::unique_lock<std::mutex> lock(mutex);
-                cv.wait_for(lock, std::chrono::milliseconds(5000), [&]() { return deviceAfterReboot != nullptr; });
+                cv.wait_for(lock, std::chrono::milliseconds(pollIntervalMs), [&]() { return deviceAfterReboot != nullptr; });
             }
-            if(deviceAfterReboot == nullptr) {
-                std::string input;
-                std::cout << "\nThe device may not have come back online yet." << std::endl;
-                std::cout << " - Press 'y' or 'Y' to restart the update if you are sure it's online." << std::endl;
-                std::cout << " - Press any other key to continue waiting for it to come back online." << std::endl;
-                std::cout << " - Press ESC 'q' or 'Q' to quit (you can re-run this program to update again)." << std::endl;
-                auto key = ob_smpl::waitForKeyPressed(30000);
-                if(key == 0 || key == ESC_KEY || key == 'q' || key == 'Q') {
-                    std::cout << "\nExiting now. You can rerun this program to update the device once it comes back online." << std::endl;
-                    return 0;
-                }
-                else if(key == 'y' || key == 'Y') {
-                    std::unique_lock<std::mutex> lock(mutex);
-                    if(deviceAfterReboot != nullptr) {
-                        std::cout << "\nThe device is online now, start to the second update now";
-                        targetDevice = deviceAfterReboot;
-                        break;
-                    }
-                    // get device again
-                    deviceList = context->queryDeviceList();
-                    try {
-                        deviceAfterReboot = deviceList->getDeviceBySN(args.serial.c_str());
-                    }
-                    catch(ob::Error &e) {
-                        (void)e;
-                    }
-                    if(deviceAfterReboot == nullptr) {
-                        std::cout << "\nThe device is still offline. You can rerun this program to update it once the device is back online." << std::endl;
-                        return -1;
-                    }
+
+            if(deviceAfterReboot != nullptr) {
+                // device reconnected via callback
+                std::cout << "\nThe device is online now, starting the second update..." << std::endl;
+                targetDevice = deviceAfterReboot;
+                reconnected  = true;
+                break;
+            }
+
+            // auto poll device list
+            try {
+                auto newDeviceList = context->queryDeviceList();
+                auto newDevice     = newDeviceList->getDeviceBySN(args.serial.c_str());
+                if(newDevice) {
+                    deviceAfterReboot = newDevice;
+                    std::cout << "\nThe device is online now, starting the second update..." << std::endl;
                     targetDevice = deviceAfterReboot;
+                    reconnected  = true;
                     break;
                 }
-                std::cout << std::endl;
-                continue;
             }
-            // ok
-            std::cout << "\nThe device is online now, start to the second update now";
-            targetDevice = deviceAfterReboot;
-            break;
-        } while(1);
+            catch(...) {
+                // device not found yet, continue waiting
+            }
+
+            elapsedTime += pollIntervalMs;
+            std::cout << "Waiting for device to reconnect... (" << elapsedTime << "/" << maxWaitTimeMs << " ms)" << std::endl;
+        }
+
+        if(!reconnected) {
+            std::cout << "\nDevice failed to reconnect within timeout. Firmware update failed." << std::endl;
+            std::cout << "You can rerun this program to update the device once it comes back online." << std::endl;
+            return -1;
+        }
+
         // update again
         updateFirmware(targetDevice, args.firmwarePath);
     }

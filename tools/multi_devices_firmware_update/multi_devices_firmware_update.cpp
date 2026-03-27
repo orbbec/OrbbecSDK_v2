@@ -32,7 +32,7 @@ namespace {
 constexpr uint32_t MS_PER_SECOND            = 1000;
 constexpr uint32_t US_PER_MS                = 1000;
 constexpr uint32_t POLL_INTERVAL_US         = 100;
-constexpr uint32_t MAX_RECONNECT_TIMEOUT_MS = 12000;
+constexpr uint32_t MAX_RECONNECT_TIMEOUT_MS = 15000;
 constexpr uint32_t POLL_INTERVAL_MS         = 1000;
 constexpr size_t   MIN_EXTENSION_LENGTH     = 4;
 constexpr uint32_t CURSOR_MOVE_UP_LINES     = 3;
