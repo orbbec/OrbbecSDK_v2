@@ -167,7 +167,7 @@ HpStatus execute(const std::shared_ptr<IVendorDataPort> &dataPort, uint8_t *reqD
             hpStatus = validateResp(respData, *respDataSize, opcode, requestId);
 
             if(hpStatus.statusCode != HP_STATUS_DEVICE_RESPONSE_BAD_MAGIC && hpStatus.statusCode != HP_STATUS_DEVICE_RESPONSE_WRONG_ID
-               && hpStatus.respErrorCode != HP_RESP_ERROR_DEVICE_BUSY) {
+               && hpStatus.respErrorCode != HP_RESP_ERROR_DEVICE_BUSY && hpStatus.statusCode != HP_STATUS_DEVICE_RESPONSE_WRONG_DATA_SIZE) {
                 break;
             }
         }
