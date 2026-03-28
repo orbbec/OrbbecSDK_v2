@@ -196,6 +196,7 @@ void G305HWNoiseRemovePropertyAccessor::getPropertyRange(uint32_t propertyId, OB
         commandPort->getPropertyRange(propertyId, range);
         auto cur              = exp(range->cur.floatValue) / (1 + exp(range->cur.floatValue));
         range->cur.floatValue = cur;
+        range->def.floatValue = 0.1f;
     } break;
 
     default: {
