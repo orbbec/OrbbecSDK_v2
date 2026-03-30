@@ -20,7 +20,14 @@ GlobalTimestampCalculator::GlobalTimestampCalculator(IDevice *owner, uint64_t de
 }
 
 void GlobalTimestampCalculator::calculate(std::shared_ptr<Frame> frame) {
-    auto srcTimestamp    = static_cast<uint32_t>(frame->getTimeStampUsec());  // get timestamp from frame and keep low 32 bits
+    const auto rawTsUs = frame->getTimeStampUsec();
+    if(rawTsUs == 0) {
+        // If the device timestamp is invalid (0), keep global timestamp as 0.
+        frame->setGlobalTimeStampUsec(0);
+        return;
+    }
+
+    auto srcTimestamp    = static_cast<uint32_t>(rawTsUs);  // get timestamp from frame and keep low 32 bits
     auto linearFuncParam = globalTimestampFitter_->getLinearFuncParam();
 
     // Convert to a timestamp with the same frequency as the device clock frequency
