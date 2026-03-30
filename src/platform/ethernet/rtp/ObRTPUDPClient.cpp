@@ -98,7 +98,7 @@ void ObRTPUDPClient::socketClose() {
     if(recvSocket_ > 0) {
         auto rst = ::closesocket(recvSocket_);
         if(rst < 0) {
-            LOG_ERROR("close udp socket failed! socket={0}, err_code={1}", recvSocket_, GET_LAST_ERROR());
+            LOG_WARN("close udp socket failed! socket={0}, err_code={1}", recvSocket_, GET_LAST_ERROR());
         }
     }
     LOG_DEBUG("udp socket closed! socket={}", recvSocket_);
