@@ -27,10 +27,10 @@ namespace libobsensor {
 #pragma pack(2)
 typedef struct {
     uint64_t frameCounter;  // Frame number
-    uint16_t extentionLen;  // Extended data length, default is 0    
+    uint16_t extentionLen;  // Extended data length, default is 0
     uint64_t timestamp;     // timestamp
     uint32_t width;         // Frame pixel width
-    uint32_t height;        // Frame pixel height    
+    uint32_t height;        // Frame pixel height
 } OBNetworkFrameHeader;
 struct MJPGMetadataHeader {
     uint8_t  magic[8];  // fixed magic:"ORBBEC"
@@ -255,14 +255,15 @@ void ObRTPSink::outputFrameFunc() {
                     frameOffset = sizeof(OBNetworkFrameHeader);
                     output->setDynamicHeaderSize(sizeof(OBNetworkFrameHeader));
                     auto header = output->getDynamicHeader<OBNetworkFrameHeader>();
+
                     frame->setTimeStampUsec(header->timestamp);
                     frame->setSystemTimeStampUsec(utils::getNowTimesUs());
                     frame->setNumber(header->frameCounter);
-                    
+
                     if(header->extentionLen != 0) {
                         frame->updateMetadata(output->getRecvdDataBuffer() + frameOffset, header->extentionLen);
                         frameOffset += header->extentionLen;
-                    }                    
+                    }
                 }
                 else {
                     frame->setTimeStampUsec(output->getTimestamp());
@@ -294,6 +295,7 @@ void ObRTPSink::outputFrameFunc() {
 
 void ObRTPSink::mjpgUpdateMetadata(std::shared_ptr<Frame> frame) {
     if(!frame || !frame->getData()) {
+        LOG_WARN("MJPG metadata update skipped: frame or frame data is null");
         return;
     }
 
@@ -302,31 +304,60 @@ void ObRTPSink::mjpgUpdateMetadata(std::shared_ptr<Frame> frame) {
 
     int jpegHeadSize = utils::getJpgHeadLength(orgFrameData, orgFrameSize);
     if(jpegHeadSize == -1 || jpegHeadSize >= orgFrameSize) {
+        LOG_WARN("MJPG metadata update skipped: invalid JPEG header size={}, frameSize={}", jpegHeadSize, orgFrameSize);
         return;
     }
 
     if(orgFrameData[jpegHeadSize] != 0xFF || orgFrameData[jpegHeadSize + 1] != 0xD8) {
+        LOG_WARN("MJPG metadata update skipped: invalid SOI marker at offset {}", jpegHeadSize);
         return;
     }
 
-    int comSequenceIndex = utils::findJpgCOMSequence(frame->getData(), orgFrameSize - jpegHeadSize, jpegHeadSize);
+    int comSequenceIndex = utils::findJpgCOMSequence(frame->getData(), orgFrameSize, jpegHeadSize);
     if(comSequenceIndex == -1) {
+        LOG_DEBUG("MJPG metadata update skipped: COM marker not found in frame");
         return;
     }
 
     const MJPGMetadataHeader *header = reinterpret_cast<const MJPGMetadataHeader *>(const_cast<uint8_t *>(frame->getData() + comSequenceIndex + 4));
     if(!header->validateMagic()) {
+        LOG_DEBUG("MJPG metadata update skipped: COM marker found but magic validation failed");
         return;
     }
 
     const int metadataSize = header->data_len;
     if(jpegHeadSize + metadataSize >= orgFrameSize) {
+        LOG_WARN("MJPG metadata update skipped: metadata size exceeds frame boundary, metadataSize={}, jpegHeadSize={}, frameSize={}", metadataSize,
+                 jpegHeadSize, orgFrameSize);
         return;
     }
+
     frame->updateMetadata(const_cast<uint8_t *>(frame->getData() + jpegHeadSize + 2 + 4), metadataSize);
 
-    int secondJpegHeadSize = utils::getJpgHeadLength(orgFrameData + jpegHeadSize, orgFrameSize - jpegHeadSize);
+    // Calculate COM segment end position
+    // COM structure: 0xFF 0xFE [2-byte length (big-endian, includes itself)] [data...]
+    int comLength     = (orgFrameData[comSequenceIndex + 2] << 8) | orgFrameData[comSequenceIndex + 3];
+    int comEndPosition = comSequenceIndex + 2 + comLength;
+
+    if(comEndPosition >= orgFrameSize) {
+        LOG_WARN("MJPG metadata update skipped: COM end position exceeds frame size, comEndPosition={}, frameSize={}", comEndPosition, orgFrameSize);
+        return;
+    }
+
+    // Search for SOS AFTER the COM segment to avoid false SOS detection in metadata content.
+    // Metadata may contain 0xFF 0xDA bytes which would be incorrectly identified as SOS marker.
+    int sosSearchOffset = comEndPosition - jpegHeadSize;
+    int remainingSize   = orgFrameSize - comEndPosition;
+
+    int sosIndex = utils::findJpgSOSSequence(orgFrameData + comEndPosition, remainingSize);
+    if(sosIndex == -1) {
+        LOG_WARN("MJPG metadata update skipped: SOS marker not found after COM segment, searchOffset={}, remainingSize={}", sosSearchOffset, remainingSize);
+        return;
+    }
+
+    int secondJpegHeadSize = sosSearchOffset + sosIndex + 14;
     if(secondJpegHeadSize == -1 || secondJpegHeadSize >= orgFrameSize) {
+        LOG_WARN("MJPG metadata update skipped: invalid second JPEG head size={}, frameSize={}", secondJpegHeadSize, orgFrameSize);
         return;
     }
 
@@ -340,4 +371,3 @@ void ObRTPSink::mjpgUpdateMetadata(std::shared_ptr<Frame> frame) {
 }
 
 }  // namespace libobsensor
-
