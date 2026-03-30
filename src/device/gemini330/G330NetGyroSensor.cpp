@@ -10,8 +10,8 @@
 namespace libobsensor {
 
 G330NetGyroSensor::G330NetGyroSensor(IDevice *owner, const std::shared_ptr<ISourcePort> &backend, const std::shared_ptr<ImuStreamer> &streamer)
-    : GyroSensor(owner, backend, streamer){
-    
+    : GyroSensor(owner, backend, streamer) {
+    stopStreamByVendorCmd();
 }
 
 G330NetGyroSensor::~G330NetGyroSensor() noexcept {
@@ -30,6 +30,12 @@ void G330NetGyroSensor::start(std::shared_ptr<const StreamProfile> sp, FrameCall
 
 void G330NetGyroSensor::stop() {
     GyroSensor::stop();
+}
+
+void G330NetGyroSensor::stopStreamByVendorCmd() {
+    auto propServer = getOwner()->getPropertyServer();
+    BEGIN_TRY_EXECUTE({ propServer->setPropertyValueT(OB_PROP_GYRO_SWITCH_BOOL, false); })
+    CATCH_EXCEPTION_AND_EXECUTE({ LOG_WARN("Failed to send stop command for gyro stream"); })
 }
 
 }  // namespace libobsensor

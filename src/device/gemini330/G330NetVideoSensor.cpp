@@ -17,6 +17,7 @@ G330NetVideoSensor::G330NetVideoSensor(IDevice *owner, OBSensorType sensorType, 
       linkSpeed_(linkSpeed) {
 
     initStreamPropertyId();
+    stopStreamByVendorCmd();
 }
 
 void G330NetVideoSensor::start(std::shared_ptr<const StreamProfile> sp, FrameCallback callback) {
@@ -89,6 +90,12 @@ void G330NetVideoSensor::initStreamPropertyId() {
         streamSwitchPropertyId_   = OB_PROP_START_IR_RIGHT_STREAM_BOOL;
         profilesSwitchPropertyId_ = OB_STRUCT_IR_RIGHT_STREAM_PROFILE;
     }
+}
+
+void G330NetVideoSensor::stopStreamByVendorCmd() {
+    auto propServer = owner_->getPropertyServer();
+    BEGIN_TRY_EXECUTE({ propServer->setPropertyValueT<bool>(streamSwitchPropertyId_, false); })
+    CATCH_EXCEPTION_AND_EXECUTE({ LOG_WARN("Failed to send stop command for {} stream", utils::obSensorToStr(sensorType_)); })
 }
 
 G330NetVideoSensor::~G330NetVideoSensor() noexcept {

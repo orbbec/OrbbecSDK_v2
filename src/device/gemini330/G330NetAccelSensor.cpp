@@ -10,8 +10,10 @@
 namespace libobsensor {
 
 
-G330NetAccelSensor::G330NetAccelSensor(IDevice *owner, const std::shared_ptr<ISourcePort> &backend, const std::shared_ptr<ImuStreamer> &streamer) 
-    : AccelSensor(owner, backend, streamer) {}
+G330NetAccelSensor::G330NetAccelSensor(IDevice *owner, const std::shared_ptr<ISourcePort> &backend, const std::shared_ptr<ImuStreamer> &streamer)
+    : AccelSensor(owner, backend, streamer) {
+    stopStreamByVendorCmd();
+}
 
 G330NetAccelSensor::~G330NetAccelSensor() noexcept {
 }
@@ -25,6 +27,12 @@ void G330NetAccelSensor::start(std::shared_ptr<const StreamProfile> sp, FrameCal
     auto propServer = owner->getPropertyServer();
     propServer->setPropertyValueT(OB_PROP_IMU_STREAM_PORT_INT, static_cast<int>(port));
     AccelSensor::start(sp, callback);
+}
+
+void G330NetAccelSensor::stopStreamByVendorCmd() {
+    auto propServer = getOwner()->getPropertyServer();
+    BEGIN_TRY_EXECUTE({ propServer->setPropertyValueT(OB_PROP_ACCEL_SWITCH_BOOL, false); })
+    CATCH_EXCEPTION_AND_EXECUTE({ LOG_WARN("Failed to send stop command for accel stream"); })
 }
 
 void G330NetAccelSensor::stop() {

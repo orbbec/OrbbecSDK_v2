@@ -15,6 +15,7 @@ public:
 
 private:
     void initStreamPropertyId();
+    void stopStreamByVendorCmd();
 
 private:
     OBInternalPropertyID streamSwitchPropertyId_;

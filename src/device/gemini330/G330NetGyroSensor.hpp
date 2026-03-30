@@ -15,5 +15,8 @@ public:
 
     void start(std::shared_ptr<const StreamProfile> sp, FrameCallback callback) override;
     void stop() override;
+
+private:
+    void stopStreamByVendorCmd();
 };
 }  // namespace libobsensor

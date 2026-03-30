@@ -15,6 +15,9 @@ public:
     void setStreamProfileList(const StreamProfileList &profileList) override;
 
 private:
+    void stopStreamByVendorCmd();
+
+private:
     uint32_t linkSpeed_;
 
 };
