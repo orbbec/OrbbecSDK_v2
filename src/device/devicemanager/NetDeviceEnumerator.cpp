@@ -42,7 +42,20 @@ NetDeviceEnumerator::NetDeviceEnumerator(DeviceChangedCallback callback, std::sh
 }
 
 NetDeviceEnumerator::~NetDeviceEnumerator() noexcept {
-    deviceWatcher_->stop();
+    stop();
+    deviceWatcher_.reset();
+    platform_.reset();
+}
+
+void NetDeviceEnumerator::stop() {
+    if(deviceWatcher_) {
+        deviceWatcher_->stop();
+    }
+
+    std::unique_lock<std::mutex> lock(deviceChangedCallbackMutex_);
+    if(devEnumChangedCallbackThread_.joinable()) {
+        devEnumChangedCallbackThread_.join();
+    }
 }
 
 DeviceEnumInfoList NetDeviceEnumerator::queryDeviceList() {

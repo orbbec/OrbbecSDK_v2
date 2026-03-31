@@ -58,6 +58,7 @@ private:
     std::vector<GVCPDeviceInfo> netDevInfoList_;
     std::mutex                  gvcpMutex_;
     std::condition_variable     condVar_;
+    std::shared_ptr<GVCPClient> gvcpClient_;
 
     std::shared_ptr<GVCPRuntimeConfig> gvcpRuntimeConfig_;
 

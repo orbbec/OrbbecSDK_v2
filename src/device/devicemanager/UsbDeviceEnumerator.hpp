@@ -16,6 +16,7 @@ public:
     ~UsbDeviceEnumerator() noexcept override;
     DeviceEnumInfoList getDeviceInfoList() override;
     void               setDeviceChangedCallback(DeviceChangedCallback callback) override;
+    void               stop() override;
 
 private:
     bool               onPlatformDeviceChanged(OBDeviceChangedType changeType, std::string devUid);

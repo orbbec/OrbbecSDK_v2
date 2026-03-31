@@ -34,6 +34,7 @@ public:
     virtual ~IDeviceEnumerator()                                                        = default;
     virtual DeviceEnumInfoList getDeviceInfoList()                                      = 0;
     virtual void               setDeviceChangedCallback(DeviceChangedCallback callback) = 0;
+    virtual void               stop()                                                   = 0;
 };
 
 class IDeviceManager {

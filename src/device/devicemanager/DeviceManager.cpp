@@ -84,6 +84,14 @@ DeviceManager::~DeviceManager() noexcept {
 
     disableDeviceClockSync();
     stopDeviceActivitySync();
+
+    for(auto &enumerator: deviceEnumerators_) {
+        if(enumerator) {
+            enumerator->stop();
+        }
+    }
+    deviceEnumerators_.clear();
+
     LOG_DEBUG("DeviceManager Destructors done");
 }
 
@@ -243,6 +251,10 @@ OBGvcpPortScheme DeviceManager::getGvcpPortscheme() const {
 }
 
 DeviceEnumInfoList DeviceManager::getDeviceInfoList() {
+    if(destroy_) {
+        return {};
+    }
+
     DeviceEnumInfoList deviceInfoList;
     for(auto &enumerator_: deviceEnumerators_) {
         auto infos = enumerator_->getDeviceInfoList();
@@ -300,6 +312,10 @@ bool DeviceManager::unregisterDeviceChangedCallback(OBCallbackId id) {
 }
 
 void DeviceManager::onDeviceChanged(const DeviceEnumInfoList &removed, const DeviceEnumInfoList &added) {
+    if(destroy_) {
+        return;
+    }
+
     LOG_INFO("Device changed! removed: {0}, added: {1}", removed.size(), added.size());
     if(!removed.empty()) {
         std::unique_lock<std::mutex> lock(createdDevicesMutex_);

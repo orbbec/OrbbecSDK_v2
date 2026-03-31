@@ -52,18 +52,13 @@ struct GVCPSocketInfo {
 
 class GVCPClient {
 public:
+    GVCPClient();
     ~GVCPClient();
 
     std::vector<GVCPDeviceInfo> queryNetDeviceList();
     bool                        forceIpConfig(std::string macAddress, const OBNetIpConfig &config);
 
-    static GVCPClient &instance() {
-        static GVCPClient instance;
-        return instance;
-    }
-
 private:
-    GVCPClient();
     int    openClientSockets();
     void   closeClientSockets();
     SOCKET openClientSocket(SOCKADDR_IN addr);

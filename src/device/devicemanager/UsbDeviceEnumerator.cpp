@@ -58,6 +58,12 @@ UsbDeviceEnumerator::UsbDeviceEnumerator(DeviceChangedCallback callback) : platf
 }
 
 UsbDeviceEnumerator::~UsbDeviceEnumerator() noexcept {
+    stop();
+    deviceWatcher_.reset();
+    platform_.reset();
+}
+
+void UsbDeviceEnumerator::stop() {
     destroy_ = true;
 
     newUsbPortArrivalCV_.notify_all();
@@ -73,8 +79,10 @@ UsbDeviceEnumerator::~UsbDeviceEnumerator() noexcept {
     if(devChangedCallbackThread_.joinable()) {
         devChangedCallbackThread_.join();
     }
-    deviceWatcher_.reset();  // deviceWatcher should be released before platform_
-    platform_.reset();
+
+    if(deviceWatcher_) {
+        deviceWatcher_->stop();
+    }
 }
 
 bool UsbDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType, std::string devUid) {

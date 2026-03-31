@@ -20,20 +20,22 @@ const uint16_t DEVICE_WATCHER_POLLING_SHORT_INTERVAL_MSEC = 1000;
 EthernetPal::EthernetPal() {
     gvcpRuntimeConfig_ = GVCPRuntimeConfig::getInstance();
     mdnsDiscovery_     = MDNSDiscovery::getInstance();
+    gvcpClient_        = std::make_shared<GVCPClient>();
 }
 
 EthernetPal::~EthernetPal() noexcept {
-    mdnsDiscovery_.reset();
     if(!stopWatch_) {
         stop();
     }
+    mdnsDiscovery_.reset();
+    gvcpClient_.reset();
 }
 
 void EthernetPal::queryGvcpDevice(bool singleShot) {
     while(!stopWatch_) {
         std::unique_lock<std::mutex> lock(gvcpMutex_);
 
-        auto list    = GVCPClient::instance().queryNetDeviceList();
+        auto list    = gvcpClient_->queryNetDeviceList();
         auto start   = utils::getSteadyTimeMs();
         auto added   = utils::subtract_sets(list, netDevInfoList_);
         auto removed = utils::subtract_sets(netDevInfoList_, list);
@@ -264,7 +266,7 @@ void EthernetPal::ensureDiscoveryIfNeeded() {
     std::future<std::vector<GVCPDeviceInfo>> gvcpFuture;
     bool                                     shouldQueryGVCP = !deviceWatchThread_.joinable();
     if(shouldQueryGVCP) {
-        gvcpFuture = std::async(std::launch::async, []() { return GVCPClient::instance().queryNetDeviceList(); });
+        gvcpFuture = std::async(std::launch::async, [this]() { return gvcpClient_->queryNetDeviceList(); });
     }
 
     // 2. Start mDNS query asynchronously if the watcher thread is not running
@@ -313,7 +315,7 @@ std::shared_ptr<IPal> createNetPal() {
 bool EthernetPal::forceIpConfig(std::string macAddress, const OBNetIpConfig &config) {
     std::unique_lock<std::mutex> lock(gvcpMutex_);
 
-    auto result = GVCPClient::instance().forceIpConfig(macAddress, config);
+    auto result = gvcpClient_->forceIpConfig(macAddress, config);
     if(result) {
         for(auto &&info: netDevInfoList_) {
             if(info.mac == macAddress) {

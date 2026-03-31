@@ -16,6 +16,7 @@ public:
     virtual ~NetDeviceEnumerator() noexcept override;
     virtual DeviceEnumInfoList getDeviceInfoList() override;
     virtual void               setDeviceChangedCallback(DeviceChangedCallback callback) override;
+    virtual void               stop() override;
 
     static std::shared_ptr<const IDeviceEnumInfo> queryNetDevice(std::string address, uint16_t port);
 
