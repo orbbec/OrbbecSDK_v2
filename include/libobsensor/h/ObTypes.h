@@ -1193,7 +1193,27 @@ typedef enum {
     OBCmdVersion, ob_cmd_version;
 
 /**
- * @brief IP address configuration for network devices (IPv4)
+ * @brief IP address configuration for network devices (IPv4), used with property OB_STRUCT_DEVICE_IP_ADDR_CONFIG.
+ *
+ * @note Device support:
+ *   - Femto Mega / Femto Mega I: only this structure is supported.
+ *   - Gemini 335Le / Gemini 435Le with older firmware: only this structure is supported.
+ *   - Gemini 335Le / Gemini 435Le with newer firmware: both this structure and @ref OBNetIpConfigV2 are supported;
+ *     it is recommended to use @ref OBNetIpConfigV2 (property OB_STRUCT_DEVICE_IP_ADDR_CONFIG_V2) instead.
+ *
+ * @note How to choose between OBNetIpConfig and OBNetIpConfigV2:
+ *   First check whether OB_STRUCT_DEVICE_IP_ADDR_CONFIG_V2 is supported by the device. If yes, use @ref OBNetIpConfigV2;
+ *   otherwise fall back to this structure.
+ *   Example:
+ *   @code
+ *   bool v2Supported = ob_device_is_property_supported(dev, OB_STRUCT_DEVICE_IP_ADDR_CONFIG_V2,
+ *                                                       OB_PERMISSION_READ_WRITE, &error);
+ *   if(v2Supported) {
+ *       // Use OBNetIpConfigV2 with OB_STRUCT_DEVICE_IP_ADDR_CONFIG_V2
+ *   } else {
+ *       // Use OBNetIpConfig with OB_STRUCT_DEVICE_IP_ADDR_CONFIG
+ *   }
+ *   @endcode
  */
 typedef struct {
     /**
@@ -1221,6 +1241,38 @@ typedef struct {
 
 #define OBDeviceIpAddrConfig OBNetIpConfig
 #define ob_device_ip_addr_config OBNetIpConfig
+
+// IP bit masks
+#define OB_NET_IP_FLAG_DHCP (0x01u)
+#define OB_NET_IP_FLAG_PERSISTENT (0x02u)
+
+/**
+ * @brief IP address configuration v2 for network devices (IPv4), used with property OB_STRUCT_DEVICE_IP_ADDR_CONFIG_V2.
+ *
+ * @note This is the recommended structure for Gemini 335Le / Gemini 435Le devices with newer firmware.
+ *       It extends @ref OBNetIpConfig by replacing the single @c dhcp field with a @c flags bitmask that supports
+ *       both DHCP mode and Persistent IP mode.
+ *
+ * @note Device support:
+ *   - Femto Mega / Femto Mega I: NOT supported; use @ref OBNetIpConfig instead.
+ *   - Gemini 335Le / Gemini 435Le with older firmware: NOT supported; use @ref OBNetIpConfig instead.
+ *   - Gemini 335Le / Gemini 435Le with newer firmware: supported and recommended.
+ *
+ * @note Before using this structure, verify support at runtime:
+ *   @code
+ *   bool v2Supported = ob_device_is_property_supported(dev, OB_STRUCT_DEVICE_IP_ADDR_CONFIG_V2,
+ *                                                       OB_PERMISSION_READ_WRITE, &error);
+ *   @endcode
+ */
+typedef struct {
+    uint16_t flags;      ///< IP configuration mode flags
+                         ///< bit0: DHCP enable (1=on, 0=off)
+                         ///< bit1: Persistent IP enable (1=on, 0=off)
+                         ///< bit[2:15]: reserved, must be 0
+    uint8_t address[4];  ///< IP address (IPv4, big-endian, e.g. 192.168.1.1 -> address[0]=192)
+    uint8_t mask[4];     ///< Subnet mask (big-endian)
+    uint8_t gateway[4];  ///< Gateway (big-endian)
+} OBNetIpConfigV2, ob_net_ip_config_v2, DEVICE_IP_ADDR_CONFIG_V2;
 
 /**
  * @brief Device communication mode

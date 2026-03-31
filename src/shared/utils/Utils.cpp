@@ -118,19 +118,10 @@ int getJpgHeadLength(const uint8_t *data, uint32_t size) {
     return jpegHeadSize;
 }
 
-bool checkIpConfig(const ob_net_ip_config &config, bool allowZeroGateWay) {
-    uint32_t ip      = (config.address[3]) | (config.address[2] << 8) | (config.address[1] << 16) | (config.address[0] << 24);
-    uint32_t mask    = (config.mask[3]) | (config.mask[2] << 8) | (config.mask[1] << 16) | (config.mask[0] << 24);
-    uint32_t gateway = (config.gateway[3]) | (config.gateway[2] << 8) | (config.gateway[1] << 16) | (config.gateway[0] << 24);
-
-    if(config.dhcp != 0) {
-        // Skip validation if DHCP is enabled
-        return true;
-    }
-
+bool validateIpConfig(uint32_t ip, uint32_t mask, uint32_t gateway, bool allowZeroGateWay) {
     // ip
     if(ip == 0x00000000 || ip == 0xFFFFFFFF || ((ip & 0xF0000000) == 0xE0000000) || ((ip & 0xF0000000) == 0xF0000000) || ((ip & 0xFF) == 0x00)
-              || ((ip & 0xFF) == 0xFF)) {
+       || ((ip & 0xFF) == 0xFF)) {
         return false;
     }
 
@@ -155,6 +146,32 @@ bool checkIpConfig(const ob_net_ip_config &config, bool allowZeroGateWay) {
     }
 
     return true;
+}
+
+bool checkIpConfig(const ob_net_ip_config &config, bool allowZeroGateWay) {
+    uint32_t ip      = (config.address[3]) | (config.address[2] << 8) | (config.address[1] << 16) | (config.address[0] << 24);
+    uint32_t mask    = (config.mask[3]) | (config.mask[2] << 8) | (config.mask[1] << 16) | (config.mask[0] << 24);
+    uint32_t gateway = (config.gateway[3]) | (config.gateway[2] << 8) | (config.gateway[1] << 16) | (config.gateway[0] << 24);
+
+    if(config.dhcp != 0) {
+        // Skip validation if DHCP is enabled
+        return true;
+    }
+
+    return validateIpConfig(ip, mask, gateway, allowZeroGateWay);
+}
+
+bool checkIpConfig(const ob_net_ip_config_v2 &config, bool allowZeroGateWay) {
+    uint32_t ip      = (config.address[3]) | (config.address[2] << 8) | (config.address[1] << 16) | (config.address[0] << 24);
+    uint32_t mask    = (config.mask[3]) | (config.mask[2] << 8) | (config.mask[1] << 16) | (config.mask[0] << 24);
+    uint32_t gateway = (config.gateway[3]) | (config.gateway[2] << 8) | (config.gateway[1] << 16) | (config.gateway[0] << 24);
+
+    if((config.flags & OB_NET_IP_FLAG_PERSISTENT) == 0) {
+        // Skip validation if persistent IP is not enabled
+        return true;
+    }
+
+    return validateIpConfig(ip, mask, gateway, allowZeroGateWay);
 }
 
 std::string getSDKLibraryName() {

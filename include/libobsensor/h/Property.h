@@ -612,6 +612,8 @@ typedef enum {
 
     /**
      * @brief LLA (Link Local Address) switch
+     *
+     * @deprecated The property is deprecated
      */
     OB_PROP_DEVICE_NETWORK_LLA_BOOL = 257,
 
@@ -619,6 +621,22 @@ typedef enum {
      * @brief Color anti-flicker switch
      */
     OB_PROP_COLOR_ANTI_FLICKER_BOOL = 259,
+
+    /**
+     * @brief Device IP mode
+     * @param value
+     *   - 0: AMR Sensor Mode.
+     *        Typically configured for ehternet interface sensors for AMRs.
+     *        When DHCP is enabled and the device fails to obtain a valid IP address, it falls back to Persistent IP.
+     *        If neither of Persistent IP and DHCP is specified, Persistent IP is enabled by default.
+     *
+     *   - 1: Industrial Sensor Mode.
+     *        Typically configured for ehternet interface sensors for industrial applications.
+     *        When DHCP is enabled and the device fails to obtain a valid IP address, it falls back to LLA (Link-Local Address).
+     *        If Persistent IP and DHCP are both enabled, the sensor starts with the attemp to used the specified persistent IP
+     *        and falls back to DHCP if Persistent IP fails.
+     */
+    OB_PROP_DEVICE_IP_MODE_INT = 260,
 
     /**
      * @brief Baseline calibration parameters
@@ -657,6 +675,7 @@ typedef enum {
 
     /**
      * @brief Device IP address configuration
+     * @see OBNetIpConfig
      */
     OB_STRUCT_DEVICE_IP_ADDR_CONFIG = 1041,
 
@@ -673,6 +692,7 @@ typedef enum {
     /**
      * @brief Device network static ip config record
      * @brief Using for get last static ip config, witch is record in device flash when user set static ip config
+     * @see OBNetIpConfig
      *
      * @attention read only
      */
@@ -718,6 +738,12 @@ typedef enum {
      * @brief Color sensor synchronized exposure parameter structure
      */
     OB_STRUCT_COLOR_SYNCED_EXPOSURE_PARAM = 1077,
+
+    /**
+     * @brief Device IP address configuration v2
+     * @see OBNetIpConfigV2
+     */
+    OB_STRUCT_DEVICE_IP_ADDR_CONFIG_V2 = 1088,
 
     /**
      * @brief Color camera auto exposure

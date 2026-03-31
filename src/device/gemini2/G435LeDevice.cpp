@@ -88,8 +88,13 @@ void G435LeDeviceBase::init() {
     propertyServer->registerProperty(OB_PROP_FRAME_INTERLEAVE_CONFIG_INDEX_INT, "rw", "rw", vendorPropertyAccessor.get());
     propertyServer->registerProperty(OB_PROP_FRAME_INTERLEAVE_ENABLE_BOOL, "rw", "rw", vendorPropertyAccessor.get());
     propertyServer->registerProperty(OB_PROP_FRAME_INTERLEAVE_LASER_PATTERN_SYNC_DELAY_INT, "rw", "rw", vendorPropertyAccessor.get());
-    if(fwVersion >= 10317) {
+    if(fwVersion >= 10317 && fwVersion <= 10319) {
         propertyServer->registerProperty(OB_PROP_DEVICE_NETWORK_LLA_BOOL, "rw", "rw", vendorPropertyAccessor.get());
+    }
+    
+    if(fwVersion >= 10320) {
+        propertyServer->registerProperty(OB_PROP_DEVICE_IP_MODE_INT, "rw", "rw", vendorPropertyAccessor.get());
+        propertyServer->registerProperty(OB_STRUCT_DEVICE_IP_ADDR_CONFIG_V2, "rw", "rw", vendorPropertyAccessor.get());
     }
 
     registerComponent(OB_DEV_COMPONENT_COLOR_FRAME_METADATA_CONTAINER, [this]() {

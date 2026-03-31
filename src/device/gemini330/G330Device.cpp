@@ -1541,14 +1541,13 @@ void G330NetDevice::init() {
         propertyServer->registerProperty(OB_PROP_HW_NOISE_REMOVE_FILTER_THRESHOLD_FLOAT, "rw", "rw", hwNoiseRemovePropertyAccessor);
     }
 
+    auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
     if(fwVersion >= 10510) {
-        auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
         propertyServer->registerProperty(OB_DEVICE_AUTO_CAPTURE_ENABLE_BOOL, "rw", "rw", vendorPropertyAccessor.get());
         propertyServer->registerProperty(OB_DEVICE_AUTO_CAPTURE_INTERVAL_TIME_INT, "rw", "rw", vendorPropertyAccessor.get());
     }
 
     if(fwVersion >= 10533) {
-        auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
         propertyServer->registerProperty(OB_PROP_FRAME_INTERLEAVE_CONFIG_INDEX_INT, "rw", "rw", vendorPropertyAccessor.get());
         propertyServer->registerProperty(OB_PROP_FRAME_INTERLEAVE_ENABLE_BOOL, "rw", "rw", vendorPropertyAccessor.get());
         propertyServer->registerProperty(OB_PROP_FRAME_INTERLEAVE_LASER_PATTERN_SYNC_DELAY_INT, "rw", "rw", vendorPropertyAccessor.get());
@@ -1557,12 +1556,10 @@ void G330NetDevice::init() {
     }
 
     if(fwVersion >= 10540) {
-        auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
         propertyServer->registerProperty(OB_STRUCT_DEVICE_ERROR_STATE, "", "r", vendorPropertyAccessor.get());
     }
 
     if(fwVersion >= 10557) {
-        auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
         propertyServer->registerProperty(OB_PROP_INTRA_CAMERA_SYNC_REFERENCE_INT, "rw", "rw", vendorPropertyAccessor.get());
         intraCameraSyncTimestampAdjuster_ = std::make_shared<StartOfExposureTimestampAdjuster>(this);
     }
@@ -1575,23 +1572,24 @@ void G330NetDevice::init() {
 #endif
 
     if(fwVersion >= 10564) {
-        auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
         propertyServer->registerProperty(OB_PROP_COLOR_DENOISING_LEVEL_INT, "rw", "rw", vendorPropertyAccessor.get());
         propertyServer->registerProperty(OB_STRUCT_DEVICE_STATIC_IP_CONFIG_RECORD, "rw", "rw", vendorPropertyAccessor.get());
     }
 
     if(fwVersion >= 10632) {
-        auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
         propertyServer->registerProperty(OB_PROP_COLOR_PRESET_PRIORITY_INT, "rw", "rw", vendorPropertyAccessor.get());
     }
-    if(fwVersion >= 10705) {
-        auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+    if(fwVersion >= 10705 && fwVersion < 10716) {
         propertyServer->registerProperty(OB_PROP_DEVICE_NETWORK_LLA_BOOL, "rw", "rw", vendorPropertyAccessor.get());
     }
 
     if(fwVersion >= 10712) {
-        auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
         propertyServer->registerProperty(OB_PROP_COLOR_ANTI_FLICKER_BOOL, "rw", "rw", vendorPropertyAccessor.get());
+    }
+
+    if(fwVersion >= 10716) {
+        propertyServer->registerProperty(OB_PROP_DEVICE_IP_MODE_INT, "rw", "rw", vendorPropertyAccessor.get());
+        propertyServer->registerProperty(OB_STRUCT_DEVICE_IP_ADDR_CONFIG_V2, "rw", "rw", vendorPropertyAccessor.get());
     }
 
     // Cache depth unit and hwD2D to avoid per-frame device queries in getDepthMaxValidValue.
