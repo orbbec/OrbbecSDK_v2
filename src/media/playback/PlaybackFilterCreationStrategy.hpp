@@ -137,5 +137,15 @@ private:
     virtual std::vector<std::shared_ptr<IFilter>> createColorFilters() override;
 };
 
+class OpenNIDeviceFilterStrategy : public FilterCreationStrategyBase, DeviceComponentBase {
+public:
+    OpenNIDeviceFilterStrategy(IDevice *owner);
+    virtual ~OpenNIDeviceFilterStrategy() noexcept override = default;
+
+private:
+    virtual std::vector<std::shared_ptr<IFilter>> createDepthFilters() override;
+    virtual std::vector<std::shared_ptr<IFilter>> createColorFilters() override;
+};
+
 }  // namespace playback
 }  // namespace libobsensor
