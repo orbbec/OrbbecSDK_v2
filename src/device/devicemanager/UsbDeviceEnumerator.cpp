@@ -2,7 +2,9 @@
 // Licensed under the MIT License.
 
 #include "UsbDeviceEnumerator.hpp"
+#include "DevicePids.hpp"
 #include "utils/Utils.hpp"
+#include <unordered_set>
 
 #include "gemini305/G305DeviceInfo.hpp"
 #include "gemini330/G330DeviceInfo.hpp"
@@ -207,10 +209,13 @@ void UsbDeviceEnumerator::deviceArrivalHandleThreadFunc() {
         if(destroy_) {
             break;
         }
+
         DeviceEnumInfoList addedDevList;
+        DeviceEnumInfoList removedDevList;
         {
             std::unique_lock<std::recursive_mutex> lock(deviceInfoListMutex_);
             addedDevList = queryArrivalDevice(false);
+            removedDevList = findMatchingGmslDeviceByUsb(addedDevList);
             for(auto &item: addedDevList) {
                 deviceInfoList_.emplace_back(item);
             }
@@ -226,7 +231,7 @@ void UsbDeviceEnumerator::deviceArrivalHandleThreadFunc() {
             }
             std::unique_lock<std::mutex> lock(callbackMutex_);
             if(!destroy_ && devChangedCallback_) {
-                devChangedCallback_({}, addedDevList);
+                devChangedCallback_(removedDevList, addedDevList);
             }
         }
     }
@@ -315,6 +320,51 @@ void UsbDeviceEnumerator::setDeviceChangedCallback(DeviceChangedCallback callbac
         devChangedCallbackThread_ = std::thread(callback, removedList, addedList);
 #endif
     };
+}
+
+DeviceEnumInfoList UsbDeviceEnumerator::findMatchingGmslDeviceByUsb(const DeviceEnumInfoList &addedDevList) {
+    DeviceEnumInfoList matchedDevList;
+    std::unordered_set<std::string> addedDeviceSNs;
+    for(const auto &item: addedDevList) {
+        const auto &sn  = item->getDeviceSn();
+        const auto  pid = item->getPid();
+        const auto  vid = item->getVid();
+        if(!isDeviceInOrbbecSeries(G305DevPids, vid, pid)) {
+            continue;
+        }
+        if(!sn.empty()) {
+            addedDeviceSNs.insert(sn);
+        }
+    }
+
+    if(!addedDeviceSNs.empty()) {
+        std::unordered_set<std::shared_ptr<const SourcePortInfo>> matchedPortInfo;
+
+        for(auto iter = deviceInfoList_.begin(); iter != deviceInfoList_.end();) {
+            const auto &deviceSn             = (*iter)->getDeviceSn();
+            const auto &deviceConnectionType = (*iter)->getConnectionType();
+            if(!deviceSn.empty() && addedDeviceSNs.count(deviceSn) && deviceConnectionType == "GMSL2") {
+                LOG_DEBUG("Found matching GMSL device with same SN: {} ({}), uid: {}", (*iter)->getName(), deviceSn, (*iter)->getUid());
+                matchedDevList.push_back(*iter);
+
+                const auto &sourcePortInfoList = (*iter)->getSourcePortInfoList();
+                for(const auto &portInfo: sourcePortInfoList) {
+                    matchedPortInfo.insert(portInfo);
+                }
+                iter = deviceInfoList_.erase(iter);
+            }
+            else {
+                ++iter;
+            }
+        }
+        if(!matchedPortInfo.empty()) {
+            currentUsbPortInfoList_.erase(
+                std::remove_if(currentUsbPortInfoList_.begin(), currentUsbPortInfoList_.end(),
+                               [&matchedPortInfo](const std::shared_ptr<const SourcePortInfo> &port) { return matchedPortInfo.count(port) > 0; }),
+                currentUsbPortInfoList_.end());
+        }
+    }
+    return matchedDevList;
 }
 
 }  // namespace libobsensor

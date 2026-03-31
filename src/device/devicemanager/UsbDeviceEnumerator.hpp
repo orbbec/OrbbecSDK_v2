@@ -23,8 +23,9 @@ private:
     DeviceEnumInfoList queryRemovedDevice(std::unordered_set<std::string> deviceRemovalUidSet);
     DeviceEnumInfoList queryArrivalDevice(bool includeGmsl);
 
-    void deviceArrivalHandleThreadFunc();
-    void deviceRemovalHandleThreadFunc();
+    void               deviceArrivalHandleThreadFunc();
+    void               deviceRemovalHandleThreadFunc();
+    DeviceEnumInfoList findMatchingGmslDeviceByUsb(const DeviceEnumInfoList &addedDevList);
 
     static DeviceEnumInfoList usbDeviceInfoMatch(const SourcePortInfoList infoList);
 
