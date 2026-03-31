@@ -171,7 +171,7 @@ void ObRTPUDPClient::flush() {
         // read data and discard
         res = recvfrom(sock, buf, sizeof(buf), 0, NULL, NULL);
         if(res > 0) {
-            LOG_DEBUG("Discarding {} bytes of leftover frame data. IP: {}, stream: {}", res, serverIp_, currentProfile_->getType());
+           LOG_DEBUG("Discarding {} bytes of leftover frame data. IP: {}", res, serverIp_);
         }
         elapsed = timer.touchMs(false);
         // Loop until timeout to avoid blocking indefinitely
