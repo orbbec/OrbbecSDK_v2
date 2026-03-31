@@ -24,6 +24,7 @@
 #include "timestamp/GlobalTimestampFitter.hpp"
 #include "timestamp/FrameTimestampCalculator.hpp"
 #include "timestamp/DeviceClockSynchronizer.hpp"
+#include "timestamp/StartOfExposureTimestampAdjuster.hpp"
 #include "property/VendorPropertyAccessor.hpp"
 #include "property/UvcPropertyAccessor.hpp"
 #include "property/PropertyServer.hpp"
@@ -164,6 +165,7 @@ void G330Device::init() {
         auto propertyServer         = getPropertyServer();
         auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
         propertyServer->registerProperty(OB_PROP_INTRA_CAMERA_SYNC_REFERENCE_INT, "rw", "rw", vendorPropertyAccessor.get());
+        intraCameraSyncTimestampAdjuster_ = std::make_shared<StartOfExposureTimestampAdjuster>(this);
     }
 
     if(fwVersion >= 10564) {
@@ -413,6 +415,7 @@ void G330Device::initSensorList() {
 
                 auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
                 sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
+                sensor->setIntraCameraSyncTimestampAdjuster(intraCameraSyncTimestampAdjuster_);
 
                 auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR, false);
                 if(frameProcessor) {
@@ -477,6 +480,7 @@ void G330Device::initSensorList() {
 
                 auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
                 sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
+                sensor->setIntraCameraSyncTimestampAdjuster(intraCameraSyncTimestampAdjuster_);
 
                 auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_LEFT_IR_FRAME_PROCESSOR, false);
                 if(frameProcessor) {
@@ -527,6 +531,7 @@ void G330Device::initSensorList() {
 
                 auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
                 sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
+                sensor->setIntraCameraSyncTimestampAdjuster(intraCameraSyncTimestampAdjuster_);
 
                 auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_RIGHT_IR_FRAME_PROCESSOR, false);
                 if(frameProcessor) {
@@ -601,6 +606,7 @@ void G330Device::initSensorList() {
 
                 auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
                 sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
+                sensor->setIntraCameraSyncTimestampAdjuster(intraCameraSyncTimestampAdjuster_);
 
                 auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR, false);
                 if(frameProcessor) {
@@ -722,6 +728,7 @@ void                 G330Device::initSensorListGMSL() {
 
                 auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
                 sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
+                sensor->setIntraCameraSyncTimestampAdjuster(intraCameraSyncTimestampAdjuster_);
 
                 auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR, false);
                 if(frameProcessor) {
@@ -823,6 +830,7 @@ void                 G330Device::initSensorListGMSL() {
 
                 auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
                 sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
+                sensor->setIntraCameraSyncTimestampAdjuster(intraCameraSyncTimestampAdjuster_);
 
                 auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_LEFT_IR_FRAME_PROCESSOR, false);
                 if(frameProcessor) {
@@ -886,6 +894,7 @@ void                 G330Device::initSensorListGMSL() {
 
                 auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
                 sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
+                sensor->setIntraCameraSyncTimestampAdjuster(intraCameraSyncTimestampAdjuster_);
 
                 auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_RIGHT_IR_FRAME_PROCESSOR, false);
                 if(frameProcessor) {
@@ -955,6 +964,7 @@ void                 G330Device::initSensorListGMSL() {
 
                 auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
                 sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
+                sensor->setIntraCameraSyncTimestampAdjuster(intraCameraSyncTimestampAdjuster_);
 
                 auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR, false);
                 if(frameProcessor) {
@@ -1554,6 +1564,7 @@ void G330NetDevice::init() {
     if(fwVersion >= 10557) {
         auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
         propertyServer->registerProperty(OB_PROP_INTRA_CAMERA_SYNC_REFERENCE_INT, "rw", "rw", vendorPropertyAccessor.get());
+        intraCameraSyncTimestampAdjuster_ = std::make_shared<StartOfExposureTimestampAdjuster>(this);
     }
 
 #if defined(__linux__) || defined(__aarch64__)
@@ -1749,6 +1760,7 @@ void G330NetDevice::initSensorList() {
 
                 auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
                 sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
+                sensor->setIntraCameraSyncTimestampAdjuster(intraCameraSyncTimestampAdjuster_);
 
                 auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR, false);
                 if(frameProcessor) {
@@ -1820,6 +1832,7 @@ void G330NetDevice::initSensorList() {
 
                 auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
                 sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
+                sensor->setIntraCameraSyncTimestampAdjuster(intraCameraSyncTimestampAdjuster_);
 
                 auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_LEFT_IR_FRAME_PROCESSOR, false);
                 if(frameProcessor) {
@@ -1877,6 +1890,7 @@ void G330NetDevice::initSensorList() {
 
                 auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
                 sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
+                sensor->setIntraCameraSyncTimestampAdjuster(intraCameraSyncTimestampAdjuster_);
 
                 auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_RIGHT_IR_FRAME_PROCESSOR, false);
                 if(frameProcessor) {
@@ -1950,6 +1964,7 @@ void G330NetDevice::initSensorList() {
 
                 auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
                 sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
+                sensor->setIntraCameraSyncTimestampAdjuster(intraCameraSyncTimestampAdjuster_);
 
                 auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR, false);
                 if(frameProcessor) {

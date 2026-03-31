@@ -349,6 +349,10 @@ void SensorBase::setGlobalTimestampCalculator(std::shared_ptr<IFrameTimestampCal
     globalTimestampCalculator_ = calculator;
 }
 
+void SensorBase::setIntraCameraSyncTimestampAdjuster(std::shared_ptr<IFrameTimestampCalculator> adjuster) {
+    intraCameraSyncTimestampAdjuster_ = adjuster;
+}
+
 void SensorBase::setFrameRecordingCallback(FrameCallback callback) {
     frameRecordingCallback_ = callback;
 }
@@ -401,6 +405,10 @@ void SensorBase::outputFrame(std::shared_ptr<Frame> frame) {
     }
     if(frameTimestampCalculator_) {
         TRY_EXECUTE(frameTimestampCalculator_->calculate(frame));
+    }
+
+    if(intraCameraSyncTimestampAdjuster_) {
+        TRY_EXECUTE(intraCameraSyncTimestampAdjuster_->calculate(frame));
     }
 
     if(globalTimestampCalculator_) {

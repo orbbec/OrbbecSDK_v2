@@ -20,6 +20,7 @@
 #include "timestamp/GlobalTimestampFitter.hpp"
 #include "timestamp/FrameTimestampCalculator.hpp"
 #include "timestamp/DeviceClockSynchronizer.hpp"
+#include "timestamp/StartOfExposureTimestampAdjuster.hpp"
 #include "property/VendorPropertyAccessor.hpp"
 #include "property/UvcPropertyAccessor.hpp"
 #include "property/PropertyServer.hpp"
@@ -514,6 +515,7 @@ void G305Device::initProperties() {
     propertyServer->registerProperty(OB_DEVICE_AUTO_CAPTURE_INTERVAL_TIME_INT, "rw", "rw", vendorPropertyAccessor.get());
     propertyServer->registerProperty(OB_STRUCT_DEVICE_ERROR_STATE, "", "r", vendorPropertyAccessor.get());
     propertyServer->registerProperty(OB_PROP_INTRA_CAMERA_SYNC_REFERENCE_INT, "rw", "rw", vendorPropertyAccessor.get());
+    intraCameraSyncTimestampAdjuster_ = std::make_shared<StartOfExposureTimestampAdjuster>(this);
     propertyServer->registerProperty(OB_PROP_COLOR_DENOISING_LEVEL_INT, "rw", "rw", vendorPropertyAccessor.get());
     // propertyServer->registerProperty(OB_STRUCT_SOFTWARE_SYNCED_TARGET_TIME, "w", "w", vendorPropertyAccessor.get());
     propertyServer->registerProperty(OB_STRUCT_PRESET_RESOLUTION_CONFIG, "rw", "rw", vendorPropertyAccessor.get());
@@ -563,6 +565,7 @@ void G305Device::initSensorList() {
 
                 auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
                 sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
+                sensor->setIntraCameraSyncTimestampAdjuster(intraCameraSyncTimestampAdjuster_);
 
                 auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR, false);
                 if(frameProcessor) {
@@ -627,6 +630,7 @@ void G305Device::initSensorList() {
 
                 auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
                 sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
+                sensor->setIntraCameraSyncTimestampAdjuster(intraCameraSyncTimestampAdjuster_);
 
                 auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_LEFT_IR_FRAME_PROCESSOR, false);
                 if(frameProcessor) {
@@ -677,6 +681,7 @@ void G305Device::initSensorList() {
 
                 auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
                 sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
+                sensor->setIntraCameraSyncTimestampAdjuster(intraCameraSyncTimestampAdjuster_);
 
                 auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_RIGHT_IR_FRAME_PROCESSOR, false);
                 if(frameProcessor) {
@@ -750,6 +755,7 @@ void G305Device::initSensorList() {
 
                 auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
                 sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
+                sensor->setIntraCameraSyncTimestampAdjuster(intraCameraSyncTimestampAdjuster_);
 
                 auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR, false);
                 if(frameProcessor) {
@@ -799,6 +805,7 @@ void G305Device::initSensorList() {
 
                 auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
                 sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
+                sensor->setIntraCameraSyncTimestampAdjuster(intraCameraSyncTimestampAdjuster_);
 
                 auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_LEFT_COLOR_FRAME_PROCESSOR, false);
                 if(frameProcessor) {
@@ -854,6 +861,7 @@ void G305Device::initSensorList() {
 
                 auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
                 sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
+                sensor->setIntraCameraSyncTimestampAdjuster(intraCameraSyncTimestampAdjuster_);
 
                 auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_RIGHT_COLOR_FRAME_PROCESSOR, false);
                 if(frameProcessor) {
@@ -923,6 +931,7 @@ void G305Device::initSensorListGMSL() {
 
                 auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
                 sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
+                sensor->setIntraCameraSyncTimestampAdjuster(intraCameraSyncTimestampAdjuster_);
 
                 auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR, false);
                 if(frameProcessor) {
@@ -1020,6 +1029,7 @@ void G305Device::initSensorListGMSL() {
 
                 auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
                 sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
+                sensor->setIntraCameraSyncTimestampAdjuster(intraCameraSyncTimestampAdjuster_);
 
                 auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_LEFT_IR_FRAME_PROCESSOR, false);
                 if(frameProcessor) {
@@ -1078,6 +1088,7 @@ void G305Device::initSensorListGMSL() {
 
                 auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
                 sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
+                sensor->setIntraCameraSyncTimestampAdjuster(intraCameraSyncTimestampAdjuster_);
 
                 auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_RIGHT_IR_FRAME_PROCESSOR, false);
                 if(frameProcessor) {
@@ -1147,6 +1158,7 @@ void G305Device::initSensorListGMSL() {
 
                 auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
                 sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
+                sensor->setIntraCameraSyncTimestampAdjuster(intraCameraSyncTimestampAdjuster_);
 
                 auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_COLOR_FRAME_PROCESSOR, false);
                 if(frameProcessor) {
@@ -1216,6 +1228,7 @@ void G305Device::initSensorListGMSL() {
 
                 auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
                 sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
+                sensor->setIntraCameraSyncTimestampAdjuster(intraCameraSyncTimestampAdjuster_);
 
                 auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_LEFT_COLOR_FRAME_PROCESSOR, false);
                 if(frameProcessor) {
@@ -1286,6 +1299,7 @@ void G305Device::initSensorListGMSL() {
 
                 auto globalFrameTimestampCalculator = std::make_shared<GlobalTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
                 sensor->setGlobalTimestampCalculator(globalFrameTimestampCalculator);
+                sensor->setIntraCameraSyncTimestampAdjuster(intraCameraSyncTimestampAdjuster_);
 
                 auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_RIGHT_COLOR_FRAME_PROCESSOR, false);
                 if(frameProcessor) {

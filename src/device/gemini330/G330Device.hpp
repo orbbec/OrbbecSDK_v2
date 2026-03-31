@@ -41,6 +41,7 @@ private:
     const uint64_t                                              deviceTimeFreq_ = 1000;     // in ms
     const uint64_t                                              frameTimeFreq_  = 1000000;  // in us
     std::function<std::shared_ptr<IFrameTimestampCalculator>()> videoFrameTimestampCalculatorCreator_;
+    std::shared_ptr<IFrameTimestampCalculator>                  intraCameraSyncTimestampAdjuster_;
     bool                                                        isGmslDevice_;
 };
 
@@ -77,6 +78,7 @@ private:
     const uint64_t                                              deviceTimeFreq_ = 1000;     // in ms
     const uint64_t                                              frameTimeFreq_  = 1000000;  // in us
     std::function<std::shared_ptr<IFrameTimestampCalculator>()> videoFrameTimestampCalculatorCreator_;
+    std::shared_ptr<IFrameTimestampCalculator>                  intraCameraSyncTimestampAdjuster_;
     std::shared_ptr<GigECcpController>                          ccpController_;
 
     StreamProfileList allNetProfileList_;

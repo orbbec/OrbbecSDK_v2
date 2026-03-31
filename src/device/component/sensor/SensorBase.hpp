@@ -56,6 +56,7 @@ public:
     void setFrameMetadataParserContainer(std::shared_ptr<IFrameMetadataParserContainer> container);
     void setFrameTimestampCalculator(std::shared_ptr<IFrameTimestampCalculator> calculator);
     void setGlobalTimestampCalculator(std::shared_ptr<IFrameTimestampCalculator> calculator);
+    void setIntraCameraSyncTimestampAdjuster(std::shared_ptr<IFrameTimestampCalculator> adjuster);
     void setFrameProcessor(std::shared_ptr<FrameProcessor> frameProcessor);
     void enableTimestampAnomalyDetection(bool enable);
 
@@ -106,6 +107,7 @@ protected:
     std::shared_ptr<FrameProcessor>                frameProcessor_;
     std::shared_ptr<TimestampAnomalyDetector>      timestampAnomalyDetector_;
     std::shared_ptr<IDeviceActivityRecorder>       deviceActivityRecorder_;
+    std::shared_ptr<IFrameTimestampCalculator>     intraCameraSyncTimestampAdjuster_;
 };
 
 }  // namespace libobsensor
