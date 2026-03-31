@@ -236,7 +236,7 @@ typedef enum {
     OB_PROP_DEVICE_COMMUNICATION_TYPE_INT = 97,
 
     /**
-     * @brief Switch infrared imaging mode, 0: active IR mode, 1: passive IR mode
+     * @brief Switch infrared imaging mode, 0: positive IR mode, 1: passive IR mode
      */
     OB_PROP_SWITCH_IR_MODE_INT = 98,
 
