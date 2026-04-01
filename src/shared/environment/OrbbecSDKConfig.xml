@@ -22,6 +22,10 @@
         of printing logs, but some logs may be lost when the program exits abnormally; true-enable,
         false-disable (default) -->
         <Async>false</Async>
+        <!-- Log flush mode, bool type. true-periodic flush (flush on warn level, default), false-flush on every log -->
+        <PeriodicFlush>true</PeriodicFlush>
+        <!-- Log periodic flush interval in seconds, float type, default 0.5 second. Only effective when PeriodicFlush is true -->
+        <FlushIntervalSec>0.5</FlushIntervalSec>
     </Log>
 
     <Memory>

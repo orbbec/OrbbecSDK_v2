@@ -77,6 +77,9 @@ struct Logger::LoggerConfig {
     LogCallback   logCallback                          = nullptr;
 
     bool async = false;
+
+    bool  periodicFlush    = true;
+    float flushIntervalSec = 0.5f;
 };
 
 Logger::LoggerConfig    Logger::config_;
@@ -222,12 +225,15 @@ void Logger::updateDefaultSpdLogger() {
     else {
         // Synchronize logger
         spdLogger = std::make_shared<spdlog::logger>(sdkLibName_, sinks.begin(), sinks.end());
+        if(config_.periodicFlush) {
+            spdlog::flush_every(std::chrono::duration<float>(config_.flushIntervalSec));
+        }
     }
 
     spdlog::set_default_logger(spdLogger);
     spdlog::set_level(spdlog::level::trace);  // Set the logger log level (here set to trace, the actual output will be output according to the sink's log
                                               // level)
-    spdlog::flush_on(spdlog::level::trace);   // Set the flush log level (immediately output logs when receiving logs greater than or equal to this level)
+    spdlog::flush_on(config_.periodicFlush ? spdlog::level::warn : spdlog::level::trace);  // Set the flush log level
     spdlog::set_pattern(OB_DEFAULT_LOG_FMT);
 }
 
@@ -304,6 +310,15 @@ void Logger::loadEnvConfig() {
     bool async = false;
     if(envConfig->getBooleanValue("Log.Async", async)) {
         config_.async = async;
+    }
+
+    bool periodicFlush = true;
+    if(envConfig->getBooleanValue("Log.PeriodicFlush", periodicFlush)) {
+        config_.periodicFlush = periodicFlush;
+    }
+    float flushIntervalSec = 0;
+    if(envConfig->getFloatValue("Log.FlushIntervalSec", flushIntervalSec) && flushIntervalSec > 0) {
+        config_.flushIntervalSec = flushIntervalSec;
     }
 }
 
