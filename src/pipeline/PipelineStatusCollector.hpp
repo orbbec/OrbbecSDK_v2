@@ -113,9 +113,10 @@ private:
 
     /**
      * @brief Collect status and reset accumulators.
+     * @param[in] forceDeviceQuery If true, always query device/driver status regardless of SDK status.
      * @return Collected pipeline status.
      */
-    OBPipelineStatus getStatusAndReset();
+    OBPipelineStatus getStatusAndReset(bool forceDeviceQuery = false);
 
     /**
      * @brief Evaluate no-frame condition and update status bits.
@@ -133,8 +134,9 @@ private:
     /**
      * @brief Fetch and fill device and driver status.
      * @param[in,out] status Status object to update.
+     * @param[in] forceFetch If true, bypass the time-based cache and fetch fresh data from device.
      */
-    void fetchDeviceAndDriverStatus(OBPipelineStatus &status);
+    void fetchDeviceAndDriverStatus(OBPipelineStatus &status, bool forceFetch = false);
 
     /**
      * @brief Aggregate driver status from active ports.

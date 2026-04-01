@@ -51,10 +51,10 @@ OBPipelineStatus PipelineStatusCollector::getStatus() {
     }
 
     lock.unlock();
-    return getStatusAndReset();
+    return getStatusAndReset(true);
 }
 
-OBPipelineStatus PipelineStatusCollector::getStatusAndReset() {
+OBPipelineStatus PipelineStatusCollector::getStatusAndReset(bool forceDeviceQuery) {
     // Collect external status (e.g. sensor drop stats) before reading
     if(externalCollector_) {
         externalCollector_();
@@ -65,8 +65,8 @@ OBPipelineStatus PipelineStatusCollector::getStatusAndReset() {
 
     evaluateNoFrame(result);
 
-    if(needDeviceQuery(result.sdkStatus)) {
-        fetchDeviceAndDriverStatus(result);
+    if(forceDeviceQuery || needDeviceQuery(result.sdkStatus)) {
+        fetchDeviceAndDriverStatus(result, forceDeviceQuery);
     }
 
     result.issue = deriveIssue(result);
@@ -92,7 +92,7 @@ void PipelineStatusCollector::startHealthMonitorThread() {
             auto userData = monitorUserData_;
             lock.unlock();
 
-            auto status = getStatusAndReset();
+            auto status = getStatusAndReset(onDemandCollection);
 
             lock.lock();
             lastStatusCache_ = status;
@@ -223,9 +223,9 @@ bool PipelineStatusCollector::needDeviceQuery(uint64_t sdkStatus) {
     return sdkStatus != 0;
 }
 
-void PipelineStatusCollector::fetchDeviceAndDriverStatus(OBPipelineStatus &status) {
+void PipelineStatusCollector::fetchDeviceAndDriverStatus(OBPipelineStatus &status, bool forceFetch) {
     auto now = steadyNow();
-    if(now - lastDevFetchTime_ < devFetchInterval_) {
+    if(!forceFetch && (now - lastDevFetchTime_ < devFetchInterval_)) {
         status.devStatus = cachedDevStatus_;
         status.drvStatus = cachedDrvStatus_;
         return;
