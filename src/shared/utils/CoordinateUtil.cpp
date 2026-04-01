@@ -761,8 +761,8 @@ void CoordinateUtil::transformationDepthToRGBDPointCloudByUVTables(const OBCamer
 				x *= positionDataScale;
 				y *= positionDataScale;
 
-				int u_rgb   = (int)round(uvTables->xTable[i] * colorScale);
-				int v_rgb   = (int)round(uvTables->yTable[i] * colorScale);
+				int u_rgb   = (int)(uvTables->xTable[i] * colorScale + 0.5f);
+				int v_rgb   = (int)(uvTables->yTable[i] * colorScale + 0.5f);
 				int idx_rgb = v_rgb * colorWidth + u_rgb;
 
 				r = cImageData[3 * idx_rgb + 0] / colorDivCoeff;
