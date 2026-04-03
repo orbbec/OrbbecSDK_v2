@@ -25,7 +25,7 @@ static void printPipelineStatus(const std::string &title, OBPipelineStatus statu
         std::cout << "Issue observed in device, status: 0x" << std::hex << status.devStatus << std::endl;
     }
     std::cout << "--------------------------------------------------------------------------------\n" << std::endl;
-};
+}
 
 int main(void) try {
 
