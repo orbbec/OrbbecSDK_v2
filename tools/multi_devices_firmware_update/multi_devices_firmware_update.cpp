@@ -23,19 +23,19 @@
 #include <cctype>
 #include <mutex>
 #include <condition_variable>
-#include <atomic>
 #include <thread>
 #include <chrono>
+#include <unordered_set>
 
-// Constants for magic numbers
+// Constants
 namespace {
-constexpr uint32_t MS_PER_SECOND            = 1000;
-constexpr uint32_t US_PER_MS                = 1000;
-constexpr uint32_t POLL_INTERVAL_US         = 100;
-constexpr uint32_t MAX_RECONNECT_TIMEOUT_MS = 15000;
-constexpr uint32_t POLL_INTERVAL_MS         = 1000;
-constexpr size_t   MIN_EXTENSION_LENGTH     = 4;
-constexpr uint32_t CURSOR_MOVE_UP_LINES     = 3;
+constexpr uint32_t kMsPerSecond           = 1000;
+constexpr uint32_t kUsPerMs               = 1000;
+constexpr uint32_t kPollIntervalUs        = 100;
+constexpr uint32_t kMaxReconnectTimeoutMs = 15000;
+constexpr uint32_t kPollIntervalMs        = 1000;
+constexpr size_t   kMinExtensionLength    = 4;
+constexpr uint32_t kCursorMoveUpLines     = 3;
 }  // namespace
 
 // Internal implementation of waitForKeyPressed
@@ -70,7 +70,7 @@ static char obSmplWaitForKeyPressInternal(uint32_t timeoutMs) {
     struct timeval te;
     long long      startTime;
     gettimeofday(&te, NULL);
-    startTime = te.tv_sec * MS_PER_SECOND + te.tv_usec / US_PER_MS;
+    startTime = te.tv_sec * kMsPerSecond + te.tv_usec / kUsPerMs;
 
     struct termios oldt, newt;
     int            ch;
@@ -90,13 +90,13 @@ static char obSmplWaitForKeyPressInternal(uint32_t timeoutMs) {
             return (char)ch;
         }
         gettimeofday(&te, NULL);
-        long long currentTime = te.tv_sec * MS_PER_SECOND + te.tv_usec / US_PER_MS;
+        long long currentTime = te.tv_sec * kMsPerSecond + te.tv_usec / kUsPerMs;
         if(timeoutMs > 0 && currentTime - startTime > timeoutMs) {
             tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
             fcntl(STDIN_FILENO, F_SETFL, oldf);
             return 0;
         }
-        usleep(POLL_INTERVAL_US);
+        usleep(kPollIntervalUs);
     }
 #endif
 }
@@ -162,18 +162,17 @@ std::vector<DeviceUpgradeContext> successDevices{};
 std::vector<DeviceUpgradeContext> mismatchDevices{};
 std::vector<DeviceUpgradeContext> failedDevices{};
 
-// For device reconnection
-std::mutex                  reconnectMutex;
-std::condition_variable     reconnectCv;
-std::shared_ptr<ob::Device> deviceAfterReboot;
-std::string                 currentReconnectSerial;
-
 int main(int argc, char *argv[]) try {
     std::string firmwarePath;
     if(!getFirmwarePathFromCommandLine(argc, argv, firmwarePath)) {
         std::cout << "Press any key to exit..." << std::endl;
         exit(EXIT_FAILURE);
     }
+
+    // For device reconnection
+    std::mutex                      reconnectMutex;
+    std::condition_variable         reconnectCv;
+    std::unordered_set<std::string> onlineDevices;
 
     ansiEscapeSupported = obSmpl::supportAnsiEscape();
 
@@ -213,21 +212,22 @@ int main(int argc, char *argv[]) try {
 
     // Set device change callback for detecting device reconnection
     context->setDeviceChangedCallback([&](std::shared_ptr<ob::DeviceList> removedList, std::shared_ptr<ob::DeviceList> addedList) {
-        (void)removedList;  // Unused parameter
-        std::shared_ptr<ob::Device> device;
-        try {
-            std::lock_guard<std::mutex> lock(reconnectMutex);
-            if(!currentReconnectSerial.empty()) {
-                device = addedList->getDeviceBySN(currentReconnectSerial.c_str());
-                if(device) {
-                    deviceAfterReboot = device;
-                    reconnectCv.notify_one();
-                }
+        (void)removedList;
+        if(!addedList) {
+            return;
+        }
+        std::lock_guard<std::mutex> lock(reconnectMutex);
+        for(uint32_t i = 0; i < addedList->getCount(); ++i) {
+            try {
+                auto dev = addedList->getDevice(i);
+                auto sn  = dev->getDeviceInfo()->getSerialNumber();
+                onlineDevices.insert(sn);
+            }
+            catch(...) {
+                // ignore
             }
         }
-        catch(ob::Error &e) {
-            std::cerr << "Device change callback error: " << e.what() << std::endl;
-        }
+        reconnectCv.notify_one();
     });
 
     // Upgrade each device
@@ -266,47 +266,40 @@ int main(int argc, char *argv[]) try {
                 totalDevices[i].device->reboot();
                 totalDevices[i].device = nullptr;  // Invalidate the old device handle
 
-                // Set the serial number to wait for
-                {
-                    std::unique_lock<std::mutex> lock(reconnectMutex);
-                    currentReconnectSerial = totalDevices[i].serialNumber;
-                }
+                std::cout << "Waiting for device to reconnect..." << std::endl;
 
-                // Wait for device to come back online - auto retry with timeout
-                const uint32_t maxWaitTimeMs  = MAX_RECONNECT_TIMEOUT_MS;
-                const uint32_t pollIntervalMs = POLL_INTERVAL_MS;
+                // Wait for device to come back online
+                const uint32_t maxWaitTimeMs  = kMaxReconnectTimeoutMs;
+                const uint32_t pollIntervalMs = kPollIntervalMs;
                 uint32_t       elapsedTime    = 0;
                 bool           reconnected    = false;
 
                 while(elapsedTime < maxWaitTimeMs) {
-                    // Wait for callback notification (1 second timeout)
                     {
                         std::unique_lock<std::mutex> lock(reconnectMutex);
-                        reconnectCv.wait_for(lock, std::chrono::milliseconds(pollIntervalMs), [&]() { return deviceAfterReboot != nullptr; });
-                    }
-
-                    if(deviceAfterReboot != nullptr) {
-                        // Device reconnected via callback
-                        std::cout << "\nThe device is online now, starting the second update..." << std::endl;
-                        totalDevices[i].device = deviceAfterReboot;
-                        reconnected            = true;
-                        break;
-                    }
-
-                    // Auto poll device list
-                    try {
-                        auto newDeviceList = context->queryDeviceList();
-                        auto newDevice     = newDeviceList->getDeviceBySN(totalDevices[i].serialNumber.c_str());
-                        if(newDevice) {
-                            deviceAfterReboot = newDevice;
-                            std::cout << "\nThe device is online now, starting the second update..." << std::endl;
-                            totalDevices[i].device = deviceAfterReboot;
-                            reconnected            = true;
-                            break;
+                        // check if device appeared in callback
+                        if(onlineDevices.count(totalDevices[i].serialNumber)) {
+                            onlineDevices.erase(totalDevices[i].serialNumber);
+                            lock.unlock();
+                            // verify by querying device list
+                            try {
+                                auto newDeviceList = context->queryDeviceList();
+                                auto newDevice     = newDeviceList->getDeviceBySN(totalDevices[i].serialNumber.c_str());
+                                if(newDevice) {
+                                    std::cout << "\nThe device is online now, starting the second update..." << std::endl;
+                                    totalDevices[i].device = newDevice;
+                                    reconnected            = true;
+                                    break;
+                                }
+                            }
+                            catch(...) {
+                                // Device not found, continue waiting
+                            }
                         }
-                    }
-                    catch(...) {
-                        // Device not found yet, continue waiting
+                        else {
+                            // wait for callback or timeout
+                            reconnectCv.wait_for(lock, std::chrono::milliseconds(pollIntervalMs));
+                        }
                     }
 
                     elapsedTime += pollIntervalMs;
@@ -318,11 +311,10 @@ int main(int argc, char *argv[]) try {
                     totalDevices[i].finalFailure = true;
                 }
 
-                // Clear reconnection state
+                // Clear online devices set for this device
                 {
                     std::lock_guard<std::mutex> lock(reconnectMutex);
-                    currentReconnectSerial = "";
-                    deviceAfterReboot      = nullptr;
+                    onlineDevices.erase(totalDevices[i].serialNumber);
                 }
 
                 // Perform second update if device is available
@@ -398,6 +390,9 @@ int main(int argc, char *argv[]) try {
         }
     }
 
+    // reset callback before destroying context
+    context->setDeviceChangedCallback([](std::shared_ptr<ob::DeviceList>, std::shared_ptr<ob::DeviceList>) {});
+
     std::cout << "Press any key to exit..." << std::endl;
     obSmpl::waitForKeyPressed();
     return 0;
@@ -416,7 +411,7 @@ void firmwareUpdateCallback(OBFwUpdateState state, const char *message, uint8_t 
     }
     else {
         if(ansiEscapeSupported) {
-            std::cout << "\033[" << CURSOR_MOVE_UP_LINES << "F";  // Move cursor up 3 lines
+            std::cout << "\033[" << kCursorMoveUpLines << "F";  // Move cursor up 3 lines
         }
     }
 
@@ -499,8 +494,8 @@ bool getFirmwarePathFromCommandLine(int argc, char **argv, std::string &firmware
     std::vector<std::string> validExtensions = { ".bin", ".img" };
     firmwarePath                             = argv[1];
 
-    if(firmwarePath.size() > MIN_EXTENSION_LENGTH) {
-        std::string extension = firmwarePath.substr(firmwarePath.size() - MIN_EXTENSION_LENGTH);
+    if(firmwarePath.size() > kMinExtensionLength) {
+        std::string extension = firmwarePath.substr(firmwarePath.size() - kMinExtensionLength);
 
         auto result = std::find_if(validExtensions.begin(), validExtensions.end(),
                                    [extension](const std::string &validExtension) { return extension == validExtension; });

@@ -15,12 +15,12 @@
 #include <condition_variable>
 #include <chrono>
 #include <thread>
+#include <unordered_set>
 
-// Constants for magic numbers
+// Constants
 namespace {
-constexpr uint32_t MS_PER_SECOND            = 1000;
-constexpr uint32_t MAX_RECONNECT_TIMEOUT_MS = 15000;
-constexpr uint32_t POLL_INTERVAL_MS         = 1000;
+constexpr uint32_t kMaxReconnectTimeoutMs = 15000;
+constexpr uint32_t kPollIntervalMs        = 1000;
 }  // namespace
 
 struct CmdArgs {
@@ -115,24 +115,27 @@ int main(int argc, char *argv[]) try {
     std::cout << "> " << args.firmwarePath << std::endl;
 
     // register callback for device change
-    std::shared_ptr<ob::Device> deviceAfterReboot;
-    std::mutex                  mutex;
-    std::condition_variable     cv;
+    std::mutex                      mutex;
+    std::condition_variable         cv;
+    std::unordered_set<std::string> onlineDevices;
 
     context->setDeviceChangedCallback([&](std::shared_ptr<ob::DeviceList> removedList, std::shared_ptr<ob::DeviceList> addedList) {
         (void)removedList;
-        std::shared_ptr<ob::Device> device;
-        try {
-            device = addedList->getDeviceBySN(args.serial.c_str());
-            {
-                std::lock_guard<std::mutex> lock(mutex);
-                deviceAfterReboot = device;
+        if(!addedList) {
+            return;
+        }
+        std::lock_guard<std::mutex> lock(mutex);
+        for(uint32_t i = 0; i < addedList->getCount(); ++i) {
+            try {
+                auto dev = addedList->getDevice(i);
+                auto sn  = dev->getDeviceInfo()->getSerialNumber();
+                onlineDevices.insert(sn);
             }
-            cv.notify_one();
+            catch(...) {
+                // ignore
+            }
         }
-        catch(ob::Error &e) {
-            std::cerr << "Device changed callback getDeviceBySN failed: " << e.what() << " (status: " << e.getStatus() << ")" << std::endl;
-        }
+        cv.notify_one();
     });
 
     // update synchronously
@@ -143,41 +146,40 @@ int main(int argc, char *argv[]) try {
         targetDevice->reboot();
         targetDevice = nullptr;
 
-        // wait for device to come back online - auto retry with timeout
-        const uint32_t maxWaitTimeMs  = MAX_RECONNECT_TIMEOUT_MS;
-        const uint32_t pollIntervalMs = POLL_INTERVAL_MS;
+        std::cout << "Waiting for device to reconnect..." << std::endl;
+
+        // wait for device to come back online
+        const uint32_t maxWaitTimeMs  = kMaxReconnectTimeoutMs;
+        const uint32_t pollIntervalMs = kPollIntervalMs;
         uint32_t       elapsedTime    = 0;
         bool           reconnected    = false;
 
         while(elapsedTime < maxWaitTimeMs) {
-            // wait for callback notification (1 second timeout)
             {
                 std::unique_lock<std::mutex> lock(mutex);
-                cv.wait_for(lock, std::chrono::milliseconds(pollIntervalMs), [&]() { return deviceAfterReboot != nullptr; });
-            }
-
-            if(deviceAfterReboot != nullptr) {
-                // device reconnected via callback
-                std::cout << "\nThe device is online now, starting the second update..." << std::endl;
-                targetDevice = deviceAfterReboot;
-                reconnected  = true;
-                break;
-            }
-
-            // auto poll device list
-            try {
-                auto newDeviceList = context->queryDeviceList();
-                auto newDevice     = newDeviceList->getDeviceBySN(args.serial.c_str());
-                if(newDevice) {
-                    deviceAfterReboot = newDevice;
-                    std::cout << "\nThe device is online now, starting the second update..." << std::endl;
-                    targetDevice = deviceAfterReboot;
-                    reconnected  = true;
-                    break;
+                // check if device appeared in callback
+                if(onlineDevices.count(args.serial)) {
+                    onlineDevices.erase(args.serial);
+                    lock.unlock();
+                    // verify by querying device list
+                    try {
+                        auto newDeviceList = context->queryDeviceList();
+                        auto newDevice     = newDeviceList->getDeviceBySN(args.serial.c_str());
+                        if(newDevice) {
+                            std::cout << "\nThe device is online now, starting the second update..." << std::endl;
+                            targetDevice = newDevice;
+                            reconnected  = true;
+                            break;
+                        }
+                    }
+                    catch(...) {
+                        // device not found, continue waiting
+                    }
                 }
-            }
-            catch(...) {
-                // device not found yet, continue waiting
+                else {
+                    // wait for callback or timeout
+                    cv.wait_for(lock, std::chrono::milliseconds(pollIntervalMs));
+                }
             }
 
             elapsedTime += pollIntervalMs;
@@ -200,11 +202,13 @@ int main(int argc, char *argv[]) try {
     targetDevice->reboot();
 
     // clear
-    devInfo           = nullptr;
-    deviceAfterReboot = nullptr;
-    targetDevice      = nullptr;
-    deviceList        = nullptr;
-    context           = nullptr;
+    devInfo      = nullptr;
+    targetDevice = nullptr;
+    deviceList   = nullptr;
+
+    // reset callback before destroying context
+    context->setDeviceChangedCallback([](std::shared_ptr<ob::DeviceList>, std::shared_ptr<ob::DeviceList>) {});
+    context = nullptr;
     return 0;
 }
 catch(ob::Error &e) {
