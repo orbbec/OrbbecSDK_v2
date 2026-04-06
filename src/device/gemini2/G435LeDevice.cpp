@@ -91,8 +91,8 @@ void G435LeDeviceBase::init() {
     if(fwVersion >= 10317 && fwVersion <= 10319) {
         propertyServer->registerProperty(OB_PROP_DEVICE_NETWORK_LLA_BOOL, "rw", "rw", vendorPropertyAccessor.get());
     }
-    
-    if(fwVersion >= 10320) {
+
+    if(fwVersion >= 10400) {
         propertyServer->registerProperty(OB_PROP_DEVICE_IP_MODE_INT, "rw", "rw", vendorPropertyAccessor.get());
         propertyServer->registerProperty(OB_STRUCT_DEVICE_IP_ADDR_CONFIG_V2, "rw", "rw", vendorPropertyAccessor.get());
     }
