@@ -37,8 +37,8 @@ VendorTCPClient::VendorTCPClient(std::string localAddress, std::string localMac,
     if(rst != 0) {
         THROW_IO_EXCEPTION(utils::string::to_string() << "Failed to load Winsock! err_code=" << GET_LAST_ERROR());
     }
-    checkLocalIP();
 #endif
+    checkLocalIP();
 // Due to network configuration changes causing socket connection pipeline errors, macOS throws a SIGPIPE exception to the application, leading to a crash (this
 // does not occur on Linux). This exception needs to be filtered out.
 #if (defined(OS_IOS) || defined(OS_MACOS))
