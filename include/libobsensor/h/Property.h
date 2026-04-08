@@ -866,9 +866,9 @@ typedef enum {
     OB_PROP_DEPTH_RM_FILTER_BOOL = 2029,
 
     /**
-     * @brief Color camera maximal gain
+     * @brief Color AE max gain
      */
-    OB_PROP_COLOR_MAXIMAL_GAIN_INT = 2030,
+    OB_PROP_COLOR_AE_MAX_GAIN_INT = 2030,
 
     /**
      * @brief Color camera shutter gain

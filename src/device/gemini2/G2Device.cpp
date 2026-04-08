@@ -143,6 +143,12 @@ void G2Device::init() {
         return factory;
     });
 
+    if((getFirmwareVersionInt() >= 10504 && deviceInfo_->pid_ == GEMINI2_PID) || (getFirmwareVersionInt() >= 10509 && deviceInfo_->pid_ == GEMINI2L_PID)) {
+        auto propertyServer         = getPropertyServer();
+        auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        propertyServer->registerProperty(OB_PROP_COLOR_AE_MAX_GAIN_INT, "rw", "rw", vendorPropertyAccessor.get());
+    }
+
     fixSensorList();  // fix sensor list according to depth alg work mode
 }
 
