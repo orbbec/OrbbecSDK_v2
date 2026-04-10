@@ -320,7 +320,7 @@ bool DeviceBase::isComponentCreated(DeviceComponentId compId) const {
 DeviceComponentPtr<IDeviceComponent> DeviceBase::getComponent(DeviceComponentId compId, bool throwExIfNotFound) {
     if(isDeactivated_) {
         if(throwExIfNotFound) {
-            THROW_WRONG_API_CALL_SEQUENCE_EXCEPTION("Device is deactivated/disconnected!");
+            THROW_WRONG_API_CALL_SEQUENCE_EXCEPTION("Device is deactivated/disconnected! DeviceComponentId:" + std::to_string(static_cast<int>(compId)));
         }
         return DeviceComponentPtr<IDeviceComponent>();
     }
