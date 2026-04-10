@@ -183,9 +183,9 @@ void DaBaiAAlgParamManager::fetchParamFromDevice() {
             param.depthIntrinsic = cameraParam.depthIntrinsic;
             param.rgbIntrinsic   = cameraParam.rgbIntrinsic;
             memcpy(&param.depthDistortion, &cameraParam.depthDistortion, sizeof(param.depthDistortion));
-            param.depthDistortion.model = OB_DISTORTION_BROWN_CONRADY;
+            param.depthDistortion.model = OB_DISTORTION_BROWN_CONRADY_K6;
             memcpy(&param.rgbDistortion, &cameraParam.rgbDistortion, sizeof(param.rgbDistortion));
-            param.rgbDistortion.model = OB_DISTORTION_BROWN_CONRADY;
+            param.rgbDistortion.model = OB_DISTORTION_BROWN_CONRADY_K6;
             param.transform           = cameraParam.transform;
             param.isMirrored          = false;
             originCalibrationCameraParamList_.emplace_back(param);
@@ -574,12 +574,12 @@ void DaBaiAAlgParamManager::bindIntrinsic(std::vector<std::shared_ptr<const Stre
                 if(irRectifyEnable_) {
                     intrinsic = d2cRectifyParam_.leftVirtualIntrin;
                     memset(&distortion, 0, sizeof(distortion));
-                    distortion.model = OB_DISTORTION_BROWN_CONRADY;
+                    distortion.model = OB_DISTORTION_BROWN_CONRADY_K6;
                 }
                 else {
                     intrinsic = d2cRectifyParam_.leftIntrin;
                     memcpy(&distortion, &d2cRectifyParam_.leftDisto, sizeof(OBCameraDistortion_Internal));
-                    distortion.model = OB_DISTORTION_BROWN_CONRADY;
+                    distortion.model = OB_DISTORTION_BROWN_CONRADY_K6;
                 }
 
                 break;
@@ -587,12 +587,12 @@ void DaBaiAAlgParamManager::bindIntrinsic(std::vector<std::shared_ptr<const Stre
                 if(irRectifyEnable_) {
                     intrinsic = d2cRectifyParam_.leftVirtualIntrin;
                     memset(&distortion, 0, sizeof(distortion));
-                    distortion.model = OB_DISTORTION_BROWN_CONRADY;
+                    distortion.model = OB_DISTORTION_BROWN_CONRADY_K6;
                 }
                 else {
                     intrinsic = d2cRectifyParam_.rightIntrin;
                     memcpy(&distortion, &d2cRectifyParam_.rightDisto, sizeof(OBCameraDistortion_Internal));
-                    distortion.model = OB_DISTORTION_BROWN_CONRADY;
+                    distortion.model = OB_DISTORTION_BROWN_CONRADY_K6;
                 }
             } break;
             default:
