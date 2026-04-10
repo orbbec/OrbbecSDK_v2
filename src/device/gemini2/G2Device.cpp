@@ -147,6 +147,7 @@ void G2Device::init() {
         auto propertyServer         = getPropertyServer();
         auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
         propertyServer->registerProperty(OB_PROP_COLOR_AE_MAX_GAIN_INT, "rw", "rw", vendorPropertyAccessor.get());
+        propertyServer->registerProperty(OB_PROP_COLOR_DENOISING_LEVEL_INT, "rw", "rw", vendorPropertyAccessor.get());
     }
 
     fixSensorList();  // fix sensor list according to depth alg work mode
