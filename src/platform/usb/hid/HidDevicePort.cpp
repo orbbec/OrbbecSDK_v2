@@ -77,8 +77,8 @@ void HidDevicePort::startStream(MutableFrameCallback callback) {
                 LOG_WARN_INTVL(utils::string::to_string() << "interrupt transfer failed, error: " << libusb_strerror(res));
                 continue;
             }
-            auto realtime = utils::getNowTimesUs();
-            frame->setSystemTimeStampUsec(realtime);
+            frame->setSystemTimeStampUsec(utils::getNowTimesUs());
+            frame->setSteadyTimeStampUsec(utils::getSteadyTimeUs());
             frameQueue_.enqueue(frame);
         }
     });

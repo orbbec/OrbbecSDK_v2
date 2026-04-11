@@ -47,7 +47,7 @@ uint64_t G305FrameTimestampCalculatorBaseDeviceTime::calculate(uint64_t srcTimes
     bool tspDecrease = (srcTimestamp < prevSrcTsp_) && (prevSrcTsp_ - srcTimestamp > 0.5 * frameTimeFreq_);  // 0.5 second
 
     // Determine whether the data frame timestamp difference is similar to the system timestamp difference
-    uint64_t curHostTsp      = utils::getNowTimesMs();
+    uint64_t curHostTsp      = utils::getSteadyTimeMs();
     int64_t  srcTspDiffMs    = static_cast<int64_t>((static_cast<double>(srcTimestamp) - prevSrcTsp_) / frameTimeFreq_ * 1000);  // Convert unit to milliseconds
     int64_t  hostTspDiffMs   = curHostTsp - prevHostTsp_;
     uint64_t prevSrcTspMs    = static_cast<uint64_t>(static_cast<double>(prevSrcTsp_) / frameTimeFreq_ * 1000);

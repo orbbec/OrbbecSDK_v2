@@ -24,6 +24,7 @@ Frame::Frame(uint8_t *data, size_t dataBufSize, OBFrameType type, FrameBufferRec
       number_(0),
       timeStampUsec_(0),
       systemTimeStampUsec_(0),
+      steadyTimeStampUsec_(0),
       globalTimeStampUsec_(0),
       metadataSize_(0),
       metadata_{},
@@ -102,6 +103,14 @@ uint64_t Frame::getSystemTimeStampUsec() const {
 
 void Frame::setSystemTimeStampUsec(uint64_t ts) {
     systemTimeStampUsec_ = ts;
+}
+
+uint64_t Frame::getSteadyTimeStampUsec() const {
+    return steadyTimeStampUsec_;
+}
+
+void Frame::setSteadyTimeStampUsec(uint64_t ts) {
+    steadyTimeStampUsec_ = ts;
 }
 
 uint64_t Frame::getGlobalTimeStampUsec() const {

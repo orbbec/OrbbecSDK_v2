@@ -258,6 +258,7 @@ void ObRTPSink::outputFrameFunc() {
 
                     frame->setTimeStampUsec(header->timestamp);
                     frame->setSystemTimeStampUsec(utils::getNowTimesUs());
+                    frame->setSteadyTimeStampUsec(utils::getSteadyTimeUs());
                     frame->setNumber(header->frameCounter);
 
                     if(header->extentionLen != 0) {
@@ -268,6 +269,7 @@ void ObRTPSink::outputFrameFunc() {
                 else {
                     frame->setTimeStampUsec(output->getTimestamp());
                     frame->setSystemTimeStampUsec(utils::getNowTimesUs());
+                    frame->setSteadyTimeStampUsec(utils::getSteadyTimeUs());
                     frame->setNumber(output->getSequenceNumber());
                 }
 

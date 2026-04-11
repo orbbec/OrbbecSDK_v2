@@ -763,8 +763,8 @@ void ObV4lGmslDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandleGmsl> devHa
                             }
                         }
 
-                        auto realtime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-                        videoFrame->setSystemTimeStampUsec(realtime);
+                        videoFrame->setSystemTimeStampUsec(utils::getNowTimesUs());
+                        videoFrame->setSteadyTimeStampUsec(utils::getSteadyTimeUs());
                         // videoFrame->setNumber(buf.sequence);
                         // for debug use. it is not necessary
                         // auto metaFrameCount=*(uint32_t *)(uvc_payload_header);

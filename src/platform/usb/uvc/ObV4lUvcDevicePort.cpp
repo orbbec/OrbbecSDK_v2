@@ -508,8 +508,8 @@ void ObV4lUvcDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandle> devHandle)
                             }
                         }
 
-                        auto realtime = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-                        videoFrame->setSystemTimeStampUsec(realtime);
+                        videoFrame->setSystemTimeStampUsec(utils::getNowTimesUs());
+                        videoFrame->setSteadyTimeStampUsec(utils::getSteadyTimeUs());
                         // NOte: // V4L2 frame number start from 0; we use a custom frame number starting from 1
                         // videoFrame->setNumber(buf.sequence);
                         videoFrame->setNumber(devHandle->loopFrameIndex);

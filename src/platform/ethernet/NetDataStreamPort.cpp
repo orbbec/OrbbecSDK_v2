@@ -76,8 +76,8 @@ void NetDataStreamPort::readData() {
         }
 
         if(PACK_SIZE == dataRecvdSize && isStreaming_) {
-            auto realtime = utils::getNowTimesUs();
-            frame->setSystemTimeStampUsec(realtime);
+            frame->setSystemTimeStampUsec(utils::getNowTimesUs());
+            frame->setSteadyTimeStampUsec(utils::getSteadyTimeUs());
             callback_(frame);
             frame.reset();
         }

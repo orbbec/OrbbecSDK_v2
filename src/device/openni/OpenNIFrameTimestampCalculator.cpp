@@ -15,6 +15,7 @@ void OpenNIFrameTimestampCalculator::calculate(std::shared_ptr<Frame> frame) {
     auto realtime = utils::getNowTimesUs();
     frame->setTimeStampUsec(realtime);
     frame->setSystemTimeStampUsec(realtime);
+    frame->setSteadyTimeStampUsec(utils::getSteadyTimeUs());
 }
 
 void OpenNIFrameTimestampCalculator::clear() {

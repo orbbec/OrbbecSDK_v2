@@ -1061,8 +1061,8 @@ STDMETHODIMP WmfUvcDevicePort::OnReadSample(HRESULT hrStatus, DWORD streamIndex,
                         stream.frameCounter++;
                         videoFrame->setNumber(stream.frameCounter);
 
-                        auto realtime = utils::getNowTimesUs();
-                        videoFrame->setSystemTimeStampUsec(realtime);
+                        videoFrame->setSystemTimeStampUsec(utils::getNowTimesUs());
+                        videoFrame->setSteadyTimeStampUsec(utils::getSteadyTimeUs());
                     });
 
 #ifdef METADATA_SUPPORT
