@@ -492,9 +492,6 @@ void ObV4lUvcDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandle> devHandle)
 
                 if(buf.bytesused) {
                     TRY_EXECUTE({
-                        auto timestamp = (double)buf.timestamp.tv_sec * 1000.f + (double)buf.timestamp.tv_usec / 1000.f;
-                        (void)timestamp;
-
                         auto rawframe   = FrameFactory::createFrameFromStreamProfile(devHandle->profile);
                         auto videoFrame = rawframe->as<VideoFrame>();
                         videoFrame->updateData(static_cast<const uint8_t *>(devHandle->buffers[buf.index].ptr), buf.bytesused);

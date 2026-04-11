@@ -14,12 +14,17 @@ public:
     virtual void clear()                                 = 0;
 };
 
-// First degree function coefficient y=ax+b
+/**
+ * @brief Point-slope parameters for global timestamp linear regression
+ * Formula: system_ts(us) = coefficientA * (device_ts - checkDataX) + refSysTime
+ */
 typedef struct {
-    double   coefficientA;
-    double   constantB;
-    uint64_t checkDataX;
-    uint64_t checkDataY;
+    double   coefficientA; // Slope (system_us / device_clock_unit), typically ~1000.0
+    double   refSysTime;   // Predicted system timestamp (us) at checkDataX
+                           // EWLR-smoothed anchor to filter out single-sample RTT noise
+    uint64_t checkDataX;   // Reference device timestamp (X anchor)
+    uint64_t checkDataY;   // Latest raw measured system timestamp (us)
+                           // For diagnostics only; not used in conversion
 } LinearFuncParam;
 
 class IGlobalTimestampFitter {

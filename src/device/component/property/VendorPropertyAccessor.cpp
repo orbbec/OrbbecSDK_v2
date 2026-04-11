@@ -90,7 +90,7 @@ const std::vector<uint8_t> &VendorPropertyAccessor::getStructureData(uint32_t pr
 
     uint16_t respDataSize    = 0;
     auto     port            = std::dynamic_pointer_cast<IVendorDataPort>(backend_);
-    uint16_t expectedRespLen = (propertyId == OB_STRUCT_DEVICE_TIME) ? 64 : 0;  // TODO: optimized for GMSL device to reduce data transfer
+    uint16_t expectedRespLen = (propertyId == OB_STRUCT_DEVICE_TIME) ? 32 : 0;  // TODO: optimized for GMSL device to reduce data transfer
     auto     res             = executeAndCheck(port, sendData_.data(), sizeof(*req), recvData_.data(), &respDataSize, propertyId, expectedRespLen);
 
     auto resp              = protocol::parseGetStructureDataResp(recvData_.data(), respDataSize);

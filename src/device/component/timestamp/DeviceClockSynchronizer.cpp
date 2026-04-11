@@ -84,7 +84,7 @@ void DeviceClockSynchronizer::timestampReset() {
 void DeviceClockSynchronizer::timerSyncWithHost() {
     const uint32_t MINI_HOST_DEVICE_TIME_DIFF = 10000;  // us
     const uint32_t MAX_REPEAT_TIME            = 10;
-    uint8_t        repeated                   = 0;
+    uint16_t       repeated                   = 0;
     uint64_t       rtt                        = 0;
     auto           owner                      = getOwner();
     auto           devInfo                    = owner->getInfo();

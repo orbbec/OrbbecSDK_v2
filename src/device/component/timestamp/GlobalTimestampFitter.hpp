@@ -10,6 +10,8 @@
 #include <queue>
 #include <mutex>
 #include <condition_variable>
+#include <limits>
+#include <atomic>
 
 namespace libobsensor {
 
@@ -31,7 +33,7 @@ private:
     void                      fittingLoop();
     inline const std::string &GetCurrentSN() const;
     void                      calcLinearParam(uint64_t sysTimestamp, uint64_t devTimestamp);
-    bool                      ensureFitting();
+    void                      ensureFitting();
 
 private:
     const uint64_t MAX_VALID_RTT = 20000;  // 10ms
@@ -40,7 +42,7 @@ private:
     std::thread             sampleThread_;
     std::mutex              sampleMutex_;
     std::condition_variable sampleCondVar_;
-    bool                    sampleLoopExit_;
+    std::atomic<bool>       sampleLoopExit_;
 
     typedef struct {
         uint64_t systemTimestamp;
@@ -48,8 +50,9 @@ private:
     } TimestampPair;
 
     std::deque<TimestampPair> samplingQueue_;
-    uint32_t                  maxQueueSize_ = 100;
-    bool                      needCalculation_{ false };  // true if samplingQueue_ changed
+    uint32_t                  maxQueueSize_{ 100 };
+    double                    decayHalfLifeSec_{ 180.0 };  // EWLR half-life in seconds; 0 = unweighted
+    bool                      needCalculation_{ false };   // true if samplingQueue_ changed
 
     // The refresh interval needs to be less than half the interval of the data frame, that is, it needs to be sampled at least twice within an overflow period.
     uint32_t refreshIntervalMsec_ = 1000;

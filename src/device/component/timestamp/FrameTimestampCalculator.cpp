@@ -11,7 +11,7 @@
 namespace libobsensor {
 
 #define BASE_DEV_TIME_MASK 0xffffffff00000000
-#define TSP_OVERFLOW_32BIT 0x100000000
+static constexpr uint64_t TSP_OVERFLOW_32BIT = 0x100000000ULL;
 
 GlobalTimestampCalculator::GlobalTimestampCalculator(IDevice *owner, uint64_t deviceTimeFreq, uint64_t frameTimeFreq)
     : DeviceComponentBase(owner), deviceTimeFreq_(deviceTimeFreq), frameTimeFreq_(frameTimeFreq) {
@@ -27,36 +27,41 @@ void GlobalTimestampCalculator::calculate(std::shared_ptr<Frame> frame) {
         return;
     }
 
-    auto srcTimestamp    = static_cast<uint32_t>(rawTsUs);  // get timestamp from frame and keep low 32 bits
+    // 1. Get 32-bit raw timestamp (unit: us)
+    auto srcTimestamp    = static_cast<uint32_t>(rawTsUs);
     auto linearFuncParam = globalTimestampFitter_->getLinearFuncParam();
 
-    // Convert to a timestamp with the same frequency as the device clock frequency
-    double   transformedTsp              = static_cast<double>(srcTimestamp) * deviceTimeFreq_ / 1000000.0;
-    uint64_t transformedTspOverflowValue = static_cast<uint64_t>(static_cast<double>(TSP_OVERFLOW_32BIT) * deviceTimeFreq_ / 1000000.0);
+    // 2. Convert current microsecond to millisecond for alignment with checkDataX (unit: ms)
+    double currentSrcMs = static_cast<double>(srcTimestamp) * deviceTimeFreq_ / 1000000.0;
 
-    // Calculate the approximate number of overflows based on the check data. The number of overflows of the current data frame should be within the range of
-    // this number plus or minus 1.
-    uint32_t numOfOverflows = static_cast<uint32_t>(linearFuncParam.checkDataX / transformedTspOverflowValue);
-    if(numOfOverflows > 0) {
-        numOfOverflows--;
+    // MS_PER_ROLLOVER is the full 32-bit cycle in milliseconds
+    const double MS_PER_ROLLOVER = static_cast<double>(0x100000000ULL) * deviceTimeFreq_ / 1000000.0;
+
+    // 3. Calculate the time difference (diff) in milliseconds
+    // Since checkDataX is in ms, referenceOffset must be in ms
+    double referenceOffset = std::fmod(linearFuncParam.checkDataX, MS_PER_ROLLOVER);
+    double diff            = currentSrcMs - referenceOffset;
+
+    // Handle 32-bit rollover logic
+    if(diff > MS_PER_ROLLOVER / 2.0) {
+        diff -= MS_PER_ROLLOVER;
     }
-    while(true) {
-        double value1 = (double)numOfOverflows * transformedTspOverflowValue + transformedTsp;
-        double value2 = (double)(numOfOverflows + 1.0) * transformedTspOverflowValue + transformedTsp;
-        if(value1 >= linearFuncParam.checkDataX) {
-            break;
-        }
-        if(value1 <= linearFuncParam.checkDataX && value2 >= linearFuncParam.checkDataX) {
-            if(linearFuncParam.checkDataX - value1 > value2 - linearFuncParam.checkDataX) {
-                numOfOverflows++;
-            }
-            break;
-        }
-        numOfOverflows++;
+    else if(diff < -MS_PER_ROLLOVER / 2.0) {
+        diff += MS_PER_ROLLOVER;
     }
-    transformedTsp = (static_cast<double>(TSP_OVERFLOW_32BIT) * numOfOverflows + srcTimestamp) * deviceTimeFreq_ / 1000000;
-    auto globalTsp = static_cast<uint64_t>(linearFuncParam.coefficientA * transformedTsp + linearFuncParam.constantB);
-    frame->setGlobalTimeStampUsec(globalTsp);
+
+    // Use the raw checkDataY as the anchor point. When the regression quality is poor,
+    // refSysTime can deviate significantly and amplify errors across all subsequent frames.
+    // checkDataY, while sensitive to single-sample RTT noise, is bounded to that one sample
+    // and does not suffer from fitting-error propagation.
+    // Using +0.5 to ensure correct rounding to the nearest microsecond
+    double   incrementalUs  = linearFuncParam.coefficientA * diff;
+    double   resultUs       = static_cast<double>(linearFuncParam.checkDataY) + incrementalUs + 0.5;
+    uint64_t frameSteadyTs  = frame->getSteadyTimeStampUsec();
+    int64_t  realtimeOffset = static_cast<int64_t>(frame->getSystemTimeStampUsec()) - static_cast<int64_t>(frameSteadyTs);
+    int64_t  globalTsp      = static_cast<int64_t>(resultUs) + realtimeOffset;
+
+    frame->setGlobalTimeStampUsec(static_cast<uint64_t>(globalTsp));
 }
 
 void GlobalTimestampCalculator::clear() {}
@@ -173,14 +178,16 @@ void FrameTimestampCalculatorOverUvcSCR::calculate(std::shared_ptr<Frame> frame)
 
 void FrameTimestampCalculatorOverUvcSCR::clear() {}
 
-G435LeFrameTimestampCalculatorDeviceTime::G435LeFrameTimestampCalculatorDeviceTime(IDevice *device, uint64_t deviceTimeFreq, uint64_t frameTimeFreq, uint64_t clockFreq)
+G435LeFrameTimestampCalculatorDeviceTime::G435LeFrameTimestampCalculatorDeviceTime(IDevice *device, uint64_t deviceTimeFreq, uint64_t frameTimeFreq,
+                                                                                   uint64_t clockFreq)
     : DeviceComponentBase(device) {
-    baseCalculator_ = std::make_shared<FrameTimestampCalculatorBaseDeviceTime>(device, deviceTimeFreq, frameTimeFreq);
+    baseCalculator_   = std::make_shared<FrameTimestampCalculatorBaseDeviceTime>(device, deviceTimeFreq, frameTimeFreq);
     directCalculator_ = std::make_shared<FrameTimestampCalculatorDirectly>(device, clockFreq);
 }
 
-void G435LeFrameTimestampCalculatorDeviceTime::calculate(std::shared_ptr<Frame> frame)  {
-    if(frame->getFormat() == OB_FORMAT_YUYV || frame->getFormat() == OB_FORMAT_I420 ||frame->getFormat() == OB_FORMAT_Y8 || frame->getFormat() == OB_FORMAT_Y10) {
+void G435LeFrameTimestampCalculatorDeviceTime::calculate(std::shared_ptr<Frame> frame) {
+    if(frame->getFormat() == OB_FORMAT_YUYV || frame->getFormat() == OB_FORMAT_I420 || frame->getFormat() == OB_FORMAT_Y8
+       || frame->getFormat() == OB_FORMAT_Y10) {
         directCalculator_->calculate(frame);
     }
     else {
@@ -199,4 +206,3 @@ void G435LeFrameTimestampCalculatorDeviceTime::clear() {
 }
 
 }  // namespace libobsensor
-
