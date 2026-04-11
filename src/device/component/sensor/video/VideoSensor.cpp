@@ -50,6 +50,7 @@ VideoSensor::~VideoSensor() noexcept {
     catch(const std::exception &e) {
         LOG_ERROR("Exception occurred while destroying VideoSensor: {}", e.what());
     }
+    frameQueue_.reset();
     LOG_DEBUG("VideoSensor destroyed @{}", sensorType_);
 }
 
@@ -126,8 +127,31 @@ void VideoSensor::start(std::shared_ptr<const StreamProfile> sp, FrameCallback c
     auto vsPort = std::dynamic_pointer_cast<IVideoStreamPort>(backend_);
     LOG_INFO("Start backend stream: {}", currentBackendStreamProfile_);
     BEGIN_TRY_EXECUTE({
-        vsPort->startStream(currentBackendStreamProfile_, [this](std::shared_ptr<Frame> frame) {  //
-            onBackendFrameCallback(frame);
+        auto vsp       = currentBackendStreamProfile_->as<VideoStreamProfile>();
+        auto queueSize = std::max<uint32_t>(vsp->getFps() / 2, 16u);  // minimum queue size is 16
+        frameQueue_    = std::make_shared<SpscFrameQueue<Frame>>(queueSize);
+        frameQueue_->start([this](std::shared_ptr<Frame> frame) { onBackendFrameCallback(frame); });
+        vsPort->startStream(currentBackendStreamProfile_, [this](std::shared_ptr<Frame> frame) {
+            utils::Timer timer;
+            bool         dropped = false;
+            auto         res     = frameQueue_->enforceEnqueue(frame, dropped);
+            DEBUG_EXECUTE({
+                auto enqueueTimeMs = timer.touchMs();
+                if(enqueueTimeMs > 5) {
+                    LOG_WARN("Enqueue frame(index: {}) cost too long: {}ms! @{}", frame->getNumber(), enqueueTimeMs, sensorType_);
+                }
+            });
+
+            if(!res) {
+                droppedFrameStatus_.fetch_or(OB_SDK_STATUS_FRAME_QUEUE_OVERFLOW, std::memory_order_relaxed);
+                LOG_INTVL(LOG_INTVL_OBJECT_TAG, 10000, spdlog::level::warn, "Failed to enqueue frame(index: {}), stream might be stopping! @{}",
+                          frame->getNumber(), sensorType_);
+            }
+            else if(dropped) {
+                droppedFrameStatus_.fetch_or(OB_SDK_STATUS_FRAME_QUEUE_OVERFLOW, std::memory_order_relaxed);
+                LOG_INTVL(LOG_INTVL_OBJECT_TAG, 10000, spdlog::level::warn,
+                          "Frame(index: {}) dropped in VideoSensor frame queue because the queue is full! @{}", frame->getNumber(), sensorType_);
+            }
         });
     })
     CATCH_EXCEPTION_AND_EXECUTE({
@@ -141,6 +165,7 @@ void VideoSensor::start(std::shared_ptr<const StreamProfile> sp, FrameCallback c
         activatedStreamProfile_.reset();
         frameCallback_ = nullptr;
         updateStreamState(STREAM_STATE_START_FAILED);
+        frameQueue_.reset();
         throw;
     })
 }
@@ -261,6 +286,7 @@ void VideoSensor::stop() {
         frameProcessor_->reset();
     }
 
+    frameQueue_.reset();
     activatedStreamProfile_.reset();
     frameCallback_ = nullptr;
 }

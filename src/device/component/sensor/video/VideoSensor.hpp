@@ -6,6 +6,7 @@
 #include "IFrame.hpp"
 #include "IFilter.hpp"
 #include "IFrameMetadataModifier.hpp"
+#include "frame/SpscFrameQueue.hpp"
 
 #include <map>
 
@@ -55,6 +56,9 @@ protected:
 
     std::shared_ptr<IFrameMetadataModifier> frameMetadataModifier_;
     std::shared_ptr<IFrameMetadataParserContainer> frameMetadataParserContainer_;
+
+    // Frame queue
+    std::shared_ptr<SpscFrameQueue<Frame>> frameQueue_;
 };
 
 }  // namespace libobsensor
