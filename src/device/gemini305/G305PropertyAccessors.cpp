@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 #include "G305PropertyAccessors.hpp"
+#include "G305DepthWorkModeManager.hpp"
 #include "component/frameprocessor/FrameProcessor.hpp"
 #include "sensor/video/DisparityBasedSensor.hpp"
 #include "IDeviceComponent.hpp"
@@ -196,7 +197,14 @@ void G305HWNoiseRemovePropertyAccessor::getPropertyRange(uint32_t propertyId, OB
         commandPort->getPropertyRange(propertyId, range);
         auto cur              = exp(range->cur.floatValue) / (1 + exp(range->cur.floatValue));
         range->cur.floatValue = cur;
-        range->def.floatValue = 0.1f;
+
+        auto depthWorkModeManager = owner_->getComponentT<G305DepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
+        if(depthWorkModeManager) {
+            const auto &currentDepthWorkMode = depthWorkModeManager->getCurrentDepthWorkMode();
+            if(std::strcmp(currentDepthWorkMode.name, "Default") == 0 || std::strcmp(currentDepthWorkMode.name, "Close Range Default") == 0) {
+                range->def.floatValue = 0.1f;
+            }
+        }
     } break;
 
     default: {
