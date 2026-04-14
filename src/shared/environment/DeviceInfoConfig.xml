@@ -109,6 +109,30 @@
             <Name>Gemini 338</Name>
             <Manufacturer>Orbbec</Manufacturer>
         </Gemini338>
+        <Gemini338Lg>
+            <VID>0x2BC5</VID>
+            <PID>0x081A</PID>
+            <Name>Gemini 338Lg</Name>
+            <Manufacturer>Orbbec</Manufacturer>
+        </Gemini338Lg>
+        <Gemini338Le>
+            <VID>0x2BC5</VID>
+            <PID>0x081B</PID>
+            <Name>Gemini 338Le</Name>
+            <Manufacturer>Orbbec</Manufacturer>
+        </Gemini338Le>
+        <Gemini338L>
+            <VID>0x2BC5</VID>
+            <PID>0x081C</PID>
+            <Name>Gemini 338L</Name>
+            <Manufacturer>Orbbec</Manufacturer>
+        </Gemini338L>
+        <Gemini331L>
+            <VID>0x2BC5</VID>
+            <PID>0x081D</PID>
+            <Name>Gemini 331L</Name>
+            <Manufacturer>Orbbec</Manufacturer>
+        </Gemini331L>
         <DaBaiA>
             <VID>0x2BC5</VID>
             <PID>0x0A12</PID>
@@ -187,6 +211,10 @@
         <Device>Gemini330Le</Device>
         <Device>Gemini336Le</Device>
         <Device>Gemini338</Device>
+        <Device>Gemini338Lg</Device>
+        <Device>Gemini338Le</Device>
+        <Device>Gemini338L</Device>
+        <Device>Gemini331L</Device>
         <Device>DaBaiA</Device>
         <Device>DaBaiAL</Device>
         <Device>Gemini345</Device>
@@ -210,6 +238,10 @@
         <Device>Gemini335Le</Device>
         <Device>Gemini330Le</Device>
         <Device>Gemini336Le</Device>
+        <Device>Gemini338Lg</Device>
+        <Device>Gemini338Le</Device>
+        <Device>Gemini338L</Device>
+        <Device>Gemini331L</Device>
         <Device>CAM-5530</Device>
         <Device>CAM-5530b</Device>
         <!-- More devices can be added here -->
@@ -218,6 +250,7 @@
     <G335LeDeviceList>
         <!-- G335Le series devices -->
         <Device>Gemini335Le</Device>
+        <Device>Gemini338Le</Device>
         <!-- More devices can be added here -->
     </G335LeDeviceList>
     <G435LeDeviceList>
