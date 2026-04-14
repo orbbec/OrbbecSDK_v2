@@ -61,6 +61,9 @@ int main(void) try {
         }
         config->enableStream(sensorType);
     }
+    if(ob_smpl::isGemini305gDevice(vid, pid, devInfo->getConnectionType())) {
+        config->disableStream(OB_SENSOR_IR_LEFT);
+    }
 
     std::mutex                          frameMutex;
     std::shared_ptr<const ob::FrameSet> renderFrameSet;

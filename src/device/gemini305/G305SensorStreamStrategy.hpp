@@ -26,6 +26,7 @@ private:
     void validateISPFirmwareVersion(const std::vector<std::shared_ptr<const StreamProfile>> &profiles);
     void validateDepthAndIrStream(const std::vector<std::shared_ptr<const StreamProfile>> &profiles);
     void validatePreset(const std::vector<std::shared_ptr<const StreamProfile>> &profiles);
+    void validateIRLeftAndColorStream(const std::vector<std::shared_ptr<const StreamProfile>> &profiles);
 
 private:
     std::mutex                                        startedStreamListMutex_;

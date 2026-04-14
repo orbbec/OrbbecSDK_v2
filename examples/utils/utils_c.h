@@ -47,10 +47,21 @@ int ob_smpl_support_ansi_escape(void);
  *
  * @param vid The vendor ID of the device.
  * @param pid The product ID of the device.
- * @return true if the device is a Gemini305 device.
+ * @return true if the device is a Gemini 305 device.
  * @return false otherwise.
  */
 bool ob_smpl_is_gemini305_device(int vid, int pid);
+
+/**
+ * @brief Check if the device is a Gemini305G device.
+ *
+ * @param vid The vendor ID of the device.
+ * @param pid The product ID of the device.
+ * @param connectionType The connection type of the device.
+ * @return true if the device is a Gemini 305g device.
+ * @return false otherwise.
+ */
+bool ob_smpl_is_gemini305g_device(int vid, int pid, const char *connectionType);
 
 /**
  * @brief Check if the device is a Astra Mini device.

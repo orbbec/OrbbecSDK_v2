@@ -63,6 +63,7 @@ void G305SensorStreamStrategy::validateStream(const std::vector<std::shared_ptr<
     }
     validateDepthAndIrStream(profiles);
     validatePreset(profiles);
+    validateIRLeftAndColorStream(profiles);
 }
 
 void G305SensorStreamStrategy::validateISPFirmwareVersion(const std::vector<std::shared_ptr<const StreamProfile>> &profiles) {
@@ -166,6 +167,30 @@ void G305SensorStreamStrategy::validatePreset(const std::vector<std::shared_ptr<
             default:
                 break;
             }
+        }
+    }
+}
+
+void G305SensorStreamStrategy::validateIRLeftAndColorStream(const std::vector<std::shared_ptr<const StreamProfile>> &profiles) {
+    if(getOwner()->getInfo()->connectionType_ != "GMSL2") {
+        return;
+    }
+
+    std::lock_guard<std::mutex> lock(startedStreamListMutex_);
+    for(auto &profile: profiles) {
+        auto streamType = profile->getType();
+        auto iter       = std::find_if(activatedStreamList_.begin(), activatedStreamList_.end(),
+                                 [streamType](const std::shared_ptr<const StreamProfile> &sp) {
+                                     if(streamType == OB_STREAM_IR_LEFT && sp->getType() == OB_STREAM_COLOR) {
+                                         return true;
+                                     }
+                                     if(streamType == OB_STREAM_COLOR && sp->getType() == OB_STREAM_IR_LEFT) {
+                                         return true;
+                                     }
+                                     return false;
+                                 });
+        if(iter != activatedStreamList_.end()) {
+            THROW_UNSUPPORTED_OPERATION_EXCEPTION("The left IR and the Color streams cannot be started simultaneously");
         }
     }
 }

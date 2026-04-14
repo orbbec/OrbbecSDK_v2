@@ -38,10 +38,21 @@ bool supportAnsiEscape();
  *
  * @param vid The vendor ID of the device.
  * @param pid The product ID of the device.
- * @return true if the device is a Gemini305 device.
+ * @return true if the device is a Gemini 305 device.
  * @return false otherwise.
  */
 bool isGemini305Device(int vid, int pid);
+
+/**
+ * @brief Check if the device is a Gemini305 device.
+ *
+ * @param vid The vendor ID of the device.
+ * @param pid The product ID of the device.
+ * @param connectionType The connection type of the device.
+ * @return true if the device is a Gemini 305g device.
+ * @return false otherwise.
+ */
+bool isGemini305gDevice(int vid, int pid, const char *connectionType);
 
 /**
  * @brief Check if the device is a Astra Mini device.

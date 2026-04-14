@@ -315,6 +315,13 @@ void startStream() {
         }
     }
 
+    auto deviceInfo = device->getDeviceInfo();
+    auto vid        = deviceInfo->getVid();
+    auto pid        = deviceInfo->getPid();
+    if(ob_smpl::isGemini305gDevice(vid, pid, deviceInfo->getConnectionType())) {
+        config->disableStream(OB_SENSOR_IR_LEFT);
+    }
+
     // start pipeline
     pipeline->start(config, handleFrameset);
     std::cout << "Stream started!" << std::endl;
@@ -937,7 +944,7 @@ void commandProcess(std::string cmd) {
     else if(cmd == "ir mirror" || cmd == "im") {
         switchIRMirror();
     }
-    else if(cmd == " ir right mirror" || cmd == "irm") {
+    else if(cmd == "ir right mirror" || cmd == "irm") {
         switchIRRightMirror();
     }
     else if(cmd == "help" || cmd == "?") {

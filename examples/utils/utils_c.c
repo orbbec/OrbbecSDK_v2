@@ -204,6 +204,10 @@ bool ob_smpl_is_gemini305_device(int vid, int pid) {
     return (vid == OB_DEVICE_VID && (pid == 0x0840 || pid == 0x0841 || pid == 0x0842 || pid == 0x0843));
 }
 
+bool ob_smpl_is_gemini305g_device(int vid, int pid, const char *connectionType) {
+    return ob_smpl_is_gemini305_device(vid, pid) && strcmp(connectionType, "GMSL2") == 0;
+}
+
 bool ob_smpl_is_astra_mini_device(int vid, int pid) {
     return (vid == OB_DEVICE_VID && (pid == 0x069d || pid == 0x065b || pid == 0x065e));
 }

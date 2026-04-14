@@ -64,6 +64,9 @@ int main(void) try {
         // enable the stream.
         config->enableStream(sensorType);
     }
+    if(ob_smpl::isGemini305gDevice(vid, pid, devInfo->getConnectionType())) {
+        config->disableStream(OB_SENSOR_IR_LEFT);
+    }
 
     // enable health monitor
     pipe.enableHealthMonitor([&](OBPipelineStatus status) { printPipelineStatus("video", status); });
