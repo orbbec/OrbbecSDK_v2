@@ -25,6 +25,14 @@ const std::string &GlobalTimestampFitter::GetCurrentSN() const {
 
 GlobalTimestampFitter::GlobalTimestampFitter(IDevice *owner)
     : DeviceComponentBase(owner), enable_(false), sampleLoopExit_(false), linearFuncParam_({ 0, 0, 0, 0 }), maxValidRtt_(MAX_VALID_RTT) {
+    // update RttWindow params
+    auto info = owner->getInfo();
+    if(info && info->connectionType_ == "Ethernet") {
+        // Ethernet typically has higher and more variable RTT, so use a more tolerant outlier filter
+        rttWindow_.updateSpreadParams(1000, 4);
+    }
+
+    // config
     std::string deviceName = utils::string::removeSpace(owner->getInfo()->name_);
     auto        envConfig  = EnvConfig::getInstance();
     int         value      = 0;
@@ -62,6 +70,7 @@ GlobalTimestampFitter::~GlobalTimestampFitter() {
     if(sampleThread_.joinable()) {
         sampleThread_.join();
     }
+    rttWindow_.clear();
 }
 
 LinearFuncParam GlobalTimestampFitter::getLinearFuncParam() {
@@ -132,6 +141,7 @@ void GlobalTimestampFitter::enable(bool en) {
         {
             std::unique_lock<std::mutex> lock(sampleMutex_);
             samplingQueue_.clear();
+            rttWindow_.clear();
         }
         {
             std::unique_lock<std::mutex> lock(linearFuncParamMutex_);
@@ -228,7 +238,7 @@ void GlobalTimestampFitter::calcLinearParam(uint64_t sysTimestamp, uint64_t devT
 }
 
 void GlobalTimestampFitter::ensureFitting() {
-    uint64_t     steadyTspUsec = 0;
+    OBTimeSample timeSample{};
     OBDeviceTime devTime{};
     bool         calc = false;
 
@@ -243,17 +253,17 @@ void GlobalTimestampFitter::ensureFitting() {
             ++count;
             utils::TransferTiming timing;
             devTime       = propertyServer->getStructureDataT<OBDeviceTime>(OB_STRUCT_DEVICE_TIME, PROP_ACCESS_INTERNAL, &timing);
-            steadyTspUsec = (timing.send.startUs + timing.send.endUs) / 2;
-            devTime.rtt   = timing.send.endUs - timing.send.startUs;
-            if(devTime.rtt > maxValidRtt_) {
-                LOG_DEBUG("Get device time rtt is too large! rtt={}", devTime.rtt);
+            timeSample    = rttWindow_.estimate(timing.send.startUs, timing.send.endUs);
+            if(timeSample.rtt > maxValidRtt_) {
+                LOG_DEBUG("Get device time rtt is too large! rtt={}", timeSample.rtt);
                 continue;
             }
-            LOG_DEBUG("steady={}, dev={}, rtt={}", steadyTspUsec, devTime.time, devTime.rtt);
+            LOG_DEBUG("start={}, steady={}, dev={}, rtt={}, rttRef={}, rttReal={}", timing.send.startUs, timeSample.time, devTime.time, timeSample.rtt,
+                      timeSample.rttRef, timing.recv.endUs - timing.send.startUs);
 
             needCalculation_ = true;
             calc             = true;
-            samplingQueue_.push_back({ steadyTspUsec, devTime.time });
+            samplingQueue_.push_back({ timeSample.time, devTime.time });
             std::this_thread::sleep_for(std::chrono::milliseconds(40));  // short interval
         }
         if(samplingQueue_.size() < 4) {
@@ -263,7 +273,7 @@ void GlobalTimestampFitter::ensureFitting() {
     }
 
     if(calc) {
-        calcLinearParam(steadyTspUsec, devTime.time);
+        calcLinearParam(timeSample.time, devTime.time);
     }
 }
 
@@ -272,7 +282,7 @@ void GlobalTimestampFitter::fittingLoop() {
 
     int retryCount = 0;
     do {
-        uint64_t     steadyTspUsec = 0;
+        OBTimeSample timeSample{};
         OBDeviceTime devTime{};
 
         try {
@@ -281,12 +291,12 @@ void GlobalTimestampFitter::fittingLoop() {
 
             utils::TransferTiming timing;
             devTime       = propertyServer->getStructureDataT<OBDeviceTime>(OB_STRUCT_DEVICE_TIME, PROP_ACCESS_INTERNAL, &timing);
-            steadyTspUsec = (timing.send.startUs + timing.send.endUs) / 2;
-            devTime.rtt   = timing.send.endUs - timing.send.startUs;
-            if(devTime.rtt > maxValidRtt_) {
-                THROW_INVALID_DATA_EXCEPTION(utils::string::to_string() << "Get device time rtt is too large! rtt=" << devTime.rtt);
+            timeSample    = rttWindow_.estimate(timing.send.startUs, timing.send.endUs);
+            if(timeSample.rtt > maxValidRtt_) {
+                THROW_INVALID_DATA_EXCEPTION(utils::string::to_string() << "Get device time rtt is too large! rtt=" << timeSample.rtt);
             }
-            LOG_DEBUG("steady={}, dev={}, rtt={}", steadyTspUsec, devTime.time, devTime.rtt);
+            LOG_DEBUG("start={}, steady={}, dev={}, rtt={}, rttRef={}, rttReal={}", timing.send.startUs, timeSample.time, devTime.time, timeSample.rtt,
+                      timeSample.rttRef, timing.recv.endUs - timing.send.startUs);
         }
         catch(...) {
             retryCount++;
@@ -320,7 +330,7 @@ void GlobalTimestampFitter::fittingLoop() {
             }
 
             needCalculation_ = true;
-            samplingQueue_.push_back({ steadyTspUsec, devTime.time });
+            samplingQueue_.push_back({ timeSample.time, devTime.time });
             if(samplingQueue_.size() < 4) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(50));
                 continue;
@@ -328,7 +338,7 @@ void GlobalTimestampFitter::fittingLoop() {
         }
 
         // calc linear param
-        calcLinearParam(steadyTspUsec, devTime.time);
+        calcLinearParam(timeSample.time, devTime.time);
 
         // wait for a moment
         {
