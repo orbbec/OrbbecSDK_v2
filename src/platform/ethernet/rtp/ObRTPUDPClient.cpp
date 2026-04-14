@@ -28,7 +28,7 @@ void ObRTPUDPClient::socketConnect() {
     recvSocket_ = socket(AF_INET, SOCK_DGRAM, 0);
 #endif
 
-    if(recvSocket_ < 0) {
+    if(recvSocket_ == INVALID_SOCKET) {
         THROW_IO_EXCEPTION(utils::string::to_string() << "Failed to create udpSocket! err_code=" << GET_LAST_ERROR());
     }
 
@@ -95,7 +95,7 @@ void ObRTPUDPClient::start(std::shared_ptr<const StreamProfile> profile, Mutable
 }
 
 void ObRTPUDPClient::socketClose() {
-    if(recvSocket_ > 0) {
+    if(recvSocket_ != INVALID_SOCKET) {
         auto rst = ::closesocket(recvSocket_);
         if(rst < 0) {
             LOG_WARN("close udp socket failed! socket={0}, err_code={1}", recvSocket_, GET_LAST_ERROR());
@@ -246,7 +246,7 @@ void ObRTPUDPClient::stop() {
 void ObRTPUDPClient::close() {
     LOG_DEBUG("close start...");
     stop();
-    if(recvSocket_ > 0) {
+    if(recvSocket_ != INVALID_SOCKET) {
         socketClose();
     }
     LOG_DEBUG("close end...");
