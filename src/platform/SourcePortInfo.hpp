@@ -72,6 +72,7 @@ struct NetSourcePortInfo : public SourcePortInfo {
     std::string localGateway      = "unknown";
     std::string devVersion        = "0.0.0.0";  // firmware or hardware version depending on device
     uint32_t    curIpConfig       = 0;          // GigE Vision Network Interface Configuration Registers
+    std::string userName          = "unknown";
 };
 
 struct ShmStreamPortInfo : public SourcePortInfo {  // shared memory stream port

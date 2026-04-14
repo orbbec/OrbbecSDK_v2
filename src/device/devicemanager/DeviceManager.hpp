@@ -30,6 +30,7 @@ public:
     std::shared_ptr<IDevice> createDevice(const std::shared_ptr<const IDeviceEnumInfo> &info, OBDeviceAccessMode accessMode) override;
     std::shared_ptr<IDevice> createNetDevice(std::string address, uint16_t port, OBDeviceAccessMode accessMode) override;
     bool                     forceIpConfig(std::string deviceUid, const OBNetIpConfig &config) override;
+    void                     triggerDeviceOffline(std::string deviceUid, bool requery = false);
     void                     setGvcpPortscheme(OBGvcpPortScheme scheme) override;
     OBGvcpPortScheme         getGvcpPortscheme() const override;
 

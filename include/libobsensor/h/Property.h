@@ -981,6 +981,13 @@ typedef enum {
      */
     OB_PROP_COLOR_DENOISING_LEVEL_INT = 5525,
 
+    /**
+     * @brief Indicates whether the device will go offline after applying IP configuration.
+     * This property does not represent an actual command; it is a capability flag only,
+     * used to identify whether the current device has the behavior of going offline after IP config is applied.
+     */
+    OB_PROP_DEVICE_OFFLINE_AFTER_IP_CONFIG_APPLY = 5555,
+
     /*
      * @brief LiDAR: set/get IP address
      */

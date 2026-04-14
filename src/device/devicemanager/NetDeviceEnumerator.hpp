@@ -23,6 +23,7 @@ public:
     void             setGvcpPortscheme(OBGvcpPortScheme scheme);
     OBGvcpPortScheme getGvcpPortscheme() const;
     bool             forceIpConfig(std::string deviceUid, const OBNetIpConfig &config);
+    void             triggerDeviceOffline(std::string deviceUid, bool requery = false);
 
 private:
     static DeviceEnumInfoList deviceInfoMatch(const SourcePortInfoList infoList);

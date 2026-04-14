@@ -243,6 +243,7 @@ void EthernetPal::updateSourcePortInfoList(const std::vector<GVCPDeviceInfo> &ad
         portInfo->localGateway      = info.localGateway;
         portInfo->devVersion        = info.devVersion;
         portInfo->curIpConfig       = utils::parseGevCurIpConfig(info.curIpConfig);
+        portInfo->userName          = info.userName;
         sourcePortInfoList_.push_back(portInfo);
     }
 
@@ -312,11 +313,9 @@ std::shared_ptr<IPal> createNetPal() {
     return std::make_shared<EthernetPal>();
 }
 
-bool EthernetPal::forceIpConfig(std::string macAddress, const OBNetIpConfig &config) {
-    std::unique_lock<std::mutex> lock(gvcpMutex_);
-
-    auto result = gvcpClient_->forceIpConfig(macAddress, config);
-    if(result) {
+void EthernetPal::triggerDeviceOffline(std::string macAddress, bool requery) {
+    {
+        std::unique_lock<std::mutex> lock(gvcpMutex_);
         for(auto &&info: netDevInfoList_) {
             if(info.mac == macAddress) {
                 GVCPDeviceInfo removedInfo = info;
@@ -325,12 +324,24 @@ bool EthernetPal::forceIpConfig(std::string macAddress, const OBNetIpConfig &con
                     netDevInfoList_.end());
                 updateSourcePortInfoList({}, { removedInfo });
                 if(callback_) {
-                    LOG_DEBUG("force ip command succeeded, remove device {} from list", removedInfo.mac);
+                    LOG_DEBUG("remove device {} from list", removedInfo.mac);
                     callback_(OB_DEVICE_REMOVED, removedInfo.mac);
                 }
                 break;
             }
         }
+    }
+    
+    if (requery) {
+        condVar_.notify_one();
+    }
+}
+
+bool EthernetPal::forceIpConfig(std::string macAddress, const OBNetIpConfig &config) {
+    auto result = gvcpClient_->forceIpConfig(macAddress, config);
+    if(result) {
+        LOG_DEBUG("force ip command succeeded, remove device {} from list", macAddress);
+        triggerDeviceOffline(macAddress);
         // std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
 

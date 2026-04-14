@@ -30,6 +30,7 @@ struct GVCPDeviceInfo {
     uint32_t    vid               = 0;
     std::string devVersion        = "0.0.0.0";
     uint32_t    curIpConfig       = 0;
+    std::string userName          = "unknown";
     // std::string manufacturer = "";
 
     virtual bool operator==(const GVCPDeviceInfo &other) const {

@@ -37,6 +37,7 @@ public:
     OBGvcpPortScheme getGvcpPortscheme() const;
 
     bool forceIpConfig(std::string macAddress, const OBNetIpConfig &config);
+    void triggerDeviceOffline(std::string macAddress, bool requery = false);
 
 private:
     void queryGvcpDevice(bool singleShot);

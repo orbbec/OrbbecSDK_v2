@@ -564,6 +564,7 @@ int GVCPClient::recvAndParseGVCPResponse(SOCKET sock, const GVCPSocketInfo &sock
         info.vid               = curVID;
         info.devVersion        = ackPayload->szDevVer;
         info.curIpConfig       = curIpSet;
+        info.userName          = std::string(ackPayload->szUserName, strnlen(ackPayload->szUserName, sizeof(ackPayload->szUserName)));
         // info.manufacturer      = ackPayload->szFacName;
 
         if(info.vid == ORBBEC_DEVICE_VID && info.pid == 0x0000 && info.name == "OI-BC300I") {

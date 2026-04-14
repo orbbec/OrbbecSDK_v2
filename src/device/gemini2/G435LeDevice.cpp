@@ -97,6 +97,10 @@ void G435LeDeviceBase::init() {
         propertyServer->registerProperty(OB_STRUCT_DEVICE_IP_ADDR_CONFIG_V2, "rw", "rw", vendorPropertyAccessor.get());
     }
 
+    if(fwVersion >= 10402) {
+        propertyServer->registerProperty(OB_PROP_DEVICE_OFFLINE_AFTER_IP_CONFIG_APPLY, "r", "r", vendorPropertyAccessor.get());
+    }
+
     registerComponent(OB_DEV_COMPONENT_COLOR_FRAME_METADATA_CONTAINER, [this]() {
         std::shared_ptr<FrameMetadataParserContainer> container;
         container = std::make_shared<G435LeColorFrameMetadataParserContainer>(this);

@@ -220,6 +220,22 @@ bool DeviceManager::forceIpConfig(std::string deviceUid, const OBNetIpConfig &co
 #endif
 }
 
+void DeviceManager::triggerDeviceOffline(std::string deviceUid, bool requery) {
+#if defined(BUILD_NET_PAL)
+    std::shared_ptr<NetDeviceEnumerator> netEnumerator;
+    for(auto &enumerator: deviceEnumerators_) {
+        netEnumerator = std::dynamic_pointer_cast<NetDeviceEnumerator>(enumerator);
+        if(netEnumerator) {
+            netEnumerator->triggerDeviceOffline(deviceUid, requery);
+            return;
+        }
+    }
+#else
+    utils::unusedVar(deviceUid);
+    utils::unusedVar(requery);
+#endif
+}
+
 void DeviceManager::setGvcpPortscheme(OBGvcpPortScheme scheme) {
 #if defined(BUILD_NET_PAL)
     std::shared_ptr<NetDeviceEnumerator> netEnumerator;

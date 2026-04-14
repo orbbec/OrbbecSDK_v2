@@ -9,6 +9,7 @@
 #include "shared/utils/Utils.hpp"
 
 #include "IDeviceManager.hpp"
+#include "devicemanager/DeviceManager.hpp"
 #include "IProperty.hpp"
 #include "IDevice.hpp"
 #include "IDeviceMonitor.hpp"
@@ -212,6 +213,20 @@ const char *ob_device_list_get_device_local_net_if_name(const ob_device_list *li
 }
 HANDLE_EXCEPTIONS_AND_RETURN(nullptr, list, index)
 
+const char *ob_device_list_get_device_user_name(const ob_device_list *list, uint32_t index, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(list);
+    VALIDATE_UNSIGNED_INDEX(index, list->list.size());
+    auto &info = list->list[index];
+    if(std::string(info->getConnectionType()) != "Ethernet") {
+        return "unknown";
+    }
+
+    auto sourcePort    = info->getSourcePortInfoList().front();
+    auto netSourcePort = std::dynamic_pointer_cast<const libobsensor::NetSourcePortInfo>(sourcePort);
+    return netSourcePort->userName.c_str();
+}
+HANDLE_EXCEPTIONS_AND_RETURN(nullptr, list, index)
+
 ob_device *ob_device_list_get_device(const ob_device_list *list, uint32_t index, ob_error **error) {
     return ob_device_list_get_device_ex(list, index, OB_DEVICE_DEFAULT_ACCESS, error);
 }
@@ -381,6 +396,7 @@ HANDLE_EXCEPTIONS_AND_RETURN(ob_bool_property_range(), device, property_id)
 
 void ob_device_set_structured_data(ob_device *device, ob_property_id property_id, const uint8_t *data, uint32_t data_size, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(device);
+    bool triggerOffline = false;
     if(property_id == OB_STRUCT_DEVICE_IP_ADDR_CONFIG) {
         VALIDATE_NOT_NULL(data);
         VALIDATE_EQUAL(data_size, sizeof(ob_net_ip_config));
@@ -391,6 +407,7 @@ void ob_device_set_structured_data(ob_device *device, ob_property_id property_id
             THROW_INVALID_PARAM_EXCEPTION("Invalid IP configuration");
             return;
         }
+        triggerOffline = true;
     }
     else if(property_id == OB_STRUCT_DEVICE_IP_ADDR_CONFIG_V2) {
         VALIDATE_NOT_NULL(data);
@@ -402,10 +419,18 @@ void ob_device_set_structured_data(ob_device *device, ob_property_id property_id
             THROW_INVALID_PARAM_EXCEPTION("Invalid IP configuration");
             return;
         }
+        triggerOffline = true;
     }
     auto                 propServer = device->device->getPropertyServer();
     std::vector<uint8_t> dataVec(data, data + data_size);
     propServer->setStructureData(property_id, dataVec, libobsensor::PROP_ACCESS_USER);
+
+    if(triggerOffline
+       && propServer->isPropertySupported(OB_PROP_DEVICE_OFFLINE_AFTER_IP_CONFIG_APPLY, libobsensor::PROP_OP_READ, libobsensor::PROP_ACCESS_USER)) {
+        auto devInfo = device->device->getInfo();
+        auto devMgr  = libobsensor::DeviceManager::getInstance();
+        devMgr->triggerDeviceOffline(devInfo->uid_, true);
+    }
 }
 HANDLE_EXCEPTIONS_NO_RETURN(device, property_id, data, data_size)
 

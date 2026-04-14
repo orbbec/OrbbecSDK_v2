@@ -392,4 +392,10 @@ bool NetDeviceEnumerator::forceIpConfig(std::string deviceUid, const OBNetIpConf
     return result;
 }
 
+void NetDeviceEnumerator::triggerDeviceOffline(std::string deviceUid, bool requery) {
+    skipOfflineVerification_.store(true);
+    platform_->triggerDeviceOffline(deviceUid, requery);
+    skipOfflineVerification_.store(false);
+}
+
 }  // namespace libobsensor
