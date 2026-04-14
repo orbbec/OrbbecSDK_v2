@@ -8,8 +8,8 @@
 
 namespace libobsensor {
 
-const uint32_t DEFAULT_CMD_MAX_DATA_SIZE  = 768;
-const int      IO_ERROR_MAX_RETRIES       = 3;   // max retries on HP_STATUS_DEVICE_RESPONSE_IO_ERROR
+const uint32_t DEFAULT_CMD_MAX_DATA_SIZE = 768;
+const int      IO_ERROR_MAX_RETRIES      = 3;  // max retries on HP_STATUS_DEVICE_RESPONSE_IO_ERROR
 
 VendorPropertyAccessor::VendorPropertyAccessor(IDevice *owner, const std::shared_ptr<ISourcePort> &backend)
     : owner_(owner),
@@ -83,7 +83,7 @@ void VendorPropertyAccessor::setStructureData(uint32_t propertyId, const std::ve
     executeAndCheck(port, sendData_.data(), reqDataSize, recvData_.data(), &respDataSize, propertyId);
 }
 
-const std::vector<uint8_t> &VendorPropertyAccessor::getStructureData(uint32_t propertyId) {
+const std::vector<uint8_t> &VendorPropertyAccessor::getStructureData(uint32_t propertyId, utils::TransferTiming *timing) {
     std::lock_guard<std::mutex> lock(mutex_);
     clearBuffers();
     auto req = protocol::initGetStructureDataReq(sendData_.data(), propertyId);
@@ -91,7 +91,7 @@ const std::vector<uint8_t> &VendorPropertyAccessor::getStructureData(uint32_t pr
     uint16_t respDataSize    = 0;
     auto     port            = std::dynamic_pointer_cast<IVendorDataPort>(backend_);
     uint16_t expectedRespLen = (propertyId == OB_STRUCT_DEVICE_TIME) ? 32 : 0;  // TODO: optimized for GMSL device to reduce data transfer
-    auto     res             = executeAndCheck(port, sendData_.data(), sizeof(*req), recvData_.data(), &respDataSize, propertyId, expectedRespLen);
+    auto     res             = executeAndCheck(port, sendData_.data(), sizeof(*req), recvData_.data(), &respDataSize, propertyId, expectedRespLen, timing);
 
     auto resp              = protocol::parseGetStructureDataResp(recvData_.data(), respDataSize);
     auto structureDataSize = protocol::getStructureDataSize(resp);
@@ -282,23 +282,18 @@ void VendorPropertyAccessor::triggerReboot() {
     }
 }
 
-protocol::HpStatus VendorPropertyAccessor::executeAndCheck(const std::shared_ptr<IVendorDataPort> &port,
-                                                           uint8_t  *reqData,
-                                                           uint16_t  reqDataSize,
-                                                           uint8_t  *respData,
-                                                           uint16_t *respDataSize,
-                                                           uint32_t  propertyId,
-                                                           uint16_t  expectedRespLen) {
-    auto res = protocol::execute(port, reqData, reqDataSize, respData, respDataSize, expectedRespLen);
+protocol::HpStatus VendorPropertyAccessor::executeAndCheck(const std::shared_ptr<IVendorDataPort> &port, uint8_t *reqData, uint16_t reqDataSize,
+                                                           uint8_t *respData, uint16_t *respDataSize, uint32_t propertyId, uint16_t expectedRespLen,
+                                                           utils::TransferTiming *timing) {
+    auto res = protocol::execute(port, reqData, reqDataSize, respData, respDataSize, expectedRespLen, timing);
 
     // Only retry and trigger reboot when autoRebootEnabled_ is set (LibUVC path only).
     // V4L2 / WMF platforms never produce HP_STATUS_DEVICE_RESPONSE_IO_ERROR,
     // so this block is effectively dead on those platforms.
     if(autoRebootEnabled_ && res.statusCode == protocol::HP_STATUS_DEVICE_RESPONSE_IO_ERROR) {
         for(int retry = 0; retry < IO_ERROR_MAX_RETRIES; retry++) {
-            LOG_WARN("VendorPropertyAccessor: response channel failed, retry {}/{}, propertyId: {}",
-                     retry + 1, IO_ERROR_MAX_RETRIES, propertyId);
-            res = protocol::execute(port, reqData, reqDataSize, respData, respDataSize, expectedRespLen);
+            LOG_WARN("VendorPropertyAccessor: response channel failed, retry {}/{}, propertyId: {}", retry + 1, IO_ERROR_MAX_RETRIES, propertyId);
+            res = protocol::execute(port, reqData, reqDataSize, respData, respDataSize, expectedRespLen, timing);
             if(res.statusCode != protocol::HP_STATUS_DEVICE_RESPONSE_IO_ERROR) {
                 break;
             }

@@ -85,13 +85,13 @@ void LazySuperPropertyAccessor::setStructureData(uint32_t propertyId, const std:
     superAccessor->setStructureData(propertyId, data);
 }
 
-const std::vector<uint8_t> &LazySuperPropertyAccessor::getStructureData(uint32_t propertyId) {
+const std::vector<uint8_t> &LazySuperPropertyAccessor::getStructureData(uint32_t propertyId, utils::TransferTiming *timing) {
     std::lock_guard<std::mutex> lock(mutex_);
     if(!accessor_) {
         accessor_ = accessorCreator_();
     }
     auto superAccessor = std::dynamic_pointer_cast<IStructureDataAccessor>(accessor_);
-    return superAccessor->getStructureData(propertyId);
+    return superAccessor->getStructureData(propertyId, timing);
 }
 
 void LazySuperPropertyAccessor::getRawData(uint32_t propertyId, GetDataCallback callback) {

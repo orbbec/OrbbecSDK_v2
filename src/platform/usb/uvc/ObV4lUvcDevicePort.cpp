@@ -834,7 +834,8 @@ void ObV4lUvcDevicePort::stopAllStream() {
         }
     }
 }
-uint32_t ObV4lUvcDevicePort::sendAndReceive(const uint8_t *sendData, uint32_t sendLen, uint8_t *recvData, uint32_t exceptedRecvLen) {
+uint32_t ObV4lUvcDevicePort::sendAndReceive(const uint8_t *sendData, uint32_t sendLen, uint8_t *recvData, uint32_t exceptedRecvLen,
+                                            utils::TransferTiming *timing) {
     std::lock_guard<std::recursive_mutex> lock(ctrlMutex_);
     uint8_t                               ctrl = OB_VENDOR_XU_CTRL_ID_64;
 
@@ -852,9 +853,11 @@ uint32_t ObV4lUvcDevicePort::sendAndReceive(const uint8_t *sendData, uint32_t se
         alignDataLen = 512;
     }
 
+    utils::TimingScope sendScope(timing, &utils::TransferTiming::send);
     if(!setXu(ctrl, sendData, alignDataLen)) {
         return 0;
     }
+    sendScope.end();
 
     ctrl = OB_VENDOR_XU_CTRL_ID_512;
     if(exceptedRecvLen <= 64) {
@@ -867,9 +870,11 @@ uint32_t ObV4lUvcDevicePort::sendAndReceive(const uint8_t *sendData, uint32_t se
         ctrl = OB_VENDOR_XU_CTRL_ID_512;
     }
 
+    utils::TimingScope recvScope(timing, &utils::TransferTiming::recv);
     if(!getXu(ctrl, recvData, &exceptedRecvLen)) {
         return 0;
     }
+    recvScope.end();
     return exceptedRecvLen;
 }
 

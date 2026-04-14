@@ -44,7 +44,10 @@ public:
     void getPropertyRange(uint32_t propertyId, OBPropertyRange *range, PropertyAccessType accessType) override;
 
     void                        setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data, PropertyAccessType accessType) override;
-    const std::vector<uint8_t> &getStructureData(uint32_t propertyId, PropertyAccessType accessType) override;
+    const std::vector<uint8_t> &getStructureData(uint32_t propertyId, PropertyAccessType accessType) override {
+        return getStructureData(propertyId, accessType, nullptr);
+    }
+    const std::vector<uint8_t> &getStructureData(uint32_t propertyId, PropertyAccessType accessType, utils::TransferTiming *timing) override;
 
     void getRawData(uint32_t propertyId, GetDataCallback callback, PropertyAccessType accessType) override;
 

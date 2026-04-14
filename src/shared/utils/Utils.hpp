@@ -76,6 +76,71 @@ private:
     std::chrono::steady_clock::time_point start_;
 };
 
+/**
+ * @brief Represents a time span measured via steady clock
+ * @note A value of 0 indicates the timestamp is unrecorded or invalid
+ */
+struct TimeInterval {
+    uint64_t startUs = 0;  ///< Start of the operation (microseconds)
+    uint64_t endUs   = 0;  ///< End of the operation (microseconds)
+};
+
+/**
+ * @brief Records the latency of a dual-phase data transfer
+ */
+struct TransferTiming {
+    TimeInterval send;  ///< Timing for the outbound/request phase
+    TimeInterval recv;  ///< Timing for the inbound/response phase
+};
+
+/**
+ * @brief RAII helper to automatically record timing; supports early manual stop
+ */
+class TimingScope {
+public:
+    /**
+     * @brief Basic constructor for direct TimeInterval pointer
+     * @param info Pointer to the timing record. Supports nullptr.
+     */
+    explicit TimingScope(TimeInterval *info) : info_(info) {
+        if(info_) {
+            info_->startUs = utils::getSteadyTimeUs();
+        }
+    }
+    /**
+     * @brief Template constructor to handle any parent structure without
+     * needing to include its header (prevents cyclic dependency).
+     * @param parent Pointer to the parent structure (e.g., XuTimeInterval*)
+     * @param member Pointer-to-member of the TimeInterval field
+     */
+    template <typename T> TimingScope(T *parent, utils::TimeInterval T::*member) : TimingScope(parent ? &(parent->*member) : nullptr) {}
+
+    // Delete copy operations
+    TimingScope(const TimingScope &)            = delete;
+    TimingScope &operator=(const TimingScope &) = delete;
+
+    /**
+     * @brief If not manually ended, record end timestamp on destruction
+     */
+    ~TimingScope() {
+        end();
+    }
+
+    /**
+     * @brief Manually record end timestamp (idempotent)
+     */
+    void end() {
+        if(info_ && !ended_) {
+            info_->endUs = utils::getSteadyTimeUs();
+            ended_       = true;
+        }
+    }
+
+private:
+    TimeInterval *info_;  ///< Pointer to the record, may be nullptr
+    bool          ended_ = false;
+};
+
 #pragma pack(push, 1)
 template <class T> class big_endian {
     T be_value;

@@ -157,7 +157,7 @@ HpStatus validateResp(uint8_t *dataBuf, uint16_t dataSize, uint16_t expectedOpco
 }
 
 HpStatus execute(const std::shared_ptr<IVendorDataPort> &dataPort, uint8_t *reqData, uint16_t reqDataSize, uint8_t *respData, uint16_t *respDataSize,
-                 uint16_t expectedRespLen) {
+                 uint16_t expectedRespLen, utils::TransferTiming *timing) {
     HpStatusCode rc = HP_STATUS_OK;
     HpStatus     hpStatus;
 
@@ -173,7 +173,7 @@ HpStatus execute(const std::shared_ptr<IVendorDataPort> &dataPort, uint8_t *reqD
     {
         rc = HP_STATUS_OK;
         try {
-            *respDataSize = static_cast<uint16_t>(dataPort->sendAndReceive(reqData, static_cast<uint32_t>(reqDataSize), respData, expectedRespLen));
+            *respDataSize = static_cast<uint16_t>(dataPort->sendAndReceive(reqData, static_cast<uint32_t>(reqDataSize), respData, expectedRespLen, timing));
         }
         catch(const libobsensor_exception &e) {
             if(e.getStatus() == OB_ERROR_DEVICE_RESPONSE_CHANNEL_FAILURE) {

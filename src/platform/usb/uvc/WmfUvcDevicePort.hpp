@@ -81,7 +81,7 @@ public:
     bool            setPu(uint32_t propertyId, int32_t value) override;
     UvcControlRange getPuRange(uint32_t propertyId) override;
 
-    uint32_t sendAndReceive(const uint8_t* sendData, uint32_t sendLen, uint8_t* recvData, uint32_t exceptedRecvLen) override;
+    uint32_t sendAndReceive(const uint8_t *sendData, uint32_t sendLen, uint8_t *recvData, uint32_t exceptedRecvLen, utils::TransferTiming *timing) override;
 
     static bool isConnected(std::shared_ptr<const USBSourcePortInfo> info);
     static void foreachUvcDevice(const USBDeviceInfoEnumCallback &action);

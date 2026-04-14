@@ -15,6 +15,11 @@
 #include <functional>
 
 namespace libobsensor {
+
+namespace utils {
+struct TransferTiming;
+}
+
 class ISourcePort {
 public:
     virtual ~ISourcePort() noexcept = default;
@@ -44,7 +49,7 @@ class IVendorDataPort : virtual public ISourcePort {  // Virtual inheritance sol
 public:
     ~IVendorDataPort() noexcept override = default;
 
-    virtual uint32_t sendAndReceive(const uint8_t *sendData, uint32_t sendLen, uint8_t *recvData, uint32_t exceptedRecvLen) = 0;
+    virtual uint32_t sendAndReceive(const uint8_t *sendData, uint32_t sendLen, uint8_t *recvData, uint32_t exceptedRecvLen, utils::TransferTiming *timing) = 0;
 };
 
 // for imu data stream

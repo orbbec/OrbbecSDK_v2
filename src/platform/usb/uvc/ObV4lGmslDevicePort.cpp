@@ -1326,7 +1326,7 @@ uint64_t ObV4lGmslDevicePort::getDriverStatus() const {
 }
 
 #define BASE_WAIT_RESPONSE_TIME_MS 1
-uint32_t ObV4lGmslDevicePort::sendAndReceive(const uint8_t *send, uint32_t sendLen, uint8_t *recv, uint32_t exceptedRecvLen) {
+uint32_t ObV4lGmslDevicePort::sendAndReceive(const uint8_t *send, uint32_t sendLen, uint8_t *recv, uint32_t exceptedRecvLen, utils::TransferTiming *timing) {
     std::unique_lock<std::mutex> lk(mMultiThreadI2CMutex);
     constexpr auto               opcode_finish_read_raw_data = 19;
     auto                         header                      = reinterpret_cast<const ProtocolHeader *>(send);
@@ -1335,29 +1335,38 @@ uint32_t ObV4lGmslDevicePort::sendAndReceive(const uint8_t *send, uint32_t sendL
         // Patch: for OPCODE_FINISH_READ_RAW_DATA (19), set max retry count to 3
         // First two attempts use 'false' to avoid throwing exceptions
         for(uint16_t i = 0; i < 2; i++) {
+            utils::TimingScope sendScope(timing, &utils::TransferTiming::send);
             if(!sendData(send, sendLen, false)) {
                 LOG_DEBUG("sendAndReceive: send error: retry count: {}", i + 1);
                 continue;
             }
+            sendScope.end();
 
             utils::sleepMs(BASE_WAIT_RESPONSE_TIME_MS);
+            utils::TimingScope recvScope(timing, &utils::TransferTiming::recv);
             if(!recvData(recv, &exceptedRecvLen, false)) {
                 LOG_DEBUG("sendAndReceive: recv error: retry count: {}", i + 1);
                 continue;
             }
+            recvScope.end();
             return exceptedRecvLen;
         }
         // If all previous attempts failed, perform the final attempt
     }
 
     // Final attempt for all commands, exceptions may be thrown
+    utils::TimingScope sendScope(timing, &utils::TransferTiming::send);
     if(!sendData(send, sendLen, true)) {
         return -1;
     }
+    sendScope.end();
+
     utils::sleepMs(BASE_WAIT_RESPONSE_TIME_MS);
+    utils::TimingScope recvScope(timing, &utils::TransferTiming::recv);
     if(!recvData(recv, &exceptedRecvLen, true)) {
         return -1;
     }
+    recvScope.end();
     return exceptedRecvLen;
 }
 

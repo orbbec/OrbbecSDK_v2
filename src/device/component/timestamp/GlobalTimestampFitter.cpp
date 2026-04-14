@@ -241,11 +241,10 @@ void GlobalTimestampFitter::ensureFitting() {
         std::unique_lock<std::mutex> lock(sampleMutex_);
         while(samplingQueue_.size() < 6 && count < 6) {
             ++count;
-            auto steadyTsp1Usec = utils::getSteadyTimeUs();
-            devTime             = propertyServer->getStructureDataT<OBDeviceTime>(OB_STRUCT_DEVICE_TIME);
-            auto steadyTsp2Usec = utils::getSteadyTimeUs();
-            steadyTspUsec       = (steadyTsp2Usec + steadyTsp1Usec) / 2;
-            devTime.rtt         = steadyTsp2Usec - steadyTsp1Usec;
+            utils::TransferTiming timing;
+            devTime       = propertyServer->getStructureDataT<OBDeviceTime>(OB_STRUCT_DEVICE_TIME, PROP_ACCESS_INTERNAL, &timing);
+            steadyTspUsec = (timing.send.startUs + timing.send.endUs) / 2;
+            devTime.rtt   = timing.send.endUs - timing.send.startUs;
             if(devTime.rtt > maxValidRtt_) {
                 LOG_DEBUG("Get device time rtt is too large! rtt={}", devTime.rtt);
                 continue;
@@ -280,11 +279,10 @@ void GlobalTimestampFitter::fittingLoop() {
             auto owner          = getOwner();
             auto propertyServer = owner->getPropertyServer();
 
-            auto steadyTsp1Usec = utils::getSteadyTimeUs();
-            devTime             = propertyServer->getStructureDataT<OBDeviceTime>(OB_STRUCT_DEVICE_TIME);
-            auto steadyTsp2Usec = utils::getSteadyTimeUs();
-            steadyTspUsec       = (steadyTsp2Usec + steadyTsp1Usec) / 2;
-            devTime.rtt         = steadyTsp2Usec - steadyTsp1Usec;
+            utils::TransferTiming timing;
+            devTime       = propertyServer->getStructureDataT<OBDeviceTime>(OB_STRUCT_DEVICE_TIME, PROP_ACCESS_INTERNAL, &timing);
+            steadyTspUsec = (timing.send.startUs + timing.send.endUs) / 2;
+            devTime.rtt   = timing.send.endUs - timing.send.startUs;
             if(devTime.rtt > maxValidRtt_) {
                 THROW_INVALID_DATA_EXCEPTION(utils::string::to_string() << "Get device time rtt is too large! rtt=" << devTime.rtt);
             }

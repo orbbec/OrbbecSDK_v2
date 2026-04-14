@@ -62,7 +62,7 @@ void NetDataStreamPort::readData() {
             dataRecvdSize = 0;
         }
 
-        BEGIN_TRY_EXECUTE({ readSize = tcpClient_->read(data + dataRecvdSize, PACK_SIZE - dataRecvdSize); })
+        BEGIN_TRY_EXECUTE({ readSize = tcpClient_->read(data + dataRecvdSize, PACK_SIZE - dataRecvdSize, nullptr); })
         CATCH_EXCEPTION_AND_EXECUTE({
             LOG_WARN("read data failed!");
             readSize = -1;

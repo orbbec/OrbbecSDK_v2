@@ -293,12 +293,13 @@ void VendorTCPClient::socketReconnect() {
     socketConnect();
 }
 
-int VendorTCPClient::read(uint8_t *data, const uint32_t dataLen) {
+int VendorTCPClient::read(uint8_t *data, const uint32_t dataLen, utils::TimeInterval *interval) {
     std::lock_guard<std::mutex> lock(tcpMtx_);
     {
         uint8_t retry = 2;
         while(retry-- && !flushed_) {
-            int rst = 0;
+            utils::TimingScope guard(interval);
+            int                rst = 0;
 #if defined(__linux__)
             rst = recv(socketFd_, (char *)data, dataLen, MSG_NOSIGNAL);
 #else
@@ -331,12 +332,13 @@ int VendorTCPClient::read(uint8_t *data, const uint32_t dataLen) {
     }
 }
 
-void VendorTCPClient::write(const uint8_t *data, const uint32_t dataLen) {
+void VendorTCPClient::write(const uint8_t *data, const uint32_t dataLen, utils::TimeInterval *interval) {
     std::lock_guard<std::mutex> lock(tcpMtx_);
     {
         uint8_t retry = 2;
         while(retry-- && !flushed_) {
-            int rst = 0;
+            utils::TimingScope guard(interval);
+            int                rst = 0;
 #if defined(__linux__)
             rst = send(socketFd_, (const char *)data, dataLen, MSG_NOSIGNAL);
 #else

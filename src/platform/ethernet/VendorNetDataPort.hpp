@@ -15,7 +15,7 @@ public:
     virtual ~VendorNetDataPort() noexcept override;
 
     std::shared_ptr<const SourcePortInfo> getSourcePortInfo() const override;
-    uint32_t sendAndReceive(const uint8_t *sendData, uint32_t sendLen, uint8_t *recvData, uint32_t exceptedRecvLen) override;
+    uint32_t sendAndReceive(const uint8_t *sendData, uint32_t sendLen, uint8_t *recvData, uint32_t exceptedRecvLen, utils::TransferTiming *timing) override;
 
 private:
     std::mutex tcpMtx_;

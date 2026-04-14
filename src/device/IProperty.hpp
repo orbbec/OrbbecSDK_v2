@@ -10,6 +10,11 @@
 #include <memory>
 
 namespace libobsensor {
+
+namespace utils {
+struct TransferTiming;
+}
+
 typedef union {
     int32_t intValue;
     float   floatValue;
@@ -50,6 +55,11 @@ public:
     virtual ~IStructureDataAccessor() noexcept override                                                         = default;
     virtual void                        setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) = 0;
     virtual const std::vector<uint8_t> &getStructureData(uint32_t propertyId)                                   = 0;
+    virtual const std::vector<uint8_t> &getStructureData(uint32_t propertyId, utils::TransferTiming *timing) {
+        (void)propertyId;
+        (void)timing;
+        THROW_NOT_IMPLEMENTED_EXCEPTION("getStructureData with timing is not implemented for this accessor");
+    }
 };
 
 class IStructureDataAccessorV1_1 : virtual public IPropertyAccessor {
@@ -105,6 +115,7 @@ public:
 
     virtual void                        setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data, PropertyAccessType accessType) = 0;
     virtual const std::vector<uint8_t> &getStructureData(uint32_t propertyId, PropertyAccessType accessType)                                   = 0;
+    virtual const std::vector<uint8_t> &getStructureData(uint32_t propertyId, PropertyAccessType accessType, utils::TransferTiming *timing)    = 0;
 
     virtual void getRawData(uint32_t propertyId, GetDataCallback callback, PropertyAccessType accessType) = 0;
 
@@ -186,8 +197,9 @@ public:  // template functions to simplify the usage of IPropertyServer
         setStructureData(propertyId, vec, accessType);
     }
 
-    template <typename T> T getStructureDataT(uint32_t propertyId, PropertyAccessType accessType = PROP_ACCESS_INTERNAL) {
-        std::vector<uint8_t> vec = getStructureData(propertyId, accessType);
+    template <typename T>
+    T getStructureDataT(uint32_t propertyId, PropertyAccessType accessType = PROP_ACCESS_INTERNAL, utils::TransferTiming *timing = nullptr) {
+        std::vector<uint8_t> vec = getStructureData(propertyId, accessType, timing);
         T                    data;
         if(vec.size() != sizeof(T) && vec.size() + 1 != sizeof(T) && vec.size() - 1 != sizeof(T)) {
             LOG_WARN("Firmware data size is not match with property type");

@@ -23,14 +23,17 @@ VendorUsbDevicePort::VendorUsbDevicePort(const std::shared_ptr<IUsbDevice> &usbD
 
 VendorUsbDevicePort::~VendorUsbDevicePort() noexcept = default;
 
-uint32_t VendorUsbDevicePort::sendAndReceive(const uint8_t *sendData, uint32_t sendLen, uint8_t *recvData, uint32_t exceptedRecvLen) {
+uint32_t VendorUsbDevicePort::sendAndReceive(const uint8_t *sendData, uint32_t sendLen, uint8_t *recvData, uint32_t exceptedRecvLen,
+                                             utils::TransferTiming *timing) {
     std::unique_lock<std::mutex> lock(mutex_);
+    utils::TimingScope           sendScope(timing, &utils::TransferTiming::send);
     auto                         libusbDevice = std::dynamic_pointer_cast<UsbDeviceLibusb>(usbDev_);
     auto                         transferred  = libusb_control_transfer(libusbDevice->getLibusbDeviceHandle(),  //
                                                                         0x40, 0, 0, 0,                          //
                                                                         const_cast<uint8_t *>(sendData),        //
                                                                         static_cast<uint16_t>(sendLen),         //
                                                                         5000);
+    sendScope.end();
     if(transferred != static_cast<int>(sendLen)) {
         if(transferred >= 0) {
             LOG_ERROR("Failed to send data to device. Sent: {}, Transferred: {}", sendLen, transferred);
@@ -40,11 +43,13 @@ uint32_t VendorUsbDevicePort::sendAndReceive(const uint8_t *sendData, uint32_t s
         }
         return 0;
     }
+    utils::TimingScope recvScope(timing, &utils::TransferTiming::recv);
     transferred = libusb_control_transfer(libusbDevice->getLibusbDeviceHandle(),   //
                                           0xc0, 0, 0, 0,                           //
                                           recvData,                                //
                                           static_cast<uint16_t>(exceptedRecvLen),  //
                                           5000);
+    recvScope.end();
     if(transferred < 0) {
         LOG_ERROR("Failed to receive data from device. Error: {}", libusb_strerror(transferred));
         return 0;

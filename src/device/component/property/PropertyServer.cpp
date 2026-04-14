@@ -289,7 +289,7 @@ void PropertyServer::setStructureData(uint32_t propertyId, const std::vector<uin
     LOG_DEBUG("[delta: {}us] Property {} set structure data successfully", delta, propId);
 }
 
-const std::vector<uint8_t> &PropertyServer::getStructureData(uint32_t propertyId, PropertyAccessType accessType) {
+const std::vector<uint8_t> &PropertyServer::getStructureData(uint32_t propertyId, PropertyAccessType accessType, utils::TransferTiming *timing) {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     if(!isPropertySupported(propertyId, PROP_OP_READ, accessType)) {
         THROW_UNSUPPORTED_OPERATION_EXCEPTION(utils::string::to_string() << "Property not readable: " << propertyId);
@@ -309,7 +309,7 @@ const std::vector<uint8_t> &PropertyServer::getStructureData(uint32_t propertyId
         THROW_INVALID_DATA_EXCEPTION(utils::string::to_string() << "Property " << propId << " does not support structure data getting");
     }
     utils::Timer timer;
-    const auto  &data = structAccessor->getStructureData(propId);
+    const auto  &data = structAccessor->getStructureData(propId, timing);
     for(auto &callback: it->second.accessCallbacks) {
         callback(propertyId, data.data(), data.size(), PROP_OP_READ);
     }

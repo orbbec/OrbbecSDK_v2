@@ -56,7 +56,7 @@ void LiDARDeviceMonitor::resumeHeartbeat() {
 }
 
 void LiDARDeviceMonitor::sendAndReceiveData(const uint8_t *sendData, uint32_t sendDataSize, uint8_t *receiveData, uint32_t *receiveDataSize) {
-    auto recvLen     = vendorDataPort_->sendAndReceive(sendData, sendDataSize, receiveData, *receiveDataSize);
+    auto recvLen     = vendorDataPort_->sendAndReceive(sendData, sendDataSize, receiveData, *receiveDataSize, nullptr);
     *receiveDataSize = recvLen;
 
     // update active time

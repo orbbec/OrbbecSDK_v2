@@ -248,9 +248,9 @@ void DeviceMonitor::resumeHeartbeat() {
 
 void DeviceMonitor::sendAndReceiveData(const uint8_t *sendData, uint32_t sendDataSize, uint8_t *receiveData, uint32_t *receiveDataSize) {
     std::lock_guard<std::mutex> lock(commMutex_);
-    uint32_t recvLen = 0;
+    uint32_t                    recvLen = 0;
     try {
-        recvLen = vendorDataPort_->sendAndReceive(sendData, sendDataSize, receiveData, *receiveDataSize);
+        recvLen = vendorDataPort_->sendAndReceive(sendData, sendDataSize, receiveData, *receiveDataSize, nullptr);
     }
     catch(const libobsensor_exception &e) {
         LOG_ERROR("sendAndReceiveData failed: {}", e.getMessage());

@@ -7,6 +7,7 @@
 #include "IDevice.hpp"
 #include "IDeviceComponent.hpp"
 #include "protocol/Protocol.hpp"  // protocol::HpStatus — required for executeAndCheck return type
+#include "utils/Utils.hpp"
 #include <atomic>
 #include <mutex>
 
@@ -27,7 +28,10 @@ public:
     void getPropertyRange(uint32_t propertyId, OBPropertyRange *range) override;
 
     void                        setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) override;
-    const std::vector<uint8_t> &getStructureData(uint32_t propertyId) override;
+    const std::vector<uint8_t> &getStructureData(uint32_t propertyId) override {
+        return getStructureData(propertyId, nullptr);
+    }
+    const std::vector<uint8_t> &getStructureData(uint32_t propertyId, utils::TransferTiming *timing) override;
 
     void getRawData(uint32_t propertyId, GetDataCallback callback) override;
 
@@ -48,13 +52,8 @@ private:
     // Replaces all protocol::execute() + protocol::checkStatus() call pairs.
     // On fault: triggers triggerReboot() (if enabled), then lets the
     // exception propagate normally so callers remain unaffected.
-    protocol::HpStatus executeAndCheck(const std::shared_ptr<IVendorDataPort> &port,
-                                       uint8_t  *reqData,
-                                       uint16_t  reqDataSize,
-                                       uint8_t  *respData,
-                                       uint16_t *respDataSize,
-                                       uint32_t  propertyId,
-                                       uint16_t  expectedRespLen = 0);
+    protocol::HpStatus executeAndCheck(const std::shared_ptr<IVendorDataPort> &port, uint8_t *reqData, uint16_t reqDataSize, uint8_t *respData,
+                                       uint16_t *respDataSize, uint32_t propertyId, uint16_t expectedRespLen = 0, utils::TransferTiming *timing = nullptr);
 
     // Send OB_PROP_DEVICE_RESET_BOOL=1 via backend_ to reboot the device.
     // Guaranteed to execute at most once per VendorPropertyAccessor instance.

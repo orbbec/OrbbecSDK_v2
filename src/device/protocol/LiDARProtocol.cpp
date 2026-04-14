@@ -177,7 +177,7 @@ HpStatus execute(const std::shared_ptr<IVendorDataPort> &dataPort, uint16_t opCo
     {
         rc = HP_STATUS_OK;
         try {
-            *respDataSize = static_cast<uint16_t>(dataPort->sendAndReceive(reqData, static_cast<uint32_t>(reqDataSize), respData, exceptRecLen));
+            *respDataSize = static_cast<uint16_t>(dataPort->sendAndReceive(reqData, static_cast<uint32_t>(reqDataSize), respData, exceptRecLen, nullptr));
         }
         catch(...) {
             rc = HP_STATUS_CONTROL_TRANSFER_FAILED;

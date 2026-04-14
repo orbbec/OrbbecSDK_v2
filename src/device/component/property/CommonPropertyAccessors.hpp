@@ -63,7 +63,10 @@ public:
     virtual ~LazySuperPropertyAccessor() noexcept override = default;
 
     void                        setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) override;
-    const std::vector<uint8_t> &getStructureData(uint32_t propertyId) override;
+    const std::vector<uint8_t> &getStructureData(uint32_t propertyId) override {
+        return getStructureData(propertyId, nullptr);
+    }
+    const std::vector<uint8_t> &getStructureData(uint32_t propertyId, utils::TransferTiming *timing) override;
     void                        getRawData(uint32_t propertyId, GetDataCallback callback) override;
 
     uint16_t                    getCmdVersionProtoV1_1(uint32_t propertyId) override;

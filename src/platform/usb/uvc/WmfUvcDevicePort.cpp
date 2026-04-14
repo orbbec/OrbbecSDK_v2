@@ -405,7 +405,8 @@ UvcControlRange WmfUvcDevicePort::getPuRange(uint32_t propertyId) {
     THROW_INVALID_PARAM_EXCEPTION("unsupported control");
 }
 
-uint32_t WmfUvcDevicePort::sendAndReceive(const uint8_t *sendData, uint32_t sendLen, uint8_t *recvData, uint32_t exceptedRecvLen) {
+uint32_t WmfUvcDevicePort::sendAndReceive(const uint8_t *sendData, uint32_t sendLen, uint8_t *recvData, uint32_t exceptedRecvLen,
+                                          utils::TransferTiming *timing) {
     std::lock_guard<std::recursive_mutex> lock(deviceMutex_);
     // checkConnection();
     if(powerState_ != kD0) {
@@ -431,10 +432,12 @@ uint32_t WmfUvcDevicePort::sendAndReceive(const uint8_t *sendData, uint32_t send
         alignDataLen = 512;
     }
 
+    utils::TimingScope sendScope(timing, &utils::TransferTiming::send);
     if(!setXu(ctrl, sendData, alignDataLen)) {
         LOG_ERROR("setXu failed!");
         return 0;
     }
+    sendScope.end();
 
     // receiveData
     ctrl             = OB_VENDOR_XU_CTRL_ID_512;
@@ -451,10 +454,12 @@ uint32_t WmfUvcDevicePort::sendAndReceive(const uint8_t *sendData, uint32_t send
         ctrl    = OB_VENDOR_XU_CTRL_ID_512;
         recvLen = 512;
     }
+    utils::TimingScope recvScope(timing, &utils::TransferTiming::recv);
     if(!getXu(ctrl, recvData, &recvLen)) {
         LOG_ERROR("getXu failed!");
         return 0;
     }
+    recvScope.end();
     return recvLen;
 }
 

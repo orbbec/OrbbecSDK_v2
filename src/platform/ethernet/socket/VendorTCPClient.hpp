@@ -3,6 +3,7 @@
 
 #pragma once
 #include "SocketTypes.hpp"
+#include "utils/Utils.hpp"
 #include <string>
 #include <mutex>
 
@@ -14,8 +15,8 @@ public:
                     uint32_t commTimeout = 5000);
     ~VendorTCPClient() noexcept;
 
-    int  read(uint8_t *data, const uint32_t dataLen);
-    void write(const uint8_t *data, const uint32_t dataLen);
+    int  read(uint8_t *data, const uint32_t dataLen, utils::TimeInterval *interval = nullptr);
+    void write(const uint8_t *data, const uint32_t dataLen, utils::TimeInterval *interval = nullptr);
 
     void flush();
 

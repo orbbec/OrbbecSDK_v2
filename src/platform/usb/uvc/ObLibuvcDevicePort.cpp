@@ -276,7 +276,6 @@ UvcControlRange ObLibuvcDevicePort::getPuRange(uint32_t propertyId) {
 }
 
 bool ObLibuvcDevicePort::setXu(uint8_t ctrl, const uint8_t *data, uint32_t len) {
-    std::lock_guard<std::recursive_mutex> lock(ctrlMutex_);
     auto recv = uvc_set_ctrl(uvcDevHandle_, xuUnit_.unit, ctrl, const_cast<uint8_t *>(data), len);
     if(recv <= 0) {
         LOG_ERROR("setXu failed, error code={}", recv);
@@ -286,7 +285,6 @@ bool ObLibuvcDevicePort::setXu(uint8_t ctrl, const uint8_t *data, uint32_t len) 
 }
 
 bool ObLibuvcDevicePort::getXu(uint8_t ctrl, uint8_t *data, uint32_t *len) {
-    std::lock_guard<std::recursive_mutex> lock(ctrlMutex_);
     switch((ObVendorXuCtrlId)ctrl) {
     case OB_VENDOR_XU_CTRL_ID_512:
         *len = 512;
@@ -314,7 +312,8 @@ bool ObLibuvcDevicePort::getXu(uint8_t ctrl, uint8_t *data, uint32_t *len) {
     return true;
 }
 
-uint32_t ObLibuvcDevicePort::sendAndReceive(const uint8_t *sendData, uint32_t sendLen, uint8_t *recvData, uint32_t exceptedRecvLen) {
+uint32_t ObLibuvcDevicePort::sendAndReceive(const uint8_t *sendData, uint32_t sendLen, uint8_t *recvData, uint32_t exceptedRecvLen,
+                                            utils::TransferTiming *timing) {
     std::lock_guard<std::recursive_mutex> lock(ctrlMutex_);
 
     uint8_t ctrl = OB_VENDOR_XU_CTRL_ID_64;
@@ -333,10 +332,14 @@ uint32_t ObLibuvcDevicePort::sendAndReceive(const uint8_t *sendData, uint32_t se
         alignDataLen = 512;
     }
 
+    // set xu
+    utils::TimingScope sendScope(timing, &utils::TransferTiming::send);
     if(!setXu(ctrl, sendData, alignDataLen)) {
         return 0;
     }
+    sendScope.end();
 
+    // get xu
     ctrl = OB_VENDOR_XU_CTRL_ID_512;
     if(exceptedRecvLen <= 64) {
         ctrl = OB_VENDOR_XU_CTRL_ID_64;
@@ -348,9 +351,11 @@ uint32_t ObLibuvcDevicePort::sendAndReceive(const uint8_t *sendData, uint32_t se
         ctrl = OB_VENDOR_XU_CTRL_ID_512;
     }
 
+    utils::TimingScope recvScope(timing, &utils::TransferTiming::recv);
     if(!getXu(ctrl, recvData, &exceptedRecvLen)) {
         return 0;
     }
+    recvScope.end();
     return exceptedRecvLen;
 }
 
