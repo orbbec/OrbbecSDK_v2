@@ -65,6 +65,8 @@ void EthernetPal::queryGvcpDevice(bool singleShot) {
         }
         auto now = utils::getSteadyTimeMs();
         if(now >= start + interval) {
+            // Prevent prolonged locking of gvcpMutex_ so that threads requiring GVCP can acquire the lock
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
             // Callback takes too long, query the device list immediately for optimization
             continue;
         }

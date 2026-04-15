@@ -421,12 +421,17 @@ void ob_device_set_structured_data(ob_device *device, ob_property_id property_id
         }
         triggerOffline = true;
     }
-    auto                 propServer = device->device->getPropertyServer();
-    std::vector<uint8_t> dataVec(data, data + data_size);
-    propServer->setStructureData(property_id, dataVec, libobsensor::PROP_ACCESS_USER);
 
-    if(triggerOffline
-       && propServer->isPropertySupported(OB_PROP_DEVICE_OFFLINE_AFTER_IP_CONFIG_APPLY, libobsensor::PROP_OP_READ, libobsensor::PROP_ACCESS_USER)) {
+    {
+        auto                 propServer = device->device->getPropertyServer();
+        std::vector<uint8_t> dataVec(data, data + data_size);
+        propServer->setStructureData(property_id, dataVec, libobsensor::PROP_ACCESS_USER);
+        triggerOffline = propServer->isPropertySupported(OB_PROP_DEVICE_OFFLINE_AFTER_IP_CONFIG_APPLY, libobsensor::PROP_OP_READ, libobsensor::PROP_ACCESS_USER)
+                             ? triggerOffline
+                             : false;
+    }
+
+    if(triggerOffline) {
         auto devInfo = device->device->getInfo();
         auto devMgr  = libobsensor::DeviceManager::getInstance();
         devMgr->triggerDeviceOffline(devInfo->uid_, true);

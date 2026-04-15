@@ -23,7 +23,8 @@
 namespace libobsensor {
 
 NetDeviceEnumerator::NetDeviceEnumerator(DeviceChangedCallback callback, std::shared_ptr<DeviceActivityManager> deviceActivityManager)
-    : platform_(Platform::getInstance()), deviceChangedCallback_(callback), deviceActivityManager_(deviceActivityManager) {
+    : platform_(Platform::getInstance()), deviceActivityManager_(deviceActivityManager) {
+    setDeviceChangedCallback(callback);
     deviceInfoList_ = queryDeviceList();
     if(!deviceInfoList_.empty()) {
         LOG_DEBUG("Current net device list: ({})", deviceInfoList_.size());
