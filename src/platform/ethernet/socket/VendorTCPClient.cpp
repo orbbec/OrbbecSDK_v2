@@ -48,7 +48,7 @@ VendorTCPClient::VendorTCPClient(std::string localAddress, std::string localMac,
 }
 
 void VendorTCPClient::checkLocalIP() {
-#if (defined(WIN32) || defined(_WIN32) || defined(WINCE))
+    isValidIP_ = false;
     unsigned int a, b, c, d;
     if(sscanf(localAddress_.c_str(), "%u.%u.%u.%u", &a, &b, &c, &d) == 4) {
         if((a == 10) ||                         // 10.0.0.0 - 10.255.255.255
@@ -58,6 +58,7 @@ void VendorTCPClient::checkLocalIP() {
         }
     }
 
+#if (defined(WIN32) || defined(_WIN32) || defined(WINCE))
     if(!isValidIP_) {
         localAddress_ = "";
         IP_ADAPTER_INFO adapterInfo[16];  // Buffer to hold adapter info
@@ -99,9 +100,6 @@ void VendorTCPClient::checkLocalIP() {
             }
         }
     }
-#else
-    // TODO
-    isValidIP_ = true;
 #endif
 }
 
