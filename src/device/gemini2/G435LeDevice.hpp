@@ -34,6 +34,8 @@ public:
     G435LeDevice(const std::shared_ptr<const IDeviceEnumInfo> &info, OBDeviceAccessMode accessMode);
     virtual ~G435LeDevice() noexcept override;
 
+    void deactivate() override;
+
 private:
     void init() override;
     void initSensorList();

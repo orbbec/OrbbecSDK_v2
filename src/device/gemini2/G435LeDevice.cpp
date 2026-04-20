@@ -282,7 +282,15 @@ G435LeDevice::G435LeDevice(const std::shared_ptr<const IDeviceEnumInfo> &info, O
     // check and start heartbeat after initialization is complete
     checkAndStartHeartbeat();
 }
-G435LeDevice::~G435LeDevice() noexcept {}
+G435LeDevice::~G435LeDevice() noexcept {
+    ccpController_.reset();
+}
+
+void G435LeDevice::deactivate() {
+    // clear ccp controller here
+    ccpController_.reset();
+    G435LeDeviceBase::deactivate();
+}
 
 void G435LeDevice::init() {
     checkAndAcquireCCP();
