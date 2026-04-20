@@ -908,6 +908,18 @@ std::ostream &operator<<(std::ostream &os, const OBExceptionType &type) {
     case OB_EXCEPTION_TYPE_UNSUPPORTED_OPERATION:
         os << "UNSUPPORTED_OPERATION";
         break;
+    case OB_EXCEPTION_TYPE_ACCESS_DENIED:
+        os << "ACCESS_DENIED";
+        break;
+    case OB_EXCEPTION_TYPE_DEVICE_UNAVAILABLE:
+        os << "DEVICE_UNAVAILABLE";
+        break;
+    case OB_EXCEPTION_TYPE_NOT_FOUND:
+        os << "NOT_FOUND";
+        break;
+    case OB_EXCEPTION_TYPE_RESOURCE_BUSY:
+        os << "RESOURCE_BUSY";
+        break;
     default:
         os << "UNKNOWN";
         break;
