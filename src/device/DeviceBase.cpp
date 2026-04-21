@@ -50,6 +50,13 @@ DeviceBase::DeviceBase(const std::shared_ptr<const IDeviceEnumInfo> &info, OBDev
     deviceInfo_->deviceSn_       = enumInfo_->getDeviceSn();
 }
 
+void DeviceBase::postInitialize() {
+    // activate device accessor
+    activateDeviceAccessor();
+    // load default post processing config
+    loadDefaultPostProcessingConfig();
+}
+
 void DeviceBase::fetchDeviceInfo() {
     auto propServer = getPropertyServer();
 

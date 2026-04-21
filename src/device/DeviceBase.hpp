@@ -30,6 +30,8 @@ public:
 
     virtual ~DeviceBase() noexcept override;
 
+    virtual void postInitialize() override;
+
     void reset() override;
     void reboot() override;
     void deactivate() override;

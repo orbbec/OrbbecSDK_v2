@@ -53,6 +53,8 @@ class IDevice : public std::enable_shared_from_this<IDevice> {
 public:
     virtual ~IDevice() = default;
 
+    virtual void postInitialize() = 0;
+
     // device life control
     virtual void reset()      = 0;
     virtual void reboot()     = 0;

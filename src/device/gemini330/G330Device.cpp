@@ -1617,6 +1617,12 @@ void G330NetDevice::init() {
     fetchDeviceErrorState();
 }
 
+void G330NetDevice::postInitialize() {
+    DeviceBase::postInitialize();
+    // initialize `cachedDepthUnit_` to prevent deadlocks in component resources caused by the stream closing too quickly.
+    (void)getDepthMaxValidValue(OB_FORMAT_Y16);
+}
+
 void G330NetDevice::checkAndAcquireCCP() {
     ccpController_ = std::make_shared<GigECcpController>(enumInfo_, "1.6.07");
     if(!ccpController_->isSupported()) {

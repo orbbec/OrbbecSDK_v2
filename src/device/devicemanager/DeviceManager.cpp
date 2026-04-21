@@ -129,8 +129,7 @@ std::shared_ptr<IDevice> DeviceManager::createNetDevice(std::string address, uin
         }
     }
 
-    device->activateDeviceAccessor();
-    device->loadDefaultPostProcessingConfig();
+    device->postInitialize();
     return device;
 #else
     utils::unusedVar(address);
@@ -191,10 +190,8 @@ std::shared_ptr<IDevice> DeviceManager::createDevice(const std::shared_ptr<const
     }
 
     if(!isCustomConnectedDevice_) {
-        // activate device accessor
-        device->activateDeviceAccessor();
-        // load default post processing config
-        device->loadDefaultPostProcessingConfig();
+        // initialization that can only be performed after construction is complete
+        device->postInitialize();
     }
 
     auto devInfo = device->getInfo();
