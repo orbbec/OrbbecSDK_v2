@@ -116,14 +116,14 @@ void ObRTPUDPClient::frameReceive() {
             int error = GET_LAST_ERROR();
 #if (defined(WIN32) || defined(_WIN32) || defined(WINCE))
             if(error == WSAETIMEDOUT) {
-                LOG_ERROR_INTVL("Receive rtp packet timed out!");
+                LOG_WARN_INTVL("Receive rtp packet timed out!");
             }
             else {
                 LOG_ERROR_INTVL("Receive rtp packet error!");
             }
 #else
             if(error == EAGAIN || error == EWOULDBLOCK) {
-                LOG_ERROR_INTVL("Receive rtp packet timed out!");
+                LOG_WARN_INTVL("Receive rtp packet timed out!");
             }
             else {
                 LOG_ERROR_INTVL("Receive rtp packet error!");
