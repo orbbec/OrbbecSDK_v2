@@ -21,6 +21,13 @@ public:
     virtual const std::vector<OBD2CProfile>  &getD2CProfileList() const             = 0;
     virtual const std::vector<OBCameraParam> &getCalibrationCameraParamList() const = 0;
     virtual const OBIMUCalibrateParams       &getIMUCalibrationParam() const        = 0;
+
+    virtual bool getPreProcessParam(uint16_t colorWidth, uint16_t colorHeight, OBD2CPreProcessParam &param) const {
+        (void)colorWidth;
+        (void)colorHeight;
+        (void)param;
+        return false;
+    }
 };
 
 class IDisparityAlgParamManager {

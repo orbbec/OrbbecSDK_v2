@@ -20,6 +20,7 @@ public:
     void bindIntrinsic(std::vector<std::shared_ptr<const StreamProfile>> streamProfileList) override;
     void reFetchDisparityParams();
     void updateD2CProfileList(const std::string currentDepthAlgMode);
+    bool getPreProcessParam(uint16_t colorWidth, uint16_t colorHeight, OBD2CPreProcessParam &param) const override;
 
 private:
     void fetchParamFromDevice() override;
@@ -33,6 +34,12 @@ private:
     void refreshExtrinsicsParams();
 
 private:
+    struct ColorPreProcessEntry {
+        uint16_t             colorWidth;
+        uint16_t             colorHeight;
+        OBD2CPreProcessParam preProcessParam;
+    };
+
     std::vector<OBDepthCalibrationParam>     depthCalibParamList_;
     std::vector<OBCameraParam>               originCalibrationCameraParamList_;
     std::vector<OBD2CProfile>                originD2cProfileList_;
@@ -44,6 +51,7 @@ private:
     std::string                              currentDepthAlgMode_;
     std::map<int, bool>                      calibrationParamValidMap_;
     std::vector<OBD2CColorPreProcessProfile> d2cColorPreProcessProfileList_;
+    std::vector<ColorPreProcessEntry>        colorPreProcessEntryList_;
     // RectifyD2C params
     OBDERectifyD2CParams d2cRectifyParam_;
     OBDEIRTransformParam depthEngineTransformParam_;

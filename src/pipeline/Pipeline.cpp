@@ -645,6 +645,13 @@ void Pipeline::checkHardwareD2CConfig() {
         auto d2cProfileList          = algParamManager->getD2CProfileList();
         depthFrameProcessor->setHardwareD2CProcessParams(colorVideoStreamProfile, depthVideoStreamProfile, calibrationCameraParams, d2cProfileList,
                                                          config_->getDepthScaleAfterAlignRequire());
+
+        OBD2CPreProcessParam preProcessParam = {};
+        if(algParamManager->getPreProcessParam(static_cast<uint16_t>(colorVideoStreamProfile->getWidth()),
+                                               static_cast<uint16_t>(colorVideoStreamProfile->getHeight()), preProcessParam)) {
+            depthFrameProcessor->setPreProcessParam(preProcessParam);
+        }
+
         enableHardwareD2C(true);
     }
 }

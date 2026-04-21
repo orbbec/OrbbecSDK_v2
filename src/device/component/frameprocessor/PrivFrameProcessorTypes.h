@@ -30,6 +30,8 @@ typedef void (*pfunc_ob_frame_processor_set_hardware_d2c_params)(ob_frame_proces
                                                                  float depth_scale, int16_t align_left, int16_t align_top, int16_t align_right,
                                                                  int16_t align_bottom, bool match_target_resolution,bool module_mirror_status, ob_error **error);
 
+typedef void (*pfunc_ob_frame_processor_set_pre_process_param)(ob_frame_processor *processor, ob_d2c_pre_process_param param, ob_error **error);
+
 #ifdef __cplusplus
 }
 #endif

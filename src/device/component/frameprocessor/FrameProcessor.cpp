@@ -33,6 +33,11 @@ FrameProcessorFactory::FrameProcessorFactory(IDevice *owner) : DeviceComponentBa
         context_->destroy_context   = dylib_->get_function<void(ob_frame_processor_context *, ob_error **)>("ob_destroy_frame_processor_context");
         context_->set_hardware_d2c_params = dylib->get_function<void(ob_frame_processor *, ob_camera_intrinsic, uint8_t, float, int16_t, int16_t, int16_t,
                                                                      int16_t, bool, bool, ob_error **error)>("ob_frame_processor_set_hardware_d2c_params");
+        TRY_EXECUTE(context_->set_pre_process_param =
+                        dylib->get_function<void(ob_frame_processor *, ob_d2c_pre_process_param, ob_error **)>("ob_frame_processor_set_pre_process_param"));
+        if(!context_->set_pre_process_param) {
+            LOG_WARN("ob_frame_processor_set_pre_process_param not found in dylib, pre-process param setting is not supported by this plugin version");
+        }
     }
     if(context_->create_context && !context_->context) {
         auto cDevice      = new ob_device;
@@ -268,6 +273,23 @@ void DepthFrameProcessor::enableHardwareD2CProcess(bool enable) {
     if(isSupported) {
         propertyServer->setPropertyValueT(OB_PROP_DEPTH_ALIGN_HARDWARE_BOOL, enable);
         TRY_EXECUTE(setConfigValueSync("HardwareD2CProcessor#255", static_cast<double>(enable)));
+    }
+}
+
+void DepthFrameProcessor::setPreProcessParam(const OBD2CPreProcessParam &param) {
+    if(!context_->set_pre_process_param) {
+        LOG_WARN("setPreProcessParam skipped: set_pre_process_param not supported by current plugin");
+        return;
+    }
+    if(!privateProcessor_) {
+        LOG_WARN("setPreProcessParam skipped: privateProcessor_ is null");
+        return;
+    }
+    ob_error *error = nullptr;
+    context_->set_pre_process_param(privateProcessor_, param, &error);
+    if(error) {
+        LOG_ERROR("set pre process param failed");
+        delete error;
     }
 }
 

@@ -305,6 +305,16 @@ void DaBaiAAlgParamManager::fetchParamFromDevice() {
     }
 }
 
+bool DaBaiAAlgParamManager::getPreProcessParam(uint16_t colorWidth, uint16_t colorHeight, OBD2CPreProcessParam &param) const {
+    for(const auto &entry: colorPreProcessEntryList_) {
+        if(entry.colorWidth == colorWidth && entry.colorHeight == colorHeight) {
+            param = entry.preProcessParam;
+            return true;
+        }
+    }
+    return false;
+}
+
 void DaBaiAAlgParamManager::reFetchDisparityParams() {
     try {
         auto owner           = getOwner();
@@ -408,6 +418,7 @@ void DaBaiAAlgParamManager::fixD2CParmaList() {
 
     // save color pre process param
     preProcessCameraParamList_.clear();
+    colorPreProcessEntryList_.clear();
 
     // fix color pre process param
     for(size_t i = 0; i < d2cProfileList_.size(); ++i) {
@@ -417,12 +428,15 @@ void DaBaiAAlgParamManager::fixD2CParmaList() {
         auto         &profile      = d2cProfileList_[i];
         auto          colorWidth   = profile.colorWidth;
         auto          colorHeight  = profile.colorHeight;
+
         auto          colorProfile = StreamProfileFactory::createVideoStreamProfile(OB_STREAM_COLOR, OB_FORMAT_UNKNOWN, colorWidth, colorHeight, 30);
         OBCameraParam colorAlignParam;
         if(!findBestMatchedCameraParam(depthModefilterCameraParamList_, colorProfile, colorAlignParam)) {
             continue;
         }
 
+        // d2cProfileList_ and d2cColorPreProcessProfileList_ are in sync here; capture the mapping before any early-continue
+        colorPreProcessEntryList_.push_back({ static_cast<uint16_t>(colorWidth), static_cast<uint16_t>(colorHeight), colorPreParam });
         // color pre process
         colorAlignParam.rgbIntrinsic.fx = colorAlignParam.rgbIntrinsic.fx / colorPreParam.colorScale;
         colorAlignParam.rgbIntrinsic.fy = colorAlignParam.rgbIntrinsic.fy / colorPreParam.colorScale;

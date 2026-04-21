@@ -4,9 +4,9 @@
 #pragma once
 #include "IDevice.hpp"
 #include "FilterDecorator.hpp"
+#include "InternalTypes.hpp"
 #include "PrivFrameProcessorTypes.h"
 #include "DeviceComponentBase.hpp"
-#include "InternalTypes.hpp"
 #include <dylib.hpp>
 #include <map>
 
@@ -22,7 +22,8 @@ struct FrameProcessorContext {
     pfunc_ob_frame_processor_process_frame           process_frame           = nullptr;
     pfunc_ob_destroy_frame_processor                 destroy_processor       = nullptr;
     pfunc_ob_destroy_frame_processor_context         destroy_context         = nullptr;
-    pfunc_ob_frame_processor_set_hardware_d2c_params set_hardware_d2c_params = nullptr;
+    pfunc_ob_frame_processor_set_hardware_d2c_params set_hardware_d2c_params   = nullptr;
+    pfunc_ob_frame_processor_set_pre_process_param   set_pre_process_param     = nullptr;
 };
 
 class FrameProcessorFactory : public DeviceComponentBase {
@@ -80,6 +81,8 @@ public:
     void setHardwareD2CProcessParams(std::shared_ptr<const VideoStreamProfile> colorVideoStreamProfile,std::shared_ptr<const VideoStreamProfile> depthVideoStreamProfile,std::vector<OBCameraParam> calibrationCameraParams, std::vector<OBD2CProfile> d2cProfiles, bool matchTargetResolution);
 
     void enableHardwareD2CProcess(bool enable);
+
+    void setPreProcessParam(const OBD2CPreProcessParam &param);
 
 private:
     OBD2CProfile  currentD2CProfile_ = {};
