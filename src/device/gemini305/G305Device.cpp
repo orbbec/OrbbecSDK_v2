@@ -1579,6 +1579,12 @@ void G305Device::fixSensorList() {
             propertyServer->registerProperty(OB_PROP_COLOR_AE_MAX_EXPOSURE_INT, "rw", "rw", colorAeAccessor);
             propertyServer->registerProperty(OB_PROP_COLOR_EXPOSURE_INT, "rw", "rw", colorAeAccessor);
         }
+        else if(sensor == OB_SENSOR_COLOR_LEFT) {
+            auto aePriority = propertyServer->getPropertyValueT<int>(OB_PROP_COLOR_AUTO_EXPOSURE_PRIORITY_INT);
+            auto ae         = propertyServer->getPropertyValueT<bool>(OB_PROP_COLOR_AUTO_EXPOSURE_BOOL);
+            propertyServer->setPropertyValueT(OB_PROP_COLOR_AUTO_EXPOSURE_PRIORITY_INT, aePriority, PROP_ACCESS_USER);
+            propertyServer->setPropertyValueT(OB_PROP_COLOR_AUTO_EXPOSURE_BOOL, ae, PROP_ACCESS_USER);
+        }
     }
 }
 
