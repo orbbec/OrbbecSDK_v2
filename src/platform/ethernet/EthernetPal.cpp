@@ -17,6 +17,35 @@ const uint16_t DEFAULT_CMD_PORT                           = 8090;
 const uint16_t DEVICE_WATCHER_POLLING_INTERVAL_MSEC       = 3000;
 const uint16_t DEVICE_WATCHER_POLLING_SHORT_INTERVAL_MSEC = 1000;
 
+namespace {
+
+template <typename DeviceInfo, typename UpdateSourceInfoFunc>
+void restoreRemovedDeviceAndDropNewSameMac(const DeviceInfo &removedDevice, std::vector<DeviceInfo> &currentList, std::vector<DeviceInfo> &addedDevices,
+                                           UpdateSourceInfoFunc updateSourceInfo) {
+    std::vector<DeviceInfo> droppedAddedDevices;
+    auto                    droppedFromCurrentList = std::remove_if(currentList.begin(), currentList.end(), [&](const DeviceInfo &currentInfo) {
+        if(currentInfo.mac == removedDevice.mac) {
+            droppedAddedDevices.push_back(currentInfo);
+            return true;
+        }
+        return false;
+    });
+    // std::remove_if only partitions kept elements to the front; erase shrinks the vector.
+    currentList.erase(droppedFromCurrentList, currentList.end());
+
+    if(!droppedAddedDevices.empty()) {
+        addedDevices.erase(
+            std::remove_if(addedDevices.begin(), addedDevices.end(), [&](const DeviceInfo &addedInfo) { return addedInfo.mac == removedDevice.mac; }),
+            addedDevices.end());
+        updateSourceInfo(std::vector<DeviceInfo>{}, droppedAddedDevices);
+    }
+
+    currentList.push_back(removedDevice);
+    updateSourceInfo(std::vector<DeviceInfo>{ removedDevice }, std::vector<DeviceInfo>{});
+}
+
+}  // namespace
+
 EthernetPal::EthernetPal() {
     gvcpRuntimeConfig_ = GVCPRuntimeConfig::getInstance();
     mdnsDiscovery_     = MDNSDiscovery::getInstance();
@@ -43,9 +72,11 @@ void EthernetPal::queryGvcpDevice(bool singleShot) {
 
         for(auto &&info: removed) {
             if(!callback_(OB_DEVICE_REMOVED, info.mac)) {
-                // if device is still online, restore it to the list
-                list.push_back(info);
-                updateSourcePortInfoList({ info }, {});
+                // If the device is still online, keep the old record and discard newly scanned entries with the same MAC.
+                restoreRemovedDeviceAndDropNewSameMac(
+                    info, list, added, [this](const std::vector<GVCPDeviceInfo> &addedDevices, const std::vector<GVCPDeviceInfo> &removedDevices) {
+                        updateSourcePortInfoList(addedDevices, removedDevices);
+                    });
             }
         }
         for(auto &&info: added) {
@@ -98,9 +129,11 @@ void EthernetPal::start(deviceChangedCallback callback) {
 
             for(auto &&info: removed) {
                 if(!callback_(OB_DEVICE_REMOVED, info.mac)) {
-                    // if device is still online, restore it to the list
-                    list.push_back(info);
-                    updateMDNSDeviceSourceInfo({ info }, {});
+                    // If the device is still online, keep the old record and discard newly scanned entries with the same MAC.
+                    restoreRemovedDeviceAndDropNewSameMac(
+                        info, list, added, [this](const std::vector<MDNSDeviceInfo> &addedDevices, const std::vector<MDNSDeviceInfo> &removedDevices) {
+                            updateMDNSDeviceSourceInfo(addedDevices, removedDevices);
+                        });
                 }
             }
             for(auto &&info: added) {
@@ -254,7 +287,7 @@ void EthernetPal::updateSourcePortInfoList(const std::vector<GVCPDeviceInfo> &ad
         auto iter = sourcePortInfoList_.begin();
         while(iter != sourcePortInfoList_.end()) {
             auto item = std::dynamic_pointer_cast<const NetSourcePortInfo>(*iter);
-            if(item->address == info.ip && item->mac == info.mac && item->serialNumber == info.sn) {
+            if(item->localAddress == info.localIp && item->address == info.ip && item->mac == info.mac && item->serialNumber == info.sn) {
                 iter = sourcePortInfoList_.erase(iter);
             }
             else {
