@@ -6,6 +6,7 @@
 #include "utils_opencv.hpp"
 #include <iostream>
 #include <limits>
+#include <vector>
 
 uint32_t getUserInput(uint32_t maxIndex) {
     int selected = -1;
@@ -31,160 +32,213 @@ uint32_t getUserInput(uint32_t maxIndex) {
     return static_cast<uint32_t>(selected);
 }
 
-// Prints the details of a stream profile (Resolution, FPS, Format).
-void printStreamProfile(const std::shared_ptr<ob::StreamProfile> &profile, uint32_t index) {
-    auto videoProfile = profile->as<ob::VideoStreamProfile>();
-    if(!videoProfile)
-        return;
-
-    auto formatName       = profile->getFormat();
-    auto width            = videoProfile->getWidth();
-    auto height           = videoProfile->getHeight();
-    auto fps              = videoProfile->getFps();
-    auto decimationConfig = videoProfile->getDecimationConfig();
-
-    std::cout << index << ". format: " << ob::TypeHelper::convertOBFormatTypeToString(formatName) << ", res: " << width << "*" << height << ", fps: " << fps;
-
-    // If decimation is active, print origin details
-    if(decimationConfig.factor != 0) {
-        std::cout << ", originRes: " << decimationConfig.originWidth << "*" << decimationConfig.originHeight
-                  << ", decimation factor: " << decimationConfig.factor;
+// Check if a resolution (width x height) already exists in the list.
+bool hasResolution(const std::vector<OBPresetResolutionConfig> &list, int16_t width, int16_t height) {
+    for(auto &cfg: list) {
+        if(cfg.width == width && cfg.height == height) {
+            return true;
+        }
     }
-    std::cout << std::endl;
+    return false;
 }
 
-// Enumerates and sets preset resolution configurations.
-// Used primarily for specific devices like Gemini 435Le.
-void enumeratePresetResolutionConfig(std::shared_ptr<ob::Device> device) {
-    std::cout << "[Notice]: This device requires a Preset Resolution Configuration." << std::endl;
-    std::cout << "Preset resolution config list: " << std::endl;
-
+// Step 1: List unique origin resolutions from preset configs.
+OBPresetResolutionConfig selectOriginResolution(std::shared_ptr<ob::Device> device, std::vector<OBPresetResolutionConfig> &matchedPresets) {
     auto presetList = device->getAvailablePresetResolutionConfigList();
     auto presetNum  = presetList->getCount();
 
     if(!presetList || presetNum == 0) {
-        std::cerr << "No preset resolution config available" << std::endl;
-        return;
+        std::cerr << "No preset resolution config available." << std::endl;
+        return {};
     }
 
-    // List all available presets
-    for(uint32_t index = 0; index < presetNum; index++) {
-        auto presetConfig = presetList->getPresetResolutionRatioConfig(index);
-        std::cout << index << ". width " << presetConfig.width << ", height " << presetConfig.height << ", IR decimation " << presetConfig.irDecimationFactor
-                  << ", Depth decimation " << presetConfig.depthDecimationFactor << std::endl;
+    // Collect one representative preset per unique origin resolution
+    std::vector<OBPresetResolutionConfig> uniqueResolutions;
+    for(uint32_t i = 0; i < presetNum; i++) {
+        auto cfg = presetList->getPresetResolutionRatioConfig(i);
+        if(!hasResolution(uniqueResolutions, cfg.width, cfg.height)) {
+            uniqueResolutions.push_back(cfg);
+        }
     }
 
-    // Get User Selection
-    uint32_t selected = getUserInput(presetNum);
+    std::cout << "\n[Step 1] Select origin resolution:" << std::endl;
+    for(size_t i = 0; i < uniqueResolutions.size(); i++) {
+        std::cout << "  " << i << ". " << uniqueResolutions[i].width << "x" << uniqueResolutions[i].height << std::endl;
+    }
 
-    // Apply the configuration to the device
-    auto presetConfig = presetList->getPresetResolutionRatioConfig(selected);
-    device->setStructuredData(OB_STRUCT_PRESET_RESOLUTION_CONFIG, (uint8_t *)&presetConfig, sizeof(presetConfig));
-    std::cout << "Preset configuration applied." << std::endl;
+    uint32_t selected = getUserInput(static_cast<uint32_t>(uniqueResolutions.size()));
+    auto     chosen   = uniqueResolutions[selected];
+
+    // Collect all preset configs matching this resolution
+    for(uint32_t i = 0; i < presetNum; i++) {
+        auto cfg = presetList->getPresetResolutionRatioConfig(i);
+        if(cfg.width == chosen.width && cfg.height == chosen.height) {
+            matchedPresets.push_back(cfg);
+        }
+    }
+
+    return chosen;
 }
 
-// Displays available stream profiles for a sensor and lets the user select one.
-std::shared_ptr<ob::StreamProfile> selectStreamProfile(const std::shared_ptr<ob::Sensor> &sensor, OBSensorType sensorType) {
-    auto streamList = sensor->getStreamProfileList();
-    if(streamList->getCount() == 0) {
-        std::cerr << "No stream profiles available for this sensor." << std::endl;
-        return nullptr;
+// Step 2: Pick a decimation config for the selected resolution.
+OBPresetResolutionConfig selectDecimation(const std::vector<OBPresetResolutionConfig> &presets) {
+    if(presets.size() == 1) {
+        auto &cfg = presets[0];
+        std::cout << "\n[Step 2] Decimation auto-selected: Depth=" << cfg.depthDecimationFactor << ", IR=" << cfg.irDecimationFactor << std::endl;
+        return cfg;
     }
 
-    std::cout << "Available profiles for " << ob::TypeHelper::convertOBSensorTypeToString(sensorType) << ":" << std::endl;
-    for(uint32_t i = 0; i < streamList->getCount(); ++i) {
-        printStreamProfile(streamList->getProfile(i), i);
+    std::cout << "\n[Step 2] Select decimation factor:" << std::endl;
+    for(size_t i = 0; i < presets.size(); i++) {
+        auto &cfg = presets[i];
+        std::cout << "  " << i << ". Depth=" << cfg.depthDecimationFactor << ", IR=" << cfg.irDecimationFactor << std::endl;
     }
 
-    // Special hint for IR sensors regarding synchronization
-    if(isIRSensor(sensorType)) {
-        std::cout << "[Note]: Please keep the original resolution and decimation factor consistent with Depth sensor." << std::endl;
+    return presets[getUserInput(static_cast<uint32_t>(presets.size()))];
+}
+
+// Find the first profile that matches the given origin resolution and decimation factor.
+// For 305 (factor > 0): match by decimationConfig.originWidth/originHeight.
+// For 435Le (factor == 0): match by profile width/height == originWidth/factor.
+std::shared_ptr<ob::StreamProfile> findProfile(const std::shared_ptr<ob::Sensor> &sensor, uint32_t originWidth, uint32_t originHeight,
+                                               uint32_t decimationFactor) {
+    auto     profiles     = sensor->getStreamProfileList();
+    uint32_t outputWidth  = originWidth / decimationFactor;
+    uint32_t outputHeight = originHeight / decimationFactor;
+    for(uint32_t i = 0; i < profiles->getCount(); i++) {
+        auto videoProfile     = profiles->getProfile(i)->as<ob::VideoStreamProfile>();
+        auto decimationConfig = videoProfile->getDecimationConfig();
+        if((decimationConfig.factor > 0 && decimationConfig.originWidth == originWidth && decimationConfig.originHeight == originHeight)
+           || (decimationConfig.factor == 0 && videoProfile->getWidth() == outputWidth && videoProfile->getHeight() == outputHeight)) {
+            return profiles->getProfile(i);
+        }
     }
-
-    uint32_t selected = getUserInput(streamList->getCount());
-
-    return streamList->getProfile(selected);
+    return nullptr;
 }
 
 int main() try {
-    // Create a pipeline with default device.
+    // Create a pipeline with the default device.
     ob::Pipeline pipe;
 
-    // Get the device with the pipeline
-    std::shared_ptr<ob::Device> device = pipe.getDevice();
-
+    auto device = pipe.getDevice();
     if(!device) {
         std::cerr << "No device found!" << std::endl;
         std::cout << "\nPress any key to exit.";
         ob_smpl::waitForKeyPressed();
         return 0;
     }
-    bool isPropertySupported = device->isPropertySupported(OB_STRUCT_PRESET_RESOLUTION_CONFIG, OB_PERMISSION_READ_WRITE);
-    if(!isPropertySupported) {
-        std::cout << "The device does not support preset resolution configuration." << std::endl;
+
+    // Check if the device supports preset resolution configuration.
+    if(!device->isPropertySupported(OB_STRUCT_PRESET_RESOLUTION_CONFIG, OB_PERMISSION_READ_WRITE)) {
+        std::cout << "This device does not support preset resolution configuration." << std::endl;
         std::cout << "\nPress any key to exit.";
         ob_smpl::waitForKeyPressed();
         return 0;
     }
 
-    // Retrieve device info VID/PID
     auto deviceInfo = device->getDeviceInfo();
     auto vid        = deviceInfo->getVid();
     auto pid        = deviceInfo->getPid();
+    std::cout << "Device: " << deviceInfo->getName() << " (VID: 0x" << std::hex << vid << ", PID: 0x" << pid << std::dec << ")" << std::endl;
 
-    std::cout << "Device connected: " << deviceInfo->getName() << " (VID: " << std::hex << vid << ", PID: " << pid << std::dec << ")" << std::endl;
-    // Specific check for Gemini 305 device
+    // Step 1: Select origin resolution (deduplicated from preset configs).
+    std::vector<OBPresetResolutionConfig> matchedPresets;
+    OBPresetResolutionConfig              originPreset = selectOriginResolution(device, matchedPresets);
+
+    // Step 2: Select decimation factor for the chosen resolution.
+    OBPresetResolutionConfig presetConfig = selectDecimation(matchedPresets);
+
+    // Apply the preset config (Gemini 305 uses a different mechanism).
     if(!ob_smpl::isGemini305Device(vid, pid)) {
-        enumeratePresetResolutionConfig(device);
+        device->setStructuredData(OB_STRUCT_PRESET_RESOLUTION_CONFIG, (uint8_t *)&presetConfig, sizeof(presetConfig));
+        std::cout << "Preset configuration applied." << std::endl;
     }
 
-    // Configure Sensors and Streams
-    std::shared_ptr<ob::SensorList> sensorList = device->getSensorList();
-    std::shared_ptr<ob::Config>     config     = std::make_shared<ob::Config>();
+    uint32_t originWidth  = static_cast<uint32_t>(originPreset.width);
+    uint32_t originHeight = static_cast<uint32_t>(originPreset.height);
 
-    std::cout << "Configuring Sensors..." << std::endl;
+    // Locate Depth, IR Left, and IR Right sensors.
+    auto                        sensorList = device->getSensorList();
+    auto                        config     = std::make_shared<ob::Config>();
+    std::shared_ptr<ob::Sensor> depthSensor;
+    std::shared_ptr<ob::Sensor> irLeftSensor;
+    std::shared_ptr<ob::Sensor> irRightSensor;
 
-    for(uint32_t index = 0; index < sensorList->getCount(); index++) {
-        OBSensorType sensorType = sensorList->getSensorType(index);
+    for(uint32_t i = 0; i < sensorList->getCount(); i++) {
+        OBSensorType type = sensorList->getSensorType(i);
+        if(type == OB_SENSOR_DEPTH) {
+            depthSensor = sensorList->getSensor(i);
+        }
+        else if(type == OB_SENSOR_IR_LEFT) {
+            irLeftSensor = sensorList->getSensor(i);
+        }
+        else if(type == OB_SENSOR_IR_RIGHT) {
+            irRightSensor = sensorList->getSensor(i);
+        }
+    }
 
-        if(isIRSensor(sensorType) || sensorType == OB_SENSOR_DEPTH) {
-            auto sensor = sensorList->getSensor(index);
-            std::cout << "\n[Sensor " << index << "]: " << ob::TypeHelper::convertOBSensorTypeToString(sensorType) << std::endl;
+    // Enable streams.
+    if(ob_smpl::isGemini305Device(vid, pid)) {
+        OBHardwareDecimationConfig decimationConfig{};
+        decimationConfig.originWidth  = originWidth;
+        decimationConfig.originHeight = originHeight;
+        decimationConfig.factor       = presetConfig.depthDecimationFactor;
 
-            // User selects a profile (Resolution/FPS)
-            std::shared_ptr<ob::StreamProfile> profile = selectStreamProfile(sensor, sensorType);
-
+        if(depthSensor) {
+            config->enableVideoStream(OB_SENSOR_DEPTH, decimationConfig);
+        }
+        if(irLeftSensor) {
+            config->enableVideoStream(OB_SENSOR_IR_LEFT, decimationConfig);
+        }
+        if(irRightSensor) {
+            config->enableVideoStream(OB_SENSOR_IR_RIGHT, decimationConfig);
+        }
+    }
+    else {
+        if(depthSensor) {
+            auto profile = findProfile(depthSensor, originWidth, originHeight, presetConfig.depthDecimationFactor);
             if(profile) {
-                // Enable this specific stream profile in the pipeline configuration
                 config->enableStream(profile);
-                std::cout << " -> Stream enabled." << std::endl;
-
-                // support 305 decimation configuration to stream profile enabling
-                // auto videoProfile     = profile->as<ob::VideoStreamProfile>();
-                // auto decimationConfig = videoProfile->getDecimationConfig();
-                // config->enableVideoStream(sensorType, decimationConfig);
+            }
+            else {
+                std::cerr << "  Depth    : no matching profile found" << std::endl;
+            }
+        }
+        if(irLeftSensor) {
+            auto profile = findProfile(irLeftSensor, originWidth, originHeight, presetConfig.irDecimationFactor);
+            if(profile) {
+                config->enableStream(profile);
+            }
+            else {
+                std::cerr << "  IR Left  : no matching profile found" << std::endl;
+            }
+        }
+        if(irRightSensor) {
+            auto profile = findProfile(irRightSensor, originWidth, originHeight, presetConfig.irDecimationFactor);
+            if(profile) {
+                config->enableStream(profile);
+            }
+            else {
+                std::cerr << "  IR Right : no matching profile found" << std::endl;
             }
         }
     }
 
-    // Start the Pipeline
-    std::cout << "\nStarting Pipeline..." << std::endl;
+    // Start the pipeline.
+    std::cout << "\nStarting pipeline..." << std::endl;
     pipe.start(config);
 
-    // Create a visualization window using the helper class (OpenCV based)
-    ob_smpl::CVWindow win("Infrared/Depth Viewer", 1280, 800, ob_smpl::ARRANGE_GRID);
-    std::cout << "Pipeline started. Rendering... (Press ESC to close)" << std::endl;
+    // Render frames in an OpenCV window. Press ESC to exit.
+    ob_smpl::CVWindow win("Decimation Viewer", 1280, 800, ob_smpl::ARRANGE_GRID);
+    std::cout << "Pipeline started. Press ESC to close." << std::endl;
 
     while(win.run()) {
         auto frameSet = pipe.waitForFrameset(100);
-
-        if(frameSet != nullptr) {
-            // Render the frames to the window
+        if(frameSet) {
             win.pushFramesToView(frameSet);
         }
     }
 
-    // Stop the pipeline to release hardware resources.
     pipe.stop();
     return 0;
 }

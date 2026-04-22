@@ -435,7 +435,8 @@ std::vector<std::shared_ptr<const VideoStreamProfile>> matchVideoStreamProfile(c
             else {
                 auto profileDecimationConfig = videoProfile->getDecimationConfig();
                 if(decimationConfig.originWidth == profileDecimationConfig.originWidth && decimationConfig.originHeight == profileDecimationConfig.originHeight
-                   && decimationScale == profileDecimationConfig.factor && videoProfile->getFormat() == format && videoProfile->getFps() == fps) {
+                   && decimationScale == profileDecimationConfig.factor && (format == OB_FORMAT_ANY || videoProfile->getFormat() == format)
+                   && (fps == OB_FPS_ANY || videoProfile->getFps() == fps)) {
                     matchProfileList.push_back(videoProfile);
                 }
             }
