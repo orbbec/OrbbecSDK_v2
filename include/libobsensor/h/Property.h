@@ -638,6 +638,11 @@ typedef enum {
      */
     OB_PROP_DEVICE_IP_MODE_INT = 260,
 
+     /**
+     * @brief DHCP assign IP timeout, unit: second
+     */   
+    OB_PROP_DHCP_ASSIGN_IP_TIMEOUT_INT = 261,
+
     /**
      * @brief Baseline calibration parameters
      */

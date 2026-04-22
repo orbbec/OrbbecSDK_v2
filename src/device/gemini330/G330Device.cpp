@@ -1608,6 +1608,10 @@ void G330NetDevice::init() {
         propertyServer->registerProperty(OB_PROP_DEVICE_OFFLINE_AFTER_IP_CONFIG_APPLY, "r", "r", vendorPropertyAccessor.get());
     }
 
+    if(fwVersion >= 10723) {
+        propertyServer->registerProperty(OB_PROP_DHCP_ASSIGN_IP_TIMEOUT_INT, "rw", "rw", vendorPropertyAccessor.get());
+    }
+
     // Cache depth unit and hwD2D to avoid per-frame device queries in getDepthMaxValidValue.
     // OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT can change dynamically;
     // OB_PROP_DISPARITY_TO_DEPTH_BOOL does not change during streaming but may change between streams.
