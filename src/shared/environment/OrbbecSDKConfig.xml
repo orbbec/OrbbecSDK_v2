@@ -87,7 +87,7 @@
         <Gemini305>
             <!-- Default backend for Linux UVC devices. If the LinuxUVCBackend is set to "Auto,"
             this item will determine the device's speciality. Optional values: V4L2, LibUVC -->
-            <LinuxUVCDefaultBackend>LibUVC</LinuxUVCDefaultBackend>
+            <LinuxUVCDefaultBackend>V4L2</LinuxUVCDefaultBackend>
 
             <Misc>
                 <GlobalTimestampFitterEnable>true</GlobalTimestampFitterEnable>
@@ -174,7 +174,7 @@
         <Gemini305g>
             <!-- The default Linux UVC backend. If the LinuxUVCBackend is set to "Auto," this item
             will determine the device's speciality. Optional values: V4L2, LibUVC -->
-            <LinuxUVCDefaultBackend>LibUVC</LinuxUVCDefaultBackend>
+            <LinuxUVCDefaultBackend>V4L2</LinuxUVCDefaultBackend>
 
             <Misc>
                 <GlobalTimestampFitterEnable>true</GlobalTimestampFitterEnable>
