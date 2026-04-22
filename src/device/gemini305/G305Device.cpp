@@ -1013,20 +1013,22 @@ void G305Device::initSensorListGMSL() {
                 auto port   = getSourcePort(leftIrPortInfo);
                 auto sensor = std::make_shared<VideoSensor>(this, OB_SENSOR_IR_LEFT, port);
                 fixSensorStreamProfile(sensor);
-                std::vector<FormatFilterConfig> formatFilterConfigs = {
-                    { FormatFilterPolicy::REMOVE, OB_FORMAT_Z16, OB_FORMAT_ANY, nullptr },   //
-                    { FormatFilterPolicy::REMOVE, OB_FORMAT_MJPG, OB_FORMAT_ANY, nullptr },  //
-                    { FormatFilterPolicy::REMOVE, OB_FORMAT_Y10, OB_FORMAT_ANY, nullptr },   //
-                    { FormatFilterPolicy::REMOVE, OB_FORMAT_Y14, OB_FORMAT_ANY, nullptr },   //
-                    { FormatFilterPolicy::REMOVE, OB_FORMAT_BA81, OB_FORMAT_ANY, nullptr },
-                    { FormatFilterPolicy::REMOVE, OB_FORMAT_NV12, OB_FORMAT_ANY, nullptr },
-                    { FormatFilterPolicy::REMOVE, OB_FORMAT_UYVY, OB_FORMAT_ANY, nullptr },
-                    { FormatFilterPolicy::REMOVE, OB_FORMAT_YUYV, OB_FORMAT_ANY, nullptr },
-                    { FormatFilterPolicy::REMOVE, OB_FORMAT_BGR, OB_FORMAT_ANY, nullptr },
-                    { FormatFilterPolicy::REMOVE, OB_FORMAT_BGRA, OB_FORMAT_ANY, nullptr }
-                    // { FormatFilterPolicy::REPLACE, OB_FORMAT_NV12, OB_FORMAT_Y12, nullptr },
-                };
 
+                std::vector<FormatFilterConfig> formatFilterConfigs = { { FormatFilterPolicy::REMOVE, OB_FORMAT_MJPG, OB_FORMAT_ANY, nullptr },  //
+                                                                        { FormatFilterPolicy::REMOVE, OB_FORMAT_Y10, OB_FORMAT_ANY, nullptr },   //
+                                                                        { FormatFilterPolicy::REMOVE, OB_FORMAT_Y14, OB_FORMAT_ANY, nullptr },   //
+                                                                        { FormatFilterPolicy::REMOVE, OB_FORMAT_BA81, OB_FORMAT_ANY, nullptr },
+                                                                        { FormatFilterPolicy::REMOVE, OB_FORMAT_NV12, OB_FORMAT_ANY, nullptr },
+                                                                        { FormatFilterPolicy::REMOVE, OB_FORMAT_UYVY, OB_FORMAT_ANY, nullptr },
+                                                                        { FormatFilterPolicy::REMOVE, OB_FORMAT_YUYV, OB_FORMAT_ANY, nullptr },
+                                                                        { FormatFilterPolicy::REMOVE, OB_FORMAT_BGR, OB_FORMAT_ANY, nullptr },
+                                                                        { FormatFilterPolicy::REMOVE, OB_FORMAT_BGRA, OB_FORMAT_ANY, nullptr } };
+                auto                            formatUnpacker      = getSensorFrameFilter("FrameUnpacker", OB_SENSOR_IR_LEFT, false);
+                if(formatUnpacker) {
+                    formatFilterConfigs.push_back({ FormatFilterPolicy::REPLACE, OB_FORMAT_Z16, OB_FORMAT_Y16,
+                                                    formatUnpacker });  // Convert Z16 depth data to Y16 by extracting the lower 10 bits and left-shifting by 6
+                                                                        // to align with the high bits)
+                }
                 sensor->updateFormatFilterConfig(formatFilterConfigs);
                 auto depthMdParserContainer = getComponentT<IFrameMetadataParserContainer>(OB_DEV_COMPONENT_DEPTH_FRAME_METADATA_CONTAINER);
                 sensor->setFrameMetadataParserContainer(depthMdParserContainer.get());
@@ -1075,8 +1077,7 @@ void G305Device::initSensorListGMSL() {
                 auto port   = getSourcePort(rightIrPortInfo);
                 auto sensor = std::make_shared<VideoSensor>(this, OB_SENSOR_IR_RIGHT, port);
                 fixSensorStreamProfile(sensor);
-                std::vector<FormatFilterConfig> formatFilterConfigs = { { FormatFilterPolicy::REMOVE, OB_FORMAT_Z16, OB_FORMAT_ANY, nullptr },   //
-                                                                        { FormatFilterPolicy::REMOVE, OB_FORMAT_MJPG, OB_FORMAT_ANY, nullptr },  //
+                std::vector<FormatFilterConfig> formatFilterConfigs = { { FormatFilterPolicy::REMOVE, OB_FORMAT_MJPG, OB_FORMAT_ANY, nullptr },  //
                                                                         { FormatFilterPolicy::REMOVE, OB_FORMAT_Y10, OB_FORMAT_ANY, nullptr },   //
                                                                         { FormatFilterPolicy::REMOVE, OB_FORMAT_Y14, OB_FORMAT_ANY, nullptr },   //
                                                                         { FormatFilterPolicy::REMOVE, OB_FORMAT_BA81, OB_FORMAT_ANY, nullptr },
@@ -1085,7 +1086,12 @@ void G305Device::initSensorListGMSL() {
                                                                         { FormatFilterPolicy::REMOVE, OB_FORMAT_YUYV, OB_FORMAT_ANY, nullptr },
                                                                         { FormatFilterPolicy::REMOVE, OB_FORMAT_BGR, OB_FORMAT_ANY, nullptr },
                                                                         { FormatFilterPolicy::REMOVE, OB_FORMAT_BGRA, OB_FORMAT_ANY, nullptr } };
-
+                auto                            formatUnpacker      = getSensorFrameFilter("FrameUnpacker", OB_SENSOR_IR_RIGHT, false);
+                if(formatUnpacker) {
+                    formatFilterConfigs.push_back({ FormatFilterPolicy::REPLACE, OB_FORMAT_Z16, OB_FORMAT_Y16,
+                                                    formatUnpacker });  // Convert Z16 depth data to Y16 by extracting the lower 10 bits and left-shifting by 6
+                                                                        // to align with the high bits
+                }
                 sensor->updateFormatFilterConfig(formatFilterConfigs);
                 auto depthMdParserContainer = getComponentT<IFrameMetadataParserContainer>(OB_DEV_COMPONENT_DEPTH_FRAME_METADATA_CONTAINER);
                 sensor->setFrameMetadataParserContainer(depthMdParserContainer.get());
