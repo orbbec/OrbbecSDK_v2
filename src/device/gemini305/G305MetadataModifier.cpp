@@ -17,8 +17,7 @@ void G305GMSLMetadataModifier::modify(std::shared_ptr<Frame> frame) {
 
     switch(frame->getType()) {
     case OB_FRAME_COLOR:
-    case OB_FRAME_COLOR_LEFT:
-    case OB_FRAME_COLOR_RIGHT: {
+    case OB_FRAME_COLOR_LEFT: {
         // Copy metadata from the frame data without clearing the metadata area
         const uint16_t *frameDataBuffer = reinterpret_cast<const uint16_t *>(frame->getData());
         for(int i = 0; i < metadataSize; i++) {
@@ -43,6 +42,17 @@ void G305GMSLMetadataModifier::modify(std::shared_ptr<Frame> frame) {
         auto frameData = frame->getDataMutable();
         memcpy(metadataBuffer + 12, frameData, metadataSize);
         // Zeroing the metadata region prevents horizontal stripes in display
+        memset(frameData, 0, metadataSize);
+    } break;
+    case OB_FRAME_COLOR_RIGHT: {
+        // Right color is raw8 with 2x width, metadata is packed as raw8 bytes with swapped byte pairs
+        auto frameData = frame->getDataMutable();
+        memcpy(metadataBuffer + 12, frameData, metadataSize);
+        // Swap high and low bytes within each uint16 to match metadata structure byte order
+        auto frameDataBuffer = reinterpret_cast<uint16_t *>(metadataBuffer + 12);
+        for(int i = 0; i < metadataSize / 2; i++) {
+            frameDataBuffer[i] = static_cast<uint16_t>((frameDataBuffer[i] << 8) | (frameDataBuffer[i] >> 8));
+        }
         memset(frameData, 0, metadataSize);
     } break;
     default:
