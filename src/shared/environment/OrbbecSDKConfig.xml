@@ -89,6 +89,10 @@
             this item will determine the device's speciality. Optional values: V4L2, LibUVC -->
             <LinuxUVCDefaultBackend>V4L2</LinuxUVCDefaultBackend>
 
+            <!-- Enable auto device reboot when a fatal XU channel IO error (LIBUSB_ERROR_IO) is
+            detected on the LibUVC backend. Set to true to enable; default is false. -->
+            <LinuxUVCAutoRebootOnFault>true</LinuxUVCAutoRebootOnFault>
+
             <Misc>
                 <GlobalTimestampFitterEnable>true</GlobalTimestampFitterEnable>
                 <!-- Global timestamp fitter refresh interval, unit: milliseconds, default value:
@@ -175,6 +179,10 @@
             <!-- The default Linux UVC backend. If the LinuxUVCBackend is set to "Auto," this item
             will determine the device's speciality. Optional values: V4L2, LibUVC -->
             <LinuxUVCDefaultBackend>V4L2</LinuxUVCDefaultBackend>
+
+            <!-- Enable auto device reboot when a fatal XU channel IO error (LIBUSB_ERROR_IO) is
+            detected on the LibUVC backend. Set to true to enable; default is false. -->
+            <LinuxUVCAutoRebootOnFault>true</LinuxUVCAutoRebootOnFault>
 
             <Misc>
                 <GlobalTimestampFitterEnable>true</GlobalTimestampFitterEnable>
@@ -1017,6 +1025,10 @@
             this item will determine the device's speciality. Optional values: V4L2, LibUVC -->
             <LinuxUVCDefaultBackend>LibUVC</LinuxUVCDefaultBackend>
 
+            <!-- Enable auto device reboot when a fatal XU channel IO error (LIBUSB_ERROR_IO) is
+            detected on the LibUVC backend. Set to true to enable; default is false. -->
+            <LinuxUVCAutoRebootOnFault>true</LinuxUVCAutoRebootOnFault>
+
             <Misc>
                 <GlobalTimestampFitterEnable>true</GlobalTimestampFitterEnable>
                 <!-- Global timestamp fitter refresh interval, unit: milliseconds, default value: 1000,
@@ -1101,6 +1113,10 @@
             will determine the device's speciality. Optional values: V4L2, LibUVC -->
             <LinuxUVCDefaultBackend>LibUVC</LinuxUVCDefaultBackend>
 
+            <!-- Enable auto device reboot when a fatal XU channel IO error (LIBUSB_ERROR_IO) is
+            detected on the LibUVC backend. Set to true to enable; default is false. -->
+            <LinuxUVCAutoRebootOnFault>true</LinuxUVCAutoRebootOnFault>
+
             <Misc>
                 <GlobalTimestampFitterEnable>true</GlobalTimestampFitterEnable>
                 <!-- Global timestamp fitter refresh interval, unit: milliseconds, default value: 1000,
@@ -1183,6 +1199,10 @@
             <!-- Default backend for Linux UVC devices. If the LinuxUVCBackend is set to "Auto,"
             this item will determine the device's speciality. Optional values: V4L2, LibUVC -->
             <LinuxUVCDefaultBackend>LibUVC</LinuxUVCDefaultBackend>
+
+            <!-- Enable auto device reboot when a fatal XU channel IO error (LIBUSB_ERROR_IO) is
+            detected on the LibUVC backend. Set to true to enable; default is false. -->
+            <LinuxUVCAutoRebootOnFault>true</LinuxUVCAutoRebootOnFault>
 
             <Misc>
                 <GlobalTimestampFitterEnable>true</GlobalTimestampFitterEnable>
@@ -1268,6 +1288,10 @@
             will determine the device's speciality. Optional values: V4L2, LibUVC -->
             <LinuxUVCDefaultBackend>LibUVC</LinuxUVCDefaultBackend>
 
+            <!-- Enable auto device reboot when a fatal XU channel IO error (LIBUSB_ERROR_IO) is
+            detected on the LibUVC backend. Set to true to enable; default is false. -->
+            <LinuxUVCAutoRebootOnFault>true</LinuxUVCAutoRebootOnFault>
+
             <Misc>
                 <GlobalTimestampFitterEnable>true</GlobalTimestampFitterEnable>
                 <!-- Global timestamp fitter refresh interval, unit: milliseconds, default value: 1000,
@@ -1351,6 +1375,10 @@
             <!-- The default Linux UVC backend. If the LinuxUVCBackend is set to "Auto," this item
             will determine the device's speciality. Optional values: V4L2, LibUVC -->
             <LinuxUVCDefaultBackend>LibUVC</LinuxUVCDefaultBackend>
+
+            <!-- Enable auto device reboot when a fatal XU channel IO error (LIBUSB_ERROR_IO) is
+            detected on the LibUVC backend. Set to true to enable; default is false. -->
+            <LinuxUVCAutoRebootOnFault>true</LinuxUVCAutoRebootOnFault>
 
             <Misc>
                 <GlobalTimestampFitterEnable>true</GlobalTimestampFitterEnable>
@@ -1516,6 +1544,10 @@
             will determine the device's speciality. Optional values: V4L2, LibUVC -->
             <LinuxUVCDefaultBackend>LibUVC</LinuxUVCDefaultBackend>
 
+            <!-- Enable auto device reboot when a fatal XU channel IO error (LIBUSB_ERROR_IO) is
+            detected on the LibUVC backend. Set to true to enable; default is false. -->
+            <LinuxUVCAutoRebootOnFault>true</LinuxUVCAutoRebootOnFault>
+
             <DepthPostProcessing>
                 <HardwareNoiseRemoveFilter>false</HardwareNoiseRemoveFilter>
                 <SoftwareNoiseRemoveFilter>true</SoftwareNoiseRemoveFilter>
@@ -1599,6 +1631,10 @@
             <!-- The default Linux UVC backend. If the LinuxUVCBackend is set to "Auto," this item
             will determine the device's speciality. Optional values: V4L2, LibUVC -->
             <LinuxUVCDefaultBackend>LibUVC</LinuxUVCDefaultBackend>
+            
+            <!-- Enable auto device reboot when a fatal XU channel IO error (LIBUSB_ERROR_IO) is
+            detected on the LibUVC backend. Set to true to enable; default is false. -->
+            <LinuxUVCAutoRebootOnFault>true</LinuxUVCAutoRebootOnFault>
 
             <DepthPostProcessing>
                 <HardwareNoiseRemoveFilter>false</HardwareNoiseRemoveFilter>
@@ -1683,6 +1719,10 @@
             this item will determine the device's speciality. Optional values: V4L2, LibUVC -->
             <LinuxUVCDefaultBackend>LibUVC</LinuxUVCDefaultBackend>
 
+            <!-- Enable auto device reboot when a fatal XU channel IO error (LIBUSB_ERROR_IO) is
+            detected on the LibUVC backend. Set to true to enable; default is false. -->
+            <LinuxUVCAutoRebootOnFault>true</LinuxUVCAutoRebootOnFault>
+
             <Misc>
                 <GlobalTimestampFitterEnable>true</GlobalTimestampFitterEnable>
                 <!-- Global timestamp fitter refresh interval, unit: milliseconds, default value: 1000,
@@ -1764,6 +1804,10 @@
             <!-- Default backend for Linux UVC devices. If the LinuxUVCBackend is set to "Auto,"
             this item will determine the device's speciality. Optional values: V4L2, LibUVC -->
             <LinuxUVCDefaultBackend>LibUVC</LinuxUVCDefaultBackend>
+
+            <!-- Enable auto device reboot when a fatal XU channel IO error (LIBUSB_ERROR_IO) is
+            detected on the LibUVC backend. Set to true to enable; default is false. -->
+            <LinuxUVCAutoRebootOnFault>true</LinuxUVCAutoRebootOnFault>
 
             <Misc>
                 <GlobalTimestampFitterEnable>true</GlobalTimestampFitterEnable>
@@ -1931,6 +1975,10 @@
             this item will determine the device's speciality. Optional values: V4L2, LibUVC -->
             <LinuxUVCDefaultBackend>LibUVC</LinuxUVCDefaultBackend>
 
+            <!-- Enable auto device reboot when a fatal XU channel IO error (LIBUSB_ERROR_IO) is
+            detected on the LibUVC backend. Set to true to enable; default is false. -->
+            <LinuxUVCAutoRebootOnFault>true</LinuxUVCAutoRebootOnFault>
+
             <Misc>
                 <GlobalTimestampFitterEnable>true</GlobalTimestampFitterEnable>
                 <!-- Global timestamp fitter refresh interval, unit: milliseconds, default value: 1000,
@@ -2012,6 +2060,10 @@
             <!-- Default backend for Linux UVC devices. If the LinuxUVCBackend is set to "Auto,"
             this item will determine the device's speciality. Optional values: V4L2, LibUVC -->
             <LinuxUVCDefaultBackend>LibUVC</LinuxUVCDefaultBackend>
+
+            <!-- Enable auto device reboot when a fatal XU channel IO error (LIBUSB_ERROR_IO) is
+            detected on the LibUVC backend. Set to true to enable; default is false. -->
+            <LinuxUVCAutoRebootOnFault>true</LinuxUVCAutoRebootOnFault>
 
             <Misc>
                 <GlobalTimestampFitterEnable>true</GlobalTimestampFitterEnable>
@@ -2543,6 +2595,10 @@
             will determine the device's speciality. Optional values: V4L2, LibUVC -->
             <LinuxUVCDefaultBackend>LibUVC</LinuxUVCDefaultBackend>
 
+            <!-- Enable auto device reboot when a fatal XU channel IO error (LIBUSB_ERROR_IO) is
+            detected on the LibUVC backend. Set to true to enable; default is false. -->
+            <LinuxUVCAutoRebootOnFault>true</LinuxUVCAutoRebootOnFault>
+
             <DepthPostProcessing>
                 <HardwareNoiseRemoveFilter>false</HardwareNoiseRemoveFilter>
                 <SoftwareNoiseRemoveFilter>true</SoftwareNoiseRemoveFilter>
@@ -2626,6 +2682,10 @@
             <!-- The default Linux UVC backend. If the LinuxUVCBackend is set to "Auto," this item
             will determine the device's speciality. Optional values: V4L2, LibUVC -->
             <LinuxUVCDefaultBackend>LibUVC</LinuxUVCDefaultBackend>
+
+            <!-- Enable auto device reboot when a fatal XU channel IO error (LIBUSB_ERROR_IO) is
+            detected on the LibUVC backend. Set to true to enable; default is false. -->
+            <LinuxUVCAutoRebootOnFault>true</LinuxUVCAutoRebootOnFault>
 
             <DepthPostProcessing>
                 <HardwareNoiseRemoveFilter>false</HardwareNoiseRemoveFilter>

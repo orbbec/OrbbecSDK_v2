@@ -49,8 +49,8 @@ enum HpStatusCode {
     HP_STATUS_OK = 0,
 
     HP_STATUS_NO_DEVICE_FOUND,
-    HP_STATUS_CONTROL_TRANSFER_FAILED,  // Transmission error
-    HP_STATUS_DATA_TRANSFER_BUSY,       // Data transfer busy
+    HP_STATUS_CONTROL_TRANSFER_FAILED,   // Transmission error (non-IO-error exception)
+    HP_STATUS_DATA_TRANSFER_BUSY,        // Data transfer busy
 
     // Request error
     HP_STATUS_REQUEST_DATA_SIZE_ERROR,
@@ -65,6 +65,7 @@ enum HpStatusCode {
     HP_STATUS_DEVICE_RESPONSE_ERROR_UNKNOWN,    // error code = 0xffff
     HP_STATUS_DEVICE_RESPONSE_DATA_SIZE_ERROR,  //
     HP_STATUS_DEVICE_RESPONSE_CMD_VERSION_UNMATCHED,
+    HP_STATUS_DEVICE_RESPONSE_IO_ERROR,         // XU response channel failed
     HP_STATUS_UNKNOWN_ERROR = 0xffff,
 };
 

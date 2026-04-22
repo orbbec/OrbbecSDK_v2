@@ -277,7 +277,7 @@ UvcControlRange ObLibuvcDevicePort::getPuRange(uint32_t propertyId) {
 
 bool ObLibuvcDevicePort::setXu(uint8_t ctrl, const uint8_t *data, uint32_t len) {
     std::lock_guard<std::recursive_mutex> lock(ctrlMutex_);
-    auto                                  recv = uvc_set_ctrl(uvcDevHandle_, xuUnit_.unit, ctrl, const_cast<uint8_t *>(data), len);
+    auto recv = uvc_set_ctrl(uvcDevHandle_, xuUnit_.unit, ctrl, const_cast<uint8_t *>(data), len);
     if(recv <= 0) {
         LOG_ERROR("setXu failed, error code={}", recv);
         return false;
@@ -304,6 +304,10 @@ bool ObLibuvcDevicePort::getXu(uint8_t ctrl, uint8_t *data, uint32_t *len) {
     int recv = uvc_get_ctrl(uvcDevHandle_, xuUnit_.unit, ctrl, data, *len, UVC_GET_CUR);
     *len     = recv;
     if(recv <= 0) {
+        if(recv == LIBUSB_ERROR_IO) {
+            THROW_IO_EXCEPTION_WITH_ERROR("getXu IO error: XU response channel returned LIBUSB_ERROR_IO (-1)",
+                                          OB_ERROR_DEVICE_RESPONSE_CHANNEL_FAILURE);
+        }
         LOG_ERROR("getXu failed, error code={}", recv);
         return false;
     }

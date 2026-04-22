@@ -557,6 +557,17 @@ void G330Device::initSensorList() {
             auto uvcDevicePort = std::dynamic_pointer_cast<UvcDevicePort>(port);
             uvcDevicePort->updateXuUnit(OB_G330_XU_UNIT);  // update xu unit to g330 xu unit
             auto accessor = std::make_shared<VendorPropertyAccessor>(this, port);
+
+            auto        envConfig    = EnvConfig::getInstance();
+            std::string deviceName   = utils::string::removeSpace(deviceInfo_->name_);
+            std::string nodeName     = "Device." + deviceName + ".LinuxUVCAutoRebootOnFault";
+            bool        autoRecovery = false;
+            envConfig->getBooleanValue(nodeName, autoRecovery);
+            LOG_INFO("UVCAutoRebootOnFault={} for device: {}", autoRecovery, deviceInfo_->name_);
+            if(autoRecovery) {
+                accessor->setAutoRebootEnabled(true);
+            }
+
             return accessor;
         });
 

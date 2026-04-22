@@ -18,6 +18,7 @@ static std::map<HpStatusCode, OBStatus> deviceErrorToOBStatus = {
     { HP_STATUS_DEVICE_RESPONSE_WRONG_DATA_SIZE, OB_ERROR_DEVICE_RESPONSE_WRONG_DATA_SIZE },
     { HP_STATUS_DEVICE_RESPONSE_ERROR, OB_ERROR_DEVICE_RESPONSE_ERROR },
     { HP_STATUS_DEVICE_RESPONSE_WARNING, OB_ERROR_DEVICE_RESPONSE_WARNING },
+    { HP_STATUS_DEVICE_RESPONSE_IO_ERROR, OB_ERROR_DEVICE_RESPONSE_CHANNEL_FAILURE },
 };
 
 bool checkStatus(uint32_t propertyId, HpStatus stat, bool throwException) {
@@ -174,6 +175,14 @@ HpStatus execute(const std::shared_ptr<IVendorDataPort> &dataPort, uint8_t *reqD
         try {
             *respDataSize = static_cast<uint16_t>(dataPort->sendAndReceive(reqData, static_cast<uint32_t>(reqDataSize), respData, expectedRespLen));
         }
+        catch(const libobsensor_exception &e) {
+            if(e.getStatus() == OB_ERROR_DEVICE_RESPONSE_CHANNEL_FAILURE) {
+                rc = HP_STATUS_DEVICE_RESPONSE_IO_ERROR;
+            }
+            else {
+                rc = HP_STATUS_CONTROL_TRANSFER_FAILED;
+            }
+        }
         catch(...) {
             rc = HP_STATUS_CONTROL_TRANSFER_FAILED;
         }
@@ -185,6 +194,11 @@ HpStatus execute(const std::shared_ptr<IVendorDataPort> &dataPort, uint8_t *reqD
                && hpStatus.respErrorCode != HP_RESP_ERROR_DEVICE_BUSY && hpStatus.statusCode != HP_STATUS_DEVICE_RESPONSE_WRONG_DATA_SIZE) {
                 break;
             }
+        }
+        else if(rc == HP_STATUS_DEVICE_RESPONSE_IO_ERROR) {
+            hpStatus.statusCode    = HP_STATUS_DEVICE_RESPONSE_IO_ERROR;
+            hpStatus.respErrorCode = HP_RESP_ERROR_UNKNOWN;
+            hpStatus.msg           = "getXu IO error: XU response channel returned LIBUSB_ERROR_IO (-1)";
         }
         else {
             hpStatus.statusCode    = rc;

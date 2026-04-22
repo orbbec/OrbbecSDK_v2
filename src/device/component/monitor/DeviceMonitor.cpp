@@ -4,6 +4,7 @@
 #include "DeviceMonitor.hpp"
 #include "protocol/Protocol.hpp"
 #include "property/InternalProperty.hpp"
+#include "exception/ObException.hpp"
 #include "logger/LoggerSnWrapper.hpp"  // Must be included last to override log macros
 
 namespace libobsensor {
@@ -245,8 +246,14 @@ void DeviceMonitor::resumeHeartbeat() {
 
 void DeviceMonitor::sendAndReceiveData(const uint8_t *sendData, uint32_t sendDataSize, uint8_t *receiveData, uint32_t *receiveDataSize) {
     std::lock_guard<std::mutex> lock(commMutex_);
-    auto                        recvLen = vendorDataPort_->sendAndReceive(sendData, sendDataSize, receiveData, *receiveDataSize);
-    *receiveDataSize                    = recvLen;
+    uint32_t recvLen = 0;
+    try {
+        recvLen = vendorDataPort_->sendAndReceive(sendData, sendDataSize, receiveData, *receiveDataSize);
+    }
+    catch(const libobsensor_exception &e) {
+        LOG_ERROR("sendAndReceiveData failed: {}", e.getMessage());
+    }
+    *receiveDataSize = recvLen;
 
     // update active time
     if(activityRecorder_) {

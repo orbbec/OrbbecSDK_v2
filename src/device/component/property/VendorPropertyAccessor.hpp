@@ -6,6 +6,8 @@
 #include "ISourcePort.hpp"
 #include "IDevice.hpp"
 #include "IDeviceComponent.hpp"
+#include "protocol/Protocol.hpp"  // protocol::HpStatus — required for executeAndCheck return type
+#include <atomic>
 #include <mutex>
 
 namespace libobsensor {
@@ -37,7 +39,27 @@ public:
     void setRawdataTransferPacketSize(uint32_t size);
     void setStructListDataTransferPacketSize(uint32_t size);
 
+    // Enable automatic device reboot when a fatal protocol-level
+    // getXu IO fault (LIBUSB_ERROR_IO) is detected. Default: false (disabled).
+    void setAutoRebootEnabled(bool enable);
+
 private:
+    // Unified execute + fault detection + checkStatus entry point.
+    // Replaces all protocol::execute() + protocol::checkStatus() call pairs.
+    // On fault: triggers triggerReboot() (if enabled), then lets the
+    // exception propagate normally so callers remain unaffected.
+    protocol::HpStatus executeAndCheck(const std::shared_ptr<IVendorDataPort> &port,
+                                       uint8_t  *reqData,
+                                       uint16_t  reqDataSize,
+                                       uint8_t  *respData,
+                                       uint16_t *respDataSize,
+                                       uint32_t  propertyId,
+                                       uint16_t  expectedRespLen = 0);
+
+    // Send OB_PROP_DEVICE_RESET_BOOL=1 via backend_ to reboot the device.
+    // Guaranteed to execute at most once per VendorPropertyAccessor instance.
+    void triggerReboot();
+
     void clearBuffers();
 
 private:
@@ -50,6 +72,9 @@ private:
     std::vector<std::vector<uint8_t>> structureDataList_;  // for cmd version 1.1
     uint32_t                          rawdataTransferPacketSize_;
     uint32_t                          structListDataTransferPacketSize_;
+
+    bool                 autoRebootEnabled_{ false };  // controlled by setAutoRebootEnabled()
+    std::atomic<bool>    rebootTriggered_{ false };    // prevents duplicate reboot triggers
 };
 }  // namespace libobsensor
 
