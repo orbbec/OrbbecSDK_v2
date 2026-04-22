@@ -212,7 +212,7 @@
                 <MaxStartStreamDelayMs>3000</MaxStartStreamDelayMs>
                 <!-- The maximum frame interval time, if this value is exceeded, it will be judged
                 that the stream is interrupted -->
-                <MaxFrameIntervalMs>3000</MaxFrameIntervalMs>
+                <MaxFrameIntervalMs>6000</MaxFrameIntervalMs>
                 <!-- The resolution width is enabled by default, int type -->
                 <Width>848</Width>
                 <!-- High resolution is enabled by default, int type -->
@@ -229,7 +229,7 @@
                 <MaxStartStreamDelayMs>3000</MaxStartStreamDelayMs>
                 <!-- The maximum frame interval time, if this value is exceeded, it will be judged
                 that the stream is interrupted -->
-                <MaxFrameIntervalMs>3000</MaxFrameIntervalMs>
+                <MaxFrameIntervalMs>6000</MaxFrameIntervalMs>
                 <!-- The resolution width is enabled by default, int type -->
                 <Width>848</Width>
                 <!-- High resolution is enabled by default, int type -->
@@ -246,7 +246,7 @@
                 <MaxStartStreamDelayMs>3000</MaxStartStreamDelayMs>
                 <!-- The maximum frame interval time, if this value is exceeded, it will be judged
                 that the stream is interrupted -->
-                <MaxFrameIntervalMs>3000</MaxFrameIntervalMs>
+                <MaxFrameIntervalMs>6000</MaxFrameIntervalMs>
                 <!-- The resolution width is enabled by default, int type -->
                 <Width>1280</Width>
                 <!-- High resolution is enabled by default, int type -->
@@ -263,7 +263,7 @@
                 <MaxStartStreamDelayMs>3000</MaxStartStreamDelayMs>
                 <!-- The maximum frame interval time, if this value is exceeded, it will be judged
                 that the stream is interrupted -->
-                <MaxFrameIntervalMs>3000</MaxFrameIntervalMs>
+                <MaxFrameIntervalMs>6000</MaxFrameIntervalMs>
                 <!-- The resolution width is enabled by default, int type -->
                 <Width>1280</Width>
                 <!-- High resolution is enabled by default, int type -->
