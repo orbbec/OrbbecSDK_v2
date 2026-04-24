@@ -7,6 +7,7 @@
 #include "IFrameTimestamp.hpp"
 #include "IFrameTimestamp.hpp"
 #include "DeviceComponentBase.hpp"
+#include <mutex>
 
 #include <atomic>
 #include <cstdint>
@@ -23,7 +24,7 @@ public:
 
 private:
     void resetStateImpl();
-    
+
 private:
     uint64_t                                deviceTimeFreq_;
     uint64_t                                frameTimeFreq_;
@@ -84,9 +85,10 @@ private:
     uint64_t deviceTimeFreq_;
     uint64_t frameTimeFreq_;
 
-    uint64_t prevSrcTsp_;
-    uint64_t prevHostTsp_;
-    uint64_t baseDevTime_;
+    std::mutex mutex_;
+    uint64_t   prevSrcTsp_;
+    uint64_t   prevHostTsp_;
+    uint64_t   baseDevTime_;
 };
 
 class FrameTimestampCalculatorOverMetadata : public IFrameTimestampCalculator, public DeviceComponentBase {
@@ -116,7 +118,7 @@ private:
     uint64_t clockFreq_;
 };
 
-class G435LeFrameTimestampCalculatorDeviceTime : public IFrameTimestampCalculator, public DeviceComponentBase{
+class G435LeFrameTimestampCalculatorDeviceTime : public IFrameTimestampCalculator, public DeviceComponentBase {
 public:
     G435LeFrameTimestampCalculatorDeviceTime(IDevice *device, uint64_t deviceTimeFreq, uint64_t frameTimeFreq, uint64_t clockFreq);
 

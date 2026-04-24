@@ -4,6 +4,7 @@
 #pragma once
 #include "IDevice.hpp"
 #include "IFrameTimestamp.hpp"
+#include <mutex>
 
 namespace libobsensor {
 
@@ -28,6 +29,8 @@ private:
     uint64_t prevHostTsp_;
     uint64_t baseDevTime_;  // Processed device timestamp, aligned to multiples of 256 seconds
     uint64_t devTime_;      // Original device timestamp
+
+    std::mutex mutex_;
 };
 
 }  // namespace libobsensor

@@ -33,7 +33,7 @@ void G330FrameTimestampCalculatorBaseDeviceTime::calculate(std::shared_ptr<Frame
 }
 
 uint64_t G330FrameTimestampCalculatorBaseDeviceTime::calculate(uint64_t srcTimestamp) {
-    // Conditions that need to update baseDevTime_:
+    std::lock_guard<std::mutex> lock(mutex_);
     // 1. The first frame after opening the stream
     // 2. The timestamp becomes smaller (the size of the timestamps of the previous and later data frames is reversed), indicating that a timestamp overflow has
     // occurred or the device clock has been cleared (a small probability may also be caused by abnormal data transmission)
@@ -86,6 +86,7 @@ uint64_t G330FrameTimestampCalculatorBaseDeviceTime::calculate(uint64_t srcTimes
 }
 
 void G330FrameTimestampCalculatorBaseDeviceTime::clear() {
+    std::lock_guard<std::mutex> lock(mutex_);
     prevSrcTsp_  = 0;
     prevHostTsp_ = 0;
     baseDevTime_ = 0;
