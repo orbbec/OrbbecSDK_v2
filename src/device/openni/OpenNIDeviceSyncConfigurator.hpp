@@ -11,6 +11,7 @@
 #include <vector>
 #include <memory>
 #include <map>
+#include <mutex>
 
 namespace libobsensor {
 
@@ -27,6 +28,7 @@ public:
 private:
     const std::vector<OBMultiDeviceSyncMode> supportedSyncModes_;
 
+    std::mutex              mutex_;
     OBMultiDeviceSyncConfig currentMultiDevSyncConfig_;
 };
 

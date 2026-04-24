@@ -188,7 +188,7 @@ void OpenNIDeviceBase::initProperties() {
     propertyServer->aliasProperty(OB_PROP_IR_EXPOSURE_INT, OB_PROP_DEPTH_EXPOSURE_INT);
     propertyServer->aliasProperty(OB_PROP_IR_GAIN_INT, OB_PROP_DEPTH_GAIN_INT);
 
-    registerComponent(OB_DEV_COMPONENT_PROPERTY_SERVER, propertyServer, true);
+    registerComponent(OB_DEV_COMPONENT_PROPERTY_SERVER, propertyServer, false);
 }
 
 std::vector<std::shared_ptr<IFilter>> OpenNIDeviceBase::createRecommendedPostProcessingFilters(OBSensorType type) {

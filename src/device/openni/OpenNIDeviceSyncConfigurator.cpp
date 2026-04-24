@@ -28,31 +28,36 @@ OBMultiDeviceSyncConfig OpenNIDeviceSyncConfigurator::getSyncConfig() {
     auto propertyServer = owner->getPropertyServer();
     auto configInternal = propertyServer->getStructureDataT<OBMultiDeviceSyncConfigInternal>(OB_STRUCT_MULTI_DEVICE_SYNC_CONFIG);
 
-    currentMultiDevSyncConfig_.syncMode = (OBMultiDeviceSyncMode)configInternal.syncMode;
-    if(currentMultiDevSyncConfig_.syncMode == 0) {
-        currentMultiDevSyncConfig_.syncMode = OB_MULTI_DEVICE_SYNC_MODE_SECONDARY_SYNCED;
+    OBMultiDeviceSyncConfig syncConfig{};
+    syncConfig.syncMode = (OBMultiDeviceSyncMode)configInternal.syncMode;
+    if(syncConfig.syncMode == 0) {
+        syncConfig.syncMode = OB_MULTI_DEVICE_SYNC_MODE_SECONDARY_SYNCED;
     }
-    else if(currentMultiDevSyncConfig_.syncMode == 1) {
-        currentMultiDevSyncConfig_.syncMode = OB_MULTI_DEVICE_SYNC_MODE_PRIMARY;
+    else if(syncConfig.syncMode == 1) {
+        syncConfig.syncMode = OB_MULTI_DEVICE_SYNC_MODE_PRIMARY;
     }
-    else if(currentMultiDevSyncConfig_.syncMode == 2) {
-        currentMultiDevSyncConfig_.syncMode = OB_MULTI_DEVICE_SYNC_MODE_FREE_RUN;
+    else if(syncConfig.syncMode == 2) {
+        syncConfig.syncMode = OB_MULTI_DEVICE_SYNC_MODE_FREE_RUN;
     }
+    syncConfig.depthDelayUs         = 0;
+    syncConfig.colorDelayUs         = 0;
+    syncConfig.trigger2ImageDelayUs = 0;
+    syncConfig.triggerOutEnable     = false;
+    syncConfig.triggerOutDelayUs    = 0;
+    syncConfig.framesPerTrigger     = 0;  // configInternal.framesPerTrigger; set to 1 at default
 
-    currentMultiDevSyncConfig_.depthDelayUs         = 0;
-    currentMultiDevSyncConfig_.colorDelayUs         = 0;
-    currentMultiDevSyncConfig_.trigger2ImageDelayUs = 0;
-    currentMultiDevSyncConfig_.triggerOutEnable     = false;
-    currentMultiDevSyncConfig_.triggerOutDelayUs    = 0;
-    currentMultiDevSyncConfig_.framesPerTrigger     = 0;  // configInternal.framesPerTrigger; set to 1 at default
-
+    std::lock_guard<std::mutex> lock(mutex_);
+    currentMultiDevSyncConfig_ = syncConfig;
     return currentMultiDevSyncConfig_;
 }
 
 void OpenNIDeviceSyncConfigurator::setSyncConfig(const OBMultiDeviceSyncConfig &deviceSyncConfig) {
-    if(currentMultiDevSyncConfig_.syncMode == deviceSyncConfig.syncMode) {
-        LOG_DEBUG("New sync config is same as current device sync config, the upgrade process would not execute!");
-        return;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if(currentMultiDevSyncConfig_.syncMode == deviceSyncConfig.syncMode) {
+            LOG_DEBUG("New sync config is same as current device sync config, the upgrade process would not execute!");
+            return;
+        }
     }
 
     OBMultiDeviceSyncConfigInternal internalConfig;
@@ -76,6 +81,8 @@ void OpenNIDeviceSyncConfigurator::setSyncConfig(const OBMultiDeviceSyncConfig &
     auto owner          = getOwner();
     auto propertyServer = owner->getPropertyServer();
     propertyServer->setStructureDataT<OBMultiDeviceSyncConfigInternal>(OB_STRUCT_MULTI_DEVICE_SYNC_CONFIG, internalConfig);
+
+    std::lock_guard<std::mutex> lock(mutex_);
     currentMultiDevSyncConfig_ = deviceSyncConfig;
 }
 

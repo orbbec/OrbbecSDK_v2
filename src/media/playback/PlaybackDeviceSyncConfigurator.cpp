@@ -13,23 +13,24 @@ PlaybackDeviceSyncConfigurator::PlaybackDeviceSyncConfigurator(IDevice *owner)
 
 OBMultiDeviceSyncConfig PlaybackDeviceSyncConfigurator::getSyncConfig() {
     if(isSyncConfigInit_) {
+        std::lock_guard<std::mutex> lock(mutex_);
         return currentMultiDevSyncConfig_;
     }
     auto owner          = getOwner();
-    auto propertyServer = owner->getPropertyServer();  // Auto-lock when getting propertyServer
-    // double check after get propertyServer
+    auto propertyServer = owner->getPropertyServer();
+
+    OBMultiDeviceSyncConfig syncConfig{};
+    if(propertyServer->isPropertySupported(OB_STRUCT_MULTI_DEVICE_SYNC_CONFIG, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
+        syncConfig = propertyServer->getStructureDataT<OBMultiDeviceSyncConfig>(OB_STRUCT_MULTI_DEVICE_SYNC_CONFIG);
+    }
+
+    std::lock_guard<std::mutex> lock(mutex_);
     if(isSyncConfigInit_) {
         return currentMultiDevSyncConfig_;
     }
-    // read from proper server
-    if(propertyServer->isPropertySupported(OB_STRUCT_MULTI_DEVICE_SYNC_CONFIG, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
-        currentMultiDevSyncConfig_ = propertyServer->getStructureDataT<OBMultiDeviceSyncConfig>(OB_STRUCT_MULTI_DEVICE_SYNC_CONFIG);
-    }
-    else {
-        currentMultiDevSyncConfig_ = {};
-    }
-    isSyncConfigInit_ = true;
-    return currentMultiDevSyncConfig_;
+    currentMultiDevSyncConfig_ = syncConfig;
+    isSyncConfigInit_          = true;
+    return syncConfig;
 }
 
 void PlaybackDeviceSyncConfigurator::setSyncConfig(const OBMultiDeviceSyncConfig &deviceSyncConfig) {

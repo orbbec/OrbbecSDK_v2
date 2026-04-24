@@ -24,13 +24,15 @@ const std::string &PropertyServer::GetCurrentSN() const {
 PropertyServer::PropertyServer(IDevice *owner) : DeviceComponentBase(owner) {}
 
 void PropertyServer::registerProperty(uint32_t propertyId, OBPermissionType userPerms, OBPermissionType intPerms, std::shared_ptr<IPropertyAccessor> accessor) {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     properties_[propertyId] = { propertyId, userPerms, intPerms, accessor };
 
     appendToPropertyMap(propertyId, userPerms, intPerms);
 }
 
 void PropertyServer::registerAccessCallback(uint32_t propertyId, PropertyAccessCallback callback) {
-    auto it = properties_.find(propertyId);
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    auto                                  it = properties_.find(propertyId);
     if(it == properties_.end()) {
         LOG_WARN("Property not found to register callback, propertyId: {}", propertyId);
         return;
@@ -66,6 +68,7 @@ void PropertyServer::registerProperty(uint32_t propertyId, const std::string &us
 }
 
 void PropertyServer::unregisterAllProperties() {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     innerPropertiesVec_.clear();
     userPropertiesVec_.clear();
     properties_.clear();
@@ -100,7 +103,8 @@ void PropertyServer::appendToPropertyMap(uint32_t propertyId, OBPermissionType u
 }
 
 void PropertyServer::aliasProperty(uint32_t aliasId, uint32_t propertyId) {
-    auto it = properties_.find(propertyId);
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    auto                                  it = properties_.find(propertyId);
     if(it == properties_.end()) {
         THROW_ITEM_NOT_FOUND_EXCEPTION("Property not found for aliasing");
     }
@@ -154,7 +158,8 @@ void PropertyServer::checkAccessMode(PropertyOperationType operationType) {
 }
 
 bool PropertyServer::isPropertySupported(uint32_t propertyId, PropertyOperationType operationType, PropertyAccessType accessType) const {
-    auto it = properties_.find(propertyId);
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    auto                                  it = properties_.find(propertyId);
     if(it == properties_.end()) {
         return false;
     }
@@ -181,25 +186,23 @@ bool PropertyServer::isPropertySupported(uint32_t propertyId, PropertyOperationT
 }
 
 void PropertyServer::setPropertyValue(uint32_t propertyId, OBPropertyValue value, PropertyAccessType accessType) {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::unique_lock<std::recursive_mutex> lock(mutex_);
     if(!isPropertySupported(propertyId, PROP_OP_WRITE, accessType)) {
         THROW_UNSUPPORTED_OPERATION_EXCEPTION("Property not writable");
     }
-    // check current access mode
     checkAccessMode(PROP_OP_WRITE);
-
-    auto  it       = properties_.find(propertyId);
-    auto &accessor = it->second.accessor;
-    auto &propId   = it->second.propertyId;
+    auto it            = properties_.find(propertyId);
+    auto propId        = it->second.propertyId;
+    auto callbacks     = it->second.accessCallbacks;
+    auto basicAccessor = std::dynamic_pointer_cast<IBasicPropertyAccessor>(it->second.accessor);
     if(propId != propertyId) {
         LOG_DEBUG("Property {} alias to {}", propId, propertyId);
     }
+    lock.unlock();
 
     utils::Timer timer;
-    auto         basicAccessor = std::dynamic_pointer_cast<IBasicPropertyAccessor>(accessor);
     basicAccessor->setPropertyValue(propId, value);
-
-    for(auto &callback: it->second.accessCallbacks) {
+    for(auto &callback: callbacks) {
         auto data = reinterpret_cast<uint8_t *>(&value);
         callback(propertyId, data, sizeof(OBPropertyValue), PROP_OP_WRITE);
     }
@@ -208,25 +211,23 @@ void PropertyServer::setPropertyValue(uint32_t propertyId, OBPropertyValue value
 }
 
 void PropertyServer::getPropertyValue(uint32_t propertyId, OBPropertyValue *value, PropertyAccessType accessType) {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::unique_lock<std::recursive_mutex> lock(mutex_);
     if(!isPropertySupported(propertyId, PROP_OP_READ, accessType)) {
         THROW_UNSUPPORTED_OPERATION_EXCEPTION(utils::string::to_string() << "Property not readable: " << propertyId);
     }
-    // check current access mode
     checkAccessMode(PROP_OP_READ);
-
-    auto  it       = properties_.find(propertyId);
-    auto &accessor = it->second.accessor;
-    auto &propId   = it->second.propertyId;
+    auto it            = properties_.find(propertyId);
+    auto propId        = it->second.propertyId;
+    auto callbacks     = it->second.accessCallbacks;
+    auto basicAccessor = std::dynamic_pointer_cast<IBasicPropertyAccessor>(it->second.accessor);
     if(propId != propertyId) {
         LOG_DEBUG("Property {} alias to {}", propId, propertyId);
     }
+    lock.unlock();
 
     utils::Timer timer;
-    auto         basicAccessor = std::dynamic_pointer_cast<IBasicPropertyAccessor>(accessor);
     basicAccessor->getPropertyValue(propId, value);
-
-    for(auto &callback: it->second.accessCallbacks) {
+    for(auto &callback: callbacks) {
         auto data = reinterpret_cast<uint8_t *>(value);
         callback(propertyId, data, sizeof(OBPropertyValue), PROP_OP_READ);
     }
@@ -240,22 +241,20 @@ void PropertyServer::getPropertyValue(uint32_t propertyId, OBPropertyValue *valu
 // }
 
 void PropertyServer::getPropertyRange(uint32_t propertyId, OBPropertyRange *range, PropertyAccessType accessType) {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::unique_lock<std::recursive_mutex> lock(mutex_);
     if(!isPropertySupported(propertyId, PROP_OP_READ, accessType)) {
         THROW_UNSUPPORTED_OPERATION_EXCEPTION(utils::string::to_string() << "Property not readable: " << propertyId);
     }
-    // check current access mode
     checkAccessMode(PROP_OP_READ);
-
-    auto  it       = properties_.find(propertyId);
-    auto &accessor = it->second.accessor;
-    auto &propId   = it->second.propertyId;
+    auto it            = properties_.find(propertyId);
+    auto propId        = it->second.propertyId;
+    auto basicAccessor = std::dynamic_pointer_cast<IBasicPropertyAccessor>(it->second.accessor);
     if(propId != propertyId) {
         LOG_DEBUG("Property {} alias to {}", propId, propertyId);
     }
+    lock.unlock();
 
     utils::Timer timer;
-    auto         basicAccessor = std::dynamic_pointer_cast<IBasicPropertyAccessor>(accessor);
     basicAccessor->getPropertyRange(propId, range);
     auto delta = timer.touchUs();
     LOG_DEBUG("[delta: {}us] Property {} range as {}-{} step {} def {}|{}-{} step {} def {}", delta, propId, range->min.intValue, range->max.intValue,
@@ -263,26 +262,26 @@ void PropertyServer::getPropertyRange(uint32_t propertyId, OBPropertyRange *rang
 }
 
 void PropertyServer::setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data, PropertyAccessType accessType) {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::unique_lock<std::recursive_mutex> lock(mutex_);
     if(!isPropertySupported(propertyId, PROP_OP_WRITE, accessType)) {
         THROW_UNSUPPORTED_OPERATION_EXCEPTION("Property not writable");
     }
-    // check current access mode
     checkAccessMode(PROP_OP_WRITE);
-
-    auto  it       = properties_.find(propertyId);
-    auto &accessor = it->second.accessor;
-    auto &propId   = it->second.propertyId;
+    auto it             = properties_.find(propertyId);
+    auto propId         = it->second.propertyId;
+    auto callbacks      = it->second.accessCallbacks;
+    auto structAccessor = std::dynamic_pointer_cast<IStructureDataAccessor>(it->second.accessor);
     if(propId != propertyId) {
         LOG_DEBUG("Property {} alias to {}", propId, propertyId);
     }
-    auto structAccessor = std::dynamic_pointer_cast<IStructureDataAccessor>(accessor);
+    lock.unlock();
+
     if(structAccessor == nullptr) {
         THROW_INVALID_DATA_EXCEPTION(utils::string::to_string() << "Property" << propId << " does not support structure data setting");
     }
     utils::Timer timer;
     structAccessor->setStructureData(propId, data);
-    for(auto &callback: it->second.accessCallbacks) {
+    for(auto &callback: callbacks) {
         callback(propertyId, data.data(), data.size(), PROP_OP_WRITE);
     }
     auto delta = timer.touchUs();
@@ -290,27 +289,26 @@ void PropertyServer::setStructureData(uint32_t propertyId, const std::vector<uin
 }
 
 const std::vector<uint8_t> &PropertyServer::getStructureData(uint32_t propertyId, PropertyAccessType accessType, utils::TransferTiming *timing) {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::unique_lock<std::recursive_mutex> lock(mutex_);
     if(!isPropertySupported(propertyId, PROP_OP_READ, accessType)) {
         THROW_UNSUPPORTED_OPERATION_EXCEPTION(utils::string::to_string() << "Property not readable: " << propertyId);
     }
-    // check current access mode
     checkAccessMode(PROP_OP_READ);
-
-    auto  it       = properties_.find(propertyId);
-    auto &accessor = it->second.accessor;
-    auto &propId   = it->second.propertyId;
+    auto it             = properties_.find(propertyId);
+    auto propId         = it->second.propertyId;
+    auto callbacks      = it->second.accessCallbacks;
+    auto structAccessor = std::dynamic_pointer_cast<IStructureDataAccessor>(it->second.accessor);
     if(propId != propertyId) {
         LOG_DEBUG("Property {} alias to {}", propId, propertyId);
     }
+    lock.unlock();
 
-    auto structAccessor = std::dynamic_pointer_cast<IStructureDataAccessor>(accessor);
     if(structAccessor == nullptr) {
         THROW_INVALID_DATA_EXCEPTION(utils::string::to_string() << "Property " << propId << " does not support structure data getting");
     }
     utils::Timer timer;
     const auto  &data = structAccessor->getStructureData(propId, timing);
-    for(auto &callback: it->second.accessCallbacks) {
+    for(auto &callback: callbacks) {
         callback(propertyId, data.data(), data.size(), PROP_OP_READ);
     }
     auto delta = timer.touchUs();
@@ -319,27 +317,26 @@ const std::vector<uint8_t> &PropertyServer::getStructureData(uint32_t propertyId
 }
 
 void PropertyServer::getRawData(uint32_t propertyId, GetDataCallback callback, PropertyAccessType accessType) {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::unique_lock<std::recursive_mutex> lock(mutex_);
     if(!isPropertySupported(propertyId, PROP_OP_READ, accessType)) {
         THROW_UNSUPPORTED_OPERATION_EXCEPTION(utils::string::to_string() << "Property not readable: " << propertyId);
     }
-    // check current access mode
     checkAccessMode(PROP_OP_READ);
-
-    auto  it       = properties_.find(propertyId);
-    auto &accessor = it->second.accessor;
-    auto &propId   = it->second.propertyId;
+    auto it              = properties_.find(propertyId);
+    auto propId          = it->second.propertyId;
+    auto accessCallbacks = it->second.accessCallbacks;
+    auto rawDataAccessor = std::dynamic_pointer_cast<IRawDataAccessor>(it->second.accessor);
     if(propId != propertyId) {
         LOG_DEBUG("Property {} alias to {}", propId, propertyId);
     }
-    auto rawDataAccessor = std::dynamic_pointer_cast<IRawDataAccessor>(accessor);
+    lock.unlock();
+
     if(rawDataAccessor == nullptr) {
         THROW_INVALID_DATA_EXCEPTION(utils::string::to_string() << "Property" << propId << " does not support raw data getting");
     }
-
     utils::Timer timer;
     rawDataAccessor->getRawData(propId, callback);  // todo: add async support
-    for(auto &accessCallback: it->second.accessCallbacks) {
+    for(auto &accessCallback: accessCallbacks) {
         accessCallback(propertyId, nullptr, 0, PROP_OP_READ);
     }
     auto delta = timer.touchUs();
@@ -347,24 +344,22 @@ void PropertyServer::getRawData(uint32_t propertyId, GetDataCallback callback, P
 }
 
 uint16_t PropertyServer::getCmdVersionProtoV1_1(uint32_t propertyId, PropertyAccessType accessType) {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::unique_lock<std::recursive_mutex> lock(mutex_);
     if(!isPropertySupported(propertyId, PROP_OP_READ, accessType)) {
         THROW_UNSUPPORTED_OPERATION_EXCEPTION(utils::string::to_string() << "Property not readable: " << propertyId);
     }
-    // check current access mode
     checkAccessMode(PROP_OP_READ);
-
-    auto  it       = properties_.find(propertyId);
-    auto &accessor = it->second.accessor;
-    auto &propId   = it->second.propertyId;
+    auto it             = properties_.find(propertyId);
+    auto propId         = it->second.propertyId;
+    auto structAccessor = std::dynamic_pointer_cast<IStructureDataAccessorV1_1>(it->second.accessor);
     if(propId != propertyId) {
         LOG_DEBUG("Property {} alias to {}", propId, propertyId);
     }
-    auto structAccessor = std::dynamic_pointer_cast<IStructureDataAccessorV1_1>(accessor);
+    lock.unlock();
+
     if(structAccessor == nullptr) {
         THROW_INVALID_DATA_EXCEPTION(utils::string::to_string() << "Property" << propId << " does not support cmd version getting");
     }
-
     utils::Timer timer;
     auto         ver   = structAccessor->getCmdVersionProtoV1_1(propId);
     auto         delta = timer.touchUs();
@@ -373,26 +368,26 @@ uint16_t PropertyServer::getCmdVersionProtoV1_1(uint32_t propertyId, PropertyAcc
 }
 
 const std::vector<uint8_t> &PropertyServer::getStructureDataProtoV1_1(uint32_t propertyId, uint16_t cmdVersion, PropertyAccessType accessType) {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::unique_lock<std::recursive_mutex> lock(mutex_);
     if(!isPropertySupported(propertyId, PROP_OP_READ, accessType)) {
         THROW_UNSUPPORTED_OPERATION_EXCEPTION(utils::string::to_string() << "Property not readable: " << propertyId);
     }
-    // check current access mode
     checkAccessMode(PROP_OP_READ);
-
-    auto  it       = properties_.find(propertyId);
-    auto &accessor = it->second.accessor;
-    auto &propId   = it->second.propertyId;
+    auto it             = properties_.find(propertyId);
+    auto propId         = it->second.propertyId;
+    auto callbacks      = it->second.accessCallbacks;
+    auto structAccessor = std::dynamic_pointer_cast<IStructureDataAccessorV1_1>(it->second.accessor);
     if(propId != propertyId) {
         LOG_DEBUG("Property {} alias to {}", propId, propertyId);
     }
-    auto structAccessor = std::dynamic_pointer_cast<IStructureDataAccessorV1_1>(accessor);
+    lock.unlock();
+
     if(structAccessor == nullptr) {
         THROW_INVALID_DATA_EXCEPTION(utils::string::to_string() << "Property" << propId << " does not support structure data getting over proto v1.1");
     }
     utils::Timer timer;
     const auto  &data = structAccessor->getStructureDataProtoV1_1(propId, cmdVersion);
-    for(auto callback: it->second.accessCallbacks) {
+    for(auto &callback: callbacks) {
         callback(propertyId, data.data(), data.size(), PROP_OP_READ);
     }
     auto delta = timer.touchUs();
@@ -401,26 +396,26 @@ const std::vector<uint8_t> &PropertyServer::getStructureDataProtoV1_1(uint32_t p
 }
 
 void PropertyServer::setStructureDataProtoV1_1(uint32_t propertyId, const std::vector<uint8_t> &data, uint16_t cmdVersion, PropertyAccessType accessType) {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::unique_lock<std::recursive_mutex> lock(mutex_);
     if(!isPropertySupported(propertyId, PROP_OP_WRITE, accessType)) {
         THROW_UNSUPPORTED_OPERATION_EXCEPTION("Property not writable");
     }
-    // check current access mode
     checkAccessMode(PROP_OP_WRITE);
-
-    auto  it       = properties_.find(propertyId);
-    auto &accessor = it->second.accessor;
-    auto &propId   = it->second.propertyId;
+    auto it             = properties_.find(propertyId);
+    auto propId         = it->second.propertyId;
+    auto callbacks      = it->second.accessCallbacks;
+    auto structAccessor = std::dynamic_pointer_cast<IStructureDataAccessorV1_1>(it->second.accessor);
     if(propId != propertyId) {
         LOG_DEBUG("Property {} alias to {}", propId, propertyId);
     }
-    auto structAccessor = std::dynamic_pointer_cast<IStructureDataAccessorV1_1>(accessor);
+    lock.unlock();
+
     if(structAccessor == nullptr) {
         THROW_INVALID_DATA_EXCEPTION(utils::string::to_string() << "Property" << propId << " does not support structure data setting over proto v1.1");
     }
     utils::Timer timer;
     structAccessor->setStructureDataProtoV1_1(propId, data, cmdVersion);
-    for(auto callback: it->second.accessCallbacks) {
+    for(auto &callback: callbacks) {
         callback(propertyId, data.data(), data.size(), PROP_OP_WRITE);
     }
     auto delta = timer.touchUs();
@@ -428,26 +423,26 @@ void PropertyServer::setStructureDataProtoV1_1(uint32_t propertyId, const std::v
 }
 
 const std::vector<uint8_t> &PropertyServer::getStructureDataListProtoV1_1(uint32_t propertyId, uint16_t cmdVersion, PropertyAccessType accessType) {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    std::unique_lock<std::recursive_mutex> lock(mutex_);
     if(!isPropertySupported(propertyId, PROP_OP_READ, accessType)) {
         THROW_UNSUPPORTED_OPERATION_EXCEPTION(utils::string::to_string() << "Property not readable: " << propertyId);
     }
-    // check current access mode
     checkAccessMode(PROP_OP_READ);
-
-    auto  it       = properties_.find(propertyId);
-    auto &accessor = it->second.accessor;
-    auto &propId   = it->second.propertyId;
+    auto it             = properties_.find(propertyId);
+    auto propId         = it->second.propertyId;
+    auto callbacks      = it->second.accessCallbacks;
+    auto structAccessor = std::dynamic_pointer_cast<IStructureDataAccessorV1_1>(it->second.accessor);
     if(propId != propertyId) {
         LOG_DEBUG("Property {} alias to {}", propId, propertyId);
     }
-    auto structAccessor = std::dynamic_pointer_cast<IStructureDataAccessorV1_1>(accessor);
+    lock.unlock();
+
     if(structAccessor == nullptr) {
         THROW_INVALID_DATA_EXCEPTION(utils::string::to_string() << "Property" << propId << " does not support structure data list getting over proto v1.1");
     }
     utils::Timer timer;
     const auto  &data = structAccessor->getStructureDataListProtoV1_1(propId, cmdVersion);
-    for(auto callback: it->second.accessCallbacks) {
+    for(auto &callback: callbacks) {
         callback(propertyId, data.data(), data.size(), PROP_OP_READ);
     }
     auto delta = timer.touchUs();
@@ -456,6 +451,7 @@ const std::vector<uint8_t> &PropertyServer::getStructureDataListProtoV1_1(uint32
 }
 
 const std::vector<OBPropertyItem> &PropertyServer::getAvailableProperties(PropertyAccessType accessType) {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
     if(accessType == PROP_ACCESS_USER) {
         return userPropertiesVec_;
     }
@@ -480,7 +476,8 @@ OBPropertyItem PropertyServer::getPropertyItem(uint32_t propertyId, PropertyAcce
 }
 
 void PropertyServer::unregisterProperty(uint32_t propertyId) {
-    auto rmPropertyId = properties_.find(propertyId);
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    auto                                  rmPropertyId = properties_.find(propertyId);
     if(rmPropertyId == properties_.end()) {
         return;
     }

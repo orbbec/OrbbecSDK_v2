@@ -28,15 +28,13 @@ DeviceSyncConfigurator::DeviceSyncConfigurator(IDevice *owner, const std::vector
 
 OBMultiDeviceSyncConfig DeviceSyncConfigurator::getSyncConfig() {
     if(isSyncConfigInit_) {
+        std::lock_guard<std::mutex> lock(mutex_);
         return currentMultiDevSyncConfig_;
     }
     auto owner          = getOwner();
-    auto propertyServer = owner->getPropertyServer();  // Auto-lock when getting propertyServer
-    // double check after get propertyServer
-    if(isSyncConfigInit_) {
-        return currentMultiDevSyncConfig_;
-    }
-    // read from device
+    auto propertyServer = owner->getPropertyServer();
+
+    // read from device (outside lock to avoid nesting with PropertyServer's mutex)
     OBMultiDeviceSyncConfig syncConfig{};
     auto configInternal = propertyServer->getStructureDataProtoV1_1_T<OBMultiDeviceSyncConfigInternal, 1>(OB_STRUCT_MULTI_DEVICE_SYNC_CONFIG);
 
@@ -65,19 +63,27 @@ OBMultiDeviceSyncConfig DeviceSyncConfigurator::getSyncConfig() {
     }
     syncConfig.framesPerTrigger = configInternal.framesPerTrigger;
 
+    std::lock_guard<std::mutex> lock(mutex_);
+    if(isSyncConfigInit_) {
+        // another thread initialized it while we were fetching
+        return currentMultiDevSyncConfig_;
+    }
     currentMultiDevSyncConfig_ = syncConfig;
     isSyncConfigInit_          = true;
     return syncConfig;
 }
 
 void DeviceSyncConfigurator::setSyncConfig(const OBMultiDeviceSyncConfig &deviceSyncConfig) {
-    auto owner          = getOwner();
-    auto propertyServer = owner->getPropertyServer();  // Auto-lock when getting propertyServer
-
-    if(isSyncConfigInit_ && 0 == memcmp(&currentMultiDevSyncConfig_, &deviceSyncConfig, sizeof(OBMultiDeviceSyncConfig))) {
-        LOG_DEBUG("New sync config is same as current device sync config, the upgrade process would not execute!");
-        return;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if(isSyncConfigInit_ && 0 == memcmp(&currentMultiDevSyncConfig_, &deviceSyncConfig, sizeof(OBMultiDeviceSyncConfig))) {
+            LOG_DEBUG("New sync config is same as current device sync config, the upgrade process would not execute!");
+            return;
+        }
     }
+
+    auto owner          = getOwner();
+    auto propertyServer = owner->getPropertyServer();
 
     OBMultiDeviceSyncConfigInternal internalConfig;
     internalConfig.syncMode = deviceSyncConfig.syncMode;
@@ -99,6 +105,7 @@ void DeviceSyncConfigurator::setSyncConfig(const OBMultiDeviceSyncConfig &device
     LOG_DEBUG("MultiDeviceSyncConfig: {}", deviceSyncConfig);
     propertyServer->setStructureDataProtoV1_1_T<OBMultiDeviceSyncConfigInternal, 1>(OB_STRUCT_MULTI_DEVICE_SYNC_CONFIG, internalConfig);
 
+    std::lock_guard<std::mutex> lock(mutex_);
     currentMultiDevSyncConfig_ = deviceSyncConfig;
     isSyncConfigInit_          = true;
 }
@@ -152,15 +159,13 @@ DeviceSyncConfiguratorOldProtocol::DeviceSyncConfiguratorOldProtocol(IDevice *ow
 
 OBMultiDeviceSyncConfig DeviceSyncConfiguratorOldProtocol::getSyncConfig() {
     if(isSyncConfigInit_) {
+        std::lock_guard<std::mutex> lock(mutex_);
         return currentMultiDevSyncConfig_;
     }
     auto owner          = getOwner();
-    auto propertyServer = owner->getPropertyServer();  // Auto-lock when getting propertyServer
-    // double check after get propertyServer
-    if(isSyncConfigInit_) {
-        return currentMultiDevSyncConfig_;
-    }
-    // read from device
+    auto propertyServer = owner->getPropertyServer();
+
+    // read from device (outside lock to avoid nesting with PropertyServer's mutex)
     OBMultiDeviceSyncConfig syncConfig{};
     auto                    configInternal = propertyServer->getStructureDataT<OBDeviceSyncConfig>(OB_STRUCT_MULTI_DEVICE_SYNC_CONFIG);
 
@@ -185,19 +190,28 @@ OBMultiDeviceSyncConfig DeviceSyncConfiguratorOldProtocol::getSyncConfig() {
         syncConfig.syncMode = OB_MULTI_DEVICE_SYNC_MODE_SECONDARY_SYNCED;
     }
 
+    std::lock_guard<std::mutex> lock(mutex_);
+    if(isSyncConfigInit_) {
+        // another thread initialized it while we were fetching
+        return currentMultiDevSyncConfig_;
+    }
     currentMultiDevSyncConfig_ = syncConfig;
     isSyncConfigInit_          = true;
     return syncConfig;
 }
 
 void DeviceSyncConfiguratorOldProtocol::setSyncConfig(const OBMultiDeviceSyncConfig &deviceSyncConfig) {
-    auto owner          = getOwner();
-    auto propertyServer = owner->getPropertyServer();  // Auto-lock when getting propertyServer
-
-    if(isSyncConfigInit_ && memcmp(&deviceSyncConfig, &currentMultiDevSyncConfig_, sizeof(OBMultiDeviceSyncConfig)) == 0) {
-        LOG_DEBUG("Sync config is the same as current config, no need to set!");
-        return;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if(isSyncConfigInit_ && memcmp(&deviceSyncConfig, &currentMultiDevSyncConfig_, sizeof(OBMultiDeviceSyncConfig)) == 0) {
+            LOG_DEBUG("Sync config is the same as current config, no need to set!");
+            return;
+        }
     }
+
+    auto owner          = getOwner();
+    auto propertyServer = owner->getPropertyServer();
+
     OBMultiDeviceSyncConfig v2SyncConfig = deviceSyncConfig;
     if(!isDepthDelaySupported_) {
         v2SyncConfig.depthDelayUs = v2SyncConfig.trigger2ImageDelayUs;
@@ -224,6 +238,7 @@ void DeviceSyncConfiguratorOldProtocol::setSyncConfig(const OBMultiDeviceSyncCon
         propertyServer->setPropertyValueT<int>(OB_PROP_CAPTURE_IMAGE_FRAME_NUMBER_INT, v2SyncConfig.framesPerTrigger);
     }
 
+    std::lock_guard<std::mutex> lock(mutex_);
     currentMultiDevSyncConfig_ = v2SyncConfig;
     isSyncConfigInit_          = true;
 }

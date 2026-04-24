@@ -62,7 +62,7 @@ private:
     inline const std::string &GetCurrentSN() const;
 
 private:
-    std::recursive_mutex             mutex_;
+    mutable std::recursive_mutex     mutex_;
     std::map<uint32_t, PropertyItem> properties_;
     std::vector<OBPropertyItem>      userPropertiesVec_;
     std::vector<OBPropertyItem>      innerPropertiesVec_;

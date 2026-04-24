@@ -169,7 +169,7 @@ void LiDARDevice::initProperties() {
     propertyServer->registerProperty(OB_RAW_DATA_IMU_CALIB_PARAM, "", "r", vendorPropertyAccessor);
 
     // register property server
-    registerComponent(OB_DEV_COMPONENT_PROPERTY_SERVER, propertyServer, true);
+    registerComponent(OB_DEV_COMPONENT_PROPERTY_SERVER, propertyServer, false);
 
     // register property server
     propertyServer->registerAccessCallback(

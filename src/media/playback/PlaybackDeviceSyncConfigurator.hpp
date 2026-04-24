@@ -11,6 +11,7 @@
 #include <vector>
 #include <memory>
 #include <map>
+#include <mutex>
 
 namespace libobsensor {
 
@@ -28,6 +29,7 @@ public:
     void                    triggerCapture() override;
 
 private:
+    std::mutex              mutex_;
     std::atomic<bool>       isSyncConfigInit_;
     OBMultiDeviceSyncConfig currentMultiDevSyncConfig_;
 };

@@ -629,7 +629,7 @@ void PlaybackDevice::initSensorList() {
 
 void PlaybackDevice::initProperties() {
     auto propertyServer = std::make_shared<PropertyServer>(this);
-    registerComponent(OB_DEV_COMPONENT_PROPERTY_SERVER, propertyServer, true);
+    registerComponent(OB_DEV_COMPONENT_PROPERTY_SERVER, propertyServer, false);
 
     if(isDeviceInOrbbecSeries(LiDARDevPids, deviceInfo_->vid_, deviceInfo_->pid_)) {
         // LiDAR: no any property for playback device

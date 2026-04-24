@@ -174,12 +174,9 @@ void SensorBase::restartStream() {
 }
 
 void SensorBase::updateStreamState(OBStreamState state) {
-    std::map<uint32_t, StreamStateChangedCallback> stateChangedCallbacks;
-    {
-        // Copy callback to prevent potential crash
-        std::unique_lock<std::mutex> lock(streamStateCallbackMutex_);
-        stateChangedCallbacks = streamStateChangedCallbacks_;
-    }
+    decltype(streamStateChangedCallbacks_) callbacksCopy;
+    std::shared_ptr<const StreamProfile>   profileCopy;
+
     std::unique_lock<std::mutex> lock(streamStateMutex_);
     if(onRecovering_) {
         return;
@@ -190,9 +187,6 @@ void SensorBase::updateStreamState(OBStreamState state) {
             return;
         }
         streamState_.store(state);
-        for(auto &callback: stateChangedCallbacks) {
-            callback.second(state, activatedStreamProfile_);  // call the callback function
-        }
         if(state == STREAM_STATE_STARTING) {
             if(frameTimestampCalculator_) {
                 frameTimestampCalculator_->clear();
@@ -217,7 +211,20 @@ void SensorBase::updateStreamState(OBStreamState state) {
             }
         }
         LOG_INFO("Stream state changed from {} to {}@{}", STREAM_STATE_STR(oldState), STREAM_STATE_STR(state), sensorType_);
+        profileCopy   = activatedStreamProfile_;
+        callbacksCopy = streamStateChangedCallbacks_;
     }
+    lock.unlock();
+
+    // Invoke callbacks outside the lock to avoid potential deadlock with resourceMutex_.
+    for(auto &cb: callbacksCopy) {
+        if(streamState_ != state) {
+            break;
+        }
+        cb.second(state, profileCopy);
+    }
+
+    // Notify waiters after all callbacks complete.
     streamStateCv_.notify_all();
 }
 
@@ -428,7 +435,7 @@ void SensorBase::outputFrame(std::shared_ptr<Frame> frame) {
     if(intraCameraSyncTimestampAdjuster_) {
         TRY_EXECUTE(intraCameraSyncTimestampAdjuster_->calculate(frame));
     }
-    
+
     if(hostTimestampProvider_) {
         hostTimestampProvider_->applyHostTimestamp(frame);
     }

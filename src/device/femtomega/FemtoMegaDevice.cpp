@@ -447,7 +447,7 @@ void FemtoMegaUsbDevice::initProperties() {
     propertyServer->aliasProperty(OB_PROP_DEPTH_EXPOSURE_INT, OB_PROP_TOF_EXPOSURE_TIME_INT);
     propertyServer->aliasProperty(OB_PROP_DEPTH_ALIGN_HARDWARE_BOOL, OB_PROP_FEMTO_MEGA_HARDWARE_D2C_BOOL);
 
-    registerComponent(OB_DEV_COMPONENT_PROPERTY_SERVER, propertyServer, true);
+    registerComponent(OB_DEV_COMPONENT_PROPERTY_SERVER, propertyServer, false);
 
     BEGIN_TRY_EXECUTE({ propertyServer->setPropertyValueT(OB_PROP_DEVICE_COMMUNICATION_TYPE_INT, OB_COMM_USB); })
     CATCH_EXCEPTION_AND_EXECUTE({ LOG_ERROR("Set device communication type to usb mode failed!"); })
@@ -938,7 +938,7 @@ void FemtoMegaNetDevice::initProperties() {
 
     auto femtoMegaTempPropertyAccessor = std::make_shared<FemtoMegaTempPropertyAccessor>(this);
     propertyServer->registerProperty(OB_STRUCT_DEVICE_TEMPERATURE, "r", "r", femtoMegaTempPropertyAccessor);
-    registerComponent(OB_DEV_COMPONENT_PROPERTY_SERVER, propertyServer, true);
+    registerComponent(OB_DEV_COMPONENT_PROPERTY_SERVER, propertyServer, false);
 
     auto frameTransformPropertyAccessor = std::make_shared<MonocularFrameTransformPropertyAccessor>(this);
     propertyServer->registerProperty(OB_PROP_DEPTH_MIRROR_BOOL, "rw", "rw", frameTransformPropertyAccessor);  // depth
