@@ -2,7 +2,8 @@
 #include "frame/Frame.hpp"
 
 namespace libobsensor {
-TimestampAnomalyDetector::TimestampAnomalyDetector(IDevice *device) : cacheTimestamp_(0), maxValidTimestampDiff_(0) {
+TimestampAnomalyDetector::TimestampAnomalyDetector(IDevice *device)
+    : lastTimestamp_(0), lastValidTimestamp_(0), maxValidTimestampDiff_(kMinTimestampDiffLimit) {
     auto config = device->getComponentT<IDeviceSyncConfigurator>(OB_DEV_COMPONENT_DEVICE_SYNC_CONFIGURATOR, false);
     if(config) {
         deviceSyncConfigurator_ = config.get();
@@ -12,22 +13,20 @@ TimestampAnomalyDetector::TimestampAnomalyDetector(IDevice *device) : cacheTimes
 }
 
 void TimestampAnomalyDetector::setCurrentFps(uint32_t fps) {
-    // Enforce a lower bound of 5 seconds on the maximum allowed time difference.
-    // This helps filter out extremely abnormal timestamps not caused by minor frame drops
-    constexpr uint32_t minTimestampDiffLimit = 5000000;  // 5s
-
+    std::lock_guard<std::mutex> lock(mutex_);
     if(fps == 0) {
-        maxValidTimestampDiff_ = minTimestampDiffLimit;
+        maxValidTimestampDiff_ = kMinTimestampDiffLimit;
     }
     else {
         maxValidTimestampDiff_ = static_cast<uint32_t>((1000000 / fps) * 10);  // 10 frames tolerance
-        if(maxValidTimestampDiff_ < minTimestampDiffLimit) {
-            maxValidTimestampDiff_ = minTimestampDiffLimit;
+        if(maxValidTimestampDiff_ < kMinTimestampDiffLimit) {
+            maxValidTimestampDiff_ = kMinTimestampDiffLimit;
         }
     }
 }
 
 void TimestampAnomalyDetector::calculate(std::shared_ptr<Frame> frame) {
+    std::lock_guard<std::mutex> lock(mutex_);
     TRY_EXECUTE({
         if(deviceSyncConfigurator_) {
             auto syncConfig = deviceSyncConfigurator_->getSyncConfig();
@@ -41,24 +40,29 @@ void TimestampAnomalyDetector::calculate(std::shared_ptr<Frame> frame) {
     if(timestamp == 0) {
         return;
     }
-    if(cacheTimestamp_ == 0) {
-        cacheTimestamp_ = timestamp;
+    if(lastTimestamp_ == 0) {
+        lastTimestamp_ = lastValidTimestamp_ = timestamp;
         return;
     }
 
-    uint64_t diff = (timestamp > cacheTimestamp_) ? (timestamp - cacheTimestamp_) : (cacheTimestamp_ - timestamp);
-    if(diff > maxValidTimestampDiff_) {
-        auto originalCacheTimestamp = cacheTimestamp_;
-        cacheTimestamp_             = timestamp;
-        THROW_INVALID_DATA_EXCEPTION("Timestamp anomaly detected, timestamp: " + std::to_string(timestamp)
-                                     + ", cacheTimestamp: " + std::to_string(originalCacheTimestamp) + " ,currentDiff: " + std::to_string(diff)
-                                     + ", maxValidTimestampDiff: " + std::to_string(maxValidTimestampDiff_));
+    auto     absDiff       = [](uint64_t a, uint64_t b) { return (a > b) ? (a - b) : (b - a); };
+    uint64_t diff          = absDiff(timestamp, lastTimestamp_);
+    uint64_t diffLastValid = absDiff(timestamp, lastValidTimestamp_);
+    if(diff > maxValidTimestampDiff_ && diffLastValid > maxValidTimestampDiff_) {
+        auto lastTimestamp = lastTimestamp_;
+        lastTimestamp_     = timestamp;
+        THROW_INVALID_DATA_EXCEPTION(utils::string::to_string()
+                                     << "Timestamp anomaly detected, timestamp: " << timestamp << ", lastTimestamp: " << lastTimestamp << ", currentDiff: "
+                                     << diff << ", diffLastValid: " << diffLastValid << ", maxValidTimestampDiff: " << maxValidTimestampDiff_);
     }
-    cacheTimestamp_ = timestamp;
+    lastTimestamp_      = timestamp;
+    lastValidTimestamp_ = timestamp;
 }
 
 void TimestampAnomalyDetector::clear() {
-    cacheTimestamp_        = 0;
-    maxValidTimestampDiff_ = 0;
+    std::lock_guard<std::mutex> lock(mutex_);
+    lastTimestamp_         = 0;
+    lastValidTimestamp_    = 0;
+    maxValidTimestampDiff_ = kMinTimestampDiffLimit;
 }
 }  // namespace libobsensor
