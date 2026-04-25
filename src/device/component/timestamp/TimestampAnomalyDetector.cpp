@@ -2,7 +2,7 @@
 #include "frame/Frame.hpp"
 
 namespace libobsensor {
-TimestampAnomalyDetector::TimestampAnomalyDetector(IDevice *device) : cacheTimestamp_(0), maxValidTimestampDiff_(0), cacheFps_(0) {
+TimestampAnomalyDetector::TimestampAnomalyDetector(IDevice *device) : cacheTimestamp_(0), maxValidTimestampDiff_(0) {
     auto config = device->getComponentT<IDeviceSyncConfigurator>(OB_DEV_COMPONENT_DEVICE_SYNC_CONFIGURATOR, false);
     if(config) {
         deviceSyncConfigurator_ = config.get();
@@ -25,7 +25,6 @@ void TimestampAnomalyDetector::setCurrentFps(uint32_t fps) {
             maxValidTimestampDiff_ = minTimestampDiffLimit;
         }
     }
-    cacheFps_ = fps;
 }
 
 void TimestampAnomalyDetector::calculate(std::shared_ptr<Frame> frame) {
@@ -45,13 +44,6 @@ void TimestampAnomalyDetector::calculate(std::shared_ptr<Frame> frame) {
     if(cacheTimestamp_ == 0) {
         cacheTimestamp_ = timestamp;
         return;
-    }
-
-    if(frame->hasMetadata(OB_FRAME_METADATA_TYPE_ACTUAL_FRAME_RATE)) {
-        auto actualFps = frame->getMetadataValue(OB_FRAME_METADATA_TYPE_ACTUAL_FRAME_RATE);
-        if(actualFps > 0 && actualFps != cacheFps_) {
-            setCurrentFps(static_cast<uint32_t>(actualFps));
-        }
     }
 
     uint64_t diff = (timestamp > cacheTimestamp_) ? (timestamp - cacheTimestamp_) : (cacheTimestamp_ - timestamp);

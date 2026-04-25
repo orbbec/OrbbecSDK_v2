@@ -21,7 +21,6 @@ private:
     OBMultiDeviceSyncMode                    currentDeviceSyncMode_;
     uint64_t                                 cacheTimestamp_;
     uint32_t                                 maxValidTimestampDiff_;
-    uint32_t                                 cacheFps_;
     std::atomic<bool>                        needDetect_;
 };
 } // namespace libobsensor
