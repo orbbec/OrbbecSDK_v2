@@ -67,17 +67,6 @@ GVCPClient::~GVCPClient() {
     closeClientSockets();
 }
 
-static bool isSameSubnet(const std::string& localIp, const std::string &devIp, uint8_t subnetLength) {
-    uint32_t a = inet_addr(localIp.c_str());
-    uint32_t b = inet_addr(devIp.c_str());
-    if(subnetLength >= 32) {
-        return a == b;
-    }
-
-    uint32_t mask = htonl(~((1U << (32 - subnetLength)) - 1));
-    return (a & mask) == (b & mask);
-}
-
 std::vector<GVCPDeviceInfo> GVCPClient::queryNetDeviceList() {
     std::lock_guard<std::mutex> lck(queryMtx_);
 
@@ -118,12 +107,13 @@ std::vector<GVCPDeviceInfo> GVCPClient::queryNetDeviceList() {
         for(auto &infos: groups) {
             GVCPDeviceInfo *best = nullptr;
             for(auto &info: infos.second) {
-                if(isSameSubnet(info.localIp, info.ip, info.localSubnetLength)) {
+                if(utils::isSameSubnet(info.localIp, info.ip, info.localSubnetLength)) {
                     best = &info;
                     break;
                 }
             }
             if(!best) {
+                std::sort(infos.second.begin(), infos.second.end(), [](const GVCPDeviceInfo &a, const GVCPDeviceInfo &b) { return a.localIp < b.localIp; });
                 best = &infos.second[0];
             }
             devInfoList_.push_back(*best);

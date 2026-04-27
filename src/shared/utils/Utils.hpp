@@ -152,6 +152,7 @@ int getJpgHeadLength(const uint8_t *data, uint32_t size);
 bool checkIpConfig(const ob_net_ip_config &config, bool allowZeroGateWay);
 bool checkIpConfig(const ob_net_ip_config_v2 &config, bool allowZeroGateWay);
 bool isAllowZeroGateway(uint32_t vid, uint32_t pid);
+bool isSameSubnet(const std::string &localIp, const std::string &devIp, uint8_t subnetLength);
 
 OBIpSourceType parseGevCurIpConfig(const uint32_t& rawConfigSet);
 

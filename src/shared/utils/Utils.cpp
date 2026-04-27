@@ -8,9 +8,13 @@
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
+#define _WINSOCK_DEPRECATED_NO_WARNINGS 1
 #include <windows.h>
+#include <winsock2.h>
+#include <WS2tcpip.h>
 #else
 #include <unistd.h>
+#include <arpa/inet.h>
 #endif
 
 #include <chrono>
@@ -205,6 +209,17 @@ OBIpSourceType parseGevCurIpConfig(const uint32_t &rawConfigSet) {
 
 bool isAllowZeroGateway(uint32_t vid, uint32_t pid) {
     return isDeviceInContainer(G335LeDevPids, vid, pid) || isDeviceInContainer(G435LeDevPids, vid, pid);
+}
+
+bool isSameSubnet(const std::string &localIp, const std::string &devIp, uint8_t subnetLength) {
+    uint32_t a = inet_addr(localIp.c_str());
+    uint32_t b = inet_addr(devIp.c_str());
+    if(subnetLength >= 32) {
+        return a == b;
+    }
+
+    uint32_t mask = htonl(~((1U << (32 - subnetLength)) - 1));
+    return (a & mask) == (b & mask);
 }
 
 }  // namespace utils
