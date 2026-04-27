@@ -5,7 +5,7 @@
 #include "DeviceBase.hpp"
 #include "IDeviceManager.hpp"
 #include "frameprocessor/FrameProcessor.hpp"
-#include "accesscontroller/GigECcpController.hpp"
+#include "accesscontroller/GvcpCcpController.hpp"
 
 #include <map>
 #include <memory>
@@ -49,7 +49,7 @@ private:
 private:
     const uint64_t                     frameTimeFreq_      = 1000;
     const uint64_t                     colorframeTimeFreq_ = 90000;
-    std::shared_ptr<GigECcpController> ccpController_;
+    std::shared_ptr<GvcpCcpController> ccpController_;
 };
 
 }  // namespace libobsensor

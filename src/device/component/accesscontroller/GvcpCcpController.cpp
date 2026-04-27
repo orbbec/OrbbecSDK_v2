@@ -3,7 +3,7 @@
 
 #if defined(BUILD_NET_PAL)
 
-#include "GigECcpController.hpp"
+#include "GvcpCcpController.hpp"
 #include "logger/Logger.hpp"
 #include "logger/LoggerInterval.hpp"
 #include "logger/LoggerSnWrapper.hpp"
@@ -12,7 +12,7 @@ namespace libobsensor {
 
 #define GetCurrentSN() portInfo_->serialNumber
 
-GigECcpController::GigECcpController(const std::shared_ptr<const IDeviceEnumInfo> &info, const std::string &minVersion) {
+GvcpCcpController::GvcpCcpController(const std::shared_ptr<const IDeviceEnumInfo> &info, const std::string &minVersion) {
     // create gvcp transmitor
     auto portInfo    = info->getSourcePortInfoList().front();
     auto netPortInfo = std::dynamic_pointer_cast<const NetSourcePortInfo>(portInfo);
@@ -21,11 +21,11 @@ GigECcpController::GigECcpController(const std::shared_ptr<const IDeviceEnumInfo
     ccpSupported_    = checkCcpCapability(minVersion);
 }
 
-GigECcpController::~GigECcpController() {
+GvcpCcpController::~GvcpCcpController() {
     TRY_EXECUTE({ releaseControl(); });
 }
 
-int32_t GigECcpController::getFirmwareVersionInt(const std::string &version) {
+int32_t GvcpCcpController::getFirmwareVersionInt(const std::string &version) {
     int    dotCount     = 0;
     char   buf[16]      = { 0 };
     size_t bufIndex     = 0;
@@ -80,7 +80,7 @@ int32_t GigECcpController::getFirmwareVersionInt(const std::string &version) {
     return calFwVersion;
 }
 
-bool GigECcpController::checkCcpCapability(const std::string &minVersion) {
+bool GvcpCcpController::checkCcpCapability(const std::string &minVersion) {
     auto currentVerion = getFirmwareVersionInt(portInfo_->devVersion);
     if(currentVerion > 0) {
         auto tempVersion = getFirmwareVersionInt(minVersion);
@@ -102,9 +102,9 @@ bool GigECcpController::checkCcpCapability(const std::string &minVersion) {
     return true;
 }
 
-void GigECcpController::acquireControl(OBDeviceAccessMode accessMode) {
+void GvcpCcpController::acquireControl(OBDeviceAccessMode accessMode) {
     if(!ccpSupported_) {
-        THROW_UNSUPPORTED_OPERATION_EXCEPTION("The current device doesn't support GigE CCP");
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("The current device doesn't support CCP");
     }
 
     uint16_t ccpValue = 0;
@@ -167,13 +167,11 @@ void GigECcpController::acquireControl(OBDeviceAccessMode accessMode) {
             LOG_WARN("Failed to read hearbeat timeout register, use the default timeout({}) instant. Status code: {:#04x}", timeout, res.first);
         }
         else {
-            // By GigE verison 2.2
             // It is recommended for the application to send a heartbeat message three times within that device heartbeat timeout period.
             // This ensures at least two heartbeat UDP packets can be lost without the connection being automatically closed by the device
             // because of heartbeat timeout.Depending on the quality of the network connection, it is possible to adjust these numbers
             timeout = res.second / 3;
             if(timeout < 500) {
-                // By GigE version 2.2
                 timeout = 500;
             }
         }
@@ -201,7 +199,7 @@ void GigECcpController::acquireControl(OBDeviceAccessMode accessMode) {
     });
 }
 
-void GigECcpController::releaseControl() {
+void GvcpCcpController::releaseControl() {
     if(!ccpSupported_) {
         return;
     }

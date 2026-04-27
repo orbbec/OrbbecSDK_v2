@@ -1004,7 +1004,7 @@ void G435LeDevice::fetchDeviceInfo() {
 }
 
 void G435LeDevice::checkAndAcquireCCP() {
-    ccpController_ = std::make_shared<GigECcpController>(enumInfo_, "1.3.12");
+    ccpController_ = std::make_shared<GvcpCcpController>(enumInfo_, "1.3.12");
     if(!ccpController_->isSupported()) {
         return;
     }

@@ -29,23 +29,23 @@ public:
     virtual ~GVCPTransmit();
 
     /**
-     * @brief Read a register from a GigE device
+     * @brief Read a register from a GVCP device
      *
      * @param[in] registerAddress Address of the register to read
      *
      * @return A pair where:
-     *         - first: acknowledgment status code as defined by GigE (uint16_t)
+     *         - first: acknowledgment status code (uint16_t)
      *         - second: register value (uint32_t)
      */
     std::pair<uint16_t, uint32_t> readRegister(uint32_t registerAddress);
 
     /**
-     * @brief Write a register to a GigE device
+     * @brief Write a register to a GVCP device
      *
      * @param[in] registerAddress Address of the register to write
      * @param[in] value Value to be written
      *
-     * @return Acknowledgment status code as defined by GigE
+     * @return Acknowledgment status code
      */
     uint16_t writeRegister(uint32_t registerAddress, uint32_t value);
 

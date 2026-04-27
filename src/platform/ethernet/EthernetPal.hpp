@@ -9,8 +9,8 @@
 #include "VendorNetDataPort.hpp"
 #include "RTSPStreamPort.hpp"
 #include "NetDataStreamPort.hpp"
-#include "gige/GVCPClient.hpp"
-#include "gige/GVCPRuntimeConfig.hpp"
+#include "gvcp/GVCPClient.hpp"
+#include "gvcp/GVCPRuntimeConfig.hpp"
 #include "mDNS/MDNSDiscovery.hpp"
 
 #include <vector>

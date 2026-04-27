@@ -7,7 +7,7 @@
 
 #include "IDeviceAccessController.hpp"
 #include "IDeviceManager.hpp"
-#include "ethernet/gige/GVCPTransmit.hpp"
+#include "ethernet/gvcp/GVCPTransmit.hpp"
 #include <atomic>
 #include <mutex>
 #include <thread>
@@ -15,7 +15,7 @@
 
 namespace libobsensor {
 
-class GigECcpController : public IDeviceAccessController {
+class GvcpCcpController : public IDeviceAccessController {
 public:
     /**
      * @brief Construction
@@ -27,8 +27,8 @@ public:
      * @throws access_denied_exception if the acquisition fails.
      *         unsupported_operation_exception if the device doesn't support CCP
      */
-    GigECcpController(const std::shared_ptr<const IDeviceEnumInfo> &info, const std::string &minVersion);
-    virtual ~GigECcpController() override;
+    GvcpCcpController(const std::shared_ptr<const IDeviceEnumInfo> &info, const std::string &minVersion);
+    virtual ~GvcpCcpController() override;
 
     bool isSupported() const override {
         return ccpSupported_;

@@ -2011,7 +2011,7 @@ typedef enum {
 #define END_OF_EXPOSURE OB_END_OF_EXPOSURE
 
 /**
- * @brief Device access mode for GigE network device
+ * @brief Device access mode for GVCP device
  */
 typedef enum {
     OB_DEVICE_ACCESS_DENIED    = 0,  ///< No access. This value is only used as a return value

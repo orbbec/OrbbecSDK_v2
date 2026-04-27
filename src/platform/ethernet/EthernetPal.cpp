@@ -8,7 +8,7 @@
 #include "LiDARDataStreamPort.hpp"
 #include "RTPStreamPort.hpp"
 #include "logger/Logger.hpp"
-#include "gige/GVCPRuntimeConfig.hpp"
+#include "gvcp/GVCPRuntimeConfig.hpp"
 #include <future>
 
 namespace libobsensor {

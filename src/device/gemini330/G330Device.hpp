@@ -8,7 +8,7 @@
 
 #if defined(BUILD_NET_PAL)
 #include "ethernet/RTPStreamPort.hpp"
-#include "accesscontroller/GigECcpController.hpp"
+#include "accesscontroller/GvcpCcpController.hpp"
 #endif
 
 #include <map>
@@ -81,7 +81,7 @@ private:
     const uint64_t                                              frameTimeFreq_  = 1000000;  // in us
     std::function<std::shared_ptr<IFrameTimestampCalculator>()> videoFrameTimestampCalculatorCreator_;
     std::shared_ptr<IFrameTimestampCalculator>                  intraCameraSyncTimestampAdjuster_;
-    std::shared_ptr<GigECcpController>                          ccpController_;
+    std::shared_ptr<GvcpCcpController>                          ccpController_;
 
     StreamProfileList allNetProfileList_;
 
