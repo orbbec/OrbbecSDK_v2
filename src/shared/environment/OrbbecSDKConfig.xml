@@ -87,7 +87,7 @@
         <Gemini305>
             <!-- Default backend for Linux UVC devices. If the LinuxUVCBackend is set to "Auto,"
             this item will determine the device's speciality. Optional values: V4L2, LibUVC -->
-            <LinuxUVCDefaultBackend>V4L2</LinuxUVCDefaultBackend>
+            <LinuxUVCDefaultBackend>LibUVC</LinuxUVCDefaultBackend>
 
             <!-- Enable auto device reboot when a fatal XU channel IO error (LIBUSB_ERROR_IO) is
             detected on the LibUVC backend. Set to true to enable; default is false. -->
@@ -178,7 +178,7 @@
         <Gemini305g>
             <!-- The default Linux UVC backend. If the LinuxUVCBackend is set to "Auto," this item
             will determine the device's speciality. Optional values: V4L2, LibUVC -->
-            <LinuxUVCDefaultBackend>V4L2</LinuxUVCDefaultBackend>
+            <LinuxUVCDefaultBackend>LibUVC</LinuxUVCDefaultBackend>
 
             <!-- Enable auto device reboot when a fatal XU channel IO error (LIBUSB_ERROR_IO) is
             detected on the LibUVC backend. Set to true to enable; default is false. -->
