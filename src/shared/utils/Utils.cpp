@@ -32,11 +32,23 @@ uint64_t getNowTimesUs() {
 }
 
 uint64_t getSteadyTimeMs() {
+#if defined(__linux__) || defined(__ANDROID__)
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
+    return static_cast<uint64_t>(ts.tv_sec) * 1000u + static_cast<uint64_t>(ts.tv_nsec) / 1000000u;
+#else
     return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+#endif
 }
 
 uint64_t getSteadyTimeUs() {
+#if defined(__linux__) || defined(__ANDROID__)
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
+    return static_cast<uint64_t>(ts.tv_sec) * 1000000u + static_cast<uint64_t>(ts.tv_nsec) / 1000u;
+#else
     return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+#endif
 }
 
 void sleepMs(uint64_t msec) {
