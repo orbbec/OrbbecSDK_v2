@@ -26,13 +26,7 @@ typedef struct {
 // When an outlier is detected the window median is used as rttRef instead.
 class RttWindow {
 public:
-    explicit RttWindow(uint32_t windowSize = 20, uint64_t spreadFloor = 200, uint64_t spreadK = 4)
-        : windowSize_(windowSize), spreadFloor_(spreadFloor), spreadK_(spreadK) {}
-
-    void updateSpreadParams(uint64_t floor, uint64_t k) {
-        spreadFloor_ = floor;
-        spreadK_     = k;
-    }
+    RttWindow() = default;
 
     void clear() {
         window_.clear();
@@ -58,29 +52,34 @@ public:
             std::sort(devs.begin(), devs.end());
             uint64_t mad = devs[devs.size() / 2];
 
-            // threshold = median + K * max(MAD, floor)
-            // floor prevents over-rejection when the distribution is very tight
-            uint64_t threshold = median + spreadK_ * (std::max)(mad, spreadFloor_);
+            // Adaptive floor: scales with median so the tolerance band naturally tracks RTT
+            // magnitude across links (GMSL/USB/100M/1G ethernet) without per-transport tuning.
+            // SPREAD_FLOOR_US is the absolute lower bound to prevent over-rejection on very fast links.
+            uint64_t floorEff  = (std::max)(SPREAD_FLOOR_US, median / 5);
+            uint64_t threshold = median + SPREAD_K * (std::max)(mad, floorEff);
             if(rtt > threshold) {
                 // Outlier: use window median as rttRef, do NOT add to window
                 rttRef = median;
-                return { t1 + rttRef / 2, rtt, rttRef };
+                // Anchor to t2: equivalent to t1+rttRef/2 on normal path, but more accurate
+                // when rtt > rttRef since the extra delay is usually pre-send scheduling jitter.
+                return { t2 - rttRef / 2, rtt, rttRef };
             }
         }
 
         // Normal sample: add to window
         window_.push_back(rtt);
-        if(window_.size() > windowSize_) {
+        if(window_.size() > WINDOW_SIZE) {
             window_.pop_front();
         }
 
-        return { t1 + rttRef / 2, rtt, rttRef };
+        return { t2 - rttRef / 2, rtt, rttRef };
     }
 
 private:
-    uint32_t             windowSize_;
-    uint64_t             spreadFloor_;  // µs, minimum MAD to avoid over-rejection
-    uint64_t             spreadK_;      // multiplier: threshold = median + K * max(MAD, floor)
+    const uint32_t WINDOW_SIZE     = 50;
+    const uint64_t SPREAD_FLOOR_US = 200;  // absolute lower bound for the adaptive floor
+    const uint64_t SPREAD_K        = 4;    // multiplier: threshold = median + K * max(MAD, floor)
+
     std::deque<uint64_t> window_;
 };
 
@@ -104,14 +103,32 @@ private:
     void                      calcLinearParam(uint64_t sysTimestamp, uint64_t devTimestamp);
     void                      ensureFitting();
 
+    /**
+     * @brief Acquire one (sysTimestamp, devTime) sample; false on RTT overflow or exception.
+     */
+    bool acquireSample(OBTimeSample &timeSample, OBDeviceTime &devTime);
+    /**
+     * @brief Update samplingQueue_ (drift reverify, out-of-order reset, size cap); true if refit needed.
+     */
+    bool updateSampleQueue(const OBTimeSample &timeSample, const OBDeviceTime &devTime);
+
 private:
     const uint64_t MAX_VALID_RTT = 20000;  // 10ms
+
+    // Timestamp discontinuity is confirmed when (trigger + agreeing reverifies) reach DRIFT_MIN_AGREE;
+    // queue is then rebuilt from new samples only. This is for abrupt retiming/jumps, not slow clock drift.
+    const uint64_t RESIDUAL_JUMP_THRESHOLD_US = 20000;  // 20ms
+    const uint32_t REVERIFY_SAMPLES           = 5;
+    const uint32_t REVERIFY_INTERVAL_MS       = 500;  // 5 samples span 2.5s for slope estimation
+    const size_t   DRIFT_MIN_AGREE            = 4;    // out of (1 trigger + 5 reverify) = 6
 
     bool                    enable_;
     std::thread             sampleThread_;
     std::mutex              sampleMutex_;
     std::condition_variable sampleCondVar_;
     std::atomic<bool>       sampleLoopExit_;
+    // Serializes acquire+queue+fit between fittingLoop and ensureFitting to avoid reFitting()/background races.
+    std::mutex samplingOpMutex_;
 
     typedef struct {
         uint64_t systemTimestamp;
@@ -120,7 +137,7 @@ private:
 
     std::deque<TimestampPair> samplingQueue_;
     uint32_t                  maxQueueSize_{ 100 };
-    double                    decayHalfLifeSec_{ 180.0 };  // EWLR half-life in seconds; 0 = unweighted
+    double                    decayHalfLifeSec_{ 600.0 };  // EWLR half-life in seconds; 0 = unweighted
     bool                      needCalculation_{ false };   // true if samplingQueue_ changed
 
     // The refresh interval needs to be less than half the interval of the data frame, that is, it needs to be sampled at least twice within an overflow period.
@@ -129,7 +146,7 @@ private:
     std::mutex              linearFuncParamMutex_;
     std::condition_variable linearFuncParamCondVar_;
     LinearFuncParam         linearFuncParam_;
-    uint64_t                lastCheckDataY = 0;
+    uint64_t                lastSysTime_ = 0;
     uint64_t                maxValidRtt_;
     RttWindow               rttWindow_;
 };

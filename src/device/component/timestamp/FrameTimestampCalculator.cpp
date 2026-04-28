@@ -7,6 +7,7 @@
 #include "utils/Utils.hpp"
 #include "logger/LoggerInterval.hpp"
 #include "InternalTypes.hpp"
+#include <cmath>
 
 namespace libobsensor {
 
@@ -27,44 +28,92 @@ void GlobalTimestampCalculator::calculate(std::shared_ptr<Frame> frame) {
         return;
     }
 
-    // 1. Get 32-bit raw timestamp (unit: us)
-    auto srcTimestamp    = static_cast<uint32_t>(rawTsUs);
     auto linearFuncParam = globalTimestampFitter_->getLinearFuncParam();
-
-    // 2. Convert current microsecond to millisecond for alignment with checkDataX (unit: ms)
-    double currentSrcMs = static_cast<double>(srcTimestamp) * deviceTimeFreq_ / 1000000.0;
-
-    // MS_PER_ROLLOVER is the full 32-bit cycle in milliseconds
-    const double MS_PER_ROLLOVER = static_cast<double>(0x100000000ULL) * deviceTimeFreq_ / 1000000.0;
-
-    // 3. Calculate the time difference (diff) in milliseconds
-    // Since checkDataX is in ms, referenceOffset must be in ms
-    double referenceOffset = std::fmod(linearFuncParam.checkDataX, MS_PER_ROLLOVER);
-    double diff            = currentSrcMs - referenceOffset;
-
-    // Handle 32-bit rollover logic
-    if(diff > MS_PER_ROLLOVER / 2.0) {
-        diff -= MS_PER_ROLLOVER;
-    }
-    else if(diff < -MS_PER_ROLLOVER / 2.0) {
-        diff += MS_PER_ROLLOVER;
+    if(linearFuncParam.coefficientA <= 0) {
+        // No valid fit yet.
+        frame->setGlobalTimeStampUsec(0);
+        return;
     }
 
-    // Use the raw checkDataY as the anchor point. When the regression quality is poor,
-    // refSysTime can deviate significantly and amplify errors across all subsequent frames.
-    // checkDataY, while sensitive to single-sample RTT noise, is bounded to that one sample
-    // and does not suffer from fitting-error propagation.
-    // Using +0.5 to ensure correct rounding to the nearest microsecond
+    // Convert frame device timestamp (us) to the same unit as fit anchors (ms),
+    // assuming the full uint64_t timestamp - no 32-bit rollover handling needed.
+    double frameDevMs = static_cast<double>(rawTsUs) * deviceTimeFreq_ / 1000000.0;
+
+    // Always anchor at the fit center: it is a weighted mean of N samples (sqrt(N) lower
+    // noise than any single raw point); drift is handled by the fitter, not by switching anchor.
+    double anchorDevMs = static_cast<double>(linearFuncParam.refDevTime);
+    double anchorSysUs = static_cast<double>(linearFuncParam.refSysTime);
+
+    double   diff           = frameDevMs - anchorDevMs;
     double   incrementalUs  = linearFuncParam.coefficientA * diff;
-    double   resultUs       = static_cast<double>(linearFuncParam.checkDataY) + incrementalUs + 0.5;
+    double   predSteadyUs   = anchorSysUs + incrementalUs;
     uint64_t frameSteadyTs  = frame->getSteadyTimeStampUsec();
     int64_t  realtimeOffset = static_cast<int64_t>(frame->getSystemTimeStampUsec()) - static_cast<int64_t>(frameSteadyTs);
-    int64_t  globalTsp      = static_cast<int64_t>(resultUs) + realtimeOffset;
+
+    // Refit detection: if fit params changed, predSteadyUs jumps by Δ for this same frame.
+    // Shift ema_ by -Δ so output stays continuous and EMA continues tracking new residuals.
+    if(fitCached_ && (linearFuncParam.coefficientA != prevCoeffA_ || anchorDevMs != prevAnchorDevMs_ || anchorSysUs != prevAnchorSysUs_)) {
+        double prevPredUs = prevAnchorSysUs_ + prevCoeffA_ * (frameDevMs - prevAnchorDevMs_);
+        double delta      = predSteadyUs - prevPredUs;
+        ema_ -= delta;
+    }
+    prevCoeffA_      = linearFuncParam.coefficientA;
+    prevAnchorDevMs_ = anchorDevMs;
+    prevAnchorSysUs_ = anchorSysUs;
+    fitCached_       = true;
+
+    // EMA correction: tracks slow bias drift continuously. See header for math.
+    double  residualUs   = static_cast<double>(frameSteadyTs) - predSteadyUs;
+    int64_t correctionUs = 0;
+    if(!emaInited_) {
+        ema_               = residualUs;
+        madEma_            = 0.0;
+        startSteadyUs_     = frameSteadyTs;
+        lastFrameSteadyUs_ = frameSteadyTs;
+        emaInited_         = true;
+    }
+    else {
+        double dtUs = static_cast<double>(frameSteadyTs - lastFrameSteadyUs_);
+        if(dtUs <= 0.0) {
+            dtUs = 1.0;
+        }
+        double alpha = 1.0 - std::exp(-dtUs / EMA_TAU_US);
+        double devUs = residualUs - ema_;
+        // Outlier gate: only active after baseline lock (MAD has settled by then).
+        double madThr   = std::max(MAD_FLOOR_US, OUTLIER_K * madEma_);
+        bool   isOutlier = baselineReady_ && (std::fabs(devUs) > madThr);
+        if(!isOutlier) {
+            ema_    = ema_ + alpha * devUs;
+            madEma_ = madEma_ + alpha * (std::fabs(devUs) - madEma_);
+        }
+        lastFrameSteadyUs_ = frameSteadyTs;
+    }
+    if(!baselineReady_ && (frameSteadyTs - startSteadyUs_) >= BASELINE_LOCK_US) {
+        emaBaseline_   = ema_;
+        baselineReady_ = true;
+    }
+    if(baselineReady_) {
+        correctionUs = static_cast<int64_t>(ema_ - emaBaseline_);
+    }
+
+    int64_t globalTsp = static_cast<int64_t>(predSteadyUs + 0.5) + realtimeOffset + correctionUs;
 
     frame->setGlobalTimeStampUsec(static_cast<uint64_t>(globalTsp));
 }
 
-void GlobalTimestampCalculator::clear() {}
+void GlobalTimestampCalculator::clear() {
+    ema_               = 0.0;
+    emaBaseline_       = 0.0;
+    madEma_            = 0.0;
+    startSteadyUs_     = 0;
+    lastFrameSteadyUs_ = 0;
+    emaInited_         = false;
+    baselineReady_     = false;
+    prevCoeffA_        = 0.0;
+    prevAnchorDevMs_   = 0.0;
+    prevAnchorSysUs_   = 0.0;
+    fitCached_         = false;
+}
 
 FrameTimestampCalculatorDirectly::FrameTimestampCalculatorDirectly(IDevice *device, uint64_t clockFreq) : DeviceComponentBase(device), clockFreq_(clockFreq) {}
 
