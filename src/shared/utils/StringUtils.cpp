@@ -7,6 +7,10 @@
 #include <locale>
 #include <cstring>
 #include <cstdlib>
+#include <clocale>
+#if defined(__APPLE__) && defined(__MACH__)
+#include <xlocale.h>
+#endif
 
 namespace libobsensor {
 namespace utils {
@@ -162,10 +166,39 @@ bool cvt2Int(const std::string &string, int &dst) {
     return false;
 }
 
+static double strtod_clocale(const char *str, char **endptr) {
+    // Use a locale-independent approach to avoid issues when the global locale
+    // has a different decimal separator (e.g. "," in some European locales).
+#ifdef _WIN32
+    static _locale_t cLocale = _create_locale(LC_NUMERIC, "C");
+    return _strtod_l(str, endptr, cLocale);
+#elif defined(__APPLE__) && defined(__MACH__)
+    static locale_t cLocale = newlocale(LC_NUMERIC_MASK, "C", (locale_t)0);
+    return strtod_l(str, endptr, cLocale);
+#elif defined(__GLIBC__) || defined(__linux__)
+    static locale_t cLocale = newlocale(LC_NUMERIC_MASK, "C", (locale_t)0);
+    return strtod_l(str, endptr, cLocale);
+#else
+    char *prev = setlocale(LC_NUMERIC, nullptr);
+    if(prev) prev = strdup(prev);
+    setlocale(LC_NUMERIC, "C");
+    double r = std::strtod(str, endptr);
+    if(prev) {
+        setlocale(LC_NUMERIC, prev);
+        free(prev);
+    }
+    return r;
+#endif
+}
+
+static float strtof_clocale(const char *str, char **endptr) {
+    return static_cast<float>(strtod_clocale(str, endptr));
+}
+
 bool cvt2Float(const std::string &string, float &dst) {
     if(!string.empty()) {
         char *nptr;
-        dst              = std::strtof(string.c_str(), &nptr);
+        dst              = strtof_clocale(string.c_str(), &nptr);
         std::string temp = clearHeadAndTailSpace(nptr);
         return temp.empty();
     }
@@ -175,7 +208,7 @@ bool cvt2Float(const std::string &string, float &dst) {
 bool cvt2Double(const std::string &string, double &dst) {
     if(!string.empty()) {
         char *nptr;
-        dst              = std::strtod(string.c_str(), &nptr);
+        dst              = strtod_clocale(string.c_str(), &nptr);
         std::string temp = clearHeadAndTailSpace(nptr);
         return temp.empty();
     }

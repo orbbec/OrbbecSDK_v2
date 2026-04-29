@@ -78,7 +78,10 @@ void PixelValueScaler::updateConfig(std::vector<std::string> &params) {
     }
     try {
         std::lock_guard<std::mutex> scaleLock(mtx_);
-        scale_ = std::stof(params[0]);
+        scale_ = 0.0f;
+        if(!utils::string::cvt2Float(params[0], scale_)) {
+            LOG_WARN("Invalid scale value: {}", params[0]);
+        }
     }
     catch(const std::exception &e) {
         THROW_INVALID_PARAM_EXCEPTION("PixelValueScaler config error: " + std::string(e.what()));

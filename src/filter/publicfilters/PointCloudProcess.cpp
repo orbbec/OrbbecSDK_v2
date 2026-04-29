@@ -83,7 +83,10 @@ void PointCloudFilter::updateConfig(std::vector<std::string> &params) {
             pointFormat_ = type;
         }
 
-        float scale = std::stof(params[1]);
+        float scale = 0.0f;
+        if(!utils::string::cvt2Float(params[1], scale)) {
+            LOG_WARN("Invalid scale value: {}", params[1]);
+        }
         if(scale >= 0.00000001 && scale <= 100) {
             positionDataScale_ = scale;
         }
