@@ -30,6 +30,14 @@ ob_source_group(ob::filter)
 
 set_target_properties(filter PROPERTIES FOLDER "modules")
 
+# Enable SSE4.1 on x86-64 for GCC/Clang so the SIMD undistortion path is compiled in.
+# MSVC x64 has SSE4.1 available by default without an extra flag.
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|amd64|AMD64")
+        target_compile_options(filter PRIVATE -msse4.1)
+    endif()
+endif()
+
 if(OB_INSTALL_FILTER_DEV_HEADERS)
     install(FILES ${CMAKE_CURRENT_LIST_DIR}/privatefilters/PrivFilterTypes.h DESTINATION include/libobsensor/h/)
 endif()

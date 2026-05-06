@@ -482,6 +482,97 @@ public:
 };
 
 /**
+ * @brief UnDistortionFilter removes lens distortion from a chosen stream (Color, IR, or Depth).
+ *
+ * Usage (pure color undistortion, sync_align scenario):
+ * @code
+ *   auto filter = std::make_shared<ob::UnDistortionFilter>();
+ *   // default stream type is COLOR, default mode is pure undistortion
+ *   filter->pushFrame(frameSet);
+ * @endcode
+ *
+ * Usage (virtual-camera mode, hw_d2c_align scenario):
+ * @code
+ *   auto filter = std::make_shared<ob::UnDistortionFilter>();
+ *   // Pass the raw depth intrinsic — filter computes the scale to color resolution internally.
+ *   filter->setNewCameraMatrix(depthIntrinsic);
+ *   filter->pushFrame(frameSet);
+ * @endcode
+ *
+ * Usage (depth undistortion — must use nearest-neighbor interpolation):
+ * @code
+ *   auto filter = std::make_shared<ob::UnDistortionFilter>(OB_STREAM_DEPTH);
+ *   filter->setInterpolationMode(0);  // nearest neighbor avoids ghost-depth artefacts
+ * @endcode
+ */
+class UnDistortionFilter : public Filter {
+public:
+    explicit UnDistortionFilter(OBStreamType streamType = OB_STREAM_COLOR) {
+        ob_error *error = nullptr;
+        auto      impl  = ob_create_filter("UnDistortionFilter", &error);
+        Error::handle(&error);
+        init(impl);
+        setConfigValue("StreamType", static_cast<double>(streamType));
+    }
+
+    virtual ~UnDistortionFilter() noexcept override = default;
+
+    /**
+     * @brief Set which stream to undistort (default: OB_STREAM_COLOR).
+     *        For depth streams, also call setInterpolationMode(0).
+     */
+    void setStreamType(OBStreamType streamType) {
+        setConfigValue("StreamType", static_cast<double>(streamType));
+    }
+
+    OBStreamType getStreamType() const {
+        return static_cast<OBStreamType>(static_cast<int>(getConfigValue("StreamType")));
+    }
+
+    /**
+     * @brief Set the new camera matrix used to project the undistorted image
+     *        (equivalent to OpenCV's `newCameraMatrix` argument in
+     *        `cv::undistort(src, dst, cameraMatrix, distCoeffs, newCameraMatrix)`).
+     *
+     * Pass the raw depth camera intrinsic.  The filter scales fx/fy/cx/cy from
+     * the depth resolution to the actual color frame resolution at process time,
+     * so the caller does NOT need to compute the scale factor.
+     *
+     * The new-camera-matrix mode is enabled as long as depthIntrinsic.width > 0.
+     * Call clearNewCameraMatrix() to return to pure undistortion.
+     *
+     * @param depthIntrinsic  The depth camera intrinsic at its native resolution.
+     */
+    void setNewCameraMatrix(OBCameraIntrinsic depthIntrinsic) {
+        setConfigValue("NewCameraFx",     static_cast<double>(depthIntrinsic.fx));
+        setConfigValue("NewCameraFy",     static_cast<double>(depthIntrinsic.fy));
+        setConfigValue("NewCameraCx",     static_cast<double>(depthIntrinsic.cx));
+        setConfigValue("NewCameraCy",     static_cast<double>(depthIntrinsic.cy));
+        setConfigValue("NewCameraWidth",  static_cast<double>(depthIntrinsic.width));
+        setConfigValue("NewCameraHeight", static_cast<double>(depthIntrinsic.height));
+    }
+
+    /**
+     * @brief Clear the new camera matrix and return to pure undistortion.
+     */
+    void clearNewCameraMatrix() {
+        setConfigValue("NewCameraWidth", 0.0);
+    }
+
+    /**
+     * @brief Set the pixel interpolation mode.
+     * @param mode 0 = nearest-neighbor (required for depth), 1 = bilinear (default).
+     */
+    void setInterpolationMode(int mode) {
+        setConfigValue("InterpolationMode", static_cast<double>(mode));
+    }
+
+    int getInterpolationMode() const {
+        return static_cast<int>(getConfigValue("InterpolationMode"));
+    }
+};
+
+/**
  * @brief The FormatConvertFilter class is a subclass of Filter that performs format conversion.
  */
 class FormatConvertFilter : public Filter {
@@ -2086,6 +2177,7 @@ inline const std::unordered_map<std::string, std::type_index> &getFilterTypeMap(
         { "FalsePositiveFilter", typeid(FalsePositiveFilter) },
         { "MgcNoiseRemovalFilter", typeid(MgcNoiseRemovalFilter) },
         { "LutNoiseRemovalFilter", typeid(LutNoiseRemovalFilter) },
+        { "UnDistortionFilter", typeid(UnDistortionFilter) },
     };
     return filterTypeMap;
 }
