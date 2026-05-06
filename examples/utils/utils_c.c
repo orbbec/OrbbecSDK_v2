@@ -11,11 +11,7 @@ extern "C" {
 #endif
 
 #if defined(__linux__) || defined(__APPLE__)
-#ifdef __linux__
-#include <termio.h>
-#else
 #include <termios.h>
-#endif
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
