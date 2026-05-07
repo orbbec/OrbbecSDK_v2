@@ -351,7 +351,7 @@ extern "C" JNIEXPORT void JNICALL Java_com_orbbec_internal_DeviceWatcher_nAddUsb
         libobsensor::AndroidUsbDeviceManager::getInstance()->addUsbDevice(env, usbDevInfo);
     }
     catch(libobsensor::libobsensor_exception &e) {
-        throw_error(env, "nAddUsbDevice", e.get_message());
+        throw_error(env, "nAddUsbDevice", e.getMessage());
     }
 }
 
@@ -374,6 +374,6 @@ extern "C" JNIEXPORT void JNICALL Java_com_orbbec_internal_DeviceWatcher_nRemove
         libobsensor::AndroidUsbDeviceManager::getInstance()->removeUsbDevice(env, usbDevInfo);
     }
     catch(libobsensor::libobsensor_exception &e) {
-        throw_error(env, "nRemoveUsbDevice", e.get_message());
+        throw_error(env, "nRemoveUsbDevice", e.getMessage());
     }
 }

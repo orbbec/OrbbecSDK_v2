@@ -154,6 +154,7 @@ bool VendorTCPClient::checkConnectReady(SOCKET socket, uint32_t timeoutMs) {
 #if(defined(OS_IOS) || defined(OS_MACOS) || defined(__ANDROID__))
     // Since the traditional `fcntl` cannot be used on iOS to set socketFd as non-blocking, leading to select blocking, reduce connTimeout and use polling to
     // avoid the issue.
+    (void)timeoutMs;
     bool status = false;
     int  retry  = 5;
     do {
