@@ -5,6 +5,7 @@
 
 #include "frame/Frame.hpp"
 #include "exception/ObException.hpp"
+#include "utils/SteadyCondVar.hpp"
 
 #include <algorithm>
 #include <atomic>
@@ -12,7 +13,6 @@
 #include <thread>
 #include <functional>
 #include <mutex>
-#include <condition_variable>
 #include <memory>
 
 namespace libobsensor {
@@ -347,7 +347,7 @@ private:
     CacheLineAtomicSizeT readIdx_;
 
     mutable std::mutex      signalMutex_;
-    std::condition_variable signal_;
+    utils::SteadyCondVar    signal_;
     CacheLineQueueState     state_;
 
     std::mutex                              threadMutex_;

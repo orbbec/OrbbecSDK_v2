@@ -10,7 +10,7 @@
 #include <map>
 #include <mutex>
 #include <thread>
-#include <condition_variable>
+#include "utils/SteadyCondVar.hpp"
 #include <atomic>
 #include <unordered_map>
 
@@ -66,11 +66,11 @@ private:
     std::map<std::string, std::weak_ptr<IDevice>> createdDevices_;
     std::mutex                                    createdDevicesMutex_;
 
-    std::thread             multiDeviceSyncThread_;
-    std::condition_variable multiDeviceSyncCv_;
-    uint64_t                multiDeviceSyncIntervalMs_;  // unit: ms
-    std::atomic<bool>       multiDeviceSyncStop_{ false };
-    std::atomic<void *>     multiDeviceSyncCaller_{ nullptr };
+    std::thread          multiDeviceSyncThread_;
+    utils::SteadyCondVar multiDeviceSyncCv_;
+    uint64_t             multiDeviceSyncIntervalMs_;  // unit: ms
+    std::atomic<bool>    multiDeviceSyncStop_{ false };
+    std::atomic<void *>  multiDeviceSyncCaller_{ nullptr };
 
     std::vector<std::shared_ptr<IDeviceEnumerator>> deviceEnumerators_;
 
@@ -78,9 +78,9 @@ private:
     std::mutex                                                    customConnectedDevicesMutex_;
     bool                                                          isCustomConnectedDevice_ = false;
 
-    std::thread             deviceActivitySyncThread_;
-    std::condition_variable deviceActivityCv_;
-    std::atomic<bool>       deviceActivitySyncStopped_{ false };
+    std::thread          deviceActivitySyncThread_;
+    utils::SteadyCondVar deviceActivityCv_;
+    std::atomic<bool>    deviceActivitySyncStopped_{ false };
 
     std::shared_ptr<DeviceActivityManager> deviceActivityManager_;
 };

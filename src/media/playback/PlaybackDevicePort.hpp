@@ -16,6 +16,7 @@
 #include <string>
 #include <mutex>
 #include <bitset>
+#include "utils/SteadyCondVar.hpp"
 
 namespace std {
 template <> struct hash<ob_playback_status> {
@@ -101,7 +102,7 @@ private:
     bool                    isLooping_;
     std::mutex              playbackMutex_;
     std::mutex              baseTimestampMutex_;
-    std::condition_variable playbackCv_;
+    utils::SteadyCondVar    playbackCv_;
     std::thread             playbackThread_;
 
     PlaybackStatusCallback playbackStatusCallback_;

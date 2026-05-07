@@ -10,7 +10,6 @@
 #include <thread>
 #include <mutex>
 #include <atomic>
-#include <condition_variable>
 
 namespace libobsensor {
 
@@ -47,9 +46,6 @@ private:
 
     ObRTPPacketQueue    rtpQueue_;
     ObRTPPacketProcessor rtpProcessor_;
-
-    std::mutex              rtpPacketMutex_;
-    std::condition_variable packetAvailableCv_;
 };
 
 }  // namespace libobsensor

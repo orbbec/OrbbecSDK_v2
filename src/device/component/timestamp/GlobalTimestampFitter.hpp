@@ -5,11 +5,10 @@
 #include "IDevice.hpp"
 #include "IFrameTimestamp.hpp"
 #include "DeviceComponentBase.hpp"
-
+#include "utils/SteadyCondVar.hpp"
 #include <thread>
 #include <queue>
 #include <mutex>
-#include <condition_variable>
 #include <limits>
 #include <atomic>
 
@@ -122,11 +121,11 @@ private:
     const uint32_t REVERIFY_INTERVAL_MS       = 500;  // 5 samples span 2.5s for slope estimation
     const size_t   DRIFT_MIN_AGREE            = 4;    // out of (1 trigger + 5 reverify) = 6
 
-    bool                    enable_;
-    std::thread             sampleThread_;
-    std::mutex              sampleMutex_;
-    std::condition_variable sampleCondVar_;
-    std::atomic<bool>       sampleLoopExit_;
+    bool                 enable_;
+    std::thread          sampleThread_;
+    std::mutex           sampleMutex_;
+    utils::SteadyCondVar sampleCondVar_;
+    std::atomic<bool>    sampleLoopExit_;
     // Serializes acquire+queue+fit between fittingLoop and ensureFitting to avoid reFitting()/background races.
     std::mutex samplingOpMutex_;
 
@@ -143,11 +142,11 @@ private:
     // The refresh interval needs to be less than half the interval of the data frame, that is, it needs to be sampled at least twice within an overflow period.
     uint32_t refreshIntervalMsec_ = 1000;
 
-    std::mutex              linearFuncParamMutex_;
-    std::condition_variable linearFuncParamCondVar_;
-    LinearFuncParam         linearFuncParam_;
-    uint64_t                lastSysTime_ = 0;
-    uint64_t                maxValidRtt_;
-    RttWindow               rttWindow_;
+    std::mutex           linearFuncParamMutex_;
+    utils::SteadyCondVar linearFuncParamCondVar_;
+    LinearFuncParam      linearFuncParam_;
+    uint64_t             lastSysTime_ = 0;
+    uint64_t             maxValidRtt_;
+    RttWindow            rttWindow_;
 };
 }  // namespace libobsensor

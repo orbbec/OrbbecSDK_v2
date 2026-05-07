@@ -6,6 +6,7 @@
 #include "libobsensor/h/ObTypes.h"
 #include "IPipelineStatusCollector.hpp"
 #include "IDevice.hpp"
+#include "utils/SteadyCondVar.hpp"
 
 #include <atomic>
 #include <mutex>
@@ -186,7 +187,7 @@ private:
 
     // Health monitor polling thread
     std::mutex                  monitorMutex_;
-    std::condition_variable     monitorCv_;
+    utils::SteadyCondVar        monitorCv_;
     std::thread                 monitorThread_;
     ob_pipeline_status_callback monitorCallback_ = nullptr;
     void                       *monitorUserData_ = nullptr;
@@ -198,7 +199,7 @@ private:
     bool                    monitorCollectRequested_ = false;
     uint64_t                monitorCollectReqSeq_    = 0;
     uint64_t                monitorCollectDoneSeq_   = 0;
-    std::condition_variable monitorCollectCv_;
+    utils::SteadyCondVar    monitorCollectCv_;
 };
 
 }  // namespace libobsensor

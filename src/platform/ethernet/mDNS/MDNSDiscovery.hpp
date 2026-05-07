@@ -9,7 +9,6 @@
 #include <set>
 #include <memory>
 #include <thread>
-#include <condition_variable>
 #include "ethernet/socket/SocketTypes.hpp"
 
 namespace libobsensor {

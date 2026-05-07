@@ -4,8 +4,7 @@
 #include <vector>
 #include <mutex>
 #include <queue>
-#include <condition_variable>
-
+#include "utils/SteadyCondVar.hpp"
 
 namespace libobsensor {
 
@@ -22,7 +21,7 @@ public:
 private:
     std::queue<std::vector<uint8_t>> queue_;
     std::mutex                       mutex_;
-    std::condition_variable          cond_var_;
+    utils::SteadyCondVar             cond_var_;
     bool                             destroy_;
 
 };

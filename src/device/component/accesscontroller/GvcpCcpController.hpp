@@ -11,7 +11,7 @@
 #include <atomic>
 #include <mutex>
 #include <thread>
-#include <condition_variable>
+#include "utils/SteadyCondVar.hpp"
 
 namespace libobsensor {
 
@@ -51,7 +51,7 @@ private:
     std::shared_ptr<const NetSourcePortInfo> portInfo_;
     std::shared_ptr<GVCPTransmit>            gvcpTransmit_;
     std::thread                              keepaliveThread_;
-    std::condition_variable                  keepaliveCv_;
+    utils::SteadyCondVar                     keepaliveCv_;
     std::atomic<bool>                        keepaliveStopped_{ false };
 };
 

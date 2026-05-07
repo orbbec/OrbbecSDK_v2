@@ -14,7 +14,7 @@
 #include <map>
 #include <mutex>
 #include <thread>
-#include <condition_variable>
+#include "utils/SteadyCondVar.hpp"
 
 namespace libobsensor {
 
@@ -95,7 +95,7 @@ protected:
     std::recursive_mutex streamRecoverMutex_;
 
     std::mutex                 streamStateMutex_;
-    std::condition_variable    streamStateCv_;
+    utils::SteadyCondVar       streamStateCv_;
     std::atomic<OBStreamState> streamState_;
     std::thread                streamStateWatcherThread_;
 

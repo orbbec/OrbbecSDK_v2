@@ -17,6 +17,7 @@
 #include <map>
 #include <mutex>
 #include <atomic>
+#include "utils/SteadyCondVar.hpp"
 
 namespace libobsensor {
 class EthernetPal : virtual public IPal, virtual public IDeviceWatcher, public std::enable_shared_from_this<EthernetPal> {
@@ -58,7 +59,7 @@ private:
     std::atomic<bool>           stopWatch_{ false };
     std::vector<GVCPDeviceInfo> netDevInfoList_;
     std::mutex                  gvcpMutex_;
-    std::condition_variable     condVar_;
+    utils::SteadyCondVar        condVar_;
     std::shared_ptr<GVCPClient> gvcpClient_;
 
     std::shared_ptr<GVCPRuntimeConfig> gvcpRuntimeConfig_;
@@ -67,7 +68,7 @@ private:
     std::vector<MDNSDeviceInfo>    mdnsDevInfoList_;
     std::shared_ptr<MDNSDiscovery> mdnsDiscovery_;
     std::thread                    mdnsWatchThread_;
-    std::condition_variable        mdnsCondVar_;
+    utils::SteadyCondVar           mdnsCondVar_;
 };
 
 }  // namespace libobsensor

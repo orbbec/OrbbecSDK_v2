@@ -13,6 +13,7 @@
 #include <thread>
 #include <mutex>
 #include <ctime>
+#include "utils/SteadyCondVar.hpp"
 
 #define LOG_RECORD_MAP_SIZE_LIMIT 500  // Maximum number of log entries
 #define MAX_LOG_INTERVAL 60 * 1000     // Maximum log output interval: 60000ms
@@ -26,7 +27,7 @@ struct ObLogIntvlRecord {
     std::chrono::system_clock::time_point lastLogTime;
     std::thread                           invokeThread;
     std::mutex                            mtx;
-    std::condition_variable               cv;
+    libobsensor::utils::SteadyCondVar     cv;
     void                                  flush() {
         cv.notify_all();
         if(invokeThread.joinable()) {

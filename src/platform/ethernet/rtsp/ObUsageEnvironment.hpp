@@ -6,7 +6,7 @@
 #include "liveMedia.hh"
 
 #include <mutex>
-#include <condition_variable>
+#include "utils/SteadyCondVar.hpp"
 #include <thread>
 #include <string>
 
@@ -40,7 +40,7 @@ private:
     std::thread             outputLogThread_;
     std::string             logMsg_;
     std::mutex              mutex_;
-    std::condition_variable newLogCv_;
+    utils::SteadyCondVar    newLogCv_;
     bool                    destroy_;
     bool                    newLog_;
 };

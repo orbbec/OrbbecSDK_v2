@@ -7,6 +7,7 @@
 #include "ISourcePort.hpp"
 #include "DeviceComponentBase.hpp"
 #include "DeviceActivityRecorder.hpp"
+#include "utils/SteadyCondVar.hpp"
 #include <map>
 
 namespace libobsensor {
@@ -42,10 +43,10 @@ private:
     std::mutex                                     stateChangedCallbacksMutex_;
     std::map<uint32_t, DeviceStateChangedCallback> stateChangedCallbacks_;
 
-    std::mutex              commMutex_;
-    std::condition_variable heartbeatAndFetchStateThreadCv_;
-    std::thread             heartbeatAndFetchStateThread_;
-    std::atomic<bool>       heartbeatAndFetchStateThreadStarted_;
+    std::mutex           commMutex_;
+    utils::SteadyCondVar heartbeatAndFetchStateThreadCv_;
+    std::thread          heartbeatAndFetchStateThread_;
+    std::atomic<bool>    heartbeatAndFetchStateThreadStarted_;
 
     std::atomic<bool>     heartbeatEnabled_;
     std::atomic<bool>     heartbeatPaused_;

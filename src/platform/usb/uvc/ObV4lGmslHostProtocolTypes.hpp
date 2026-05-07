@@ -22,7 +22,6 @@
 #include "libobsensor/h/ObTypes.h"
 
 #include <mutex>
-#include <condition_variable>
 
 namespace libobsensor {
 

@@ -8,8 +8,8 @@
 #include <thread>
 #include <sys/mman.h>
 #include <mutex>
-#include <condition_variable>
 
+#include "utils/SteadyCondVar.hpp"
 #include "UvcDevicePort.hpp"
 #include "usb/enumerator/IUsbEnumerator.hpp"
 #include "frame/Frame.hpp"
@@ -115,7 +115,7 @@ struct V4lDeviceHandleGmsl {
     std::atomic<bool>            isCapturing     = { false };
     std::atomic<bool>            canStartCapture = { false };
     std::mutex                   streamMutex;  // mutex for start capture
-    std::condition_variable      streamCv;     // cv for start capture
+    utils::SteadyCondVar         streamCv;     // cv for start capture
     std::atomic<std::uint64_t>   loopFrameIndex = { 0 };
 };
 

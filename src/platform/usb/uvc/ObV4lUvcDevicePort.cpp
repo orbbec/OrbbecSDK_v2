@@ -11,7 +11,6 @@
 #include <sys/stat.h>
 #include <sys/sysmacros.h>
 #include <mutex>
-#include <condition_variable>
 #include "ObV4lUvcDevicePort.hpp"
 
 #include "logger/Logger.hpp"

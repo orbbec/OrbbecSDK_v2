@@ -6,6 +6,7 @@
 #include "IDeviceWatcher.hpp"
 #include "Platform.hpp"
 
+#include "utils/SteadyCondVar.hpp"
 #include <memory>
 #include <unordered_set>
 
@@ -38,13 +39,13 @@ private:
     DeviceChangedCallback devChangedCallback_ = nullptr;
     std::thread           devChangedCallbackThread_;
 
-    SourcePortInfoList      currentUsbPortInfoList_;
-    bool                    newUsbPortArrival_ = false;
-    std::condition_variable newUsbPortArrivalCV_;
-    std::thread             deviceArrivalHandleThread_;
+    SourcePortInfoList   currentUsbPortInfoList_;
+    bool                 newUsbPortArrival_ = false;
+    utils::SteadyCondVar newUsbPortArrivalCV_;
+    std::thread          deviceArrivalHandleThread_;
 
     // removal thread
-    std::condition_variable         deviceRemovalCV_;
+    utils::SteadyCondVar            deviceRemovalCV_;
     std::mutex                      deviceRemovalMutex_;
     std::unordered_set<std::string> deviceRemovalUidSet_;
     std::thread                     deviceRemovalHandleThread_;

@@ -10,6 +10,7 @@
 #include <vector>
 #include <unordered_map>
 #include <queue>
+#include "utils/SteadyCondVar.hpp"
 
 namespace libobsensor {
 
@@ -70,7 +71,7 @@ public:
 private:
     std::atomic<bool>                 running_;
     mutable std::mutex                mutex_;
-    std::condition_variable           cv_;
+    utils::SteadyCondVar              cv_;
     std::queue<std::function<void()>> tasks_;
     std::thread                       worker_;
 };

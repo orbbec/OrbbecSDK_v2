@@ -6,7 +6,7 @@
 #include "IDevice.hpp"
 #include <thread>
 #include <mutex>
-#include <condition_variable>
+#include "utils/SteadyCondVar.hpp"
 
 namespace libobsensor {
 class OpenNIDisp2DepthPropertyAccessor : public IBasicPropertyAccessor, public IStructureDataAccessor {
@@ -73,7 +73,7 @@ private:
     std::mutex              heartBeatMutex_;
     bool                    heartBeatRunning_;
     std::thread             heartBeatThread_;
-    std::condition_variable heartBeatCV_;
+    utils::SteadyCondVar heartBeatCV_;
 };
 
 

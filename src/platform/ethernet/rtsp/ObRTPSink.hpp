@@ -13,7 +13,7 @@
 #include <atomic>
 #include <mutex>
 #include <thread>
-#include <condition_variable>
+#include "utils/SteadyCondVar.hpp"
 
 namespace libobsensor {
 
@@ -153,7 +153,7 @@ private:
     std::mutex                               reclaimedRTPBufferMutex_;
     std::queue<std::shared_ptr<ObRTPBuffer>> outputRTPBufferQueue_;
     std::mutex                               outputRTPBufferQueueMutex_;
-    std::condition_variable                  frameAvailableCv_;
+    utils::SteadyCondVar                     frameAvailableCv_;
     std::shared_ptr<ObRTPBuffer>             currentBuffer_;
 
     const uint8_t  MAX_FRAME_NUM       = 4;

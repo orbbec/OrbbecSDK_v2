@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include <condition_variable>
+#include "utils/SteadyCondVar.hpp"
 #include <atomic>
 #include <map>
 #include <mutex>
@@ -61,7 +61,7 @@ private:
 
     // nvram
     std::mutex              nvramMutex_;
-    std::condition_variable nvramCV_;
+    utils::SteadyCondVar    nvramCV_;
     std::vector<uint8_t>    nvramData_;
 
     //  Depth Engine
@@ -73,11 +73,11 @@ private:
     std::thread                             depthEngineThread_;
     std::shared_ptr<const StreamProfile>    lastStreamProfile_;
     std::mutex                              depthEngineMutex_;
-    std::condition_variable                 depthEngineCV_;
+    utils::SteadyCondVar                    depthEngineCV_;
     bool                                    depthEngineReady_ = false;
 
     std::mutex                         frameQueueMutex_;
-    std::condition_variable            frameQueueCV_;
+    utils::SteadyCondVar               frameQueueCV_;
     std::queue<std::shared_ptr<Frame>> frameQueue_;
 };
 
