@@ -281,6 +281,30 @@ OB_EXPORT void ob_log_external_message(ob_log_severity severity, const char *mod
  */
 OB_EXPORT void ob_set_extensions_directory(const char *directory, ob_error **error);
 
+
+/**
+ * @brief Set the host-side timestamp clock type for the current context.
+ *
+ * @attention All ob::Context instances share the same underlying SDK runtime and clock type.
+ * @attention Switching affects frame system and global timestamps; avoid switching during streaming.
+ * @attention It is recommended to synchronize device timestamps after switching.
+ *
+ * @param[in] context Pointer to the context object
+ * @param[in] clock_type The clock type to use for host-side timestamps
+ * @param[out] error Pointer to an error object that will be populated if an error occurs
+ */
+OB_EXPORT void ob_context_set_timestamp_clock_type(ob_context *context, ob_clock_type clock_type, ob_error **error);
+
+/**
+ * @brief Get the current host-side timestamp clock type for the context.
+ *
+ * @param[in] context Pointer to the context object
+ * @param[out] error Pointer to an error object that will be populated if an error occurs
+ *
+ * @return ob_clock_type The current clock type
+ */
+OB_EXPORT ob_clock_type ob_context_get_timestamp_clock_type(const ob_context *context, ob_error **error);
+
 // The following interfaces are deprecated and are retained here for compatibility purposes.
 #define ob_enable_multi_device_sync ob_enable_device_clock_sync
 #define ob_set_logger_callback ob_set_logger_to_callback

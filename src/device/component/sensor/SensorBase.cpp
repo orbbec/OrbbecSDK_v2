@@ -11,6 +11,7 @@
 #include "environment/EnvConfig.hpp"
 #include "IDevice.hpp"
 #include "IDepthWorkModeManager.hpp"
+#include "context/Context.hpp"
 
 #include "logger/LoggerSnWrapper.hpp"  // Must be included last to override log macros
 
@@ -31,6 +32,8 @@ SensorBase::SensorBase(IDevice *owner, OBSensorType sensorType, const std::share
       streamInterruptTimeoutMs_(DefaultStreamInterruptTimeoutMs) {
     enableTimestampAnomalyDetection(true);
     startStreamRecovery();
+
+    hostTimestampProvider_ = Context::getInstance()->getHostTimestampProvider();
 
     auto activityRecorder = owner->getComponentT<IDeviceActivityRecorder>(OB_DEV_COMPONENT_DEVICE_ACTIVITY_RECORDER, false);
     if(activityRecorder) {
@@ -417,12 +420,17 @@ void SensorBase::outputFrame(std::shared_ptr<Frame> frame) {
     if(frameMetadataParserContainer_) {
         TRY_EXECUTE(frame->registerMetadataParsers(frameMetadataParserContainer_));
     }
+
     if(frameTimestampCalculator_) {
         TRY_EXECUTE(frameTimestampCalculator_->calculate(frame));
     }
 
     if(intraCameraSyncTimestampAdjuster_) {
         TRY_EXECUTE(intraCameraSyncTimestampAdjuster_->calculate(frame));
+    }
+    
+    if(hostTimestampProvider_) {
+        hostTimestampProvider_->applyHostTimestamp(frame);
     }
 
     if(globalTimestampCalculator_) {

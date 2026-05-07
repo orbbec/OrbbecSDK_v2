@@ -422,6 +422,7 @@ void LiDARStreamer::parseLiDARData(std::shared_ptr<Frame> frame) {
     frame_->setTimeStampUsec(timestamp);
     frame_->setSystemTimeStampUsec(timestamp);
     frame_->setSteadyTimeStampUsec(utils::getSteadyTimeUs());
+    frame_->setDeviceTimestampFromHost(true);
 
     if(header->dataBlockNum >= maxDataBlockNum) {
         // reach the max data block num - all data for a circle

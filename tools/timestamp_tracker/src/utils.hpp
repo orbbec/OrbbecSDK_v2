@@ -15,6 +15,8 @@ OBSensorType sensorNameToType(const std::string &name);
 OBFormat     formatStringToOBFormat(const std::string &fmt);
 bool         deviceHasSensor(std::shared_ptr<ob::Device> device, OBSensorType type);
 bool         isEscPressed();
+uint64_t     getWallTimesUs();
+uint64_t     getSteadyTimeUs();
 
 }  // namespace tools
 }  // namespace libobsensor

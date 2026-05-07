@@ -64,6 +64,8 @@ public:
     void           setSteadyTimeStampUsec(uint64_t ts);
     uint64_t       getGlobalTimeStampUsec() const;
     void           setGlobalTimeStampUsec(uint64_t ts);
+    bool           isDeviceTimestampFromHost() const;
+    void           setDeviceTimestampFromHost(bool enable);
 
     size_t         getMetadataSize() const;
     void           updateMetadata(const uint8_t *metadata, size_t metadataSize);
@@ -116,6 +118,7 @@ protected:
     uint64_t                                       systemTimeStampUsec_;
     uint64_t                                       steadyTimeStampUsec_;
     uint64_t                                       globalTimeStampUsec_;
+    bool                                           deviceTimestampFromHost_{ false };
     size_t                                         metadataSize_;
     uint8_t                                        metadata_[12 + 255];  // standard uvc payload size is 12bytes, add some extra space for metadata
     std::shared_ptr<IFrameMetadataParserContainer> metadataPhasers_;

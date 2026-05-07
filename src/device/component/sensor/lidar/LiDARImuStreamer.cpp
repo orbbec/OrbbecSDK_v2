@@ -319,6 +319,7 @@ void LiDARImuStreamer::parseIMUData(std::shared_ptr<Frame> frame) {
         accelFrame->setTimeStampUsec(timestamp);
         accelFrame->setSystemTimeStampUsec(timestamp);
         accelFrame->setSteadyTimeStampUsec(steadyUs);
+        accelFrame->setDeviceTimestampFromHost(true);
     }
 
     if(gyroStreamProfile) {
@@ -335,6 +336,7 @@ void LiDARImuStreamer::parseIMUData(std::shared_ptr<Frame> frame) {
         gyroFrame->setTimeStampUsec(timestamp);
         gyroFrame->setSystemTimeStampUsec(timestamp);
         gyroFrame->setSteadyTimeStampUsec(steadyUs);
+        gyroFrame->setDeviceTimestampFromHost(true);
     }
     outputFrame(accelFrame, gyroFrame);
 }

@@ -76,3 +76,4 @@ std::ostream &operator<<(std::ostream &os, const OBPlaybackStatus &status);
 std::ostream &operator<<(std::ostream &os, const OBMultiDeviceSyncConfig &config);
 std::ostream &operator<<(std::ostream &os, const OBDeviceSyncConfig &config);
 std::ostream &operator<<(std::ostream &os, const OBDeviceAccessMode &mode);
+std::ostream &operator<<(std::ostream &os, const OBClockType &type);

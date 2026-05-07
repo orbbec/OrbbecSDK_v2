@@ -9,7 +9,7 @@
 namespace libobsensor {
 namespace tools {
 
-TimestampCollector::TimestampCollector(std::shared_ptr<ob::Device> device) : device_(device) {
+TimestampCollector::TimestampCollector(std::shared_ptr<ob::Device> device, OBClockType clockType) : device_(device), clockType_(clockType) {
     auto devInfo  = device_->getDeviceInfo();
     deviceName_   = devInfo->getName();
     serialNumber_ = devInfo->getSerialNumber();
@@ -164,9 +164,7 @@ bool TimestampCollector::start(const CmdLineConfig &config) {
 
     pipeline_->start(obConfig, [this](std::shared_ptr<ob::FrameSet> frameSet) {
         // Capture system timestamp immediately — before acquiring the lock — for maximum accuracy.
-        uint64_t recvTimeUs =
-            static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count());
-        std::lock_guard<std::mutex> lock(frameQueueMutex_);
+        uint64_t recvTimeUs = clockType_ == OB_CLOCK_TYPE_REALTIME ? getWallTimesUs() : getSteadyTimeUs();
         frameQueue_.push({ frameSet, recvTimeUs });
         frameQueueCv_.notify_one();
     });

@@ -26,7 +26,7 @@ struct TimedFrameSet {
 
 class TimestampCollector {
 public:
-    explicit TimestampCollector(std::shared_ptr<ob::Device> device);
+    explicit TimestampCollector(std::shared_ptr<ob::Device> device, OBClockType clockType);
     ~TimestampCollector();
 
     TimestampCollector(const TimestampCollector &)            = delete;
@@ -50,6 +50,7 @@ private:
     std::shared_ptr<ob::Pipeline> pipeline_;
     std::string                   deviceName_;
     std::string                   serialNumber_;
+    OBClockType                   clockType_{ OB_CLOCK_TYPE_REALTIME };
 
     std::map<OBSensorType, std::string>                enabledSensors_;  // value = sensorName
     std::map<OBSensorType, std::shared_ptr<CsvWriter>> writers_;

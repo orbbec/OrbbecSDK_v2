@@ -1110,3 +1110,19 @@ std::ostream &operator<<(std::ostream &os, const OBDeviceAccessMode &mode) {
     os << "(" << static_cast<uint32_t>(mode) << ")";
     return os;
 }
+
+std::ostream &operator<<(std::ostream &os, const OBClockType &type) {
+    switch(type) {
+    case OB_CLOCK_TYPE_REALTIME:
+        os << "realtime";
+        break;
+    case OB_CLOCK_TYPE_MONOTONIC:
+        os << "monotonic";
+        break;
+    default:
+        os << "unknown type";
+        break;
+    }
+    os << "(" << static_cast<uint32_t>(type) << ")";
+    return os;
+}

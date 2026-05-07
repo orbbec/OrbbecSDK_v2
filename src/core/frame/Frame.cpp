@@ -121,6 +121,14 @@ void Frame::setGlobalTimeStampUsec(uint64_t ts) {
     globalTimeStampUsec_ = ts;
 }
 
+bool Frame::isDeviceTimestampFromHost() const {
+    return deviceTimestampFromHost_;
+}
+
+void Frame::setDeviceTimestampFromHost(bool enable) {
+    deviceTimestampFromHost_ = enable;
+}
+
 uint32_t VideoFrame::getFps() const {
     if(!streamProfile_) {
         THROW_INVALID_DATA_EXCEPTION("Error: this frame dose not have a stream profile!");

@@ -18,6 +18,8 @@
 
 namespace libobsensor {
 
+class HostTimestampProvider;
+
 class SensorBase : public ISensor, public std::enable_shared_from_this<SensorBase> {
     static constexpr int DefaultNoStreamTimeoutMs        = 3000;
     static constexpr int DefaultStreamInterruptTimeoutMs = 3000;
@@ -111,6 +113,7 @@ protected:
     std::shared_ptr<TimestampAnomalyDetector>      timestampAnomalyDetector_;
     std::shared_ptr<IDeviceActivityRecorder>       deviceActivityRecorder_;
     std::shared_ptr<IFrameTimestampCalculator>     intraCameraSyncTimestampAdjuster_;
+    std::shared_ptr<HostTimestampProvider>         hostTimestampProvider_;
 
     std::atomic<uint64_t> droppedFrameStatus_{ 0 };
 };

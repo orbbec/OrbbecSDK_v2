@@ -4,6 +4,7 @@
 #include "utils.hpp"
 #include <libobsensor/hpp/TypeHelper.hpp>
 #include <cctype>
+#include <chrono>
 
 #ifdef _WIN32
 #include <conio.h>
@@ -87,6 +88,20 @@ bool isEscPressed() {
     return pressed;
 }
 #endif
+
+uint64_t getWallTimesUs() {
+    return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+}
+
+uint64_t getSteadyTimeUs() {
+#if defined(__linux__) || defined(__ANDROID__)
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
+    return static_cast<uint64_t>(ts.tv_sec) * 1000000u + static_cast<uint64_t>(ts.tv_nsec) / 1000u;
+#else
+    return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+#endif
+}
 
 }  // namespace tools
 }  // namespace libobsensor

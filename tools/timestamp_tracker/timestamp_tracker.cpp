@@ -61,10 +61,11 @@ int main(int argc, char *argv[]) try {
     std::cout << std::endl;
 
     std::vector<std::shared_ptr<TimestampCollector>> collectors;
+    auto                                             clockType = ctx.getTimestampClockType();
 
     for(uint32_t i = 0; i < deviceCount; ++i) {
         auto device    = deviceList->getDevice(i);
-        auto collector = std::make_shared<TimestampCollector>(device);
+        auto collector = std::make_shared<TimestampCollector>(device, clockType);
 
         std::cout << "[" << (i + 1) << "/" << deviceCount << "] ";
         if(!collector->start(config)) {

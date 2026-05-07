@@ -86,6 +86,33 @@ public:
     }
 
     /**
+     * @brief Set the host-side timestamp clock type for the current context.
+     *
+     * @attention All ob::Context instances share the same underlying SDK runtime and clock type.
+     * @attention Switching affects frame system and global timestamps; avoid switching during streaming.
+     * @attention It is recommended to synchronize device timestamps after switching.
+     *
+     * @param[in] type The clock type to use for host-side timestamps.
+     */
+    void setTimestampClockType(OBClockType type) const {
+        ob_error *error = nullptr;
+        ob_context_set_timestamp_clock_type(impl_, type, &error);
+        Error::handle(&error);
+    }
+
+    /**
+     * @brief Get the current host-side timestamp clock type for the context.
+     *
+     * @return OBClockType The current clock type.
+     */
+    OBClockType getTimestampClockType() const {
+        ob_error *error = nullptr;
+        auto      type  = ob_context_get_timestamp_clock_type(impl_, &error);
+        Error::handle(&error);
+        return type;
+    }
+
+    /**
      * @brief Queries the enumerated device list.
      *
      * @return std::shared_ptr<DeviceList> A pointer to the device list class.

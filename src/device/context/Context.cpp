@@ -6,6 +6,7 @@
 #include "devicemanager/DeviceManager.hpp"
 #include "environment/Version.hpp"
 
+#include <memory>
 #include <mutex>
 
 namespace libobsensor {
@@ -43,6 +44,7 @@ Context::Context(const std::string &configFilePath) {
     filterFactory_           = FilterFactory::getInstance();
     platform_                = Platform::getInstance();
     dynamicLibraryManager_   = DynamicLibraryManager::getInstance();
+    hostTimestampProvider_   = std::make_shared<HostTimestampProvider>();
 
     if(configFilePath.empty()) {
         LOG_DEBUG("Context created! Library version: v{}", OB_LIB_VERSION_STR);
@@ -88,6 +90,10 @@ std::shared_ptr<FrameMemoryPool> Context::getFrameMemoryPool() const {
 
 std::shared_ptr<Platform> Context::getPlatform() const {
     return platform_;
+}
+
+std::shared_ptr<HostTimestampProvider> Context::getHostTimestampProvider() const {
+    return hostTimestampProvider_;
 }
 
 #ifdef OB_BUILD_WITH_EXTENSIONS_COMMIT_HASH

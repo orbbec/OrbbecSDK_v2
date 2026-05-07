@@ -2031,6 +2031,15 @@ typedef enum {
     OBIpSourceType;
 
 /**
+ * @brief Host-side timestamp clock type for device.
+ */
+typedef enum {
+    OB_CLOCK_TYPE_REALTIME  = 0, /**< Wall clock (system_clock), epoch-based. Default. */
+    OB_CLOCK_TYPE_MONOTONIC = 1, /**< System monotonic clock, non-epoch. */
+} OBClockType,
+    ob_clock_type;
+
+/**
  * @brief Callback for file transfer
  *
  * @param[in] state Transmission status
