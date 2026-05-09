@@ -861,6 +861,7 @@ uint32_t ObV4lUvcDevicePort::sendAndReceive(const uint8_t *sendData, uint32_t se
     ctrl = OB_VENDOR_XU_CTRL_ID_512;
     if(exceptedRecvLen <= 64) {
         ctrl = OB_VENDOR_XU_CTRL_ID_64;
+        exceptedRecvLen = 64;
     }
     else if(exceptedRecvLen > 512) {
         ctrl = OB_VENDOR_XU_CTRL_ID_1024;
