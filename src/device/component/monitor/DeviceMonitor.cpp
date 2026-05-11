@@ -186,12 +186,14 @@ void DeviceMonitor::disableHeartbeat() {
         LOG_DEBUG("Heartbeat already disabled!");
         return;
     }
-    auto owner = getOwner();
 
-    OBPropertyValue value;
-    value.intValue    = 0;
-    auto propAccessor = owner->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
-    propAccessor->setPropertyValue(OB_PROP_HEARTBEAT_BOOL, value);
+    TRY_EXECUTE({
+        auto            owner = getOwner();
+        OBPropertyValue value;
+        value.intValue    = 0;
+        auto propAccessor = owner->getComponentT<IBasicPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        propAccessor->setPropertyValue(OB_PROP_HEARTBEAT_BOOL, value);
+    });
 
     heartbeatEnabled_ = false;
     heartbeatPaused_  = false;

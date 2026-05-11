@@ -203,15 +203,21 @@ DeviceBase::~DeviceBase() noexcept {
 }
 
 void DeviceBase::deactivate() {
+    std::lock_guard<std::mutex> guard(deactivateMutex_);
+    if(isDeactivated_) {
+        return;
+    }
+
     if(hasAnySensorStreamActivated()) {
         LOG_WARN("Device is deactivated or disconnected while there are still sensors streaming!");
     }
 
-    // CRITICAL: Heartbeat must be stopped before deactivating the device
+    // CRITICAL: Stop heartbeat and firmwareLog thread before deactivating the device
     TRY_EXECUTE({
         auto monitor = getComponentT<IDeviceMonitor>(OB_DEV_COMPONENT_DEVICE_MONITOR, false);
         if(monitor) {
             monitor->disableHeartbeat();
+            monitor->disableFirmwareLog();
         }
     });
 

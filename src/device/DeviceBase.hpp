@@ -143,6 +143,7 @@ private:
     std::vector<ComponentItem>   components_;  // using vector to control destroy order of components
 
     std::atomic<bool> isDeactivated_;
+    std::mutex        deactivateMutex_;
 
     std::map<OBSensorType, std::shared_ptr<const SourcePortInfo>> sensorPortInfos_;
     std::map<OBSensorType, std::shared_ptr<IFilter>>              sensorFrameFilters_;
