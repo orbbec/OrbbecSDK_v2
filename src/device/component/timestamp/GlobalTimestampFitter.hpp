@@ -120,12 +120,15 @@ private:
     const uint32_t REVERIFY_SAMPLES           = 5;
     const uint32_t REVERIFY_INTERVAL_MS       = 500;  // 5 samples span 2.5s for slope estimation
     const size_t   DRIFT_MIN_AGREE            = 4;    // out of (1 trigger + 5 reverify) = 6
+    // Queue size considered "mature": gates EWLR weighting and drift-jump detection.
+    const size_t MATURE_QUEUE_SIZE = 15;
 
     bool                 enable_;
     std::thread          sampleThread_;
     std::mutex           sampleMutex_;
     utils::SteadyCondVar sampleCondVar_;
     std::atomic<bool>    sampleLoopExit_;
+    std::atomic<bool>    needBootstrap_{ false };
     // Serializes acquire+queue+fit between fittingLoop and ensureFitting to avoid reFitting()/background races.
     std::mutex samplingOpMutex_;
 

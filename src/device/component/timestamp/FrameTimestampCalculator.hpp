@@ -8,6 +8,7 @@
 #include "IFrameTimestamp.hpp"
 #include "DeviceComponentBase.hpp"
 
+#include <atomic>
 #include <cstdint>
 
 namespace libobsensor {
@@ -20,6 +21,9 @@ public:
     void calculate(std::shared_ptr<Frame> frame) override;
     void clear() override;
 
+private:
+    void resetStateImpl();
+    
 private:
     uint64_t                                deviceTimeFreq_;
     uint64_t                                frameTimeFreq_;
@@ -44,6 +48,9 @@ private:
     double prevAnchorDevMs_ = 0.0;
     double prevAnchorSysUs_ = 0.0;
     bool   fitCached_       = false;
+
+    // Set by clear() (any thread); drained by calculate() (frame thread).
+    std::atomic<bool> pendingReset_{ false };
 };
 
 class FrameTimestampCalculatorDirectly : public IFrameTimestampCalculator, public DeviceComponentBase {

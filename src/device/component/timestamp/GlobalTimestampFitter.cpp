@@ -89,11 +89,18 @@ void GlobalTimestampFitter::reFitting(bool async) {
         std::unique_lock<std::mutex> lock(sampleMutex_);
         needCalculation_ = true;
         samplingQueue_.clear();
-        sampleCondVar_.notify_one();
+        // Do NOT notify here: avoid fittingLoop racing with ensureFitting during bootstrap.
     }
 
     if(!async) {
         ensureFitting();
+        needBootstrap_ = true;
+        sampleCondVar_.notify_one();
+    }
+    else {
+        // No one does bootstrap on the calling thread; wake fittingLoop to do it.
+        needBootstrap_ = true;
+        sampleCondVar_.notify_one();
     }
 }
 
@@ -179,11 +186,10 @@ void GlobalTimestampFitter::calcLinearParam(uint64_t sysTimestamp, uint64_t devT
         // Exponential decay weight: w_i = exp(-lambda * age_ms)
         // age_ms = newest device timestamp - sample device timestamp (device clock in ms)
         // lambda = ln(2) / (halfLife * 1000); when halfLife == 0, all weights = 1 (unweighted)
-        // Use equal weights during early convergence (queueSize < ewlrThreshold) to avoid
+        // Use equal weights during early convergence (queueSize < MATURE_QUEUE_SIZE) to avoid
         // staircase artifacts; switch to EWLR only after enough samples are accumulated.
-        const size_t ewlrThreshold    = 15;
         double       newestDevTs      = (double)samplingQueue_.back().deviceTimestamp;
-        double       effective_lambda = (queueSize >= ewlrThreshold && decayHalfLifeSec_ > 0.0) ? std::log(2.0) / (decayHalfLifeSec_ * 1000.0) : 0.0;
+        double       effective_lambda = (queueSize >= MATURE_QUEUE_SIZE && decayHalfLifeSec_ > 0.0) ? std::log(2.0) / (decayHalfLifeSec_ * 1000.0) : 0.0;
 
         // 2. First pass: compute weighted means.
         double sumWdx = 0.0, sumWdy = 0.0;
@@ -220,8 +226,9 @@ void GlobalTimestampFitter::calcLinearParam(uint64_t sysTimestamp, uint64_t devT
         // This is device-frequency independent because dy is in microseconds.
         double slope = Exy / Exx;
         double SSres = Eyy - slope * Exy;
-        if(SSres < 0.0)
+        if(SSres < 0.0) {
             SSres = 0.0;  // guard against tiny negative due to floating-point error
+        }
         residualRmsUs = std::sqrt(SSres / W);
     }
 
@@ -260,7 +267,6 @@ void GlobalTimestampFitter::ensureFitting() {
 
     {
         uint8_t count = 0;
-        sampleCondVar_.notify_all();
         std::unique_lock<std::mutex> lock(sampleMutex_);
         while(samplingQueue_.size() < 6 && count < 6) {
             ++count;
@@ -326,11 +332,12 @@ bool GlobalTimestampFitter::updateSampleQueue(const OBTimeSample &timeSample, co
         }
     }
     if(coefficientA > 0) {
-        double predicted = refSysTime + coefficientA * ((double)devTime.time - refDevTime);
-        residualUs       = (double)timeSample.time - predicted;
-
         std::unique_lock<std::mutex> lock(sampleMutex_);
-        if(!samplingQueue_.empty()) {
+        auto                         size = samplingQueue_.size();
+        if(size >= MATURE_QUEUE_SIZE) {
+            double predicted = refSysTime + coefficientA * ((double)devTime.time - refDevTime);
+            residualUs       = (double)timeSample.time - predicted;
+
             const auto &lastSample     = samplingQueue_.back();
             double      lastPredicted  = refSysTime + coefficientA * ((double)lastSample.deviceTimestamp - refDevTime);
             double      lastResidualUs = (double)lastSample.systemTimestamp - lastPredicted;
@@ -435,6 +442,9 @@ void GlobalTimestampFitter::fittingLoop() {
 
     int retryCount = 0;
     do {
+        // Consume the bootstrap signal before acquiring samplingOpMutex_.
+        needBootstrap_ = false;
+
         OBTimeSample timeSample{};
         OBDeviceTime devTime{};
 
@@ -448,7 +458,7 @@ void GlobalTimestampFitter::fittingLoop() {
                 if(retryCount > MAX_RETRY_COUNT) {
                     std::unique_lock<std::mutex> lock(sampleMutex_);
                     auto                         interval = refreshIntervalMsec_;
-                    if(samplingQueue_.size() >= 15) {
+                    if(samplingQueue_.size() >= MATURE_QUEUE_SIZE) {
                         interval *= 10;
                     }
                     LOG_DEBUG("The device time RTT has reached the upper limit several times. Sleep for {}ms and retry", interval);
@@ -474,13 +484,17 @@ void GlobalTimestampFitter::fittingLoop() {
         if(samplingQueue_.size() < 4) {
             interval = 50;
         }
-        else if(samplingQueue_.size() >= 15) {
+        else if(samplingQueue_.size() >= MATURE_QUEUE_SIZE) {
             interval = refreshIntervalMsec_ * 10;
         }
         else {
             interval = refreshIntervalMsec_;
         }
-        sampleCondVar_.wait_for(lock, std::chrono::milliseconds(interval), [this]() { return sampleLoopExit_.load(); });
+        sampleCondVar_.wait_for(lock, std::chrono::milliseconds(interval), [this]() { return sampleLoopExit_.load() || needBootstrap_.load(); });
+        if(needBootstrap_.load()) {
+            // Sleep briefly to ensure enough interval from reFitting for accurate sampling.
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        }
     } while(!sampleLoopExit_);
 
     LOG_DEBUG("GlobalTimestampFitter fittingLoop exit");

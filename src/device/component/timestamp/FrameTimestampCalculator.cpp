@@ -18,9 +18,30 @@ GlobalTimestampCalculator::GlobalTimestampCalculator(IDevice *owner, uint64_t de
     : DeviceComponentBase(owner), deviceTimeFreq_(deviceTimeFreq), frameTimeFreq_(frameTimeFreq) {
     (void)frameTimeFreq_;
     globalTimestampFitter_ = owner->getComponentT<IGlobalTimestampFitter>(OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER).get();
+
+    // Reset EMA/refit state on device-clock reset events to avoid a 25s wrong-output tail.
+    auto                  propServer = owner->getPropertyServer();
+    std::vector<uint32_t> resetProps;
+    if(propServer->isPropertySupported(OB_PROP_TIMER_RESET_SIGNAL_BOOL, PROP_OP_WRITE, PROP_ACCESS_INTERNAL)) {
+        resetProps.push_back(OB_PROP_TIMER_RESET_SIGNAL_BOOL);
+    }
+    if(propServer->isPropertySupported(OB_STRUCT_DEVICE_TIME, PROP_OP_WRITE, PROP_ACCESS_INTERNAL)) {
+        resetProps.push_back(OB_STRUCT_DEVICE_TIME);
+    }
+    if(!resetProps.empty()) {
+        propServer->registerAccessCallback(resetProps, [this](uint32_t, const uint8_t *, size_t, PropertyOperationType operationType) {
+            if(operationType == PROP_OP_WRITE) {
+                clear();
+            }
+        });
+    }
 }
 
 void GlobalTimestampCalculator::calculate(std::shared_ptr<Frame> frame) {
+    if(pendingReset_.exchange(false, std::memory_order_acquire)) {
+        resetStateImpl();
+    }
+
     const auto rawTsUs = frame->getTimeStampUsec();
     if(rawTsUs == 0) {
         // If the device timestamp is invalid (0), keep global timestamp as 0.
@@ -102,6 +123,11 @@ void GlobalTimestampCalculator::calculate(std::shared_ptr<Frame> frame) {
 }
 
 void GlobalTimestampCalculator::clear() {
+    // Thread-safe: actual reset runs at the top of the next calculate() on the frame thread.
+    pendingReset_.store(true, std::memory_order_release);
+}
+
+void GlobalTimestampCalculator::resetStateImpl() {
     ema_               = 0.0;
     emaBaseline_       = 0.0;
     madEma_            = 0.0;
