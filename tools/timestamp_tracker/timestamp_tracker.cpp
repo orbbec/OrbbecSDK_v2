@@ -42,15 +42,8 @@ int main(int argc, char *argv[]) try {
     std::cout << std::endl;
 
     ob::Context ctx;
-
-    if(config.syncIntervalSec > 0) {
-        uint64_t intervalMs = config.getSyncIntervalMs();
-        std::cout << "Enabling periodic time sync (interval: " << config.syncIntervalSec << "s)" << std::endl;
-        ctx.enableDeviceClockSync(intervalMs);
-    }
-
-    auto     deviceList  = ctx.queryDeviceList();
-    uint32_t deviceCount = deviceList->getCount();
+    auto        deviceList  = ctx.queryDeviceList();
+    uint32_t    deviceCount = deviceList->getCount();
 
     if(deviceCount == 0) {
         std::cerr << "Error: No devices found!" << std::endl;
@@ -60,14 +53,29 @@ int main(int argc, char *argv[]) try {
     std::cout << "Found " << deviceCount << " device(s)" << std::endl;
     std::cout << std::endl;
 
+    // Pre-query device to make enableDeviceClockSync work
+    // having to query this on the frame thread.
+    std::vector<std::shared_ptr<ob::Device>> devObjs;
+    for(uint32_t i = 0; i < deviceCount; ++i) {
+        devObjs.emplace_back(deviceList->getDevice(i));
+    }
+
+    if(config.syncIntervalSec > 0) {
+        uint64_t intervalMs = config.getSyncIntervalMs();
+        std::cout << "Enabling periodic time sync (interval: " << config.syncIntervalSec << "s)" << std::endl;
+        ctx.enableDeviceClockSync(intervalMs);
+        std::cout << "Wait for the initial time synchronization to complete" << std::endl;
+        std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+    }
+
     std::vector<std::shared_ptr<TimestampCollector>> collectors;
     auto                                             clockType = ctx.getTimestampClockType();
 
-    for(uint32_t i = 0; i < deviceCount; ++i) {
-        auto device    = deviceList->getDevice(i);
+    uint32_t i = 0;
+    for(auto device: devObjs) {
         auto collector = std::make_shared<TimestampCollector>(device, clockType);
 
-        std::cout << "[" << (i + 1) << "/" << deviceCount << "] ";
+        std::cout << "[" << ++i << "/" << deviceCount << "] ";
         if(!collector->start(config)) {
             std::cerr << "Failed to start collector for device " << i << std::endl;
             continue;
