@@ -165,7 +165,13 @@ bool TimestampCollector::start(const CmdLineConfig &config) {
     pipeline_->start(obConfig, [this](std::shared_ptr<ob::FrameSet> frameSet) {
         // Capture system timestamp immediately — before acquiring the lock — for maximum accuracy.
         uint64_t recvTimeUs = clockType_ == OB_CLOCK_TYPE_REALTIME ? getWallTimesUs() : getSteadyTimeUs();
-        frameQueue_.push({ frameSet, recvTimeUs });
+        {
+            std::lock_guard<std::mutex> lock(frameQueueMutex_);
+            if(!running_) {
+                return;
+            }
+            frameQueue_.push({ frameSet, recvTimeUs });
+        }
         frameQueueCv_.notify_one();
     });
 
@@ -174,17 +180,21 @@ bool TimestampCollector::start(const CmdLineConfig &config) {
 }
 
 void TimestampCollector::stop() {
-    if(!running_) {
+    if(!running_.exchange(false)) {
         return;
     }
 
     std::cout << "Stopping collector for " << getDeviceInfoStr() << std::endl;
 
-    running_ = false;
     frameQueueCv_.notify_all();
 
     if(pipeline_) {
-        pipeline_->stop();
+        try {
+            pipeline_->stop();
+        }
+        catch(ob::Error &e) {
+            std::cerr << "  Stop pipeline error: " << e.what() << std::endl;
+        }
         pipeline_.reset();
     }
 
@@ -207,7 +217,7 @@ bool TimestampCollector::isRunning() const {
 
 void TimestampCollector::processFrames() {
     while(running_) {
-        TimedFrameSet item{ nullptr, 0 };
+        std::queue<TimedFrameSet> localQueue;
         {
             std::unique_lock<std::mutex> lock(frameQueueMutex_);
             frameQueueCv_.wait_for(lock, std::chrono::milliseconds(100), [this] { return !running_ || !frameQueue_.empty(); });
@@ -218,13 +228,15 @@ void TimestampCollector::processFrames() {
             if(frameQueue_.empty()) {
                 continue;
             }
-
-            item = frameQueue_.front();
-            frameQueue_.pop();
+            frameQueue_.swap(localQueue);
         }
 
-        if(item.frameSet) {
-            onFrameSet(item.frameSet, item.recvTimeUs);
+        while(!localQueue.empty()) {
+            auto item = localQueue.front();
+            localQueue.pop();
+            if(item.frameSet) {
+                onFrameSet(item.frameSet, item.recvTimeUs);
+            }
         }
     }
 
