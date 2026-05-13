@@ -70,54 +70,64 @@ void GlobalTimestampCalculator::calculate(std::shared_ptr<Frame> frame) {
     double   predSteadyUs   = anchorSysUs + incrementalUs;
     uint64_t frameSteadyTs  = frame->getSteadyTimeStampUsec();
     int64_t  realtimeOffset = static_cast<int64_t>(frame->getSystemTimeStampUsec()) - static_cast<int64_t>(frameSteadyTs);
+    int64_t  globalTsp      = static_cast<int64_t>(predSteadyUs + 0.5) + realtimeOffset;
 
-    // Refit detection: if fit params changed, predSteadyUs jumps by Δ for this same frame.
-    // Shift ema_ by -Δ so output stays continuous and EMA continues tracking new residuals.
-    if(fitCached_ && (linearFuncParam.coefficientA != prevCoeffA_ || anchorDevMs != prevAnchorDevMs_ || anchorSysUs != prevAnchorSysUs_)) {
-        double prevPredUs = prevAnchorSysUs_ + prevCoeffA_ * (frameDevMs - prevAnchorDevMs_);
-        double delta      = predSteadyUs - prevPredUs;
-        ema_ -= delta;
-    }
-    prevCoeffA_      = linearFuncParam.coefficientA;
-    prevAnchorDevMs_ = anchorDevMs;
-    prevAnchorSysUs_ = anchorSysUs;
-    fitCached_       = true;
-
-    // EMA correction: tracks slow bias drift continuously. See header for math.
-    double  residualUs   = static_cast<double>(frameSteadyTs) - predSteadyUs;
-    int64_t correctionUs = 0;
-    if(!emaInited_) {
-        ema_               = residualUs;
-        madEma_            = 0.0;
-        startSteadyUs_     = frameSteadyTs;
-        lastFrameSteadyUs_ = frameSteadyTs;
-        emaInited_         = true;
-    }
-    else {
-        double dtUs = static_cast<double>(frameSteadyTs - lastFrameSteadyUs_);
-        if(dtUs <= 0.0) {
-            dtUs = 1.0;
+    auto ptpActive       = globalTimestampFitter_->isPtpActive();
+    auto ptpStateChanged = (ptpActive != prevPtpActive_);
+    if(!ptpActive) {
+        // Refit detection: if fit params changed, predSteadyUs jumps by Δ for this same frame.
+        // Shift ema_ by -Δ so output stays continuous and EMA continues tracking new residuals.
+        if(fitCached_ && (linearFuncParam.coefficientA != prevCoeffA_ || anchorDevMs != prevAnchorDevMs_ || anchorSysUs != prevAnchorSysUs_)) {
+            double prevPredUs = prevAnchorSysUs_ + prevCoeffA_ * (frameDevMs - prevAnchorDevMs_);
+            double delta      = predSteadyUs - prevPredUs;
+            ema_ -= delta;
         }
-        double alpha = 1.0 - std::exp(-dtUs / EMA_TAU_US);
-        double devUs = residualUs - ema_;
-        // Outlier gate: only active after baseline lock (MAD has settled by then).
-        double madThr   = std::max(MAD_FLOOR_US, OUTLIER_K * madEma_);
-        bool   isOutlier = baselineReady_ && (std::fabs(devUs) > madThr);
-        if(!isOutlier) {
-            ema_    = ema_ + alpha * devUs;
-            madEma_ = madEma_ + alpha * (std::fabs(devUs) - madEma_);
-        }
-        lastFrameSteadyUs_ = frameSteadyTs;
-    }
-    if(!baselineReady_ && (frameSteadyTs - startSteadyUs_) >= BASELINE_LOCK_US) {
-        emaBaseline_   = ema_;
-        baselineReady_ = true;
-    }
-    if(baselineReady_) {
-        correctionUs = static_cast<int64_t>(ema_ - emaBaseline_);
-    }
+        prevCoeffA_      = linearFuncParam.coefficientA;
+        prevAnchorDevMs_ = anchorDevMs;
+        prevAnchorSysUs_ = anchorSysUs;
+        fitCached_       = true;
 
-    int64_t globalTsp = static_cast<int64_t>(predSteadyUs + 0.5) + realtimeOffset + correctionUs;
+        // EMA correction: tracks slow bias drift continuously. See header for math.
+        double  residualUs   = static_cast<double>(frameSteadyTs) - predSteadyUs;
+        int64_t correctionUs = 0;
+        if(!emaInited_) {
+            ema_               = residualUs;
+            madEma_            = 0.0;
+            startSteadyUs_     = frameSteadyTs;
+            lastFrameSteadyUs_ = frameSteadyTs;
+            emaInited_         = true;
+        }
+        else {
+            double dtUs = static_cast<double>(frameSteadyTs - lastFrameSteadyUs_);
+            if(dtUs <= 0.0) {
+                dtUs = 1.0;
+            }
+            double alpha = 1.0 - std::exp(-dtUs / EMA_TAU_US);
+            double devUs = residualUs - ema_;
+            // Outlier gate: only active after baseline lock (MAD has settled by then).
+            double madThr    = std::max(MAD_FLOOR_US, OUTLIER_K * madEma_);
+            bool   isOutlier = baselineReady_ && (std::fabs(devUs) > madThr);
+            if(!isOutlier) {
+                ema_    = ema_ + alpha * devUs;
+                madEma_ = madEma_ + alpha * (std::fabs(devUs) - madEma_);
+            }
+            lastFrameSteadyUs_ = frameSteadyTs;
+        }
+        if(!baselineReady_ && (frameSteadyTs - startSteadyUs_) >= BASELINE_LOCK_US) {
+            emaBaseline_   = ema_;
+            baselineReady_ = true;
+        }
+        if(baselineReady_) {
+            correctionUs = static_cast<int64_t>(ema_ - emaBaseline_);
+        }
+        globalTsp += correctionUs;
+    }
+    else if(ptpStateChanged) {
+        // PTP just became active: clear accumulated EMA state once so it does not pollute
+        // the output if PTP is later lost and EMA resumes.
+        resetStateImpl();
+        prevPtpActive_ = ptpActive;
+    }
 
     frame->setGlobalTimeStampUsec(static_cast<uint64_t>(globalTsp));
 }

@@ -56,6 +56,14 @@ GlobalTimestampFitter::GlobalTimestampFitter(IDevice *owner)
             }
         });
     }
+    // PTP clock sync enable
+    if(propServer->isPropertySupported(OB_DEVICE_PTP_CLOCK_SYNC_ENABLE_BOOL, PROP_OP_WRITE, PROP_ACCESS_INTERNAL)) {
+        propServer->registerAccessCallback(OB_DEVICE_PTP_CLOCK_SYNC_ENABLE_BOOL, [&](uint32_t, const uint8_t *, size_t, PropertyOperationType operationType) {
+            if(operationType == PROP_OP_WRITE) {
+                ptpActive_ = propServer->getPropertyValueT<bool>(OB_DEVICE_PTP_CLOCK_SYNC_ENABLE_BOOL, PROP_ACCESS_INTERNAL);
+            }
+        });
+    }
 
     LOG_DEBUG("GlobalTimestampFitter created: maxQueueSize_={}, refreshIntervalMsec_={}", maxQueueSize_, refreshIntervalMsec_);
 }
@@ -78,6 +86,10 @@ LinearFuncParam GlobalTimestampFitter::getLinearFuncParam() {
     }
 
     return linearFuncParam_;
+}
+
+bool GlobalTimestampFitter::isPtpActive() const {
+    return ptpActive_.load();
 }
 
 void GlobalTimestampFitter::reFitting(bool async) {

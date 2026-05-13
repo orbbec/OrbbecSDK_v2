@@ -49,6 +49,9 @@ private:
     double prevAnchorSysUs_ = 0.0;
     bool   fitCached_       = false;
 
+    // Last known PTP-active state; used to detect transitions and reset EMA exactly once per edge.
+    bool prevPtpActive_ = false;
+
     // Set by clear() (any thread); drained by calculate() (frame thread).
     std::atomic<bool> pendingReset_{ false };
 };

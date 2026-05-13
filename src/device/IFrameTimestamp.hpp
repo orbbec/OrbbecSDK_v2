@@ -42,8 +42,9 @@ public:
     virtual void pause()               = 0;
     virtual void resume()              = 0;
 
-    virtual void enable(bool en)   = 0;
-    virtual bool isEnabled() const = 0;
+    virtual void enable(bool en)     = 0;
+    virtual bool isEnabled() const   = 0;
+    virtual bool isPtpActive() const = 0;
 };
 
 }  // namespace libobsensor

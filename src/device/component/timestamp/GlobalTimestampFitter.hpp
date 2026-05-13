@@ -95,6 +95,7 @@ public:
 
     void enable(bool en) override;
     bool isEnabled() const override;
+    bool isPtpActive() const override;
 
 private:
     void                      fittingLoop();
@@ -129,6 +130,7 @@ private:
     utils::SteadyCondVar sampleCondVar_;
     std::atomic<bool>    sampleLoopExit_;
     std::atomic<bool>    needBootstrap_{ false };
+    std::atomic<bool>    ptpActive_{ false };
     // Serializes acquire+queue+fit between fittingLoop and ensureFitting to avoid reFitting()/background races.
     std::mutex samplingOpMutex_;
 
