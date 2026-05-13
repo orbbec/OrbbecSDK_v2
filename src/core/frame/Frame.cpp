@@ -248,10 +248,12 @@ void Frame::setStreamProfile(std::shared_ptr<const StreamProfile> streamProfile)
 }
 
 void Frame::copyInfoFromOther(const std::shared_ptr<const Frame> otherFrame) {
-    number_              = otherFrame->number_;
-    timeStampUsec_       = otherFrame->timeStampUsec_;
-    systemTimeStampUsec_ = otherFrame->systemTimeStampUsec_;
-    globalTimeStampUsec_ = otherFrame->globalTimeStampUsec_;
+    number_                  = otherFrame->number_;
+    timeStampUsec_           = otherFrame->timeStampUsec_;
+    systemTimeStampUsec_     = otherFrame->systemTimeStampUsec_;
+    steadyTimeStampUsec_     = otherFrame->steadyTimeStampUsec_;
+    globalTimeStampUsec_     = otherFrame->globalTimeStampUsec_;
+    deviceTimestampFromHost_ = otherFrame->deviceTimestampFromHost_;
 
     metadataSize_ = otherFrame->metadataSize_;
     memcpy(metadata_, otherFrame->metadata_, metadataSize_);
