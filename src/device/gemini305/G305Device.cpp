@@ -77,6 +77,44 @@ void G305Device::init() {
     fetchDeviceInfo();
     fetchExtensionInfo();
 
+    auto fwVersion      = getFirmwareVersionInt();
+    auto propertyServer = getPropertyServer();
+    {
+        if(fwVersion >= 10071) {
+            auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+            propertyServer->registerProperty(OB_PROP_COLOR_AUTO_EXPOSURE_BOOL, "rw", "rw", vendorPropertyAccessor.get());
+            propertyServer->registerProperty(OB_PROP_COLOR_GAIN_INT, "rw", "rw", vendorPropertyAccessor.get());
+            propertyServer->registerProperty(OB_PROP_COLOR_AUTO_EXPOSURE_PRIORITY_INT, "rw", "rw", vendorPropertyAccessor.get());
+            propertyServer->registerProperty(OB_PROP_DEPTH_GAIN_INT, "rw", "rw", vendorPropertyAccessor.get());
+        }
+        else {
+            {
+                auto &sourcePortInfo      = getSensorPortInfo(OB_SENSOR_COLOR_LEFT);
+                auto  uvcPropertyAccessor = std::make_shared<LazyPropertyAccessor>([this, sourcePortInfo]() {
+                    auto port     = getSourcePort(sourcePortInfo);
+                    auto accessor = std::make_shared<UvcPropertyAccessor>(port);
+                    return accessor;
+                });
+                propertyServer->registerProperty(OB_PROP_COLOR_AUTO_EXPOSURE_BOOL, "rw", "rw", uvcPropertyAccessor);
+                propertyServer->registerProperty(OB_PROP_COLOR_GAIN_INT, "rw", "rw", uvcPropertyAccessor);
+                propertyServer->registerProperty(OB_PROP_COLOR_AUTO_EXPOSURE_PRIORITY_INT, "rw", "rw", uvcPropertyAccessor);
+            }
+
+            {
+                auto &sourcePortInfo      = getSensorPortInfo(OB_SENSOR_DEPTH);
+                auto  uvcPropertyAccessor = std::make_shared<LazyPropertyAccessor>([this, sourcePortInfo]() {
+                    auto port     = getSourcePort(sourcePortInfo);
+                    auto accessor = std::make_shared<UvcPropertyAccessor>(port);
+                    return accessor;
+                });
+                propertyServer->registerProperty(OB_PROP_DEPTH_GAIN_INT, "rw", "rw", uvcPropertyAccessor);
+            }
+        }
+        propertyServer->aliasProperty(OB_PROP_IR_AUTO_EXPOSURE_BOOL, OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL);
+        propertyServer->aliasProperty(OB_PROP_IR_EXPOSURE_INT, OB_PROP_DEPTH_EXPOSURE_INT);
+        propertyServer->aliasProperty(OB_PROP_IR_GAIN_INT, OB_PROP_DEPTH_GAIN_INT);
+    }
+
     videoFrameTimestampCalculatorCreator_ = [this]() {
         auto metadataType = OB_FRAME_METADATA_TYPE_TIMESTAMP;
         return std::make_shared<FrameTimestampCalculatorOverMetadata>(this, metadataType, frameTimeFreq_);
@@ -97,9 +135,7 @@ void G305Device::init() {
     auto sensorStreamStrategy = std::make_shared<G305SensorStreamStrategy>(this);
     registerComponent(OB_DEV_COMPONENT_SENSOR_STREAM_STRATEGY, sensorStreamStrategy);
 
-    auto fwVersion = getFirmwareVersionInt();
     if(fwVersion >= 10054) {
-        auto propertyServer         = getPropertyServer();
         auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
         propertyServer->registerProperty(OB_PROP_COLOR_ANTI_FLICKER_BOOL, "rw", "rw", vendorPropertyAccessor.get());
     }
@@ -412,22 +448,7 @@ void G305Device::initProperties() {
             propertyServer->registerProperty(OB_PROP_COLOR_POWER_LINE_FREQUENCY_INT, "rw", "rw", uvcPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_COLOR_BACKLIGHT_COMPENSATION_INT, "rw", "rw", uvcPropertyAccessor);
         }
-        else if(sensor == OB_SENSOR_COLOR_LEFT) {
-            auto uvcPropertyAccessor = std::make_shared<LazyPropertyAccessor>([this, sourcePortInfo]() {
-                auto port     = getSourcePort(sourcePortInfo);
-                auto accessor = std::make_shared<UvcPropertyAccessor>(port);
-                return accessor;
-            });
-            propertyServer->registerProperty(OB_PROP_COLOR_AUTO_EXPOSURE_BOOL, "rw", "rw", uvcPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_COLOR_GAIN_INT, "rw", "rw", uvcPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_COLOR_AUTO_EXPOSURE_PRIORITY_INT, "rw", "rw", uvcPropertyAccessor);
-        }
         else if(sensor == OB_SENSOR_DEPTH) {
-            auto uvcPropertyAccessor = std::make_shared<LazyPropertyAccessor>([this, sourcePortInfo]() {
-                auto port     = getSourcePort(sourcePortInfo);
-                auto accessor = std::make_shared<UvcPropertyAccessor>(port);
-                return accessor;
-            });
 
             auto vendorPropertyAccessor = std::make_shared<LazySuperPropertyAccessor>([this]() {
                 auto accessor = getComponentT<IPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
@@ -436,7 +457,6 @@ void G305Device::initProperties() {
 
             propertyServer->registerProperty(OB_PROP_DISP_SEARCH_OFFSET_INT, "rw", "rw", d2dPropertyAccessor);  // using d2d property accessor
             propertyServer->registerProperty(OB_STRUCT_DISP_OFFSET_CONFIG, "rw", "rw", vendorPropertyAccessor);
-            propertyServer->registerProperty(OB_PROP_DEPTH_GAIN_INT, "rw", "rw", uvcPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_DEPTH_AUTO_EXPOSURE_PRIORITY_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_DEPTH_EXPOSURE_INT, "rw", "rw", vendorPropertyAccessor);
@@ -481,10 +501,6 @@ void G305Device::initProperties() {
             propertyServer->registerProperty(OB_PROP_COLOR_EXPOSURE_INT, "rw", "rw", vendorPropertyAccessor);  // using vendor property accessor
             propertyServer->registerProperty(OB_PROP_COLOR_AE_MAX_EXPOSURE_INT, "rw", "rw", vendorPropertyAccessor);
             // propertyServer->registerProperty(OB_STRUCT_COLOR_SYNCED_EXPOSURE_PARAM, "rw", "rw", vendorPropertyAccessor);
-
-            propertyServer->aliasProperty(OB_PROP_IR_AUTO_EXPOSURE_BOOL, OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL);
-            propertyServer->aliasProperty(OB_PROP_IR_EXPOSURE_INT, OB_PROP_DEPTH_EXPOSURE_INT);
-            propertyServer->aliasProperty(OB_PROP_IR_GAIN_INT, OB_PROP_DEPTH_GAIN_INT);
 
             if(isGmslDevice_) {
                 propertyServer->registerProperty(OB_PROP_DEVICE_REPOWER_BOOL, "w", "w", vendorPropertyAccessor);
@@ -1582,6 +1598,11 @@ void G305Device::fixSensorList() {
     auto sensors = getSensorTypeList();
     for(auto &sensor: sensors) {
         if(sensor == OB_SENSOR_COLOR) {
+            propertyServer->unregisterProperty(OB_PROP_COLOR_AUTO_EXPOSURE_BOOL);
+            propertyServer->unregisterProperty(OB_PROP_COLOR_EXPOSURE_INT);
+            propertyServer->unregisterProperty(OB_PROP_COLOR_AUTO_EXPOSURE_PRIORITY_INT);
+            propertyServer->unregisterProperty(OB_PROP_COLOR_GAIN_INT);
+
             propertyServer->aliasProperty(OB_PROP_COLOR_AUTO_EXPOSURE_BOOL, OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL);
             propertyServer->aliasProperty(OB_PROP_COLOR_EXPOSURE_INT, OB_PROP_DEPTH_EXPOSURE_INT);
             propertyServer->aliasProperty(OB_PROP_COLOR_GAIN_INT, OB_PROP_DEPTH_GAIN_INT);
@@ -1593,10 +1614,13 @@ void G305Device::fixSensorList() {
             propertyServer->registerProperty(OB_PROP_COLOR_EXPOSURE_INT, "rw", "rw", colorAeAccessor);
         }
         else if(sensor == OB_SENSOR_COLOR_LEFT) {
-            auto aePriority = propertyServer->getPropertyValueT<int>(OB_PROP_COLOR_AUTO_EXPOSURE_PRIORITY_INT);
-            auto ae         = propertyServer->getPropertyValueT<bool>(OB_PROP_COLOR_AUTO_EXPOSURE_BOOL);
-            propertyServer->setPropertyValueT(OB_PROP_COLOR_AUTO_EXPOSURE_PRIORITY_INT, aePriority, PROP_ACCESS_USER);
-            propertyServer->setPropertyValueT(OB_PROP_COLOR_AUTO_EXPOSURE_BOOL, ae, PROP_ACCESS_USER);
+            auto fwVersion = getFirmwareVersionInt();
+            if(fwVersion < 10071) {
+                auto aePriority = propertyServer->getPropertyValueT<int>(OB_PROP_COLOR_AUTO_EXPOSURE_PRIORITY_INT);
+                auto ae         = propertyServer->getPropertyValueT<bool>(OB_PROP_COLOR_AUTO_EXPOSURE_BOOL);
+                propertyServer->setPropertyValueT(OB_PROP_COLOR_AUTO_EXPOSURE_PRIORITY_INT, aePriority, PROP_ACCESS_INTERNAL);
+                propertyServer->setPropertyValueT(OB_PROP_COLOR_AUTO_EXPOSURE_BOOL, ae, PROP_ACCESS_INTERNAL);
+            }
         }
     }
 }
