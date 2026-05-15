@@ -86,7 +86,9 @@ void ObRTPUDPClient::start(std::shared_ptr<const StreamProfile> profile, Mutable
     }
 
     startReceive_.store(true);
+    // Clear any stale data from previous runs
     rtpQueue_.reset();
+    rtpProcessor_.reset();
     rtpProcessor_.resetNumber();
     currentProfile_ = profile;
     frameCallback_  = callback;
@@ -236,7 +238,11 @@ void ObRTPUDPClient::stop() {
         receiverThread_.join();
         flush();
     }
+
+    // Ensure any buffered RTP packets are discarded when stopping
     rtpQueue_.destroy();
+    rtpProcessor_.reset();
+
     if(callbackThread_.joinable()) {
         callbackThread_.join();
     }

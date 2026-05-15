@@ -34,7 +34,9 @@ void ObRTPPacketQueue::destroy() {
     {
         std::lock_guard<std::mutex> lock(mutex_);
         destroy_ = true;
-    }  
+        // discard any buffered packets
+        std::queue<std::vector<uint8_t>>().swap(queue_);
+    }
     cond_var_.notify_all();
 }
 
@@ -42,6 +44,8 @@ void ObRTPPacketQueue::reset() {
     {
         std::lock_guard<std::mutex> lock(mutex_);
         destroy_ = false;
+        // clear any remaining packets from previous session
+        std::queue<std::vector<uint8_t>>().swap(queue_);
     }
     cond_var_.notify_all();
 }

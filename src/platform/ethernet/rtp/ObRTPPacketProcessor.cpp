@@ -36,6 +36,17 @@ bool ObRTPPacketProcessor::foundStartPacket() {
 }
 
 bool ObRTPPacketProcessor::process(RTPHeader *header, uint8_t *recvData, uint32_t length, uint32_t type, OBFormat format) {
+    // Critical initialization check - buffer must be allocated
+    if(rtpBuffer_ == nullptr) {
+        LOG_WARN("RTP buffer allocation failed");
+        return false;
+    }
+
+    if(length < RTP_FIX_SIZE) {
+        LOG_WARN("RTP packet too small to contain header: {} bytes", length);
+        return false;
+    }
+
     if(fameSequenceNumberCount_ >= maxPacketCount_) {
         LOG_WARN("RTP data buffer overflow!");
         reset();
@@ -57,9 +68,22 @@ bool ObRTPPacketProcessor::process(RTPHeader *header, uint8_t *recvData, uint32_
 
     fameSequenceNumberCount_++;
 
-    uint32_t offset  = RTP_FIX_METADATA_OFFSET + sequenceNumber * maxPacketSize_;
+    // Protect against invalid sequence numbers / out-of-range writes.
+    if(sequenceNumber >= maxPacketCount_) {
+        LOG_WARN("RTP sequence number {} exceeds max packet count {}", sequenceNumber, maxPacketCount_);
+        reset();
+        return false;
+    }
+
     uint32_t dataLen = length - RTP_FIX_SIZE;
-    if(rtpBuffer_ != nullptr && dataLen > 0) {
+    uint32_t offset  = RTP_FIX_METADATA_OFFSET + (uint32_t)sequenceNumber * maxPacketSize_;
+    if(offset + dataLen > maxCacheSize_) {
+        LOG_WARN("RTP packet data overruns buffer (offset={} dataLen={} max={})", offset, dataLen, maxCacheSize_);
+        reset();
+        return false;
+    }
+
+    if(dataLen > 0) {
         memcpy(rtpBuffer_ + offset, recvData + RTP_FIX_SIZE, dataLen);
         dataSize_ += dataLen;
     }
