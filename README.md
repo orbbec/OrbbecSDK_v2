@@ -101,7 +101,7 @@ Here is the device support list of OrbbecSDK v1 (v1.x) and Orbbec SDK v2 (v2.x):
     <tr>
       <td>Gemini 2 XL</td>
       <td>recommended for new designs</td>
-      <td>to be supported</td>
+      <td>not supported</td>
     </tr>
     <tr>
       <td>Gemini 215</td>
