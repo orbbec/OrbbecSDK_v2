@@ -13,10 +13,7 @@
 namespace libobsensor {
 
 const std::map<int, std::string> G305DeviceNameMap = {
-    { 0x0840, "Gemini 305" },
-    { 0x0841, "Gemini 305" },
-    { 0x0842, "Gemini 305g" },
-    { 0x0843, "Gemini 301g" },
+    { 0x0840, "Gemini 305" }, { 0x0841, "Gemini 305" }, { 0x0842, "Gemini 305g" }, { 0x0843, "Gemini 301g" }, { 0x0845, "Gemini 309g" },
 };
 
 G305DeviceInfo::G305DeviceInfo(const SourcePortInfoList groupedInfoList) {

@@ -197,7 +197,7 @@ bool ob_smpl_is_lidar_device(ob_device *device) {
 }
 
 bool ob_smpl_is_gemini305_device(int vid, int pid) {
-    return (vid == OB_DEVICE_VID && (pid == 0x0840 || pid == 0x0841 || pid == 0x0842 || pid == 0x0843));
+    return (vid == OB_DEVICE_VID && (pid == 0x0840 || pid == 0x0841 || pid == 0x0842 || pid == 0x0843|| pid == 0x0845));
 }
 
 bool ob_smpl_is_gemini305g_device(int vid, int pid, const char *connectionType) {

@@ -51,6 +51,7 @@ $MultiPinDevices = "USB\VID_2BC5&PID_06D0&MI_00", #  Gemini 2 R  // 3 pin for de
                  "USB\VID_2BC5&PID_0841&MI_00",
                  "USB\VID_2BC5&PID_0842&MI_00",
                  "USB\VID_2BC5&PID_0843&MI_00",
+                 "USB\VID_2BC5&PID_0845&MI_00",
                  "USB\VID_2BC5&PID_081A&MI_00", 
                  "USB\VID_2BC5&PID_081C&MI_00",     
                  "USB\VID_2BC5&PID_081D&MI_00"                  
