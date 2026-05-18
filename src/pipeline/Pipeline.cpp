@@ -371,11 +371,11 @@ void Pipeline::stop() {
 
     if(config_ && (config_->isStreamEnabled(OB_STREAM_DEPTH) || config_->isStreamEnabled(OB_STREAM_COLOR))) {
         resetAlignMode();
+        enableHardwareD2C(false);
     }
     if(frameAggregator_) {
         frameAggregator_->clearAllFrameQueue();
     }
-    enableHardwareD2C(false);
 
     // flush output frame queue
     outputFrameQueue_->flush();
@@ -622,6 +622,11 @@ void Pipeline::checkHardwareD2CConfig() {
     auto frameProcessor      = device_->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR, false);
     auto depthFrameProcessor = std::dynamic_pointer_cast<DepthFrameProcessor>(frameProcessor.get());
     if(!depthFrameProcessor) {
+        return;
+    }
+
+    // Skip HW D2C management if config has no depth/color streams (e.g. IMU-only config)
+    if(!config_->isStreamEnabled(OB_STREAM_DEPTH) && !config_->isStreamEnabled(OB_STREAM_COLOR)) {
         return;
     }
 
