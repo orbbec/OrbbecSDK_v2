@@ -523,6 +523,37 @@ void ob_device_enable_global_timestamp(ob_device *device, bool enable, ob_error 
 }
 HANDLE_EXCEPTIONS_NO_RETURN(device, enable)
 
+void ob_device_set_global_timestamp_host_clock_fn(ob_device *device, ob_host_clock_fn fn, void *user_data, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(device);
+    auto globalTimestampFilter = device->device->getComponentT<libobsensor::IGlobalTimestampFitter>(libobsensor::OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER);
+    if(fn == nullptr) {
+        globalTimestampFilter->setHostClockFn(libobsensor::HostClockFn{});
+    }
+    else {
+        globalTimestampFilter->setHostClockFn([fn, user_data]() -> uint64_t { return fn(user_data); });
+    }
+}
+HANDLE_EXCEPTIONS_NO_RETURN(device, fn, user_data)
+
+void ob_device_set_global_timestamp_max_rtt_us(ob_device *device, uint64_t max_rtt_us, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(device);
+    auto globalTimestampFilter = device->device->getComponentT<libobsensor::IGlobalTimestampFitter>(libobsensor::OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER);
+    globalTimestampFilter->setMaxValidRtt(max_rtt_us);
+}
+HANDLE_EXCEPTIONS_NO_RETURN(device, max_rtt_us)
+
+void ob_device_get_global_timestamp_linear_param(const ob_device *device, ob_linear_func_param *out_param, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(device);
+    VALIDATE_NOT_NULL(out_param);
+    auto globalTimestampFilter = device->device->getComponentT<libobsensor::IGlobalTimestampFitter>(libobsensor::OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER);
+    auto param                 = globalTimestampFilter->getLinearFuncParam();
+    out_param->coefficient_a   = param.coefficientA;
+    out_param->constant_b      = param.constantB;
+    out_param->check_data_x    = param.checkDataX;
+    out_param->check_data_y    = param.checkDataY;
+}
+HANDLE_EXCEPTIONS_NO_RETURN(device, out_param)
+
 void ob_device_update_firmware(ob_device *device, const char *path, ob_device_fw_update_callback callback, bool async, void *user_data,
                                ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(device);

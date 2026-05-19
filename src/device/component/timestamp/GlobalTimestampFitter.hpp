@@ -22,7 +22,8 @@ public:
     void            reFitting(bool async) override;
     void            pause() override;
     void            resume() override;
-    void            setMaxValidRtt(uint64_t maxValidTime);
+    void            setMaxValidRtt(uint64_t maxValidUs) override;
+    void            setHostClockFn(HostClockFn fn) override;
 
     void enable(bool en) override;
     bool isEnabled() const override;
@@ -59,5 +60,8 @@ private:
     LinearFuncParam         linearFuncParam_;
     uint64_t                lastCheckDataY = 0;
     uint64_t                maxValidRtt_;
+
+    std::mutex  hostClockFnMutex_;
+    HostClockFn hostClockFn_;
 };
 }  // namespace libobsensor

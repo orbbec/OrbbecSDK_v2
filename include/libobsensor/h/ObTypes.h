@@ -383,6 +383,20 @@ typedef struct {
 } OBDataChunk, ob_data_chunk;
 
 /**
+ * @brief Coefficients of the global-timestamp linear fit `host_us = a * device_us + b`.
+ *
+ * Returned by ob_device_get_global_timestamp_linear_param. All fields are zero
+ * until the fitter has collected enough samples to fit (typically a few
+ * seconds after enabling the global timestamp).
+ */
+typedef struct {
+    double   coefficient_a;  ///< Slope of the fit
+    double   constant_b;     ///< Intercept of the fit
+    uint64_t check_data_x;   ///< Most recent device-time sample fed into the fit (x)
+    uint64_t check_data_y;   ///< Host-time partner of check_data_x (y)
+} OBLinearFuncParam, ob_linear_func_param;
+
+/**
  * @brief Structure for integer range
  */
 typedef struct {
@@ -2147,6 +2161,19 @@ typedef void (*ob_playback_status_changed_callback)(ob_playback_status status, v
  * @param[in] user_data User-defined data
  */
 typedef void (*ob_pipeline_status_callback)(ob_pipeline_status status, void *user_data);
+
+/**
+ * @brief Host clock callback signature for the global timestamp fitter.
+ *
+ * Returns the current host time in microseconds, in whatever clock domain the
+ * caller wants device timestamps mapped into. The fitter pairs the value with
+ * a device-time query to build a linear `device -> host` fit.
+ *
+ * @param[in] user_data The opaque pointer passed alongside the function pointer
+ *                      when registering the callback.
+ * @return The current host time in microseconds.
+ */
+typedef uint64_t (*ob_host_clock_fn)(void *user_data);
 
 /**
  * @brief Callback Id

@@ -24,7 +24,12 @@ const std::string &GlobalTimestampFitter::GetCurrentSN() const {
 }
 
 GlobalTimestampFitter::GlobalTimestampFitter(IDevice *owner)
-    : DeviceComponentBase(owner), enable_(false), sampleLoopExit_(false), linearFuncParam_({ 0, 0, 0, 0 }), maxValidRtt_(MAX_VALID_RTT) {
+    : DeviceComponentBase(owner),
+      enable_(false),
+      sampleLoopExit_(false),
+      linearFuncParam_({ 0, 0, 0, 0 }),
+      maxValidRtt_(MAX_VALID_RTT),
+      hostClockFn_(&utils::getNowTimesUs) {
     std::string deviceName = utils::string::removeSpace(owner->getInfo()->name_);
     auto        envConfig  = EnvConfig::getInstance();
     int         value      = 0;
@@ -108,8 +113,27 @@ void GlobalTimestampFitter::resume() {
     }
 }
 
-void GlobalTimestampFitter::setMaxValidRtt(uint64_t maxValidTime) {
-    maxValidRtt_ = maxValidTime;
+void GlobalTimestampFitter::setMaxValidRtt(uint64_t maxValidUs) {
+    maxValidRtt_ = maxValidUs;
+}
+
+void GlobalTimestampFitter::setHostClockFn(HostClockFn fn) {
+    if(!fn) {
+        fn = &utils::getNowTimesUs;
+    }
+    {
+        std::unique_lock<std::mutex> lock(hostClockFnMutex_);
+        hostClockFn_ = std::move(fn);
+    }
+    // Any samples already in the queue were taken in the previous clock domain;
+    // mixing them with the new domain would produce garbage in the linear fit.
+    // Clear and force a refit on the next sample iteration.
+    {
+        std::unique_lock<std::mutex> lock(sampleMutex_);
+        samplingQueue_.clear();
+        needCalculation_ = true;
+        sampleCondVar_.notify_one();
+    }
 }
 
 void GlobalTimestampFitter::enable(bool en) {
@@ -206,9 +230,19 @@ bool GlobalTimestampFitter::ensureFitting() {
         std::unique_lock<std::mutex> lock(sampleMutex_);
         while(samplingQueue_.size() < 6 && count < 6) {
             ++count;
-            auto sysTsp1Usec = utils::getNowTimesUs();
-            devTime          = propertyServer->getStructureDataT<OBDeviceTime>(OB_STRUCT_DEVICE_TIME);
-            auto sysTsp2Usec = utils::getNowTimesUs();
+            uint64_t sysTsp1Usec;
+            uint64_t sysTsp2Usec;
+            {
+                // Hold hostClockFnMutex_ across the entire bracket so a concurrent
+                // setHostClockFn cannot return until this sample finishes. This is
+                // what lets callers safely free old closure storage after the
+                // setter returns. Cost: ~RTT of one device-time query (typically
+                // a few ms) of contention with the setter.
+                std::unique_lock<std::mutex> hostFnLock(hostClockFnMutex_);
+                sysTsp1Usec = hostClockFn_();
+                devTime     = propertyServer->getStructureDataT<OBDeviceTime>(OB_STRUCT_DEVICE_TIME);
+                sysTsp2Usec = hostClockFn_();
+            }
             sysTspUsec       = (sysTsp2Usec + sysTsp1Usec) / 2;
             devTime.rtt      = sysTsp2Usec - sysTsp1Usec;
             if(devTime.rtt > maxValidRtt_) {
@@ -257,9 +291,15 @@ void GlobalTimestampFitter::fittingLoop() {
             auto owner          = getOwner();
             auto propertyServer = owner->getPropertyServer();
 
-            auto sysTsp1Usec = utils::getNowTimesUs();
-            devTime          = propertyServer->getStructureDataT<OBDeviceTime>(OB_STRUCT_DEVICE_TIME);
-            auto sysTsp2Usec = utils::getNowTimesUs();
+            uint64_t sysTsp1Usec;
+            uint64_t sysTsp2Usec;
+            {
+                // See ensureFitting() for why this mutex is held across the property query.
+                std::unique_lock<std::mutex> hostFnLock(hostClockFnMutex_);
+                sysTsp1Usec = hostClockFn_();
+                devTime     = propertyServer->getStructureDataT<OBDeviceTime>(OB_STRUCT_DEVICE_TIME);
+                sysTsp2Usec = hostClockFn_();
+            }
             sysTspUsec       = (sysTsp2Usec + sysTsp1Usec) / 2;
             devTime.rtt      = sysTsp2Usec - sysTsp1Usec;
             if(devTime.rtt > maxValidRtt_) {
