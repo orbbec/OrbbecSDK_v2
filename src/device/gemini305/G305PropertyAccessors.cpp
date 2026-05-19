@@ -197,14 +197,7 @@ void G305HWNoiseRemovePropertyAccessor::getPropertyRange(uint32_t propertyId, OB
         commandPort->getPropertyRange(propertyId, range);
         auto cur              = exp(range->cur.floatValue) / (1 + exp(range->cur.floatValue));
         range->cur.floatValue = cur;
-
-        auto depthWorkModeManager = owner_->getComponentT<G305DepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
-        if(depthWorkModeManager) {
-            const auto &currentDepthWorkMode = depthWorkModeManager->getCurrentDepthWorkMode();
-            if(std::strcmp(currentDepthWorkMode.name, "Default") == 0 || std::strcmp(currentDepthWorkMode.name, "Close Range Default") == 0) {
-                range->def.floatValue = 0.1f;
-            }
-        }
+        range->def.floatValue = 0.1f;
     } break;
 
     default: {
