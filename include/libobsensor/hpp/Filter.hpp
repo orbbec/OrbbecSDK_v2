@@ -1381,6 +1381,23 @@ public:
     }
 
     /**
+     * @brief Get the FalsePositive filter fpebfMinBleedLength range.
+     *
+     * @return OBUint16PropertyRange the fpebfMinBleedLength value of property range.
+     */
+    OBUint16PropertyRange getfpebfMinBleedLengthRange() {
+        OBUint16PropertyRange range{};
+        const auto           &schemaVec = getConfigSchemaVec();
+        for(const auto &item: schemaVec) {
+            if(strcmp(item.name, "fpebfMinBleedLength") == 0) {
+                range = getPropertyRange<OBUint16PropertyRange>(item, getConfigValue("fpebfMinBleedLength"));
+                break;
+            }
+        }
+        return range;
+    }
+
+    /**
      * @brief Get the FalsePositive filter fpTextureSparsityFilterEnable range.
      *
      * @return OBUint8PropertyRange the fpTextureSparsityFilterEnable value of property range.
@@ -1612,6 +1629,74 @@ public:
         for(const auto &item: schemaVec) {
             if(strcmp(item.name, "fppafMaxSpeckleSize") == 0) {
                 range = getPropertyRange<OBUint16PropertyRange>(item, getConfigValue("fppafMaxSpeckleSize"));
+                break;
+            }
+        }
+        return range;
+    }
+
+    /**
+     * @brief Get the FalsePositive filter fppafMaxWidthRatio range.
+     *
+     * @return OBFloatPropertyRange the fppafMaxWidthRatio value of property range.
+     */
+    OBFloatPropertyRange getfppafMaxWidthRatioRange() {
+        OBFloatPropertyRange range{};
+        const auto          &schemaVec = getConfigSchemaVec();
+        for(const auto &item: schemaVec) {
+            if(strcmp(item.name, "fppafMaxWidthRatio") == 0) {
+                range = getPropertyRange<OBFloatPropertyRange>(item, getConfigValue("fppafMaxWidthRatio"));
+                break;
+            }
+        }
+        return range;
+    }
+
+    /**
+     * @brief Get the FalsePositive filter fppafMaxHeightRatio range.
+     *
+     * @return OBFloatPropertyRange the fppafMaxHeightRatio value of property range.
+     */
+    OBFloatPropertyRange getfppafMaxHeightRatioRange() {
+        OBFloatPropertyRange range{};
+        const auto          &schemaVec = getConfigSchemaVec();
+        for(const auto &item: schemaVec) {
+            if(strcmp(item.name, "fppafMaxHeightRatio") == 0) {
+                range = getPropertyRange<OBFloatPropertyRange>(item, getConfigValue("fppafMaxHeightRatio"));
+                break;
+            }
+        }
+        return range;
+    }
+
+    /**
+     * @brief Get the FalsePositive filter fppafTolerance range.
+     *
+     * @return OBFloatPropertyRange the fppafTolerance value of property range.
+     */
+    OBFloatPropertyRange getfppafToleranceRange() {
+        OBFloatPropertyRange range{};
+        const auto          &schemaVec = getConfigSchemaVec();
+        for(const auto &item: schemaVec) {
+            if(strcmp(item.name, "fppafTolerance") == 0) {
+                range = getPropertyRange<OBFloatPropertyRange>(item, getConfigValue("fppafTolerance"));
+                break;
+            }
+        }
+        return range;
+    }
+
+    /**
+     * @brief Get the FalsePositive filter fppafScore range.
+     *
+     * @return OBUint16PropertyRange the fppafScore value of property range.
+     */
+    OBUint16PropertyRange getfppafScoreRange() {
+        OBUint16PropertyRange range{};
+        const auto           &schemaVec = getConfigSchemaVec();
+        for(const auto &item: schemaVec) {
+            if(strcmp(item.name, "fppafScore") == 0) {
+                range = getPropertyRange<OBUint16PropertyRange>(item, getConfigValue("fppafScore"));
                 break;
             }
         }

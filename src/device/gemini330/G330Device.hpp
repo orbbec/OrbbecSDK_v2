@@ -36,6 +36,7 @@ private:
 
     std::shared_ptr<const StreamProfile> loadDefaultStreamProfile(OBSensorType sensorType);
     void                                 loadDefaultDepthPostProcessingConfig();
+    void                                 updateDepthPostProcessingFilterList() override;
 
 private:
     const uint64_t                                              deviceTimeFreq_ = 1000;     // in ms
@@ -43,6 +44,8 @@ private:
     std::function<std::shared_ptr<IFrameTimestampCalculator>()> videoFrameTimestampCalculatorCreator_;
     std::shared_ptr<IFrameTimestampCalculator>                  intraCameraSyncTimestampAdjuster_;
     bool                                                        isGmslDevice_;
+
+    std::map<OBSensorType, std::vector<std::shared_ptr<IFilter>>> sensorFilterListMap_;
 };
 
 #if defined(BUILD_NET_PAL)
@@ -74,6 +77,7 @@ private:
 
     std::shared_ptr<const StreamProfile> loadDefaultStreamProfile(OBSensorType sensorType);
     void                                 loadDefaultDepthPostProcessingConfig();
+    void                                 updateDepthPostProcessingFilterList() override;
 
 private:
     std::shared_ptr<const SourcePortInfo>                       vendorPortInfo_;
@@ -84,6 +88,8 @@ private:
     std::shared_ptr<GvcpCcpController>                          ccpController_;
 
     StreamProfileList allNetProfileList_;
+
+    std::map<OBSensorType, std::vector<std::shared_ptr<IFilter>>> sensorFilterListMap_;
 
     int      netBandwidth_;
     uint32_t linkSpeed_;

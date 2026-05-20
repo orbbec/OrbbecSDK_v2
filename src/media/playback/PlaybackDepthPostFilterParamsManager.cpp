@@ -132,6 +132,7 @@ void PlaybackDepthPostFilterParamsManager::parseFilterParamsV0102(const uint8_t 
     fpFilterParams_.push_back(std::to_string(fpFilterParams.edge_bleed_params.max_x_ratio));
     fpFilterParams_.push_back(std::to_string(fpFilterParams.edge_bleed_params.min_y_ratio));
     fpFilterParams_.push_back(std::to_string(fpFilterParams.edge_bleed_params.max_y_ratio));
+    fpFilterParams_.push_back(std::to_string(fpFilterParams.edge_bleed_params.bleed_num));
 
     fpFilterParams_.push_back(std::to_string(fpFilterParams.texture_sparsity_params.is_textureSparsityNoise_enable));
     fpFilterParams_.push_back(std::to_string(fpFilterParams.texture_sparsity_params.min_x_ratio));
@@ -148,6 +149,10 @@ void PlaybackDepthPostFilterParamsManager::parseFilterParamsV0102(const uint8_t 
     fpFilterParams_.push_back(std::to_string(fpFilterParams.pattern_ambiguity_params.max_y_ratio));
     fpFilterParams_.push_back(std::to_string(fpFilterParams.pattern_ambiguity_params.max_depth));
     fpFilterParams_.push_back(std::to_string(fpFilterParams.pattern_ambiguity_params.max_size));
+    fpFilterParams_.push_back(std::to_string(fpFilterParams.texture_sparsity_params.max_w_ratio));
+    fpFilterParams_.push_back(std::to_string(fpFilterParams.texture_sparsity_params.max_h_ratio));
+    fpFilterParams_.push_back(std::to_string(fpFilterParams.pattern_ambiguity_params.conti_ratio));
+    fpFilterParams_.push_back(std::to_string(fpFilterParams.pattern_ambiguity_params.score_array[0]));
 
     fpFilterEnable_ = fpFilterParams.enabled;
 }

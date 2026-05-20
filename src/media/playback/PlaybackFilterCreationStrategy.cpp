@@ -95,7 +95,7 @@ std::vector<std::shared_ptr<IFilter>> DaBaiAFilterStrategy::createDepthFilters()
     std::vector<std::shared_ptr<IFilter>> depthFilterList;
 
     auto owner                         = getOwner();
-    auto depthPostrFilterParamsManager = owner->getComponentT<PlaybackDepthPostFilterParamsManager>(OB_DEV_COMPONENT_DEPTH_POST_FILTER_PARAMS_MANAGER, false);
+    auto depthPostFilterParamsManager = owner->getComponentT<PlaybackDepthPostFilterParamsManager>(OB_DEV_COMPONENT_DEPTH_POST_FILTER_PARAMS_MANAGER, false);
 
     if(filterFactory->isFilterCreatorExists("DecimationFilter")) {
         auto decimationFilter = filterFactory->createFilter("DecimationFilter");
@@ -105,9 +105,9 @@ std::vector<std::shared_ptr<IFilter>> DaBaiAFilterStrategy::createDepthFilters()
 
     if(filterFactory->isFilterCreatorExists("SpatialAdvancedFilter")) {
         auto spatFilter = filterFactory->createFilter("SpatialAdvancedFilter");
-        if(depthPostrFilterParamsManager) {
-            spatFilter->updateConfig(depthPostrFilterParamsManager->getSpatialAdvancedFilterUpdateParams());
-            spatFilter->enable(depthPostrFilterParamsManager->isSpatialAdvancedFilterEnable());
+        if(depthPostFilterParamsManager) {
+            spatFilter->updateConfig(depthPostFilterParamsManager->getSpatialAdvancedFilterUpdateParams());
+            spatFilter->enable(depthPostFilterParamsManager->isSpatialAdvancedFilterEnable());
         }
         else {
             // magnitude, alpha, disp_diff, radius
@@ -120,9 +120,9 @@ std::vector<std::shared_ptr<IFilter>> DaBaiAFilterStrategy::createDepthFilters()
 
     if(filterFactory->isFilterCreatorExists("TemporalFilter")) {
         auto tempFilter = filterFactory->createFilter("TemporalFilter");
-        if(depthPostrFilterParamsManager) {
-            tempFilter->updateConfig(depthPostrFilterParamsManager->getTemporalFilterUpdateParams());
-            tempFilter->enable(depthPostrFilterParamsManager->isTemporalFilterEnable());
+        if(depthPostFilterParamsManager) {
+            tempFilter->updateConfig(depthPostFilterParamsManager->getTemporalFilterUpdateParams());
+            tempFilter->enable(depthPostFilterParamsManager->isTemporalFilterEnable());
         }
         else {
             // diff_scale, weight
@@ -135,9 +135,9 @@ std::vector<std::shared_ptr<IFilter>> DaBaiAFilterStrategy::createDepthFilters()
 
     if(filterFactory->isFilterCreatorExists("HoleFillingFilter")) {
         auto hfFilter = filterFactory->createFilter("HoleFillingFilter");
-        if(depthPostrFilterParamsManager) {
-            hfFilter->updateConfig(depthPostrFilterParamsManager->getHoleFillingFilterUpdateParams());
-            hfFilter->enable(depthPostrFilterParamsManager->isHoleFillingFilterEnable());
+        if(depthPostFilterParamsManager) {
+            hfFilter->updateConfig(depthPostFilterParamsManager->getHoleFillingFilterUpdateParams());
+            hfFilter->enable(depthPostFilterParamsManager->isHoleFillingFilterEnable());
         }
         else {
             std::vector<std::string> params = { "2" };
@@ -147,13 +147,13 @@ std::vector<std::shared_ptr<IFilter>> DaBaiAFilterStrategy::createDepthFilters()
         depthFilterList.push_back(hfFilter);
     }
 
-    if(depthPostrFilterParamsManager) {
+    if(depthPostFilterParamsManager) {
         if(filterFactory->isFilterCreatorExists("FalsePositiveFilter")) {
             auto fpFilter   = filterFactory->createFilter("FalsePositiveFilter");
-            auto filterData = depthPostrFilterParamsManager->getFPFilterParams();
+            auto filterData = depthPostFilterParamsManager->getFPFilterParams();
             fpFilter->setConfigData(filterData, sizeof(FalsePositiveFilterParams));
-            fpFilter->updateConfig(depthPostrFilterParamsManager->getFPFilterUpdateParams());
-            fpFilter->enable(depthPostrFilterParamsManager->isFPFilterEnable());
+            fpFilter->updateConfig(depthPostFilterParamsManager->getFPFilterUpdateParams());
+            fpFilter->enable(depthPostFilterParamsManager->isFPFilterEnable());
             depthFilterList.push_back(fpFilter);
         }
     }
@@ -205,76 +205,123 @@ std::vector<std::shared_ptr<IFilter>> Gemini330FilterStrategy::createFilters(OBS
 std::vector<std::shared_ptr<IFilter>> Gemini330FilterStrategy::createDepthFilters() {
     auto filterFactory = FilterFactory::getInstance();
 
+    auto owner                         = getOwner();
+    auto depthPostFilterParamsManager = owner->getComponentT<PlaybackDepthPostFilterParamsManager>(OB_DEV_COMPONENT_DEPTH_POST_FILTER_PARAMS_MANAGER, false);
+
     std::vector<std::shared_ptr<IFilter>> depthFilterList;
     if(filterFactory->isFilterCreatorExists("DecimationFilter")) {
         auto decimationFilter = filterFactory->createFilter("DecimationFilter");
+        decimationFilter->enable(false);
         depthFilterList.push_back(decimationFilter);
     }
 
     if(filterFactory->isFilterCreatorExists("HDRMerge")) {
         auto hdrMergeFilter = filterFactory->createFilter("HDRMerge");
+        hdrMergeFilter->enable(false);
         depthFilterList.push_back(hdrMergeFilter);
     }
 
     if(filterFactory->isFilterCreatorExists("SequenceIdFilter")) {
         auto sequenceIdFilter = filterFactory->createFilter("SequenceIdFilter");
+        sequenceIdFilter->enable(false);
         depthFilterList.push_back(sequenceIdFilter);
     }
 
     if(filterFactory->isFilterCreatorExists("SpatialFastFilter")) {
         auto spatFilter = filterFactory->createFilter("SpatialFastFilter");
-        // radius
-        std::vector<std::string> params = { "3" };
-        spatFilter->updateConfig(params);
+        if(depthPostFilterParamsManager) {
+            spatFilter->updateConfig(depthPostFilterParamsManager->getSpatialFastFilterUpdateParams());
+            spatFilter->enable(depthPostFilterParamsManager->isSpatialFastFilterEnable());
+        }
+        else {
+            // radius
+            std::vector<std::string> params = { "3" };
+            spatFilter->updateConfig(params);
+            spatFilter->enable(false);
+        }
         depthFilterList.push_back(spatFilter);
     }
 
     if(filterFactory->isFilterCreatorExists("SpatialModerateFilter")) {
         auto spatFilter = filterFactory->createFilter("SpatialModerateFilter");
-        // magnitude, disp_diff, radius
-        std::vector<std::string> params = { "1", "160", "3" };
-        spatFilter->updateConfig(params);
+        if(depthPostFilterParamsManager) {
+            spatFilter->updateConfig(depthPostFilterParamsManager->getSpatialModerateFilterUpdateParams());
+            spatFilter->enable(depthPostFilterParamsManager->isSpatialModerateFilterEnable());
+        }
+        else {
+            // magnitude, disp_diff, radius
+            std::vector<std::string> params = { "1", "160", "3" };
+            spatFilter->updateConfig(params);
+            spatFilter->enable(false);
+        }
         depthFilterList.push_back(spatFilter);
     }
 
     if(filterFactory->isFilterCreatorExists("SpatialAdvancedFilter")) {
         auto spatFilter = filterFactory->createFilter("SpatialAdvancedFilter");
-        // magnitude, alpha, disp_diff, radius
-        std::vector<std::string> params = { "1", "0.5", "160", "1" };
-        spatFilter->updateConfig(params);
+        if(depthPostFilterParamsManager) {
+            spatFilter->updateConfig(depthPostFilterParamsManager->getSpatialAdvancedFilterUpdateParams());
+            spatFilter->enable(depthPostFilterParamsManager->isSpatialAdvancedFilterEnable());
+        }
+        else {
+            // magnitude, alpha, disp_diff, radius
+            std::vector<std::string> params = { "1", "0.5", "160", "1" };
+            spatFilter->updateConfig(params);
+            spatFilter->enable(false);
+        }
         depthFilterList.push_back(spatFilter);
     }
 
     if(filterFactory->isFilterCreatorExists("TemporalFilter")) {
         auto tempFilter = filterFactory->createFilter("TemporalFilter");
-        // diff_scale, weight
-        std::vector<std::string> params = { "0.1", "0.4" };
-        tempFilter->updateConfig(params);
+        if(depthPostFilterParamsManager) {
+            tempFilter->updateConfig(depthPostFilterParamsManager->getTemporalFilterUpdateParams());
+            tempFilter->enable(depthPostFilterParamsManager->isTemporalFilterEnable());
+        }
+        else {
+            // diff_scale, weight
+            std::vector<std::string> params = { "0.1", "0.4" };
+            tempFilter->updateConfig(params);
+            tempFilter->enable(false);
+        }
         depthFilterList.push_back(tempFilter);
     }
 
     if(filterFactory->isFilterCreatorExists("HoleFillingFilter")) {
-        auto                     hfFilter = filterFactory->createFilter("HoleFillingFilter");
-        std::vector<std::string> params   = { "2" };
-        hfFilter->updateConfig(params);
+        auto hfFilter = filterFactory->createFilter("HoleFillingFilter");
+        if(depthPostFilterParamsManager) {
+            hfFilter->updateConfig(depthPostFilterParamsManager->getHoleFillingFilterUpdateParams());
+            hfFilter->enable(depthPostFilterParamsManager->isHoleFillingFilterEnable());
+        }
+        else {
+            std::vector<std::string> params = { "2" };
+            hfFilter->updateConfig(params);
+            hfFilter->enable(false);
+        }
         depthFilterList.push_back(hfFilter);
+    }
+
+    if(depthPostFilterParamsManager) {
+        if(filterFactory->isFilterCreatorExists("FalsePositiveFilter")) {
+            auto comprehensiveFilter = filterFactory->createFilter("FalsePositiveFilter");
+            auto filterData          = depthPostFilterParamsManager->getFPFilterParams();
+            comprehensiveFilter->setConfigData(filterData, sizeof(FalsePositiveFilterParams));
+            comprehensiveFilter->updateConfig(depthPostFilterParamsManager->getFPFilterUpdateParams());
+            comprehensiveFilter->enable(depthPostFilterParamsManager->isFPFilterEnable());
+            depthFilterList.push_back(comprehensiveFilter);
+        }
     }
 
     if(filterFactory->isFilterCreatorExists("DisparityTransform")) {
         auto dtFilter = filterFactory->createFilter("DisparityTransform");
+        dtFilter->enable(true);
         depthFilterList.push_back(dtFilter);
     }
 
     if(filterFactory->isFilterCreatorExists("ThresholdFilter")) {
         auto ThresholdFilter = filterFactory->createFilter("ThresholdFilter");
+        ThresholdFilter->enable(false);
         depthFilterList.push_back(ThresholdFilter);
-    }
-
-    for(size_t i = 0; i < depthFilterList.size(); i++) {
-        auto filter = depthFilterList[i];
-        if(filter->getName() != "DisparityTransform") {
-            filter->enable(false);
-        }
     }
     return depthFilterList;
 }

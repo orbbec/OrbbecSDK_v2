@@ -151,6 +151,10 @@ void PlaybackDevice::init() {
     if(isDeviceInContainer(DaBaiADevPids, vid, pid) && fwVersion > 10800) {
         isSupportDepthPostFilter = true;
     }
+    else if(isDeviceInContainer(G330DevPids, vid, pid) && fwVersion >= 10621) {
+        isSupportDepthPostFilter = true;
+    }
+
     if(isSupportDepthPostFilter) {
         auto propertyServer         = getComponentT<PropertyServer>(OB_DEV_COMPONENT_PROPERTY_SERVER).get();
         auto vendorPropertyAccessor = getComponentT<PlaybackVendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR).get();

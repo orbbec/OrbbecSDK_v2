@@ -37,6 +37,7 @@
 #include "firmwareupdater/FirmwareUpdater.hpp"
 #include "firmwareupdater/firmwareupdateguard/FirmwareUpdateGuards.hpp"
 #include "frameprocessor/FrameProcessor.hpp"
+#include "comprehensivefilter/DepthPostFilterParamsManager.hpp"
 
 #include "G330MetadataParser.hpp"
 #include "G330MetadataTypes.hpp"
@@ -259,6 +260,17 @@ void G330Device::init() {
         return container;
     });
 
+    TRY_EXECUTE({
+        if(getFirmwareVersionInt() >= 10621) {
+            auto propertyServer         = getPropertyServer();
+            auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+            propertyServer->registerProperty(OB_RAW_DATA_DEPTH_POST_FILTER_PARAMS, "", "r", vendorPropertyAccessor.get());
+
+            auto depthPostFilterParamsManager = std::make_shared<DepthPostFilterParamsManager>(this);
+            registerComponent(OB_DEV_COMPONENT_DEPTH_POST_FILTER_PARAMS_MANAGER, depthPostFilterParamsManager);
+        }
+    })
+
     fetchDeviceErrorState();
 }
 
@@ -454,6 +466,20 @@ void G330Device::initSensorList() {
         registerComponent(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR, [this]() {
             auto factory        = getComponentT<FrameProcessorFactory>(OB_DEV_COMPONENT_FRAME_PROCESSOR_FACTORY);
             auto frameProcessor = factory->createFrameProcessor(OB_SENSOR_DEPTH);
+
+            auto depthPostFilterParamsManager = getComponentT<DepthPostFilterParamsManager>(OB_DEV_COMPONENT_DEPTH_POST_FILTER_PARAMS_MANAGER, false);
+            if(depthPostFilterParamsManager && frameProcessor) {
+                auto noiseRmFilterParams = depthPostFilterParamsManager->getNoiseRemovalFilterUpdateParams();
+                int  paramSize           = static_cast<int>(noiseRmFilterParams.size());
+                for(int i = 0; i < paramSize; i++) {
+                    std::string filterConfigName = "NoiseRemovalFilter#";
+                    std::string configSchemaName = filterConfigName.append(std::to_string(i));
+                    frameProcessor->setConfigValue(configSchemaName, noiseRmFilterParams[i]);
+                }
+                OBPropertyValue value;
+                value.intValue = depthPostFilterParamsManager->isNoiseRemovalFilterEnable() ? 1 : 0;
+                frameProcessor->setPropertyValue(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL, value);
+            }
             return frameProcessor;
         });
 
@@ -784,6 +810,20 @@ void                 G330Device::initSensorListGMSL() {
         registerComponent(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR, [this]() {
             auto factory        = getComponentT<FrameProcessorFactory>(OB_DEV_COMPONENT_FRAME_PROCESSOR_FACTORY);
             auto frameProcessor = factory->createFrameProcessor(OB_SENSOR_DEPTH);
+
+            auto depthPostFilterParamsManager = getComponentT<DepthPostFilterParamsManager>(OB_DEV_COMPONENT_DEPTH_POST_FILTER_PARAMS_MANAGER, false);
+            if(depthPostFilterParamsManager && frameProcessor) {
+                auto noiseRmFilterParams = depthPostFilterParamsManager->getNoiseRemovalFilterUpdateParams();
+                int  paramSize           = static_cast<int>(noiseRmFilterParams.size());
+                for(int i = 0; i < paramSize; i++) {
+                    std::string filterConfigName = "NoiseRemovalFilter#";
+                    std::string configSchemaName = filterConfigName.append(std::to_string(i));
+                    frameProcessor->setConfigValue(configSchemaName, noiseRmFilterParams[i]);
+                }
+                OBPropertyValue value;
+                value.intValue = depthPostFilterParamsManager->isNoiseRemovalFilterEnable() ? 1 : 0;
+                frameProcessor->setPropertyValue(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL, value);
+            }
             return frameProcessor;
         });
 
@@ -1234,6 +1274,11 @@ void G330Device::initProperties() {
 }
 
 std::vector<std::shared_ptr<IFilter>> G330Device::createRecommendedPostProcessingFilters(OBSensorType type) {
+    auto filterIter = sensorFilterListMap_.find(type);
+    if(filterIter != sensorFilterListMap_.end()) {
+        return filterIter->second;
+    }
+
     auto filterFactory = FilterFactory::getInstance();
     if(type == OB_SENSOR_DEPTH) {
         // activate depth frame processor library
@@ -1241,76 +1286,123 @@ std::vector<std::shared_ptr<IFilter>> G330Device::createRecommendedPostProcessin
 
         std::vector<std::shared_ptr<IFilter>> depthFilterList;
 
+        auto depthPostFilterParamsManager = getComponentT<DepthPostFilterParamsManager>(OB_DEV_COMPONENT_DEPTH_POST_FILTER_PARAMS_MANAGER, false);
+
         if(filterFactory->isFilterCreatorExists("DecimationFilter")) {
             auto decimationFilter = filterFactory->createFilter("DecimationFilter");
+            decimationFilter->enable(false);
             depthFilterList.push_back(decimationFilter);
         }
 
         if(filterFactory->isFilterCreatorExists("ThresholdFilter")) {
-            auto ThresholdFilter = filterFactory->createFilter("ThresholdFilter");
-            depthFilterList.push_back(ThresholdFilter);
+            auto thresholdFilter = filterFactory->createFilter("ThresholdFilter");
+            thresholdFilter->enable(false);
+            depthFilterList.push_back(thresholdFilter);
         }
 
         if(filterFactory->isFilterCreatorExists("HDRMerge")) {
             auto hdrMergeFilter = filterFactory->createFilter("HDRMerge");
+            hdrMergeFilter->enable(false);
             depthFilterList.push_back(hdrMergeFilter);
         }
 
         if(filterFactory->isFilterCreatorExists("SequenceIdFilter")) {
             auto sequenceIdFilter = filterFactory->createFilter("SequenceIdFilter");
+            sequenceIdFilter->enable(false);
             depthFilterList.push_back(sequenceIdFilter);
         }
 
         if(filterFactory->isFilterCreatorExists("SpatialFastFilter")) {
             auto spatFilter = filterFactory->createFilter("SpatialFastFilter");
-            // radius
-            std::vector<std::string> params = { "3" };
-            spatFilter->updateConfig(params);
+            if(depthPostFilterParamsManager) {
+                spatFilter->updateConfig(depthPostFilterParamsManager->getSpatialFastFilterUpdateParams());
+                spatFilter->enable(depthPostFilterParamsManager->isSpatialFastFilterEnable());
+            }
+            else {
+                // radius
+                std::vector<std::string> params = { "3" };
+                spatFilter->updateConfig(params);
+                spatFilter->enable(false);
+            }
             depthFilterList.push_back(spatFilter);
         }
 
         if(filterFactory->isFilterCreatorExists("SpatialModerateFilter")) {
             auto spatFilter = filterFactory->createFilter("SpatialModerateFilter");
-            // magnitude, disp_diff, radius
-            std::vector<std::string> params = { "1", "160", "5" };
-            spatFilter->updateConfig(params);
+            if(depthPostFilterParamsManager) {
+                spatFilter->updateConfig(depthPostFilterParamsManager->getSpatialModerateFilterUpdateParams());
+                spatFilter->enable(depthPostFilterParamsManager->isSpatialModerateFilterEnable());
+            }
+            else {
+                // magnitude, disp_diff, radius
+                std::vector<std::string> params = { "1", "160", "5" };
+                spatFilter->updateConfig(params);
+                spatFilter->enable(false);
+            }
             depthFilterList.push_back(spatFilter);
         }
 
         if(filterFactory->isFilterCreatorExists("SpatialAdvancedFilter")) {
             auto spatFilter = filterFactory->createFilter("SpatialAdvancedFilter");
-            // magnitude, alpha, disp_diff, radius
-            std::vector<std::string> params = { "1", "0.5", "160", "1" };
-            spatFilter->updateConfig(params);
+            if(depthPostFilterParamsManager) {
+                spatFilter->updateConfig(depthPostFilterParamsManager->getSpatialAdvancedFilterUpdateParams());
+                spatFilter->enable(depthPostFilterParamsManager->isSpatialAdvancedFilterEnable());
+            }
+            else {
+                // magnitude, alpha, disp_diff, radius
+                std::vector<std::string> params = { "1", "0.5", "160", "1" };
+                spatFilter->updateConfig(params);
+                spatFilter->enable(false);
+            }
             depthFilterList.push_back(spatFilter);
         }
 
         if(filterFactory->isFilterCreatorExists("TemporalFilter")) {
             auto tempFilter = filterFactory->createFilter("TemporalFilter");
-            // diff_scale, weight
-            std::vector<std::string> params = { "0.1", "0.4" };
-            tempFilter->updateConfig(params);
+            if(depthPostFilterParamsManager) {
+                tempFilter->updateConfig(depthPostFilterParamsManager->getTemporalFilterUpdateParams());
+                tempFilter->enable(depthPostFilterParamsManager->isTemporalFilterEnable());
+            }
+            else {
+                // diff_scale, weight
+                std::vector<std::string> params = { "0.1", "0.4" };
+                tempFilter->updateConfig(params);
+                tempFilter->enable(false);
+            }
             depthFilterList.push_back(tempFilter);
         }
 
         if(filterFactory->isFilterCreatorExists("HoleFillingFilter")) {
-            auto                     hfFilter = filterFactory->createFilter("HoleFillingFilter");
-            std::vector<std::string> params   = { "2" };
-            hfFilter->updateConfig(params);
+            auto hfFilter = filterFactory->createFilter("HoleFillingFilter");
+            if(depthPostFilterParamsManager) {
+                hfFilter->updateConfig(depthPostFilterParamsManager->getHoleFillingFilterUpdateParams());
+                hfFilter->enable(depthPostFilterParamsManager->isHoleFillingFilterEnable());
+            }
+            else {
+                std::vector<std::string> params = { "2" };
+                hfFilter->updateConfig(params);
+                hfFilter->enable(false);
+            }
             depthFilterList.push_back(hfFilter);
+        }
+
+        if(depthPostFilterParamsManager) {
+            if(filterFactory->isFilterCreatorExists("FalsePositiveFilter")) {
+                auto comprehensiveFilter = filterFactory->createFilter("FalsePositiveFilter");
+                auto filterData          = depthPostFilterParamsManager->getFPFilterParams();
+                comprehensiveFilter->setConfigData(filterData, sizeof(FalsePositiveFilterParams));
+                comprehensiveFilter->updateConfig(depthPostFilterParamsManager->getFPFilterUpdateParams());
+                comprehensiveFilter->enable(depthPostFilterParamsManager->isFPFilterEnable());
+                depthFilterList.push_back(comprehensiveFilter);
+            }
         }
 
         if(filterFactory->isFilterCreatorExists("DisparityTransform")) {
             auto dtFilter = filterFactory->createFilter("DisparityTransform");
+            dtFilter->enable(true);
             depthFilterList.push_back(dtFilter);
         }
-
-        for(size_t i = 0; i < depthFilterList.size(); i++) {
-            auto filter = depthFilterList[i];
-            if(filter->getName() != "DisparityTransform") {
-                filter->enable(false);
-            }
-        }
+        sensorFilterListMap_[OB_SENSOR_DEPTH] = depthFilterList;
         return depthFilterList;
     }
     else if(type == OB_SENSOR_COLOR) {
@@ -1323,6 +1415,7 @@ std::vector<std::shared_ptr<IFilter>> G330Device::createRecommendedPostProcessin
             decimationFilter->enable(false);
             colorFilterList.push_back(decimationFilter);
         }
+        sensorFilterListMap_[OB_SENSOR_COLOR] = colorFilterList;
         return colorFilterList;
     }
     else if(type == OB_SENSOR_IR_LEFT) {
@@ -1332,6 +1425,7 @@ std::vector<std::shared_ptr<IFilter>> G330Device::createRecommendedPostProcessin
             auto sequenceIdFilter = filterFactory->createFilter("SequenceIdFilter");
             sequenceIdFilter->enable(false);
             leftIRFilterList.push_back(sequenceIdFilter);
+            sensorFilterListMap_[OB_SENSOR_IR_LEFT] = leftIRFilterList;
             return leftIRFilterList;
         }
     }
@@ -1342,6 +1436,7 @@ std::vector<std::shared_ptr<IFilter>> G330Device::createRecommendedPostProcessin
             auto sequenceIdFilter = filterFactory->createFilter("SequenceIdFilter");
             sequenceIdFilter->enable(false);
             rightIRFilterList.push_back(sequenceIdFilter);
+            sensorFilterListMap_[OB_SENSOR_IR_RIGHT] = rightIRFilterList;
             return rightIRFilterList;
         }
     }
@@ -1382,6 +1477,63 @@ void G330Device::loadDefaultDepthPostProcessingConfig() {
     catch(libobsensor_exception &e) {
         std::string errorMsg = "Failed to load default depth post processing config: " + std::string(e.what());
         LOG_WARN(errorMsg);
+    }
+}
+
+void G330Device::updateDepthPostProcessingFilterList() {
+    auto depthPostFilterParamsManager = getComponentT<DepthPostFilterParamsManager>(OB_DEV_COMPONENT_DEPTH_POST_FILTER_PARAMS_MANAGER, false);
+    if(depthPostFilterParamsManager) {
+        // Update recommended filters
+        auto filterIter = sensorFilterListMap_.find(OB_SENSOR_DEPTH);
+        if(filterIter != sensorFilterListMap_.end()) {
+            std::vector<std::shared_ptr<IFilter>> newDepthFilterList;
+            std::vector<std::shared_ptr<IFilter>> depthFilterList = filterIter->second;
+            for(const auto &filter: depthFilterList) {
+                if(filter->getName() == "SpatialFastFilter") {
+                    filter->updateConfig(depthPostFilterParamsManager->getSpatialFastFilterUpdateParams());
+                    filter->enable(depthPostFilterParamsManager->isSpatialFastFilterEnable());
+                }
+                if(filter->getName() == "SpatialModerateFilter") {
+                    filter->updateConfig(depthPostFilterParamsManager->getSpatialModerateFilterUpdateParams());
+                    filter->enable(depthPostFilterParamsManager->isSpatialModerateFilterEnable());
+                }
+                if(filter->getName() == "SpatialAdvancedFilter") {
+                    filter->updateConfig(depthPostFilterParamsManager->getSpatialAdvancedFilterUpdateParams());
+                    filter->enable(depthPostFilterParamsManager->isSpatialAdvancedFilterEnable());
+                }
+                if(filter->getName() == "TemporalFilter") {
+                    filter->updateConfig(depthPostFilterParamsManager->getTemporalFilterUpdateParams());
+                    filter->enable(depthPostFilterParamsManager->isTemporalFilterEnable());
+                }
+                if(filter->getName() == "HoleFillingFilter") {
+                    filter->updateConfig(depthPostFilterParamsManager->getHoleFillingFilterUpdateParams());
+                    filter->enable(depthPostFilterParamsManager->isHoleFillingFilterEnable());
+                }
+                if(filter->getName() == "FalsePositiveFilter") {
+                    auto filterData = depthPostFilterParamsManager->getFPFilterParams();
+                    filter->setConfigData(filterData, sizeof(FalsePositiveFilterParams));
+                    filter->updateConfig(depthPostFilterParamsManager->getFPFilterUpdateParams());
+                    filter->enable(depthPostFilterParamsManager->isFPFilterEnable());
+                }
+                newDepthFilterList.push_back(filter);
+            }
+            sensorFilterListMap_[OB_SENSOR_DEPTH] = newDepthFilterList;
+        }
+
+        // Update NoiseRemovalFilter
+        auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR, false);
+        if(frameProcessor) {
+            auto noiseRmFilterParams = depthPostFilterParamsManager->getNoiseRemovalFilterUpdateParams();
+            int  paramSize           = static_cast<int>(noiseRmFilterParams.size());
+            for(int i = 0; i < paramSize; i++) {
+                std::string filterConfigName = "NoiseRemovalFilter#";
+                std::string configSchemaName = filterConfigName.append(std::to_string(i));
+                frameProcessor->setConfigValue(configSchemaName, noiseRmFilterParams[i]);
+            }
+            OBPropertyValue value;
+            value.intValue = depthPostFilterParamsManager->isNoiseRemovalFilterEnable() ? 1 : 0;
+            frameProcessor->setPropertyValue(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL, value);
+        }
     }
 }
 
@@ -1634,6 +1786,16 @@ void G330NetDevice::init() {
                                                }
                                            });
 
+    TRY_EXECUTE({
+        if(getFirmwareVersionInt() >= 10621) {
+            vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+            propertyServer->registerProperty(OB_RAW_DATA_DEPTH_POST_FILTER_PARAMS, "", "r", vendorPropertyAccessor.get());
+
+            auto depthPostFilterParamsManager = std::make_shared<DepthPostFilterParamsManager>(this);
+            registerComponent(OB_DEV_COMPONENT_DEPTH_POST_FILTER_PARAMS_MANAGER, depthPostFilterParamsManager);
+        }
+    })
+
     fetchDeviceErrorState();
 }
 
@@ -1822,6 +1984,20 @@ void G330NetDevice::initSensorList() {
         registerComponent(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR, [this]() {
             auto factory        = getComponentT<FrameProcessorFactory>(OB_DEV_COMPONENT_FRAME_PROCESSOR_FACTORY);
             auto frameProcessor = factory->createFrameProcessor(OB_SENSOR_DEPTH);
+
+            auto depthPostFilterParamsManager = getComponentT<DepthPostFilterParamsManager>(OB_DEV_COMPONENT_DEPTH_POST_FILTER_PARAMS_MANAGER, false);
+            if(depthPostFilterParamsManager && frameProcessor) {
+                auto noiseRmFilterParams = depthPostFilterParamsManager->getNoiseRemovalFilterUpdateParams();
+                int  paramSize           = static_cast<int>(noiseRmFilterParams.size());
+                for(int i = 0; i < paramSize; i++) {
+                    std::string filterConfigName = "NoiseRemovalFilter#";
+                    std::string configSchemaName = filterConfigName.append(std::to_string(i));
+                    frameProcessor->setConfigValue(configSchemaName, noiseRmFilterParams[i]);
+                }
+                OBPropertyValue value;
+                value.intValue = depthPostFilterParamsManager->isNoiseRemovalFilterEnable() ? 1 : 0;
+                frameProcessor->setPropertyValue(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL, value);
+            }
             return frameProcessor;
         });
     }
@@ -2235,6 +2411,11 @@ void G330NetDevice::initProperties() {
 }
 
 std::vector<std::shared_ptr<IFilter>> G330NetDevice::createRecommendedPostProcessingFilters(OBSensorType type) {
+    auto filterIter = sensorFilterListMap_.find(type);
+    if(filterIter != sensorFilterListMap_.end()) {
+        return filterIter->second;
+    }
+
     auto filterFactory = FilterFactory::getInstance();
     if(type == OB_SENSOR_DEPTH) {
         // activate depth frame processor library
@@ -2242,76 +2423,124 @@ std::vector<std::shared_ptr<IFilter>> G330NetDevice::createRecommendedPostProces
 
         std::vector<std::shared_ptr<IFilter>> depthFilterList;
 
+        auto depthPostFilterParamsManager = getComponentT<DepthPostFilterParamsManager>(OB_DEV_COMPONENT_DEPTH_POST_FILTER_PARAMS_MANAGER, false);
+
         if(filterFactory->isFilterCreatorExists("DecimationFilter")) {
             auto decimationFilter = filterFactory->createFilter("DecimationFilter");
+            decimationFilter->enable(false);
             depthFilterList.push_back(decimationFilter);
         }
 
         if(filterFactory->isFilterCreatorExists("ThresholdFilter")) {
-            auto ThresholdFilter = filterFactory->createFilter("ThresholdFilter");
-            depthFilterList.push_back(ThresholdFilter);
+            auto thresholdFilter = filterFactory->createFilter("ThresholdFilter");
+            thresholdFilter->enable(false);
+            depthFilterList.push_back(thresholdFilter);
         }
 
         if(filterFactory->isFilterCreatorExists("HDRMerge")) {
             auto hdrMergeFilter = filterFactory->createFilter("HDRMerge");
+            hdrMergeFilter->enable(false);
             depthFilterList.push_back(hdrMergeFilter);
         }
 
         if(filterFactory->isFilterCreatorExists("SequenceIdFilter")) {
             auto sequenceIdFilter = filterFactory->createFilter("SequenceIdFilter");
+            sequenceIdFilter->enable(false);
             depthFilterList.push_back(sequenceIdFilter);
         }
 
         if(filterFactory->isFilterCreatorExists("SpatialFastFilter")) {
             auto spatFilter = filterFactory->createFilter("SpatialFastFilter");
-            // radius
-            std::vector<std::string> params = { "3" };
-            spatFilter->updateConfig(params);
+            if(depthPostFilterParamsManager) {
+                spatFilter->updateConfig(depthPostFilterParamsManager->getSpatialFastFilterUpdateParams());
+                spatFilter->enable(depthPostFilterParamsManager->isSpatialFastFilterEnable());
+            }
+            else {
+                // radius
+                std::vector<std::string> params = { "3" };
+                spatFilter->updateConfig(params);
+                spatFilter->enable(false);
+            }
             depthFilterList.push_back(spatFilter);
         }
 
         if(filterFactory->isFilterCreatorExists("SpatialModerateFilter")) {
             auto spatFilter = filterFactory->createFilter("SpatialModerateFilter");
-            // magnitude, disp_diff, radius
-            std::vector<std::string> params = { "1", "160", "5" };
-            spatFilter->updateConfig(params);
+            if(depthPostFilterParamsManager) {
+                spatFilter->updateConfig(depthPostFilterParamsManager->getSpatialModerateFilterUpdateParams());
+                spatFilter->enable(depthPostFilterParamsManager->isSpatialModerateFilterEnable());
+            }
+            else {
+                // magnitude, disp_diff, radius
+                std::vector<std::string> params = { "1", "160", "5" };
+                spatFilter->updateConfig(params);
+                spatFilter->enable(false);
+            }
             depthFilterList.push_back(spatFilter);
         }
 
         if(filterFactory->isFilterCreatorExists("SpatialAdvancedFilter")) {
             auto spatFilter = filterFactory->createFilter("SpatialAdvancedFilter");
-            // magnitude, alpha, disp_diff, radius
-            std::vector<std::string> params = { "1", "0.5", "160", "1" };
-            spatFilter->updateConfig(params);
+            if(depthPostFilterParamsManager) {
+                spatFilter->updateConfig(depthPostFilterParamsManager->getSpatialAdvancedFilterUpdateParams());
+                spatFilter->enable(depthPostFilterParamsManager->isSpatialAdvancedFilterEnable());
+            }
+            else {
+                // magnitude, alpha, disp_diff, radius
+                std::vector<std::string> params = { "1", "0.5", "160", "1" };
+                spatFilter->updateConfig(params);
+                spatFilter->enable(false);
+            }
             depthFilterList.push_back(spatFilter);
         }
 
         if(filterFactory->isFilterCreatorExists("TemporalFilter")) {
             auto tempFilter = filterFactory->createFilter("TemporalFilter");
-            // diff_scale, weight
-            std::vector<std::string> params = { "0.1", "0.4" };
-            tempFilter->updateConfig(params);
+            if(depthPostFilterParamsManager) {
+                tempFilter->updateConfig(depthPostFilterParamsManager->getTemporalFilterUpdateParams());
+                tempFilter->enable(depthPostFilterParamsManager->isTemporalFilterEnable());
+            }
+            else {
+                // diff_scale, weight
+                std::vector<std::string> params = { "0.1", "0.4" };
+                tempFilter->updateConfig(params);
+                tempFilter->enable(false);
+            }
             depthFilterList.push_back(tempFilter);
         }
 
         if(filterFactory->isFilterCreatorExists("HoleFillingFilter")) {
-            auto                     hfFilter = filterFactory->createFilter("HoleFillingFilter");
-            std::vector<std::string> params   = { "2" };
-            hfFilter->updateConfig(params);
+            auto hfFilter = filterFactory->createFilter("HoleFillingFilter");
+            if(depthPostFilterParamsManager) {
+                hfFilter->updateConfig(depthPostFilterParamsManager->getHoleFillingFilterUpdateParams());
+                hfFilter->enable(depthPostFilterParamsManager->isHoleFillingFilterEnable());
+            }
+            else {
+                std::vector<std::string> params = { "2" };
+                hfFilter->updateConfig(params);
+                hfFilter->enable(false);
+            }
             depthFilterList.push_back(hfFilter);
+        }
+
+        if(depthPostFilterParamsManager) {
+            if(filterFactory->isFilterCreatorExists("FalsePositiveFilter")) {
+                auto comprehensiveFilter = filterFactory->createFilter("FalsePositiveFilter");
+                auto filterData          = depthPostFilterParamsManager->getFPFilterParams();
+                comprehensiveFilter->setConfigData(filterData, sizeof(FalsePositiveFilterParams));
+                comprehensiveFilter->updateConfig(depthPostFilterParamsManager->getFPFilterUpdateParams());
+                comprehensiveFilter->enable(depthPostFilterParamsManager->isFPFilterEnable());
+                depthFilterList.push_back(comprehensiveFilter);
+            }
         }
 
         if(filterFactory->isFilterCreatorExists("DisparityTransform")) {
             auto dtFilter = filterFactory->createFilter("DisparityTransform");
+            dtFilter->enable(true);
             depthFilterList.push_back(dtFilter);
         }
 
-        for(size_t i = 0; i < depthFilterList.size(); i++) {
-            auto filter = depthFilterList[i];
-            if(filter->getName() != "DisparityTransform") {
-                filter->enable(false);
-            }
-        }
+        sensorFilterListMap_[OB_SENSOR_DEPTH] = depthFilterList;
         return depthFilterList;
     }
     else if(type == OB_SENSOR_COLOR) {
@@ -2324,6 +2553,7 @@ std::vector<std::shared_ptr<IFilter>> G330NetDevice::createRecommendedPostProces
             decimationFilter->enable(false);
             colorFilterList.push_back(decimationFilter);
         }
+        sensorFilterListMap_[OB_SENSOR_COLOR] = colorFilterList;
         return colorFilterList;
     }
     else if(type == OB_SENSOR_IR_LEFT) {
@@ -2333,6 +2563,7 @@ std::vector<std::shared_ptr<IFilter>> G330NetDevice::createRecommendedPostProces
             auto sequenceIdFilter = filterFactory->createFilter("SequenceIdFilter");
             sequenceIdFilter->enable(false);
             leftIRFilterList.push_back(sequenceIdFilter);
+            sensorFilterListMap_[OB_SENSOR_IR_LEFT] = leftIRFilterList;
             return leftIRFilterList;
         }
     }
@@ -2343,11 +2574,69 @@ std::vector<std::shared_ptr<IFilter>> G330NetDevice::createRecommendedPostProces
             auto sequenceIdFilter = filterFactory->createFilter("SequenceIdFilter");
             sequenceIdFilter->enable(false);
             rightIRFilterList.push_back(sequenceIdFilter);
+            sensorFilterListMap_[OB_SENSOR_IR_RIGHT] = rightIRFilterList;
             return rightIRFilterList;
         }
     }
 
     return {};
+}
+
+void G330NetDevice::updateDepthPostProcessingFilterList() {
+    auto depthPostFilterParamsManager = getComponentT<DepthPostFilterParamsManager>(OB_DEV_COMPONENT_DEPTH_POST_FILTER_PARAMS_MANAGER, false);
+    if(depthPostFilterParamsManager) {
+        // Update recommended filters
+        auto filterIter = sensorFilterListMap_.find(OB_SENSOR_DEPTH);
+        if(filterIter != sensorFilterListMap_.end()) {
+            std::vector<std::shared_ptr<IFilter>> newDepthFilterList;
+            std::vector<std::shared_ptr<IFilter>> depthFilterList = filterIter->second;
+            for(const auto &filter: depthFilterList) {
+                if(filter->getName() == "SpatialFastFilter") {
+                    filter->updateConfig(depthPostFilterParamsManager->getSpatialFastFilterUpdateParams());
+                    filter->enable(depthPostFilterParamsManager->isSpatialFastFilterEnable());
+                }
+                if(filter->getName() == "SpatialModerateFilter") {
+                    filter->updateConfig(depthPostFilterParamsManager->getSpatialModerateFilterUpdateParams());
+                    filter->enable(depthPostFilterParamsManager->isSpatialModerateFilterEnable());
+                }
+                if(filter->getName() == "SpatialAdvancedFilter") {
+                    filter->updateConfig(depthPostFilterParamsManager->getSpatialAdvancedFilterUpdateParams());
+                    filter->enable(depthPostFilterParamsManager->isSpatialAdvancedFilterEnable());
+                }
+                if(filter->getName() == "TemporalFilter") {
+                    filter->updateConfig(depthPostFilterParamsManager->getTemporalFilterUpdateParams());
+                    filter->enable(depthPostFilterParamsManager->isTemporalFilterEnable());
+                }
+                if(filter->getName() == "HoleFillingFilter") {
+                    filter->updateConfig(depthPostFilterParamsManager->getHoleFillingFilterUpdateParams());
+                    filter->enable(depthPostFilterParamsManager->isHoleFillingFilterEnable());
+                }
+                if(filter->getName() == "FalsePositiveFilter") {
+                    auto filterData = depthPostFilterParamsManager->getFPFilterParams();
+                    filter->setConfigData(filterData, sizeof(FalsePositiveFilterParams));
+                    filter->updateConfig(depthPostFilterParamsManager->getFPFilterUpdateParams());
+                    filter->enable(depthPostFilterParamsManager->isFPFilterEnable());
+                }
+                newDepthFilterList.push_back(filter);
+            }
+            sensorFilterListMap_[OB_SENSOR_DEPTH] = newDepthFilterList;
+        }
+
+        // Update NoiseRemovalFilter
+        auto frameProcessor = getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR, false);
+        if(frameProcessor) {
+            auto noiseRmFilterParams = depthPostFilterParamsManager->getNoiseRemovalFilterUpdateParams();
+            int  paramSize           = static_cast<int>(noiseRmFilterParams.size());
+            for(int i = 0; i < paramSize; i++) {
+                std::string filterConfigName = "NoiseRemovalFilter#";
+                std::string configSchemaName = filterConfigName.append(std::to_string(i));
+                frameProcessor->setConfigValue(configSchemaName, noiseRmFilterParams[i]);
+            }
+            OBPropertyValue value;
+            value.intValue = depthPostFilterParamsManager->isNoiseRemovalFilterEnable() ? 1 : 0;
+            frameProcessor->setPropertyValue(OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL, value);
+        }
+    }
 }
 
 void libobsensor::G330NetDevice::initSensorStreamProfileList(std::shared_ptr<ISensor> sensor) {
