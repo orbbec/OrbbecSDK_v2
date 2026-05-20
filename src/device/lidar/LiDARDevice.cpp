@@ -42,15 +42,6 @@ void LiDARDevice::init() {
 
     fetchDeviceInfo();
 
-    registerComponent(
-        OB_DEV_COMPONENT_DEVICE_ACTIVITY_RECORDER,
-        [this]() {
-            std::shared_ptr<DeviceActivityRecorder> activityRecorder;
-            TRY_EXECUTE({ activityRecorder = std::make_shared<DeviceActivityRecorder>(this); })
-            return activityRecorder;
-        },
-        false);
-
     auto algParamManager = std::make_shared<LiDARAlgParamManager>(this);
     registerComponent(OB_DEV_COMPONENT_ALG_PARAM_MANAGER, algParamManager);
 }
