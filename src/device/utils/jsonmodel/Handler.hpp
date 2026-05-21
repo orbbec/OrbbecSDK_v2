@@ -17,19 +17,114 @@ namespace libobsensor {
 namespace jsonmodel {
 
 class IHandler;
+class ILeafHandler;
+class IObjectHandler;
+struct OrderedExportOptions;
+
+enum class NodeKind {
+    Leaf,
+    Object,
+};
+
+struct ExportValue;
+using ExportValuePtr = std::shared_ptr<ExportValue>;
+
+struct ExportField {
+    std::string    key;
+    ExportValuePtr value;
+};
+
+struct ExportValue {
+    enum class Kind {
+        Null,
+        Scalar,
+        Object,
+        Array,
+    };
+
+    Kind                        kind{ Kind::Null };
+    Json::Value                 scalarValue{ Json::nullValue };
+    std::vector<ExportField>    objectFields;
+    std::vector<ExportValuePtr> arrayItems;
+
+    static ExportValue nullValue() {
+        return {};
+    }
+
+    static ExportValue scalar(Json::Value value) {
+        ExportValue exportValue;
+        if(value.isObject() || value.isArray()) {
+            throw std::invalid_argument("ExportValue::scalar does not accept objects or arrays");
+        }
+        exportValue.kind        = value.isNull() ? Kind::Null : Kind::Scalar;
+        exportValue.scalarValue = std::move(value);
+        return exportValue;
+    }
+
+    static ExportValue object(std::vector<ExportField> fields) {
+        ExportValue exportValue;
+        exportValue.kind         = Kind::Object;
+        exportValue.objectFields = std::move(fields);
+        return exportValue;
+    }
+
+    static ExportValue array(std::vector<ExportValue> items) {
+        ExportValue exportValue;
+        exportValue.kind = Kind::Array;
+        exportValue.arrayItems.reserve(items.size());
+        for(auto &item: items) {
+            exportValue.arrayItems.emplace_back(std::make_shared<ExportValue>(std::move(item)));
+        }
+        return exportValue;
+    }
+
+    bool isNull() const {
+        return kind == Kind::Null;
+    }
+};
+
+inline ExportValuePtr makeValuePtr(ExportValue value) {
+    return std::make_shared<ExportValue>(std::move(value));
+}
+
+inline ExportField makeField(std::string key, ExportValue value) {
+    return { std::move(key), makeValuePtr(std::move(value)) };
+}
+
+template <typename T> inline ExportValue makeScalar(const T &value) {
+    return ExportValue::scalar(JsonTraits<T>::to(value));
+}
+
+inline ExportValue makeScalar(const char *value) {
+    return makeScalar(std::string(value ? value : ""));
+}
+
+template <size_t N> inline ExportValue makeScalar(const char (&value)[N]) {
+    return makeScalar(static_cast<const char *>(value));
+}
+
+template <typename T> inline ExportField makeField(std::string key, const T &value) {
+    return makeField(std::move(key), makeScalar(value));
+}
 
 /**
  * @brief A recursive node in the configuration tree.
  */
 struct Node {
-    std::string                        key;                // Key name of the node
-    bool                               leafNode{ true };   // True if the node is leaf node
-    std::shared_ptr<IHandler>          handler;            // Logic handler(Leaf node: ILeafHandler; Object node: IObjectHandler) for the node
+    std::string                        key;  // Key name of the node
+    NodeKind                           kind{ NodeKind::Leaf };
+    std::shared_ptr<ILeafHandler>      leafHandler;
+    std::shared_ptr<IObjectHandler>    objectHandler;
     bool                               optional{ false };  // True if the node is optional
     std::vector<std::shared_ptr<Node>> children;           // children node for Object node
 
-    Node(std::string key, bool leafNode, std::shared_ptr<IHandler> handler = nullptr, bool optional = false)
-        : key(key), leafNode(leafNode), handler(handler), optional(optional) {}
+    Node(std::string key, NodeKind kind, bool optional = false) : key(std::move(key)), kind(kind), optional(optional) {}
+
+    Node(std::string key, std::shared_ptr<ILeafHandler> handler, bool optional = false)
+        : key(std::move(key)), kind(NodeKind::Leaf), leafHandler(std::move(handler)), optional(optional) {}
+
+    Node(std::string key, std::shared_ptr<IObjectHandler> handler, bool optional = false)
+        : key(std::move(key)), kind(NodeKind::Object), objectHandler(std::move(handler)), optional(optional) {}
 };
 
 /**
@@ -59,12 +154,11 @@ public:
     virtual void set(const std::string &k, const Json::Value &v) = 0;
 
     /**
-     * @brief Retrieves data from the handler's logic and converts it to JSON
+     * @brief Retrieves the current structured export value for this leaf node
      * @param k Key of the current JSON node
-     * @return A Json::Value representing the current state
-     *         Returns a JSON null value if the config is not supported
+     * @return The structured export value for the current state
      */
-    virtual Json::Value get(const std::string &k) = 0;
+    virtual ExportValue exportValue(const std::string &k) = 0;
 
 protected:
     enum class CaseMode { Keep, Upper, Lower };
@@ -117,7 +211,7 @@ public:
     virtual void onPostChildrenSet() = 0;
 
     /**
-     * @brief Called once before generating all child nodes during get
+     * @brief Called once before generating all child nodes during export
      *
      * @return A vector of additional child node keys to include
      */
@@ -126,13 +220,13 @@ public:
     };
 
     /**
-     * @brief Called for each child node during get to retrieve its value
+     * @brief Called for each child node during export to retrieve its value
      *
      * @param k The child node key
      *
-     * @return The JSON value for the given key
+     * @return The structured export value for the given key
      */
-    virtual Json::Value onGetChild(const std::string &k) = 0;
+    virtual ExportValue exportChildValue(const std::string &k) = 0;
 };
 
 }  // namespace jsonmodel

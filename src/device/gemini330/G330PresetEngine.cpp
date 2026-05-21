@@ -56,7 +56,7 @@ void G330PresetEngine::init() {
     }
 
     // comment
-    configEngine_.addLeaf("_comment", std::make_shared<CommentHandler>("null means the device doesn't support this property and will ignore it"));
+    configEngine_.addLeaf("comment", std::make_shared<CommentHandler>("null means the device doesn't support this property and will ignore it"));
     // version
     configEngine_.declareObject(kApiVersion, [&](jsonmodel::ConfigEngine &engine) {
         engine.addLeaf("preset", std::make_shared<ValueCompareHandler<unsigned int>>(kG330PresetVersion, CompareMode::Equal));
@@ -66,8 +66,8 @@ void G330PresetEngine::init() {
     configEngine_.declareObject("device_info", [&](jsonmodel::ConfigEngine &engine) {
         auto devInfo = owner_->getInfo();
         engine.addLeaf("fw_version", std::make_shared<VersionHandler>(devInfo->fwVersion_, CompareMode::Ignore));
-        engine.addLeaf("vid", std::make_shared<ValueCompareHandler<int>>(devInfo->vid_, CompareMode::Equal));
-        engine.addLeaf("pid", std::make_shared<ValueCompareHandler<int>>(devInfo->pid_, CompareMode::Equal));
+        engine.addLeaf("vid", std::make_shared<HexValueCompareHandler<int>>(devInfo->vid_, CompareMode::Equal, 4));
+        engine.addLeaf("pid", std::make_shared<HexValueCompareHandler<int>>(devInfo->pid_, CompareMode::Equal, 4));
         engine.addLeaf("name", std::make_shared<VersionHandler>(devInfo->fullName_, CompareMode::Ignore));
     });
     // parameters

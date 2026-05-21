@@ -185,13 +185,11 @@ Json::Value G330PresetManager::exportSettingsAsPresetJsonValue(const std::string
 }
 
 const std::vector<uint8_t> &G330PresetManager::exportSettingsAsPresetJsonData(const std::string &presetName) {
-    auto                      root = exportSettingsAsPresetJsonValue(presetName);
-    Json::StreamWriterBuilder builder;
-    builder.settings_["indentation"]             = "  ";
-    builder.settings_["enableYAMLCompatibility"] = true;
-    builder.settings_["dropNullPlaceholders"]    = false;  // Keep null for nullvalue
-    std::ostringstream oss;
-    builder.newStreamWriter()->write(root, &oss);
+    storeCurrentParamsAsCustomPreset(presetName);
+    jsonmodel::OrderedExportOptions options;
+    auto                            jsonText = getCurrentPresetEngine()->exportJson(options);
+    std::ostringstream              oss;
+    oss << jsonText;
     tmpJsonData_.clear();
     auto str = oss.str();
     std::copy(str.begin(), str.end(), std::back_inserter(tmpJsonData_));
@@ -199,15 +197,12 @@ const std::vector<uint8_t> &G330PresetManager::exportSettingsAsPresetJsonData(co
 }
 
 void G330PresetManager::exportSettingsAsPresetJsonFile(const std::string &filePath) {
-    auto root = exportSettingsAsPresetJsonValue(filePath);
+    storeCurrentParamsAsCustomPreset(filePath);
+    jsonmodel::OrderedExportOptions options;
+    auto                            jsonText = getCurrentPresetEngine()->exportJson(options);
 
-    std::ofstream             ofs(filePath);
-    Json::StreamWriterBuilder builder;
-    builder.settings_["indentation"]             = "  ";
-    builder.settings_["enableYAMLCompatibility"] = true;
-    builder.settings_["dropNullPlaceholders"]    = false;  // Keep null for nullvalue
-    auto writer                                  = builder.newStreamWriter();
-    writer->write(root, &ofs);
+    std::ofstream ofs(filePath);
+    ofs << jsonText;
 }
 
 void G330PresetManager::fetchPreset() {

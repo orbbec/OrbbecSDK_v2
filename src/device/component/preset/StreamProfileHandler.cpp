@@ -81,18 +81,18 @@ std::vector<std::string> StreamProfileHandler::onPreChildrenGet() {
     return {};
 }
 
-Json::Value StreamProfileHandler::onGetChild(const std::string &k) {
+jsonmodel::ExportValue StreamProfileHandler::exportChildValue(const std::string &k) {
     if(k == kStreamProfileFormatKey) {
-        return jsonmodel::JsonTraits<std::string>::to(utils::obFormatToStr(format_));
+        return jsonmodel::makeScalar(utils::obFormatToStr(format_));
     }
     else if(k == kStreamProfileFpsKey) {
-        return jsonmodel::JsonTraits<uint32_t>::to(fps_);
+        return jsonmodel::makeScalar(fps_);
     }
     else if(k == kStreamProfileWidthKey) {
-        return jsonmodel::JsonTraits<uint32_t>::to(width_);
+        return jsonmodel::makeScalar(width_);
     }
     else if(k == kStreamProfileHeightKey) {
-        return jsonmodel::JsonTraits<uint32_t>::to(height_);
+        return jsonmodel::makeScalar(height_);
     }
     else {
         THROW_INVALID_PARAM_EXCEPTION("Invalid key of frame stream profile: '" + k + "'");

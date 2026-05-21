@@ -76,16 +76,18 @@ void PostProcessingFilterHandler::set(const std::string &k, const Json::Value &v
     }
 }
 
-Json::Value PostProcessingFilterHandler::get(const std::string &k) {
+jsonmodel::ExportValue PostProcessingFilterHandler::exportValue(const std::string &k) {
     utils::unusedVar(k);
-    Json::Value node(Json::arrayValue);
+    std::vector<jsonmodel::ExportValue> filterItems;
+    filterItems.reserve(postFilters_.size());
 
     for(auto &filter: postFilters_) {
-        Json::Value filterNode(Json::objectValue);
+        std::vector<jsonmodel::ExportField> fields;
+        fields.reserve(static_cast<size_t>(2 + filter->getConfigSchemaVec().size()));
 
         // name and enable
-        filterNode[kFilterNameKey] = filter->getName();
-        filterNode[kEnableKey]     = filter->isEnabled();
+        fields.emplace_back(jsonmodel::makeField(kFilterNameKey, filter->getName()));
+        fields.emplace_back(jsonmodel::makeField(kEnableKey, filter->isEnabled()));
         // configs
         auto configNames = filter->getConfigSchemaVec();
         for(const auto &configName: configNames) {
@@ -93,22 +95,22 @@ Json::Value PostProcessingFilterHandler::get(const std::string &k) {
             auto value = filter->getConfigValue(configName.name);
             switch(item.type) {
             case OB_FILTER_CONFIG_VALUE_TYPE_INT:
-                filterNode[configName.name] = jsonmodel::JsonTraits<int>::to(static_cast<int>(value));
+                fields.emplace_back(jsonmodel::makeField(configName.name, static_cast<int>(value)));
                 break;
             case OB_FILTER_CONFIG_VALUE_TYPE_BOOLEAN:
-                filterNode[configName.name] = jsonmodel::JsonTraits<bool>::to(static_cast<bool>(value));
+                fields.emplace_back(jsonmodel::makeField(configName.name, static_cast<bool>(value)));
                 break;
             case OB_FILTER_CONFIG_VALUE_TYPE_FLOAT:
             default:
                 // default is double
-                filterNode[configName.name] = jsonmodel::JsonTraits<double>::to(value);
+                fields.emplace_back(jsonmodel::makeField(configName.name, value));
                 break;
             }
         }
-        node.append(filterNode);
+        filterItems.emplace_back(jsonmodel::ExportValue::object(std::move(fields)));
     }
 
-    return node;
+    return jsonmodel::ExportValue::array(std::move(filterItems));
 }
 
 }  // namespace libobsensor

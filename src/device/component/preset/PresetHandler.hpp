@@ -35,11 +35,11 @@ public:
     }
 
     /**
-     * @brief Implementation of ILeafHandler::get
+     * @brief Implementation of ILeafHandler::exportValue
      */
-    Json::Value get(const std::string &k) override {
+    jsonmodel::ExportValue exportValue(const std::string &k) override {
         utils::unusedVar(k);
-        return jsonmodel::JsonTraits<std::string>::to(comments_);
+        return jsonmodel::makeScalar(comments_);
     }
 
 private:
@@ -75,9 +75,9 @@ public:
     std::vector<std::string> onPreChildrenGet() override;
 
     /**
-     * @brief Implementation of IObjectHandler::onGetChild
+     * @brief Implementation of IObjectHandler::exportChildValue
      */
-    Json::Value onGetChild(const std::string &k) override;
+    jsonmodel::ExportValue exportChildValue(const std::string &k) override;
 
 private:
     IDevice                                                         *owner_ = nullptr;
@@ -113,16 +113,16 @@ public:
     void onPostChildrenSet() override;
 
     /**
-     * @brief Called once before generating all child nodes during get
+     * @brief Called once before generating all child nodes during export
      *
      * @return A vector of additional child node keys to include
      */
     std::vector<std::string> onPreChildrenGet() override;
 
     /**
-     * @brief Implementation of IObjectHandler::onGetChild
+     * @brief Implementation of IObjectHandler::exportChildValue
      */
-    Json::Value onGetChild(const std::string &k) override;
+    jsonmodel::ExportValue exportChildValue(const std::string &k) override;
 
 private:
     void stopSetting();
@@ -157,9 +157,9 @@ public:
     void set(const std::string &k, const Json::Value &v) override;
 
     /**
-     * @brief Implementation of ILeafHandler::get
+     * @brief Implementation of ILeafHandler::exportValue
      */
-    Json::Value get(const std::string &k) override;
+    jsonmodel::ExportValue exportValue(const std::string &k) override;
 
 protected:
     enum class Mode {
@@ -201,9 +201,9 @@ public:
     std::vector<std::string> onPreChildrenGet() override;
 
     /**
-     * @brief Implementation of IObjectHandler::onGetChild
+     * @brief Implementation of IObjectHandler::exportChildValue
      */
-    Json::Value onGetChild(const std::string &k) override;
+    jsonmodel::ExportValue exportChildValue(const std::string &k) override;
 
 private:
     IDevice *owner_ = nullptr;
@@ -241,9 +241,9 @@ public:
     std::vector<std::string> onPreChildrenGet() override;
 
     /**
-     * @brief Implementation of IObjectHandler::onGetChild
+     * @brief Implementation of IObjectHandler::exportChildValue
      */
-    Json::Value onGetChild(const std::string &k) override;
+    jsonmodel::ExportValue exportChildValue(const std::string &k) override;
 
 private:
     IDevice *owner_ = nullptr;
@@ -280,9 +280,9 @@ public:
     std::vector<std::string> onPreChildrenGet() override;
 
     /**
-     * @brief Implementation of IObjectHandler::onGetChild
+     * @brief Implementation of IObjectHandler::exportChildValue
      */
-    Json::Value onGetChild(const std::string &k) override;
+    jsonmodel::ExportValue exportChildValue(const std::string &k) override;
 
 private:
     void stopSetting();
@@ -316,9 +316,9 @@ public:
     void set(const std::string &k, const Json::Value &v) override;
 
     /**
-     * @brief Implementation of ILeafHandler::get
+     * @brief Implementation of ILeafHandler::exportValue
      */
-    Json::Value get(const std::string &k) override;
+    jsonmodel::ExportValue exportValue(const std::string &k) override;
 
 private:
     IDevice *owner_ = nullptr;
@@ -332,8 +332,8 @@ public:
     HeartbeatHandler(IDevice *owner) : owner_(owner) {}
     ~HeartbeatHandler() override = default;
 
-    void set(const std::string &k, const Json::Value &v) override;
-    Json::Value get(const std::string &k) override;
+    void                   set(const std::string &k, const Json::Value &v) override;
+    jsonmodel::ExportValue exportValue(const std::string &k) override;
 
 private:
     IDevice *owner_ = nullptr;

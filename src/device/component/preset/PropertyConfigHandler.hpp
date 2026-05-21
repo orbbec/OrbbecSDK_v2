@@ -35,18 +35,18 @@ public:
     }
 
     /**
-     * @brief Implementation of ILeafHandler::get
+     * @brief Implementation of ILeafHandler::exportValue
      */
-    Json::Value get(const std::string &k) override {
+    jsonmodel::ExportValue exportValue(const std::string &k) override {
         utils::unusedVar(k);
         auto propServer = owner_->getPropertyServer();
         if(propServer->isPropertySupported(propertyId_, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
             T value = propServer->getPropertyValueT<T>(propertyId_);
-            return jsonmodel::JsonTraits<T>::to(value);
+            return jsonmodel::makeScalar(value);
         }
         else {
             LOG_WARN("Unsupported property '{}', skipping getting, return nullvalue", propertyId_);
-            return Json::Value(Json::nullValue);
+            return jsonmodel::ExportValue::nullValue();
         }
     }
 

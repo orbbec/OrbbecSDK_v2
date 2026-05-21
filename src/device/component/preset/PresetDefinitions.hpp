@@ -13,7 +13,7 @@ namespace libobsensor {
 
 // Common JSON keys
 constexpr const char kApiVersion[]    = "api_version";
-constexpr const char kFilterNameKey[] = "_filter_name";
+constexpr const char kFilterNameKey[] = "filter_name";
 constexpr const char kEnableKey[]     = "enable";
 constexpr const char kLeftKey[]       = "left";
 constexpr const char kRightKey[]      = "right";

@@ -128,33 +128,28 @@ std::vector<std::string> FrameInterleaveHandler::onPreChildrenGet() {
     return {};
 }
 
-Json::Value FrameInterleaveHandler::onGetChild(const std::string &k) {
+jsonmodel::ExportValue FrameInterleaveHandler::exportChildValue(const std::string &k) {
     if(k == kEnableKey) {
-        return jsonmodel::JsonTraits<bool>::to(enable_);
+        return jsonmodel::makeScalar(enable_);
     }
     else if(k == kInterleaveModeKey) {
-        return jsonmodel::JsonTraits<std::string>::to(currentModeName_);
+        return jsonmodel::makeScalar(currentModeName_);
     }
     else if(k == kInterleaveConfigIndexKey) {
-        return jsonmodel::JsonTraits<int>::to(currentIndex_);
+        return jsonmodel::makeScalar(currentIndex_);
     }
     else if(k == kInterleaveParmas) {
-        if(params_.empty()) {
-            return Json::Value(Json::arrayValue);
-        }
-
-        Json::Value paramNode(Json::arrayValue);
+        std::vector<jsonmodel::ExportValue> paramItems;
+        paramItems.reserve(params_.size());
         for(const auto &param: params_) {
-            Json::Value object(Json::objectValue);
-            object[kInterleaveDepthExposureKey]      = jsonmodel::JsonTraits<int>::to(param.depthExposureTime);
-            object[kInterleaveDepthGainKey]          = jsonmodel::JsonTraits<int>::to(param.depthGain);
-            object[kInterleaveDepthBrightnessKey]    = jsonmodel::JsonTraits<int>::to(param.depthBrightness);
-            object[kInterleaveDepthAeMaxExposureKey] = jsonmodel::JsonTraits<int>::to(param.depthMaxExposure);
-            object[kInterleaveLaserControlKey]       = jsonmodel::JsonTraits<int>::to(param.laserSwitch);
-
-            paramNode.append(object);
+            std::vector<jsonmodel::ExportField> fields;
+            fields.reserve(paramsKeyList_.size());
+            for(const auto &entry: paramsKeyList_) {
+                fields.emplace_back(jsonmodel::makeField(entry.first, param.*(entry.second)));
+            }
+            paramItems.emplace_back(jsonmodel::ExportValue::object(std::move(fields)));
         }
-        return paramNode;
+        return jsonmodel::ExportValue::array(std::move(paramItems));
     }
     else {
         THROW_INVALID_PARAM_EXCEPTION("Invalid key of frame interleave: '" + k + "'");
@@ -274,16 +269,16 @@ std::vector<std::string> RoiHandler::onPreChildrenGet() {
     return {};
 }
 
-Json::Value RoiHandler::onGetChild(const std::string &k) {
+jsonmodel::ExportValue RoiHandler::exportChildValue(const std::string &k) {
     if(!readSupported_) {
-        return Json::Value(Json::nullValue);
+        return jsonmodel::ExportValue::nullValue();
     }
 
     auto it = valueMap_.find(k);
     if(it == valueMap_.end()) {
         THROW_INVALID_PARAM_EXCEPTION("Invalid key of ROI: '" + k + "'");
     }
-    return jsonmodel::JsonTraits<int>::to(*(it->second));
+    return jsonmodel::makeScalar(static_cast<int>(*(it->second)));
 }
 
 // D2DHandler
@@ -318,7 +313,7 @@ void D2DHandler::set(const std::string &k, const Json::Value &v) {
     }
 }
 
-Json::Value D2DHandler::get(const std::string &k) {
+jsonmodel::ExportValue D2DHandler::exportValue(const std::string &k) {
     utils::unusedVar(k);
     auto        propServer = owner_->getPropertyServer();
     auto        hardware   = propServer->getPropertyValueT<bool>(OB_PROP_DISPARITY_TO_DEPTH_BOOL);
@@ -337,7 +332,7 @@ Json::Value D2DHandler::get(const std::string &k) {
         }
     }
 
-    return jsonmodel::JsonTraits<std::string>::to(mode);
+    return jsonmodel::makeScalar(mode);
 }
 
 // SoftwareNoiseRemovalFilterHandler
@@ -384,15 +379,15 @@ std::vector<std::string> SoftwareNoiseRemovalFilterHandler::onPreChildrenGet() {
     return {};
 }
 
-Json::Value SoftwareNoiseRemovalFilterHandler::onGetChild(const std::string &k) {
+jsonmodel::ExportValue SoftwareNoiseRemovalFilterHandler::exportChildValue(const std::string &k) {
     if(k == kEnableKey) {
-        return jsonmodel::JsonTraits<bool>::to(enable_);
+        return jsonmodel::makeScalar(enable_);
     }
     else if(k == kNoiseRemovalFilterMinDifferenceKey) {
-        return jsonmodel::JsonTraits<int>::to(minDiff_);
+        return jsonmodel::makeScalar(minDiff_);
     }
     else if(k == kNoiseRemovalFilterMaxSizeKey) {
-        return jsonmodel::JsonTraits<int>::to(maxSize_);
+        return jsonmodel::makeScalar(maxSize_);
     }
     else {
         THROW_INVALID_PARAM_EXCEPTION("Invalid key of software noise removal filter: '" + k + "'");
@@ -438,12 +433,12 @@ std::vector<std::string> HardwareNoiseRemovalFilterHandler::onPreChildrenGet() {
     return {};
 }
 
-Json::Value HardwareNoiseRemovalFilterHandler::onGetChild(const std::string &k) {
+jsonmodel::ExportValue HardwareNoiseRemovalFilterHandler::exportChildValue(const std::string &k) {
     if(k == kEnableKey) {
-        return jsonmodel::JsonTraits<bool>::to(enable_);
+        return jsonmodel::makeScalar(enable_);
     }
     else if(k == kNoiseRemovalFilterThresholdKey) {
-        return jsonmodel::JsonTraits<float>::to(threshold_);
+        return jsonmodel::makeScalar(threshold_);
     }
     else {
         THROW_INVALID_PARAM_EXCEPTION("Invalid key of hardware noise removal filter: '" + k + "'");
@@ -568,16 +563,16 @@ std::vector<std::string> DisparitySearchHandler::onPreChildrenGet() {
     return {};
 }
 
-Json::Value DisparitySearchHandler::onGetChild(const std::string &k) {  // Save all values
+jsonmodel::ExportValue DisparitySearchHandler::exportChildValue(const std::string &k) {  // Save all values
     if(!readSupported_) {
-        return Json::Value(Json::nullValue);
+        return jsonmodel::ExportValue::nullValue();
     }
 
     if(k == kDisparitySearchRangeModeKey) {
-        return jsonmodel::JsonTraits<int>::to(rangeMode_);
+        return jsonmodel::makeScalar(rangeMode_);
     }
     else if(k == kDisparitySearchOffsetKey) {
-        return jsonmodel::JsonTraits<int>::to(searchOffset_);
+        return jsonmodel::makeScalar(searchOffset_);
     }
     else {
         THROW_INVALID_PARAM_EXCEPTION("Invalid key of disparity search: '" + k + "'");
@@ -592,11 +587,11 @@ void DepthWorkModeHandler::set(const std::string &k, const Json::Value &v) {
     depthWorkModeManager->switchDepthWorkMode(value);
 }
 
-Json::Value DepthWorkModeHandler::get(const std::string &k) {
+jsonmodel::ExportValue DepthWorkModeHandler::exportValue(const std::string &k) {
     utils::unusedVar(k);
     auto depthWorkModeManager = owner_->getComponentT<IDepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
     auto workMode             = depthWorkModeManager->getCurrentDepthWorkMode();
-    return jsonmodel::JsonTraits<std::string>::to(workMode.name);
+    return jsonmodel::makeScalar(workMode.name);
 }
 
 // HeartbeatHandler
@@ -616,13 +611,13 @@ void HeartbeatHandler::set(const std::string &k, const Json::Value &v) {
     }
 }
 
-Json::Value HeartbeatHandler::get(const std::string &k) {
+jsonmodel::ExportValue HeartbeatHandler::exportValue(const std::string &k) {
     utils::unusedVar(k);
     auto monitor = owner_->getComponentT<IDeviceMonitor>(OB_DEV_COMPONENT_DEVICE_MONITOR, false);
     if(!monitor) {
-        return Json::Value(Json::nullValue);
+        return jsonmodel::ExportValue::nullValue();
     }
-    return jsonmodel::JsonTraits<bool>::to(monitor->isHeartbeatEnabled());
+    return jsonmodel::makeScalar(monitor->isHeartbeatEnabled());
 }
 
 }  // namespace libobsensor

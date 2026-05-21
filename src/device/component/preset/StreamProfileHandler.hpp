@@ -41,9 +41,9 @@ public:
     std::vector<std::string> onPreChildrenGet() override;
 
     /**
-     * @brief Implementation of IObjectHandler::onGetChild
+     * @brief Implementation of IObjectHandler::exportChildValue
      */
-    Json::Value onGetChild(const std::string &k) override;
+    jsonmodel::ExportValue exportChildValue(const std::string &k) override;
 
 private:
     IDevice     *owner_{ nullptr };

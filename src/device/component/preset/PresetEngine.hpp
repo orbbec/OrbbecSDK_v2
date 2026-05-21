@@ -34,6 +34,13 @@ public:
      * @return The resulting JSON object
      */
     virtual Json::Value exportJson() = 0;
+
+    /**
+     * @brief Exports the current state of all handlers into ordered JSON text.
+     * @param options Formatting options for ordered export
+     * @return The resulting JSON string
+     */
+    virtual std::string exportJson(const jsonmodel::OrderedExportOptions &options) = 0;
 };
 
 /**
@@ -66,6 +73,18 @@ public:
             THROW_WRONG_API_CALL_SEQUENCE_EXCEPTION("ConfigEngine has not been initialized");
         }
         return configEngine_.exportAll();
+    }
+
+    /**
+     * @brief Implementation of IPresetEngine::exportJson for ordered text export.
+     * @param options Formatting options for ordered export
+     * @return The resulting JSON string
+     */
+    std::string exportJson(const jsonmodel::OrderedExportOptions &options) override {
+        if(!initialized_) {
+            THROW_WRONG_API_CALL_SEQUENCE_EXCEPTION("ConfigEngine has not been initialized");
+        }
+        return configEngine_.exportAll(options);
     }
 
 protected:

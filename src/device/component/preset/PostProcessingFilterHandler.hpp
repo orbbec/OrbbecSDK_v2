@@ -27,9 +27,9 @@ public:
     void set(const std::string &k, const Json::Value &v) override;
 
     /**
-     * @brief Implementation of ILeafHandler::get
+     * @brief Implementation of ILeafHandler::exportValue
      */
-    Json::Value get(const std::string &k) override;
+    jsonmodel::ExportValue exportValue(const std::string &k) override;
 
 private:
     std::shared_ptr<IFilter> getFilter(const std::string &name);
