@@ -75,13 +75,15 @@ StreamExtrinsicsManager::StreamExtrinsicsManager() {}
 StreamExtrinsicsManager::~StreamExtrinsicsManager() noexcept = default;
 
 void StreamExtrinsicsManager::registerExtrinsics(const std::shared_ptr<const StreamProfile> &from, const std::shared_ptr<const StreamProfile> &to,
-                                                 const OBExtrinsic &extrinsics) {
+                                                 const OBExtrinsic &extrinsics,bool cleanExpired) {
     if(!from || !to) {
         THROW_INVALID_PARAM_EXCEPTION("Invalid stream profile, from or to is null");
     }
 
     std::unique_lock<std::recursive_mutex> lock(mutex_);
-    cleanExpiredStreamProfiles();  // clean expired stream profiles first
+    if(cleanExpired) {
+        cleanExpiredStreamProfiles();  // clean expired stream profiles first
+    }
 
     // judge if already registered and if the extrinsics is the same
     bool alreadyRegistered   = false;
@@ -225,7 +227,7 @@ void StreamExtrinsicsManager::registerExtrinsics(const std::shared_ptr<const Str
         THROW_INVALID_PARAM_EXCEPTION("To Stream profile not registered!");
     }
 
-    registerExtrinsics(from, to, extrinsics);
+    registerExtrinsics(from, to, extrinsics,false);
 }
 
 void StreamExtrinsicsManager::registerSameExtrinsics(const std::shared_ptr<const StreamProfile> &from, const std::shared_ptr<const StreamProfile> &to) {

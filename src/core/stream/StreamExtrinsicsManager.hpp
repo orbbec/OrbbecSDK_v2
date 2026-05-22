@@ -23,7 +23,10 @@ public:
 
     ~StreamExtrinsicsManager() noexcept;
 
-    void registerExtrinsics(const std::shared_ptr<const StreamProfile> &from, const std::shared_ptr<const StreamProfile> &to, const OBExtrinsic &extrinsics);
+    void registerExtrinsics(const std::shared_ptr<const StreamProfile> &from, const std::shared_ptr<const StreamProfile> &to, const OBExtrinsic &extrinsics,bool cleanExpired = true);
+    /**
+     * @brief Register extrinsics from stream profile `from` to stream profile of type `type`. If there is no stream profile of the specified type, an exception will be thrown.
+     */
     void registerExtrinsics(const std::shared_ptr<const StreamProfile> &from, const OBStreamType &type, const OBExtrinsic &extrinsics);
     void registerSameExtrinsics(const std::shared_ptr<const StreamProfile> &from, const std::shared_ptr<const StreamProfile> &to);
 
