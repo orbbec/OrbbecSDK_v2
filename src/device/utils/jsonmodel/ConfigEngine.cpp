@@ -361,7 +361,7 @@ void ConfigEngine::importRecursive(std::shared_ptr<Node> node, const Json::Value
                     }
                 }
                 else if(!child->optional) {
-                    currentPath = fullPath(pathStack, node->key);
+                    currentPath = fullPath(pathStack, child->key);
                     throw std::runtime_error("Missing required field: " + currentPath);
                 }
             }
@@ -378,7 +378,7 @@ void ConfigEngine::importRecursive(std::shared_ptr<Node> node, const Json::Value
                 importRecursive(child, value[child->key], pathStack);
             }
             else if(!child->optional) {
-                currentPath = fullPath(pathStack, node->key);
+                currentPath = fullPath(pathStack, child->key);
                 throw std::runtime_error("Missing required field: " + currentPath);
             }
         }

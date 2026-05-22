@@ -59,4 +59,34 @@ protected:
     uint32_t propertyId_{};      // property id
 };
 
+/**
+ * @brief Handler for color power line frequency mapping.
+ */
+class ColorPowerLineFrequencyHandler : public PropertyConfigHandler<int> {
+public:
+    explicit ColorPowerLineFrequencyHandler(IDevice *owner);
+    ~ColorPowerLineFrequencyHandler() override = default;
+
+    void                   set(const std::string &k, const Json::Value &v) override;
+    jsonmodel::ExportValue exportValue(const std::string &k) override;
+
+private:
+    std::map<int, std::string> valueMapping_;
+};
+
+/**
+ * @brief Handler for color preset mapping.
+ */
+class ColorPresetHandler : public PropertyConfigHandler<int> {
+public:
+    explicit ColorPresetHandler(IDevice *owner);
+    ~ColorPresetHandler() override = default;
+
+    void                   set(const std::string &k, const Json::Value &v) override;
+    jsonmodel::ExportValue exportValue(const std::string &k) override;
+
+private:
+    std::map<int, std::string> valueMapping_;
+};
+
 }  // namespace libobsensor

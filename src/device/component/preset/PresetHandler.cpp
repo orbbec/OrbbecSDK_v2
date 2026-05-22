@@ -502,6 +502,12 @@ void DisparitySearchHandler::onSetChild(const std::string &k, const Json::Value 
     // Save all values
     if(k == kDisparitySearchRangeModeKey) {
         rangeMode_ = jsonmodel::JsonTraits<int>::from(v);
+        for(const auto &entry: rangeModeMapping_) {
+            if(entry.second == rangeMode_) {
+                rangeMode_ = entry.first;
+                break;
+            }
+        }
     }
     else if(k == kDisparitySearchOffsetKey) {
         searchOffset_ = jsonmodel::JsonTraits<int>::from(v);
@@ -569,7 +575,8 @@ jsonmodel::ExportValue DisparitySearchHandler::exportChildValue(const std::strin
     }
 
     if(k == kDisparitySearchRangeModeKey) {
-        return jsonmodel::makeScalar(rangeMode_);
+        auto it = rangeModeMapping_.find(rangeMode_);
+        return jsonmodel::makeScalar(it != rangeModeMapping_.end() ? it->second : rangeMode_);
     }
     else if(k == kDisparitySearchOffsetKey) {
         return jsonmodel::makeScalar(searchOffset_);
@@ -599,16 +606,17 @@ void HeartbeatHandler::set(const std::string &k, const Json::Value &v) {
     utils::unusedVar(k);
     auto monitor = owner_->getComponentT<IDeviceMonitor>(OB_DEV_COMPONENT_DEVICE_MONITOR, false);
     if(!monitor) {
-        LOG_WARN("Device monitor not available, skipping heartbeat setting");
+        LOG_WARN("Device monitor not available, skipping {} setting", firmwareLog_ ? "firmware log" : "heartbeat");
         return;
     }
-    bool enabled = jsonmodel::JsonTraits<bool>::from(v);
-    if(enabled) {
-        monitor->enableHeartbeat();
+
+    const bool enabled = jsonmodel::JsonTraits<bool>::from(v);
+    if(firmwareLog_) {
+        enabled ? monitor->enableFirmwareLog() : monitor->disableFirmwareLog();
+        return;
     }
-    else {
-        monitor->disableHeartbeat();
-    }
+    // heartbeat
+    enabled ? monitor->enableHeartbeat() : monitor->disableHeartbeat();
 }
 
 jsonmodel::ExportValue HeartbeatHandler::exportValue(const std::string &k) {
@@ -616,6 +624,10 @@ jsonmodel::ExportValue HeartbeatHandler::exportValue(const std::string &k) {
     auto monitor = owner_->getComponentT<IDeviceMonitor>(OB_DEV_COMPONENT_DEVICE_MONITOR, false);
     if(!monitor) {
         return jsonmodel::ExportValue::nullValue();
+    }
+
+    if(firmwareLog_) {
+        return jsonmodel::makeScalar(monitor->isFirmwareLogEnabled());
     }
     return jsonmodel::makeScalar(monitor->isHeartbeatEnabled());
 }

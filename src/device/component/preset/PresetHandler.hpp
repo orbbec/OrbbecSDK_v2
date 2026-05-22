@@ -256,7 +256,7 @@ private:
  */
 class DisparitySearchHandler : public jsonmodel::IObjectHandler {
 public:
-    DisparitySearchHandler(IDevice *owner) : owner_(owner) {};
+    DisparitySearchHandler(IDevice *owner) : owner_(owner) {}
     ~DisparitySearchHandler() override;
 
     /**
@@ -290,11 +290,12 @@ private:
     void setDisparitySearchProperties();
 
 private:
-    IDevice *owner_ = nullptr;
-    int      rangeMode_{ 0 };
-    int      searchOffset_{ 0 };
-    bool     writeSupported_{ true };
-    bool     readSupported_{ true };
+    IDevice           *owner_ = nullptr;
+    int                rangeMode_{ 0 };
+    int                searchOffset_{ 0 };
+    std::map<int, int> rangeModeMapping_{ { 0, 64 }, { 1, 128 }, { 2, 256 } };
+    bool               writeSupported_{ true };
+    bool               readSupported_{ true };
     // for setting
     uint32_t          callbackToken_{ 0 };
     std::atomic<bool> needUnregister_{ false };
@@ -329,14 +330,15 @@ private:
  */
 class HeartbeatHandler : public jsonmodel::ILeafHandler {
 public:
-    HeartbeatHandler(IDevice *owner) : owner_(owner) {}
+    HeartbeatHandler(IDevice *owner, bool firmwareLog) : owner_(owner), firmwareLog_(firmwareLog) {}
     ~HeartbeatHandler() override = default;
 
     void                   set(const std::string &k, const Json::Value &v) override;
     jsonmodel::ExportValue exportValue(const std::string &k) override;
 
 private:
-    IDevice *owner_ = nullptr;
+    IDevice *owner_       = nullptr;
+    bool     firmwareLog_ = false;
 };
 
 }  // namespace libobsensor

@@ -75,12 +75,13 @@ void G330PresetEngine::init() {
         // device settings
         engine.declareObject("device", [&](jsonmodel::ConfigEngine &engine) {
             engine.addLeaf("device_ptp_clock_sync", std::make_shared<PropertyConfigHandler<bool>>(owner_, OB_DEVICE_PTP_CLOCK_SYNC_ENABLE_BOOL));
-            engine.addLeaf("device_heartbeat", std::make_shared<HeartbeatHandler>(owner_));
+            engine.addLeaf("device_heartbeat", std::make_shared<HeartbeatHandler>(owner_, false));
+            engine.addLeaf("device_firmware_log", std::make_shared<HeartbeatHandler>(owner_, true));
             engine.addLeaf("device_usb2_repeat_identify", std::make_shared<PropertyConfigHandler<bool>>(owner_, OB_PROP_DEVICE_USB2_REPEAT_IDENTIFY_BOOL));
         });
         // depth
         engine.declareObject("sensor_depth", [&](jsonmodel::ConfigEngine &engine) {
-            engine.addLeaf("depth_alg_mode", std::make_shared<DepthWorkModeHandler>(owner_));
+            engine.addLeaf("depth_preset", std::make_shared<DepthWorkModeHandler>(owner_));
             engine.addLeaf("depth_auto_exposure_priority", std::make_shared<PropertyConfigHandler<int>>(owner_, OB_PROP_DEPTH_AUTO_EXPOSURE_PRIORITY_INT));
             engine.addLeaf("depth_auto_exposure", std::make_shared<PropertyConfigHandler<bool>>(owner_, OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL));
             engine.addLeaf("depth_ae_max_exposure", std::make_shared<PropertyConfigHandler<int>>(owner_, OB_PROP_IR_AE_MAX_EXPOSURE_INT));
@@ -175,7 +176,9 @@ void G330PresetEngine::init() {
             engine.addLeaf("color_backlight_compensation", std::make_shared<PropertyConfigHandler<int>>(owner_, OB_PROP_COLOR_BACKLIGHT_COMPENSATION_INT));
             engine.addLeaf("color_contrast", std::make_shared<PropertyConfigHandler<int>>(owner_, OB_PROP_COLOR_CONTRAST_INT));
             engine.addLeaf("color_saturation", std::make_shared<PropertyConfigHandler<int>>(owner_, OB_PROP_COLOR_SATURATION_INT));
-            engine.addLeaf("color_power_line_frequency", std::make_shared<PropertyConfigHandler<int>>(owner_, OB_PROP_COLOR_POWER_LINE_FREQUENCY_INT));
+            engine.addLeaf("color_power_line_frequency", std::make_shared<ColorPowerLineFrequencyHandler>(owner_));
+            engine.addLeaf("color_anti_flicker", std::make_shared<PropertyConfigHandler<bool>>(owner_, OB_PROP_COLOR_ANTI_FLICKER_BOOL));
+            engine.addLeaf("color_preset", std::make_shared<ColorPresetHandler>(owner_));
             // ae_roi
             engine.addObject(
                 "color_ae_roi",
