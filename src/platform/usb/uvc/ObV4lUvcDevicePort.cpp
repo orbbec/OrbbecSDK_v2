@@ -449,6 +449,9 @@ void ObV4lUvcDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandle> devHandle)
                 }
                 continue;
             }
+            else if(val == 0) {
+                continue;
+            }
 
             if(FD_ISSET(devHandle->stopPipeFd[0], &fds) || FD_ISSET(devHandle->stopPipeFd[1], &fds)) {
                 if(!devHandle->isCapturing) {

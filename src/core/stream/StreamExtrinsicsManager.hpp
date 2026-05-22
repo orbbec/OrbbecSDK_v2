@@ -7,6 +7,7 @@
 #include "StreamProfile.hpp"
 #include <map>
 #include <memory>
+#include <unordered_map>
 #include <vector>
 
 namespace libobsensor {
@@ -47,6 +48,8 @@ private:
     std::recursive_mutex                                                mutex_;
     std::map<uint64_t, std::vector<std::weak_ptr<const StreamProfile>>> streamProfileMap_;  // vertices
     std::map<uint64_t, std::vector<std::pair<uint64_t, OBExtrinsic>>>   extrinsicsGraph_;   // graph adjacency list
+
+    std::unordered_map<uint64_t, uint64_t> profileToIdMap_;
 };
 
 }  // namespace libobsensor

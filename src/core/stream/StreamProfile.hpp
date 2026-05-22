@@ -30,6 +30,8 @@ private:
 class StreamProfile : public std::enable_shared_from_this<StreamProfile>, private StreamProfileBackendLifeSpan {
 public:
     StreamProfile(std::shared_ptr<LazySensor> owner, OBStreamType type, OBFormat format);
+    StreamProfile(const StreamProfile &)            = delete;
+    StreamProfile &operator=(const StreamProfile &) = delete;
 
     virtual ~StreamProfile() noexcept = default;
 
@@ -42,6 +44,7 @@ public:
     OBFormat     getFormat() const;
     void         setIndex(uint8_t index);
     uint8_t      getIndex() const;
+    uint64_t     getInstanceId() const;
 
     OBExtrinsic getExtrinsicTo(std::shared_ptr<const StreamProfile> targetStreamProfile) const;
     void        bindExtrinsicTo(std::shared_ptr<const StreamProfile> targetStreamProfile, const OBExtrinsic &extrinsic);
@@ -77,11 +80,15 @@ public:
 
     virtual std::ostream &operator<<(std::ostream &os) const;
 
+private:
+    static uint64_t allocateInstanceId();
+
 protected:
     std::weak_ptr<LazySensor> owner_;
     OBStreamType              type_;
     OBFormat                  format_;
     uint8_t                   index_;  // for multi-stream sensor (multi pin uvc device)
+    uint64_t                  instanceId_;
 };
 class VideoStreamProfile : public StreamProfile {
 public:

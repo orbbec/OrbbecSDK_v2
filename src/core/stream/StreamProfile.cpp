@@ -7,6 +7,7 @@
 #include "utils/PublicTypeHelper.hpp"
 
 #include "frame/Frame.hpp"
+#include <atomic>
 
 namespace libobsensor {
 
@@ -19,7 +20,13 @@ StreamProfileBackendLifeSpan::~StreamProfileBackendLifeSpan() {
     logger_.reset();
 }
 
-StreamProfile::StreamProfile(std::shared_ptr<LazySensor> owner, OBStreamType type, OBFormat format) : owner_(owner), type_(type), format_(format), index_(0) {}
+uint64_t StreamProfile::allocateInstanceId() {
+    static std::atomic<uint64_t> nextInstanceId{ 1 };
+    return nextInstanceId.fetch_add(1, std::memory_order_relaxed);
+}
+
+StreamProfile::StreamProfile(std::shared_ptr<LazySensor> owner, OBStreamType type, OBFormat format)
+    : owner_(owner), type_(type), format_(format), index_(0), instanceId_(allocateInstanceId()) {}
 
 std::shared_ptr<LazySensor> StreamProfile::getOwner() const {
     return owner_.lock();
@@ -51,6 +58,10 @@ void StreamProfile::setIndex(uint8_t index) {
 
 uint8_t StreamProfile::getIndex() const {
     return index_;
+}
+
+uint64_t StreamProfile::getInstanceId() const {
+    return instanceId_;
 }
 
 void StreamProfile::bindExtrinsicTo(std::shared_ptr<const StreamProfile> targetStreamProfile, const OBExtrinsic &extrinsic) {
