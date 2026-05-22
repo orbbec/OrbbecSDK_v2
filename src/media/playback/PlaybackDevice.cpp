@@ -188,8 +188,8 @@ void PlaybackDevice::init() {
         registerPropertyCondition(propertyServer, OB_RAW_DATA_DEPTH_POST_FILTER_PARAMS, "", "r", vendorPropertyAccessor);
 
         // depth post filter param
-        auto depthEngineParamsManager = std::make_shared<PlaybackDepthPostFilterParamsManager>(this, port_);
-        registerComponent(OB_DEV_COMPONENT_DEPTH_POST_FILTER_PARAMS_MANAGER, depthEngineParamsManager);
+        auto depthPostFilterParamsManager = std::make_shared<PlaybackDepthPostFilterParamsManager>(this, port_);
+        registerComponent(OB_DEV_COMPONENT_DEPTH_POST_FILTER_PARAMS_MANAGER, depthPostFilterParamsManager);
     }
 
     if(port_->isPropertySupported(OB_PROP_FRAME_INTERLEAVE_ENABLE_BOOL)) {

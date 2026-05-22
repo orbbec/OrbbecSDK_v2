@@ -13,7 +13,7 @@
 namespace libobsensor {
 
 G305PresetManager::G305PresetManager(IDevice *owner) : DeviceComponentBase(owner) {
-    auto depthWorkModeManager = owner->getComponentT<G305DepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
+    auto depthWorkModeManager = owner->getComponentT<IDepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
     auto depthWorkModeList    = depthWorkModeManager->getDepthWorkModeList();
 
     for(auto &mode: depthWorkModeList) {
@@ -22,9 +22,15 @@ G305PresetManager::G305PresetManager(IDevice *owner) : DeviceComponentBase(owner
 
     auto propServer = owner->getPropertyServer();
     if(availablePresets_.size() > 0) {
-        auto currentDepthWorkMode = propServer->getStructureDataProtoV1_1_T<OBDepthWorkMode_Internal, 0>(OB_STRUCT_CURRENT_DEPTH_ALG_MODE);
-        currentPreset_            = currentDepthWorkMode.name;
-        depthWorkModeManager->switchDepthWorkMode(currentPreset_.c_str());
+        if(owner->isPlaybackDevice()) {
+            currentPreset_ = availablePresets_[0];
+            depthWorkModeManager->switchDepthWorkMode(currentPreset_.c_str());
+        }
+        else {
+            auto currentDepthWorkMode = propServer->getStructureDataProtoV1_1_T<OBDepthWorkMode_Internal, 0>(OB_STRUCT_CURRENT_DEPTH_ALG_MODE);
+            currentPreset_            = currentDepthWorkMode.name;
+            depthWorkModeManager->switchDepthWorkMode(currentPreset_.c_str());
+        }
     }
 
     if(!owner->isPlaybackDevice()) {
@@ -77,7 +83,7 @@ void G305PresetManager::loadPreset(const std::string &presetName) {
     }
     else {
         auto owner                = getOwner();
-        auto depthWorkModeManager = owner->getComponentT<G305DepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
+        auto depthWorkModeManager = owner->getComponentT<IDepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
 
         depthWorkModeManager->switchDepthWorkMode(presetName.c_str());
         currentPreset_ = presetName;
@@ -208,7 +214,7 @@ void G305PresetManager::exportSettingsAsPresetJsonFile(const std::string &filePa
 
 void G305PresetManager::fetchPreset() {
     auto owner                = getOwner();
-    auto depthWorkModeManager = owner->getComponentT<G305DepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
+    auto depthWorkModeManager = owner->getComponentT<IDepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
 
     // refetch list
     depthWorkModeManager->fetchDepthWorkModeList();
@@ -243,7 +249,7 @@ void G305PresetManager::loadCustomPreset(const std::string &presetName, const G3
     auto owner = getOwner();
 
     {
-        auto depthWorkModeManager = owner->getComponentT<G305DepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
+        auto depthWorkModeManager = owner->getComponentT<IDepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
         depthWorkModeManager->switchDepthWorkMode(preset.depthWorkMode.c_str());
     }
 
@@ -301,7 +307,7 @@ void G305PresetManager::storeCurrentParamsAsCustomPreset(const std::string &pres
     preset.colorPowerLineFrequency    = getPropertyValue<int>(owner, OB_PROP_COLOR_POWER_LINE_FREQUENCY_INT);
 
     {
-        auto depthWorkModeManager = owner->getComponentT<G305DepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
+        auto depthWorkModeManager = owner->getComponentT<IDepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
         preset.depthWorkMode      = depthWorkModeManager->getCurrentDepthWorkMode().name;
     }
 

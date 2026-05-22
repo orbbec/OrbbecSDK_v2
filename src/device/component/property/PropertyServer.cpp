@@ -307,7 +307,7 @@ const std::vector<uint8_t> &PropertyServer::getStructureData(uint32_t propertyId
         THROW_INVALID_DATA_EXCEPTION(utils::string::to_string() << "Property " << propId << " does not support structure data getting");
     }
     utils::Timer timer;
-    const auto  &data = structAccessor->getStructureData(propId, timing);
+    const auto  &data = timing ? structAccessor->getStructureData(propId, timing) : structAccessor->getStructureData(propId);
     for(auto &callback: callbacks) {
         callback(propertyId, data.data(), data.size(), PROP_OP_READ);
     }
