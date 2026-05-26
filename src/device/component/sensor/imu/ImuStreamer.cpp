@@ -181,9 +181,10 @@ void ImuStreamer::parseIMUData(std::shared_ptr<Frame> frame) {
         auto frameSet = FrameFactory::createFrameSet();
 
         OBImuOriginData *imuData    = (OBImuOriginData *)((uint8_t *)imuOrgData + groupIndex * sizeof(OBImuOriginData));
-        uint64_t         timestamp  = ((uint64_t)imuData->timestamp[0] | ((uint64_t)imuData->timestamp[1] << 32));
-        auto             sysTspUs   = frame->getSystemTimeStampUsec();
-        auto             frameIndex = frameIndex_++;
+        uint64_t         timestamp   = ((uint64_t)imuData->timestamp[0] | ((uint64_t)imuData->timestamp[1] << 32));
+        auto             sysTspUs    = frame->getSystemTimeStampUsec();
+        auto             steadyTspUs = frame->getSteadyTimeStampUsec();
+        auto             frameIndex  = frameIndex_++;
 
         if(accelStreamProfile) {
             auto accelFrame     = FrameFactory::createFrameFromStreamProfile(accelStreamProfile);
@@ -198,6 +199,7 @@ void ImuStreamer::parseIMUData(std::shared_ptr<Frame> frame) {
             accelFrame->setNumber(frameIndex);
             accelFrame->setTimeStampUsec(timestamp);
             accelFrame->setSystemTimeStampUsec(sysTspUs);
+            accelFrame->setSteadyTimeStampUsec(steadyTspUs);
             frameSet->pushFrame(accelFrame);
         }
 
@@ -213,6 +215,7 @@ void ImuStreamer::parseIMUData(std::shared_ptr<Frame> frame) {
             gyroFrame->setNumber(frameIndex);
             gyroFrame->setTimeStampUsec(timestamp);
             gyroFrame->setSystemTimeStampUsec(sysTspUs);
+            gyroFrame->setSteadyTimeStampUsec(steadyTspUs);
             frameSet->pushFrame(gyroFrame);
         }
         if(!filters_.empty()) {
