@@ -34,6 +34,14 @@ const char *ob_imu_rate_type_to_string(OBIMUSampleRate type) {
     return libobsensor::utils::obImuRateToStr(type).c_str();
 }
 
+float ob_imu_rate_type_to_value(OBIMUSampleRate type) {
+    return libobsensor::utils::mapIMUSampleRateToValue(type);
+}
+
+OBIMUSampleRate ob_imu_rate_value_to_type(float value) {
+    return libobsensor::utils::mapValueToIMUSampleRate(value);
+}
+
 const char *ob_gyro_range_type_to_string(OBGyroFullScaleRange type) {
     return libobsensor::utils::GyroFullScaleRangeToStr(type).c_str();
 }
@@ -52,6 +60,22 @@ const char *ob_meta_data_type_to_string(OBFrameMetadataType type) {
 
 OBStreamType ob_sensor_type_to_stream_type(OBSensorType type) {
     return libobsensor::utils::mapSensorTypeToStreamType(type);
+}
+
+OB_EXPORT OBSensorType ob_stream_type_to_sensor_type(OBStreamType type) {
+    return libobsensor::utils::mapStreamTypeToSensorType(type);
+}
+
+OB_EXPORT OBFrameType ob_stream_type_to_frame_type(OBStreamType type) {
+    return libobsensor::utils::mapStreamTypeToFrameType(type);
+}
+
+OBStreamType ob_frame_type_to_stream_type(OBFrameType type) {
+    return libobsensor::utils::mapFrameTypeToStreamType(type);
+}
+
+OB_EXPORT OBSensorType ob_frame_type_to_sensor_type(OBFrameType type) {
+    return libobsensor::utils::mapFrameTypeToSensorType(type);
 }
 
 #ifdef __cplusplus

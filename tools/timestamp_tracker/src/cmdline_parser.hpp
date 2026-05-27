@@ -12,11 +12,13 @@ namespace libobsensor {
 namespace tools {
 
 struct StreamSpec {
-    std::string sensor;      ///< sensor name
-    int         width  = 0;  ///< 0 = any
-    int         height = 0;  ///< 0 = any
-    int         fps    = 0;  ///< 0 = any
-    std::string format;      ///< "" = any
+    std::string sensor;               ///< sensor name
+    int         width  = 0;           ///< 0 = any
+    int         height = 0;           ///< 0 = any
+    double      fps    = 0.0;         ///< 0 = any; for IMU this is the shared sample rate in Hz
+    std::string format;               ///< "" = any
+    std::string accelFullScaleRange;  ///< for IMU/accel only; "" = any
+    std::string gyroFullScaleRange;   ///< for IMU/gyro only; "" = any
 };
 
 struct CmdLineConfig {

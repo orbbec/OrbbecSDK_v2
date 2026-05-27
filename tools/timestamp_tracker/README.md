@@ -47,12 +47,14 @@ This writes a default `config.json` which you can edit before use. Stream config
   "syncInterval": 0,
   "streams": [
     { "sensor": "depth", "width": 640, "height": 480, "fps": 30, "format": "Y16" },
-    { "sensor": "color", "fps": 15, "format": "MJPG" }
+    { "sensor": "color", "fps": 15, "format": "MJPG" },
+    { "sensor": "imu", "fps": "100HZ", "accelFullScaleRange": "16g", "gyroFullScaleRange": "2000dps" }
   ],
   "deviceOverrides": {
     "<serial_number>": {
       "streams": [
-        { "sensor": "depth" }
+        { "sensor": "depth" },
+        { "sensor": "imu", "fps": "3.125HZ", "accelFullScaleRange": "8g", "gyroFullScaleRange": "1000dps" }
       ]
     }
   }
@@ -62,6 +64,9 @@ This writes a default `config.json` which you can edit before use. Stream config
 - `streams` — global stream config applied to all devices.
 - `deviceOverrides` — per-device stream config keyed by serial number; fully overrides `streams` for that device.
 - In each stream object, `sensor` is **required**; `width`, `height`, `fps`, and `format` are **optional** (omit or set to `0`/empty for auto-select).
+- Video stream `fps` should remain an integer value.
+- When `sensor` is `"imu"`, the tool opens both accel and gyro together. `fps` is their shared sample rate, and can be written either as a number or as a case-insensitive Hz string such as `"3.125HZ"`, `"6.25hz"`, or `"100HZ"`.
+- IMU full-scale range strings follow SDK names such as `"16g"`, `"8g"`, `"1000dps"`, and `"2000dps"`.
 - `-t` and `-i` CLI flags always override the corresponding JSON values.
 
 When no stream config is provided, the tool auto-selects: Depth + Color (preferred), or Color_Left + Color_Right (fallback).
@@ -96,10 +101,16 @@ The tool generates CSV files in the **current directory** with the following nam
 Timestamps_<SerialNumber>_<SensorType>_<Width>x<Height>_<FPS>_<Format>.csv
 ```
 
+For IMU streams, the filename uses the full-scale range and sample rate instead:
+```
+Timestamps_<SerialNumber>_<SensorType>_<FullScaleRange>_<SampleRate>_<Format>.csv
+```
+
 For example:
 ```
 Timestamps_CP4H74D0001K_Color_1280x720_30_MJPG.csv
 Timestamps_CP4H74D0001K_Depth_848x480_30_Y16.csv
+Timestamps_CP4H74D0001K_Accel_16g_100_HZ_ACCEL.csv
 ```
 
 When a file reaches **1,024,000 rows**, it automatically rolls over to a new volume (appending `-2`, `-3`, etc.):
@@ -232,12 +243,14 @@ struct CmdLineConfig {
 ### Sensor Types
 Any sensor type recognized by the SDK can be specified in the JSON config by name (case-insensitive), e.g. `"depth"`, `"color"`, `"ir"`, `"ir_left"`, `"ir_right"`. The tool resolves names via the SDK's own string conversion at runtime.
 
+In addition, `"imu"` is a tool-level alias that expands to both accel and gyro and starts them together.
+
 When no config is provided, the tool auto-selects: **Depth + Color** (preferred), or **Color_Left + Color_Right** (fallback if depth/color are unavailable).
 
 ## Notes
 
 - Primarily tested with the **Gemini 330** series; other series may work but are not guaranteed.
-- Supported sensors: Depth, Color, IR, Color_Left, Color_Right (any type the SDK recognizes).
+- Supported sensors: Depth, Color, IR, Color_Left, Color_Right, Accel, Gyro, and the `imu` alias.
 - When no stream config is provided, auto-selects Depth + Color, or Color_Left + Color_Right as fallback.
 - The tool uses the `libobsensor::tools` namespace for all internal components.
 - Frame processing runs in a dedicated thread per device for real-time performance.

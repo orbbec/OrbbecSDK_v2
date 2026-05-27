@@ -16,12 +16,48 @@
 namespace libobsensor {
 namespace tools {
 
+namespace {
+
+std::string normalizeToken(const std::string &value) {
+    std::string normalized;
+    normalized.reserve(value.size());
+    for(auto c: value) {
+        if(std::isalnum(static_cast<unsigned char>(c))) {
+            normalized.push_back(static_cast<char>(::tolower(static_cast<unsigned char>(c))));
+        }
+    }
+    return normalized;
+}
+
+bool matchesEnumToken(const std::string &input, const std::string &candidate, const std::string &suffix = "") {
+    const auto normalizedInput     = normalizeToken(input);
+    const auto normalizedCandidate = normalizeToken(candidate);
+    if(normalizedInput == normalizedCandidate) {
+        return true;
+    }
+    if(!suffix.empty() && normalizedCandidate.size() > suffix.size() && normalizedCandidate.substr(normalizedCandidate.size() - suffix.size()) == suffix) {
+        return normalizedInput == normalizedCandidate.substr(0, normalizedCandidate.size() - suffix.size());
+    }
+    return false;
+}
+
+}  // namespace
+
 std::string toLower(const std::string &s) {
     std::string out = s;
     for(auto &c: out) {
         c = static_cast<char>(::tolower(static_cast<unsigned char>(c)));
     }
     return out;
+}
+
+bool isImuSensorName(const std::string &name) {
+    return normalizeToken(name) == "imu";
+}
+
+bool isWildcardToken(const std::string &value) {
+    const auto normalized = normalizeToken(value);
+    return normalized.empty() || normalized == "any" || normalized == "unknown";
 }
 
 // Sensor name string (case-insensitive) -> OBSensorType
@@ -53,6 +89,43 @@ OBFormat formatStringToOBFormat(const std::string &fmt) {
     return OB_FORMAT_UNKNOWN;
 }
 
+OBAccelFullScaleRange accelFullScaleRangeFromString(const std::string &range) {
+    if(isWildcardToken(range)) {
+        return OB_ACCEL_FULL_SCALE_RANGE_ANY;
+    }
+
+    static const OBAccelFullScaleRange candidates[] = {
+        OB_ACCEL_FS_2g, OB_ACCEL_FS_4g, OB_ACCEL_FS_8g, OB_ACCEL_FS_16g, OB_ACCEL_FS_3g, OB_ACCEL_FS_6g, OB_ACCEL_FS_12g, OB_ACCEL_FS_24g,
+    };
+
+    for(auto candidate: candidates) {
+        if(matchesEnumToken(range, ob::TypeHelper::convertOBAccelFullScaleRangeTypeToString(candidate), "g")) {
+            return candidate;
+        }
+    }
+
+    return OB_ACCEL_FS_UNKNOWN;
+}
+
+OBGyroFullScaleRange gyroFullScaleRangeFromString(const std::string &range) {
+    if(isWildcardToken(range)) {
+        return OB_GYRO_FULL_SCALE_RANGE_ANY;
+    }
+
+    static const OBGyroFullScaleRange candidates[] = {
+        OB_GYRO_FS_16dps,  OB_GYRO_FS_31dps,  OB_GYRO_FS_62dps,  OB_GYRO_FS_125dps,  OB_GYRO_FS_250dps,
+        OB_GYRO_FS_500dps, OB_GYRO_FS_400dps, OB_GYRO_FS_800dps, OB_GYRO_FS_1000dps, OB_GYRO_FS_2000dps,
+    };
+
+    for(auto candidate: candidates) {
+        if(matchesEnumToken(range, ob::TypeHelper::convertOBGyroFullScaleRangeTypeToString(candidate), "dps")) {
+            return candidate;
+        }
+    }
+
+    return OB_GYRO_FS_UNKNOWN;
+}
+
 // Check if a given sensor type is present on the device.
 bool deviceHasSensor(std::shared_ptr<ob::Device> device, OBSensorType type) {
     auto sensorList = device->getSensorList();
@@ -77,8 +150,8 @@ bool isEscPressed() {
 bool isEscPressed() {
     struct termios oldt, newt;
     tcgetattr(STDIN_FILENO, &oldt);
-    newt             = oldt;
-    newt.c_lflag    &= ~static_cast<tcflag_t>(ICANON | ECHO);
+    newt = oldt;
+    newt.c_lflag &= ~static_cast<tcflag_t>(ICANON | ECHO);
     newt.c_cc[VMIN]  = 0;
     newt.c_cc[VTIME] = 0;
     tcsetattr(STDIN_FILENO, TCSANOW, &newt);

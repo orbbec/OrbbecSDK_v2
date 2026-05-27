@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 #include "cmdline_parser.hpp"
+#include <cctype>
 #include <fstream>
 #include <iostream>
 #include <json/json.h>
@@ -9,15 +10,99 @@
 namespace libobsensor {
 namespace tools {
 
-static StreamSpec parseStreamSpec(const Json::Value &obj) {
-    StreamSpec spec;
-    spec.sensor = obj.get("sensor", "").asString();
-    spec.width  = obj.get("width", 0).asInt();
-    spec.height = obj.get("height", 0).asInt();
-    spec.fps    = obj.get("fps", 0).asInt();
-    spec.format = obj.get("format", "").asString();
-    return spec;
+namespace {
+
+std::string trim(const std::string &value) {
+    size_t begin = 0;
+    while(begin < value.size() && std::isspace(static_cast<unsigned char>(value[begin]))) {
+        ++begin;
+    }
+
+    size_t end = value.size();
+    while(end > begin && std::isspace(static_cast<unsigned char>(value[end - 1]))) {
+        --end;
+    }
+
+    return value.substr(begin, end - begin);
 }
+
+std::string toLowerCopy(const std::string &value) {
+    std::string lowered = value;
+    for(auto &ch: lowered) {
+        ch = static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
+    }
+    return lowered;
+}
+
+bool parseFpsValue(const Json::Value &value, double &fps, std::string &error) {
+    fps = 0.0;
+    if(value.isNull()) {
+        return true;
+    }
+
+    if(value.isDouble() || value.isInt() || value.isUInt()) {
+        fps = value.asDouble();
+    }
+    else if(value.isString()) {
+        std::string text = trim(value.asString());
+        if(text.empty()) {
+            return true;
+        }
+
+        const std::string lowered = toLowerCopy(text);
+        if(lowered.size() >= 2 && lowered.substr(lowered.size() - 2) == "hz") {
+            text = trim(text.substr(0, text.size() - 2));
+        }
+
+        if(text.empty()) {
+            error = "fps string is empty after removing Hz suffix";
+            return false;
+        }
+
+        try {
+            size_t parsedLength = 0;
+            fps                 = std::stod(text, &parsedLength);
+            if(parsedLength != text.size()) {
+                error = "fps contains unexpected trailing characters";
+                return false;
+            }
+        }
+        catch(...) {
+            error = "fps must be a number or a string like \"3.125HZ\"";
+            return false;
+        }
+    }
+    else {
+        error = "fps must be a number or a string like \"3.125HZ\"";
+        return false;
+    }
+
+    if(fps < 0.0) {
+        error = "fps cannot be negative";
+        return false;
+    }
+
+    return true;
+}
+
+bool parseStreamSpec(const Json::Value &obj, StreamSpec &spec, std::string &error) {
+    spec.sensor              = obj.get("sensor", "").asString();
+    spec.width               = obj.get("width", 0).asInt();
+    spec.height              = obj.get("height", 0).asInt();
+    spec.format              = obj.get("format", "").asString();
+    spec.accelFullScaleRange = obj.get("accelFullScaleRange", "").asString();
+    spec.gyroFullScaleRange  = obj.get("gyroFullScaleRange", "").asString();
+
+    if(!parseFpsValue(obj.get("fps", Json::Value()), spec.fps, error)) {
+        const std::string sensorName = spec.sensor.empty() ? "<unknown>" : spec.sensor;
+        error                        = "Invalid fps for sensor \"" + sensorName + "\": " + error;
+        return false;
+    }
+
+    return true;
+}
+
+}  // namespace
 
 static bool loadConfigFile(const std::string &path, CmdLineConfig &config, bool overrideDuration, bool overrideSyncInterval) {
     std::ifstream ifs(path);
@@ -49,7 +134,13 @@ static bool loadConfigFile(const std::string &path, CmdLineConfig &config, bool 
 
     if(root.isMember("streams")) {
         for(const auto &s: root["streams"]) {
-            config.streams.push_back(parseStreamSpec(s));
+            StreamSpec  spec;
+            std::string error;
+            if(!parseStreamSpec(s, spec, error)) {
+                std::cerr << "Error: " << error << "\n";
+                return false;
+            }
+            config.streams.push_back(spec);
         }
     }
 
@@ -59,7 +150,13 @@ static bool loadConfigFile(const std::string &path, CmdLineConfig &config, bool 
             std::vector<StreamSpec> specs;
             if(overrides[serial].isMember("streams")) {
                 for(const auto &s: overrides[serial]["streams"]) {
-                    specs.push_back(parseStreamSpec(s));
+                    StreamSpec  spec;
+                    std::string error;
+                    if(!parseStreamSpec(s, spec, error)) {
+                        std::cerr << "Error: " << error << " (device override: " << serial << ")\n";
+                        return false;
+                    }
+                    specs.push_back(spec);
                 }
             }
             config.deviceOverrides[serial] = specs;
@@ -99,7 +196,8 @@ bool CmdLineParser::generateDefaultConfig(const std::string &outputPath) {
     ofs << "  \"syncInterval\": 0,\n";
     ofs << "  \"streams\": [\n";
     ofs << "    { \"sensor\": \"depth\", \"width\": 0, \"height\": 0, \"fps\": 0, \"format\": \"\" },\n";
-    ofs << "    { \"sensor\": \"color\", \"width\": 0, \"height\": 0, \"fps\": 0, \"format\": \"\" }\n";
+    ofs << "    { \"sensor\": \"color\", \"width\": 0, \"height\": 0, \"fps\": 0, \"format\": \"\" },\n";
+    ofs << "    { \"sensor\": \"imu\", \"fps\": \"200HZ\", \"accelFullScaleRange\": \"4g\", \"gyroFullScaleRange\": \"1000dps\" }\n";
     ofs << "  ],\n";
     ofs << "  \"deviceOverrides\": {\n";
     ofs << "    \"<serial_number>\": {\n";

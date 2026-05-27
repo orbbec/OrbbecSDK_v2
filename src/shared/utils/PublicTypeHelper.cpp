@@ -4,8 +4,9 @@
 #include "PublicTypeHelper.hpp"
 #include "exception/ObException.hpp"
 
-#include <map>
 #include <algorithm>
+#include <cmath>
+#include <map>
 
 namespace libobsensor {
 namespace utils {
@@ -294,6 +295,14 @@ const std::map<uint32_t, OBFormat> fourccToOBFormat = {
     { fourCc2Int('R', 'W', '1', '6'), OB_FORMAT_RW16 }, { fourCc2Int('Y', 'C', 'C', '4'), OB_FORMAT_Y12C4 },
 };
 
+const std::map<OBIMUSampleRate, float> IMUSampleRate_Value_Map = {
+    { OB_SAMPLE_RATE_1_5625_HZ, 1.5625f }, { OB_SAMPLE_RATE_3_125_HZ, 3.125f }, { OB_SAMPLE_RATE_6_25_HZ, 6.25f }, { OB_SAMPLE_RATE_12_5_HZ, 12.5f },
+    { OB_SAMPLE_RATE_25_HZ, 25.f },        { OB_SAMPLE_RATE_50_HZ, 50.f },      { OB_SAMPLE_RATE_100_HZ, 100.f },  { OB_SAMPLE_RATE_200_HZ, 200.f },
+    { OB_SAMPLE_RATE_400_HZ, 400.f },      { OB_SAMPLE_RATE_500_HZ, 500.f },    { OB_SAMPLE_RATE_800_HZ, 800.f },  { OB_SAMPLE_RATE_1_KHZ, 1000.f },
+    { OB_SAMPLE_RATE_2_KHZ, 2000.f },      { OB_SAMPLE_RATE_4_KHZ, 4000.f },    { OB_SAMPLE_RATE_8_KHZ, 8000.f },  { OB_SAMPLE_RATE_16_KHZ, 16000.f },
+    { OB_SAMPLE_RATE_32_KHZ, 32000.f },
+};
+
 OBFormat uvcFourccToOBFormat(uint32_t fourcc) {
     auto it = fourccToOBFormat.find(fourcc);
     if(it != fourccToOBFormat.end()) {
@@ -311,44 +320,23 @@ uint32_t obFormatToUvcFourcc(OBFormat format) {
 }
 
 float mapIMUSampleRateToValue(OBIMUSampleRate rate) {
-    switch(rate) {
-    case OB_SAMPLE_RATE_1_5625_HZ:
-        return 1.5625f;
-    case OB_SAMPLE_RATE_3_125_HZ:
-        return 3.125f;
-    case OB_SAMPLE_RATE_6_25_HZ:
-        return 6.25f;
-    case OB_SAMPLE_RATE_12_5_HZ:
-        return 12.5f;
-    case OB_SAMPLE_RATE_25_HZ:
-        return 25.f;
-    case OB_SAMPLE_RATE_50_HZ:
-        return 50.f;
-    case OB_SAMPLE_RATE_100_HZ:
-        return 100.f;
-    case OB_SAMPLE_RATE_200_HZ:
-        return 200.f;
-    case OB_SAMPLE_RATE_500_HZ:
-        return 500.f;
-    case OB_SAMPLE_RATE_1_KHZ:
-        return 1000.f;
-    case OB_SAMPLE_RATE_2_KHZ:
-        return 2000.f;
-    case OB_SAMPLE_RATE_4_KHZ:
-        return 4000.f;
-    case OB_SAMPLE_RATE_8_KHZ:
-        return 8000.f;
-    case OB_SAMPLE_RATE_16_KHZ:
-        return 16000.f;
-    case OB_SAMPLE_RATE_32_KHZ:
-        return 32000.f;
-    case OB_SAMPLE_RATE_400_HZ:
-        return 400.f;
-    case OB_SAMPLE_RATE_800_HZ:
-        return 800.f;
-    default:
-        return 0.f;
+    auto it = IMUSampleRate_Value_Map.find(rate);
+    if(it != IMUSampleRate_Value_Map.end()) {
+        return it->second;
     }
+
+    return 0.f;
+}
+
+OBIMUSampleRate mapValueToIMUSampleRate(float value) {
+    for(const auto &entry: IMUSampleRate_Value_Map) {
+        const float rateValue = entry.second;
+        if(std::abs(rateValue - value) < 1e-5f) {
+            return entry.first;
+        }
+    }
+
+    return OB_SAMPLE_RATE_UNKNOWN;
 }
 
 float mapLiDARScanRateToValue(OBLiDARScanRate rate) {

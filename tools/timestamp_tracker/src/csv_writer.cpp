@@ -70,16 +70,37 @@ void CsvWriter::writeFrame(std::shared_ptr<ob::Frame> frame, uint64_t recvTimeUs
 
     // On the first frame, resolve the actual profile and open the file.
     if(!fileReady_) {
-        auto     profile = frame->getStreamProfile()->as<ob::VideoStreamProfile>();
-        uint32_t width   = profile ? profile->getWidth() : 0;
-        uint32_t height  = profile ? profile->getHeight() : 0;
-        uint32_t fps     = profile ? profile->getFps() : 0;
-        std::string fmt  = profile ? ob::TypeHelper::convertOBFormatTypeToString(profile->getFormat()) : "";
+        auto        profile = frame->getStreamProfile();
+        std::string fmt     = ob::TypeHelper::convertOBFormatTypeToString(profile->getFormat());
+        if(profile->is<ob::VideoStreamProfile>()) {
+            auto     vsp    = profile->as<ob::VideoStreamProfile>();
+            uint32_t width  = vsp->getWidth();
+            uint32_t height = vsp->getHeight();
+            uint32_t fps    = vsp->getFps();
 
-        // Build base filename: Timestamps_{SerialNumber}_{SensorType}_{Width}x{Height}_{FPS}_{Format}
-        baseFilename_ = "Timestamps_" + serialNumber_ + "_" + sensorType_ + "_"
-                        + std::to_string(width) + "x" + std::to_string(height) + "_"
-                        + std::to_string(fps) + "_" + fmt;
+            // Build base filename: Timestamps_{SerialNumber}_{SensorType}_{Width}x{Height}_{FPS}_{Format}
+            baseFilename_ = "Timestamps_" + serialNumber_ + "_" + sensorType_ + "_" + std::to_string(width) + "x" + std::to_string(height) + "_"
+                            + std::to_string(fps) + "_" + fmt;
+        }
+        else if(profile->is<ob::AccelStreamProfile>()) {
+            auto asp = profile->as<ob::AccelStreamProfile>();
+            auto fsr = ob::TypeHelper::convertOBAccelFullScaleRangeTypeToString(asp->getFullScaleRange());
+            auto sr  = ob::TypeHelper::convertOBIMUSampleRateTypeToString(asp->getSampleRate());
+            // Build base filename: Timestamps_{SerialNumber}_{SensorType}_{FullScaleRange}_{SampleRate}_{Format}
+            baseFilename_ = "Timestamps_" + serialNumber_ + "_" + sensorType_ + "_" + fsr + "_" + sr + "_" + fmt;
+        }
+        else if(profile->is<ob::GyroStreamProfile>()) {
+            auto gsp = profile->as<ob::GyroStreamProfile>();
+            auto fsr = ob::TypeHelper::convertOBGyroFullScaleRangeTypeToString(gsp->getFullScaleRange());
+            auto sr  = ob::TypeHelper::convertOBIMUSampleRateTypeToString(gsp->getSampleRate());
+            // Build base filename: Timestamps_{SerialNumber}_{SensorType}_{FullScaleRange}_{SampleRate}_{Format}
+            baseFilename_ = "Timestamps_" + serialNumber_ + "_" + sensorType_ + "_" + fsr + "_" + sr + "_" + fmt;
+        }
+        else {
+            // Build base filename: Timestamps_{SerialNumber}_{SensorType}_{Format}
+            baseFilename_ = "Timestamps_" + serialNumber_ + "_" + sensorType_ + "_" + fmt;
+        }
+
         volumeIndex_  = 1;
         rowCount_     = 0;
         writeCount_   = 0;

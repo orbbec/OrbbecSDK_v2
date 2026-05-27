@@ -27,8 +27,9 @@ template <typename T> uint32_t fourCc2Int(const T a, const T b, const T c, const
 OBFormat uvcFourccToOBFormat(uint32_t fourcc);
 uint32_t obFormatToUvcFourcc(OBFormat format);
 
-float mapIMUSampleRateToValue(OBIMUSampleRate rate);
-float mapLiDARScanRateToValue(OBLiDARScanRate rate);
+float           mapIMUSampleRateToValue(OBIMUSampleRate rate);
+OBIMUSampleRate mapValueToIMUSampleRate(float value);
+float           mapLiDARScanRateToValue(OBLiDARScanRate rate);
 
 const std::string &obFormatToStr(OBFormat type);
 const std::string &obFrameToStr(OBFrameType type);

@@ -3,6 +3,7 @@
 
 #include "timestamp_collector.hpp"
 #include "utils.hpp"
+#include <cmath>
 #include <chrono>
 #include <iostream>
 
@@ -34,6 +35,19 @@ std::vector<std::string> TimestampCollector::getOpenedFiles() const {
 bool TimestampCollector::setupSensors(std::shared_ptr<ob::Config> &obConfig, const CmdLineConfig &toolConfig) {
     std::cout << "  Device: " << getDeviceInfoStr() << std::endl;
 
+    auto isIntegralFps = [](double value) { return std::fabs(value - std::round(value)) < 1e-5; };
+
+    auto printImuSensorEnabled = [](const std::string &sensorName, double sampleRate, const std::string &fullScaleRange) {
+        std::cout << "    - " << sensorName << " sensor enabled";
+        if(sampleRate > 0.0) {
+            std::cout << " @" << sampleRate << "Hz";
+        }
+        if(!isWildcardToken(fullScaleRange)) {
+            std::cout << " " << fullScaleRange;
+        }
+        std::cout << std::endl;
+    };
+
     // Resolve which stream specs to use for this device
     const std::vector<StreamSpec> *specsPtr = nullptr;
     auto                           it       = toolConfig.deviceOverrides.find(serialNumber_);
@@ -49,6 +63,43 @@ bool TimestampCollector::setupSensors(std::shared_ptr<ob::Config> &obConfig, con
     if(specsPtr != nullptr) {
         // --- User-specified streams ---
         for(const auto &spec: *specsPtr) {
+            if(isImuSensorName(spec.sensor)) {
+                bool hasAccel = deviceHasSensor(device_, OB_SENSOR_ACCEL);
+                bool hasGyro  = deviceHasSensor(device_, OB_SENSOR_GYRO);
+                if(!hasAccel || !hasGyro) {
+                    std::cerr << "  Warning: Sensor \"imu\" requires both accel and gyro on device, skipping." << std::endl;
+                    continue;
+                }
+
+                OBIMUSampleRate sampleRate = ob::TypeHelper::convertOBIMUSampleRateValueToType(static_cast<float>(spec.fps));
+                if(spec.fps > 0 && sampleRate == OB_SAMPLE_RATE_UNKNOWN) {
+                    std::cerr << "  Warning: Unsupported IMU sample rate \"" << spec.fps << "\", skipping." << std::endl;
+                    continue;
+                }
+
+                OBAccelFullScaleRange accelRange = accelFullScaleRangeFromString(spec.accelFullScaleRange);
+                if(!isWildcardToken(spec.accelFullScaleRange) && accelRange == OB_ACCEL_FS_UNKNOWN) {
+                    std::cerr << "  Warning: Unsupported accel full scale range \"" << spec.accelFullScaleRange << "\", skipping." << std::endl;
+                    continue;
+                }
+
+                OBGyroFullScaleRange gyroRange = gyroFullScaleRangeFromString(spec.gyroFullScaleRange);
+                if(!isWildcardToken(spec.gyroFullScaleRange) && gyroRange == OB_GYRO_FS_UNKNOWN) {
+                    std::cerr << "  Warning: Unsupported gyro full scale range \"" << spec.gyroFullScaleRange << "\", skipping." << std::endl;
+                    continue;
+                }
+
+                const std::string accelName = ob::TypeHelper::convertOBSensorTypeToString(OB_SENSOR_ACCEL);
+                const std::string gyroName  = ob::TypeHelper::convertOBSensorTypeToString(OB_SENSOR_GYRO);
+                obConfig->enableAccelStream(accelRange, sampleRate);
+                obConfig->enableGyroStream(gyroRange, sampleRate);
+                enabledSensors_[OB_SENSOR_ACCEL] = accelName;
+                enabledSensors_[OB_SENSOR_GYRO]  = gyroName;
+                printImuSensorEnabled(accelName, spec.fps, spec.accelFullScaleRange);
+                printImuSensorEnabled(gyroName, spec.fps, spec.gyroFullScaleRange);
+                continue;
+            }
+
             OBSensorType sensorType = sensorNameToType(spec.sensor);
             if(sensorType == OB_SENSOR_UNKNOWN) {
                 std::cerr << "  Warning: Unknown sensor name \"" << spec.sensor << "\", skipping." << std::endl;
@@ -61,18 +112,67 @@ bool TimestampCollector::setupSensors(std::shared_ptr<ob::Config> &obConfig, con
 
             OBFormat format = formatStringToOBFormat(spec.format);
 
-            std::string sensorName      = ob::TypeHelper::convertOBSensorTypeToString(sensorType);
+            std::string sensorName = ob::TypeHelper::convertOBSensorTypeToString(sensorType);
+            if(ob_is_video_sensor_type(sensorType)) {
+                if(spec.fps > 0.0 && !isIntegralFps(spec.fps)) {
+                    std::cerr << "  Warning: Video sensor \"" << spec.sensor << "\" requires integer fps, got \"" << spec.fps << "\", skipping." << std::endl;
+                    continue;
+                }
+
+                obConfig->enableVideoStream(sensorType, static_cast<uint32_t>(spec.width), static_cast<uint32_t>(spec.height),
+                                            static_cast<uint32_t>(std::llround(spec.fps)), format);
+            }
+            else if(sensorType == OB_SENSOR_ACCEL) {
+                OBIMUSampleRate sampleRate = ob::TypeHelper::convertOBIMUSampleRateValueToType(static_cast<float>(spec.fps));
+                if(spec.fps > 0 && sampleRate == OB_SAMPLE_RATE_UNKNOWN) {
+                    std::cerr << "  Warning: Unsupported accel sample rate \"" << spec.fps << "\", skipping." << std::endl;
+                    continue;
+                }
+
+                OBAccelFullScaleRange accelRange = accelFullScaleRangeFromString(spec.accelFullScaleRange);
+                if(!isWildcardToken(spec.accelFullScaleRange) && accelRange == OB_ACCEL_FS_UNKNOWN) {
+                    std::cerr << "  Warning: Unsupported accel full scale range \"" << spec.accelFullScaleRange << "\", skipping." << std::endl;
+                    continue;
+                }
+
+                obConfig->enableAccelStream(accelRange, sampleRate);
+            }
+            else if(sensorType == OB_SENSOR_GYRO) {
+                OBIMUSampleRate sampleRate = ob::TypeHelper::convertOBIMUSampleRateValueToType(static_cast<float>(spec.fps));
+                if(spec.fps > 0 && sampleRate == OB_SAMPLE_RATE_UNKNOWN) {
+                    std::cerr << "  Warning: Unsupported gyro sample rate \"" << spec.fps << "\", skipping." << std::endl;
+                    continue;
+                }
+
+                OBGyroFullScaleRange gyroRange = gyroFullScaleRangeFromString(spec.gyroFullScaleRange);
+                if(!isWildcardToken(spec.gyroFullScaleRange) && gyroRange == OB_GYRO_FS_UNKNOWN) {
+                    std::cerr << "  Warning: Unsupported gyro full scale range \"" << spec.gyroFullScaleRange << "\", skipping." << std::endl;
+                    continue;
+                }
+
+                obConfig->enableGyroStream(gyroRange, sampleRate);
+            }
+            else {
+                std::cerr << "  Warning: Unsupported sensor type \"" << spec.sensor << "\" for custom stream config, skipping." << std::endl;
+                continue;
+            }
+
             enabledSensors_[sensorType] = sensorName;
-            obConfig->enableVideoStream(sensorType, static_cast<uint32_t>(spec.width), static_cast<uint32_t>(spec.height), static_cast<uint32_t>(spec.fps),
-                                        format);
+
             std::cout << "    - " << sensorName << " sensor enabled";
-            if(spec.width > 0 && spec.height > 0) {
+            if(ob_is_video_sensor_type(sensorType) && spec.width > 0 && spec.height > 0) {
                 std::cout << " (" << spec.width << "x" << spec.height << ")";
             }
-            if(spec.fps > 0) {
-                std::cout << " @" << spec.fps << "fps";
+            if(spec.fps > 0.0) {
+                std::cout << " @" << spec.fps << (ob_is_video_sensor_type(sensorType) ? "fps" : "Hz");
             }
-            if(!spec.format.empty()) {
+            if(sensorType == OB_SENSOR_ACCEL && !isWildcardToken(spec.accelFullScaleRange)) {
+                std::cout << " " << spec.accelFullScaleRange;
+            }
+            if(sensorType == OB_SENSOR_GYRO && !isWildcardToken(spec.gyroFullScaleRange)) {
+                std::cout << " " << spec.gyroFullScaleRange;
+            }
+            if(ob_is_video_sensor_type(sensorType) && !spec.format.empty()) {
                 std::cout << " " << spec.format;
             }
             std::cout << std::endl;
@@ -257,11 +357,7 @@ void TimestampCollector::onFrameSet(std::shared_ptr<ob::FrameSet> frameSet, uint
         if(!frame) {
             continue;
         }
-        auto sensor = frame->getSensor();
-        if(!sensor) {
-            continue;
-        }
-        auto sensorType = sensor->getType();
+        auto sensorType = ob_frame_type_to_sensor_type(frame->getType());
         if(writers_.count(sensorType)) {
             writers_[sensorType]->writeFrame(frame, recvTimeUs);
         }
