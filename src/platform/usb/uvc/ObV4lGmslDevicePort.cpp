@@ -653,8 +653,7 @@ void ObV4lGmslDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandleGmsl> devHa
 
         std::unique_lock<std::mutex> lock(devHandle->streamMutex);
         // wait stream on
-        devHandle->streamCv.wait_for(lock, std::chrono::milliseconds(100),
-                                     [&]() { return devHandle->canStartCapture.load() || !devHandle->isCapturing.load(); });
+        devHandle->streamCv.wait(lock, [&]() { return devHandle->canStartCapture.load() || !devHandle->isCapturing.load(); });
         LOG_INFO("Start to capture: {}", devHandle->info->name);
 
         // capture video frames
