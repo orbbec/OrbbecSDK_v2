@@ -8,6 +8,8 @@
 #include "utils/Utils.hpp"
 #include "IDepthWorkModeManager.hpp"
 #include "preset/PresetDefinitions.hpp"
+#include "logger/Logger.hpp"
+#include "utils/FlagGuard.hpp"
 
 #include <json/json.h>
 
@@ -81,11 +83,15 @@ G330PresetManager::G330PresetManager(IDevice *owner) : DeviceComponentBase(owner
                                            OB_PROP_IR_RIGHT_MIRROR_BOOL,
                                            OB_PROP_IR_RIGHT_ROTATE_INT };
         propServer->registerAccessCallback(propertyIds, [&](uint32_t, const uint8_t *, size_t, PropertyOperationType operationType) {
+            if(isExternalDataLoading_) {
+                // Don't update preset name while imported data is applying properties.
+                return;
+            }
             if(operationType == PROP_OP_WRITE) {
                 currentPresetName_ = kCustomPresetName;
             }
         });
-        storeCurrentParamsAsCustomPreset(kCustomPresetName);
+        TRY_EXECUTE({ storeCurrentParamsAsCustomPreset(kCustomPresetName); });
     }
 }
 
@@ -131,6 +137,7 @@ void G330PresetManager::loadPresetFromJsonData(const std::string &presetName, co
     if(currentPresetName_ == kCustomPresetName) {
         storeCurrentParamsAsCustomPreset(kCustomPresetName);
     }
+    FlagGuard guard(isExternalDataLoading_);
     loadPresetFromJsonValue(presetName, root);
 }
 
@@ -142,6 +149,7 @@ void G330PresetManager::loadPresetFromJsonFile(const std::string &filePath) {
     if(currentPresetName_ == kCustomPresetName) {
         storeCurrentParamsAsCustomPreset(kCustomPresetName);
     }
+    FlagGuard guard(isExternalDataLoading_);
     loadPresetFromJsonValue(filePath, root);
 }
 
@@ -227,13 +235,12 @@ void G330PresetManager::fetchPreset() {
         currentPresetName_ = availablePresets_[0];
         depthWorkModeManager->switchDepthWorkMode(currentPresetName_.c_str());
     }
-    storeCurrentParamsAsCustomPreset(kCustomPresetName);
+    TRY_EXECUTE({ storeCurrentParamsAsCustomPreset(kCustomPresetName); });
 }
 
 void G330PresetManager::loadCustomPreset(const std::string &presetName, const Json::Value &preset) {
     auto presetEngine = getPresetEngine(preset);
     presetEngine->importJson(preset);
-
     currentPresetName_ = presetName;
 }
 

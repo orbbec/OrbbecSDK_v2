@@ -1275,6 +1275,12 @@ void G330Device::initProperties() {
     registerComponent(OB_DEV_COMPONENT_PROPERTY_SERVER, propertyServer, false);
 }
 
+void G330Device::postInitialize() {
+    DeviceBase::postInitialize();
+    // Eagerly initialize the PresetManager to avoid lazy creation during streaming
+    (void)getComponentT<IPresetManager>(OB_DEV_COMPONENT_PRESET_MANAGER, false);
+}
+
 std::vector<std::shared_ptr<IFilter>> G330Device::createRecommendedPostProcessingFilters(OBSensorType type) {
     // first: find from cache
     auto it = recommendedPostFilters_.find(type);
@@ -1806,6 +1812,8 @@ void G330NetDevice::init() {
 
 void G330NetDevice::postInitialize() {
     DeviceBase::postInitialize();
+    // Eagerly initialize the PresetManager to avoid lazy creation during streaming
+    (void)getComponentT<IPresetManager>(OB_DEV_COMPONENT_PRESET_MANAGER, false);
     // initialize `cachedDepthUnit_` to prevent deadlocks in component resources caused by the stream closing too quickly.
     (void)getDepthMaxValidValue(OB_FORMAT_Y16);
 }

@@ -25,6 +25,8 @@ public:
     void                                  loadDefaultPostProcessingConfig() override;
     uint16_t                              getDepthMaxValidValue(OBFormat format) override;
 
+    void postInitialize() override;
+
 private:
     void init() override;
     void initSensorList();

@@ -9,8 +9,10 @@
 #include "G330PresetEngine.hpp"
 
 #include <map>
+#include <set>
 #include <string>
 #include <vector>
+#include <atomic>
 
 namespace Json {
 class Value;  // forward declaration
@@ -44,6 +46,7 @@ private:
     std::vector<std::string> availablePresets_;
     std::string              currentPresetName_;
     std::vector<uint8_t>     tmpJsonData_;
+    std::atomic<bool>        isExternalDataLoading_{ false };
 
     std::map<std::string, Json::Value>  customPresets_;
     std::shared_ptr<G330PresetEngine>   presetEngine_;
