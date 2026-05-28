@@ -257,7 +257,7 @@ After upgrading to the UVC protocol, these devices will have a firmware major ve
 | Gemini 305g        | 1.0.70                     |        1.0.70                   |
 | Gemini 345        | 1.7.04                     |        1.9.03                   |
 | Gemini 345Lg        | 1.7.04                     |        1.9.03                   |
-| Gemini 435Le        | 1.2.4                     |        1.3.6                   |
+| Gemini 435Le        | 1.2.4                     |        1.3.19                   |
 | Gemini 335Le        | 1.5.31                     |        1.6.00                     |
 | Gemini 330        | 1.2.20                       |        1.6.00                       |
 | Gemini 330L       | 1.2.20                       |       1.6.00                      |
