@@ -141,8 +141,10 @@ void G305Device::init() {
     }
 
     if(fwVersion >= 10072) {
-        auto frameInterleaveManager = std::make_shared<G305FrameInterleaveManager>(this);
-        registerComponent(OB_DEV_COMPONENT_FRAME_INTERLEAVE_MANAGER, frameInterleaveManager);
+        if(deviceInfo_->pid_ != 0x0845) {
+            auto frameInterleaveManager = std::make_shared<G305FrameInterleaveManager>(this);
+            registerComponent(OB_DEV_COMPONENT_FRAME_INTERLEAVE_MANAGER, frameInterleaveManager);
+        }
     }
 
     static const std::vector<OBMultiDeviceSyncMode> supportedSyncModes = {
