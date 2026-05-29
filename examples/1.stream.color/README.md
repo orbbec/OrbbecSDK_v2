@@ -1,4 +1,4 @@
-# C++ Sample: 1.stream.color
+# C++ Sample: 1.stream.color
 
 ## Overview
 

@@ -36,7 +36,7 @@ void ob_sensor_start(ob_sensor *sensor, const ob_stream_profile *profile, ob_fra
     auto internalSensor = sensor->device->getSensor(sensor->type);
     internalSensor->start(profile->profile, [callback, user_data](std::shared_ptr<const libobsensor::Frame> frame) {
         auto implFrame   = new ob_frame();
-        implFrame->frame = std::const_pointer_cast<libobsensor::Frame>(frame);  // todo: this is a hack，need to fix
+        implFrame->frame = std::const_pointer_cast<libobsensor::Frame>(frame);  // todo: this is a hack, need to fix
         callback(implFrame, user_data);
     });
 }

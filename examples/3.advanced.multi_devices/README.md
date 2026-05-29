@@ -1,4 +1,4 @@
-# C++ Sample：3.advanced.multi_devices
+# C++ Sample: 3.advanced.multi_devices
 
 ## Overview
 

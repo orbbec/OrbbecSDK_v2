@@ -6,7 +6,7 @@
 #include "ISourcePort.hpp"
 #include "IDevice.hpp"
 #include "IDeviceComponent.hpp"
-#include "protocol/Protocol.hpp"  // protocol::HpStatus — required for executeAndCheck return type
+#include "protocol/Protocol.hpp"  // protocol::HpStatus - required for executeAndCheck return type
 #include "utils/Utils.hpp"
 #include <atomic>
 #include <mutex>
@@ -72,8 +72,7 @@ private:
     uint32_t                          rawdataTransferPacketSize_;
     uint32_t                          structListDataTransferPacketSize_;
 
-    bool                 autoRebootEnabled_{ false };  // controlled by setAutoRebootEnabled()
-    std::atomic<bool>    rebootTriggered_{ false };    // prevents duplicate reboot triggers
+    bool              autoRebootEnabled_{ false };  // controlled by setAutoRebootEnabled()
+    std::atomic<bool> rebootTriggered_{ false };    // prevents duplicate reboot triggers
 };
 }  // namespace libobsensor
-

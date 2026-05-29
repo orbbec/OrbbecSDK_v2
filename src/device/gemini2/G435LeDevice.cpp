@@ -53,7 +53,7 @@ static const uint8_t INTERFACE_COLOR    = 0;
 static const uint8_t INTERFACE_LEFT_IR  = 4;
 static const uint8_t INTERFACE_DEPTH    = 2;
 static const uint8_t INTERFACE_RIGHT_IR = 6;
-static const uint8_t COMPAT_VERSION     = 1;  // 1:Supports embedding metadata into color data streams in MJPEG format.​
+static const uint8_t COMPAT_VERSION     = 1;  // 1:Supports embedding metadata into color data streams in MJPEG format.
 
 G435LeDeviceBase::G435LeDeviceBase(const std::shared_ptr<const IDeviceEnumInfo> &info, OBDeviceAccessMode accessMode) : DeviceBase(info, accessMode) {}
 G435LeDeviceBase::~G435LeDeviceBase() noexcept {}
@@ -101,11 +101,10 @@ void G435LeDeviceBase::init() {
         propertyServer->registerProperty(OB_PROP_DEVICE_OFFLINE_AFTER_IP_CONFIG_APPLY, "r", "r", vendorPropertyAccessor.get());
     }
 
-    if (fwVersion >= 10403)
-    {
+    if(fwVersion >= 10403) {
         propertyServer->registerProperty(OB_PROP_DHCP_ASSIGN_IP_TIMEOUT_INT, "rw", "rw", vendorPropertyAccessor.get());
     }
-    
+
     registerComponent(OB_DEV_COMPONENT_COLOR_FRAME_METADATA_CONTAINER, [this]() {
         std::shared_ptr<FrameMetadataParserContainer> container;
         container = std::make_shared<G435LeColorFrameMetadataParserContainer>(this);

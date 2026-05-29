@@ -24,7 +24,7 @@ sudo apt-get remove docker docker-engine docker.io containerd runc
 sudo apt-get install apt-transport-https ca-certificates curl gnupg2 software-properties-common
 ```
 
-### Trust Docker’s GPG Key:
+### Trust Docker's GPG Key:
 
 ```bash
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg

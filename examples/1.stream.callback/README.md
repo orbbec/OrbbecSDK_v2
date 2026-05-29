@@ -1,8 +1,8 @@
-# C++ Sample: 1.stream.callback
+# C++ Sample: 1.stream.callback
 
 ## Overview
 
-In this sample,user can get the depth、RGB、IR image.This sample also support users can perform user-defined operations such as data acquisition, data processing, and data modification within the callback function.
+In this sample, user can get the depth, RGB and IR image. This sample also support users can perform user-defined operations such as data acquisition, data processing, and data modification within the callback function.
 
 ### Knowledge
 

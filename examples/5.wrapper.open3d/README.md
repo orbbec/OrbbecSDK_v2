@@ -1,4 +1,4 @@
-# C++ Sample: 5.wrapper.open3d
+# C++ Sample: 5.wrapper.open3d
 
 ## Overview
 

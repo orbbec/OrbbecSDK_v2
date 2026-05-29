@@ -1,4 +1,4 @@
-# C++ Sample: 3.advanced.multi_devices_sync_gmsltrigger
+# C++ Sample: 3.advanced.multi_devices_sync_gmsltrigger
 
 ## Overview
 

@@ -1,8 +1,8 @@
-# C++ Sample: 4.misc.metadata
+# C++ Sample: 4.misc.metadata
 
 ## Overview
 
-Use the SDK interface to get the frameSet, then get the frame from frameSet, print the value of the frame metadata and exit the program using the ESC_KEY key.
+Use the SDK interface to get the frameSet, then get the frame from frameSet, print the value of the frame metadata and exit the program using the ESC_KEY key.
 
 ### Knowledge
 

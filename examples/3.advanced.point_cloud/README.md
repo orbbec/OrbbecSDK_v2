@@ -1,8 +1,8 @@
-# C++ Sample: 3.advanced.point_clout
+# C++ Sample: 3.advanced.point_clout
 
 ## Overview
 
-Connect the device to open the stream, generate a depth point cloud or RGBD point cloud and save it as a ply format file, and exit the program through the ESC\_KEY key
+Connect the device to open the stream, generate a depth point cloud or RGBD point cloud and save it as a ply format file, and exit the program through the ESC\_KEY key
 
 ### Knowledge
 

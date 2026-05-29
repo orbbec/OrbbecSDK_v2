@@ -43,7 +43,7 @@ uint32_t convertToUvcCompatibleID(uint32_t propertyId) {
     case OB_PROP_COLOR_HUE_INT:
     case OB_PROP_COLOR_POWER_LINE_FREQUENCY_INT:
     case OB_PROP_IR_BRIGHTNESS_INT:
-    case OB_PROP_COLOR_AE_MAX_EXPOSURE_INT:  // todo：not supported yet
+    case OB_PROP_COLOR_AE_MAX_EXPOSURE_INT:  // todo: not supported yet
     case OB_PROP_IR_AE_MAX_EXPOSURE_INT:
     case OB_PROP_COLOR_HDR_BOOL:
         return propertyId;
@@ -68,7 +68,7 @@ void UvcPropertyAccessor::setPropertyValue(uint32_t propertyId, const OBProperty
     switch(propertyId) {
     case OB_PROP_COLOR_MIRROR_BOOL: {
         uvcDevicePort->getPu(OB_PROP_COLOR_ROLL_INT, val);
-        // OB_PROP_COLOR_ROLL_INT：0->none 1->mirror 2->flip 3->mirror with flip
+        // OB_PROP_COLOR_ROLL_INT: 0->none 1->mirror 2->flip 3->mirror with flip
         fixValue.intValue = (val & 0xFFFFFFFE) | (value.intValue & 0x01);
         if(val != fixValue.intValue) {
             uvcDevicePort->setPu(OB_PROP_COLOR_ROLL_INT, fixValue.intValue);
@@ -77,7 +77,7 @@ void UvcPropertyAccessor::setPropertyValue(uint32_t propertyId, const OBProperty
     }
     case OB_PROP_COLOR_FLIP_BOOL: {
         uvcDevicePort->getPu(OB_PROP_COLOR_ROLL_INT, val);
-        // OB_PROP_COLOR_ROLL_INT：0->none 1->mirror 2->flip 3->mirror with flip
+        // OB_PROP_COLOR_ROLL_INT: 0->none 1->mirror 2->flip 3->mirror with flip
         fixValue.intValue = (val & 0xFFFFFFFD) | ((value.intValue & 0x01) << 1);
         if(val != fixValue.intValue) {
             uvcDevicePort->setPu(OB_PROP_COLOR_ROLL_INT, fixValue.intValue);
@@ -108,13 +108,13 @@ void UvcPropertyAccessor::getPropertyValue(uint32_t propertyId, OBPropertyValue 
     switch(propertyId) {
     case OB_PROP_COLOR_MIRROR_BOOL: {
         uvcDevicePort->getPu(OB_PROP_COLOR_ROLL_INT, val);
-        // OB_PROP_COLOR_ROLL_INT：0->none 1->mirror 2->flip 3->mirror with flip
+        // OB_PROP_COLOR_ROLL_INT: 0->none 1->mirror 2->flip 3->mirror with flip
         value->intValue = val & 0x01;
         break;
     }
     case OB_PROP_COLOR_FLIP_BOOL: {
         uvcDevicePort->getPu(OB_PROP_COLOR_ROLL_INT, val);
-        // OB_PROP_COLOR_ROLL_INT：0->none 1->mirror 2->flip 3->mirror with flip
+        // OB_PROP_COLOR_ROLL_INT: 0->none 1->mirror 2->flip 3->mirror with flip
         value->intValue = val & (0x01 << 1);
         break;
     }
@@ -141,7 +141,7 @@ void UvcPropertyAccessor::getPropertyRange(uint32_t propertyId, OBPropertyRange 
 
     switch(propertyId) {
     case OB_PROP_COLOR_MIRROR_BOOL: {
-        // OB_PROP_COLOR_ROLL_INT：0->none 1->mirror 2->flip 3->mirror with flip
+        // OB_PROP_COLOR_ROLL_INT: 0->none 1->mirror 2->flip 3->mirror with flip
         rangeControl        = uvcDevicePort->getPuRange(OB_PROP_COLOR_ROLL_INT);
         *range              = UvcCtrlRangeToPropRange(rangeControl);
         range->def.intValue = range->def.intValue & 0x01;
@@ -151,7 +151,7 @@ void UvcPropertyAccessor::getPropertyRange(uint32_t propertyId, OBPropertyRange 
         break;
     }
     case OB_PROP_COLOR_FLIP_BOOL: {
-        // OB_PROP_COLOR_ROLL_INT：0->none 1->mirror 2->flip 3->mirror with flip
+        // OB_PROP_COLOR_ROLL_INT: 0->none 1->mirror 2->flip 3->mirror with flip
         rangeControl        = uvcDevicePort->getPuRange(OB_PROP_COLOR_ROLL_INT);
         *range              = UvcCtrlRangeToPropRange(rangeControl);
         range->def.intValue = range->def.intValue & (0x01 << 1);

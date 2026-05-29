@@ -1,4 +1,4 @@
-# C++ Sample: 4.misc.save_to_disk
+# C++ Sample: 4.misc.save_to_disk
 
 ## Overview
 
@@ -35,7 +35,7 @@ Metadata is used to describe the various properties and states of a frame.
     auto frameSet   = pipe.waitForFrameset();
     ```
 
-3. Convert color images to RGB format and save them.
+3. Convert color images to RGB format and save them.
 
     ```cpp
     // Get the depth and color frames.

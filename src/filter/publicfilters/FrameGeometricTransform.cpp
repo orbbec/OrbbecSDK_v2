@@ -476,7 +476,7 @@ void FrameRotate::setConfigData(void *data, uint32_t size) {
 }
 
 const std::string &FrameRotate::getConfigSchema() const {
-    // csv format: name，type， min，max，step，default，description
+    // csv format: name, type, min, max, step, default, description
     static const std::string schema = "rotate, int, 0, 270, 90, 0, frame image rotation angle";
     return schema;
 }

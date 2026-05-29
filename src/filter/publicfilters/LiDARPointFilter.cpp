@@ -53,7 +53,7 @@ void LiDARPointFilter::setConfigData(void *data, uint32_t size) {
 }
 
 const std::string &LiDARPointFilter::getConfigSchema() const {
-    // csv format: name，type，min，max，step，default，description
+    // csv format: name, type, min, max, step, default, description
     static const std::string schema = "FilterLevel, integer, 0, 5, 1, 0, filter level of lidar point cloud";
     return schema;
 }

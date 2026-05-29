@@ -1,8 +1,8 @@
-# C++ Sample: 3.advanced.post_processing
+# C++ Sample: 3.advanced.post_processing
 
 ## Overview
 
-Use the SDK interface to  demonstrate post-processing operations, display post-processed images, and exit the program using the ESC_KEY key
+Use the SDK interface to demonstrate post-processing operations, display post-processed images, and exit the program using the ESC_KEY key
 
 ### Knowledge
 

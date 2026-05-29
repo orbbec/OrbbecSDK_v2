@@ -1,4 +1,4 @@
-# C++ Sample：2.device.hot_plugin
+# C++ Sample: 2.device.hot_plugin
 
 ## Overview
 
@@ -18,7 +18,7 @@ Sensor can be used to obtain different components of the camera and the stream o
 
 ## code overview
 
-1. Register device callback and execute relevant functions during device unplugging and unplugging
+1. Register device callback and execute relevant functions during device unplugging and unplugging
 
     ```cpp
         auto id = ctx.registerDeviceChangedCallback( []( std::shared_ptr< ob::DeviceList > removedList, std::shared_ptr< ob::DeviceList > addedList ) {

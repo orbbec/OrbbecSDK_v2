@@ -1,4 +1,4 @@
-# C++ Sample: 1.stream.depth
+# C++ Sample: 1.stream.depth
 
 ## Overview
 

@@ -200,8 +200,8 @@ void GlobalTimestampFitter::calcLinearParam(uint64_t sysTimestamp, uint64_t devT
         // lambda = ln(2) / (halfLife * 1000); when halfLife == 0, all weights = 1 (unweighted)
         // Use equal weights during early convergence (queueSize < MATURE_QUEUE_SIZE) to avoid
         // staircase artifacts; switch to EWLR only after enough samples are accumulated.
-        double       newestDevTs      = (double)samplingQueue_.back().deviceTimestamp;
-        double       effective_lambda = (queueSize >= MATURE_QUEUE_SIZE && decayHalfLifeSec_ > 0.0) ? std::log(2.0) / (decayHalfLifeSec_ * 1000.0) : 0.0;
+        double newestDevTs      = (double)samplingQueue_.back().deviceTimestamp;
+        double effective_lambda = (queueSize >= MATURE_QUEUE_SIZE && decayHalfLifeSec_ > 0.0) ? std::log(2.0) / (decayHalfLifeSec_ * 1000.0) : 0.0;
 
         // 2. First pass: compute weighted means.
         double sumWdx = 0.0, sumWdy = 0.0;
@@ -233,7 +233,7 @@ void GlobalTimestampFitter::calcLinearParam(uint64_t sysTimestamp, uint64_t devT
         needCalculation_ = false;
 
         // Compute weighted residual RMS (in us) to assess fit quality:
-        //   SSres = Σw·(dy - A·dx)^2 = Eyy - A·Exy   (since A = Exy/Exx)
+        //   SSres = Σw*(dy - A*dx)^2 = Eyy - A*Exy   (since A = Exy/Exx)
         //   rms   = sqrt(SSres / W)
         // This is device-frequency independent because dy is in microseconds.
         double slope = Exy / Exx;
@@ -278,7 +278,7 @@ void GlobalTimestampFitter::ensureFitting() {
     std::lock_guard<std::mutex> opLock(samplingOpMutex_);
 
     {
-        uint8_t count = 0;
+        uint8_t                      count = 0;
         std::unique_lock<std::mutex> lock(sampleMutex_);
         while(samplingQueue_.size() < 6 && count < 6) {
             ++count;

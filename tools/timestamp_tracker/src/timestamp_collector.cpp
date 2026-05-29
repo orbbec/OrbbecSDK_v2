@@ -263,7 +263,7 @@ bool TimestampCollector::start(const CmdLineConfig &config) {
     processThread_ = std::thread(&TimestampCollector::processFrames, this);
 
     pipeline_->start(obConfig, [this](std::shared_ptr<ob::FrameSet> frameSet) {
-        // Capture system timestamp immediately — before acquiring the lock — for maximum accuracy.
+        // Capture system timestamp immediately - before acquiring the lock - for maximum accuracy.
         uint64_t recvTimeUs = clockType_ == OB_CLOCK_TYPE_REALTIME ? getWallTimesUs() : getSteadyTimeUs();
         {
             std::lock_guard<std::mutex> lock(frameQueueMutex_);

@@ -1,4 +1,4 @@
-# C++ Sample: 2.device.forceip
+# C++ Sample: 2.device.forceip
 
 ## Overview
 This sample demonstrates how to use the SDK context class to query connected devices, configure the network IP of a selected device using the ForceIP command .

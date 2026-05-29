@@ -1,4 +1,4 @@
-# C++ Sample：2.device.firmware_update
+# C++ Sample: 2.device.firmware_update
 
 ## Overview
 
@@ -182,7 +182,7 @@ Device is the device object, which can be used to obtain the device information,
 1. Do not disconnect the device during the firmware update process.
 2. If multiple devices are connected, always specify the serial number using -s.
 3. On Linux platforms, using LibUVC is strongly recommended.
-4. Firmware update failures will throw exceptions—check console output for details.
+4. Firmware update failures will throw exceptions - check console output for details.
 
 ## Run Sample
 

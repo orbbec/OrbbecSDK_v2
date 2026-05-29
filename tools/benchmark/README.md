@@ -1,6 +1,6 @@
 # Benchmark Tool
 
-This tool is used to measure the performance of OrbbecSDK_v2. It can be used to measure the camera’s CPU usage, memory consumption, camera latency, and more. The benchmark tool is cross-platform and supports Windows, Linux, ARM64, and MacOS.
+This tool is used to measure the performance of OrbbecSDK_v2. It can be used to measure the camera's CPU usage, memory consumption, camera latency, and more. The benchmark tool is cross-platform and supports Windows, Linux, ARM64, and MacOS.
 
 **Note:**
 - This tool is designed for testing the **Gemini 330** series cameras. If you are using other camera, it may cause some issues (e.g., non-Gemini 330 series do not support hardware noise removal). You can modify the code in this project according to your needs.

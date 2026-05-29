@@ -50,7 +50,7 @@ include(cmake/macro.cmake)
 # set compiler flags
 include(cmake/compiler_flags.cmake)
 
-# configure platform-specific settings（contains platform-specific compiler flags）
+# configure platform-specific settings (contains platform-specific compiler flags)
 if(ANDROID_NDK_TOOLCHAIN_INCLUDED)
     include(cmake/android_config.cmake)
 elseif(WIN32)

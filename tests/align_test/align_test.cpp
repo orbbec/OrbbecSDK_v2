@@ -75,39 +75,39 @@ void displayIniData(const IniData &iniData) {
     }
 }
 
-int parse_bolt_data(char *filename, OBCameraIntrinsic &depth_intr, OBCameraIntrinsic &color_intr, OBCameraDistortion &depth_disto, OBCameraDistortion &color_disto,
-                    OBTransform &trans) {
-    IniData inidata = parseIniFile(filename);
-    color_disto.k1  = static_cast<float>(std::atof(inidata["ColorDistortion"]["k1"].c_str()));
-    color_disto.k2  = static_cast<float>(std::atof(inidata["ColorDistortion"]["k2"].c_str()));
-    color_disto.k3  = static_cast<float>(std::atof(inidata["ColorDistortion"]["k3"].c_str()));
-    color_disto.k4  = static_cast<float>(std::atof(inidata["ColorDistortion"]["k4"].c_str()));
-    color_disto.k5  = static_cast<float>(std::atof(inidata["ColorDistortion"]["k5"].c_str()));
-    color_disto.k6  = static_cast<float>(std::atof(inidata["ColorDistortion"]["k6"].c_str()));
-    color_disto.p1  = static_cast<float>(std::atof(inidata["ColorDistortion"]["p1"].c_str()));
-    color_disto.p2  = static_cast<float>(std::atof(inidata["ColorDistortion"]["p2"].c_str()));
-    color_disto.model   = OBCameraDistortionModel::OB_DISTORTION_BROWN_CONRADY;
-    color_intr.fx   = static_cast<float>(std::atof(inidata["ColorIntrinsic"]["fx"].c_str()));
-    color_intr.fy   = static_cast<float>(std::atof(inidata["ColorIntrinsic"]["fy"].c_str()));
-    color_intr.cx   = static_cast<float>(std::atof(inidata["ColorIntrinsic"]["cx"].c_str()));
-    color_intr.cy   = static_cast<float>(std::atof(inidata["ColorIntrinsic"]["cy"].c_str()));
-    color_intr.width   = static_cast<int16_t>(std::atof(inidata["ColorIntrinsic"]["width"].c_str()));
-    color_intr.height   = static_cast<int16_t>(std::atof(inidata["ColorIntrinsic"]["height"].c_str()));
-    depth_disto.k1  = static_cast<float>(std::atof(inidata["DepthDistortion"]["k1"].c_str()));
-    depth_disto.k2  = static_cast<float>(std::atof(inidata["DepthDistortion"]["k2"].c_str()));
-    depth_disto.k3  = static_cast<float>(std::atof(inidata["DepthDistortion"]["k3"].c_str()));
-    depth_disto.k4  = static_cast<float>(std::atof(inidata["DepthDistortion"]["k4"].c_str()));
-    depth_disto.k5  = static_cast<float>(std::atof(inidata["DepthDistortion"]["k5"].c_str()));
-    depth_disto.k6  = static_cast<float>(std::atof(inidata["DepthDistortion"]["k6"].c_str()));
-    depth_disto.p1  = static_cast<float>(std::atof(inidata["DepthDistortion"]["p1"].c_str()));
-    depth_disto.p2  = static_cast<float>(std::atof(inidata["DepthDistortion"]["p2"].c_str()));
-    depth_disto.model   = OBCameraDistortionModel::OB_DISTORTION_BROWN_CONRADY_K6;
-    depth_intr.fx       = static_cast<float>(std::atof(inidata["DepthIntrinsic"]["fx"].c_str()));
-    depth_intr.fy       = static_cast<float>(std::atof(inidata["DepthIntrinsic"]["fy"].c_str()));
-    depth_intr.cx       = static_cast<float>(std::atof(inidata["DepthIntrinsic"]["cx"].c_str()));
-    depth_intr.cy       = static_cast<float>(std::atof(inidata["DepthIntrinsic"]["cy"].c_str()));
-    depth_intr.width    = static_cast<int16_t>(std::atof(inidata["DepthIntrinsic"]["width"].c_str()));
-    depth_intr.height   = static_cast<int16_t>(std::atof(inidata["DepthIntrinsic"]["height"].c_str()));
+int parse_bolt_data(char *filename, OBCameraIntrinsic &depth_intr, OBCameraIntrinsic &color_intr, OBCameraDistortion &depth_disto,
+                    OBCameraDistortion &color_disto, OBTransform &trans) {
+    IniData inidata   = parseIniFile(filename);
+    color_disto.k1    = static_cast<float>(std::atof(inidata["ColorDistortion"]["k1"].c_str()));
+    color_disto.k2    = static_cast<float>(std::atof(inidata["ColorDistortion"]["k2"].c_str()));
+    color_disto.k3    = static_cast<float>(std::atof(inidata["ColorDistortion"]["k3"].c_str()));
+    color_disto.k4    = static_cast<float>(std::atof(inidata["ColorDistortion"]["k4"].c_str()));
+    color_disto.k5    = static_cast<float>(std::atof(inidata["ColorDistortion"]["k5"].c_str()));
+    color_disto.k6    = static_cast<float>(std::atof(inidata["ColorDistortion"]["k6"].c_str()));
+    color_disto.p1    = static_cast<float>(std::atof(inidata["ColorDistortion"]["p1"].c_str()));
+    color_disto.p2    = static_cast<float>(std::atof(inidata["ColorDistortion"]["p2"].c_str()));
+    color_disto.model = OBCameraDistortionModel::OB_DISTORTION_BROWN_CONRADY;
+    color_intr.fx     = static_cast<float>(std::atof(inidata["ColorIntrinsic"]["fx"].c_str()));
+    color_intr.fy     = static_cast<float>(std::atof(inidata["ColorIntrinsic"]["fy"].c_str()));
+    color_intr.cx     = static_cast<float>(std::atof(inidata["ColorIntrinsic"]["cx"].c_str()));
+    color_intr.cy     = static_cast<float>(std::atof(inidata["ColorIntrinsic"]["cy"].c_str()));
+    color_intr.width  = static_cast<int16_t>(std::atof(inidata["ColorIntrinsic"]["width"].c_str()));
+    color_intr.height = static_cast<int16_t>(std::atof(inidata["ColorIntrinsic"]["height"].c_str()));
+    depth_disto.k1    = static_cast<float>(std::atof(inidata["DepthDistortion"]["k1"].c_str()));
+    depth_disto.k2    = static_cast<float>(std::atof(inidata["DepthDistortion"]["k2"].c_str()));
+    depth_disto.k3    = static_cast<float>(std::atof(inidata["DepthDistortion"]["k3"].c_str()));
+    depth_disto.k4    = static_cast<float>(std::atof(inidata["DepthDistortion"]["k4"].c_str()));
+    depth_disto.k5    = static_cast<float>(std::atof(inidata["DepthDistortion"]["k5"].c_str()));
+    depth_disto.k6    = static_cast<float>(std::atof(inidata["DepthDistortion"]["k6"].c_str()));
+    depth_disto.p1    = static_cast<float>(std::atof(inidata["DepthDistortion"]["p1"].c_str()));
+    depth_disto.p2    = static_cast<float>(std::atof(inidata["DepthDistortion"]["p2"].c_str()));
+    depth_disto.model = OBCameraDistortionModel::OB_DISTORTION_BROWN_CONRADY_K6;
+    depth_intr.fx     = static_cast<float>(std::atof(inidata["DepthIntrinsic"]["fx"].c_str()));
+    depth_intr.fy     = static_cast<float>(std::atof(inidata["DepthIntrinsic"]["fy"].c_str()));
+    depth_intr.cx     = static_cast<float>(std::atof(inidata["DepthIntrinsic"]["cx"].c_str()));
+    depth_intr.cy     = static_cast<float>(std::atof(inidata["DepthIntrinsic"]["cy"].c_str()));
+    depth_intr.width  = static_cast<int16_t>(std::atof(inidata["DepthIntrinsic"]["width"].c_str()));
+    depth_intr.height = static_cast<int16_t>(std::atof(inidata["DepthIntrinsic"]["height"].c_str()));
 
     for(size_t i = 0; i < 9; i++) {
         std::string key = "rot" + std::to_string(i);
@@ -117,7 +117,7 @@ int parse_bolt_data(char *filename, OBCameraIntrinsic &depth_intr, OBCameraIntri
     for(size_t i = 0; i < 3; i++) {
         std::string key = "trans" + std::to_string(i);
         float       tmp = static_cast<float>(std::atof(inidata["D2CTransformParam"][key].c_str()));
-        trans.trans[i]    = tmp;
+        trans.trans[i]  = tmp;
     }
 
     return 0;
@@ -199,7 +199,7 @@ int parse_obviewer_data(char *filename, OBCameraIntrinsic &depth_intr, OBCameraI
 }
 
 int parse_oblog_data(char *filename, INTRINSIC_MAP &depth_intr_map, INTRINSIC_MAP &color_intr_map, OBCameraDistortion &depth_disto,
-    OBCameraDistortion &color_disto, OBTransform &trans) {
+                     OBCameraDistortion &color_disto, OBTransform &trans) {
 
     std::ifstream file(filename);
     if(!file.is_open()) {
@@ -215,13 +215,13 @@ int parse_oblog_data(char *filename, INTRINSIC_MAP &depth_intr_map, INTRINSIC_MA
     std::regex intrinsicRegex(R"(cx: ()" + numberPattern + R"(), cy: ()" + numberPattern + R"(), fx: ()" + numberPattern + R"(), fy: ()" + numberPattern
                               + R"(), width: (\d+), height: (\d+))");
 
-    std::regex distortionRegex(R"(k1: ()" + numberPattern + R"(), k2: ()" + numberPattern + R"(), k3: ()" + numberPattern + R"(), k4: ()" + numberPattern + R"(), k5: ()"
-                               + numberPattern + R"(), k6: ()" + numberPattern + R"(), p1: ()" + numberPattern + R"(), p2: ()" + numberPattern + R"())");
+    std::regex distortionRegex(R"(k1: ()" + numberPattern + R"(), k2: ()" + numberPattern + R"(), k3: ()" + numberPattern + R"(), k4: ()" + numberPattern
+                               + R"(), k5: ()" + numberPattern + R"(), k6: ()" + numberPattern + R"(), p1: ()" + numberPattern + R"(), p2: ()" + numberPattern
+                               + R"())");
 
-    std::regex extrinsicRegex(R"(rot: \[()" + numberPattern + R"(), ()" + numberPattern + R"(), ()" + numberPattern + R"(), ()"
-        + numberPattern + R"(), ()" + numberPattern + R"(), ()" + numberPattern + R"(), ()"
-        + numberPattern + R"(), ()" + numberPattern + R"(), ()" + numberPattern + R"()\], trans: \[()"
-        + numberPattern + R"(), ()" + numberPattern + R"(), ()" + numberPattern + R"()\])");
+    std::regex extrinsicRegex(R"(rot: \[()" + numberPattern + R"(), ()" + numberPattern + R"(), ()" + numberPattern + R"(), ()" + numberPattern + R"(), ()"
+                              + numberPattern + R"(), ()" + numberPattern + R"(), ()" + numberPattern + R"(), ()" + numberPattern + R"(), ()" + numberPattern
+                              + R"()\], trans: \[()" + numberPattern + R"(), ()" + numberPattern + R"(), ()" + numberPattern + R"()\])");
 
     while(std::getline(file, line)) {
         printf("%s\n", line.c_str());
@@ -229,15 +229,15 @@ int parse_oblog_data(char *filename, INTRINSIC_MAP &depth_intr_map, INTRINSIC_MA
 
         // Match color intrinsic parameters
         if(std::regex_search(line, match, intrinsicRegex) && line.find("rgbIntrinsic") != std::string::npos) {
-            OBCameraIntrinsic color_intr = { std::stof(match[1]), std::stof(match[2]),          std::stof(match[3]),
-                           std::stof(match[4]), int16_t(std::stoi(match[5])), int16_t(std::stoi(match[6])) };
+            OBCameraIntrinsic color_intr                                    = { std::stof(match[1]), std::stof(match[2]),          std::stof(match[3]),
+                                                                                std::stof(match[4]), int16_t(std::stoi(match[5])), int16_t(std::stoi(match[6])) };
             color_intr_map[RESOLUTION(color_intr.width, color_intr.height)] = color_intr;
         }
 
         // Match depth intrinsic parameters
         else if(std::regex_search(line, match, intrinsicRegex) && line.find("depthIntrinsic") != std::string::npos) {
-            OBCameraIntrinsic depth_intr = { std::stof(match[1]), std::stof(match[2]),          std::stof(match[3]),
-                           std::stof(match[4]), int16_t(std::stoi(match[5])), int16_t(std::stoi(match[6])) };
+            OBCameraIntrinsic depth_intr                                    = { std::stof(match[1]), std::stof(match[2]),          std::stof(match[3]),
+                                                                                std::stof(match[4]), int16_t(std::stoi(match[5])), int16_t(std::stoi(match[6])) };
             depth_intr_map[RESOLUTION(depth_intr.width, depth_intr.height)] = depth_intr;
         }
 
@@ -268,7 +268,6 @@ int parse_oblog_data(char *filename, INTRINSIC_MAP &depth_intr_map, INTRINSIC_MA
 
     file.close();
     return 0;
-
 }
 
 int main__(int argc, char *argv[]) {
@@ -277,7 +276,7 @@ int main__(int argc, char *argv[]) {
         return -1;
     }
 
-    INTRINSIC_MAP  depth_intr, color_intr;
+    INTRINSIC_MAP      depth_intr, color_intr;
     OBCameraDistortion depth_disto, color_disto;
     OBTransform        transform;
     if(0 != parse_oblog_data(argv[1], depth_intr, color_intr, depth_disto, color_disto, transform)) {
@@ -289,7 +288,7 @@ int main__(int argc, char *argv[]) {
 }
 
 int main(int argc, char *argv[]) {
-    // swap_endianness ¥Û–°∂À …Ë÷√1
+    // swap_endianness
     if(argc < 6) {
         std::cerr << "Usage: %s <param_file> <depth_image_file> <color_image_file> <copy1> <sse> [swap_endianness=0]" << std::endl;
         return -1;
@@ -303,15 +302,15 @@ int main(int argc, char *argv[]) {
     OBTransform        transform;
 
     bool bIni = false;
-    { 
+    {
         std::string tmp = std::string(argv[1]);
-        if (tmp.length() >= 4) {
+        if(tmp.length() >= 4) {
             bIni = tmp.substr(tmp.length() - 4) == ".ini";
         }
     }
 
     if((bIni && parse_bolt_data(argv[1], depth_intr, color_intr, depth_disto, color_disto, transform))
-        || (0 != parse_obviewer_data(argv[1], depth_intr, color_intr, depth_disto, color_disto, transform))) {
+       || (0 != parse_obviewer_data(argv[1], depth_intr, color_intr, depth_disto, color_disto, transform))) {
         std::cerr << "Parse parameter file error." << std::endl;
         return -1;
     }
@@ -331,28 +330,28 @@ int main(int argc, char *argv[]) {
     int       depth_height = depth_intr.height;
     int       color_width  = color_intr.width;
     int       color_height = color_intr.height;
-    uint32_t  depth_size = depth_width * depth_height * sizeof(uint16_t);
-    uint16_t *depth_data = (uint16_t *)malloc(depth_size);
+    uint32_t  depth_size   = depth_width * depth_height * sizeof(uint16_t);
+    uint16_t *depth_data   = (uint16_t *)malloc(depth_size);
     fread(depth_data, depth_size, 1, depth_file);
     bool swap_endianness = false;
     if(argc > 6)
         swap_endianness = bool(std::atoi(argv[6]));
     if(swap_endianness) {
-		for(int i = 0; i < depth_intr.width * depth_intr.height; i++) {
-			depth_data[i] = _byteswap_ushort(depth_data[i]);
-		}
+        for(int i = 0; i < depth_intr.width * depth_intr.height; i++) {
+            depth_data[i] = _byteswap_ushort(depth_data[i]);
+        }
     }
 
     uint32_t  aligned_depth_size = color_width * color_height * sizeof(uint16_t);
     uint16_t *aligned_depth_data = (uint16_t *)malloc(aligned_depth_size);
-    int num = 0;
-    double sum_time = 0.0;
-    while (true) {
+    int       num                = 0;
+    double    sum_time           = 0.0;
+    while(true) {
         TINIT;
         TIC;
         // SSE
-        //impl->D2C(depth_data, depth_width, depth_height, aligned_depth_data, color_width, color_height, nullptr, true);
-        //TOC("D2C_withSSE");
+        // impl->D2C(depth_data, depth_width, depth_height, aligned_depth_data, color_width, color_height, nullptr, true);
+        // TOC("D2C_withSSE");
         // without SSE
         impl->D2C(depth_data, depth_intr.width, depth_intr.height, aligned_depth_data, color_intr.width, color_intr.height, nullptr, is_sse);
         TOC("D2C_withoutSSE");
@@ -365,7 +364,7 @@ int main(int argc, char *argv[]) {
     printf("ave_time: %f\n", ave_time);
 
     if(0 == impl->D2C(depth_data, depth_intr.width, depth_intr.height, aligned_depth_data, color_intr.width, color_intr.height, nullptr, is_sse)) {
-    //if(0 == impl->D2C(depth_data, depth_intr.width, depth_intr.height, aligned_depth_data, color_intr.width, color_intr.height, nullptr, false)) {
+        // if(0 == impl->D2C(depth_data, depth_intr.width, depth_intr.height, aligned_depth_data, color_intr.width, color_intr.height, nullptr, false)) {
         char nname[256];
         sprintf(nname, "%s_filtered_%dx%d.raw", argv[2], color_intr.width, color_intr.height);
         FILE *fp = fopen(nname, "wb");
@@ -387,7 +386,9 @@ int main(int argc, char *argv[]) {
     fread(color_data, color_size, 1, color_file);
     uint32_t aligned_color_size = depth_intr.width * depth_intr.height * sizeof(uint8_t) * 3;
     uint8_t *aligned_color_data = (uint8_t *)malloc(aligned_color_size);
-    if(0 == impl->C2D(depth_data, depth_intr.width, depth_intr.height, color_data, aligned_color_data, color_intr.width, color_intr.height, OB_FORMAT_RGB, true)) {
+    if(0
+       == impl->C2D(depth_data, depth_intr.width, depth_intr.height, color_data, aligned_color_data, color_intr.width, color_intr.height, OB_FORMAT_RGB,
+                    true)) {
         char nname[256];
         sprintf(nname, "%s_filtered.raw", argv[3]);
         FILE *fp = fopen(nname, "wb");
@@ -396,7 +397,7 @@ int main(int argc, char *argv[]) {
             fclose(fp);
         }
     }
-    
+
     free(depth_data);
     free(color_data);
     free(aligned_color_data);
@@ -405,4 +406,3 @@ int main(int argc, char *argv[]) {
     impl = nullptr;
     return 0;
 }
-

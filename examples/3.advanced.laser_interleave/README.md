@@ -1,4 +1,4 @@
-# C++ Sample: 3.advanced.interleave
+# C++ Sample: 3.advanced.interleave
 
 ## Overview
 

@@ -152,7 +152,7 @@ public:
     virtual void copyInfoFromOther(std::shared_ptr<const Frame> sourceFrame) override;
 
 protected:
-    OBPixelType pixelType_;              // 0: depth, 1: disparity for structure light camara， 2： raw phase for tof camara
+    OBPixelType pixelType_;              // 0: depth, 1: disparity for structure light camara, 2: raw phase for tof camara
     uint8_t     availablePixelBitSize_;  // available bit size of each pixel
     uint32_t    stride_ = 0;
 };
@@ -185,8 +185,8 @@ public:
     virtual void copyInfoFromOther(std::shared_ptr<const Frame> sourceFrame) override;
 
 private:
-    float valueScale_;
-    uint16_t maxValidDepthValue_ = 65535; 
+    float    valueScale_;
+    uint16_t maxValidDepthValue_ = 65535;
 };
 
 class ConfidenceFrame : public VideoFrame {
@@ -248,7 +248,7 @@ class GyroFrame : public Frame {
 public:
 #pragma pack(push, 1)
     typedef struct {
-        OBGyroValue value;  // Acceleration values ​​in three directions (xyz), unit: dps (degrees per second)
+        OBGyroValue value;  // Acceleration values in three directions (xyz), unit: dps (degrees per second)
         float       temp;   // Temperature in Celsius
     } Data;
 #pragma pack(pop)

@@ -61,8 +61,8 @@ This writes a default `config.json` which you can edit before use. Stream config
 }
 ```
 
-- `streams` — global stream config applied to all devices.
-- `deviceOverrides` — per-device stream config keyed by serial number; fully overrides `streams` for that device.
+- `streams` - global stream config applied to all devices.
+- `deviceOverrides` - per-device stream config keyed by serial number; fully overrides `streams` for that device.
 - In each stream object, `sensor` is **required**; `width`, `height`, `fps`, and `format` are **optional** (omit or set to `0`/empty for auto-select).
 - Video stream `fps` should remain an integer value.
 - When `sensor` is `"imu"`, the tool opens both accel and gyro together. `fps` is their shared sample rate, and can be written either as a number or as a case-insensitive Hz string such as `"3.125HZ"`, `"6.25hz"`, or `"100HZ"`.
@@ -127,12 +127,12 @@ Each CSV file contains only timestamp-related columns (resolution, FPS, and form
 |--------|-------------|
 | FrameIndex | SDK frame index |
 | FrameNumber | Metadata frame number (if available, otherwise "n/a") |
-| RecvTS(us) | App receive timestamp — system clock captured at pipeline callback entry (microseconds) |
+| RecvTS(us) | App receive timestamp - system clock captured at pipeline callback entry (microseconds) |
 | SysTS(us) | SDK system timestamp (microseconds) |
 | GlobalTS(us) | Global timestamp (microseconds) |
 | DevTS(us) | Device timestamp (microseconds) |
-| Diff_SG(us) | SysTS − GlobalTS (empty if GlobalTS unavailable) |
-| Diff_SD(us) | SysTS − DevTS (empty if DevTS unavailable) |
+| Diff_SG(us) | SysTS - GlobalTS (empty if GlobalTS unavailable) |
+| Diff_SD(us) | SysTS - DevTS (empty if DevTS unavailable) |
 
 **Sample Output:**
 ```

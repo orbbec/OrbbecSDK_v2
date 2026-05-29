@@ -23,12 +23,12 @@ Include relevant log entries or error messages that are related to the problem.Y
 
 - OS: Name and version (e.g., Windows 10, Ubuntu 20.04).
 - Architecture: x86_64, armv7, etc.
-- Visual Studio/GCC：Version A.B.C
+- Visual Studio/GCC: Version A.B.C
 
 **Tool/SDK Version:**
 
 - SDK: Version A.B.C
-- OrbbecViewer：: Version A.B.C
+- OrbbecViewer: Version A.B.C
 
 **Device Information:**
 

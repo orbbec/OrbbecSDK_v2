@@ -1,4 +1,4 @@
-# C++ Sample: 3.advanced.preset
+# C++ Sample: 3.advanced.preset
 
 ## Overview
 

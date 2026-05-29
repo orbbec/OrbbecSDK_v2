@@ -1,4 +1,4 @@
-# C++ Sample: 5.wrapper.pcl_color
+# C++ Sample: 5.wrapper.pcl_color
 
 ## Overview
 

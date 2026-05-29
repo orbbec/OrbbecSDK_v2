@@ -32,7 +32,7 @@ With the **Orbbec SDK v1**, developers encountering customization needs or techn
 
 ### 2.4 Security and Privacy
 
-Because the source code of **Orbbec SDK v2** is public, it can be reviewed by developers and security experts, enabling potential vulnerabilities to be identified and addressed early. By contrast,  **Orbbec SDK v1** functions as a “black box,” leaving developers unable to fully assess whether its internal implementation contains security flaws or risks.
+Because the source code of **Orbbec SDK v2** is public, it can be reviewed by developers and security experts, enabling potential vulnerabilities to be identified and addressed early. By contrast,  **Orbbec SDK v1** functions as a "black box" leaving developers unable to fully assess whether its internal implementation contains security flaws or risks.
 
 ### 2.5 Rapid Iteration and Updates
 
@@ -528,7 +528,7 @@ catch(ob::Error &e) {
 
 - (1). Download [Orbbec SDK v1](https://github.com/orbbec/OrbbecSDK/releases) (e.g., version v1.10.22) and [Orbbec SDK v2](https://github.com/orbbec/OrbbecSDK_v2/releases) (e.g., version v2.4.3) from github.
 
-    Orbbec SDK v1： ![obsdkv1_v2_07](images/obsdkv1_v2_01.jpg) &emsp;&emsp; Orbbec SDK v2： ![obsdkv1_v2_02](images/obsdkv1_v2_02.jpg) 
+    Orbbec SDK v1: ![obsdkv1_v2_07](images/obsdkv1_v2_01.jpg) &emsp;&emsp; Orbbec SDK v2: ![obsdkv1_v2_02](images/obsdkv1_v2_02.jpg) 
 
 - (2). Delete the header files in the `include` directory of  Orbbec SDK v1, and copy the header files from the `include` directory of  Orbbec SDK v2 into the `include` directory of Orbbec SDK v1.
 
@@ -575,7 +575,7 @@ catch(ob::Error &e) {
 
 - (1). Download Orbbec SDK v1 (version v1.10.22 as an example) and Orbbec SDK v2 (version v2.4.3 as an example) from the official website.
 
-    Orbbec SDK v1：  ![obsdkv1_v2_14](images/obsdkv1_v2_14.jpg) &emsp;&emsp;&emsp;Orbbec SDK v2： ![obsdkv1_v2_15](images/obsdkv1_v2_15.jpg)
+    Orbbec SDK v1: ![obsdkv1_v2_14](images/obsdkv1_v2_14.jpg) &emsp;&emsp;&emsp;Orbbec SDK v2: ![obsdkv1_v2_15](images/obsdkv1_v2_15.jpg)
 - (2). Remove the header files in  Orbbec SDK v1's "include" directory and copy the header files from Orbbec SDK v2's "include" directory into the  Orbbec SDK v1's "include" directory.
     
      ![obsdkv1_v2_16](images/obsdkv1_v2_16.jpg)&emsp;![obsdkv1_v2_17](images/obsdkv1_v2_17.jpg)

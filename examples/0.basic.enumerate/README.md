@@ -1,4 +1,4 @@
-# C++ Sample: 0.basic.enumerate
+# C++ Sample: 0.basic.enumerate
 
 ## Overview
 

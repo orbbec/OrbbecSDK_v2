@@ -1,4 +1,4 @@
-# C++ Sample: 1.stream.multi_streams
+# C++ Sample: 1.stream.multi_streams
 
 ## Overview
 

@@ -1,4 +1,4 @@
-# C++ Sample: 3.advanced.hw_d2c_align
+# C++ Sample: 3.advanced.hw_d2c_align
 
 ## Overview
 

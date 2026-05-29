@@ -43,7 +43,7 @@ void FormatConverter::setConfigData(void *data, uint32_t size) {
 }
 
 const std::string &FormatConverter::getConfigSchema() const {
-    // csv format: name，type， min，max，step，default，description
+    // csv format: name, type, min, max, step, default, description
     static const std::string schema = "convertType, int, 0, 21, 1, 0, frame data converter type";
     return schema;
 }

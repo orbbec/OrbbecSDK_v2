@@ -1,4 +1,4 @@
-# C++ Sample：2.device.record
+# C++ Sample: 2.device.record
 
 ## Overview
 

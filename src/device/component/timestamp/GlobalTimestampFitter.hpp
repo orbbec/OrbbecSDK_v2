@@ -42,7 +42,7 @@ public:
 
             uint64_t median = s[s.size() / 2];
 
-            // MAD: median absolute deviation — robust spread estimate
+            // MAD: median absolute deviation - robust spread estimate
             std::vector<uint64_t> devs;
             devs.reserve(s.size());
             for(auto v: s) {

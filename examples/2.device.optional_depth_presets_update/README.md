@@ -1,4 +1,4 @@
-# C++ Sample：2.device.optional_depth_presets_update
+# C++ Sample: 2.device.optional_depth_presets_update
 
 ## Overview
 

@@ -11,7 +11,7 @@ namespace libobsensor {
 const size_t DEFAULT_FRAME_QUEUE_CAPACITY = 10;
 
 FilterExtension::FilterExtension(const std::string &name) : name_(name), enabled_(true), configChanged_(false) {
-    srcFrameQueue_ = std::make_shared<FrameQueue<const Frame>>(DEFAULT_FRAME_QUEUE_CAPACITY);  // todo： read from config file to set the size of frame queue
+    srcFrameQueue_ = std::make_shared<FrameQueue<const Frame>>(DEFAULT_FRAME_QUEUE_CAPACITY);  // todo: read from config file to set the size of frame queue
     LOG_DEBUG("Filter {} created with frame queue capacity {}", name_, srcFrameQueue_->capacity());
 }
 

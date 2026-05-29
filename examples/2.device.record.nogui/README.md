@@ -1,4 +1,4 @@
-# C++ Sample：2.device.record.nogui
+# C++ Sample: 2.device.record.nogui
 
 ## Overview
 

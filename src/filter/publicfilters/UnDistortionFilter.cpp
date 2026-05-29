@@ -3,8 +3,7 @@
 
 #include "UnDistortionFilter.hpp"
 #include "UnDistortionImplGeneric.hpp"
-#if defined(__ARM_NEON__) || defined(__NEON__) || defined(__SSSE3__) || \
-    (defined(_MSC_VER) && (defined(_M_AMD64) || defined(_M_X64)))
+#if defined(__ARM_NEON__) || defined(__NEON__) || defined(__SSSE3__) || (defined(_MSC_VER) && (defined(_M_AMD64) || defined(_M_X64)))
 #include "UnDistortionImplSSE.hpp"
 #endif
 #include "exception/ObException.hpp"
@@ -22,14 +21,22 @@ namespace libobsensor {
 
 static OBFrameType streamTypeToFrameType(OBStreamType st) {
     switch(st) {
-    case OB_STREAM_COLOR:       return OB_FRAME_COLOR;
-    case OB_STREAM_COLOR_LEFT:  return OB_FRAME_COLOR_LEFT;
-    case OB_STREAM_COLOR_RIGHT: return OB_FRAME_COLOR_RIGHT;
-    case OB_STREAM_DEPTH:       return OB_FRAME_DEPTH;
-    case OB_STREAM_IR:          return OB_FRAME_IR;
-    case OB_STREAM_IR_LEFT:     return OB_FRAME_IR_LEFT;
-    case OB_STREAM_IR_RIGHT:    return OB_FRAME_IR_RIGHT;
-    default:                    return OB_FRAME_UNKNOWN;
+    case OB_STREAM_COLOR:
+        return OB_FRAME_COLOR;
+    case OB_STREAM_COLOR_LEFT:
+        return OB_FRAME_COLOR_LEFT;
+    case OB_STREAM_COLOR_RIGHT:
+        return OB_FRAME_COLOR_RIGHT;
+    case OB_STREAM_DEPTH:
+        return OB_FRAME_DEPTH;
+    case OB_STREAM_IR:
+        return OB_FRAME_IR;
+    case OB_STREAM_IR_LEFT:
+        return OB_FRAME_IR_LEFT;
+    case OB_STREAM_IR_RIGHT:
+        return OB_FRAME_IR_RIGHT;
+    default:
+        return OB_FRAME_UNKNOWN;
     }
 }
 
@@ -37,17 +44,14 @@ static bool isDistortionTrivial(const OBCameraDistortion &d) {
     if(d.model == OB_DISTORTION_NONE) {
         return true;
     }
-    return d.k1 == 0.0f && d.k2 == 0.0f && d.k3 == 0.0f &&
-           d.k4 == 0.0f && d.k5 == 0.0f && d.k6 == 0.0f &&
-           d.p1 == 0.0f && d.p2 == 0.0f;
+    return d.k1 == 0.0f && d.k2 == 0.0f && d.k3 == 0.0f && d.k4 == 0.0f && d.k5 == 0.0f && d.k6 == 0.0f && d.p1 == 0.0f && d.p2 == 0.0f;
 }
 
 // ---------------------------------------------------------------------------
 
 UnDistortionFilter::UnDistortionFilter()
     :
-#if defined(__ARM_NEON__) || defined(__NEON__) || defined(__SSSE3__) || \
-    (defined(_MSC_VER) && (defined(_M_AMD64) || defined(_M_X64)))
+#if defined(__ARM_NEON__) || defined(__NEON__) || defined(__SSSE3__) || (defined(_MSC_VER) && (defined(_M_AMD64) || defined(_M_X64)))
       impl_(std::make_shared<UnDistortionImplSSE>()),
 #else
       impl_(std::make_shared<UnDistortionImplGeneric>()),
@@ -59,7 +63,8 @@ UnDistortionFilter::UnDistortionFilter()
       initialized_(false),
       cachedIntrinsic_{},
       cachedDistortion_{},
-      cachedFormat_(OB_FORMAT_UNKNOWN) {}
+      cachedFormat_(OB_FORMAT_UNKNOWN) {
+}
 
 UnDistortionFilter::~UnDistortionFilter() noexcept {
     reset();
@@ -70,20 +75,19 @@ void UnDistortionFilter::updateConfig(std::vector<std::string> &params) {
     // [0] StreamType  [1] NewCameraFx  [2] NewCameraFy  [3] NewCameraCx  [4] NewCameraCy
     // [5] NewCameraWidth  [6] NewCameraHeight  [7] InterpolationMode  [8] MjpgOutputFormat
     if(params.size() != 9) {
-        THROW_INVALID_PARAM_EXCEPTION("UnDistortionFilter config error: expected 9 params, got " +
-                                      std::to_string(params.size()));
+        THROW_INVALID_PARAM_EXCEPTION("UnDistortionFilter config error: expected 9 params, got " + std::to_string(params.size()));
     }
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     try {
-        streamType_                 = static_cast<OBStreamType>(std::stoi(params[0]));
-        newCameraIntrinsic_.fx      = std::stof(params[1]);
-        newCameraIntrinsic_.fy      = std::stof(params[2]);
-        newCameraIntrinsic_.cx      = std::stof(params[3]);
-        newCameraIntrinsic_.cy      = std::stof(params[4]);
-        newCameraIntrinsic_.width   = static_cast<int16_t>(std::stoi(params[5]));
-        newCameraIntrinsic_.height  = static_cast<int16_t>(std::stoi(params[6]));
-        interpMode_                 = std::stoi(params[7]);
-        int newMjpgFmt              = std::stoi(params[8]);
+        streamType_                = static_cast<OBStreamType>(std::stoi(params[0]));
+        newCameraIntrinsic_.fx     = std::stof(params[1]);
+        newCameraIntrinsic_.fy     = std::stof(params[2]);
+        newCameraIntrinsic_.cx     = std::stof(params[3]);
+        newCameraIntrinsic_.cy     = std::stof(params[4]);
+        newCameraIntrinsic_.width  = static_cast<int16_t>(std::stoi(params[5]));
+        newCameraIntrinsic_.height = static_cast<int16_t>(std::stoi(params[6]));
+        interpMode_                = std::stoi(params[7]);
+        int newMjpgFmt             = std::stoi(params[8]);
         if(newMjpgFmt != mjpgOutputFormat_) {
             mjpgOutputFormat_ = newMjpgFmt;
             mjpgConverter_.reset();  // force re-init with new target format
@@ -130,14 +134,11 @@ void UnDistortionFilter::reset() {
 
 // ---------------------------------------------------------------------------
 
-bool UnDistortionFilter::isCacheValid(const OBCameraIntrinsic  &intrin,
-                                       const OBCameraDistortion  &disto,
-                                       OBFormat                   fmt) const {
+bool UnDistortionFilter::isCacheValid(const OBCameraIntrinsic &intrin, const OBCameraDistortion &disto, OBFormat fmt) const {
     if(!initialized_ || fmt != cachedFormat_) {
         return false;
     }
-    return std::memcmp(&intrin, &cachedIntrinsic_,  sizeof(OBCameraIntrinsic))  == 0 &&
-           std::memcmp(&disto,  &cachedDistortion_, sizeof(OBCameraDistortion)) == 0;
+    return std::memcmp(&intrin, &cachedIntrinsic_, sizeof(OBCameraIntrinsic)) == 0 && std::memcmp(&disto, &cachedDistortion_, sizeof(OBCameraDistortion)) == 0;
 }
 
 std::shared_ptr<Frame> UnDistortionFilter::undistortFrame(std::shared_ptr<const Frame> frame) {
@@ -199,19 +200,19 @@ std::shared_ptr<Frame> UnDistortionFilter::undistortFrame(std::shared_ptr<const 
     // New-camera-matrix mode: scale the stored (depth-calibrated) intrinsic to match the current color frame size.
     // Use separate horizontal/vertical scale factors to handle aspect-ratio differences
     // (e.g. depth 640x480 = 4:3, color 1920x1080 = 16:9).
-    OBCameraIntrinsic scaledNewCamera{};
+    OBCameraIntrinsic        scaledNewCamera{};
     const OBCameraIntrinsic *newCameraPtr = nullptr;
     if(newCameraMode) {
-        float scale_x = static_cast<float>(w) / static_cast<float>(newCameraIntrinsic_.width);
-        float scale_y = static_cast<float>(h) / static_cast<float>(newCameraIntrinsic_.height);
-        scaledNewCamera    = newCameraIntrinsic_;
+        float scale_x   = static_cast<float>(w) / static_cast<float>(newCameraIntrinsic_.width);
+        float scale_y   = static_cast<float>(h) / static_cast<float>(newCameraIntrinsic_.height);
+        scaledNewCamera = newCameraIntrinsic_;
         scaledNewCamera.fx *= scale_x;
         scaledNewCamera.fy *= scale_y;
         scaledNewCamera.cx *= scale_x;
         scaledNewCamera.cy *= scale_y;
         scaledNewCamera.width  = static_cast<int16_t>(w);
         scaledNewCamera.height = static_cast<int16_t>(h);
-        newCameraPtr = &scaledNewCamera;
+        newCameraPtr           = &scaledNewCamera;
     }
 
     // Build or rebuild LUT when camera params change.
@@ -219,11 +220,8 @@ std::shared_ptr<Frame> UnDistortionFilter::undistortFrame(std::shared_ptr<const 
     // field of the color frame profile after warmup (to signal "pre-corrected"), while the
     // actual pixel data and source intrinsics are unchanged.  In that situation, keep the
     // existing LUT rather than rebuilding it as an identity mapping.
-    const bool onlyDistortionWentTrivial =
-        newCameraMode && initialized_ &&
-        isDistortionTrivial(disto) && !isDistortionTrivial(cachedDistortion_) &&
-        fmt == cachedFormat_ &&
-        std::memcmp(&intrin, &cachedIntrinsic_, sizeof(OBCameraIntrinsic)) == 0;
+    const bool onlyDistortionWentTrivial = newCameraMode && initialized_ && isDistortionTrivial(disto) && !isDistortionTrivial(cachedDistortion_)
+                                           && fmt == cachedFormat_ && std::memcmp(&intrin, &cachedIntrinsic_, sizeof(OBCameraIntrinsic)) == 0;
 
     if(!isCacheValid(intrin, disto, fmt) && !onlyDistortionWentTrivial) {
         impl_->initialize(intrin, disto, newCameraPtr, fmt, interpMode_);
@@ -266,10 +264,10 @@ std::shared_ptr<Frame> UnDistortionFilter::process(std::shared_ptr<const Frame> 
     OBFrameType targetFrameType = streamTypeToFrameType(streamType_);
 
     if(frame->is<FrameSet>()) {
-        auto fset       = frame->as<FrameSet>();
+        auto fset        = frame->as<FrameSet>();
         auto targetFrame = fset->getFrame(targetFrameType);
         if(!targetFrame) {
-            // No matching stream in this FrameSet — pass through unchanged
+            // No matching stream in this FrameSet - pass through unchanged
             return FrameFactory::createFrameFromOtherFrame(frame);
         }
 
@@ -289,7 +287,7 @@ std::shared_ptr<Frame> UnDistortionFilter::process(std::shared_ptr<const Frame> 
         return undistortFrame(frame);
     }
 
-    // Unrecognised frame type — pass through
+    // Unrecognised frame type - pass through
     return FrameFactory::createFrameFromOtherFrame(frame, true);
 }
 

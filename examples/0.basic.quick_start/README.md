@@ -1,4 +1,4 @@
-# C++ Sample: 0.basic.quick_start
+# C++ Sample: 0.basic.quick_start
 
 ## Overview
 

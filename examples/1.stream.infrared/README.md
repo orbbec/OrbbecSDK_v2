@@ -1,4 +1,4 @@
-# C++ Sample: 1.stream.infrared
+# C++ Sample: 1.stream.infrared
 
 ## Overview
 

@@ -18,7 +18,7 @@ This document describes these functions and demonstrates the basic usage process
 
 
 # OrbbecViewer Usage for 3D Camera
-This document takes the Gemini 330 series as an example to illustrate the camera’s features. Functionality may vary across different devices. It corresponds to OrbbecViewer version **2.6.2**, and the interface may differ in other versions. Please refer to the actual OrbbecViewer for details.
+This document takes the Gemini 330 series as an example to illustrate the camera's features. Functionality may vary across different devices. It corresponds to OrbbecViewer version **2.6.2**, and the interface may differ in other versions. Please refer to the actual OrbbecViewer for details.
 
 
 As shown in the figure, the main interface is marked with three areas separated by red boxes. 
@@ -123,7 +123,7 @@ Including recording, playback, and image saving features.
 
 ![16](images/image16.jpg)
 
-Buttons above the preview window function as the table below：
+Buttons above the preview window function as the table below:
 
 ![image preview button](images/image_preview_button.jpg)
 
@@ -135,11 +135,11 @@ Buttons above the preview window function as the table below：
 In advanced mode, both D2C and point clouds are supported.
 
 * Control depth and color alignment, and the alignment mode supports hardware D2C and software D2C.
-* Frame synchronization： Enables or disables the frame synchronization function. When frame synchronization is enabled, the SDK will combine Depth and Color into a FrameSet based on the device hardware timestamp, which can only be supported by devices that support frame synchronization, such as: Gemini 435Le、Gemini 330 series Gemini2、Gemini2 L、Astra2、Femto Mega、Femto Bolt。
+* Frame synchronization: Enables or disables the frame synchronization function. When frame synchronization is enabled, the SDK will combine Depth and Color into a FrameSet based on the device hardware timestamp, which can only be supported by devices that support frame synchronization, such as: Gemini 435Le, Gemini 330 series Gemini2, Gemini2 L, Astra2, Femto Mega, Femto Bolt.
 * Match Target Res: Match target resolution,for example, when D2C is enabled, selecting this option sets the depth resolution equal to the color resolution. If not selected, the depth resolution will be lower than the color resolution while keeping the same aspect ratio.
 * Decimation Filter Factor: Point Cloud Decimation Factor.
-* Image View： Display and save 2D images.
-* Point Cloud View： Display and save 3D PointCloud data.
+* Image View: Display and save 2D images.
+* Point Cloud View: Display and save 3D PointCloud data.
 
   You can choose to export the depth point cloud (xyz) or RGBD point cloud (xyzrgb) and save it as a ply format file, which is saved in the "OrbbecViewer/output/PointCloud" directory by default.
 
@@ -148,7 +148,7 @@ In advanced mode, both D2C and point clouds are supported.
 
 ## Device Information
 
-Click the button“ ![10](images/image10.jpg) ”to view device information.
+Click the button" ![10](images/image10.jpg)" to view device information.
 The OrbbecViewer tool contains simple device information such as firmware version, product identification code, temperature, etc.
 
 ![11](images/image11.jpg)
@@ -162,7 +162,7 @@ The OrbbecViewer tool contains simple device information such as firmware versio
 
 When the device is connected, click![30](images/image30.jpg)Access the firmware update page. The firmware storage path can be found at https://github.com/orbbec/OrbbecFirmware .
 
-- Gemini 330 series、Gemini 435Le、Gemini 2、Gemini 2L、Astra 2、Gemini 215、Gemini 210 Upgrade interface:
+- Gemini 330 series, Gemini 435Le, Gemini 2, Gemini 2L, Astra 2, Gemini 215, Gemini 210 Upgrade interface:
 
 ![31](images/image31.jpg)
 
@@ -210,7 +210,7 @@ The OrbbecViewer tool allows the user to select a combination of point cloud and
 
 ## Device Information
 
-Click the button“ ![10](./images/image30.jpg) ”to view device information.
+Click the button" ![10](./images/image30.jpg)" to view device information.
 The OrbbecViewer tool contains simple device information such as firmware version, product identification code, serial number, etc.
 
 ![lidar_7](./images/lidar_image7.png)
@@ -245,5 +245,5 @@ In the "Area3" section of the control panel, you can modify the configurations o
 
 - **Format**: Configures the point cloud stream format, which supports two options: "Spherical Point Cloud" and "Cartesian Point Cloud". This setting is only available when the data stream is stopped.
 - **Rotation Speed**: Configures the rotation speed of the LiDAR. This setting is only available when the data stream is stopped.
-- **Repetitive Scan Mode**: The repetitive scanning mode offers four options: non-repetitive scan, repetitive scan ×1, repetitive scan ×2, and repetitive scan ×4. The modification of this parameter will take effect only after the LiDAR is powered off and restarted.
+- **Repetitive Scan Mode**: The repetitive scanning mode offers four options: non-repetitive scan, repetitive scan x1, repetitive scan x2, and repetitive scan x4. The modification of this parameter will take effect only after the LiDAR is powered off and restarted.
 - **Filter Level**: Serves to filter the generated trailing points. A higher value indicates stronger filtering effect, and a value of 0 means no filtering is applied.

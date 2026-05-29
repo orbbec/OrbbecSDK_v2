@@ -1,4 +1,4 @@
-# C++ Sample: 3.advanced.coordinate_transform
+# C++ Sample: 3.advanced.coordinate_transform
 
 ## Overview
 
@@ -12,7 +12,7 @@ Frameset is a combination of different types of Frames
 
 ## Code overview
 
-1. Enable color stream
+1. Enable color stream
 
     ```cpp
         auto colorProfiles = pipe.getStreamProfileList(OB_SENSOR_COLOR);
@@ -22,7 +22,7 @@ Frameset is a combination of different types of Frames
         config->enableStream(colorProfile);
     ```
 
-2. Enable depth stream
+2. Enable depth stream
 
     ```cpp
         auto                                    depthProfiles = pipe.getStreamProfileList(OB_SENSOR_DEPTH);
@@ -34,7 +34,7 @@ Frameset is a combination of different types of Frames
         config->enableStream(depthProfile);
     ```
 
-3. Get frame data
+3. Get frame data
 
     ```cpp
         auto colorFrame = frameSet->colorFrame();

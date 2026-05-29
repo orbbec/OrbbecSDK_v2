@@ -1,4 +1,4 @@
-# C++ Sample: 1.stream.confidence
+# C++ Sample: 1.stream.confidence
 
 ## Overview
 

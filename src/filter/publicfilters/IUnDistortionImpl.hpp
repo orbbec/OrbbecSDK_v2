@@ -19,15 +19,11 @@ public:
     // Build or rebuild the internal LUT.
     // newCameraIntrinsic != nullptr: project output through the new camera matrix (hw_d2c use-case).
     // Otherwise: pure undistortion, same resolution/intrinsic as input.
-    virtual void initialize(const OBCameraIntrinsic  &intrinsic,
-                            const OBCameraDistortion  &distortion,
-                            const OBCameraIntrinsic   *newCameraIntrinsic,
-                            OBFormat                   format,
-                            int                        interpMode) = 0;
+    virtual void initialize(const OBCameraIntrinsic &intrinsic, const OBCameraDistortion &distortion, const OBCameraIntrinsic *newCameraIntrinsic,
+                            OBFormat format, int interpMode) = 0;
 
-    // Remap src → dst.  Both buffers must cover width*height pixels in the given format.
-    virtual void undistort(const uint8_t *src, uint8_t *dst,
-                           int width, int height, OBFormat format) = 0;
+    // Remap src -> dst.  Both buffers must cover width*height pixels in the given format.
+    virtual void undistort(const uint8_t *src, uint8_t *dst, int width, int height, OBFormat format) = 0;
 
     virtual void reset() = 0;
 };

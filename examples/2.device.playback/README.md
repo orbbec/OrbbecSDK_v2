@@ -1,4 +1,4 @@
-# C++ Sample：2.device.playback
+# C++ Sample: 2.device.playback
 
 ## Overview
 

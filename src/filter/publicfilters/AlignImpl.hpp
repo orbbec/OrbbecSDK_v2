@@ -13,7 +13,7 @@
 #include "libobsensor/h/ObTypes.h"
 #include "IAlignImpl.hpp"
 
-#if(defined(__ARM_NEON__) || defined(__aarch64__) || defined(__arm__))
+#if (defined(__ARM_NEON__) || defined(__aarch64__) || defined(__arm__))
 #include "SSE2NEON.h"
 #else
 #include <xmmintrin.h>
@@ -60,8 +60,8 @@ public:
      * @param[in] max_invalid_value max invalud value
      */
     void initialize(OBCameraIntrinsic depth_intrin, OBCameraDistortion depth_disto, OBCameraIntrinsic rgb_intrin, OBCameraDistortion rgb_disto,
-                    OBExtrinsic depth_to_rgb, float depth_unit_mm, bool add_target_distortion, bool gap_fill_copy, bool use_scale,
-                    OBFormat depth_format, uint16_t max_invalid_value) override;
+                    OBExtrinsic depth_to_rgb, float depth_unit_mm, bool add_target_distortion, bool gap_fill_copy, bool use_scale, OBFormat depth_format,
+                    uint16_t max_invalid_value) override;
 
     /**
      * @brief Get depth unit in millimeter
@@ -214,7 +214,7 @@ private:
 
     // possible inflection point of the calibrated K6 distortion curve
     float r2_max_loc_;
-    // work buffers — reused across frames to avoid per-call malloc/free
+    // work buffers - reused across frames to avoid per-call malloc/free
     std::vector<uint16_t> depth_work_buf_;  // copy of input depth with invalid pixels zeroed
     std::vector<uint16_t> scale_work_buf_;  // intermediate buffer for D2C post-process scale step
 

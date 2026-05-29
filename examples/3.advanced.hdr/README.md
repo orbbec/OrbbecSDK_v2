@@ -1,4 +1,4 @@
-# C++ Sample: 3.advanced.hdr
+# C++ Sample: 3.advanced.hdr
 
 ## Overview
 

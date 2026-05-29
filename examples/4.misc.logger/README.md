@@ -1,4 +1,4 @@
-# C++ Sample: 4.msic.loggger
+# C++ Sample: 4.msic.loggger
 
 ## Overview
 Use the SDK context class or modify the XML configuration file to set the SDK log level, including the log level output to the terminal and the log level output to the file.

@@ -1,4 +1,4 @@
-# C++ Sample: 5.wrapper.pcl
+# C++ Sample: 5.wrapper.pcl
 
 This project provides a set of examples and utilities for working with the Orbbec SDK and PCL (Point Cloud Library). It includes various modules for processing depth, color, and point cloud data.
 

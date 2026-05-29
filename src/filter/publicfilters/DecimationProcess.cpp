@@ -243,7 +243,7 @@ void DecimationFilter::setConfigData(void *data, uint32_t size) {
 }
 
 const std::string &DecimationFilter::getConfigSchema() const {
-    // csv format: name，type， min，max，step，default，description
+    // csv format: name, type, min, max, step, default, description
     static const std::string schema = "decimate, int, 1, 8, 1, 2, value decimate factor";
     return schema;
 }

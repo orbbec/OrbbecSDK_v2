@@ -1,4 +1,4 @@
-# C++ Sample: 1.stream.imu
+# C++ Sample: 1.stream.imu
 
 ## Overview
 

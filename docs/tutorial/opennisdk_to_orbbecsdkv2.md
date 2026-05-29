@@ -15,7 +15,7 @@ Switching from the OpenNI protocol to the UVC protocol offers significant advant
     - UVC Protocol: As a standard USB Video Class protocol, UVC is natively supported by operating systems (Windows, macOS, Linux) without the need for additional drivers. This provides true plug-and-play functionality, significantly lowering the barrier for end users.
 2. Data Handling: Simplified Development and Integration
     - OpenNI Protocol: Depth (Depth), infrared (IR), and other data streams are transmitted in packets via a proprietary protocol. After reception, the SDK must perform frame assembly and unpacking according to proprietary specifications.
-    - UVC Protocol: Depth (Depth), infrared (IR), and other data streams are transmitted using the standard UVC protocol. Frame assembly is handled by the OS kernel’s UVC driver, and the SDK receives complete image data without the need for further assembly.
+    - UVC Protocol: Depth (Depth), infrared (IR), and other data streams are transmitted using the standard UVC protocol. Frame assembly is handled by the OS kernel's UVC driver, and the SDK receives complete image data without the need for further assembly.
 3. System Overhead: Optimized Resource Efficiency
     - OpenNI Protocol: Data frame assembly, checksum verification, and unpacking at the software level consume additional CPU resources.
     - UVC Protocol: Frame assembly is managed by the hardware (camera chip) or the kernel-level UVC driver, eliminating CPU overhead at the application layer, which improves data processing efficiency.
@@ -26,13 +26,13 @@ Upgrading a device from the OpenNI protocol to the UVC protocol only requires a 
 
 **Important Notes During the Upgrade Process:**
 
-**i.Firmware Distinction:** 
-The version numbering schemes for OpenNI protocol firmware (format: 1.x.xx) and UVC protocol firmware (format: 2.x.xx) are different. Ensure you select the correct firmware file corresponding to your target protocol before starting the upgrade.
+**i.Firmware Distinction:**
+The version numbering schemes for OpenNI protocol firmware (format: 1.x.xx) and UVC protocol firmware (format: 2.x.xx) are different. Ensure you select the correct firmware file corresponding to your target protocol before starting the upgrade.
 
-**ii. Post-Upgrade Action on Windows:** 
-On Windows, after completing the upgrade via the OpenNI2 SDK, you must first uninstall the “Orbbec SensorDriver” in Device Manager and then reconnect the device for the host to correctly recognize it as a new UVC device. This process is not user-friendly, and after a reboot, it is inconvenient to read the firmware version to verify whether the upgrade was successful. Therefore, it is recommended to perform the upgrade on Linux.
+**ii. Post-Upgrade Action on Windows:**
+On Windows, after completing the upgrade via the OpenNI2 SDK, you must first uninstall the "Orbbec SensorDriver" in Device Manager and then reconnect the device for the host to correctly recognize it as a new UVC device. This process is not user-friendly, and after a reboot, it is inconvenient to read the firmware version to verify whether the upgrade was successful. Therefore, it is recommended to perform the upgrade on Linux.
 
-**iii. SDK Switch:** After the device has been upgraded to the UVC protocol, the original OpenNI2 SDK is no longer applicable. You must switch to the Orbbec SDK v2, which is specifically designed for the UVC protocol (Download: https://github.com/orbbec/OrbbecSDK_v2).
+**iii. SDK Switch:** After the device has been upgraded to the UVC protocol, the original OpenNI2 SDK is no longer applicable. You must switch to the Orbbec SDK v2, which is specifically designed for the UVC protocol (Download: https://github.com/orbbec/OrbbecSDK_v2).
 
 ## 4. Mapping of Common OpenNI2 Interfaces to Orbbec SDK v2
 
@@ -514,7 +514,7 @@ OpenNI::shutdown();
 
 **OrbbecSDK v2 API :**
 
-Create a global variable or smart pointer for `ob::Context`，explicit destruction is not required.
+Create a global variable or smart pointer for `ob::Context`, explicit destruction is not required.
 
 ### 4.11 Device Disconnection Status Callback
 
@@ -567,11 +567,11 @@ ob::Context ctx;
 
 // register device callback
 auto id = ctx.registerDeviceChangedCallback([](std::shared_ptr<ob::DeviceList> removedList, std::shared_ptr<ob::DeviceList> deviceList) {
-    if（deviceList->deviceCount() > 0）{
+    if (deviceList->deviceCount() > 0) {
 
     }
 
-    if（removedList->deviceCount() > 0）{
+    if (removedList->deviceCount() > 0) {
 
     }
 });
@@ -608,7 +608,7 @@ typedef enum
 	IMAGE_REGISTRATION_DEPTH_TO_COLOR	= 1,
 } ImageRegistrationMode;
 // API
-Status openni::Device::setImageRegistrationMode(ImageRegistrationMode mode)；
+Status openni::Device::setImageRegistrationMode(ImageRegistrationMode mode);
 ```
 
 **OrbbecSDK v2 API :**
@@ -950,13 +950,13 @@ bool status = device->getBoolProperty(OB_PROP_LDP_STATUS_BOOL);
 **OpenNI2 SDK API :**
 ```cpp
 // The purpose of setting the minimum and maximum values for Depth is to filter out Depth points that are outside of this range. This needs to be set between the create and start functions of OpenNI. The reference code for setting this is similar to setting the Depth resolution.
-// Set Depth minimum values：
+// Set Depth minimum values:
 int dataSize = 4;
 // Set 340mm
 int nMinDepth = 340; 
 openni::Status rc = depth.setProperty(XN_STREAM_PROPERTY_MIN_DEPTH, (uint8_t *)&nMinDepth, dataSize);
 
-// Set Depth maximum values：
+// Set Depth maximum values:
 int dataSize = 4;
 // //Set 1500mm 
 int nMaxDepth =1500 ; 
@@ -976,7 +976,7 @@ config->enableVideoStream(OB_STREAM_DEPTH);
 // Start the pipeline with config.
 pipe.start(config);
 
-//Create ThresholdFilter to set depth minimum and maximum values：
+//Create ThresholdFilter to set depth minimum and maximum values:
 auto thresholdFilter = std::make_shared<ob::ThresholdFilter>();
 thresholdFilter->setValueRange(340, 1500);
 
@@ -1007,7 +1007,7 @@ pipe.stop();
 ```cpp
 int dataSize = 4;
 // 0: represents left IR; 1: represents right IR
-int switch_ir = 1或0; 
+int switch_ir = 1; // or 0; 
 openni::Status rc = Device.setProperty(XN_MODULE_PROPERTY_SWITCH_IR, (uint8_t*)&switch_ir,dataSize);
 ```
 
@@ -1272,7 +1272,7 @@ void firmwareUpdateCallback(OBFwUpdateState state, const char *message, uint8_t 
 // 6.Reboot the device after a successful upgrade.
 device->reboot();
 ```
-Notes：
+Notes:
 If the device enters Bootloader mode, upgrading via Orbbec SDK v2 is not supported; it can only be upgraded using the OpenNI SDK.
 
 ### 4.40 Read and Write User Data

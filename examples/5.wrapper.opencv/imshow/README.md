@@ -1,4 +1,4 @@
-# C++ Sample: 5.wrapper.opencv.imshow
+# C++ Sample: 5.wrapper.opencv.imshow
 
 ## Overview
 This example shows how to use OpenCV's `imshow` function to display the camera feed in a window.

@@ -1,4 +1,4 @@
-# C++ Sample：3.advanced.common_usages
+# C++ Sample: 3.advanced.common_usages
 
 ## Overview
 
@@ -29,7 +29,7 @@ Device is the device object, which can be used to obtain the device information,
         // Query the list of connected devices.
         std::shared_ptr<ob::DeviceList> devices = ctx->queryDeviceList();
 
-        // Handle connected devices（and open one device）
+        // Handle connected devices (and open one device)
         handleDeviceConnected(devices);
     ```
 
@@ -64,7 +64,7 @@ Device is the device object, which can be used to obtain the device information,
         void setDepthExposureValue(bool increase)
         //Depth exposure value adjustment
         void setDepthGainValue(bool increase)
-    ‵‵‵
+    ```
 
 ## Run Sample
 

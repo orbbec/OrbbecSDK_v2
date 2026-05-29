@@ -75,7 +75,7 @@ StreamExtrinsicsManager::StreamExtrinsicsManager() {}
 StreamExtrinsicsManager::~StreamExtrinsicsManager() noexcept = default;
 
 void StreamExtrinsicsManager::registerExtrinsics(const std::shared_ptr<const StreamProfile> &from, const std::shared_ptr<const StreamProfile> &to,
-                                                 const OBExtrinsic &extrinsics,bool cleanExpired) {
+                                                 const OBExtrinsic &extrinsics, bool cleanExpired) {
     if(!from || !to) {
         THROW_INVALID_PARAM_EXCEPTION("Invalid stream profile, from or to is null");
     }
@@ -148,7 +148,7 @@ void StreamExtrinsicsManager::registerExtrinsics(const std::shared_ptr<const Str
                 }
                 streamProfileMap_.erase(fromId);
 
-                // after moving the stream profiles, we need to update the extrinsics graph with the new id： `toId`
+                // after moving the stream profiles, we need to update the extrinsics graph with the new id: `toId`
                 auto &extrPairVec = extrinsicsGraph_[fromId];
                 for(auto &extrPair: extrPairVec) {
                     auto &toExtrPairVec = extrinsicsGraph_[extrPair.first];
@@ -234,7 +234,7 @@ void StreamExtrinsicsManager::registerExtrinsics(const std::shared_ptr<const Str
         THROW_INVALID_PARAM_EXCEPTION("To Stream profile not registered!");
     }
 
-    registerExtrinsics(from, to, extrinsics,false);
+    registerExtrinsics(from, to, extrinsics, false);
 }
 
 void StreamExtrinsicsManager::registerSameExtrinsics(const std::shared_ptr<const StreamProfile> &from, const std::shared_ptr<const StreamProfile> &to) {

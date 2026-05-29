@@ -26,7 +26,7 @@ printf("Invalid input, please input a number between %d and %d or \'q\' to exit 
 
 ### 2.Enumerates stream information
 
-Get stream profile list, then different output formats are formulated according to sensor type. For example, if sensor type = 'OB_SENSOR_COLOR', need to print stream type、stream format、stream resolution、stream fps、stream index.
+Get stream profile list, then different output formats are formulated according to sensor type. For example, if sensor type = 'OB_SENSOR_COLOR', need to print stream type, stream format, stream resolution, stream fps, stream index.
 
 ```c
 // Get sensor type.
@@ -58,7 +58,7 @@ check_ob_error(&error);
 
 ### 4.Enumerates device information
 
-Get device information. And then print device name、pid、SN、connect type.
+Get device information. And then print device name, pid, SN, connect type.
 
 ```c
 // Get device information.

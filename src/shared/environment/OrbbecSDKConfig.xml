@@ -44,8 +44,8 @@
     <Pipeline>
         <Stream>
             <Depth>
-                <!-- Use default stream profile, bool type, true： use default stream profile,
-                false：use specified stream profile in the configuration file -->
+                <!-- Use default stream profile, bool type, true: use default stream profile,
+                false: use specified stream profile in the configuration file -->
                 <UseDefaultStreamProfile>true</UseDefaultStreamProfile>
             </Depth>
             <Color>

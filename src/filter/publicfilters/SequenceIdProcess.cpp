@@ -37,7 +37,7 @@ void SequenceIdFilter::setConfigData(void *data, uint32_t size) {
 }
 
 const std::string &SequenceIdFilter::getConfigSchema() const {
-    // csv format: name，type， min，max，step，default，description
+    // csv format: name, type, min, max, step, default, description
     static const std::string schema = "sequenceid, integer, -1, 1, 1, 0, frame data sequence id value";
     return schema;
 }

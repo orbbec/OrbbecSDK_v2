@@ -1,8 +1,8 @@
-# C++ Sample: 3.advanced.multi_devices_sync
+# C++ Sample: 3.advanced.multi_devices_sync
 
 ## Overview
 
-Function description: Demonstrate multi devices synchronization operation,This sample supports network devices, USB devices, and GMSL devices (such as Gemini 335lg). 
+Function description: Demonstrate multi devices synchronization operation,This sample supports network devices, USB devices, and GMSL devices (such as Gemini 335lg). 
 
 - Network devices and USB devices must be connected to a sync hub(via the 8-pin port),please refer to the [Multi-device Sync documentation](https://www.orbbec.com/docs-general/set-up-cameras-for-external-synchronization_v1-2/).
 - GMSL devices can connect via the 8-pin port or through multi-device sync via GMSL2 /FAKRA, Gemini 335lg multi device sync please refer [this document](https://www.orbbec.com/docs/gemini-335lg-hardware-synchronization/).
@@ -10,17 +10,17 @@ Function description: Demonstrate multi devices synchronization operation,T
 
 ## Code overview
 
-### 1.Configure multi device synchronization
+### 1.Configure multi device synchronization
 
 ```cpp
     configMultiDeviceSync();
 ```
 
-### 2.Conduct multi device testing
+### 2.Conduct multi device testing
 ```cpp
     testMultiDeviceSync();
 ```
-#### 2.1 Distinguishing secondary devices
+#### 2.1 Distinguishing secondary devices
 
 ```cpp
         streamDevList.clear();
@@ -50,14 +50,14 @@ Function description: Demonstrate multi devices synchronization operation,T
         }
 ```
 
-#### 2.2 Enable secondary devices
+#### 2.2 Enable secondary devices
 
 ```cpp
         std::cout << "Secondary devices start..." << std::endl;
         startDeviceStreams(secondary_devices, 0);
 ```
 
-#### 2.3 Enable Primary device
+#### 2.3 Enable Primary device
 
 
 ```cpp
@@ -65,7 +65,7 @@ Function description: Demonstrate multi devices synchronization operation,T
         startDeviceStreams(primary_devices, static_cast<int>(secondary_devices.size()));
 ```
 
-#### 2.4 Set software synchronization interval time
+#### 2.4 Set software synchronization interval time
 
 ```cpp
     // Start the multi-device time synchronization function
@@ -86,7 +86,7 @@ Function description: Demonstrate multi devices synchronization operation,T
         }
 ```
 
-#### 7.Close data stream
+#### 7.Close data stream
 
 ```cpp
         // Stop streams and clear resources
@@ -112,7 +112,7 @@ if(multiDeviceSyncConfig.syncMode == OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_TRIGGERI
 *Press `t` in the render window to trigger a capture once.*
 
 ## Configuration file parameter description
-**Notes："The configuration parameters for multi-device Sync may vary between different devices. Please refer to the [Multi-device Sync documentation](https://www.orbbec.com/docs-general/set-up-cameras-for-external-synchronization_v1-2/)**
+**Notes: "The configuration parameters for multi-device Sync may vary between different devices. Please refer to the [Multi-device Sync documentation](https://www.orbbec.com/docs-general/set-up-cameras-for-external-synchronization_v1-2/)**
 
 config file :  MultiDeviceSyncConfig.json
 
@@ -187,7 +187,7 @@ The following demonstrates how to use the multi-device synchronization sample on
 ![windows_sync](image/windows_sync.png)
 
 
-0: Configure sync mode and start stream
+0: Configure sync mode and start stream
 
 1: Start stream: If the parameters for multi device sync mode have been configured, you can start the stream directly.
 

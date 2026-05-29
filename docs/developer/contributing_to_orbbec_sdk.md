@@ -59,4 +59,4 @@ git checkout -b your_branch_name
 
 - Finally, you've done all the steps, and we will approve your PR after the reviewers have checked it.
 
-## **Thank you for your contributions！**
+## **Thank you for your contributions!**
