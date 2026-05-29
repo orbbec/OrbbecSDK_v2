@@ -94,7 +94,7 @@ private:
  */
 class RoiHandler : public jsonmodel::IObjectHandler {
 public:
-    RoiHandler(IDevice *owner, uint32_t propertyId, OBSensorType sensorType);
+    RoiHandler(IDevice *owner, uint32_t propertyId, OBSensorType sensorType, bool requireStreamActive = true);
     ~RoiHandler() override;
 
     /**
@@ -133,6 +133,7 @@ private:
     IDevice                         *owner_      = nullptr;
     uint32_t                         propertyId_ = 0;
     OBSensorType                     sensorType_{ OB_SENSOR_UNKNOWN };
+    bool                             requireStreamActive_{ true };
     AE_ROI                           roi_{};
     bool                             writeSupported_{ true };
     bool                             readSupported_{ true };
@@ -256,7 +257,7 @@ private:
  */
 class DisparitySearchHandler : public jsonmodel::IObjectHandler {
 public:
-    DisparitySearchHandler(IDevice *owner) : owner_(owner) {}
+    DisparitySearchHandler(IDevice *owner, bool requireStreamActive = true) : owner_(owner), requireStreamActive_(requireStreamActive) {}
     ~DisparitySearchHandler() override;
 
     /**
@@ -291,6 +292,7 @@ private:
 
 private:
     IDevice           *owner_ = nullptr;
+    bool               requireStreamActive_{ true };
     int                rangeMode_{ 0 };
     int                searchOffset_{ 0 };
     std::map<int, int> rangeModeMapping_{ { 0, 64 }, { 1, 128 }, { 2, 256 } };

@@ -55,6 +55,8 @@ void G330PresetEngine::init() {
         return;
     }
 
+    auto firmwareVersionInt = owner_->getFirmwareVersionInt();
+
     // comment
     configEngine_.addLeaf("comment", std::make_shared<CommentHandler>("null means the device doesn't support this property and will ignore it"));
     // version
@@ -102,7 +104,7 @@ void G330PresetEngine::init() {
                     engine.declareLeaf(kTopKey);     // int
                     engine.declareLeaf(kBottomKey);  // int
                 },
-                std::make_shared<RoiHandler>(owner_, OB_STRUCT_DEPTH_AE_ROI, OB_SENSOR_DEPTH));
+                std::make_shared<RoiHandler>(owner_, OB_STRUCT_DEPTH_AE_ROI, OB_SENSOR_DEPTH, firmwareVersionInt < 10735));
             // frame interleave
             engine.addObject(
                 "frame_interleave",
@@ -129,7 +131,7 @@ void G330PresetEngine::init() {
                     engine.declareLeaf(kDisparitySearchRangeModeKey);  // int
                     engine.declareLeaf(kDisparitySearchOffsetKey);     // int
                 },
-                std::make_shared<DisparitySearchHandler>(owner_));
+                std::make_shared<DisparitySearchHandler>(owner_, firmwareVersionInt < 10735));
             // Depth noise removal filter
             engine.declareObject("noise_removal_filter", [&](jsonmodel::ConfigEngine &engine) {
                 // hardware noise remove filter
@@ -189,7 +191,7 @@ void G330PresetEngine::init() {
                     engine.declareLeaf(kTopKey);     // int
                     engine.declareLeaf(kBottomKey);  // int
                 },
-                std::make_shared<RoiHandler>(owner_, OB_STRUCT_COLOR_AE_ROI, OB_SENSOR_COLOR));
+                std::make_shared<RoiHandler>(owner_, OB_STRUCT_COLOR_AE_ROI, OB_SENSOR_COLOR, firmwareVersionInt < 10735));
             // image orientation
             engine.declareObject("image_orientation", [&](jsonmodel::ConfigEngine &engine) {
                 engine.addLeaf("flip", std::make_shared<PropertyConfigHandler<bool>>(owner_, OB_PROP_COLOR_FLIP_BOOL));

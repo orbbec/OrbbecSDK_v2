@@ -157,10 +157,11 @@ jsonmodel::ExportValue FrameInterleaveHandler::exportChildValue(const std::strin
 }
 
 // RoiHandler
-RoiHandler::RoiHandler(IDevice *owner, uint32_t propertyId, OBSensorType sensorType)
+RoiHandler::RoiHandler(IDevice *owner, uint32_t propertyId, OBSensorType sensorType, bool requireStreamActive)
     : owner_(owner),
       propertyId_(propertyId),
       sensorType_(sensorType),
+      requireStreamActive_(requireStreamActive),
       valueMap_{ { kLeftKey, &roi_.x0_left }, { kRightKey, &roi_.x1_right }, { kTopKey, &roi_.y0_top }, { kBottomKey, &roi_.y1_bottom } } {}
 
 RoiHandler::~RoiHandler() {
@@ -172,7 +173,7 @@ bool RoiHandler::onPreChildrenSet(const Json::Value &value) {
     stopSetting();
     writeSupported_ = true;
     auto propServer = owner_->getPropertyServer();
-    if(!propServer->isPropertySupported(propertyId_, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
+    if(!propServer->isPropertySupported(propertyId_, PROP_OP_WRITE, PROP_ACCESS_INTERNAL)) {
         writeSupported_ = false;
         return false;
     }
@@ -210,7 +211,7 @@ void RoiHandler::onPostChildrenSet() {
         return;
     }
 
-    if(sensor->isStreamActivated()) {
+    if(!requireStreamActive_ || sensor->isStreamActivated()) {
         setRoiProperties();
     }
     else {
@@ -525,7 +526,7 @@ void DisparitySearchHandler::onPostChildrenSet() {
 
     // Set all values when depth stream is on
     auto sensor = owner_->getSensor(OB_SENSOR_DEPTH);
-    if(sensor->isStreamActivated()) {
+    if(!requireStreamActive_ || sensor->isStreamActivated()) {
         setDisparitySearchProperties();
     }
     else {

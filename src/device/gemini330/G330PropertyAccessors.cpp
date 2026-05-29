@@ -48,8 +48,9 @@ void G330Disp2DepthPropertyAccessor::setPropertyValue(uint32_t propertyId, const
 
     } break;
     case OB_PROP_DISP_SEARCH_OFFSET_INT: {
-        auto sensor = owner_->getComponentT<ISensor>(OB_DEV_COMPONENT_DEPTH_SENSOR).get();
-        if(!sensor->isStreamActivated()) {
+        auto sensor    = owner_->getComponentT<ISensor>(OB_DEV_COMPONENT_DEPTH_SENSOR).get();
+        auto fwVersion = owner_->getFirmwareVersionInt();
+        if(!sensor->isStreamActivated() && fwVersion < 10735) {
             THROW_WRONG_API_CALL_SEQUENCE_EXCEPTION("disp search offset can only be set when depth sensor is activated");
         }
 
