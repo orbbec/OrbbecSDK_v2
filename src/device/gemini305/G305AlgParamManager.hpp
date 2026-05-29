@@ -34,7 +34,7 @@ private:
     void fetchParamFromDevice() override;
     void registerBasicExtrinsics() override;
     void fetchPresetResolutionConfig();
-    void fixD2CParmaList();
+    void fixD2CParamList();
     bool findBestMatchedCameraParam(const std::vector<OBCameraParam> &cameraParamList, const std::shared_ptr<const VideoStreamProfile> &profile,
                                     OBCameraParam &result);
     void d2CProfileListFilter(const std::string currentDepthAlgMode);

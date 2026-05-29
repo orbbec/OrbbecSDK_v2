@@ -72,7 +72,7 @@ bool G305AlgParamManager::findBestMatchedCameraParam(const std::vector<OBCameraP
 G305AlgParamManager::G305AlgParamManager(IDevice *owner) : DisparityAlgParamManagerBase(owner) {
     fetchParamFromDevice();
     fetchPresetResolutionConfig();
-    fixD2CParmaList();
+    fixD2CParamList();
     registerBasicExtrinsics();
 }
 
@@ -215,7 +215,7 @@ void G305AlgParamManager::registerBasicExtrinsics() {
     basicStreamProfileList_.emplace_back(rightIrBasicStreamProfile);
 }
 
-void G305AlgParamManager::fixD2CParmaList() {
+void G305AlgParamManager::fixD2CParamList() {
     if(originD2cProfileList_.empty()) {
         return;
     }
@@ -235,6 +235,11 @@ void G305AlgParamManager::fixD2CParmaList() {
 
         if(std::strcmp(currentDepthWorkMode.name, kDoubleRgbMode) == 0) {
             doubleRgbCalibrationCameraParamList_ = originCalibrationCameraParamList_;
+            // In dual RGB mode, depthDistortion actually holds the left RGB camera's distortion.
+            // Both left and right RGB cameras should use BROWN_CONRADY_K6 for accurate undistortion.
+            for(auto &param : calibrationCameraParamList_) {
+                param.depthDistortion.model = OB_DISTORTION_BROWN_CONRADY_K6;
+            }
             return;
         }
     }
