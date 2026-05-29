@@ -47,7 +47,7 @@ static bool isDistortionTrivial(const OBCameraDistortion &d) {
     return d.k1 == 0.0f && d.k2 == 0.0f && d.k3 == 0.0f && d.k4 == 0.0f && d.k5 == 0.0f && d.k6 == 0.0f && d.p1 == 0.0f && d.p2 == 0.0f;
 }
 
-// Derive the interpolation mode 
+// Derive the interpolation mode
 static int autoInterpMode(OBStreamType st) {
     switch(st) {
     case OB_STREAM_DEPTH:
