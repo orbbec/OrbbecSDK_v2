@@ -80,10 +80,10 @@ LiDARImuStreamer::LiDARImuStreamer(IDevice *owner, const std::shared_ptr<IDataSt
 
 LiDARImuStreamer::~LiDARImuStreamer() noexcept {
     if(accelStreamProfile_) {
-        stopStream(nullptr);
+        stopStream(accelStreamProfile_);
     }
     if(gyroStreamProfile_) {
-        stopStream(nullptr);
+        stopStream(gyroStreamProfile_);
     }
 }
 
@@ -187,8 +187,8 @@ void LiDARImuStreamer::stopStream(std::shared_ptr<const StreamProfile> sp) {
             // clear current profile
             accelStreamProfile_ = nullptr;
             accelCallback_      = nullptr;
-            if(gyroStreamProfile_ == nullptr) {
-                // all imu streams are off
+            if(gyroStreamProfile_ != nullptr) {
+                // gyro stream is still running
                 return;
             }
         }
@@ -200,8 +200,8 @@ void LiDARImuStreamer::stopStream(std::shared_ptr<const StreamProfile> sp) {
             // clear current profile
             gyroStreamProfile_ = nullptr;
             gyroCallback_      = nullptr;
-            if(accelStreamProfile_ == nullptr) {
-                // all imu streams are off
+            if(accelStreamProfile_ != nullptr) {
+                // accel stream is still running
                 return;
             }
         }
