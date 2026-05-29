@@ -48,11 +48,16 @@ ColorPresetHandler::ColorPresetHandler(IDevice *owner)
     : PropertyConfigHandler<int>(owner, OB_PROP_COLOR_PRESET_PRIORITY_INT), valueMapping_{ { 0, "Default" }, { 1, "Warm Biased AWB" } } {}
 
 void ColorPresetHandler::set(const std::string &k, const Json::Value &v) {
+#if 1
+    // TODO: Temporarily disabled, will be enabled after device issue is resolved
+    utils::unusedVar(k);
+    utils::unusedVar(v);
+    return;
+#else
     if(!v.isString()) {
         PropertyConfigHandler<int>::set(k, v);
         return;
     }
-
     const auto stringValue = v.asString();
     for(const auto &entry: valueMapping_) {
         if(entry.second == stringValue) {
@@ -68,9 +73,15 @@ void ColorPresetHandler::set(const std::string &k, const Json::Value &v) {
     catch(...) {
         LOG_ERROR("Invalid color preset value '{}'", stringValue);
     }
+#endif
 }
 
 jsonmodel::ExportValue ColorPresetHandler::exportValue(const std::string &k) {
+#if 1
+    // TODO: Temporarily disabled, will be enabled after device issue is resolved
+    utils::unusedVar(k);
+    return jsonmodel::ExportValue::nullValue();
+#else
     auto value = PropertyConfigHandler<int>::exportValue(k);
     if(value.isNull()) {
         return value;
@@ -79,6 +90,7 @@ jsonmodel::ExportValue ColorPresetHandler::exportValue(const std::string &k) {
     const int intValue = jsonmodel::JsonTraits<int>::from(value.scalarValue);
     auto      it       = valueMapping_.find(intValue);
     return it != valueMapping_.end() ? jsonmodel::makeScalar(it->second) : jsonmodel::makeScalar(std::to_string(intValue));
+#endif
 }
 
 }  // namespace libobsensor
