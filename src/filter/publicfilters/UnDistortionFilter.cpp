@@ -47,6 +47,22 @@ static bool isDistortionTrivial(const OBCameraDistortion &d) {
     return d.k1 == 0.0f && d.k2 == 0.0f && d.k3 == 0.0f && d.k4 == 0.0f && d.k5 == 0.0f && d.k6 == 0.0f && d.p1 == 0.0f && d.p2 == 0.0f;
 }
 
+// Derive the interpolation mode 
+static int autoInterpMode(OBStreamType st) {
+    switch(st) {
+    case OB_STREAM_DEPTH:
+    case OB_STREAM_IR:
+    case OB_STREAM_IR_LEFT:
+    case OB_STREAM_IR_RIGHT:
+        return UNDIST_INTERP_NEAREST;
+    case OB_STREAM_COLOR:
+    case OB_STREAM_COLOR_LEFT:
+    case OB_STREAM_COLOR_RIGHT:
+    default:
+        return UNDIST_INTERP_BILINEAR;
+    }
+}
+
 // ---------------------------------------------------------------------------
 
 UnDistortionFilter::UnDistortionFilter()
@@ -73,9 +89,9 @@ UnDistortionFilter::~UnDistortionFilter() noexcept {
 void UnDistortionFilter::updateConfig(std::vector<std::string> &params) {
     // Config order must match getConfigSchema():
     // [0] StreamType  [1] NewCameraFx  [2] NewCameraFy  [3] NewCameraCx  [4] NewCameraCy
-    // [5] NewCameraWidth  [6] NewCameraHeight  [7] InterpolationMode  [8] MjpgOutputFormat
-    if(params.size() != 9) {
-        THROW_INVALID_PARAM_EXCEPTION("UnDistortionFilter config error: expected 9 params, got " + std::to_string(params.size()));
+    // [5] NewCameraWidth  [6] NewCameraHeight  [7] MjpgOutputFormat
+    if(params.size() != 8) {
+        THROW_INVALID_PARAM_EXCEPTION("UnDistortionFilter config error: expected 8 params, got " + std::to_string(params.size()));
     }
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     try {
@@ -86,8 +102,7 @@ void UnDistortionFilter::updateConfig(std::vector<std::string> &params) {
         newCameraIntrinsic_.cy     = std::stof(params[4]);
         newCameraIntrinsic_.width  = static_cast<int16_t>(std::stoi(params[5]));
         newCameraIntrinsic_.height = static_cast<int16_t>(std::stoi(params[6]));
-        interpMode_                = std::stoi(params[7]);
-        int newMjpgFmt             = std::stoi(params[8]);
+        int newMjpgFmt             = std::stoi(params[7]);
         if(newMjpgFmt != mjpgOutputFormat_) {
             mjpgOutputFormat_ = newMjpgFmt;
             mjpgConverter_.reset();  // force re-init with new target format
@@ -117,7 +132,6 @@ const std::string &UnDistortionFilter::getConfigSchema() const {
         "NewCameraCy, float, 0, 10000, 1, 0, new camera matrix cy at reference resolution\n"
         "NewCameraWidth, integer, 0, 10000, 1, 0, reference resolution width (0=pure undistortion)\n"
         "NewCameraHeight, integer, 0, 10000, 1, 0, reference resolution height\n"
-        "InterpolationMode, integer, 0, 1, 1, 1, interpolation mode: 0=nearest neighbor 1=bilinear\n"
         "MjpgOutputFormat, integer, 0, 1, 1, 0, output format when input is MJPG: 0=RGB 1=BGR\n";
     return schema;
 }
@@ -224,6 +238,7 @@ std::shared_ptr<Frame> UnDistortionFilter::undistortFrame(std::shared_ptr<const 
                                            && fmt == cachedFormat_ && std::memcmp(&intrin, &cachedIntrinsic_, sizeof(OBCameraIntrinsic)) == 0;
 
     if(!isCacheValid(intrin, disto, fmt) && !onlyDistortionWentTrivial) {
+        interpMode_ = autoInterpMode(streamType_);
         impl_->initialize(intrin, disto, newCameraPtr, fmt, interpMode_);
         cachedIntrinsic_  = intrin;
         cachedDistortion_ = disto;

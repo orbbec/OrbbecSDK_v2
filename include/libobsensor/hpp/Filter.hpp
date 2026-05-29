@@ -484,26 +484,6 @@ public:
 /**
  * @brief UnDistortionFilter removes lens distortion from a chosen stream (Color, IR, or Depth).
  *
- * Usage (pure color undistortion, sync_align scenario):
- * @code
- *   auto filter = std::make_shared<ob::UnDistortionFilter>();
- *   // default stream type is COLOR, default mode is pure undistortion
- *   filter->pushFrame(frameSet);
- * @endcode
- *
- * Usage (virtual-camera mode, hw_d2c_align scenario):
- * @code
- *   auto filter = std::make_shared<ob::UnDistortionFilter>();
- *   // Pass the raw depth intrinsic - filter computes the scale to color resolution internally.
- *   filter->setNewCameraMatrix(depthIntrinsic);
- *   filter->pushFrame(frameSet);
- * @endcode
- *
- * Usage (depth undistortion - must use nearest-neighbor interpolation):
- * @code
- *   auto filter = std::make_shared<ob::UnDistortionFilter>(OB_STREAM_DEPTH);
- *   filter->setInterpolationMode(0);  // nearest neighbor avoids ghost-depth artefacts
- * @endcode
  */
 class UnDistortionFilter : public Filter {
 public:
@@ -519,7 +499,6 @@ public:
 
     /**
      * @brief Set which stream to undistort (default: OB_STREAM_COLOR).
-     *        For depth streams, also call setInterpolationMode(0).
      */
     void setStreamType(OBStreamType streamType) {
         setConfigValue("StreamType", static_cast<double>(streamType));
@@ -557,18 +536,6 @@ public:
      */
     void clearNewCameraMatrix() {
         setConfigValue("NewCameraWidth", 0.0);
-    }
-
-    /**
-     * @brief Set the pixel interpolation mode.
-     * @param mode 0 = nearest-neighbor (required for depth), 1 = bilinear (default).
-     */
-    void setInterpolationMode(int mode) {
-        setConfigValue("InterpolationMode", static_cast<double>(mode));
-    }
-
-    int getInterpolationMode() const {
-        return static_cast<int>(getConfigValue("InterpolationMode"));
     }
 };
 
