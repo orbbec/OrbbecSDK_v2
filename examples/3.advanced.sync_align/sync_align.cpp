@@ -52,6 +52,14 @@ int main(void) try {
     // Start the pipeline with config
     pipe->start(config);
 
+    std::shared_ptr<ob::UnDistortionFilter> colorUndistort;
+    {
+        auto devInfo = pipe->getDevice()->getDeviceInfo();
+        if(ob_smpl::isDabaiASeriesDevice(devInfo->getVid(), devInfo->getPid())) {
+            colorUndistort = std::make_shared<ob::UnDistortionFilter>(OB_STREAM_COLOR);
+        }
+    }
+
     // Create a window for rendering and set the resolution of the window
     ob_smpl::CVWindow win("Sync&Align", 1280, 720, ob_smpl::ARRANGE_OVERLAY);
     // set key prompt
@@ -74,6 +82,14 @@ int main(void) try {
         auto frameSet = pipe->waitForFrameset(100);
         if(frameSet == nullptr) {
             continue;
+        }
+
+        // Undistort the color frame before alignment
+        if(colorUndistort && frameSet->getColorFrame()) {
+            auto undistorted = colorUndistort->process(frameSet);
+            if(undistorted) {
+                frameSet = undistorted->as<ob::FrameSet>();
+            }
         }
 
         // Get filter according to the align mode
@@ -99,4 +115,3 @@ catch(ob::Error &e) {
     ob_smpl::waitForKeyPressed();
     exit(EXIT_FAILURE);
 }
-

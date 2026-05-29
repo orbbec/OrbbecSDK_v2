@@ -6,10 +6,12 @@
 #include "utils.hpp"
 #include "utils_opencv.hpp"
 
+#include <atomic>
 #include <mutex>
 #include <thread>
 
-bool enable_align_mode = 1;
+bool              enable_align_mode = 1;
+std::atomic<bool> hw_d2c_undist_configured{ false };
 
 // key press event processing
 void handleKeyPress(ob_smpl::CVWindow &win, std::shared_ptr<ob::Pipeline> pipe, int key, std::shared_ptr<ob::Config> config) {
@@ -27,9 +29,11 @@ void handleKeyPress(ob_smpl::CVWindow &win, std::shared_ptr<ob::Pipeline> pipe, 
             win.addLog("Haeware Depth to Color Align: Disabled");
         }
 
-        // restart the pipeline with the new config
+        // restart the pipeline with the new config; the next frame's depth
+        // intrinsic must be re-applied to the color undistortion filter.
         pipe->stop();
         pipe->start(config);
+        hw_d2c_undist_configured.store(false, std::memory_order_release);
     }
 }
 
@@ -110,6 +114,14 @@ int main(void) try {
     // Start the pipeline with config
     pipe->start(config);
 
+    std::shared_ptr<ob::UnDistortionFilter> colorUndistort;
+    {
+        auto devInfo = pipe->getDevice()->getDeviceInfo();
+        if(ob_smpl::isDabaiASeriesDevice(devInfo->getVid(), devInfo->getPid())) {
+            colorUndistort = std::make_shared<ob::UnDistortionFilter>(OB_STREAM_COLOR);
+        }
+    }
+
     // Create a window for rendering and set the resolution of the window
     ob_smpl::CVWindow win("Hardware Depth to Color Align", 1280, 720, ob_smpl::ARRANGE_OVERLAY);
     // set key prompt
@@ -123,6 +135,29 @@ int main(void) try {
         if(frameSet == nullptr) {
             continue;
         }
+
+        // Color undistortion (Dabai A series only, and only while HW D2C is on).
+        if(colorUndistort && enable_align_mode) {
+            if(!hw_d2c_undist_configured.load(std::memory_order_acquire)) {
+                auto depthFrame = frameSet->getDepthFrame();
+                if(depthFrame) {
+                    auto depthVsp = depthFrame->getStreamProfile()->as<ob::VideoStreamProfile>();
+                    // Dabai A series only - this call would break HW D2C alignment on other devices.
+                    colorUndistort->setNewCameraMatrix(depthVsp->getIntrinsic());
+                    hw_d2c_undist_configured.store(true, std::memory_order_release);
+                }
+            }
+            if(hw_d2c_undist_configured.load(std::memory_order_acquire)) {
+                auto undistorted = colorUndistort->process(frameSet);
+                if(undistorted) {
+                    auto undistortedSet = undistorted->as<ob::FrameSet>();
+                    if(undistortedSet) {
+                        frameSet = undistortedSet;
+                    }
+                }
+            }
+        }
+
         win.pushFramesToView(frameSet);
     }
 

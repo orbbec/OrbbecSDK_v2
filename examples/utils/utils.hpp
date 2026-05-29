@@ -64,6 +64,16 @@ bool isGemini305gDevice(int vid, int pid, const char *connectionType);
  */
 bool isAstraMiniDevice(int vid, int pid);
 
+/**
+ * @brief Check if the device is a Dabai A series device.
+ *
+ * @param vid The vendor ID of the device.
+ * @param pid The product ID of the device.
+ * @return true if the device is a Dabai A series device.
+ * @return false otherwise.
+ */
+bool isDabaiASeriesDevice(int vid, int pid);
+
 class StreamStateGuard {
 public:
     explicit StreamStateGuard(std::ios &s) : ios(s), flags(s.flags()), fill(s.fill()) {}

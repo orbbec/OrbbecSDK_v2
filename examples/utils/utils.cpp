@@ -55,4 +55,8 @@ bool isAstraMiniDevice(int vid, int pid) {
     return ob_smpl_is_astra_mini_device(vid, pid);
 }
 
+bool isDabaiASeriesDevice(int vid, int pid) {
+    return ob_smpl_is_dabai_a_series_device(vid, pid);
+}
+
 }  // namespace ob_smpl

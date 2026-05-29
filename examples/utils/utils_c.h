@@ -73,6 +73,16 @@ bool ob_smpl_is_gemini305g_device(int vid, int pid, const char *connectionType);
  */
 bool ob_smpl_is_astra_mini_device(int vid, int pid);
 
+/**
+ * @brief Check if the device is a Dabai A series device.
+ *
+ * @param vid The vendor ID of the device.
+ * @param pid The product ID of the device.
+ * @return true if the device is a Dabai A series device.
+ * @return false otherwise.
+ */
+bool ob_smpl_is_dabai_a_series_device(int vid, int pid);
+
 // Macro to check for error and exit program if there is one.
 #define CHECK_OB_ERROR_EXIT(error)                                               \
     if(*error) {                                                                 \
