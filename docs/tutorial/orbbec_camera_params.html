@@ -105,7 +105,7 @@
             border-bottom: 2px solid #e1e4e8;
         }
         
-        /* 冻结第一列 */
+        /* Freeze first column */
         th:first-child,
         td:first-child {
             position: sticky;
@@ -116,29 +116,29 @@
             border-right: 2px solid #e1e4e8;
         }
         
-        /* 冻结第二列 */
+        /* Freeze second column */
         th:nth-child(2),
         td:nth-child(2) {
             position: sticky;
-            left: 150px; /* 第一列的宽度 */
+            left: 150px; /* width of first column */
             z-index: 15;
             min-width: 200px;
             background-color: white;
             border-right: 1px solid #e1e4e8;
         }
         
-        /* 表头第一列的样式 */
+        /* Style for first header column */
         thead th:first-child {
             z-index: 110;
         }
         
-        /* 表头第二列的样式 */
+        /* Style for second header column */
         thead th:nth-child(2) {
             z-index: 105;
             left: 150px;
         }
         
-        /* 悬停效果 */
+        /* Hover effect */
         tbody tr:hover {
             background-color: #f6f8fa;
         }
@@ -148,7 +148,7 @@
             background-color: #e1e4e8;
         }
         
-        /* 参数分组标题行 */
+        /* Parameter group header row */
         .section-header {
             background-color: #f0f7ff !important;
             font-weight: bold;
@@ -178,7 +178,7 @@
             border-left: 4px solid #28a745;
         }
         
-        /* 多值参数样式 - 新增 */
+        /* Multi-value parameter style - new */
         .multi-value {
             line-height: 1.8 !important;
         }
@@ -189,13 +189,13 @@
             content: "";
         }
         
-        /* 确保包含换行的单元格有更好的显示 */
+        /* Ensure cells with line breaks display better */
         td br {
             display: block;
             margin-bottom: 4px;
         }
         
-        /* 滚动条样式 */
+        /* Scrollbar style */
         .table-wrapper::-webkit-scrollbar {
             width: 10px;
             height: 10px;
@@ -868,14 +868,14 @@
     </div>
 
     <script>
-        // 搜索功能
+        // Search feature
         document.getElementById('searchInput').addEventListener('input', function(e) {
             const searchTerm = e.target.value.toLowerCase();
             const rows = document.querySelectorAll('#cameraParamsTable tbody tr');
             
             rows.forEach(row => {
                 if (row.classList.contains('section-header')) {
-                    // 保持分组标题行可见
+                    // Keep group header rows visible
                     row.style.display = '';
                     return;
                 }
@@ -889,15 +889,15 @@
             });
         });
         
-        // 筛选功能
+        // Filter feature
         document.querySelectorAll('.filter-btn').forEach(button => {
             button.addEventListener('click', function() {
-                // 移除所有按钮的active类
+                // Remove active class from all buttons
                 document.querySelectorAll('.filter-btn').forEach(btn => {
                     btn.classList.remove('active');
                 });
                 
-                // 为当前按钮添加active类
+                // Add active class to current button
                 this.classList.add('active');
                 
                 const filter = this.getAttribute('data-filter');
@@ -905,7 +905,7 @@
                 
                 rows.forEach(row => {
                     if (row.classList.contains('section-header')) {
-                        // 默认显示分组标题
+                        // Show group headers by default
                         row.style.display = '';
                         return;
                     }
@@ -913,7 +913,7 @@
                     if (filter === 'all') {
                         row.style.display = '';
                     } else {
-                        // 按参数类型筛选
+                        // Filter by parameter type
                         if (row.classList.contains(filter + '-param')) {
                             row.style.display = '';
                         } else {
@@ -922,7 +922,7 @@
                     }
                 });
                 
-                // 确保分组标题在筛选后仍然显示
+                // Ensure group headers stay visible after filtering
                 const sectionHeaders = document.querySelectorAll('.section-header');
                 sectionHeaders.forEach(header => {
                     const nextRows = [];
@@ -934,7 +934,7 @@
                         nextRow = nextRow.nextElementSibling;
                     }
                     
-                    // 如果分组下没有可见行，隐藏分组标题
+                    // Hide group header if no rows in the group are visible
                     if (nextRows.length === 0) {
                         header.style.display = 'none';
                     } else {
@@ -944,7 +944,7 @@
             });
         });
         
-        // 高亮搜索词并保持换行
+        // Highlight search terms and preserve line breaks
         function highlightText(element, searchTerm) {
             if (!searchTerm) return;
             
@@ -953,7 +953,7 @@
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = originalHTML;
             
-            // 递归高亮文本节点
+            // Recursively highlight text nodes
             function highlightNodes(node) {
                 if (node.nodeType === Node.TEXT_NODE) {
                     const text = node.textContent;
@@ -963,7 +963,7 @@
                         node.parentNode.replaceChild(span, node);
                     }
                 } else if (node.nodeType === Node.ELEMENT_NODE && node.tagName !== 'MARK') {
-                    // 处理子节点
+                    // Process child nodes
                     const childNodes = Array.from(node.childNodes);
                     childNodes.forEach(child => highlightNodes(child));
                 }
@@ -972,34 +972,34 @@
             highlightNodes(tempDiv);
             element.innerHTML = tempDiv.innerHTML;
             
-            // 恢复换行符
+            // Restore line breaks
             preserveLineBreaks(element);
         }
         
-        // 保持换行符
+        // Preserve line breaks
         function preserveLineBreaks(element) {
-            // 确保多值单元格的换行符正确显示
+            // Ensure line breaks in multi-value cells display correctly
             if (element.classList.contains('multi-value')) {
                 element.innerHTML = element.innerHTML.replace(/<br>/g, '<br>');
             }
         }
         
-        // 监听搜索输入以高亮文本
+        // Listen for search input to highlight text
         document.getElementById('searchInput').addEventListener('input', function(e) {
             const searchTerm = e.target.value.trim();
             if (searchTerm.length > 2) {
                 document.querySelectorAll('#cameraParamsTable td').forEach(td => {
                     const originalText = td.textContent;
-                    // 保存原始的HTML结构
+                    // Save the original HTML structure
                     const originalHTML = td.innerHTML;
                     td.innerHTML = originalHTML;
                     highlightText(td, searchTerm);
                 });
             } else if (searchTerm.length === 0) {
-                // 清空搜索框时恢复原始状态
+                // Restore original state when search box is cleared
                 document.querySelectorAll('#cameraParamsTable td').forEach(td => {
                     if (td.classList.contains('multi-value')) {
-                        // 恢复多值单元格的原始HTML
+                        // Restore original HTML of multi-value cells
                         const content = td.textContent;
                         td.innerHTML = content.replace(/\n/g, '<br>');
                     }
