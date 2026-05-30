@@ -304,24 +304,20 @@ void ObRTPSink::mjpgUpdateMetadata(std::shared_ptr<Frame> frame) {
 
     int jpegHeadSize = utils::getJpgHeadLength(orgFrameData, orgFrameSize);
     if(jpegHeadSize == -1 || jpegHeadSize >= orgFrameSize) {
-        LOG_WARN("MJPG metadata update skipped: invalid JPEG header size={}, frameSize={}", jpegHeadSize, orgFrameSize);
         return;
     }
 
     if(orgFrameData[jpegHeadSize] != 0xFF || orgFrameData[jpegHeadSize + 1] != 0xD8) {
-        LOG_WARN("MJPG metadata update skipped: invalid SOI marker at offset {}", jpegHeadSize);
         return;
     }
 
     int comSequenceIndex = utils::findJpgCOMSequence(frame->getData(), orgFrameSize, jpegHeadSize);
     if(comSequenceIndex == -1) {
-        LOG_DEBUG("MJPG metadata update skipped: COM marker not found in frame");
         return;
     }
 
     const MJPGMetadataHeader *header = reinterpret_cast<const MJPGMetadataHeader *>(const_cast<uint8_t *>(frame->getData() + comSequenceIndex + 4));
     if(!header->validateMagic()) {
-        LOG_DEBUG("MJPG metadata update skipped: COM marker found but magic validation failed");
         return;
     }
 
