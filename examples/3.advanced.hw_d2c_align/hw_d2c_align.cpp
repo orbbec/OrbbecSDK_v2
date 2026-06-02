@@ -22,11 +22,11 @@ void handleKeyPress(ob_smpl::CVWindow &win, std::shared_ptr<ob::Pipeline> pipe, 
         // update the align mode in the config
         if(enable_align_mode) {
             config->setAlignMode(ALIGN_D2C_HW_MODE);
-            win.addLog("Haeware Depth to Color Align: Enabled");
+            win.addLog("Hardware Depth to Color Align: Enabled");
         }
         else {
             config->setAlignMode(ALIGN_DISABLE);
-            win.addLog("Haeware Depth to Color Align: Disabled");
+            win.addLog("Hardware Depth to Color Align: Disabled");
         }
 
         // restart the pipeline with the new config; the next frame's depth

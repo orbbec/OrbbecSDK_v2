@@ -602,9 +602,9 @@ auto deviceInfo = device->getDeviceInfo();
 ```cpp
 typedef enum
 {
-    //Close haedware D2C
+    //Close hardware D2C
 	IMAGE_REGISTRATION_OFF				= 0,
-    //Open haedware D2C
+    //Open hardware D2C
 	IMAGE_REGISTRATION_DEPTH_TO_COLOR	= 1,
 } ImageRegistrationMode;
 // API
