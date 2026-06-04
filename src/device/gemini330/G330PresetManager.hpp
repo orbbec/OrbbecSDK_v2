@@ -13,26 +13,30 @@
 #include <string>
 #include <vector>
 #include <atomic>
+#include <mutex>
 
 namespace Json {
 class Value;  // forward declaration
 }  // namespace Json
 
 namespace libobsensor {
+class ApplicationConfig;
 
 class G330PresetManager : public IPresetManager, public DeviceComponentBase {
 public:
     G330PresetManager(IDevice *owner);
     ~G330PresetManager() override = default;
 
-    void                            loadPreset(const std::string &presetName) override;
-    const std::string              &getCurrentPresetName() const override;
-    const std::vector<std::string> &getAvailablePresetList() const override;
-    void                            loadPresetFromJsonData(const std::string &presetName, const std::vector<uint8_t> &jsonData) override;
-    void                            loadPresetFromJsonFile(const std::string &filePath) override;
-    const std::vector<uint8_t>     &exportSettingsAsPresetJsonData(const std::string &presetName) override;
-    void                            exportSettingsAsPresetJsonFile(const std::string &filePath) override;
-    void                            fetchPreset() override;
+    void                               loadPreset(const std::string &presetName) override;
+    const std::string                 &getCurrentPresetName() const override;
+    const std::vector<std::string>    &getAvailablePresetList() const override;
+    void                               loadPresetFromJsonData(const std::string &presetName, const std::vector<uint8_t> &jsonData) override;
+    void                               loadPresetFromJsonFile(const std::string &filePath) override;
+    const std::vector<uint8_t>        &exportSettingsAsPresetJsonData(const std::string &presetName) override;
+    void                               exportSettingsAsPresetJsonFile(const std::string &filePath) override;
+    void                               fetchPreset() override;
+    bool                               isApplicationConfigSupported() const override;
+    std::shared_ptr<ApplicationConfig> getApplicationConfig() override;
 
 private:
     std::shared_ptr<IPresetEngine> getPresetEngine(const Json::Value &root);
@@ -51,6 +55,8 @@ private:
     std::map<std::string, Json::Value>  customPresets_;
     std::shared_ptr<G330PresetEngine>   presetEngine_;
     std::shared_ptr<G330PresetEngineV1> presetEngineV1_;
+    std::mutex                          applicationConfigMutex_;
+    std::shared_ptr<ApplicationConfig>  applicationConfig_;
 };
 
 }  // namespace libobsensor

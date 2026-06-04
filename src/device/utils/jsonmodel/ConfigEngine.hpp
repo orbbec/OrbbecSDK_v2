@@ -101,6 +101,13 @@ public:
      */
     std::string exportAll(const OrderedExportOptions &options);
 
+    /**
+     * @brief Exports the current state as an ExportValue tree (preserves declaration order).
+     * Callers can append extra nodes before serializing with jsonmodel::serialize().
+     * @return The root ExportValue
+     */
+    ExportValue exportToValue();
+
 private:
     /**
      * @brief Recursive helper for import (Child-to-Parent execution)
@@ -121,6 +128,15 @@ private:
     std::shared_ptr<Node>             rootNode_;   // The root of the node tree
     std::stack<std::shared_ptr<Node>> nodeStack_;  // Context stack for tree building
 };
+
+/**
+ * @brief Serializes an ExportValue tree to ordered JSON text.
+ * Use after appending extra root nodes to the ExportValue returned by ConfigEngine::exportToValue().
+ * @param value The root ExportValue to serialize
+ * @param options Formatting options (defaults to standard indented output)
+ * @return The resulting JSON string
+ */
+std::string serialize(const ExportValue &value, const OrderedExportOptions &options = {});
 
 }  // namespace jsonmodel
 }  // namespace libobsensor

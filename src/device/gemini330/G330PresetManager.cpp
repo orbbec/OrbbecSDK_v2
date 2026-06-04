@@ -10,7 +10,10 @@
 #include "preset/PresetDefinitions.hpp"
 #include "logger/Logger.hpp"
 #include "utils/FlagGuard.hpp"
+#include "preset/ApplicationConfig.hpp"
+#include "preset/ApplicationConfigHandler.hpp"
 
+#include <fstream>
 #include <json/json.h>
 
 namespace libobsensor {
@@ -139,6 +142,7 @@ void G330PresetManager::loadPresetFromJsonData(const std::string &presetName, co
     }
     FlagGuard guard(isExternalDataLoading_);
     loadPresetFromJsonValue(presetName, root);
+    ApplicationConfigHandler::applyFromJsonRoot(*this, getOwner(), root);
 }
 
 void G330PresetManager::loadPresetFromJsonFile(const std::string &filePath) {
@@ -151,6 +155,7 @@ void G330PresetManager::loadPresetFromJsonFile(const std::string &filePath) {
     }
     FlagGuard guard(isExternalDataLoading_);
     loadPresetFromJsonValue(filePath, root);
+    ApplicationConfigHandler::applyFromJsonRoot(*this, getOwner(), root);
 }
 
 std::shared_ptr<IPresetEngine> G330PresetManager::getPresetEngine(const Json::Value &root) {
@@ -194,23 +199,19 @@ Json::Value G330PresetManager::exportSettingsAsPresetJsonValue(const std::string
 
 const std::vector<uint8_t> &G330PresetManager::exportSettingsAsPresetJsonData(const std::string &presetName) {
     storeCurrentParamsAsCustomPreset(presetName);
-    jsonmodel::OrderedExportOptions options;
-    auto                            jsonText = getCurrentPresetEngine()->exportJson(options);
-    std::ostringstream              oss;
-    oss << jsonText;
-    tmpJsonData_.clear();
-    auto str = oss.str();
-    std::copy(str.begin(), str.end(), std::back_inserter(tmpJsonData_));
+    auto rootValue = getCurrentPresetEngine()->exportToValue();
+    ApplicationConfigHandler::appendToExportValue(rootValue, *this);
+    auto str = jsonmodel::serialize(rootValue);
+    tmpJsonData_.assign(str.begin(), str.end());
     return tmpJsonData_;
 }
 
 void G330PresetManager::exportSettingsAsPresetJsonFile(const std::string &filePath) {
     storeCurrentParamsAsCustomPreset(filePath);
-    jsonmodel::OrderedExportOptions options;
-    auto                            jsonText = getCurrentPresetEngine()->exportJson(options);
-
+    auto rootValue = getCurrentPresetEngine()->exportToValue();
+    ApplicationConfigHandler::appendToExportValue(rootValue, *this);
     std::ofstream ofs(filePath);
-    ofs << jsonText;
+    ofs << jsonmodel::serialize(rootValue);
 }
 
 void G330PresetManager::fetchPreset() {
@@ -236,6 +237,18 @@ void G330PresetManager::fetchPreset() {
         depthWorkModeManager->switchDepthWorkMode(currentPresetName_.c_str());
     }
     TRY_EXECUTE({ storeCurrentParamsAsCustomPreset(kCustomPresetName); });
+}
+
+bool G330PresetManager::isApplicationConfigSupported() const {
+    return true;
+}
+
+std::shared_ptr<ApplicationConfig> G330PresetManager::getApplicationConfig() {
+    std::lock_guard<std::mutex> lock(applicationConfigMutex_);
+    if(!applicationConfig_) {
+        applicationConfig_ = std::make_shared<ApplicationConfig>(getOwner());
+    }
+    return applicationConfig_;
 }
 
 void G330PresetManager::loadCustomPreset(const std::string &presetName, const Json::Value &preset) {

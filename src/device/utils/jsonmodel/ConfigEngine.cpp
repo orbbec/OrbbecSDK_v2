@@ -293,9 +293,16 @@ Json::Value ConfigEngine::exportAll() {
 }
 
 std::string ConfigEngine::exportAll(const OrderedExportOptions &options) {
-    const auto         exportValue = buildExportValue(rootNode_);
+    return serialize(buildExportValue(rootNode_), options);
+}
+
+ExportValue ConfigEngine::exportToValue() {
+    return buildExportValue(rootNode_);
+}
+
+std::string serialize(const ExportValue &value, const OrderedExportOptions &options) {
     std::ostringstream oss;
-    OrderedTextExporter(oss, options).write(exportValue);
+    OrderedTextExporter(oss, options).write(value);
     if(!options.indentation.empty()) {
         oss << '\n';
     }

@@ -35,6 +35,7 @@ typedef struct ob_filter_t                        ob_filter;
 typedef struct ob_filter_list_t                   ob_filter_list;
 typedef struct ob_pipeline_t                      ob_pipeline;
 typedef struct ob_config_t                        ob_config;
+typedef struct ob_application_config_t            ob_application_config;
 typedef struct ob_depth_work_mode_list_t          ob_depth_work_mode_list;
 typedef struct ob_device_preset_list_t            ob_device_preset_list;
 typedef struct ob_filter_config_schema_list_t     ob_filter_config_schema_list;
@@ -574,6 +575,7 @@ typedef enum {
     ALIGN_DISABLE,     /**< Turn off alignment */
     ALIGN_D2C_HW_MODE, /**< Hardware D2C alignment mode */
     ALIGN_D2C_SW_MODE, /**< Software D2C alignment mode */
+    ALIGN_C2D_SW_MODE, /**< Software C2D alignment mode */
 } OBAlignMode,
     ob_align_mode;
 

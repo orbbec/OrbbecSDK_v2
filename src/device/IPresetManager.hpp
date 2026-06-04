@@ -3,9 +3,12 @@
 
 #pragma once
 
-namespace libobsensor {
+#include <memory>
 #include <string>
 #include <vector>
+
+namespace libobsensor {
+class ApplicationConfig;
 
 constexpr const char kCustomPresetName[] = "Custom";
 
@@ -21,6 +24,13 @@ public:
     virtual const std::vector<uint8_t>     &exportSettingsAsPresetJsonData(const std::string &presetName)                               = 0;
     virtual void                            exportSettingsAsPresetJsonFile(const std::string &filePath)                                 = 0;
     virtual void                            fetchPreset()                                                                               = 0;
+
+    virtual bool isApplicationConfigSupported() const {
+        return false;
+    }
+    virtual std::shared_ptr<ApplicationConfig> getApplicationConfig() {
+        return nullptr;
+    }
 };
 }  // namespace libobsensor
 

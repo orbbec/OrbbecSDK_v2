@@ -409,6 +409,13 @@ const std::map<OBStreamType, std::string> Stream_Str_Map = { { OB_STREAM_UNKNOWN
                                                              { OB_STREAM_COLOR_LEFT, "Left Color" },
                                                              { OB_STREAM_COLOR_RIGHT, "Right Color" } };
 
+const std::map<OBAlignMode, std::string> AlignMode_Str_Map = {
+    { ALIGN_DISABLE, "Disable" },
+    { ALIGN_D2C_HW_MODE, "D2C(HW)" },
+    { ALIGN_D2C_SW_MODE, "D2C(SW)" },
+    { ALIGN_C2D_SW_MODE, "C2D(SW)" },
+};
+
 const std::map<OBIMUSampleRate, std::string> ImuRate_Str_Map = {
     { OB_SAMPLE_RATE_UNKNOWN, "UNKNOWN" }, { OB_SAMPLE_RATE_1_5625_HZ, "1_5625_HZ" }, { OB_SAMPLE_RATE_3_125_HZ, "3_125_HZ" },
     { OB_SAMPLE_RATE_6_25_HZ, "6_25_HZ" }, { OB_SAMPLE_RATE_12_5_HZ, "12_5_HZ" },     { OB_SAMPLE_RATE_25_HZ, "25_HZ" },
@@ -544,6 +551,14 @@ const std::string &obSensorToStr(OBSensorType type) {
     return it->second;
 }
 
+const std::string &obAlignModeToStr(OBAlignMode type) {
+    auto it = AlignMode_Str_Map.find(type);
+    if(it == AlignMode_Str_Map.end()) {
+        THROW_INVALID_PARAM_EXCEPTION("Unregistered align mode");
+    }
+    return it->second;
+}
+
 const std::string &obImuRateToStr(OBIMUSampleRate type) {
     auto it = ImuRate_Str_Map.find(type);
     if(it == ImuRate_Str_Map.end()) {
@@ -619,6 +634,15 @@ OBSensorType strToOBSensor(const std::string str) {
         }
     }
     THROW_INVALID_PARAM_EXCEPTION("Unregistered sensor type");
+}
+
+OBAlignMode strToOBAlignMode(const std::string str) {
+    for(auto it = AlignMode_Str_Map.begin(); it != AlignMode_Str_Map.end(); ++it) {
+        if(it->second == str) {
+            return it->first;
+        }
+    }
+    THROW_INVALID_PARAM_EXCEPTION("Unregistered align mode");
 }
 
 OBIMUSampleRate strToObImuRate(const std::string str) {

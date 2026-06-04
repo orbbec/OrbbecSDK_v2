@@ -41,6 +41,13 @@ public:
      * @return The resulting JSON string
      */
     virtual std::string exportJson(const jsonmodel::OrderedExportOptions &options) = 0;
+
+    /**
+     * @brief Exports the current state as an ExportValue tree.
+     * Callers can append extra root nodes (e.g. application_config) before serializing.
+     * @return The root ExportValue containing device parameters
+     */
+    virtual jsonmodel::ExportValue exportToValue() = 0;
 };
 
 /**
@@ -85,6 +92,16 @@ public:
             THROW_WRONG_API_CALL_SEQUENCE_EXCEPTION("ConfigEngine has not been initialized");
         }
         return configEngine_.exportAll(options);
+    }
+
+    /**
+     * @brief Implementation of IPresetEngine::exportToValue
+     */
+    jsonmodel::ExportValue exportToValue() override {
+        if(!initialized_) {
+            THROW_WRONG_API_CALL_SEQUENCE_EXCEPTION("ConfigEngine has not been initialized");
+        }
+        return configEngine_.exportToValue();
     }
 
 protected:

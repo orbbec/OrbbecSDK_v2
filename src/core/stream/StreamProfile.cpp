@@ -160,7 +160,8 @@ uint32_t VideoStreamProfile::getMaxFrameDataSize() const {
 }
 
 std::shared_ptr<StreamProfile> VideoStreamProfile::clone() const {
-    auto sp            = std::make_shared<VideoStreamProfile>(owner_.lock(), type_, format_, width_, height_, fps_);
+    auto sp = std::make_shared<VideoStreamProfile>(owner_.lock(), type_, format_, width_, height_, fps_);
+    sp->setDecimationConfig(decimationConfig_);
     auto intrinsicsMgr = StreamIntrinsicsManager::getInstance();
     if(intrinsicsMgr->containsVideoStreamIntrinsics(shared_from_this())) {
         auto intrinsic = intrinsicsMgr->getVideoStreamIntrinsics(shared_from_this());
@@ -189,7 +190,8 @@ void DisparityBasedStreamProfile::bindDisparityParam(const OBDisparityParam &par
 }
 
 std::shared_ptr<StreamProfile> DisparityBasedStreamProfile::clone() const {
-    auto sp            = std::make_shared<DisparityBasedStreamProfile>(owner_.lock(), type_, format_, width_, height_, fps_);
+    auto sp = std::make_shared<DisparityBasedStreamProfile>(owner_.lock(), type_, format_, width_, height_, fps_);
+    sp->setDecimationConfig(decimationConfig_);
     auto intrinsicsMgr = StreamIntrinsicsManager::getInstance();
     if(intrinsicsMgr->containsVideoStreamIntrinsics(shared_from_this())) {
         auto intrinsic = intrinsicsMgr->getVideoStreamIntrinsics(shared_from_this());
@@ -209,8 +211,11 @@ std::shared_ptr<StreamProfile> DisparityBasedStreamProfile::clone() const {
 
 AccelStreamProfile::AccelStreamProfile(std::shared_ptr<LazySensor> owner, OBAccelFullScaleRange fullScaleRange, OBAccelSampleRate sampleRate)
     : StreamProfile{ owner, OB_STREAM_ACCEL, OB_FORMAT_ACCEL }, fullScaleRange_(fullScaleRange), sampleRate_(sampleRate) {}
+
 bool VideoStreamProfile::operator==(const VideoStreamProfile &other) const {
-    return (type_ == other.type_) && (format_ == other.format_) && (width_ == other.width_) && (height_ == other.height_) && (fps_ == other.fps_);
+    return (type_ == other.type_) && (format_ == other.format_) && (width_ == other.width_) && (height_ == other.height_) && (fps_ == other.fps_)
+           && (decimationConfig_.originWidth == other.decimationConfig_.originWidth) && (decimationConfig_.originHeight == other.decimationConfig_.originHeight)
+           && (decimationConfig_.factor == other.decimationConfig_.factor);
 }
 
 std::ostream &VideoStreamProfile::operator<<(std::ostream &os) const {
