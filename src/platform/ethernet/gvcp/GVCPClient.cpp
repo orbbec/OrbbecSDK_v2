@@ -75,9 +75,19 @@ std::vector<GVCPDeviceInfo> GVCPClient::queryNetDeviceList() {
 
     checkAndUpdateSockets();
     std::vector<std::thread> threads;
-    for(int i = 0; i < sockCount_; ++i) {
-        auto func = std::bind(&GVCPClient::sendGVCPDiscovery, this, socketInfos_[i]);
-        threads.emplace_back(func, socketInfos_[i]);
+    try {
+        for(int i = 0; i < sockCount_; ++i) {
+            threads.emplace_back(&GVCPClient::sendGVCPDiscovery, this, socketInfos_[i]);
+        }
+    }
+    catch(const std::exception &e) {
+        LOG_ERROR("GVCPClient: failed to create discovery thread: {}", e.what());
+        for(auto &t: threads) {
+            if(t.joinable()) {
+                t.join();
+            }
+        }
+        return tmpList;
     }
 
     for(auto &thread: threads) {
@@ -414,14 +424,20 @@ SOCKET GVCPClient::openClientSocket(SOCKADDR_IN addr) {
     int bBroadcast = 1;
 #if (defined(WIN32) || defined(_WIN32) || defined(WINCE))
     int err = setsockopt(sock, SOL_SOCKET, SO_BROADCAST, (char *)&bBroadcast, sizeof(bBroadcast));
+    if(err == SOCKET_ERROR) {
+        closesocket(sock);
+        THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "Failed to set socket broadcast option! err_code=" << GET_LAST_ERROR());
+    }
 #else
     // int     err = setsockopt(sock, SOL_SOCKET, SO_BROADCAST | SO_REUSEADDR, (char *)&bBroadcast, sizeof(bBroadcast));
     int err = setsockopt(sock, SOL_SOCKET, SO_BROADCAST, (char *)&bBroadcast, sizeof(bBroadcast));
     if(err == SOCKET_ERROR) {
+        closesocket(sock);
         THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "Failed to set socket boardcast option! err_code=" << GET_LAST_ERROR());
     }
     err = setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *)&bBroadcast, sizeof(bBroadcast));
     if(err == SOCKET_ERROR) {
+        closesocket(sock);
         THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "Failed to set socket reuseaddr option! err_code=" << GET_LAST_ERROR());
     }
 #endif
@@ -436,6 +452,7 @@ SOCKET GVCPClient::openClientSocket(SOCKADDR_IN addr) {
 #endif
     err = setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char *)&dwTimeout, sizeof(dwTimeout));
     if(err == SOCKET_ERROR) {
+        closesocket(sock);
         THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "Failed to set socket timeout option! err_code=" << GET_LAST_ERROR());
     }
 
@@ -446,6 +463,7 @@ SOCKET GVCPClient::openClientSocket(SOCKADDR_IN addr) {
     LOG_INTVL(LOG_INTVL_OBJECT_TAG + "GVCP bind", MAX_LOG_INTERVAL, spdlog::level::debug, "bind {}:{}", ip, ntohs(addr.sin_port));
     err = bind(sock, (SOCKADDR *)&addr, sizeof(SOCKADDR));
     if(err == SOCKET_ERROR) {
+        closesocket(sock);
         return 0;
     }
 
