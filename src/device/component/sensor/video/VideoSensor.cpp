@@ -278,6 +278,12 @@ void VideoSensor::stop() {
 
     updateStreamState(STREAM_STATE_STOPPED);
 
+    // Stop backend thread first to prevent it from pushing frames into a filter chain
+    // that is being concurrently reset, which can cause use-after-free in filter processing.
+    if(frameQueue_) {
+        frameQueue_->stop();
+    }
+
     if(currentFormatFilterConfig_ && currentFormatFilterConfig_->converter) {
         currentFormatFilterConfig_->converter->reset();
     }

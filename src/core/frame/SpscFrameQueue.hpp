@@ -243,7 +243,11 @@ public:
                 }
 
                 if(frame) {
-                    callback_(frame);
+                    try {
+                        callback_(frame);
+                    }
+                    catch(...) {
+                    }
                 }
             }
             state_.stopped.store(true, std::memory_order_release);

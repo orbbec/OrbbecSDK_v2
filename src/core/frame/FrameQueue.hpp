@@ -99,7 +99,11 @@ public:
                 }
 
                 if(frame) {
-                    callback_(frame);
+                    try {
+                        callback_(frame);
+                    }
+                    catch(...) {
+                    }
                 }
             }
             stopped_ = true;
