@@ -4,6 +4,9 @@
 #pragma once
 #include "IFilter.hpp"
 #include <map>
+#include <utility>
+#include <vector>
+#include "libobsensor/h/ObTypes.h"
 
 namespace libobsensor {
 
@@ -26,6 +29,7 @@ private:
 protected:
     std::map<uint64_t, std::shared_ptr<const Frame>> frames_;
     std::shared_ptr<Frame>                           depth_merged_frame_;
+    std::pair<OBFormat, std::vector<uint8_t>>        expLut_;
 };
 
 }  // namespace libobsensor

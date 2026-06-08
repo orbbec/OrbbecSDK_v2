@@ -11,18 +11,7 @@
 
 namespace libobsensor {
 
-// avoids returning too old merged frame - frame counter jumps forward
-static std::pair<OBFormat, std::vector<uint8_t>> EXP_LUT_;
-
-template <typename T> void generateConfidenceMap(const T *ir, uint8_t *map, int width, int height) {
-    const T *p_ir  = ir;
-    uint8_t *p_map = map;
-    for(int i = 0; i < height; i++) {
-        for(int j = 0; j < width; j++) {
-            *p_map++ = EXP_LUT_[*p_ir++];
-        }
-    }
-}
+#define FRAME_TIMESTAMP_TOLERANCE_USEC 1000  // 1ms
 
 template <typename T> void triangleWeights(std::vector<uint8_t> &w) {
     int length = 1 << (sizeof(T) * 8);
@@ -35,12 +24,13 @@ template <typename T> void triangleWeights(std::vector<uint8_t> &w) {
     }
 }
 
-template <typename T> void mergeFramesUsingIr(uint16_t *new_data, uint16_t *d0, uint16_t *d1, const T *ir0, const T *ir1, int width, int height) {
+template <typename T>
+void mergeFramesUsingIr(uint16_t *new_data, uint16_t *d0, uint16_t *d1, const T *ir0, const T *ir1, int width, int height, const std::vector<uint8_t> &lut) {
     int pix_num = width * height;
 
     for(int i = 0; i < pix_num; i++) {
-        uint8_t c0 = EXP_LUT_.second[ir0[i]];
-        uint8_t c1 = EXP_LUT_.second[ir1[i]];
+        uint8_t c0 = lut[ir0[i]];
+        uint8_t c1 = lut[ir1[i]];
         // new_data[i] = c0 > c1 ? d0[i] : d1[i];
         uint8_t c = c0, idx = 0;
         if(c1 > c0) {
@@ -102,27 +92,34 @@ bool checkIRAvailability(std::shared_ptr<const DepthFrame> first_depth, std::sha
     }
 
     try {
-        auto depth_info = first_depth->getMetadataValue(OB_FRAME_METADATA_TYPE_FRAME_NUMBER);
-        auto ir_info    = first_ir->getMetadataValue(OB_FRAME_METADATA_TYPE_FRAME_NUMBER);
-        if(depth_info != ir_info) {
+        auto checkFrameNumberMatch = [](std::shared_ptr<const DepthFrame> depth, std::shared_ptr<const IRFrame> ir) {
+            auto depth_info = depth->getMetadataValue(OB_FRAME_METADATA_TYPE_FRAME_NUMBER);
+            auto ir_info    = ir->getMetadataValue(OB_FRAME_METADATA_TYPE_FRAME_NUMBER);
+            if(depth_info == ir_info) {
+                return true;
+            }
+            auto depth_ts = depth->getTimeStampUsec();
+            auto ir_ts    = ir->getTimeStampUsec();
+            auto ts_diff  = depth_ts > ir_ts ? (depth_ts - ir_ts) : (ir_ts - depth_ts);
+            if(ts_diff > FRAME_TIMESTAMP_TOLERANCE_USEC) {
+                return false;
+            }
+            return true;
+        };
+
+        if(!checkFrameNumberMatch(first_depth, first_ir) || !checkFrameNumberMatch(second_depth, second_ir)) {
             return false;
         }
 
-        depth_info = second_depth->getMetadataValue(OB_FRAME_METADATA_TYPE_FRAME_NUMBER);
-        ir_info    = second_ir->getMetadataValue(OB_FRAME_METADATA_TYPE_FRAME_NUMBER);
-        if(depth_info != ir_info) {
-            return false;
-        }
+        auto checkMetadataMatch = [](std::shared_ptr<const DepthFrame> depth, std::shared_ptr<const IRFrame> ir, OBFrameMetadataType type) {
+            if(depth->getMetadataValue(type) != ir->getMetadataValue(type)) {
+                return false;
+            }
+            return true;
+        };
 
-        depth_info = first_depth->getMetadataValue(OB_FRAME_METADATA_TYPE_HDR_SEQUENCE_INDEX);
-        ir_info    = first_ir->getMetadataValue(OB_FRAME_METADATA_TYPE_HDR_SEQUENCE_INDEX);
-        if(depth_info != ir_info) {
-            return false;
-        }
-
-        depth_info = second_depth->getMetadataValue(OB_FRAME_METADATA_TYPE_HDR_SEQUENCE_INDEX);
-        ir_info    = second_ir->getMetadataValue(OB_FRAME_METADATA_TYPE_HDR_SEQUENCE_INDEX);
-        if(depth_info != ir_info) {
+        if(!checkMetadataMatch(first_depth, first_ir, OB_FRAME_METADATA_TYPE_HDR_SEQUENCE_INDEX)
+           || !checkMetadataMatch(second_depth, second_ir, OB_FRAME_METADATA_TYPE_HDR_SEQUENCE_INDEX)) {
             return false;
         }
     }
@@ -294,24 +291,24 @@ std::shared_ptr<Frame> HDRMerge::merge(std::shared_ptr<const Frame> first_fs, st
         memset(d, 0, newFrame->getDataSize());
         if(checkIRAvailability(first_depth, first_ir, second_depth, second_ir)) {
             OBFormat ir_format = first_ir->getFormat();
-            if((EXP_LUT_.first != ir_format) || (EXP_LUT_.second.empty())) {
-                EXP_LUT_.first = ir_format;
+            if((expLut_.first != ir_format) || (expLut_.second.empty())) {
+                expLut_.first = ir_format;
                 if(ir_format == OB_FORMAT_Y8)
-                    triangleWeights<uint8_t>(EXP_LUT_.second);
+                    triangleWeights<uint8_t>(expLut_.second);
                 else
-                    triangleWeights<uint16_t>(EXP_LUT_.second);
+                    triangleWeights<uint16_t>(expLut_.second);
             }
             if(OB_FORMAT_Y8 == ir_format) {
                 if(first_depth->getMetadataValue(OB_FRAME_METADATA_TYPE_EXPOSURE) == first_ir->getMetadataValue(OB_FRAME_METADATA_TYPE_EXPOSURE))
-                    mergeFramesUsingIr<uint8_t>(d, d0, d1, first_ir->getData(), second_ir->getData(), width, height);
+                    mergeFramesUsingIr<uint8_t>(d, d0, d1, first_ir->getData(), second_ir->getData(), width, height, expLut_.second);
                 else
-                    mergeFramesUsingIr<uint8_t>(d, d0, d1, second_ir->getData(), first_ir->getData(), width, height);
+                    mergeFramesUsingIr<uint8_t>(d, d0, d1, second_ir->getData(), first_ir->getData(), width, height, expLut_.second);
             }
             else {
                 if(first_depth->getMetadataValue(OB_FRAME_METADATA_TYPE_EXPOSURE) == first_ir->getMetadataValue(OB_FRAME_METADATA_TYPE_EXPOSURE))
-                    mergeFramesUsingIr<uint16_t>(d, d0, d1, (uint16_t *)first_ir->getData(), (uint16_t *)second_ir->getData(), width, height);
+                    mergeFramesUsingIr<uint16_t>(d, d0, d1, (uint16_t *)first_ir->getData(), (uint16_t *)second_ir->getData(), width, height, expLut_.second);
                 else
-                    mergeFramesUsingIr<uint16_t>(d, d0, d1, (uint16_t *)second_ir->getData(), (uint16_t *)first_ir->getData(), width, height);
+                    mergeFramesUsingIr<uint16_t>(d, d0, d1, (uint16_t *)second_ir->getData(), (uint16_t *)first_ir->getData(), width, height, expLut_.second);
             }
         }
         else {
