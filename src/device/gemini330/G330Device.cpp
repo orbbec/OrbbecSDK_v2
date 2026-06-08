@@ -189,6 +189,13 @@ void G330Device::init() {
         propertyServer->registerProperty(OB_PROP_COLOR_ANTI_FLICKER_BOOL, "rw", "rw", vendorPropertyAccessor.get());
     }
 
+    if(fwVersion >= 10746) {
+        auto propertyServer         = getPropertyServer();
+        auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        propertyServer->registerProperty(OB_PROP_CURRENT_DISP_SEARCH_RANGE_MODE_INT, "r", "r", vendorPropertyAccessor.get());
+        propertyServer->registerProperty(OB_PROP_CURRENT_DISP_SEARCH_OFFSET_INT, "r", "r", vendorPropertyAccessor.get());
+    }
+
     if(fwVersion >= 10802) {
         auto propertyServer         = getPropertyServer();
         auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
@@ -1779,6 +1786,11 @@ void G330NetDevice::init() {
 
     if(fwVersion >= 10723) {
         propertyServer->registerProperty(OB_PROP_DHCP_ASSIGN_IP_TIMEOUT_INT, "rw", "rw", vendorPropertyAccessor.get());
+    }
+
+    if(fwVersion >= 10746) {
+        propertyServer->registerProperty(OB_PROP_CURRENT_DISP_SEARCH_RANGE_MODE_INT, "r", "r", vendorPropertyAccessor.get());
+        propertyServer->registerProperty(OB_PROP_CURRENT_DISP_SEARCH_OFFSET_INT, "r", "r", vendorPropertyAccessor.get());
     }
 
     // Cache depth unit and hwD2D to avoid per-frame device queries in getDepthMaxValidValue.

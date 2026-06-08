@@ -649,6 +649,20 @@ typedef enum {
     OB_PROP_USB_SYNC_VOLTAGE_LEVEL_INT = 270,
 
     /**
+     * @brief Get the current disparity search range mode value
+     *
+     * @attention read only
+     */
+    OB_PROP_CURRENT_DISP_SEARCH_RANGE_MODE_INT = 271,
+
+    /**
+     * @brief Get the current disparity search offset value
+     *
+     * @attention read only
+     */
+    OB_PROP_CURRENT_DISP_SEARCH_OFFSET_INT = 272,
+
+    /**
      * @brief Enable FPS boost in trigger mode
      */
     OB_PROP_FPS_BOOST_BOOL = 275,
