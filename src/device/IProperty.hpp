@@ -200,9 +200,9 @@ public:  // template functions to simplify the usage of IPropertyServer
     template <typename T>
     T getStructureDataT(uint32_t propertyId, PropertyAccessType accessType = PROP_ACCESS_INTERNAL, utils::TransferTiming *timing = nullptr) {
         std::vector<uint8_t> vec = getStructureData(propertyId, accessType, timing);
-        T                    data;
+        T                    data{};
         if(vec.size() != sizeof(T) && vec.size() + 1 != sizeof(T) && vec.size() - 1 != sizeof(T)) {
-            LOG_WARN("Firmware data size is not match with property type");
+            LOG_WARN("Firmware data size mismatch for property type. Expected: {}, Actual: {}", sizeof(T), vec.size());
         }
         std::memcpy(&data, vec.data(), std::min(vec.size(), sizeof(T)));
         return data;
@@ -210,9 +210,9 @@ public:  // template functions to simplify the usage of IPropertyServer
 
     template <typename T, uint32_t CMD_VER> T getStructureDataProtoV1_1_T(uint32_t propertyId, PropertyAccessType accessType = PROP_ACCESS_INTERNAL) {
         std::vector<uint8_t> vec = getStructureDataProtoV1_1(propertyId, CMD_VER, accessType);
-        T                    data;
+        T                    data{};
         if(vec.size() != sizeof(T) && vec.size() + 1 != sizeof(T) && vec.size() - 1 != sizeof(T)) {
-            LOG_WARN("Firmware data size is not match with property type");
+            LOG_WARN("Firmware data size mismatch for property type. Expected: {}, Actual: {}", sizeof(T), vec.size());
         }
         std::memcpy(&data, vec.data(), std::min(vec.size(), sizeof(T)));
         return data;
