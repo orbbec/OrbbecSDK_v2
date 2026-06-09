@@ -11,11 +11,10 @@ public:
     explicit FemtoMegaTempPropertyAccessor(IDevice *owner);
     virtual ~FemtoMegaTempPropertyAccessor() noexcept override = default;
 
-    virtual void                        setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) override;
-    virtual const std::vector<uint8_t> &getStructureData(uint32_t propertyId) override;
+    virtual void                 setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) override;
+    virtual std::vector<uint8_t> getStructureData(uint32_t propertyId) override;
 
 private:
-    IDevice             *owner_;
-    std::vector<uint8_t> tempData_;
+    IDevice *owner_;
 };
 }  // namespace libobsensor

@@ -135,7 +135,7 @@ void G2Disp2DepthPropertyAccessor::setStructureData(uint32_t propertyId, const s
     THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "unsupported property id:" << propertyId);
 }
 
-const std::vector<uint8_t> &G2Disp2DepthPropertyAccessor::getStructureData(uint32_t propertyId) {
+std::vector<uint8_t> G2Disp2DepthPropertyAccessor::getStructureData(uint32_t propertyId) {
     if(propertyId == OB_STRUCT_DEPTH_PRECISION_SUPPORT_LIST) {
         if(hwDisparityToDepthEnabled_) {
 
@@ -428,7 +428,7 @@ void G435LeDisp2DepthPropertyAccessor::setPropertyValue(uint32_t propertyId, con
     }
 }
 
-const std::vector<uint8_t> &G435LeDisp2DepthPropertyAccessor::getStructureData(uint32_t propertyId) {
+std::vector<uint8_t> G435LeDisp2DepthPropertyAccessor::getStructureData(uint32_t propertyId) {
     if(propertyId == OB_STRUCT_DEPTH_PRECISION_SUPPORT_LIST) {
         if(hwDisparityToDepthEnabled_) {
             auto owner       = getOwner();

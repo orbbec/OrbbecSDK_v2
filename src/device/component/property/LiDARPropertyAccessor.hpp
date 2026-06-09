@@ -23,8 +23,8 @@ public:
     void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
     void getPropertyRange(uint32_t propertyId, OBPropertyRange *range) override;
 
-    void                        setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) override;
-    const std::vector<uint8_t> &getStructureData(uint32_t propertyId) override;
+    void                 setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) override;
+    std::vector<uint8_t> getStructureData(uint32_t propertyId) override;
 
 private:
     uint32_t getLiDARPid();
@@ -33,12 +33,11 @@ private:
     std::pair<uint16_t, OBPropertyType> OBPropertyToOpCode(uint32_t propertyId, bool set);
 
 private:
-    IDevice *                    owner_;
+    IDevice                     *owner_;
     std::shared_ptr<ISourcePort> backend_;
     std::mutex                   mutex_;
     std::vector<uint8_t>         recvData_;
     std::vector<uint8_t>         sendData_;
-    std::vector<uint8_t>         outputData_;
 };
 
 }  // namespace libobsensor

@@ -336,7 +336,7 @@ void LiDARPropertyAccessor::setStructureData(uint32_t propertyId, const std::vec
     lidarprotocol::checkStatus(res);
 }
 
-const std::vector<uint8_t> &LiDARPropertyAccessor::getStructureData(uint32_t propertyId) {
+std::vector<uint8_t> LiDARPropertyAccessor::getStructureData(uint32_t propertyId) {
     std::lock_guard<std::mutex> lock(mutex_);
     clearBuffers();
     auto op      = OBPropertyToOpCode(propertyId, false);
@@ -355,9 +355,9 @@ const std::vector<uint8_t> &LiDARPropertyAccessor::getStructureData(uint32_t pro
         res.msg           = "get structure data return data size invalid";
         lidarprotocol::checkStatus(res);
     }
-    outputData_.resize(structureDataSize);
-    memcpy(outputData_.data(), resp->data, structureDataSize);
-    return outputData_;
+    std::vector<uint8_t> outputData(structureDataSize);
+    memcpy(outputData.data(), resp->data, structureDataSize);
+    return outputData;
 }
 
 std::pair<uint16_t, OBPropertyType> LiDARPropertyAccessor::OBPropertyToOpCode(uint32_t propertyId, bool set) {

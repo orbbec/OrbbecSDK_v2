@@ -30,7 +30,7 @@ public:
 
     void registerProperty(uint32_t propertyId, OBPermissionType userPerms, OBPermissionType intPerms, std::shared_ptr<IPropertyAccessor> accessor) override;
     void registerProperty(uint32_t propertyId, const std::string &userPermsStr, const std::string &intPermsStr,
-                                  std::shared_ptr<IPropertyAccessor> accessor) override;
+                          std::shared_ptr<IPropertyAccessor> accessor) override;
     void unregisterAllProperties() override;
     void unregisterProperty(uint32_t propertyId) override;
     void aliasProperty(uint32_t aliasId, uint32_t propertyId) override;
@@ -43,18 +43,18 @@ public:
     void getPropertyValue(uint32_t propertyId, OBPropertyValue *value, PropertyAccessType accessType) override;
     void getPropertyRange(uint32_t propertyId, OBPropertyRange *range, PropertyAccessType accessType) override;
 
-    void                        setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data, PropertyAccessType accessType) override;
-    const std::vector<uint8_t> &getStructureData(uint32_t propertyId, PropertyAccessType accessType) override {
+    void                 setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data, PropertyAccessType accessType) override;
+    std::vector<uint8_t> getStructureData(uint32_t propertyId, PropertyAccessType accessType) override {
         return getStructureData(propertyId, accessType, nullptr);
     }
-    const std::vector<uint8_t> &getStructureData(uint32_t propertyId, PropertyAccessType accessType, utils::TransferTiming *timing) override;
+    std::vector<uint8_t> getStructureData(uint32_t propertyId, PropertyAccessType accessType, utils::TransferTiming *timing) override;
 
     void getRawData(uint32_t propertyId, GetDataCallback callback, PropertyAccessType accessType) override;
 
-    uint16_t                    getCmdVersionProtoV1_1(uint32_t propertyId, PropertyAccessType accessType) override;
-    const std::vector<uint8_t> &getStructureDataProtoV1_1(uint32_t propertyId, uint16_t cmdVersion, PropertyAccessType accessType) override;
+    uint16_t             getCmdVersionProtoV1_1(uint32_t propertyId, PropertyAccessType accessType) override;
+    std::vector<uint8_t> getStructureDataProtoV1_1(uint32_t propertyId, uint16_t cmdVersion, PropertyAccessType accessType) override;
     void setStructureDataProtoV1_1(uint32_t propertyId, const std::vector<uint8_t> &data, uint16_t cmdVersion, PropertyAccessType accessType) override;
-    const std::vector<uint8_t> &getStructureDataListProtoV1_1(uint32_t propertyId, uint16_t cmdVersion, PropertyAccessType accessType) override;
+    std::vector<uint8_t> getStructureDataListProtoV1_1(uint32_t propertyId, uint16_t cmdVersion, PropertyAccessType accessType) override;
 
 private:
     void                      appendToPropertyMap(uint32_t propertyId, OBPermissionType userPerms, OBPermissionType intPerms);

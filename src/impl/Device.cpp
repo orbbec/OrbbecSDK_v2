@@ -441,8 +441,8 @@ HANDLE_EXCEPTIONS_NO_RETURN(device, property_id, data, data_size)
 
 void ob_device_get_structured_data(ob_device *device, ob_property_id property_id, uint8_t *data, uint32_t *data_size, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(device);
-    auto  propServer   = device->device->getPropertyServer();
-    auto &firmwareData = propServer->getStructureData(property_id, libobsensor::PROP_ACCESS_USER);
+    auto propServer   = device->device->getPropertyServer();
+    auto firmwareData = propServer->getStructureData(property_id, libobsensor::PROP_ACCESS_USER);
 
     memcpy(data, firmwareData.data(), firmwareData.size());
     *data_size = static_cast<uint32_t>(firmwareData.size());

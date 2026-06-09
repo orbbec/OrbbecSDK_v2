@@ -85,7 +85,7 @@ void LazySuperPropertyAccessor::setStructureData(uint32_t propertyId, const std:
     superAccessor->setStructureData(propertyId, data);
 }
 
-const std::vector<uint8_t> &LazySuperPropertyAccessor::getStructureData(uint32_t propertyId, utils::TransferTiming *timing) {
+std::vector<uint8_t> LazySuperPropertyAccessor::getStructureData(uint32_t propertyId, utils::TransferTiming *timing) {
     std::lock_guard<std::mutex> lock(mutex_);
     if(!accessor_) {
         accessor_ = accessorCreator_();
@@ -112,7 +112,7 @@ uint16_t LazySuperPropertyAccessor::getCmdVersionProtoV1_1(uint32_t propertyId) 
     return superAccessor->getCmdVersionProtoV1_1(propertyId);
 }
 
-const std::vector<uint8_t> &LazySuperPropertyAccessor::getStructureDataProtoV1_1(uint32_t propertyId, uint16_t cmdVersion) {
+std::vector<uint8_t> LazySuperPropertyAccessor::getStructureDataProtoV1_1(uint32_t propertyId, uint16_t cmdVersion) {
     std::lock_guard<std::mutex> lock(mutex_);
     if(!accessor_) {
         accessor_ = accessorCreator_();
@@ -130,7 +130,7 @@ void LazySuperPropertyAccessor::setStructureDataProtoV1_1(uint32_t propertyId, c
     superAccessor->setStructureDataProtoV1_1(propertyId, data, cmdVersion);
 }
 
-const std::vector<uint8_t> &LazySuperPropertyAccessor::getStructureDataListProtoV1_1(uint32_t propertyId, uint16_t cmdVersion) {
+std::vector<uint8_t> LazySuperPropertyAccessor::getStructureDataListProtoV1_1(uint32_t propertyId, uint16_t cmdVersion) {
     std::lock_guard<std::mutex> lock(mutex_);
     if(!accessor_) {
         accessor_ = accessorCreator_();
@@ -146,7 +146,7 @@ void StructureDataOverV1_1Accessor::setStructureData(uint32_t propertyId, const 
     structureDataV1_1Accessor_->setStructureDataProtoV1_1(propertyId, data, cmdVersion_);
 }
 
-const std::vector<uint8_t> &StructureDataOverV1_1Accessor::getStructureData(uint32_t propertyId) {
+std::vector<uint8_t> StructureDataOverV1_1Accessor::getStructureData(uint32_t propertyId) {
     return structureDataV1_1Accessor_->getStructureDataProtoV1_1(propertyId, cmdVersion_);
 }
 
@@ -187,16 +187,16 @@ void BaselinePropertyAccessor::setStructureData(uint32_t propertyId, const std::
     THROW_UNSUPPORTED_OPERATION_EXCEPTION("Baseline params readonly!");
 }
 
-const std::vector<uint8_t> &BaselinePropertyAccessor::getStructureData(uint32_t propertyId) {
+std::vector<uint8_t> BaselinePropertyAccessor::getStructureData(uint32_t propertyId) {
     utils::unusedVar(propertyId);
-    baselineData_.resize(sizeof(OBBaselineCalibrationParam));
-    OBBaselineCalibrationParam *param = (OBBaselineCalibrationParam *)baselineData_.data();
+    std::vector<uint8_t>        baselineData(sizeof(OBBaselineCalibrationParam));
+    OBBaselineCalibrationParam *param = (OBBaselineCalibrationParam *)baselineData.data();
 
     auto        algParamManager = owner_->getComponentT<IDisparityAlgParamManager>(OB_DEV_COMPONENT_ALG_PARAM_MANAGER);
     const auto &disparityParam  = algParamManager->getDisparityParam();
     param->baseline             = disparityParam.baseline * disparityParam.unit;
     param->zpd                  = static_cast<float>(disparityParam.zpd);
-    return baselineData_;
+    return baselineData;
 }
 
 StereoFrameTransformPropertyAccessor::StereoFrameTransformPropertyAccessor(IDevice *owner) : owner_(owner) {}

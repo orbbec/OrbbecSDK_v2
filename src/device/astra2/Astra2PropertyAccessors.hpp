@@ -15,8 +15,8 @@ public:
     virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
     virtual void getPropertyRange(uint32_t propertyId, OBPropertyRange *range) override;
 
-    void                        setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) override;
-    const std::vector<uint8_t> &getStructureData(uint32_t propertyId) override;
+    void                 setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) override;
+    std::vector<uint8_t> getStructureData(uint32_t propertyId) override;
 
 private:
     void markOutputDisparityFrame(bool enable);
@@ -37,12 +37,11 @@ public:
     explicit Astra2TempPropertyAccessor(IDevice *owner);
     virtual ~Astra2TempPropertyAccessor() noexcept override = default;
 
-    virtual void                        setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) override;
-    virtual const std::vector<uint8_t> &getStructureData(uint32_t propertyId) override;
+    virtual void                 setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) override;
+    virtual std::vector<uint8_t> getStructureData(uint32_t propertyId) override;
 
 private:
-    IDevice             *owner_;
-    std::vector<uint8_t> tempData_;
+    IDevice *owner_;
 };
 
 class Astra2FrameTransformPropertyAccessor : public IBasicPropertyAccessor {

@@ -20,15 +20,14 @@ public:
     virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
     virtual void getPropertyRange(uint32_t propertyId, OBPropertyRange *range) override;
 
-    virtual void                        setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) override;
-    virtual const std::vector<uint8_t> &getStructureData(uint32_t propertyId) override;
+    virtual void                 setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) override;
+    virtual std::vector<uint8_t> getStructureData(uint32_t propertyId) override;
 
 public:
     template <typename T> T *allocateData(std::vector<uint8_t> &data);
 
 private:
     const std::shared_ptr<ISourcePort> port_;
-    std::vector<uint8_t>               data_;
 };
 
 class PlaybackFilterPropertyAccessor : public IBasicPropertyAccessor, public IStructureDataAccessor {
@@ -40,15 +39,14 @@ public:
     virtual void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
     virtual void getPropertyRange(uint32_t propertyId, OBPropertyRange *range) override;
 
-    virtual void                        setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) override;
-    virtual const std::vector<uint8_t> &getStructureData(uint32_t propertyId) override;
+    virtual void                 setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) override;
+    virtual std::vector<uint8_t> getStructureData(uint32_t propertyId) override;
 
 private:
     void getRecordPropertyValue(uint32_t propertyId, OBPropertyValue *value);
 
     const std::shared_ptr<ISourcePort> port_;
     IDevice                           *owner_;
-    std::vector<uint8_t>               data_;
 };
 
 class PlaybackFrameTransformPropertyAccessor : public IBasicPropertyAccessor {

@@ -26,7 +26,7 @@ using GyroFullScaleRangeList  = ImuSensorProfileList<OBGyroFullScaleRange>;
 #pragma pack()
 
 template <typename T> T *PlaybackVendorPropertyAccessor::allocateData(std::vector<uint8_t> &data) {
-    data_.clear();
+    data.clear();
     data.resize(sizeof(T));
     return reinterpret_cast<T *>(data.data());
 }
@@ -84,41 +84,42 @@ void PlaybackVendorPropertyAccessor::setStructureData(uint32_t propertyId, const
     LOG_DEBUG("unsupported set structure data for playback device, propertyId: {}", propertyId);
 }
 
-const std::vector<uint8_t> &PlaybackVendorPropertyAccessor::getStructureData(uint32_t propertyId) {
-    auto playPort_ = std::dynamic_pointer_cast<PlaybackDevicePort>(port_);
+std::vector<uint8_t> PlaybackVendorPropertyAccessor::getStructureData(uint32_t propertyId) {
+    auto                 playPort_ = std::dynamic_pointer_cast<PlaybackDevicePort>(port_);
+    std::vector<uint8_t> data;
 
     switch(propertyId) {
     case OB_STRUCT_GET_ACCEL_PRESETS_ODR_LIST: {
-        AccelSampleRateList *dataPtr = allocateData<AccelSampleRateList>(data_);
+        AccelSampleRateList *dataPtr = allocateData<AccelSampleRateList>(data);
 
         // todo: check the vector is not empty
         dataPtr->values[0] = playPort_->getStreamProfileList(OB_SENSOR_ACCEL).at(0)->as<AccelStreamProfile>()->getSampleRate();
         dataPtr->num       = 1;
     } break;
     case OB_STRUCT_GET_ACCEL_PRESETS_FULL_SCALE_LIST: {
-        AccelFullScaleRangeList *dataPtr = allocateData<AccelFullScaleRangeList>(data_);
+        AccelFullScaleRangeList *dataPtr = allocateData<AccelFullScaleRangeList>(data);
 
         dataPtr->values[0] = playPort_->getStreamProfileList(OB_SENSOR_ACCEL).at(0)->as<AccelStreamProfile>()->getFullScaleRange();
         dataPtr->num       = 1;
     } break;
     case OB_STRUCT_GET_GYRO_PRESETS_ODR_LIST: {
-        GyroSampleRateList *dataPtr = allocateData<GyroSampleRateList>(data_);
+        GyroSampleRateList *dataPtr = allocateData<GyroSampleRateList>(data);
 
         dataPtr->values[0] = playPort_->getStreamProfileList(OB_SENSOR_GYRO).at(0)->as<GyroStreamProfile>()->getSampleRate();
         dataPtr->num       = 1;
     } break;
     case OB_STRUCT_GET_GYRO_PRESETS_FULL_SCALE_LIST: {
-        GyroFullScaleRangeList *data = allocateData<GyroFullScaleRangeList>(data_);
+        GyroFullScaleRangeList *dataPtr = allocateData<GyroFullScaleRangeList>(data);
 
-        data->values[0] = playPort_->getStreamProfileList(OB_SENSOR_GYRO).at(0)->as<GyroStreamProfile>()->getFullScaleRange();
-        data->num       = 1;
+        dataPtr->values[0] = playPort_->getStreamProfileList(OB_SENSOR_GYRO).at(0)->as<GyroStreamProfile>()->getFullScaleRange();
+        dataPtr->num       = 1;
     } break;
     default: {
-        data_ = playPort_->getRecordedStructData(propertyId);
+        data = playPort_->getRecordedStructData(propertyId);
     } break;
     }
 
-    return data_;
+    return data;
 }
 
 PlaybackFilterPropertyAccessor::PlaybackFilterPropertyAccessor(const std::shared_ptr<ISourcePort> &backend, IDevice *owner) : port_(backend), owner_(owner) {}
@@ -189,19 +190,22 @@ void PlaybackFilterPropertyAccessor::setStructureData(uint32_t propertyId, const
     LOG_DEBUG("unsupported set structure data for playback device, propertyId: {}", propertyId);
 }
 
-const std::vector<uint8_t> &PlaybackFilterPropertyAccessor::getStructureData(uint32_t propertyId) {
+std::vector<uint8_t> PlaybackFilterPropertyAccessor::getStructureData(uint32_t propertyId) {
+    std::vector<uint8_t> data;
+
     switch(propertyId) {
     case OB_STRUCT_DEPTH_PRECISION_SUPPORT_LIST: {
         OBPropertyValue value{};
         getPropertyValue(OB_PROP_DEPTH_PRECISION_LEVEL_INT, &value);
-        std::memcpy(data_.data(), &value.intValue, sizeof(value.intValue));
+        data.resize(sizeof(value.intValue));
+        std::memcpy(data.data(), &value.intValue, sizeof(value.intValue));
     } break;
     default: {
         LOG_WARN("unsupported get property value for playback device, propertyId: {}", propertyId);
     } break;
     }
 
-    return data_;
+    return data;
 }
 
 // PlaybackFrameTransformPropertyAccessor

@@ -113,7 +113,7 @@ void OpenNIDisp2DepthPropertyAccessor::setStructureData(uint32_t propertyId, con
     THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "unsupported property id:" << propertyId);
 }
 
-const std::vector<uint8_t> &OpenNIDisp2DepthPropertyAccessor::getStructureData(uint32_t propertyId) {
+std::vector<uint8_t> OpenNIDisp2DepthPropertyAccessor::getStructureData(uint32_t propertyId) {
     if(propertyId == OB_STRUCT_DEPTH_PRECISION_SUPPORT_LIST) {
         static std::vector<uint16_t> swD2DSupportList = { OB_PRECISION_1MM, OB_PRECISION_0MM8, OB_PRECISION_0MM4, OB_PRECISION_0MM2, OB_PRECISION_0MM1 };
         static std::vector<uint8_t>  swD2DSupportListBytes(reinterpret_cast<uint8_t *>(swD2DSupportList.data()),
@@ -305,7 +305,7 @@ void OpenNITemperatureStructurePropertyAccessor::setStructureData(uint32_t prope
     THROW_INVALID_PARAM_EXCEPTION("OB_PROP_TEMPERATURE_COMPENSATION_BOOL is read-only");
 }
 
-const std::vector<uint8_t> &OpenNITemperatureStructurePropertyAccessor::getStructureData(uint32_t propertyId) {
+std::vector<uint8_t> OpenNITemperatureStructurePropertyAccessor::getStructureData(uint32_t propertyId) {
     if(propertyId == OB_STRUCT_DEVICE_TEMPERATURE) {
         auto                commandPort = owner_->getComponentT<IStructureDataAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
         auto                data        = commandPort->getStructureData(OB_STRUCT_DEVICE_TEMPERATURE);

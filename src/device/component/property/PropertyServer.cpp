@@ -288,7 +288,7 @@ void PropertyServer::setStructureData(uint32_t propertyId, const std::vector<uin
     LOG_DEBUG("[delta: {}us] Property {} set structure data successfully", delta, propId);
 }
 
-const std::vector<uint8_t> &PropertyServer::getStructureData(uint32_t propertyId, PropertyAccessType accessType, utils::TransferTiming *timing) {
+std::vector<uint8_t> PropertyServer::getStructureData(uint32_t propertyId, PropertyAccessType accessType, utils::TransferTiming *timing) {
     std::unique_lock<std::recursive_mutex> lock(mutex_);
     if(!isPropertySupported(propertyId, PROP_OP_READ, accessType)) {
         THROW_UNSUPPORTED_OPERATION_EXCEPTION(utils::string::to_string() << "Property not readable: " << propertyId);
@@ -307,7 +307,7 @@ const std::vector<uint8_t> &PropertyServer::getStructureData(uint32_t propertyId
         THROW_INVALID_DATA_EXCEPTION(utils::string::to_string() << "Property " << propId << " does not support structure data getting");
     }
     utils::Timer timer;
-    const auto  &data = timing ? structAccessor->getStructureData(propId, timing) : structAccessor->getStructureData(propId);
+    auto         data = timing ? structAccessor->getStructureData(propId, timing) : structAccessor->getStructureData(propId);
     for(auto &callback: callbacks) {
         callback(propertyId, data.data(), data.size(), PROP_OP_READ);
     }
@@ -367,7 +367,7 @@ uint16_t PropertyServer::getCmdVersionProtoV1_1(uint32_t propertyId, PropertyAcc
     return ver;
 }
 
-const std::vector<uint8_t> &PropertyServer::getStructureDataProtoV1_1(uint32_t propertyId, uint16_t cmdVersion, PropertyAccessType accessType) {
+std::vector<uint8_t> PropertyServer::getStructureDataProtoV1_1(uint32_t propertyId, uint16_t cmdVersion, PropertyAccessType accessType) {
     std::unique_lock<std::recursive_mutex> lock(mutex_);
     if(!isPropertySupported(propertyId, PROP_OP_READ, accessType)) {
         THROW_UNSUPPORTED_OPERATION_EXCEPTION(utils::string::to_string() << "Property not readable: " << propertyId);
@@ -386,7 +386,7 @@ const std::vector<uint8_t> &PropertyServer::getStructureDataProtoV1_1(uint32_t p
         THROW_INVALID_DATA_EXCEPTION(utils::string::to_string() << "Property" << propId << " does not support structure data getting over proto v1.1");
     }
     utils::Timer timer;
-    const auto  &data = structAccessor->getStructureDataProtoV1_1(propId, cmdVersion);
+    auto         data = structAccessor->getStructureDataProtoV1_1(propId, cmdVersion);
     for(auto &callback: callbacks) {
         callback(propertyId, data.data(), data.size(), PROP_OP_READ);
     }
@@ -422,7 +422,7 @@ void PropertyServer::setStructureDataProtoV1_1(uint32_t propertyId, const std::v
     LOG_DEBUG("[delta: {}us] Property {} set structure data successfully over proto v1.1", delta, propId);
 }
 
-const std::vector<uint8_t> &PropertyServer::getStructureDataListProtoV1_1(uint32_t propertyId, uint16_t cmdVersion, PropertyAccessType accessType) {
+std::vector<uint8_t> PropertyServer::getStructureDataListProtoV1_1(uint32_t propertyId, uint16_t cmdVersion, PropertyAccessType accessType) {
     std::unique_lock<std::recursive_mutex> lock(mutex_);
     if(!isPropertySupported(propertyId, PROP_OP_READ, accessType)) {
         THROW_UNSUPPORTED_OPERATION_EXCEPTION(utils::string::to_string() << "Property not readable: " << propertyId);
@@ -441,7 +441,7 @@ const std::vector<uint8_t> &PropertyServer::getStructureDataListProtoV1_1(uint32
         THROW_INVALID_DATA_EXCEPTION(utils::string::to_string() << "Property" << propId << " does not support structure data list getting over proto v1.1");
     }
     utils::Timer timer;
-    const auto  &data = structAccessor->getStructureDataListProtoV1_1(propId, cmdVersion);
+    auto         data = structAccessor->getStructureDataListProtoV1_1(propId, cmdVersion);
     for(auto &callback: callbacks) {
         callback(propertyId, data.data(), data.size(), PROP_OP_READ);
     }

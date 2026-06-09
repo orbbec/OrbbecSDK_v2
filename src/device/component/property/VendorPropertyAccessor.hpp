@@ -27,18 +27,18 @@ public:
     void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
     void getPropertyRange(uint32_t propertyId, OBPropertyRange *range) override;
 
-    void                        setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) override;
-    const std::vector<uint8_t> &getStructureData(uint32_t propertyId) override {
+    void                 setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) override;
+    std::vector<uint8_t> getStructureData(uint32_t propertyId) override {
         return getStructureData(propertyId, nullptr);
     }
-    const std::vector<uint8_t> &getStructureData(uint32_t propertyId, utils::TransferTiming *timing) override;
+    std::vector<uint8_t> getStructureData(uint32_t propertyId, utils::TransferTiming *timing) override;
 
     void getRawData(uint32_t propertyId, GetDataCallback callback) override;
 
-    uint16_t                    getCmdVersionProtoV1_1(uint32_t propertyId) override;
-    const std::vector<uint8_t> &getStructureDataProtoV1_1(uint32_t propertyId, uint16_t cmdVersion) override;
-    void                        setStructureDataProtoV1_1(uint32_t propertyId, const std::vector<uint8_t> &data, uint16_t cmdVersion) override;
-    const std::vector<uint8_t> &getStructureDataListProtoV1_1(uint32_t propertyId, uint16_t cmdVersion) override;
+    uint16_t             getCmdVersionProtoV1_1(uint32_t propertyId) override;
+    std::vector<uint8_t> getStructureDataProtoV1_1(uint32_t propertyId, uint16_t cmdVersion) override;
+    void                 setStructureDataProtoV1_1(uint32_t propertyId, const std::vector<uint8_t> &data, uint16_t cmdVersion) override;
+    std::vector<uint8_t> getStructureDataListProtoV1_1(uint32_t propertyId, uint16_t cmdVersion) override;
 
     void setRawdataTransferPacketSize(uint32_t size);
     void setStructListDataTransferPacketSize(uint32_t size);
@@ -62,15 +62,13 @@ private:
     void clearBuffers();
 
 private:
-    IDevice                          *owner_;
-    std::shared_ptr<ISourcePort>      backend_;
-    std::mutex                        mutex_;
-    std::vector<uint8_t>              recvData_;
-    std::vector<uint8_t>              sendData_;
-    std::vector<uint8_t>              outputData_;
-    std::vector<std::vector<uint8_t>> structureDataList_;  // for cmd version 1.1
-    uint32_t                          rawdataTransferPacketSize_;
-    uint32_t                          structListDataTransferPacketSize_;
+    IDevice                     *owner_;
+    std::shared_ptr<ISourcePort> backend_;
+    std::mutex                   mutex_;
+    std::vector<uint8_t>         recvData_;
+    std::vector<uint8_t>         sendData_;
+    uint32_t                     rawdataTransferPacketSize_;
+    uint32_t                     structListDataTransferPacketSize_;
 
     bool              autoRebootEnabled_{ false };  // controlled by setAutoRebootEnabled()
     std::atomic<bool> rebootTriggered_{ false };    // prevents duplicate reboot triggers

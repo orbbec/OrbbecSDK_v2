@@ -132,7 +132,7 @@ void Astra2Disp2DepthPropertyAccessor::setStructureData(uint32_t propertyId, con
     THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "unsupported property id:" << propertyId);
 }
 
-const std::vector<uint8_t> &Astra2Disp2DepthPropertyAccessor::getStructureData(uint32_t propertyId) {
+std::vector<uint8_t> Astra2Disp2DepthPropertyAccessor::getStructureData(uint32_t propertyId) {
     if(propertyId == OB_STRUCT_DEPTH_PRECISION_SUPPORT_LIST) {
         if(hwDisparityToDepthEnabled_) {
             static std::vector<uint16_t> hwD2DSupportList = { OB_PRECISION_0MM8, OB_PRECISION_0MM4, OB_PRECISION_0MM1 };
@@ -158,9 +158,8 @@ void Astra2TempPropertyAccessor::setStructureData(uint32_t propertyId, const std
     THROW_UNSUPPORTED_OPERATION_EXCEPTION("Temperature params readonly!");
 }
 
-const std::vector<uint8_t> &Astra2TempPropertyAccessor::getStructureData(uint32_t propertyId) {
+std::vector<uint8_t> Astra2TempPropertyAccessor::getStructureData(uint32_t propertyId) {
     utils::unusedVar(propertyId);
-    tempData_.resize(sizeof(OBDeviceTemperature));
 
     auto                       commandPort = owner_->getComponentT<IStructureDataAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
     const std::vector<uint8_t> tempData    = commandPort->getStructureData(OB_STRUCT_DEVICE_TEMPERATURE);
@@ -172,9 +171,10 @@ const std::vector<uint8_t> &Astra2TempPropertyAccessor::getStructureData(uint32_
     tempParam.chipBottomTemp = 0;
     tempParam.chipTopTemp    = 0;
 
-    memcpy(tempData_.data(), &tempParam, sizeof(OBDeviceTemperature));
+    std::vector<uint8_t> outputData(sizeof(OBDeviceTemperature));
+    memcpy(outputData.data(), &tempParam, sizeof(OBDeviceTemperature));
 
-    return tempData_;
+    return outputData;
 }
 
 Astra2FrameTransformPropertyAccessor::Astra2FrameTransformPropertyAccessor(IDevice *owner) : owner_(owner) {}

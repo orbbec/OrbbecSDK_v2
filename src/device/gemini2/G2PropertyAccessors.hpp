@@ -12,18 +12,18 @@ public:
     virtual ~G2Disp2DepthPropertyAccessor() noexcept override = default;
 
     IDevice *getOwner();
-    void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
-    void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
-    void getPropertyRange(uint32_t propertyId, OBPropertyRange *range) override;
+    void     setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
+    void     getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
+    void     getPropertyRange(uint32_t propertyId, OBPropertyRange *range) override;
 
-    void                        setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) override;
-    const std::vector<uint8_t> &getStructureData(uint32_t propertyId) override;
+    void                 setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) override;
+    std::vector<uint8_t> getStructureData(uint32_t propertyId) override;
 
 protected:
     void markOutputDisparityFrame(bool enable);
 
 protected:
-    bool hwDisparityToDepthEnabled_;
+    bool                  hwDisparityToDepthEnabled_;
     std::vector<uint16_t> hwD2DSupportList_ = { OB_PRECISION_0MM8, OB_PRECISION_0MM4, OB_PRECISION_0MM2 };
 
 private:
@@ -62,8 +62,8 @@ public:
     explicit G435LeDisp2DepthPropertyAccessor(IDevice *owner);
     virtual ~G435LeDisp2DepthPropertyAccessor() noexcept override = default;
 
-    virtual const std::vector<uint8_t> &getStructureData(uint32_t propertyId) override;
-    virtual void                        setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
+    virtual std::vector<uint8_t> getStructureData(uint32_t propertyId) override;
+    virtual void                 setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
 };
 
 class G210FrameTransformPropertyAccessor : public IBasicPropertyAccessor {

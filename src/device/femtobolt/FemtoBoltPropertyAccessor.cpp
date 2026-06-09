@@ -50,9 +50,8 @@ void FemtoBoltTempPropertyAccessor::setStructureData(uint32_t propertyId, const 
     THROW_UNSUPPORTED_OPERATION_EXCEPTION("Temperature params readonly!");
 }
 
-const std::vector<uint8_t> &FemtoBoltTempPropertyAccessor::getStructureData(uint32_t propertyId) {
+std::vector<uint8_t> FemtoBoltTempPropertyAccessor::getStructureData(uint32_t propertyId) {
     utils::unusedVar(propertyId);
-    tempData_.resize(sizeof(OBDeviceTemperature));
 
     auto                       commandPort = owner_->getComponentT<IStructureDataAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
     const std::vector<uint8_t> tempData    = commandPort->getStructureData(OB_STRUCT_DEVICE_TEMPERATURE);
@@ -68,8 +67,9 @@ const std::vector<uint8_t> &FemtoBoltTempPropertyAccessor::getStructureData(uint
     tempParam.rgbTemp        = 0;
     tempParam.tecTemp        = 0;
 
-    memcpy(tempData_.data(), &tempParam, sizeof(OBDeviceTemperature));
+    std::vector<uint8_t> outputData(sizeof(OBDeviceTemperature));
+    memcpy(outputData.data(), &tempParam, sizeof(OBDeviceTemperature));
 
-    return tempData_;
+    return outputData;
 }
 }  // namespace libobsensor

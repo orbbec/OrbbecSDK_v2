@@ -83,7 +83,7 @@ void VendorPropertyAccessor::setStructureData(uint32_t propertyId, const std::ve
     executeAndCheck(port, sendData_.data(), reqDataSize, recvData_.data(), &respDataSize, propertyId);
 }
 
-const std::vector<uint8_t> &VendorPropertyAccessor::getStructureData(uint32_t propertyId, utils::TransferTiming *timing) {
+std::vector<uint8_t> VendorPropertyAccessor::getStructureData(uint32_t propertyId, utils::TransferTiming *timing) {
     std::lock_guard<std::mutex> lock(mutex_);
     clearBuffers();
     auto req = protocol::initGetStructureDataReq(sendData_.data(), propertyId);
@@ -101,9 +101,9 @@ const std::vector<uint8_t> &VendorPropertyAccessor::getStructureData(uint32_t pr
         res.msg           = "get structure data return data size invalid";
         protocol::checkStatus(propertyId, res);
     }
-    outputData_.resize(structureDataSize);
-    memcpy(outputData_.data(), resp->data, structureDataSize);
-    return outputData_;
+    std::vector<uint8_t> outputData(structureDataSize);
+    memcpy(outputData.data(), resp->data, structureDataSize);
+    return outputData;
 }
 
 void VendorPropertyAccessor::getRawData(uint32_t propertyId, GetDataCallback callback) {
@@ -169,7 +169,7 @@ uint16_t VendorPropertyAccessor::getCmdVersionProtoV1_1(uint32_t propertyId) {
     return *(uint16_t *)(resp->data);
 }
 
-const std::vector<uint8_t> &VendorPropertyAccessor::getStructureDataProtoV1_1(uint32_t propertyId, uint16_t cmdVersion) {
+std::vector<uint8_t> VendorPropertyAccessor::getStructureDataProtoV1_1(uint32_t propertyId, uint16_t cmdVersion) {
     std::lock_guard<std::mutex> lock(mutex_);
     clearBuffers();
 
@@ -193,9 +193,9 @@ const std::vector<uint8_t> &VendorPropertyAccessor::getStructureDataProtoV1_1(ui
         res.msg           = "get structure data over protocol version 1.1 return data size invalid";
         protocol::checkStatus(propertyId, res);
     }
-    outputData_.resize(dataSize);
-    memcpy(outputData_.data(), resp->data, dataSize);
-    return outputData_;
+    std::vector<uint8_t> outputData(dataSize);
+    memcpy(outputData.data(), resp->data, dataSize);
+    return outputData;
 }
 
 void VendorPropertyAccessor::setStructureDataProtoV1_1(uint32_t propertyId, const std::vector<uint8_t> &data, uint16_t cmdVersion) {
@@ -208,7 +208,7 @@ void VendorPropertyAccessor::setStructureDataProtoV1_1(uint32_t propertyId, cons
     executeAndCheck(port, sendData_.data(), reqDataSize, recvData_.data(), &respDataSize, propertyId);
 }
 
-const std::vector<uint8_t> &VendorPropertyAccessor::getStructureDataListProtoV1_1(uint32_t propertyId, uint16_t cmdVersion) {
+std::vector<uint8_t> VendorPropertyAccessor::getStructureDataListProtoV1_1(uint32_t propertyId, uint16_t cmdVersion) {
     std::lock_guard<std::mutex> lock(mutex_);
     uint32_t                    dataSize = 0;
     clearBuffers();
@@ -225,7 +225,7 @@ const std::vector<uint8_t> &VendorPropertyAccessor::getStructureDataListProtoV1_
         protocol::checkStatus(propertyId, res);
     }
     dataSize = resp->dataSize;
-    outputData_.resize(dataSize);
+    std::vector<uint8_t> outputData(dataSize);
     {
         for(uint32_t packetOffset = 0; packetOffset < dataSize; packetOffset += structListDataTransferPacketSize_) {
             clearBuffers();  // reset request and response buffer cache
@@ -235,7 +235,7 @@ const std::vector<uint8_t> &VendorPropertyAccessor::getStructureDataListProtoV1_
             respDataSize = 1024;
             port         = std::dynamic_pointer_cast<IVendorDataPort>(backend_);
             executeAndCheck(port, sendData_.data(), sizeof(*req1), recvData_.data(), &respDataSize, propertyId);
-            memcpy(outputData_.data() + packetOffset, recvData_.data() + sizeof(protocol::RespHeader), packetSize);
+            memcpy(outputData.data() + packetOffset, recvData_.data() + sizeof(protocol::RespHeader), packetSize);
         }
     }
 
@@ -246,7 +246,7 @@ const std::vector<uint8_t> &VendorPropertyAccessor::getStructureDataListProtoV1_
     }
 
     protocol::checkStatus(propertyId, res);
-    return outputData_;
+    return outputData;
 }
 
 void VendorPropertyAccessor::setAutoRebootEnabled(bool enable) {

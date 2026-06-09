@@ -62,17 +62,17 @@ public:
     LazySuperPropertyAccessor(std::function<std::shared_ptr<IPropertyAccessor>()> accessorCreator);
     virtual ~LazySuperPropertyAccessor() noexcept override = default;
 
-    void                        setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) override;
-    const std::vector<uint8_t> &getStructureData(uint32_t propertyId) override {
+    void                 setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) override;
+    std::vector<uint8_t> getStructureData(uint32_t propertyId) override {
         return getStructureData(propertyId, nullptr);
     }
-    const std::vector<uint8_t> &getStructureData(uint32_t propertyId, utils::TransferTiming *timing) override;
-    void                        getRawData(uint32_t propertyId, GetDataCallback callback) override;
+    std::vector<uint8_t> getStructureData(uint32_t propertyId, utils::TransferTiming *timing) override;
+    void                 getRawData(uint32_t propertyId, GetDataCallback callback) override;
 
-    uint16_t                    getCmdVersionProtoV1_1(uint32_t propertyId) override;
-    const std::vector<uint8_t> &getStructureDataProtoV1_1(uint32_t propertyId, uint16_t cmdVersion) override;
-    void                        setStructureDataProtoV1_1(uint32_t propertyId, const std::vector<uint8_t> &data, uint16_t cmdVersion) override;
-    const std::vector<uint8_t> &getStructureDataListProtoV1_1(uint32_t propertyId, uint16_t cmdVersion) override;
+    uint16_t             getCmdVersionProtoV1_1(uint32_t propertyId) override;
+    std::vector<uint8_t> getStructureDataProtoV1_1(uint32_t propertyId, uint16_t cmdVersion) override;
+    void                 setStructureDataProtoV1_1(uint32_t propertyId, const std::vector<uint8_t> &data, uint16_t cmdVersion) override;
+    std::vector<uint8_t> getStructureDataListProtoV1_1(uint32_t propertyId, uint16_t cmdVersion) override;
 };
 
 class StructureDataOverV1_1Accessor : public IStructureDataAccessor {
@@ -81,8 +81,8 @@ public:
 
     virtual ~StructureDataOverV1_1Accessor() noexcept override = default;
 
-    void                        setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) override;
-    const std::vector<uint8_t> &getStructureData(uint32_t propertyId) override;
+    void                 setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) override;
+    std::vector<uint8_t> getStructureData(uint32_t propertyId) override;
 
 private:
     std::shared_ptr<IStructureDataAccessorV1_1> structureDataV1_1Accessor_;
@@ -109,12 +109,11 @@ public:
 
     virtual ~BaselinePropertyAccessor() noexcept override = default;
 
-    void                        setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) override;
-    const std::vector<uint8_t> &getStructureData(uint32_t propertyId) override;
+    void                 setStructureData(uint32_t propertyId, const std::vector<uint8_t> &data) override;
+    std::vector<uint8_t> getStructureData(uint32_t propertyId) override;
 
 private:
-    IDevice             *owner_;
-    std::vector<uint8_t> baselineData_;
+    IDevice *owner_;
 };
 
 class StereoFrameTransformPropertyAccessor : public IBasicPropertyAccessor {
