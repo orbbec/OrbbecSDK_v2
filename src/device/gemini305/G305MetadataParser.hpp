@@ -613,15 +613,6 @@ private:
                 parsedData = static_cast<int64_t>(roi.y1_bottom);
             }
         }
-        else if(propertyId == OB_STRUCT_DEPTH_HDR_CONFIG) {
-            auto hdrConfig = *(reinterpret_cast<const OBHdrConfig *>(data));
-            if(type == OB_FRAME_METADATA_TYPE_HDR_SEQUENCE_NAME) {
-                parsedData = static_cast<int64_t>(hdrConfig.sequence_name);
-            }
-            else if(type == OB_FRAME_METADATA_TYPE_HDR_SEQUENCE_SIZE) {
-                parsedData = static_cast<int64_t>(hdrConfig.enable);
-            }
-        }
 
         return parsedData;
     }
@@ -693,24 +684,12 @@ public:
 
 class G305DepthMetadataHdrSequenceSizeParser : public IFrameMetadataParser {
 public:
-    G305DepthMetadataHdrSequenceSizeParser(IDevice *device) : device_(device), inited_(false), frameInterleaveEnabled_(false), hdrEnabled_(false) {
+    G305DepthMetadataHdrSequenceSizeParser(IDevice *device) : device_(device), inited_(false), frameInterleaveEnabled_(false) {
         auto propertyServer = device_->getPropertyServer();
-        if(propertyServer->isPropertySupported(OB_STRUCT_DEPTH_HDR_CONFIG, PROP_OP_WRITE, PROP_ACCESS_USER)) {
-            propertyServer->registerAccessCallback(OB_STRUCT_DEPTH_HDR_CONFIG,
-                                                   [this](uint32_t propertyId, const uint8_t *data, size_t dataSize, PropertyOperationType operationType) {
-                                                       utils::unusedVar(propertyId);
-                                                       utils::unusedVar(dataSize);
-                                                       utils::unusedVar(operationType);
-                                                       auto hdrConfig = *(reinterpret_cast<const OBHdrConfig *>(data));
-                                                       hdrEnabled_    = hdrConfig.enable;
-                                                       inited_        = true;
-                                                   });
-        }
         if(propertyServer->isPropertySupported(OB_PROP_FRAME_INTERLEAVE_ENABLE_BOOL, PROP_OP_WRITE, PROP_ACCESS_USER)) {
             propertyServer->registerAccessCallback(OB_PROP_FRAME_INTERLEAVE_ENABLE_BOOL,
                                                    [this](uint32_t propertyId, const uint8_t *data, size_t dataSize, PropertyOperationType operationType) {
                                                        utils::unusedVar(propertyId);
-
                                                        utils::unusedVar(dataSize);
                                                        utils::unusedVar(operationType);
                                                        frameInterleaveEnabled_ = *(reinterpret_cast<const bool *>(data));
@@ -726,16 +705,12 @@ public:
         utils::unusedVar(dataSize);
         if(!inited_) {
             auto propertyServer = device_->getPropertyServer();
-            if(propertyServer->isPropertySupported(OB_STRUCT_DEPTH_HDR_CONFIG, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
-                auto hdrConfig = propertyServer->getStructureDataT<OBHdrConfig>(OB_STRUCT_DEPTH_HDR_CONFIG);
-                hdrEnabled_    = hdrConfig.enable;
-            }
             if(propertyServer->isPropertySupported(OB_PROP_FRAME_INTERLEAVE_ENABLE_BOOL, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
                 frameInterleaveEnabled_ = propertyServer->getPropertyValueT<bool>(OB_PROP_FRAME_INTERLEAVE_ENABLE_BOOL);
             }
             inited_ = true;
         }
-        return (hdrEnabled_ || frameInterleaveEnabled_) ? 2 : 0;
+        return frameInterleaveEnabled_ ? 2 : 0;
     }
 
     bool isSupported(const uint8_t *metadata, size_t dataSize) override {
@@ -749,7 +724,6 @@ private:
 
     bool inited_;
     bool frameInterleaveEnabled_;
-    bool hdrEnabled_;
 };
 
 }  // namespace libobsensor

@@ -218,15 +218,11 @@ public:
 
         registerParser(OB_FRAME_METADATA_TYPE_DISPARITY_SEARCH_RANGE,
                        std::make_shared<G305DepthMetadataParser>(device, OB_FRAME_METADATA_TYPE_DISPARITY_SEARCH_RANGE));
-        {
-            if(propServer->isPropertySupported(OB_STRUCT_DEPTH_HDR_CONFIG, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
-                registerParser(OB_FRAME_METADATA_TYPE_FRAME_NUMBER,
-                               std::make_shared<G305DepthScrMetadataHDRSequenceIDParser>());  // todo: remove this line after fix hdr merge issue
-                registerParser(OB_FRAME_METADATA_TYPE_HDR_SEQUENCE_INDEX, std::make_shared<G305DepthScrMetadataHDRSequenceIDParser>());
-                registerParser(OB_FRAME_METADATA_TYPE_HDR_SEQUENCE_NAME,
-                               std::make_shared<G305DepthMetadataParser>(device, OB_FRAME_METADATA_TYPE_HDR_SEQUENCE_NAME));
-                registerParser(OB_FRAME_METADATA_TYPE_HDR_SEQUENCE_SIZE, std::make_shared<G305DepthMetadataHdrSequenceSizeParser>(device));
-            }
+        if(propServer->isPropertySupported(OB_PROP_FRAME_INTERLEAVE_ENABLE_BOOL, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
+            registerParser(OB_FRAME_METADATA_TYPE_FRAME_NUMBER,
+                           std::make_shared<G305DepthScrMetadataHDRSequenceIDParser>());  // todo: remove this line after fix hdr merge issue
+            registerParser(OB_FRAME_METADATA_TYPE_HDR_SEQUENCE_INDEX, std::make_shared<G305DepthScrMetadataHDRSequenceIDParser>());
+            registerParser(OB_FRAME_METADATA_TYPE_HDR_SEQUENCE_SIZE, std::make_shared<G305DepthMetadataHdrSequenceSizeParser>(device));
         }
 
         registerParser(OB_FRAME_METADATA_TYPE_AE_ROI_LEFT, std::make_shared<G305DepthMetadataParser>(device, OB_FRAME_METADATA_TYPE_AE_ROI_LEFT));
