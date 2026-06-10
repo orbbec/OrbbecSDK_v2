@@ -11,6 +11,18 @@
 
 namespace libobsensor {
 
+namespace {
+// On a playback device a non-writable property must be skipped silently (no throw, no log).
+// On a real device this returns false, so the caller keeps its original behavior (write, or warn/throw).
+bool skipWriteOnPlayback(IDevice *owner, uint32_t propertyId) {
+    if(owner == nullptr || !owner->isPlaybackDevice()) {
+        return false;
+    }
+    auto propServer = owner->getPropertyServer();
+    return propServer && !propServer->isPropertySupported(propertyId, PROP_OP_WRITE, PROP_ACCESS_INTERNAL);
+}
+}  // namespace
+
 // FrameInterleaveHandler
 FrameInterleaveHandler::FrameInterleaveHandler(IDevice *owner)
     : owner_(owner),
@@ -79,6 +91,9 @@ void FrameInterleaveHandler::onSetChild(const std::string &k, const Json::Value 
 void FrameInterleaveHandler::onPostChildrenSet() {
     if(frameInterleaveManager_ == nullptr) {
         LOG_WARN("The current device doesn't contain the frame interleave manager component");
+        return;
+    }
+    if(skipWriteOnPlayback(owner_, OB_PROP_FRAME_INTERLEAVE_ENABLE_BOOL)) {
         return;
     }
     // Set all values
@@ -201,7 +216,9 @@ void RoiHandler::onSetChild(const std::string &k, const Json::Value &v, const Js
 
 void RoiHandler::onPostChildrenSet() {
     if(!writeSupported_) {
-        LOG_WARN("Unsupported ROI properties, skipping setting");
+        if(!owner_->isPlaybackDevice()) {
+            LOG_WARN("Unsupported ROI properties, skipping setting");
+        }
         return;
     }
 
@@ -297,19 +314,27 @@ void D2DHandler::set(const std::string &k, const Json::Value &v) {
         THROW_INVALID_PARAM_EXCEPTION("Invalid value of '" + k + "': " + mode);
     }
     auto propServer = owner_->getPropertyServer();
+    // Per-property guard: on playback the hardware disparity property is read-only and is skipped,
+    // while the software disparity property is writable and is still restored.
+    auto setDisparity = [&](uint32_t propertyId, bool value) {
+        if(skipWriteOnPlayback(owner_, propertyId)) {
+            return;
+        }
+        propServer->setPropertyValueT<bool>(propertyId, value);
+    };
     switch(it->second) {
     case Mode::Hardware:
-        propServer->setPropertyValueT<bool>(OB_PROP_DISPARITY_TO_DEPTH_BOOL, true);
-        propServer->setPropertyValueT<bool>(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL, false);
+        setDisparity(OB_PROP_DISPARITY_TO_DEPTH_BOOL, true);
+        setDisparity(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL, false);
         break;
     case Mode::Software:
-        propServer->setPropertyValueT<bool>(OB_PROP_DISPARITY_TO_DEPTH_BOOL, false);
-        propServer->setPropertyValueT<bool>(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL, true);
+        setDisparity(OB_PROP_DISPARITY_TO_DEPTH_BOOL, false);
+        setDisparity(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL, true);
         break;
     case Mode::Disable:
     default:
-        propServer->setPropertyValueT<bool>(OB_PROP_DISPARITY_TO_DEPTH_BOOL, false);
-        propServer->setPropertyValueT<bool>(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL, false);
+        setDisparity(OB_PROP_DISPARITY_TO_DEPTH_BOOL, false);
+        setDisparity(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL, false);
         break;
     }
 }
@@ -416,6 +441,9 @@ void HardwareNoiseRemovalFilterHandler::onSetChild(const std::string &k, const J
 }
 
 void HardwareNoiseRemovalFilterHandler::onPostChildrenSet() {
+    if(skipWriteOnPlayback(owner_, OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL)) {
+        return;
+    }
     // Set all values
     auto propServer = owner_->getPropertyServer();
     propServer->setPropertyValueT<bool>(OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL, enable_);
@@ -519,6 +547,9 @@ void DisparitySearchHandler::onSetChild(const std::string &k, const Json::Value 
 }
 
 void DisparitySearchHandler::onPostChildrenSet() {
+    if(owner_->isPlaybackDevice()) {
+        return;
+    }
     if(!writeSupported_) {
         LOG_WARN("Unsupported disparity search properties, skipping setting");
         return;
@@ -590,6 +621,12 @@ jsonmodel::ExportValue DisparitySearchHandler::exportChildValue(const std::strin
 // DepthWorkModeHandler
 void DepthWorkModeHandler::set(const std::string &k, const Json::Value &v) {
     utils::unusedVar(k);
+
+    if(owner_->isPlaybackDevice()) {
+        // DepthWorkMode are real-hardware only; skip silently on playback.
+        return;
+    }
+
     auto value                = jsonmodel::JsonTraits<std::string>::from(v);
     auto depthWorkModeManager = owner_->getComponentT<IDepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
     depthWorkModeManager->switchDepthWorkMode(value);
@@ -605,6 +642,10 @@ jsonmodel::ExportValue DepthWorkModeHandler::exportValue(const std::string &k) {
 // HeartbeatHandler
 void HeartbeatHandler::set(const std::string &k, const Json::Value &v) {
     utils::unusedVar(k);
+    if(owner_->isPlaybackDevice()) {
+        // Heartbeat / firmware log are real-hardware only; skip silently on playback.
+        return;
+    }
     auto monitor = owner_->getComponentT<IDeviceMonitor>(OB_DEV_COMPONENT_DEVICE_MONITOR, false);
     if(!monitor) {
         LOG_WARN("Device monitor not available, skipping {} setting", firmwareLog_ ? "firmware log" : "heartbeat");

@@ -27,6 +27,9 @@ public:
     void                            exportSettingsAsPresetJsonFile(const std::string &filePath) override;
     void                            fetchPreset() override;
 
+    bool                               isApplicationConfigSupported() const override;
+    std::shared_ptr<ApplicationConfig> getApplicationConfig() override;
+
 private:
     std::shared_ptr<IPresetManager> delegate_;
 };

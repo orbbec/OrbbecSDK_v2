@@ -815,6 +815,16 @@ uint64_t PlaybackDevice::getPosition() const {
     return port_->getPosition();
 }
 
+bool PlaybackDevice::isSensorExists(OBSensorType type) const {
+    for(auto sensorType: sensorTypeList_) {
+        if(sensorType == type) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 std::vector<OBSensorType> PlaybackDevice::getSensorTypeList() const {
     return sensorTypeList_;
 }

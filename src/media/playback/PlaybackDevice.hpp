@@ -35,6 +35,7 @@ public:
 public:
     virtual void              fetchDeviceInfo() override;
     virtual void              fetchExtensionInfo() override;
+    bool                      isSensorExists(OBSensorType type) const override;
     std::vector<OBSensorType> getSensorTypeList() const override;
 
     std::vector<std::shared_ptr<IFilter>> createRecommendedPostProcessingFilters(OBSensorType type) override;

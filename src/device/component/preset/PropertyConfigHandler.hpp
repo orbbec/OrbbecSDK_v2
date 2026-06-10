@@ -29,7 +29,8 @@ public:
         if(propServer->isPropertySupported(propertyId_, PROP_OP_WRITE, PROP_ACCESS_INTERNAL)) {
             propServer->setPropertyValueT<T>(propertyId_, value);
         }
-        else {
+        else if(!owner_->isPlaybackDevice()) {
+            // Real device: keep warning. Playback device: silently skip the non-writable property.
             LOG_WARN("Unsupported property '{}', skipping setting", propertyId_);
         }
     }

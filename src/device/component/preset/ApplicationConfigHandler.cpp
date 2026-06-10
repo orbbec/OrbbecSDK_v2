@@ -347,6 +347,13 @@ void applyApplicationConfigJsonV1(ApplicationConfig &config, IDevice *owner, con
                 continue;
             }
 
+            if(!owner->isSensorExists(sensorType)) {
+                // The sensor is present in the JSON but not on the current device (e.g. a playback bag only
+                // contains the sensors that were actually streaming). Ignore the extra sensor.
+                LOG_DEBUG("Ignoring {} sensor '{}' not present on the current device", kAppConfigRoot, name);
+                continue;
+            }
+
             auto        index      = config.getSensorIndex(sensorType, true);
             const auto &sensorJson = sensors[name];
             auto        context    = std::string("sensor ") + name;

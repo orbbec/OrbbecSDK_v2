@@ -6,7 +6,6 @@
 #include "preset/PropertyConfigHandler.hpp"
 #include "preset/PresetHandler.hpp"
 #include "preset/PostProcessingFilterHandler.hpp"
-#include "preset/StreamProfileHandler.hpp"
 #include "preset/PresetDefinitions.hpp"
 #include "environment/Version.hpp"
 

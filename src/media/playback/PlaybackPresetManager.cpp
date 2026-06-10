@@ -27,14 +27,13 @@ const std::vector<std::string> &PlaybackPresetManager::getAvailablePresetList() 
 }
 
 void PlaybackPresetManager::loadPresetFromJsonData(const std::string &presetName, const std::vector<uint8_t> &jsonData) {
-    utils::unusedVar(presetName);
-    utils::unusedVar(jsonData);
-    LOG_DEBUG("Playback Device: unsupported loadPresetFromJsonData() called with name: {}", presetName);
+    // Forward to the delegate preset manager. Hardware-only writes are skipped silently by each handler
+    // on a playback device, while recoverable runtime params and application_config are restored.
+    delegate_->loadPresetFromJsonData(presetName, jsonData);
 }
 
 void PlaybackPresetManager::loadPresetFromJsonFile(const std::string &filePath) {
-    utils::unusedVar(filePath);
-    LOG_DEBUG("Playback Device: unsupported loadPresetFromJsonFile() called with file: {}", filePath);
+    delegate_->loadPresetFromJsonFile(filePath);
 }
 
 const std::vector<uint8_t> &PlaybackPresetManager::exportSettingsAsPresetJsonData(const std::string &presetName) {
@@ -47,6 +46,14 @@ void PlaybackPresetManager::exportSettingsAsPresetJsonFile(const std::string &fi
 
 void PlaybackPresetManager::fetchPreset() {
     LOG_DEBUG("Playback Device: unsupported fetchPreset()");
+}
+
+bool PlaybackPresetManager::isApplicationConfigSupported() const {
+    return delegate_->isApplicationConfigSupported();
+}
+
+std::shared_ptr<ApplicationConfig> PlaybackPresetManager::getApplicationConfig() {
+    return delegate_->getApplicationConfig();
 }
 
 }  // namespace libobsensor
