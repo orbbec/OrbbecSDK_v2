@@ -213,6 +213,11 @@ void RecordDevice::writeExposureAndGainProperty() {
     writePropertyT<int>(OB_PROP_LASER_POWER_LEVEL_CONTROL_INT);
     writePropertyT<bool>(OB_PROP_LDP_BOOL);
 
+    // device property
+    writePropertyT<int>(OB_PROP_DEVICE_AE_REFERENCE_INT);
+    writePropertyT<int>(OB_PROP_DEVICE_AE_STRATEGY_INT);
+    writePropertyT<int>(OB_PROP_USB_SYNC_VOLTAGE_LEVEL_INT);
+
     // depth property
     writePropertyT<bool>(OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL);
     writePropertyT<int>(OB_PROP_DEPTH_AUTO_EXPOSURE_PRIORITY_INT);
@@ -220,8 +225,6 @@ void RecordDevice::writeExposureAndGainProperty() {
     writePropertyT<int>(OB_PROP_DEPTH_GAIN_INT);
 
     // color property
-    writePropertyT<int>(OB_PROP_DEVICE_AE_REFERENCE_INT);
-    writePropertyT<int>(OB_PROP_DEVICE_AE_STRATEGY_INT);
     writePropertyT<bool>(OB_PROP_COLOR_AUTO_EXPOSURE_BOOL);
     writePropertyT<bool>(OB_PROP_COLOR_AUTO_WHITE_BALANCE_BOOL);
     writePropertyT<int>(OB_PROP_COLOR_POWER_LINE_FREQUENCY_INT);

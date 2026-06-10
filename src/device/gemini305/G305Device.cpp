@@ -147,6 +147,11 @@ void G305Device::init() {
         }
     }
 
+    if(fwVersion >= 10076) {
+        auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        propertyServer->registerProperty(OB_PROP_USB_SYNC_VOLTAGE_LEVEL_INT, "rw", "rw", vendorPropertyAccessor.get());
+    }
+
     static const std::vector<OBMultiDeviceSyncMode> supportedSyncModes = {
         OB_MULTI_DEVICE_SYNC_MODE_STANDALONE,          OB_MULTI_DEVICE_SYNC_MODE_PRIMARY,
         OB_MULTI_DEVICE_SYNC_MODE_SECONDARY_SYNCED,    OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_TRIGGERING,
@@ -537,6 +542,7 @@ void G305Device::initProperties() {
     propertyServer->registerProperty(OB_PROP_FRAME_INTERLEAVE_ENABLE_BOOL, "rw", "rw", vendorPropertyAccessor.get());
     propertyServer->registerProperty(OB_PROP_DEVICE_AE_REFERENCE_INT, "rw", "rw", vendorPropertyAccessor.get());
     propertyServer->registerProperty(OB_PROP_DEVICE_AE_STRATEGY_INT, "rw", "rw", vendorPropertyAccessor.get());
+    propertyServer->registerProperty(OB_PROP_USB_SYNC_VOLTAGE_LEVEL_INT, "rw", "rw", vendorPropertyAccessor.get());
 
     propertyServer->registerProperty(OB_DEVICE_AUTO_CAPTURE_ENABLE_BOOL, "rw", "rw", vendorPropertyAccessor.get());
     propertyServer->registerProperty(OB_DEVICE_AUTO_CAPTURE_INTERVAL_TIME_INT, "rw", "rw", vendorPropertyAccessor.get());

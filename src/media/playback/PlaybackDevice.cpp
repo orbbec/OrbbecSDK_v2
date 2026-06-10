@@ -673,6 +673,7 @@ void PlaybackDevice::initProperties() {
     // G305 device properties
     registerPropertyCondition(propertyServer, OB_PROP_DEVICE_AE_STRATEGY_INT, "r", "r", vendorAccessor);
     registerPropertyCondition(propertyServer, OB_PROP_DEVICE_AE_REFERENCE_INT, "r", "r", vendorAccessor);
+    registerPropertyCondition(propertyServer, OB_PROP_USB_SYNC_VOLTAGE_LEVEL_INT, "r", "r", vendorAccessor);
     // Exposure properties
     // Depth sensor properties
     registerPropertyCondition(propertyServer, OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL, "r", "r", vendorAccessor);

@@ -638,10 +638,15 @@ typedef enum {
      */
     OB_PROP_DEVICE_IP_MODE_INT = 260,
 
-     /**
+    /**
      * @brief DHCP assign IP timeout, unit: second
-     */   
+     */
     OB_PROP_DHCP_ASSIGN_IP_TIMEOUT_INT = 261,
+
+    /**
+     * @brief USB sync I/O voltage level
+     */
+    OB_PROP_USB_SYNC_VOLTAGE_LEVEL_INT = 270,
 
     /**
      * @brief Enable FPS boost in trigger mode
