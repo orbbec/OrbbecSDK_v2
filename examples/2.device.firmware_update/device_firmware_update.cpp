@@ -19,7 +19,7 @@
 
 // Constants
 namespace {
-constexpr uint32_t kMaxReconnectTimeoutMs = 15000;
+constexpr uint32_t kMaxReconnectTimeoutMs = 30000;
 constexpr uint32_t kPollIntervalMs        = 1000;
 }  // namespace
 

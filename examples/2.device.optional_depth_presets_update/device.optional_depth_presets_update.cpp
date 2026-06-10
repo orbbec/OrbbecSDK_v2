@@ -23,25 +23,26 @@ static void printPreset(std::shared_ptr<ob::Device> device);
 std::vector<std::shared_ptr<ob::Device>> devices{};
 
 int main() try {
-    // Create a context to access the connected devices
-    std::shared_ptr<ob::Context> context = std::make_shared<ob::Context>();
-
-    // Get connected devices from the context
-    std::shared_ptr<ob::DeviceList> deviceList = context->queryDeviceList();
-    if(deviceList->getCount() == 0) {
-        std::cout << "No device found. Please connect a device first!" << std::endl;
-        std::cout << "Press any key to exit..." << std::endl;
-        ob_smpl::waitForKeyPressed();
-        return 0;
-    }
-
-    for(uint32_t i = 0; i < deviceList->getCount(); ++i) {
-        devices.push_back(deviceList->getDevice(i));
-    }
-    std::cout << "Devices found:" << std::endl;
-    printDeviceList();
-
     while(true) {
+        // Create a context to access the connected devices
+        std::shared_ptr<ob::Context> context = std::make_shared<ob::Context>();
+
+        // Get connected devices from the context
+        std::shared_ptr<ob::DeviceList> deviceList = context->queryDeviceList();
+        if(deviceList->getCount() == 0) {
+            std::cout << "No device found. Please connect a device first!" << std::endl;
+            std::cout << "Press any key to exit..." << std::endl;
+            ob_smpl::waitForKeyPressed();
+            return 0;
+        }
+
+        devices.clear();
+        for(uint32_t i = 0; i < deviceList->getCount(); ++i) {
+            devices.push_back(deviceList->getDevice(i));
+        }
+        std::cout << "Devices found:" << std::endl;
+        printDeviceList();
+
         bool                        firstCall   = true;
         OBFwUpdateState             updateState = STAT_START;
         std::shared_ptr<ob::Device> device      = nullptr;
@@ -83,10 +84,15 @@ int main() try {
             // If the update fails, will throw an exception.
             std::cerr << "\nThe update was interrupted! An error occurred! " << std::endl;
             std::cerr << "Error message: " << e.what() << " (status: " << e.getStatus() << ")" << "\n" << std::endl;
-            std::cout << "Press any key to exit." << std::endl;
-            ob_smpl::waitForKeyPressed();
             delete[] filePaths;
             filePaths = nullptr;
+            // Release SDK resources before waiting for input, as internal threads
+            // may interfere with stdin on some platforms.
+            device.reset();
+            devices.clear();
+            context.reset();
+            std::cout << "Press any key to exit." << std::endl;
+            ob_smpl::waitForKeyPressed();
             break;
         }
 
@@ -97,14 +103,25 @@ int main() try {
             printPreset(device);
         }
 
+        // Release SDK resources before reading stdin, as internal threads
+        // may interfere with stdin on some platforms.
+        device.reset();
+        devices.clear();
+        context.reset();
+
         if(!shouldContinue()) {
             break;
         }
     }
+
+    return 0;
 }
 catch(ob::Error &e) {
     std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\nstatus:" << e.getStatus()
               << "\ntype:" << e.getExceptionType() << std::endl;
+    // Release SDK resources before waiting for input, as internal threads
+    // may interfere with stdin on some platforms.
+    devices.clear();
     std::cout << "\nPress any key to exit.";
     ob_smpl::waitForKeyPressed();
     exit(EXIT_FAILURE);

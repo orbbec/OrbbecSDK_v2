@@ -32,7 +32,7 @@ namespace {
 constexpr uint32_t kMsPerSecond           = 1000;
 constexpr uint32_t kUsPerMs               = 1000;
 constexpr uint32_t kPollIntervalUs        = 100;
-constexpr uint32_t kMaxReconnectTimeoutMs = 15000;
+constexpr uint32_t kMaxReconnectTimeoutMs = 30000;
 constexpr uint32_t kPollIntervalMs        = 1000;
 constexpr size_t   kMinExtensionLength    = 4;
 constexpr uint32_t kCursorMoveUpLines     = 3;
@@ -390,8 +390,16 @@ int main(int argc, char *argv[]) try {
         }
     }
 
-    // reset callback before destroying context
+    // Reset callback before destroying context to avoid dangling references
     context->setDeviceChangedCallback([](std::shared_ptr<ob::DeviceList>, std::shared_ptr<ob::DeviceList>) {});
+
+    // Release SDK resources before waiting for input, as the libuvc backend's
+    // internal threads can interfere with stdin on Linux.
+    successDevices.clear();
+    mismatchDevices.clear();
+    failedDevices.clear();
+    totalDevices.clear();
+    context.reset();
 
     std::cout << "Press any key to exit..." << std::endl;
     obSmpl::waitForKeyPressed();
