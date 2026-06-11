@@ -166,18 +166,27 @@ void DeviceBase::fetchExtensionInfo() {
     extensionInfo_["AllSensorsUsingSameClock"] = "true";
 }
 
-void DeviceBase::fetchDeviceErrorState() {
+void DeviceBase::fetchDeviceErrorState(uint64_t maxCacheAgeMs) {
     auto propServer = getPropertyServer();
     if(propServer->isPropertySupported(OB_STRUCT_DEVICE_ERROR_STATE, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
+        std::lock_guard<std::mutex> lock(errorStateFetchMutex_);
+        if(maxCacheAgeMs > 0) {
+            auto now = utils::getSteadyTimeMs();
+            if(now - lastErrorStateFetchTime_ < maxCacheAgeMs) {
+                return;  // cache is still fresh enough, reuse cached value
+            }
+        }
         try {
-            deviceErrorState_ = 0;
-            auto state        = propServer->getStructureDataProtoV1_1_T<OBDeviceErrorState, 1>(OB_STRUCT_DEVICE_ERROR_STATE, PROP_ACCESS_INTERNAL);
-            deviceErrorState_ = state.errorCode;
+            deviceErrorState_        = 0;
+            auto state               = propServer->getStructureDataProtoV1_1_T<OBDeviceErrorState, 1>(OB_STRUCT_DEVICE_ERROR_STATE, PROP_ACCESS_INTERNAL);
+            deviceErrorState_        = state.errorCode;
+            lastErrorStateFetchTime_ = utils::getSteadyTimeMs();
         }
         CATCH_EXCEPTION
     }
     else {
         // Unsupported
+        std::lock_guard<std::mutex> lock(errorStateFetchMutex_);
         deviceErrorState_ = 0;
     }
 }
@@ -195,6 +204,7 @@ const std::string &DeviceBase::getExtensionInfo(const std::string &infoKey) cons
 }
 
 uint64_t DeviceBase::getDeviceErrorState() const {
+    std::lock_guard<std::mutex> lock(errorStateFetchMutex_);
     return deviceErrorState_;
 }
 

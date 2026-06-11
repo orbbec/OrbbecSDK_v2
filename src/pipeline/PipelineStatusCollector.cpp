@@ -4,6 +4,7 @@
 #include "PipelineStatusCollector.hpp"
 #include "ISourcePort.hpp"
 #include "logger/Logger.hpp"
+#include "utils/Utils.hpp"
 
 namespace libobsensor {
 
@@ -172,9 +173,11 @@ void PipelineStatusCollector::reset() {
         std::lock_guard<std::mutex> lock(framTimeMutex_);
         lastFrameTime_.clear();
     }
-    cachedDevStatus_  = 0;
-    cachedDrvStatus_  = 0;
-    lastDevFetchTime_ = {};
+    {
+        std::lock_guard<std::mutex> lock(devFetchMutex_);
+        cachedDrvStatus_  = 0;
+        lastDrvFetchTime_ = 0;
+    }
     {
         std::lock_guard<std::mutex> lock(monitorMutex_);
         lastStatusCache_         = {};
@@ -201,7 +204,8 @@ void PipelineStatusCollector::setNoFrameThresholdUsec(uint64_t thresholdUsec) {
 }
 
 void PipelineStatusCollector::setDevFetchIntervalMs(uint64_t intervalMs) {
-    devFetchInterval_ = std::chrono::milliseconds(intervalMs);
+    std::lock_guard<std::mutex> lock(devFetchMutex_);
+    devFetchInterval_ = intervalMs;
 }
 
 void PipelineStatusCollector::evaluateNoFrame(OBPipelineStatus &status) {
@@ -224,30 +228,39 @@ bool PipelineStatusCollector::needDeviceQuery(uint64_t sdkStatus) {
 }
 
 void PipelineStatusCollector::fetchDeviceAndDriverStatus(OBPipelineStatus &status, bool forceFetch) {
-    auto now = steadyNow();
-    if(!forceFetch && (now - lastDevFetchTime_ < devFetchInterval_)) {
-        status.devStatus = cachedDevStatus_;
-        status.drvStatus = cachedDrvStatus_;
-        return;
+    // Fetch device error state via Property 5524. The cache/throttle is owned by the
+    // device itself (shared across all pipelines bound to it); forceFetch=true requires
+    // the latest value, otherwise reuse a cached value up to devFetchInterval_ old.
+    uint64_t intervalMs;
+    {
+        std::lock_guard<std::mutex> lock(devFetchMutex_);
+        intervalMs = devFetchInterval_;
     }
-    lastDevFetchTime_ = now;
 
-    // Fetch device error state via Property 5524
+    uint64_t devStatus        = 0;
+    uint64_t maxDevCacheAgeMs = forceFetch ? 0 : intervalMs;
     try {
-        device_->fetchDeviceErrorState();
-        cachedDevStatus_ = device_->getDeviceErrorState();
+        device_->fetchDeviceErrorState(maxDevCacheAgeMs);
+        devStatus = device_->getDeviceErrorState();
         // Clear the most significant bit (MSB), which indicates the state info cache flag
-        cachedDevStatus_ &= ~(1ULL << 63);
+        devStatus &= ~(1ULL << 63);
     }
     catch(...) {
-        cachedDevStatus_ = 0;
+        devStatus = 0;
     }
 
-    // Fetch driver status from active ports
-    cachedDrvStatus_ = fetchPortDriverStatus();
+    status.devStatus = devStatus;
 
-    status.devStatus = cachedDevStatus_;
-    status.drvStatus = cachedDrvStatus_;
+    // Throttle the driver status query the same way: getDriverStatus() may issue a kernel
+    // ioctl on GMSL ports, so reuse the cached value within devFetchInterval_ unless forced.
+    {
+        std::lock_guard<std::mutex> lock(devFetchMutex_);
+        if(forceFetch || lastDrvFetchTime_ == 0 || utils::getSteadyTimeMs() - lastDrvFetchTime_ >= intervalMs) {
+            cachedDrvStatus_  = fetchPortDriverStatus();
+            lastDrvFetchTime_ = utils::getSteadyTimeMs();
+        }
+        status.drvStatus = cachedDrvStatus_;
+    }
 }
 
 uint64_t PipelineStatusCollector::fetchPortDriverStatus() {
@@ -276,10 +289,6 @@ OBPipelineIssue PipelineStatusCollector::deriveIssue(const OBPipelineStatus &s) 
 uint64_t PipelineStatusCollector::nowUsec() {
     auto now = std::chrono::system_clock::now();
     return static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count());
-}
-
-std::chrono::steady_clock::time_point PipelineStatusCollector::steadyNow() {
-    return std::chrono::steady_clock::now();
 }
 
 }  // namespace libobsensor

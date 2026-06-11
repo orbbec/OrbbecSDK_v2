@@ -82,8 +82,12 @@ public:
 
     /**
      * @brief Fetch device error state from device and update cache
+     * @param[in] maxCacheAgeMs Maximum age (in milliseconds) of the cached error state that
+     *        is acceptable to reuse without querying the device. 0 (default) always queries
+     *        the device for the latest state. The cache is shared across all components
+     *        (e.g. multiple pipelines) bound to the same device.
      */
-    virtual void fetchDeviceErrorState() = 0;
+    virtual void fetchDeviceErrorState(uint64_t maxCacheAgeMs = 0) = 0;
 
     // device components management
     virtual bool                                 isComponentExists(DeviceComponentId compId) const                     = 0;

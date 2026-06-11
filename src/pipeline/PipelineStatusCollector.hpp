@@ -101,8 +101,9 @@ public:
     void setNoFrameThresholdUsec(uint64_t thresholdUsec);
 
     /**
-     * @brief Set minimum interval for device-status queries.
-     * @param[in] intervalMs Interval in milliseconds.
+     * @brief Set the maximum age of the cached device error state that this
+     *        pipeline is willing to reuse before re-querying the device.
+     * @param[in] intervalMs Maximum cache age in milliseconds.
      */
     void setDevFetchIntervalMs(uint64_t intervalMs);
 
@@ -135,7 +136,9 @@ private:
     /**
      * @brief Fetch and fill device and driver status.
      * @param[in,out] status Status object to update.
-     * @param[in] forceFetch If true, bypass the time-based cache and fetch fresh data from device.
+     * @param[in] forceFetch If true, always query the device for the latest error state;
+     *        if false, the device-level cache may be reused as long as it is no older
+     *        than devFetchInterval_.
      */
     void fetchDeviceAndDriverStatus(OBPipelineStatus &status, bool forceFetch = false);
 
@@ -158,12 +161,6 @@ private:
      */
     uint64_t nowUsec();
 
-    /**
-     * @brief Get current steady clock time point.
-     * @return Current steady clock time point.
-     */
-    std::chrono::steady_clock::time_point steadyNow();
-
 private:
     IDevice *device_;
 
@@ -174,10 +171,13 @@ private:
 
     uint64_t noFrameThresholdUsec_ = 3000000;  // 3 seconds
 
-    uint64_t                              cachedDevStatus_ = 0;
-    uint64_t                              cachedDrvStatus_ = 0;
-    std::chrono::steady_clock::time_point lastDevFetchTime_{};
-    std::chrono::milliseconds             devFetchInterval_{ 3000 };
+    // Device/driver status fetch throttle state, guarded by devFetchMutex_ since it is
+    // accessed from concurrent status queries. Driver status is cached to avoid a GMSL ioctl
+    // on every tick.
+    std::mutex devFetchMutex_;
+    uint64_t   devFetchInterval_{ 3000 };
+    uint64_t   cachedDrvStatus_  = 0;
+    uint64_t   lastDrvFetchTime_ = 0;
 
     std::mutex                                portsMutex_;
     std::vector<std::shared_ptr<ISourcePort>> activePorts_;
@@ -195,11 +195,11 @@ private:
     bool                        monitorStop_ = true;
     std::atomic<bool>           monitorEnable_{ false };
 
-    OBPipelineStatus        lastStatusCache_{};
-    bool                    monitorCollectRequested_ = false;
-    uint64_t                monitorCollectReqSeq_    = 0;
-    uint64_t                monitorCollectDoneSeq_   = 0;
-    utils::SteadyCondVar    monitorCollectCv_;
+    OBPipelineStatus     lastStatusCache_{};
+    bool                 monitorCollectRequested_ = false;
+    uint64_t             monitorCollectReqSeq_    = 0;
+    uint64_t             monitorCollectDoneSeq_   = 0;
+    utils::SteadyCondVar monitorCollectCv_;
 };
 
 }  // namespace libobsensor

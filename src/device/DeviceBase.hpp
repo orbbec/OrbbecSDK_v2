@@ -66,7 +66,7 @@ public:
     const std::string                &getExtensionInfo(const std::string &infoKey) const override;
     bool                              isExtensionInfoExists(const std::string &infoKey) const override;
     uint64_t                          getDeviceErrorState() const override;
-    void                              fetchDeviceErrorState() override;
+    void                              fetchDeviceErrorState(uint64_t maxCacheAgeMs = 0) override;
 
     const std::string &getSn() const override {
         // Hold a local reference to keep the device info valid during access.
@@ -131,9 +131,15 @@ protected:
     std::shared_ptr<DeviceInfo>                  deviceInfo_;
     std::map<std::string, std::string>           extensionInfo_;
     uint64_t                                     deviceErrorState_ = 0;
-    std::atomic<bool>                            isPlaybackDevice_{ false };
-    std::atomic<bool>                            hasAccessControl_{ false };
-    std::atomic<OBDeviceAccessMode>              accessMode_{ OB_DEVICE_DEFAULT_ACCESS };
+
+    // Error state fetch throttling: prevents redundant USB queries when
+    // multiple pipelines share the same device and poll the error state.
+    uint64_t           lastErrorStateFetchTime_ = 0;
+    mutable std::mutex errorStateFetchMutex_;
+
+    std::atomic<bool>               isPlaybackDevice_{ false };
+    std::atomic<bool>               hasAccessControl_{ false };
+    std::atomic<OBDeviceAccessMode> accessMode_{ OB_DEVICE_DEFAULT_ACCESS };
 
     // Post processing filter list
     std::map<OBSensorType, std::vector<std::shared_ptr<IFilter>>> recommendedPostFilters_;
