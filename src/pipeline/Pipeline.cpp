@@ -365,6 +365,12 @@ void Pipeline::stopStream() {
 
 void Pipeline::stop() {
     LOG_INFO("Try to stop pipeline!");
+
+    // stop and reset status collector
+    statusCollector_->reset();
+    statusCollector_->clearActivePorts();
+    activeSensors_.clear();
+
     if(streamState_ != STREAM_STATE_STOPPED) {
         stopStream();
     }
@@ -382,11 +388,6 @@ void Pipeline::stop() {
 
     // clear callback
     pipelineCallback_ = nullptr;
-
-    // reset status collector
-    statusCollector_->reset();
-    statusCollector_->clearActivePorts();
-    activeSensors_.clear();
 
     streamState_ = STREAM_STATE_STOPPED;
     LOG_INFO("Stop pipeline done!");
