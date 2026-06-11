@@ -542,7 +542,6 @@ void G305Device::initProperties() {
     propertyServer->registerProperty(OB_PROP_FRAME_INTERLEAVE_ENABLE_BOOL, "rw", "rw", vendorPropertyAccessor.get());
     propertyServer->registerProperty(OB_PROP_DEVICE_AE_REFERENCE_INT, "rw", "rw", vendorPropertyAccessor.get());
     propertyServer->registerProperty(OB_PROP_DEVICE_AE_STRATEGY_INT, "rw", "rw", vendorPropertyAccessor.get());
-    propertyServer->registerProperty(OB_PROP_USB_SYNC_VOLTAGE_LEVEL_INT, "rw", "rw", vendorPropertyAccessor.get());
 
     propertyServer->registerProperty(OB_DEVICE_AUTO_CAPTURE_ENABLE_BOOL, "rw", "rw", vendorPropertyAccessor.get());
     propertyServer->registerProperty(OB_DEVICE_AUTO_CAPTURE_INTERVAL_TIME_INT, "rw", "rw", vendorPropertyAccessor.get());
