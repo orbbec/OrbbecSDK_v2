@@ -2,15 +2,18 @@
 // Licensed under the MIT License.
 
 #include "DepthEngineLoader.hpp"
+#include "context/DynamicLibraryManager.hpp"
 #include "environment/EnvConfig.hpp"
 namespace libobsensor {
 
 DepthEngineLoadFactory::DepthEngineLoadFactory() {
-    std::string depthEngineLoadPath_ = EnvConfig::getExtensionsDirectory() + "/depthengine/";
+    context_         = std::make_shared<deloader_global_context_t>();
+    context_->loaded = false;
 
-    dylib_ = std::make_shared<dylib>(depthEngineLoadPath_, "depthengine");
-
-    context_ = std::make_shared<deloader_global_context_t>();
+    dylib_ = DynamicLibraryManager::getInstance()->getLibrary("depthengine");
+    if(!dylib_) {
+        dylib_ = DynamicLibraryManager::getInstance()->loadLibrary(EnvConfig::getExtensionsDirectory() + "/depthengine/", "depthengine");
+    }
 
     if(dylib_) {
         if(!dylib_->has_symbol(K4A_PLUGIN_EXPORTED_FUNCTION)) {

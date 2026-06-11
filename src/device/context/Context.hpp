@@ -18,6 +18,7 @@
 #include "Platform.hpp"
 #include "DynamicLibraryManager.hpp"
 #include "timestamp/HostTimestampProvider.hpp"
+#include "common/DeviceSeriesInfo.hpp"
 
 namespace libobsensor {
 class Context {
@@ -26,6 +27,8 @@ private:
 
     static std::mutex             instanceMutex_;
     static std::weak_ptr<Context> instanceWeakPtr_;
+
+    void registerDynamicLibraryLoadedCallbacks();
 
 public:
     ~Context() noexcept;
@@ -40,9 +43,6 @@ public:
     std::shared_ptr<HostTimestampProvider> getHostTimestampProvider() const;
 
 private:
-#ifdef OB_BUILD_WITH_EXTENSIONS_COMMIT_HASH
-    void logExtensionsCommitHashes();
-#endif
     std::shared_ptr<EnvConfig>               envConfig_;
     std::shared_ptr<Logger>                  logger_;
     std::shared_ptr<IDeviceManager>          deviceManager_;
@@ -51,6 +51,7 @@ private:
     std::shared_ptr<StreamExtrinsicsManager> streamExtrinsicsManager_;
     std::shared_ptr<FilterFactory>           filterFactory_;
     std::shared_ptr<Platform>                platform_;
+    std::shared_ptr<DeviceSeriesInfoManager> deviceSeriesInfoManager_;
     std::shared_ptr<DynamicLibraryManager>   dynamicLibraryManager_;
     std::shared_ptr<HostTimestampProvider>   hostTimestampProvider_;
 

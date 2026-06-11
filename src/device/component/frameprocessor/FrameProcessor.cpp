@@ -2,58 +2,66 @@
 // Licensed under the MIT License.
 
 #include "FrameProcessor.hpp"
+#include "context/DynamicLibraryManager.hpp"
+#include "environment/EnvConfig.hpp"
 #include "frame/FrameFactory.hpp"
 #include "utils/Utils.hpp"
-#include "environment/EnvConfig.hpp"
 #include "property/InternalProperty.hpp"
 
 namespace libobsensor {
 FrameProcessorFactory::FrameProcessorFactory(IDevice *owner) : DeviceComponentBase(owner) {
-    std::string moduleLoadPath = EnvConfig::getExtensionsDirectory() + "/frameprocessor/";
-    dylib_                     = std::make_shared<dylib>(moduleLoadPath.c_str(), "ob_frame_processor");
-
-    auto dylib = dylib_;
-    context_   = std::shared_ptr<FrameProcessorContext>(new FrameProcessorContext(), [dylib](FrameProcessorContext *context) {
-        if(context->destroy_context) {
-            ob_error *error = nullptr;
-            context->destroy_context(context->context, &error);
-            delete error;
+    try {
+        dylib_ = DynamicLibraryManager::getInstance()->getLibrary("ob_frame_processor");
+        if(!dylib_) {
+            dylib_ = DynamicLibraryManager::getInstance()->loadLibrary(EnvConfig::getExtensionsDirectory() + "/frameprocessor/", "ob_frame_processor");
         }
-        delete context;
-    });
 
-    if(dylib_) {
-        context_->create_context = dylib_->get_function<ob_frame_processor_context *(ob_device *, ob_error **)>("ob_create_frame_processor_context");
-        context_->create_processor =
-            dylib_->get_function<ob_frame_processor *(ob_frame_processor_context *, ob_sensor_type type, ob_error **)>("ob_create_frame_processor");
-        context_->get_config_schema = dylib_->get_function<const char *(ob_frame_processor *, ob_error **)>("ob_frame_processor_get_config_schema");
-        context_->update_config     = dylib_->get_function<void(ob_frame_processor *, size_t, const char **, ob_error **)>("ob_frame_processor_update_config");
-        context_->process_frame     = dylib_->get_function<ob_frame *(ob_frame_processor *, ob_frame *, ob_error **)>("ob_frame_processor_process_frame");
-        context_->destroy_processor = dylib_->get_function<void(ob_frame_processor *, ob_error **)>("ob_destroy_frame_processor");
-        context_->destroy_context   = dylib_->get_function<void(ob_frame_processor_context *, ob_error **)>("ob_destroy_frame_processor_context");
-        context_->set_hardware_d2c_params = dylib->get_function<void(ob_frame_processor *, ob_camera_intrinsic, uint8_t, float, int16_t, int16_t, int16_t,
-                                                                     int16_t, bool, bool, ob_error **error)>("ob_frame_processor_set_hardware_d2c_params");
-        TRY_EXECUTE(context_->set_pre_process_param =
-                        dylib->get_function<void(ob_frame_processor *, ob_d2c_pre_process_param, ob_error **)>("ob_frame_processor_set_pre_process_param"));
-        if(!context_->set_pre_process_param) {
-            LOG_WARN("ob_frame_processor_set_pre_process_param not found in dylib, pre-process param setting is not supported by this plugin version");
+        auto dylib = dylib_;
+        context_   = std::shared_ptr<FrameProcessorContext>(new FrameProcessorContext(), [dylib](FrameProcessorContext *context) {
+            if(context->destroy_context) {
+                ob_error *error = nullptr;
+                context->destroy_context(context->context, &error);
+                delete error;
+            }
+            delete context;
+        });
+
+        if(dylib_) {
+            context_->create_context = dylib_->get_function<ob_frame_processor_context *(ob_device *, ob_error **)>("ob_create_frame_processor_context");
+            context_->create_processor =
+                dylib_->get_function<ob_frame_processor *(ob_frame_processor_context *, ob_sensor_type type, ob_error **)>("ob_create_frame_processor");
+            context_->get_config_schema = dylib_->get_function<const char *(ob_frame_processor *, ob_error **)>("ob_frame_processor_get_config_schema");
+            context_->update_config = dylib_->get_function<void(ob_frame_processor *, size_t, const char **, ob_error **)>("ob_frame_processor_update_config");
+            context_->process_frame = dylib_->get_function<ob_frame *(ob_frame_processor *, ob_frame *, ob_error **)>("ob_frame_processor_process_frame");
+            context_->destroy_processor       = dylib_->get_function<void(ob_frame_processor *, ob_error **)>("ob_destroy_frame_processor");
+            context_->destroy_context         = dylib_->get_function<void(ob_frame_processor_context *, ob_error **)>("ob_destroy_frame_processor_context");
+            context_->set_hardware_d2c_params = dylib->get_function<void(ob_frame_processor *, ob_camera_intrinsic, uint8_t, float, int16_t, int16_t, int16_t,
+                                                                         int16_t, bool, bool, ob_error **error)>("ob_frame_processor_set_hardware_d2c_params");
+            TRY_EXECUTE(context_->set_pre_process_param =
+                            dylib->get_function<void(ob_frame_processor *, ob_d2c_pre_process_param, ob_error **)>("ob_frame_processor_set_pre_process_param"));
+            if(!context_->set_pre_process_param) {
+                LOG_WARN("ob_frame_processor_set_pre_process_param not found in dylib, pre-process param setting is not supported by this plugin version");
+            }
+        }
+        if(context_->create_context && !context_->context) {
+            auto cDevice      = new ob_device;
+            cDevice->device   = owner->shared_from_this();
+            ob_error *error   = nullptr;
+            context_->context = context_->create_context(cDevice, &error);
+            if(error) {
+                delete cDevice;
+                THROW_STANDARD_EXCEPTION("create frame processor context failed");
+            }
+
+            if(cDevice) {
+                delete cDevice;
+                cDevice = nullptr;
+            }
         }
     }
-    if(context_->create_context && !context_->context) {
-        auto cDevice      = new ob_device;
-        cDevice->device   = owner->shared_from_this();
-        ob_error *error   = nullptr;
-        context_->context = context_->create_context(cDevice, &error);
-        if(error) {
-            // TODO
-            delete cDevice;
-            THROW_STANDARD_EXCEPTION("create frame processor context failed");
-        }
-
-        if(cDevice) {
-            delete cDevice;
-            cDevice = nullptr;
-        }
+    catch(const std::exception &e) {
+        LOG_WARN("Failed to load frame processor library: {}", e.what());
+        THROW_STANDARD_EXCEPTION(e.what());
     }
 }
 
