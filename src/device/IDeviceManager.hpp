@@ -62,6 +62,7 @@ public:
      * @param[in] repeatInterval Interval in ms. 0 for one-shot (sync), >0 for periodic (async)
      */
     virtual void  enableDeviceClockSync(void *caller, uint64_t repeatInterval) = 0;
+    virtual bool  syncDeviceHardwarePPSTime(uint64_t hardwarePPSTime)          = 0;
     virtual void  disableDeviceClockSync()                                     = 0;
     virtual void *getDeviceClockSyncCaller()                                   = 0;
 };

@@ -175,6 +175,16 @@ void ob_enable_device_clock_sync(ob_context *context, uint64_t repeat_interval_m
 }
 HANDLE_EXCEPTIONS_NO_RETURN(context, repeat_interval_msec)
 
+void ob_sync_device_hardware_pps_time(ob_context *context, uint64_t hardware_pps_time, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(context);
+    auto       deviceMgr = context->context->getDeviceManager();
+    const bool ok        = deviceMgr->syncDeviceHardwarePPSTime(hardware_pps_time);
+    if(!ok) {
+        LOG_WARN("ob_sync_device_hardware_pps_time failed or no eligible device, hardware_pps_time={}ms", hardware_pps_time);
+    }
+}
+HANDLE_EXCEPTIONS_NO_RETURN(context, hardware_pps_time)
+
 void ob_free_idle_memory(ob_context *context, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(context);
     auto frameMemPool = context->context->getFrameMemoryPool();

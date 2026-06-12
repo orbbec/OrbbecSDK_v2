@@ -42,6 +42,7 @@ public:
     bool isNetDeviceEnumerationEnable() const override;
 
     void  enableDeviceClockSync(void *caller, uint64_t repeatInterval) override;
+    bool  syncDeviceHardwarePPSTime(uint64_t hardwarePPSTime) override;
     void  disableDeviceClockSync() override;
     void *getDeviceClockSyncCaller() override {
         return multiDeviceSyncCaller_.load();

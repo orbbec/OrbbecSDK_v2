@@ -144,4 +144,37 @@ void DeviceClockSynchronizer::timerSyncWithHost() {
     }
 }
 
+bool DeviceClockSynchronizer::syncDeviceHardwarePPSTime(uint64_t hardwarePPSTime) {
+    auto owner          = getOwner();
+    auto propertyServer = owner->getPropertyServer();
+
+    if(!propertyServer->isPropertySupported(OB_PROP_CHECK_PPS_SYNC_IN_SIGNAL_BOOL, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
+        LOG_ERROR("Device does not support hardware PPS sync");
+        return false;
+    }
+
+    if(hardwarePPSTime == 0) {
+        LOG_ERROR("hardwarePPSTime invalid: 0");
+        return false;
+    }
+
+    OBDeviceTime devTsp{};
+    devTsp.time = hardwarePPSTime;
+    devTsp.rtt  = 0;
+
+    try {
+        propertyServer->setStructureDataT<OBDeviceTime>(OB_STRUCT_DEVICE_TIME, devTsp);
+    }
+    catch(const std::exception &e) {
+        LOG_ERROR("setStructureDataT(OB_STRUCT_DEVICE_TIME) failed: {}", e.what());
+        return false;
+    }
+    catch(...) {
+        LOG_ERROR("setStructureDataT(OB_STRUCT_DEVICE_TIME) failed: unknown exception");
+        return false;
+    }
+
+    return true;
+}
+
 }  // namespace libobsensor

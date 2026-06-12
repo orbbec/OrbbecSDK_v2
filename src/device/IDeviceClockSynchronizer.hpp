@@ -15,6 +15,7 @@ public:
     virtual OBDeviceTimestampResetConfig getTimestampResetConfig()                                                         = 0;
     virtual void                         timestampReset()                                                                  = 0;
     virtual void                         timerSyncWithHost()                                                               = 0;
+    virtual bool                         syncDeviceHardwarePPSTime(uint64_t hardwarePPSTime)                               = 0;
 };
 
 }  // namespace libobsensor

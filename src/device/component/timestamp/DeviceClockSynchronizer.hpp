@@ -16,6 +16,7 @@ public:
     OBDeviceTimestampResetConfig getTimestampResetConfig() override;
     void                         timestampReset() override;
     void                         timerSyncWithHost() override;
+    bool                         syncDeviceHardwarePPSTime(uint64_t hardwarePPSTime) override;
 
 private:
     uint64_t deviceClockFreqIn_;

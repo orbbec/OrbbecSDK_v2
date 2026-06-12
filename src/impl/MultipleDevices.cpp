@@ -84,6 +84,18 @@ void ob_device_timer_sync_with_host(ob_device *device, ob_error **error) BEGIN_A
 }
 HANDLE_EXCEPTIONS_AND_RETURN(, device)
 
+bool ob_device_sync_hardware_pps_time(ob_device *device, uint64_t hardwarePPSTime, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(device);
+
+    auto configurator = device->device->getComponentT<libobsensor::IDeviceClockSynchronizer>(libobsensor::OB_DEV_COMPONENT_DEVICE_CLOCK_SYNCHRONIZER, false);
+    if(!configurator) {
+        LOG_WARN("Device does not support clock synchronization");
+        return false;
+    }
+    return configurator->syncDeviceHardwarePPSTime(hardwarePPSTime);
+}
+HANDLE_EXCEPTIONS_AND_RETURN(0, device)
+
 #ifdef __cplusplus
 }
 #endif

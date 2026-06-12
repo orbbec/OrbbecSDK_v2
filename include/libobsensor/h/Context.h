@@ -185,6 +185,15 @@ OB_EXPORT void ob_unregister_device_changed_callback(ob_context *context, ob_cal
 OB_EXPORT void ob_enable_device_clock_sync(ob_context *context, uint64_t repeat_interval_msec, ob_error **error);
 
 /**
+ * @brief Synchronize the device time (synchronize hardwarePPS time to all created devices)
+ *
+ * @param[in] context Pointer to the context object
+ * @param[in] hardware_pps_time unit: ms.
+ * @param[out] error Pointer to an error object that will be populated if an error occurs during execution
+ */
+OB_EXPORT void ob_sync_device_hardware_pps_time(ob_context *context, uint64_t hardware_pps_time, ob_error **error);
+
+/**
  * @brief Free idle memory from the internal frame memory pool
  *
  * @param[in] context Pointer to the context object

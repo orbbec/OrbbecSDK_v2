@@ -338,6 +338,17 @@ OB_EXPORT void ob_device_enable_heartbeat(ob_device *device, bool enable, ob_err
 OB_EXPORT void ob_device_enable_firmware_log(ob_device *device, bool enable, ob_error **error);
 
 /**
+ * @brief Synchronize the device time (synchronize hardwarePPS time to device)
+ *
+ * @param[in] device The device object.
+ * @param[in] hardware_pps_time unit: ms.
+ * @param[out] error Pointer to an error object that will be set if an error occurs.
+ *
+ * @return bool Whether the synchronisation is successful.
+ */
+OB_EXPORT bool ob_device_sync_hardware_pps_time(ob_device *device, uint64_t hardware_pps_time, ob_error **error);
+
+/**
  * @brief Send data to the device and receive data from the device.
  * @brief This is a factory and debug function, which can be used to send and receive data from the device. The data format is secret and belongs to the device
  * vendor.

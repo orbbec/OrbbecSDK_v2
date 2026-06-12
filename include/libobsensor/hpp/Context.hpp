@@ -260,6 +260,17 @@ public:
     }
 
     /**
+     * @brief Activates synchronization time to all created devices (if supported).
+     *
+     * @param[in] hardwarePPSTime unit:ms.
+     */
+    void syncDeviceHardwarePPSTime(uint64_t hardwarePPSTime) const {
+        ob_error *error = nullptr;
+        ob_sync_device_hardware_pps_time(impl_, hardwarePPSTime, &error);
+        Error::handle(&error);
+    }
+
+    /**
      * @brief Frees idle memory from the internal frame memory pool.
      * @brief The SDK includes an internal frame memory pool that caches memory allocated for frames received from devices.
      */

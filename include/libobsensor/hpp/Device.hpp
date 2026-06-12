@@ -536,6 +536,18 @@ public:
     }
 
     /**
+     * @brief synchronization the device time (synchronize hardwarePPS time to device)
+     * @param[in] hardwarePPSTime unit:ms
+     * @return Whether the synchronisation is successful
+     */
+    bool syncDeviceHardwarePPSTime(uint64_t hardwarePPSTime) const {
+        ob_error *error   = nullptr;
+        bool      success = ob_device_sync_hardware_pps_time(impl_, hardwarePPSTime, &error);
+        Error::handle(&error);
+        return success;
+    }
+
+    /**
      * @brief Enable or disable the device heartbeat.
      * @brief After enable the device heartbeat, the sdk will start a thread to send heartbeat signal to the device error every 3 seconds.
      *
