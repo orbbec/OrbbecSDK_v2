@@ -5,7 +5,9 @@
 #include "DeviceBase.hpp"
 #include "IDeviceManager.hpp"
 #include "frameprocessor/FrameProcessor.hpp"
+#if defined(BUILD_NET_PAL)
 #include "accesscontroller/GvcpCcpController.hpp"
+#endif
 
 #include <map>
 #include <memory>
@@ -44,13 +46,16 @@ private:
     void updateSensorStreamProfile();
 
     void fetchDeviceInfo() override;
+#if defined(BUILD_NET_PAL)
     void checkAndAcquireCCP();
+#endif
 
 private:
-    const uint64_t                     frameTimeFreq_      = 1000;
-    const uint64_t                     colorframeTimeFreq_ = 90000;
+    const uint64_t frameTimeFreq_      = 1000;
+    const uint64_t colorframeTimeFreq_ = 90000;
+#if defined(BUILD_NET_PAL)
     std::shared_ptr<GvcpCcpController> ccpController_;
+#endif
 };
 
 }  // namespace libobsensor
-

@@ -76,7 +76,7 @@ SourcePortInfoList Platform::queryUsbSourcePortInfos(bool includeGmsl) {
     if(pal == palMap_.end()) {
         THROW_PAL_EXCEPTION("Usb pal is not exist, please check the build config that you have enabled BUILD_USB_PAL", OB_ERROR_ITEM_NOT_FOUND);
     }
-#if defined(OS_LINUX)
+#if defined(OS_LINUX) && defined(BUILD_USB_PAL)
     auto linuxUsbPal = std::dynamic_pointer_cast<LinuxUsbPal>(pal->second);
     return includeGmsl ? linuxUsbPal->querySourcePortInfos() : linuxUsbPal->queryUsbSourcePortInfos();
 #else
@@ -193,7 +193,7 @@ void Platform::setGvcpPortscheme(OBGvcpPortScheme scheme) {
     auto ethernetPal = std::dynamic_pointer_cast<EthernetPal>(pal->second);
     ethernetPal->setGvcpPortscheme(scheme);
 #else
-    utils::unusedVar(protocol);
+    utils::unusedVar(scheme);
 #endif
 }
 
@@ -207,7 +207,7 @@ OBGvcpPortScheme Platform::getGvcpPortscheme() const {
     auto ethernetPal = std::dynamic_pointer_cast<EthernetPal>(pal->second);
     return ethernetPal->getGvcpPortscheme();
 #else
-    utils::unusedVar(protocol);
+    return OB_GVCP_PORT_SCHEME_STANDARD;
 #endif
 }
 

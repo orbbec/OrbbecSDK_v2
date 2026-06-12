@@ -1555,6 +1555,15 @@ void G330Device::updateDepthPostProcessingFilterList() {
     }
 }
 
+uint16_t G330Device::getDepthMaxValidValue(OBFormat format) {
+    (void)format;
+    return 65535;
+}
+
+#if defined(BUILD_NET_PAL)
+//====================================================================================================================================
+//=========================================================G330NetDevice==============================================================
+
 // Helper: calculate the maximum valid depth pixel value for Gemini 335Le.
 static uint16_t calcG335LeMaxDepthValue(OBFormat format, float depthUnit, bool hwD2D) {
     uint32_t maxValue = 65535;
@@ -1596,15 +1605,6 @@ static uint16_t calcG335LeMaxDepthValue(OBFormat format, float depthUnit, bool h
     maxValue = static_cast<uint32_t>(std::floor(maxValue / depthUnit));
     return maxValue > 65535 ? 65535 : static_cast<uint16_t>(maxValue);
 }
-
-uint16_t G330Device::getDepthMaxValidValue(OBFormat format) {
-    (void)format;
-    return 65535;
-}
-
-#if defined(BUILD_NET_PAL)
-//====================================================================================================================================
-//=========================================================G330NetDevice==============================================================
 
 G330NetDevice::G330NetDevice(const std::shared_ptr<const IDeviceEnumInfo> &info, OBDeviceAccessMode accessMode) : DeviceBase(info, accessMode) {
     init();

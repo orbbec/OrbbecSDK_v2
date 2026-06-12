@@ -295,17 +295,23 @@ G435LeDevice::G435LeDevice(const std::shared_ptr<const IDeviceEnumInfo> &info, O
     checkAndStartHeartbeat();
 }
 G435LeDevice::~G435LeDevice() noexcept {
+#if defined(BUILD_NET_PAL)
     ccpController_.reset();
+#endif
 }
 
 void G435LeDevice::deactivate() {
+#if defined(BUILD_NET_PAL)
     // clear ccp controller here
     ccpController_.reset();
+#endif
     G435LeDeviceBase::deactivate();
 }
 
 void G435LeDevice::init() {
+#if defined(BUILD_NET_PAL)
     checkAndAcquireCCP();
+#endif
     initSensorList();
     initProperties();
     G435LeDeviceBase::init();
@@ -1010,6 +1016,7 @@ void G435LeDevice::fetchDeviceInfo() {
     extensionInfo_["MCUVersion"]               = version.subSystemVersion;
 }
 
+#if defined(BUILD_NET_PAL)
 void G435LeDevice::checkAndAcquireCCP() {
     ccpController_ = std::make_shared<GvcpCcpController>(enumInfo_, "1.3.12");
     if(!ccpController_->isSupported()) {
@@ -1019,4 +1026,5 @@ void G435LeDevice::checkAndAcquireCCP() {
     hasAccessControl_ = true;
     accessMode_       = ccpController_->getState();
 }
+#endif
 }  // namespace libobsensor

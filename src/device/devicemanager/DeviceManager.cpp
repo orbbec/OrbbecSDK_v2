@@ -134,6 +134,7 @@ std::shared_ptr<IDevice> DeviceManager::createNetDevice(std::string address, uin
 #else
     utils::unusedVar(address);
     utils::unusedVar(port);
+    utils::unusedVar(accessMode);
     THROW_UNSUPPORTED_OPERATION_EXCEPTION("The library currently compiled does not support network functions. "
                                           "Please turn on the CMAKE \"BUILD_NET_PAL\" option and recompile.");
 #endif
@@ -259,6 +260,8 @@ OBGvcpPortScheme DeviceManager::getGvcpPortscheme() const {
         }
     }
     LOG_DEBUG("Network device enumeration is disabled now, return the default scheme");
+    return OB_GVCP_PORT_SCHEME_STANDARD;
+#else
     return OB_GVCP_PORT_SCHEME_STANDARD;
 #endif
 }

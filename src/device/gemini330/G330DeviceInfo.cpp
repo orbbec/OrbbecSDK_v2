@@ -80,6 +80,7 @@ std::shared_ptr<IDevice> G330DeviceInfo::createDevice(OBDeviceAccessMode accessM
 #if defined(BUILD_NET_PAL)
         return std::make_shared<G330NetDevice>(shared_from_this(), accessMode);
 #else
+        utils::unusedVar(accessMode);
         LOG_ERROR("Ethernet pal not supported, please rebuild with BUILD_NET_PAL=ON");
         return nullptr;
 #endif
