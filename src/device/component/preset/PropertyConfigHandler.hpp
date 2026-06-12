@@ -85,9 +85,6 @@ public:
 
     void                   set(const std::string &k, const Json::Value &v) override;
     jsonmodel::ExportValue exportValue(const std::string &k) override;
-
-private:
-    std::map<int, std::string> valueMapping_;
 };
 
 }  // namespace libobsensor
