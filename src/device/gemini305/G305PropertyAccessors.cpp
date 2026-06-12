@@ -273,4 +273,5 @@ void G305ColorAePropertyAccessor::getPropertyRange(uint32_t propertyId, OBProper
     } break;
     }
 }
+
 }  // namespace libobsensor

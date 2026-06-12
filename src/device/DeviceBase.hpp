@@ -89,6 +89,7 @@ public:
     DeviceComponentPtr<ISensor>                  getSensor(OBSensorType type) override;
     std::vector<OBSensorType>                    getSensorTypeList() const override;
     bool                                         hasAnySensorStreamActivated() override;
+    bool                                         hasAnyVideoSensorStreamActivated() override;
 
     std::vector<std::shared_ptr<IFilter>> createRecommendedPostProcessingFilters(OBSensorType type) override;
     std::shared_ptr<IFilter>              getSensorFrameFilter(const std::string &name, OBSensorType type, bool throwIfNotFound = true) override;

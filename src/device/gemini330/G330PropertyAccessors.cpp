@@ -291,4 +291,5 @@ void G330NetPTPClockSyncPropertyAccessor::getPropertyRange(uint32_t propertyId, 
     commandPort->getPropertyRange(propertyId, range);
 }
 #endif
+
 }  // namespace libobsensor

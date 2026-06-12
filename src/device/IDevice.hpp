@@ -101,6 +101,7 @@ public:
     virtual DeviceComponentPtr<ISensor> getSensor(OBSensorType type)             = 0;
     virtual std::vector<OBSensorType>   getSensorTypeList() const                = 0;
     virtual bool                        hasAnySensorStreamActivated()            = 0;
+    virtual bool                        hasAnyVideoSensorStreamActivated()       = 0;  // only checks video sensors (depth/color/IR variants)
 
     // todo: Add a filter manager as a component and move this function to it
     virtual std::vector<std::shared_ptr<IFilter>> createRecommendedPostProcessingFilters(OBSensorType type)                                     = 0;

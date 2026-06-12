@@ -43,6 +43,7 @@
 #include "G330DepthWorkModeManager.hpp"
 #include "G330SensorStreamStrategy.hpp"
 #include "G330PropertyAccessors.hpp"
+#include "property/HardwareD2CPropertyAccessor.hpp"
 #include "G330FrameMetadataParserContainer.hpp"
 #include "DabaiAMetadataModifier.hpp"
 
@@ -924,9 +925,9 @@ void                 DabaiADevice::initSensorListGMSL() {
 
             auto port               = getSourcePort(imuPortInfo);
             auto imuCorrectorFilter = getSensorFrameFilter("IMUCorrector", OB_SENSOR_ACCEL, true);
-            auto imuCalculator  = std::make_shared<ImuCalculatorBMI088>();
-            auto dataStreamPort = std::dynamic_pointer_cast<IDataStreamPort>(port);
-            auto imuStreamer    = std::make_shared<ImuStreamer>(this, dataStreamPort, imuCorrectorFilter,imuCalculator);
+            auto imuCalculator      = std::make_shared<ImuCalculatorBMI088>();
+            auto dataStreamPort     = std::dynamic_pointer_cast<IDataStreamPort>(port);
+            auto imuStreamer        = std::make_shared<ImuStreamer>(this, dataStreamPort, imuCorrectorFilter, imuCalculator);
             return imuStreamer;
         });
 
@@ -1038,7 +1039,8 @@ void DabaiADevice::initProperties() {
             propertyServer->registerProperty(OB_PROP_LASER_ON_OFF_PATTERN_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_TEMPERATURE_COMPENSATION_BOOL, "rw", "rw", vendorPropertyAccessor);
 
-            propertyServer->registerProperty(OB_PROP_DEPTH_ALIGN_HARDWARE_BOOL, "rw", "rw", vendorPropertyAccessor);
+            auto hwD2CGuardAccessor = std::make_shared<HardwareD2CPropertyAccessor>(this, vendorPropertyAccessor);
+            propertyServer->registerProperty(OB_PROP_DEPTH_ALIGN_HARDWARE_BOOL, "rw", "rw", hwD2CGuardAccessor);
             propertyServer->registerProperty(OB_PROP_LASER_POWER_LEVEL_CONTROL_INT, "rw", "rw", vendorPropertyAccessor);
             propertyServer->registerProperty(OB_PROP_LDP_MEASURE_DISTANCE_INT, "r", "r", vendorPropertyAccessor);
             // propertyServer->registerProperty(OB_PROP_TIMER_RESET_SIGNAL_BOOL, "w", "w", vendorPropertyAccessor);

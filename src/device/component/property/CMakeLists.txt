@@ -11,6 +11,8 @@ target_sources(
     ${CMAKE_CURRENT_LIST_DIR}/PropertyServer.hpp
     ${CMAKE_CURRENT_LIST_DIR}/CommonPropertyAccessors.cpp
     ${CMAKE_CURRENT_LIST_DIR}/CommonPropertyAccessors.hpp
+    ${CMAKE_CURRENT_LIST_DIR}/HardwareD2CPropertyAccessor.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/HardwareD2CPropertyAccessor.hpp
     ${CMAKE_CURRENT_LIST_DIR}/FilterPropertyAccessors.cpp
     ${CMAKE_CURRENT_LIST_DIR}/FilterPropertyAccessors.hpp
     ${CMAKE_CURRENT_LIST_DIR}/InternalProperty.hpp

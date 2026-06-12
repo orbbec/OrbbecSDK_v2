@@ -460,6 +460,24 @@ bool DeviceBase::hasAnySensorStreamActivated() {
     return false;
 }
 
+bool DeviceBase::hasAnyVideoSensorStreamActivated() {
+    for(auto &item: sensorPortInfos_) {
+        auto sensorType = item.first;
+        if(!ob_is_video_sensor_type(sensorType)) {
+            continue;
+        }
+        if(isSensorCreated(sensorType)) {
+            TRY_EXECUTE({
+                auto sensor = getSensor(sensorType);
+                if(sensor && sensor->isStreamActivated()) {
+                    return true;
+                }
+            });
+        }
+    }
+    return false;
+}
+
 std::vector<std::shared_ptr<IFilter>> DeviceBase::createRecommendedPostProcessingFilters(OBSensorType type) {
     auto it = recommendedPostFilters_.find(type);
     if(it != recommendedPostFilters_.end()) {

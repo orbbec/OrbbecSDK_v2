@@ -43,7 +43,6 @@ private:
     uint32_t performanceMode_;
 };
 
-
 class G330HWNoiseRemovePropertyAccessor : public IBasicPropertyAccessor {
 public:
     explicit G330HWNoiseRemovePropertyAccessor(IDevice *owner);
