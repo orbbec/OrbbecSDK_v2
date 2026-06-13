@@ -589,14 +589,30 @@ std::vector<std::string> DisparitySearchHandler::onPreChildrenGet() {
     // check permission
     readSupported_  = true;
     auto propServer = owner_->getPropertyServer();
-    if(!propServer->isPropertySupported(OB_PROP_DISP_SEARCH_RANGE_MODE_INT, PROP_OP_READ, PROP_ACCESS_INTERNAL)
-       || !propServer->isPropertySupported(OB_PROP_DISP_SEARCH_OFFSET_INT, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
+
+    // Prefer the read-only CURRENT_* property (the value in effect), fall back to base.
+    // Returns false if neither is readable.
+    auto pick = [&](uint32_t cur, uint32_t base, uint32_t &id) -> bool {
+        if(propServer->isPropertySupported(cur, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
+            id = cur;
+            return true;
+        }
+        if(propServer->isPropertySupported(base, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
+            id = base;
+            return true;
+        }
+        return false;
+    };
+
+    uint32_t rangeModeId = 0, searchOffsetId = 0;
+    if(!pick(OB_PROP_CURRENT_DISP_SEARCH_RANGE_MODE_INT, OB_PROP_DISP_SEARCH_RANGE_MODE_INT, rangeModeId)
+       || !pick(OB_PROP_CURRENT_DISP_SEARCH_OFFSET_INT, OB_PROP_DISP_SEARCH_OFFSET_INT, searchOffsetId)) {
         readSupported_ = false;
         return {};
     }
     // Get all values
-    rangeMode_    = propServer->getPropertyValueT<int>(OB_PROP_DISP_SEARCH_RANGE_MODE_INT);
-    searchOffset_ = propServer->getPropertyValueT<int>(OB_PROP_DISP_SEARCH_OFFSET_INT);
+    rangeMode_    = propServer->getPropertyValueT<int>(rangeModeId);
+    searchOffset_ = propServer->getPropertyValueT<int>(searchOffsetId);
     // No any extra child nodes
     return {};
 }
