@@ -186,6 +186,12 @@ void G330Device::init() {
         propertyServer->registerProperty(OB_PROP_COLOR_ANTI_FLICKER_BOOL, "rw", "rw", vendorPropertyAccessor.get());
     }
 
+    if(fwVersion >= 10802) {
+        auto propertyServer         = getPropertyServer();
+        auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        propertyServer->registerProperty(OB_PROP_FPS_BOOST_BOOL, "rw", "rw", vendorPropertyAccessor.get());
+    }
+
     auto sensorStreamStrategy = std::make_shared<G330SensorStreamStrategy>(this);
     registerComponent(OB_DEV_COMPONENT_SENSOR_STREAM_STRATEGY, sensorStreamStrategy);
 
@@ -1615,19 +1621,18 @@ void G330NetDevice::init() {
     // Cache depth unit and hwD2D to avoid per-frame device queries in getDepthMaxValidValue.
     // OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT can change dynamically;
     // OB_PROP_DISPARITY_TO_DEPTH_BOOL does not change during streaming but may change between streams.
-    propertyServer->registerAccessCallback(
-        { OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT, OB_PROP_DISPARITY_TO_DEPTH_BOOL },
-        [this](uint32_t propId, const uint8_t *data, size_t dataSize, PropertyOperationType opType) {
-            if(opType != PROP_OP_WRITE || data == nullptr) {
-                return;
-            }
-            if(propId == OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT && dataSize >= sizeof(float)) {
-                cachedDepthUnit_ = *reinterpret_cast<const float *>(data);
-            }
-            else if(propId == OB_PROP_DISPARITY_TO_DEPTH_BOOL && dataSize >= sizeof(uint32_t)) {
-                cachedHwD2D_ = (*reinterpret_cast<const uint32_t *>(data) != 0);
-            }
-        });
+    propertyServer->registerAccessCallback({ OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT, OB_PROP_DISPARITY_TO_DEPTH_BOOL },
+                                           [this](uint32_t propId, const uint8_t *data, size_t dataSize, PropertyOperationType opType) {
+                                               if(opType != PROP_OP_WRITE || data == nullptr) {
+                                                   return;
+                                               }
+                                               if(propId == OB_PROP_DEPTH_UNIT_FLEXIBLE_ADJUSTMENT_FLOAT && dataSize >= sizeof(float)) {
+                                                   cachedDepthUnit_ = *reinterpret_cast<const float *>(data);
+                                               }
+                                               else if(propId == OB_PROP_DISPARITY_TO_DEPTH_BOOL && dataSize >= sizeof(uint32_t)) {
+                                                   cachedHwD2D_ = (*reinterpret_cast<const uint32_t *>(data) != 0);
+                                               }
+                                           });
 
     fetchDeviceErrorState();
 }
