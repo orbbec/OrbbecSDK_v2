@@ -289,6 +289,9 @@ void GlobalTimestampFitter::ensureFitting() {
             if(!ok) {
                 continue;
             }
+            if(!samplingQueue_.empty() && (devTime.time < samplingQueue_.back().deviceTimestamp)) {
+                samplingQueue_.clear();
+            }
             needCalculation_ = true;
             calc             = true;
             samplingQueue_.push_back({ timeSample.time, devTime.time });
