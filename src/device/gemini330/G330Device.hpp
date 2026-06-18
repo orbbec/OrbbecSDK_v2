@@ -21,9 +21,8 @@ public:
     G330Device(const std::shared_ptr<const IDeviceEnumInfo> &info);
     virtual ~G330Device() noexcept override;
 
-    std::vector<std::shared_ptr<IFilter>> createRecommendedPostProcessingFilters(OBSensorType type) override;
-    void                                  loadDefaultPostProcessingConfig() override;
-    uint16_t                              getDepthMaxValidValue(OBFormat format) override;
+    void     loadDefaultPostProcessingConfig() override;
+    uint16_t getDepthMaxValidValue(OBFormat format) override;
 
     void postInitialize() override;
 
@@ -58,10 +57,9 @@ public:
 
     virtual void postInitialize() override;
 
-    void                                  deactivate() override;
-    std::vector<std::shared_ptr<IFilter>> createRecommendedPostProcessingFilters(OBSensorType type) override;
-    void                                  loadDefaultPostProcessingConfig() override;
-    uint16_t                              getDepthMaxValidValue(OBFormat format) override;
+    void     deactivate() override;
+    void     loadDefaultPostProcessingConfig() override;
+    uint16_t getDepthMaxValidValue(OBFormat format) override;
 
 private:
     void init() override;

@@ -38,8 +38,6 @@ public:
     bool                      isSensorExists(OBSensorType type) const override;
     std::vector<OBSensorType> getSensorTypeList() const override;
 
-    std::vector<std::shared_ptr<IFilter>> createRecommendedPostProcessingFilters(OBSensorType type) override;
-
 private:
     void init() override;
     void initSensorList();

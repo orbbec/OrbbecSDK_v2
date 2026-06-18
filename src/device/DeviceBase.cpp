@@ -14,6 +14,7 @@
 #include "IDeviceMonitor.hpp"
 #include "utils/DeviceTypeHelper.hpp"
 #include "component/comprehensivefilter/DepthPostFilterParamsManager.hpp"
+#include "component/recommended_post_filters/RecommendedPostFilterStrategy.hpp"
 
 #ifdef __linux__
 #include "usb/uvc/UvcDevicePort.hpp"
@@ -484,17 +485,23 @@ std::vector<std::shared_ptr<IFilter>> DeviceBase::createRecommendedPostProcessin
         return it->second;
     }
 
-    if(type == OB_SENSOR_DEPTH) {
-        auto                                  filterFactory = FilterFactory::getInstance();
-        std::vector<std::shared_ptr<IFilter>> depthFilterList;
+    // The recommended list per device family is the single source of truth, resolved by vid/pid.
+    // Live devices and the playback device share it through this same factory.
+    std::vector<std::shared_ptr<IFilter>> filters;
+    auto                                  strategy = RecommendedPostFilterStrategyFactory::create(deviceInfo_->vid_, deviceInfo_->pid_);
+    if(strategy) {
+        filters = strategy->createFilters(this, type);
+    }
+    else if(type == OB_SENSOR_DEPTH) {
+        // Fallback for devices without a dedicated recommended list: a bare threshold filter.
+        auto filterFactory = FilterFactory::getInstance();
         if(filterFactory->isFilterCreatorExists("ThresholdFilter")) {
             auto ThresholdFilter = filterFactory->createFilter("ThresholdFilter");
-            depthFilterList.push_back(ThresholdFilter);
+            filters.push_back(ThresholdFilter);
         }
-        recommendedPostFilters_[type] = depthFilterList;
-        return depthFilterList;
     }
-    return {};
+    recommendedPostFilters_[type] = filters;
+    return filters;
 }
 
 std::shared_ptr<IFilter> DeviceBase::getSensorFrameFilter(const std::string &name, OBSensorType type, bool throwIfNotFound) {

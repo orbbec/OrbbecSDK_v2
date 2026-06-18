@@ -20,8 +20,6 @@ public:
 
     void init() override;
 
-    std::vector<std::shared_ptr<IFilter>> createRecommendedPostProcessingFilters(OBSensorType type) override;
-
 protected:
     void initSensorStreamProfile(std::shared_ptr<ISensor> sensor);
 

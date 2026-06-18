@@ -98,65 +98,6 @@ void G2XLDeviceBase::init() {
     });
 }
 
-std::vector<std::shared_ptr<IFilter>> G2XLDeviceBase::createRecommendedPostProcessingFilters(OBSensorType type) {
-    if(type != OB_SENSOR_DEPTH) {
-        return {};
-    }
-    // first: find from cache
-    auto it = recommendedPostFilters_.find(type);
-    if(it != recommendedPostFilters_.end()) {
-        return it->second;
-    }
-    // Create new if no found
-    auto                                  filterFactory = FilterFactory::getInstance();
-    std::vector<std::shared_ptr<IFilter>> depthFilterList;
-
-    if(filterFactory->isFilterCreatorExists("EdgeNoiseRemovalFilter")) {
-        auto enrFilter = filterFactory->createFilter("EdgeNoiseRemovalFilter");
-        enrFilter->enable(false);
-        // todo: set default values
-        depthFilterList.push_back(enrFilter);
-    }
-
-    if(filterFactory->isFilterCreatorExists("SpatialAdvancedFilter")) {
-        auto spatFilter = filterFactory->createFilter("SpatialAdvancedFilter");
-        spatFilter->enable(false);
-        // magnitude, alpha, disp_diff, radius
-        std::vector<std::string> params = { "1", "0.5", "64", "1" };
-        spatFilter->updateConfig(params);
-        depthFilterList.push_back(spatFilter);
-    }
-
-    if(filterFactory->isFilterCreatorExists("TemporalFilter")) {
-        auto tempFilter = filterFactory->createFilter("TemporalFilter");
-        tempFilter->enable(false);
-        // diff_scale, weight
-        std::vector<std::string> params = { "0.1", "0.4" };
-        tempFilter->updateConfig(params);
-        depthFilterList.push_back(tempFilter);
-    }
-
-    if(filterFactory->isFilterCreatorExists("HoleFillingFilter")) {
-        auto hfFilter = filterFactory->createFilter("HoleFillingFilter");
-        hfFilter->enable(false);
-        depthFilterList.push_back(hfFilter);
-    }
-
-    if(filterFactory->isFilterCreatorExists("DisparityTransform")) {
-        auto dtFilter = filterFactory->createFilter("DisparityTransform");
-        dtFilter->enable(true);
-        depthFilterList.push_back(dtFilter);
-    }
-
-    if(filterFactory->isFilterCreatorExists("ThresholdFilter")) {
-        auto ThresholdFilter = filterFactory->createFilter("ThresholdFilter");
-        depthFilterList.push_back(ThresholdFilter);
-    }
-
-    recommendedPostFilters_[type] = depthFilterList;
-    return depthFilterList;
-}
-
 void G2XLDeviceBase::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
     auto streamProfileFilter = getComponentT<IStreamProfileFilter>(OB_DEV_COMPONENT_STREAM_PROFILE_FILTER);
     sensor->setStreamProfileFilter(streamProfileFilter.get());

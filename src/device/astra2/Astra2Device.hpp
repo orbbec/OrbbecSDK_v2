@@ -17,8 +17,6 @@ public:
     Astra2Device(const std::shared_ptr<const IDeviceEnumInfo> &info);
     virtual ~Astra2Device() noexcept override;
 
-    std::vector<std::shared_ptr<IFilter>> createRecommendedPostProcessingFilters(OBSensorType type) override;
-
 private:
     void init() override;
     void initSensorList();
@@ -33,4 +31,3 @@ private:
 };
 
 }  // namespace libobsensor
-

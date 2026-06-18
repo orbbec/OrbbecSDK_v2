@@ -495,14 +495,4 @@ void G210Device::initProperties() {
     registerComponent(OB_DEV_COMPONENT_PROPERTY_SERVER, propertyServer, false);
 }
 
-std::vector<std::shared_ptr<IFilter>> G210Device::createRecommendedPostProcessingFilters(OBSensorType type) {
-    // first: find from cache
-    auto it = recommendedPostFilters_.find(type);
-    if(it != recommendedPostFilters_.end()) {
-        return it->second;
-    }
-    // Create new if no found
-    return {};
-}
-
 }  // namespace libobsensor

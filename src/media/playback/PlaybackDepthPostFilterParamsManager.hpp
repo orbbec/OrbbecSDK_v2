@@ -4,6 +4,7 @@
 #pragma once
 #include "IDevice.hpp"
 #include "DeviceComponentBase.hpp"
+#include "comprehensivefilter/IDepthPostFilterParamsManager.hpp"
 #include "InternalTypes.hpp"
 #include "PlaybackDevicePort.hpp"
 #include <string>
@@ -11,76 +12,76 @@
 
 namespace libobsensor {
 
-class PlaybackDepthPostFilterParamsManager : public DeviceComponentBase {
+class PlaybackDepthPostFilterParamsManager : public DeviceComponentBase, public IDepthPostFilterParamsManager {
 public:
     PlaybackDepthPostFilterParamsManager(IDevice *owner, std::shared_ptr<PlaybackDevicePort> port);
     virtual ~PlaybackDepthPostFilterParamsManager() override;
 
-    FalsePositiveFilterParams *getFPFilterParams() {
+    FalsePositiveFilterParams *getFPFilterParams() override {
         return &fpFilterConfig_;
     }
 
-    std::vector<std::string> &getFPFilterUpdateParams() {
+    std::vector<std::string> &getFPFilterUpdateParams() override {
         return fpFilterParams_;
     }
 
-    bool isFPFilterEnable() {
+    bool isFPFilterEnable() override {
         return fpFilterEnable_;
     }
 
-    std::vector<std::string> &getTemporalFilterUpdateParams() {
+    std::vector<std::string> &getTemporalFilterUpdateParams() override {
         return tempFilterParams_;
     }
 
-    bool isTemporalFilterEnable() {
+    bool isTemporalFilterEnable() override {
         return tempFilterEnable_;
     }
 
-    std::vector<std::string> &getHoleFillingFilterUpdateParams() {
+    std::vector<std::string> &getHoleFillingFilterUpdateParams() override {
         return hfFilterParams_;
     }
 
-    bool isHoleFillingFilterEnable() {
+    bool isHoleFillingFilterEnable() override {
         return hfFilterEnable_;
     }
 
-    std::vector<std::string> &getSpatialFastFilterUpdateParams() {
+    std::vector<std::string> &getSpatialFastFilterUpdateParams() override {
         return spatFastFilterParams_;
     }
 
-    bool isSpatialFastFilterEnable() {
+    bool isSpatialFastFilterEnable() override {
         return spatFastFilterEnable_;
     }
 
-    std::vector<std::string> &getSpatialAdvancedFilterUpdateParams() {
+    std::vector<std::string> &getSpatialAdvancedFilterUpdateParams() override {
         return spatAdvFilterParams_;
     }
 
-    bool isSpatialAdvancedFilterEnable() {
+    bool isSpatialAdvancedFilterEnable() override {
         return spatAdvFilterEnable_;
     }
 
-    std::vector<std::string> &getSpatialModerateFilterUpdateParams() {
+    std::vector<std::string> &getSpatialModerateFilterUpdateParams() override {
         return spatMdFilterParams_;
     }
 
-    bool isSpatialModerateFilterEnable() {
+    bool isSpatialModerateFilterEnable() override {
         return spatMdFilterEnable_;
     }
 
-    std::vector<std::string> &getEdgeNoiseRemovalFilterUpdateParams() {
+    std::vector<std::string> &getEdgeNoiseRemovalFilterUpdateParams() override {
         return edgeNRFilterParams_;
     }
 
-    bool isEdgeNoiseRemovalFilterEnable() {
+    bool isEdgeNoiseRemovalFilterEnable() override {
         return edgeNRFilterEnable_;
     }
 
-    std::vector<double> &getNoiseRemovalFilterUpdateParams() {
+    std::vector<double> &getNoiseRemovalFilterUpdateParams() override {
         return noiseRemFilterParams_;
     }
 
-    bool isNoiseRemovalFilterEnable() {
+    bool isNoiseRemovalFilterEnable() override {
         return noiseRemFilterEnable_;
     }
 

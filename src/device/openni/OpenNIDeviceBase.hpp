@@ -19,8 +19,7 @@ public:
     OpenNIDeviceBase(const std::shared_ptr<const IDeviceEnumInfo> &info);
     virtual ~OpenNIDeviceBase() noexcept override;
 
-    std::vector<std::shared_ptr<IFilter>> createRecommendedPostProcessingFilters(OBSensorType type) override;
-    void                                  loadDefaultPostProcessingConfig() override;
+    void loadDefaultPostProcessingConfig() override;
 
     OpenNIFrameProcessParam getFrameProcessParam();
 
@@ -32,11 +31,10 @@ protected:
     void         loadDefaultDepthPostProcessingConfig();
 
 protected:
-    const uint64_t deviceTimeFreq_ = 1000;     // in ms
-    const uint64_t frameTimeFreq_  = 1000000;  // in us
+    const uint64_t                                              deviceTimeFreq_ = 1000;     // in ms
+    const uint64_t                                              frameTimeFreq_  = 1000000;  // in us
     std::function<std::shared_ptr<IFrameTimestampCalculator>()> videoFrameTimestampCalculatorCreator_;
     std::shared_ptr<LazySuperPropertyAccessor>                  vendorPropertyAccessor_;
 };
 
 }  // namespace libobsensor
-

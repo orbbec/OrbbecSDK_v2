@@ -3,7 +3,6 @@
 
 #include "PlaybackDevice.hpp"
 #include "PlaybackDeviceParamManager.hpp"
-#include "PlaybackFilterCreationStrategy.hpp"
 #include "PlaybackDepthWorkModeManager.hpp"
 #include "PlaybackPresetManager.hpp"
 #include "PlaybackDeviceSyncConfigurator.hpp"
@@ -38,7 +37,6 @@
 #include "gemini305/G305PresetManager.hpp"
 
 namespace libobsensor {
-using namespace playback;
 
 PlaybackDevice::PlaybackDevice(const std::string &filePath) : filePath_(filePath), port_(std::make_shared<PlaybackDevicePort>(filePath)) {
     isPlaybackDevice_ = true;
@@ -758,23 +756,6 @@ void PlaybackDevice::initProperties() {
         auto deviceSyncConfigurator = std::make_shared<PlaybackDeviceSyncConfigurator>(this);
         registerComponent(OB_DEV_COMPONENT_DEVICE_SYNC_CONFIGURATOR, deviceSyncConfigurator);
     }
-}
-
-std::vector<std::shared_ptr<IFilter>> PlaybackDevice::createRecommendedPostProcessingFilters(OBSensorType type) {
-    // first: find from cache
-    auto it = recommendedPostFilters_.find(type);
-    if(it != recommendedPostFilters_.end()) {
-        return it->second;
-    }
-    // Create new if no found
-    auto filterStrategyFactory = FilterCreationStrategyFactory::getInstance();  // namespace playback
-    auto filterStrategy        = filterStrategyFactory->create(deviceInfo_->vid_, deviceInfo_->pid_, this);
-    if(filterStrategy) {
-        auto filters                  = filterStrategy->createFilters(type);
-        recommendedPostFilters_[type] = filters;
-        return filters;
-    }
-    return {};
 }
 
 void PlaybackDevice::registerPropertyCondition(std::shared_ptr<PropertyServer> server, uint32_t propertyId, const std::string &userPermsStr,

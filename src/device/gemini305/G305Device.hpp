@@ -21,8 +21,7 @@ public:
     G305Device(const std::shared_ptr<const IDeviceEnumInfo> &info);
     virtual ~G305Device() noexcept override;
 
-    std::vector<std::shared_ptr<IFilter>> createRecommendedPostProcessingFilters(OBSensorType type) override;
-    void                                  loadDefaultPostProcessingConfig() override;
+    void loadDefaultPostProcessingConfig() override;
 
 private:
     struct ResolutionFps {
