@@ -25,6 +25,7 @@ option(OB_BUILD_GMSL_PAL "Enable this to support GMSL communication" ON)
 # install options
 option(OB_INSTALL_EXAMPLES_SOURCE "Install SDK examples source files" ON)
 option(OB_INSTALL_FILTER_DEV_HEADERS "Install HEADER files for filter development" OFF)
+option(OB_INSTALL_LICENSES "Install the SDK and third-party license notices into the package" ON)
 
 # Femto Bolt compatibility
 option(OB_ENABLE_BOLT_OPENGL_COMPAT "Enable OpenGL compatibility mode for Femto Bolt devices" OFF)

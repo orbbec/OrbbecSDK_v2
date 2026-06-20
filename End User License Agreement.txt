@@ -34,6 +34,8 @@ The Open-Source Library is licensed to you under the terms of the applicable ope
 
 Orbbec provides the Open-Source Library to you solely on the terms of those licenses and disclaims any additional rights not granted therein.
 
+The restrictions in this EULA do not limit any rights granted by the applicable open-source licenses, including rights under the GNU Lesser General Public License to modify covered libraries, reverse engineer solely for debugging such modifications, and relink or rebuild the SDK with modified covered libraries where those rights apply.
+
 4. Restrictions (Extension Library Only)
 
 Except with respect to the Open-Source Library, and except to the extent expressly permitted by applicable law that cannot be overridden by contract, you must not, and must not permit any third party to: 
