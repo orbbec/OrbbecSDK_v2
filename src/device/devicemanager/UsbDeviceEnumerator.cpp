@@ -66,13 +66,23 @@ UsbDeviceEnumerator::~UsbDeviceEnumerator() noexcept {
 }
 
 void UsbDeviceEnumerator::stop() {
-    destroy_ = true;
-
+    // Set the shutdown flag while holding each waiter's mutex before notifying, so a
+    // worker thread cannot miss the wakeup by entering its wait right after the notify.
+    {
+        std::lock_guard<std::mutex> lock(newUsbPortArrivalMutex_);
+        destroy_ = true;
+    }
     newUsbPortArrivalCV_.notify_all();
     if(deviceArrivalHandleThread_.joinable()) {
         deviceArrivalHandleThread_.join();
     }
 
+    {
+        // Locking under deviceRemovalMutex_ synchronizes the removal waiter's wakeup;
+        // required even though destroy_ is already true. Do not remove.
+        std::lock_guard<std::mutex> lock(deviceRemovalMutex_);
+        destroy_ = true;
+    }
     deviceRemovalCV_.notify_all();
     if(deviceRemovalHandleThread_.joinable()) {
         deviceRemovalHandleThread_.join();
@@ -94,7 +104,10 @@ bool UsbDeviceEnumerator::onPlatformDeviceChanged(OBDeviceChangedType changeType
         deviceRemovalCV_.notify_all();
     }
     else {  // OB_DEVICE_ARRIVAL
-        newUsbPortArrival_ = true;
+        {
+            std::lock_guard<std::mutex> lock(newUsbPortArrivalMutex_);
+            newUsbPortArrival_ = true;
+        }
         newUsbPortArrivalCV_.notify_all();
     }
 
@@ -190,21 +203,24 @@ DeviceEnumInfoList UsbDeviceEnumerator::usbDeviceInfoMatch(const SourcePortInfoL
 }
 
 void UsbDeviceEnumerator::deviceArrivalHandleThreadFunc() {
-    std::mutex                   mtx;
-    std::unique_lock<std::mutex> lk(mtx);
     while(!destroy_) {
-        newUsbPortArrivalCV_.wait(lk, [&]() { return newUsbPortArrival_ || destroy_; });
-        if(destroy_) {
-            break;
-        }
-        uint16_t delayTime = 1000;
+        {
+            // Wait on the shared mutex that protects newUsbPortArrival_ and destroy_, so
+            // arrival notifications and shutdown signals cannot be lost.
+            std::unique_lock<std::mutex> lk(newUsbPortArrivalMutex_);
+            newUsbPortArrivalCV_.wait(lk, [&]() { return newUsbPortArrival_ || destroy_; });
+            if(destroy_) {
+                break;
+            }
+            uint16_t delayTime = 1000;
 #ifdef OS_MACOS
-        delayTime = 3000;
+            delayTime = 3000;
 #endif
-        do {
-            newUsbPortArrival_ = false;
-            newUsbPortArrivalCV_.wait_for(lk, std::chrono::milliseconds(delayTime));
-        } while(!destroy_ && newUsbPortArrival_);
+            do {
+                newUsbPortArrival_ = false;
+                newUsbPortArrivalCV_.wait_for(lk, std::chrono::milliseconds(delayTime));
+            } while(!destroy_ && newUsbPortArrival_);
+        }
 
         if(destroy_) {
             break;
@@ -214,7 +230,7 @@ void UsbDeviceEnumerator::deviceArrivalHandleThreadFunc() {
         DeviceEnumInfoList removedDevList;
         {
             std::unique_lock<std::recursive_mutex> lock(deviceInfoListMutex_);
-            addedDevList = queryArrivalDevice(false);
+            addedDevList   = queryArrivalDevice(false);
             removedDevList = findMatchingGmslDeviceByUsb(addedDevList);
             for(auto &item: addedDevList) {
                 deviceInfoList_.emplace_back(item);
@@ -238,17 +254,17 @@ void UsbDeviceEnumerator::deviceArrivalHandleThreadFunc() {
 }
 
 void UsbDeviceEnumerator::deviceRemovalHandleThreadFunc() {
-    std::mutex                   mtx;
-    std::unique_lock<std::mutex> lk(mtx);
     while(!destroy_) {
-        deviceRemovalCV_.wait(lk, [&]() { return !deviceRemovalUidSet_.empty() || destroy_; });
-        if(destroy_) {
-            break;
-        }
         std::unordered_set<std::string> removalUidList{};
         {
+            // Wait on deviceRemovalMutex_, which also protects deviceRemovalUidSet_ and is
+            // held by the notifier, so removal notifications and shutdown signals are not lost.
+            std::unique_lock<std::mutex> lk(deviceRemovalMutex_);
+            deviceRemovalCV_.wait(lk, [&]() { return !deviceRemovalUidSet_.empty() || destroy_; });
+            if(destroy_) {
+                break;
+            }
             // copy list
-            std::lock_guard<std::mutex> lock(deviceRemovalMutex_);
             removalUidList.swap(deviceRemovalUidSet_);
         }
         std::vector<std::shared_ptr<const IDeviceEnumInfo>> removedDevList;
@@ -323,7 +339,7 @@ void UsbDeviceEnumerator::setDeviceChangedCallback(DeviceChangedCallback callbac
 }
 
 DeviceEnumInfoList UsbDeviceEnumerator::findMatchingGmslDeviceByUsb(const DeviceEnumInfoList &addedDevList) {
-    DeviceEnumInfoList matchedDevList;
+    DeviceEnumInfoList              matchedDevList;
     std::unordered_set<std::string> addedDeviceSNs;
     for(const auto &item: addedDevList) {
         const auto &sn  = item->getDeviceSn();

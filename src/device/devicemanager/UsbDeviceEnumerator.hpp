@@ -7,6 +7,7 @@
 #include "Platform.hpp"
 
 #include "utils/SteadyCondVar.hpp"
+#include <atomic>
 #include <memory>
 #include <unordered_set>
 
@@ -32,7 +33,7 @@ private:
 
 private:
     std::shared_ptr<Platform> platform_;
-    bool                      destroy_ = false;
+    std::atomic<bool>         destroy_{ false };
 
     std::shared_ptr<IDeviceWatcher> deviceWatcher_;
 
@@ -41,6 +42,7 @@ private:
 
     SourcePortInfoList   currentUsbPortInfoList_;
     bool                 newUsbPortArrival_ = false;
+    std::mutex           newUsbPortArrivalMutex_;
     utils::SteadyCondVar newUsbPortArrivalCV_;
     std::thread          deviceArrivalHandleThread_;
 
