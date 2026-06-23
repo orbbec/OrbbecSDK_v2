@@ -72,8 +72,7 @@ void G330PresetEngine::init() {
         [&](jsonmodel::ConfigEngine &engine) {
             auto devInfo = owner_->getInfo();
             engine.addLeaf("fw_version", std::make_shared<VersionHandler>(devInfo->fwVersion_, CompareMode::Ignore));
-            engine.addLeaf("vid", std::make_shared<HexValueCompareHandler<int>>(devInfo->vid_, CompareMode::Equal, 4), true);
-            engine.addLeaf("pid", std::make_shared<HexValueCompareHandler<int>>(devInfo->pid_, CompareMode::Equal, 4), true);
+            engine.addLeaf("compatible_devices", std::make_shared<CompatibleDevicesHandler>(devInfo->vid_, devInfo->pid_, 4), true);
             engine.addLeaf("name", std::make_shared<VersionHandler>(devInfo->fullName_, CompareMode::Ignore));
         },
         true);

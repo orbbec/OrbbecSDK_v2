@@ -3,6 +3,8 @@
 
 #include "CompareHandler.hpp"
 #include "exception/ObException.hpp"
+#include "PresetDefinitions.hpp"
+
 #include <cstdint>
 #include <string>
 #include <stdexcept>
@@ -102,6 +104,44 @@ uint32_t VersionHandler::toUintVersion(const std::string &version) {
     }
 
     return result;
+}
+
+CompatibleDevicesHandler::CompatibleDevicesHandler(int vid, int pid, size_t hexWidth) : vid_(vid), pid_(pid), hexWidth_(hexWidth) {}
+
+void CompatibleDevicesHandler::set(const std::string &k, const Json::Value &v) {
+    if(!v.isArray()) {
+        THROW_INVALID_PARAM_EXCEPTION("The value is not array for key '" + k + "'");
+    }
+    if(v.empty()) {
+        THROW_INVALID_PARAM_EXCEPTION("The compatible devices list is empty for key '" + k + "'");
+    }
+    for(Json::ArrayIndex i = 0; i < v.size(); ++i) {
+        const auto &item = v[i];
+        if(!item.isObject() || !item.isMember(kVidKey) || !item.isMember(kPidKey)) {
+            THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string()
+                                          << "Each compatible device must contain '" << kVidKey << "' and '" << kPidKey << "' for key '" + k + "'");
+        }
+        const int vid = preset_detail::parseHexValue<int>(item[kVidKey]);
+        const int pid = preset_detail::parseHexValue<int>(item[kPidKey]);
+        if(vid == vid_ && pid == pid_) {
+            return;
+        }
+    }
+    std::ostringstream oss;
+    oss << "Current device (vid '" << preset_detail::formatHexValue(vid_, hexWidth_) << "', pid '" << preset_detail::formatHexValue(pid_, hexWidth_)
+        << "') is not in the compatible devices list";
+    THROW_INVALID_PARAM_EXCEPTION(oss.str());
+}
+
+jsonmodel::ExportValue CompatibleDevicesHandler::exportValue(const std::string &k) {
+    utils::unusedVar(k);
+    std::vector<jsonmodel::ExportField> fields;
+    fields.emplace_back(jsonmodel::makeField(kVidKey, preset_detail::formatHexValue(vid_, hexWidth_)));
+    fields.emplace_back(jsonmodel::makeField(kPidKey, preset_detail::formatHexValue(pid_, hexWidth_)));
+
+    std::vector<jsonmodel::ExportValue> items;
+    items.emplace_back(jsonmodel::ExportValue::object(std::move(fields)));
+    return jsonmodel::ExportValue::array(std::move(items));
 }
 
 }  // namespace libobsensor

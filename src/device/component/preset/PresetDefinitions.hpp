@@ -20,6 +20,10 @@ constexpr const char kRightKey[]      = "right";
 constexpr const char kTopKey[]        = "top";
 constexpr const char kBottomKey[]     = "bottom";
 
+// JSON Keys for device
+constexpr const char kVidKey[] = "vid";
+constexpr const char kPidKey[] = "pid";
+
 // JSON keys for frame interleave
 constexpr const char kInterleaveModeKey[]               = "mode";
 constexpr const char kInterleaveConfigIndexKey[]        = "config_index";
