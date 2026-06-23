@@ -47,19 +47,19 @@ public:
      * @param key The key identifying this object
      * @param next A callback to define nested child nodes
      * @param handler Optional handler for this object node
-     * @param optional Indicates if this object is optional in the input JSON (default: false)
+     * @param required Indicates if this object must be present in the input JSON (default: false)
      */
-    void addObject(const std::string &key, ContinueFunc next, std::shared_ptr<IObjectHandler> handler, bool optional = false);
+    void addObject(const std::string &key, ContinueFunc next, std::shared_ptr<IObjectHandler> handler, bool required = false);
 
     /**
      * @brief Defines an object node without handler in the JSON hierarchy
      *
      * @param key The key identifying this object
      * @param next A callback to define nested child nodes
-     * @param optional Indicates if this object is optional in the input JSON (default: false)
+     * @param required Indicates if this object must be present in the input JSON (default: false)
      */
-    void declareObject(const std::string &key, ContinueFunc next, bool optional = false) {
-        return addObject(key, next, nullptr, optional);
+    void declareObject(const std::string &key, ContinueFunc next, bool required = false) {
+        return addObject(key, next, nullptr, required);
     }
 
     /**
@@ -67,18 +67,18 @@ public:
      *
      * @param key The key identifying this object
      * @param handler Optional handler for this leaf node
-     * @param optional Indicates if this object is optional in the input JSON (default: false)
+     * @param required Indicates if this leaf must be present in the input JSON (default: false)
      */
-    void addLeaf(const std::string &key, std::shared_ptr<ILeafHandler> handler, bool optional = false);
+    void addLeaf(const std::string &key, std::shared_ptr<ILeafHandler> handler, bool required = false);
 
     /**
      * @brief Defines a leaf property node without handler in the JSON hierarchy
      *
      * @param key The key identifying this object
-     * @param optional Indicates if this object is optional in the input JSON (default: false)
+     * @param required Indicates if this leaf must be present in the input JSON (default: false)
      */
-    void declareLeaf(const std::string &key, bool optional = false) {
-        return addLeaf(key, nullptr, optional);
+    void declareLeaf(const std::string &key, bool required = false) {
+        return addLeaf(key, nullptr, required);
     }
 
     /**

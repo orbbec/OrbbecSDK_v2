@@ -115,16 +115,16 @@ struct Node {
     NodeKind                           kind{ NodeKind::Leaf };
     std::shared_ptr<ILeafHandler>      leafHandler;
     std::shared_ptr<IObjectHandler>    objectHandler;
-    bool                               optional{ false };  // True if the node is optional
+    bool                               required{ false };  // True if the node must be present in the input JSON
     std::vector<std::shared_ptr<Node>> children;           // children node for Object node
 
-    Node(std::string key, NodeKind kind, bool optional = false) : key(std::move(key)), kind(kind), optional(optional) {}
+    Node(std::string key, NodeKind kind, bool required = false) : key(std::move(key)), kind(kind), required(required) {}
 
-    Node(std::string key, std::shared_ptr<ILeafHandler> handler, bool optional = false)
-        : key(std::move(key)), kind(NodeKind::Leaf), leafHandler(std::move(handler)), optional(optional) {}
+    Node(std::string key, std::shared_ptr<ILeafHandler> handler, bool required = false)
+        : key(std::move(key)), kind(NodeKind::Leaf), leafHandler(std::move(handler)), required(required) {}
 
-    Node(std::string key, std::shared_ptr<IObjectHandler> handler, bool optional = false)
-        : key(std::move(key)), kind(NodeKind::Object), objectHandler(std::move(handler)), optional(optional) {}
+    Node(std::string key, std::shared_ptr<IObjectHandler> handler, bool required = false)
+        : key(std::move(key)), kind(NodeKind::Object), objectHandler(std::move(handler)), required(required) {}
 };
 
 /**

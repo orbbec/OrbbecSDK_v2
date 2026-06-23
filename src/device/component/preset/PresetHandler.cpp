@@ -48,6 +48,9 @@ bool FrameInterleaveHandler::onPreChildrenSet(const Json::Value &value) {
         LOG_WARN("The current device doesn't contain the frame interleave manager component");
         return false;
     }
+    if (!value.isMember(kEnableKey)) {
+        THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "Missing required field in frame interleave: " << kEnableKey);
+    }
     enable_ = jsonmodel::JsonTraits<bool>::from(value[kEnableKey]);
     return enable_;
 }
@@ -60,13 +63,19 @@ void FrameInterleaveHandler::onSetChild(const std::string &k, const Json::Value 
     }
     else if(k == kInterleaveModeKey) {
         currentModeName_ = jsonmodel::JsonTraits<std::string>::from(v);
+        if(currentModeName_.empty()) {
+            THROW_INVALID_PARAM_EXCEPTION("The value is empty in frame interleave: " + k);
+        }
     }
     else if(k == kInterleaveConfigIndexKey) {
         currentIndex_ = jsonmodel::JsonTraits<int>::from(v);
+        if (currentIndex_ < 0) {
+            THROW_INVALID_PARAM_EXCEPTION("The value is invalid in frame interleave: " + k);
+        }
     }
     else if(k == kInterleaveParmas) {
         if(!v.isArray()) {
-            THROW_INVALID_PARAM_EXCEPTION("Invalid value of key in fram interleave: '" + k + "'");
+            THROW_INVALID_PARAM_EXCEPTION("The value is not array in frame interleave: " + k);
         }
         params_.clear();
         for(Json::ArrayIndex i = 0; i < v.size(); ++i) {
@@ -81,6 +90,9 @@ void FrameInterleaveHandler::onSetChild(const std::string &k, const Json::Value 
                 param.*member = jsonmodel::JsonTraits<int>::from(item[key]);
             }
             params_.push_back(std::move(param));
+        }
+        if (params_.empty()) {
+            THROW_INVALID_PARAM_EXCEPTION("The child node is empty in frame interleave: " + k);
         }
     }
     else {
@@ -100,15 +112,13 @@ void FrameInterleaveHandler::onPostChildrenSet() {
     auto propServer = owner_->getPropertyServer();
     propServer->setPropertyValueT<bool>(OB_PROP_FRAME_INTERLEAVE_ENABLE_BOOL, enable_);
     if(enable_) {
-        if(!currentModeName_.empty()) {
-            // update params
-            int32_t index = 0;
-            for(const auto &param: params_) {
-                frameInterleaveManager_->updateParam(currentModeName_, param, index++);
-            }
-            // load
-            frameInterleaveManager_->loadFrameInterleave(currentModeName_);
+        // update params
+        int32_t index = 0;
+        for(const auto &param: params_) {
+            frameInterleaveManager_->updateParam(currentModeName_, param, index++);
         }
+        // load
+        frameInterleaveManager_->loadFrameInterleave(currentModeName_);
         // update index
         propServer->setPropertyValueT<int>(OB_PROP_FRAME_INTERLEAVE_CONFIG_INDEX_INT, currentIndex_);
     }

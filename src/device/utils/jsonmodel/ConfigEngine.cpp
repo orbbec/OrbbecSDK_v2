@@ -256,9 +256,9 @@ ConfigEngine::ConfigEngine() : rootNode_(std::make_shared<Node>("", NodeKind::Ob
 
 ConfigEngine::~ConfigEngine() = default;
 
-void ConfigEngine::addObject(const std::string &key, ContinueFunc next, std::shared_ptr<IObjectHandler> handler, bool optional) {
+void ConfigEngine::addObject(const std::string &key, ContinueFunc next, std::shared_ptr<IObjectHandler> handler, bool required) {
     // 1. new node
-    auto newNode = std::make_shared<Node>(key, std::move(handler), optional);
+    auto newNode = std::make_shared<Node>(key, std::move(handler), required);
 
     // 2. Attach to the current parent (Top of the nodeStack)
     nodeStack_.top()->children.emplace_back(newNode);
@@ -275,9 +275,9 @@ void ConfigEngine::addObject(const std::string &key, ContinueFunc next, std::sha
     nodeStack_.pop();
 }
 
-void ConfigEngine::addLeaf(const std::string &key, std::shared_ptr<ILeafHandler> handler, bool optional) {
+void ConfigEngine::addLeaf(const std::string &key, std::shared_ptr<ILeafHandler> handler, bool required) {
     // 1. new node
-    auto newNode = std::make_shared<Node>(key, std::move(handler), optional);
+    auto newNode = std::make_shared<Node>(key, std::move(handler), required);
 
     // 2. Attach to the current parent (Top of the nodeStack)
     nodeStack_.top()->children.emplace_back(newNode);
@@ -367,7 +367,7 @@ void ConfigEngine::importRecursive(std::shared_ptr<Node> node, const Json::Value
                         objHandler->onSetChild(child->key, value[child->key], value);
                     }
                 }
-                else if(!child->optional) {
+                else if(child->required) {
                     currentPath = fullPath(pathStack, child->key);
                     throw std::runtime_error("Missing required field: " + currentPath);
                 }
@@ -384,7 +384,7 @@ void ConfigEngine::importRecursive(std::shared_ptr<Node> node, const Json::Value
                 // import child
                 importRecursive(child, value[child->key], pathStack);
             }
-            else if(!child->optional) {
+            else if(child->required) {
                 currentPath = fullPath(pathStack, child->key);
                 throw std::runtime_error("Missing required field: " + currentPath);
             }
