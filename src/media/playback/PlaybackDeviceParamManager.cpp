@@ -4,6 +4,7 @@
 #include "PlaybackDeviceParamManager.hpp"
 #include "stream/StreamIntrinsicsManager.hpp"
 #include "property/InternalProperty.hpp"
+#include <algorithm>
 
 namespace libobsensor {
 
@@ -58,12 +59,41 @@ void PlaybackDeviceParamManager::bindDisparityParam(std::vector<std::shared_ptr<
     }
 }
 
+bool PlaybackDeviceParamManager::getPreProcessParam(uint16_t colorWidth, uint16_t colorHeight, OBD2CPreProcessParam &param) const {
+    // d2cColorPreProcessProfileList_ is parallel to the first N hardware-D2C entries of d2cProfileList_
+    // by index (software D2C entries appended later have no corresponding pre-process profile).
+    // Iterating only up to the smaller of the two sizes is therefore both correct and safe.
+    // Returns false if d2cColorPreProcessProfileList_ is empty (old recording or non-DaBaiA device),
+    // which causes Pipeline::checkHardwareD2CConfig() to skip setPreProcessParam() — same as before.
+    auto count = std::min(d2cProfileList_.size(), d2cColorPreProcessProfileList_.size());
+    for(size_t i = 0; i < count; i++) {
+        if(d2cProfileList_[i].colorWidth == colorWidth && d2cProfileList_[i].colorHeight == colorHeight) {
+            param = d2cColorPreProcessProfileList_[i].preProcessParam;
+            return true;
+        }
+    }
+    return false;
+}
+
 void PlaybackDeviceParamManager::initDeviceParams() {
     std::vector<uint8_t> rawData   = port_->getRecordedStructData(OB_RAW_DATA_D2C_ALIGN_SUPPORT_PROFILE_LIST);
     auto itemCount = rawData.size() / sizeof(OBD2CProfile);
     for(uint32_t i = 0; i < itemCount; i++) {
         auto item = reinterpret_cast<OBD2CProfile *>(rawData.data() + i * sizeof(OBD2CProfile));
         d2cProfileList_.push_back(*item);
+    }
+
+    // Load the hardware D2C color pre-process profile list written by RecordDevice.
+    // Parallel to the first N hardware-D2C entries of d2cProfileList_ by index.
+    // For recordings made before this fix or for non-DaBaiA devices the property is absent:
+    // getRecordedStructData() returns an empty vector, leaving d2cColorPreProcessProfileList_ empty,
+    // and getPreProcessParam() then returns false — preserving backward compatibility.
+    rawData.clear();
+    rawData   = port_->getRecordedStructData(OB_RAW_DATA_D2C_ALIGN_COLOR_PRE_PROCESS_PROFILE_LIST);
+    itemCount = rawData.size() / sizeof(OBD2CColorPreProcessProfile);
+    for(uint32_t i = 0; i < itemCount; i++) {
+        auto item = reinterpret_cast<OBD2CColorPreProcessProfile *>(rawData.data() + i * sizeof(OBD2CColorPreProcessProfile));
+        d2cColorPreProcessProfileList_.push_back(*item);
     }
 
     rawData.clear();

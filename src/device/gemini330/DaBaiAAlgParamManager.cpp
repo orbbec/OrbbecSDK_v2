@@ -315,6 +315,10 @@ bool DaBaiAAlgParamManager::getPreProcessParam(uint16_t colorWidth, uint16_t col
     return false;
 }
 
+const std::vector<OBD2CColorPreProcessProfile> &DaBaiAAlgParamManager::getD2CColorPreProcessProfileList() const {
+    return d2cColorPreProcessProfileList_;
+}
+
 void DaBaiAAlgParamManager::reFetchDisparityParams() {
     try {
         auto owner           = getOwner();

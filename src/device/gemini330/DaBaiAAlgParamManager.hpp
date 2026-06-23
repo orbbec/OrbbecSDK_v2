@@ -22,6 +22,11 @@ public:
     void updateD2CProfileList(const std::string currentDepthAlgMode);
     bool getPreProcessParam(uint16_t colorWidth, uint16_t colorHeight, OBD2CPreProcessParam &param) const override;
 
+    // Returns the filtered d2cColorPreProcessProfileList_ built by d2CProfileListFilter() and used in
+    // fixD2CParmaList(). Parallel to the first N (hardware D2C) entries of getD2CProfileList() by index.
+    // RecordDevice writes this into the recording file so PlaybackDeviceParamManager can restore it.
+    const std::vector<OBD2CColorPreProcessProfile> &getD2CColorPreProcessProfileList() const override;
+
 private:
     void fetchParamFromDevice() override;
     void registerBasicExtrinsics() override;

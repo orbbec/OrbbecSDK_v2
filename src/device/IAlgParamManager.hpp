@@ -28,6 +28,15 @@ public:
         (void)param;
         return false;
     }
+
+    // Returns the hardware D2C color pre-process profile list, which is parallel (by index) to the
+    // first N hardware-D2C entries of getD2CProfileList(). Used by RecordDevice to persist this data
+    // into the recording file so PlaybackDeviceParamManager can reconstruct the correct preProcessParam.
+    // Default implementation returns an empty list; only DaBaiA devices override this.
+    virtual const std::vector<OBD2CColorPreProcessProfile> &getD2CColorPreProcessProfileList() const {
+        static const std::vector<OBD2CColorPreProcessProfile> empty;
+        return empty;
+    }
 };
 
 class IDisparityAlgParamManager {

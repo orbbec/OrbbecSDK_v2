@@ -260,6 +260,17 @@ void RecordDevice::writeCalibrationParamProperty() {
         writer_->writeProperty(OB_RAW_DATA_D2C_ALIGN_SUPPORT_PROFILE_LIST, reinterpret_cast<uint8_t *>(d2cProfileList.data()),
                                static_cast<uint32_t>(d2cProfileList.size() * sizeof(OBD2CProfile)));
 
+        // Write the hardware D2C color pre-process profile list so playback can reconstruct the correct
+        // OBD2CPreProcessParam (colorScale, alignLeft, alignTop, etc.) for each color resolution.
+        // This list is parallel to the first N hardware-D2C entries of d2cProfileList by index.
+        // Non-DaBaiA devices return an empty list from the default IAlgParamManager implementation,
+        // so nothing is written for them and their recording files are not affected.
+        const auto &colorPreProcessList = algParamManager->getD2CColorPreProcessProfileList();
+        if(!colorPreProcessList.empty()) {
+            writer_->writeProperty(OB_RAW_DATA_D2C_ALIGN_COLOR_PRE_PROCESS_PROFILE_LIST, reinterpret_cast<const uint8_t *>(colorPreProcessList.data()),
+                                   static_cast<uint32_t>(colorPreProcessList.size() * sizeof(OBD2CColorPreProcessProfile)));
+        }
+
         // calibration param list
         auto calibrationList = algParamManager->getCalibrationCameraParamList();
         writer_->writeProperty(OB_RAW_DATA_ALIGN_CALIB_PARAM, reinterpret_cast<uint8_t *>(calibrationList.data()),
