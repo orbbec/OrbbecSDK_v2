@@ -32,6 +32,15 @@ public:
         return nullptr;
     }
 };
+
+class IColorPresetManager {
+public:
+    virtual ~IColorPresetManager() = default;
+
+    virtual const std::string              &getCurrentName() const                = 0;
+    virtual void                            switchPreset(const std::string &name) = 0;
+    virtual const std::vector<std::string> &getPresetList() const                 = 0;
+};
 }  // namespace libobsensor
 
 #ifdef __cplusplus
@@ -40,6 +49,10 @@ extern "C" {
 
 struct ob_device_preset_list_t {
     std::vector<std::string> presetList;
+};
+
+struct ob_color_preset_list_t {
+    std::vector<std::string> list;
 };
 
 #ifdef __cplusplus

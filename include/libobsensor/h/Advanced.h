@@ -342,6 +342,74 @@ OB_EXPORT OBPresetResolutionConfig ob_device_preset_resolution_config_list_get_i
  */
 OB_EXPORT void ob_delete_preset_resolution_config_list(ob_preset_resolution_config_list *ob_preset_resolution_config_list, ob_error **error);
 
+/**
+ * @brief Check if the device supports color preset.
+ *
+ * @param[in] device The device object.
+ * @param[out] error Pointer to an error object that will be set if an error occurs.
+ *
+ * @return bool Returns true if the device supports color preset.
+ */
+OB_EXPORT bool ob_device_is_color_preset_supported(const ob_device *device, ob_error **error);
+
+/**
+ * @brief Get the current color preset name.
+ *
+ * @param[in] device The device object.
+ * @param[out] error Pointer to an error object that will be set if an error occurs.
+ *
+ * @return const char* The current color preset name.
+ */
+OB_EXPORT const char *ob_device_get_current_color_preset_name(const ob_device *device, ob_error **error);
+
+/**
+ * @brief Switch the color preset by name.
+ *
+ * @param[in] device The device object.
+ * @param[in] preset_name The color preset name.
+ * @param[out] error Pointer to an error object that will be set if an error occurs.
+ */
+OB_EXPORT void ob_device_switch_color_preset(ob_device *device, const char *preset_name, ob_error **error);
+
+/**
+ * @brief Get the available color preset list.
+ *
+ * @param[in] device The device object.
+ * @param[out] error Pointer to an error object that will be set if an error occurs.
+ *
+ * @return ob_color_preset_list* The color preset list.
+ */
+OB_EXPORT ob_color_preset_list *ob_device_get_color_preset_list(const ob_device *device, ob_error **error);
+
+/**
+ * @brief Get the number of color preset in the list.
+ *
+ * @param[in] list The color preset list.
+ * @param[out] error Pointer to an error object that will be set if an error occurs.
+ *
+ * @return uint32_t The number of color preset in the list.
+ */
+OB_EXPORT uint32_t ob_color_preset_list_get_count(const ob_color_preset_list *list, ob_error **error);
+
+/**
+ * @brief Get the name of color preset at the specified index.
+ *
+ * @param[in] list The color preset list.
+ * @param[in] index The index of the color preset.
+ * @param[out] error Pointer to an error object that will be set if an error occurs.
+ *
+ * @return const char* The name of the color preset.
+ */
+OB_EXPORT const char *ob_color_preset_list_get_name(const ob_color_preset_list *list, uint32_t index, ob_error **error);
+
+/**
+ * @brief Delete the color preset list.
+ *
+ * @param[in] list The color preset list.
+ * @param[out] error Pointer to an error object that will be set if an error occurs.
+ */
+OB_EXPORT void ob_delete_color_preset_list(ob_color_preset_list *list, ob_error **error);
+
 // The following interfaces are deprecated and are retained here for compatibility purposes.
 #define ob_depth_work_mode_list_count ob_depth_work_mode_list_get_count
 #define ob_device_preset_list_count ob_device_preset_list_get_count

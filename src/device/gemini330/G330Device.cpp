@@ -38,6 +38,8 @@
 #include "firmwareupdater/firmwareupdateguard/FirmwareUpdateGuards.hpp"
 #include "frameprocessor/FrameProcessor.hpp"
 #include "comprehensivefilter/DepthPostFilterParamsManager.hpp"
+#include "colorpreset/ColorPresetManager.hpp"
+#include "colorpreset/ColorPresetMaps.hpp"
 
 #include "G330MetadataParser.hpp"
 #include "G330MetadataTypes.hpp"
@@ -182,6 +184,8 @@ void G330Device::init() {
         auto propertyServer         = getPropertyServer();
         auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
         propertyServer->registerProperty(OB_PROP_COLOR_PRESET_PRIORITY_INT, "rw", "rw", vendorPropertyAccessor.get());
+
+        registerComponent(OB_DEV_COMPONENT_COLOR_PRESET_MANAGER, [this]() { return std::make_shared<ColorPresetManager>(this, getG330ColorPresetMap()); });
     }
 
     if(fwVersion >= 10712) {
@@ -936,10 +940,10 @@ void                 G330Device::initSensorListGMSL() {
                 auto port   = getSourcePort(rightIrPortInfo);
                 auto sensor = std::make_shared<VideoSensor>(this, OB_SENSOR_IR_RIGHT, port);
 
-                std::vector<FormatFilterConfig> formatFilterConfigs = { { FormatFilterPolicy::REMOVE, OB_FORMAT_Z16, OB_FORMAT_ANY, nullptr },  //
+                std::vector<FormatFilterConfig> formatFilterConfigs = { { FormatFilterPolicy::REMOVE, OB_FORMAT_Z16, OB_FORMAT_ANY, nullptr },   //
                                                                         { FormatFilterPolicy::REMOVE, OB_FORMAT_MJPG, OB_FORMAT_ANY, nullptr },  //
-                                                                        { FormatFilterPolicy::REMOVE, OB_FORMAT_Y10, OB_FORMAT_ANY, nullptr },  //
-                                                                        { FormatFilterPolicy::REMOVE, OB_FORMAT_Y14, OB_FORMAT_ANY, nullptr },  //
+                                                                        { FormatFilterPolicy::REMOVE, OB_FORMAT_Y10, OB_FORMAT_ANY, nullptr },   //
+                                                                        { FormatFilterPolicy::REMOVE, OB_FORMAT_Y14, OB_FORMAT_ANY, nullptr },   //
                                                                         { FormatFilterPolicy::REMOVE, OB_FORMAT_BA81, OB_FORMAT_ANY, nullptr },
                                                                         { FormatFilterPolicy::REMOVE, OB_FORMAT_NV12, OB_FORMAT_ANY, nullptr },
                                                                         { FormatFilterPolicy::REMOVE, OB_FORMAT_UYVY, OB_FORMAT_ANY, nullptr },
@@ -1595,6 +1599,8 @@ void G330NetDevice::init() {
 
     if(fwVersion >= 10632) {
         propertyServer->registerProperty(OB_PROP_COLOR_PRESET_PRIORITY_INT, "rw", "rw", vendorPropertyAccessor.get());
+
+        registerComponent(OB_DEV_COMPONENT_COLOR_PRESET_MANAGER, [this]() { return std::make_shared<ColorPresetManager>(this, getG330ColorPresetMap()); });
     }
     if(fwVersion >= 10705 && fwVersion < 10716) {
         propertyServer->registerProperty(OB_PROP_DEVICE_NETWORK_LLA_BOOL, "rw", "rw", vendorPropertyAccessor.get());

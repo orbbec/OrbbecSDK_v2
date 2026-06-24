@@ -27,6 +27,7 @@ namespace ob {
 class DeviceInfo;
 class SensorList;
 class DevicePresetList;
+class ColorPresetList;
 class OBDepthWorkModeList;
 class CameraParamList;
 class DeviceFrameInterleaveList;
@@ -509,6 +510,53 @@ public:
         auto      list  = ob_device_get_depth_work_mode_list(impl_, &error);
         Error::handle(&error);
         return std::make_shared<OBDepthWorkModeList>(list);
+    }
+
+    /**
+     * @brief Check if the device supports color preset.
+     *
+     * @return bool Returns true if the device supports color preset.
+     */
+    bool isColorPresetSupported() const {
+        ob_error *error  = nullptr;
+        auto      result = ob_device_is_color_preset_supported(impl_, &error);
+        Error::handle(&error);
+        return result;
+    }
+
+    /**
+     * @brief Get the current color preset name.
+     *
+     * @return const char* The current color preset name.
+     */
+    const char *getCurrentColorPresetName() const {
+        ob_error   *error = nullptr;
+        const char *name  = ob_device_get_current_color_preset_name(impl_, &error);
+        Error::handle(&error);
+        return name;
+    }
+
+    /**
+     * @brief Switch the color preset by name.
+     *
+     * @param[in] presetName The color preset name.
+     */
+    void switchColorPreset(const char *presetName) const {
+        ob_error *error = nullptr;
+        ob_device_switch_color_preset(impl_, presetName, &error);
+        Error::handle(&error);
+    }
+
+    /**
+     * @brief Get the available color preset list.
+     *
+     * @return std::shared_ptr<ColorPresetList> The color preset list.
+     */
+    std::shared_ptr<ColorPresetList> getColorPresetList() const {
+        ob_error *error = nullptr;
+        auto      list  = ob_device_get_color_preset_list(impl_, &error);
+        Error::handle(&error);
+        return std::make_shared<ColorPresetList>(list);
     }
 
     /**
@@ -1651,6 +1699,36 @@ public:
     // The following interfaces are deprecated and are retained here for compatibility purposes.
     uint32_t count() {
         return getCount();
+    }
+};
+
+/**
+ * @brief Class representing a list of color presets
+ */
+class ColorPresetList {
+private:
+    ob_color_preset_list *impl_ = nullptr;
+
+public:
+    explicit ColorPresetList(ob_color_preset_list *impl) : impl_(impl) {}
+    ~ColorPresetList() noexcept {
+        ob_error *error = nullptr;
+        ob_delete_color_preset_list(impl_, &error);
+        Error::handle(&error, false);
+    }
+
+    uint32_t getCount() const {
+        ob_error *error = nullptr;
+        auto      count = ob_color_preset_list_get_count(impl_, &error);
+        Error::handle(&error);
+        return count;
+    }
+
+    const char *getName(uint32_t index) const {
+        ob_error   *error = nullptr;
+        const char *name  = ob_color_preset_list_get_name(impl_, index, &error);
+        Error::handle(&error);
+        return name;
     }
 };
 

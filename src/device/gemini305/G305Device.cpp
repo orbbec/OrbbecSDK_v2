@@ -33,6 +33,8 @@
 #include "firmwareupdater/FirmwareUpdater.hpp"
 #include "firmwareupdater/firmwareupdateguard/FirmwareUpdateGuards.hpp"
 #include "frameprocessor/FrameProcessor.hpp"
+#include "colorpreset/ColorPresetManager.hpp"
+#include "colorpreset/ColorPresetMaps.hpp"
 
 #include "utils/BufferParser.hpp"
 #include "G305DeviceInfo.hpp"
@@ -151,6 +153,10 @@ void G305Device::init() {
     if(fwVersion >= 10076) {
         auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
         propertyServer->registerProperty(OB_PROP_USB_SYNC_VOLTAGE_LEVEL_INT, "rw", "rw", vendorPropertyAccessor.get());
+        propertyServer->registerProperty(OB_PROP_COLOR_PRESET_PRIORITY_INT, "", "rw", vendorPropertyAccessor.get());
+
+        registerComponent(OB_DEV_COMPONENT_COLOR_PRESET_MANAGER,
+                          [this]() { return std::make_shared<ColorPresetManager>(this, getG305ColorPresetMap()); });
     }
 
     static const std::vector<OBMultiDeviceSyncMode> supportedSyncModes = {

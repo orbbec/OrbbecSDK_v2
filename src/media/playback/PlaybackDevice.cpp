@@ -10,6 +10,8 @@
 #include "exception/ObException.hpp"
 #include "common/DevicePids.hpp"
 #include "component/frameprocessor/FrameProcessor.hpp"
+#include "component/colorpreset/ColorPresetManager.hpp"
+#include "component/colorpreset/ColorPresetMaps.hpp"
 #include "component/sensor/video/DisparityBasedSensor.hpp"
 #include "component/metadata/FrameMetadataParserContainer.hpp"
 #include "component/timestamp/GlobalTimestampFitter.hpp"
@@ -169,6 +171,32 @@ void PlaybackDevice::init() {
     if(delegateManager) {
         auto presetManager = std::make_shared<PlaybackPresetManager>(this, delegateManager);
         registerComponent(OB_DEV_COMPONENT_PRESET_MANAGER, presetManager);
+    }
+
+    // color preset: reuse the live device component, but expose only the recorded preset from the shared mapping.
+    if(port_->isPropertySupported(OB_PROP_COLOR_PRESET_PRIORITY_INT)) {
+        const std::map<int32_t, std::string> *colorPresetMap = nullptr;
+        if(isDeviceInOrbbecSeries(G305DevPids, vid, pid)) {
+            colorPresetMap = &getG305ColorPresetMap();
+        }
+        else if(isDeviceInContainer(G330DevPids, vid, pid)) {
+            colorPresetMap = &getG330ColorPresetMap();
+        }
+
+        if(colorPresetMap) {
+            OBPropertyValue recordedPreset{};
+            port_->getRecordedPropertyValue(OB_PROP_COLOR_PRESET_PRIORITY_INT, &recordedPreset);
+
+            // keep only the recorded preset; unknown values are left to ColorPresetManager
+            std::map<int32_t, std::string> currentPreset;
+            auto                           it = colorPresetMap->find(recordedPreset.intValue);
+            if(it != colorPresetMap->end()) {
+                currentPreset.emplace(it->first, it->second);
+            }
+
+            registerComponent(OB_DEV_COMPONENT_COLOR_PRESET_MANAGER,
+                              [this, currentPreset]() { return std::make_shared<ColorPresetManager>(this, currentPreset); });
+        }
     }
 
     auto fwVersion                = getFirmwareVersionInt();

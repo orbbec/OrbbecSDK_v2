@@ -41,6 +41,7 @@ typedef struct ob_device_preset_list_t            ob_device_preset_list;
 typedef struct ob_filter_config_schema_list_t     ob_filter_config_schema_list;
 typedef struct ob_device_frame_interleave_list_t  ob_device_frame_interleave_list;
 typedef struct ob_preset_resolution_config_list_t ob_preset_resolution_config_list;
+typedef struct ob_color_preset_list_t             ob_color_preset_list;
 
 #define OB_WIDTH_ANY 0
 #define OB_HEIGHT_ANY 0
