@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 #include "RecordDevice.hpp"
-#include "DevicePids.hpp"
+#include "common/DevicePids.hpp"
 #include "frame/FrameFactory.hpp"
 #include "DeviceBase.hpp"
 #include "IAlgParamManager.hpp"

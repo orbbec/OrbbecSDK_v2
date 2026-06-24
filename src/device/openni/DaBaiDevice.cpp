@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 #include "DaBaiDevice.hpp"
-#include "DevicePids.hpp"
+#include "common/DevicePids.hpp"
 #include "InternalTypes.hpp"
 #include "utils/Utils.hpp"
 #include "environment/EnvConfig.hpp"
@@ -25,9 +25,7 @@
 #include "monitor/DeviceMonitor.hpp"
 #include "OpenNIDisparitySensor.hpp"
 #include "OpenNIStreamProfileFilter.hpp"
-#include "DevicePids.hpp"
 #include <algorithm>
-
 
 namespace libobsensor {
 

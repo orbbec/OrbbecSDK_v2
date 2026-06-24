@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 #include "UsbDeviceEnumerator.hpp"
-#include "DevicePids.hpp"
+#include "common/DevicePids.hpp"
 #include "utils/Utils.hpp"
 #include <unordered_set>
 

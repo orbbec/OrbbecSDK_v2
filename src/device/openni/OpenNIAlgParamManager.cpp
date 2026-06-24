@@ -10,7 +10,7 @@
 #include "stream/StreamExtrinsicsManager.hpp"
 #include "stream/StreamProfileFactory.hpp"
 #include "exception/ObException.hpp"
-#include "DevicePids.hpp"
+#include "common/DevicePids.hpp"
 #include <vector>
 
 namespace libobsensor {

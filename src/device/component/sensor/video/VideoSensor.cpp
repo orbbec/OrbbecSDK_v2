@@ -13,7 +13,7 @@
 #include "FilterDecorator.hpp"
 #include "publicfilters/FormatConverterProcess.hpp"
 #include "property/InternalProperty.hpp"
-#include "DevicePids.hpp"
+#include "common/DevicePids.hpp"
 
 #include "logger/LoggerSnWrapper.hpp"  // Must be included last to override log macros
 

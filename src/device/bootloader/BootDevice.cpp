@@ -3,7 +3,7 @@
 
 #include "BootDevice.hpp"
 
-#include "DevicePids.hpp"
+#include "common/DevicePids.hpp"
 #include "InternalTypes.hpp"
 
 #include "utils/Utils.hpp"

@@ -4,7 +4,7 @@
 #include "FemtoMegaDeviceInfo.hpp"
 #include "FemtoMegaDevice.hpp"
 #include "FemtoMegaIDevice.hpp"
-#include "DevicePids.hpp"
+#include "common/DevicePids.hpp"
 #include "utils/Utils.hpp"
 #include "exception/ObException.hpp"
 #include "SourcePortInfo.hpp"

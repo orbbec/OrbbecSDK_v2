@@ -3,7 +3,7 @@
 
 #include "FemtoBoltDeviceInfo.hpp"
 #include "FemtoBoltDevice.hpp"
-#include "DevicePids.hpp"
+#include "common/DevicePids.hpp"
 #include "utils/Utils.hpp"
 #if defined(BUILD_USB_PAL)
 #include "usb/UsbPortGroup.hpp"

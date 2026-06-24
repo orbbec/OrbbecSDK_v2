@@ -3,7 +3,7 @@
 
 #include "DaBaiAAlgParamManager.hpp"
 #include "property/InternalProperty.hpp"
-#include "DevicePids.hpp"
+#include "common/DevicePids.hpp"
 #include "exception/ObException.hpp"
 #include "publicfilters/IMUCorrector.hpp"
 #include "G330DepthWorkModeManager.hpp"

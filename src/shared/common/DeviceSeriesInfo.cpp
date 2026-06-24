@@ -5,6 +5,7 @@
 #include "DeviceInfoConfig.hpp"
 #include "logger/Logger.hpp"
 #include "exception/ObException.hpp"
+#include "DevicePids.hpp"
 
 #include <iostream>
 #include <iomanip>
@@ -56,11 +57,70 @@ std::shared_ptr<DeviceSeriesInfoManager> DeviceSeriesInfoManager::getInstance() 
     return instance;
 }
 
+namespace {
+std::unordered_set<uint32_t> deviceEnumWhitelist;
+
+void populateHardcodedUsbDevices() {
+    auto add = [](uint16_t vid, uint16_t pid) {
+        uint32_t key = (static_cast<uint32_t>(vid) << 16) | static_cast<uint32_t>(pid);
+        deviceEnumWhitelist.insert(key);
+    };
+    for(auto pid: BootDevPids) {
+        add(ORBBEC_DEVICE_VID, pid);
+    }
+    for(auto pid: Astra2DevPids) {
+        add(ORBBEC_DEVICE_VID, pid);
+    }
+    for(auto pid: Gemini2DevPids) {
+        add(ORBBEC_DEVICE_VID, pid);
+    }
+    for(auto pid: FemtoMegaDevPids) {
+        add(ORBBEC_DEVICE_VID, pid);
+    }
+    for(auto pid: FemtoBoltDevPids) {
+        add(ORBBEC_DEVICE_VID, pid);
+    }
+    for(auto pid: G305DevPids) {
+        add(ORBBEC_DEVICE_VID, pid);
+    }
+    for(auto pid: OpenNIDevPids) {
+        add(ORBBEC_DEVICE_VID, pid);
+    }
+    for(auto pid: OpenniRgbPids) {
+        add(ORBBEC_DEVICE_VID, pid);
+    }
+    for(auto pid: OpenniAstraPids) {
+        add(ORBBEC_DEVICE_VID, pid);
+    }
+    for(auto pid: OpenNIDualPids) {
+        add(ORBBEC_DEVICE_VID, pid);
+    }
+    for(auto pid: OpenniMonocularPids) {
+        add(ORBBEC_DEVICE_VID, pid);
+    }
+    for(auto pid: OpenniDW2Pids) {
+        add(ORBBEC_DEVICE_VID, pid);
+    }
+    for(auto pid: OpenniMaxPids) {
+        add(ORBBEC_DEVICE_VID, pid);
+    }
+    for(auto pid: LiDARDevPids) {
+        add(ORBBEC_DEVICE_VID, pid);
+    }
+}
+}  // namespace
+
 DeviceSeriesInfoManager::DeviceSeriesInfoManager() {
     // load built-in config
     loadXmlConfig("config/DeviceInfoConfig.xml", false);
     // try load external config
     loadXmlConfig("DeviceInfoConfigOEM.xml", true);
+
+    // Populate hardcoded devices only when the Orbbec VID is configured in XML.
+    // This allows OEM customers to exclude official devices by removing 0x2BC5 from their XML.
+    if(supportedUsbVids.count(ORBBEC_DEVICE_VID) > 0) {
+        populateHardcodedUsbDevices();
+    }
 }
 
 // merge unique b into a
@@ -152,6 +212,19 @@ void DeviceSeriesInfoManager::loadXmlConfig(const std::string &configFileName, b
         // If the value already exists, insertion is ignored
         manufacturerVidMap.insert(kv);
     }
+
+    // Collect (VID,PID) pairs from this config into the global USB whitelist
+    auto collectVidPid = [](const std::vector<DeviceIdentifier> &list) {
+        for(const auto &dev: list) {
+            uint32_t key = (static_cast<uint32_t>(dev.vid_) << 16) | static_cast<uint32_t>(dev.pid_);
+            deviceEnumWhitelist.insert(key);
+        }
+    };
+    collectVidPid(g330VidpidList);
+    collectVidPid(g330LVidpidList);
+    collectVidPid(daBaiAVidpidList);
+    collectVidPid(g335LeVidpidList);
+    collectVidPid(g435LeVidpidList);
 }
 
 bool isDeviceInContainer(const std::vector<DeviceIdentifier> &deviceContainer, const uint32_t &vid, const uint32_t &pid) {
@@ -168,18 +241,18 @@ bool isDeviceInOrbbecSeries(const std::vector<uint16_t> &deviceContainer, const 
 }
 
 bool isSupportedDevice(uint32_t vid, uint32_t pid) {
-    const auto &allowedVids = libobsensor::supportedUsbVids;
-    if(allowedVids.count(static_cast<uint16_t>(vid)) > 0) {
+    // When the Orbbec VID is not configured via XML (e.g. OEM customers who replaced DeviceInfoConfig.xml), the bootloader device is not in the whitelist but
+    // must remain reachable for firmware recovery.
+    if(vid == ORBBEC_DEVICE_VID && pid == 0x0501 && supportedUsbVids.count(ORBBEC_DEVICE_VID) == 0) {
         return true;
     }
-    // Whitelist for OEM bootloader identification: only the latest
-    // supported bootloader device (PID 0x0501) is accepted.
-    return vid == ORBBEC_DEVICE_VID && pid == 0x0501;
+
+    uint32_t key = (static_cast<uint32_t>(vid) << 16) | static_cast<uint32_t>(pid);
+    return deviceEnumWhitelist.count(key) > 0;
 }
 
 bool isSupportedOemBootloaderNetworkDevice(const std::string &manufacturer, uint32_t pid, uint32_t &vid) {
-    // Whitelist for OEM bootloader identification: only the latest
-    // supported bootloader device (PID 0x0501) is accepted.
+    // Whitelist for OEM bootloader identification: only the latest supported bootloader device (PID 0x0501) is accepted.
     if(manufacturer == "Orbbec" && pid == 0x0501) {
         vid = ORBBEC_DEVICE_VID;
         return true;

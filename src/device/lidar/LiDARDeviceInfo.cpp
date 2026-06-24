@@ -4,7 +4,7 @@
 #include "LiDARDeviceInfo.hpp"
 #include "LiDARDevice.hpp"
 #include "MS600Device.hpp"
-#include "DevicePids.hpp"
+#include "common/DevicePids.hpp"
 #include "ethernet/NetPortGroup.hpp"
 #include "utils/Utils.hpp"
 #include "exception/ObException.hpp"

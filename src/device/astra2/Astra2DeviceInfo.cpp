@@ -3,7 +3,7 @@
 
 #include "Astra2DeviceInfo.hpp"
 #include "Astra2Device.hpp"
-#include "DevicePids.hpp"
+#include "common/DevicePids.hpp"
 #if defined(BUILD_USB_PAL)
 #include "usb/UsbPortGroup.hpp"
 #endif

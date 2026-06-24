@@ -3,7 +3,7 @@
 
 #include "BootDeviceInfo.hpp"
 #include "BootDevice.hpp"
-#include "DevicePids.hpp"
+#include "common/DevicePids.hpp"
 #if defined(BUILD_USB_PAL)
 #include "usb/UsbPortGroup.hpp"
 #endif

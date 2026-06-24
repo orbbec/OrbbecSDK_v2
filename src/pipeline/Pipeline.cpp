@@ -3,7 +3,7 @@
 
 #include "Pipeline.hpp"
 
-#include "DevicePids.hpp"
+#include "common/DevicePids.hpp"
 #include "context/Context.hpp"
 #include "stream/StreamProfileFactory.hpp"
 #include "logger/LoggerInterval.hpp"

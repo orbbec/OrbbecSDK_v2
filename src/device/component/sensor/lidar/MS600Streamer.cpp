@@ -10,7 +10,7 @@
 #include "utils/Utils.hpp"
 #include "property/InternalProperty.hpp"
 #include "IDevice.hpp"
-#include "DevicePids.hpp"
+#include "common/DevicePids.hpp"
 
 #ifdef _WIN32
 #include <winsock2.h>

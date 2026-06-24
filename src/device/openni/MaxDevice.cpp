@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 #include "MaxDevice.hpp"
-#include "DevicePids.hpp"
+#include "common/DevicePids.hpp"
 #include "InternalTypes.hpp"
 #include "utils/Utils.hpp"
 #include "environment/EnvConfig.hpp"
@@ -26,7 +26,6 @@
 #include "property/PrivateFilterPropertyAccessors.hpp"
 #include "monitor/DeviceMonitor.hpp"
 #include "OpenNIDeviceSyncConfigurator.hpp"
-#include "DevicePids.hpp"
 #include <algorithm>
 
 

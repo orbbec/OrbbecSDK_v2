@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 #include "FirmwareUpdateGuards.hpp"
-#include "DevicePids.hpp"
+#include "common/DevicePids.hpp"
 #include "logger/Logger.hpp"
 #include "utils/Utils.hpp"
 

@@ -7,7 +7,7 @@
 #include "stream/StreamProfileFactory.hpp"
 #include "exception/ObException.hpp"
 #include "property/InternalProperty.hpp"
-#include "DevicePids.hpp"
+#include "common/DevicePids.hpp"
 
 namespace libobsensor {
 OpenNIStreamProfileFilter::OpenNIStreamProfileFilter(IDevice *owner) : DeviceComponentBase(owner) {

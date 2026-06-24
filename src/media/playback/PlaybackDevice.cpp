@@ -9,7 +9,7 @@
 #include "PlaybackDeviceSyncConfigurator.hpp"
 #include "PlaybackDepthPostFilterParamsManager.hpp"
 #include "exception/ObException.hpp"
-#include "DevicePids.hpp"
+#include "common/DevicePids.hpp"
 #include "component/frameprocessor/FrameProcessor.hpp"
 #include "component/sensor/video/DisparityBasedSensor.hpp"
 #include "component/metadata/FrameMetadataParserContainer.hpp"

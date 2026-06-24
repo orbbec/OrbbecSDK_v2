@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 #include "OpenNIDeviceInfo.hpp"
-#include "DevicePids.hpp"
+#include "common/DevicePids.hpp"
 #include "utils/Utils.hpp"
 #include "OpenNIDeviceBase.hpp"
 #include "DaBaiDevice.hpp"

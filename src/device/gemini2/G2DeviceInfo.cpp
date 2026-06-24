@@ -6,7 +6,7 @@
 #include "G2XLDevice.hpp"
 #include "G210Device.hpp"
 #include "G435LeDevice.hpp"
-#include "DevicePids.hpp"
+#include "common/DevicePids.hpp"
 #include "utils/Utils.hpp"
 #include "exception/ObException.hpp"
 #include "SourcePortInfo.hpp"

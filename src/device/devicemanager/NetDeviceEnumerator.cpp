@@ -11,7 +11,7 @@
 #include "property/VendorPropertyAccessor.hpp"
 #include "property/LiDARPropertyAccessor.hpp"
 #include "property/InternalProperty.hpp"
-#include "DevicePids.hpp"
+#include "common/DevicePids.hpp"
 #include "utils/Utils.hpp"
 #if defined(BUILD_NET_PAL)
 #include "ethernet/NetDataStreamPort.hpp"

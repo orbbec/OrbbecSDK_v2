@@ -7,7 +7,7 @@
 #include "PlaybackDevicePort.hpp"
 #include "IDeviceComponent.hpp"
 #include "logger/Logger.hpp"
-#include "DevicePids.hpp"
+#include "common/DevicePids.hpp"
 
 #include "component/property/CommonPropertyAccessors.hpp"
 #include "gemini2/G2PropertyAccessors.hpp"

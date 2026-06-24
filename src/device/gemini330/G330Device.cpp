@@ -3,7 +3,7 @@
 
 #include "G330Device.hpp"
 
-#include "DevicePids.hpp"
+#include "common/DevicePids.hpp"
 #include "InternalTypes.hpp"
 #include "SourcePortInfo.hpp"
 

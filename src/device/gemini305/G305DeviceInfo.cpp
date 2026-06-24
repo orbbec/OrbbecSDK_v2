@@ -3,7 +3,7 @@
 
 #include "G305DeviceInfo.hpp"
 #include "G305Device.hpp"
-#include "DevicePids.hpp"
+#include "common/DevicePids.hpp"
 #include "usb/UsbPortGroup.hpp"
 #include "utils/Utils.hpp"
 #include "exception/ObException.hpp"

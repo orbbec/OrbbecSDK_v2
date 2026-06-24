@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 #include "AstraMiniDevice.hpp"
-#include "DevicePids.hpp"
+#include "common/DevicePids.hpp"
 #include "InternalTypes.hpp"
 #include "utils/Utils.hpp"
 #include "environment/EnvConfig.hpp"
@@ -24,7 +24,7 @@
 #include "monitor/DeviceMonitor.hpp"
 #include "OpenNIDisparitySensor.hpp"
 #include "AstraMiniSensorStreamStrategy.hpp"
-#include "DevicePids.hpp"
+#include "common/DevicePids.hpp"
 #include <algorithm>
 
 

@@ -7,7 +7,7 @@
 #include "stream/StreamProfileFactory.hpp"
 #include "stream/StreamProfile.hpp"
 #include "property/InternalProperty.hpp"
-#include "DevicePids.hpp"
+#include "common/DevicePids.hpp"
 #include "exception/ObException.hpp"
 #include "publicfilters/IMUCorrector.hpp"
 

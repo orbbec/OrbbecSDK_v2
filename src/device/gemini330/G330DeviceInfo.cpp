@@ -4,7 +4,7 @@
 #include "G330DeviceInfo.hpp"
 #include "G330Device.hpp"
 #include "DabaiADevice.hpp"
-#include "DevicePids.hpp"
+#include "common/DevicePids.hpp"
 #include "utils/Utils.hpp"
 #include "exception/ObException.hpp"
 #include "ethernet/RTPStreamPort.hpp"

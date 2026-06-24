@@ -6,7 +6,7 @@
 #include "protocol/LiDARProtocol.hpp"
 #include "libobsensor/h/Property.h"
 #include "InternalProperty.hpp"
-#include "DevicePids.hpp"
+#include "common/DevicePids.hpp"
 
 namespace libobsensor {
 

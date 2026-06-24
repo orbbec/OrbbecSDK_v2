@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 #include "OpenNIDeviceBase.hpp"
-#include "DevicePids.hpp"
+#include "common/DevicePids.hpp"
 #include "InternalTypes.hpp"
 #include "utils/Utils.hpp"
 #include "environment/EnvConfig.hpp"
@@ -25,7 +25,6 @@
 #include "firmwareupdater/FirmwareUpdater.hpp"
 #include "firmwareupdater/firmwareupdateguard/FirmwareUpdateGuards.hpp"
 #include "OpenNIDisparitySensor.hpp"
-#include "DevicePids.hpp"
 #include <algorithm>
 
 namespace libobsensor {

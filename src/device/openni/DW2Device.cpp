@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 #include "DW2Device.hpp"
-#include "DevicePids.hpp"
+#include "common/DevicePids.hpp"
 #include "InternalTypes.hpp"
 #include "utils/Utils.hpp"
 #include "environment/EnvConfig.hpp"
@@ -25,9 +25,7 @@
 #include "property/FilterPropertyAccessors.hpp"
 #include "property/PrivateFilterPropertyAccessors.hpp"
 #include "monitor/DeviceMonitor.hpp"
-#include "DevicePids.hpp"
 #include <algorithm>
-
 
 namespace libobsensor {
 
