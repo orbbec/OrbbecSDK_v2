@@ -341,6 +341,14 @@ void DepthFrameProcessor::setPropertyValue(uint32_t propertyId, const OBProperty
         configSchemaName = "NoiseRemovalFilter#1";
         configValue      = static_cast<double>(value.intValue);
     } break;
+    case OB_PROP_DEPTH_OUTLIERS_FILTER_BOOL: {
+        configSchemaName = "DispOutliersFilter#255";
+        configValue      = static_cast<double>(value.intValue);
+    } break;
+    case OB_PROP_DEPTH_OUTLIERS_FILTER_SEARCH_MODE_INT: {
+        configSchemaName = "DispOutliersFilter#0";
+        configValue      = static_cast<double>(value.intValue);
+    } break;
     case OB_PROP_DISPARITY_TO_DEPTH_BOOL: {
         configSchemaName = "HardwareD2DCorrectionFilter#255";
         configValue      = static_cast<double>(value.intValue);
@@ -400,6 +408,14 @@ void DepthFrameProcessor::getPropertyValue(uint32_t propertyId, OBPropertyValue 
         auto getValue   = getConfigValue("NoiseRemovalFilter#1");
         value->intValue = static_cast<int32_t>(getValue);
     } break;
+    case OB_PROP_DEPTH_OUTLIERS_FILTER_BOOL: {
+        auto getValue   = getConfigValue("DispOutliersFilter#255");
+        value->intValue = static_cast<int32_t>(getValue);
+    } break;
+    case OB_PROP_DEPTH_OUTLIERS_FILTER_SEARCH_MODE_INT: {
+        auto getValue   = getConfigValue("DispOutliersFilter#0");
+        value->intValue = static_cast<int32_t>(getValue);
+    } break;
     case OB_PROP_DEPTH_MIRROR_BOOL: {
         auto getValue   = getConfigValue("FrameMirror#255");
         value->intValue = static_cast<int32_t>(getValue);
@@ -439,6 +455,12 @@ void DepthFrameProcessor::getPropertyRange(uint32_t propertyId, OBPropertyRange 
         break;
     case OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT:
         configName = "NoiseRemovalFilter#1";
+        break;
+    case OB_PROP_DEPTH_OUTLIERS_FILTER_BOOL:
+        configName = "DispOutliersFilter#255";
+        break;
+    case OB_PROP_DEPTH_OUTLIERS_FILTER_SEARCH_MODE_INT:
+        configName = "DispOutliersFilter#0";
         break;
     case OB_PROP_DEPTH_ROTATE_INT:
         configName = "FrameRotate#0";

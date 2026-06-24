@@ -133,6 +133,11 @@ void OpenNIDeviceBase::initProperties() {
     propertyServer->registerProperty(OB_PROP_DEPTH_SOFT_FILTER_BOOL, "rw", "rw", privatePropertyAccessor);
     propertyServer->registerProperty(OB_PROP_DEPTH_MAX_DIFF_INT, "rw", "rw", privatePropertyAccessor);
     propertyServer->registerProperty(OB_PROP_DEPTH_MAX_SPECKLE_SIZE_INT, "rw", "rw", privatePropertyAccessor);
+    if(deviceInfo_->pid_ == OB_DEVICE_MAX_PRO_PID || deviceInfo_->pid_ == OB_DEVICE_GEMINI_UW_PID
+       || deviceInfo_->pid_ == OB_DEVICE_DABAI_MAX_PID) {
+        propertyServer->registerProperty(OB_PROP_DEPTH_OUTLIERS_FILTER_BOOL, "rw", "rw", privatePropertyAccessor);
+        propertyServer->registerProperty(OB_PROP_DEPTH_OUTLIERS_FILTER_SEARCH_MODE_INT, "rw", "rw", privatePropertyAccessor);
+    }
 
     auto frameTransformPropertyAccessor = std::make_shared<OpenNIFrameTransformPropertyAccessor>(this);
     propertyServer->registerProperty(OB_PROP_DEPTH_MIRROR_BOOL, "rw", "rw", frameTransformPropertyAccessor);

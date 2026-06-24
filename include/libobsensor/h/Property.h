@@ -100,6 +100,16 @@ typedef enum {
     OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL = 24,
 
     /**
+     * @brief Depth outliers filter switch
+     */
+    OB_PROP_DEPTH_OUTLIERS_FILTER_BOOL = 25,
+
+    /**
+     * @brief Depth outliers filter search range mode
+     */
+    OB_PROP_DEPTH_OUTLIERS_FILTER_SEARCH_MODE_INT = 26,
+
+    /**
      * @brief LDP status
      */
     OB_PROP_LDP_STATUS_BOOL = 32,
