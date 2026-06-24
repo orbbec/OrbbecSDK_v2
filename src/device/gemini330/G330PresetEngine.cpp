@@ -71,6 +71,10 @@ void G330PresetEngine::init() {
         "device_info",
         [&](jsonmodel::ConfigEngine &engine) {
             auto devInfo = owner_->getInfo();
+            engine.addLeaf(
+                "comment",
+                std::make_shared<CommentHandler>(
+                    "extra vid/pid may be added to 'compatible_devices' to share this preset across devices; ensure their properties are compatible"));
             engine.addLeaf("fw_version", std::make_shared<VersionHandler>(devInfo->fwVersion_, CompareMode::Ignore));
             engine.addLeaf("compatible_devices", std::make_shared<CompatibleDevicesHandler>(devInfo->vid_, devInfo->pid_, 4), true);
             engine.addLeaf("name", std::make_shared<VersionHandler>(devInfo->fullName_, CompareMode::Ignore));
@@ -80,6 +84,10 @@ void G330PresetEngine::init() {
     configEngine_.declareObject(
         "parameters",
         [&](jsonmodel::ConfigEngine &engine) {
+            engine.addLeaf(
+                "comment",
+                std::make_shared<CommentHandler>(
+                    "all fields are optional; atomic groups (e.g. 'depth_ae_roi') are optional as a whole but require all child fields when present"));
             // device settings
             engine.declareObject("device", [&](jsonmodel::ConfigEngine &engine) {
                 engine.addLeaf("device_ptp_clock_sync", std::make_shared<PropertyConfigHandler<bool>>(owner_, OB_DEVICE_PTP_CLOCK_SYNC_ENABLE_BOOL));
