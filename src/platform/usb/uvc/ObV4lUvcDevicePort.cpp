@@ -705,12 +705,19 @@ void ObV4lUvcDevicePort::startStream(std::shared_ptr<const StreamProfile> profil
     // stream on
     v4l2_buf_type bufType = V4L2_BUF_TYPE_VIDEO_CAPTURE;
     if(xioctl(devHandle->fd, VIDIOC_STREAMON, &bufType) < 0) {
+        {
+            std::lock_guard<std::mutex> lk(devHandle->streamMutex);
+            devHandle->isCapturing = false;
+        }
         auto err = errno;
         stopStream(devHandle);
         THROW_IO_EXCEPTION("Failed to stream on!" + devHandle->info->name + ", " + strerror(err));
     }
     // start capture
-    devHandle->canStartCapture = true;
+    {
+        std::lock_guard<std::mutex> lk(devHandle->streamMutex);
+        devHandle->canStartCapture = true;
+    }
     devHandle->streamCv.notify_all();
 }
 
@@ -863,7 +870,7 @@ uint32_t ObV4lUvcDevicePort::sendAndReceive(const uint8_t *sendData, uint32_t se
 
     ctrl = OB_VENDOR_XU_CTRL_ID_512;
     if(exceptedRecvLen <= 64) {
-        ctrl = OB_VENDOR_XU_CTRL_ID_64;
+        ctrl            = OB_VENDOR_XU_CTRL_ID_64;
         exceptedRecvLen = 64;
     }
     else if(exceptedRecvLen > 512) {

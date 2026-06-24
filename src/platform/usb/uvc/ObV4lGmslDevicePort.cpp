@@ -1133,6 +1133,10 @@ void ObV4lGmslDevicePort::startStream(std::shared_ptr<const StreamProfile> profi
     std::unique_lock<std::mutex> lk(mMultiThreadI2CMutex);
     if(xioctlGmsl(devHandle->fd, VIDIOC_STREAMON, &bufType) < 0) {
         lk.unlock();
+        {
+            std::lock_guard<std::mutex> streamLk(devHandle->streamMutex);
+            devHandle->isCapturing = false;
+        }
         auto err = errno;
         stopStream(devHandle);
         THROW_IO_EXCEPTION("Failed to stream on!" + devHandle->info->name + ", " + strerror(err));
@@ -1140,7 +1144,10 @@ void ObV4lGmslDevicePort::startStream(std::shared_ptr<const StreamProfile> profi
     lk.unlock();
     LOG_DEBUG("-VIDIOC_STREAMON success-");
     // start capture
-    devHandle->canStartCapture = true;
+    {
+        std::lock_guard<std::mutex> streamLk(devHandle->streamMutex);
+        devHandle->canStartCapture = true;
+    }
     devHandle->streamCv.notify_all();
 
     LOG_DEBUG("-Leave startStream-");

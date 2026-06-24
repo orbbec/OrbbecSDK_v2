@@ -43,7 +43,10 @@ SensorBase::SensorBase(IDevice *owner, OBSensorType sensorType, const std::share
 
 SensorBase::~SensorBase() noexcept {
     if(streamStateWatcherThread_.joinable()) {
-        recoveryEnabled_ = false;
+        {
+            std::lock_guard<std::mutex> lock(streamStateMutex_);
+            recoveryEnabled_ = false;
+        }
         streamStateCv_.notify_all();
         streamStateWatcherThread_.join();
     }
@@ -276,7 +279,10 @@ void SensorBase::startStreamRecovery() {
 }
 
 void SensorBase::disableStreamRecovery() {
-    recoveryEnabled_ = false;
+    {
+        std::lock_guard<std::mutex> lock(streamStateMutex_);
+        recoveryEnabled_ = false;
+    }
     streamStateCv_.notify_all();
     if(streamStateWatcherThread_.joinable()) {
         streamStateWatcherThread_.join();
@@ -300,12 +306,16 @@ void SensorBase::watchStreamState() {
                                   isTriggeringMode = true;
                                   LOG_DEBUG_INTVL_MS(5000, "{} Curent mode is not supported stream recovery", sensorType_);
                               })
-            CATCH_EXCEPTION_AND_EXECUTE(recoveryEnabled_ = false; streamStateCv_.notify_all();)
+            CATCH_EXCEPTION_AND_EXECUTE({
+                std::lock_guard<std::mutex> lk(streamStateMutex_);
+                recoveryEnabled_ = false;
+            } streamStateCv_.notify_all();)
         }
 
         if(streamState_ == STREAM_STATE_STOPPED || streamState_ == STREAM_STATE_STOPPING || streamState_ == STREAM_STATE_ERROR) {
+            auto                         oldState = streamState_.load();
             std::unique_lock<std::mutex> lock(streamStateMutex_);
-            streamStateCv_.wait(lock);
+            streamStateCv_.wait(lock, [&]() { return streamState_ != oldState || !recoveryEnabled_; });
             recoveryCount_ = 0;
         }
         else if(streamState_ == STREAM_STATE_STARTING && noStreamTimeoutMs_ > 0) {

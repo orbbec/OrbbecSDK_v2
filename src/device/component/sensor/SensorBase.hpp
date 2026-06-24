@@ -99,12 +99,12 @@ protected:
     std::atomic<OBStreamState> streamState_;
     std::thread                streamStateWatcherThread_;
 
-    bool     onRecovering_;
-    bool     recoveryEnabled_;
-    uint32_t maxRecoveryCount_;
-    uint32_t recoveryCount_;
-    uint32_t noStreamTimeoutMs_;
-    uint32_t streamInterruptTimeoutMs_;
+    std::atomic<bool> onRecovering_;
+    std::atomic<bool> recoveryEnabled_;
+    uint32_t          maxRecoveryCount_;
+    uint32_t          recoveryCount_;
+    uint32_t          noStreamTimeoutMs_;
+    uint32_t          streamInterruptTimeoutMs_;
 
     std::shared_ptr<IFrameMetadataParserContainer> frameMetadataParserContainer_;
     std::shared_ptr<IFrameTimestampCalculator>     frameTimestampCalculator_;
