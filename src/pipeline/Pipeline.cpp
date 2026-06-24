@@ -663,6 +663,13 @@ void Pipeline::enableHardwareD2C(bool enable) {
     if(!depthFrameProcessor) {
         return;
     }
+    if(!enable) {
+        // Disabling hardware D2C is a best-effort fallback: query the state first and return
+        // early if it is already disabled, to avoid the "not allowed while streaming" exception.
+        if(!depthFrameProcessor->isHardwareD2CProcessEnabled()) {
+            return;
+        }
+    }
     depthFrameProcessor->enableHardwareD2CProcess(enable);
 }
 

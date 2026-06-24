@@ -284,6 +284,16 @@ void DepthFrameProcessor::enableHardwareD2CProcess(bool enable) {
     }
 }
 
+bool DepthFrameProcessor::isHardwareD2CProcessEnabled() const {
+    auto owner          = getOwner();
+    auto propertyServer = owner->getPropertyServer();
+    bool isSupported    = propertyServer->isPropertySupported(OB_PROP_DEPTH_ALIGN_HARDWARE_BOOL, PROP_OP_READ, PROP_ACCESS_INTERNAL);
+    if(isSupported) {
+        return propertyServer->getPropertyValueT<bool>(OB_PROP_DEPTH_ALIGN_HARDWARE_BOOL);
+    }
+    return false;
+}
+
 void DepthFrameProcessor::setPreProcessParam(const OBD2CPreProcessParam &param) {
     if(!context_->set_pre_process_param) {
         LOG_WARN("setPreProcessParam skipped: set_pre_process_param not supported by current plugin");
