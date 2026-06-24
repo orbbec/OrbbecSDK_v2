@@ -44,33 +44,35 @@ jsonmodel::ExportValue ColorPowerLineFrequencyHandler::exportValue(const std::st
 }
 
 // ColorPresetHandler
-ColorPresetHandler::ColorPresetHandler(IDevice *owner) : PropertyConfigHandler<int>(owner, OB_PROP_COLOR_PRESET_PRIORITY_INT) {}
+ColorPresetHandler::ColorPresetHandler(IDevice *owner, bool supported) : owner_(owner), supported_(supported) {}
 
 void ColorPresetHandler::set(const std::string &k, const Json::Value &v) {
-#if 1
-    // TODO: Temporarily disabled, will be enabled after device issue is resolved
     utils::unusedVar(k);
-    utils::unusedVar(v);
-    return;
-#else
-    // try to set as int
-    try {
-        TRY_EXECUTE({ PropertyConfigHandler<int>::set(k, v); });
+
+    if(!supported_) {
+        // Firmware does not support color preset, ignore on import
+        return;
     }
-    catch(...) {
-        LOG_ERROR("Invalid color preset value '{}'", v.asString(););
+
+    if(!v.isString()) {
+        LOG_ERROR("Invalid color preset value '{}'", v.toStyledString());
+        return;
     }
-#endif
+
+    auto colorPresetManager = owner_->getComponentT<IColorPresetManager>(OB_DEV_COMPONENT_COLOR_PRESET_MANAGER);
+    colorPresetManager->switchPreset(v.asString());
 }
 
 jsonmodel::ExportValue ColorPresetHandler::exportValue(const std::string &k) {
-#if 1
-    // TODO: Temporarily disabled, will be enabled after device issue is resolved
     utils::unusedVar(k);
-    return jsonmodel::ExportValue::nullValue();
-#else
-    return PropertyConfigHandler<int>::exportValue(k);
-#endif
+
+    if(!supported_) {
+        // Firmware does not support color preset, export as null
+        return jsonmodel::ExportValue::nullValue();
+    }
+
+    auto colorPresetManager = owner_->getComponentT<IColorPresetManager>(OB_DEV_COMPONENT_COLOR_PRESET_MANAGER);
+    return jsonmodel::makeScalar(colorPresetManager->getCurrentName());
 }
 
 }  // namespace libobsensor

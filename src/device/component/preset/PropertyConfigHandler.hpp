@@ -78,13 +78,17 @@ private:
 /**
  * @brief Handler for color preset mapping.
  */
-class ColorPresetHandler : public PropertyConfigHandler<int> {
+class ColorPresetHandler : public jsonmodel::ILeafHandler {
 public:
-    explicit ColorPresetHandler(IDevice *owner);
+    ColorPresetHandler(IDevice *owner, bool supported);
     ~ColorPresetHandler() override = default;
 
     void                   set(const std::string &k, const Json::Value &v) override;
     jsonmodel::ExportValue exportValue(const std::string &k) override;
+
+private:
+    IDevice *owner_{ nullptr };  // owner
+    bool     supported_{ false };
 };
 
 }  // namespace libobsensor
