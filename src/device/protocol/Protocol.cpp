@@ -6,6 +6,8 @@
 #include "exception/ObException.hpp"
 #include <map>
 #include <sstream>
+#include <atomic>
+#include <random>
 
 namespace libobsensor {
 namespace protocol {
@@ -214,9 +216,12 @@ HpStatus execute(const std::shared_ptr<IVendorDataPort> &dataPort, uint8_t *reqD
 }
 
 uint16_t generateRequestId() {
-    static uint16_t requestId = 0;
-    requestId++;
-    return requestId;
+    // Random start so processes don't share an id sequence; atomic increment keeps ids distinct.
+    static std::atomic<uint16_t> requestId{ []() -> uint16_t {
+        std::random_device rd;
+        return static_cast<uint16_t>(rd());
+    }() };
+    return ++requestId;
 }
 
 GetPropertyReq *initGetPropertyReq(uint8_t *dataBuf, uint32_t propertyId) {
