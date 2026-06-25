@@ -17,6 +17,7 @@ public:
 
 private:
     void init() override;
+    void postInitialize() override;
     void initSensorList();
     void initProperties();
     void initSensorStreamProfile(std::shared_ptr<ISensor> sensor);

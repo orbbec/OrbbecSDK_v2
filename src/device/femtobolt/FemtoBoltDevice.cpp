@@ -23,6 +23,7 @@
 #include "property/CommonPropertyAccessors.hpp"
 #include "property/FilterPropertyAccessors.hpp"
 #include "property/PrivateFilterPropertyAccessors.hpp"
+#include "property/InternalProperty.hpp"
 #include "monitor/DeviceMonitor.hpp"
 #include "FemtoBoltAlgParamManager.hpp"
 #include "FemtoBoltPresetManager.hpp"
@@ -85,6 +86,24 @@ void FemtoBoltDevice::init() {
 
     auto deviceClockSynchronizer = std::make_shared<DeviceClockSynchronizer>(this, deviceTimeFreq_, deviceTimeFreq_);
     registerComponent(OB_DEV_COMPONENT_DEVICE_CLOCK_SYNCHRONIZER, deviceClockSynchronizer);
+}
+
+void FemtoBoltDevice::postInitialize() {
+    DeviceBase::postInitialize();
+
+    // Best-effort recovery from stale streaming state left by a previous abnormal process exit
+    TRY_EXECUTE({
+        auto propServer = getPropertyServer();
+        if(propServer->isPropertySupported(OB_PROP_STOP_COLOR_STREAM_BOOL, PROP_OP_WRITE, PROP_ACCESS_INTERNAL)) {
+            propServer->setPropertyValueT<bool>(OB_PROP_STOP_COLOR_STREAM_BOOL, true);
+        }
+    });
+    TRY_EXECUTE({
+        auto propServer = getPropertyServer();
+        if(propServer->isPropertySupported(OB_PROP_STOP_DEPTH_STREAM_BOOL, PROP_OP_WRITE, PROP_ACCESS_INTERNAL)) {
+            propServer->setPropertyValueT<bool>(OB_PROP_STOP_DEPTH_STREAM_BOOL, true);
+        }
+    });
 }
 
 void FemtoBoltDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
