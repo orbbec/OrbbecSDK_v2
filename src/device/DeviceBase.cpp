@@ -14,6 +14,7 @@
 #include "IDeviceMonitor.hpp"
 #include "utils/DeviceTypeHelper.hpp"
 #include "component/comprehensivefilter/DepthPostFilterParamsManager.hpp"
+#include "component/monitor/DeviceActivityRecorder.hpp"
 
 #ifdef __linux__
 #include "usb/uvc/UvcDevicePort.hpp"
@@ -55,6 +56,21 @@ void DeviceBase::postInitialize() {
     activateDeviceAccessor();
     // load default post processing config
     loadDefaultPostProcessingConfig();
+
+    // Register the device activity recorder for all net devices.
+    // `NetDeviceEnumerator::handleDeviceRemoved` checks the activity recorder
+    // to determine if a device is offline before removing it, so temporary
+    // GVCP discovery failures do not deactivate streaming devices.
+    if(enumInfo_ && enumInfo_->getConnectionType() == "Ethernet") {
+        registerComponent(
+            OB_DEV_COMPONENT_DEVICE_ACTIVITY_RECORDER,
+            [this]() {
+                std::shared_ptr<DeviceActivityRecorder> activityRecorder;
+                TRY_EXECUTE({ activityRecorder = std::make_shared<DeviceActivityRecorder>(this); })
+                return activityRecorder;
+            },
+            false);
+    }
 }
 
 void DeviceBase::fetchDeviceInfo() {

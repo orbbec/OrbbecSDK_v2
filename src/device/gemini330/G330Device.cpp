@@ -32,7 +32,6 @@
 #include "property/FilterPropertyAccessors.hpp"
 #include "property/PrivateFilterPropertyAccessors.hpp"
 #include "monitor/DeviceMonitor.hpp"
-#include "monitor/DeviceActivityRecorder.hpp"
 #include "syncconfig/DeviceSyncConfigurator.hpp"
 #include "firmwareupdater/FirmwareUpdater.hpp"
 #include "firmwareupdater/firmwareupdateguard/FirmwareUpdateGuards.hpp"
@@ -1540,15 +1539,6 @@ void G330NetDevice::init() {
         TRY_EXECUTE({ factory = std::make_shared<FirmwareUpdateGuardFactory>(this); })
         return factory;
     });
-
-    registerComponent(
-        OB_DEV_COMPONENT_DEVICE_ACTIVITY_RECORDER,
-        [this]() {
-            std::shared_ptr<DeviceActivityRecorder> activityRecorder;
-            TRY_EXECUTE({ activityRecorder = std::make_shared<DeviceActivityRecorder>(this); })
-            return activityRecorder;
-        },
-        false);
 
     auto propertyServer = getPropertyServer();
     auto fwVersion      = getFirmwareVersionInt();
