@@ -247,6 +247,47 @@ OB_EXPORT bool ob_device_is_global_timestamp_supported(const ob_device *device, 
 OB_EXPORT void ob_device_enable_global_timestamp(ob_device *device, bool enable, ob_error **error);
 
 /**
+ * @brief Replace the host clock source used by the global timestamp fitter.
+ *
+ * The default is the SDK's internal std::chrono::system_clock-based clock.
+ * Callers that want frame timestamps in a different domain (e.g. a monotonic
+ * application clock) install their own function here. Safe to call before or
+ * while the fitter is enabled; any pending samples are discarded so the next
+ * sample iteration begins in the new domain.
+ *
+ * @param[in] device The device object.
+ * @param[in] fn The host clock callback, or NULL to restore the SDK default.
+ * @param[in] user_data Opaque pointer passed verbatim to `fn` on every call.
+ *                      The caller must keep `user_data` valid for as long as
+ *                      `fn` may be invoked (i.e. until the device is destroyed
+ *                      or this function is called again).
+ * @param[out] error Pointer to an error object that will be set if an error occurs.
+ */
+OB_EXPORT void ob_device_set_global_timestamp_host_clock_fn(ob_device *device, ob_host_clock_fn fn, void *user_data, ob_error **error);
+
+/**
+ * @brief Set the maximum acceptable round-trip time of a device-time query
+ * used as a fit sample. Samples exceeding this are discarded.
+ *
+ * @param[in] device The device object.
+ * @param[in] max_rtt_us Upper bound, in microseconds.
+ * @param[out] error Pointer to an error object that will be set if an error occurs.
+ */
+OB_EXPORT void ob_device_set_global_timestamp_max_rtt_us(ob_device *device, uint64_t max_rtt_us, ob_error **error);
+
+/**
+ * @brief Read the current linear fit from the global timestamp fitter.
+ *
+ * Useful for observability and for detecting the pre-convergence state
+ * (all-zero fields indicates no fit yet).
+ *
+ * @param[in] device The device object.
+ * @param[out] out_param The fit parameters. Must not be NULL.
+ * @param[out] error Pointer to an error object that will be set if an error occurs.
+ */
+OB_EXPORT void ob_device_get_global_timestamp_linear_param(const ob_device *device, ob_linear_func_param *out_param, ob_error **error);
+
+/**
  * @brief Update the device firmware.
  *
  * @param[in] device The device object.
