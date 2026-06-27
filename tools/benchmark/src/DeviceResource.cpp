@@ -10,6 +10,10 @@ DeviceResource::DeviceResource(std::shared_ptr<ob::Device> device) : device_(dev
     align_filter_       = std::make_shared<ob::Align>(OB_STREAM_COLOR);
     point_cloud_filter_ = std::make_shared<ob::PointCloudFilter>();
 
+    if(device_ != nullptr and device_->isGlobalTimestampSupported()) {
+        device_->enableGlobalTimestamp(true);
+    }
+
     resetConfig();
 }
 
