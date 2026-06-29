@@ -10,7 +10,13 @@
 #include <sys/stat.h>
 #include <sys/sysmacros.h>
 
+#include <algorithm>
+#include <array>
+#include <cstdlib>
+#include <cstring>
 #include <list>
+#include <map>
+#include <mutex>
 #include <regex>
 
 #include <linux/media.h>
@@ -44,6 +50,177 @@ namespace libobsensor {
 
 #define USE_MEMORY_MMAP true
 std::mutex mMultiThreadI2CMutex;
+
+namespace {
+constexpr size_t kGmslMetadataTraceMetadataSnapshotBytes = 96;
+constexpr size_t kGmslMetadataTraceImageFrameCounterOffset = 0;
+constexpr size_t kGmslMetadataTraceImageSofSecOffset       = 12;
+constexpr size_t kGmslMetadataTraceImageSofNsecOffset      = 16;
+constexpr size_t kGmslMetadataTraceImageOffsetUsecOffset   = 56;
+
+uint32_t readLe32GmslMetadataTrace(const void *data, size_t size, size_t offset) {
+    if(!data || offset + 4 > size) {
+        return 0;
+    }
+    auto ptr = static_cast<const uint8_t *>(data) + offset;
+    return static_cast<uint32_t>(ptr[0]) | (static_cast<uint32_t>(ptr[1]) << 8) | (static_cast<uint32_t>(ptr[2]) << 16)
+           | (static_cast<uint32_t>(ptr[3]) << 24);
+}
+
+struct GmslMetadataTraceV4LState {
+    bool     hasLastVideoSeq  = false;
+    bool     hasLastMetaSeq   = false;
+    bool     hasLastImageCounter = false;
+    uint32_t lastVideoSeq     = 0;
+    uint32_t lastMetaSeq      = 0;
+    uint32_t lastImageCounter = 0;
+    int64_t  lastImageSofUsec = 0;
+    uint64_t lastLoopIndex    = 0;
+    uint32_t sampleCount      = 0;
+};
+
+struct GmslMetadataTraceMetadataSnapshot {
+    bool                                               valid     = false;
+    uint32_t                                           index     = 0;
+    uint32_t                                           sequence  = 0;
+    uint32_t                                           bytesused = 0;
+    uint32_t                                           copied    = 0;
+    std::array<uint8_t, kGmslMetadataTraceMetadataSnapshotBytes> bytes     = {};
+};
+
+std::mutex                                      gmslMetadataTraceV4LMutex;
+std::map<std::string, GmslMetadataTraceV4LState> gmslMetadataTraceV4LStates;
+
+bool isGmslMetadataTraceEnabled() {
+    static const bool enabled = [] {
+        const char *value = std::getenv("OB_GMSL_METADATA_TRACE");
+        if(!value) {
+            return false;
+        }
+        return std::strcmp(value, "1") == 0 || std::strcmp(value, "true") == 0 || std::strcmp(value, "TRUE") == 0 || std::strcmp(value, "on") == 0
+               || std::strcmp(value, "ON") == 0;
+    }();
+    return enabled;
+}
+
+uint8_t readG330PrependedByteGmslMetadataTrace(const void *data, size_t size, int streamType, size_t metadataOffset) {
+    if(!data) {
+        return 0;
+    }
+    auto ptr = static_cast<const uint8_t *>(data);
+    if(streamType == OB_STREAM_COLOR || streamType == OB_STREAM_COLOR_LEFT || streamType == OB_STREAM_COLOR_RIGHT) {
+        const size_t srcOffset = metadataOffset * 2 + 1;
+        return srcOffset < size ? ptr[srcOffset] : 0;
+    }
+    if(streamType == OB_STREAM_DEPTH) {
+        const size_t srcOffset = metadataOffset * 2;
+        return srcOffset < size ? ptr[srcOffset] : 0;
+    }
+    return metadataOffset < size ? ptr[metadataOffset] : 0;
+}
+
+uint32_t readG330PrependedLe32GmslMetadataTrace(const void *data, size_t size, int streamType, size_t metadataOffset) {
+    return static_cast<uint32_t>(readG330PrependedByteGmslMetadataTrace(data, size, streamType, metadataOffset))
+           | (static_cast<uint32_t>(readG330PrependedByteGmslMetadataTrace(data, size, streamType, metadataOffset + 1)) << 8)
+           | (static_cast<uint32_t>(readG330PrependedByteGmslMetadataTrace(data, size, streamType, metadataOffset + 2)) << 16)
+           | (static_cast<uint32_t>(readG330PrependedByteGmslMetadataTrace(data, size, streamType, metadataOffset + 3)) << 24);
+}
+
+std::string hexPrefixGmslMetadataTrace(const void *data, size_t size, size_t maxBytes) {
+    if(!data || size == 0 || maxBytes == 0) {
+        return "";
+    }
+    static constexpr char kHex[] = "0123456789abcdef";
+    auto                  ptr    = static_cast<const uint8_t *>(data);
+    const size_t          count  = std::min(size, maxBytes);
+    std::string           out;
+    out.reserve(count * 3);
+    for(size_t i = 0; i < count; ++i) {
+        if(i > 0) {
+            out.push_back(':');
+        }
+        out.push_back(kHex[(ptr[i] >> 4) & 0x0f]);
+        out.push_back(kHex[ptr[i] & 0x0f]);
+    }
+    return out;
+}
+
+void logGmslMetadataTraceV4L(const std::string &devName, int streamType, uint64_t loopIndex, uint32_t videoSeq, uint32_t videoBytes, uint32_t videoIndex,
+                             int metadataIndex, uint32_t metaSeq, uint32_t metaLen, uint32_t metaFirstU32, uint32_t payloadDwPresentationTime,
+                             const void *metadataPtr, size_t metadataSize, const GmslMetadataTraceMetadataSnapshot *dqbufSnapshot,
+                             bool dqbufLaterHexEqual, uint32_t imageFrameCounter, uint32_t imageSofSec, uint32_t imageSofNsec, uint32_t imageOffsetUsec) {
+    if(!isGmslMetadataTraceEnabled()) {
+        return;
+    }
+
+    std::lock_guard<std::mutex> lock(gmslMetadataTraceV4LMutex);
+    auto                       &state = gmslMetadataTraceV4LStates[devName + ":" + std::to_string(streamType)];
+    const bool videoSeqJump = state.hasLastVideoSeq && videoSeq != state.lastVideoSeq + 1;
+    const bool metaSeqJump  = metadataIndex >= 0 && state.hasLastMetaSeq && metaSeq != state.lastMetaSeq + 1;
+    const bool loopJump     = state.sampleCount > 0 && loopIndex != state.lastLoopIndex + 1;
+    const int64_t imageSofUsec = static_cast<int64_t>(imageSofSec) * 1000000 + static_cast<int64_t>(imageSofNsec) / 1000
+                                 - static_cast<int64_t>(imageOffsetUsec);
+    const bool imageCounterRepeat = state.hasLastImageCounter && imageFrameCounter == state.lastImageCounter;
+    const bool imageCounterJump   = state.hasLastImageCounter && imageFrameCounter > state.lastImageCounter + 1;
+    const bool hasDqbufSnapshot   = dqbufSnapshot && dqbufSnapshot->valid;
+    const bool dqbufLaterHexDiff  = hasDqbufSnapshot && metadataPtr && !dqbufLaterHexEqual;
+    const bool shouldLog          = state.sampleCount < 12 || videoSeqJump || metaSeqJump || loopJump || imageCounterRepeat || imageCounterJump
+                           || dqbufLaterHexDiff;
+
+    if(shouldLog) {
+        std::string flags;
+        if(videoSeqJump) {
+            flags += " video_seq_jump";
+        }
+        if(metaSeqJump) {
+            flags += " meta_seq_jump";
+        }
+        if(loopJump) {
+            flags += " loop_jump";
+        }
+        if(imageCounterRepeat) {
+            flags += " image_counter_repeat";
+        }
+        if(imageCounterJump) {
+            flags += " image_counter_jump";
+        }
+        if(dqbufLaterHexDiff) {
+            flags += " dqbuf_later_hex_diff";
+        }
+        const auto metaHex       = hexPrefixGmslMetadataTrace(metadataPtr, metadataSize, 64);
+        const auto dqbufMetaHex  = hasDqbufSnapshot ? hexPrefixGmslMetadataTrace(dqbufSnapshot->bytes.data(), dqbufSnapshot->copied,
+                                                                                 kGmslMetadataTraceMetadataSnapshotBytes)
+                                                    : "";
+        const auto laterMetaHex  = hexPrefixGmslMetadataTrace(metadataPtr, metadataSize, kGmslMetadataTraceMetadataSnapshotBytes);
+        const auto dVideoSeq     = state.hasLastVideoSeq ? static_cast<int64_t>(videoSeq) - static_cast<int64_t>(state.lastVideoSeq) : 0;
+        const auto dMetaSeq      = state.hasLastMetaSeq ? static_cast<int64_t>(metaSeq) - static_cast<int64_t>(state.lastMetaSeq) : 0;
+        const auto dImageCounter = state.hasLastImageCounter ? static_cast<int64_t>(imageFrameCounter) - static_cast<int64_t>(state.lastImageCounter) : 0;
+        const auto dImageSofMs   = state.hasLastImageCounter ? (imageSofUsec - state.lastImageSofUsec) / 1000.0 : 0.0;
+
+        LOG_INFO("GMSL metadata trace source=v4l dev={} streamType={} loopIndex={} videoSeq={} dVideoSeq={} videoBufIndex={} videoBytes={} "
+                 "metadataIndex={} metaSeq={} dMetaSeq={} metaLen={} metaFirstU32={} payloadDwPresentationTime={} metaHex={} dqbufMetaSeq={} "
+                 "dqbufMetaLen={} dqbufMetaCopied={} dqbufMetaHex={} laterMetaHex={} dqbufLaterHexEqual={} imgFrameCounter={} dImgFrameCounter={} "
+                 "imgSofSec={} imgSofNsec={} imgOffsetUsec={} imgSofUsec={} dImgSofMs={} flags={}",
+                 devName, streamType, loopIndex, videoSeq, dVideoSeq, videoIndex, videoBytes, metadataIndex, metaSeq, dMetaSeq, metaLen, metaFirstU32,
+                 payloadDwPresentationTime, metaHex, hasDqbufSnapshot ? dqbufSnapshot->sequence : 0, hasDqbufSnapshot ? dqbufSnapshot->bytesused : 0,
+                 hasDqbufSnapshot ? dqbufSnapshot->copied : 0, dqbufMetaHex, laterMetaHex, hasDqbufSnapshot ? (dqbufLaterHexEqual ? 1 : 0) : -1,
+                 imageFrameCounter, dImageCounter, imageSofSec, imageSofNsec, imageOffsetUsec, imageSofUsec, dImageSofMs,
+                 flags.empty() ? "none" : flags.c_str());
+    }
+
+    state.hasLastVideoSeq = true;
+    state.lastVideoSeq    = videoSeq;
+    if(metadataIndex >= 0) {
+        state.hasLastMetaSeq = true;
+        state.lastMetaSeq    = metaSeq;
+    }
+    state.hasLastImageCounter = true;
+    state.lastImageCounter    = imageFrameCounter;
+    state.lastImageSofUsec    = imageSofUsec;
+    state.lastLoopIndex       = loopIndex;
+    state.sampleCount++;
+}
+}  // namespace
 
 static std::map<uint32_t, uint32_t> v4lFourccMapGmsl = {
     { 0x47524559, 0x59382020 }, /*'GREY' to 'Y8  '*/
@@ -630,6 +807,8 @@ void writeBufferToFile(const char *buf, std::size_t size, const std::string &fil
 void ObV4lGmslDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandleGmsl> devHandle) {
     int metadataBufferIndex = -1;
     int colorFrameNum       = 0;  // color drop 1~3 frame -> fix color green screen issue.
+    std::array<GmslMetadataTraceMetadataSnapshot, MAX_BUFFER_COUNT_GMSL> metadataSnapshots = {};
+    const bool metadataTraceEnabled = isGmslMetadataTraceEnabled();
 
     devHandle->loopFrameIndex.store(1);  // frame number start from 1
     try {
@@ -714,6 +893,20 @@ void ObV4lGmslDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandleGmsl> devHa
                     devHandle->metadataBuffers[buf.index].actual_length = buf.bytesused;
                     devHandle->metadataBuffers[buf.index].sequence      = buf.sequence;
                     metadataBufferIndex                                 = buf.index;
+                    if(metadataTraceEnabled && buf.index < devHandle->metadataBuffers.size() && devHandle->metadataBuffers[buf.index].ptr) {
+                        auto &snapshot  = metadataSnapshots[buf.index];
+                        auto &metaBuf   = devHandle->metadataBuffers[buf.index];
+                        snapshot.valid  = true;
+                        snapshot.index  = buf.index;
+                        snapshot.sequence  = buf.sequence;
+                        snapshot.bytesused = buf.bytesused;
+                        snapshot.copied    = static_cast<uint32_t>(std::min<size_t>({ static_cast<size_t>(buf.bytesused),
+                                                                                       static_cast<size_t>(metaBuf.length),
+                                                                                       kGmslMetadataTraceMetadataSnapshotBytes }));
+                        if(snapshot.copied > 0) {
+                            std::memcpy(snapshot.bytes.data(), metaBuf.ptr, snapshot.copied);
+                        }
+                    }
                 }
 
                 if(devHandle->isCapturing) {
@@ -740,6 +933,33 @@ void ObV4lGmslDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandleGmsl> devHa
                     TRY_EXECUTE({
                         auto rawframe   = FrameFactory::createFrameFromStreamProfile(devHandle->profile);
                         auto videoFrame = rawframe->as<VideoFrame>();
+                        uint32_t metadataTraceMetaSeq                  = 0;
+                        uint32_t metadataTraceMetaLen                  = 0;
+                        uint32_t metadataTraceMetaFirstU32             = 0;
+                        uint32_t metadataTracePayloadDwPresentationTime = 0;
+                        int      metadataTraceMetadataIndex            = metadataBufferIndex;
+                        const void *metadataTraceMetadataPtr           = nullptr;
+                        const GmslMetadataTraceMetadataSnapshot *metadataTraceDqbufSnapshot = nullptr;
+                        bool     metadataTraceDqbufLaterHexEqual       = false;
+                        const int metadataTraceStreamType              = static_cast<int>(devHandle->profile->getType());
+                        uint32_t  metadataTraceImageFrameCounter       = 0;
+                        uint32_t  metadataTraceImageSofSec             = 0;
+                        uint32_t  metadataTraceImageSofNsec            = 0;
+                        uint32_t  metadataTraceImageOffsetUsec         = 0;
+                        if(metadataTraceEnabled) {
+                            const auto metadataTraceVideoData     = devHandle->buffers[buf.index].ptr;
+                            metadataTraceImageFrameCounter = readG330PrependedLe32GmslMetadataTrace(
+                                metadataTraceVideoData, buf.bytesused, metadataTraceStreamType, kGmslMetadataTraceImageFrameCounterOffset);
+                            metadataTraceImageSofSec = readG330PrependedLe32GmslMetadataTrace(metadataTraceVideoData, buf.bytesused,
+                                                                                              metadataTraceStreamType,
+                                                                                              kGmslMetadataTraceImageSofSecOffset);
+                            metadataTraceImageSofNsec = readG330PrependedLe32GmslMetadataTrace(metadataTraceVideoData, buf.bytesused,
+                                                                                               metadataTraceStreamType,
+                                                                                               kGmslMetadataTraceImageSofNsecOffset);
+                            metadataTraceImageOffsetUsec = readG330PrependedLe32GmslMetadataTrace(metadataTraceVideoData, buf.bytesused,
+                                                                                                  metadataTraceStreamType,
+                                                                                                  kGmslMetadataTraceImageOffsetUsecOffset);
+                        }
                         // if((DetectPlatform() == Platform::Xavier) || (DetectPlatform() == Platform::Orin))
                         if(1 > 0)  // Modify the default setting to apply special resolution processing to all NVIDIA platforms
                         {
@@ -754,12 +974,32 @@ void ObV4lGmslDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandleGmsl> devHa
                             auto &metaBuf                = devHandle->metadataBuffers[metadataBufferIndex];
                             auto  uvc_payload_header     = metaBuf.ptr;
                             auto  uvc_payload_header_len = metaBuf.actual_length;
+                            if(metadataTraceEnabled) {
+                                metadataTraceMetaSeq        = metaBuf.sequence;
+                                metadataTraceMetaLen        = uvc_payload_header_len;
+                                metadataTraceMetaFirstU32   = readLe32GmslMetadataTrace(uvc_payload_header, uvc_payload_header_len, 0);
+                                metadataTraceMetadataPtr    = uvc_payload_header;
+                                metadataTraceDqbufSnapshot  = metadataBufferIndex < static_cast<int>(metadataSnapshots.size())
+                                                            && metadataSnapshots[metadataBufferIndex].valid
+                                                        ? &metadataSnapshots[metadataBufferIndex]
+                                                        : nullptr;
+                            }
+                            if(metadataTraceEnabled && metadataTraceDqbufSnapshot) {
+                                const size_t compareLen = std::min<size_t>(
+                                    { static_cast<size_t>(metadataTraceDqbufSnapshot->copied), static_cast<size_t>(uvc_payload_header_len),
+                                      kGmslMetadataTraceMetadataSnapshotBytes });
+                                metadataTraceDqbufLaterHexEqual = compareLen == metadataTraceDqbufSnapshot->copied && compareLen > 0
+                                                            && std::memcmp(metadataTraceDqbufSnapshot->bytes.data(), uvc_payload_header, compareLen) == 0;
+                            }
                             videoFrame->updateMetadata(static_cast<const uint8_t *>(uvc_payload_header), 12);
                             videoFrame->appendMetadata(static_cast<const uint8_t *>(uvc_payload_header), uvc_payload_header_len);
 
                             if(uvc_payload_header_len >= sizeof(StandardUvcFramePayloadHeader)) {
                                 auto payloadHeader = (StandardUvcFramePayloadHeader *)uvc_payload_header;
                                 videoFrame->setTimeStampUsec(payloadHeader->dwPresentationTime);
+                                if(metadataTraceEnabled) {
+                                    metadataTracePayloadDwPresentationTime = payloadHeader->dwPresentationTime;
+                                }
                             }
                         }
 
@@ -772,6 +1012,14 @@ void ObV4lGmslDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandleGmsl> devHa
 
                         // fix frame index zero issue.
                         videoFrame->setNumber(devHandle->loopFrameIndex);
+                        if(metadataTraceEnabled) {
+                            logGmslMetadataTraceV4L(devHandle->info->name, metadataTraceStreamType, devHandle->loopFrameIndex.load(), buf.sequence,
+                                                    buf.bytesused, buf.index, metadataTraceMetadataIndex, metadataTraceMetaSeq, metadataTraceMetaLen,
+                                                    metadataTraceMetaFirstU32, metadataTracePayloadDwPresentationTime, metadataTraceMetadataPtr,
+                                                    metadataTraceMetaLen, metadataTraceDqbufSnapshot, metadataTraceDqbufLaterHexEqual,
+                                                    metadataTraceImageFrameCounter, metadataTraceImageSofSec, metadataTraceImageSofNsec,
+                                                    metadataTraceImageOffsetUsec);
+                        }
                         // LOG_DEBUG("set loopFrameIndex:{}", devHandle->loopFrameIndex);
 
                         if(devHandle->profile->getType() == OB_STREAM_COLOR) {
