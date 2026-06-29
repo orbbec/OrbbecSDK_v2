@@ -3,6 +3,9 @@
 
 #include "G330MetadataModifier.hpp"
 #include "frame/Frame.hpp"
+#include "utils/GmslMetadataTrace.hpp"
+
+#include <cstring>
 
 namespace libobsensor {
 
@@ -22,6 +25,7 @@ void G330GMSLMetadataModifier::modify(std::shared_ptr<Frame> frame) {
         for(int i = 0; i < metadataSize; i++) {
             metadataBuffer[i + 12] = static_cast<uint8_t>(frameDataBuffer[i] >> 8);
         }
+        utils::GmslMetadataTrace::logG330ModifierFrame(frame->getType(), frame->getNumber(), metadataBuffer, metadataSize + 12);
     } break;
     case OB_FRAME_DEPTH: {
         // Copy metadata from the frame data and clear the metadata area
@@ -33,6 +37,7 @@ void G330GMSLMetadataModifier::modify(std::shared_ptr<Frame> frame) {
         // Zeroing the metadata region prevents horizontal stripes in display
         // For depth images, zeroed pixels are interpreted as depth=0 and do not affect usage
         memset(frameData, 0, metadataSize * sizeof(uint16_t));
+        utils::GmslMetadataTrace::logG330ModifierFrame(frame->getType(), frame->getNumber(), metadataBuffer, metadataSize + 12);
     } break;
     case OB_FRAME_IR:
     case OB_FRAME_IR_LEFT:
@@ -42,6 +47,7 @@ void G330GMSLMetadataModifier::modify(std::shared_ptr<Frame> frame) {
         memcpy(metadataBuffer + 12, frameData, metadataSize);
         // Zeroing the metadata region prevents horizontal stripes in display
         memset(frameData, 0, metadataSize);
+        utils::GmslMetadataTrace::logG330ModifierFrame(frame->getType(), frame->getNumber(), metadataBuffer, metadataSize + 12);
     } break;
     default:
         // do nothing
