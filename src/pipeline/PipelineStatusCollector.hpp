@@ -18,6 +18,7 @@
 namespace libobsensor {
 
 class ISourcePort;
+class IDeviceSyncConfigurator;
 
 class PipelineStatusCollector : public IPipelineStatusCollector {
 public:
@@ -127,6 +128,12 @@ private:
     void evaluateNoFrame(OBPipelineStatus &status);
 
     /**
+     * @brief Check whether device is in a software/hardware triggering mode.
+     * @return True if frame interval depends on external/software triggers.
+     */
+    bool isTriggeringMode();
+
+    /**
      * @brief Determine whether device/driver query is needed.
      * @param[in] sdkStatus Current SDK status bits.
      * @return True if device/driver status should be queried.
@@ -162,7 +169,8 @@ private:
     uint64_t nowUsec();
 
 private:
-    IDevice *device_;
+    IDevice                                 *device_;
+    std::shared_ptr<IDeviceSyncConfigurator> deviceSyncConfigurator_;
 
     std::atomic<uint64_t> sdkStatus_{ 0 };
 

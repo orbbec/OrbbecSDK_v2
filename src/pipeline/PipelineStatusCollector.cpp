@@ -3,12 +3,18 @@
 
 #include "PipelineStatusCollector.hpp"
 #include "ISourcePort.hpp"
+#include "IDeviceSyncConfigurator.hpp"
 #include "logger/Logger.hpp"
 #include "utils/Utils.hpp"
 
 namespace libobsensor {
 
-PipelineStatusCollector::PipelineStatusCollector(IDevice *device) : device_(device) {}
+PipelineStatusCollector::PipelineStatusCollector(IDevice *device) : device_(device) {
+    auto configurator = device_->getComponentT<IDeviceSyncConfigurator>(OB_DEV_COMPONENT_DEVICE_SYNC_CONFIGURATOR, false);
+    if(configurator) {
+        deviceSyncConfigurator_ = configurator.get();
+    }
+}
 
 PipelineStatusCollector::~PipelineStatusCollector() noexcept {
     disableHealthMonitor();
@@ -209,9 +215,15 @@ void PipelineStatusCollector::setDevFetchIntervalMs(uint64_t intervalMs) {
 }
 
 void PipelineStatusCollector::evaluateNoFrame(OBPipelineStatus &status) {
-    auto                        now = nowUsec();
+    bool                        triggeringMode = isTriggeringMode();
+    auto                        now            = nowUsec();
     std::lock_guard<std::mutex> lock(framTimeMutex_);
     for(auto &kv: lastFrameTime_) {
+        if(ob_is_video_stream_type(kv.first) && triggeringMode) {
+            // Ignore video stream in triggering mode
+            continue;
+        }
+
         uint64_t t = kv.second;
         if(t == 0) {
             continue;
@@ -220,6 +232,20 @@ void PipelineStatusCollector::evaluateNoFrame(OBPipelineStatus &status) {
             status.sdkStatus |= OB_SDK_STATUS_STREAM_NO_FRAME;
             break;
         }
+    }
+}
+
+bool PipelineStatusCollector::isTriggeringMode() {
+    if(!deviceSyncConfigurator_) {
+        return false;
+    }
+
+    try {
+        auto syncConfig = deviceSyncConfigurator_->getSyncConfig();
+        return syncConfig.syncMode == OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_TRIGGERING || syncConfig.syncMode == OB_MULTI_DEVICE_SYNC_MODE_HARDWARE_TRIGGERING;
+    }
+    catch(...) {
+        return false;
     }
 }
 
