@@ -426,7 +426,7 @@ OB_EXPORT const char *ob_device_info_get_uid(const ob_device_info *info, ob_erro
  *
  * @param[in] info Device Information
  * @param[out] error Pointer to an error object that will be set if an error occurs.
- * 
+ *
  * @return const char* return device serial number
  */
 OB_EXPORT const char *ob_device_info_get_serial_number(const ob_device_info *info, ob_error **error);
@@ -436,7 +436,7 @@ OB_EXPORT const char *ob_device_info_get_serial_number(const ob_device_info *inf
  *
  * @param[in] info Device Information
  * @param[out] error Pointer to an error object that will be set if an error occurs.
- * 
+ *
  * @return int return the firmware version number
  */
 OB_EXPORT const char *ob_device_info_get_firmware_version(const ob_device_info *info, ob_error **error);
@@ -458,7 +458,7 @@ OB_EXPORT const char *ob_device_info_get_connection_type(const ob_device_info *i
  *
  * @param[in] info Device Information
  * @param[out] error Pointer to an error object that will be set if an error occurs.
- * 
+ *
  * @return const char* The IP address, such as "192.168.1.10"
  */
 OB_EXPORT const char *ob_device_info_get_ip_address(const ob_device_info *info, ob_error **error);
@@ -520,7 +520,7 @@ OB_EXPORT const char *ob_device_get_extension_info(const ob_device *device, cons
  *
  * @param[in] info Device Information
  * @param[out] error Pointer to an error object that will be set if an error occurs.
- * 
+ *
  * @return const char* The minimum SDK version number supported by the device
  */
 OB_EXPORT const char *ob_device_info_get_supported_min_sdk_version(const ob_device_info *info, ob_error **error);
@@ -530,7 +530,7 @@ OB_EXPORT const char *ob_device_info_get_supported_min_sdk_version(const ob_devi
  *
  * @param[in] info Device Information
  * @param[out] error Pointer to an error object that will be set if an error occurs.
- * 
+ *
  * @return const char* The ASIC name
  */
 OB_EXPORT const char *ob_device_info_get_asicName(const ob_device_info *info, ob_error **error);
@@ -540,7 +540,7 @@ OB_EXPORT const char *ob_device_info_get_asicName(const ob_device_info *info, ob
  *
  * @param[in] info Device Information
  * @param[out] error Pointer to an error object that will be set if an error occurs.
- * 
+ *
  * @return ob_device_type The device type
  */
 OB_EXPORT ob_device_type ob_device_info_get_device_type(const ob_device_info *info, ob_error **error);
@@ -558,7 +558,7 @@ OB_EXPORT void ob_delete_device_list(ob_device_list *list, ob_error **error);
  *
  * @param[in] list Device list object
  * @param[out] error Pointer to an error object that will be set if an error occurs.
- * 
+ *
  * @return uint32_t return the number of devices
  */
 OB_EXPORT uint32_t ob_device_list_get_count(const ob_device_list *list, ob_error **error);
@@ -569,7 +569,7 @@ OB_EXPORT uint32_t ob_device_list_get_count(const ob_device_list *list, ob_error
  * @param[in] list Device list object
  * @param[in] index Device index
  * @param[out] error Pointer to an error object that will be set if an error occurs.
- * 
+ *
  * @return const char* return device name
  */
 OB_EXPORT const char *ob_device_list_get_device_name(const ob_device_list *list, uint32_t index, ob_error **error);
@@ -580,7 +580,7 @@ OB_EXPORT const char *ob_device_list_get_device_name(const ob_device_list *list,
  * @param[in] list Device list object
  * @param[in] index Device index
  * @param[out] error Pointer to an error object that will be set if an error occurs.
- * 
+ *
  * @return int return the device pid
  */
 OB_EXPORT int ob_device_list_get_device_pid(const ob_device_list *list, uint32_t index, ob_error **error);
@@ -762,6 +762,46 @@ OB_EXPORT ob_ip_source_type ob_device_list_get_device_ip_source_type(const ob_de
  * @return const char* The user-defined name string. Returns "unknown" for non-Ethernet devices or if not set.
  */
 OB_EXPORT const char *ob_device_list_get_device_user_name(const ob_device_list *list, uint32_t index, ob_error **error);
+
+/**
+ * @brief Query the current device access state without opening the device.
+ *
+ * @attention This is a non-invasive GVCP CCP query for supported Ethernet devices. It reports device-side CCP state, not the owner process or host.
+ * For non-Ethernet devices or Ethernet devices without CCP support, it returns OB_DEVICE_ACCESS_STATE_UNSUPPORTED.
+ * CONTROLLED means monitor access may still be available, while default/control access may still fail.
+ * This call is synchronous and blocks while waiting for the device's GVCP response over the network; querying an unreachable device blocks until the
+ * underlying retry logic gives up, so prefer calling it off the UI thread when querying multiple devices.
+ * The returned state reflects the device access state only at the moment of the query and does not guarantee that a subsequent access (such as creating or
+ * opening the device) will succeed, as another client may change the state in between.
+ *
+ * @param[in] list Device list object.
+ * @param[in] index The index of the device.
+ * @param[out] error Pointer to an error object that will be set if an error occurs.
+ *
+ * @return The current access state of the device.
+ */
+OB_EXPORT ob_device_access_state ob_device_list_query_device_access_state(const ob_device_list *list, uint32_t index, ob_error **error);
+
+/**
+ * @brief Query the current device access state by serial number without opening the device.
+ *
+ * @attention This is a non-invasive GVCP CCP query for supported Ethernet devices. It reports device-side CCP state, not the owner process or host.
+ * For non-Ethernet devices or Ethernet devices without CCP support, it returns OB_DEVICE_ACCESS_STATE_UNSUPPORTED.
+ * CONTROLLED means monitor access may still be available, while default/control access may still fail.
+ * This call is synchronous and blocks while waiting for the device's GVCP response over the network; querying an unreachable device blocks until the
+ * underlying retry logic gives up, so prefer calling it off the UI thread when querying multiple devices.
+ * The returned state reflects the device access state only at the moment of the query and does not guarantee that a subsequent access (such as creating or
+ * opening the device) will succeed, as another client may change the state in between.
+ * If no device in the list matches the given serial number, an error is set via the error parameter.
+ *
+ * @param[in] list Device list object.
+ * @param[in] serial_number The serial number of the device.
+ * @param[out] error Pointer to an error object that will be set if an error occurs.
+ *
+ * @return The current access state of the device.
+ */
+OB_EXPORT ob_device_access_state ob_device_list_query_device_access_state_by_serial_number(const ob_device_list *list, const char *serial_number,
+                                                                                           ob_error **error);
 
 /**
  * @brief Create a device.

@@ -941,7 +941,7 @@ void G435LeDevice::fetchDeviceInfo() {
 
 #if defined(BUILD_NET_PAL)
 void G435LeDevice::checkAndAcquireCCP() {
-    ccpController_ = std::make_shared<GvcpCcpController>(enumInfo_, "1.3.12");
+    ccpController_ = std::make_shared<GvcpCcpController>(enumInfo_);
     if(!ccpController_->isSupported()) {
         return;
     }

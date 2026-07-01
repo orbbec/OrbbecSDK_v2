@@ -21,14 +21,15 @@ public:
      * @brief Construction
      *
      * @param[in] info Enumeration info of the device.
-     * @param[in] minVersion The The minimum firmware version for access control, in "a.b.c" format.
-     *                       Empty or invalid strings are treated as 0.0.0 (all versions supported).
      *
-     * @throws access_denied_exception if the acquisition fails.
+     * @throws access_denied_exception if the
+     * acquisition fails.
      *         unsupported_operation_exception if the device doesn't support CCP
      */
-    GvcpCcpController(const std::shared_ptr<const IDeviceEnumInfo> &info, const std::string &minVersion);
+    GvcpCcpController(const std::shared_ptr<const IDeviceEnumInfo> &info);
     virtual ~GvcpCcpController() override;
+
+    static OBDeviceAccessState queryAccessState(const std::shared_ptr<const IDeviceEnumInfo> &info);
 
     bool isSupported() const override {
         return ccpSupported_;
@@ -42,8 +43,10 @@ public:
     void releaseControl() override;
 
 private:
-    int32_t getFirmwareVersionInt(const std::string &version);
-    bool    checkCcpCapability(const std::string &minVersion);
+    static int32_t     getFirmwareVersionInt(const std::string &version);
+    static std::string resolveCcpMinVersion(int vid, int pid);
+    static bool        isTimeoutOrUnreachable(int32_t errorCode);
+    bool               checkCcpCapability(const std::string &minVersion);
 
 private:
     std::atomic<OBDeviceAccessMode>          accessMode_{ OB_DEVICE_ACCESS_DENIED };

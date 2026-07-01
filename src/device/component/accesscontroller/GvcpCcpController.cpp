@@ -4,6 +4,7 @@
 #if defined(BUILD_NET_PAL)
 
 #include "GvcpCcpController.hpp"
+#include "common/DeviceSeriesInfo.hpp"
 #include "logger/Logger.hpp"
 #include "logger/LoggerInterval.hpp"
 #include "logger/LoggerSnWrapper.hpp"
@@ -12,13 +13,20 @@ namespace libobsensor {
 
 #define GetCurrentSN() portInfo_->serialNumber
 
-GvcpCcpController::GvcpCcpController(const std::shared_ptr<const IDeviceEnumInfo> &info, const std::string &minVersion) {
+GvcpCcpController::GvcpCcpController(const std::shared_ptr<const IDeviceEnumInfo> &info) {
     // create gvcp transmitor
     auto portInfo    = info->getSourcePortInfoList().front();
     auto netPortInfo = std::dynamic_pointer_cast<const NetSourcePortInfo>(portInfo);
-    gvcpTransmit_    = std::make_shared<GVCPTransmit>(netPortInfo);
-    portInfo_        = netPortInfo;
-    ccpSupported_    = checkCcpCapability(minVersion);
+    if(!netPortInfo) {
+        return;
+    }
+    auto minVersion = resolveCcpMinVersion(info->getVid(), info->getPid());
+    if(minVersion.empty()) {
+        return;
+    }
+    gvcpTransmit_ = std::make_shared<GVCPTransmit>(netPortInfo);
+    portInfo_     = netPortInfo;
+    ccpSupported_ = checkCcpCapability(minVersion);
 }
 
 GvcpCcpController::~GvcpCcpController() {
@@ -43,7 +51,7 @@ int32_t GvcpCcpController::getFirmwareVersionInt(const std::string &version) {
                 int value = atoi(buf);
                 // The version number has only two digits
                 if(value >= 100) {
-                    LOG_ERROR("bad fwVersion: {}", version);
+                    SPDLOG_LOGGER_ERROR(spdlog::default_logger(), "bad fwVersion: {}", version);
                     return false;
                 }
 
@@ -57,7 +65,7 @@ int32_t GvcpCcpController::getFirmwareVersionInt(const std::string &version) {
                     calFwVersion += value;
                 }
                 else {
-                    LOG_ERROR("bad fwVersion: {}", version);
+                    SPDLOG_LOGGER_ERROR(spdlog::default_logger(), "bad fwVersion: {}", version);
                     return false;
                 }
 
@@ -74,10 +82,31 @@ int32_t GvcpCcpController::getFirmwareVersionInt(const std::string &version) {
     }
     // If the version number cannot be determined, then fix logic is given priority
     if(calFwVersion == 0 || dotCount < 2) {
-        LOG_ERROR("bad fwVersion: {}, parse digital version failed", version);
+        SPDLOG_LOGGER_ERROR(spdlog::default_logger(), "bad fwVersion: {}, parse digital version failed", version);
         return 0;
     }
     return calFwVersion;
+}
+
+std::string GvcpCcpController::resolveCcpMinVersion(int vid, int pid) {
+    const auto v = static_cast<uint32_t>(vid);
+    const auto p = static_cast<uint32_t>(pid);
+
+    if(isDeviceInContainer(G335LeDevPids, v, p)) {
+        return "1.6.07";
+    }
+    if(isDeviceInContainer(G435LeDevPids, v, p)) {
+        return "1.3.12";
+    }
+    return "";
+}
+
+bool GvcpCcpController::isTimeoutOrUnreachable(int32_t errorCode) {
+#if (defined(WIN32) || defined(_WIN32) || defined(WINCE))
+    return errorCode == WSAETIMEDOUT || errorCode == WSAEHOSTUNREACH || errorCode == WSAENETUNREACH || errorCode == WSAECONNREFUSED;
+#else
+    return errorCode == ETIMEDOUT || errorCode == EHOSTUNREACH || errorCode == ENETUNREACH || errorCode == ECONNREFUSED;
+#endif
 }
 
 bool GvcpCcpController::checkCcpCapability(const std::string &minVersion) {
@@ -100,6 +129,46 @@ bool GvcpCcpController::checkCcpCapability(const std::string &minVersion) {
         return false;
     }
     return true;
+}
+
+OBDeviceAccessState GvcpCcpController::queryAccessState(const std::shared_ptr<const IDeviceEnumInfo> &info) {
+    auto portInfo    = info->getSourcePortInfoList().front();
+    auto netPortInfo = std::dynamic_pointer_cast<const NetSourcePortInfo>(portInfo);
+    if(!netPortInfo) {
+        return OB_DEVICE_ACCESS_STATE_UNSUPPORTED;
+    }
+
+    const auto minVersion = resolveCcpMinVersion(info->getVid(), info->getPid());
+    if(minVersion.empty()) {
+        return OB_DEVICE_ACCESS_STATE_UNSUPPORTED;
+    }
+
+    const auto currentVersion  = getFirmwareVersionInt(netPortInfo->devVersion);
+    const auto requiredVersion = getFirmwareVersionInt(minVersion);
+    if(currentVersion > 0 && requiredVersion > 0 && currentVersion < requiredVersion) {
+        return OB_DEVICE_ACCESS_STATE_FW_NOT_SUPPORTED;
+    }
+
+    GVCPTransmit transmit(netPortInfo);
+    auto         res = transmit.readRegister(GVCP_CCP_REGISTER);
+    if(res.first == GEV_STATUS_SUCCESS) {
+        const uint32_t ccp = res.second & GVCP_CCP_MASK;
+        if((ccp & GVCP_CCP_EXCLUSIVE_ACCESS) != 0) {
+            return OB_DEVICE_ACCESS_STATE_EXCLUSIVE;
+        }
+        if((ccp & GVCP_CCP_CONTROL_ACCESS) != 0) {
+            return OB_DEVICE_ACCESS_STATE_CONTROLLED;
+        }
+        return OB_DEVICE_ACCESS_STATE_AVAILABLE;
+    }
+
+    if(res.first == GEV_STATUS_ACCESS_DENIED) {
+        return OB_DEVICE_ACCESS_STATE_EXCLUSIVE;
+    }
+    if(res.first == GEV_STATUS_ERROR && isTimeoutOrUnreachable(transmit.lastError())) {
+        return OB_DEVICE_ACCESS_STATE_UNREACHABLE;
+    }
+    return OB_DEVICE_ACCESS_STATE_UNKNOWN;
 }
 
 void GvcpCcpController::acquireControl(OBDeviceAccessMode accessMode) {

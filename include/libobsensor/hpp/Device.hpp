@@ -1449,9 +1449,9 @@ public:
      *
      * @return const char* The host network interface name (e.g., "eth0", "en0").
      */
-    const char* getLocalNetInterfaceName(uint32_t index) const {
-        ob_error *error = nullptr;
-        auto netItfName = ob_device_list_get_device_local_net_if_name(impl_, index, &error);
+    const char *getLocalNetInterfaceName(uint32_t index) const {
+        ob_error *error      = nullptr;
+        auto      netItfName = ob_device_list_get_device_local_net_if_name(impl_, index, &error);
         Error::handle(&error);
         return netItfName;
     }
@@ -1486,6 +1486,49 @@ public:
         auto      userName = ob_device_list_get_device_user_name(impl_, index, &error);
         Error::handle(&error);
         return userName;
+    }
+
+    /**
+     * @brief Query the current device access state without opening the device.
+     *
+     * @attention This is a non-invasive GVCP CCP query for supported Ethernet devices. It reports device-side CCP state, not the owner process or host.
+     * CONTROLLED means monitor access may still be available, while default/control access may still fail.
+     * This call is synchronous and blocks while waiting for the device's GVCP response over the network; querying an unreachable device blocks until the
+     * underlying retry logic gives up, so prefer calling it off the UI thread when querying multiple devices.
+     * The returned state reflects the device access state only at the moment of the query and does not guarantee that a subsequent access (such as creating
+     * or opening the device) will succeed, as another client may change the state in between.
+     *
+     * @param[in] index The index of the device.
+     *
+     * @return OBDeviceAccessState The current access state of the device.
+     */
+    OBDeviceAccessState queryDeviceAccessState(uint32_t index) const {
+        ob_error *error = nullptr;
+        auto      state = ob_device_list_query_device_access_state(impl_, index, &error);
+        Error::handle(&error);
+        return state;
+    }
+
+    /**
+     * @brief Query the current device access state by serial number without opening the device.
+     *
+     * @attention This is a non-invasive GVCP CCP query for supported Ethernet devices. It reports device-side CCP state, not the owner process or host.
+     * CONTROLLED means monitor access may still be available, while default/control access may still fail.
+     * This call is synchronous and blocks while waiting for the device's GVCP response over the network; querying an unreachable device blocks until the
+     * underlying retry logic gives up, so prefer calling it off the UI thread when querying multiple devices.
+     * The returned state reflects the device access state only at the moment of the query and does not guarantee that a subsequent access (such as creating
+     * or opening the device) will succeed, as another client may change the state in between.
+     * If no device in the list matches the given serial number, this throws an ob::Error.
+     *
+     * @param[in] serialNumber The serial number of the device.
+     *
+     * @return OBDeviceAccessState The current access state of the device.
+     */
+    OBDeviceAccessState queryDeviceAccessStateBySN(const char *serialNumber) const {
+        ob_error *error = nullptr;
+        auto      state = ob_device_list_query_device_access_state_by_serial_number(impl_, serialNumber, &error);
+        Error::handle(&error);
+        return state;
     }
 
     /**

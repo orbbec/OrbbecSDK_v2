@@ -49,6 +49,13 @@ public:
      */
     uint16_t writeRegister(uint32_t registerAddress, uint32_t value);
 
+    /**
+     * @brief Get the last host-side socket error reported by transmit().
+     */
+    int32_t lastError() const {
+        return lastError_;
+    }
+
 private:
     /**
      * @brief Initiate with network source port info

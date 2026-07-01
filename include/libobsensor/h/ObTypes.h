@@ -2025,6 +2025,20 @@ typedef enum {
 } ob_device_access_mode,
     OBDeviceAccessMode;
 
+/**
+ * @brief Device access state queried from GVCP CCP without opening the device.
+ */
+typedef enum {
+    OB_DEVICE_ACCESS_STATE_UNKNOWN          = 0,  ///< The access state cannot be determined
+    OB_DEVICE_ACCESS_STATE_UNSUPPORTED      = 1,  ///< The device or current build does not support access-state query
+    OB_DEVICE_ACCESS_STATE_AVAILABLE        = 2,  ///< The device is available for control access
+    OB_DEVICE_ACCESS_STATE_CONTROLLED       = 3,  ///< The device has a controller; monitor access may still be available
+    OB_DEVICE_ACCESS_STATE_EXCLUSIVE        = 4,  ///< The device is held exclusively and cannot be accessed
+    OB_DEVICE_ACCESS_STATE_UNREACHABLE      = 5,  ///< The device did not respond or the network path is unreachable
+    OB_DEVICE_ACCESS_STATE_FW_NOT_SUPPORTED = 6,  ///< The device supports CCP, but the firmware version is too old
+} ob_device_access_state,
+    OBDeviceAccessState;
+
 typedef enum {
     OB_IP_SOURCE_NONE       = 0,  ///< No IP configuration active (e.g. USB device).
     OB_IP_SOURCE_LLA        = 1,  ///< LLA (Link-Local Address / Auto IP).

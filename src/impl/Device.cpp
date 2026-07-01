@@ -13,6 +13,10 @@
 #include "IProperty.hpp"
 #include "IDevice.hpp"
 #include "IDeviceMonitor.hpp"
+
+#if defined(BUILD_NET_PAL)
+#include "accesscontroller/GvcpCcpController.hpp"
+#endif
 #include "IAlgParamManager.hpp"
 #include "IFrameTimestamp.hpp"
 
@@ -227,6 +231,41 @@ const char *ob_device_list_get_device_user_name(const ob_device_list *list, uint
 }
 HANDLE_EXCEPTIONS_AND_RETURN(nullptr, list, index)
 
+ob_device_access_state ob_device_list_query_device_access_state(const ob_device_list *list, uint32_t index, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(list);
+    VALIDATE_UNSIGNED_INDEX(index, list->list.size());
+    auto &info = list->list[index];
+#if defined(BUILD_NET_PAL)
+    if(std::string(info->getConnectionType()) != "Ethernet") {
+        return OB_DEVICE_ACCESS_STATE_UNSUPPORTED;
+    }
+    return libobsensor::GvcpCcpController::queryAccessState(info);
+#else
+    libobsensor::utils::unusedVar(info);
+    return OB_DEVICE_ACCESS_STATE_UNSUPPORTED;
+#endif
+}
+HANDLE_EXCEPTIONS_AND_RETURN(OB_DEVICE_ACCESS_STATE_UNKNOWN, list, index)
+
+ob_device_access_state ob_device_list_query_device_access_state_by_serial_number(const ob_device_list *list, const char *serial_number,
+                                                                                 ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(list);
+    VALIDATE_NOT_NULL(serial_number);
+    for(auto &info: list->list) {
+        if(info->getDeviceSn() == serial_number) {
+#if defined(BUILD_NET_PAL)
+            if(std::string(info->getConnectionType()) != "Ethernet") {
+                return OB_DEVICE_ACCESS_STATE_UNSUPPORTED;
+            }
+            return libobsensor::GvcpCcpController::queryAccessState(info);
+#else
+            return OB_DEVICE_ACCESS_STATE_UNSUPPORTED;
+#endif
+        }
+    }
+    THROW_INVALID_PARAM_EXCEPTION("Device not found by serial number: " + std::string(serial_number));
+}
+HANDLE_EXCEPTIONS_AND_RETURN(OB_DEVICE_ACCESS_STATE_UNKNOWN, list, serial_number)
 ob_device *ob_device_list_get_device(const ob_device_list *list, uint32_t index, ob_error **error) {
     return ob_device_list_get_device_ex(list, index, OB_DEVICE_DEFAULT_ACCESS, error);
 }

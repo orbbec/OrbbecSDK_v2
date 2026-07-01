@@ -1667,7 +1667,7 @@ void G330NetDevice::postInitialize() {
 }
 
 void G330NetDevice::checkAndAcquireCCP() {
-    ccpController_ = std::make_shared<GvcpCcpController>(enumInfo_, "1.6.07");
+    ccpController_ = std::make_shared<GvcpCcpController>(enumInfo_);
     if(!ccpController_->isSupported()) {
         return;
     }
