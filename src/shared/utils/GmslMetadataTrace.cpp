@@ -75,6 +75,24 @@ uint8_t readG330PrependedByte(const void *data, size_t size, OBStreamType stream
     return metadataOffset < size ? ptr[metadataOffset] : 0;
 }
 
+bool hasG330PrependedBytes(const void *data, size_t size, OBStreamType streamType, size_t metadataOffset, size_t byteCount) {
+    if(!data || byteCount == 0) {
+        return false;
+    }
+
+    const size_t lastMetadataOffset = metadataOffset + byteCount - 1;
+    if(streamType == OB_STREAM_COLOR || streamType == OB_STREAM_COLOR_LEFT || streamType == OB_STREAM_COLOR_RIGHT) {
+        if(size < 2) {
+            return false;
+        }
+        return lastMetadataOffset <= (size - 2) / 2;
+    }
+    if(streamType == OB_STREAM_DEPTH) {
+        return lastMetadataOffset <= (size - 1) / 2;
+    }
+    return lastMetadataOffset < size;
+}
+
 uint32_t readG330PrependedLe32(const void *data, size_t size, OBStreamType streamType, size_t metadataOffset) {
     return static_cast<uint32_t>(readG330PrependedByte(data, size, streamType, metadataOffset))
            | (static_cast<uint32_t>(readG330PrependedByte(data, size, streamType, metadataOffset + 1)) << 8)
@@ -84,7 +102,7 @@ uint32_t readG330PrependedLe32(const void *data, size_t size, OBStreamType strea
 
 MetadataFields readG330PrependedMetadata(const void *data, size_t size, OBStreamType streamType) {
     MetadataFields fields;
-    if(!data || size == 0) {
+    if(!hasG330PrependedBytes(data, size, streamType, G330_OFFSET_USEC_OFFSET, sizeof(uint32_t))) {
         return fields;
     }
 
@@ -203,7 +221,11 @@ bool isEnabled() {
 }
 
 V4lTrace::V4lTrace(std::string devName, OBStreamType streamType, size_t metadataBufferCount, MetadataFormat metadataFormat)
-    : devName_(std::move(devName)), streamType_(streamType), metadataFormat_(metadataFormat), enabled_(isEnabled()), snapshots_(metadataBufferCount) {}
+    : devName_(std::move(devName)),
+      streamType_(streamType),
+      metadataFormat_(metadataFormat),
+      enabled_(isEnabled()),
+      snapshots_(enabled_ ? metadataBufferCount : 0) {}
 
 bool V4lTrace::enabled() const {
     return enabled_;
