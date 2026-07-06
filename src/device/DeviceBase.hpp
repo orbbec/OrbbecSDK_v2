@@ -100,6 +100,7 @@ public:
     void setFirmwareUpdateState(bool isUpdating) override;
     bool isFirmwareUpdating() const override;
     void updateOptionalDepthPresets(const char filePathList[][OB_PATH_MAX], uint8_t pathCount, DeviceFwUpdateCallback updateCallback) override;
+    void updateOptionalDepthPresets(const OBDataView *dataList, uint8_t count, DeviceFwUpdateCallback updateCallback) override;
     static std::map<std::string, std::string> parseExtensionInfo(std::string extensionInfo);
 
     void activateDeviceAccessor() override;
@@ -116,6 +117,9 @@ protected:
     virtual void        fetchDeviceInfo();
     virtual void        fetchExtensionInfo();
     DeviceComponentLock tryLockResource();
+
+    // refresh cached info / preset list after a successful preset update
+    void refreshAfterOptionalDepthPresetsUpdate();
 
     std::shared_ptr<ISourcePort> getSourcePort(std::shared_ptr<const SourcePortInfo> sourcePortInfo) const;
 

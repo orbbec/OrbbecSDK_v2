@@ -64,6 +64,16 @@ FirmwareUpdater::FirmwareUpdater(IDevice *owner) : DeviceComponentBase(owner) {
                 ctx_->dylib_
                     ->get_function<void(ob_device *, const char filePathList[][OB_PATH_MAX], uint8_t, ob_device_fw_update_callback, void *, ob_error **)>(
                         "ob_device_update_optional_depth_presets_ext");
+            // Optional symbol: only newer extensions export it
+            if(ctx_->dylib_->has_symbol("ob_device_update_optional_depth_presets_from_data_ext")) {
+                ctx_->update_optional_depth_presets_from_data_ext =
+                    ctx_->dylib_
+                        ->get_function<void(ob_device *, const ob_data_view *, uint8_t, ob_device_fw_update_callback, void *, ob_error **)>(
+                            "ob_device_update_optional_depth_presets_from_data_ext");
+            }
+            else {
+                LOG_WARN("firmwareupdater extension has no 'ob_device_update_optional_depth_presets_from_data_ext'; updating presets from data is disabled.");
+            }
             ctx_->read_customer_data_ext = ctx_->dylib_->get_function<void(ob_device *, void *, uint32_t *, ob_error **)>("ob_device_read_customer_data_ext");
             ctx_->write_customer_data_ext =
                 ctx_->dylib_->get_function<void(ob_device *, const void *, uint32_t, ob_error **)>("ob_device_write_customer_data_ext");
@@ -178,6 +188,27 @@ void FirmwareUpdater::updateOptionalDepthPresetsExt(const char filePathList[][OB
     }
 }
 
+void FirmwareUpdater::updateOptionalDepthPresetsFromDataExt(const OBDataView *dataList, uint8_t count, DeviceFwUpdateCallback callback) {
+    if(!ctx_->update_optional_depth_presets_from_data_ext) {
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("The loaded firmwareupdater extension does not support updating optional depth presets from data.");
+    }
+
+    // Reject concurrent updates and mark the device as updating; released when this (synchronous) call returns.
+    ScopedUpdateClaim claim(updateInProgress_, getOwner());
+
+    deviceFwUpdateCallback_ = callback;
+    deviceFwUpdateCallback_(STAT_START, "Ready to update optional depth preset...", 0);
+
+    // Synchronous: run on the caller's thread, so the caller's buffers stay valid without copying (matters for large presets).
+    ob_error *error  = nullptr;
+    auto      device = std::make_shared<ob_device>();
+    device->device   = getOwner()->shared_from_this();
+    ctx_->update_optional_depth_presets_from_data_ext(device.get(), dataList, count, onDeviceFwUpdateCallback, this, &error);
+    if(error) {
+        LOG_ERROR("Preset update failed: {}", error->message);
+        delete error;
+    }
+}
 void FirmwareUpdater::writeCustomerDataExt(const uint8_t *customerData, uint32_t customerDataSize, ob_error **error) {
     auto device    = std::make_shared<ob_device>();
     device->device = getOwner()->shared_from_this();

@@ -385,6 +385,14 @@ typedef struct {
 } OBDataChunk, ob_data_chunk;
 
 /**
+ * @brief A read-only, non-owning view over a byte buffer (a data pointer plus its size)
+ */
+typedef struct {
+    const uint8_t *data;      ///< Pointer to the data
+    uint32_t       dataSize;  ///< Size of the data in bytes
+} OBDataView, ob_data_view;
+
+/**
  * @brief Structure for integer range
  */
 typedef struct {

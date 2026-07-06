@@ -393,6 +393,8 @@ public:
     /**
      * @brief Update the device firmware
      *
+     * @attention Only one firmware/preset update may run per device at a time
+     *
      * @param[in] filePath Firmware path
      * @param[in] callback Firmware Update progress and status callback
      * @param[in] async Whether to execute asynchronously
@@ -406,6 +408,8 @@ public:
 
     /**
      * @brief Update the device firmware from data
+     *
+     * @attention Only one firmware/preset update may run per device at a time
      *
      * @param[in] firmwareData Firmware data
      * @param[in] firmwareDataSize Firmware data size
@@ -422,6 +426,8 @@ public:
     /**
      * @brief Update the device optional depth presets
      *
+     * @attention Only one firmware/preset update may run per device at a time
+     *
      * @param[in] filePathList A list(2D array) of preset file paths, each up to OB_PATH_MAX characters.
      * @param[in] pathCount The number of the preset file paths.
      * @param[in] callback Preset update progress and status callback
@@ -430,6 +436,27 @@ public:
         ob_error *error   = nullptr;
         fwUpdateCallback_ = callback;
         ob_device_update_optional_depth_presets(impl_, filePathList, pathCount, &Device::firmwareUpdateCallback, this, &error);
+        Error::handle(&error);
+    }
+
+    /**
+     * @brief Update the device optional depth presets from data loaded in memory
+     *
+     * @attention Only one firmware/preset update may run per device at a time
+     *
+     * @param[in] dataList A list of preset data blocks, each holding the raw bytes of one preset.
+     * @param[in] callback Preset update progress and status callback
+     */
+    void updateOptionalDepthPresets(const std::vector<std::vector<uint8_t>> &dataList, DeviceFwUpdateCallback callback) {
+        ob_error                      *error = nullptr;
+        std::vector<OBDataView> presets;
+        presets.reserve(dataList.size());
+        for(const auto &data: dataList) {
+            presets.push_back({data.data(), static_cast<uint32_t>(data.size())});
+        }
+        fwUpdateCallback_ = callback;
+        auto count        = static_cast<uint8_t>(presets.size());
+        ob_device_update_optional_depth_presets_from_data(impl_, presets.data(), count, &Device::firmwareUpdateCallback, this, &error);
         Error::handle(&error);
     }
 

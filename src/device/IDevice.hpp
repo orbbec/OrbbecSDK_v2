@@ -117,6 +117,9 @@ public:
     // update device depth presets
     virtual void updateOptionalDepthPresets(const char filePathList[][OB_PATH_MAX], uint8_t pathCount, DeviceFwUpdateCallback updateCallback) = 0;
 
+    // update device depth presets from data loaded in memory
+    virtual void updateOptionalDepthPresets(const OBDataView *dataList, uint8_t count, DeviceFwUpdateCallback updateCallback) = 0;
+
     // activate device accessor
     virtual void activateDeviceAccessor() = 0;
 

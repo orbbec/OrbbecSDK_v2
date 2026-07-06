@@ -18,6 +18,9 @@ typedef void (*pfunc_ob_device_update_firmware_from_raw_data_ext)(ob_device *dev
 typedef void (*pfunc_ob_device_optional_depth_presets_ext)(ob_device *device, const char filePathList[][OB_PATH_MAX], uint8_t pathCount,
                                                            ob_device_fw_update_callback callback, void *user_data, ob_error **error);
 
+typedef void (*pfunc_ob_device_optional_depth_presets_from_data_ext)(ob_device *device, const ob_data_view *data_List, uint8_t count,
+                                                                     ob_device_fw_update_callback callback, void *user_data, ob_error **error);
+
 typedef void (*pfunc_ob_device_write_customer_data_ext)(ob_device *device, const void *data, uint32_t data_size, ob_error **error);
 
 typedef void (*pfunc_ob_device_read_customer_data_ext)(ob_device *device, void *data, uint32_t *data_size, ob_error **error);

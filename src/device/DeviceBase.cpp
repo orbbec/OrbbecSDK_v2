@@ -677,23 +677,53 @@ void DeviceBase::updateOptionalDepthPresets(const char filePathList[][OB_PATH_MA
     });
 
     if(success) {
-        // refresh extension info, device error state and preset list
-        fetchExtensionInfo();
-        // device error state
-        fetchDeviceErrorState();
-        // update preset list
-        auto presetMgr = getComponentT<libobsensor::IPresetManager>(libobsensor::OB_DEV_COMPONENT_PRESET_MANAGER, false);
-        if(presetMgr) {
-            presetMgr->fetchPreset();
+        refreshAfterOptionalDepthPresetsUpdate();
+    }
+}
+
+void DeviceBase::updateOptionalDepthPresets(const OBDataView *dataList, uint8_t count, DeviceFwUpdateCallback updateCallback) {
+    if(!hasWriteAccess()) {
+        std::ostringstream oss;
+        oss << "The current access mode is " << accessMode_ << " and does not allow write operations";
+        THROW_ACCESS_DENIED_EXCEPTION(oss.str());
+    }
+
+    if(hasAnySensorStreamActivated()) {
+        THROW_WRONG_API_CALL_SEQUENCE_EXCEPTION("Device is streaming, please stop all sensors before updating preset!");
+    }
+
+    auto updater = getComponentT<FirmwareUpdater>(OB_DEV_COMPONENT_FIRMWARE_UPDATER, true);
+    bool success = false;
+    updater->updateOptionalDepthPresetsFromDataExt(dataList, count, [updateCallback, &success](OBFwUpdateState state, const char *message, uint8_t percent) {
+        updateCallback(state, message, percent);
+        if(state == STAT_DONE_WITH_DUPLICATES || state == STAT_DONE) {
+            // success
+            success = true;
         }
-        // update depth post filter params
-        auto depthPostrFilterParamsManager = getComponentT<libobsensor::DepthPostFilterParamsManager>(OB_DEV_COMPONENT_DEPTH_POST_FILTER_PARAMS_MANAGER, false);
-        if(depthPostrFilterParamsManager) {
-            TRY_EXECUTE({
-                depthPostrFilterParamsManager->fetchParamFromDevice();
-                updateDepthPostProcessingFilterList();
-            });
-        }
+    });
+
+    if(success) {
+        refreshAfterOptionalDepthPresetsUpdate();
+    }
+}
+
+void DeviceBase::refreshAfterOptionalDepthPresetsUpdate() {
+    // refresh extension info, device error state and preset list
+    fetchExtensionInfo();
+    // device error state
+    fetchDeviceErrorState();
+    // update preset list
+    auto presetMgr = getComponentT<libobsensor::IPresetManager>(libobsensor::OB_DEV_COMPONENT_PRESET_MANAGER, false);
+    if(presetMgr) {
+        presetMgr->fetchPreset();
+    }
+    // update depth post filter params
+    auto depthPostrFilterParamsManager = getComponentT<libobsensor::DepthPostFilterParamsManager>(OB_DEV_COMPONENT_DEPTH_POST_FILTER_PARAMS_MANAGER, false);
+    if(depthPostrFilterParamsManager) {
+        TRY_EXECUTE({
+            depthPostrFilterParamsManager->fetchParamFromDevice();
+            updateDepthPostProcessingFilterList();
+        });
     }
 }
 
