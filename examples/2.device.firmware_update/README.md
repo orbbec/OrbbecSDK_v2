@@ -169,13 +169,15 @@ Device is the device object, which can be used to obtain the device information,
 
     This logic is handled internally by the sample and requires no user intervention unless the device does not reconnect in time.
 
-8. Final Reboot
+8. Final Reboot (Required)
 
-    After the firmware update completes successfully, the device will reboot:
+    A reboot is mandatory after the firmware update completes - the new firmware does not take effect until the device reboots. The sample performs this reboot automatically at the end of a successful update:
 
     ```c++
     targetDevice->reboot();
     ```
+
+    The device will disconnect and reconnect during the reboot - this is expected, do not power it off.
 
 ### Attention
 
@@ -183,6 +185,7 @@ Device is the device object, which can be used to obtain the device information,
 2. If multiple devices are connected, always specify the serial number using -s.
 3. On Linux platforms, using LibUVC is strongly recommended.
 4. Firmware update failures will throw exceptions - check console output for details.
+5. A reboot is required after the update - the new firmware only takes effect after the reboot.
 
 ## Run Sample
 
@@ -248,6 +251,3 @@ Device is the device object, which can be used to obtain the device information,
 - linux update Result
 
 ![image](../../docs/resource/device_firmware_update.jpg)
-
-
-

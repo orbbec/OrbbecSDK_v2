@@ -190,7 +190,7 @@ Upgrade process completed.
 
 ### Post-Update
 
-- Successfully updated devices are automatically rebooted
+- Successfully updated devices are automatically rebooted - the new firmware only takes effect after this reboot, and each device will disconnect and reconnect during it, so do not power off any device
 - Press any key to exit after the summary is displayed
 
 ## Troubleshooting
