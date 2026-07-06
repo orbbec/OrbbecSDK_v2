@@ -9,6 +9,44 @@
 #include "firmwareupdateguard/FirmwareUpdateGuards.hpp"
 
 namespace libobsensor {
+
+namespace {
+
+/**
+ * @brief RAII guard for exclusive device updates.
+ *
+ * Claims the device update slot on construction and releases it on destruction.
+ * While active, the device is marked as updating.
+ * Asynchronous updates should retain the guard via shared_ptr until completion.
+ */
+class ScopedUpdateClaim {
+public:
+    ScopedUpdateClaim(std::atomic<bool> &flag, IDevice *owner) : flag_(flag), owner_(owner) {
+        bool expected = false;
+        if(!flag_.compare_exchange_strong(expected, true)) {
+            THROW_WRONG_API_CALL_SEQUENCE_EXCEPTION("Another firmware or preset update is already in progress, please wait for it to finish.");
+        }
+        if(owner_) {
+            owner_->setFirmwareUpdateState(true);
+        }
+    }
+
+    ~ScopedUpdateClaim() noexcept {
+        if(owner_) {
+            owner_->setFirmwareUpdateState(false);
+        }
+        flag_.store(false);
+    }
+
+    ScopedUpdateClaim(const ScopedUpdateClaim &)            = delete;
+    ScopedUpdateClaim &operator=(const ScopedUpdateClaim &) = delete;
+
+private:
+    std::atomic<bool> &flag_;
+    IDevice           *owner_;
+};
+}  // namespace
+
 FirmwareUpdater::FirmwareUpdater(IDevice *owner) : DeviceComponentBase(owner) {
     try {
         ctx_         = std::make_shared<FirmwareUpdateContext>();
@@ -52,6 +90,10 @@ void FirmwareUpdater::onDeviceFwUpdateCallback(ob_fw_update_state state, const c
 }
 
 void FirmwareUpdater::updateFirmwareExt(const std::string &path, DeviceFwUpdateCallback callback, bool async) {
+    // Reject concurrent updates and mark the device as updating
+    // Released when the worker thread (last owner) finishes
+    auto claim = std::make_shared<ScopedUpdateClaim>(updateInProgress_, getOwner());
+
     if(updateThread_.joinable()) {
         updateThread_.join();
     }
@@ -59,7 +101,7 @@ void FirmwareUpdater::updateFirmwareExt(const std::string &path, DeviceFwUpdateC
     deviceFwUpdateCallback_ = callback;
     deviceFwUpdateCallback_(STAT_FILE_TRANSFER, "Ready to update firmware...", 0);
 
-    updateThread_ = std::thread([this, path, async]() {
+    updateThread_ = std::thread([this, path, async, claim]() {
         ob_error *error  = nullptr;
         auto      device = std::make_shared<ob_device>();
         device->device   = getOwner()->shared_from_this();
@@ -82,6 +124,10 @@ void FirmwareUpdater::updateFirmwareExt(const std::string &path, DeviceFwUpdateC
 }
 
 void FirmwareUpdater::updateFirmwareFromRawDataExt(const uint8_t *firmwareData, uint32_t firmwareSize, DeviceFwUpdateCallback callback, bool async) {
+    // Reject concurrent updates and mark the device as updating
+    // Released when the worker thread (last owner) finishes
+    auto claim = std::make_shared<ScopedUpdateClaim>(updateInProgress_, getOwner());
+
     if(updateThread_.joinable()) {
         updateThread_.join();
     }
@@ -91,7 +137,7 @@ void FirmwareUpdater::updateFirmwareFromRawDataExt(const uint8_t *firmwareData, 
 
     // Prevent asynchronous call data from being destroyed
     std::vector<uint8_t> data(firmwareData, firmwareData + firmwareSize);
-    updateThread_ = std::thread([this, data, firmwareSize, async]() {
+    updateThread_ = std::thread([this, data, firmwareSize, async, claim]() {
         ob_error *error  = nullptr;
         auto      device = std::make_shared<ob_device>();
         device->device   = getOwner()->shared_from_this();
@@ -114,25 +160,24 @@ void FirmwareUpdater::updateFirmwareFromRawDataExt(const uint8_t *firmwareData, 
 }
 
 void FirmwareUpdater::updateOptionalDepthPresetsExt(const char filePathList[][OB_PATH_MAX], uint8_t pathCount, DeviceFwUpdateCallback callback) {
-    if(updateThread_.joinable()) {
-        updateThread_.join();
-    }
+    // Reject concurrent updates and mark the device as updating
+    // Released when this (synchronous) call returns
+    ScopedUpdateClaim claim(updateInProgress_, getOwner());
 
     deviceFwUpdateCallback_ = callback;
-    deviceFwUpdateCallback_(STAT_START, "Ready to update custom preset...", 0);
+    deviceFwUpdateCallback_(STAT_START, "Ready to update optional depth preset...", 0);
 
-    updateThread_ = std::thread([this, filePathList, pathCount]() {
-        ob_error *error  = nullptr;
-        auto      device = std::make_shared<ob_device>();
-        device->device   = getOwner()->shared_from_this();
-        ctx_->update_optional_depth_presets_ext(device.get(), filePathList, pathCount, onDeviceFwUpdateCallback, this, &error);
-        if(error) {
-            LOG_ERROR("Preset update failed: {}", error->message);
-            delete error;
-        }
-    });
-    updateThread_.join();
+    // Synchronous: run directly on the caller's thread.
+    ob_error *error  = nullptr;
+    auto      device = std::make_shared<ob_device>();
+    device->device   = getOwner()->shared_from_this();
+    ctx_->update_optional_depth_presets_ext(device.get(), filePathList, pathCount, onDeviceFwUpdateCallback, this, &error);
+    if(error) {
+        LOG_ERROR("Preset update failed: {}", error->message);
+        delete error;
+    }
 }
+
 void FirmwareUpdater::writeCustomerDataExt(const uint8_t *customerData, uint32_t customerDataSize, ob_error **error) {
     auto device    = std::make_shared<ob_device>();
     device->device = getOwner()->shared_from_this();

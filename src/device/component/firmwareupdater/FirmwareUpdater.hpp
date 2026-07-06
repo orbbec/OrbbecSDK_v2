@@ -8,6 +8,7 @@
 
 #include <dylib.hpp>
 
+#include <atomic>
 #include <string>
 #include <thread>
 
@@ -40,6 +41,9 @@ private:
     std::shared_ptr<FirmwareUpdateContext> ctx_;
     DeviceFwUpdateCallback deviceFwUpdateCallback_;
     std::thread                            updateThread_;
+
+    // Serializes all firmware/preset updates on this device (reject-if-busy)
+    std::atomic<bool> updateInProgress_{ false };
 };
 
 }  // namespace libobsensor
