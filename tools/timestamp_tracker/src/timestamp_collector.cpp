@@ -242,6 +242,17 @@ bool TimestampCollector::start(const CmdLineConfig &config) {
         device_->setIntProperty(OB_PROP_COLOR_EXPOSURE_INT, 30);  // unit: 100us
     }
 
+    // enable GlobalTimestamp if support
+    if(device_->isGlobalTimestampSupported()) {
+        try {
+            device_->enableGlobalTimestamp(true);
+        }
+        catch(...) {
+            // ignore error
+            std::cerr << "Enable global timestamp failed, ignore" << std::endl;
+        }
+    }
+
     auto obConfig = std::make_shared<ob::Config>();
     obConfig->setFrameAggregateOutputMode(OB_FRAME_AGGREGATE_OUTPUT_DISABLE);
     if(!setupSensors(obConfig, config)) {
