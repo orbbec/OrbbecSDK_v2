@@ -258,17 +258,17 @@ After upgrading to the UVC protocol, these devices will have a firmware major ve
 | Gemini 345        | 1.7.04                     |        1.9.03                   |
 | Gemini 345Lg        | 1.7.04                     |        1.9.03                   |
 | Gemini 435Le        | 1.2.4                     |        1.3.19                   |
-| Gemini 335Le        | 1.5.31                     |        1.6.00                     |
-| Gemini 330        | 1.2.20                       |        1.6.00                       |
-| Gemini 330L       | 1.2.20                       |       1.6.00                      |
-| Gemini 335        | 1.2.20                       |       1.6.00                        |
-| Gemini 335L       | 1.2.20                       |        1.6.00                       |
-| Gemini 336        | 1.2.20                       |       1.6.00                        |
-| Gemini 336L       | 1.2.20                       |        1.6.00                       |
-| Gemini 335Lg      | 1.3.46                       |        1.6.00                       |
+| Gemini 335Le        | 1.5.31                     |        1.8.10                     |
+| Gemini 330        | 1.2.20                       |        1.8.10                       |
+| Gemini 330L       | 1.2.20                       |       1.8.10                      |
+| Gemini 335        | 1.2.20                       |       1.8.10                        |
+| Gemini 335L       | 1.2.20                       |        1.8.10                       |
+| Gemini 336        | 1.2.20                       |       1.8.10                        |
+| Gemini 336L       | 1.2.20                       |        1.8.10                       |
+| Gemini 335Lg      | 1.3.46                       |        1.8.10                       |
 | Femto Bolt        | 1.1.2                  |              1.1.3                       |
 | Femto Mega        | 1.3.0                  |              1.3.1                       |
-| Femto Mega I        | 2.0.4                  |            2.0.4                     |
+| Femto Mega I        | 2.0.4                  |            2.0.5                     |
 | Astra 2           | 2.8.20                       |         2.8.20                      |
 | Gemini 2 L        | 1.4.53                       |        1.5.2                       |
 | Gemini 2          | 1.4.92               |                1.4.98                       |
