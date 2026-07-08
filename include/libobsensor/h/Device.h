@@ -351,6 +351,16 @@ OB_EXPORT void ob_device_enable_heartbeat(ob_device *device, bool enable, ob_err
 OB_EXPORT void ob_device_enable_firmware_log(ob_device *device, bool enable, ob_error **error);
 
 /**
+ * @brief Check whether the device firmware log is enabled.
+ *
+ * @param[in] device The device object.
+ * @param[out] error Pointer to an error object that will be set if an error occurs.
+ *
+ * @return bool Whether the firmware log is enabled.
+ */
+OB_EXPORT bool ob_device_is_firmware_log_enabled(ob_device *device, ob_error **error);
+
+/**
  * @brief Synchronize the device time (synchronize hardwarePPS time to device)
  *
  * @param[in] device The device object.

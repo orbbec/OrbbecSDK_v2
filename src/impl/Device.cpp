@@ -669,6 +669,13 @@ void ob_device_enable_firmware_log(ob_device *device, bool enable, ob_error **er
 }
 HANDLE_EXCEPTIONS_NO_RETURN(device, enable)
 
+bool ob_device_is_firmware_log_enabled(ob_device *device, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(device);
+    auto devMonitor = device->device->getComponentT<libobsensor::IDeviceMonitor>(libobsensor::OB_DEV_COMPONENT_DEVICE_MONITOR);
+    return devMonitor->isFirmwareLogEnabled();
+}
+HANDLE_EXCEPTIONS_AND_RETURN(false, device)
+
 void ob_device_send_and_receive_data(ob_device *device, const uint8_t *send_data, uint32_t send_data_size, uint8_t *receive_data, uint32_t *receive_data_size,
                                      ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(device);
