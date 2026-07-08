@@ -110,10 +110,11 @@ struct V4lDeviceHandleGmsl {
     MutableFrameCallback                      frameCallback;
     std::shared_ptr<const VideoStreamProfile> profile = nullptr;
 
-    int                          stopPipeFd[2]   = { -1, -1 };  // pipe to signal the capture thread to stop
-    std::shared_ptr<std::thread> captureThread   = nullptr;
-    std::atomic<bool>            isCapturing     = { false };
-    std::atomic<bool>            canStartCapture = { false };
+    int                          stopPipeFd[2]         = { -1, -1 };  // pipe to signal the capture thread to stop
+    std::shared_ptr<std::thread> captureThread         = nullptr;
+    std::atomic<bool>            isCapturing           = { false };
+    std::atomic<bool>            canStartCapture       = { false };
+    bool                         needDropInitialFrames = false;
     std::mutex                   streamMutex;  // mutex for start capture
     utils::SteadyCondVar         streamCv;     // cv for start capture
     std::atomic<std::uint64_t>   loopFrameIndex = { 0 };
@@ -167,6 +168,7 @@ private:
     std::shared_ptr<const USBSourcePortInfo>          portInfo_ = nullptr;
     std::vector<std::shared_ptr<V4lDeviceHandleGmsl>> deviceHandles_;
     std::recursive_mutex                              streamMutex_;
+    bool                                              isDaBaiADevice_ = false;
 };
 
 }  // namespace libobsensor

@@ -25,6 +25,7 @@
 #include "logger/LoggerInterval.hpp"
 #include "exception/ObException.hpp"
 #include "frame/FrameFactory.hpp"
+#include "common/DevicePids.hpp"
 
 #include <iostream>
 #include <chrono>
@@ -530,6 +531,8 @@ ObV4lGmslDevicePort::ObV4lGmslDevicePort(std::shared_ptr<const USBSourcePortInfo
         THROW_DEVICE_UNAVAILABLE_EXCEPTION("No v4l device found for port: " + portInfo_->infUrl);
     }
 
+    isDaBaiADevice_ = isDeviceInContainer(DaBaiADevPids, portInfo_->vid, portInfo_->pid);
+
     LOG_DEBUG("V4L device port created for {} with {} v4l2 device", portInfo_->infUrl, deviceHandles_.size());
 }
 
@@ -629,7 +632,7 @@ void writeBufferToFile(const char *buf, std::size_t size, const std::string &fil
 
 void ObV4lGmslDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandleGmsl> devHandle) {
     int metadataBufferIndex = -1;
-    int colorFrameNum       = 0;  // color drop 1~3 frame -> fix color green screen issue.
+    int colorFrameNum       = 0;  // DaBaiA series only: drop first 3 color frames to fix green screen issue
 
     devHandle->loopFrameIndex.store(1);  // frame number start from 1
     try {
@@ -773,7 +776,7 @@ void ObV4lGmslDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandleGmsl> devHa
                         videoFrame->setNumber(devHandle->loopFrameIndex);
                         // LOG_DEBUG("set loopFrameIndex:{}", devHandle->loopFrameIndex);
 
-                        if(devHandle->profile->getType() == OB_STREAM_COLOR) {
+                        if(devHandle->needDropInitialFrames) {
                             if(colorFrameNum >= 3) {
                                 devHandle->frameCallback(videoFrame);
                             }
@@ -1121,11 +1124,12 @@ void ObV4lGmslDevicePort::startStream(std::shared_ptr<const StreamProfile> profi
     // NOTE: Ensure the thread is started before calling Stream On.
     // Starting the stream before the thread may cause the first few frames to be lost
     // due to the thread not being ready in time.
-    devHandle->isCapturing     = true;
-    devHandle->canStartCapture = false;
-    devHandle->profile         = videoProfile;
-    devHandle->frameCallback   = callback;
-    devHandle->captureThread   = std::make_shared<std::thread>([this, devHandle]() { captureLoop(devHandle); });
+    devHandle->isCapturing           = true;
+    devHandle->canStartCapture       = false;
+    devHandle->profile               = videoProfile;
+    devHandle->frameCallback         = callback;
+    devHandle->needDropInitialFrames = isDaBaiADevice_ && videoProfile->getType() == OB_STREAM_COLOR;
+    devHandle->captureThread         = std::make_shared<std::thread>([this, devHandle]() { captureLoop(devHandle); });
 
     // stream on
     std::this_thread::sleep_for(std::chrono::milliseconds(10));
