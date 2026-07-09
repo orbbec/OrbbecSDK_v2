@@ -95,8 +95,12 @@ class IPropertyServer {
 public:
     virtual ~IPropertyServer() noexcept = default;
 
-    virtual void registerAccessCallback(uint32_t propertyId, PropertyAccessCallback callback)               = 0;
-    virtual void registerAccessCallback(std::vector<uint32_t> propertyIds, PropertyAccessCallback callback) = 0;
+    virtual uint64_t registerAccessCallback(uint32_t propertyId, PropertyAccessCallback callback)               = 0;
+    virtual uint64_t registerAccessCallback(std::vector<uint32_t> propertyIds, PropertyAccessCallback callback) = 0;
+
+    // Unregister a callback previously registered via registerAccessCallback, using the token it returned.
+    // Removes the callback from every property it was registered on. A token of 0 or an unknown token is ignored.
+    virtual void unregisterAccessCallback(uint64_t token) = 0;
 
     virtual void registerProperty(uint32_t propertyId, OBPermissionType userPerms, OBPermissionType intPerms, std::shared_ptr<IPropertyAccessor> accessor) = 0;
     virtual void registerProperty(uint32_t propertyId, const std::string &userPerms, const std::string &intPerms,

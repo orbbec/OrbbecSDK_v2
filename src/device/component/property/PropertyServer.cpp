@@ -5,6 +5,7 @@
 #include "exception/ObException.hpp"
 #include "logger/Logger.hpp"
 #include "utils/Utils.hpp"
+#include <algorithm>
 #include <memory>
 
 #include "logger/LoggerSnWrapper.hpp"  // Must be included last to override log macros
@@ -30,19 +31,47 @@ void PropertyServer::registerProperty(uint32_t propertyId, OBPermissionType user
     appendToPropertyMap(propertyId, userPerms, intPerms);
 }
 
-void PropertyServer::registerAccessCallback(uint32_t propertyId, PropertyAccessCallback callback) {
+uint64_t PropertyServer::registerAccessCallback(uint32_t propertyId, PropertyAccessCallback callback) {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     auto                                  it = properties_.find(propertyId);
     if(it == properties_.end()) {
         LOG_WARN("Property not found to register callback, propertyId: {}", propertyId);
-        return;
+        return 0;
     }
-    it->second.accessCallbacks.push_back(callback);
+    auto token = ++accessCallbackTokenCounter_;
+    it->second.accessCallbacks.push_back({ token, std::move(callback) });
+    return token;
 }
 
-void PropertyServer::registerAccessCallback(std::vector<uint32_t> propertyIds, PropertyAccessCallback callback) {
+uint64_t PropertyServer::registerAccessCallback(std::vector<uint32_t> propertyIds, PropertyAccessCallback callback) {
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    // Share one token across all properties so a single unregisterAccessCallback removes them together.
+    // Only allocate a token once the first property is actually found, so a caller whose properties are
+    // all unsupported gets 0 back and can tell the callback was never registered.
+    uint64_t token = 0;
     for(auto propertyId: propertyIds) {
-        registerAccessCallback(propertyId, callback);
+        auto it = properties_.find(propertyId);
+        if(it == properties_.end()) {
+            LOG_WARN("Property not found to register callback, propertyId: {}", propertyId);
+            continue;
+        }
+        if(token == 0) {
+            token = ++accessCallbackTokenCounter_;
+        }
+        it->second.accessCallbacks.push_back({ token, callback });
+    }
+    return token;
+}
+
+void PropertyServer::unregisterAccessCallback(uint64_t token) {
+    if(token == 0) {
+        return;
+    }
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    for(auto &entry: properties_) {
+        auto &callbacks = entry.second.accessCallbacks;
+        callbacks.erase(std::remove_if(callbacks.begin(), callbacks.end(), [token](const AccessCallbackItem &item) { return item.token == token; }),
+                        callbacks.end());
     }
 }
 
@@ -204,7 +233,7 @@ void PropertyServer::setPropertyValue(uint32_t propertyId, OBPropertyValue value
     basicAccessor->setPropertyValue(propId, value);
     for(auto &callback: callbacks) {
         auto data = reinterpret_cast<uint8_t *>(&value);
-        callback(propertyId, data, sizeof(OBPropertyValue), PROP_OP_WRITE);
+        callback.callback(propertyId, data, sizeof(OBPropertyValue), PROP_OP_WRITE);
     }
     auto delta = timer.touchUs();
     LOG_DEBUG("[delta: {}us] Property {} set to {}|{}", delta, propId, value.intValue, value.floatValue);
@@ -229,7 +258,7 @@ void PropertyServer::getPropertyValue(uint32_t propertyId, OBPropertyValue *valu
     basicAccessor->getPropertyValue(propId, value);
     for(auto &callback: callbacks) {
         auto data = reinterpret_cast<uint8_t *>(value);
-        callback(propertyId, data, sizeof(OBPropertyValue), PROP_OP_READ);
+        callback.callback(propertyId, data, sizeof(OBPropertyValue), PROP_OP_READ);
     }
     auto delta = timer.touchUs();
     LOG_DEBUG("[delta: {}us] Property {} get as {}|{}", delta, propId, value->intValue, value->floatValue);
@@ -282,7 +311,7 @@ void PropertyServer::setStructureData(uint32_t propertyId, const std::vector<uin
     utils::Timer timer;
     structAccessor->setStructureData(propId, data);
     for(auto &callback: callbacks) {
-        callback(propertyId, data.data(), data.size(), PROP_OP_WRITE);
+        callback.callback(propertyId, data.data(), data.size(), PROP_OP_WRITE);
     }
     auto delta = timer.touchUs();
     LOG_DEBUG("[delta: {}us] Property {} set structure data successfully", delta, propId);
@@ -309,7 +338,7 @@ std::vector<uint8_t> PropertyServer::getStructureData(uint32_t propertyId, Prope
     utils::Timer timer;
     auto         data = timing ? structAccessor->getStructureData(propId, timing) : structAccessor->getStructureData(propId);
     for(auto &callback: callbacks) {
-        callback(propertyId, data.data(), data.size(), PROP_OP_READ);
+        callback.callback(propertyId, data.data(), data.size(), PROP_OP_READ);
     }
     auto delta = timer.touchUs();
     LOG_DEBUG("[delta: {}us] Property {} get structure data successfully, size {}", delta, propId, data.size());
@@ -337,7 +366,7 @@ void PropertyServer::getRawData(uint32_t propertyId, GetDataCallback callback, P
     utils::Timer timer;
     rawDataAccessor->getRawData(propId, callback);  // todo: add async support
     for(auto &accessCallback: accessCallbacks) {
-        accessCallback(propertyId, nullptr, 0, PROP_OP_READ);
+        accessCallback.callback(propertyId, nullptr, 0, PROP_OP_READ);
     }
     auto delta = timer.touchUs();
     LOG_DEBUG("[delta: {}us] Property {} get raw data successfully", delta, propId);
@@ -388,7 +417,7 @@ std::vector<uint8_t> PropertyServer::getStructureDataProtoV1_1(uint32_t property
     utils::Timer timer;
     auto         data = structAccessor->getStructureDataProtoV1_1(propId, cmdVersion);
     for(auto &callback: callbacks) {
-        callback(propertyId, data.data(), data.size(), PROP_OP_READ);
+        callback.callback(propertyId, data.data(), data.size(), PROP_OP_READ);
     }
     auto delta = timer.touchUs();
     LOG_DEBUG("[delta: {}us] Property {} get structure data successfully over proto v1.1, size {}", delta, propId, data.size());
@@ -416,7 +445,7 @@ void PropertyServer::setStructureDataProtoV1_1(uint32_t propertyId, const std::v
     utils::Timer timer;
     structAccessor->setStructureDataProtoV1_1(propId, data, cmdVersion);
     for(auto &callback: callbacks) {
-        callback(propertyId, data.data(), data.size(), PROP_OP_WRITE);
+        callback.callback(propertyId, data.data(), data.size(), PROP_OP_WRITE);
     }
     auto delta = timer.touchUs();
     LOG_DEBUG("[delta: {}us] Property {} set structure data successfully over proto v1.1", delta, propId);
@@ -443,7 +472,7 @@ std::vector<uint8_t> PropertyServer::getStructureDataListProtoV1_1(uint32_t prop
     utils::Timer timer;
     auto         data = structAccessor->getStructureDataListProtoV1_1(propId, cmdVersion);
     for(auto &callback: callbacks) {
-        callback(propertyId, data.data(), data.size(), PROP_OP_READ);
+        callback.callback(propertyId, data.data(), data.size(), PROP_OP_READ);
     }
     auto delta = timer.touchUs();
     LOG_DEBUG("[delta: {}us] Property {} get structure data list successfully over proto v1.1, size {}", delta, propId, data.size());

@@ -13,20 +13,26 @@ namespace libobsensor {
 
 class PropertyServer : public IPropertyServer, public DeviceComponentBase {
 
+    struct AccessCallbackItem {
+        uint64_t               token;
+        PropertyAccessCallback callback;
+    };
+
     struct PropertyItem {
-        uint32_t                            propertyId;
-        OBPermissionType                    userPermission;
-        OBPermissionType                    InternalPermission;
-        std::shared_ptr<IPropertyAccessor>  accessor;
-        std::vector<PropertyAccessCallback> accessCallbacks;
+        uint32_t                           propertyId;
+        OBPermissionType                   userPermission;
+        OBPermissionType                   InternalPermission;
+        std::shared_ptr<IPropertyAccessor> accessor;
+        std::vector<AccessCallbackItem>    accessCallbacks;
     };
 
 public:
     PropertyServer(IDevice *owner);
     ~PropertyServer() noexcept override = default;
 
-    virtual void registerAccessCallback(uint32_t propertyId, PropertyAccessCallback callback) override;
-    virtual void registerAccessCallback(std::vector<uint32_t> propertyIds, PropertyAccessCallback callback) override;
+    virtual uint64_t registerAccessCallback(uint32_t propertyId, PropertyAccessCallback callback) override;
+    virtual uint64_t registerAccessCallback(std::vector<uint32_t> propertyIds, PropertyAccessCallback callback) override;
+    void             unregisterAccessCallback(uint64_t token) override;
 
     void registerProperty(uint32_t propertyId, OBPermissionType userPerms, OBPermissionType intPerms, std::shared_ptr<IPropertyAccessor> accessor) override;
     void registerProperty(uint32_t propertyId, const std::string &userPermsStr, const std::string &intPermsStr,
@@ -66,6 +72,7 @@ private:
     std::map<uint32_t, PropertyItem> properties_;
     std::vector<OBPropertyItem>      userPropertiesVec_;
     std::vector<OBPropertyItem>      innerPropertiesVec_;
+    uint64_t                         accessCallbackTokenCounter_{ 0 };
 };
 
 }  // namespace libobsensor
