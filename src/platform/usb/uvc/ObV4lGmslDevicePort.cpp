@@ -10,7 +10,11 @@
 #include <sys/stat.h>
 #include <sys/sysmacros.h>
 
+#include <algorithm>
+#include <cstring>
 #include <list>
+#include <map>
+#include <mutex>
 #include <regex>
 
 #include <linux/media.h>
@@ -25,6 +29,7 @@
 #include "logger/LoggerInterval.hpp"
 #include "exception/ObException.hpp"
 #include "frame/FrameFactory.hpp"
+#include "utils/GmslMetadataTrace.hpp"
 
 #include <iostream>
 #include <chrono>
@@ -630,6 +635,8 @@ void writeBufferToFile(const char *buf, std::size_t size, const std::string &fil
 void ObV4lGmslDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandleGmsl> devHandle) {
     int metadataBufferIndex = -1;
     int colorFrameNum       = 0;  // color drop 1~3 frame -> fix color green screen issue.
+    utils::GmslMetadataTrace::V4lTrace metadataTrace(devHandle->info->name, devHandle->profile->getType(), MAX_BUFFER_COUNT_GMSL,
+                                                     utils::GmslMetadataTrace::MetadataFormat::G330_96B);
 
     devHandle->loopFrameIndex.store(1);  // frame number start from 1
     try {
@@ -714,6 +721,10 @@ void ObV4lGmslDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandleGmsl> devHa
                     devHandle->metadataBuffers[buf.index].actual_length = buf.bytesused;
                     devHandle->metadataBuffers[buf.index].sequence      = buf.sequence;
                     metadataBufferIndex                                 = buf.index;
+                    if(metadataTrace.enabled() && buf.index < devHandle->metadataBuffers.size()) {
+                        auto &metaBuf = devHandle->metadataBuffers[buf.index];
+                        metadataTrace.recordMetadataDequeued(buf.index, buf.sequence, buf.bytesused, metaBuf.ptr, metaBuf.length);
+                    }
                 }
 
                 if(devHandle->isCapturing) {
@@ -740,6 +751,10 @@ void ObV4lGmslDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandleGmsl> devHa
                     TRY_EXECUTE({
                         auto rawframe   = FrameFactory::createFrameFromStreamProfile(devHandle->profile);
                         auto videoFrame = rawframe->as<VideoFrame>();
+                        uint32_t metadataTraceSeq               = 0;
+                        uint32_t metadataTraceBytes             = 0;
+                        uint32_t metadataTracePresentationTime  = 0;
+                        const void *metadataTraceData           = nullptr;
                         // if((DetectPlatform() == Platform::Xavier) || (DetectPlatform() == Platform::Orin))
                         if(1 > 0)  // Modify the default setting to apply special resolution processing to all NVIDIA platforms
                         {
@@ -754,12 +769,16 @@ void ObV4lGmslDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandleGmsl> devHa
                             auto &metaBuf                = devHandle->metadataBuffers[metadataBufferIndex];
                             auto  uvc_payload_header     = metaBuf.ptr;
                             auto  uvc_payload_header_len = metaBuf.actual_length;
+                            metadataTraceSeq   = metaBuf.sequence;
+                            metadataTraceBytes = uvc_payload_header_len;
+                            metadataTraceData  = uvc_payload_header;
                             videoFrame->updateMetadata(static_cast<const uint8_t *>(uvc_payload_header), 12);
                             videoFrame->appendMetadata(static_cast<const uint8_t *>(uvc_payload_header), uvc_payload_header_len);
 
                             if(uvc_payload_header_len >= sizeof(StandardUvcFramePayloadHeader)) {
                                 auto payloadHeader = (StandardUvcFramePayloadHeader *)uvc_payload_header;
                                 videoFrame->setTimeStampUsec(payloadHeader->dwPresentationTime);
+                                metadataTracePresentationTime = payloadHeader->dwPresentationTime;
                             }
                         }
 
@@ -772,6 +791,9 @@ void ObV4lGmslDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandleGmsl> devHa
 
                         // fix frame index zero issue.
                         videoFrame->setNumber(devHandle->loopFrameIndex);
+                        metadataTrace.logFrame(devHandle->loopFrameIndex.load(), buf.sequence, buf.bytesused, buf.index, metadataBufferIndex, metadataTraceSeq,
+                                               metadataTraceBytes, metadataTracePresentationTime, metadataTraceData, metadataTraceBytes,
+                                               devHandle->buffers[buf.index].ptr, buf.bytesused);
                         // LOG_DEBUG("set loopFrameIndex:{}", devHandle->loopFrameIndex);
 
                         if(devHandle->profile->getType() == OB_STREAM_COLOR) {
