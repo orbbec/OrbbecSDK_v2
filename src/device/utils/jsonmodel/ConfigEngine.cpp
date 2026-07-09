@@ -284,6 +284,9 @@ void ConfigEngine::addLeaf(const std::string &key, std::shared_ptr<ILeafHandler>
 }
 
 void ConfigEngine::importAll(const Json::Value &root) {
+    // Reset every handler before importing so that pending asynchronous work from a previous
+    // import is cancelled even when this import does not contain the corresponding node.
+    resetHandlers(rootNode_);
     std::vector<std::string> pathStack;
     importRecursive(rootNode_, root, pathStack);
 }
@@ -307,6 +310,18 @@ std::string serialize(const ExportValue &value, const OrderedExportOptions &opti
         oss << '\n';
     }
     return oss.str();
+}
+
+void ConfigEngine::resetHandlers(const std::shared_ptr<Node> &node) {
+    if(node->leafHandler) {
+        node->leafHandler->onImportReset();
+    }
+    if(node->objectHandler) {
+        node->objectHandler->onImportReset();
+    }
+    for(auto &child: node->children) {
+        resetHandlers(child);
+    }
 }
 
 void ConfigEngine::importRecursive(std::shared_ptr<Node> node, const Json::Value &value, std::vector<std::string> &pathStack) {

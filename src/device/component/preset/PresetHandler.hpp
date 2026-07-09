@@ -14,6 +14,7 @@
 #include <thread>
 #include <mutex>
 #include <atomic>
+#include <memory>
 
 namespace libobsensor {
 
@@ -94,8 +95,13 @@ private:
  */
 class RoiHandler : public jsonmodel::IObjectHandler {
 public:
-    RoiHandler(IDevice *owner, uint32_t propertyId, OBSensorType sensorType, bool requireStreamActive = true);
+    RoiHandler(IDevice *owner, uint32_t propertyId, OBSensorType sensorType);
     ~RoiHandler() override;
+
+    /**
+     * @brief Implementation of IObjectHandler::onImportReset
+     */
+    void onImportReset() override;
 
     /**
      * @brief Implementation of IObjectHandler::onPreChildrenSet
@@ -128,20 +134,22 @@ private:
     void stopSetting();
     void unregisterStreamCallback();
     void setRoiProperties();
+    void registerUserOverrideGuard();
+    void unregisterUserOverrideGuard();
 
 private:
-    IDevice                         *owner_      = nullptr;
-    uint32_t                         propertyId_ = 0;
-    OBSensorType                     sensorType_{ OB_SENSOR_UNKNOWN };
-    bool                             requireStreamActive_{ true };
-    AE_ROI                           roi_{};
-    bool                             writeSupported_{ true };
-    bool                             readSupported_{ true };
-    std::map<std::string, int16_t *> valueMap_;
-    std::atomic<bool>                needSetting_{ false };
-    std::atomic<bool>                needUnregister_{ false };
-    uint32_t                         callbackToken_{ 0 };
-    std::thread                      settingThread_;
+    IDevice                           *owner_      = nullptr;
+    uint32_t                           propertyId_ = 0;
+    OBSensorType                       sensorType_{ OB_SENSOR_UNKNOWN };
+    AE_ROI                             roi_{};
+    bool                               writeSupported_{ true };
+    bool                               readSupported_{ true };
+    std::map<std::string, int16_t *>   valueMap_;
+    std::shared_ptr<std::atomic<bool>> needSetting_ = std::make_shared<std::atomic<bool>>(false);
+    std::atomic<bool>                  needUnregister_{ false };
+    uint32_t                           callbackToken_{ 0 };
+    uint64_t                           overrideGuardToken_{ 0 };
+    std::thread                        settingThread_;
 };
 
 /**
@@ -257,8 +265,13 @@ private:
  */
 class DisparitySearchHandler : public jsonmodel::IObjectHandler {
 public:
-    DisparitySearchHandler(IDevice *owner, bool requireStreamActive = true) : owner_(owner), requireStreamActive_(requireStreamActive) {}
+    DisparitySearchHandler(IDevice *owner) : owner_(owner) {}
     ~DisparitySearchHandler() override;
+
+    /**
+     * @brief Implementation of IObjectHandler::onImportReset
+     */
+    void onImportReset() override;
 
     /**
      * @brief Implementation of IObjectHandler::onPreChildrenSet
@@ -289,20 +302,22 @@ private:
     void stopSetting();
     void unregisterStreamCallback();
     void setDisparitySearchProperties();
+    void registerUserOverrideGuard();
+    void unregisterUserOverrideGuard();
 
 private:
     IDevice           *owner_ = nullptr;
-    bool               requireStreamActive_{ true };
     int                rangeMode_{ 0 };
     int                searchOffset_{ 0 };
     std::map<int, int> rangeModeMapping_{ { 0, 64 }, { 1, 128 }, { 2, 256 } };
     bool               writeSupported_{ true };
     bool               readSupported_{ true };
     // for setting
-    uint32_t          callbackToken_{ 0 };
-    std::atomic<bool> needUnregister_{ false };
-    std::atomic<bool> needSetting_{ false };
-    std::thread       settingThread_;
+    uint32_t                           callbackToken_{ 0 };
+    uint64_t                           overrideGuardToken_{ 0 };
+    std::atomic<bool>                  needUnregister_{ false };
+    std::shared_ptr<std::atomic<bool>> needSetting_ = std::make_shared<std::atomic<bool>>(false);
+    std::thread                        settingThread_;
 };
 
 /**

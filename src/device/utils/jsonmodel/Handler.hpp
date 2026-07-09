@@ -133,6 +133,17 @@ struct Node {
 class IHandler {
 public:
     virtual ~IHandler();
+
+    /**
+     * @brief Called on every handler before an import starts, regardless of whether this node
+     *        appears in the imported JSON.
+     *
+     * Use this to cancel any pending asynchronous work left over from a previous import (e.g. a
+     * deferred property write waiting for the stream to start). set/onPreChildrenSet is only invoked
+     * when the node is present in the JSON, so a node that is absent from the new preset would
+     * otherwise keep its stale deferred state.
+     */
+    virtual void onImportReset() {}
 };
 
 /**

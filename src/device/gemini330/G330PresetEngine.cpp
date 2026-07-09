@@ -103,7 +103,8 @@ void G330PresetEngine::init() {
                     engine.addLeaf("depth_auto_exposure_priority",
                                    std::make_shared<PropertyConfigHandler<int>>(owner_, OB_PROP_DEPTH_AUTO_EXPOSURE_PRIORITY_INT));
                     engine.addLeaf("depth_auto_exposure", std::make_shared<PropertyConfigHandler<bool>>(owner_, OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL));
-                    engine.addLeaf("depth_ae_max_exposure", std::make_shared<PropertyConfigHandler<int>>(owner_, OB_PROP_IR_AE_MAX_EXPOSURE_INT));
+                    engine.addLeaf("depth_ae_max_exposure",
+                                   std::make_shared<DeferredPropertyConfigHandler<int>>(owner_, OB_PROP_IR_AE_MAX_EXPOSURE_INT, OB_SENSOR_DEPTH));
                     engine.addLeaf("mean_intensity_set_point", std::make_shared<PropertyConfigHandler<int>>(owner_, OB_PROP_IR_BRIGHTNESS_INT));
                     engine.addLeaf("depth_exposure_time", std::make_shared<PropertyConfigHandler<int>>(owner_, OB_PROP_IR_EXPOSURE_INT));
                     engine.addLeaf("depth_gain", std::make_shared<PropertyConfigHandler<int>>(owner_, OB_PROP_IR_GAIN_INT));
@@ -121,7 +122,7 @@ void G330PresetEngine::init() {
                             engine.declareLeaf(kTopKey, true);     // int
                             engine.declareLeaf(kBottomKey, true);  // int
                         },
-                        std::make_shared<RoiHandler>(owner_, OB_STRUCT_DEPTH_AE_ROI, OB_SENSOR_DEPTH, firmwareVersionInt < 10735));
+                        std::make_shared<RoiHandler>(owner_, OB_STRUCT_DEPTH_AE_ROI, OB_SENSOR_DEPTH));
                     // frame interleave (atomic group: optional as a whole, but inner fields required when present)
                     engine.addObject(
                         "frame_interleave",
@@ -148,7 +149,7 @@ void G330PresetEngine::init() {
                             engine.declareLeaf(kDisparitySearchRangeModeKey, true);  // int
                             engine.declareLeaf(kDisparitySearchOffsetKey, true);     // int
                         },
-                        std::make_shared<DisparitySearchHandler>(owner_, firmwareVersionInt < 10735));
+                        std::make_shared<DisparitySearchHandler>(owner_));
                     // Depth noise removal filter (atomic group: optional as a whole, but both hardware and software required when present)
                     engine.declareObject("noise_removal_filter", [&](jsonmodel::ConfigEngine &engine) {
                         // hardware noise remove filter
@@ -184,7 +185,8 @@ void G330PresetEngine::init() {
                 engine.addLeaf("color_auto_exposure_priority", std::make_shared<PropertyConfigHandler<int>>(owner_, OB_PROP_COLOR_AUTO_EXPOSURE_PRIORITY_INT));
                 engine.addLeaf("color_auto_exposure", std::make_shared<PropertyConfigHandler<bool>>(owner_, OB_PROP_COLOR_AUTO_EXPOSURE_BOOL));
                 engine.addLeaf("color_denoising_level", std::make_shared<PropertyConfigHandler<int>>(owner_, OB_PROP_COLOR_DENOISING_LEVEL_INT));
-                engine.addLeaf("color_ae_max_exposure", std::make_shared<PropertyConfigHandler<int>>(owner_, OB_PROP_COLOR_AE_MAX_EXPOSURE_INT));
+                engine.addLeaf("color_ae_max_exposure",
+                               std::make_shared<DeferredPropertyConfigHandler<int>>(owner_, OB_PROP_COLOR_AE_MAX_EXPOSURE_INT, OB_SENSOR_COLOR));
                 engine.addLeaf("color_exposure_time", std::make_shared<PropertyConfigHandler<int>>(owner_, OB_PROP_COLOR_EXPOSURE_INT));
                 engine.addLeaf("color_gain", std::make_shared<PropertyConfigHandler<int>>(owner_, OB_PROP_COLOR_GAIN_INT));
                 engine.addLeaf("color_brightness", std::make_shared<PropertyConfigHandler<int>>(owner_, OB_PROP_COLOR_BRIGHTNESS_INT));
@@ -209,7 +211,7 @@ void G330PresetEngine::init() {
                         engine.declareLeaf(kTopKey, true);     // int
                         engine.declareLeaf(kBottomKey, true);  // int
                     },
-                    std::make_shared<RoiHandler>(owner_, OB_STRUCT_COLOR_AE_ROI, OB_SENSOR_COLOR, firmwareVersionInt < 10735));
+                    std::make_shared<RoiHandler>(owner_, OB_STRUCT_COLOR_AE_ROI, OB_SENSOR_COLOR));
                 // image orientation
                 engine.declareObject("image_orientation", [&](jsonmodel::ConfigEngine &engine) {
                     engine.addLeaf("flip", std::make_shared<PropertyConfigHandler<bool>>(owner_, OB_PROP_COLOR_FLIP_BOOL));

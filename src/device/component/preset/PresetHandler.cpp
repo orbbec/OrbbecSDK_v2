@@ -48,7 +48,7 @@ bool FrameInterleaveHandler::onPreChildrenSet(const Json::Value &value) {
         LOG_WARN("The current device doesn't contain the frame interleave manager component");
         return false;
     }
-    if (!value.isMember(kEnableKey)) {
+    if(!value.isMember(kEnableKey)) {
         THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string() << "Missing required field in frame interleave: " << kEnableKey);
     }
     enable_ = jsonmodel::JsonTraits<bool>::from(value[kEnableKey]);
@@ -69,7 +69,7 @@ void FrameInterleaveHandler::onSetChild(const std::string &k, const Json::Value 
     }
     else if(k == kInterleaveConfigIndexKey) {
         currentIndex_ = jsonmodel::JsonTraits<int>::from(v);
-        if (currentIndex_ < 0) {
+        if(currentIndex_ < 0) {
             THROW_INVALID_PARAM_EXCEPTION("The value is invalid in frame interleave: " + k);
         }
     }
@@ -91,7 +91,7 @@ void FrameInterleaveHandler::onSetChild(const std::string &k, const Json::Value 
             }
             params_.push_back(std::move(param));
         }
-        if (params_.empty()) {
+        if(params_.empty()) {
             THROW_INVALID_PARAM_EXCEPTION("The child node is empty in frame interleave: " + k);
         }
     }
@@ -182,14 +182,19 @@ jsonmodel::ExportValue FrameInterleaveHandler::exportChildValue(const std::strin
 }
 
 // RoiHandler
-RoiHandler::RoiHandler(IDevice *owner, uint32_t propertyId, OBSensorType sensorType, bool requireStreamActive)
+RoiHandler::RoiHandler(IDevice *owner, uint32_t propertyId, OBSensorType sensorType)
     : owner_(owner),
       propertyId_(propertyId),
       sensorType_(sensorType),
-      requireStreamActive_(requireStreamActive),
       valueMap_{ { kLeftKey, &roi_.x0_left }, { kRightKey, &roi_.x1_right }, { kTopKey, &roi_.y0_top }, { kBottomKey, &roi_.y1_bottom } } {}
 
 RoiHandler::~RoiHandler() {
+    stopSetting();
+}
+
+void RoiHandler::onImportReset() {
+    // Cancel any pending deferred write left over from a previous import, even when this import
+    // does not carry the ROI node at all.
     stopSetting();
 }
 
@@ -238,32 +243,65 @@ void RoiHandler::onPostChildrenSet() {
         return;
     }
 
-    if(!requireStreamActive_ || sensor->isStreamActivated()) {
-        setRoiProperties();
+    setRoiProperties();
+
+    if(owner_->isPlaybackDevice()) {
+        return;
     }
-    else {
-        needSetting_    = true;
-        needUnregister_ = true;
-        callbackToken_  = sensor->registerStreamStateChangedCallback([this](OBStreamState state, const std::shared_ptr<const StreamProfile> &profile) {
-            utils::unusedVar(profile);
-            if(state == STREAM_STATE_STREAMING) {
-                if(!needSetting_) {
-                    return;
-                }
-                settingThread_ = std::thread([&]() {
-                    needSetting_ = false;
-                    setRoiProperties();
-                    unregisterStreamCallback();
-                });
-            }
+
+    // Always register a stream callback to write again once streaming starts, ensuring the
+    // value takes effect even when the firmware ignores writes made before the stream is active.
+    *needSetting_   = true;
+    needUnregister_ = true;
+    registerUserOverrideGuard();
+    callbackToken_ = sensor->registerStreamStateChangedCallback([this](OBStreamState state, const std::shared_ptr<const StreamProfile> &profile) {
+        utils::unusedVar(profile);
+        if(state != STREAM_STATE_STREAMING) {
+            return;
+        }
+        // Claim this deferred write exactly once: only the invocation that flips true->false starts
+        // the thread, so a repeated STREAMING event never reassigns a still-joinable settingThread_.
+        bool expected = true;
+        if(!needSetting_->compare_exchange_strong(expected, false)) {
+            return;
+        }
+        settingThread_ = std::thread([this]() {
+            setRoiProperties();
+            unregisterStreamCallback();
         });
-    }
+    });
 }
 
 void RoiHandler::stopSetting() {
     unregisterStreamCallback();
+    unregisterUserOverrideGuard();
     if(settingThread_.joinable()) {
         settingThread_.join();
+    }
+}
+
+void RoiHandler::registerUserOverrideGuard() {
+    if(overrideGuardToken_ != 0) {
+        return;
+    }
+    auto propServer = owner_->getPropertyServer();
+    // Capture the flag by shared_ptr rather than this: an access callback may still run from a
+    // snapshot taken before unregister, when the handler could already have been destroyed.
+    auto needSetting    = needSetting_;
+    overrideGuardToken_ = propServer->registerAccessCallback(propertyId_, [needSetting](uint32_t, const uint8_t *, size_t, PropertyOperationType op) {
+        if(op == PROP_OP_WRITE) {
+            needSetting->store(false);
+        }
+    });
+}
+
+void RoiHandler::unregisterUserOverrideGuard() {
+    if(overrideGuardToken_ != 0) {
+        TRY_EXECUTE({
+            auto propServer = owner_->getPropertyServer();
+            propServer->unregisterAccessCallback(overrideGuardToken_);
+        });
+        overrideGuardToken_ = 0;
     }
 }
 
@@ -287,6 +325,11 @@ std::vector<std::string> RoiHandler::onPreChildrenGet() {
     if(propServer->isPropertySupported(propertyId_, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
         roi_           = propServer->getStructureDataT<AE_ROI>(propertyId_);
         readSupported_ = true;
+        auto sensor    = owner_->getSensor(sensorType_);
+        if(sensor && !sensor->isStreamActivated()) {
+            LOG_WARN("Exporting ROI property '{}' while stream is not active; the value may differ from what will be applied after streaming starts",
+                     propertyId_);
+        }
     }
     else {
         readSupported_ = false;
@@ -489,10 +532,43 @@ DisparitySearchHandler::~DisparitySearchHandler() {
     stopSetting();
 }
 
+void DisparitySearchHandler::onImportReset() {
+    // Cancel any pending deferred write left over from a previous import, even when this import
+    // does not carry the disparity search node at all.
+    stopSetting();
+}
+
 void DisparitySearchHandler::stopSetting() {
     unregisterStreamCallback();
+    unregisterUserOverrideGuard();
     if(settingThread_.joinable()) {
         settingThread_.join();
+    }
+}
+
+void DisparitySearchHandler::registerUserOverrideGuard() {
+    if(overrideGuardToken_ != 0) {
+        return;
+    }
+    auto propServer = owner_->getPropertyServer();
+    // Capture the flag by shared_ptr rather than this: an access callback may still run from a
+    // snapshot taken before unregister, when the handler could already have been destroyed.
+    auto needSetting    = needSetting_;
+    overrideGuardToken_ = propServer->registerAccessCallback({ OB_PROP_DISP_SEARCH_RANGE_MODE_INT, OB_PROP_DISP_SEARCH_OFFSET_INT },
+                                                             [needSetting](uint32_t, const uint8_t *, size_t, PropertyOperationType op) {
+                                                                 if(op == PROP_OP_WRITE) {
+                                                                     needSetting->store(false);
+                                                                 }
+                                                             });
+}
+
+void DisparitySearchHandler::unregisterUserOverrideGuard() {
+    if(overrideGuardToken_ != 0) {
+        TRY_EXECUTE({
+            auto propServer = owner_->getPropertyServer();
+            propServer->unregisterAccessCallback(overrideGuardToken_);
+        });
+        overrideGuardToken_ = 0;
     }
 }
 
@@ -565,31 +641,31 @@ void DisparitySearchHandler::onPostChildrenSet() {
         return;
     }
 
-    // Set all values when depth stream is on
     auto sensor = owner_->getSensor(OB_SENSOR_DEPTH);
-    if(!requireStreamActive_ || sensor->isStreamActivated()) {
-        setDisparitySearchProperties();
-    }
-    else {
-        // depth stream is off, start a thread to set to prevent potential deadlock when stream is on
-        needSetting_    = true;
-        needUnregister_ = true;
-        callbackToken_  = sensor->registerStreamStateChangedCallback([this](OBStreamState state, const std::shared_ptr<const StreamProfile> &profile) {
-            utils::unusedVar(profile);
-            if(state == STREAM_STATE_STREAMING) {
-                if(!needSetting_) {
-                    return;
-                }
-                settingThread_ = std::thread([&]() {
-                    needSetting_ = false;
-                    // set properties
-                    setDisparitySearchProperties();
-                    // unregister callback
-                    unregisterStreamCallback();
-                });
-            }
+
+    setDisparitySearchProperties();
+
+    // Always register a stream callback to write again once streaming starts, ensuring the
+    // value takes effect even when the firmware ignores writes made before the stream is active.
+    *needSetting_   = true;
+    needUnregister_ = true;
+    registerUserOverrideGuard();
+    callbackToken_ = sensor->registerStreamStateChangedCallback([this](OBStreamState state, const std::shared_ptr<const StreamProfile> &profile) {
+        utils::unusedVar(profile);
+        if(state != STREAM_STATE_STREAMING) {
+            return;
+        }
+        // Claim this deferred write exactly once: only the invocation that flips true->false starts
+        // the thread, so a repeated STREAMING event never reassigns a still-joinable settingThread_.
+        bool expected = true;
+        if(!needSetting_->compare_exchange_strong(expected, false)) {
+            return;
+        }
+        settingThread_ = std::thread([this]() {
+            setDisparitySearchProperties();
+            unregisterStreamCallback();
         });
-    }
+    });
 }
 
 std::vector<std::string> DisparitySearchHandler::onPreChildrenGet() {
@@ -623,6 +699,10 @@ std::vector<std::string> DisparitySearchHandler::onPreChildrenGet() {
     // Get all values
     rangeMode_    = propServer->getPropertyValueT<int>(rangeModeId);
     searchOffset_ = propServer->getPropertyValueT<int>(searchOffsetId);
+    auto sensor   = owner_->getSensor(OB_SENSOR_DEPTH);
+    if(sensor && !sensor->isStreamActivated()) {
+        LOG_WARN("Exporting disparity search properties while stream is not active; the values may differ from what will be applied after streaming starts");
+    }
     // No any extra child nodes
     return {};
 }
