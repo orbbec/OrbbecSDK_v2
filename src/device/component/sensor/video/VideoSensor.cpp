@@ -28,12 +28,14 @@ VideoSensor::VideoSensor(IDevice *owner, OBSensorType sensorType, const std::sha
         THROW_INVALID_PARAM_EXCEPTION("Backend is not a valid IVideoStreamPort");
     }
 
-    try {
-        // try to stop stream to avoid that the device is in streaming state due to some reason such as a previous crash
-        trySendStopStreamVendorCmd();
-    }
-    catch(const std::exception &e) {
-        LOG_WARN("Failed to stop stream: {}", e.what());
+    if(owner_->hasWriteAccess()) {
+        try {
+            // try to stop stream to avoid that the device is in streaming state due to some reason such as a previous crash
+            trySendStopStreamVendorCmd();
+        }
+        catch(const std::exception &e) {
+            LOG_WARN("Failed to stop stream: {}", e.what());
+        }
     }
 
     auto backendSpList = vsPort->getStreamProfileList();

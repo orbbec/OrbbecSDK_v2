@@ -294,19 +294,22 @@ void G435LeDevice::initSensorList() {
                 }
 
                 auto propServer = getPropertyServer();
-                BEGIN_TRY_EXECUTE({ propServer->setPropertyValueT<bool>(OB_PROP_DISPARITY_TO_DEPTH_BOOL, true); })
-                CATCH_EXCEPTION_AND_EXECUTE({ LOG_ERROR("Set disparity to depth failed!"); })
+                if(hasWriteAccess()) {
+                    BEGIN_TRY_EXECUTE({ propServer->setPropertyValueT<bool>(OB_PROP_DISPARITY_TO_DEPTH_BOOL, true); })
+                    CATCH_EXCEPTION_AND_EXECUTE({ LOG_ERROR("Set disparity to depth failed!"); })
 
-                BEGIN_TRY_EXECUTE({ propServer->setPropertyValueT<bool>(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL, false); })
-                CATCH_EXCEPTION_AND_EXECUTE({ LOG_ERROR("Set SDK disparity to depth failed!"); })
-
+                    BEGIN_TRY_EXECUTE({ propServer->setPropertyValueT<bool>(OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL, false); })
+                    CATCH_EXCEPTION_AND_EXECUTE({ LOG_ERROR("Set SDK disparity to depth failed!"); })
+                }
                 sensor->markOutputDisparityFrame(false);
 
                 auto depthPrecisionRange = propServer->getPropertyRangeT<int32_t>(OB_PROP_DEPTH_PRECISION_LEVEL_INT);
                 LOG_DEBUG("Depth precision level range: min={}, max={}, def={}, cur={}", depthPrecisionRange.min, depthPrecisionRange.max,
                           depthPrecisionRange.def, depthPrecisionRange.cur);
-                BEGIN_TRY_EXECUTE({ propServer->setPropertyValueT(OB_PROP_DEPTH_PRECISION_LEVEL_INT, depthPrecisionRange.def); })
-                CATCH_EXCEPTION_AND_EXECUTE({ LOG_ERROR("Set depth precision level failed!"); })
+                if(hasWriteAccess()) {
+                    BEGIN_TRY_EXECUTE({ propServer->setPropertyValueT(OB_PROP_DEPTH_PRECISION_LEVEL_INT, depthPrecisionRange.def); })
+                    CATCH_EXCEPTION_AND_EXECUTE({ LOG_ERROR("Set depth precision level failed!"); })
+                }
                 sensor->setDepthUnit(utils::depthPrecisionLevelToUnit((OBDepthPrecisionLevel)depthPrecisionRange.def));
 
                 initSensorStreamProfile(sensor);
@@ -722,10 +725,12 @@ void G435LeDevice::initProperties() {
     propertyServer->registerProperty(OB_PROP_CONFIDENCE_FLIP_BOOL, "rw", "rw", frameTransformPropertyAccessor);
     propertyServer->registerProperty(OB_PROP_CONFIDENCE_ROTATE_INT, "rw", "rw", frameTransformPropertyAccessor);
 
-    BEGIN_TRY_EXECUTE({ propertyServer->setPropertyValueT(OB_PROP_DEVICE_COMMUNICATION_TYPE_INT, OB_COMM_NET); })
-    CATCH_EXCEPTION_AND_EXECUTE({ LOG_ERROR("Set device communication type to ethernet mode failed!"); })
-    BEGIN_TRY_EXECUTE({ propertyServer->setPropertyValueT(OB_PROP_COMPAT_VERSION_INT, COMPAT_VERSION); })
-    CATCH_EXCEPTION_AND_EXECUTE({ LOG_ERROR("Set device compat version failed!"); })
+    if(hasWriteAccess()) {
+        BEGIN_TRY_EXECUTE({ propertyServer->setPropertyValueT(OB_PROP_DEVICE_COMMUNICATION_TYPE_INT, OB_COMM_NET); })
+        CATCH_EXCEPTION_AND_EXECUTE({ LOG_ERROR("Set device communication type to ethernet mode failed!"); })
+        BEGIN_TRY_EXECUTE({ propertyServer->setPropertyValueT(OB_PROP_COMPAT_VERSION_INT, COMPAT_VERSION); })
+        CATCH_EXCEPTION_AND_EXECUTE({ LOG_ERROR("Set device compat version failed!"); })
+    }
 }
 void G435LeDevice::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
     auto              sensorType = sensor->getSensorType();
