@@ -38,6 +38,9 @@ FrameInterleaveHandler::FrameInterleaveHandler(IDevice *owner)
 }
 
 bool FrameInterleaveHandler::onPreChildrenSet(const Json::Value &value) {
+    if(skipWriteOnPlayback(owner_, OB_PROP_FRAME_INTERLEAVE_ENABLE_BOOL)) {
+        return false;
+    }
     // clear data
     enable_          = false;
     currentIndex_    = -1;
@@ -57,6 +60,9 @@ bool FrameInterleaveHandler::onPreChildrenSet(const Json::Value &value) {
 
 void FrameInterleaveHandler::onSetChild(const std::string &k, const Json::Value &v, const Json::Value &parent) {
     utils::unusedVar(parent);
+    if(skipWriteOnPlayback(owner_, OB_PROP_FRAME_INTERLEAVE_ENABLE_BOOL)) {
+        return;
+    }
     // Save all values
     if(k == kEnableKey) {
         enable_ = jsonmodel::JsonTraits<bool>::from(v);
