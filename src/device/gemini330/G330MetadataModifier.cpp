@@ -17,10 +17,18 @@ void G330GMSLMetadataModifier::modify(std::shared_ptr<Frame> frame) {
 
     switch(frame->getType()) {
     case OB_FRAME_COLOR: {
-        // Copy metadata from the frame data without clearing the metadata area
-        const uint16_t *frameDataBuffer = reinterpret_cast<const uint16_t *>(frame->getData());
+        // Copy metadata from the frame data
+        auto            frameData       = frame->getDataMutable();
+        const uint16_t *frameDataBuffer = reinterpret_cast<const uint16_t *>(frameData);
         for(int i = 0; i < metadataSize; i++) {
             metadataBuffer[i + 12] = static_cast<uint8_t>(frameDataBuffer[i] >> 8);
+        }
+        // The metadata bytes overwrite pixel data in the first row and cannot be restored;
+        // conceal them by copying the same-position pixels from the second row.
+        // Color raw is 2 bytes per pixel (e.g. YUYV), so one row spans width * 2 bytes.
+        const uint32_t rowStride = frame->as<VideoFrame>()->getWidth() * 2;
+        if(rowStride >= metadataSize * sizeof(uint16_t)) {
+            memcpy(frameData, frameData + rowStride, metadataSize * sizeof(uint16_t));
         }
     } break;
     case OB_FRAME_DEPTH: {

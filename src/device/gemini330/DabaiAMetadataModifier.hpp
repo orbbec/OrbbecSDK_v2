@@ -14,6 +14,9 @@ public:
     virtual ~DabaiALGMSLMetadataModifier() override;
 
     void modify(std::shared_ptr<Frame> frame) override;
+
+private:
+    bool needImageRepair_ = false;  //  Only Gemini345 series needs it
 };
 
 }  // namespace libobsensor
