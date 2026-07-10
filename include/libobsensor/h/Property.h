@@ -678,6 +678,11 @@ typedef enum {
     OB_PROP_FPS_BOOST_BOOL = 275,
 
     /**
+     * @brief MJPEG encoding quality factor
+     */
+    OB_PROP_MJPEG_QUALITY_INT = 277,
+
+    /**
      * @brief Baseline calibration parameters
      */
     OB_STRUCT_BASELINE_CALIBRATION_PARAM = 1002,

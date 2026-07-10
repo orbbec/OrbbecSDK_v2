@@ -240,6 +240,7 @@ void RecordDevice::writeExposureAndGainProperty() {
     writePropertyT<int>(OB_PROP_COLOR_GAMMA_INT);
     writePropertyT<int>(OB_PROP_COLOR_HUE_INT);
     writePropertyT<int>(OB_PROP_COLOR_BACKLIGHT_COMPENSATION_INT);
+    writePropertyT<int>(OB_PROP_MJPEG_QUALITY_INT);
     writePropertyT<int>(OB_PROP_COLOR_DENOISING_LEVEL_INT);
     writePropertyT<int>(OB_PROP_COLOR_PRESET_PRIORITY_INT);
     writePropertyT<bool>(OB_PROP_COLOR_ANTI_FLICKER_BOOL);

@@ -84,7 +84,8 @@ G330PresetManager::G330PresetManager(IDevice *owner) : DeviceComponentBase(owner
                                            OB_PROP_IR_ROTATE_INT,
                                            OB_PROP_IR_RIGHT_FLIP_BOOL,
                                            OB_PROP_IR_RIGHT_MIRROR_BOOL,
-                                           OB_PROP_IR_RIGHT_ROTATE_INT };
+                                           OB_PROP_IR_RIGHT_ROTATE_INT,
+                                           OB_PROP_MJPEG_QUALITY_INT };
         propServer->registerAccessCallback(propertyIds, [&](uint32_t, const uint8_t *, size_t, PropertyOperationType operationType) {
             if(isExternalDataLoading_) {
                 // Don't update preset name while imported data is applying properties.

@@ -723,6 +723,7 @@ void PlaybackDevice::initProperties() {
     registerPropertyCondition(propertyServer, OB_PROP_COLOR_GAMMA_INT, "r", "r", vendorAccessor);
     registerPropertyCondition(propertyServer, OB_PROP_COLOR_HUE_INT, "r", "r", vendorAccessor);
     registerPropertyCondition(propertyServer, OB_PROP_COLOR_BACKLIGHT_COMPENSATION_INT, "r", "r", vendorAccessor);
+    registerPropertyCondition(propertyServer, OB_PROP_MJPEG_QUALITY_INT, "r", "r", vendorAccessor);
     registerPropertyCondition(propertyServer, OB_PROP_COLOR_DENOISING_LEVEL_INT, "r", "r", vendorAccessor);
     registerPropertyCondition(propertyServer, OB_PROP_COLOR_PRESET_PRIORITY_INT, "r", "r", vendorAccessor);
     registerPropertyCondition(propertyServer, OB_PROP_COLOR_ANTI_FLICKER_BOOL, "r", "r", vendorAccessor);

@@ -200,6 +200,7 @@ void G330PresetEngine::init() {
                 engine.addLeaf("color_saturation", std::make_shared<PropertyConfigHandler<int>>(owner_, OB_PROP_COLOR_SATURATION_INT));
                 engine.addLeaf("color_power_line_frequency", std::make_shared<ColorPowerLineFrequencyHandler>(owner_));
                 engine.addLeaf("color_anti_flicker", std::make_shared<PropertyConfigHandler<bool>>(owner_, OB_PROP_COLOR_ANTI_FLICKER_BOOL));
+                engine.addLeaf("mjpeg_quality", std::make_shared<PropertyConfigHandler<int>>(owner_, OB_PROP_MJPEG_QUALITY_INT));
                 engine.addLeaf("color_preset", std::make_shared<ColorPresetHandler>(owner_, firmwareVersionInt >= 10736));
                 // ae_roi (atomic group: optional as a whole, but all corners required when present)
                 engine.addObject(
