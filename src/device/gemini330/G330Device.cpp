@@ -8,6 +8,7 @@
 #include "SourcePortInfo.hpp"
 
 #include "utils/Utils.hpp"
+#include "utils/DeviceTypeHelper.hpp"
 #include "environment/EnvConfig.hpp"
 #include "usb/uvc/UvcDevicePort.hpp"
 #include "stream/StreamProfileFactory.hpp"
@@ -211,6 +212,7 @@ void G330Device::init() {
         auto propertyServer         = getPropertyServer();
         auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
         propertyServer->registerProperty(OB_PROP_MJPEG_QUALITY_INT, "rw", "rw", vendorPropertyAccessor.get());
+        propertyServer->registerProperty(OB_PROP_HOST_PLATFORM_INT, "", "w", vendorPropertyAccessor.get());
     }
 
     auto sensorStreamStrategy = std::make_shared<G330SensorStreamStrategy>(this);
@@ -1296,6 +1298,15 @@ void G330Device::initProperties() {
 
 void G330Device::postInitialize() {
     DeviceBase::postInitialize();
+
+    TRY_EXECUTE({
+        auto propertyServer = getPropertyServer();
+        if(propertyServer->isPropertySupported(OB_PROP_HOST_PLATFORM_INT, PROP_OP_WRITE, PROP_ACCESS_INTERNAL)) {
+            uint32_t hostPlatform = getHostPlatformType();
+            propertyServer->setPropertyValueT<uint32_t>(OB_PROP_HOST_PLATFORM_INT, hostPlatform, PROP_ACCESS_INTERNAL);
+        }
+    })
+
     // Eagerly initialize the PresetManager to avoid lazy creation during streaming
     (void)getComponentT<IPresetManager>(OB_DEV_COMPONENT_PRESET_MANAGER, false);
 }
