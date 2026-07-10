@@ -56,4 +56,8 @@ std::shared_ptr<ApplicationConfig> PlaybackPresetManager::getApplicationConfig()
     return delegate_->getApplicationConfig();
 }
 
+std::shared_ptr<ApplicationConfig> PlaybackPresetManager::getApplicationConfig(const std::string &presetName) {
+    return delegate_->getApplicationConfig(presetName);
+}
+
 }  // namespace libobsensor

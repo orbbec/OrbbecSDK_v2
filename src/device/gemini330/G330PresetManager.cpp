@@ -144,6 +144,7 @@ void G330PresetManager::loadPresetFromJsonData(const std::string &presetName, co
     FlagGuard guard(isExternalDataLoading_);
     loadPresetFromJsonValue(presetName, root);
     ApplicationConfigHandler::applyFromJsonRoot(*this, getOwner(), root);
+    storeImportedApplicationConfig(presetName, root);
 }
 
 void G330PresetManager::loadPresetFromJsonFile(const std::string &filePath) {
@@ -157,6 +158,7 @@ void G330PresetManager::loadPresetFromJsonFile(const std::string &filePath) {
     FlagGuard guard(isExternalDataLoading_);
     loadPresetFromJsonValue(filePath, root);
     ApplicationConfigHandler::applyFromJsonRoot(*this, getOwner(), root);
+    storeImportedApplicationConfig(filePath, root);
 }
 
 std::shared_ptr<IPresetEngine> G330PresetManager::getPresetEngine(const Json::Value &root) {
@@ -227,6 +229,7 @@ void G330PresetManager::fetchPreset() {
     currentPresetName_.clear();
     tmpJsonData_.clear();
     customPresets_.clear();
+    importedAppConfigs_.clear();
 
     auto depthWorkModeList = depthWorkModeManager->getDepthWorkModeList();
     for(auto &mode: depthWorkModeList) {
@@ -250,6 +253,23 @@ std::shared_ptr<ApplicationConfig> G330PresetManager::getApplicationConfig() {
         applicationConfig_ = std::make_shared<ApplicationConfig>(getOwner());
     }
     return applicationConfig_;
+}
+
+std::shared_ptr<ApplicationConfig> G330PresetManager::getApplicationConfig(const std::string &presetName) {
+    auto iter = importedAppConfigs_.find(presetName);
+    if(iter == importedAppConfigs_.end()) {
+        return nullptr;
+    }
+    return iter->second;
+}
+
+void G330PresetManager::storeImportedApplicationConfig(const std::string &presetName, const Json::Value &root) {
+    if(!isApplicationConfigSupported() || !root.isMember(ApplicationConfigHandler::rootKeyName())) {
+        return;
+    }
+    // Snapshot the just-applied global config into an independent object, so a later switch back to this
+    // preset can restore it even after the shared global has been overwritten by other presets.
+    importedAppConfigs_[presetName] = std::make_shared<ApplicationConfig>(*getApplicationConfig());
 }
 
 void G330PresetManager::loadCustomPreset(const std::string &presetName, const Json::Value &preset) {

@@ -184,6 +184,20 @@ public:
         return std::make_shared<ApplicationConfig>(handle);
     }
 
+    /**
+     * @brief Get the application config carried by an externally imported preset, by preset name.
+     * @return nullptr for built-in presets or presets that carry no application config.
+     */
+    static std::shared_ptr<ApplicationConfig> get(const std::shared_ptr<Device> &device, const std::string &presetName) {
+        ob_error *error  = nullptr;
+        auto      handle = ob_device_get_application_config_by_preset(device->getImpl(), presetName.c_str(), &error);
+        Error::handle(&error);
+        if(!handle) {
+            return nullptr;
+        }
+        return std::make_shared<ApplicationConfig>(handle);
+    }
+
     explicit ApplicationConfig(ob_application_config *handle) : handle_(handle) {}
 
     ~ApplicationConfig() noexcept {

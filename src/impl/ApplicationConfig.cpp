@@ -31,6 +31,26 @@ ob_application_config *ob_device_get_application_config(ob_device *device, ob_er
 }
 HANDLE_EXCEPTIONS_AND_RETURN(nullptr, device)
 
+ob_application_config *ob_device_get_application_config_by_preset(ob_device *device, const char *preset_name, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(device);
+    VALIDATE_NOT_NULL(preset_name);
+
+    auto presetMgr = device->device->getComponentT<libobsensor::IPresetManager>(libobsensor::OB_DEV_COMPONENT_PRESET_MANAGER, false);
+    if(!presetMgr || !presetMgr->isApplicationConfigSupported()) {
+        return nullptr;
+    }
+
+    auto config = presetMgr->getApplicationConfig(std::string(preset_name));
+    if(!config) {
+        return nullptr;
+    }
+
+    auto impl    = new ob_application_config();
+    impl->config = config;
+    return impl;
+}
+HANDLE_EXCEPTIONS_AND_RETURN(nullptr, device)
+
 void ob_delete_application_config(ob_application_config *config, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(config);
     delete config;

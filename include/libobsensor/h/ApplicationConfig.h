@@ -79,6 +79,20 @@ typedef enum {
 OB_EXPORT ob_application_config *ob_device_get_application_config(ob_device *device, ob_error **error);
 
 /**
+ * @brief Get the application configuration carried by an externally imported preset, by preset name.
+ *
+ * @param[in] device The device object.
+ * @param[in] preset_name The preset name to query.
+ * @param[out] error Pointer to an error object that will be set if an error occurs.
+ *
+ * @return ob_application_config* The application configuration imported with the given preset, or NULL for
+ * built-in presets or presets that carry no application configuration.
+ * @attention The returned config is owned by the device; it should still be released by calling
+ * @ref ob_delete_application_config (releasing the handle does not destroy the cached object).
+ */
+OB_EXPORT ob_application_config *ob_device_get_application_config_by_preset(ob_device *device, const char *preset_name, ob_error **error);
+
+/**
  * @brief Delete an application configuration object.
  *
  * @param[in] config The application configuration object to be deleted.

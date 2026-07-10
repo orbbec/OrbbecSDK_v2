@@ -31,6 +31,12 @@ public:
     virtual std::shared_ptr<ApplicationConfig> getApplicationConfig() {
         return nullptr;
     }
+    // Return the application config carried by an externally imported preset, keyed by preset name.
+    // Returns nullptr for built-in presets or presets that carry no application config.
+    virtual std::shared_ptr<ApplicationConfig> getApplicationConfig(const std::string &presetName) {
+        (void)presetName;
+        return nullptr;
+    }
 };
 
 class IColorPresetManager {

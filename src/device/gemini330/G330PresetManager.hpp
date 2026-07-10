@@ -37,6 +37,7 @@ public:
     void                               fetchPreset() override;
     bool                               isApplicationConfigSupported() const override;
     std::shared_ptr<ApplicationConfig> getApplicationConfig() override;
+    std::shared_ptr<ApplicationConfig> getApplicationConfig(const std::string &presetName) override;
 
 private:
     std::shared_ptr<IPresetEngine> getPresetEngine(const Json::Value &root);
@@ -45,6 +46,7 @@ private:
     void                           loadCustomPreset(const std::string &presetName, const Json::Value &preset);
     void                           loadPresetFromJsonValue(const std::string &presetName, const Json::Value &root);
     Json::Value                    exportSettingsAsPresetJsonValue(const std::string &presetName);
+    void                           storeImportedApplicationConfig(const std::string &presetName, const Json::Value &root);
 
 private:
     std::vector<std::string> availablePresets_;
@@ -57,6 +59,10 @@ private:
     std::shared_ptr<G330PresetEngineV1> presetEngineV1_;
     std::mutex                          applicationConfigMutex_;
     std::shared_ptr<ApplicationConfig>  applicationConfig_;
+
+    // Application config carried by externally imported presets, keyed by preset name. Only populated on
+    // import (loadPresetFromJsonFile/Data); built-in presets and "Custom" are never stored here.
+    std::map<std::string, std::shared_ptr<ApplicationConfig>> importedAppConfigs_;
 };
 
 }  // namespace libobsensor

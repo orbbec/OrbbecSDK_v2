@@ -29,6 +29,7 @@ public:
 
     bool                               isApplicationConfigSupported() const override;
     std::shared_ptr<ApplicationConfig> getApplicationConfig() override;
+    std::shared_ptr<ApplicationConfig> getApplicationConfig(const std::string &presetName) override;
 
 private:
     std::shared_ptr<IPresetManager> delegate_;
