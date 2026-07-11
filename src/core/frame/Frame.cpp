@@ -30,6 +30,8 @@ Frame::Frame(uint8_t *data, size_t dataBufSize, OBFrameType type, FrameBufferRec
       metadata_{},
       metadataPhasers_(nullptr),
       streamProfile_(nullptr),
+      frameToken_(0),
+      deviceInfo_(nullptr),
       type_(type),
       frameData_(data),
       dataBufSize_(dataBufSize),
@@ -239,6 +241,22 @@ int64_t Frame::getMetadataValue(OBFrameMetadataType type) const {
     return parser->getValue(metadata_, metadataSize_);
 }
 
+void Frame::setAuthToken(uint64_t token) {
+    frameToken_ = token;
+}
+
+uint64_t Frame::getAuthToken() const {
+    return frameToken_;
+}
+
+void Frame::setDeviceInfo(std::shared_ptr<const DeviceInfo> info) {
+    deviceInfo_ = std::move(info);
+}
+
+std::shared_ptr<const DeviceInfo> Frame::getDeviceInfo() const {
+    return deviceInfo_;
+}
+
 std::shared_ptr<const StreamProfile> Frame::getStreamProfile() const {
     return streamProfile_;
 }
@@ -258,6 +276,8 @@ void Frame::copyInfoFromOther(const std::shared_ptr<const Frame> otherFrame) {
     metadataSize_ = otherFrame->metadataSize_;
     memcpy(metadata_, otherFrame->metadata_, metadataSize_);
     metadataPhasers_ = otherFrame->metadataPhasers_;
+    frameToken_      = otherFrame->frameToken_;
+    deviceInfo_      = otherFrame->deviceInfo_;
 }
 
 size_t Frame::getDataBufSize() const {

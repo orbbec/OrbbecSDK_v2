@@ -11,7 +11,11 @@
 #include "IStreamProfile.hpp"
 #include "libobsensor/h/ObTypes.h"
 
+#include <stdexcept>
+
 namespace libobsensor {
+
+class IDevice;
 
 typedef std::function<void(std::shared_ptr<Frame>)> FilterCallback;
 
@@ -28,6 +32,16 @@ public:
 
     // Synchronize
     virtual std::shared_ptr<Frame> process(std::shared_ptr<const Frame> frame) = 0;
+
+    virtual std::shared_ptr<IDevice> getActivatedDevice() const {
+        return nullptr;
+    }
+
+    virtual void activate(std::shared_ptr<IDevice> device, const ob_priv_filter_activate_options *options = nullptr) {
+        (void)device;
+        (void)options;
+        throw std::runtime_error("Filter does not support device activation");
+    }
 };
 
 class IFilterExtension {

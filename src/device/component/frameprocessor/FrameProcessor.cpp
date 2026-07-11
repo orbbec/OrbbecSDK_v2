@@ -147,27 +147,33 @@ FrameProcessor::~FrameProcessor() noexcept {
 }
 
 std::shared_ptr<Frame> FrameProcessor::process(std::shared_ptr<const Frame> frame) {
-    if(!context_->process_frame || !privateProcessor_) {
-        return FrameFactory::createFrameFromOtherFrame(frame, true);
-    }
-
-    checkAndUpdateConfig();
-
-    ob_frame              *c_frame = new ob_frame();
-    ob_error              *error   = nullptr;
     std::shared_ptr<Frame> resultFrame;
-    c_frame->frame = std::const_pointer_cast<Frame>(frame);
 
-    auto rst_frame = context_->process_frame(privateProcessor_, c_frame, &error);
-    if(rst_frame) {
-        resultFrame = rst_frame->frame;
-        delete rst_frame;
+    if(!context_->process_frame || !privateProcessor_) {
+        resultFrame = FrameFactory::createFrameFromOtherFrame(frame, true);
     }
-    delete c_frame;
+    else {
+        checkAndUpdateConfig();
 
-    if(error) {
-        delete error;
-        return FrameFactory::createFrameFromOtherFrame(frame, true);
+        ob_frame *c_frame = new ob_frame();
+        ob_error *error   = nullptr;
+        c_frame->frame    = std::const_pointer_cast<Frame>(frame);
+
+        auto rst_frame = context_->process_frame(privateProcessor_, c_frame, &error);
+        if(rst_frame) {
+            resultFrame = rst_frame->frame;
+            delete rst_frame;
+        }
+        delete c_frame;
+
+        if(error) {
+            delete error;
+            resultFrame = FrameFactory::createFrameFromOtherFrame(frame, true);
+        }
+    }
+
+    if(!resultFrame) {
+        return nullptr;
     }
 
     return resultFrame;

@@ -303,6 +303,51 @@ public:
     }
 
     /**
+     * @brief Check whether the device supports license authorization.
+     *
+     * @return true if the device supports license authorization, false otherwise.
+     */
+    bool isLicenseAuthorizationSupported() const {
+        ob_error *error = nullptr;
+        auto      res   = ob_device_is_license_authorization_supported(impl_, &error);
+        Error::handle(&error);
+        return res;
+    }
+
+    /**
+     * @brief Write signed device license information.
+     *
+     * @param[in] licenseInfo SDK license_info JSON string
+     */
+    void writeLicenseInfo(const std::string &licenseInfo) const {
+        ob_error *error = nullptr;
+        ob_device_write_license_info(impl_, licenseInfo.c_str(), static_cast<uint32_t>(licenseInfo.size()), &error);
+        Error::handle(&error);
+    }
+
+    /**
+     * @brief Clear license information stored on the device.
+     */
+    void clearLicenseInfo() const {
+        ob_error *error = nullptr;
+        ob_device_clear_license_info(impl_, &error);
+        Error::handle(&error);
+    }
+
+    /**
+     * @brief Read signed device license information as SDK license_info JSON.
+     *
+     * @return std::string SDK license_info JSON string
+     */
+    std::string readLicenseInfo() const {
+        ob_error *error     = nullptr;
+        char      buf[4096] = {};
+        ob_device_read_license_info(impl_, buf, sizeof(buf), &error);
+        Error::handle(&error);
+        return std::string(buf);
+    }
+
+    /**
      * @brief Set the customer data type of a device property
      *
      * @param[in] data The data to set

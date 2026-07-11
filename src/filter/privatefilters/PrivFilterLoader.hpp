@@ -28,6 +28,8 @@ struct PrivFilterPackageContext {
     pfunc_ob_priv_filter_get_vendor_specific_code get_vendor_specific_code;
     pfunc_ob_priv_filter_is_activated             is_activated;
     pfunc_ob_priv_filter_activate                 activate;
+    pfunc_ob_priv_filter_get_activated_device     get_activated_device = nullptr;
+    pfunc_ob_priv_filter_activate_ex              activate_ex          = nullptr;
 };
 
 class PrivFilterCreator : public IPrivFilterCreator {

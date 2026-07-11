@@ -7,6 +7,10 @@
 #include "FilterFactory.hpp"
 #include "publicfilters/Align.hpp"
 #include "FilterDecorator.hpp"
+#include "IDevice.hpp"
+
+#include "libobsensor/hpp/Filter.hpp"
+#include "libobsensor/hpp/Device.hpp"
 
 #ifdef __cplusplus
 extern "C" {
@@ -51,6 +55,13 @@ ob_filter *ob_create_private_filter(const char *name, const char *activation_key
     return filterImpl;
 }
 HANDLE_EXCEPTIONS_AND_RETURN(nullptr, name, activation_key)
+
+void ob_filter_activate_private_ex(ob_filter *filter, ob_device *device, const ob_priv_filter_activate_options *options, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(filter);
+    VALIDATE_NOT_NULL(device);
+    filter->filter->activate(device->device, options);
+}
+HANDLE_EXCEPTIONS_NO_RETURN(filter, device)
 
 void ob_delete_filter(ob_filter *filter, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(filter);

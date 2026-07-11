@@ -10,6 +10,7 @@
 
 #include "IDeviceManager.hpp"
 #include "devicemanager/DeviceManager.hpp"
+#include "license/IDeviceLicenseInfoManager.hpp"
 #include "IProperty.hpp"
 #include "IDevice.hpp"
 #include "IDeviceMonitor.hpp"
@@ -487,6 +488,53 @@ void ob_device_get_structured_data(ob_device *device, ob_property_id property_id
     *data_size = static_cast<uint32_t>(firmwareData.size());
 }
 HANDLE_EXCEPTIONS_NO_RETURN(device, property_id, data, data_size)
+
+bool ob_device_is_license_authorization_supported(const ob_device *device, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(device);
+    auto devInner = device->device;
+    auto manager  = devInner->getComponentT<libobsensor::IDeviceLicenseInfoManager>(libobsensor::OB_DEV_COMPONENT_DEVICE_LICENSE_INFO_MANAGER, false);
+    // Always return true if the manager is registered with the device
+    return manager ? true : false;
+}
+HANDLE_EXCEPTIONS_AND_RETURN(false, device)
+
+void ob_device_write_license_info(ob_device *device, const char *license_info_json, uint32_t license_info_json_size, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(device);
+    VALIDATE_NOT_NULL(license_info_json);
+    if(license_info_json_size == 0) {
+        THROW_INVALID_PARAM_EXCEPTION("license_info_json_size is 0");
+    }
+
+    auto        devInner = device->device;
+    auto        manager  = devInner->getComponentT<libobsensor::IDeviceLicenseInfoManager>(libobsensor::OB_DEV_COMPONENT_DEVICE_LICENSE_INFO_MANAGER, true);
+    std::string jsonStr(license_info_json, license_info_json_size);
+    manager->writeLicenseInfo(jsonStr);
+}
+HANDLE_EXCEPTIONS_NO_RETURN(device, license_info_json, license_info_json_size)
+
+void ob_device_read_license_info(const ob_device *device, char *license_info_json, uint32_t license_info_json_size, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(device);
+    VALIDATE_NOT_NULL(license_info_json);
+
+    auto devInner     = device->device;
+    auto manager      = devInner->getComponentT<libobsensor::IDeviceLicenseInfoManager>(libobsensor::OB_DEV_COMPONENT_DEVICE_LICENSE_INFO_MANAGER, true);
+    auto licenseInfo  = manager->getLicenseInfo();
+    auto requiredSize = static_cast<uint32_t>(licenseInfo.size() + 1);
+    if(license_info_json_size < requiredSize) {
+        THROW_INVALID_PARAM_EXCEPTION("license_info_json buffer is too small, required: " + std::to_string(requiredSize));
+    }
+
+    std::memcpy(license_info_json, licenseInfo.c_str(), requiredSize);
+}
+HANDLE_EXCEPTIONS_NO_RETURN(device, license_info_json, license_info_json_size)
+
+void ob_device_clear_license_info(ob_device *device, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(device);
+    auto devInner = device->device;
+    auto manager  = devInner->getComponentT<libobsensor::IDeviceLicenseInfoManager>(libobsensor::OB_DEV_COMPONENT_DEVICE_LICENSE_INFO_MANAGER, true);
+    manager->clearLicenseInfo();
+}
+HANDLE_EXCEPTIONS_NO_RETURN(device)
 
 void ob_device_get_raw_data(ob_device *device, ob_property_id property_id, ob_get_data_callback cb, void *user_data, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(device);

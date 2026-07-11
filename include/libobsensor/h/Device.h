@@ -164,6 +164,76 @@ OB_EXPORT void ob_device_set_structured_data(ob_device *device, ob_property_id p
 OB_EXPORT void ob_device_get_structured_data(ob_device *device, ob_property_id property_id, uint8_t *data, uint32_t *data_size, ob_error **error);
 
 /**
+ * @brief Check whether the device supports license authorization.
+ *
+ * This function only reports whether the device provides the license authorization
+ * capability. It does not read or validate the license information.
+ *
+ * @param[in] device The device object.
+ * @param[out] error Log error messages.
+ * @return true if the device supports license authorization, false otherwise.
+ */
+OB_EXPORT bool ob_device_is_license_authorization_supported(const ob_device *device, ob_error **error);
+
+/**
+ * @brief Write signed device license information.
+ *
+ * The license_info_json is a UTF-8 JSON string with the following structure. All
+ * binary fields are lowercase hex strings without a "0x" prefix and with a fixed
+ * length. Before writing, the SDK reads the currently connected device and compares
+ * it against "devInfo" to prevent writing a license to the wrong device; it does NOT
+ * verify the signature or recompute deviceHash (signature and device-binding checks
+ * are performed by the consumer/filter at runtime).
+ *
+ *   {
+ *     "formatVersion": 1,                 // license_info envelope version
+ *     "devInfo": {                        // plaintext, NOT signed; used only to
+ *       "deviceSn": "SN123456789",        //   guard against mis-writing to the
+ *       "vid": "2BC5",                    //   wrong device. vid/pid are 4-char
+ *       "pid": "0660"                     //   uppercase hex.
+ *     },
+ *     "licenseInfo": {                    // signed authorization credential
+ *       "schemaVersion": 1,               // credential schema version
+ *       "keyVersion": 1,                  // 16-bit signing public key id
+ *       "featureFlags": "0000000000000001",// 8 bytes, 16-char lowercase hex
+ *       "expireDate": 4294967295,         // YYYYMMDD; 0xFFFFFFFF = permanent
+ *       "deviceHash": "00112233445566778899aabbccddeeff",        // 16 bytes, 32-char hex
+ *       "signature": "...",               // ECDSA P-256 r||s, 64 bytes, 128-char hex
+ *       "vendorLicense": "..."            // third-party vendor blob, lowercase hex (235 bytes)
+ *     }
+ *   }
+ *
+ * @param[in] device The device object.
+ * @param[in] license_info_json The SDK license_info JSON string described above.
+ * @param[in] license_info_json_size The byte size of license_info_json, excluding any trailing null terminator.
+ * @param[out] error Pointer to an error object that will be set if an error occurs.
+ */
+OB_EXPORT void ob_device_write_license_info(ob_device *device, const char *license_info_json, uint32_t license_info_json_size, ob_error **error);
+
+/**
+ * @brief Read signed device license information as SDK license_info JSON.
+ *
+ * @param[in] device The device object.
+ * @param[out] license_info_json The output buffer for SDK license_info JSON, null-terminated on success.
+ * @param[in] license_info_json_size Size of the output buffer in bytes. Must be large enough to hold the JSON string and a trailing null terminator; 512
+ * bytes is sufficient for the current schema.
+ * @param[out] error Pointer to an error object that will be set if an error occurs.
+ */
+OB_EXPORT void ob_device_read_license_info(const ob_device *device, char *license_info_json, uint32_t license_info_json_size, ob_error **error);
+
+/**
+ * @brief Clear license information stored on the device.
+ *
+ * Erases the device license storage area so that the device returns to the
+ * "no license" state. Intended for internal repair, re-activation or debugging
+ * builds and should be gated by caller-side confirmation.
+ *
+ * @param[in] device The device object.
+ * @param[out] error Pointer to an error object that will be set if an error occurs.
+ */
+OB_EXPORT void ob_device_clear_license_info(ob_device *device, ob_error **error);
+
+/**
  * @brief Get raw data of a device property.
  *
  * @param[in] device The device object.

@@ -9,6 +9,7 @@
 
 #include "IFrame.hpp"
 #include "ISensor.hpp"
+#include "IDevice.hpp"
 
 #ifdef __cplusplus
 extern "C" {
@@ -339,6 +340,31 @@ ob_device *ob_frame_get_device(const ob_frame *frame, ob_error **error) BEGIN_AP
     auto deviceImpl    = new ob_device();
     deviceImpl->device = device;
     return deviceImpl;
+}
+HANDLE_EXCEPTIONS_AND_RETURN(nullptr, frame)
+
+uint64_t ob_frame_get_token(const ob_frame *frame, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(frame);
+    return frame->frame->getAuthToken();
+}
+HANDLE_EXCEPTIONS_AND_RETURN(uint64_t(0), frame)
+
+void ob_frame_set_token(ob_frame *frame, uint64_t token, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(frame);
+    frame->frame->setAuthToken(token);
+}
+HANDLE_EXCEPTIONS_NO_RETURN(frame, token)
+
+ob_device_info *ob_frame_get_device_info(const ob_frame *frame, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(frame);
+    auto info = frame->frame->getDeviceInfo();
+    if(!info) {
+        return nullptr;
+    }
+
+    auto impl  = new ob_device_info();
+    impl->info = info;
+    return impl;
 }
 HANDLE_EXCEPTIONS_AND_RETURN(nullptr, frame)
 

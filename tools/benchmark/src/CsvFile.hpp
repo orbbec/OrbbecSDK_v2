@@ -9,12 +9,14 @@
 #include <vector>
 
 struct SystemInfo {
-    SystemInfo(const std::string &time, float cpuUsage, float memUsage) :
-        time(time), cpuUsage(cpuUsage), memUsage(memUsage) {}
+    SystemInfo(const std::string &time, float cpuUsage, float memUsage, float gpuUsage, float gpuMemUsedMB)
+        : time(time), cpuUsage(cpuUsage), memUsage(memUsage), gpuUsage(gpuUsage), gpuMemUsedMB(gpuMemUsedMB) {}
 
     std::string time;
     float       cpuUsage;
     float       memUsage;
+    float       gpuUsage;
+    float       gpuMemUsedMB;
 };
 
 class CSVFile {
@@ -27,8 +29,8 @@ public:
 
     bool isOpen() const;
 
-    void writeSystemInfo(const std::string &timestamp, float cpuUsage, float memoryUsage);
-    void writeAverageSystemInfo(const std::string &config, float cpuUsage, float memoryUsage);
+    void writeSystemInfo(const std::string &timestamp, float cpuUsage, float memoryUsage, float gpuUsage, float gpuMemoryUsedMB);
+    void writeAverageSystemInfo(const std::string &config, float cpuUsage, float memoryUsage, float gpuUsage, float gpuMemoryUsedMB);
     void writeSystemInfos(const std::vector<SystemInfo> &systemInfos);
     void writeTitle(const std::string &title);
 

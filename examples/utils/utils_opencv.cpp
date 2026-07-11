@@ -484,11 +484,13 @@ cv::Mat CVWindow::visualize(std::shared_ptr<const ob::Frame> frame) {
             cv::Mat cvtMat;
             cv::Mat rawMat = cv::Mat(videoFrame->getHeight(), videoFrame->getWidth(), CV_16UC1, videoFrame->getData());
             rawMat.convertTo(cvtMat, CV_8UC1, 1.0 / 16.0f);
-            cv::cvtColor(cvtMat, rstMat, cv::COLOR_GRAY2RGB);
+            // cv::cvtColor(cvtMat, rstMat, cv::COLOR_GRAY2RGB);
+            cv::applyColorMap(cvtMat, rstMat, cv::COLORMAP_JET);
         }
         else if(videoFrame->getFormat() == OB_FORMAT_Y8) {
             cv::Mat rawMat = cv::Mat(videoFrame->getHeight(), videoFrame->getWidth(), CV_8UC1, videoFrame->getData());
-            cv::cvtColor(rawMat, rstMat, cv::COLOR_GRAY2RGB);
+            // cv::cvtColor(rawMat, rstMat, cv::COLOR_GRAY2RGB);
+            cv::applyColorMap(rawMat, rstMat, cv::COLORMAP_JET);
         }
     } break;
     case OB_FRAME_ACCEL: {

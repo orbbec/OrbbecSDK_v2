@@ -66,6 +66,8 @@ public:
     virtual void                   setConfigData(void *data, uint32_t size) override;
     virtual const std::string     &getConfigSchema() const override;
     virtual std::shared_ptr<Frame> process(std::shared_ptr<const Frame> frame) override;
+    std::shared_ptr<IDevice>       getActivatedDevice() const override;
+    void                           activate(std::shared_ptr<IDevice> device, const ob_priv_filter_activate_options *options = nullptr) override;
 
     std::shared_ptr<IFilterBase> getBaseFilter() const;
 

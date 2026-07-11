@@ -2,12 +2,14 @@
 // Licensed under the MIT License.
 
 #include "PrivFilterCppWrapper.hpp"
+#include "IDevice.hpp"
 #include "logger/Logger.hpp"
 #include "exception/ObException.hpp"
 
 namespace libobsensor {
-PrivFilterCppWrapper::PrivFilterCppWrapper(const std::string &filterName, std::shared_ptr<ob_priv_filter_context> filterCtx)
-    : name_(filterName), privFilterCtx_(filterCtx) {
+PrivFilterCppWrapper::PrivFilterCppWrapper(const std::string &filterName, std::shared_ptr<ob_priv_filter_context> filterCtx,
+                                           pfunc_ob_priv_filter_activate_ex activateExFunc)
+    : name_(filterName), privFilterCtx_(filterCtx), activateExFunc_(activateExFunc) {
     ob_error   *error = nullptr;
     const char *desc  = privFilterCtx_->get_config_schema(privFilterCtx_->filter, &error);
     if(error) {
@@ -63,6 +65,28 @@ void PrivFilterCppWrapper::reset() {
     if(error) {
         LOG_WARN("Private filter {} reset failed: {}", name_, error->message);
         delete error;
+    }
+}
+
+std::shared_ptr<IDevice> PrivFilterCppWrapper::getActivatedDevice() const {
+    return activatedDeviceImpl_.device;
+}
+
+void PrivFilterCppWrapper::activate(std::shared_ptr<IDevice> device, const ob_priv_filter_activate_options *options) {
+    if(!device) {
+        THROW_INVALID_PARAM_EXCEPTION("Device is null");
+    }
+
+    if(!activateExFunc_) {
+        THROW_UNSUPPORTED_OPERATION_EXCEPTION("Private filter does not support device activation");
+    }
+
+    ob_error *error             = nullptr;
+    activatedDeviceImpl_.device = std::move(device);
+    activateExFunc_(privFilterCtx_->filter, &activatedDeviceImpl_, options, &error);
+    if(error) {
+        activatedDeviceImpl_.device = nullptr;
+        THROW_UNRECOVERABLE(std::string(error->message), error->exception_type, error->status);
     }
 }
 

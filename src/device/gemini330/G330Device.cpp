@@ -41,6 +41,7 @@
 #include "comprehensivefilter/DepthPostFilterParamsManager.hpp"
 #include "colorpreset/ColorPresetManager.hpp"
 #include "colorpreset/ColorPresetMaps.hpp"
+#include "license/G330DeviceLicenseInfoManager.hpp"
 
 #include "G330MetadataParser.hpp"
 #include "G330MetadataTypes.hpp"
@@ -292,6 +293,15 @@ void G330Device::init() {
             registerComponent(OB_DEV_COMPONENT_DEPTH_POST_FILTER_PARAMS_MANAGER, depthPostFilterParamsManager);
         }
     })
+
+    registerComponent(
+        OB_DEV_COMPONENT_DEVICE_LICENSE_INFO_MANAGER,
+        [this]() {
+            std::shared_ptr<G330DeviceLicenseInfoManager> licenseInfoManager;
+            TRY_EXECUTE({ licenseInfoManager = std::make_shared<G330DeviceLicenseInfoManager>(this); })
+            return licenseInfoManager;
+        },
+        false);
 
     fetchDeviceErrorState();
 }
@@ -1568,6 +1578,15 @@ void G330NetDevice::init() {
             std::shared_ptr<DeviceActivityRecorder> activityRecorder;
             TRY_EXECUTE({ activityRecorder = std::make_shared<DeviceActivityRecorder>(this); })
             return activityRecorder;
+        },
+        false);
+
+    registerComponent(
+        OB_DEV_COMPONENT_DEVICE_LICENSE_INFO_MANAGER,
+        [this]() {
+            std::shared_ptr<G330DeviceLicenseInfoManager> licenseInfoManager;
+            TRY_EXECUTE({ licenseInfoManager = std::make_shared<G330DeviceLicenseInfoManager>(this); })
+            return licenseInfoManager;
         },
         false);
 

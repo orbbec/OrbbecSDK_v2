@@ -932,6 +932,9 @@ std::ostream &operator<<(std::ostream &os, const OBExceptionType &type) {
     case OB_EXCEPTION_TYPE_RESOURCE_BUSY:
         os << "RESOURCE_BUSY";
         break;
+    case OB_EXCEPTION_TYPE_LICENSE_VERIFY_FAILED:
+        os << "LICENSE_VERIFY_FAILED";
+        break;
     default:
         os << "UNKNOWN";
         break;

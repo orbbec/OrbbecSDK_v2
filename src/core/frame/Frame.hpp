@@ -18,6 +18,7 @@ namespace libobsensor {
 class logger;
 class FrameMemoryPool;
 class FrameMemoryAllocator;
+struct DeviceInfo;
 class FrameBackendLifeSpan {
 public:
     FrameBackendLifeSpan();
@@ -79,6 +80,11 @@ public:
     bool    hasMetadata(OBFrameMetadataType type) const;
     int64_t getMetadataValue(OBFrameMetadataType type) const;
 
+    void                              setAuthToken(uint64_t token);
+    uint64_t                          getAuthToken() const;
+    void                              setDeviceInfo(std::shared_ptr<const DeviceInfo> info);
+    std::shared_ptr<const DeviceInfo> getDeviceInfo() const;
+
     std::shared_ptr<const StreamProfile> getStreamProfile() const;
     void                                 setStreamProfile(std::shared_ptr<const StreamProfile> streamProfile);
     OBFormat                             getFormat() const;  // get from stream profile
@@ -123,6 +129,8 @@ protected:
     uint8_t                                        metadata_[12 + 255];  // standard uvc payload size is 12bytes, add some extra space for metadata
     std::shared_ptr<IFrameMetadataParserContainer> metadataPhasers_;
     std::shared_ptr<const StreamProfile>           streamProfile_;
+    uint64_t                                       frameToken_ = 0;
+    std::shared_ptr<const DeviceInfo>              deviceInfo_;
 
     const OBFrameType type_;  // Determined during construction, it is an inherent property of the object and cannot be changed.
 

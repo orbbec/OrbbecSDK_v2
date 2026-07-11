@@ -152,6 +152,7 @@ typedef enum {
     OB_EXCEPTION_TYPE_INVALID_DATA,            /**< Runtime data is invalid, check data content or size */
     OB_EXCEPTION_TYPE_NOT_FOUND,               /**< The requested item was not found */
     OB_EXCEPTION_TYPE_RESOURCE_BUSY,           /**< Resource is busy or locked by another operation */
+    OB_EXCEPTION_TYPE_LICENSE_VERIFY_FAILED,   /**< License verification failed, the device/feature license is missing, invalid or expired */
 } OBExceptionType,
     ob_exception_type;
 
@@ -1734,6 +1735,18 @@ typedef struct {
     double                  def;   ///< Default value casted to double
     const char             *desc;  ///< Description of the configuration item
 } OBFilterConfigSchemaItem, ob_filter_config_schema_item;
+
+/**
+ * @brief Extensible options for activating a private filter instance.
+ * @brief Passed to @ref ob_filter_activate_private_ex / @ref ob_priv_filter_activate_ex. New fields must only be
+ *        appended at the end. The caller sets @ref struct_size to sizeof(ob_priv_filter_activate_options); the callee
+ *        uses it to detect which fields a (possibly older) caller actually provided, keeping the ABI compatible as the
+ *        struct grows. This is the single extension point for future activation parameters.
+ */
+typedef struct ob_priv_filter_activate_options {
+    uint32_t    struct_size;        ///< Size of this struct in bytes, set by the caller to sizeof(ob_priv_filter_activate_options).
+    const char *model_path;  ///< Path to the inference model file. NULL or empty selects the filter's default model.
+}OBPrivFilterActivateOptions, ob_priv_filter_activate_options;
 
 /**
  * @brief struct of serial number

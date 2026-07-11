@@ -22,6 +22,7 @@
 #include <typeinfo>
 #include <typeindex>
 #include <unordered_map>
+#include <vector>
 #include <cstring>
 
 namespace ob {
@@ -2081,6 +2082,175 @@ public:
     ~DisparityTransform() noexcept override = default;
 };
 
+/**
+ * @brief Enhanced depth filter that requires a device for activation.
+ *
+ * @note The constructor is a template so that Filter.hpp does not need to include Device.hpp.
+ *       The template is instantiated at the call site where the device type is complete.
+ */
+class EnhancedDepthFilter : public Filter {
+public:
+    /**
+     * @brief Construct an EnhancedDepthFilter and activate it for the given device.
+     *
+     * @param[in] device The device the filter is bound to.
+     * @param[in] modelPath Optional path to the inference model file used during activation. When empty, the
+     *            filter falls back to its default model file at extensions/filters/enhanced_depth_filter/model.sm4
+     *            (located next to the filter library).
+     */
+    template <typename T> explicit EnhancedDepthFilter(std::shared_ptr<T> device, const std::string &modelPath = "") {
+        if(!device) {
+            throw std::invalid_argument("device is null");
+        }
+        ob_error *error = nullptr;
+        auto      impl  = ob_create_private_filter("EnhancedDepthFilter", "", &error);
+        Error::handle(&error);
+
+        // Only pass options when a model path is provided; otherwise hand down nullptr so the filter uses its default.
+        ob_priv_filter_activate_options  options{};
+        ob_priv_filter_activate_options *optionsPtr = nullptr;
+        if(!modelPath.empty()) {
+            options.struct_size = sizeof(options);
+            options.model_path  = modelPath.c_str();
+            optionsPtr          = &options;
+        }
+        ob_filter_activate_private_ex(impl, device->getImpl(), optionsPtr, &error);
+        Error::handle(&error);
+        init(impl);
+    }
+
+    ~EnhancedDepthFilter() noexcept override = default;
+
+    /**
+     * @brief Get the resolutions supported by the enhanced depth filter for the constrained (aligned-to) stream.
+     *
+     * @return The list of supported {width, height} pairs. This is the single source of truth used by
+     *         @ref isSupportedResolution.
+     */
+    static const std::vector<std::pair<uint32_t, uint32_t>> &getSupportedResolutions() {
+        static const std::vector<std::pair<uint32_t, uint32_t>> supportedResolutions = {
+            { 640, 480 },
+            { 1280, 720 },
+            { 1280, 800 },
+        };
+        return supportedResolutions;
+    }
+
+    /**
+     * @brief Get the frame formats supported by the enhanced depth filter for a given stream type.
+     *
+     * @param[in] streamType The stream type. Only color and depth streams are supported.
+     *
+     * @return The list of supported formats (color: OB_FORMAT_RGB; depth: OB_FORMAT_Y10, OB_FORMAT_Y11,
+     *         OB_FORMAT_Y12, OB_FORMAT_Y14, OB_FORMAT_Y16, OB_FORMAT_Z16). Empty for unsupported stream types. This is the single
+     *         source of truth used by @ref isSupportedFormat.
+     */
+    static std::vector<OBFormat> getSupportedFormats(OBStreamType streamType) {
+        if(streamType == OB_STREAM_COLOR) {
+            return { OB_FORMAT_RGB };
+        }
+        if(streamType == OB_STREAM_DEPTH) {
+            return { OB_FORMAT_Y10, OB_FORMAT_Y11, OB_FORMAT_Y12, OB_FORMAT_Y14, OB_FORMAT_Y16, OB_FORMAT_Z16 };
+        }
+        return {};
+    }
+
+    /**
+     * @brief Check whether a resolution is supported by the enhanced depth filter for a given stream alignment pair.
+     *
+     * @param[in] sourceStreamType The source stream type that provides the input frames.
+     * @param[in] alignToStreamType The target stream type that the source stream is aligned to.
+     * @param[in] width The frame width to validate.
+     * @param[in] height The frame height to validate.
+     *
+     * @return true if the resolution is supported for the specified alignment combination, otherwise false.
+     */
+    static bool isSupportedResolution(OBStreamType sourceStreamType, OBStreamType alignToStreamType, uint32_t width, uint32_t height) {
+        if(sourceStreamType != alignToStreamType) {
+            // If the source and target stream types are different, any resolution is supported.
+            return true;
+        }
+
+        for(const auto &res: getSupportedResolutions()) {
+            if(res.first == width && res.second == height) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @brief Check whether a frame format is supported by the enhanced depth filter for a given stream type.
+     *
+     * @param[in] streamType The stream type to validate. Only color and depth streams are supported.
+     * @param[in] format The frame format to validate.
+     *
+     * @return true if the format is supported for the given stream type, otherwise false.
+     */
+    static bool isSupportedFormat(OBStreamType streamType, OBFormat format) {
+        for(const auto &supported: getSupportedFormats(streamType)) {
+            if(supported == format) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @brief Set the working resolution of the enhanced depth filter.
+     *
+     * @param[in] width The target frame width.
+     * @param[in] height The target frame height.
+     */
+    void setResolution(uint32_t width, uint32_t height) {
+        setConfigValue("width", static_cast<double>(width));
+        setConfigValue("height", static_cast<double>(height));
+    }
+
+    /**
+     * @brief Get the current configured frame width.
+     *
+     * @return uint32_t The current width.
+     */
+    uint32_t getCurrentWidth() const {
+        return static_cast<uint32_t>(getConfigValue("width"));
+    }
+
+    /**
+     * @brief Get the current configured frame height.
+     *
+     * @return uint32_t The current height.
+     */
+    uint32_t getCurrentHeight() const {
+        return static_cast<uint32_t>(getConfigValue("height"));
+    }
+
+    /**
+     * @brief Set the confidence threshold for depth values.
+     *
+     * @param value The confidence threshold.
+     */
+    void setConfidenceThreshold(uint32_t value) {
+        setConfigValue("confidence_threshold", static_cast<double>(value));
+    }
+
+    /**
+     * @brief Get the property range of the confidence threshold range.
+     */
+    OBIntPropertyRange getConfidenceThresholdRange() {
+        OBIntPropertyRange range{};
+        const auto        &schemaVec = getConfigSchemaVec();
+        for(const auto &item: schemaVec) {
+            const char *name = "confidence_threshold";
+            if(std::strcmp(item.name, name) == 0) {
+                range = getPropertyRange<OBIntPropertyRange>(item, getConfigValue(name));
+                break;
+            }
+        }
+        return range;
+    }
+};
+
 class OBFilterList {
 private:
     ob_filter_list_t *impl_;
@@ -2151,6 +2321,7 @@ inline const std::unordered_map<std::string, std::type_index> &getFilterTypeMap(
         { "MgcNoiseRemovalFilter", typeid(MgcNoiseRemovalFilter) },
         { "LutNoiseRemovalFilter", typeid(LutNoiseRemovalFilter) },
         { "UnDistortionFilter", typeid(UnDistortionFilter) },
+        { "EnhancedDepthFilter", typeid(EnhancedDepthFilter) },
     };
     return filterTypeMap;
 }

@@ -112,7 +112,8 @@ private:
     X(OB_DEV_COMPONENT_RIGHT_COLOR_FRAME_PROCESSOR, "right color frame processor")                   \
     X(OB_DEV_COMPONENT_RIGHT_COLOR_FRAME_METADATA_CONTAINER, "right color frame metadata container") \
     X(OB_DEV_COMPONENT_DEPTH_POST_FILTER_PARAMS_MANAGER, "post filter params manager")               \
-    X(OB_DEV_COMPONENT_COLOR_PRESET_MANAGER, "color preset manager")
+    X(OB_DEV_COMPONENT_COLOR_PRESET_MANAGER, "color preset manager")                                 \
+    X(OB_DEV_COMPONENT_DEVICE_LICENSE_INFO_MANAGER, "device license info manager")
 
 // generate enum
 typedef enum {

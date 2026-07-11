@@ -12,6 +12,13 @@
 #include <queue>
 #include <atomic>
 
+struct DeviceFrameStats {
+    uint64_t receivedFrameCount         = 0;
+    uint64_t alignProcessedFrameCount   = 0;
+    uint64_t enhancedProcessedFrameCount = 0;
+    uint64_t completedFrameCount        = 0;
+};
+
 class DeviceResource {
 public:
     DeviceResource(std::shared_ptr<ob::Device> device);
@@ -19,6 +26,7 @@ public:
 
     void startStream(std::shared_ptr<ob::Config> config, bool enableTimestampDiffSaver = false);
     void stopStream();
+    DeviceFrameStats getFrameStats();
 
 public:
     /**
@@ -33,7 +41,8 @@ public:
 
     /**
      * @brief Enables or disables the software noise removal filter.
-     * @note OrbebcSDK have a internal Noise removal filter, and it's default is on. If you use hardware noise removal filter, it is recommended to disable the internal filter.
+     * @note OrbebcSDK have a internal Noise removal filter, and it's default is on. If you use hardware noise removal filter, it is recommended to disable the
+     * internal filter.
      */
     void enableSwNoiseRemoveFilter(bool enable);
 
@@ -41,6 +50,11 @@ public:
      * @brief Enables or disables the align filter.
      */
     void enableAlignFilter(bool enable);
+
+    /**
+     * @brief Enables or disables the enhanced depth filter.
+     */
+    void enableEnhancedDepthFilter(bool enable, uint32_t width, uint32_t height);
 
     /**
      * @brief Enables or disables the point cloud filter.
@@ -79,14 +93,17 @@ private:
     std::condition_variable                   timestamp_diff_cv_;
     std::thread                               timestamp_diff_saver_thread_;
     std::atomic<bool>                         timestamp_diff_saver_running_{ false };
+    DeviceFrameStats                          frameStats_;
 
-    bool is_spatial_filter_enabled_     = false;
-    bool is_align_filter_enabled_       = false;
-    bool is_point_cloud_filter_enabled_ = false;
-    bool is_timestamp_saver_enabled_    = false;
+    bool is_spatial_filter_enabled_        = false;
+    bool is_align_filter_enabled_          = false;
+    bool is_enhanced_depth_filter_enabled_ = false;
+    bool is_point_cloud_filter_enabled_    = false;
+    bool is_timestamp_saver_enabled_       = false;
 
-    std::shared_ptr<ob::Align>            align_filter_       = nullptr;
-    std::shared_ptr<ob::PointCloudFilter> point_cloud_filter_ = nullptr;
+    std::shared_ptr<ob::Align>               align_filter_          = nullptr;
+    std::shared_ptr<ob::EnhancedDepthFilter> enhanced_depth_filter_ = nullptr;
+    std::shared_ptr<ob::PointCloudFilter>    point_cloud_filter_    = nullptr;
 
     // Post-processing filters
     std::shared_ptr<ob::SpatialAdvancedFilter> spatial_filter_ = nullptr;

@@ -434,6 +434,7 @@ void SensorBase::outputFrame(std::shared_ptr<Frame> frame) {
     if(activatedStreamProfile_) {
         frame->setStreamProfile(activatedStreamProfile_);
     }
+    frame->setDeviceInfo(owner_->getInfo());
     if(frameMetadataParserContainer_) {
         TRY_EXECUTE(frame->registerMetadataParsers(frameMetadataParserContainer_));
     }

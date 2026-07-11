@@ -84,6 +84,27 @@ typedef ob_frame *(*pfunc_ob_priv_filter_process)(ob_priv_filter *filter, const 
 typedef void (*pfunc_ob_priv_filter_context_destroy)(ob_priv_filter_context *filter_context, ob_error **error);
 
 /**
+ * @brief Function pointer type for getting the device currently bound to a filter instance.
+ *
+ * @param[in] filter The filter object.
+ * @param[out] error Pointer to an error object that will be set if an error occurs.
+ *
+ * @return The activated device or nullptr when the filter is not activated with a device.
+ */
+typedef const ob_device *(*pfunc_ob_priv_filter_get_activated_device)(ob_priv_filter *filter, ob_error **error);
+
+/**
+ * @brief Function pointer type for activating a filter instance with a specific device.
+ *
+ * @param[in] filter The filter object.
+ * @param[in] device The device to associate with the filter instance.
+ * @param[in] options Optional extensible activation options (may be NULL). See @ref ob_priv_filter_activate_options.
+ * @param[out] error Pointer to an error object that will be set if an error occurs.
+ */
+typedef void (*pfunc_ob_priv_filter_activate_ex)(ob_priv_filter *filter, const ob_device *device, const ob_priv_filter_activate_options *options,
+                                                 ob_error **error);
+
+/**
  * @brief The filter context object is used to store the filter object and the function pointers to the filter functions.
  *
  */

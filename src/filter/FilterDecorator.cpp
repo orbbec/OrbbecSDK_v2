@@ -325,6 +325,14 @@ std::shared_ptr<Frame> FilterDecorator::process(std::shared_ptr<const Frame> fra
     return baseFilter_->process(frame);
 }
 
+std::shared_ptr<IDevice> FilterDecorator::getActivatedDevice() const {
+    return baseFilter_->getActivatedDevice();
+}
+
+void FilterDecorator::activate(std::shared_ptr<IDevice> device, const ob_priv_filter_activate_options *options) {
+    baseFilter_->activate(device, options);
+}
+
 std::shared_ptr<IFilterBase> FilterDecorator::getBaseFilter() const {
     return baseFilter_;
 }
