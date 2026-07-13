@@ -63,8 +63,7 @@ int main(int argc, char **argv) try {
 #if !(defined(__linux__) && defined(__aarch64__))
     std::cout << "EnhancedDepthFilter is only supported on the NVIDIA Jetson platform, exit." << std::endl;
     return EXIT_FAILURE;
-#endif
-
+#else
     // Software align depth to color (D2C). Alternatively, you can use hardware D2C on the device
     // (e.g. enable it via the pipeline config) when the requested resolution is supported by hardware.
     auto alignFilter         = std::make_shared<ob::Align>(OB_STREAM_COLOR);
@@ -111,6 +110,7 @@ int main(int argc, char **argv) try {
 
     pipe.stop();
     return 0;
+#endif
 }
 catch(const ob::Error &e) {
     std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\nstatus:" << e.getStatus()
