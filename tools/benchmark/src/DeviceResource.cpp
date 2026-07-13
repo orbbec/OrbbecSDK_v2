@@ -13,11 +13,6 @@ DeviceResource::DeviceResource(std::shared_ptr<ob::Device> device) : device_(dev
     resetConfig();
 }
 
-DeviceFrameStats DeviceResource::getFrameStats() {
-    std::lock_guard<std::mutex> lock(mutex_);
-    return frameStats_;
-}
-
 void DeviceResource::timestampDiffSaver() {
     std::string   sn            = device_->getDeviceInfo()->getSerialNumber();
     auto          rgbFileName   = sn + "_timestamp_difference_color.csv";
@@ -73,8 +68,7 @@ void DeviceResource::timestampDiffSaver() {
                     file << metadataIndex << ",";
                 }
                 else {
-                    file << "n/a"
-                         << ",";
+                    file << "n/a" << ",";
                 }
                 file << sysTimestamp << "," << globalTimestamp << "," << timestamp << "," << static_cast<int64_t>(sysTimestamp - globalTimestamp) << ","
                      << static_cast<int64_t>(sysTimestamp - timestamp) << std::endl;
@@ -125,11 +119,6 @@ void DeviceResource::startStream(std::shared_ptr<ob::Config> config, bool enable
         device_->setBoolProperty(OB_PROP_COLOR_AUTO_EXPOSURE_BOOL, true);
     }
 
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        frameStats_ = DeviceFrameStats{};
-    }
-
     pipeline_->start(config, [this](std::shared_ptr<ob::FrameSet> frameset) {
         if(frameset == nullptr) {
             return;
@@ -137,36 +126,19 @@ void DeviceResource::startStream(std::shared_ptr<ob::Config> config, bool enable
 
         std::lock_guard<std::mutex> lock(mutex_);
         frames_ = frameset;
-        ++frameStats_.receivedFrameCount;
 
         if(is_timestamp_saver_enabled_ && timestamp_diff_saver_running_) {
             frameQueue_.push(frameset);
             timestamp_diff_cv_.notify_all();
         }
 
-        auto processedFrame = frames_;
-
         // Note: It is not recommended to handle d2c or point cloud consuming operations in the callbacks set by the pipeline.
-        if((is_align_filter_enabled_ || is_point_cloud_filter_enabled_) && align_filter_) {
-            processedFrame = align_filter_->process(processedFrame);
-            if(!processedFrame) {
-                return;
-            }
-            ++frameStats_.alignProcessedFrameCount;
+        if(is_align_filter_enabled_ && align_filter_) {
+            frames_ = align_filter_->process(frames_);
         }
-
-        if(is_enhanced_depth_filter_enabled_ && enhanced_depth_filter_) {
-            processedFrame = enhanced_depth_filter_->process(processedFrame);
-            if(!processedFrame) {
-                return;
-            }
-            ++frameStats_.enhancedProcessedFrameCount;
-        }
-
-        frames_ = processedFrame;
-        ++frameStats_.completedFrameCount;
 
         if(is_point_cloud_filter_enabled_ && point_cloud_filter_) {
+            frames_ = align_filter_->process(frames_);
             point_cloud_filter_->process(frames_);
         }
     });
@@ -207,28 +179,20 @@ void DeviceResource::enableSwNoiseRemoveFilter(bool enable) {
 
 void DeviceResource::enableAlignFilter(bool enable) {
     std::lock_guard<std::mutex> lock(mutex_);
+    pipeline_->enableFrameSync();
     is_align_filter_enabled_ = enable;
-}
-
-void DeviceResource::enableEnhancedDepthFilter(bool enable, uint32_t width, uint32_t height) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    if(enable && !enhanced_depth_filter_) {
-        enhanced_depth_filter_ = std::make_shared<ob::EnhancedDepthFilter>(device_);
-    }
-    if(enable && enhanced_depth_filter_) {
-        enhanced_depth_filter_->setResolution(width, height);
-    }
-    is_enhanced_depth_filter_enabled_ = enable;
 }
 
 void DeviceResource::enablePointCloudFilter(bool enable) {
     std::lock_guard<std::mutex> lock(mutex_);
+    pipeline_->enableFrameSync();
     is_point_cloud_filter_enabled_ = enable;
     point_cloud_filter_->setCreatePointFormat(OB_FORMAT_POINT);
 }
 
 void DeviceResource::enableRGBPointCloudFilter(bool enable) {
     std::lock_guard<std::mutex> lock(mutex_);
+    pipeline_->enableFrameSync();
     is_point_cloud_filter_enabled_ = enable;
     point_cloud_filter_->setCreatePointFormat(OB_FORMAT_RGB_POINT);
 }
@@ -236,16 +200,11 @@ void DeviceResource::enableRGBPointCloudFilter(bool enable) {
 void DeviceResource::resetConfig() {
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        is_point_cloud_filter_enabled_    = false;
-        is_align_filter_enabled_          = false;
-        is_enhanced_depth_filter_enabled_ = false;
+        is_point_cloud_filter_enabled_ = false;
+        is_align_filter_enabled_       = false;
     }
 
     pipeline_->disableFrameSync();
-
-    if(enhanced_depth_filter_) {
-        enhanced_depth_filter_->reset();
-    }
 
     enableHwNoiseRemoveFilter(false);
     enableSwNoiseRemoveFilter(false);

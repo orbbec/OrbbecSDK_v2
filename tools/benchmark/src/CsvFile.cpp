@@ -22,33 +22,19 @@ bool CSVFile::isOpen() const {
     return csvFile_.is_open();
 }
 
-void CSVFile::writeSystemInfo(const std::string &timestamp, float cpuUsage, float memoryUsage, float gpuUsage, float gpuMemoryUsedMB) {
-    csvFile_ << timestamp << "," << cpuUsage << "," << memoryUsage << "," << gpuUsage << ",";
-    if(gpuMemoryUsedMB >= 0.0f) {
-        csvFile_ << gpuMemoryUsedMB;
-    }
-    else {
-        csvFile_ << "N/A";
-    }
-    csvFile_ << "\n";
+void CSVFile::writeSystemInfo(const std::string &timestamp, float cpuUsage, float memoryUsage) {
+    csvFile_ << timestamp << "," << cpuUsage << "," << memoryUsage << "\n";
     csvFile_.flush();
 }
 
 void CSVFile::writeSystemInfos(const std::vector<SystemInfo> &systemInfos) {
     for(const auto &info: systemInfos) {
-        writeSystemInfo(info.time, info.cpuUsage, info.memUsage, info.gpuUsage, info.gpuMemUsedMB);
+        writeSystemInfo(info.time, info.cpuUsage, info.memUsage);
     }
 }
 
-void CSVFile::writeAverageSystemInfo(const std::string &config, float cpuUsage, float memoryUsage, float gpuUsage, float gpuMemoryUsedMB) {
-    csvFile_ << config << "," << cpuUsage << "," << memoryUsage << "," << gpuUsage << ",";
-    if(gpuMemoryUsedMB >= 0.0f) {
-        csvFile_ << gpuMemoryUsedMB;
-    }
-    else {
-        csvFile_ << "N/A";
-    }
-    csvFile_ << "\n";
+void CSVFile::writeAverageSystemInfo(const std::string &config, float cpuUsage, float memoryUsage) {
+    csvFile_ << config << "," << cpuUsage << "," << memoryUsage << "\n";
     csvFile_.flush();
 }
 
