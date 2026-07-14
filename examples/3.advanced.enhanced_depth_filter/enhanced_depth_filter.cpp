@@ -62,6 +62,8 @@ int main(int argc, char **argv) try {
     // (Linux arm64). On any other platform, stop here after reading the license info.
 #if defined(__ANDROID__) || !(defined(__linux__) && defined(__aarch64__))
     std::cout << "EnhancedDepthFilter is only supported on the NVIDIA Jetson platform, exit." << std::endl;
+    std::cout << "\nPress any key to exit.";
+    ob_smpl::waitForKeyPressed();
     return EXIT_FAILURE;
 #else
     // Software align depth to color (D2C). Alternatively, you can use hardware D2C on the device
