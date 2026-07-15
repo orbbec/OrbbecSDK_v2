@@ -60,7 +60,7 @@ int main(int argc, char **argv) try {
 
     // The EnhancedDepthFilter relies on an inference engine that is only available on NVIDIA Jetson
     // (Linux arm64). On any other platform, stop here after reading the license info.
-#if !(defined(__linux__) && defined(__aarch64__))
+#if defined(__ANDROID__) || !(defined(__linux__) && defined(__aarch64__))
     std::cout << "EnhancedDepthFilter is only supported on the NVIDIA Jetson platform, exit." << std::endl;
     return EXIT_FAILURE;
 #else
