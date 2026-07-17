@@ -148,7 +148,7 @@ public:
     }
 
 #define VALIDATE_STR_NOT_NULL(str)                                                 \
-    if(!(str) || *(str) == '0') {                                                  \
+    if(!(str) || *(str) == '\0') {                                                 \
         std::string msg = "NULL or empty string passed for argument \"" #str "\""; \
         LOG_WARN(msg);                                                             \
         THROW_INVALID_PARAM_EXCEPTION(msg);                                        \
