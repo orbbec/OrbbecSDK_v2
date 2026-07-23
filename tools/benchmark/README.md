@@ -1,6 +1,6 @@
 # Benchmark Tool
 
-This tool is used to measure the performance of OrbbecSDK_v2. It can be used to measure the camera's CPU usage, memory consumption, camera latency, and more. The benchmark tool is cross-platform and supports Windows, Linux, ARM64, and MacOS.
+This tool is used to measure the performance of OrbbecSDK_v2. It can be used to measure the camera's CPU usage, memory consumption, and more. The benchmark tool is cross-platform and supports Windows, Linux, ARM64, and MacOS.
 
 **Note:**
 - This tool is designed for testing the **Gemini 330** series cameras. If you are using other camera, it may cause some issues (e.g., non-Gemini 330 series do not support hardware noise removal). You can modify the code in this project according to your needs.
@@ -21,17 +21,16 @@ On platforms other than Windows, run the tool using `sudo ./ob_benchmark`, as sh
 ![summary](image/linux_benchmark.png)
 
 ### CPU and Memory Consumption
-The current benchmark tool runs five test cases by default, Each test case runs for **five minutes**.
+The current benchmark tool runs four test cases by default. Each test case runs for **five minutes**.
 
 |    Test Case    |                     Note                      |
 | --- | --- |
-| Measure the latency of depth and color streams  |   1. Enable depth and color streams using the default resolutions defined in the OrbbecSDKConfig.xml. Measure the latency and save the results in a .csv file. <br /> 2. Disable Software Noise Remove Filter   <br /> 3. Disable hardware Noise Remove Filter         |
 | Get depth, color, left IR, and right IR streams |  1. Enable depth,color,left IR, right IR using the default resolutions   <br />  2. Disable Software Noise Remove Filter   <br /> 3. Disable hardware Noise Remove Filter                  |
 | Software D2C         |  1. Enable depth and color streams using the default resolutions  <br /> 2. Disable Software Noise Remove Filter   <br /> 3. Enable hardware Noise Remove Filter  <br /> 4.  Enable Software D2C Filter              |
 | Depth point cloud         |  1.  Enable depth stream using the default resolutions  <br />  2. Disable Software Noise Remove Filter   <br /> 3. Enable hardware Noise Remove Filter  <br /> 4. Enable depth point cloud filter          |
 | Color point cloud     |   1.  Enable depth and color streams using the default resolutions  <br />  2. Disable Software Noise Remove Filter   <br /> 3. Enable hardware Noise Remove Filter  <br /> 4. Enable RGBD point cloud filter                    |
 
-After the benchmark tool finishes, a `summary.csv` file will be generated in the same directory as the executable. This file contains the average results of the five test cases. For example, the following demonstrates on AGX Orin (Arm64 Ubuntu 22.04, JetPack 6.2, 64GB RAM).
+After the benchmark tool finishes, a `summary.csv` file will be generated in the same directory as the executable. This file contains the average results of the four test cases. For example, the following demonstrates on AGX Orin (Arm64 Ubuntu 22.04, JetPack 6.2, 64GB RAM).
 
 - Test results of the 335L on AGX Orin with Libuvc backend 
 ![summary](image/libuvc_summary.png)
@@ -41,15 +40,16 @@ After the benchmark tool finishes, a `summary.csv` file will be generated in the
 ![summary](image/v4l2_summary.png)
 
 **In OrbbecSDKConfig.xml, the default backend is libuvc. To switch to V4L2, find the corresponding device entry in the configuration file and modify the backend setting as shown below.**
-~~~
+```
 <LinuxUVCDefaultBackend>V4L2</LinuxUVCDefaultBackend>
-~~~
+```
 
 **Notes:**
 CPU usage includes the CPU consumed by writing CSV files. 
 
-### Depth and Color latency
-- The test cases for measuring the latency of depth and color streams will generate two .csv files: `xxx_timestamp_difference_color.csv` and `xxx_timestamp_difference_depth.csv`, where `xxx` represents the camera's serial number. The latency is represented by the difference between the system timestamp and the device timestamp. 
+### Timestamp Tracking and Latency
+
+Timestamp collection and latency measurement have moved to the [Timestamp Tracker Tool](../timestamp_tracker/README.md), which is included in the SDK package as `ob_timestamp_tracker`. Use that tool to collect system, global, device, and application receive timestamps for supported streams and devices. It also enables global timestamps automatically when the connected device supports them.
 
 ## Advanced requirements
 The benchmark included in the SDK zip package only supports the Gemini 330 series. If you need to test other devices or add additional test items, you will need to modify the benchmark code. To do this, download the SDK source code, make the necessary changes, and then recompile it.
