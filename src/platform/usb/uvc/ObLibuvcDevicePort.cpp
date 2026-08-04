@@ -153,6 +153,7 @@ void ObLibuvcDevicePort::startStream(std::shared_ptr<const StreamProfile> profil
         }
         std::unique_lock<std::mutex> lock(streamMutex_);
         streamHandles_.erase(streamHandles_.end() - 1);
+        uvc_stream_close(uvcStreamHandle);
         THROW_MEMORY_EXCEPTION("uvc_stream_start failed with err_code=UVC_ERROR_NO_MEM, try to increase the usbfs buffer size!");
     }
 
