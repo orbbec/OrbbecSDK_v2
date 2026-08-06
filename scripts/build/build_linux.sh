@@ -16,6 +16,8 @@ if [ "$ARCH" = "aarch64" ]; then
     PLATFORM=${SYSTEM}_arm64
 elif [ "$ARCH" = "armv7l" ]; then
     PLATFORM=${SYSTEM}_arm32
+elif [ "$ARCH" = "loongarch64" ]; then
+    PLATFORM=${SYSTEM}_loongarch64
 else
     PLATFORM=${SYSTEM}_$ARCH
 fi
