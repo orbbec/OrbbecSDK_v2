@@ -47,7 +47,7 @@ Here is the device support list of OrbbecSDK v1 (v1.x) and Orbbec SDK v2 (v2.x):
       <td>recommended for new designs</td>
     </tr>
     <tr>
-      <td rowspan="8" style="text-align: center; font-weight: bold;">Gemini 330</td>
+      <td rowspan="10" style="text-align: center; font-weight: bold;">Gemini 330</td>
       <td>Gemini 335Le</td>
       <td>not supported</td>
       <td>recommended for new designs</td>
@@ -84,6 +84,16 @@ Here is the device support list of OrbbecSDK v1 (v1.x) and Orbbec SDK v2 (v2.x):
     </tr>
     <tr>
       <td>Gemini 335Lg</td>
+      <td>not supported</td>
+      <td>recommended for new designs</td>
+    </tr>
+    <tr>
+      <td>Gemini 338Le</td>
+      <td>not supported</td>
+      <td>recommended for new designs</td>
+    </tr>
+    <tr>
+      <td>Gemini 338Lg</td>
       <td>not supported</td>
       <td>recommended for new designs</td>
     </tr>
@@ -266,6 +276,8 @@ After upgrading to the UVC protocol, these devices will have a firmware major ve
 | Gemini 336        | 1.2.20                       |       1.8.10                        |
 | Gemini 336L       | 1.2.20                       |        1.8.10                       |
 | Gemini 335Lg      | 1.3.46                       |        1.8.10                       |
+| Gemini 338Le      | 1.8.17                       |        1.8.17                       |
+| Gemini 338Lg      | 1.8.17                       |        1.8.17                       |
 | Femto Bolt        | 1.1.2                  |              1.1.3                       |
 | Femto Mega        | 1.3.0                  |              1.3.1                       |
 | Femto Mega I        | 2.0.4                  |            2.0.5                     |
