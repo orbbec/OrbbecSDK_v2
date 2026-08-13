@@ -9,7 +9,7 @@ This tool is used to collect frame timestamps from all connected Orbbec cameras.
 ### Command Line Options
 
 ```bash
-./timestamp_tracker [options]
+./ob_timestamp_tracker [options]
 
 Options:
   -t, --time <minutes>          Tracking duration in minutes (default: 60)
@@ -21,12 +21,12 @@ Options:
   -h, --help                    Show help message
 
 Examples:
-  ./timestamp_tracker                           # 1 hour tracking, auto-select streams
-  ./timestamp_tracker -t 30                     # 30 minutes tracking
-  ./timestamp_tracker -t 60 -i 60               # 1 hour with 60s sync interval
-  ./timestamp_tracker -g config.json            # generate default JSON config file
-  ./timestamp_tracker -c config.json            # use JSON config file
-  ./timestamp_tracker -c config.json -t 30      # JSON config, override duration
+  ./ob_timestamp_tracker                           # 1 hour tracking, auto-select streams
+  ./ob_timestamp_tracker -t 30                     # 30 minutes tracking
+  ./ob_timestamp_tracker -t 60 -i 60               # 1 hour with 60s sync interval
+  ./ob_timestamp_tracker -g config.json            # generate default JSON config file
+  ./ob_timestamp_tracker -c config.json            # use JSON config file
+  ./ob_timestamp_tracker -c config.json -t 30      # JSON config, override duration
 ```
 
 Press **ESC** at any time to stop the tool early.
@@ -36,7 +36,7 @@ Press **ESC** at any time to stop the tool early.
 To quickly generate a default config file as a starting point:
 
 ```bash
-./timestamp_tracker -g config.json
+./ob_timestamp_tracker -g config.json
 ```
 
 This writes a default `config.json` which you can edit before use. Stream configuration is then loaded via `-c`:
@@ -75,16 +75,16 @@ When no stream config is provided, the tool auto-selects: Depth + Color (preferr
 
 **Windows:**
 ```powershell
-timestamp_tracker.exe
-timestamp_tracker.exe -g config.json       # generate default config
-timestamp_tracker.exe -c config.json
+ob_timestamp_tracker.exe
+ob_timestamp_tracker.exe -g config.json       # generate default config
+ob_timestamp_tracker.exe -c config.json
 ```
 
 **Linux/macOS/ARM64:**
 ```bash
-sudo ./timestamp_tracker
-sudo ./timestamp_tracker -g config.json    # generate default config
-sudo ./timestamp_tracker -c config.json
+sudo ./ob_timestamp_tracker
+sudo ./ob_timestamp_tracker -g config.json    # generate default config
+sudo ./ob_timestamp_tracker -c config.json
 ```
 
 The tool will automatically:
@@ -203,27 +203,27 @@ cmake -DOB_BUILD_TOOLS=ON ..
 
 ### Step 3: Run the tool
 After building, the executable will be located in:
-- Windows: `build/win_x64/bin/timestamp_tracker.exe`
-- Linux: `build/linux_x86_64/bin/timestamp_tracker`
-- ARM64: `build/linux_arm64/bin/timestamp_tracker`
+- Windows: `build/win_x64/bin/ob_timestamp_tracker.exe`
+- Linux: `build/linux_x86_64/bin/ob_timestamp_tracker`
+- ARM64: `build/linux_arm64/bin/ob_timestamp_tracker`
 
 ## Troubleshooting
 
 ### No devices found
 - Ensure the camera is properly connected
 - On Linux, install udev rules: `sudo ./scripts/env_setup/install_udev_rules.sh`
-- Run with sudo on Linux: `sudo ./timestamp_tracker`
+- Run with sudo on Linux: `sudo ./ob_timestamp_tracker`
 
 ### Permission denied (Linux)
 The tool requires elevated permissions to access USB devices:
 ```bash
-sudo ./timestamp_tracker
+sudo ./ob_timestamp_tracker
 ```
 
 ### Timestamp drift in long tracking sessions
 Use periodic time synchronization:
 ```bash
-./timestamp_tracker -t 120 -i 60  # Sync every 60 seconds
+./ob_timestamp_tracker -t 120 -i 60  # Sync every 60 seconds
 ```
 
 ### CSV files not generated
