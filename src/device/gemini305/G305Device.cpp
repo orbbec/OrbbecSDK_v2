@@ -144,7 +144,8 @@ void G305Device::init() {
     }
 
     if(fwVersion >= 10072) {
-        if(deviceInfo_->pid_ != 0x0845) {
+        // Frame interleave: Gemini 309g (0x0845) requires firmware 1.0.88+, other Gemini 305 series 1.0.72+.
+        if(deviceInfo_->pid_ != 0x0845 || fwVersion >= 10088) {
             auto frameInterleaveManager = std::make_shared<G305FrameInterleaveManager>(this);
             registerComponent(OB_DEV_COMPONENT_FRAME_INTERLEAVE_MANAGER, frameInterleaveManager);
         }
