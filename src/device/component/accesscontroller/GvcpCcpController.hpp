@@ -46,11 +46,13 @@ private:
     static int32_t     getFirmwareVersionInt(const std::string &version);
     static std::string resolveCcpMinVersion(int vid, int pid);
     static bool        isTimeoutOrUnreachable(int32_t errorCode);
+    static bool        isCcpEnabled();
     bool               checkCcpCapability(const std::string &minVersion);
+    void               loadConfig();
 
-private:
     std::atomic<OBDeviceAccessMode>          accessMode_{ OB_DEVICE_ACCESS_DENIED };
     bool                                     ccpSupported_{ false };
+    bool                                     ccpEnabled_{ true };
     std::shared_ptr<const NetSourcePortInfo> portInfo_;
     std::shared_ptr<GVCPTransmit>            gvcpTransmit_;
     std::thread                              keepaliveThread_;

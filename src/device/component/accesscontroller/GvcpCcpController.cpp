@@ -5,6 +5,7 @@
 
 #include "GvcpCcpController.hpp"
 #include "common/DeviceSeriesInfo.hpp"
+#include "environment/EnvConfig.hpp"
 #include "logger/Logger.hpp"
 #include "logger/LoggerInterval.hpp"
 #include "logger/LoggerSnWrapper.hpp"
@@ -14,6 +15,12 @@ namespace libobsensor {
 #define GetCurrentSN() portInfo_->serialNumber
 
 GvcpCcpController::GvcpCcpController(const std::shared_ptr<const IDeviceEnumInfo> &info) {
+    loadConfig();
+
+    if(!ccpEnabled_) {
+        return;
+    }
+
     // create gvcp transmitor
     auto portInfo    = info->getSourcePortInfoList().front();
     auto netPortInfo = std::dynamic_pointer_cast<const NetSourcePortInfo>(portInfo);
@@ -31,6 +38,19 @@ GvcpCcpController::GvcpCcpController(const std::shared_ptr<const IDeviceEnumInfo
 
 GvcpCcpController::~GvcpCcpController() {
     TRY_EXECUTE({ releaseControl(); });
+}
+
+void GvcpCcpController::loadConfig() {
+    ccpEnabled_ = isCcpEnabled();
+}
+
+bool GvcpCcpController::isCcpEnabled() {
+    bool              enabled = true;
+    auto              envConfig = EnvConfig::getInstance();
+    if(envConfig) {
+        envConfig->getBooleanValue("Device.CcpEnable", enabled);
+    }
+    return enabled;
 }
 
 int32_t GvcpCcpController::getFirmwareVersionInt(const std::string &version) {
@@ -132,6 +152,10 @@ bool GvcpCcpController::checkCcpCapability(const std::string &minVersion) {
 }
 
 OBDeviceAccessState GvcpCcpController::queryAccessState(const std::shared_ptr<const IDeviceEnumInfo> &info) {
+    if(!isCcpEnabled()) {
+        return OB_DEVICE_ACCESS_STATE_UNSUPPORTED;
+    }
+
     auto portInfo    = info->getSourcePortInfoList().front();
     auto netPortInfo = std::dynamic_pointer_cast<const NetSourcePortInfo>(portInfo);
     if(!netPortInfo) {
@@ -269,7 +293,7 @@ void GvcpCcpController::acquireControl(OBDeviceAccessMode accessMode) {
 }
 
 void GvcpCcpController::releaseControl() {
-    if(!ccpSupported_) {
+    if(!ccpEnabled_ || !ccpSupported_) {
         return;
     }
     // stop heartbeat
