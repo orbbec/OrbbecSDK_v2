@@ -26,6 +26,7 @@
 #include "exception/ObException.hpp"
 #include "frame/FrameFactory.hpp"
 #include "common/DevicePids.hpp"
+#include "common/DeviceSeriesInfo.hpp"
 
 #include <iostream>
 #include <chrono>
@@ -2013,8 +2014,13 @@ const std::vector<UsbInterfaceInfo> ObV4lGmslDevicePort::queryDevicesInfo() {
         }
 
         UsbInterfaceInfo info{};
-        info.vid              = (devInfo.vid != 0) ? devInfo.vid : GMSL_VID_ORBBEC;
-        info.pid              = devInfo.pid;
+        info.vid = (devInfo.vid != 0) ? devInfo.vid : GMSL_VID_ORBBEC;
+        info.pid = devInfo.pid;
+
+        if(!isSupportedDevice(info.vid, info.pid)) {
+            continue;
+        }
+
         info.infName          = devName;
         info.infUrl           = video_path;
         info.infNameDescIndex = 0;  // unsupported
