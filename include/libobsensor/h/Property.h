@@ -683,6 +683,19 @@ typedef enum {
     OB_PROP_MJPEG_QUALITY_INT = 277,
 
     /**
+     * @brief Color AE/AWB status.
+     * @param value
+     *   - 0: Converging.
+     *          Both AE and AWB algorithms are dynamically adjusting,
+     *          and the parameters have not yet stabilized.
+     *
+     *   - 1: Dual Convergence.
+     *          Both AE and AWB algorithms have completed convergence,
+     *          and the system is in a stable imaging state.
+     */
+    OB_PROP_COLOR_AE_AWB_STATUS_INT = 287,
+
+    /**
      * @brief Baseline calibration parameters
      */
     OB_STRUCT_BASELINE_CALIBRATION_PARAM = 1002,
@@ -788,6 +801,12 @@ typedef enum {
      * @see OBNetIpConfigV2
      */
     OB_STRUCT_DEVICE_IP_ADDR_CONFIG_V2 = 1088,
+
+    /**
+     * @brief Color AWB gain parameters
+     * @see OBAwbGainParams
+     */
+    OB_STRUCT_COLOR_AWB_GAIN = 1097,
 
     /**
      * @brief Color camera auto exposure
@@ -1133,6 +1152,7 @@ typedef enum {
 #define OB_PROP_DEPTH_SOFT_FILTER_BOOL OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_BOOL
 #define OB_PROP_DEPTH_MAX_DIFF_INT OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_DIFF_INT
 #define OB_PROP_DEPTH_MAX_SPECKLE_SIZE_INT OB_PROP_DEPTH_NOISE_REMOVAL_FILTER_MAX_SPECKLE_SIZE_INT
+#define OB_PROP_COLOR_AE_AWB_STAT_INT OB_PROP_COLOR_AE_AWB_STATUS_INT
 
 /**
  * @brief The data type used to describe all property settings
