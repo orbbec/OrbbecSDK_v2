@@ -1310,6 +1310,14 @@ void G330Device::initProperties() {
     auto baseLinePropertyAccessor = std::make_shared<BaselinePropertyAccessor>(this);
     propertyServer->registerProperty(OB_STRUCT_BASELINE_CALIBRATION_PARAM, "r", "r", baseLinePropertyAccessor);
 
+    // Gemini 330 (0x0801) and Gemini 330L (0x0805) have no LDP module, unregister the LDP properties.
+    auto vid = deviceInfo_->vid_;
+    auto pid = deviceInfo_->pid_;
+    if(vid == ORBBEC_DEVICE_VID && (pid == 0x0801 || pid == 0x0805)) {
+        propertyServer->unregisterProperty(OB_PROP_LDP_BOOL);
+        propertyServer->unregisterProperty(OB_PROP_LDP_MEASURE_DISTANCE_INT);
+    }
+
     registerComponent(OB_DEV_COMPONENT_PROPERTY_SERVER, propertyServer, false);
 }
 
