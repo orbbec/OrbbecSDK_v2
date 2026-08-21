@@ -12,6 +12,8 @@
 
 #include <list>
 #include <regex>
+#include <utility>
+#include <vector>
 
 #include <linux/media.h>
 #include <linux/videodev2.h>
@@ -632,8 +634,16 @@ void writeBufferToFile(const char *buf, std::size_t size, const std::string &fil
 }
 
 void ObV4lGmslDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandleGmsl> devHandle) {
-    int metadataBufferIndex = -1;
-    int colorFrameNum       = 0;  // DaBaiA series only: drop first 3 color frames to fix green screen issue
+    struct CachedMetadataGmsl {
+        bool                 valid    = false;
+        uint32_t             sequence = 0;
+        uint32_t             size     = 0;
+        std::vector<uint8_t> data;  // full metadata payload
+    };
+    std::array<CachedMetadataGmsl, MAX_BUFFER_COUNT_GMSL> metadataCache{};     // per-buffer metadata cache, matched by sequence
+    CachedMetadataGmsl                                    lastUsedMetadata{};  // fallback: last metadata attached to a video frame
+    int                                                   colorFrameNum = 0;   // DaBaiA series only: drop first 3 color frames to fix green screen issue
+    const uint8_t                                         metadataPadding[sizeof(StandardUvcFramePayloadHeader)] = {};
 
     devHandle->loopFrameIndex.store(1);  // frame number start from 1
     try {
@@ -659,6 +669,42 @@ void ObV4lGmslDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandleGmsl> devHa
         // wait stream on
         devHandle->streamCv.wait(lock, [&]() { return devHandle->canStartCapture.load() || !devHandle->isCapturing.load(); });
         LOG_INFO("Start to capture: {}", devHandle->info->name);
+
+        auto readMetadata = [&](bool metadataEventTriggered) {
+            v4l2_buffer metadataBuf = {};
+            metadataBuf.type        = LOCAL_V4L2_BUF_TYPE_META_CAPTURE_GMSL;
+            metadataBuf.memory      = USE_MEMORY_MMAP ? V4L2_MEMORY_MMAP : V4L2_MEMORY_USERPTR;
+            if(xioctlGmsl(devHandle->metadataFd, VIDIOC_DQBUF, &metadataBuf) < 0) {
+                if(metadataEventTriggered || errno != EAGAIN) {
+                    LOG_INTVL(LOG_INTVL_OBJECT_TAG + "captureLoop", 5000, spdlog::level::err, "devHandle->metadataFd VIDIOC_DQBUF failed, {}, {}",
+                              strerror(errno), devHandle->metadataInfo->name);
+                }
+                return;
+            }
+            auto &sourceBuffer = devHandle->metadataBuffers[metadataBuf.index];
+            auto &cache        = metadataCache[metadataBuf.index];
+            cache.valid        = false;
+            cache.size         = 0;
+            if((metadataBuf.bytesused) && (!(metadataBuf.flags & V4L2_BUF_FLAG_ERROR))) {
+                const auto metadataSize = std::min<uint32_t>(metadataBuf.bytesused, sourceBuffer.length);
+                if(metadataSize > 0) {
+                    cache.data.resize(metadataSize);
+                    std::memcpy(cache.data.data(), sourceBuffer.ptr, metadataSize);
+                    cache.valid    = true;
+                    cache.sequence = metadataBuf.sequence;
+                    cache.size     = metadataSize;
+                }
+            }
+
+            if(xioctlGmsl(devHandle->metadataFd, VIDIOC_QBUF, &metadataBuf) < 0) {
+                LOG_INTVL(LOG_INTVL_OBJECT_TAG + "captureLoop", 5000, spdlog::level::err, "devHandle->metadataFd VIDIOC_QBUF failed, {}, {}", strerror(errno),
+                          devHandle->metadataInfo->name);
+            }
+        };
+        auto findMetadata = [&](uint32_t sequence) {
+            return std::find_if(metadataCache.begin(), metadataCache.end(),
+                                [sequence](const CachedMetadataGmsl &metadata) { return metadata.valid && metadata.sequence == sequence; });
+        };
 
         // capture video frames
         while(devHandle->isCapturing) {
@@ -704,27 +750,7 @@ void ObV4lGmslDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandleGmsl> devHa
 
             if(devHandle->metadataFd >= 0 && FD_ISSET(devHandle->metadataFd, &fds)) {
                 FD_CLR(devHandle->metadataFd, &fds);
-                v4l2_buffer buf = { 0 };
-                memset(&buf, 0, sizeof(buf));
-                buf.type   = LOCAL_V4L2_BUF_TYPE_META_CAPTURE_GMSL;
-                buf.memory = USE_MEMORY_MMAP ? V4L2_MEMORY_MMAP : V4L2_MEMORY_USERPTR;
-                if(xioctlGmsl(devHandle->metadataFd, VIDIOC_DQBUF, &buf) < 0) {
-                    LOG_INTVL(LOG_INTVL_OBJECT_TAG + "captureLoop", 5000, spdlog::level::err, "devHandle->metadataFd VIDIOC_DQBUF failed, {}, {}",
-                              strerror(errno), devHandle->metadataInfo->name);
-                }
-
-                if((buf.bytesused) && (!(buf.flags & V4L2_BUF_FLAG_ERROR))) {
-                    devHandle->metadataBuffers[buf.index].actual_length = buf.bytesused;
-                    devHandle->metadataBuffers[buf.index].sequence      = buf.sequence;
-                    metadataBufferIndex                                 = buf.index;
-                }
-
-                if(devHandle->isCapturing) {
-                    if(xioctlGmsl(devHandle->metadataFd, VIDIOC_QBUF, &buf) < 0) {
-                        LOG_INTVL(LOG_INTVL_OBJECT_TAG + "captureLoop", 5000, spdlog::level::err, "devHandle->metadataFd VIDIOC_QBUF failed, {}, {}",
-                                  strerror(errno), devHandle->metadataInfo->name);
-                    }
-                }
+                readMetadata(true);
             }
 
             if(FD_ISSET(devHandle->fd, &fds)) {
@@ -737,6 +763,7 @@ void ObV4lGmslDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandleGmsl> devHa
                 if(xioctlGmsl(devHandle->fd, VIDIOC_DQBUF, &buf) < 0) {
                     LOG_INTVL(LOG_INTVL_OBJECT_TAG + "captureLoop", 5000, spdlog::level::err, "devHandle->fd VIDIOC_DQBUF failed, {}, {}", strerror(errno),
                               devHandle->info->name);
+                    continue;
                 }
 
                 if((buf.bytesused) && (!(buf.flags & V4L2_BUF_FLAG_ERROR))) {
@@ -752,17 +779,29 @@ void ObV4lGmslDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandleGmsl> devHa
                             videoFrame->updateData(devHandle->buffers[buf.index].ptr, buf.bytesused);
                         }
 
-                        if(metadataBufferIndex >= 0) {
-                            // temp fix orbbecviewer metadata view flash issue. reason:Occasional missing of one frame in metadata data.
-                            auto &metaBuf                = devHandle->metadataBuffers[metadataBufferIndex];
-                            auto  uvc_payload_header     = metaBuf.ptr;
-                            auto  uvc_payload_header_len = metaBuf.actual_length;
-                            videoFrame->updateMetadata(static_cast<const uint8_t *>(uvc_payload_header), 12);
-                            videoFrame->appendMetadata(static_cast<const uint8_t *>(uvc_payload_header), uvc_payload_header_len);
+                        if(devHandle->metadataFd >= 0) {
+                            auto metadataIter = findMetadata(buf.sequence);
+                            if(metadataIter == metadataCache.end()) {
+                                // the metadata for this video frame may have been queued after the last select(); try one non-blocking read
+                                readMetadata(false);
+                                metadataIter = findMetadata(buf.sequence);
+                            }
 
-                            if(uvc_payload_header_len >= sizeof(StandardUvcFramePayloadHeader)) {
-                                auto payloadHeader = (StandardUvcFramePayloadHeader *)uvc_payload_header;
-                                videoFrame->setTimeStampUsec(payloadHeader->dwPresentationTime);
+                            if(metadataIter != metadataCache.end()) {
+                                // matched by sequence -- use the cached metadata and remember it as the last-used fallback
+                                auto &cachedMeta = *metadataIter;
+                                videoFrame->updateMetadata(metadataPadding, sizeof(metadataPadding));
+                                videoFrame->appendMetadata(static_cast<const uint8_t *>(cachedMeta.data.data()), cachedMeta.size);
+                                std::swap(lastUsedMetadata, cachedMeta);
+                                cachedMeta.valid = false;  // consume it so it cannot be matched twice
+                                cachedMeta.size  = 0;
+                            }
+                            else if(lastUsedMetadata.valid) {
+                                // no matching metadata -- reuse the last metadata attached to a video frame
+                                LOG_INTVL(LOG_INTVL_OBJECT_TAG + "captureLoop", 5000, spdlog::level::warn, "Use last metadata, video/metadata seq: {}/{}, {}",
+                                          buf.sequence, lastUsedMetadata.sequence, devHandle->info->name);
+                                videoFrame->updateMetadata(metadataPadding, sizeof(metadataPadding));
+                                videoFrame->appendMetadata(static_cast<const uint8_t *>(lastUsedMetadata.data.data()), lastUsedMetadata.size);
                             }
                         }
 
@@ -793,11 +832,9 @@ void ObV4lGmslDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandleGmsl> devHa
                     });
                 }
 
-                if(devHandle->isCapturing) {
-                    if(xioctlGmsl(devHandle->fd, VIDIOC_QBUF, &buf) < 0) {
-                        LOG_INTVL(LOG_INTVL_OBJECT_TAG + "captureLoop", 5000, spdlog::level::err, "devHandle->fd VIDIOC_QBUF failed, {}, {}", strerror(errno),
-                                  devHandle->info->name);
-                    }
+                if(xioctlGmsl(devHandle->fd, VIDIOC_QBUF, &buf) < 0) {
+                    LOG_INTVL(LOG_INTVL_OBJECT_TAG + "captureLoop", 5000, spdlog::level::err, "devHandle->fd VIDIOC_QBUF failed, {}, {}", strerror(errno),
+                              devHandle->info->name);
                 }
             }
         }
