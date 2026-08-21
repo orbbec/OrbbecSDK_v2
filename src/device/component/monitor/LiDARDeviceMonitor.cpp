@@ -21,8 +21,7 @@ LiDARDeviceMonitor::LiDARDeviceMonitor(IDevice *owner, std::shared_ptr<ISourcePo
 LiDARDeviceMonitor::~LiDARDeviceMonitor() noexcept {}
 
 OBDeviceState LiDARDeviceMonitor::getCurrentDeviceState() const {
-    LOG_ERROR("LiDAR device doesn't support heartbeat and fetching state right now!");
-    return 0x00;
+    THROW_NOT_IMPLEMENTED_EXCEPTION("LiDAR device doesn't support heartbeat and fetching state right now!");
 }
 
 int LiDARDeviceMonitor::registerStateChangedCallback(DeviceStateChangedCallback callback) {
@@ -33,6 +32,7 @@ int LiDARDeviceMonitor::registerStateChangedCallback(DeviceStateChangedCallback 
 
 void LiDARDeviceMonitor::unregisterStateChangedCallback(int callbackId) {
     utils::unusedVar(callbackId);
+    THROW_NOT_IMPLEMENTED_EXCEPTION("LiDAR device doesn't support heartbeat and fetching state right now!");
 }
 
 void LiDARDeviceMonitor::enableHeartbeat() {
@@ -44,7 +44,7 @@ void LiDARDeviceMonitor::disableHeartbeat() {
 }
 
 bool LiDARDeviceMonitor::isHeartbeatEnabled() const {
-    return false;
+    THROW_NOT_IMPLEMENTED_EXCEPTION("LiDAR device doesn't support heartbeat and fetching state right now!");
 }
 
 void LiDARDeviceMonitor::pauseHeartbeat() {
@@ -74,6 +74,15 @@ void LiDARDeviceMonitor::disableFirmwareLog() {
 }
 
 bool LiDARDeviceMonitor::isFirmwareLogEnabled() const {
-    return false;
+    THROW_NOT_IMPLEMENTED_EXCEPTION("LiDAR device doesn't support firmware log right now!");
+}
+
+void LiDARDeviceMonitor::setPollInterval(uint32_t intervalMs) {
+    utils::unusedVar(intervalMs);
+    THROW_NOT_IMPLEMENTED_EXCEPTION("LiDAR device doesn't support device monitor polling right now!");
+}
+
+uint32_t LiDARDeviceMonitor::getPollInterval() const {
+    THROW_NOT_IMPLEMENTED_EXCEPTION("LiDAR device doesn't support device monitor polling right now!");
 }
 }  // namespace libobsensor

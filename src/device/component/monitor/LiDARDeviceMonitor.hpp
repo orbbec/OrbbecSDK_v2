@@ -12,7 +12,7 @@ namespace libobsensor {
 
 /**
  * @brief LiDARDeviceMonitor class
- * @details TODO: LiDAR device doesn't support heartbeat and get state now
+ * @details LiDAR devices do not support heartbeat, firmware log, or device monitor polling.
  */
 class LiDARDeviceMonitor : public IDeviceMonitor, public DeviceComponentBase {
 public:
@@ -30,6 +30,9 @@ public:
     void          enableFirmwareLog() override;
     void          disableFirmwareLog() override;
     bool          isFirmwareLogEnabled() const override;
+
+    void     setPollInterval(uint32_t intervalMs) override;
+    uint32_t getPollInterval() const override;
 
     void sendAndReceiveData(const uint8_t *sendData, uint32_t sendDataSize, uint8_t *receiveData, uint32_t *receiveDataSize) override;
 

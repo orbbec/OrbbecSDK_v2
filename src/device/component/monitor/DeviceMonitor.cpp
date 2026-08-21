@@ -4,12 +4,16 @@
 #include "DeviceMonitor.hpp"
 #include "protocol/Protocol.hpp"
 #include "property/InternalProperty.hpp"
+#include "utils/Utils.hpp"
 #include "exception/ObException.hpp"
 #include "logger/LoggerSnWrapper.hpp"  // Must be included last to override log macros
 
 namespace libobsensor {
 
-const uint16_t MAX_RECV_DATA_SIZE = 1024;
+constexpr uint16_t MAX_RECV_DATA_SIZE = 1024;
+constexpr uint32_t DEFAULT_INTERVAL   = 3000;
+constexpr uint32_t MIN_INTERVAL       = 1000;
+constexpr uint32_t MAX_INTERVAL       = 10000;
 
 const std::string &DeviceMonitor::GetCurrentSN() const {
     auto owner = getOwner();
@@ -28,6 +32,8 @@ DeviceMonitor::DeviceMonitor(IDevice *owner, std::shared_ptr<ISourcePort> dataPo
       heartbeatEnabled_(false),
       heartbeatPaused_(false),
       firmwareLogEnabled_(false),
+      interval_(DEFAULT_INTERVAL),
+      intervalUpdated_(false),
       hbRecvData_(MAX_RECV_DATA_SIZE),
       hbSendData_(MAX_RECV_DATA_SIZE) {
     vendorDataPort_ = std::dynamic_pointer_cast<IVendorDataPort>(dataPort);
@@ -62,15 +68,24 @@ void DeviceMonitor::start() {
     }
     heartbeatAndFetchStateThreadStarted_ = true;
     heartbeatAndFetchStateThread_        = std::thread([this]() {
-        const uint32_t HEARTBEAT_INTERVAL_MS = 3000;
+        utils::Timer timer;
         while(heartbeatAndFetchStateThreadStarted_) {
             std::unique_lock<std::mutex> lock(commMutex_);
-            heartbeatAndFetchStateThreadCv_.wait_for(lock, std::chrono::milliseconds(HEARTBEAT_INTERVAL_MS),
-                                                            [this]() { return !heartbeatAndFetchStateThreadStarted_; });
+            const auto                   interval = interval_.load();
+            heartbeatAndFetchStateThreadCv_.wait_for(lock, std::chrono::milliseconds(interval),
+                                                            [this]() { return !heartbeatAndFetchStateThreadStarted_ || intervalUpdated_; });
             if(!heartbeatAndFetchStateThreadStarted_) {
                 break;
             }
+            if(intervalUpdated_) {
+                intervalUpdated_ = false;
+                if(timer.touchMs(false) < interval_.load()) {
+                    timer.reset();
+                    continue;
+                }
+            }
             heartbeatAndFetchState();
+            timer.reset();
         }
     });
 }
@@ -296,6 +311,26 @@ void DeviceMonitor::disableFirmwareLog() {
 
 bool DeviceMonitor::isFirmwareLogEnabled() const {
     return firmwareLogEnabled_;
+}
+
+void DeviceMonitor::setPollInterval(uint32_t intervalMs) {
+    if(intervalMs < MIN_INTERVAL) {
+        intervalMs = MIN_INTERVAL;
+    }
+    else if(intervalMs > MAX_INTERVAL) {
+        intervalMs = MAX_INTERVAL;
+    }
+    {
+        std::lock_guard<std::mutex> lock(commMutex_);
+        interval_.store(intervalMs);
+        intervalUpdated_ = true;
+    }
+    heartbeatAndFetchStateThreadCv_.notify_one();
+    LOG_DEBUG("Device monitor poll interval set to {} ms", intervalMs);
+}
+
+uint32_t DeviceMonitor::getPollInterval() const {
+    return interval_.load();
 }
 
 }  // namespace libobsensor

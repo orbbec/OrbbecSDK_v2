@@ -28,6 +28,9 @@ public:
     void          disableFirmwareLog() override;
     bool          isFirmwareLogEnabled() const override;
 
+    void     setPollInterval(uint32_t intervalMs) override;
+    uint32_t getPollInterval() const override;
+
     void sendAndReceiveData(const uint8_t *sendData, uint32_t sendDataSize, uint8_t *receiveData, uint32_t *receiveDataSize) override;
 
 private:
@@ -51,6 +54,8 @@ private:
     std::atomic<bool>     heartbeatEnabled_;
     std::atomic<bool>     heartbeatPaused_;
     std::atomic<bool>     firmwareLogEnabled_;
+    std::atomic<uint32_t> interval_;
+    bool                  intervalUpdated_;
 
     std::vector<uint8_t> hbRecvData_;
     std::vector<uint8_t> hbSendData_;

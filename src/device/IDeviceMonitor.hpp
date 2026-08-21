@@ -30,6 +30,9 @@ public:
     virtual void disableFirmwareLog()         = 0;
     virtual bool isFirmwareLogEnabled() const = 0;
 
+    virtual void     setPollInterval(uint32_t intervalMs) = 0;
+    virtual uint32_t getPollInterval() const              = 0;
+
     // for debug and vendor specific purpose
     virtual void sendAndReceiveData(const uint8_t *sendData, uint32_t sendDataSize, uint8_t *receiveData, uint32_t *receiveDataSize) = 0;
 };
