@@ -9,6 +9,7 @@
 #include <mutex>
 #include <string>
 #include <iomanip>
+#include <atomic>
 
 const std::map<std::string, int> openni_device_list = { { "Astra Mini S Pro", 0x065e }, { "Astra Mini Pro", 0x065b }, { "DaBai Max", 0x069a },
                                                         { "DaBai Max Pro", 0x069e },    { "Gemini UW", 0x06aa },      { "DaBai DW2", 0x069f },
@@ -48,6 +49,36 @@ std::shared_ptr<ob::VideoStreamProfile>                         depthProfile = n
 std::shared_ptr<ob::VideoStreamProfile>                         irProfile    = nullptr;
 
 std::shared_ptr<ob::Filter> align = nullptr;
+
+struct InputThreadState {
+    std::atomic<bool> stop     = { false };
+    std::atomic<bool> finished = { false };
+    std::mutex        commandMutex;
+};
+
+class InputThreadCleanup {
+public:
+    InputThreadCleanup(std::thread &thread, const std::shared_ptr<InputThreadState> &state) : thread_(thread), state_(state) {}
+    ~InputThreadCleanup() {
+        if(!thread_.joinable()) {
+            return;
+        }
+        state_->stop.store(true);
+        {
+            std::lock_guard<std::mutex> commandLock(state_->commandMutex);
+        }
+        if(state_->finished.load()) {
+            thread_.join();
+        }
+        else {
+            thread_.detach();
+        }
+    }
+
+private:
+    std::thread                      &thread_;
+    std::shared_ptr<InputThreadState> state_;
+};
 
 void handleDeviceConnected(std::shared_ptr<ob::DeviceList> connectList);
 void handleDeviceDisconnected(std::shared_ptr<ob::DeviceList> disconnectList);
@@ -98,26 +129,42 @@ int main(void) try {
     irRightMirrorSupport = device->isPropertySupported(OB_PROP_IR_RIGHT_MIRROR_BOOL, OB_PERMISSION_READ_WRITE);
     printUsage();
 
-    auto inputWatchThread = std::thread([]{
+    auto inputState       = std::make_shared<InputThreadState>();
+    auto inputWindow      = win;
+    auto inputWatchThread = std::thread([inputState, inputWindow] {
         while(true) {
             std::string cmd;
             std::cout << "\nInput command:  ";
             std::getline(std::cin, cmd);
+            std::lock_guard<std::mutex> lock(inputState->commandMutex);
+            if(inputState->stop.load()) {
+                break;
+            }
+            if(std::cin.eof()) {
+                std::cout << "Input stream closed (EOF), exiting." << std::endl;
+                inputWindow->close();
+                break;
+            }
             if(cmd == "quit" || cmd == "q") {
-                win->close();
+                inputWindow->close();
                 break;
             }
             else {
                 commandProcess(cmd);
             }
         }
+        inputState->finished.store(true);
     });
-    inputWatchThread.detach();
+
+    InputThreadCleanup inputThreadCleanup(inputWatchThread, inputState);
 
     while(win->run()) {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
+    // Prevent the input thread from dispatching commands while resources are being stopped.
+    std::lock_guard<std::mutex> commandLock(inputState->commandMutex);
+    inputState->stop.store(true);
     if(pipeline) {
         pipeline->stop();
     }
@@ -140,9 +187,7 @@ int main(void) try {
 catch(ob::Error &e) {
     std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\nstatus:" << e.getStatus()
               << "\ntype:" << e.getExceptionType() << std::endl;
-    std::cout << "\nPress any key to exit.";
-    ob_smpl::waitForKeyPressed();
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
 }
 
 // Device connection callback
@@ -768,13 +813,13 @@ void setDepthGainValue(bool increase) {
                     auto pid = device->getDeviceInfo()->getPid();
                     if(isOpenniDeviceSeries(pid) && (vid == 0x2BC5)) {
                         if(increase) {
-                            value ++;
+                            value++;
                             if(value > valueRange.max) {
                                 value = valueRange.max;
                             }
                         }
                         else {
-                            value --;
+                            value--;
                             if(value < valueRange.min) {
                                 value = valueRange.min;
                             }

@@ -17,7 +17,9 @@ int main(void) try {
     std::atomic<bool> exited(false);
     std::string       filePath;
     // Get valid .bag file path from user input
-    getRosbagPath(filePath);
+    if(!getRosbagPath(filePath)) {
+        return 0;
+    }
 
     // Create a playback device with a Rosbag file
     std::shared_ptr<ob::PlaybackDevice> playback = std::make_shared<ob::PlaybackDevice>(filePath);
@@ -42,7 +44,6 @@ int main(void) try {
         }
         frameCount++;
     };
-
 
     std::mutex                    replayMutex;
     std::condition_variable       replayCv;
@@ -131,6 +132,10 @@ bool getRosbagPath(std::string &rosbagPath) {
         std::cout << "Path: ";
         std::string input;
         std::getline(std::cin, input);
+        if(std::cin.eof()) {
+            std::cout << "Input stream closed (EOF), exiting." << std::endl;
+            return false;
+        }
 
         // Remove leading and trailing whitespaces
         input.erase(std::find_if(input.rbegin(), input.rend(), [](unsigned char ch) { return !std::isspace(ch); }).base(), input.end());

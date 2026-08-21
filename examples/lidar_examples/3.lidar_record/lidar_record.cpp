@@ -10,6 +10,8 @@
 #include <thread>
 #include <atomic>
 #include <map>
+#include <limits>
+#include <exception>
 
 std::shared_ptr<ob::Device> selectDevice(std::shared_ptr<ob::DeviceList> deviceList);
 
@@ -35,6 +37,9 @@ int main(void) try {
         device = selectDevice(deviceList);
         std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     }
+    if(device == nullptr) {
+        return 0;
+    }
 
     // Check LiDAR device
     if(!ob_smpl::isLiDARDevice(device)) {
@@ -46,8 +51,12 @@ int main(void) try {
     std::cout << "Please enter the output filename (with .bag extension) and press Enter to start recording: ";
     std::string filePath;
     std::getline(std::cin, filePath);
+    if(std::cin.eof()) {
+        std::cout << "Input stream closed (EOF), exiting." << std::endl;
+        return 0;
+    }
     std::string suffix = ".bag";
-    if(filePath.compare(filePath.length() - suffix.length(), suffix.length(), suffix) != 0) {
+    if(filePath.size() < suffix.size() || filePath.compare(filePath.size() - suffix.size(), suffix.size(), suffix) != 0) {
         filePath.append(suffix);
     }
 
@@ -152,6 +161,12 @@ catch(ob::Error &e) {
     ob_smpl::waitForKeyPressed();
     exit(EXIT_FAILURE);
 }
+catch(std::exception &e) {
+    std::cerr << "Error: " << e.what() << std::endl;
+    std::cout << "\nPress any key to exit.";
+    ob_smpl::waitForKeyPressed();
+    exit(EXIT_FAILURE);
+}
 
 // Select a device, the name, pid, vid, uid of the device will be printed here, and the corresponding device object will be created after selection
 std::shared_ptr<ob::Device> selectDevice(std::shared_ptr<ob::DeviceList> deviceList) {
@@ -165,12 +180,18 @@ std::shared_ptr<ob::Device> selectDevice(std::shared_ptr<ob::DeviceList> deviceL
     std::cout << "Select a device: ";
 
     int devIndex;
-    std::cin >> devIndex;
-    while(devIndex < 0 || devIndex >= devCount || std::cin.fail()) {
-        std::cin.clear();
-        std::cin.ignore();
-        std::cout << "Your select is out of range, please reselect: " << std::endl;
+    while(true) {
         std::cin >> devIndex;
+        if(!std::cin.fail() && devIndex >= 0 && devIndex < devCount) {
+            break;
+        }
+        if(std::cin.eof()) {
+            std::cout << "Input stream closed (EOF), exiting." << std::endl;
+            return nullptr;
+        }
+        std::cin.clear();
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        std::cout << "Your select is out of range, please reselect: " << std::endl;
     }
 
     return deviceList->getDevice(devIndex);

@@ -8,6 +8,8 @@
 #include <iomanip>
 #include <vector>
 #include <cmath>
+#include <exception>
+#include <limits>
 
 // Select devices
 std::shared_ptr<ob::Device> selectDevice(std::shared_ptr<ob::DeviceList> deviceList);
@@ -38,6 +40,9 @@ int main(void) try {
     }
     else {
         device = selectDevice(deviceList);
+    }
+    if(device == nullptr) {
+        return 0;
     }
 
     // Check LiDAR device
@@ -135,6 +140,12 @@ catch(ob::Error &e) {
     ob_smpl::waitForKeyPressed();
     exit(EXIT_FAILURE);
 }
+catch(std::exception &e) {
+    std::cerr << "Error: " << e.what() << std::endl;
+    std::cout << "\nPress any key to exit.";
+    ob_smpl::waitForKeyPressed();
+    exit(EXIT_FAILURE);
+}
 
 // Print LiDAR profile information.
 void printLiDARProfile(std::shared_ptr<ob::StreamProfile> profile, uint32_t index) {
@@ -181,12 +192,18 @@ std::shared_ptr<ob::Device> selectDevice(std::shared_ptr<ob::DeviceList> deviceL
     std::cout << "Select a device: ";
 
     int devIndex;
-    std::cin >> devIndex;
-    while(devIndex < 0 || devIndex >= devCount || std::cin.fail()) {
-        std::cin.clear();
-        std::cin.ignore();
-        std::cout << "Your select is out of range, please reselect: " << std::endl;
+    while(true) {
         std::cin >> devIndex;
+        if(!std::cin.fail() && devIndex >= 0 && devIndex < devCount) {
+            break;
+        }
+        if(std::cin.eof()) {
+            std::cout << "Input stream closed (EOF), exiting." << std::endl;
+            return nullptr;
+        }
+        std::cin.clear();
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        std::cout << "Your select is out of range, please reselect: " << std::endl;
     }
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 

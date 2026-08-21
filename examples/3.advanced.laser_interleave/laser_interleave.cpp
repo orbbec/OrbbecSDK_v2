@@ -6,14 +6,46 @@
 #include "utils.hpp"
 #include "utils_opencv.hpp"
 
-void inputWatcher();
+#include <atomic>
 
 std::shared_ptr<ob::Filter>        postDepthFilter         = nullptr;
 std::shared_ptr<ob::Filter>        postLeftInfraredFilter  = nullptr;
 std::shared_ptr<ob::Filter>        postRightInfraredFilter = nullptr;
 std::shared_ptr<ob_smpl::CVWindow> win;
 
-int  main(void) try {
+struct InputThreadState {
+    std::atomic<bool> stop     = { false };
+    std::atomic<bool> finished = { false };
+    std::mutex        commandMutex;
+};
+
+void inputWatcher(std::shared_ptr<ob_smpl::CVWindow> inputWindow, std::shared_ptr<InputThreadState> inputState);
+
+class InputThreadCleanup {
+public:
+    InputThreadCleanup(std::thread &thread, const std::shared_ptr<InputThreadState> &state) : thread_(thread), state_(state) {}
+    ~InputThreadCleanup() {
+        if(!thread_.joinable()) {
+            return;
+        }
+        state_->stop.store(true);
+        {
+            std::lock_guard<std::mutex> commandLock(state_->commandMutex);
+        }
+        if(state_->finished.load()) {
+            thread_.join();
+        }
+        else {
+            thread_.detach();
+        }
+    }
+
+private:
+    std::thread                      &thread_;
+    std::shared_ptr<InputThreadState> state_;
+};
+
+int main(void) try {
     // Create a pipeline with default device
     ob::Pipeline pipe;
 
@@ -42,7 +74,7 @@ int  main(void) try {
     postDepthFilter         = ob::FilterFactory::createFilter("SequenceIdFilter");
     postLeftInfraredFilter  = ob::FilterFactory::createFilter("SequenceIdFilter");
     postRightInfraredFilter = ob::FilterFactory::createFilter("SequenceIdFilter");
-    
+
     // load frame interleave mode as 'Laser On-Off'
     device->loadFrameInterleave("Laser On-Off");
     // enable frame interleave
@@ -70,17 +102,17 @@ int  main(void) try {
     // Start the pipeline with config
     pipe.start(config);
 
-    postDepthFilter->setConfigValue("sequenceid", -1); // sequenceid can be -1,0,1
+    postDepthFilter->setConfigValue("sequenceid", -1);  // sequenceid can be -1,0,1
     postLeftInfraredFilter->setConfigValue("sequenceid", -1);
     postRightInfraredFilter->setConfigValue("sequenceid", -1);
-
-    auto inputWatchThread = std::thread(inputWatcher);
-    inputWatchThread.detach();
 
     // Create a window for rendering and set the resolution of the window
 
     // create window for render
-    win = std::make_shared<ob_smpl::CVWindow>("Laser On-Off", 1280, 720, ob_smpl::ARRANGE_GRID);
+    win                                 = std::make_shared<ob_smpl::CVWindow>("Laser On-Off", 1280, 720, ob_smpl::ARRANGE_GRID);
+    auto               inputState       = std::make_shared<InputThreadState>();
+    auto               inputWatchThread = std::thread(inputWatcher, win, inputState);
+    InputThreadCleanup inputThreadCleanup(inputWatchThread, inputState);
     while(win->run()) {
         auto frameSet = pipe.waitForFrameset(100);
         if(frameSet == nullptr) {
@@ -96,8 +128,11 @@ int  main(void) try {
         };
 
         try {
+            // Serialize filter->process() with the input thread's setConfigValue/enable dispatch.
+            std::lock_guard<std::mutex> commandLock(inputState->commandMutex);
+
             // Using SequenceId filter to filter frames
-            
+
             // 1: depth
             auto depthFrame = postFilter(frameSet, postDepthFilter, OB_FRAME_DEPTH);
             if(depthFrame) {
@@ -124,6 +159,9 @@ int  main(void) try {
         }
     }
 
+    // Wait for an in-flight command before releasing filters and the device.
+    std::lock_guard<std::mutex> commandLock(inputState->commandMutex);
+    inputState->stop.store(true);
     postDepthFilter.reset();
     postLeftInfraredFilter.reset();
     postRightInfraredFilter.reset();
@@ -139,9 +177,7 @@ int  main(void) try {
 catch(ob::Error &e) {
     std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\nstatus:" << e.getStatus()
               << "\ntype:" << e.getExceptionType() << std::endl;
-    std::cout << "\nPress any key to exit...";
-    ob_smpl::waitForKeyPressed();
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
 }
 
 void printCommandTips() {
@@ -158,14 +194,23 @@ void printCommandTips() {
     std::cout << "\nPress 'q' or 'quit' to exit the program." << std::endl;
 }
 
-void inputWatcher() {
+void inputWatcher(std::shared_ptr<ob_smpl::CVWindow> inputWindow, std::shared_ptr<InputThreadState> inputState) {
     while(true) {
         std::string cmd;
 
         printCommandTips();
         std::getline(std::cin, cmd);
+        std::lock_guard<std::mutex> commandLock(inputState->commandMutex);
+        if(inputState->stop.load()) {
+            break;
+        }
+        if(std::cin.eof()) {
+            std::cout << "Input stream closed (EOF), exiting." << std::endl;
+            inputWindow->close();
+            break;
+        }
         if(cmd == "quit" || cmd == "q") {
-            win->close();
+            inputWindow->close();
             break;
         }
         else {
@@ -224,4 +269,5 @@ void inputWatcher() {
             }
         }
     }
+    inputState->finished.store(true);
 }

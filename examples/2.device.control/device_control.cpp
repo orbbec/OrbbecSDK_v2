@@ -12,6 +12,8 @@
 #include <iomanip>
 #include <sstream>
 #include <iostream>
+#include <limits>
+#include <exception>
 #include <algorithm>
 
 std::shared_ptr<ob::Device> selectDevice(std::shared_ptr<ob::DeviceList> deviceList);
@@ -41,10 +43,14 @@ int main(void) try {
             else {
                 device = selectDevice(deviceList);
             }
+            if(device == nullptr) {
+                isSelectDevice = false;
+                break;
+            }
             auto deviceInfo = device->getDeviceInfo();
             std::cout << "\n------------------------------------------------------------------------\n";
             std::cout << "Current Device: "
-                      << " name: " << deviceInfo->getName() << ", vid: 0x" << std::uppercase<<std::hex << deviceInfo->getVid() << ", pid: 0x" << std::setw(4)
+                      << " name: " << deviceInfo->getName() << ", vid: 0x" << std::uppercase << std::hex << deviceInfo->getVid() << ", pid: 0x" << std::setw(4)
                       << std::setfill('0') << deviceInfo->getPid() << ", uid: 0x" << deviceInfo->getUid() << std::dec << std::endl;
         }
         else {
@@ -62,6 +68,12 @@ int main(void) try {
         while(isSelectProperty) {
             std::string choice;
             std::getline(std::cin, choice);
+            if(std::cin.eof()) {
+                std::cout << "Input stream closed (EOF), exiting." << std::endl;
+                isSelectProperty = false;
+                isSelectDevice   = false;
+                break;
+            }
 
             if(choice != "?") {
                 std::istringstream       ss(choice);
@@ -122,6 +134,12 @@ catch(ob::Error &e) {
     ob_smpl::waitForKeyPressed();
     exit(EXIT_FAILURE);
 }
+catch(std::exception &e) {
+    std::cerr << "Error: " << e.what() << std::endl;
+    std::cout << "\nPress any key to exit.";
+    ob_smpl::waitForKeyPressed();
+    exit(EXIT_FAILURE);
+}
 
 // Select a device, the name, pid, vid, uid of the device will be printed here, and the corresponding device object will be created after selection
 std::shared_ptr<ob::Device> selectDevice(std::shared_ptr<ob::DeviceList> deviceList) {
@@ -135,12 +153,18 @@ std::shared_ptr<ob::Device> selectDevice(std::shared_ptr<ob::DeviceList> deviceL
     std::cout << "Select a device: ";
 
     int devIndex;
-    std::cin >> devIndex;
-    while(devIndex < 0 || devIndex >= devCount || std::cin.fail()) {
-        std::cin.clear();
-        std::cin.ignore();
-        std::cout << "Your select is out of range, please reselect: " << std::endl;
+    while(true) {
         std::cin >> devIndex;
+        if(!std::cin.fail() && devIndex >= 0 && devIndex < devCount) {
+            break;
+        }
+        if(std::cin.eof()) {
+            std::cout << "Input stream closed (EOF), exiting." << std::endl;
+            return nullptr;
+        }
+        std::cin.clear();
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        std::cout << "Your select is out of range, please reselect: " << std::endl;
     }
 
     return deviceList->getDevice(devIndex);

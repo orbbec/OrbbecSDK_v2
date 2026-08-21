@@ -18,6 +18,7 @@
 #include <condition_variable>
 #include <functional>
 #include <iostream>
+#include <exception>
 #include <chrono>
 
 #define MAX_DEVICE_COUNT 9
@@ -70,6 +71,10 @@ int main(void) try {
         std::cout << "Please select input: ";
         // std::cin >> choice;
         if(!(std::cin >> choice)) {
+            if(std::cin.eof()) {
+                std::cout << "Input stream closed (EOF), exiting." << std::endl;
+                break;
+            }
             std::cin.clear();
             std::cin.ignore(maxInputIgnore, '\n');
             std::cout << "Invalid input. Please enter a number [0~1]" << std::endl;
@@ -103,6 +108,12 @@ int main(void) try {
 catch(ob::Error &e) {
     std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\nstatus:" << e.getStatus()
               << "\ntype:" << e.getExceptionType() << std::endl;
+    std::cout << "\nPress any key to exit.";
+    ob_smpl::waitForKeyPressed();
+    exit(EXIT_FAILURE);
+}
+catch(std::exception &e) {
+    std::cerr << "Error: " << e.what() << std::endl;
     std::cout << "\nPress any key to exit.";
     ob_smpl::waitForKeyPressed();
     exit(EXIT_FAILURE);

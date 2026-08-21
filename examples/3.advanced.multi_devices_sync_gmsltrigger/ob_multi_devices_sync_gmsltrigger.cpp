@@ -12,7 +12,7 @@ on the nvidia arm64 xavier/orin platform ,this sample use nvidia platform soc pw
 #include <iostream>
 #include <string>
 
-static const char *  DEVICE_PATH = "/dev/camsync";
+static const char   *DEVICE_PATH = "/dev/camsync";
 static const uint8_t WRITE_MODE  = 1;
 static const uint8_t READ_MODE   = 0;
 
@@ -125,6 +125,10 @@ int main(void) try {
         int index = -1;
         // std::cin >> index;
         if(!(std::cin >> index)) {
+            if(std::cin.eof()) {
+                std::cout << "Input stream closed (EOF), exiting." << std::endl;
+                return 0;
+            }
             std::cin.clear();
             std::cin.ignore(maxInputIgnore, '\n');
             std::cout << "Invalid input. Please enter a number." << std::endl;
@@ -135,7 +139,16 @@ int main(void) try {
         switch(index) {
         case 0:
             std::cout << "Enter FPS (frames per second) (for example: 3000): ";
-            std::cin >> fps;  // set the FPS here
+            if(!(std::cin >> fps)) {
+                if(std::cin.eof()) {
+                    std::cout << "Input stream closed (EOF), exiting." << std::endl;
+                    return 0;
+                }
+                std::cin.clear();
+                std::cin.ignore(maxInputIgnore, '\n');
+                std::cout << "Invalid FPS. Please enter a number." << std::endl;
+                continue;
+            }
             std::cout << "Setting FPS to " << fps << "..." << std::endl;
             break;
         case 1:
@@ -164,5 +177,4 @@ catch(ob::Error &e) {
               << "\ntype:" << e.getExceptionType() << std::endl;
     exit(EXIT_FAILURE);
 }
-
 #endif

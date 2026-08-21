@@ -7,6 +7,7 @@
 #include <string>
 #include <thread>
 #include <mutex>
+#include <atomic>
 #include <condition_variable>
 #include <cmath>
 #include <map>
@@ -84,20 +85,21 @@ private:
     cv::Mat resizeMatKeepAspectRatio(const cv::Mat &mat, int width, int height);
 
 private:
-    std::string name_;
-    ArrangeMode arrangeMode_;
-    uint32_t    width_;
-    uint32_t    height_;
-    bool        closed_;
-    bool        showInfo_;
-    bool        showSyncTimeInfo_;
-    bool        isWindowDestroyed_;
-    float       alpha_;
+    std::string       name_;
+    ArrangeMode       arrangeMode_;
+    uint32_t          width_;
+    uint32_t          height_;
+    std::atomic<bool> closed_;  // read without mutex by run()/processFrames()
+    bool              showInfo_;
+    bool              showSyncTimeInfo_;
+    bool              isWindowDestroyed_;
+    float             alpha_;
 
     std::thread                                                  processThread_;
     std::map<int, std::vector<std::shared_ptr<const ob::Frame>>> srcFrameGroups_;
     std::mutex                                                   srcFrameGroupsMtx_;
     std::condition_variable                                      srcFrameGroupsCv_;
+    bool                                                         framesPending_ = false;
 
     using StreamsMatMap = std::map<int, std::pair<std::shared_ptr<const ob::Frame>, cv::Mat>>;
     StreamsMatMap matGroups_;

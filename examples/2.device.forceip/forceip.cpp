@@ -11,6 +11,8 @@
 #include <iomanip>
 #include <sstream>
 #include <iostream>
+#include <limits>
+#include <exception>
 
 static bool parseIpString(const std::string &Str, uint8_t *out) {
     if(Str.empty()) {
@@ -80,8 +82,12 @@ static bool selectDevice(std::shared_ptr<ob::DeviceList> deviceList, uint32_t &s
         std::cout << "Enter your choice: ";
         std::cin >> index;
         if(std::cin.fail()) {
+            if(std::cin.eof()) {
+                std::cout << "Input stream closed (EOF), exiting." << std::endl;
+                return false;
+            }
             std::cin.clear();
-            std::cin.ignore();
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
             std::cout << "Invalid input, please enter a number." << std::endl;
             continue;
         }
@@ -96,48 +102,45 @@ static bool selectDevice(std::shared_ptr<ob::DeviceList> deviceList, uint32_t &s
     return false;
 }
 
-static OBNetIpConfig getIPConfig() {
-    OBNetIpConfig cfg;
-    std::string   val;
-    uint8_t       address[4];
-    uint8_t       mask[4];
-    uint8_t       gateway[4];
+static bool getIPConfig(OBNetIpConfig &cfg) {
+    std::string val;
+    uint8_t     address[4] = { 0 };
+    uint8_t     mask[4]    = { 0 };
+    uint8_t     gateway[4] = { 0 };
 
-    std::cout << "Please enter the network configuration information:" << std::endl;    
-    std::cout << "Enter IP address:" << std::endl;
-    while(std::cin >> val) {
-        if(parseIpString(val, address)) {
-            break;
+    std::cout << "Please enter the network configuration information:" << std::endl;
+    auto readAddress = [&](const char *label, uint8_t *output) -> bool {
+        std::cout << label << std::endl;
+        while(true) {
+            if(!(std::cin >> val)) {
+                if(std::cin.eof()) {
+                    std::cout << "Input stream closed (EOF), exiting." << std::endl;
+                    return false;
+                }
+                std::cin.clear();
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                std::cout << "Invalid format." << std::endl;
+                std::cout << label << std::endl;
+                continue;
+            }
+            if(parseIpString(val, output)) {
+                return true;
+            }
+            std::cout << "Invalid format." << std::endl;
+            std::cout << label << std::endl;
         }
-        std::cout << "Invalid format." << std::endl;
-        std::cout << "Enter IP address:" << std::endl;
-    }
+    };
 
-    std::cout << "Enter Subnet Mask:" << std::endl;
-    while(std::cin >> val) {
-        if(parseIpString(val, mask)) {
-            break;
-        }
-        std::cout << "Invalid format." << std::endl;
-        std::cout << "Enter Subnet Mask:" << std::endl;
+    if(!readAddress("Enter IP address:", address) || !readAddress("Enter Subnet Mask:", mask) || !readAddress("Enter Gateway address:", gateway)) {
+        return false;
     }
-
-    std::cout << "Enter Gateway address:" << std::endl;
-    while(std::cin >> val) {
-        if(parseIpString(val, gateway)) {
-            break;
-        }
-        std::cout << "Invalid format." << std::endl;
-        std::cout << "Enter Gateway address:" << std::endl;
-    }
-
     cfg.dhcp = 0;
     for(int i = 0; i < 4; ++i) {
         cfg.address[i] = address[i];
         cfg.gateway[i] = gateway[i];
         cfg.mask[i]    = mask[i];
     }
-    return cfg;
+    return true;
 }
 
 int main(void) try {
@@ -148,18 +151,29 @@ int main(void) try {
     // Select a device to operate
     uint32_t selectedIndex;
     auto     res = selectDevice(deviceList, selectedIndex);
-    if(res) {
-        // Get the new IP configuration from user input
-        OBNetIpConfig config = getIPConfig();
+    if(!res) {
+        if(std::cin.eof()) {
+            // Input stream closed (EOF) - message already printed, exit without waiting for a key press
+            return 0;
+        }
+        std::cout << "\nPress any key to exit.";
+        ob_smpl::waitForKeyPressed();
+        return 0;
+    }
 
-        // Change device IP configuration
-        res = context.forceIp(deviceList->getUid(selectedIndex), config);
-        if(res) {
-            std::cout << "The new IP configuration has been successfully applied to the device." << std::endl;
-        }
-        else {
-            std::cout << "Failed to apply the new IP configuration." << std::endl;
-        }
+    // Get the new IP configuration from user input; canceled when the input stream is closed
+    OBNetIpConfig config;
+    if(!getIPConfig(config)) {
+        return 0;
+    }
+
+    // Change device IP configuration
+    res = context.forceIp(deviceList->getUid(selectedIndex), config);
+    if(res) {
+        std::cout << "The new IP configuration has been successfully applied to the device." << std::endl;
+    }
+    else {
+        std::cout << "Failed to apply the new IP configuration." << std::endl;
     }
 
     std::cout << "\nPress any key to exit.";
@@ -169,6 +183,12 @@ int main(void) try {
 catch(ob::Error &e) {
     std::cerr << "Function: " << e.getFunction() << "\nArguments: " << e.getArgs() << "\nMessage: " << e.what() << "\nStatus: " << e.getStatus()
               << "\nException Type: " << e.getExceptionType() << std::endl;
+    std::cout << "\nPress any key to exit.";
+    ob_smpl::waitForKeyPressed();
+    exit(EXIT_FAILURE);
+}
+catch(std::exception &e) {
+    std::cerr << "Error: " << e.what() << std::endl;
     std::cout << "\nPress any key to exit.";
     ob_smpl::waitForKeyPressed();
     exit(EXIT_FAILURE);

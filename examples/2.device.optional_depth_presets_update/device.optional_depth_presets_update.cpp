@@ -131,6 +131,10 @@ static bool shouldContinue() {
     std::string input;
     std::cout << "Enter 'Q' or 'q' to quit, or any other key to continue: ";
     std::getline(std::cin, input);
+    if(std::cin.eof()) {
+        std::cout << "Input stream closed (EOF), exiting." << std::endl;
+        return false;
+    }
     if(input == "Q" || input == "q") {
         return false;
     }
@@ -190,6 +194,10 @@ static bool getPresetPath(std::vector<std::string> &pathList) {
         std::cout << "Enter Path: ";
         std::string input;
         std::getline(std::cin, input);
+        if(std::cin.eof()) {
+            std::cout << "Input stream closed (EOF), exiting." << std::endl;
+            return false;
+        }
 
         if(input == "Q" || input == "q") {
             return false;
@@ -235,6 +243,10 @@ static bool selectDevice(std::shared_ptr<ob::Device> &device) {
         std::cout << "Please select a device to update the optional depth preset, enter 'l' to list devices, or enter 'q' to quit: " << std::endl;
         std::cout << "Device index: ";
         std::getline(std::cin, input);
+        if(std::cin.eof()) {
+            std::cout << "Input stream closed (EOF), exiting." << std::endl;
+            return false;
+        }
 
         if(input == "Q" || input == "q") {
             return false;

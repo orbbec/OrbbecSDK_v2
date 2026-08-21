@@ -67,7 +67,10 @@ bool CVWindow::run() {
     int key = cv::waitKey(1);
     if(key != -1) {
         if(key == ESC_KEY) {
-            closed_ = true;
+            {
+                std::lock_guard<std::mutex> lock(srcFrameGroupsMtx_);
+                closed_.store(true);
+            }
             srcFrameGroupsCv_.notify_all();
         }
         else if(key == '1') {
@@ -111,23 +114,27 @@ bool CVWindow::run() {
             keyPressedCallback_(key);
         }
     }
-    return !closed_;
+    return !closed_.load();
 }
 
 // close window
 void CVWindow::close() {
     {
-        std::lock_guard<std::mutex> lock(renderMatsMtx_);
-        closed_ = true;
-        srcFrameGroupsCv_.notify_all();
+        std::lock_guard<std::mutex> lock(srcFrameGroupsMtx_);
+        closed_.store(true);
     }
+    srcFrameGroupsCv_.notify_all();
 
     if(processThread_.joinable()) {
         processThread_.join();
     }
 
     matGroups_.clear();
-    srcFrameGroups_.clear();
+    {
+        std::lock_guard<std::mutex> lock(srcFrameGroupsMtx_);
+        srcFrameGroups_.clear();
+        framesPending_ = false;
+    }
 }
 
 void CVWindow::destroyWindow() {
@@ -146,7 +153,11 @@ void CVWindow::reset() {
     close();
 
     // restart thread
-    closed_        = false;
+    {
+        std::lock_guard<std::mutex> lock(srcFrameGroupsMtx_);
+        closed_.store(false);
+        framesPending_ = false;
+    }
     processThread_ = std::thread(&CVWindow::processFrames, this);
 }
 
@@ -194,6 +205,7 @@ void CVWindow::pushFramesToView(std::vector<std::shared_ptr<const ob::Frame>> fr
 
     std::lock_guard<std::mutex> lk(srcFrameGroupsMtx_);
     srcFrameGroups_[groupId] = singleFrames;
+    framesPending_           = true;
     srcFrameGroupsCv_.notify_one();
 }
 
@@ -224,14 +236,15 @@ void CVWindow::setAlpha(float alpha) {
 // frames processing thread
 void CVWindow::processFrames() {
     std::map<int, std::vector<std::shared_ptr<const ob::Frame>>> frameGroups;
-    while(!closed_) {
-        if(closed_) {
-            break;
-        }
+    while(!closed_.load()) {
         {
             std::unique_lock<std::mutex> lk(srcFrameGroupsMtx_);
-            srcFrameGroupsCv_.wait(lk);
-            frameGroups = srcFrameGroups_;
+            srcFrameGroupsCv_.wait(lk, [this] { return closed_.load() || framesPending_; });
+            if(closed_.load()) {
+                break;
+            }
+            frameGroups    = srcFrameGroups_;
+            framesPending_ = false;
         }
 
         if(frameGroups.empty()) {

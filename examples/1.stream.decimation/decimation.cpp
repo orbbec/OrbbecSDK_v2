@@ -6,15 +6,20 @@
 #include "utils_opencv.hpp"
 #include <iostream>
 #include <limits>
+#include <exception>
 #include <vector>
 
-uint32_t getUserInput(uint32_t maxIndex) {
+bool getUserInput(uint32_t maxIndex, uint32_t &selectedIndex) {
     int selected = -1;
     while(true) {
         std::cout << "Please input the index (0 - " << maxIndex - 1 << "): ";
         std::cin >> selected;
 
         if(std::cin.fail()) {
+            if(std::cin.eof()) {
+                std::cout << "Input stream closed (EOF), exiting." << std::endl;
+                return false;
+            }
             std::cin.clear();
             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
             std::cout << "Invalid input, please enter a number." << std::endl;
@@ -26,10 +31,13 @@ uint32_t getUserInput(uint32_t maxIndex) {
             continue;
         }
 
-        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        if(!std::cin.eof()) {
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        }
         break;
     }
-    return static_cast<uint32_t>(selected);
+    selectedIndex = static_cast<uint32_t>(selected);
+    return true;
 }
 
 // Check if a resolution (width x height) already exists in the list.
@@ -43,14 +51,14 @@ bool hasResolution(const std::vector<OBPresetResolutionConfig> &list, int16_t wi
 }
 
 // Step 1: List unique origin resolutions from preset configs.
-OBPresetResolutionConfig selectOriginResolution(std::shared_ptr<ob::Device> device, std::vector<OBPresetResolutionConfig> &matchedPresets) {
+bool selectOriginResolution(std::shared_ptr<ob::Device> device, std::vector<OBPresetResolutionConfig> &matchedPresets,
+                            OBPresetResolutionConfig &selectedConfig) {
     auto presetList = device->getAvailablePresetResolutionConfigList();
-    auto presetNum  = presetList->getCount();
-
-    if(!presetList || presetNum == 0) {
+    if(!presetList || presetList->getCount() == 0) {
         std::cerr << "No preset resolution config available." << std::endl;
-        return {};
+        return false;
     }
+    auto presetNum = presetList->getCount();
 
     // Collect one representative preset per unique origin resolution
     std::vector<OBPresetResolutionConfig> uniqueResolutions;
@@ -66,8 +74,11 @@ OBPresetResolutionConfig selectOriginResolution(std::shared_ptr<ob::Device> devi
         std::cout << "  " << i << ". " << uniqueResolutions[i].width << "x" << uniqueResolutions[i].height << std::endl;
     }
 
-    uint32_t selected = getUserInput(static_cast<uint32_t>(uniqueResolutions.size()));
-    auto     chosen   = uniqueResolutions[selected];
+    uint32_t selected;
+    if(!getUserInput(static_cast<uint32_t>(uniqueResolutions.size()), selected)) {
+        return false;
+    }
+    auto chosen = uniqueResolutions[selected];
 
     // Collect all preset configs matching this resolution
     for(uint32_t i = 0; i < presetNum; i++) {
@@ -77,15 +88,17 @@ OBPresetResolutionConfig selectOriginResolution(std::shared_ptr<ob::Device> devi
         }
     }
 
-    return chosen;
+    selectedConfig = chosen;
+    return true;
 }
 
 // Step 2: Pick a decimation config for the selected resolution.
-OBPresetResolutionConfig selectDecimation(const std::vector<OBPresetResolutionConfig> &presets) {
+bool selectDecimation(const std::vector<OBPresetResolutionConfig> &presets, OBPresetResolutionConfig &selectedConfig) {
     if(presets.size() == 1) {
         auto &cfg = presets[0];
         std::cout << "\n[Step 2] Decimation auto-selected: Depth=" << cfg.depthDecimationFactor << ", IR=" << cfg.irDecimationFactor << std::endl;
-        return cfg;
+        selectedConfig = cfg;
+        return true;
     }
 
     std::cout << "\n[Step 2] Select decimation factor:" << std::endl;
@@ -94,7 +107,12 @@ OBPresetResolutionConfig selectDecimation(const std::vector<OBPresetResolutionCo
         std::cout << "  " << i << ". Depth=" << cfg.depthDecimationFactor << ", IR=" << cfg.irDecimationFactor << std::endl;
     }
 
-    return presets[getUserInput(static_cast<uint32_t>(presets.size()))];
+    uint32_t selected;
+    if(!getUserInput(static_cast<uint32_t>(presets.size()), selected)) {
+        return false;
+    }
+    selectedConfig = presets[selected];
+    return true;
 }
 
 // Find the first profile that matches the given origin resolution and decimation factor.
@@ -143,10 +161,18 @@ int main() try {
 
     // Step 1: Select origin resolution (deduplicated from preset configs).
     std::vector<OBPresetResolutionConfig> matchedPresets;
-    OBPresetResolutionConfig              originPreset = selectOriginResolution(device, matchedPresets);
+    OBPresetResolutionConfig              originPreset;
+    if(!selectOriginResolution(device, matchedPresets, originPreset)) {
+        // EOF is a normal shutdown; any other failure (e.g. no preset config) is a real error.
+        return std::cin.eof() ? 0 : EXIT_FAILURE;
+    }
 
     // Step 2: Select decimation factor for the chosen resolution.
-    OBPresetResolutionConfig presetConfig = selectDecimation(matchedPresets);
+    OBPresetResolutionConfig presetConfig;
+    if(!selectDecimation(matchedPresets, presetConfig)) {
+        // Same distinction as above: EOF exits cleanly, anything else is an error.
+        return std::cin.eof() ? 0 : EXIT_FAILURE;
+    }
 
     // Apply the preset config (Gemini 305 uses a different mechanism).
     if(!ob_smpl::isGemini305Device(vid, pid)) {
@@ -245,6 +271,12 @@ int main() try {
 catch(ob::Error &e) {
     std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\nstatus:" << e.getStatus()
               << "\ntype:" << e.getExceptionType() << std::endl;
+    std::cout << "\nPress any key to exit.";
+    ob_smpl::waitForKeyPressed();
+    exit(EXIT_FAILURE);
+}
+catch(std::exception &e) {
+    std::cerr << "Error: " << e.what() << std::endl;
     std::cout << "\nPress any key to exit.";
     ob_smpl::waitForKeyPressed();
     exit(EXIT_FAILURE);

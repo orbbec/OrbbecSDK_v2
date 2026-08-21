@@ -18,8 +18,36 @@
 #include <sys/stat.h>
 #endif
 
-bool              quit_program      = false;  // Flag to signal the program to quit
-std::atomic<bool> capture_requested = { false };  // Flag to trigger depth frame capture
+struct FilterControlState {
+    std::atomic<bool> quit             = { false };
+    std::atomic<bool> captureRequested = { false };
+    std::atomic<bool> finished         = { false };
+    std::mutex        filterMutex;
+};
+
+class FilterThreadCleanup {
+public:
+    FilterThreadCleanup(std::thread &thread, const std::shared_ptr<FilterControlState> &state) : thread_(thread), state_(state) {}
+    ~FilterThreadCleanup() {
+        if(!thread_.joinable()) {
+            return;
+        }
+        state_->quit.store(true);
+        {
+            std::lock_guard<std::mutex> filterLock(state_->filterMutex);
+        }
+        if(state_->finished.load()) {
+            thread_.join();
+        }
+        else {
+            thread_.detach();
+        }
+    }
+
+private:
+    std::thread                        &thread_;
+    std::shared_ptr<FilterControlState> state_;
+};
 
 static void createDirectories(const std::string &path) {
     for(size_t i = 1; i <= path.size(); ++i) {
@@ -60,11 +88,10 @@ void printFiltersInfo(const std::vector<std::shared_ptr<ob::Filter>> &filterList
             std::cout << "    - {" << configSchema.name << ", " << configSchema.type << ", " << configSchema.min << ", " << configSchema.max << ", "
                       << configSchema.step << ", " << configSchema.def << ", " << configSchema.desc << "}" << std::endl;
         }
-        filter->enable(false);  // Disable the filter
     }
 }
 
-void filterControl(const std::vector<std::shared_ptr<ob::Filter>> &filterList) {
+void filterControl(std::vector<std::shared_ptr<ob::Filter>> filterList, std::shared_ptr<FilterControlState> state) {
     auto printHelp = [&]() {
         std::cout << "Available commands:" << std::endl;
         std::cout << "- Enter `[Filter]` to list the config values for the filter" << std::endl;
@@ -78,17 +105,34 @@ void filterControl(const std::vector<std::shared_ptr<ob::Filter>> &filterList) {
         std::cout << "- Enter `Q` or `q` to quit" << std::endl;
     };
     printHelp();
-    while(!quit_program) {
+    while(!state->quit.load()) {
         std::cout << "---------------------------" << std::endl;
         std::cout << "Enter your input (h for help): ";
 
         std::string input;
         std::getline(std::cin, input);
-        if(input == "q" || input == "Q") {
-            quit_program = true;
+        bool shouldExit = false;
+        {
+            std::lock_guard<std::mutex> filterLock(state->filterMutex);
+            if(state->quit.load()) {
+                shouldExit = true;
+            }
+            else if(std::cin.eof()) {
+                std::cout << "Input stream closed (EOF), exiting." << std::endl;
+                state->quit.store(true);
+                shouldExit = true;
+            }
+            else if(input == "q" || input == "Q") {
+                state->quit.store(true);
+                shouldExit = true;
+            }
+        }
+        if(shouldExit) {
             break;
         }
         else if(input == "l" || input == "L") {
+            // Take the lock so the listing does not race with the render thread's filter->process().
+            std::lock_guard<std::mutex> filterLock(state->filterMutex);
             printFiltersInfo(filterList);
             continue;
         }
@@ -97,7 +141,7 @@ void filterControl(const std::vector<std::shared_ptr<ob::Filter>> &filterList) {
             continue;
         }
         else if(input == "c" || input == "C") {
-            capture_requested = true;
+            state->captureRequested.store(true);
             std::cout << "Capture requested, saving depth frames to Output/Processing/ ..." << std::endl;
             continue;
         }
@@ -113,55 +157,61 @@ void filterControl(const std::vector<std::shared_ptr<ob::Filter>> &filterList) {
         }
 
         bool foundFilter = false;
-        for(auto &filter: filterList) {
-            if(filter->getName() == tokens[0]) {
-                foundFilter = true;
-                if(tokens.size() == 1) {  // print list of configs for the filter
-                    auto configSchemaVec = filter->getConfigSchemaVec();
-                    std::cout << "Config values for " << filter->getName() << ":" << std::endl;
-                    for(auto &configSchema: configSchemaVec) {
-                        std::cout << " - " << configSchema.name << ": " << filter->getConfigValue(configSchema.name) << std::endl;
-                    }
-                }
-                else if(tokens.size() == 2 && (tokens[1] == "on" || tokens[1] == "off")) {  // Enable/disable the filter
-                    filter->enable(tokens[1] == "on");
-                    std::cout << "Success: Filter " << filter->getName() << " is now " << (filter->isEnabled() ? "enabled" : "disabled") << std::endl;
-                }
-                else if(tokens.size() == 2 && tokens[1] == "list") {  // List the config values for the filter
-                    auto configSchemaVec = filter->getConfigSchemaVec();
-                    std::cout << "Config schema for " << filter->getName() << ":" << std::endl;
-                    for(auto &configSchema: configSchemaVec) {
-                        std::cout << " - {" << configSchema.name << ", " << configSchema.type << ", " << configSchema.min << ", " << configSchema.max << ", "
-                                  << configSchema.step << ", " << configSchema.def << ", " << configSchema.desc << "}" << std::endl;
-                    }
-                }
-                else if(tokens.size() == 2) {  // Print the config schema for the filter
-                    auto configSchemaVec = filter->getConfigSchemaVec();
-                    bool foundConfig     = false;
-                    for(auto &configSchema: configSchemaVec) {
-                        if(configSchema.name == tokens[1]) {
-                            foundConfig = true;
-                            std::cout << "Config values for " << filter->getName() << "@" << configSchema.name << ":"
-                                      << filter->getConfigValue(configSchema.name) << std::endl;
-                            break;
+        {
+            std::lock_guard<std::mutex> filterLock(state->filterMutex);
+            if(state->quit.load()) {
+                break;
+            }
+            for(auto &filter: filterList) {
+                if(filter->getName() == tokens[0]) {
+                    foundFilter = true;
+                    if(tokens.size() == 1) {  // print list of configs for the filter
+                        auto configSchemaVec = filter->getConfigSchemaVec();
+                        std::cout << "Config values for " << filter->getName() << ":" << std::endl;
+                        for(auto &configSchema: configSchemaVec) {
+                            std::cout << " - " << configSchema.name << ": " << filter->getConfigValue(configSchema.name) << std::endl;
                         }
                     }
-                    if(!foundConfig) {
-                        std::cerr << "Error: Config " << tokens[1] << " not found for filter " << filter->getName() << std::endl;
+                    else if(tokens.size() == 2 && (tokens[1] == "on" || tokens[1] == "off")) {  // Enable/disable the filter
+                        filter->enable(tokens[1] == "on");
+                        std::cout << "Success: Filter " << filter->getName() << " is now " << (filter->isEnabled() ? "enabled" : "disabled") << std::endl;
                     }
+                    else if(tokens.size() == 2 && tokens[1] == "list") {  // List the config values for the filter
+                        auto configSchemaVec = filter->getConfigSchemaVec();
+                        std::cout << "Config schema for " << filter->getName() << ":" << std::endl;
+                        for(auto &configSchema: configSchemaVec) {
+                            std::cout << " - {" << configSchema.name << ", " << configSchema.type << ", " << configSchema.min << ", " << configSchema.max
+                                      << ", " << configSchema.step << ", " << configSchema.def << ", " << configSchema.desc << "}" << std::endl;
+                        }
+                    }
+                    else if(tokens.size() == 2) {  // Print the config schema for the filter
+                        auto configSchemaVec = filter->getConfigSchemaVec();
+                        bool foundConfig     = false;
+                        for(auto &configSchema: configSchemaVec) {
+                            if(configSchema.name == tokens[1]) {
+                                foundConfig = true;
+                                std::cout << "Config values for " << filter->getName() << "@" << configSchema.name << ":"
+                                          << filter->getConfigValue(configSchema.name) << std::endl;
+                                break;
+                            }
+                        }
+                        if(!foundConfig) {
+                            std::cerr << "Error: Config " << tokens[1] << " not found for filter " << filter->getName() << std::endl;
+                        }
+                    }
+                    else if(tokens.size() == 3) {  // Set a config value
+                        try {
+                            double value = std::stod(tokens[2]);
+                            filter->setConfigValue(tokens[1], value);
+                        }
+                        catch(const std::exception &e) {
+                            std::cerr << "Error: " << e.what() << std::endl;
+                            continue;
+                        }
+                        std::cout << "Success: Config value of " << tokens[1] << " for filter " << filter->getName() << " is set to " << tokens[2] << std::endl;
+                    }
+                    break;
                 }
-                else if(tokens.size() == 3) {  // Set a config value
-                    try {
-                        double value = std::stod(tokens[2]);
-                        filter->setConfigValue(tokens[1], value);
-                    }
-                    catch(const std::exception &e) {
-                        std::cerr << "Error: " << e.what() << std::endl;
-                        continue;
-                    }
-                    std::cout << "Success: Config value of " << tokens[1] << " for filter " << filter->getName() << " is set to " << tokens[2] << std::endl;
-                }
-                break;
             }
         }
         if(!foundFilter) {
@@ -169,6 +219,7 @@ void filterControl(const std::vector<std::shared_ptr<ob::Filter>> &filterList) {
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
+    state->finished.store(true);
 }
 
 int main() try {
@@ -183,6 +234,11 @@ int main() try {
     // Print the recommended filters
     printFiltersInfo(filterList);
 
+    // Disable all filters initially; the user enables them via the console control loop
+    for(auto &filter: filterList) {
+        filter->enable(false);
+    }
+
     // Create a config with depth stream enabled
     std::shared_ptr<ob::Config> config = std::make_shared<ob::Config>();
     config->enableStream(OB_STREAM_DEPTH);
@@ -191,13 +247,14 @@ int main() try {
     pipe.start(config);
 
     // Start the filter control loop on sub thread
-    std::thread filterControlThread(filterControl, filterList);
-    filterControlThread.detach();
+    auto                filterState = std::make_shared<FilterControlState>();
+    std::thread         filterControlThread(filterControl, filterList, filterState);
+    FilterThreadCleanup filterThreadCleanup(filterControlThread, filterState);
 
     // Create a window for rendering, and set the resolution of the window
     ob_smpl::CVWindow win("PostProcessing", 1280, 720, ob_smpl::ARRANGE_ONE_ROW);
 
-    while(win.run() && !quit_program) {
+    while(win.run() && !filterState->quit.load()) {
         // Wait for up to 1000ms for a frameset in blocking mode.
         auto frameSet = pipe.waitForFrameset(1000);
         if(frameSet == nullptr) {
@@ -212,14 +269,17 @@ int main() try {
 
         auto processedFrame = depthFrameRaw;
         // Apply the recommended filters to the depth frame
-        for(auto &filter: filterList) {
-            if(filter->isEnabled()) {  // Only apply enabled filters
-                processedFrame = filter->process(processedFrame);
+        {
+            std::lock_guard<std::mutex> filterLock(filterState->filterMutex);
+            for(auto &filter: filterList) {
+                if(filter->isEnabled()) {  // Only apply enabled filters
+                    processedFrame = filter->process(processedFrame);
+                }
             }
         }
 
         // Check if a capture was requested (triggered by pressing 'C' in the console)
-        if(capture_requested.exchange(false)) {
+        if(filterState->captureRequested.exchange(false)) {
             const std::string outDir = "Output/Process";
             createDirectories(outDir);
 
@@ -238,18 +298,16 @@ int main() try {
         win.pushFramesToView(processedFrame, 1);
     }
 
+    filterState->quit.store(true);
+    std::lock_guard<std::mutex> filterLock(filterState->filterMutex);
+
     // Stop the pipeline
     pipe.stop();
-
-    quit_program = true;
 
     return 0;
 }
 catch(ob::Error &e) {
     std::cerr << "function:" << e.getFunction() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\nstatus:" << e.getStatus()
               << "\ntype:" << e.getExceptionType() << std::endl;
-    std::cout << "\nPress any key to exit.";
-    ob_smpl::waitForKeyPressed();
-    exit(EXIT_FAILURE);
+    return EXIT_FAILURE;
 }
-
