@@ -20,6 +20,40 @@ ObRTPUDPClient::~ObRTPUDPClient() noexcept {
     close();
 }
 
+void ObRTPUDPClient::setReceiveBuffer() {
+    const int requestSizes[3] = { 512 * 1024 * 1024, 256 * 1024 * 1024, 128 * 1024 * 1024 };
+    int       actualOpt       = 0;
+    int       realBuf         = 0;
+    int       okIndex         = -1;
+
+    for(int i = 0; i < 3; i++) {
+        if(setsockopt(recvSocket_, SOL_SOCKET, SO_RCVBUF, (const char *)&requestSizes[i], sizeof(int)) != 0) {
+            continue;
+        }
+        socklen_t optLen = sizeof(actualOpt);
+        if(getsockopt(recvSocket_, SOL_SOCKET, SO_RCVBUF, (char *)&actualOpt, &optLen) != 0) {
+            continue;
+        }
+        realBuf = actualOpt;
+#if defined(__linux__)
+        realBuf /= 2;
+#endif
+        if(realBuf >= requestSizes[i]) {
+            okIndex = i;
+            break;
+        }
+    }
+
+    if(okIndex >= 0) {
+        LOG_INFO("SO_RCVBUF fallback: requested={}MB, actual={}MB", requestSizes[okIndex] / (1024 * 1024), realBuf / (1024 * 1024));
+    }
+    else {
+        LOG_WARN("SO_RCVBUF configuration failed. Current buffer size={}MB, RTP streaming requires at least 128MB receive buffer. Please increase the system "
+                 "UDP receive buffer limit.",
+                 realBuf / (1024 * 1024));
+    }
+}
+
 void ObRTPUDPClient::socketConnect() {
     // 1.Create udpsocket
 #if (defined(WIN32) || defined(_WIN32) || defined(WINCE))
@@ -40,8 +74,7 @@ void ObRTPUDPClient::socketConnect() {
     commTimeout.tv_sec  = COMM_TIMEOUT_MS / 1000;
     commTimeout.tv_usec = COMM_TIMEOUT_MS % 1000 * 1000;
 #endif
-    int nRecvBuf = 512 * 1024 * 1024;
-    setsockopt(recvSocket_, SOL_SOCKET, SO_RCVBUF, (const char *)&nRecvBuf, sizeof(int));
+    setReceiveBuffer();
     setsockopt(recvSocket_, SOL_SOCKET, SO_RCVTIMEO, (char *)&commTimeout, sizeof(commTimeout));
 
     // 3.Set server address
@@ -173,7 +206,7 @@ void ObRTPUDPClient::flush() {
         // read data and discard
         res = recvfrom(sock, buf, sizeof(buf), 0, NULL, NULL);
         if(res > 0) {
-           LOG_DEBUG("Discarding {} bytes of leftover frame data. IP: {}", res, serverIp_);
+            LOG_DEBUG("Discarding {} bytes of leftover frame data. IP: {}", res, serverIp_);
         }
         elapsed = timer.touchMs(false);
         // Loop until timeout to avoid blocking indefinitely

@@ -25,6 +25,7 @@ public:
 
 private:
     void socketConnect();
+    void setReceiveBuffer();
     void socketClose();
     void frameReceive();
     void flush();
