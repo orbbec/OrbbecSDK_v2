@@ -8,13 +8,13 @@ ObRTPPacketQueue::~ObRTPPacketQueue() noexcept {
     destroy();
 }
 
-void ObRTPPacketQueue::push(const std::vector<uint8_t> &data) {
+void ObRTPPacketQueue::push(std::vector<uint8_t> &&data) {
     {
         std::lock_guard<std::mutex> lock(mutex_);
         if(destroy_) {
             return;
         }
-        queue_.push(data);
+        queue_.push(std::move(data));
     }
     cond_var_.notify_one();
 }
@@ -25,7 +25,7 @@ bool ObRTPPacketQueue::pop(std::vector<uint8_t> &data) {
     if(destroy_ && queue_.empty()) {
         return false;
     }
-    data = queue_.front();
+    data = std::move(queue_.front());
     queue_.pop();
     return true;
 }

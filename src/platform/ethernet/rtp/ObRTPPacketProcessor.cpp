@@ -28,7 +28,6 @@ void ObRTPPacketProcessor::OnStartOfFrame() {
     foundStartPacket_        = true;
     dataSize_                = 0;
     fameSequenceNumberCount_ = 0;
-    memset(rtpBuffer_, 0, maxCacheSize_);
 }
 
 bool ObRTPPacketProcessor::foundStartPacket() {
@@ -146,14 +145,13 @@ void ObRTPPacketProcessor::reset() {
     revDataError_            = false;
     dataSize_                = 0;
     fameSequenceNumberCount_ = 0;
-    memset(rtpBuffer_, 0, maxCacheSize_);
 }
 
 void ObRTPPacketProcessor::release() {
     if(rtpBuffer_ != nullptr) {
-        delete rtpBuffer_;
+        delete[] rtpBuffer_;
         rtpBuffer_ = nullptr;
     }
 }
 
-}
+}  // namespace libobsensor

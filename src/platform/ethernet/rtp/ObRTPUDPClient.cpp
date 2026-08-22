@@ -13,6 +13,8 @@ namespace libobsensor {
 
 ObRTPUDPClient::ObRTPUDPClient(std::string localAddress, std::string address, uint16_t port)
     : localIp_(localAddress), serverIp_(address), serverPort_(port), startReceive_(false), recvSocket_(INVALID_SOCKET) {
+    serverAddr_.sin_family = AF_INET;
+    inet_pton(AF_INET, serverIp_.c_str(), &serverAddr_.sin_addr);
     socketConnect();
 }
 
@@ -168,12 +170,9 @@ void ObRTPUDPClient::frameReceive() {
         }
 
         if(recvLen > 0) {
-            char server_ip[INET_ADDRSTRLEN];
-            inet_ntop(AF_INET, &serverAddr.sin_addr, server_ip, sizeof(server_ip));
-            std::string serverIpString(server_ip);
-            if(serverIpString == serverIp_) {
+            if(serverAddr.sin_addr.s_addr == serverAddr_.sin_addr.s_addr) {
                 std::vector<uint8_t> data(buffer.begin(), buffer.begin() + recvLen);
-                rtpQueue_.push(data);
+                rtpQueue_.push(std::move(data));
             }
         }
     }

@@ -35,6 +35,7 @@ private:
     std::string       localIp_;
     std::string       serverIp_;
     uint16_t          serverPort_;
+    sockaddr_in       serverAddr_{};
     std::atomic<bool> startReceive_;
     SOCKET            recvSocket_;
     uint32_t          COMM_TIMEOUT_MS = 100;

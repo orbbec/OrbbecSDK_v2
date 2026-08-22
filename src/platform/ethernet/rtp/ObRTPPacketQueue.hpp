@@ -13,7 +13,7 @@ public:
     ObRTPPacketQueue();
     ~ObRTPPacketQueue() noexcept;
 
-    void push(const std::vector<uint8_t> &data);
+    void push(std::vector<uint8_t> &&data);
     bool pop(std::vector<uint8_t> &data);
     void destroy();
     void reset();
