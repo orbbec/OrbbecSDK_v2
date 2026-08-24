@@ -10,9 +10,15 @@
 #include <map>
 #include <sstream>
 #include <string>
+#ifdef _WIN32
 #include <windows.h>
+#endif
 
 #include "get_time.h"
+
+static inline uint16_t byteswap16(uint16_t val) {
+    return (val >> 8) | (val << 8);
+}
 
 // Data structure to hold the sections, keys, and values
 using IniSection = std::map<std::string, std::string>;
@@ -315,7 +321,7 @@ int main(int argc, char *argv[]) {
         return -1;
     }
     libobsensor::AlignImpl *impl = new libobsensor::AlignImpl();
-    impl->initialize(depth_intr, depth_disto, color_intr, color_disto, transform, 1, true, is_copy1);
+    impl->initialize(depth_intr, depth_disto, color_intr, color_disto, transform, 1, true, is_copy1, false, OB_FORMAT_Y16, 0);
 
     ob_error *err = nullptr;
 
@@ -332,13 +338,17 @@ int main(int argc, char *argv[]) {
     int       color_height = color_intr.height;
     uint32_t  depth_size   = depth_width * depth_height * sizeof(uint16_t);
     uint16_t *depth_data   = (uint16_t *)malloc(depth_size);
-    fread(depth_data, depth_size, 1, depth_file);
+    if(fread(depth_data, depth_size, 1, depth_file) != 1) {
+        fclose(depth_file);
+        std::cerr << "Failed to read depth data" << std::endl;
+        return -1;
+    }
     bool swap_endianness = false;
     if(argc > 6)
         swap_endianness = bool(std::atoi(argv[6]));
     if(swap_endianness) {
         for(int i = 0; i < depth_intr.width * depth_intr.height; i++) {
-            depth_data[i] = _byteswap_ushort(depth_data[i]);
+            depth_data[i] = byteswap16(depth_data[i]);
         }
     }
 
@@ -383,7 +393,11 @@ int main(int argc, char *argv[]) {
     }
     uint32_t color_size = color_intr.width * color_intr.height * sizeof(uint8_t) * 3;
     uint8_t *color_data = (uint8_t *)malloc(color_size);
-    fread(color_data, color_size, 1, color_file);
+    if(fread(color_data, color_size, 1, color_file) != 1) {
+        fclose(color_file);
+        std::cerr << "Failed to read color data" << std::endl;
+        return -1;
+    }
     uint32_t aligned_color_size = depth_intr.width * depth_intr.height * sizeof(uint8_t) * 3;
     uint8_t *aligned_color_data = (uint8_t *)malloc(aligned_color_size);
     if(0

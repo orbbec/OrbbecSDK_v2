@@ -17,3 +17,4 @@ The libraries included in this folder are:
 | cmrc           | A Resource Compiler in a Single CMake Script                                  | MIT          | <https://github.com/vector-of-bool/cmrc>          |
 | josncpp        | A C++ library for interacting with JSON.                                      | MIT          | <https://github.com/open-source-parsers/jsoncpp>   |
 | mdns-1.4.3     | A cross-platform C library for mDNS and DNS-DS                                | FREE         | https://github.com/mjansson/mdns                  |
+| googletest v1.15.2 | A C++ testing and mocking framework                                      | BSD-3-Clause | <https://github.com/google/googletest>            |

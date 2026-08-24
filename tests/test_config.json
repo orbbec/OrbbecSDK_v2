@@ -1,0 +1,37 @@
+{
+    "device": {
+        "serial": "CP93653000RV",
+        "count": 1
+    },
+    "destructive": {
+        "enabled": false
+    },
+    "resource": {
+        "bagPaths": [],
+        "firmwarePath": "",
+        "depthPresetPath": ""
+    },
+    "network": {
+        "ip": "192.168.1.20",
+        "mac": "54:14:FD:23:78:4A",
+        "mask": "255.255.255.0",
+        "gateway": "192.168.1.1",
+        "originalIp": "192.168.1.15"
+    },
+    "performance": {
+        "durationSeconds": 60,
+        "cpuThreads": 0,
+        "ioThreads": 2
+    },
+    "threadSafety": {
+        "durationSeconds": 10,
+        "threadCount": 4
+    },
+    "suites": {
+        "unit": true,
+        "hw": true,
+        "scenario": true,
+        "perf": true,
+        "destructive": false
+    }
+}

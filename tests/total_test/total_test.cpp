@@ -11,7 +11,12 @@
 #include <libobsensor/h/Frame.h>
 #include <libobsensor/h/StreamProfile.h>
 
+#ifdef _WIN32
 #include <windows.h>
+#else
+#include <unistd.h>
+#define Sleep(ms) usleep((ms) * 1000)
+#endif
 
 // helper function to check for errors and exit if there is one
 void check_ob_error(ob_error **err) {
@@ -157,7 +162,7 @@ void sensor_frame_callback(ob_frame *frame, void *user_data) {
     check_ob_error(&err);
 
     char *str = (char *)user_data;
-    printf("%s: frame#%lld: width: %d, height: %d, format: %d, size: %d, dataPtr: %p\n", str, index, width, height, format, size, data);
+    printf("%s: frame#%llu: width: %d, height: %d, format: %d, size: %d, dataPtr: %p\n", str, (unsigned long long)index, width, height, format, size, data);
 }
 
 int main() {
@@ -201,7 +206,7 @@ int main() {
     const ob_stream_profile *stream_profile = ob_stream_profile_list_get_profile(stream_profile_list, 0, &err);
     check_ob_error(&err);
 
-    ob_sensor_start(sensor, stream_profile, sensor_frame_callback, "hello, world", &err);
+    ob_sensor_start(sensor, stream_profile, sensor_frame_callback, (void *)"hello, world", &err);
     check_ob_error(&err);
 
     // sleep for 5 seconds

@@ -128,6 +128,7 @@ if(OB_IS_MAIN_PROJECT AND OB_INSTALL_LICENSES)
 endif()
 
 if(OB_BUILD_TESTS)
+    enable_testing()
     add_subdirectory(tests)
 endif()
 
