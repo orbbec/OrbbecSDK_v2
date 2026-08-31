@@ -223,6 +223,12 @@ void G330Device::init() {
         propertyServer->registerProperty(OB_STRUCT_COLOR_AWB_GAIN, "rw", "rw", vendorPropertyAccessor.get());
     }
 
+    if(fwVersion >= 10824) {
+        auto propertyServer         = getPropertyServer();
+        auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        propertyServer->registerProperty(OB_PROP_COLOR_WB_CTRL_INT, "rw", "rw", vendorPropertyAccessor.get());
+    }
+
     auto sensorStreamStrategy = std::make_shared<G330SensorStreamStrategy>(this);
     registerComponent(OB_DEV_COMPONENT_SENSOR_STREAM_STRATEGY, sensorStreamStrategy);
 
@@ -1687,6 +1693,10 @@ void G330NetDevice::init() {
     if(fwVersion >= 10821) {
         propertyServer->registerProperty(OB_PROP_COLOR_AE_AWB_STATUS_INT, "r", "r", vendorPropertyAccessor.get());
         propertyServer->registerProperty(OB_STRUCT_COLOR_AWB_GAIN, "rw", "rw", vendorPropertyAccessor.get());
+    }
+
+    if(fwVersion >= 10824) {
+        propertyServer->registerProperty(OB_PROP_COLOR_WB_CTRL_INT, "rw", "rw", vendorPropertyAccessor.get());
     }
 
     // Cache depth unit and hwD2D to avoid per-frame device queries in getDepthMaxValidValue.

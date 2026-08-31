@@ -979,6 +979,11 @@ typedef enum {
     OB_PROP_DEPTH_AUTO_EXPOSURE_PRIORITY_INT = 2052,
 
     /**
+     * @brief Color camera WB control
+     */
+    OB_PROP_COLOR_WB_CTRL_INT = 2053,
+
+    /**
      * @brief Software disparity to depth
      */
     OB_PROP_SDK_DISPARITY_TO_DEPTH_BOOL = 3004,
