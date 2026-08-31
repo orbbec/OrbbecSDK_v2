@@ -674,6 +674,7 @@ typedef enum {
 
     /**
      * @brief Enable FPS boost in trigger mode
+     *        Not effective for devices connected via USB 2.x or lower
      */
     OB_PROP_FPS_BOOST_BOOL = 275,
 
