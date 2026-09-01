@@ -177,6 +177,33 @@ bool WmfUvcDevicePort::isConnected(std::shared_ptr<const USBSourcePortInfo> info
     return result;
 }
 
+void WmfUvcDevicePort::markDisconnected() {
+    disconnected_.store(true);
+}
+
+void WmfUvcDevicePort::abortPendingIo() {
+    CComPtr<IMFMediaSource> source;
+    {
+        std::lock_guard<std::mutex> lock(abortSourceMutex_);
+        source = abortSource_;
+    }
+    if(source) {
+        source->Shutdown();
+    }
+}
+
+bool WmfUvcDevicePort::isDisconnected() const {
+    return disconnected_.load();
+}
+
+bool WmfUvcDevicePort::shouldSkipControlTransfer() {
+    if(isDisconnected()) {
+        return true;
+    }
+
+    return false;
+}
+
 struct pu_control {
     uint32_t propertyId;
     long     ksProperty;
@@ -408,11 +435,17 @@ UvcControlRange WmfUvcDevicePort::getPuRange(uint32_t propertyId) {
 uint32_t WmfUvcDevicePort::sendAndReceive(const uint8_t *sendData, uint32_t sendLen, uint8_t *recvData, uint32_t exceptedRecvLen,
                                           utils::TransferTiming *timing) {
     std::lock_guard<std::recursive_mutex> lock(deviceMutex_);
+    if(shouldSkipControlTransfer()) {
+        return 0;
+    }
     // checkConnection();
     if(powerState_ != kD0) {
         setPowerStateD0();
     }
     if(xuKsControl_ == nullptr) {
+        if(shouldSkipControlTransfer() || deviceSource_ == nullptr) {
+            return 0;
+        }
         initXu();
     }
 
@@ -433,6 +466,9 @@ uint32_t WmfUvcDevicePort::sendAndReceive(const uint8_t *sendData, uint32_t send
     }
 
     utils::TimingScope sendScope(timing, &utils::TransferTiming::send);
+    if(shouldSkipControlTransfer()) {
+        return 0;
+    }
     if(!setXu(ctrl, sendData, alignDataLen)) {
         LOG_ERROR("setXu failed!");
         return 0;
@@ -455,6 +491,9 @@ uint32_t WmfUvcDevicePort::sendAndReceive(const uint8_t *sendData, uint32_t send
         recvLen = 512;
     }
     utils::TimingScope recvScope(timing, &utils::TransferTiming::recv);
+    if(shouldSkipControlTransfer()) {
+        return 0;
+    }
     if(!getXu(ctrl, recvData, &recvLen)) {
         LOG_ERROR("getXu failed!");
         return 0;
@@ -691,6 +730,9 @@ void WmfUvcDevicePort::setPowerStateD0() {
     if(powerState_ == kD0) {
         return;
     }
+    if(isDisconnected()) {
+        THROW_DEVICE_UNAVAILABLE_EXCEPTION("Camera is disconnected");
+    }
     if(!deviceAttrs_) {
         deviceAttrs_ = createDeviceAttrs();
     }
@@ -699,15 +741,53 @@ void WmfUvcDevicePort::setPowerStateD0() {
         readerAttrs_ = createReaderAttrs();
     }
 
-    // enable source
-    CHECK_HR(MFCreateDeviceSource(deviceAttrs_, &deviceSource_));
-    LOG_HR(deviceSource_->QueryInterface(__uuidof(IAMCameraControl), reinterpret_cast<void **>(&cameraControl_)));
-    LOG_HR(deviceSource_->QueryInterface(__uuidof(IAMVideoProcAmp), reinterpret_cast<void **>(&videoProc_)));
+    CComPtr<IMFMediaSource> source;
+    CHECK_HR(MFCreateDeviceSource(deviceAttrs_, &source));
 
-    // enable reader
-    CHECK_HR(MFCreateSourceReaderFromMediaSource(deviceSource_, readerAttrs_, &streamReader_));
-    // CHECK_HR(streamReader_->SetStreamSelection(static_cast<DWORD>(MF_SOURCE_READER_ALL_STREAMS), TRUE));
-    powerState_ = kD0;
+    bool sourcePublished = false;
+    {
+        std::lock_guard<std::mutex> abortLock(abortSourceMutex_);
+        if(!isDisconnected()) {
+            abortSource_    = source;
+            sourcePublished = true;
+        }
+    }
+    if(!sourcePublished) {
+        source->Shutdown();
+        THROW_DEVICE_UNAVAILABLE_EXCEPTION("Camera was disconnected while creating the WMF source");
+    }
+
+    CComPtr<IAMCameraControl>               cameraControl;
+    CComPtr<IAMVideoProcAmp>                videoProc;
+    Microsoft::WRL::ComPtr<IMFSourceReader> streamReader;
+    try {
+        LOG_HR(source->QueryInterface(__uuidof(IAMCameraControl), reinterpret_cast<void **>(&cameraControl)));
+        LOG_HR(source->QueryInterface(__uuidof(IAMVideoProcAmp), reinterpret_cast<void **>(&videoProc)));
+        if(isDisconnected()) {
+            THROW_DEVICE_UNAVAILABLE_EXCEPTION("Camera was disconnected while initializing WMF controls");
+        }
+
+        CHECK_HR(MFCreateSourceReaderFromMediaSource(source, readerAttrs_, &streamReader));
+        if(isDisconnected()) {
+            THROW_DEVICE_UNAVAILABLE_EXCEPTION("Camera was disconnected while creating the WMF source reader");
+        }
+
+        deviceSource_  = source;
+        cameraControl_ = cameraControl;
+        videoProc_     = videoProc;
+        streamReader_  = streamReader;
+        powerState_    = kD0;
+    }
+    catch(...) {
+        {
+            std::lock_guard<std::mutex> abortLock(abortSourceMutex_);
+            if(abortSource_.p == source.p) {
+                abortSource_.Release();
+            }
+        }
+        source->Shutdown();
+        throw;
+    }
 }
 
 void WmfUvcDevicePort::setPowerStateD3() {
@@ -725,12 +805,18 @@ void WmfUvcDevicePort::setPowerStateD3() {
         safe_release(deviceSource_);
     }
 
+    {
+        std::lock_guard<std::mutex> abortLock(abortSourceMutex_);
+        abortSource_.Release();
+    }
+
     if(xuKsControl_ != nullptr) {
         safe_release(xuKsControl_);
         xuKsControl_ = nullptr;
     }
 
     streams_.clear();
+    isStarted_  = false;
     powerState_ = kD3;
 }
 

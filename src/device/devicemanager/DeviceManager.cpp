@@ -341,7 +341,7 @@ void DeviceManager::onDeviceChanged(const DeviceEnumInfoList &removed, const Dev
                 auto dev = iter->second.lock();
                 if(dev) {
                     dev->registerRebootCallback(nullptr);
-                    dev->deactivate();
+                    dev->deactivate(true);
                 }
                 createdDevices_.erase(iter);
             }

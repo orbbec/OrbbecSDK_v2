@@ -34,7 +34,7 @@ public:
 
     void reset() override;
     void reboot() override;
-    void deactivate() override;
+    void deactivate(bool forceAbortPendingIo = false) override;
 
     bool isPlaybackDevice() const override {
         return isPlaybackDevice_.load();
@@ -158,6 +158,10 @@ private:
 
     std::atomic<bool> isDeactivated_;
     std::mutex        deactivateMutex_;
+
+    mutable std::mutex                              sourcePortsMutex_;
+    mutable std::vector<std::weak_ptr<ISourcePort>> createdSourcePorts_;
+    mutable bool                                    sourcePortsClosing_ = false;
 
     std::map<OBSensorType, std::shared_ptr<const SourcePortInfo>> sensorPortInfos_;
     std::map<OBSensorType, std::shared_ptr<IFilter>>              sensorFrameFilters_;

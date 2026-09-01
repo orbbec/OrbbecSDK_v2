@@ -210,10 +210,10 @@ uint64_t DeviceBase::getDeviceErrorState() const {
 }
 
 DeviceBase::~DeviceBase() noexcept {
-    deactivate();  // deactivate() will clear all components
+    deactivate(false);  // deactivate() will clear all components
 }
 
-void DeviceBase::deactivate() {
+void DeviceBase::deactivate(bool forceAbortPendingIo) {
     std::lock_guard<std::mutex> guard(deactivateMutex_);
     if(isDeactivated_) {
         return;
@@ -223,16 +223,53 @@ void DeviceBase::deactivate() {
         LOG_WARN("Device is deactivated or disconnected while there are still sensors streaming!");
     }
 
+    auto monitor = getComponentT<IDeviceMonitor>(OB_DEV_COMPONENT_DEVICE_MONITOR, false);
+
+    std::vector<std::shared_ptr<ISourcePort>> sourcePorts;
+    {
+        std::lock_guard<std::mutex> lock(sourcePortsMutex_);
+        sourcePortsClosing_ = true;
+        for(auto it = createdSourcePorts_.begin(); it != createdSourcePorts_.end();) {
+            auto port = it->lock();
+            if(port) {
+                sourcePorts.push_back(port);
+                ++it;
+            }
+            else {
+                it = createdSourcePorts_.erase(it);
+            }
+        }
+    }
+
+    auto markSourcePortsDisconnected = [&sourcePorts]() {
+        for(const auto &port: sourcePorts) {
+            TRY_EXECUTE(port->markDisconnected());
+        }
+    };
+
+    auto abortSourcePortPendingIo = [&sourcePorts]() {
+        for(const auto &port: sourcePorts) {
+            TRY_EXECUTE(port->abortPendingIo());
+        }
+    };
+
+    if(forceAbortPendingIo) {
+        isDeactivated_ = true;
+        markSourcePortsDisconnected();
+        abortSourcePortPendingIo();
+    }
+
     // CRITICAL: Stop heartbeat and firmwareLog thread before deactivating the device
     TRY_EXECUTE({
-        auto monitor = getComponentT<IDeviceMonitor>(OB_DEV_COMPONENT_DEVICE_MONITOR, false);
         if(monitor) {
             monitor->disableHeartbeat();
             monitor->disableFirmwareLog();
         }
     });
 
-    isDeactivated_ = true;
+    if(!forceAbortPendingIo) {
+        isDeactivated_ = true;
+    }
 
     std::vector<ComponentItem> tempComponents;  // using temp to avoid deadlock when deactivating components
     {
@@ -244,6 +281,15 @@ void DeviceBase::deactivate() {
         // The clear order should be reversed as the order of the components are added.
         // Otherwise, the dependency between components may be broken and cause crash.
         tempComponents.erase(tempComponents.end() - 1);
+    }
+
+    if(!forceAbortPendingIo) {
+        markSourcePortsDisconnected();
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(sourcePortsMutex_);
+        createdSourcePorts_.clear();
     }
     sensorPortInfos_.clear();
 }
@@ -266,12 +312,16 @@ void DeviceBase::reboot() {
         (*cb)(shared_from_this());
     }
 
-    deactivate();
+    deactivate(true);
 }
 
 void DeviceBase::reset() {
-    deactivate();
-    isDeactivated_ = false;
+    deactivate(false);
+    {
+        std::lock_guard<std::mutex> lock(sourcePortsMutex_);
+        isDeactivated_      = false;
+        sourcePortsClosing_ = false;
+    }
 
 #ifdef OS_MACOS
     // macOS: allow time for libusb/IOKit to fully release UVC interfaces before
@@ -588,7 +638,15 @@ int DeviceBase::getFirmwareVersionInt() {
 }
 
 std::shared_ptr<ISourcePort> DeviceBase::getSourcePort(std::shared_ptr<const SourcePortInfo> sourcePortInfo) const {
-    auto platform = Platform::getInstance();
+    {
+        std::lock_guard<std::mutex> lock(sourcePortsMutex_);
+        if(sourcePortsClosing_) {
+            THROW_DEVICE_UNAVAILABLE_EXCEPTION("Device is deactivating; no new source ports can be created");
+        }
+    }
+
+    auto                         platform = Platform::getInstance();
+    std::shared_ptr<ISourcePort> port;
 #if defined(__linux__) || defined(__ANDROID__)
     if(sourcePortInfo->portType == SOURCE_PORT_USB_UVC) {
         auto        envConfig = EnvConfig::getInstance();
@@ -606,10 +664,43 @@ std::shared_ptr<ISourcePort> DeviceBase::getSourcePort(std::shared_ptr<const Sou
                 backend = OB_UVC_BACKEND_TYPE_V4L2;
             }
         }
-        return platform->getUvcSourcePort(sourcePortInfo, backend);
+        port = platform->getUvcSourcePort(sourcePortInfo, backend);
     }
+    else
 #endif
-    return platform->getSourcePort(sourcePortInfo);
+    {
+        port = platform->getSourcePort(sourcePortInfo);
+    }
+
+    bool rejectPort = false;
+    {
+        std::lock_guard<std::mutex> lock(sourcePortsMutex_);
+        if(sourcePortsClosing_) {
+            rejectPort = true;
+        }
+        else {
+            auto it = createdSourcePorts_.begin();
+            while(it != createdSourcePorts_.end()) {
+                auto existingPort = it->lock();
+                if(!existingPort) {
+                    it = createdSourcePorts_.erase(it);
+                }
+                else {
+                    if(existingPort == port) {
+                        return port;
+                    }
+                    ++it;
+                }
+            }
+            createdSourcePorts_.push_back(port);
+        }
+    }
+
+    if(rejectPort) {
+        TRY_EXECUTE(port->markDisconnected());
+        THROW_DEVICE_UNAVAILABLE_EXCEPTION("Device started deactivating while the source port was being created");
+    }
+    return port;
 }
 
 OBDeviceAccessMode DeviceBase::normalizeMode(OBDeviceAccessMode mode) {

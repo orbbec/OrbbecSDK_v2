@@ -57,7 +57,7 @@ public:
 
     virtual void postInitialize() override;
 
-    void     deactivate() override;
+    void     deactivate(bool forceAbortPendingIo = false) override;
     void     loadDefaultPostProcessingConfig() override;
     uint16_t getDepthMaxValidValue(OBFormat format) override;
 

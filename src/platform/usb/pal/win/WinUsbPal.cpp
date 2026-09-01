@@ -39,7 +39,7 @@ namespace libobsensor {
 
 class WinUsbDeviceWatcher : public IDeviceWatcher {
 public:
-    WinUsbDeviceWatcher(const IPal *backend);
+    WinUsbDeviceWatcher(const WinUsbPal *backend);
     ~WinUsbDeviceWatcher() noexcept override;
 
     void start(deviceChangedCallback callback) override;
@@ -54,7 +54,7 @@ private:
     std::thread eventThread_;
     std::mutex  mutex_;
     struct extra_data {
-        const IPal           *backend_;
+        const WinUsbPal      *backend_;
         deviceChangedCallback callback_;
         bool                  stopped_;
         HWND                  hWnd;
@@ -138,6 +138,39 @@ WinUsbPal::~WinUsbPal() noexcept {
     LOG_DEBUG("WinUsbPal destroyed!");
 }
 
+void WinUsbPal::markUvcPortsDisconnected(uint16_t vid, uint16_t pid, const std::string &uid, const std::string &symbolicLink) const {
+    auto                                           removedUrl = utils::string::toUpper(symbolicLink);
+    std::vector<std::shared_ptr<WmfUvcDevicePort>> disconnectedPorts;
+
+    {
+        std::lock_guard<std::mutex> lock(sourcePortMapMutex_);
+        for(auto it = sourcePortMap_.begin(); it != sourcePortMap_.end();) {
+            auto port = it->second.lock();
+            if(!port) {
+                it = sourcePortMap_.erase(it);
+                continue;
+            }
+
+            auto portInfo = std::dynamic_pointer_cast<const USBSourcePortInfo>(it->first);
+            if(portInfo && portInfo->portType == SOURCE_PORT_USB_UVC && portInfo->vid == vid && portInfo->pid == pid) {
+                auto       portUrl    = utils::string::toUpper(portInfo->url);
+                const bool urlMatched = !portUrl.empty() && portUrl == removedUrl;
+                const bool uidMatched = !uid.empty() && portInfo->uid == uid;
+                if(urlMatched || uidMatched) {
+                    auto uvcPort = std::dynamic_pointer_cast<WmfUvcDevicePort>(port);
+                    if(uvcPort) {
+                        disconnectedPorts.push_back(std::move(uvcPort));
+                    }
+                }
+            }
+            ++it;
+        }
+    }
+
+    for(const auto &port: disconnectedPorts) {
+        port->markDisconnected();
+    }
+}
 std::shared_ptr<ISourcePort> WinUsbPal::getSourcePort(std::shared_ptr<const SourcePortInfo> portInfo) {
     std::unique_lock<std::mutex> lock(sourcePortMapMutex_);
     std::shared_ptr<ISourcePort> port;
@@ -153,12 +186,17 @@ std::shared_ptr<ISourcePort> WinUsbPal::getSourcePort(std::shared_ptr<const Sour
     }
 
     // check if the port already exists in the map
-    for(const auto &pair: sourcePortMap_) {
-        if(pair.first == portInfo) {
-            port = pair.second.lock();
-            if(port != nullptr) {
+    for(auto it = sourcePortMap_.begin(); it != sourcePortMap_.end();) {
+        if(it->first == portInfo) {
+            port = it->second.lock();
+            if(port != nullptr && !port->isDisconnected()) {
                 return port;
             }
+            it = sourcePortMap_.erase(it);
+            break;
+        }
+        else {
+            ++it;
         }
     }
 
@@ -251,7 +289,7 @@ SourcePortInfoList WinUsbPal::querySourcePortInfos() {
     return portInfoList;
 }
 
-WinUsbDeviceWatcher::WinUsbDeviceWatcher(const IPal *backend) {
+WinUsbDeviceWatcher::WinUsbDeviceWatcher(const WinUsbPal *backend) {
     extraData_.backend_         = backend;
     extraData_.stopped_         = true;
     extraData_.callback_        = nullptr;
@@ -370,6 +408,7 @@ LRESULT CALLBACK WinUsbDeviceWatcher::onWinEvent(HWND hWnd, UINT message, WPARAM
                     else if(wParam == DBT_DEVICEREMOVECOMPLETE) {
                         LOG_DEBUG("Device removed event occurred! symbolicLink={}", symbolicLink);
                         if(devIntf->dbcc_classguid == GUID_DEVINTERFACE_USB_DEVICE) {
+                            watcherExtraData->backend_->markUvcPortsDisconnected(vid, pid, uid, symbolicLink);
                             (void)watcherExtraData->callback_(OB_DEVICE_REMOVED, symbolicLink);
                         }
                     }

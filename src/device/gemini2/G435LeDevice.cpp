@@ -223,12 +223,12 @@ G435LeDevice::~G435LeDevice() noexcept {
 #endif
 }
 
-void G435LeDevice::deactivate() {
+void G435LeDevice::deactivate(bool forceAbortPendingIo) {
 #if defined(BUILD_NET_PAL)
     // clear ccp controller here
     ccpController_.reset();
 #endif
-    G435LeDeviceBase::deactivate();
+    G435LeDeviceBase::deactivate(forceAbortPendingIo);
 }
 
 void G435LeDevice::init() {

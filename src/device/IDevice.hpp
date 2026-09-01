@@ -56,9 +56,9 @@ public:
     virtual void postInitialize() = 0;
 
     // device life control
-    virtual void reset()      = 0;
-    virtual void reboot()     = 0;
-    virtual void deactivate() = 0;
+    virtual void reset()                                      = 0;
+    virtual void reboot()                                     = 0;
+    virtual void deactivate(bool forceAbortPendingIo = false) = 0;
 
     virtual bool isPlaybackDevice() const = 0;
 

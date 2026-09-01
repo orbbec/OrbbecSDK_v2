@@ -82,11 +82,16 @@ public:
     UvcControlRange getPuRange(uint32_t propertyId) override;
 
     uint32_t sendAndReceive(const uint8_t *sendData, uint32_t sendLen, uint8_t *recvData, uint32_t exceptedRecvLen, utils::TransferTiming *timing) override;
+    void     abortPendingIo() override;
+    void     markDisconnected() override;
+    bool     isDisconnected() const override;
 
     static bool isConnected(std::shared_ptr<const USBSourcePortInfo> info);
     static void foreachUvcDevice(const USBDeviceInfoEnumCallback &action);
 
 private:
+    bool shouldSkipControlTransfer();
+
     IAMVideoProcAmp  *getVideoProc() const;
     IAMCameraControl *getCameraControl() const;
 
@@ -112,12 +117,16 @@ private:
 
 private:
     std::recursive_mutex deviceMutex_;
+    std::mutex           abortSourceMutex_;
 
     std::shared_ptr<const USBSourcePortInfo> portInfo_;
     PowerState                               powerState_ = kD3;
 
-    CComPtr<IMFMediaSource>                 deviceSource_ = nullptr;
-    CComPtr<IMFAttributes>                  deviceAttrs_  = nullptr;
+    CComPtr<IMFMediaSource> deviceSource_ = nullptr;
+    // Kept separately so abortPendingIo() can call Shutdown() without waiting
+    // for deviceMutex_, which may be held by a blocked KsProperty() call.
+    CComPtr<IMFMediaSource>                 abortSource_ = nullptr;
+    CComPtr<IMFAttributes>                  deviceAttrs_ = nullptr;
     Microsoft::WRL::ComPtr<IMFSourceReader> streamReader_;
     CComPtr<IMFAttributes>                  readerAttrs_ = nullptr;
 
@@ -131,7 +140,8 @@ private:
     std::map<uint32_t, StreamObject> streams_;  // <index, StreamObj>
     std::mutex                       streamsMutex_;
 
-    std::atomic<bool> isStarted_ = { false };
+    std::atomic<bool> isStarted_    = { false };
+    std::atomic<bool> disconnected_ = { false };
     std::wstring      deviceId_;
 
     StreamProfileList profileList_;
@@ -149,4 +159,3 @@ private:
 };
 
 }  // namespace libobsensor
-

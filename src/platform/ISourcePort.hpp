@@ -27,6 +27,21 @@ public:
     virtual std::shared_ptr<const SourcePortInfo> getSourcePortInfo() const = 0;
 
     /**
+     * @brief Abort any pending blocking I/O on this port.
+     *        Default implementation is a no-op for ports that do not support cancellation.
+     */
+    virtual void abortPendingIo() {}
+
+    /**
+     * @brief Permanently invalidate this port so it rejects new I/O.
+     */
+    virtual void markDisconnected() {}
+
+    virtual bool isDisconnected() const {
+        return false;
+    }
+
+    /**
      * @brief Get driver-level status bits for diagnostics.
      * @return Driver-specific diagnostic bitmask. 0 means no issues.
      */

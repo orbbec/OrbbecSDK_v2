@@ -80,7 +80,7 @@ std::string VendorUsbDevicePort::getUsbConnectType() {
     auto device    = libusb_get_device(devHandle);
 
     libusb_device_descriptor desc;
-    auto  ret = libusb_get_device_descriptor(device, &desc);
+    auto                     ret = libusb_get_device_descriptor(device, &desc);
     if(ret < 0) {
         LOG_ERROR("Failed to get device descriptor. Error: {}", libusb_strerror(ret));
         return "";
