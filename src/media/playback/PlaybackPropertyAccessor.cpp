@@ -50,6 +50,7 @@ void PlaybackVendorPropertyAccessor::getPropertyValue(uint32_t propertyId, OBPro
         const auto &profiles = playPort_->getStreamProfileList(OB_SENSOR_ACCEL);
         if(profiles.empty()) {
             LOG_WARN("No accelerometer profiles available");
+            value->intValue = 0;  // Invalid value
             break;
         }
         auto accelStreamProfile = profiles.at(0)->as<AccelStreamProfile>();
@@ -61,6 +62,7 @@ void PlaybackVendorPropertyAccessor::getPropertyValue(uint32_t propertyId, OBPro
         const auto &profiles = playPort_->getStreamProfileList(OB_SENSOR_GYRO);
         if(profiles.empty()) {
             LOG_WARN("No gyroscope profiles available");
+            value->intValue = 0;  // Invalid value
             break;
         }
         auto gyroStreamProfile = profiles.at(0)->as<GyroStreamProfile>();
