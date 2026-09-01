@@ -17,10 +17,14 @@
 
 namespace libobsensor {
 
-class RecordDevice {
+class RecordDevice : public std::enable_shared_from_this<RecordDevice> {
 public:
     RecordDevice(std::shared_ptr<IDevice> device, const std::string &filePath, bool compressionsEnabled = true);
     virtual ~RecordDevice() noexcept;
+
+    // Registers the per-sensor recording callbacks. Must be called after the RecordDevice is owned
+    // by a std::shared_ptr (it relies on shared_from_this), i.e. right after make_shared.
+    void init();
 
     void pause();
     void resume();

@@ -18,6 +18,7 @@ ob_record_device *ob_create_record_device(ob_device *device, const char *file_pa
     VALIDATE_NOT_NULL(device);
     VALIDATE_NOT_NULL(file_path);
     auto recorder = std::make_shared<libobsensor::RecordDevice>(device->device, file_path, compression_enabled);
+    recorder->init();
 
     auto impl      = new ob_record_device();
     impl->recorder = recorder;

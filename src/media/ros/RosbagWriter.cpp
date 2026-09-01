@@ -21,6 +21,7 @@ RosWriter::~RosWriter() {
 }
 
 void RosWriter::stop(bool hasError) {
+    std::lock_guard<std::mutex> lock(writeMutex_);
     if (file_) {
         file_.reset();
         file_ = nullptr;

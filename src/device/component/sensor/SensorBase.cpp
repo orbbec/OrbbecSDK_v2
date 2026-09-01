@@ -380,7 +380,8 @@ void SensorBase::setIntraCameraSyncTimestampAdjuster(std::shared_ptr<IFrameTimes
 }
 
 void SensorBase::setFrameRecordingCallback(FrameCallback callback) {
-    frameRecordingCallback_ = callback;
+    std::lock_guard<std::mutex> lock(frameRecordingCallbackMutex_);
+    frameRecordingCallback_ = std::move(callback);
 }
 
 uint64_t SensorBase::getAndResetDroppedFrameStatus() {
@@ -464,8 +465,14 @@ void SensorBase::outputFrame(std::shared_ptr<Frame> frame) {
         });
     }
 
-    if(frameRecordingCallback_) {
-        frameRecordingCallback_(frame);
+    FrameCallback recordingCallback;
+    {
+        std::lock_guard<std::mutex> lock(frameRecordingCallbackMutex_);
+        recordingCallback = frameRecordingCallback_;
+    }
+
+    if(recordingCallback) {
+        recordingCallback(frame);
     }
 
     if(frameProcessor_) {

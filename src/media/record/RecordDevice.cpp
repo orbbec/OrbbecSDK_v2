@@ -20,11 +20,29 @@ RecordDevice::RecordDevice(std::shared_ptr<IDevice> device, const std::string &f
 
     writer_ = std::make_shared<RosWriter>(filePath_, isCompressionsEnabled_);
     writeAllProperties();
+}
 
+void RecordDevice::init() {
     const auto &sensorTypeList = device_->getSensorTypeList();
+
+    // Populate all once-flags before registering any callback, so an in-flight callback never
+    // observes a partially built map.
     for(const auto &sensorType: sensorTypeList) {
-        device_->getSensor(sensorType)->setFrameRecordingCallback([this](std::shared_ptr<const Frame> frame) { onFrameRecordingCallback(frame); });
         sensorOnceFlags_[sensorType] = std::unique_ptr<std::once_flag>(new std::once_flag());
+    }
+
+    // The callback captures a weak_ptr, not this. It locks it before touching any member, so the
+    // RecordDevice cannot be destroyed while a callback is running, and a callback that arrives
+    // during/after destruction simply drops the frame.
+    std::weak_ptr<RecordDevice> weakSelf = shared_from_this();
+    for(const auto &sensorType: sensorTypeList) {
+        device_->getSensor(sensorType)->setFrameRecordingCallback([weakSelf](std::shared_ptr<const Frame> frame) {
+            auto self = weakSelf.lock();
+            if(!self) {
+                return;
+            }
+            self->onFrameRecordingCallback(frame);
+        });
     }
 }
 
@@ -36,9 +54,7 @@ RecordDevice::~RecordDevice() {
     }
 
     for(auto &item: frameQueueMap_) {
-        while(!item.second->empty()) {
-            std::this_thread::sleep_for(std::chrono::nanoseconds(100));
-        }
+        item.second->flush();
     }
 
     // stop recorder and write device&frame info

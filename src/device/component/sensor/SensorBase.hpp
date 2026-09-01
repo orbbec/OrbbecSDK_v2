@@ -14,6 +14,7 @@
 #include <map>
 #include <mutex>
 #include <thread>
+#include <utility>
 #include "utils/SteadyCondVar.hpp"
 
 namespace libobsensor {
@@ -87,6 +88,11 @@ protected:
     std::shared_ptr<const StreamProfile> activatedStreamProfile_;
     FrameCallback                        frameCallback_;
     FrameCallback                        frameRecordingCallback_;
+
+    // Guards frameRecordingCallback_ against concurrent set/clear vs. read in outputFrame.
+    // Lifetime of the callee is guarded by the callback itself (RecordDevice holds a weak_ptr),
+    // so no in-flight counting is needed here.
+    std::mutex frameRecordingCallbackMutex_;
 
     std::mutex                                     streamStateCallbackMutex_;
     std::map<uint32_t, StreamStateChangedCallback> streamStateChangedCallbacks_;
