@@ -1322,6 +1322,7 @@ void G330Device::initProperties() {
     if(vid == ORBBEC_DEVICE_VID && (pid == 0x0801 || pid == 0x0805)) {
         propertyServer->unregisterProperty(OB_PROP_LDP_BOOL);
         propertyServer->unregisterProperty(OB_PROP_LDP_MEASURE_DISTANCE_INT);
+        propertyServer->unregisterProperty(OB_PROP_LDP_STATUS_BOOL);
     }
 
     registerComponent(OB_DEV_COMPONENT_PROPERTY_SERVER, propertyServer, false);
