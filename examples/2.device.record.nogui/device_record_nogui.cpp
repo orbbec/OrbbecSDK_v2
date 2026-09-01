@@ -10,11 +10,15 @@
 #include <thread>
 #include <atomic>
 #include <map>
+#include <exception>
 
 int main(void) try {
     std::cout << "Please enter the output filename (with .bag extension) and press Enter to start recording: ";
     std::string filePath;
-    std::getline(std::cin, filePath);
+    if(!std::getline(std::cin, filePath)) {
+        std::cout << "Input stream closed (EOF), exiting." << std::endl;
+        return 0;
+    }
 
     // Create a context, for getting devices and sensors
     std::shared_ptr<ob::Context> context = std::make_shared<ob::Context>();
@@ -151,4 +155,10 @@ catch(ob::Error &e) {
     std::cout << "\nPress any key to exit.";
     ob_smpl::waitForKeyPressed();
     exit(EXIT_FAILURE);
+}
+catch(std::exception &e) {
+    std::cerr << "Error: " << e.what() << std::endl;
+    std::cout << "\nPress any key to exit.";
+    ob_smpl::waitForKeyPressed();
+    return EXIT_FAILURE;
 }

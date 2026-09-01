@@ -73,8 +73,7 @@ int main(void) try {
     bool isSelectProperty = true;
     while(isSelectProperty) {
         std::string choice;
-        std::getline(std::cin, choice);
-        if(std::cin.eof()) {
+        if(!std::getline(std::cin, choice)) {
             std::cout << "Input stream closed (EOF), exiting." << std::endl;
             isSelectProperty = false;
             break;

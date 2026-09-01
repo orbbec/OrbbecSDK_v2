@@ -113,8 +113,7 @@ bool getRosbagPath(std::string &rosbagPath) {
         std::cout << "Please input the path of the Rosbag file (.bag) to playback: \n";
         std::cout << "Path: ";
         std::string input;
-        std::getline(std::cin, input);
-        if(std::cin.eof()) {
+        if(!std::getline(std::cin, input)) {
             std::cout << "Input stream closed (EOF), exiting." << std::endl;
             return false;
         }

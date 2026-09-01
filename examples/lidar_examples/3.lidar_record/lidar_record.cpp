@@ -50,8 +50,7 @@ int main(void) try {
     std::cout << "\n------------------------------------------------------------------------\n";
     std::cout << "Please enter the output filename (with .bag extension) and press Enter to start recording: ";
     std::string filePath;
-    std::getline(std::cin, filePath);
-    if(std::cin.eof()) {
+    if(!std::getline(std::cin, filePath)) {
         std::cout << "Input stream closed (EOF), exiting." << std::endl;
         return 0;
     }

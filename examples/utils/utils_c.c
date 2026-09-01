@@ -10,6 +10,14 @@
 extern "C" {
 #endif
 
+static void report_stdin_unavailable(void) {
+    static bool reported = false;
+    if(!reported) {
+        fprintf(stderr, "Input stream is closed or not an interactive terminal, exiting.\n");
+        reported = true;
+    }
+}
+
 #if defined(__linux__) || defined(__APPLE__)
 #include <termios.h>
 #include <string.h>
@@ -44,12 +52,19 @@ int kbhit(void) {
     struct termios oldt, newt;
     int            ch;
     int            oldf;
-    tcgetattr(STDIN_FILENO, &oldt);
+    if(tcgetattr(STDIN_FILENO, &oldt) < 0) {
+        return -1;
+    }
     newt = oldt;
     newt.c_lflag &= ~(ICANON | ECHO);
-    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+    if(tcsetattr(STDIN_FILENO, TCSANOW, &newt) < 0) {
+        return -1;
+    }
     oldf = fcntl(STDIN_FILENO, F_GETFL, 0);
-    fcntl(STDIN_FILENO, F_SETFL, oldf | O_NONBLOCK);
+    if(oldf < 0 || fcntl(STDIN_FILENO, F_SETFL, oldf | O_NONBLOCK) < 0) {
+        tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+        return -1;
+    }
     ch = getchar();
     tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
     fcntl(STDIN_FILENO, F_SETFL, oldf);
@@ -57,6 +72,11 @@ int kbhit(void) {
         ungetc(ch, stdin);
         return 1;
     }
+    if(feof(stdin)) {
+        return -1;
+    }
+    // A non-blocking read with no available input sets ferror (typically EAGAIN).
+    clearerr(stdin);
     return 0;
 }
 
@@ -77,8 +97,19 @@ char ob_smpl_wait_for_key_press(uint32_t timeout_ms) {  // Get the current time
 
     while(true) {
         long long current_time;
-        if(kbhit()) {
-            return getch();
+        int input_status = kbhit();
+        if(input_status < 0) {
+            // Treat a closed stdin as ESC so existing samples exit safely.
+            report_stdin_unavailable();
+            return ESC_KEY;
+        }
+        if(input_status > 0) {
+            int key = getch();
+            if(key < 0) {
+                report_stdin_unavailable();
+                return ESC_KEY;
+            }
+            return (char)key;
         }
         gettimeofday(&te, NULL);
         current_time = te.tv_sec * 1000LL + te.tv_usec / 1000;
@@ -116,15 +147,19 @@ uint64_t ob_smpl_get_current_timestamp_ms() {
 char ob_smpl_wait_for_key_press(uint32_t timeout_ms) {
     HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE);
     if(hStdin == INVALID_HANDLE_VALUE) {
-        return 0;
+        report_stdin_unavailable();
+        return ESC_KEY;
     }
     DWORD mode = 0;
     if(!GetConsoleMode(hStdin, &mode)) {
-        return 0;
+        // stdin is closed, redirected, or otherwise not an interactive console.
+        report_stdin_unavailable();
+        return ESC_KEY;
     }
     mode &= ~ENABLE_ECHO_INPUT;
     if(!SetConsoleMode(hStdin, mode)) {
-        return 0;
+        report_stdin_unavailable();
+        return ESC_KEY;
     }
     DWORD start_time = GetTickCount();
     while(true) {

@@ -15,7 +15,7 @@
 // Select devices
 ob_device *selectDevice(ob_device_list *deviceList, ob_error *error);
 // Select sensors and enable streams
-void select_sensors_and_streams(ob_device *device, ob_config *config);
+bool select_sensors_and_streams(ob_device *device, ob_config *config);
 // Print LiDAR point cloud frame information
 void print_lidar_point_cloud_info(ob_frame *point_cloud_frame);
 // Frame callback function
@@ -29,9 +29,15 @@ int select_index(const char *prompt, int min_value, int max_value) {
     printf("\n%s (Input index or \'q\' to exit): ", prompt);
     while(true) {
         char input;
+        int  trailing;
         int  ret = scanf("%c", &input);
-        (void)ret;
-        getchar();
+        if(ret == EOF) {
+            printf("\nInput stream closed (EOF), exiting.\n");
+            return -1;
+        }
+        // Consume the rest of the input line before processing the selection.
+        while((trailing = getchar()) != '\n' && trailing != EOF) {
+        }
 
         if(input == 'q' || input == 'Q') {
             value = -1;
@@ -80,6 +86,13 @@ int main(void) {
     else {
         device = selectDevice(deviceList, error);
         CHECK_OB_ERROR_EXIT(&error);
+        if(device == NULL) {
+            ob_delete_device_list(deviceList, &error);
+            CHECK_OB_ERROR_EXIT(&error);
+            ob_delete_context(context, &error);
+            CHECK_OB_ERROR_EXIT(&error);
+            return 0;
+        }
     }
 
     // Create a pipeline to manage the streams
@@ -127,7 +140,19 @@ int main(void) {
     CHECK_OB_ERROR_EXIT(&error);
 
     // Select sensors and enable streams
-    select_sensors_and_streams(device, config);
+    if(!select_sensors_and_streams(device, config)) {
+        ob_delete_config(config, &error);
+        CHECK_OB_ERROR_EXIT(&error);
+        ob_delete_pipeline(pipe, &error);
+        CHECK_OB_ERROR_EXIT(&error);
+        ob_delete_device(device, &error);
+        CHECK_OB_ERROR_EXIT(&error);
+        ob_delete_device_list(deviceList, &error);
+        CHECK_OB_ERROR_EXIT(&error);
+        ob_delete_context(context, &error);
+        CHECK_OB_ERROR_EXIT(&error);
+        return 0;
+    }
     ob_pipeline_start_with_callback(pipe, config, frame_callback, (void *)NULL, &error);
     CHECK_OB_ERROR_EXIT(&error);
 
@@ -408,11 +433,14 @@ ob_device *selectDevice(ob_device_list *deviceList, ob_error *error) {
         printf("%d. name: %s, vid: 0x%04x, pid: 0x%04x, uid: %s, sn: %s\n", i, name, (unsigned int)vid, (unsigned int)pid, uid, sn);
     }
     devIndex = select_index("Select a device", 0, devCount - 1);
+    if(devIndex < 0) {
+        return NULL;
+    }
 
     return ob_device_list_get_device(deviceList, devIndex, &error);
 }
 // Select sensors and enable streams
-void select_sensors_and_streams(ob_device *device, ob_config *config) {
+bool select_sensors_and_streams(ob_device *device, ob_config *config) {
 
     // error handling
     ob_error       *error           = NULL;
@@ -441,7 +469,7 @@ void select_sensors_and_streams(ob_device *device, ob_config *config) {
     if(sensor_selected == -1) {
         ob_delete_sensor_list(sensor_list, &error);
         CHECK_OB_ERROR_EXIT(&error);
-        return;
+        return false;
     }
 
     // Check if the selected sensor index is valid
@@ -517,6 +545,16 @@ void select_sensors_and_streams(ob_device *device, ob_config *config) {
         // Select a stream profile
         profile_selected = select_index("Select a stream profile to enable", 0, profile_count - 1);
 
+        if(profile_selected < 0) {
+            ob_delete_stream_profile_list(profile_list, &error);
+            CHECK_OB_ERROR_EXIT(&error);
+            ob_delete_sensor(sensor, &error);
+            CHECK_OB_ERROR_EXIT(&error);
+            ob_delete_sensor_list(sensor_list, &error);
+            CHECK_OB_ERROR_EXIT(&error);
+            return false;
+        }
+
         // Check if the selected stream profile index is valid
         if(profile_selected >= 0 && profile_selected < (int)profile_count) {
             // Get the selected stream profile
@@ -543,4 +581,5 @@ void select_sensors_and_streams(ob_device *device, ob_config *config) {
     // Delete sensor list
     ob_delete_sensor_list(sensor_list, &error);
     CHECK_OB_ERROR_EXIT(&error);
+    return true;
 }

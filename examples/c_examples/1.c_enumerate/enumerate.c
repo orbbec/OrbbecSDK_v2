@@ -25,9 +25,15 @@ int select_index(const char *prompt, int min_value, int max_value) {  // todo: t
     printf("\n%s (Input device index or \'q\' to exit program): ", prompt);
     while(true) {
         char input;
+        int  trailing;
         int  ret = scanf("%c", &input);
-        (void)ret;
-        getchar();
+        if(ret == EOF) {
+            printf("\nInput stream closed (EOF), exiting.\n");
+            return -1;
+        }
+        // Consume the rest of the input line before processing the selection.
+        while((trailing = getchar()) != '\n' && trailing != EOF) {
+        }
 
         if(input == 'q' || input == 'Q') {
             value = -1;

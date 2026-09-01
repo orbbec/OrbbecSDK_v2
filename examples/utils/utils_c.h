@@ -22,7 +22,7 @@ uint64_t ob_smpl_get_current_timestamp_ms(void);
  *
  * @param[in] timeout_ms The maximum time to wait for a key press in milliseconds. Set to 0 to wait indefinitely.
  *
- * @return char The key that was pressed.
+ * @return char The key that was pressed, 0 on timeout, or ESC_KEY when stdin is closed or unavailable.
  */
 char ob_smpl_wait_for_key_press(uint32_t timeout_ms);
 

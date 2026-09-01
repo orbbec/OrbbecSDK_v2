@@ -31,9 +31,7 @@ int main() try {
         std::shared_ptr<ob::DeviceList> deviceList = context->queryDeviceList();
         if(deviceList->getCount() == 0) {
             std::cout << "No device found. Please connect a device first!" << std::endl;
-            std::cout << "Press any key to exit..." << std::endl;
-            ob_smpl::waitForKeyPressed();
-            return 0;
+            return EXIT_FAILURE;
         }
 
         devices.clear();
@@ -48,14 +46,22 @@ int main() try {
         std::shared_ptr<ob::Device> device      = nullptr;
 
         if(!selectDevice(device)) {
-            break;
+            // Release SDK resources before leaving the loop; some Linux devices may keep
+            // background threads alive while their shared pointers are still held.
+            device.reset();
+            devices.clear();
+            context.reset();
+            return 0;
         }
 
         printPreset(device);
 
         std::vector<std::string> pathList;
         if(!getPresetPath(pathList)) {
-            break;
+            device.reset();
+            devices.clear();
+            context.reset();
+            return 0;
         }
 
         uint8_t index                 = 0;
@@ -130,8 +136,7 @@ catch(ob::Error &e) {
 static bool shouldContinue() {
     std::string input;
     std::cout << "Enter 'Q' or 'q' to quit, or any other key to continue: ";
-    std::getline(std::cin, input);
-    if(std::cin.eof()) {
+    if(!std::getline(std::cin, input)) {
         std::cout << "Input stream closed (EOF), exiting." << std::endl;
         return false;
     }
@@ -193,8 +198,7 @@ static bool getPresetPath(std::vector<std::string> &pathList) {
     do {
         std::cout << "Enter Path: ";
         std::string input;
-        std::getline(std::cin, input);
-        if(std::cin.eof()) {
+        if(!std::getline(std::cin, input)) {
             std::cout << "Input stream closed (EOF), exiting." << std::endl;
             return false;
         }
@@ -242,8 +246,7 @@ static bool selectDevice(std::shared_ptr<ob::Device> &device) {
     while(true) {
         std::cout << "Please select a device to update the optional depth preset, enter 'l' to list devices, or enter 'q' to quit: " << std::endl;
         std::cout << "Device index: ";
-        std::getline(std::cin, input);
-        if(std::cin.eof()) {
+        if(!std::getline(std::cin, input)) {
             std::cout << "Input stream closed (EOF), exiting." << std::endl;
             return false;
         }

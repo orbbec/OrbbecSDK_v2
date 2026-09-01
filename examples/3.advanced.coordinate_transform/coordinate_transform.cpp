@@ -32,7 +32,10 @@ int main(void) try {
 
         std::cout << "\nInput command:  ";
         std::string cmd = "1";
-        std::getline(std::cin, cmd);
+        if(!std::getline(std::cin, cmd)) {
+            std::cout << "Input stream closed (EOF), exiting." << std::endl;
+            break;
+        }
         if(cmd == "quit" || cmd == "q") {
             break;
         }
