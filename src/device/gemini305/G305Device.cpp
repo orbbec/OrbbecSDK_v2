@@ -35,6 +35,7 @@
 #include "frameprocessor/FrameProcessor.hpp"
 #include "colorpreset/ColorPresetManager.hpp"
 #include "colorpreset/ColorPresetMaps.hpp"
+#include "comprehensivefilter/DepthPostFilterParamsManager.hpp"
 
 #include "utils/BufferParser.hpp"
 #include "G305DeviceInfo.hpp"
@@ -162,6 +163,10 @@ void G305Device::init() {
     if(fwVersion >= 10085) {
         auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
         propertyServer->registerProperty(OB_PROP_FPS_BOOST_BOOL, "rw", "rw", vendorPropertyAccessor.get());
+        propertyServer->registerProperty(OB_RAW_DATA_DEPTH_POST_FILTER_PARAMS, "", "r", vendorPropertyAccessor.get());
+
+        auto depthPostFilterParamsManager = std::make_shared<DepthPostFilterParamsManager>(this);
+        registerComponent(OB_DEV_COMPONENT_DEPTH_POST_FILTER_PARAMS_MANAGER, depthPostFilterParamsManager);
     }
 
     static const std::vector<OBMultiDeviceSyncMode> supportedSyncModes = {
@@ -271,6 +276,28 @@ void G305Device::init() {
 
 void G305Device::loadDefaultPostProcessingConfig() {
     loadDefaultDepthPostProcessingConfig();
+}
+
+void G305Device::updateDepthPostProcessingFilterList() {
+    auto depthPostFilterParamsManager = getComponentT<DepthPostFilterParamsManager>(OB_DEV_COMPONENT_DEPTH_POST_FILTER_PARAMS_MANAGER, false);
+    if(depthPostFilterParamsManager) {
+        // Update recommended filters
+        auto filterIter = recommendedPostFilters_.find(OB_SENSOR_DEPTH);
+        if(filterIter != recommendedPostFilters_.end()) {
+            std::vector<std::shared_ptr<IFilter>> newDepthFilterList;
+            std::vector<std::shared_ptr<IFilter>> depthFilterList = filterIter->second;
+            for(const auto &filter: depthFilterList) {
+                if(filter->getName() == "FalsePositiveFilter") {
+                    auto filterData = depthPostFilterParamsManager->getFPFilterParams();
+                    filter->setConfigData(filterData, sizeof(FalsePositiveFilterParams));
+                    filter->updateConfig(depthPostFilterParamsManager->getFPFilterUpdateParams());
+                    filter->enable(depthPostFilterParamsManager->isFPFilterEnable());
+                }
+                newDepthFilterList.push_back(filter);
+            }
+            recommendedPostFilters_[OB_SENSOR_DEPTH] = newDepthFilterList;
+        }
+    }
 }
 
 void G305Device::initProperties() {

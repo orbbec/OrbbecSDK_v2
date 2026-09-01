@@ -43,6 +43,7 @@ private:
     void                                 initSensorStreamProfile(std::shared_ptr<ISensor> sensor);
     void                                 initSensorListGMSL();
     void                                 loadDefaultDepthPostProcessingConfig();
+    void                                 updateDepthPostProcessingFilterList() override;
     std::shared_ptr<const StreamProfile> loadDefaultStreamProfile(OBSensorType sensorType);
     void                                 updateSensorStreamProfile();
     void                                 fixSensorList();

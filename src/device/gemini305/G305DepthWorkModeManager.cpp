@@ -3,6 +3,7 @@
 
 #include "G305DepthWorkModeManager.hpp"
 #include "property/InternalProperty.hpp"
+#include "component/comprehensivefilter/DepthPostFilterParamsManager.hpp"
 #include "logger/Logger.hpp"
 
 namespace libobsensor {
@@ -60,6 +61,16 @@ void G305DepthWorkModeManager::switchDepthWorkMode(const OBDepthWorkMode_Interna
     currentWorkMode_ = targetDepthMode;
 
     LOG_DEBUG("Device depth work mode have been switch to: {}, device will be reinitialize to apply the new mode.", targetDepthMode.name);
+
+    {
+        auto depthPostrFilterParamsManager = owner->getComponentT<DepthPostFilterParamsManager>(OB_DEV_COMPONENT_DEPTH_POST_FILTER_PARAMS_MANAGER, false);
+        if(depthPostrFilterParamsManager) {
+            TRY_EXECUTE({
+                depthPostrFilterParamsManager->fetchParamFromDevice();
+                owner->updateDepthPostProcessingFilterList();
+            });
+        }
+    }
 
     if((currentModeName != kDoubleRgbMode && targetModeName == kDoubleRgbMode) || (targetModeName != kDoubleRgbMode && currentModeName == kDoubleRgbMode)) {
         owner->reset();

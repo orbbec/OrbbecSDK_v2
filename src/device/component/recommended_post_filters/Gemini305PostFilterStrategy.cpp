@@ -3,8 +3,10 @@
 
 #include "RecommendedPostFilterStrategies.hpp"
 
+#include "InternalTypes.hpp"
 #include "FilterFactory.hpp"
 #include "frameprocessor/FrameProcessor.hpp"
+#include "comprehensivefilter/IDepthPostFilterParamsManager.hpp"
 
 namespace libobsensor {
 
@@ -20,6 +22,8 @@ public:
             owner->getComponentT<FrameProcessor>(OB_DEV_COMPONENT_DEPTH_FRAME_PROCESSOR, false);
 
             std::vector<std::shared_ptr<IFilter>> depthFilterList;
+
+            auto depthPostFilterParamsManager = owner->getComponentT<IDepthPostFilterParamsManager>(OB_DEV_COMPONENT_DEPTH_POST_FILTER_PARAMS_MANAGER, false);
 
             if(filterFactory->isFilterCreatorExists("DecimationFilter")) {
                 auto decimationFilter = filterFactory->createFilter("DecimationFilter");
@@ -80,6 +84,17 @@ public:
                 depthFilterList.push_back(hfFilter);
             }
 
+            if(depthPostFilterParamsManager) {
+                if(filterFactory->isFilterCreatorExists("FalsePositiveFilter")) {
+                    auto falsePositiveFilter = filterFactory->createFilter("FalsePositiveFilter");
+                    auto filterData          = depthPostFilterParamsManager->getFPFilterParams();
+                    falsePositiveFilter->setConfigData(filterData, sizeof(FalsePositiveFilterParams));
+                    falsePositiveFilter->updateConfig(depthPostFilterParamsManager->getFPFilterUpdateParams());
+                    falsePositiveFilter->enable(depthPostFilterParamsManager->isFPFilterEnable());
+                    depthFilterList.push_back(falsePositiveFilter);
+                }
+            }
+
             if(filterFactory->isFilterCreatorExists("DisparityTransform")) {
                 auto dtFilter = filterFactory->createFilter("DisparityTransform");
                 depthFilterList.push_back(dtFilter);
@@ -87,7 +102,7 @@ public:
 
             for(size_t i = 0; i < depthFilterList.size(); i++) {
                 auto filter = depthFilterList[i];
-                if(filter->getName() != "DisparityTransform") {
+                if(filter->getName() != "DisparityTransform" && filter->getName() != "FalsePositiveFilter") {
                     filter->enable(false);
                 }
             }
