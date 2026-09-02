@@ -19,6 +19,37 @@
 
 namespace libobsensor {
 
+namespace {
+
+constexpr int JPEG_EOI_MARKER = 0xD9;
+
+bool isRecoverableMjpegWarning(tjhandle handle) {
+    tjwarninginfo warningInfo = {};
+    if(tjGetErrorCode(handle) != TJERR_WARNING || tjGetWarningInfo(handle, &warningInfo) != 0) {
+        return false;
+    }
+
+    if(!warningInfo.decompressionCompleted || warningInfo.warningCount != 1) {
+        return false;
+    }
+
+    switch(warningInfo.warningCode) {
+    case TJWARN_EXTRANEOUS_DATA:
+        return warningInfo.parameter2 == JPEG_EOI_MARKER;
+    case TJWARN_HIT_MARKER:
+        return warningInfo.markerCode == JPEG_EOI_MARKER && warningInfo.totalIMCURows > 0
+               && warningInfo.inputIMCURow == warningInfo.totalIMCURows - 1;
+    case TJWARN_JFIF_MAJOR:
+    case TJWARN_JPEG_EOF:
+    case TJWARN_BOGUS_ICC:
+        return true;
+    default:
+        return false;
+    }
+}
+
+}  // namespace
+
 FormatConverter::FormatConverter() : convertType_(FORMAT_YUYV_TO_RGB) {}
 FormatConverter::~FormatConverter() noexcept {
     clearTempDataBuf();
@@ -147,7 +178,9 @@ std::shared_ptr<Frame> FormatConverter::process(std::shared_ptr<const Frame> fra
         nv12ToRgb((uint8_t *)frame->getData(), (uint8_t *)tarFrame->getData(), w, h);
         break;
     case FORMAT_MJPG_TO_I420:
-        mjpgToI420((uint8_t *)frame->getData(), (uint32_t)frame->getDataSize(), (uint8_t *)tarFrame->getData(), w, h);
+        if(!mjpgToI420((uint8_t *)frame->getData(), (uint32_t)frame->getDataSize(), (uint8_t *)tarFrame->getData(), w, h)) {
+            return nullptr;
+        }
         break;
     case FORMAT_RGB_TO_BGR:
         exchangeRAndB((uint8_t *)frame->getData(), (uint8_t *)tarFrame->getData(), w, h);
@@ -156,20 +189,29 @@ std::shared_ptr<Frame> FormatConverter::process(std::shared_ptr<const Frame> fra
         exchangeRAndB((uint8_t *)frame->getData(), (uint8_t *)tarFrame->getData(), w, h);
         break;
     case FORMAT_MJPG_TO_NV21:
-        mjpgToNv21((uint8_t *)frame->getData(), (uint32_t)frame->getDataSize(), (uint8_t *)tarFrame->getData(), w, h);
+        if(!mjpgToNv21((uint8_t *)frame->getData(), (uint32_t)frame->getDataSize(), (uint8_t *)tarFrame->getData(), w, h)) {
+            return nullptr;
+        }
         break;
     case FORMAT_MJPG_TO_RGB:
-        if(!mjpgToRgb((uint8_t *)frame->getData(), (uint32_t)frame->getDataSize(), (uint8_t *)tarFrame->getData(), w, h))
+        if(!mjpgToRgb((uint8_t *)frame->getData(), (uint32_t)frame->getDataSize(), (uint8_t *)tarFrame->getData(), w, h)) {
             return nullptr;
+        }
         break;
     case FORMAT_MJPG_TO_BGR:
-        mjpgToBgr((uint8_t *)frame->getData(), (uint32_t)frame->getDataSize(), (uint8_t *)tarFrame->getData(), w, h);
+        if(!mjpgToBgr((uint8_t *)frame->getData(), (uint32_t)frame->getDataSize(), (uint8_t *)tarFrame->getData(), w, h)) {
+            return nullptr;
+        }
         break;
     case FORMAT_MJPG_TO_BGRA:
-        mjpegToBgra((uint8_t *)frame->getData(), (uint32_t)frame->getDataSize(), (uint8_t *)tarFrame->getData(), w, h);
+        if(!mjpgToBgra((uint8_t *)frame->getData(), (uint32_t)frame->getDataSize(), (uint8_t *)tarFrame->getData(), w, h)) {
+            return nullptr;
+        }
         break;
     case FORMAT_MJPG_TO_NV12:
-        mjpgToNv12((uint8_t *)frame->getData(), (uint32_t)frame->getDataSize(), (uint8_t *)tarFrame->getData(), w, h);
+        if(!mjpgToNv12((uint8_t *)frame->getData(), (uint32_t)frame->getDataSize(), (uint8_t *)tarFrame->getData(), w, h)) {
+            return nullptr;
+        }
         break;
     case FORMAT_RGBA_TO_RGB:
         rgbaToRgb((uint8_t *)frame->getData(), (uint32_t)frame->getDataSize(), (uint8_t *)tarFrame->getData(), w, h);
@@ -294,10 +336,10 @@ void FormatConverter::nv12ToRgb(uint8_t *src, uint8_t *target, uint32_t width, u
     libyuv::NV12ToRAW(yData, width, vuData, width, target, width * 3, width, height);
 }
 
-void FormatConverter::mjpgToI420(uint8_t *src, uint32_t src_len, uint8_t *target, uint32_t width, uint32_t height) {
+bool FormatConverter::mjpgToI420(uint8_t *src, uint32_t src_len, uint8_t *target, uint32_t width, uint32_t height) {
     if(src == nullptr || target == nullptr) {
         LOG_ERROR_INTVL("FormatConverter mjpegFrame is null or dstFrame is null");
-        return;
+        return false;
     }
 
     uint8_t *yData = target;
@@ -307,61 +349,83 @@ void FormatConverter::mjpgToI420(uint8_t *src, uint32_t src_len, uint8_t *target
     int ret = libyuv::MJPGToI420(src, src_len, yData, width, uData, width / 2, vData, width / 2, width, height, width, height);
     if(ret != 0) {
         LOG_ERROR_INTVL("mjpeg to yuv error");
+        return false;
     }
+    return true;
 }
 
-void FormatConverter::mjpgToNv21(uint8_t *src, uint32_t src_len, uint8_t *target, uint32_t width, uint32_t height) {
-    int ret;
+bool FormatConverter::mjpgToNv21(uint8_t *src, uint32_t src_len, uint8_t *target, uint32_t width, uint32_t height) {
+    if(src == nullptr || target == nullptr) {
+        LOG_ERROR_INTVL("FormatConverter mjpegFrame is null or dstFrame is null");
+        return false;
+    }
 
     uint8_t *yData  = target;
     uint8_t *vuData = target + width * height;
 
-    ret = libyuv::MJPGToNV21(src, src_len, yData, width, vuData, width, width, height, width, height);
+    const int ret = libyuv::MJPGToNV21(src, src_len, yData, width, vuData, width, width, height, width, height);
     if(ret != 0) {
         LOG_ERROR_INTVL("mjpeg to nv21 error");
+        return false;
     }
+    return true;
 }
 
-void FormatConverter::mjpgToNv12(uint8_t *src, uint32_t src_len, uint8_t *target, uint32_t width, uint32_t height) {
-    int ret;
+bool FormatConverter::mjpgToNv12(uint8_t *src, uint32_t src_len, uint8_t *target, uint32_t width, uint32_t height) {
+    if(src == nullptr || target == nullptr) {
+        LOG_ERROR_INTVL("FormatConverter mjpegFrame is null or dstFrame is null");
+        return false;
+    }
 
     uint8_t *yData  = target;
     uint8_t *vuData = target + width * height;
 
-    ret = libyuv::MJPGToNV12(src, src_len, yData, width, vuData, width, width, height, width, height);
+    const int ret = libyuv::MJPGToNV12(src, src_len, yData, width, vuData, width, width, height, width, height);
     if(ret != 0) {
         LOG_ERROR_INTVL("mjpeg to nv12 error");
+        return false;
     }
+    return true;
+}
+
+bool FormatConverter::decompressMjpeg(uint8_t *src, uint32_t srcLen, uint8_t *target, uint32_t width, uint32_t height, int pixelFormat) {
+    if(src == nullptr || target == nullptr) {
+        LOG_ERROR_INTVL("FormatConverter mjpeg source or target frame is null");
+        return false;
+    }
+
+    tjhandle handle = tjInitDecompress();
+    if(handle == nullptr) {
+        LOG_WARN_INTVL("Failed to initialize mjpeg decompressor: {}", tjGetErrorStr2(nullptr));
+        return false;
+    }
+
+    const int result = tjDecompress2(handle, src, srcLen, target, width,
+                                     0,  // pitch
+                                     height, pixelFormat, TJFLAG_FASTDCT | TJFLAG_FASTUPSAMPLE);
+    if(result == 0) {
+        tjDestroy(handle);
+        return true;
+    }
+
+    const bool recoverable = isRecoverableMjpegWarning(handle);
+    if(recoverable) {
+        LOG_WARN_INTVL("Decoded mjpeg frame with recoverable warning: {}", tjGetErrorStr2(handle));
+    }
+    else {
+        LOG_WARN_INTVL("Failed to decode mjpeg frame: {}", tjGetErrorStr2(handle));
+    }
+
+    tjDestroy(handle);
+    return recoverable;
 }
 
 bool FormatConverter::mjpgToRgb(uint8_t *src, uint32_t src_len, uint8_t *target, uint32_t width, uint32_t height) {
-    tjhandle tjHandle;
-    tjHandle = tjInitDecompress();
-    if(tjDecompress2(tjHandle, src, src_len, target, width,
-                     0,  // pitch
-                     height, TJPF_RGB, TJFLAG_FASTDCT | TJFLAG_FASTUPSAMPLE)
-       != 0) {
-        LOG_WARN_INTVL("Failed to decode mjpeg frame to rgb! {}", tjGetErrorStr2(tjHandle));
-        tjDestroy(tjHandle);
-        return false;
-    }
-    tjDestroy(tjHandle);
-    return true;
+    return decompressMjpeg(src, src_len, target, width, height, TJPF_RGB);
 }
 
 bool FormatConverter::mjpgToBgr(uint8_t *src, uint32_t src_len, uint8_t *target, uint32_t width, uint32_t height) {
-    tjhandle tjHandle;
-    tjHandle = tjInitDecompress();
-    if(tjDecompress2(tjHandle, src, src_len, target, width,
-                     0,  // pitch
-                     height, TJPF_BGR, TJFLAG_FASTDCT | TJFLAG_FASTUPSAMPLE)
-       != 0) {
-        LOG_WARN_INTVL("Failed to decode mjpeg frame to bgr! {}", tjGetErrorStr2(tjHandle));
-        tjDestroy(tjHandle);
-        return false;
-    }
-    tjDestroy(tjHandle);
-    return true;
+    return decompressMjpeg(src, src_len, target, width, height, TJPF_BGR);
 }
 
 void FormatConverter::exchangeRAndB(uint8_t *pucRgb, uint8_t *target, uint32_t width, uint32_t height, uint32_t pixelSize) {
@@ -378,16 +442,8 @@ void FormatConverter::exchangeRAndB(uint8_t *pucRgb, uint8_t *target, uint32_t w
     }
 }
 
-void FormatConverter::mjpegToBgra(uint8_t *src, uint32_t src_len, uint8_t *target, uint32_t width, uint32_t height) {
-    tjhandle tjHandle;
-    tjHandle = tjInitDecompress();
-    if(tjDecompress2(tjHandle, src, src_len, target, width,
-                     0,  // pitch
-                     height, TJPF_BGRA, TJFLAG_FASTDCT | TJFLAG_FASTUPSAMPLE)
-       != 0) {
-        LOG_WARN_INTVL("Failed to decompress color frame");
-    }
-    tjDestroy(tjHandle);
+bool FormatConverter::mjpgToBgra(uint8_t *src, uint32_t src_len, uint8_t *target, uint32_t width, uint32_t height) {
+    return decompressMjpeg(src, src_len, target, width, height, TJPF_BGRA);
 }
 
 void FormatConverter::rgbaToRgb(uint8_t *src, uint32_t src_len, uint8_t *target, uint32_t width, uint32_t height) {

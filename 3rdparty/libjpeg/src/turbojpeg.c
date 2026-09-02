@@ -63,6 +63,8 @@ struct my_error_mgr {
   jmp_buf setjmp_buffer;
   void (*emit_message) (j_common_ptr, int);
   boolean warning, stopOnWarning;
+  int warningCode, warningParameter1, warningParameter2, warningMarkerCode;
+  unsigned int warningCount, warningInputIMCURow, warningTotalIMCURows;
 };
 typedef struct my_error_mgr *my_error_ptr;
 
@@ -91,6 +93,21 @@ static void my_emit_message(j_common_ptr cinfo, int msg_level)
 {
   my_error_ptr myerr = (my_error_ptr)cinfo->err;
 
+  if (msg_level < 0) {
+    if (myerr->warningCount == 0) {
+      myerr->warningCode = cinfo->err->msg_code;
+      myerr->warningParameter1 = cinfo->err->msg_parm.i[0];
+      myerr->warningParameter2 = cinfo->err->msg_parm.i[1];
+      if (cinfo->is_decompressor) {
+        j_decompress_ptr dinfo = (j_decompress_ptr)cinfo;
+
+        myerr->warningMarkerCode = dinfo->unread_marker;
+        myerr->warningInputIMCURow = dinfo->input_iMCU_row;
+        myerr->warningTotalIMCURows = dinfo->total_iMCU_rows;
+      }
+    }
+    myerr->warningCount++;
+  }
   myerr->emit_message(cinfo, msg_level);
   if (msg_level < 0) {
     myerr->warning = TRUE;
@@ -109,7 +126,7 @@ typedef struct _tjinstance {
   struct my_error_mgr jerr;
   int init, headerRead;
   char errStr[JMSG_LENGTH_MAX];
-  boolean isInstanceError;
+  boolean isInstanceError, decompressionCompleted;
 } tjinstance;
 
 static const int pixelsize[TJ_NUMSAMP] = { 3, 3, 3, 1, 3, 3 };
@@ -189,6 +206,14 @@ static int cs2pf[JPEG_NUMCS] = {
   } \
   cinfo = &this->cinfo;  dinfo = &this->dinfo; \
   this->jerr.warning = FALSE; \
+  this->jerr.warningCode = 0; \
+  this->jerr.warningParameter1 = 0; \
+  this->jerr.warningParameter2 = 0; \
+  this->jerr.warningMarkerCode = 0; \
+  this->jerr.warningCount = 0; \
+  this->jerr.warningInputIMCURow = 0; \
+  this->jerr.warningTotalIMCURows = 0; \
+  this->decompressionCompleted = FALSE; \
   this->isInstanceError = FALSE;
 
 #define GET_CINSTANCE(handle) \
@@ -201,6 +226,14 @@ static int cs2pf[JPEG_NUMCS] = {
   } \
   cinfo = &this->cinfo; \
   this->jerr.warning = FALSE; \
+  this->jerr.warningCode = 0; \
+  this->jerr.warningParameter1 = 0; \
+  this->jerr.warningParameter2 = 0; \
+  this->jerr.warningMarkerCode = 0; \
+  this->jerr.warningCount = 0; \
+  this->jerr.warningInputIMCURow = 0; \
+  this->jerr.warningTotalIMCURows = 0; \
+  this->decompressionCompleted = FALSE; \
   this->isInstanceError = FALSE;
 
 #define GET_DINSTANCE(handle) \
@@ -213,6 +246,14 @@ static int cs2pf[JPEG_NUMCS] = {
   } \
   dinfo = &this->dinfo; \
   this->jerr.warning = FALSE; \
+  this->jerr.warningCode = 0; \
+  this->jerr.warningParameter1 = 0; \
+  this->jerr.warningParameter2 = 0; \
+  this->jerr.warningMarkerCode = 0; \
+  this->jerr.warningCount = 0; \
+  this->jerr.warningInputIMCURow = 0; \
+  this->jerr.warningTotalIMCURows = 0; \
+  this->decompressionCompleted = FALSE; \
   this->isInstanceError = FALSE;
 
 static int getPixelFormat(int pixelSize, int flags)
@@ -409,6 +450,59 @@ DLLEXPORT int tjGetErrorCode(tjhandle handle)
 
   if (this && this->jerr.warning) return TJERR_WARNING;
   else return TJERR_FATAL;
+}
+
+static int getWarningCode(int messageCode)
+{
+  switch (messageCode) {
+  case JWRN_ADOBE_XFORM:
+    return TJWARN_ADOBE_XFORM;
+#if JPEG_LIB_VERSION >= 70 || defined(C_ARITH_CODING_SUPPORTED) || \
+  defined(D_ARITH_CODING_SUPPORTED)
+  case JWRN_ARITH_BAD_CODE:
+    return TJWARN_ARITH_BAD_CODE;
+#endif
+  case JWRN_BOGUS_PROGRESSION:
+    return TJWARN_BOGUS_PROGRESSION;
+  case JWRN_EXTRANEOUS_DATA:
+    return TJWARN_EXTRANEOUS_DATA;
+  case JWRN_HIT_MARKER:
+    return TJWARN_HIT_MARKER;
+  case JWRN_HUFF_BAD_CODE:
+    return TJWARN_HUFF_BAD_CODE;
+  case JWRN_JFIF_MAJOR:
+    return TJWARN_JFIF_MAJOR;
+  case JWRN_JPEG_EOF:
+    return TJWARN_JPEG_EOF;
+  case JWRN_MUST_RESYNC:
+    return TJWARN_MUST_RESYNC;
+  case JWRN_NOT_SEQUENTIAL:
+    return TJWARN_NOT_SEQUENTIAL;
+  case JWRN_TOO_MUCH_DATA:
+    return TJWARN_TOO_MUCH_DATA;
+  case JWRN_BOGUS_ICC:
+    return TJWARN_BOGUS_ICC;
+  default:
+    return TJWARN_UNKNOWN;
+  }
+}
+
+DLLEXPORT int tjGetWarningInfo(tjhandle handle, tjwarninginfo *warningInfo)
+{
+  tjinstance *this = (tjinstance *)handle;
+
+  if (!this || !warningInfo) return -1;
+
+  warningInfo->warningCode =
+    this->jerr.warning ? getWarningCode(this->jerr.warningCode) : TJWARN_NONE;
+  warningInfo->warningCount = this->jerr.warningCount;
+  warningInfo->parameter1 = this->jerr.warningParameter1;
+  warningInfo->parameter2 = this->jerr.warningParameter2;
+  warningInfo->markerCode = this->jerr.warningMarkerCode;
+  warningInfo->inputIMCURow = this->jerr.warningInputIMCURow;
+  warningInfo->totalIMCURows = this->jerr.warningTotalIMCURows;
+  warningInfo->decompressionCompleted = this->decompressionCompleted;
+  return 0;
 }
 
 
@@ -1307,6 +1401,7 @@ DLLEXPORT int tjDecompress2(tjhandle handle, const unsigned char *jpegBuf,
     jpeg_read_scanlines(dinfo, &row_pointer[dinfo->output_scanline],
                         dinfo->output_height - dinfo->output_scanline);
   jpeg_finish_decompress(dinfo);
+  this->decompressionCompleted = TRUE;
 
 bailout:
   if (dinfo->global_state > DSTATE_START) jpeg_abort_decompress(dinfo);

@@ -60,6 +60,7 @@ TURBOJPEG_2.0
   global:
     tjGetErrorCode;
     tjGetErrorStr2;
+    tjGetWarningInfo;
     tjLoadImage;
     tjSaveImage;
 } TURBOJPEG_1.4;
