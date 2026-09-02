@@ -72,6 +72,7 @@ private:
 #endif
 
 private:
+    void                    doStopStream(uvc_stream_handle_t *streamHandle, uvc_device_handle_t* devHandle);
     int32_t                 uvcCtrlValueTranslate(uvc_req_code action, OBPropertyID propertyId, int32_t value) const;
     static void             onFrameCallback(uvc_frame *frame, void *user_ptr);
     std::vector<uvcProfile> queryAvailableUvcProfile() const;

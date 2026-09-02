@@ -167,6 +167,29 @@ void ObLibuvcDevicePort::startStream(std::shared_ptr<const StreamProfile> profil
     LOG_DEBUG("ObLibuvcDevicePort::startStream() done");
 }
 
+void ObLibuvcDevicePort::doStopStream(uvc_stream_handle_t *streamHandle, uvc_device_handle_t *devHandle) {
+    auto endpointAddr = streamHandle->stream_if->bEndpointAddress;
+
+#ifdef OS_MACOS
+    auto ret = libusb_clear_halt(devHandle->usb_devh, endpointAddr);
+    if(ret != LIBUSB_SUCCESS) {
+        LOG_ERROR("libusb_clear_halt failed, error code={}", ret);
+    }
+#endif
+
+    uvc_stream_stop(streamHandle);
+
+#ifndef OS_MACOS
+    // clear halt before release interface ( called by uvc_stream_close)
+    auto ret = libusb_clear_halt(devHandle->usb_devh, endpointAddr);
+    if(ret != LIBUSB_SUCCESS) {
+        LOG_ERROR("libusb_clear_halt failed, error code={}", ret);
+    }
+#endif
+
+    uvc_stream_close(streamHandle);
+}
+
 void ObLibuvcDevicePort::stopStream(std::shared_ptr<const StreamProfile> profile) {
 
     LOG_DEBUG("ObLibuvcDevicePort::stopStream()...");
@@ -181,18 +204,7 @@ void ObLibuvcDevicePort::stopStream(std::shared_ptr<const StreamProfile> profile
         return;
     }
 
-    uvc_stream_handle_t *uvcStreamHandle = (*it)->streamHandle;
-    auto                 endpointAddr    = uvcStreamHandle->stream_if->bEndpointAddress;
-#ifdef OS_MACOS
-    libusb_clear_halt(uvcDevHandle_->usb_devh, endpointAddr);
-#endif
-    uvc_stream_stop(uvcStreamHandle);
-    uvc_stream_close(uvcStreamHandle);
-
-#ifndef OS_MACOS
-    libusb_clear_halt(uvcDevHandle_->usb_devh, endpointAddr);
-#endif
-
+    doStopStream((*it)->streamHandle, uvcDevHandle_);
     streamHandles_.erase(it);
     LOG_DEBUG("ObLibuvcDevicePort::stopStream() done");
 }
@@ -203,14 +215,7 @@ void ObLibuvcDevicePort::stopAllStream() {
         return;
     }
     for(auto &&sh: streamHandles_) {
-        uvc_stream_handle_t *uvcStreamHandle = sh->streamHandle;
-        auto                 endpointAddr    = uvcStreamHandle->stream_if->bEndpointAddress;
-        uvc_stream_stop(uvcStreamHandle);
-        uvc_stream_close(uvcStreamHandle);
-        auto ret = libusb_clear_halt(uvcDevHandle_->usb_devh, endpointAddr);
-        if(ret != LIBUSB_SUCCESS) {
-            LOG_ERROR("libusb_clear_halt failed, error code={}", ret);
-        }
+        doStopStream(sh->streamHandle, uvcDevHandle_);
     }
     streamHandles_.clear();
     LOG_DEBUG("ObLibuvcDevicePort::stopAllStream() done");
@@ -304,8 +309,7 @@ bool ObLibuvcDevicePort::getXu(uint8_t ctrl, uint8_t *data, uint32_t *len) {
     *len     = recv;
     if(recv <= 0) {
         if(recv == LIBUSB_ERROR_IO) {
-            THROW_IO_EXCEPTION_WITH_ERROR("getXu IO error: XU response channel returned LIBUSB_ERROR_IO (-1)",
-                                          OB_ERROR_DEVICE_RESPONSE_CHANNEL_FAILURE);
+            THROW_IO_EXCEPTION_WITH_ERROR("getXu IO error: XU response channel returned LIBUSB_ERROR_IO (-1)", OB_ERROR_DEVICE_RESPONSE_CHANNEL_FAILURE);
         }
         LOG_ERROR("getXu failed, error code={}", recv);
         return false;
