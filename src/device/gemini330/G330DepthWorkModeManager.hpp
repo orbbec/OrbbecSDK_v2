@@ -14,17 +14,19 @@ public:
     G330DepthWorkModeManager(IDevice *owner);
     virtual ~G330DepthWorkModeManager() noexcept override = default;
 
-    std::vector<OBDepthWorkMode_Internal> getDepthWorkModeList() const override;
-    const OBDepthWorkMode_Internal       &getCurrentDepthWorkMode() const override;
-    void                                  switchDepthWorkMode(const std::string &modeName) override;
-    void                                  fetchDepthWorkModeList() override;
+    std::vector<DepthWorkModeItem> getDepthWorkModeList() const override;
+    const DepthWorkModeItem       &getCurrentDepthWorkMode() const override;
+    void                           switchDepthWorkMode(const std::string &modeName, const std::string &version = "") override;
+    void                           fetchDepthWorkModeList() override;
+    bool                           isVersionSupported() const override;
 
 private:
-    void switchDepthWorkMode(const OBDepthWorkMode_Internal &targetDepthMode);
+    void switchDepthWorkMode(const OBDepthWorkModeV2_Internal &targetDepthMode);
 
 private:
-    std::vector<OBDepthWorkMode_Internal> depthWorkModeList_;
-    OBDepthWorkMode_Internal              currentWorkMode_;
+    std::vector<DepthWorkModeItem> depthWorkModeItemList_;
+    DepthWorkModeItem              currentWorkMode_;
+    bool                           versionSupported_;
 };
 
 }  // namespace libobsensor

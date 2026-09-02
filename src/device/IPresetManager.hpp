@@ -12,18 +12,28 @@ class ApplicationConfig;
 
 constexpr const char kCustomPresetName[] = "Custom";
 
+struct PresetItem {
+    std::string name;
+    std::string version;
+};
+
 class IPresetManager {
 public:
     virtual ~IPresetManager() = default;
 
-    virtual void                            loadPreset(const std::string &presetName)                                                   = 0;
-    virtual const std::string              &getCurrentPresetName() const                                                                = 0;
-    virtual const std::vector<std::string> &getAvailablePresetList() const                                                              = 0;
-    virtual void                            loadPresetFromJsonData(const std::string &presetName, const std::vector<uint8_t> &jsonData) = 0;
-    virtual void                            loadPresetFromJsonFile(const std::string &filePath)                                         = 0;
-    virtual const std::vector<uint8_t>     &exportSettingsAsPresetJsonData(const std::string &presetName)                               = 0;
-    virtual void                            exportSettingsAsPresetJsonFile(const std::string &filePath)                                 = 0;
-    virtual void                            fetchPreset()                                                                               = 0;
+    virtual void                           loadPreset(const std::string &presetName, const std::string &version = "")                  = 0;
+    virtual const std::string             &getCurrentPresetName() const                                                                = 0;
+    virtual const std::vector<PresetItem> &getAvailablePresetList() const                                                              = 0;
+    virtual void                           loadPresetFromJsonData(const std::string &presetName, const std::vector<uint8_t> &jsonData) = 0;
+    virtual void                           loadPresetFromJsonFile(const std::string &filePath)                                         = 0;
+    virtual const std::vector<uint8_t>    &exportSettingsAsPresetJsonData(const std::string &presetName)                               = 0;
+    virtual void                           exportSettingsAsPresetJsonFile(const std::string &filePath)                                 = 0;
+    virtual void                           fetchPreset()                                                                               = 0;
+
+    virtual const std::string &getCurrentDepthWorkModeVersion() const {
+        static const std::string emptyVersion;
+        return emptyVersion;
+    }
 
     virtual bool isApplicationConfigSupported() const {
         return false;
@@ -54,7 +64,7 @@ extern "C" {
 #endif
 
 struct ob_device_preset_list_t {
-    std::vector<std::string> presetList;
+    std::vector<libobsensor::PresetItem> presetList;
 };
 
 struct ob_color_preset_list_t {

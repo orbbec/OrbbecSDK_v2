@@ -19,9 +19,9 @@ extern "C" {
 ob_depth_work_mode ob_device_get_current_depth_work_mode(const ob_device *device, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(device);
     auto               workModeMgr = device->device->getComponentT<libobsensor::IDepthWorkModeManager>(libobsensor::OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
-    const auto        &checksum    = workModeMgr->getCurrentDepthWorkMode();
+    const auto        &checksum    = workModeMgr->getCurrentDepthWorkMode().mode;
     ob_depth_work_mode work_mode;
-    memcpy(work_mode.checksum, checksum.checksum, sizeof(checksum.checksum));
+    memcpy(work_mode.checksum, checksum.checksum, sizeof(work_mode.checksum));
     memcpy(work_mode.name, checksum.name, sizeof(work_mode.name));
     return work_mode;
 }
@@ -30,7 +30,7 @@ HANDLE_EXCEPTIONS_AND_RETURN({}, device)
 const char *ob_device_get_current_depth_work_mode_name(const ob_device *device, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(device);
     auto  workModeMgr = device->device->getComponentT<libobsensor::IDepthWorkModeManager>(libobsensor::OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
-    auto &checksum    = workModeMgr->getCurrentDepthWorkMode();
+    auto &checksum    = workModeMgr->getCurrentDepthWorkMode().mode;
     return checksum.name;
 }
 HANDLE_EXCEPTIONS_AND_RETURN({}, device)
@@ -75,7 +75,7 @@ HANDLE_EXCEPTIONS_AND_RETURN(0, work_mode_list)
 ob_depth_work_mode ob_depth_work_mode_list_get_item(const ob_depth_work_mode_list *work_mode_list, uint32_t index, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(work_mode_list);
     VALIDATE_UNSIGNED_INDEX(index, work_mode_list->workModeList.size());
-    const auto        &workMode = work_mode_list->workModeList.at(index);
+    const auto        &workMode = work_mode_list->workModeList.at(index).mode;
     ob_depth_work_mode impl;
     memcpy(impl.checksum, workMode.checksum, sizeof(workMode.checksum));
     memcpy(impl.name, workMode.name, sizeof(workMode.name));
@@ -181,21 +181,47 @@ HANDLE_EXCEPTIONS_AND_RETURN(0, preset_list)
 const char *ob_device_preset_list_get_name(const ob_device_preset_list *preset_list, uint32_t index, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(preset_list);
     VALIDATE_UNSIGNED_INDEX(index, preset_list->presetList.size());
-    return preset_list->presetList.at(index).c_str();
+    return preset_list->presetList.at(index).name.c_str();
+}
+HANDLE_EXCEPTIONS_AND_RETURN(nullptr, preset_list, index)
+
+const char *ob_device_preset_list_get_depth_work_mode_version(const ob_device_preset_list *preset_list, uint32_t index, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(preset_list);
+    VALIDATE_UNSIGNED_INDEX(index, preset_list->presetList.size());
+    return preset_list->presetList.at(index).version.c_str();
 }
 HANDLE_EXCEPTIONS_AND_RETURN(nullptr, preset_list, index)
 
 bool ob_device_preset_list_has_preset(const ob_device_preset_list *preset_list, const char *preset_name, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(preset_list);
     VALIDATE_NOT_NULL(preset_name);
-    for(auto &name: preset_list->presetList) {
-        if(name == preset_name) {
+    for(auto &item: preset_list->presetList) {
+        if(item.name == preset_name) {
             return true;
         }
     }
     return false;
 }
 HANDLE_EXCEPTIONS_AND_RETURN(false, preset_list, preset_name)
+
+const char *ob_device_get_current_preset_depth_work_mode_version(const ob_device *device, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(device);
+    auto presetMgr = device->device->getComponentT<libobsensor::IPresetManager>(libobsensor::OB_DEV_COMPONENT_PRESET_MANAGER);
+    return presetMgr->getCurrentDepthWorkModeVersion().c_str();
+}
+HANDLE_EXCEPTIONS_AND_RETURN(nullptr, device)
+
+void ob_device_load_preset_by_depth_work_mode_version(ob_device *device, const char *preset_name, const char *version, ob_error **error) BEGIN_API_CALL {
+    VALIDATE_NOT_NULL(device);
+    VALIDATE_NOT_NULL(preset_name);
+    VALIDATE_NOT_NULL(version);
+    if(*version == '\0') {
+        THROW_INVALID_PARAM_EXCEPTION("version must not be empty, use ob_device_load_preset instead");
+    }
+    auto presetMgr = device->device->getComponentT<libobsensor::IPresetManager>(libobsensor::OB_DEV_COMPONENT_PRESET_MANAGER);
+    presetMgr->loadPreset(preset_name, version);
+}
+HANDLE_EXCEPTIONS_NO_RETURN(device, preset_name, version)
 
 bool ob_device_is_frame_interleave_supported(const ob_device *device, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(device);

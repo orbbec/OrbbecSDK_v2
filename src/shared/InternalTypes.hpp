@@ -161,6 +161,15 @@ typedef struct {
     uint32_t optionCode;    // OBDepthModeOptionCode
 } OBDepthWorkMode_Internal;
 
+typedef struct {
+    uint8_t  checksum[16];  // The camera depth mode corresponds to the hash binary array
+    char     name[32];      // name
+    uint32_t optionCode;    // OBDepthModeOptionCode
+    uint32_t version;       // 0=no version; 1.2.3 <=> 0x01020300
+    uint8_t  extSize;       // extension size, currently 0
+    uint8_t  reserved[7];   // always at the end, total 64 bytes
+} OBDepthWorkModeV2_Internal;
+
 typedef enum {
     NORMAL                                = 0,           // Normal mode, no special processing required
     MX6600_RIGHT_IR_FROM_DEPTH_CHANNEL    = 2,           // Gemini2 calibration mode, right IR data goes through the depth channel

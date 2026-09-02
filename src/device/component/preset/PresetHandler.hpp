@@ -321,7 +321,7 @@ private:
 };
 
 /**
- * @brief Handler for the depth work mode configuration
+ * @brief Handler for the legacy depth work mode name (string value, no version)
  */
 class DepthWorkModeHandler : public jsonmodel::ILeafHandler {
 public:
@@ -340,6 +340,45 @@ public:
 
 private:
     IDevice *owner_ = nullptr;
+};
+
+/**
+ * @brief Handler for the depth work mode configuration (name + version)
+ */
+class DepthWorkModeV2Handler : public jsonmodel::IObjectHandler {
+public:
+    DepthWorkModeV2Handler(IDevice *owner) : owner_(owner) {}
+    ~DepthWorkModeV2Handler() override = default;
+
+    /**
+     * @brief Implementation of IObjectHandler::onPreChildrenSet
+     */
+    bool onPreChildrenSet(const Json::Value &value) override;
+
+    /**
+     * @brief Implementation of IObjectHandler::onSetChild
+     */
+    void onSetChild(const std::string &k, const Json::Value &v, const Json::Value &parent) override;
+
+    /**
+     * @brief Implementation of IObjectHandler::onPostChildrenSet
+     */
+    void onPostChildrenSet() override;
+
+    /**
+     * @brief Implementation of IObjectHandler::onPreChildrenGet
+     */
+    std::vector<std::string> onPreChildrenGet() override;
+
+    /**
+     * @brief Implementation of IObjectHandler::exportChildValue
+     */
+    jsonmodel::ExportValue exportChildValue(const std::string &k) override;
+
+private:
+    IDevice    *owner_ = nullptr;
+    std::string name_;
+    std::string version_;
 };
 
 /**

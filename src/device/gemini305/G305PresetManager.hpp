@@ -20,8 +20,8 @@ namespace libobsensor {
 struct G305Preset {
     // device/global
     std::string depthWorkMode;
-    
-    //ae configuration
+
+    // ae configuration
     int aeReference;
     int aeStrategy;
 
@@ -63,14 +63,14 @@ public:
     G305PresetManager(IDevice *owner);
     ~G305PresetManager() override = default;
 
-    void                            loadPreset(const std::string &presetName) override;
-    const std::string              &getCurrentPresetName() const override;
-    const std::vector<std::string> &getAvailablePresetList() const override;
-    void                            loadPresetFromJsonData(const std::string &presetName, const std::vector<uint8_t> &jsonData) override;
-    void                            loadPresetFromJsonFile(const std::string &filePath) override;
-    const std::vector<uint8_t>     &exportSettingsAsPresetJsonData(const std::string &presetName) override;
-    void                            exportSettingsAsPresetJsonFile(const std::string &filePath) override;
-    void                            fetchPreset() override;
+    void                           loadPreset(const std::string &presetName, const std::string &version = "") override;
+    const std::string             &getCurrentPresetName() const override;
+    const std::vector<PresetItem> &getAvailablePresetList() const override;
+    void                           loadPresetFromJsonData(const std::string &presetName, const std::vector<uint8_t> &jsonData) override;
+    void                           loadPresetFromJsonFile(const std::string &filePath) override;
+    const std::vector<uint8_t>    &exportSettingsAsPresetJsonData(const std::string &presetName) override;
+    void                           exportSettingsAsPresetJsonFile(const std::string &filePath) override;
+    void                           fetchPreset() override;
 
 private:
     void        storeCurrentParamsAsCustomPreset(const std::string &presetName);
@@ -79,9 +79,9 @@ private:
     Json::Value exportSettingsAsPresetJsonValue(const std::string &presetName);
 
 private:
-    std::vector<std::string> availablePresets_;
-    std::string              currentPreset_;
-    std::vector<uint8_t>     tmpJsonData_;
+    std::vector<PresetItem> availablePresets_;
+    std::string             currentPreset_;
+    std::vector<uint8_t>    tmpJsonData_;
 
     std::map<std::string, G305Preset> customPresets_;
 };

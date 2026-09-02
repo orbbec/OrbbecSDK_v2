@@ -16,13 +16,13 @@ public:
     PlaybackDepthWorkModeManager(IDevice *owner, std::shared_ptr<PlaybackDevicePort> port);
     virtual ~PlaybackDepthWorkModeManager() noexcept override = default;
 
-    virtual std::vector<OBDepthWorkMode_Internal> getDepthWorkModeList() const override;
-    virtual const OBDepthWorkMode_Internal       &getCurrentDepthWorkMode() const override;
-    virtual void                                  switchDepthWorkMode(const std::string &name) override;
-    void                                          fetchDepthWorkModeList() override;
+    virtual std::vector<DepthWorkModeItem> getDepthWorkModeList() const override;
+    virtual const DepthWorkModeItem       &getCurrentDepthWorkMode() const override;
+    virtual void                           switchDepthWorkMode(const std::string &name, const std::string &version = "") override;
+    void                                   fetchDepthWorkModeList() override;
 
 private:
     std::shared_ptr<PlaybackDevicePort> port_;
-    OBDepthWorkMode_Internal            currentDepthWorkMode_;
+    DepthWorkModeItem                   currentItem_;
 };
 }  // namespace libobsensor

@@ -27,9 +27,10 @@ public:
     G330PresetManager(IDevice *owner);
     ~G330PresetManager() override = default;
 
-    void                               loadPreset(const std::string &presetName) override;
+    void                               loadPreset(const std::string &presetName, const std::string &version = "") override;
     const std::string                 &getCurrentPresetName() const override;
-    const std::vector<std::string>    &getAvailablePresetList() const override;
+    const std::string                 &getCurrentDepthWorkModeVersion() const override;
+    const std::vector<PresetItem>     &getAvailablePresetList() const override;
     void                               loadPresetFromJsonData(const std::string &presetName, const std::vector<uint8_t> &jsonData) override;
     void                               loadPresetFromJsonFile(const std::string &filePath) override;
     const std::vector<uint8_t>        &exportSettingsAsPresetJsonData(const std::string &presetName) override;
@@ -49,13 +50,14 @@ private:
     void                           storeImportedApplicationConfig(const std::string &presetName, const Json::Value &root);
 
 private:
-    std::vector<std::string> availablePresets_;
-    std::string              currentPresetName_;
-    std::vector<uint8_t>     tmpJsonData_;
-    std::atomic<bool>        isExternalDataLoading_{ false };
+    std::vector<PresetItem> availablePresets_;
+    std::string             currentPresetName_;
+    std::vector<uint8_t>    tmpJsonData_;
+    std::atomic<bool>       isExternalDataLoading_{ false };
 
     std::map<std::string, Json::Value>  customPresets_;
     std::shared_ptr<G330PresetEngine>   presetEngine_;
+    std::shared_ptr<G330PresetEngine>   presetEngineV2_;
     std::shared_ptr<G330PresetEngineV1> presetEngineV1_;
     std::mutex                          applicationConfigMutex_;
     std::shared_ptr<ApplicationConfig>  applicationConfig_;

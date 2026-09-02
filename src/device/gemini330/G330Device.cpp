@@ -114,10 +114,28 @@ void G330Device::init() {
     auto algParamManager = std::make_shared<G330AlgParamManager>(this);
     registerComponent(OB_DEV_COMPONENT_ALG_PARAM_MANAGER, algParamManager);
 
+    auto fwVersion = getFirmwareVersionInt();
+    if(fwVersion >= 10824) {
+        auto propertyServer         = getPropertyServer();
+        auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+        propertyServer->registerProperty(OB_RAW_DATA_DEPTH_ALG_MODE_LIST_V2, "", "r", vendorPropertyAccessor.get());
+        propertyServer->registerProperty(OB_STRUCT_CURRENT_DEPTH_ALG_MODE_V2, "", "rw", vendorPropertyAccessor.get());
+        // fetch preset version info via fetchExtensionInfo after a V2 work mode switch
+        propertyServer->registerAccessCallback(
+            {
+                OB_STRUCT_CURRENT_DEPTH_ALG_MODE_V2,
+            },
+            [&](uint32_t propertyId, const uint8_t *, size_t, PropertyOperationType operationType) {
+                if(operationType == PROP_OP_WRITE && propertyId == OB_STRUCT_CURRENT_DEPTH_ALG_MODE_V2) {
+                    fetchExtensionInfo();
+                }
+            });
+    }
+
     auto depthWorkModeManager = std::make_shared<G330DepthWorkModeManager>(this);
     registerComponent(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER, depthWorkModeManager);
 
-    if(getFirmwareVersionInt() >= 10441) {
+    if(fwVersion >= 10441) {
         // support custom presets upgrade
         auto propertyServer = getPropertyServer();
         propertyServer->registerAccessCallback(
@@ -137,7 +155,6 @@ void G330Device::init() {
         return presetManager;
     });
 
-    auto fwVersion = getFirmwareVersionInt();
     if(fwVersion > 10370) {
         auto propertyServer         = getPropertyServer();
         auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
@@ -1528,13 +1545,29 @@ void G330NetDevice::init() {
     auto algParamManager = std::make_shared<G330AlgParamManager>(this);
     registerComponent(OB_DEV_COMPONENT_ALG_PARAM_MANAGER, algParamManager);
 
+    auto propertyServer         = getPropertyServer();
+    auto fwVersion              = getFirmwareVersionInt();
+    auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
+
+    if(fwVersion >= 10824) {
+        propertyServer->registerProperty(OB_RAW_DATA_DEPTH_ALG_MODE_LIST_V2, "", "r", vendorPropertyAccessor.get());
+        propertyServer->registerProperty(OB_STRUCT_CURRENT_DEPTH_ALG_MODE_V2, "", "rw", vendorPropertyAccessor.get());
+        // fetch preset version info via fetchExtensionInfo after a V2 work mode switch
+        propertyServer->registerAccessCallback(
+            {
+                OB_STRUCT_CURRENT_DEPTH_ALG_MODE_V2,
+            },
+            [&](uint32_t propertyId, const uint8_t *, size_t, PropertyOperationType operationType) {
+                if(operationType == PROP_OP_WRITE && propertyId == OB_STRUCT_CURRENT_DEPTH_ALG_MODE_V2) {
+                    fetchExtensionInfo();
+                }
+            });
+    }
     auto depthWorkModeManager = std::make_shared<G330DepthWorkModeManager>(this);
     registerComponent(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER, depthWorkModeManager);
 
-    auto fwVersion = getFirmwareVersionInt();
     if(fwVersion >= 10500) {
         // support custom presets upgrade
-        auto propertyServer = getPropertyServer();
         propertyServer->registerAccessCallback(
             {
                 OB_STRUCT_CURRENT_DEPTH_ALG_MODE,
@@ -1616,14 +1649,12 @@ void G330NetDevice::init() {
         },
         false);
 
-    auto propertyServer = getPropertyServer();
     if(fwVersion >= 373) {
         auto hwNoiseRemovePropertyAccessor = std::make_shared<G330HWNoiseRemovePropertyAccessor>(this);
         propertyServer->registerProperty(OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL, "rw", "rw", hwNoiseRemovePropertyAccessor);
         propertyServer->registerProperty(OB_PROP_HW_NOISE_REMOVE_FILTER_THRESHOLD_FLOAT, "rw", "rw", hwNoiseRemovePropertyAccessor);
     }
 
-    auto vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
     if(fwVersion >= 10510) {
         propertyServer->registerProperty(OB_DEVICE_AUTO_CAPTURE_ENABLE_BOOL, "rw", "rw", vendorPropertyAccessor.get());
         propertyServer->registerProperty(OB_DEVICE_AUTO_CAPTURE_INTERVAL_TIME_INT, "rw", "rw", vendorPropertyAccessor.get());

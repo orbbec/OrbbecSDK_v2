@@ -89,7 +89,9 @@ bool        cvt2Int(const std::string &string, int &dst);
 bool        cvt2Float(const std::string &string, float &dst);
 bool        cvt2Double(const std::string &string, double &dst);
 bool        cvt2Boolean(const std::string &string, bool &dst);
+
+// Depth work mode version helper: 0x01020300 -> "1.2.3", 0 means no version
+std::string versionToString(uint32_t version);
 }  // namespace string
 }  // namespace utils
 }  // namespace libobsensor
-

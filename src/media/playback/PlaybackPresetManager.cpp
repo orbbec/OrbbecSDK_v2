@@ -13,7 +13,8 @@ namespace libobsensor {
 
 PlaybackPresetManager::PlaybackPresetManager(IDevice *owner, std::shared_ptr<IPresetManager> delegate) : DeviceComponentBase(owner), delegate_(delegate) {}
 
-void PlaybackPresetManager::loadPreset(const std::string &presetName) {
+void PlaybackPresetManager::loadPreset(const std::string &presetName, const std::string &version) {
+    utils::unusedVar(version);
     utils::unusedVar(presetName);
     LOG_DEBUG("Playback Device: unsupported loadPreset() called with name: {}", presetName);
 }
@@ -22,7 +23,11 @@ const std::string &PlaybackPresetManager::getCurrentPresetName() const {
     return delegate_->getCurrentPresetName();
 }
 
-const std::vector<std::string> &PlaybackPresetManager::getAvailablePresetList() const {
+const std::string &PlaybackPresetManager::getCurrentDepthWorkModeVersion() const {
+    return delegate_->getCurrentDepthWorkModeVersion();
+}
+
+const std::vector<PresetItem> &PlaybackPresetManager::getAvailablePresetList() const {
     return delegate_->getAvailablePresetList();
 }
 

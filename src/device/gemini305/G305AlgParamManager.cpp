@@ -233,7 +233,7 @@ void G305AlgParamManager::fixD2CParamList() {
         auto depthWorkModeManager = owner->getComponentT<G305DepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
         auto currentDepthWorkMode = depthWorkModeManager->getCurrentDepthWorkMode();
 
-        if(std::strcmp(currentDepthWorkMode.name, kDoubleRgbMode) == 0) {
+        if(std::strcmp(currentDepthWorkMode.mode.name, kDoubleRgbMode) == 0) {
             doubleRgbCalibrationCameraParamList_ = originCalibrationCameraParamList_;
             // In dual RGB mode, depthDistortion actually holds the left RGB camera's distortion.
             // Both left and right RGB cameras should use BROWN_CONRADY_K6 for accurate undistortion.

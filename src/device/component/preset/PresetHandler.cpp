@@ -748,7 +748,50 @@ jsonmodel::ExportValue DepthWorkModeHandler::exportValue(const std::string &k) {
     utils::unusedVar(k);
     auto depthWorkModeManager = owner_->getComponentT<IDepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
     auto workMode             = depthWorkModeManager->getCurrentDepthWorkMode();
-    return jsonmodel::makeScalar(workMode.name);
+    return jsonmodel::makeScalar(workMode.mode.name);
+}
+
+// DepthWorkModeV2Handler
+bool DepthWorkModeV2Handler::onPreChildrenSet(const Json::Value &value) {
+    utils::unusedVar(value);
+    if(owner_->isPlaybackDevice()) {
+        // DepthWorkMode are real-hardware only; skip silently on playback.
+        return false;
+    }
+    name_.clear();
+    version_.clear();
+    return true;
+}
+
+void DepthWorkModeV2Handler::onSetChild(const std::string &k, const Json::Value &v, const Json::Value &parent) {
+    utils::unusedVar(parent);
+    if(k == "name") {
+        name_ = jsonmodel::JsonTraits<std::string>::from(v);
+    }
+    else if(k == "version") {
+        version_ = jsonmodel::JsonTraits<std::string>::from(v);
+    }
+}
+
+void DepthWorkModeV2Handler::onPostChildrenSet() {
+    auto depthWorkModeManager = owner_->getComponentT<IDepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
+    depthWorkModeManager->switchDepthWorkMode(name_, version_);
+}
+
+std::vector<std::string> DepthWorkModeV2Handler::onPreChildrenGet() {
+    return { "name", "version" };
+}
+
+jsonmodel::ExportValue DepthWorkModeV2Handler::exportChildValue(const std::string &k) {
+    auto depthWorkModeManager = owner_->getComponentT<IDepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
+    auto workMode             = depthWorkModeManager->getCurrentDepthWorkMode();
+    if(k == "name") {
+        return jsonmodel::makeScalar(workMode.mode.name);
+    }
+    if(k == "version") {
+        return jsonmodel::makeScalar(workMode.version);
+    }
+    return jsonmodel::ExportValue::nullValue();
 }
 
 // HeartbeatHandler

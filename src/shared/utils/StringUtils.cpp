@@ -180,7 +180,8 @@ static double strtod_clocale(const char *str, char **endptr) {
     return strtod_l(str, endptr, cLocale);
 #else
     char *prev = setlocale(LC_NUMERIC, nullptr);
-    if(prev) prev = strdup(prev);
+    if(prev)
+        prev = strdup(prev);
     setlocale(LC_NUMERIC, "C");
     double r = std::strtod(str, endptr);
     if(prev) {
@@ -213,6 +214,14 @@ bool cvt2Double(const std::string &string, double &dst) {
         return temp.empty();
     }
     return false;
+}
+
+std::string versionToString(uint32_t version) {
+    uint32_t value = version >> 8;
+    if(value == 0) {
+        return "";
+    }
+    return std::to_string((value >> 16) & 0xFF) + "." + std::to_string((value >> 8) & 0xFF) + "." + std::to_string(value & 0xFF);
 }
 
 }  // namespace string

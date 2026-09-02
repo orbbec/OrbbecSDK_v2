@@ -37,12 +37,14 @@ MegaPresetManager::MegaPresetManager(IDevice *owner) : DeviceComponentBase(owner
         storeCurrentParamsAsCustomPreset(kCustomPresetName);
     }
     else {
-        availablePresets_.emplace_back(currentPreset_);
+        availablePresets_.push_back({ currentPreset_, "" });
     }
 }
 
-void MegaPresetManager::loadPreset(const std::string &presetName) {
-    if(std::find(availablePresets_.begin(), availablePresets_.end(), presetName) == availablePresets_.end()) {
+void MegaPresetManager::loadPreset(const std::string &presetName, const std::string &version) {
+    utils::unusedVar(version);
+    if(std::find_if(availablePresets_.begin(), availablePresets_.end(), [&presetName](const PresetItem &item) { return item.name == presetName; })
+       == availablePresets_.end()) {
         THROW_INVALID_PARAM_EXCEPTION("Invalid preset name: " + presetName);
     }
 
@@ -65,7 +67,7 @@ const std::string &MegaPresetManager::getCurrentPresetName() const {
     return currentPreset_;
 }
 
-const std::vector<std::string> &MegaPresetManager::getAvailablePresetList() const {
+const std::vector<PresetItem> &MegaPresetManager::getAvailablePresetList() const {
     return availablePresets_;
 }
 
@@ -110,7 +112,7 @@ void MegaPresetManager::loadPresetFromJsonValue(const std::string &presetName, c
 
     if(!getOwner()->isPlaybackDevice()) {
         if(customPresets_.find(presetName) == customPresets_.end()) {
-            availablePresets_.emplace_back(presetName);
+            availablePresets_.push_back({ presetName, "" });
         }
     }
     customPresets_[presetName] = preset;
@@ -226,7 +228,7 @@ void MegaPresetManager::storeCurrentParamsAsCustomPreset(const std::string &pres
 
     if(!owner->isPlaybackDevice()) {
         if(customPresets_.find(presetName) == customPresets_.end()) {
-            availablePresets_.emplace_back(presetName);
+            availablePresets_.push_back({ presetName, "" });
         }
     }
     customPresets_[presetName] = preset;

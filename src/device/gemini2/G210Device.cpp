@@ -109,7 +109,7 @@ void G210Device::initSensorStreamProfile(std::shared_ptr<ISensor> sensor) {
 
     auto        depthWorkModeManager = getComponentT<IDepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
     const auto &workMode             = depthWorkModeManager->getCurrentDepthWorkMode();
-    std::string workModeName         = workMode.name;
+    std::string workModeName         = workMode.mode.name;
     auto        sensorType           = sensor->getSensorType();
     auto        streamProfile        = StreamProfileFactory::getDefaultStreamProfileFromEnvConfig(deviceInfo_->name_, sensorType, workModeName);
     if(!streamProfile) {

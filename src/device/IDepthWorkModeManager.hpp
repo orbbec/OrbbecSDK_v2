@@ -8,14 +8,22 @@
 
 namespace libobsensor {
 
+struct DepthWorkModeItem {
+    OBDepthWorkModeV2_Internal mode;
+    std::string                version;
+};
+
 class IDepthWorkModeManager {
 public:
     virtual ~IDepthWorkModeManager() = default;
 
-    virtual std::vector<OBDepthWorkMode_Internal> getDepthWorkModeList() const                 = 0;
-    virtual const OBDepthWorkMode_Internal       &getCurrentDepthWorkMode() const              = 0;
-    virtual void                                  switchDepthWorkMode(const std::string &name) = 0;
-    virtual void                                  fetchDepthWorkModeList()                     = 0;
+    virtual std::vector<DepthWorkModeItem> getDepthWorkModeList() const                                                  = 0;
+    virtual const DepthWorkModeItem       &getCurrentDepthWorkMode() const                                               = 0;
+    virtual void                           switchDepthWorkMode(const std::string &name, const std::string &version = "") = 0;
+    virtual void                           fetchDepthWorkModeList()                                                      = 0;
+    virtual bool                           isVersionSupported() const {
+        return false;
+    }
 };
 }  // namespace libobsensor
 
@@ -24,7 +32,7 @@ extern "C" {
 #endif
 
 struct ob_depth_work_mode_list_t {
-    std::vector<OBDepthWorkMode_Internal> workModeList;
+    std::vector<libobsensor::DepthWorkModeItem> workModeList;
 };
 
 #ifdef __cplusplus

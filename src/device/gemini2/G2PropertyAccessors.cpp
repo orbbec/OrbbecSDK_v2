@@ -216,7 +216,7 @@ OBDepthModeOptionCode G2FrameTransformPropertyAccessor::getOptionCode() {
     // lazy initialization of option code, case G2DepthWorkModeManager is lazy initialized
     if(optionCode_ == INVALID) {
         auto depthWorkModeManager = owner_->getComponentT<IDepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
-        optionCode_               = static_cast<OBDepthModeOptionCode>(depthWorkModeManager->getCurrentDepthWorkMode().optionCode);
+        optionCode_               = static_cast<OBDepthModeOptionCode>(depthWorkModeManager->getCurrentDepthWorkMode().mode.optionCode);
     }
 
     return optionCode_;

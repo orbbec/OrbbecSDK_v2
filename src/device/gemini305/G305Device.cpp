@@ -1461,7 +1461,7 @@ void G305Device::fixSensorList() {
     const auto &currentMode          = depthWorkModeManager->getCurrentDepthWorkMode();
     auto        propertyServer       = getPropertyServer();
     // deregister unsupported sensors according to depth work mode option code
-    if(std::strcmp(currentMode.name, kDoubleRgbMode) == 0) {
+    if(std::strcmp(currentMode.mode.name, kDoubleRgbMode) == 0) {
         deregisterSensor(OB_SENSOR_DEPTH);
         deregisterSensor(OB_SENSOR_IR_LEFT);
         deregisterSensor(OB_SENSOR_IR_RIGHT);

@@ -17,11 +17,11 @@ DaBaiAPresetManager::DaBaiAPresetManager(IDevice *owner) : DeviceComponentBase(o
     auto depthWorkModeList    = depthWorkModeManager->getDepthWorkModeList();
 
     for(auto &mode: depthWorkModeList) {
-        availablePresets_.emplace_back(mode.name);
+        availablePresets_.push_back({ mode.mode.name, "" });
     }
 
     if(availablePresets_.size() > 0) {
-        currentPreset_ = availablePresets_[0];
+        currentPreset_ = availablePresets_[0].name;
         depthWorkModeManager->switchDepthWorkMode(currentPreset_.c_str());
     }
 
@@ -58,8 +58,10 @@ DaBaiAPresetManager::DaBaiAPresetManager(IDevice *owner) : DeviceComponentBase(o
     }
 }
 
-void DaBaiAPresetManager::loadPreset(const std::string &presetName) {
-    if(std::find(availablePresets_.begin(), availablePresets_.end(), presetName) == availablePresets_.end()) {
+void DaBaiAPresetManager::loadPreset(const std::string &presetName, const std::string &version) {
+    utils::unusedVar(version);
+    if(std::find_if(availablePresets_.begin(), availablePresets_.end(), [&presetName](const PresetItem &item) { return item.name == presetName; })
+       == availablePresets_.end()) {
         THROW_INVALID_PARAM_EXCEPTION("Invalid preset name: " + presetName);
     }
 
@@ -86,7 +88,7 @@ const std::string &DaBaiAPresetManager::getCurrentPresetName() const {
     return currentPreset_;
 }
 
-const std::vector<std::string> &DaBaiAPresetManager::getAvailablePresetList() const {
+const std::vector<PresetItem> &DaBaiAPresetManager::getAvailablePresetList() const {
     return availablePresets_;
 }
 
@@ -138,7 +140,7 @@ void DaBaiAPresetManager::loadPresetFromJsonValue(const std::string &presetName,
 
     if(!getOwner()->isPlaybackDevice()) {
         if(customPresets_.find(presetName) == customPresets_.end()) {
-            availablePresets_.emplace_back(presetName);
+            availablePresets_.push_back({ presetName, "" });
         }
     }
     customPresets_[presetName] = preset;
@@ -215,11 +217,11 @@ void DaBaiAPresetManager::fetchPreset() {
 
     auto depthWorkModeList = depthWorkModeManager->getDepthWorkModeList();
     for(auto &mode: depthWorkModeList) {
-        availablePresets_.emplace_back(mode.name);
+        availablePresets_.push_back({ mode.mode.name, "" });
     }
 
     if(availablePresets_.size() > 0) {
-        currentPreset_ = availablePresets_[0];
+        currentPreset_ = availablePresets_[0].name;
         depthWorkModeManager->switchDepthWorkMode(currentPreset_.c_str());
     }
     storeCurrentParamsAsCustomPreset(kCustomPresetName);
@@ -292,12 +294,12 @@ void DaBaiAPresetManager::storeCurrentParamsAsCustomPreset(const std::string &pr
 
     {
         auto depthWorkModeManager = owner->getComponentT<IDepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
-        preset.depthWorkMode      = depthWorkModeManager->getCurrentDepthWorkMode().name;
+        preset.depthWorkMode      = depthWorkModeManager->getCurrentDepthWorkMode().mode.name;
     }
 
     if(!owner->isPlaybackDevice()) {
         if(customPresets_.find(presetName) == customPresets_.end()) {
-            availablePresets_.emplace_back(presetName);
+            availablePresets_.push_back({ presetName, "" });
         }
     }
     customPresets_[presetName] = preset;

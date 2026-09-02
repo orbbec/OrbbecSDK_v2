@@ -6,6 +6,7 @@
 #include "InternalTypes.hpp"
 #include "exception/ObException.hpp"
 #include "utils/Utils.hpp"
+#include "utils/StringUtils.hpp"
 #include "IDepthWorkModeManager.hpp"
 #include "preset/PresetDefinitions.hpp"
 #include "logger/Logger.hpp"
@@ -22,13 +23,14 @@ G330PresetManager::G330PresetManager(IDevice *owner) : DeviceComponentBase(owner
     auto depthWorkModeManager = owner->getComponentT<IDepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
     auto depthWorkModeList    = depthWorkModeManager->getDepthWorkModeList();
 
-    for(auto &mode: depthWorkModeList) {
-        availablePresets_.emplace_back(mode.name);
+    for(auto &item: depthWorkModeList) {
+        availablePresets_.push_back({ item.mode.name, item.version });
     }
 
     if(availablePresets_.size() > 0) {
-        currentPresetName_ = availablePresets_[0];
-        depthWorkModeManager->switchDepthWorkMode(currentPresetName_.c_str());
+        currentPresetName_ = availablePresets_[0].name;
+        // switch to the exact first item, a name-only switch would select the latest version among same-name modes
+        depthWorkModeManager->switchDepthWorkMode(currentPresetName_, availablePresets_[0].version);
     }
 
     if(!owner->isPlaybackDevice()) {
@@ -99,9 +101,16 @@ G330PresetManager::G330PresetManager(IDevice *owner) : DeviceComponentBase(owner
     }
 }
 
-void G330PresetManager::loadPreset(const std::string &presetName) {
-    if(std::find(availablePresets_.begin(), availablePresets_.end(), presetName) == availablePresets_.end()) {
+void G330PresetManager::loadPreset(const std::string &presetName, const std::string &version) {
+    auto iter = std::find_if(availablePresets_.begin(), availablePresets_.end(), [&presetName](const PresetItem &item) { return item.name == presetName; });
+    if(iter == availablePresets_.end()) {
         THROW_INVALID_PARAM_EXCEPTION("Invalid preset name: " + presetName);
+    }
+
+    // custom preset's target version is defined by its content, reject mismatched version before applying
+    auto customIter = customPresets_.find(presetName);
+    if(customIter != customPresets_.end() && !version.empty() && version != iter->version) {
+        THROW_INVALID_PARAM_EXCEPTION("Invalid preset version: " + version + ", preset: " + presetName);
     }
 
     // store current parameters to kCustomPresetName
@@ -109,16 +118,15 @@ void G330PresetManager::loadPreset(const std::string &presetName) {
         storeCurrentParamsAsCustomPreset(kCustomPresetName);
     }
 
-    auto iter = customPresets_.find(presetName);
-    if(iter != customPresets_.end()) {
+    if(customIter != customPresets_.end()) {
         // Load custom preset
-        loadCustomPreset(iter->first, iter->second);
+        loadCustomPreset(customIter->first, customIter->second);
     }
     else {
         auto owner                = getOwner();
         auto depthWorkModeManager = owner->getComponentT<IDepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
 
-        depthWorkModeManager->switchDepthWorkMode(presetName.c_str());
+        depthWorkModeManager->switchDepthWorkMode(presetName, version);
         currentPresetName_ = presetName;
     }
 }
@@ -127,7 +135,12 @@ const std::string &G330PresetManager::getCurrentPresetName() const {
     return currentPresetName_;
 }
 
-const std::vector<std::string> &G330PresetManager::getAvailablePresetList() const {
+const std::string &G330PresetManager::getCurrentDepthWorkModeVersion() const {
+    auto depthWorkModeManager = getOwner()->getComponentT<IDepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
+    return depthWorkModeManager->getCurrentDepthWorkMode().version;
+}
+
+const std::vector<PresetItem> &G330PresetManager::getAvailablePresetList() const {
     return availablePresets_;
 }
 
@@ -163,6 +176,15 @@ void G330PresetManager::loadPresetFromJsonFile(const std::string &filePath) {
 
 std::shared_ptr<IPresetEngine> G330PresetManager::getPresetEngine(const Json::Value &root) {
     if(root.isObject() && root.isMember(kApiVersion)) {
+        auto presetVersion = root[kApiVersion]["preset"].asUInt();
+        if(presetVersion <= 2) {
+            // preset version 2 json: depth_preset is a legacy string leaf
+            if(presetEngineV2_ == nullptr) {
+                presetEngineV2_ = std::make_shared<G330PresetEngine>(getOwner(), 2);
+                presetEngineV2_->init();
+            }
+            return presetEngineV2_;
+        }
         return getCurrentPresetEngine();
     }
     if(presetEngineV1_ == nullptr) {
@@ -174,7 +196,7 @@ std::shared_ptr<IPresetEngine> G330PresetManager::getPresetEngine(const Json::Va
 
 std::shared_ptr<IPresetEngine> G330PresetManager::getCurrentPresetEngine() {
     if(presetEngine_ == nullptr) {
-        presetEngine_ = std::make_shared<G330PresetEngine>(getOwner());
+        presetEngine_ = std::make_shared<G330PresetEngine>(getOwner(), kG330PresetVersion);
         presetEngine_->init();
     }
     return presetEngine_;
@@ -184,8 +206,14 @@ void G330PresetManager::loadPresetFromJsonValue(const std::string &presetName, c
     loadCustomPreset(presetName, root);
 
     if(!getOwner()->isPlaybackDevice()) {
-        if(customPresets_.find(presetName) == customPresets_.end()) {
-            availablePresets_.emplace_back(presetName);
+        if(std::find_if(availablePresets_.begin(), availablePresets_.end(), [&presetName](const PresetItem &item) { return item.name == presetName; })
+           == availablePresets_.end()) {
+            std::string        version;
+            const Json::Value &depthPreset = root["parameters"]["sensor_depth"]["depth_preset"];
+            if(depthPreset.isObject() && depthPreset.isMember("version")) {
+                version = depthPreset["version"].asString();
+            }
+            availablePresets_.push_back({ presetName, version });
         }
     }
     customPresets_[presetName] = root;
@@ -232,13 +260,14 @@ void G330PresetManager::fetchPreset() {
     importedAppConfigs_.clear();
 
     auto depthWorkModeList = depthWorkModeManager->getDepthWorkModeList();
-    for(auto &mode: depthWorkModeList) {
-        availablePresets_.emplace_back(mode.name);
+    for(auto &item: depthWorkModeList) {
+        availablePresets_.push_back({ item.mode.name, item.version });
     }
 
     if(availablePresets_.size() > 0) {
-        currentPresetName_ = availablePresets_[0];
-        depthWorkModeManager->switchDepthWorkMode(currentPresetName_.c_str());
+        currentPresetName_ = availablePresets_[0].name;
+        // switch to the exact first item, a name-only switch would select the latest version among same-name modes
+        depthWorkModeManager->switchDepthWorkMode(currentPresetName_, availablePresets_[0].version);
     }
     TRY_EXECUTE({ storeCurrentParamsAsCustomPreset(kCustomPresetName); });
 }
@@ -283,8 +312,13 @@ void G330PresetManager::storeCurrentParamsAsCustomPreset(const std::string &pres
     auto data         = presetEngine->exportJson();
 
     if(!getOwner()->isPlaybackDevice()) {
-        if(customPresets_.find(presetName) == customPresets_.end()) {
-            availablePresets_.emplace_back(presetName);
+        auto iter = std::find_if(availablePresets_.begin(), availablePresets_.end(), [&presetName](const PresetItem &item) { return item.name == presetName; });
+        auto depthWorkModeManager = getOwner()->getComponentT<IDepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
+        if(iter == availablePresets_.end()) {
+            availablePresets_.push_back({ presetName, depthWorkModeManager->getCurrentDepthWorkMode().version });
+        }
+        else {
+            iter->version = depthWorkModeManager->getCurrentDepthWorkMode().version;
         }
     }
     customPresets_[presetName] = data;

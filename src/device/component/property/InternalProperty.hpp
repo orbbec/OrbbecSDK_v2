@@ -54,6 +54,7 @@ typedef enum {
     OB_STRUCT_IR_STREAM_PROFILE           = 1050, /**< set stream profile to ir or left ir*/
     OB_STRUCT_IR_RIGHT_STREAM_PROFILE     = 1065, /**< set stream profile to right ir*/
     OB_STRUCT_SOFTWARE_SYNCED_TARGET_TIME = 1076, /**< Soft sync capture image*/
+    OB_STRUCT_CURRENT_DEPTH_ALG_MODE_V2   = 1103, /**< The current camera depth mode with version */
     OB_RAW_DATA_DUAL_CAMERA_PARAMS_0      = 4045, /**< Obtain Mx6000 binocular Content0 parameters */
     OB_RAW_DATA_DUAL_CAMERA_PARAMS_1      = 4046, /**< Obtain Mx6000 binocular Content1 parameters */
     OB_RAW_DATA_DUAL_CAMERA_PARAMS_2      = 4047, /**< Obtain Mx6000 binocular Content2 parameters */
@@ -76,6 +77,7 @@ typedef enum {
     OB_RAW_PRESET_RESOLUTION_CONFIG_LIST                 = 4061, /**< Resolution ratio configuration list*/
     OB_RAW_DATA_PRESET_RESOLUTION_MASK_LIST              = 4062, /**< Resolution ratio mask list*/
     OB_RAW_DATA_DEPTH_POST_FILTER_PARAMS                 = 4063, /**< Comprehensive filter parameters*/
+    OB_RAW_DATA_DEPTH_ALG_MODE_LIST_V2                   = 4077, /**< Depth algorithm mode list with version*/
     OB_PROP_DEVICE_LOG_SEVERITY_LEVEL_INT                = 5003, /**< Device log level*/
     OB_STRUCT_DEVICE_ERROR_STATE                         = 5524, /**< Device error state*/
 

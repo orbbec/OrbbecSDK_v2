@@ -120,7 +120,7 @@ void G305SensorStreamStrategy::validateDepthAndIrStream(const std::vector<std::s
 }
 
 void G305SensorStreamStrategy::validatePreset(const std::vector<std::shared_ptr<const StreamProfile>> &profiles) {
-    OBDepthWorkMode_Internal currentDepthMode{};
+    DepthWorkModeItem currentDepthMode{};
 
     {
         auto owner                = getOwner();
@@ -129,7 +129,7 @@ void G305SensorStreamStrategy::validatePreset(const std::vector<std::shared_ptr<
     }
 
     const char *FactoryMode = "Factory Calib";
-    if(strncmp(currentDepthMode.name, FactoryMode, strlen(FactoryMode) + 1) == 0) {
+    if(strncmp(currentDepthMode.mode.name, FactoryMode, strlen(FactoryMode) + 1) == 0) {
         // Factory Calibration mode
         for(auto profile: profiles) {
             auto streamType = profile->getType();

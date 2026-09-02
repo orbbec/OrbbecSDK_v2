@@ -527,7 +527,7 @@ void SensorBase::validateDeviceState(const std::shared_ptr<const StreamProfile> 
             if(depthWorkModeManager) {
                 auto        currentDepthMode = depthWorkModeManager->getCurrentDepthWorkMode();
                 const char *factoryMode      = "Factory Calib";
-                if(strncmp(currentDepthMode.name, factoryMode, strlen(factoryMode) + 1) == 0) {
+                if(strncmp(currentDepthMode.mode.name, factoryMode, strlen(factoryMode) + 1) == 0) {
                     // Factory Calibration mode
                     flag = 0;
                     break;

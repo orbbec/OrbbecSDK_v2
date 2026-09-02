@@ -623,7 +623,7 @@ private:
             auto        depthWorkModeManager = device_->getComponentT<IDepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
             const auto &currentMode          = depthWorkModeManager->getCurrentDepthWorkMode();
 
-            std::string depthWorkModeName(currentMode.name);
+            std::string depthWorkModeName(currentMode.mode.name);
             if(depthWorkModeName.find("Dual Color") != std::string::npos) {
                 compentIds.push_back(OB_DEV_COMPONENT_LEFT_COLOR_SENSOR);
                 compentIds.push_back(OB_DEV_COMPONENT_RIGHT_COLOR_SENSOR);

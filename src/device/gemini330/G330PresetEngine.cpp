@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 #include "G330PresetEngine.hpp"
+#include "IDepthWorkModeManager.hpp"
 #include "preset/CompareHandler.hpp"
 #include "preset/PropertyConfigHandler.hpp"
 #include "preset/PresetHandler.hpp"
@@ -47,7 +48,7 @@ void G330PresetEngineV1::init() {
     initialized_.store(true);
 }
 
-G330PresetEngine::G330PresetEngine(IDevice *owner) : PresetEngineBase(owner) {}
+G330PresetEngine::G330PresetEngine(IDevice *owner, uint32_t presetVersion) : PresetEngineBase(owner), presetVersion_(presetVersion) {}
 
 void G330PresetEngine::init() {
     if(initialized_) {
@@ -62,7 +63,7 @@ void G330PresetEngine::init() {
     configEngine_.declareObject(
         kApiVersion,
         [&](jsonmodel::ConfigEngine &engine) {
-            engine.addLeaf("preset", std::make_shared<ValueCompareHandler<unsigned int>>(kG330PresetVersion, CompareMode::Equal), true);
+            engine.addLeaf("preset", std::make_shared<ValueCompareHandler<unsigned int>>(presetVersion_, CompareMode::Equal), true);
             engine.addLeaf("sdk", std::make_shared<VersionHandler>(OB_LIB_VERSION_STR, CompareMode::Ignore));
         },
         true);
@@ -99,7 +100,18 @@ void G330PresetEngine::init() {
             engine.declareObject(
                 "sensor_depth",
                 [&](jsonmodel::ConfigEngine &engine) {
-                    engine.addLeaf("depth_preset", std::make_shared<DepthWorkModeHandler>(owner_));
+                    if(presetVersion_ >= 3) {
+                        engine.addObject(
+                            "depth_preset",
+                            [&](jsonmodel::ConfigEngine &engine) {
+                                engine.addLeaf("name", nullptr);
+                                engine.addLeaf("version", nullptr);
+                            },
+                            std::make_shared<DepthWorkModeV2Handler>(owner_));
+                    }
+                    else {
+                        engine.addLeaf("depth_preset", std::make_shared<DepthWorkModeHandler>(owner_));
+                    }
                     engine.addLeaf("depth_auto_exposure_priority",
                                    std::make_shared<PropertyConfigHandler<int>>(owner_, OB_PROP_DEPTH_AUTO_EXPOSURE_PRIORITY_INT));
                     engine.addLeaf("depth_auto_exposure", std::make_shared<PropertyConfigHandler<bool>>(owner_, OB_PROP_DEPTH_AUTO_EXPOSURE_BOOL));

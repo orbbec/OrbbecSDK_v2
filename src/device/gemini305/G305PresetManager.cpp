@@ -17,13 +17,13 @@ G305PresetManager::G305PresetManager(IDevice *owner) : DeviceComponentBase(owner
     auto depthWorkModeList    = depthWorkModeManager->getDepthWorkModeList();
 
     for(auto &mode: depthWorkModeList) {
-        availablePresets_.emplace_back(mode.name);
+        availablePresets_.push_back({ mode.mode.name, "" });
     }
 
     auto propServer = owner->getPropertyServer();
     if(availablePresets_.size() > 0) {
         if(owner->isPlaybackDevice()) {
-            currentPreset_ = availablePresets_[0];
+            currentPreset_ = availablePresets_[0].name;
             depthWorkModeManager->switchDepthWorkMode(currentPreset_.c_str());
         }
         else {
@@ -66,8 +66,10 @@ G305PresetManager::G305PresetManager(IDevice *owner) : DeviceComponentBase(owner
     }
 }
 
-void G305PresetManager::loadPreset(const std::string &presetName) {
-    if(std::find(availablePresets_.begin(), availablePresets_.end(), presetName) == availablePresets_.end()) {
+void G305PresetManager::loadPreset(const std::string &presetName, const std::string &version) {
+    utils::unusedVar(version);
+    if(std::find_if(availablePresets_.begin(), availablePresets_.end(), [&presetName](const PresetItem &item) { return item.name == presetName; })
+       == availablePresets_.end()) {
         THROW_INVALID_PARAM_EXCEPTION("Invalid preset name: " + presetName);
     }
 
@@ -94,7 +96,7 @@ const std::string &G305PresetManager::getCurrentPresetName() const {
     return currentPreset_;
 }
 
-const std::vector<std::string> &G305PresetManager::getAvailablePresetList() const {
+const std::vector<PresetItem> &G305PresetManager::getAvailablePresetList() const {
     return availablePresets_;
 }
 
@@ -147,7 +149,7 @@ void G305PresetManager::loadPresetFromJsonValue(const std::string &presetName, c
 
     if(!getOwner()->isPlaybackDevice()) {
         if(customPresets_.find(presetName) == customPresets_.end()) {
-            availablePresets_.emplace_back(presetName);
+            availablePresets_.push_back({ presetName, "" });
         }
     }
     customPresets_[presetName] = preset;
@@ -227,7 +229,7 @@ void G305PresetManager::fetchPreset() {
 
     auto depthWorkModeList = depthWorkModeManager->getDepthWorkModeList();
     for(auto &mode: depthWorkModeList) {
-        availablePresets_.emplace_back(mode.name);
+        availablePresets_.push_back({ mode.mode.name, "" });
     }
     if(availablePresets_.size() > 0) {
         auto propServer           = owner->getPropertyServer();
@@ -308,12 +310,12 @@ void G305PresetManager::storeCurrentParamsAsCustomPreset(const std::string &pres
 
     {
         auto depthWorkModeManager = owner->getComponentT<IDepthWorkModeManager>(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER);
-        preset.depthWorkMode      = depthWorkModeManager->getCurrentDepthWorkMode().name;
+        preset.depthWorkMode      = depthWorkModeManager->getCurrentDepthWorkMode().mode.name;
     }
 
     if(!owner->isPlaybackDevice()) {
         if(customPresets_.find(presetName) == customPresets_.end()) {
-            availablePresets_.emplace_back(presetName);
+            availablePresets_.push_back({ presetName, "" });
         }
     }
     customPresets_[presetName] = preset;

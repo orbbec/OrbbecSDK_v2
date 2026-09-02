@@ -18,14 +18,15 @@ public:
     PlaybackPresetManager(IDevice *owner, std::shared_ptr<IPresetManager> delegate);
     ~PlaybackPresetManager() override = default;
 
-    void                            loadPreset(const std::string &presetName) override;
-    const std::string              &getCurrentPresetName() const override;
-    const std::vector<std::string> &getAvailablePresetList() const override;
-    void                            loadPresetFromJsonData(const std::string &presetName, const std::vector<uint8_t> &jsonData) override;
-    void                            loadPresetFromJsonFile(const std::string &filePath) override;
-    const std::vector<uint8_t>     &exportSettingsAsPresetJsonData(const std::string &presetName) override;
-    void                            exportSettingsAsPresetJsonFile(const std::string &filePath) override;
-    void                            fetchPreset() override;
+    void                           loadPreset(const std::string &presetName, const std::string &version = "") override;
+    const std::string             &getCurrentPresetName() const override;
+    const std::string             &getCurrentDepthWorkModeVersion() const override;
+    const std::vector<PresetItem> &getAvailablePresetList() const override;
+    void                           loadPresetFromJsonData(const std::string &presetName, const std::vector<uint8_t> &jsonData) override;
+    void                           loadPresetFromJsonFile(const std::string &filePath) override;
+    const std::vector<uint8_t>    &exportSettingsAsPresetJsonData(const std::string &presetName) override;
+    void                           exportSettingsAsPresetJsonFile(const std::string &filePath) override;
+    void                           fetchPreset() override;
 
     bool                               isApplicationConfigSupported() const override;
     std::shared_ptr<ApplicationConfig> getApplicationConfig() override;

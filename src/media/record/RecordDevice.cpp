@@ -301,9 +301,15 @@ void RecordDevice::writeCalibrationParamProperty() {
 void RecordDevice::writeDepthWorkModeProperty() {
     // depth work mode
     auto propertyServer = device_->getComponentT<IPropertyServer>(OB_DEV_COMPONENT_PROPERTY_SERVER, false);
-    if(propertyServer && propertyServer->isPropertySupported(OB_STRUCT_CURRENT_DEPTH_ALG_MODE, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
-        auto depthMode = propertyServer->getStructureDataProtoV1_1_T<OBDepthWorkMode_Internal, 0>(OB_STRUCT_CURRENT_DEPTH_ALG_MODE);
-        writer_->writeProperty(OB_STRUCT_CURRENT_DEPTH_ALG_MODE, reinterpret_cast<uint8_t *>(&depthMode), sizeof(OBDepthWorkMode_Internal));
+    if(propertyServer) {
+        if(propertyServer->isPropertySupported(OB_STRUCT_CURRENT_DEPTH_ALG_MODE, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
+            auto depthMode = propertyServer->getStructureDataProtoV1_1_T<OBDepthWorkMode_Internal, 0>(OB_STRUCT_CURRENT_DEPTH_ALG_MODE);
+            writer_->writeProperty(OB_STRUCT_CURRENT_DEPTH_ALG_MODE, reinterpret_cast<uint8_t *>(&depthMode), sizeof(OBDepthWorkMode_Internal));
+        }
+        if(propertyServer->isPropertySupported(OB_STRUCT_CURRENT_DEPTH_ALG_MODE_V2, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
+            auto depthMode = propertyServer->getStructureDataProtoV1_1_T<OBDepthWorkModeV2_Internal, 1>(OB_STRUCT_CURRENT_DEPTH_ALG_MODE_V2);
+            writer_->writeProperty(OB_STRUCT_CURRENT_DEPTH_ALG_MODE_V2, reinterpret_cast<uint8_t *>(&depthMode), sizeof(OBDepthWorkModeV2_Internal));
+        }
     }
 }
 

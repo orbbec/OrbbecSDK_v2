@@ -9,7 +9,7 @@
 namespace libobsensor {
 
 // Current preset version
-constexpr const uint32_t kG330PresetVersion = 2;
+constexpr const uint32_t kG330PresetVersion = 3;
 
 /**
  * @brief G330PresetEngine version 1
@@ -26,17 +26,20 @@ public:
 };
 
 /**
- * @brief G330PresetEngine version 2
+ * @brief G330PresetEngine (api_version.preset >= 2)
  */
 class G330PresetEngine : public PresetEngineBase {
 public:
-    G330PresetEngine(IDevice *owner);
+    G330PresetEngine(IDevice *owner, uint32_t presetVersion);
     ~G330PresetEngine() override = default;
 
     /**
      * @brief Implementation of IPresetEngine::init
      */
     void init() override;
+
+private:
+    uint32_t presetVersion_{ kG330PresetVersion };
 };
 
 }  // namespace libobsensor
