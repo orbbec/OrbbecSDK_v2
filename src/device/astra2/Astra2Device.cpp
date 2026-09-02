@@ -65,7 +65,7 @@ void Astra2Device::init() {
 
     videoFrameTimestampCalculatorCreator_ = [this]() { return std::make_shared<Astra2VideoFrameTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_); };
 
-    auto globalTimestampFilter = std::make_shared<GlobalTimestampFitter>(this);
+    auto globalTimestampFilter = std::make_shared<GlobalTimestampFitter>(this, deviceTimeFreq_);
     registerComponent(OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER, globalTimestampFilter);
 
     auto algParamManager = std::make_shared<Astra2AlgParamManager>(this);

@@ -507,8 +507,9 @@ void ObV4lUvcDevicePort::captureLoop(std::shared_ptr<V4lDeviceHandle> devHandle)
                             }
                         }
 
-                        videoFrame->setSystemTimeStampUsec(utils::getNowTimesUs());
-                        videoFrame->setSteadyTimeStampUsec(utils::getSteadyTimeUs());
+                        const auto timestamp = utils::getHostTimestampUs();
+                        videoFrame->setSystemTimeStampUsec(timestamp.systemTimeUs);
+                        videoFrame->setSteadyTimeStampUsec(timestamp.steadyTimeUs);
                         // NOte: // V4L2 frame number start from 0; we use a custom frame number starting from 1
                         // videoFrame->setNumber(buf.sequence);
                         videoFrame->setNumber(devHandle->loopFrameIndex);

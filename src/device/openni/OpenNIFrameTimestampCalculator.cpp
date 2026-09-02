@@ -11,10 +11,10 @@ OpenNIFrameTimestampCalculator::OpenNIFrameTimestampCalculator(IDevice *device, 
     : device_(device), deviceTimeFreq_(deviceTimeFreq), frameTimeFreq_(frameTimeFreq) {}
 
 void OpenNIFrameTimestampCalculator::calculate(std::shared_ptr<Frame> frame) {
-    auto realtime = utils::getNowTimesUs();
-    frame->setTimeStampUsec(realtime);
-    frame->setSystemTimeStampUsec(realtime);
-    frame->setSteadyTimeStampUsec(utils::getSteadyTimeUs());
+    const auto timestamp = utils::getHostTimestampUs();
+    frame->setTimeStampUsec(timestamp.systemTimeUs);
+    frame->setSystemTimeStampUsec(timestamp.systemTimeUs);
+    frame->setSteadyTimeStampUsec(timestamp.steadyTimeUs);
     frame->setDeviceTimestampFromHost(true);
 }
 

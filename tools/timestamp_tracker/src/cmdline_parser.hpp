@@ -24,6 +24,7 @@ struct StreamSpec {
 struct CmdLineConfig {
     int         durationMinutes = 60;
     int         syncIntervalSec = 0;
+    int         ldpIntervalMs   = 0;
     bool        showHelp        = false;
     bool        generateConfig  = false;
     std::string generateConfigFile;
@@ -37,6 +38,10 @@ struct CmdLineConfig {
 
     uint64_t getSyncIntervalMs() const {
         return static_cast<uint64_t>(syncIntervalSec) * 1000;
+    }
+
+    uint64_t getLdpIntervalMs() const {
+        return static_cast<uint64_t>(ldpIntervalMs);
     }
 
     uint64_t getDurationMs() const {

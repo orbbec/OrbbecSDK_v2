@@ -16,6 +16,7 @@ Options:
   -i, --sync-interval <seconds> Device clock sync interval in seconds (default: 0)
                                 0 = sync device clock once at start
                                 >0 = periodic device clock sync every N seconds
+  -l, --ldp <milliseconds>      Enable per-device LDP polling (1000-10000ms)
   -c, --config <file>           Path to JSON configuration file
   -g, --generate-config <file>  Write a default JSON config to <file> and exit
   -h, --help                    Show help message
@@ -24,6 +25,13 @@ Examples:
   ./ob_timestamp_tracker                           # 1 hour tracking, auto-select streams
   ./ob_timestamp_tracker -t 30                     # 30 minutes tracking
   ./ob_timestamp_tracker -t 60 -i 60               # 1 hour with 60s sync interval
+  ./ob_timestamp_tracker -g config.json            # generate default JSON config file
+  ./ob_timestamp_tracker -c config.json            # use JSON config file
+  ./ob_timestamp_tracker -c config.json -t 30      # JSON config, override duration
+  ./ob_timestamp_tracker                           # 1 hour tracking, auto-select streams
+  ./ob_timestamp_tracker -t 30                     # 30 minutes tracking
+  ./ob_timestamp_tracker -t 60 -i 60               # 1 hour with 60s sync interval
+  ./ob_timestamp_tracker -l 1000                   # poll LDP once per second on supported devices
   ./ob_timestamp_tracker -g config.json            # generate default JSON config file
   ./ob_timestamp_tracker -c config.json            # use JSON config file
   ./ob_timestamp_tracker -c config.json -t 30      # JSON config, override duration
@@ -68,6 +76,7 @@ This writes a default `config.json` which you can edit before use. Stream config
 - When `sensor` is `"imu"`, the tool opens both accel and gyro together. `fps` is their shared sample rate, and can be written either as a number or as a case-insensitive Hz string such as `"3.125HZ"`, `"6.25hz"`, or `"100HZ"`.
 - IMU full-scale range strings follow SDK names such as `"16g"`, `"8g"`, `"1000dps"`, and `"2000dps"`.
 - `-t` and `-i` CLI flags always override the corresponding JSON values.
+- `-l <milliseconds>` enables LDP on each supported device and reads `OB_PROP_LDP_MEASURE_DISTANCE_INT` periodically. The value is discarded; unsupported devices are ignored. Before enabling it, the tool saves the original LDP and laser control values, then restores them on exit. Values below 1000 ms use 1000 ms; values above 10000 ms use 10000 ms.
 
 When no stream config is provided, the tool auto-selects: Depth + Color (preferred), or Color_Left + Color_Right (fallback).
 

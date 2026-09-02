@@ -42,6 +42,9 @@ public:
 
 private:
     void processFrames();
+    void startLdpPolling(uint64_t intervalMs);
+    void stopLdpPolling();
+    void pollLdp(uint64_t intervalMs);
     void onFrameSet(std::shared_ptr<ob::FrameSet> frameSet, uint64_t recvTimeUs);
     bool setupSensors(std::shared_ptr<ob::Config> &obConfig, const CmdLineConfig &toolConfig);
 
@@ -61,6 +64,17 @@ private:
     std::mutex                frameQueueMutex_;
     std::condition_variable   frameQueueCv_;
     std::queue<TimedFrameSet> frameQueue_;
+
+    std::atomic<bool>       ldpPolling_{ false };
+    bool                    ldpStateSaved_{ false };
+    bool                    ldpOriginalState_{ false };
+    bool                    laserControlStateSaved_{ false };
+    int32_t                 laserControlOriginalState_{ 0 };
+    bool                    laserBoolStateSaved_{ false };
+    bool                    laserBoolOriginalState_{ false };
+    std::thread             ldpThread_;
+    std::mutex              ldpMutex_;
+    std::condition_variable ldpCv_;
 };
 
 }  // namespace tools

@@ -66,11 +66,12 @@ void G2Device::init() {
     fetchDeviceInfo();
     fetchExtensionInfo();
 
+    deviceTimeFreq_ = deviceInfo_->pid_ == GEMINI2L_PID ? 1000 : 1000000;
+
     videoFrameTimestampCalculatorCreator_ = [this]() {
         std::shared_ptr<IFrameTimestampCalculator> calculator;
         if(deviceInfo_->pid_ == GEMINI2L_PID) {
-            deviceTimeFreq_ = 1000;
-            calculator      = std::make_shared<G2LVideoFrameTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
+            calculator = std::make_shared<G2LVideoFrameTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
         }
         else {
             calculator = std::make_shared<G2VideoFrameTimestampCalculator>(this, deviceTimeFreq_, frameTimeFreq_);
@@ -84,7 +85,7 @@ void G2Device::init() {
         propertyServer->registerProperty(OB_STRUCT_DEPTH_AE_ROI, "rw", "rw", vendorPropertyAccessor.get());
     }
 
-    auto globalTimestampFilter = std::make_shared<GlobalTimestampFitter>(this);
+    auto globalTimestampFilter = std::make_shared<GlobalTimestampFitter>(this, deviceTimeFreq_);
     registerComponent(OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER, globalTimestampFilter);
 
     auto algParamManager = std::make_shared<G2AlgParamManager>(this);
@@ -121,11 +122,9 @@ void G2Device::init() {
     registerComponent(OB_DEV_COMPONENT_DEVICE_CLOCK_SYNCHRONIZER, [this] {
         std::shared_ptr<DeviceClockSynchronizer> deviceClockSynchronizer;
         if(deviceInfo_->pid_ == GEMINI2L_PID) {
-            deviceTimeFreq_         = 1000;
             deviceClockSynchronizer = std::make_shared<DeviceClockSynchronizer>(this, deviceTimeFreq_, deviceTimeFreq_);
         }
         else {
-            deviceTimeFreq_         = 1000000;
             deviceClockSynchronizer = std::make_shared<DeviceClockSynchronizer>(this, deviceTimeFreq_, 1000);
         }
         return deviceClockSynchronizer;

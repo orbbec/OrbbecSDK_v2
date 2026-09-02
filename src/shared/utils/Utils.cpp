@@ -51,6 +51,13 @@ uint64_t getSteadyTimeUs() {
 #endif
 }
 
+HostTimestamp getHostTimestampUs() {
+    const auto steadyBefore = getSteadyTimeUs();
+    const auto systemTime   = getNowTimesUs();
+    const auto steadyAfter  = getSteadyTimeUs();
+    return { systemTime, steadyBefore + (steadyAfter - steadyBefore) / 2 };
+}
+
 void sleepMs(uint64_t msec) {
 #ifdef WIN32
     Sleep((DWORD)msec);

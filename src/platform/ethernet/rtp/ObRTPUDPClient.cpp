@@ -233,8 +233,9 @@ void ObRTPUDPClient::frameProcess() {
                         continue;
                     }
 
-                    frame->setSystemTimeStampUsec(utils::getNowTimesUs());
-                    frame->setSteadyTimeStampUsec(utils::getSteadyTimeUs());
+                    const auto timestamp = utils::getHostTimestampUs();
+                    frame->setSystemTimeStampUsec(timestamp.systemTimeUs);
+                    frame->setSteadyTimeStampUsec(timestamp.steadyTimeUs);
                     frame->setTimeStampUsec(rtpProcessor_.getTimestamp());
                     frame->setNumber(rtpProcessor_.getNumber());
                     frame->updateMetadata(rtpProcessor_.getMetaData(), metaDataSize);
@@ -255,8 +256,9 @@ void ObRTPUDPClient::frameProcess() {
                 auto frame = FrameFactory::createFrame(OB_FRAME_UNKNOWN, OB_FORMAT_UNKNOWN, OB_UDP_BUFFER_SIZE);
                 frame->updateData(data.data() + 12, data.size() - 12);
                 frame->setTimeStampUsec(header->timestamp);
-                frame->setSystemTimeStampUsec(utils::getNowTimesUs());
-                frame->setSteadyTimeStampUsec(utils::getSteadyTimeUs());
+                const auto timestamp = utils::getHostTimestampUs();
+                frame->setSystemTimeStampUsec(timestamp.systemTimeUs);
+                frame->setSteadyTimeStampUsec(timestamp.steadyTimeUs);
                 frameCallback_(frame);
             }
         }

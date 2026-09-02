@@ -5,6 +5,9 @@
 
 #include <IFrame.hpp>
 
+#include <cstdint>
+#include <memory>
+
 namespace libobsensor {
 class IFrameTimestampCalculator {
 public:
@@ -19,15 +22,23 @@ public:
  * Formula: system_ts(us) = coefficientA * (device_ts - refDevTime) + refSysTime
  */
 typedef struct {
-    double   coefficientA;  // Slope (system_us / device_clock_unit), typically ~1000.0
-    uint64_t refDevTime;    // Predicted device timestamp (ms)
-    uint64_t refSysTime;    // Predicted system timestamp (us)
-    uint64_t devTime;       // Latest raw measured device timestamp (ms)
-    uint64_t sysTime;       // Latest raw measured system timestamp (us)
+    double   coefficientA;  // Host microseconds per device clock tick
+    uint64_t refDevTime;    // Reference device timestamp in device clock ticks
+    uint64_t refSysTime;    // Reference host timestamp in microseconds
+    uint64_t devTime;       // Latest device timestamp in device clock ticks
+    uint64_t sysTime;       // Latest host timestamp in microseconds
 } LinearFuncParam;
 
+typedef struct {
+    uint64_t timestampUs;
+    uint64_t generation;
+    double   remainingCorrectionUs;
+    double   estimatedErrorUs;
+    bool     valid;
+    bool     stable;
+} GlobalTimestampMapResult;
+
 class IGlobalTimestampFitter {
-public:
 public:
     virtual ~IGlobalTimestampFitter() = default;
 
@@ -42,9 +53,10 @@ public:
     virtual void pause()               = 0;
     virtual void resume()              = 0;
 
-    virtual void enable(bool en)     = 0;
-    virtual bool isEnabled() const   = 0;
-    virtual bool isPtpActive() const = 0;
+    virtual void enable(bool en)   = 0;
+    virtual bool isEnabled() const = 0;
+
+    virtual GlobalTimestampMapResult mapDeviceTime(double deviceTimestampTicks) = 0;
 };
 
 }  // namespace libobsensor

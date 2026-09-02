@@ -58,7 +58,7 @@ void FemtoBoltDevice::init() {
         frameTimeFreq_  = 1000000;
     }
 
-    auto globalTimestampFilter = std::make_shared<GlobalTimestampFitter>(this);
+    auto globalTimestampFilter = std::make_shared<GlobalTimestampFitter>(this, deviceTimeFreq_);
     registerComponent(OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER, globalTimestampFilter);
 
     auto algParamManager = std::make_shared<FemtoBoltAlgParamManager>(this);

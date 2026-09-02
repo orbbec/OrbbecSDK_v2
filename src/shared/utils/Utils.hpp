@@ -21,7 +21,17 @@ uint64_t getNowTimesMs();
 uint64_t getNowTimesUs();
 uint64_t getSteadyTimeMs();
 uint64_t getSteadyTimeUs();
-void     sleepMs(uint64_t msec);
+
+struct HostTimestamp {
+    uint64_t systemTimeUs;
+    uint64_t steadyTimeUs;
+};
+
+// Capture the wall clock between two monotonic-clock reads. The monotonic
+// midpoint bounds scheduling-induced skew between the two clock domains.
+HostTimestamp getHostTimestampUs();
+
+void sleepMs(uint64_t msec);
 
 /**
  * @brief Timer class to measure time intervals between calls

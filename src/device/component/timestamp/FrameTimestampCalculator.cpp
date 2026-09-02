@@ -7,7 +7,6 @@
 #include "utils/Utils.hpp"
 #include "logger/LoggerInterval.hpp"
 #include "InternalTypes.hpp"
-#include <cmath>
 
 namespace libobsensor {
 
@@ -15,33 +14,14 @@ namespace libobsensor {
 static constexpr uint64_t TSP_OVERFLOW_32BIT = 0x100000000ULL;
 
 GlobalTimestampCalculator::GlobalTimestampCalculator(IDevice *owner, uint64_t deviceTimeFreq, uint64_t frameTimeFreq)
-    : DeviceComponentBase(owner), deviceTimeFreq_(deviceTimeFreq), frameTimeFreq_(frameTimeFreq) {
+    : DeviceComponentBase(owner),
+      deviceTimeFreq_(deviceTimeFreq),
+      frameTimeFreq_(frameTimeFreq),
+      globalTimestampFitter_(owner->getComponentT<IGlobalTimestampFitter>(OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER).get()) {
     (void)frameTimeFreq_;
-    globalTimestampFitter_ = owner->getComponentT<IGlobalTimestampFitter>(OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER).get();
-
-    // Reset EMA/refit state on device-clock reset events to avoid a 25s wrong-output tail.
-    auto                  propServer = owner->getPropertyServer();
-    std::vector<uint32_t> resetProps;
-    if(propServer->isPropertySupported(OB_PROP_TIMER_RESET_SIGNAL_BOOL, PROP_OP_WRITE, PROP_ACCESS_INTERNAL)) {
-        resetProps.push_back(OB_PROP_TIMER_RESET_SIGNAL_BOOL);
-    }
-    if(propServer->isPropertySupported(OB_STRUCT_DEVICE_TIME, PROP_OP_WRITE, PROP_ACCESS_INTERNAL)) {
-        resetProps.push_back(OB_STRUCT_DEVICE_TIME);
-    }
-    if(!resetProps.empty()) {
-        propServer->registerAccessCallback(resetProps, [this](uint32_t, const uint8_t *, size_t, PropertyOperationType operationType) {
-            if(operationType == PROP_OP_WRITE) {
-                clear();
-            }
-        });
-    }
 }
 
 void GlobalTimestampCalculator::calculate(std::shared_ptr<Frame> frame) {
-    if(pendingReset_.exchange(false, std::memory_order_acquire)) {
-        resetStateImpl();
-    }
-
     const auto rawTsUs = frame->getTimeStampUsec();
     if(rawTsUs == 0) {
         // If the device timestamp is invalid (0), keep global timestamp as 0.
@@ -49,107 +29,23 @@ void GlobalTimestampCalculator::calculate(std::shared_ptr<Frame> frame) {
         return;
     }
 
-    auto linearFuncParam = globalTimestampFitter_->getLinearFuncParam();
-    if(linearFuncParam.coefficientA <= 0) {
-        // No valid fit yet.
+    // Convert the frame timestamp from microseconds to device clock ticks, the axis
+    // shared by the device-level timestamp fitter and mapper.
+    double frameDevTicks = static_cast<double>(rawTsUs) * deviceTimeFreq_ / 1000000.0;
+    auto   mapped        = globalTimestampFitter_->mapDeviceTime(frameDevTicks);
+    if(!mapped.valid) {
+        LOG_DEBUG_INTVL_MS(3000, "Global timestamp mapper is not valid yet, frame global timestamp set to 0");
         frame->setGlobalTimeStampUsec(0);
         return;
     }
 
-    // Convert frame device timestamp (us) to the same unit as fit anchors (ms),
-    // assuming the full uint64_t timestamp - no 32-bit rollover handling needed.
-    double frameDevMs = static_cast<double>(rawTsUs) * deviceTimeFreq_ / 1000000.0;
-
-    // Always anchor at the fit center: it is a weighted mean of N samples (sqrt(N) lower
-    // noise than any single raw point); drift is handled by the fitter, not by switching anchor.
-    double anchorDevMs = static_cast<double>(linearFuncParam.refDevTime);
-    double anchorSysUs = static_cast<double>(linearFuncParam.refSysTime);
-
-    double   diff           = frameDevMs - anchorDevMs;
-    double   incrementalUs  = linearFuncParam.coefficientA * diff;
-    double   predSteadyUs   = anchorSysUs + incrementalUs;
-    uint64_t frameSteadyTs  = frame->getSteadyTimeStampUsec();
-    int64_t  realtimeOffset = static_cast<int64_t>(frame->getSystemTimeStampUsec()) - static_cast<int64_t>(frameSteadyTs);
-    int64_t  globalTsp      = static_cast<int64_t>(predSteadyUs + 0.5) + realtimeOffset;
-
-    auto ptpActive       = globalTimestampFitter_->isPtpActive();
-    auto ptpStateChanged = (ptpActive != prevPtpActive_);
-    if(!ptpActive) {
-        // Refit detection: if fit params changed, predSteadyUs jumps by Δ for this same frame.
-        // Shift ema_ by -Δ so output stays continuous and EMA continues tracking new residuals.
-        if(fitCached_ && (linearFuncParam.coefficientA != prevCoeffA_ || anchorDevMs != prevAnchorDevMs_ || anchorSysUs != prevAnchorSysUs_)) {
-            double prevPredUs = prevAnchorSysUs_ + prevCoeffA_ * (frameDevMs - prevAnchorDevMs_);
-            double delta      = predSteadyUs - prevPredUs;
-            ema_ -= delta;
-        }
-        prevCoeffA_      = linearFuncParam.coefficientA;
-        prevAnchorDevMs_ = anchorDevMs;
-        prevAnchorSysUs_ = anchorSysUs;
-        fitCached_       = true;
-
-        // EMA correction: tracks slow bias drift continuously. See header for math.
-        double  residualUs   = static_cast<double>(frameSteadyTs) - predSteadyUs;
-        int64_t correctionUs = 0;
-        if(!emaInited_) {
-            ema_               = residualUs;
-            madEma_            = 0.0;
-            startSteadyUs_     = frameSteadyTs;
-            lastFrameSteadyUs_ = frameSteadyTs;
-            emaInited_         = true;
-        }
-        else {
-            double dtUs = static_cast<double>(frameSteadyTs - lastFrameSteadyUs_);
-            if(dtUs <= 0.0) {
-                dtUs = 1.0;
-            }
-            double alpha = 1.0 - std::exp(-dtUs / EMA_TAU_US);
-            double devUs = residualUs - ema_;
-            // Outlier gate: only active after baseline lock (MAD has settled by then).
-            double madThr    = std::max(MAD_FLOOR_US, OUTLIER_K * madEma_);
-            bool   isOutlier = baselineReady_ && (std::fabs(devUs) > madThr);
-            if(!isOutlier) {
-                ema_    = ema_ + alpha * devUs;
-                madEma_ = madEma_ + alpha * (std::fabs(devUs) - madEma_);
-            }
-            lastFrameSteadyUs_ = frameSteadyTs;
-        }
-        if(!baselineReady_ && (frameSteadyTs - startSteadyUs_) >= BASELINE_LOCK_US) {
-            emaBaseline_   = ema_;
-            baselineReady_ = true;
-        }
-        if(baselineReady_) {
-            correctionUs = static_cast<int64_t>(ema_ - emaBaseline_);
-        }
-        globalTsp += correctionUs;
-    }
-    else if(ptpStateChanged) {
-        // PTP just became active: clear accumulated EMA state once so it does not pollute
-        // the output if PTP is later lost and EMA resumes.
-        resetStateImpl();
-        prevPtpActive_ = ptpActive;
-    }
-
-    frame->setGlobalTimeStampUsec(static_cast<uint64_t>(globalTsp));
+    const auto frameSteadyTs  = frame->getSteadyTimeStampUsec();
+    int64_t    realtimeOffset = static_cast<int64_t>(frame->getSystemTimeStampUsec()) - static_cast<int64_t>(frameSteadyTs);
+    int64_t    globalTsp      = static_cast<int64_t>(mapped.timestampUs) + realtimeOffset;
+    frame->setGlobalTimeStampUsec(globalTsp > 0 ? static_cast<uint64_t>(globalTsp) : 0);
 }
 
-void GlobalTimestampCalculator::clear() {
-    // Thread-safe: actual reset runs at the top of the next calculate() on the frame thread.
-    pendingReset_.store(true, std::memory_order_release);
-}
-
-void GlobalTimestampCalculator::resetStateImpl() {
-    ema_               = 0.0;
-    emaBaseline_       = 0.0;
-    madEma_            = 0.0;
-    startSteadyUs_     = 0;
-    lastFrameSteadyUs_ = 0;
-    emaInited_         = false;
-    baselineReady_     = false;
-    prevCoeffA_        = 0.0;
-    prevAnchorDevMs_   = 0.0;
-    prevAnchorSysUs_   = 0.0;
-    fitCached_         = false;
-}
+void GlobalTimestampCalculator::clear() {}
 
 FrameTimestampCalculatorDirectly::FrameTimestampCalculatorDirectly(IDevice *device, uint64_t clockFreq) : DeviceComponentBase(device), clockFreq_(clockFreq) {}
 

@@ -69,7 +69,7 @@ void G210Device::init() {
         return calculator;
     };
 
-    auto globalTimestampFilter = std::make_shared<GlobalTimestampFitter>(this);
+    auto globalTimestampFilter = std::make_shared<GlobalTimestampFitter>(this, deviceTimeFreq_);
     registerComponent(OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER, globalTimestampFilter);
 
     auto algParamManager = std::make_shared<G2AlgParamManager>(this);

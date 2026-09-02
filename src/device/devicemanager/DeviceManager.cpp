@@ -447,7 +447,13 @@ bool DeviceManager::syncDeviceHardwarePPSTime(uint64_t hardwarePPSTime) {
         anyTried = true;
         try {
             bool syncOk = synchronizer->syncDeviceHardwarePPSTime(hardwarePPSTime);
-            allSuccess  = allSuccess && syncOk;
+            if(syncOk) {
+                auto globalTspFitter = dev->getComponentT<IGlobalTimestampFitter>(OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER, false);
+                if(globalTspFitter) {
+                    globalTspFitter->reFitting(false);
+                }
+            }
+            allSuccess = allSuccess && syncOk;
         }
         catch(const std::exception &e) {
             LOG_ERROR("syncDeviceHardwarePPSTime exception: {}", e.what());

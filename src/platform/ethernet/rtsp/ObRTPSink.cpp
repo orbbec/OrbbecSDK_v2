@@ -257,8 +257,9 @@ void ObRTPSink::outputFrameFunc() {
                     auto header = output->getDynamicHeader<OBNetworkFrameHeader>();
 
                     frame->setTimeStampUsec(header->timestamp);
-                    frame->setSystemTimeStampUsec(utils::getNowTimesUs());
-                    frame->setSteadyTimeStampUsec(utils::getSteadyTimeUs());
+                    const auto timestamp = utils::getHostTimestampUs();
+                    frame->setSystemTimeStampUsec(timestamp.systemTimeUs);
+                    frame->setSteadyTimeStampUsec(timestamp.steadyTimeUs);
                     frame->setNumber(header->frameCounter);
 
                     if(header->extentionLen != 0) {
@@ -268,8 +269,9 @@ void ObRTPSink::outputFrameFunc() {
                 }
                 else {
                     frame->setTimeStampUsec(output->getTimestamp());
-                    frame->setSystemTimeStampUsec(utils::getNowTimesUs());
-                    frame->setSteadyTimeStampUsec(utils::getSteadyTimeUs());
+                    const auto timestamp = utils::getHostTimestampUs();
+                    frame->setSystemTimeStampUsec(timestamp.systemTimeUs);
+                    frame->setSteadyTimeStampUsec(timestamp.steadyTimeUs);
                     frame->setNumber(output->getSequenceNumber());
                 }
 

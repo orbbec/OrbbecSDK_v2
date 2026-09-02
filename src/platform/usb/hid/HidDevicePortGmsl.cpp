@@ -231,8 +231,9 @@ void HidDevicePortGmsl::pollData() {
                 LOG_DEBUG("->{} timestamp[1]: {}  \n", i, imuOrigFrameMsg.imuFrameData[i].timestamp[1]);
             }
 #endif
-            frame->setSystemTimeStampUsec(utils::getNowTimesUs());
-            frame->setSteadyTimeStampUsec(utils::getSteadyTimeUs());
+            const auto timestamp = utils::getHostTimestampUs();
+            frame->setSystemTimeStampUsec(timestamp.systemTimeUs);
+            frame->setSteadyTimeStampUsec(timestamp.steadyTimeUs);
             frameQueue_.enqueue(frame);
         }
         else {

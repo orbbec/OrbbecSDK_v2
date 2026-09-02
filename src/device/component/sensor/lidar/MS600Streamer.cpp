@@ -306,10 +306,10 @@ void MS600Streamer::parseLiDARData(std::shared_ptr<Frame> frame) {
 
     // timestamp
     // Tips: timestamp in header cycles every 0 to 1 hour, use system time
-    auto timestamp = utils::getNowTimesUs();
-    frame_->setTimeStampUsec(timestamp);
-    frame_->setSystemTimeStampUsec(timestamp);
-    frame_->setSteadyTimeStampUsec(utils::getSteadyTimeUs());
+    const auto timestamp = utils::getHostTimestampUs();
+    frame_->setTimeStampUsec(timestamp.systemTimeUs);
+    frame_->setSystemTimeStampUsec(timestamp.systemTimeUs);
+    frame_->setSteadyTimeStampUsec(timestamp.steadyTimeUs);
     frame_->setDeviceTimestampFromHost(true);
 
     if(header->dataBlockNum >= maxDataBlockNum) {

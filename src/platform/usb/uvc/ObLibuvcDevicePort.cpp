@@ -467,8 +467,9 @@ void ObLibuvcDevicePort::onFrameCallback(uvc_frame *frame, void *userPtr) {
         auto metadata_bytes = frame->metadata_bytes > 255 ? 255 : frame->metadata_bytes;
         videoFrame->appendMetadata(static_cast<const uint8_t *>(frame->metadata), metadata_bytes);
 
-        videoFrame->setSystemTimeStampUsec(utils::getNowTimesUs());
-        videoFrame->setSteadyTimeStampUsec(utils::getSteadyTimeUs());
+        const auto timestamp = utils::getHostTimestampUs();
+        videoFrame->setSystemTimeStampUsec(timestamp.systemTimeUs);
+        videoFrame->setSteadyTimeStampUsec(timestamp.steadyTimeUs);
         videoFrame->setTimeStampUsec(frame->pts);
         // Use a custom frame index instand of uvc_frame::sequence to avoid abnormal sequence ID increments
         // when UVC data reception encounters errors.

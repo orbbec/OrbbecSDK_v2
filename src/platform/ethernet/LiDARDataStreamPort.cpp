@@ -83,8 +83,9 @@ void LiDARDataStreamPort::readData() {
 
         if(readSize > 0 && isStreaming_.load()) {
             frame->setDataSize(readSize);
-            frame->setSystemTimeStampUsec(utils::getNowTimesUs());
-            frame->setSteadyTimeStampUsec(utils::getSteadyTimeUs());
+            const auto timestamp = utils::getHostTimestampUs();
+            frame->setSystemTimeStampUsec(timestamp.systemTimeUs);
+            frame->setSteadyTimeStampUsec(timestamp.steadyTimeUs);
             callback_(frame);
             frame.reset();
         }

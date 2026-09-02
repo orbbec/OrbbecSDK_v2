@@ -36,6 +36,9 @@ int main(int argc, char *argv[]) try {
     std::cout << "================================================" << std::endl;
     std::cout << "Duration: " << config.durationMinutes << " minutes" << std::endl;
     std::cout << "Sync interval: " << config.syncIntervalSec << " seconds (" << (config.syncIntervalSec == 0 ? "once" : "periodic") << ")" << std::endl;
+    if(config.ldpIntervalMs > 0) {
+        std::cout << "LDP interval: " << config.ldpIntervalMs << " ms" << std::endl;
+    }
     if(!config.configFile.empty()) {
         std::cout << "Config file: " << config.configFile << std::endl;
     }

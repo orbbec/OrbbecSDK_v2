@@ -173,6 +173,7 @@ void CmdLineParser::printUsage(const char *programName) {
     std::cout << "  -i, --sync-interval <seconds> Device clock sync interval in seconds (default: 0)\n";
     std::cout << "                                0 = sync device clock once at start\n";
     std::cout << "                                >0 = periodic device clock sync every N seconds\n";
+    std::cout << "  -l, --ldp <milliseconds>      Enable per-device LDP polling (1000-10000ms)\n";
     std::cout << "  -c, --config <file>           Path to JSON configuration file\n";
     std::cout << "  -g, --generate-config <file>  Write a default JSON config to <file> and exit\n";
     std::cout << "  -h, --help                    Show this help message\n";
@@ -180,6 +181,7 @@ void CmdLineParser::printUsage(const char *programName) {
     std::cout << "  " << programName << "                             # 1 hour tracking, auto-select streams\n";
     std::cout << "  " << programName << " -t 30                       # 30 minutes tracking\n";
     std::cout << "  " << programName << " -t 60 -i 60                 # 1 hour with 60s sync interval\n";
+    std::cout << "  " << programName << " -l 1000                     # poll LDP once per second\n";
     std::cout << "  " << programName << " -c config.json              # load JSON config file\n";
     std::cout << "  " << programName << " -g config.json              # generate default JSON config\n";
     std::cout << "\nTip: use -g to export a default config file, then edit it to customise streams.\n";
@@ -250,6 +252,24 @@ bool CmdLineParser::parse(int argc, char *argv[], CmdLineConfig &config) {
             }
             catch(...) {
                 std::cerr << "Error: Invalid sync interval.\n";
+                return false;
+            }
+        }
+        else if((arg == "-l" || arg == "--ldp") && i + 1 < argc) {
+            try {
+                int val = std::stoi(argv[++i]);
+                if(val < 1000) {
+                    std::cerr << "Warning: LDP interval below 1000 ms, using 1000 ms.\n";
+                    val = 1000;
+                }
+                else if(val > 10000) {
+                    std::cerr << "Warning: LDP interval above 10000 ms, using 10000 ms.\n";
+                    val = 10000;
+                }
+                config.ldpIntervalMs = val;
+            }
+            catch(...) {
+                std::cerr << "Error: Invalid LDP interval.\n";
                 return false;
             }
         }

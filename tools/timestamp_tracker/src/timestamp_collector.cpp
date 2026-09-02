@@ -32,6 +32,94 @@ std::vector<std::string> TimestampCollector::getOpenedFiles() const {
     return openedFiles_;
 }
 
+void TimestampCollector::startLdpPolling(uint64_t intervalMs) {
+    if(intervalMs == 0
+       || !device_->isPropertySupported(OB_PROP_LDP_BOOL, OB_PERMISSION_WRITE)
+       || !device_->isPropertySupported(OB_PROP_LDP_BOOL, OB_PERMISSION_READ)
+       || !device_->isPropertySupported(OB_PROP_LDP_MEASURE_DISTANCE_INT, OB_PERMISSION_READ)) {
+        return;
+    }
+
+    try {
+        ldpOriginalState_ = device_->getBoolProperty(OB_PROP_LDP_BOOL);
+        ldpStateSaved_    = true;
+
+        if(device_->isPropertySupported(OB_PROP_LASER_CONTROL_INT, OB_PERMISSION_READ)
+           && device_->isPropertySupported(OB_PROP_LASER_CONTROL_INT, OB_PERMISSION_WRITE)) {
+            laserControlOriginalState_ = device_->getIntProperty(OB_PROP_LASER_CONTROL_INT);
+            laserControlStateSaved_    = true;
+            device_->setIntProperty(OB_PROP_LASER_CONTROL_INT, 1);
+        }
+        else if(device_->isPropertySupported(OB_PROP_LASER_BOOL, OB_PERMISSION_READ)
+                && device_->isPropertySupported(OB_PROP_LASER_BOOL, OB_PERMISSION_WRITE)) {
+            laserBoolOriginalState_ = device_->getBoolProperty(OB_PROP_LASER_BOOL);
+            laserBoolStateSaved_    = true;
+            device_->setBoolProperty(OB_PROP_LASER_BOOL, true);
+        }
+        device_->setBoolProperty(OB_PROP_LDP_BOOL, true);
+    }
+    catch(const ob::Error &error) {
+        std::cerr << "  Enable LDP failed for " << getDeviceInfoStr() << ": " << error.what() << std::endl;
+        stopLdpPolling();
+        return;
+    }
+
+    ldpPolling_ = true;
+    ldpThread_  = std::thread(&TimestampCollector::pollLdp, this, intervalMs);
+    std::cout << "  LDP polling enabled (interval: " << intervalMs << " ms)" << std::endl;
+}
+
+void TimestampCollector::stopLdpPolling() {
+    ldpPolling_ = false;
+    ldpCv_.notify_all();
+    if(ldpThread_.joinable()) {
+        ldpThread_.join();
+    }
+
+    if(ldpStateSaved_) {
+        try {
+            device_->setBoolProperty(OB_PROP_LDP_BOOL, ldpOriginalState_);
+        }
+        catch(const ob::Error &error) {
+            std::cerr << "  Restore LDP state failed for " << getDeviceInfoStr() << ": " << error.what() << std::endl;
+        }
+    }
+    if(laserControlStateSaved_) {
+        try {
+            device_->setIntProperty(OB_PROP_LASER_CONTROL_INT, laserControlOriginalState_);
+        }
+        catch(const ob::Error &error) {
+            std::cerr << "  Restore laser control state failed for " << getDeviceInfoStr() << ": " << error.what() << std::endl;
+        }
+    }
+    else if(laserBoolStateSaved_) {
+        try {
+            device_->setBoolProperty(OB_PROP_LASER_BOOL, laserBoolOriginalState_);
+        }
+        catch(const ob::Error &error) {
+            std::cerr << "  Restore laser state failed for " << getDeviceInfoStr() << ": " << error.what() << std::endl;
+        }
+    }
+
+    ldpStateSaved_          = false;
+    laserControlStateSaved_ = false;
+    laserBoolStateSaved_    = false;
+}
+
+void TimestampCollector::pollLdp(uint64_t intervalMs) {
+    std::unique_lock<std::mutex> lock(ldpMutex_);
+    while(ldpPolling_) {
+        lock.unlock();
+        try {
+            static_cast<void>(device_->getIntProperty(OB_PROP_LDP_MEASURE_DISTANCE_INT));
+        }
+        catch(const ob::Error &) {
+        }
+        lock.lock();
+        ldpCv_.wait_for(lock, std::chrono::milliseconds(intervalMs), [this] { return !ldpPolling_; });
+    }
+}
+
 bool TimestampCollector::setupSensors(std::shared_ptr<ob::Config> &obConfig, const CmdLineConfig &toolConfig) {
     std::cout << "  Device: " << getDeviceInfoStr() << std::endl;
 
@@ -286,6 +374,8 @@ bool TimestampCollector::start(const CmdLineConfig &config) {
         frameQueueCv_.notify_one();
     });
 
+    startLdpPolling(config.getLdpIntervalMs());
+
     std::cout << "  Collector started successfully" << std::endl;
     return true;
 }
@@ -298,6 +388,7 @@ void TimestampCollector::stop() {
     std::cout << "Stopping collector for " << getDeviceInfoStr() << std::endl;
 
     frameQueueCv_.notify_all();
+    stopLdpPolling();
 
     if(pipeline_) {
         try {

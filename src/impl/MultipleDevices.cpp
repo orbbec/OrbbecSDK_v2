@@ -92,7 +92,17 @@ bool ob_device_sync_hardware_pps_time(ob_device *device, uint64_t hardwarePPSTim
         LOG_WARN("Device does not support clock synchronization");
         return false;
     }
-    return configurator->syncDeviceHardwarePPSTime(hardwarePPSTime);
+    auto synced = configurator->syncDeviceHardwarePPSTime(hardwarePPSTime);
+    if(synced) {
+        TRY_EXECUTE({
+            auto globalTspFitter =
+                device->device->getComponentT<libobsensor::IGlobalTimestampFitter>(libobsensor::OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER, false);
+            if(globalTspFitter) {
+                globalTspFitter->reFitting(false);
+            }
+        });
+    }
+    return synced;
 }
 HANDLE_EXCEPTIONS_AND_RETURN(0, device)
 

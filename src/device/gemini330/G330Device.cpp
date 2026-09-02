@@ -108,7 +108,7 @@ void G330Device::init() {
         return std::make_shared<FrameTimestampCalculatorOverMetadata>(this, metadataType, frameTimeFreq_);
     };
 
-    auto globalTimestampFilter = std::make_shared<GlobalTimestampFitter>(this);
+    auto globalTimestampFilter = std::make_shared<GlobalTimestampFitter>(this, deviceTimeFreq_);
     registerComponent(OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER, globalTimestampFilter);
 
     auto algParamManager = std::make_shared<G330AlgParamManager>(this);
@@ -1539,7 +1539,7 @@ void G330NetDevice::init() {
         return std::make_shared<FrameTimestampCalculatorOverMetadata>(this, metadataType, frameTimeFreq_);
     };
 
-    auto globalTimestampFilter = std::make_shared<GlobalTimestampFitter>(this);
+    auto globalTimestampFilter = std::make_shared<GlobalTimestampFitter>(this, deviceTimeFreq_);
     registerComponent(OB_DEV_COMPONENT_GLOBAL_TIMESTAMP_FILTER, globalTimestampFilter);
 
     auto algParamManager = std::make_shared<G330AlgParamManager>(this);
