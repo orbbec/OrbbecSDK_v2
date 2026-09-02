@@ -42,6 +42,10 @@ public:
     void acquireControl(OBDeviceAccessMode accessMode) override;
     void releaseControl() override;
 
+    std::shared_ptr<GVCPTransmit> getGVCPTransmit() const {
+        return gvcpTransmit_;
+    }
+
 private:
     static int32_t     getFirmwareVersionInt(const std::string &version);
     static std::string resolveCcpMinVersion(int vid, int pid);

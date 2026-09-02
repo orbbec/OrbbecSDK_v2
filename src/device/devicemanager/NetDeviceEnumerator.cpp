@@ -409,6 +409,10 @@ bool NetDeviceEnumerator::forceIpConfig(std::string deviceUid, const OBNetIpConf
     return result;
 }
 
+bool NetDeviceEnumerator::sendActionCommand(uint32_t deviceKey, uint32_t groupKey, uint32_t groupMask, const std::string &destIp, uint64_t scheduledTime) {
+    return platform_->sendActionCommand(deviceKey, groupKey, groupMask, destIp, scheduledTime);
+}
+
 void NetDeviceEnumerator::triggerDeviceOffline(std::string deviceUid, bool requery) {
     skipOfflineVerification_.store(true);
     platform_->triggerDeviceOffline(deviceUid, requery);

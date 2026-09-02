@@ -61,6 +61,7 @@ GVCPClient::GVCPClient() {
 
 GVCPClient::~GVCPClient() {
     std::lock_guard<std::mutex> lck(queryMtx_);
+    std::lock_guard<std::mutex> actionLck(actionSocketMtx_);
 #if (defined(WIN32) || defined(_WIN32) || defined(WINCE))
     WSACleanup();
 #endif
@@ -179,6 +180,166 @@ bool GVCPClient::forceIpConfig(std::string macAddress, const OBNetIpConfig &conf
     return false;
 }
 
+bool GVCPClient::sendActionCommand(uint32_t deviceKey, uint32_t groupKey, uint32_t groupMask,
+                                   const std::string &destIp, uint64_t scheduledTime) {
+    std::lock_guard<std::mutex> lck(actionSocketMtx_);
+
+    SOCKADDR_IN destAddr;
+    memset(&destAddr, 0, sizeof(destAddr));
+    destAddr.sin_family = AF_INET;
+    destAddr.sin_port   = htons(runtimeConfig_->getGvcpPort());
+    const bool globalBroadcast = destIp.empty() || destIp == "255.255.255.255";
+    if(globalBroadcast) {
+        destAddr.sin_addr.s_addr = INADDR_BROADCAST;
+    }
+    else if(inet_pton(AF_INET, destIp.c_str(), &destAddr.sin_addr) != 1) {
+        LOG_ERROR("Invalid Action Command destination IP: {}", destIp);
+        return false;
+    }
+
+    const uint32_t destination = ntohl(destAddr.sin_addr.s_addr);
+    const auto     isSameSubnetForSocket = [&](int index) {
+        if(index < 0 || index >= sockCount_ || socketInfos_[index].subnetLength == 0 || socketInfos_[index].subnetLength > 32) {
+            return false;
+        }
+
+        in_addr localAddr{};
+        if(inet_pton(AF_INET, socketInfos_[index].address.c_str(), &localAddr) != 1) {
+            return false;
+        }
+
+        const uint32_t prefix = socketInfos_[index].subnetLength;
+        const uint32_t mask   = prefix == 32 ? 0xFFFFFFFFu : 0xFFFFFFFFu << (32 - prefix);
+        const uint32_t local  = ntohl(localAddr.s_addr);
+        return (destination & mask) == (local & mask);
+    };
+    const auto     isDirectedBroadcastForSocket = [&](int index) {
+        if(index < 0 || index >= sockCount_ || socketInfos_[index].subnetLength == 0 || socketInfos_[index].subnetLength >= 31) {
+            return false;
+        }
+
+        in_addr localAddr{};
+        if(inet_pton(AF_INET, socketInfos_[index].address.c_str(), &localAddr) != 1) {
+            return false;
+        }
+
+        const uint32_t prefix = socketInfos_[index].subnetLength;
+        const uint32_t mask   = 0xFFFFFFFFu << (32 - prefix);
+        const uint32_t local  = ntohl(localAddr.s_addr);
+        return (destination & mask) == (local & mask) && (destination & ~mask) == ~mask;
+    };
+
+    bool isDirectedBroadcast = false;
+    int  unicastSocketIndex  = -1;
+    if(!globalBroadcast) {
+        for(int i = 0; i < actionSockCount_; ++i) {
+            if(actionSocks_[i] != 0 && actionSocks_[i] != INVALID_SOCKET && isDirectedBroadcastForSocket(i)) {
+                isDirectedBroadcast = true;
+                break;
+            }
+        }
+
+        if(!isDirectedBroadcast) {
+            // Let the OS select the route, then map its selected source address to
+            // the corresponding bound Action Command socket. This also handles
+            // destinations reachable through a gateway.
+            SOCKET routeSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+            if(routeSocket != INVALID_SOCKET) {
+                if(connect(routeSocket, reinterpret_cast<SOCKADDR *>(&destAddr), sizeof(destAddr)) == 0) {
+                    SOCKADDR_IN localAddr;
+                    memset(&localAddr, 0, sizeof(localAddr));
+                    socklen_t localAddrLen = sizeof(localAddr);
+                    if(getsockname(routeSocket, reinterpret_cast<SOCKADDR *>(&localAddr), &localAddrLen) == 0) {
+                        const char *localIp = inet_ntoa(localAddr.sin_addr);
+                        if(localIp != nullptr) {
+                            for(int i = 0; i < actionSockCount_; ++i) {
+                                if(actionSocks_[i] != 0 && actionSocks_[i] != INVALID_SOCKET && socketInfos_[i].address == localIp) {
+                                    unicastSocketIndex = i;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                closesocket(routeSocket);
+            }
+
+            if(unicastSocketIndex < 0) {
+                // A direct-subnet match is a deterministic fallback when route
+                // probing is unavailable or the selected interface is not ready.
+                uint8_t bestPrefix = 0;
+                for(int i = 0; i < actionSockCount_; ++i) {
+                    if(actionSocks_[i] != 0 && actionSocks_[i] != INVALID_SOCKET && isSameSubnetForSocket(i)
+                       && (unicastSocketIndex < 0 || socketInfos_[i].subnetLength > bestPrefix)) {
+                        unicastSocketIndex = i;
+                        bestPrefix          = socketInfos_[i].subnetLength;
+                    }
+                }
+            }
+
+            if(unicastSocketIndex < 0) {
+                LOG_ERROR("No local network interface can route Action Command destination: {}", destIp);
+                return false;
+            }
+        }
+    }
+
+    struct gvcp_cmd_header header;
+    header.cMsgKeyCode = GVCP_KEY_CODE;
+    header.cFlag       = scheduledTime != 0 ? GVCP_ACTION_FLAGS_SCHEDULED : GVCP_ACTION_FLAGS_NO_ACK;
+    header.wCmd        = htons(GVCP_ACTION_CMD);
+    header.wReqID      = htons(GVCP_REQUEST_ID);
+
+    uint8_t  buffer[64];
+    uint16_t payloadLen;
+    if(scheduledTime != 0) {
+        payloadLen = sizeof(gvcp_action_cmd_scheduled_payload);
+        header.wLen = htons(payloadLen);
+        memcpy(buffer, &header, sizeof(header));
+        uint32_t dk = htonl(deviceKey);
+        uint32_t gk = htonl(groupKey);
+        uint32_t gm = htonl(groupMask);
+        memcpy(buffer + sizeof(header), &dk, 4);
+        memcpy(buffer + sizeof(header) + 4, &gk, 4);
+        memcpy(buffer + sizeof(header) + 8, &gm, 4);
+        uint64_t at = scheduledTime;
+        for(int i = 7; i >= 0; i--) {
+            buffer[sizeof(header) + 12 + i] = static_cast<uint8_t>(at & 0xFF);
+            at >>= 8;
+        }
+    }
+    else {
+        payloadLen = sizeof(gvcp_action_cmd_payload);
+        header.wLen = htons(payloadLen);
+        memcpy(buffer, &header, sizeof(header));
+        uint32_t dk = htonl(deviceKey);
+        uint32_t gk = htonl(groupKey);
+        uint32_t gm = htonl(groupMask);
+        memcpy(buffer + sizeof(header), &dk, 4);
+        memcpy(buffer + sizeof(header) + 4, &gk, 4);
+        memcpy(buffer + sizeof(header) + 8, &gm, 4);
+    }
+
+    bool actionCommandSent = false;
+    for(int i = 0; i < actionSockCount_; ++i) {
+        if(actionSocks_[i] == 0 || actionSocks_[i] == INVALID_SOCKET) {
+            continue;
+        }
+        if(!globalBroadcast && ((isDirectedBroadcast && !isDirectedBroadcastForSocket(i)) || (!isDirectedBroadcast && i != unicastSocketIndex))) {
+            continue;
+        }
+        int sent = sendto(actionSocks_[i], reinterpret_cast<char *>(buffer), sizeof(header) + payloadLen, 0, reinterpret_cast<SOCKADDR *>(&destAddr),
+                          sizeof(destAddr));
+        if(sent == static_cast<int>(sizeof(header) + payloadLen)) {
+            actionCommandSent = true;
+        }
+    }
+    if(!actionCommandSent) {
+        LOG_WARN("Action Command send failed: no usable action socket, sockets={}, destIp={}, scheduled={}", actionSockCount_, destIp, scheduledTime != 0);
+    }
+    return actionCommandSent;
+}
+
 #if defined(__APPLE__)
 const uint8_t *GVCPClient::getMACAddress(struct ifaddrs *ifap, const char *interface_name) {
     struct ifaddrs *p = ifap;
@@ -276,6 +437,13 @@ int GVCPClient::openClientSockets() {
             SOCKET socket                       = openClientSocket(addrSrv);
             int    curIndex                     = index++;
             socketInfos_[curIndex].sock         = socket;
+            try {
+                std::lock_guard<std::mutex> actionLock(actionSocketMtx_);
+                actionSocks_[curIndex] = openActionSocket(addrSrv);
+            }
+            catch(const std::exception &e) {
+                LOG_WARN("Failed to create Action Command socket for {}: {}", ipStr, e.what());
+            }
             socketInfos_[curIndex].mac          = macAddress;
             socketInfos_[curIndex].address      = ipStr;
             socketInfos_[curIndex].subnetLength = subnetLength;
@@ -284,6 +452,10 @@ int GVCPClient::openClientSockets() {
         }
     }
     sockCount_ = index;
+    {
+        std::lock_guard<std::mutex> actionLock(actionSocketMtx_);
+        actionSockCount_ = index;
+    }
 #else
     struct ifaddrs *ifaddr, *ifa;
     int             family, s, n;
@@ -324,7 +496,14 @@ int GVCPClient::openClientSockets() {
             int    curIndex                 = index++;
             socketInfos_[curIndex].sock     = socket;
             socketInfos_[curIndex].sockRecv = openClientRecvSocket(socket);
-            int prefixLength                = 0;
+            try {
+                std::lock_guard<std::mutex> actionLock(actionSocketMtx_);
+                actionSocks_[curIndex] = openActionSocket(addrSrv);
+            }
+            catch(const std::exception &e) {
+                LOG_WARN("Failed to create Action Command socket for {}: {}", ipStr, e.what());
+            }
+            int prefixLength = 0;
             if(ifa->ifa_netmask != NULL) {
                 struct sockaddr_in *netmask = (struct sockaddr_in *)ifa->ifa_netmask;
                 uint32_t            mask    = ntohl(netmask->sin_addr.s_addr);
@@ -373,6 +552,10 @@ int GVCPClient::openClientSockets() {
     }
 
     sockCount_ = index;
+    {
+        std::lock_guard<std::mutex> actionLock(actionSocketMtx_);
+        actionSockCount_ = index;
+    }
     freeifaddrs(ifaddr);
 #endif
 
@@ -385,7 +568,18 @@ void GVCPClient::closeClientSockets() {
         if(socketInfos_[i].sockRecv > 0) {
             closesocket(socketInfos_[i].sockRecv);
         }
+        if(actionSocks_[i] != 0 && actionSocks_[i] != INVALID_SOCKET) {
+            closesocket(actionSocks_[i]);
+            actionSocks_[i] = 0;
+        }
     }
+    actionSockCount_ = 0;
+}
+
+SOCKET GVCPClient::openActionSocket(SOCKADDR_IN addr) {
+    auto socket = openClientSocket(addr);
+    LOG_DEBUG("Created Action Command socket on {}", inet_ntoa(addr.sin_addr));
+    return socket;
 }
 
 SOCKET GVCPClient::openClientRecvSocket(SOCKET srcSock) {
@@ -835,9 +1029,12 @@ void GVCPClient::checkAndUpdateSockets() {
                 continue;
             }
 
-            bool found = false;
-            for(auto socketInfo: socketInfos_) {
+            bool found       = false;
+            int  foundIndex  = -1;
+            int  socketIndex = 0;
+            for(const auto &socketInfo: socketInfos_) {
                 if(socketInfo.sock == 0) {
+                    ++socketIndex;
                     continue;
                 }
 
@@ -846,12 +1043,26 @@ void GVCPClient::checkAndUpdateSockets() {
                 if(getsockname(socketInfo.sock, (struct sockaddr *)&addr, &addrLen) == 0) {
                     std::string sockIp = inet_ntoa(addr.sin_addr);
                     if(ipStr == sockIp) {
-                        found = true;
+                        found      = true;
+                        foundIndex = socketIndex;
                         break;
                     }
                 }
                 else {
                     LOG_INFO("get socket ip addr failed,{}", ipStr);
+                }
+                ++socketIndex;
+            }
+
+            if(found && foundIndex >= 0) {
+                std::lock_guard<std::mutex> actionLock(actionSocketMtx_);
+                if(actionSocks_[foundIndex] == 0 || actionSocks_[foundIndex] == INVALID_SOCKET) {
+                    try {
+                        actionSocks_[foundIndex] = openActionSocket(addrSrv);
+                    }
+                    catch(const std::exception &e) {
+                        LOG_WARN("Failed to create Action Command socket for {}: {}", ipStr, e.what());
+                    }
                 }
             }
 
@@ -872,6 +1083,13 @@ void GVCPClient::checkAndUpdateSockets() {
 
                         int curIndex                        = index++;
                         socketInfos_[curIndex].sock         = socketFd;
+                        try {
+                            std::lock_guard<std::mutex> actionLock(actionSocketMtx_);
+                            actionSocks_[curIndex] = openActionSocket(addrSrv);
+                        }
+                        catch(const std::exception &e) {
+                            LOG_WARN("Failed to create Action Command socket for {}: {}", ipStr, e.what());
+                        }
                         socketInfos_[curIndex].mac          = macAddress;
                         socketInfos_[curIndex].address      = ipStr;
                         socketInfos_[curIndex].subnetLength = subnetLength;
@@ -886,6 +1104,10 @@ void GVCPClient::checkAndUpdateSockets() {
         }
     }
     sockCount_ = index;
+    {
+        std::lock_guard<std::mutex> actionLock(actionSocketMtx_);
+        actionSockCount_ = index;
+    }
 #else
     struct ifaddrs *ifaddr, *ifa;
     int             family, s, n;
@@ -929,11 +1151,35 @@ void GVCPClient::checkAndUpdateSockets() {
                 }
             }
 
+            if(found) {
+                for(int i = 0; i < sockCount_; ++i) {
+                    if(ipStr == socketInfos_[i].address) {
+                        std::lock_guard<std::mutex> actionLock(actionSocketMtx_);
+                        if(actionSocks_[i] == 0 || actionSocks_[i] == INVALID_SOCKET) {
+                            try {
+                                actionSocks_[i] = openActionSocket(addrSrv);
+                            }
+                            catch(const std::exception &e) {
+                                LOG_WARN("Failed to create Action Command socket for {}: {}", ipStr, e.what());
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+
             if(!found) {
                 auto sock                       = openClientSocket(addrSrv);
                 int  curIndex                   = index++;
                 socketInfos_[curIndex].sock     = sock;
                 socketInfos_[curIndex].sockRecv = openClientRecvSocket(sock);
+                try {
+                    std::lock_guard<std::mutex> actionLock(actionSocketMtx_);
+                    actionSocks_[curIndex] = openActionSocket(addrSrv);
+                }
+                catch(const std::exception &e) {
+                    LOG_WARN("Failed to create Action Command socket for {}: {}", ipStr, e.what());
+                }
 
                 LOG_DEBUG("getnameinfo-name: {}", ifa->ifa_name);
 
@@ -987,6 +1233,10 @@ void GVCPClient::checkAndUpdateSockets() {
         }
     }
     sockCount_ = index;
+    {
+        std::lock_guard<std::mutex> actionLock(actionSocketMtx_);
+        actionSockCount_ = index;
+    }
     freeifaddrs(ifaddr);
 #endif
 }

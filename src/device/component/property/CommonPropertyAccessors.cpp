@@ -1,13 +1,18 @@
 // Copyright (c) Orbbec Inc. All Rights Reserved.
 // Licensed under the MIT License.
 
+#include <limits>
+
 #include "CommonPropertyAccessors.hpp"
 
 #include "IDeviceMonitor.hpp"
 #include "IAlgParamManager.hpp"
 #include "component/frameprocessor/FrameProcessor.hpp"
+#include "exception/ObException.hpp"
 
 #include "libobsensor/h/ObTypes.h"
+#include "ethernet/gvcp/GVCPTransmit.hpp"
+#include "ethernet/gvcp/GVCPTypes.hpp"
 #include "utils/Utils.hpp"
 namespace libobsensor {
 
@@ -439,4 +444,122 @@ void MonocularFrameTransformPropertyAccessor::getPropertyRange(uint32_t property
     }
     }
 }
+
+ActionCommandPropertyAccessor::ActionCommandPropertyAccessor(std::shared_ptr<GVCPTransmit> gvcpTransmit)
+    : gvcpTransmit_(std::move(gvcpTransmit)) {}
+
+void ActionCommandPropertyAccessor::setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) {
+    switch(propertyId) {
+    case OB_PROP_ACTION_DEVICE_KEY_INT: {
+        const auto status = gvcpTransmit_->writeRegister(GVCP_ACTION_DEVICE_KEY_REGISTER, static_cast<uint32_t>(value.intValue));
+        if(status != GEV_STATUS_SUCCESS) {
+            THROW_IO_EXCEPTION(utils::string::to_string() << "Failed to write Action Device Key. status: " << status);
+        }
+    } break;
+    case OB_PROP_ACTION_SELECTOR_INT: {
+        const auto result = gvcpTransmit_->readRegister(GVCP_ACTION_SIGNAL_COUNT_REGISTER);
+        if(result.first != GEV_STATUS_SUCCESS) {
+            THROW_IO_EXCEPTION(utils::string::to_string() << "Failed to read Action Signal Count. status: " << result.first);
+        }
+        const auto signalCount = result.second;
+        if(value.intValue < 0 || static_cast<uint32_t>(value.intValue) >= signalCount) {
+            THROW_INVALID_PARAM_EXCEPTION(utils::string::to_string()
+                                          << "Action selector out of range: " << value.intValue << ", signal count: " << signalCount);
+        }
+        actionSelector_ = static_cast<int>(value.intValue);
+    } break;
+    case OB_PROP_ACTION_GROUP_KEY_INT: {
+        const auto status = gvcpTransmit_->writeRegister(GVCP_ACTION_GROUP_KEY_BASE + 0x10 * actionSelector_, static_cast<uint32_t>(value.intValue));
+        if(status != GEV_STATUS_SUCCESS) {
+            THROW_IO_EXCEPTION(utils::string::to_string() << "Failed to write Action Group Key. status: " << status);
+        }
+    } break;
+    case OB_PROP_ACTION_GROUP_MASK_INT: {
+        const auto status = gvcpTransmit_->writeRegister(GVCP_ACTION_GROUP_MASK_BASE + 0x10 * actionSelector_, static_cast<uint32_t>(value.intValue));
+        if(status != GEV_STATUS_SUCCESS) {
+            THROW_IO_EXCEPTION(utils::string::to_string() << "Failed to write Action Group Mask. status: " << status);
+        }
+    } break;
+    default:
+        THROW_INVALID_PARAM_EXCEPTION("Invalid Action Command property id");
+    }
+}
+
+void ActionCommandPropertyAccessor::getPropertyValue(uint32_t propertyId, OBPropertyValue *value) {
+    switch(propertyId) {
+    case OB_PROP_ACTION_SIGNAL_COUNT_INT: {
+        const auto result = gvcpTransmit_->readRegister(GVCP_ACTION_SIGNAL_COUNT_REGISTER);
+        if(result.first != GEV_STATUS_SUCCESS) {
+            THROW_IO_EXCEPTION(utils::string::to_string() << "Failed to read Action Signal Count. status: " << result.first);
+        }
+        value->intValue = static_cast<int32_t>(result.second);
+        break;
+    }
+    case OB_PROP_ACTION_DEVICE_KEY_INT: {
+        const auto result = gvcpTransmit_->readRegister(GVCP_ACTION_DEVICE_KEY_REGISTER);
+        if(result.first != GEV_STATUS_SUCCESS) {
+            THROW_IO_EXCEPTION(utils::string::to_string() << "Failed to read Action Device Key. status: " << result.first);
+        }
+        value->intValue = static_cast<int32_t>(result.second);
+        break;
+    }
+    case OB_PROP_ACTION_SCHEDULED_COMMAND_QUEUE_SIZE_INT: {
+        const auto result = gvcpTransmit_->readRegister(GVCP_ACTION_SCHEDULED_QUEUE_SIZE_REGISTER);
+        if(result.first != GEV_STATUS_SUCCESS) {
+            THROW_IO_EXCEPTION(utils::string::to_string() << "Failed to read Scheduled Action Command Queue Size. status: " << result.first);
+        }
+        value->intValue = static_cast<int32_t>(result.second);
+        break;
+    }
+    case OB_PROP_ACTION_SELECTOR_INT:
+        value->intValue = actionSelector_;
+        break;
+    case OB_PROP_ACTION_GROUP_KEY_INT: {
+        const auto result = gvcpTransmit_->readRegister(GVCP_ACTION_GROUP_KEY_BASE + 0x10 * actionSelector_);
+        if(result.first != GEV_STATUS_SUCCESS) {
+            THROW_IO_EXCEPTION(utils::string::to_string() << "Failed to read Action Group Key. status: " << result.first);
+        }
+        value->intValue = static_cast<int32_t>(result.second);
+        break;
+    }
+    case OB_PROP_ACTION_GROUP_MASK_INT: {
+        const auto result = gvcpTransmit_->readRegister(GVCP_ACTION_GROUP_MASK_BASE + 0x10 * actionSelector_);
+        if(result.first != GEV_STATUS_SUCCESS) {
+            THROW_IO_EXCEPTION(utils::string::to_string() << "Failed to read Action Group Mask. status: " << result.first);
+        }
+        value->intValue = static_cast<int32_t>(result.second);
+        break;
+    }
+    default:
+        THROW_INVALID_PARAM_EXCEPTION("Invalid Action Command property id");
+    }
+}
+
+void ActionCommandPropertyAccessor::getPropertyRange(uint32_t propertyId, OBPropertyRange *range) {
+    switch(propertyId) {
+    case OB_PROP_ACTION_SELECTOR_INT: {
+        const auto result = gvcpTransmit_->readRegister(GVCP_ACTION_SIGNAL_COUNT_REGISTER);
+        if(result.first != GEV_STATUS_SUCCESS) {
+            THROW_IO_EXCEPTION(utils::string::to_string() << "Failed to read Action Signal Count. status: " << result.first);
+        }
+        const auto signalCount = result.second;
+        if(signalCount == 0) {
+            THROW_IO_EXCEPTION("Action Command signal count is zero");
+        }
+        range->min.intValue  = 0;
+        range->max.intValue  = static_cast<int32_t>(signalCount) - 1;
+        range->step.intValue = 1;
+        range->def.intValue  = 0;
+        break;
+    }
+    default:
+        // Action keys and masks use the complete int32_t bit-pattern range.
+        range->min.intValue  = (std::numeric_limits<int32_t>::min)();
+        range->max.intValue  = (std::numeric_limits<int32_t>::max)();
+        range->step.intValue = 1;
+        range->def.intValue  = 0;
+        break;
+    }
+}
+
 }  // namespace libobsensor

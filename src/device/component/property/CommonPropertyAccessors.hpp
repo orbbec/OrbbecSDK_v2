@@ -142,4 +142,19 @@ private:
     IDevice *owner_;
 };
 
+class GVCPTransmit;
+class ActionCommandPropertyAccessor : public IBasicPropertyAccessor {
+public:
+    explicit ActionCommandPropertyAccessor(std::shared_ptr<GVCPTransmit> gvcpTransmit);
+    virtual ~ActionCommandPropertyAccessor() noexcept override = default;
+
+    void setPropertyValue(uint32_t propertyId, const OBPropertyValue &value) override;
+    void getPropertyValue(uint32_t propertyId, OBPropertyValue *value) override;
+    void getPropertyRange(uint32_t propertyId, OBPropertyRange *range) override;
+
+private:
+    std::shared_ptr<GVCPTransmit> gvcpTransmit_;
+    int                           actionSelector_ = 0;
+};
+
 }  // namespace libobsensor

@@ -218,6 +218,25 @@ bool DeviceManager::forceIpConfig(std::string deviceUid, const OBNetIpConfig &co
 #endif
 }
 
+bool DeviceManager::sendActionCommand(uint32_t deviceKey, uint32_t groupKey, uint32_t groupMask, const std::string &destIp, uint64_t scheduledTime) {
+#if defined(BUILD_NET_PAL)
+    for(auto &enumerator: deviceEnumerators_) {
+        auto netEnumerator = std::dynamic_pointer_cast<NetDeviceEnumerator>(enumerator);
+        if(netEnumerator) {
+            return netEnumerator->sendActionCommand(deviceKey, groupKey, groupMask, destIp, scheduledTime);
+        }
+    }
+    return false;
+#else
+    utils::unusedVar(deviceKey);
+    utils::unusedVar(groupKey);
+    utils::unusedVar(groupMask);
+    utils::unusedVar(destIp);
+    utils::unusedVar(scheduledTime);
+    return false;
+#endif
+}
+
 void DeviceManager::triggerDeviceOffline(std::string deviceUid, bool requery) {
 #if defined(BUILD_NET_PAL)
     std::shared_ptr<NetDeviceEnumerator> netEnumerator;

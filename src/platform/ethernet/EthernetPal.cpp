@@ -383,6 +383,11 @@ bool EthernetPal::forceIpConfig(std::string macAddress, const OBNetIpConfig &con
     return result;
 }
 
+bool EthernetPal::sendActionCommand(uint32_t deviceKey, uint32_t groupKey, uint32_t groupMask,
+                                    const std::string &destIp, uint64_t scheduledTime) {
+    return gvcpClient_->sendActionCommand(deviceKey, groupKey, groupMask, destIp, scheduledTime);
+}
+
 void EthernetPal::setGvcpPortscheme(OBGvcpPortScheme scheme) {
     gvcpRuntimeConfig_->setGvcpPortscheme(scheme);
     // re-query gvcp device

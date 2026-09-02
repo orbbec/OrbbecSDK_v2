@@ -1049,6 +1049,9 @@ std::ostream &operator<<(std::ostream &os, const OBMultiDeviceSyncConfig &config
     case OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_SYNCED:
         os << "software synced";
         break;
+    case OB_MULTI_DEVICE_SYNC_MODE_GROUP_ACTIONS:
+        os << "group actions";
+        break;
     default:
         os << "unknown(" << config.syncMode << ")";
         break;

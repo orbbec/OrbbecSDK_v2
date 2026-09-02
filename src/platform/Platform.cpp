@@ -226,6 +226,25 @@ bool Platform::forceIpConfig(std::string deviceUid, const OBNetIpConfig &config)
 #endif
 }
 
+bool Platform::sendActionCommand(uint32_t deviceKey, uint32_t groupKey, uint32_t groupMask,
+                                 const std::string &destIp, uint64_t scheduledTime) {
+#if defined(BUILD_NET_PAL)
+    auto pal = palMap_.find("net");
+    if(pal == palMap_.end()) {
+        THROW_PAL_EXCEPTION("Net pal is not exist, please check the build config that you have enabled BUILD_NET_PAL", OB_ERROR_ITEM_NOT_FOUND);
+    }
+    auto ethernetPal = std::dynamic_pointer_cast<EthernetPal>(pal->second);
+    return ethernetPal->sendActionCommand(deviceKey, groupKey, groupMask, destIp, scheduledTime);
+#else
+    utils::unusedVar(deviceKey);
+    utils::unusedVar(groupKey);
+    utils::unusedVar(groupMask);
+    utils::unusedVar(destIp);
+    utils::unusedVar(scheduledTime);
+    return false;
+#endif
+}
+
 void Platform::triggerDeviceOffline(std::string deviceUid, bool requery) {
 #if defined(BUILD_NET_PAL)
     auto pal = palMap_.find("net");

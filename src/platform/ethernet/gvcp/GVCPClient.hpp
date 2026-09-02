@@ -58,11 +58,14 @@ public:
 
     std::vector<GVCPDeviceInfo> queryNetDeviceList();
     bool                        forceIpConfig(std::string macAddress, const OBNetIpConfig &config);
+    bool                        sendActionCommand(uint32_t deviceKey, uint32_t groupKey, uint32_t groupMask,
+                                                 const std::string &destIp, uint64_t scheduledTime);
 
 private:
     int    openClientSockets();
     void   closeClientSockets();
     SOCKET openClientSocket(SOCKADDR_IN addr);
+    SOCKET openActionSocket(SOCKADDR_IN addr);
     /**
      * @brief receive parse gvcp response
      *
@@ -87,7 +90,10 @@ private:
 private:
     SOCKET                      socks_[MAX_SOCKETS];
     GVCPSocketInfo              socketInfos_[MAX_SOCKETS];
-    int                         sockCount_ = 0;
+    SOCKET                      actionSocks_[MAX_SOCKETS] = {};
+    int                         actionSockCount_          = 0;
+    int                         sockCount_                = 0;
+    std::mutex                  actionSocketMtx_;
     std::vector<GVCPDeviceInfo> devInfoList_;
     std::mutex                  queryMtx_;
     std::mutex                  devInfoListMtx_;

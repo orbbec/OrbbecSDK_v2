@@ -41,6 +41,9 @@ typedef enum : uint16_t {
     GVCP_READREG_ACK  = 0x0081,
     GVCP_WRITEREG_CMD = 0x0082,
     GVCP_WRITEREG_ACK = 0x0083,
+    // Action Command Protocol
+    GVCP_ACTION_CMD = 0x0100,
+    GVCP_ACTION_ACK = 0x0101,
 } GVCPCmdAndAck;
 
 // GVCP register values (subset)
@@ -48,6 +51,12 @@ typedef enum : uint16_t {
     GVCP_CAPABILITY_REGISTER        = 0x0934,
     GVCP_HEARTBEAT_TIMEOUT_REGISTER = 0x0938,
     GVCP_CCP_REGISTER               = 0x0A00,
+    // Action Command bootstrap registers
+    GVCP_ACTION_SIGNAL_COUNT_REGISTER         = 0x0908,
+    GVCP_ACTION_DEVICE_KEY_REGISTER           = 0x090C,
+    GVCP_ACTION_SCHEDULED_QUEUE_SIZE_REGISTER = 0x0970,
+    GVCP_ACTION_GROUP_KEY_BASE                = 0x9800,
+    GVCP_ACTION_GROUP_MASK_BASE               = 0x9804,
 } GVCPRegister;
 
 // CCP bit mask
@@ -58,6 +67,11 @@ typedef enum : uint16_t {
 #define GVCP_CCP_OPEN_ACCESS (0x00)
 // bit 29 30 and 31 ((bit0=MSB)
 #define GVCP_CCP_MASK (0x07)
+
+// Action Command flags: fire-and-forget, cameras do not reply ACTION_ACK
+#define GVCP_ACTION_FLAGS_NO_ACK (0x00)
+// Action time available is the most significant bit of the flag field.
+#define GVCP_ACTION_FLAGS_SCHEDULED (0x80)
 
 struct gvcp_cmd_header {
     uint8_t  cMsgKeyCode;  // 0x42
@@ -137,6 +151,21 @@ struct gvcp_writereg_ack {
     uint16_t               reserved;
     uint16_t               index;
 };
+// Action Command payload — immediate (wLen=12 bytes)
+struct gvcp_action_cmd_payload {
+    uint32_t deviceKey;   // big-endian
+    uint32_t groupKey;    // big-endian
+    uint32_t groupMask;   // big-endian
+};
+
+// Action Command payload — scheduled (wLen=20 bytes)
+struct gvcp_action_cmd_scheduled_payload {
+    uint32_t deviceKey;    // big-endian
+    uint32_t groupKey;     // big-endian
+    uint32_t groupMask;    // big-endian
+    uint64_t actionTime;   // PTP timestamp, big-endian
+};
+
 #pragma pack(pop)
 
 }  // namespace libobsensor

@@ -1578,6 +1578,12 @@ typedef enum {
      * @brief The device captures data in software synchronization mode, starting acquisition based on the system time.
      */
     OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_SYNCED = 1 << 8,
+
+    /**
+     * @brief Group actions trigger mode.
+     * @note The device waits for a GVCP ACTION_CMD matching the configured action parameters.
+     */
+    OB_MULTI_DEVICE_SYNC_MODE_GROUP_ACTIONS = 1 << 9,
 } ob_multi_device_sync_mode,
     OBMultiDeviceSyncMode;
 

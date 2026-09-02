@@ -98,6 +98,16 @@ bool ob_force_ip_config(const char *macAddress, ob_net_ip_config config, ob_erro
 }
 HANDLE_EXCEPTIONS_AND_RETURN(false, macAddress)
 
+bool ob_send_action_command(uint32_t deviceKey, uint32_t groupKey, uint32_t groupMask,
+                            const char *destIp, uint64_t scheduledTime,
+                            ob_error **error) BEGIN_API_CALL {
+    auto ctx    = libobsensor::Context::getInstance();
+    auto devMgr = ctx->getDeviceManager();
+    return devMgr->sendActionCommand(deviceKey, groupKey, groupMask,
+                                     destIp ? destIp : "", scheduledTime);
+}
+HANDLE_EXCEPTIONS_AND_RETURN(false, deviceKey, groupKey, groupMask, destIp, scheduledTime)
+
 void ob_set_gvcp_port_scheme(ob_context *context, ob_gvcp_port_scheme scheme, ob_error **error) BEGIN_API_CALL {
     VALIDATE_NOT_NULL(context);
     auto deviceMgr = context->context->getDeviceManager();

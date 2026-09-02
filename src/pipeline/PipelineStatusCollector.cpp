@@ -242,7 +242,8 @@ bool PipelineStatusCollector::isTriggeringMode() {
 
     try {
         auto syncConfig = deviceSyncConfigurator_->getSyncConfig();
-        return syncConfig.syncMode == OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_TRIGGERING || syncConfig.syncMode == OB_MULTI_DEVICE_SYNC_MODE_HARDWARE_TRIGGERING;
+        return syncConfig.syncMode == OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_TRIGGERING || syncConfig.syncMode == OB_MULTI_DEVICE_SYNC_MODE_HARDWARE_TRIGGERING
+               || syncConfig.syncMode == OB_MULTI_DEVICE_SYNC_MODE_GROUP_ACTIONS;
     }
     catch(...) {
         return false;

@@ -50,6 +50,8 @@ public:
     void             setGvcpPortscheme(OBGvcpPortScheme scheme);
     OBGvcpPortScheme getGvcpPortscheme() const;
     bool             forceIpConfig(std::string deviceUid, const OBNetIpConfig &config);
+    bool             sendActionCommand(uint32_t deviceKey, uint32_t groupKey, uint32_t groupMask,
+                                       const std::string &destIp, uint64_t scheduledTime);
     void             triggerDeviceOffline(std::string deviceUid, bool requery = false);
 
 private:

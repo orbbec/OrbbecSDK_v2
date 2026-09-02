@@ -47,6 +47,8 @@ public:
     virtual void                     setGvcpPortscheme(OBGvcpPortScheme scheme)                                                      = 0;
     virtual OBGvcpPortScheme         getGvcpPortscheme() const                                                                       = 0;
 
+    virtual bool sendActionCommand(uint32_t deviceKey, uint32_t groupKey, uint32_t groupMask, const std::string &destIp, uint64_t scheduledTime) = 0;
+
     virtual DeviceEnumInfoList getDeviceInfoList()                                           = 0;
     virtual OBCallbackId       registerDeviceChangedCallback(DeviceChangedCallback callback) = 0;
     virtual bool               unregisterDeviceChangedCallback(OBCallbackId id)              = 0;

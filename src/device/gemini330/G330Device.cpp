@@ -1531,7 +1531,8 @@ void G330NetDevice::init() {
     auto depthWorkModeManager = std::make_shared<G330DepthWorkModeManager>(this);
     registerComponent(OB_DEV_COMPONENT_DEPTH_WORK_MODE_MANAGER, depthWorkModeManager);
 
-    if(getFirmwareVersionInt() >= 10500) {
+    auto fwVersion = getFirmwareVersionInt();
+    if(fwVersion >= 10500) {
         // support custom presets upgrade
         auto propertyServer = getPropertyServer();
         propertyServer->registerAccessCallback(
@@ -1554,10 +1555,13 @@ void G330NetDevice::init() {
     auto sensorStreamStrategy = std::make_shared<G330SensorStreamStrategy>(this);
     registerComponent(OB_DEV_COMPONENT_SENSOR_STREAM_STRATEGY, sensorStreamStrategy);
 
-    static const std::vector<OBMultiDeviceSyncMode> supportedSyncModes = {
+    std::vector<OBMultiDeviceSyncMode> supportedSyncModes = {
         OB_MULTI_DEVICE_SYNC_MODE_FREE_RUN,         OB_MULTI_DEVICE_SYNC_MODE_STANDALONE,          OB_MULTI_DEVICE_SYNC_MODE_PRIMARY,
         OB_MULTI_DEVICE_SYNC_MODE_SECONDARY_SYNCED, OB_MULTI_DEVICE_SYNC_MODE_SOFTWARE_TRIGGERING, OB_MULTI_DEVICE_SYNC_MODE_HARDWARE_TRIGGERING
     };
+    if(fwVersion >= 10824 && ccpController_ && ccpController_->getGVCPTransmit()) {
+        supportedSyncModes.push_back(OB_MULTI_DEVICE_SYNC_MODE_GROUP_ACTIONS);
+    }
     auto deviceSyncConfigurator = std::make_shared<DeviceSyncConfigurator>(this, supportedSyncModes);
     registerComponent(OB_DEV_COMPONENT_DEVICE_SYNC_CONFIGURATOR, deviceSyncConfigurator);
 
@@ -1613,7 +1617,6 @@ void G330NetDevice::init() {
         false);
 
     auto propertyServer = getPropertyServer();
-    auto fwVersion      = getFirmwareVersionInt();
     if(fwVersion >= 373) {
         auto hwNoiseRemovePropertyAccessor = std::make_shared<G330HWNoiseRemovePropertyAccessor>(this);
         propertyServer->registerProperty(OB_PROP_HW_NOISE_REMOVE_FILTER_ENABLE_BOOL, "rw", "rw", hwNoiseRemovePropertyAccessor);
@@ -1644,7 +1647,7 @@ void G330NetDevice::init() {
     }
 
 #if defined(__linux__) || defined(__aarch64__)
-    if(getFirmwareVersionInt() >= 10533) {
+    if(fwVersion >= 10533) {
         auto ptpClockSyncPropertyAccessor = std::make_shared<G330NetPTPClockSyncPropertyAccessor>(this);
         propertyServer->registerProperty(OB_DEVICE_PTP_CLOCK_SYNC_ENABLE_BOOL, "rw", "rw", ptpClockSyncPropertyAccessor);
     }
@@ -1695,6 +1698,17 @@ void G330NetDevice::init() {
         propertyServer->registerProperty(OB_PROP_COLOR_AE_AWB_STATUS_INT, "r", "r", vendorPropertyAccessor.get());
         propertyServer->registerProperty(OB_STRUCT_COLOR_AWB_GAIN, "rw", "rw", vendorPropertyAccessor.get());
     }
+    if(fwVersion >= 10824 && ccpController_ && ccpController_->getGVCPTransmit()) {
+        propertyServer->registerProperty(OB_PROP_HOST_PLATFORM_INT, "", "w", vendorPropertyAccessor.get());
+        auto gvcpTransmit              = ccpController_->getGVCPTransmit();
+        auto actionCmdPropertyAccessor = std::make_shared<ActionCommandPropertyAccessor>(gvcpTransmit);
+        propertyServer->registerProperty(OB_PROP_ACTION_SIGNAL_COUNT_INT, "r", "r", actionCmdPropertyAccessor);
+        propertyServer->registerProperty(OB_PROP_ACTION_DEVICE_KEY_INT, "rw", "rw", actionCmdPropertyAccessor);
+        propertyServer->registerProperty(OB_PROP_ACTION_SCHEDULED_COMMAND_QUEUE_SIZE_INT, "r", "r", actionCmdPropertyAccessor);
+        propertyServer->registerProperty(OB_PROP_ACTION_SELECTOR_INT, "rw", "rw", actionCmdPropertyAccessor);
+        propertyServer->registerProperty(OB_PROP_ACTION_GROUP_KEY_INT, "rw", "rw", actionCmdPropertyAccessor);
+        propertyServer->registerProperty(OB_PROP_ACTION_GROUP_MASK_INT, "rw", "rw", actionCmdPropertyAccessor);
+    }
 
     if(fwVersion >= 10824) {
         propertyServer->registerProperty(OB_PROP_COLOR_WB_CTRL_INT, "rw", "rw", vendorPropertyAccessor.get());
@@ -1717,7 +1731,7 @@ void G330NetDevice::init() {
                                            });
 
     TRY_EXECUTE({
-        if(getFirmwareVersionInt() >= 10621) {
+        if(fwVersion >= 10621) {
             vendorPropertyAccessor = getComponentT<VendorPropertyAccessor>(OB_DEV_COMPONENT_MAIN_PROPERTY_ACCESSOR);
             propertyServer->registerProperty(OB_RAW_DATA_DEPTH_POST_FILTER_PARAMS, "", "r", vendorPropertyAccessor.get());
 
@@ -1731,6 +1745,13 @@ void G330NetDevice::init() {
 
 void G330NetDevice::postInitialize() {
     DeviceBase::postInitialize();
+    TRY_EXECUTE({
+        auto propertyServer = getPropertyServer();
+        if(propertyServer->isPropertySupported(OB_PROP_HOST_PLATFORM_INT, PROP_OP_WRITE, PROP_ACCESS_INTERNAL)) {
+            uint32_t hostPlatform = getHostPlatformType();
+            propertyServer->setPropertyValueT<uint32_t>(OB_PROP_HOST_PLATFORM_INT, hostPlatform, PROP_ACCESS_INTERNAL);
+        }
+    })
     // Eagerly initialize the PresetManager to avoid lazy creation during streaming
     (void)getComponentT<IPresetManager>(OB_DEV_COMPONENT_PRESET_MANAGER, false);
     // initialize `cachedDepthUnit_` to prevent deadlocks in component resources caused by the stream closing too quickly.
