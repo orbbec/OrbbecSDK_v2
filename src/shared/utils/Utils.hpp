@@ -12,6 +12,7 @@
 // Include all the headers in the utils directory for convenience
 #include "StringUtils.hpp"
 #include "FileUtils.hpp"
+#include "JpegUtils.hpp"
 #include "PublicTypeHelper.hpp"
 
 namespace libobsensor {
@@ -216,13 +217,6 @@ template <class T> inline bool isMatchDeviceByPid(uint16_t pid, T &pids) {
     }
     return false;
 }
-
-bool checkJpgImageData(const uint8_t *data, size_t dataLen);
-
-int findJpgSequence(const uint8_t *data, uint32_t size, uint32_t startIndex, const uint8_t *target, uint32_t targetLength);
-int findJpgSOSSequence(const uint8_t *data, uint32_t size, uint32_t startIndex = 0);
-int findJpgCOMSequence(const uint8_t *data, uint32_t size, uint32_t startIndex = 0);
-int getJpgHeadLength(const uint8_t *data, uint32_t size);
 
 bool checkIpConfig(const ob_net_ip_config &config, bool allowZeroGateWay);
 bool checkIpConfig(const ob_net_ip_config_v2 &config, bool allowZeroGateWay);

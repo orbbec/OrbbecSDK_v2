@@ -7,6 +7,7 @@
 #include "exception/ObException.hpp"
 #include "logger/LoggerInterval.hpp"
 #include "logger/LoggerHelper.hpp"
+#include "utils/JpegUtils.hpp"
 #include "utils/Utils.hpp"
 #include "stream/StreamProfile.hpp"
 #include "frame/Frame.hpp"
@@ -205,17 +206,31 @@ void VideoSensor::onBackendFrameCallback(std::shared_ptr<Frame> frame) {
 
     auto markDataDrop = [this]() { droppedFrameStatus_.fetch_or(OB_SDK_STATUS_FRAME_DROP_DATA, std::memory_order_relaxed); };
 
-    if(format == OB_FORMAT_MJPG && frame->getDataSize() < MIN_VIDEO_FRAME_DATA_SIZE) {
-        LOG_WARN_INTVL("[{}] This frame will be dropped because data size less than mini size (1024 byte)! size={} @{}", GetCurrentSN(), dataSize, sensorType_);
-        markDataDrop();
-        return;
+    if(format == OB_FORMAT_MJPG) {
+        if(dataSize < MIN_VIDEO_FRAME_DATA_SIZE) {
+            LOG_WARN_INTVL("[{}] This frame will be dropped because data size less than mini size (1024 byte)! size={} @{}", GetCurrentSN(), dataSize,
+                           sensorType_);
+            markDataDrop();
+            return;
+        }
+
+        if(sensorType_ != OB_SENSOR_DEPTH) {
+            size_t     validJpegDataSize = 0;
+            const auto status            = utils::checkJpegFrameBoundary(frame->getData(), dataSize, &validJpegDataSize);
+            if(status == utils::JpegStatus::Invalid) {
+                LOG_WARN_INTVL("[{}] This frame will be dropped because JPEG frame boundary verification failed! @{}", GetCurrentSN(), sensorType_);
+                markDataDrop();
+                return;
+            }
+            else if(status == utils::JpegStatus::Confirmed && validJpegDataSize < dataSize) {
+                LOG_DEBUG_INTVL("[{}] Trim {} bytes of trailing data from MJPEG frame. @{}", GetCurrentSN(), dataSize - validJpegDataSize, sensorType_);
+                frame->setDataSize(validJpegDataSize);
+                dataSize = validJpegDataSize;
+            }
+        }
     }
-    else if(format == OB_FORMAT_MJPG && sensorType_ != OB_SENSOR_DEPTH && !utils::checkJpgImageData(frame->getData(), dataSize)) {
-        LOG_WARN_INTVL("[{}] This frame will be dropped because jpg format verification failure! @{}", GetCurrentSN(), sensorType_);
-        markDataDrop();
-        return;
-    }
-    else if(maxFrameDataSize < dataSize) {
+
+    if(maxFrameDataSize < dataSize) {
         LOG_WARN_INTVL("[{}] This frame will be dropped because because the data size is larger than expected! size={}, expected={} @{}", GetCurrentSN(),
                        dataSize, maxFrameDataSize, sensorType_);
         markDataDrop();
