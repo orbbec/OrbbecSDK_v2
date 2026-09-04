@@ -16,7 +16,7 @@ StartOfExposureTimestampAdjuster::StartOfExposureTimestampAdjuster(IDevice *devi
         syncReferenceMode_ = val.intValue;
 
         // Re-read from device whenever the user writes the property
-        propServer->registerAccessCallback(OB_PROP_INTRA_CAMERA_SYNC_REFERENCE_INT,
+        propServer->registerAccessCallback({ OB_PROP_INTRA_CAMERA_SYNC_REFERENCE_INT, OB_STRUCT_MULTI_DEVICE_SYNC_CONFIG },
                                            [this](uint32_t, const uint8_t *, size_t, PropertyOperationType operationType) {
                                                if(operationType == PROP_OP_WRITE) {
                                                    auto            propServer = getOwner()->getPropertyServer();
