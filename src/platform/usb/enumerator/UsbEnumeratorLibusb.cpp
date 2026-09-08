@@ -115,9 +115,14 @@ std::string getDeviceUidByWinDeviceID(const std::string &deviceID) {
         return "";
     }
 
-    if(ids.size() > 2)
-        return ids[1];
-    return "";
+    std::string uid;
+    if(ids.size() > 3) {
+        uid = ids[0] + ids[1] + ids[2];
+    }
+    else if(ids.size() > 2) {
+        uid = ids[1];
+    }
+    return uid;
 }
 
 std::string getDeviceHubIdByWin(const std::string &devicePath) {

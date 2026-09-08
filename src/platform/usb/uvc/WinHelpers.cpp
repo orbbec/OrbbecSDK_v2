@@ -155,13 +155,19 @@ bool parse_usb_path_multiple_interface(uint16_t &vid, uint16_t &pid, uint16_t &m
         return false;
     }
 
-    if(ids.size() > 2)
+    if(ids.size() > 3) {
+        unique_id = ids[0] + ids[1] + ids[2];
+    }
+    else if(ids.size() > 2) {
         unique_id = ids[1];
-    else
+    }
+    else {
         unique_id = "";
+    }
 
-    if(tokens.size() >= 3)
+    if(tokens.size() >= 3) {
         device_guid = tokens[3];
+    }
 
     return true;
 }
@@ -231,7 +237,14 @@ bool parse_usb_path_from_device_id(uint16_t &vid, uint16_t &pid, uint16_t &mi, s
         LOG_ERROR("malformed id string: {}", tokens[2]);
         return false;
     }
-    unique_id = ids[1];
+
+    if(ids.size() > 3) {
+        unique_id = ids[0] + ids[1] + ids[2];
+    }
+    else {
+        unique_id = ids[1];
+    }
+
     return true;
 }
 
