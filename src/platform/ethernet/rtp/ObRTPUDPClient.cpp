@@ -29,9 +29,7 @@ void ObRTPUDPClient::setReceiveBuffer() {
     int       okIndex         = -1;
 
     for(int i = 0; i < 3; i++) {
-        if(setsockopt(recvSocket_, SOL_SOCKET, SO_RCVBUF, (const char *)&requestSizes[i], sizeof(int)) != 0) {
-            continue;
-        }
+        setsockopt(recvSocket_, SOL_SOCKET, SO_RCVBUF, (const char *)&requestSizes[i], sizeof(int));
         socklen_t optLen = sizeof(actualOpt);
         if(getsockopt(recvSocket_, SOL_SOCKET, SO_RCVBUF, (char *)&actualOpt, &optLen) != 0) {
             continue;
@@ -47,12 +45,12 @@ void ObRTPUDPClient::setReceiveBuffer() {
     }
 
     if(okIndex >= 0) {
-        LOG_INFO("SO_RCVBUF fallback: requested={}MB, actual={}MB", requestSizes[okIndex] / (1024 * 1024), realBuf / (1024 * 1024));
+        LOG_INFO("SO_RCVBUF fallback: requested={} bytes, actual={} bytes", requestSizes[okIndex], realBuf);
     }
     else {
-        LOG_WARN("SO_RCVBUF configuration failed. Current buffer size={}MB, RTP streaming requires at least 128MB receive buffer. Please increase the system "
-                 "UDP receive buffer limit.",
-                 realBuf / (1024 * 1024));
+        LOG_WARN("SO_RCVBUF configuration failed. Current buffer size={} bytes, RTP streaming requires at least 134217728 bytes(128MB) receive buffer. Please "
+                 "increase the system UDP receive buffer limit.",
+                 realBuf);
     }
 }
 
