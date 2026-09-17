@@ -113,6 +113,7 @@ void DepthPostFilterParamsManager::parseFilterParamsV0102(const uint8_t *data, c
     hfFilterEnable_ = holeFilterParams.enabled;
 
     SpatialFastFilterParams spatFastFilterParams = depthPostFilterParams_.spat_fast_filter_params;
+    spatFastFilterParams_.clear();
     spatFastFilterParams_.push_back(std::to_string(spatFastFilterParams.win_size));
     spatFastFilterEnable_ = spatFastFilterParams.enabled;
 
