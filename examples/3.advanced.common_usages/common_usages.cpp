@@ -98,9 +98,6 @@ int main(void) try {
     // create window for render
     win = std::make_shared<ob_smpl::CVWindow>("CommonUsages", 1280, 720, ob_smpl::ARRANGE_GRID);
 
-    // Set log severity. disable log, please set OB_LOG_SEVERITY_OFF.
-    ob::Context::setLoggerSeverity(OB_LOG_SEVERITY_ERROR);
-
     // Create ob:Context.
     ctx = std::make_shared<ob::Context>();
 
@@ -380,12 +377,14 @@ std::shared_ptr<ob::FrameSet> fileterAlign(std::shared_ptr<ob::FrameSet> framese
     return newFrameSet;
 }
 void handleFrameset(std::shared_ptr<ob::FrameSet> frameset) {
-    auto alignFrameSet = fileterAlign(frameset);
-    // If no depthframe is present, it is discarded
-    if(frameset->getCount() < 3) {
-        return;
+    // Align (depth to color) only applies when both depth and color frames are present.
+    if(frameset->getFrame(OB_FRAME_DEPTH) && frameset->getFrame(OB_FRAME_COLOR)) {
+        auto alignFrameSet = fileterAlign(frameset);
+        win->pushFramesToView(alignFrameSet);
     }
-    win->pushFramesToView(alignFrameSet);
+    else {
+        win->pushFramesToView(frameset);
+    }
 }
 
 void getDeviceInformation() {
