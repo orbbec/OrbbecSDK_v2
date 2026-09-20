@@ -46,6 +46,7 @@
 #include "property/HardwareD2CPropertyAccessor.hpp"
 #include "G330FrameMetadataParserContainer.hpp"
 #include "DabaiAMetadataModifier.hpp"
+#include "license/G330DeviceLicenseInfoManager.hpp"
 
 #include <algorithm>
 
@@ -192,6 +193,15 @@ void DabaiADevice::init() {
             registerComponent(OB_DEV_COMPONENT_DEPTH_POST_FILTER_PARAMS_MANAGER, depthPostrFilterParamsManager);
         }
     })
+
+    registerComponent(
+        OB_DEV_COMPONENT_DEVICE_LICENSE_INFO_MANAGER,
+        [this]() {
+            std::shared_ptr<G330DeviceLicenseInfoManager> licenseInfoManager;
+            TRY_EXECUTE({ licenseInfoManager = std::make_shared<G330DeviceLicenseInfoManager>(this); })
+            return licenseInfoManager;
+        },
+        false);
 }
 
 std::shared_ptr<const StreamProfile> DabaiADevice::loadDefaultStreamProfile(OBSensorType sensorType) {

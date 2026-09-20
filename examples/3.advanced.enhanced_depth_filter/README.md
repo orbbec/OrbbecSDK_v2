@@ -40,11 +40,14 @@ std::cout << "license info:" << licenseInfo << std::endl;
 
 ### 2. Create the filters
 
-Create an `Align` filter to align depth to color and create the `EnhancedDepthFilter` with the optional model path.
+Create an `Align` filter to align depth to color and create the `EnhancedDepthFilter` with the optional model path. For DabaiA series devices, also create an `UnDistortionFilter` to remove lens distortion before alignment; on other devices it is left unset.
 
 ```cpp
 auto alignFilter         = std::make_shared<ob::Align>(OB_STREAM_COLOR);
 auto enhancedDepthFilter = std::make_shared<ob::EnhancedDepthFilter>(device, modelPath);
+auto deviceInfo          = device->getDeviceInfo();
+// Create UnDistortionFilter for DabaiA devices
+auto unDistortionFilter = ob_smpl::isDabaiASeriesDevice(deviceInfo->getVid(), deviceInfo->getPid()) ? std::make_shared<ob::UnDistortionFilter>() : nullptr;
 ```
 
 ### 3. Configure and start the pipeline
@@ -61,10 +64,18 @@ pipe.start(config);
 
 ### 4. Align and process the frames
 
-Align each frameset, apply enhanced depth processing, and obtain the processed color, depth, and optional confidence frames.
+For a DabaiA series device, undistort the frameset first. Then align each frameset, apply enhanced depth processing, and obtain the processed color, depth, and optional confidence frames.
 
 ```cpp
-auto aligned = alignFilter->process(frameset);
+std::shared_ptr<ob::Frame> input = frameset;
+if(unDistortionFilter) {
+    input = unDistortionFilter->process(input);
+    if(!input) {
+        continue;
+    }
+}
+
+auto aligned = alignFilter->process(input);
 if(!aligned) {
     continue;
 }

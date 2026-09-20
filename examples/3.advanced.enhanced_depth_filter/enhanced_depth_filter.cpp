@@ -70,6 +70,9 @@ int main(int argc, char **argv) try {
     // (e.g. enable it via the pipeline config) when the requested resolution is supported by hardware.
     auto alignFilter         = std::make_shared<ob::Align>(OB_STREAM_COLOR);
     auto enhancedDepthFilter = std::make_shared<ob::EnhancedDepthFilter>(device, modelPath);
+    auto deviceInfo          = device->getDeviceInfo();
+    // Create UnDistortionFilter for DabaiA devices
+    auto unDistortionFilter = ob_smpl::isDabaiASeriesDevice(deviceInfo->getVid(), deviceInfo->getPid()) ? std::make_shared<ob::UnDistortionFilter>() : nullptr;
 
     auto config = std::make_shared<ob::Config>();
     config->enableVideoStream(OB_STREAM_COLOR, 640, 480, OB_FPS_ANY, OB_FORMAT_RGB);
@@ -86,7 +89,15 @@ int main(int argc, char **argv) try {
         }
         std::vector<std::shared_ptr<const ob::Frame>> originFrames{ frameset->getColorFrame(), frameset->getDepthFrame() };
 
-        auto aligned = alignFilter->process(frameset);
+        std::shared_ptr<ob::Frame> input = frameset;
+        if(unDistortionFilter) {
+            input = unDistortionFilter->process(input);
+            if(!input) {
+                continue;
+            }
+        }
+
+        auto aligned = alignFilter->process(input);
         if(!aligned) {
             continue;
         }
