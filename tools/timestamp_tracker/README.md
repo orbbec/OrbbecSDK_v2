@@ -140,14 +140,15 @@ Each CSV file contains only timestamp-related columns (resolution, FPS, and form
 | SysTS(us) | SDK system timestamp (microseconds) |
 | GlobalTS(us) | Global timestamp (microseconds) |
 | DevTS(us) | Device timestamp (microseconds) |
+| SensorTS(us) | Video streams only: sensor timestamp metadata (microseconds; "n/a" when unsupported) |
 | Diff_SG(us) | SysTS - GlobalTS (empty if GlobalTS unavailable) |
 | Diff_SD(us) | SysTS - DevTS (empty if DevTS unavailable) |
 
-**Sample Output:**
+**Sample Video Output:**
 ```
-FrameIndex,FrameNumber,RecvTS(us),SysTS(us),GlobalTS(us),DevTS(us),Diff_SG(us),Diff_SD(us)
-1,1,1774342520618000,1774342520622037,1774342520605178,1774342520604183,16859,17854
-2,2,1774342520651000,1774342520654397,1774342520638555,1774342520637556,15842,16841
+FrameIndex,FrameNumber,RecvTS(us),SysTS(us),GlobalTS(us),DevTS(us),SensorTS(us),Diff_SG(us),Diff_SD(us)
+1,1,1774342520618000,1774342520622037,1774342520605178,1774342520604183,1774342520604183,16859,17854
+2,2,1774342520651000,1774342520654397,1774342520638555,1774342520637556,1774342520637556,15842,16841
 ```
 
 ### Depth and Color Latency

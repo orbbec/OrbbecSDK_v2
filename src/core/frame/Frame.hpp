@@ -79,6 +79,8 @@ public:
     void    registerMetadataParsers(std::shared_ptr<IFrameMetadataParserContainer> parsers);
     bool    hasMetadata(OBFrameMetadataType type) const;
     int64_t getMetadataValue(OBFrameMetadataType type) const;
+    // Populate only during capture, before publishing the frame. Reads never populate the cache.
+    void cacheTimestampMetadata(OBFrameMetadataType type);
 
     void                              setAuthToken(uint64_t token);
     uint64_t                          getAuthToken() const;
@@ -135,6 +137,11 @@ protected:
     const OBFrameType type_;  // Determined during construction, it is an inherent property of the object and cannot be changed.
 
 private:
+    int64_t      timestampMetadata_            = 0;
+    int64_t      sensorTimestampMetadata_      = 0;
+    mutable bool timestampMetadataValid_       = false;
+    mutable bool sensorTimestampMetadataValid_ = false;
+
     uint8_t const         *frameData_;
     const size_t           dataBufSize_;
     FrameBufferReclaimFunc bufferReclaimFunc_;

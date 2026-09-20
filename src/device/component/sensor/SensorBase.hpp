@@ -81,6 +81,7 @@ protected:
     IDevice                     *owner_;
     const OBSensorType           sensorType_;
     std::shared_ptr<ISourcePort> backend_;
+    bool                         prefetchTimestampMetadata_ = false;
 
     StreamProfileList                     streamProfileList_;
     std::shared_ptr<IStreamProfileFilter> streamProfileFilter_;

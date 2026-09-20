@@ -12,6 +12,9 @@
 #include "IDevice.hpp"
 #include "IDepthWorkModeManager.hpp"
 #include "context/Context.hpp"
+#ifdef __linux__
+#include "usb/uvc/UvcDevicePort.hpp"
+#endif
 
 #include "logger/LoggerSnWrapper.hpp"  // Must be included last to override log macros
 
@@ -30,6 +33,11 @@ SensorBase::SensorBase(IDevice *owner, OBSensorType sensorType, const std::share
       recoveryCount_(0),
       noStreamTimeoutMs_(DefaultNoStreamTimeoutMs),
       streamInterruptTimeoutMs_(DefaultStreamInterruptTimeoutMs) {
+#ifdef __linux__
+    auto uvcPort               = std::dynamic_pointer_cast<UvcDevicePort>(backend_);
+    prefetchTimestampMetadata_ = uvcPort && uvcPort->getBackendType() == OB_UVC_BACKEND_TYPE_V4L2;
+#endif
+
     enableTimestampAnomalyDetection(true);
     startStreamRecovery();
 
@@ -439,6 +447,17 @@ void SensorBase::outputFrame(std::shared_ptr<Frame> frame) {
     frame->setDeviceInfo(owner_->getInfo());
     if(frameMetadataParserContainer_) {
         TRY_EXECUTE(frame->registerMetadataParsers(frameMetadataParserContainer_));
+        if(prefetchTimestampMetadata_) {
+            // Resolve stateful timestamp parsers before later frames can advance their rollover base.
+            // Frame caches these values for timestamp calculation and delayed application reads.
+            for(auto type: { OB_FRAME_METADATA_TYPE_TIMESTAMP, OB_FRAME_METADATA_TYPE_SENSOR_TIMESTAMP }) {
+                TRY_EXECUTE({
+                    if(frame->hasMetadata(type)) {
+                        frame->cacheTimestampMetadata(type);
+                    }
+                });
+            }
+        }
     }
 
     if(frameTimestampCalculator_) {

@@ -38,7 +38,11 @@ bool CsvWriter::openVolume() {
     }
 
     // Simplified header: only timestamp-related columns
-    file_ << "FrameIndex,FrameNumber,RecvTS(us),SysTS(us),GlobalTS(us),DevTS(us),Diff_SG(us),Diff_SD(us)\n";
+    file_ << "FrameIndex,FrameNumber,RecvTS(us),SysTS(us),GlobalTS(us),DevTS(us)";
+    if(isVideoStream_) {
+        file_ << ",SensorTS(us)";
+    }
+    file_ << ",Diff_SG(us),Diff_SD(us)\n";
     file_.flush();
     headerWritten_ = true;
     rowCount_      = 0;
@@ -52,6 +56,7 @@ void CsvWriter::close() {
         file_.flush();  // Ensure all data is written before closing
         file_.close();
     }
+    isVideoStream_ = false;
     fileReady_     = false;
     headerWritten_ = false;
     writeCount_    = 0;
@@ -72,7 +77,8 @@ void CsvWriter::writeFrame(std::shared_ptr<ob::Frame> frame, uint64_t recvTimeUs
     if(!fileReady_) {
         auto        profile = frame->getStreamProfile();
         std::string fmt     = ob::TypeHelper::convertOBFormatTypeToString(profile->getFormat());
-        if(profile->is<ob::VideoStreamProfile>()) {
+        isVideoStream_      = profile->is<ob::VideoStreamProfile>();
+        if(isVideoStream_) {
             auto     vsp    = profile->as<ob::VideoStreamProfile>();
             uint32_t width  = vsp->getWidth();
             uint32_t height = vsp->getHeight();
@@ -101,9 +107,9 @@ void CsvWriter::writeFrame(std::shared_ptr<ob::Frame> frame, uint64_t recvTimeUs
             baseFilename_ = "Timestamps_" + serialNumber_ + "_" + sensorType_ + "_" + fmt;
         }
 
-        volumeIndex_  = 1;
-        rowCount_     = 0;
-        writeCount_   = 0;
+        volumeIndex_ = 1;
+        rowCount_    = 0;
+        writeCount_  = 0;
         if(!openVolume()) {
             return;
         }
@@ -130,6 +136,14 @@ void CsvWriter::writeFrame(std::shared_ptr<ob::Frame> frame, uint64_t recvTimeUs
     auto globalTs = frame->globalTimeStampUs();
     auto deviceTs = frame->timeStampUs();
     oss << "," << sysTs << "," << globalTs << "," << deviceTs;
+    if(isVideoStream_) {
+        if(frame->hasMetadata(OB_FRAME_METADATA_TYPE_SENSOR_TIMESTAMP)) {
+            oss << "," << frame->getMetadataValue(OB_FRAME_METADATA_TYPE_SENSOR_TIMESTAMP);
+        }
+        else {
+            oss << ",n/a";
+        }
+    }
 
     // diff_system_global
     if(globalTs > 0) {

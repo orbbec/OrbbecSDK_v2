@@ -10,6 +10,10 @@
 
 namespace libobsensor {
 
+int64_t IFrameMetadataParser::getValue(const Frame &frame) {
+    return getValue(frame.getMetadata(), frame.getMetadataSize());
+}
+
 FrameBackendLifeSpan::FrameBackendLifeSpan()
     : logger_(Logger::getInstance()), memoryPool_(FrameMemoryPool::getInstance()), memoryAllocator_(FrameMemoryAllocator::getInstance()) {}
 
@@ -179,7 +183,8 @@ size_t Frame::getMetadataSize() const {
 }
 
 void Frame::setMetadataSize(size_t metadataSize) {
-    metadataSize_ = metadataSize;
+    timestampMetadataValid_ = sensorTimestampMetadataValid_ = false;
+    metadataSize_                                           = metadataSize;
 }
 
 void Frame::updateMetadata(const uint8_t *metadata, size_t metadataSize) {
@@ -190,6 +195,7 @@ void Frame::updateMetadata(const uint8_t *metadata, size_t metadataSize) {
     if(metadataSize > sizeof(metadata_)) {
         THROW_MEMORY_EXCEPTION("Metadata size is too large!");
     }
+    timestampMetadataValid_ = sensorTimestampMetadataValid_ = false;
     memcpy(metadata_, metadata, metadataSize);
     metadataSize_ = metadataSize;
 }
@@ -202,6 +208,7 @@ void Frame::appendMetadata(const uint8_t *metadata, size_t metadataSize) {
     if(metadataSize_ + metadataSize > sizeof(metadata_)) {
         THROW_MEMORY_EXCEPTION("Metadata size is too large!");
     }
+    timestampMetadataValid_ = sensorTimestampMetadataValid_ = false;
     memcpy(metadata_ + metadataSize_, metadata, metadataSize);
     metadataSize_ += metadataSize;
 }
@@ -211,11 +218,13 @@ const uint8_t *Frame::getMetadata() const {
 }
 
 uint8_t *Frame::getMetadataMutable() const {
+    timestampMetadataValid_ = sensorTimestampMetadataValid_ = false;
     return const_cast<uint8_t *>(metadata_);
 }
 
 void Frame::registerMetadataParsers(std::shared_ptr<IFrameMetadataParserContainer> parsers) {
-    metadataPhasers_ = parsers;
+    timestampMetadataValid_ = sensorTimestampMetadataValid_ = false;
+    metadataPhasers_                                        = parsers;
 }
 
 bool Frame::hasMetadata(OBFrameMetadataType type) const {
@@ -234,11 +243,37 @@ int64_t Frame::getMetadataValue(OBFrameMetadataType type) const {
         THROW_UNSUPPORTED_OPERATION_EXCEPTION(utils::string::to_string()
                                               << "Metadata phasers are not registered! Unsupported to get metadata for type: " << type);
     }
+    if(type == OB_FRAME_METADATA_TYPE_TIMESTAMP && timestampMetadataValid_) {
+        return timestampMetadata_;
+    }
+    if(type == OB_FRAME_METADATA_TYPE_SENSOR_TIMESTAMP && sensorTimestampMetadataValid_) {
+        return sensorTimestampMetadata_;
+    }
     auto parser = metadataPhasers_->get(type);
     if(!parser->isSupported(metadata_, metadataSize_)) {
         THROW_UNSUPPORTED_OPERATION_EXCEPTION(utils::string::to_string() << "Current metadata does not contain metadata for type: " << type);
     }
-    return parser->getValue(metadata_, metadataSize_);
+    return parser->getValue(*this);
+}
+
+void Frame::cacheTimestampMetadata(OBFrameMetadataType type) {
+    if(type == OB_FRAME_METADATA_TYPE_TIMESTAMP) {
+        const auto value        = getMetadataValue(type);
+        timestampMetadata_      = value;
+        timestampMetadataValid_ = true;
+    }
+    else if(type == OB_FRAME_METADATA_TYPE_SENSOR_TIMESTAMP) {
+        // Sensor parsers may depend on TIMESTAMP. Resolve it once before deriving the sensor value.
+        if(hasMetadata(OB_FRAME_METADATA_TYPE_TIMESTAMP) && !timestampMetadataValid_) {
+            cacheTimestampMetadata(OB_FRAME_METADATA_TYPE_TIMESTAMP);
+        }
+        const auto value              = getMetadataValue(type);
+        sensorTimestampMetadata_      = value;
+        sensorTimestampMetadataValid_ = true;
+    }
+    else {
+        THROW_INVALID_PARAM_EXCEPTION("Only timestamp metadata can be cached");
+    }
 }
 
 void Frame::setAuthToken(uint64_t token) {
@@ -266,6 +301,9 @@ void Frame::setStreamProfile(std::shared_ptr<const StreamProfile> streamProfile)
 }
 
 void Frame::copyInfoFromOther(const std::shared_ptr<const Frame> otherFrame) {
+    if(otherFrame.get() == this) {
+        return;
+    }
     number_                  = otherFrame->number_;
     timeStampUsec_           = otherFrame->timeStampUsec_;
     systemTimeStampUsec_     = otherFrame->systemTimeStampUsec_;
@@ -275,9 +313,13 @@ void Frame::copyInfoFromOther(const std::shared_ptr<const Frame> otherFrame) {
 
     metadataSize_ = otherFrame->metadataSize_;
     memcpy(metadata_, otherFrame->metadata_, metadataSize_);
-    metadataPhasers_ = otherFrame->metadataPhasers_;
-    frameToken_      = otherFrame->frameToken_;
-    deviceInfo_      = otherFrame->deviceInfo_;
+    metadataPhasers_              = otherFrame->metadataPhasers_;
+    timestampMetadata_            = otherFrame->timestampMetadata_;
+    sensorTimestampMetadata_      = otherFrame->sensorTimestampMetadata_;
+    timestampMetadataValid_       = otherFrame->timestampMetadataValid_;
+    sensorTimestampMetadataValid_ = otherFrame->sensorTimestampMetadataValid_;
+    frameToken_                   = otherFrame->frameToken_;
+    deviceInfo_                   = otherFrame->deviceInfo_;
 }
 
 size_t Frame::getDataBufSize() const {
@@ -342,7 +384,7 @@ float DepthFrame::getValueScale() const {
     return valueScale_;
 }
 
-void DepthFrame::setMaxValidDepthValue(uint16_t maxDepthValue){
+void DepthFrame::setMaxValidDepthValue(uint16_t maxDepthValue) {
     maxValidDepthValue_ = maxDepthValue;
 }
 

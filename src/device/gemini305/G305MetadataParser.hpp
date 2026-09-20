@@ -7,6 +7,7 @@
 #include <set>
 
 #include "IFrame.hpp"
+#include "frame/Frame.hpp"
 #include "G305MetadataTypes.hpp"
 #include "exception/ObException.hpp"
 #include "logger/LoggerInterval.hpp"
@@ -213,7 +214,20 @@ public:
             return -1;
         }
 
-        auto calculatedTimestamp = G305PayloadHeadMetadataColorRightDeviceTimestampParser::getValue(metadata, dataSize);
+        return applySensorOffset(metadata, G305PayloadHeadMetadataColorRightDeviceTimestampParser::getValue(metadata, dataSize));
+    }
+
+    int64_t getValue(const Frame &frame) override {
+        if(!frame.hasMetadata(OB_FRAME_METADATA_TYPE_TIMESTAMP)) {
+            // No TIMESTAMP metadata available: fall back to the raw metadata path (which returns -1
+            // without advancing the stateful calculator when the metadata is insufficient) instead of throwing.
+            return getValue(frame.getMetadata(), frame.getMetadataSize());
+        }
+        return applySensorOffset(frame.getMetadata(), frame.getMetadataValue(OB_FRAME_METADATA_TYPE_TIMESTAMP));
+    }
+
+private:
+    int64_t applySensorOffset(const uint8_t *metadata, int64_t calculatedTimestamp) const {
         // get frame offset,unit 100us
         auto     standardUvcMetadata = *(reinterpret_cast<const StandardUvcFramePayloadHeader *>(metadata));
         uint16_t rawValue            = (((standardUvcMetadata.scrSourceClock[1] & 0xF8) >> 3) | ((standardUvcMetadata.scrSourceClock[2] & 0x7F) << 5));
@@ -246,7 +260,20 @@ public:
             return -1;
         }
 
-        auto calculatedTimestamp = G305PayloadHeadMetadataColorDeviceTimestampParser::getValue(metadata, dataSize);
+        return applySensorOffset(metadata, G305PayloadHeadMetadataColorDeviceTimestampParser::getValue(metadata, dataSize));
+    }
+
+    int64_t getValue(const Frame &frame) override {
+        if(!frame.hasMetadata(OB_FRAME_METADATA_TYPE_TIMESTAMP)) {
+            // No TIMESTAMP metadata available: fall back to the raw metadata path (which returns -1
+            // without advancing the stateful calculator when the metadata is insufficient) instead of throwing.
+            return getValue(frame.getMetadata(), frame.getMetadataSize());
+        }
+        return applySensorOffset(frame.getMetadata(), frame.getMetadataValue(OB_FRAME_METADATA_TYPE_TIMESTAMP));
+    }
+
+private:
+    int64_t applySensorOffset(const uint8_t *metadata, int64_t calculatedTimestamp) const {
         // get frame offset,unit 100us
         auto     standardUvcMetadata = *(reinterpret_cast<const StandardUvcFramePayloadHeader *>(metadata));
         uint16_t rawValue            = (((standardUvcMetadata.scrSourceClock[1] & 0xF8) >> 3) | ((standardUvcMetadata.scrSourceClock[2] & 0x7F) << 5));
@@ -379,7 +406,20 @@ public:
             return -1;
         }
 
-        auto calculatedTimestamp = G305PayloadHeadMetadataDepthDeviceTimestampParser::getValue(metadata, dataSize);
+        return applySensorOffset(metadata, G305PayloadHeadMetadataDepthDeviceTimestampParser::getValue(metadata, dataSize));
+    }
+
+    int64_t getValue(const Frame &frame) override {
+        if(!frame.hasMetadata(OB_FRAME_METADATA_TYPE_TIMESTAMP)) {
+            // No TIMESTAMP metadata available: fall back to the raw metadata path (which returns -1
+            // without advancing the stateful calculator when the metadata is insufficient) instead of throwing.
+            return getValue(frame.getMetadata(), frame.getMetadataSize());
+        }
+        return applySensorOffset(frame.getMetadata(), frame.getMetadataValue(OB_FRAME_METADATA_TYPE_TIMESTAMP));
+    }
+
+private:
+    int64_t applySensorOffset(const uint8_t *metadata, int64_t calculatedTimestamp) const {
         // get depth exposure,unit 1us
         auto     standardUvcMetadata = *(reinterpret_cast<const StandardUvcFramePayloadHeader *>(metadata));
         uint32_t exposure =

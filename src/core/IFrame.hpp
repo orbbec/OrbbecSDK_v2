@@ -17,9 +17,13 @@ typedef std::function<void(std::shared_ptr<Frame>)>       MutableFrameCallback;
 
 class IFrameMetadataParser {
 public:
-    virtual ~IFrameMetadataParser()                                       = default;
-    virtual int64_t getValue(const uint8_t *metadata, size_t dataSize)    = 0;
-    virtual bool    isSupported(const uint8_t *metadata, size_t dataSize) = 0;
+    virtual ~IFrameMetadataParser()                                    = default;
+    virtual int64_t getValue(const uint8_t *metadata, size_t dataSize) = 0;
+
+    // The frame is borrowed for this call only; parsers must not retain it.
+    virtual int64_t getValue(const Frame &frame);
+
+    virtual bool isSupported(const uint8_t *metadata, size_t dataSize) = 0;
 };
 
 typedef std::function<int64_t(const int64_t &param)> FrameMetadataModifier;

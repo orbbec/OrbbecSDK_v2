@@ -39,6 +39,7 @@ private:
     std::string           sensorType_;
     std::string           baseFilename_;           // filename without ".csv" extension; set on first frame
     bool                  fileReady_     = false;  // true once the file has been opened on first frame
+    bool                  isVideoStream_ = false;
     bool                  headerWritten_ = false;
     uint32_t              writeCount_    = 0;
     uint32_t              rowCount_      = 0;

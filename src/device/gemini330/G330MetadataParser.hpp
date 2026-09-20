@@ -7,6 +7,7 @@
 #include <set>
 
 #include "IFrame.hpp"
+#include "frame/Frame.hpp"
 #include "G330MetadataTypes.hpp"
 #include "exception/ObException.hpp"
 #include "logger/LoggerInterval.hpp"
@@ -19,7 +20,7 @@
 namespace libobsensor {
 template <typename T> class G330MetadataTimestampParser : public IFrameMetadataParser {
 public:
-    G330MetadataTimestampParser(){};
+    G330MetadataTimestampParser() {};
     virtual ~G330MetadataTimestampParser() noexcept override = default;
 
     int64_t getValue(const uint8_t *metadata, size_t dataSize) override {
@@ -40,8 +41,8 @@ public:
 // for depth and ir sensor
 class G330MetadataSensorTimestampParser : public IFrameMetadataParser {
 public:
-    G330MetadataSensorTimestampParser(){};
-    explicit G330MetadataSensorTimestampParser(FrameMetadataModifier exp_to_usec) : exp_to_usec_(exp_to_usec){};
+    G330MetadataSensorTimestampParser() {};
+    explicit G330MetadataSensorTimestampParser(FrameMetadataModifier exp_to_usec) : exp_to_usec_(exp_to_usec) {};
     virtual ~G330MetadataSensorTimestampParser() noexcept override = default;
 
     int64_t getValue(const uint8_t *metadata, size_t dataSize) override {
@@ -65,8 +66,8 @@ private:
 
 class G330ColorMetadataSensorTimestampParser : public IFrameMetadataParser {
 public:
-    G330ColorMetadataSensorTimestampParser(){};
-    explicit G330ColorMetadataSensorTimestampParser(FrameMetadataModifier exp_to_usec) : exp_to_usec_(exp_to_usec){};
+    G330ColorMetadataSensorTimestampParser() {};
+    explicit G330ColorMetadataSensorTimestampParser(FrameMetadataModifier exp_to_usec) : exp_to_usec_(exp_to_usec) {};
     virtual ~G330ColorMetadataSensorTimestampParser() noexcept override = default;
 
     int64_t getValue(const uint8_t *metadata, size_t dataSize) override {
@@ -90,7 +91,7 @@ private:
 
 class G330ScrMetadataParserBase : public IFrameMetadataParser {
 public:
-    G330ScrMetadataParserBase(){};
+    G330ScrMetadataParserBase() {};
     virtual ~G330ScrMetadataParserBase() noexcept override = default;
 
     bool isSupported(const uint8_t *metadata, size_t dataSize) override {
@@ -142,9 +143,22 @@ public:
             return -1;
         }
 
-        auto calculatedTimestamp = G330PayloadHeadMetadataTimestampParser::getValue(metadata, dataSize);
+        return applySensorOffset(metadata, G330PayloadHeadMetadataTimestampParser::getValue(metadata, dataSize));
+    }
+
+    int64_t getValue(const Frame &frame) override {
+        if(!frame.hasMetadata(OB_FRAME_METADATA_TYPE_TIMESTAMP)) {
+            // No TIMESTAMP metadata available: fall back to the raw metadata path (which returns -1
+            // without advancing the stateful calculator when the metadata is insufficient) instead of throwing.
+            return getValue(frame.getMetadata(), frame.getMetadataSize());
+        }
+        return applySensorOffset(frame.getMetadata(), frame.getMetadataValue(OB_FRAME_METADATA_TYPE_TIMESTAMP));
+    }
+
+private:
+    int64_t applySensorOffset(const uint8_t *metadata, int64_t calculatedTimestamp) const {
         // get frame offset,unit 100us
-        auto    standardUvcMetadata = *(reinterpret_cast<const StandardUvcFramePayloadHeader *>(metadata));
+        auto     standardUvcMetadata = *(reinterpret_cast<const StandardUvcFramePayloadHeader *>(metadata));
         uint16_t rawValue            = (((standardUvcMetadata.scrSourceClock[1] & 0xF8) >> 3) | ((standardUvcMetadata.scrSourceClock[2] & 0x7F) << 5));
         int32_t  frameOffset         = 0;
         // 12bit offset value check sign bit
@@ -226,7 +240,20 @@ public:
             return -1;
         }
 
-        auto calculatedTimestamp = G330PayloadHeadMetadataTimestampParser::getValue(metadata, dataSize);
+        return applySensorOffset(metadata, G330PayloadHeadMetadataTimestampParser::getValue(metadata, dataSize));
+    }
+
+    int64_t getValue(const Frame &frame) override {
+        if(!frame.hasMetadata(OB_FRAME_METADATA_TYPE_TIMESTAMP)) {
+            // No TIMESTAMP metadata available: fall back to the raw metadata path (which returns -1
+            // without advancing the stateful calculator when the metadata is insufficient) instead of throwing.
+            return getValue(frame.getMetadata(), frame.getMetadataSize());
+        }
+        return applySensorOffset(frame.getMetadata(), frame.getMetadataValue(OB_FRAME_METADATA_TYPE_TIMESTAMP));
+    }
+
+private:
+    int64_t applySensorOffset(const uint8_t *metadata, int64_t calculatedTimestamp) const {
         // get depth exposure,unit 1us
         auto     standardUvcMetadata = *(reinterpret_cast<const StandardUvcFramePayloadHeader *>(metadata));
         uint32_t exposure =
@@ -394,7 +421,7 @@ public:
         }
 
         auto propertyServer = device_->getPropertyServer();
-        if (propertyServer) {
+        if(propertyServer) {
             propertyServer_ = propertyServer.get();
         }
         if(propertyServer_ && propertyServer_->isPropertySupported(propertyId_, PROP_OP_READ, PROP_ACCESS_INTERNAL)) {
@@ -405,7 +432,7 @@ public:
                     if(propertyId != static_cast<uint32_t>(propertyId_)) {
                         return;
                     }
-                    auto propertyItem   = propertyServer_->getPropertyItem(propertyId_, PROP_ACCESS_USER);
+                    auto propertyItem = propertyServer_->getPropertyItem(propertyId_, PROP_ACCESS_USER);
                     if(propertyItem.type == OB_STRUCT_PROPERTY) {
                         data_ = parseStructurePropertyValue(type, propertyId, data);
                     }
@@ -543,7 +570,7 @@ private:
 
     FrameMetadataModifier modifier_;
 
-    std::atomic<bool> initPropertyValue_;
+    std::atomic<bool>                initPropertyValue_;
     std::shared_ptr<IPropertyServer> propertyServer_;
 };
 
