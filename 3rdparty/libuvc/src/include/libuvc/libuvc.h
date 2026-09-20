@@ -597,6 +597,22 @@ uvc_error_t uvc_stream_get_frame(uvc_stream_handle_t *strmh, uvc_frame_t **frame
 uvc_error_t uvc_stream_stop(uvc_stream_handle_t *strmh);
 void        uvc_stream_close(uvc_stream_handle_t *strmh);
 
+/** Severity of a diagnostics message. The sink decides what to log; libuvc decides
+ * what a message means. CRITICAL messages (e.g. an exhausted transfer queue) must be
+ * logged in any build, DEBUG/WARN are detail that a diagnostic build should gate. */
+typedef enum {
+    UVC_DIAG_DEBUG = 0, /* per-second snapshot and other detail */
+    UVC_DIAG_WARN,      /* transient submit failures and summaries */
+    UVC_DIAG_IMPORTANT, /* rate-limited summaries worth logging in any build */
+    UVC_DIAG_CRITICAL   /* recovery is not possible: transfer queue exhausted */
+} uvc_diag_level_t;
+/** Optional diagnostics sink. Set before starting the stream; do not call stream APIs from the sink. */
+typedef void (*uvc_stream_diagnostic_callback_t)(uvc_diag_level_t level, const char *message, void *user_ptr);
+/** A NULL cb disables reporting; transfer recovery runs either way. */
+void uvc_stream_set_diagnostic_callback(uvc_stream_handle_t *strmh, uvc_stream_diagnostic_callback_t cb, void *user_ptr);
+/** Nonblocking snapshot, suitable for reporting before a timeout recovery. */
+void uvc_stream_log_diagnostics(uvc_stream_handle_t *strmh, const char *reason);
+
 int uvc_get_ctrl_len(uvc_device_handle_t *devh, uint8_t unit, uint8_t ctrl);
 int uvc_get_ctrl(uvc_device_handle_t *devh, uint8_t unit, uint8_t ctrl, void *data, int len, enum uvc_req_code req_code);
 int uvc_set_ctrl(uvc_device_handle_t *devh, uint8_t unit, uint8_t ctrl, void *data, int len);

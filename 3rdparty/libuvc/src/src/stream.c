@@ -739,10 +739,304 @@ void _uvc_process_payload(uvc_stream_handle_t *strmh, uint8_t *payload, size_t p
  *
  * @param transfer Active transfer
  */
+
+static uint64_t _uvc_diagnostic_time_ms(void) {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (uint64_t)ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+}
+
+void uvc_stream_set_diagnostic_callback(uvc_stream_handle_t *strmh, uvc_stream_diagnostic_callback_t cb, void *user_ptr) {
+    strmh->diagnostic_cb   = cb;
+    strmh->diagnostic_user = user_ptr;
+}
+
+void uvc_stream_log_diagnostics(uvc_stream_handle_t *strmh, const char *reason) {
+    char     message[1024];
+    uint64_t now;
+    /* Retry counters share diagnostic_mutex; never acquire cb_mutex here. */
+    if(!strmh->diagnostic_cb)
+        return;
+    if(pthread_mutex_trylock(&strmh->diagnostic_mutex) != 0) {
+        strmh->diagnostic_cb(UVC_DIAG_DEBUG, "UVC diagnostics busy: submission or diagnostic update in progress", strmh->diagnostic_user);
+        return;
+    }
+    now = _uvc_diagnostic_time_ms();
+    snprintf(message, sizeof(message),
+             "UVC diagnostics reason=%s stream=%p bus=%u address=%u endpoint=0x%02x "
+             "active=%u inflight=%u submits=%llu submit_failures=%llu callbacks=%llu "
+             "status[completed,error,timeout,cancelled,stall,no_device,overflow]=[%llu,%llu,%llu,%llu,%llu,%llu,%llu] "
+             "retry_parked=%u retry_submits=%llu retry_successes=%llu retry_max_recovery_ms=%llu "
+             "now_ms=%llu last_submit_ms=%llu last_callback_ms=%llu",
+             reason, (void *)strmh, libusb_get_bus_number(strmh->devh->dev->usb_dev), libusb_get_device_address(strmh->devh->dev->usb_dev),
+             strmh->stream_if->bEndpointAddress, strmh->diagnostic_active, strmh->diagnostic_inflight, (unsigned long long)strmh->diagnostic_submits,
+             (unsigned long long)strmh->diagnostic_submit_failures, (unsigned long long)strmh->diagnostic_callbacks,
+             (unsigned long long)strmh->diagnostic_status[0], (unsigned long long)strmh->diagnostic_status[1], (unsigned long long)strmh->diagnostic_status[2],
+             (unsigned long long)strmh->diagnostic_status[3], (unsigned long long)strmh->diagnostic_status[4], (unsigned long long)strmh->diagnostic_status[5],
+             (unsigned long long)strmh->diagnostic_status[6], strmh->retry_parked_count, (unsigned long long)strmh->retry_submits,
+             (unsigned long long)strmh->retry_successes, (unsigned long long)strmh->retry_max_recovery_ms, (unsigned long long)now,
+             (unsigned long long)strmh->diagnostic_last_submit_ms, (unsigned long long)strmh->diagnostic_last_callback_ms);
+    pthread_mutex_unlock(&strmh->diagnostic_mutex);
+    strmh->diagnostic_cb(UVC_DIAG_DEBUG, message, strmh->diagnostic_user);
+}
+
+/* Emit at most one summary per LIBUVC_RETRY_SUMMARY_INTERVAL_MS; stop/close flush any remainder.
+ * Only diagnostic_mutex is acquired, so callers may already hold cb_mutex. */
+static void _uvc_log_retry_summary(uvc_stream_handle_t *strmh, const char *reason, int force) {
+    char     message[512];
+    uint64_t now;
+    if(!strmh->diagnostic_cb)
+        return;
+    pthread_mutex_lock(&strmh->diagnostic_mutex);
+    now = _uvc_diagnostic_time_ms();
+    if(!strmh->retry_log_started || (!force && now - strmh->retry_log_last_ms < LIBUVC_RETRY_SUMMARY_INTERVAL_MS)
+       || (strmh->retry_log_failures == strmh->diagnostic_submit_failures && strmh->retry_log_submits == strmh->retry_submits
+           && strmh->retry_log_successes == strmh->retry_successes)) {
+        pthread_mutex_unlock(&strmh->diagnostic_mutex);
+        return;
+    }
+    snprintf(message, sizeof(message),
+             "UVC retry summary reason=%s stream=%p submit_failures_delta=%llu retry_attempts_delta=%llu "
+             "recovered_delta=%llu pending=%u active=%u inflight=%u max_recovery_ms=%llu",
+             reason, (void *)strmh, (unsigned long long)(strmh->diagnostic_submit_failures - strmh->retry_log_failures),
+             (unsigned long long)(strmh->retry_submits - strmh->retry_log_submits), (unsigned long long)(strmh->retry_successes - strmh->retry_log_successes),
+             strmh->retry_parked_count, strmh->diagnostic_active, strmh->diagnostic_inflight, (unsigned long long)strmh->retry_max_recovery_ms);
+    strmh->retry_log_last_ms   = now;
+    strmh->retry_log_failures  = strmh->diagnostic_submit_failures;
+    strmh->retry_log_submits   = strmh->retry_submits;
+    strmh->retry_log_successes = strmh->retry_successes;
+    pthread_mutex_unlock(&strmh->diagnostic_mutex);
+    strmh->diagnostic_cb(UVC_DIAG_IMPORTANT, message, strmh->diagnostic_user);
+}
+
+/* The submission never reached the kernel, so the same transfer can be retried.
+ * Every other failure is treated as unrecoverable. */
+static int _uvc_submit_is_transient(int ret) {
+    return ret == LIBUSB_ERROR_NO_MEM;
+}
+
+static int _uvc_submit_stream_transfer(uvc_stream_handle_t *strmh, struct libusb_transfer *transfer) {
+    int              ret;
+    int              report_failure = 0;
+    uvc_diag_level_t failure_level  = UVC_DIAG_WARN;
+    char             message[256];
+    /* Serialize accounting with callback entry: a completion can arrive before submit returns. */
+    pthread_mutex_lock(&strmh->diagnostic_mutex);
+    ret = libusb_submit_transfer(transfer);
+    if(ret == 0) {
+        strmh->diagnostic_submits++;
+        strmh->diagnostic_inflight++;
+        strmh->diagnostic_last_submit_ms = _uvc_diagnostic_time_ms();
+    }
+    else {
+        strmh->diagnostic_submit_failures++;
+        report_failure = !_uvc_submit_is_transient(ret) || !strmh->retry_log_started;
+        if(!strmh->retry_log_started) {
+            /* Log the first failure in every build; later detail remains opt-in. */
+            failure_level            = UVC_DIAG_IMPORTANT;
+            strmh->retry_log_started = 1;
+            strmh->retry_log_last_ms = _uvc_diagnostic_time_ms();
+        }
+    }
+    pthread_mutex_unlock(&strmh->diagnostic_mutex);
+    if(report_failure && strmh->diagnostic_cb) {
+        snprintf(message, sizeof(message), "UVC submit failed stream=%p transfer=%p endpoint=0x%02x ret=%d (%s)%s", (void *)strmh, (void *)transfer,
+                 transfer->endpoint, ret, libusb_error_name(ret), _uvc_submit_is_transient(ret) ? " transient, keeping transfer for retry" : "");
+        strmh->diagnostic_cb(failure_level, message, strmh->diagnostic_user);
+    }
+    return ret;
+}
+
+static void _uvc_diagnostic_retire(uvc_stream_handle_t *strmh) {
+    unsigned int active;
+    pthread_mutex_lock(&strmh->diagnostic_mutex);
+    if(strmh->diagnostic_active)
+        strmh->diagnostic_active--;
+    active = strmh->diagnostic_active;
+    pthread_mutex_unlock(&strmh->diagnostic_mutex);
+    /* Snapshot is emitted by the caller after it releases cb_mutex; emitting it here
+     * would deadlock when this runs inside _uvc_retire_slot under cb_mutex. */
+    if(strmh->running && strmh->diagnostic_cb && active == 0)
+        strmh->diagnostic_cb(UVC_DIAG_CRITICAL, "UVC transfer queue exhausted while stream is running", strmh->diagnostic_user);
+}
+
+static void _uvc_diagnostic_callback_entry(uvc_stream_handle_t *strmh, struct libusb_transfer *transfer) {
+    uint64_t now;
+    int      report;
+    char     message[256];
+    now = _uvc_diagnostic_time_ms();
+    pthread_mutex_lock(&strmh->diagnostic_mutex);
+    strmh->diagnostic_callbacks++;
+    if(strmh->diagnostic_inflight)
+        strmh->diagnostic_inflight--;
+    if((unsigned int)transfer->status < 7)
+        strmh->diagnostic_status[transfer->status]++;
+    strmh->diagnostic_last_callback_ms = now;
+    report                             = now - strmh->diagnostic_last_report_ms >= 1000;
+    if(report)
+        strmh->diagnostic_last_report_ms = now;
+    pthread_mutex_unlock(&strmh->diagnostic_mutex);
+    if(!strmh->diagnostic_cb)
+        return;
+    /* Cancellation during stop is expected; transient statuses remain visible in the summary. */
+    if(strmh->running
+       && (transfer->status == LIBUSB_TRANSFER_ERROR || transfer->status == LIBUSB_TRANSFER_CANCELLED || transfer->status == LIBUSB_TRANSFER_NO_DEVICE)) {
+        snprintf(message, sizeof(message), "UVC transfer retired stream=%p transfer=%p endpoint=0x%02x status=%d (%s) actual_length=%d running=1",
+                 (void *)strmh, (void *)transfer, transfer->endpoint, transfer->status, libusb_error_name(transfer->status), transfer->actual_length);
+        strmh->diagnostic_cb(UVC_DIAG_WARN, message, strmh->diagnostic_user);
+    }
+    if(report) {
+        _uvc_log_retry_summary(strmh, "periodic", 0);
+        uvc_stream_log_diagnostics(strmh, "periodic");
+    }
+}
+
+/* May be called with or without cb_mutex held, including the callback's fast-path check.
+ * Writers hold cb_mutex then diagnostic_mutex; never take these in reverse order. */
+static unsigned int _uvc_retry_pending_count(uvc_stream_handle_t *strmh) {
+    unsigned int count;
+    pthread_mutex_lock(&strmh->diagnostic_mutex);
+    count = strmh->retry_parked_count;
+    pthread_mutex_unlock(&strmh->diagnostic_mutex);
+    return count;
+}
+
+/* Index of the slot owning this transfer, or -1. cb_mutex must be held. */
+static int _uvc_slot_of(uvc_stream_handle_t *strmh, struct libusb_transfer *transfer) {
+    int i;
+    for(i = 0; i < (int)strmh->actual_transfer_buff_num; i++) {
+        if(strmh->transfers[i] == transfer)
+            return i;
+    }
+    return -1;
+}
+
+/* Release one slot's transfer and buffer exactly once. cb_mutex must be held. */
+static void _uvc_retire_slot(uvc_stream_handle_t *strmh, int slot) {
+    struct libusb_transfer *transfer = strmh->transfers[slot];
+    if(transfer == NULL)
+        return;
+    if(strmh->retry_parked[slot]) {
+        strmh->retry_parked[slot] = 0;
+        pthread_mutex_lock(&strmh->diagnostic_mutex);
+        if(strmh->retry_parked_count)
+            strmh->retry_parked_count--;
+        pthread_mutex_unlock(&strmh->diagnostic_mutex);
+    }
+    free(transfer->buffer);
+    libusb_free_transfer(transfer);
+    strmh->transfers[slot] = NULL;
+    _uvc_diagnostic_retire(strmh);
+}
+
+/* Park a slot for a later retry, keeping its transfer and buffer, so recovery needs no
+ * new allocation. cb_mutex must be held. */
+static void _uvc_park_slot_for_retry(uvc_stream_handle_t *strmh, int slot) {
+    uint64_t now = _uvc_diagnostic_time_ms();
+    uint64_t delay;
+    if(!strmh->retry_parked[slot]) {
+        strmh->retry_parked[slot]           = 1;
+        strmh->retry_attempts[slot]         = 0;
+        strmh->retry_first_failure_ms[slot] = now;
+        pthread_mutex_lock(&strmh->diagnostic_mutex);
+        strmh->retry_parked_count++;
+        pthread_mutex_unlock(&strmh->diagnostic_mutex);
+    }
+    strmh->retry_attempts[slot]++;
+    if(now - strmh->retry_first_failure_ms[slot] >= LIBUVC_RETRY_FAST_WINDOW_MS) {
+        /* No longer brief: keep trying, but slowly, rather than giving up. */
+        delay = LIBUVC_RETRY_SLOW_INTERVAL_MS;
+    }
+    else {
+        uint32_t shift = strmh->retry_attempts[slot] - 1;
+        if(shift > 5)
+            shift = 5;
+        delay = (uint64_t)1 << shift;
+        if(delay > LIBUVC_RETRY_BACKOFF_MAX_MS)
+            delay = LIBUVC_RETRY_BACKOFF_MAX_MS;
+    }
+    strmh->retry_due_ms[slot] = now + delay;
+}
+
+/* Resubmit slots parked by an earlier transient failure. Driven by completion callbacks,
+ * which arrive on the bus schedule, so a parked slot is retried within about one
+ * transfer period while anything is still in flight. Never blocks or sleeps.
+ *
+ * cb_mutex must be held, and the caller must still own a live transfer: staying inside
+ * its critical section keeps a concurrent stop from closing the handle underneath us. */
+static void _uvc_retry_parked_slots_locked(uvc_stream_handle_t *strmh) {
+    int      slot;
+    int      submitted = 0;
+    int      alive = 0, parked = 0, stalled = 0;
+    uint64_t now;
+    char     message[256];
+
+    if(_uvc_retry_pending_count(strmh) == 0)
+        return;
+
+    now = _uvc_diagnostic_time_ms();
+    for(slot = 0; slot < (int)strmh->actual_transfer_buff_num; slot++) {
+        struct libusb_transfer *transfer = strmh->transfers[slot];
+        int                     ret;
+        if(transfer == NULL || !strmh->retry_parked[slot])
+            continue;
+        if(submitted >= LIBUVC_RETRY_MAX_PER_CALLBACK || now < strmh->retry_due_ms[slot])
+            continue;
+
+        pthread_mutex_lock(&strmh->diagnostic_mutex);
+        strmh->retry_submits++;
+        pthread_mutex_unlock(&strmh->diagnostic_mutex);
+        ret = _uvc_submit_stream_transfer(strmh, transfer);
+        submitted++;
+        if(ret == 0) {
+            uint64_t elapsed          = now - strmh->retry_first_failure_ms[slot];
+            strmh->retry_parked[slot] = 0;
+            unsigned int still_parked;
+            strmh->retry_attempts[slot] = 0;
+            pthread_mutex_lock(&strmh->diagnostic_mutex);
+            if(strmh->retry_parked_count)
+                strmh->retry_parked_count--;
+            strmh->retry_successes++;
+            if(elapsed > strmh->retry_max_recovery_ms)
+                strmh->retry_max_recovery_ms = elapsed;
+            still_parked = strmh->retry_parked_count;
+            pthread_mutex_unlock(&strmh->diagnostic_mutex);
+            if(still_parked == 0)
+                _uvc_log_retry_summary(strmh, "recovered", 0);
+        }
+        else if(_uvc_submit_is_transient(ret)) {
+            _uvc_park_slot_for_retry(strmh, slot);
+        }
+        else {
+            _uvc_retire_slot(strmh, slot);
+        }
+    }
+
+    /* Nothing left in flight to drive further retries. Report it, rate limited. */
+    for(slot = 0; slot < (int)strmh->actual_transfer_buff_num; slot++) {
+        if(strmh->transfers[slot] == NULL)
+            continue;
+        alive++;
+        if(strmh->retry_parked[slot])
+            parked++;
+    }
+    if(alive > 0 && alive == parked && now - strmh->retry_last_stall_report_ms >= 1000) {
+        strmh->retry_last_stall_report_ms = now;
+        stalled                           = 1;
+    }
+
+    if(stalled && strmh->diagnostic_cb) {
+        snprintf(message, sizeof(message), "UVC transfer queue temporarily empty stream=%p parked=%d of %d: no completion left to drive recovery",
+                 (void *)strmh, parked, alive);
+        strmh->diagnostic_cb(UVC_DIAG_CRITICAL, message, strmh->diagnostic_user);
+    }
+}
+
 void LIBUSB_CALL _uvc_stream_callback(struct libusb_transfer *transfer) {
     uvc_stream_handle_t *strmh = transfer->user_data;
 
     int resubmit = 1;
+    _uvc_diagnostic_callback_entry(strmh, transfer);
 
     switch(transfer->status) {
     case LIBUSB_TRANSFER_COMPLETED:
@@ -774,22 +1068,18 @@ void LIBUSB_CALL _uvc_stream_callback(struct libusb_transfer *transfer) {
     case LIBUSB_TRANSFER_CANCELLED:
     case LIBUSB_TRANSFER_ERROR:
     case LIBUSB_TRANSFER_NO_DEVICE: {
-        uint32_t i;
+        int slot;
         UVC_DEBUG("not retrying transfer, status = %d", transfer->status);
         pthread_mutex_lock(&strmh->cb_mutex);
 
         /* Mark transfer as deleted. */
-        for(i = 0; i < strmh->actual_transfer_buff_num; i++) {
-            if(strmh->transfers[i] == transfer) {
-                UVC_DEBUG("Freeing transfer %d (%p)", i, transfer);
-                free(transfer->buffer);
-                libusb_free_transfer(transfer);
-                strmh->transfers[i] = NULL;
-                break;
-            }
-        }
-        if(i == strmh->actual_transfer_buff_num) {
+        slot = _uvc_slot_of(strmh, transfer);
+        if(slot < 0) {
             UVC_DEBUG("transfer %p not found; not freeing!", transfer);
+        }
+        else {
+            UVC_DEBUG("Freeing transfer %d (%p)", slot, transfer);
+            _uvc_retire_slot(strmh, slot);
         }
 
         resubmit = 0;
@@ -808,23 +1098,28 @@ void LIBUSB_CALL _uvc_stream_callback(struct libusb_transfer *transfer) {
 
     if(resubmit) {
         if(strmh->running) {
-            int libusbRet = libusb_submit_transfer(transfer);
-            if(libusbRet < 0) {
-                uint32_t i;
+            int libusbRet = _uvc_submit_stream_transfer(strmh, transfer);
+            /* Lock only when there is bookkeeping to do or a parked slot to retry. */
+            if(libusbRet < 0 || _uvc_retry_pending_count(strmh) > 0) {
                 pthread_mutex_lock(&strmh->cb_mutex);
 
-                /* Mark transfer as deleted. */
-                for(i = 0; i < strmh->actual_transfer_buff_num; i++) {
-                    if(strmh->transfers[i] == transfer) {
-                        UVC_DEBUG("Freeing failed transfer %d (%p)", i, transfer);
-                        free(transfer->buffer);
-                        libusb_free_transfer(transfer);
-                        strmh->transfers[i] = NULL;
-                        break;
+                if(libusbRet < 0) {
+                    int slot = _uvc_slot_of(strmh, transfer);
+                    if(slot < 0) {
+                        UVC_DEBUG("failed transfer %p not found; not freeing!", transfer);
+                    }
+                    else if(_uvc_submit_is_transient(libusbRet)) {
+                        /* Keep it: a later completion resubmits it. */
+                        _uvc_park_slot_for_retry(strmh, slot);
+                    }
+                    else {
+                        UVC_DEBUG("Freeing failed transfer %d (%p)", slot, transfer);
+                        _uvc_retire_slot(strmh, slot);
                     }
                 }
-                if(i == strmh->actual_transfer_buff_num) {
-                    UVC_DEBUG("failed transfer %p not found; not freeing!", transfer);
+
+                if(strmh->running) {
+                    _uvc_retry_parked_slots_locked(strmh);
                 }
 
                 pthread_cond_broadcast(&strmh->cb_cond);
@@ -832,21 +1127,17 @@ void LIBUSB_CALL _uvc_stream_callback(struct libusb_transfer *transfer) {
             }
         }
         else {
-            uint32_t i;
+            int slot;
             pthread_mutex_lock(&strmh->cb_mutex);
 
             /* Mark transfer as deleted. */
-            for(i = 0; i < strmh->actual_transfer_buff_num; i++) {
-                if(strmh->transfers[i] == transfer) {
-                    UVC_DEBUG("Freeing orphan transfer %d (%p)", i, transfer);
-                    free(transfer->buffer);
-                    libusb_free_transfer(transfer);
-                    strmh->transfers[i] = NULL;
-                    break;
-                }
-            }
-            if(i == strmh->actual_transfer_buff_num) {
+            slot = _uvc_slot_of(strmh, transfer);
+            if(slot < 0) {
                 UVC_DEBUG("orphan transfer %p not found; not freeing!", transfer);
+            }
+            else {
+                UVC_DEBUG("Freeing orphan transfer %d (%p)", slot, transfer);
+                _uvc_retire_slot(strmh, slot);
             }
 
             pthread_cond_broadcast(&strmh->cb_cond);
@@ -877,17 +1168,8 @@ uvc_error_t uvc_start_streaming(uvc_device_handle_t *devh, uvc_stream_ctrl_t *ct
 
     ret = uvc_stream_start(strmh, cb, user_ptr, flags);
 
-    if(ret == UVC_ERROR_NO_MEM) {
-        for(uint32_t i = 0; i < strmh->actual_transfer_buff_num; i++) {
-            if(strmh->transfers[i] != NULL) {
-                free(strmh->transfers[i]->buffer);
-                libusb_free_transfer(strmh->transfers[i]);
-                strmh->transfers[i] = NULL;
-            }
-        }
-        return ret;
-    }
-    else if(ret != UVC_SUCCESS) {
+    if(ret != UVC_SUCCESS) {
+        /* uvc_stream_start does not close the stream handle on failure. */
         uvc_stream_close(strmh);
         return ret;
     }
@@ -909,17 +1191,8 @@ uvc_error_t uvc_start_streaming_A(uvc_device_handle_t *devh, uvc_stream_ctrl_t *
     }
 
     ret = uvc_stream_start(strmh, cb, user_ptr, flags);
-    if(ret == UVC_ERROR_NO_MEM) {
-        for(uint32_t i = 0; i < strmh->actual_transfer_buff_num; i++) {
-            if(strmh->transfers[i] != NULL) {
-                free(strmh->transfers[i]->buffer);
-                libusb_free_transfer(strmh->transfers[i]);
-                strmh->transfers[i] = NULL;
-            }
-        }
-        return ret;
-    }
-    else if(ret != UVC_SUCCESS) {
+    if(ret != UVC_SUCCESS) {
+        /* uvc_stream_start does not close the stream handle on failure. */
         uvc_stream_close(strmh);
         return ret;
     }
@@ -1022,6 +1295,7 @@ uvc_error_t uvc_stream_open_ctrl(uvc_device_handle_t *devh, uvc_stream_handle_t 
     strmh->payload_header_holdbuf = malloc(LIBUVC_XFER_PAYLOAD_HEADER_BUF_SIZE);
 
     pthread_mutex_init(&strmh->cb_mutex, NULL);
+    pthread_mutex_init(&strmh->diagnostic_mutex, NULL);
     pthread_cond_init(&strmh->cb_cond, NULL);
 
     DL_APPEND(devh->streams, strmh);
@@ -1059,7 +1333,7 @@ uvc_error_t uvc_stream_start(uvc_stream_handle_t *strmh, uvc_frame_callback_t *c
     /* Total amount of data per transfer */
     size_t                  total_transfer_size = 0;
     struct libusb_transfer *transfer;
-    uint32_t                    transfer_id;
+    uint32_t                transfer_id;
 
     ctrl = &strmh->cur_ctrl;
 
@@ -1191,8 +1465,9 @@ uvc_error_t uvc_stream_start(uvc_stream_handle_t *strmh, uvc_frame_callback_t *c
         }
     }
 
-    strmh->user_cb  = cb;
-    strmh->user_ptr = user_ptr;
+    strmh->diagnostic_active = strmh->actual_transfer_buff_num;
+    strmh->user_cb           = cb;
+    strmh->user_ptr          = user_ptr;
 
     /* If the user wants it, set up a thread that calls the user's function
      * with the contents of each frame.
@@ -1201,19 +1476,49 @@ uvc_error_t uvc_stream_start(uvc_stream_handle_t *strmh, uvc_frame_callback_t *c
         pthread_create(&strmh->cb_thread, NULL, _uvc_user_caller, (void *)strmh);
     }
 
-    for(transfer_id = 0; transfer_id < strmh->actual_transfer_buff_num; transfer_id++) {
-        ret = libusb_submit_transfer(strmh->transfers[transfer_id]);
-        if(ret != UVC_SUCCESS) {
-            UVC_DEBUG("libusb_submit_transfer failed: %d", ret);
-            break;
-        }
-    }
+    {
+        /* Submit every slot. A transient failure parks its transfer instead of dropping
+         * it, so the queue is not silently shortened. */
+        int         submitted   = 0;
+        uvc_error_t lastFailure = UVC_SUCCESS;
 
-    if(ret != UVC_SUCCESS && transfer_id > 0) {
-        for(; transfer_id < strmh->actual_transfer_buff_num; transfer_id++) {
-            free(strmh->transfers[transfer_id]->buffer);
-            libusb_free_transfer(strmh->transfers[transfer_id]);
-            strmh->transfers[transfer_id] = 0;
+        for(transfer_id = 0; transfer_id < strmh->actual_transfer_buff_num; transfer_id++) {
+            ret = _uvc_submit_stream_transfer(strmh, strmh->transfers[transfer_id]);
+            if(ret == UVC_SUCCESS) {
+                submitted++;
+                continue;
+            }
+            UVC_DEBUG("libusb_submit_transfer failed: %d", ret);
+            lastFailure = ret;
+            pthread_mutex_lock(&strmh->cb_mutex);
+            if(_uvc_submit_is_transient(ret)) {
+                _uvc_park_slot_for_retry(strmh, transfer_id);
+            }
+            else {
+                _uvc_retire_slot(strmh, transfer_id);
+            }
+            pthread_mutex_unlock(&strmh->cb_mutex);
+        }
+
+        if(submitted == 0) {
+            /* Nothing in flight can drive a retry: roll back and report the failure. */
+            int slot;
+            pthread_mutex_lock(&strmh->cb_mutex);
+            strmh->running = 0;
+            for(slot = 0; slot < (int)strmh->actual_transfer_buff_num; slot++) {
+                _uvc_retire_slot(strmh, slot);
+            }
+            pthread_cond_broadcast(&strmh->cb_cond);
+            pthread_mutex_unlock(&strmh->cb_mutex);
+            if(strmh->user_cb) {
+                pthread_join(strmh->cb_thread, NULL);
+            }
+            /* Keep the handle: the caller owns it and will close it on the failure it
+             * receives. Closing it here would free memory the caller still references. */
+            _uvc_log_retry_summary(strmh, "start_failed", 1);
+            ret = lastFailure;
+            UVC_EXIT(ret);
+            return ret;
         }
         ret = UVC_SUCCESS;
     }
@@ -1463,30 +1768,45 @@ uvc_error_t uvc_stream_stop(uvc_stream_handle_t *strmh) {
     strmh->running = 0;
 
     pthread_mutex_lock(&strmh->cb_mutex);
+    _uvc_log_retry_summary(strmh, "before_stop", 1);
 
     for(i = 0; i < strmh->actual_transfer_buff_num; i++) {
         if(strmh->transfers[i] != NULL) {
-            int res = libusb_cancel_transfer(strmh->transfers[i]);
+            int res;
+            if(strmh->retry_parked[i]) {
+                /* No kernel request, so no cancellation arrives: release it here or the
+                 * wait below never ends. */
+                _uvc_retire_slot(strmh, i);
+                continue;
+            }
+            res = libusb_cancel_transfer(strmh->transfers[i]);
             // 增加LIBUSB_ERROR_NO_DEVICE状态的判断，解决Android7平台贾维斯设备开流状态下热拔插概率性
             // 出现EventHandle线程无法退出的问题
             if(res < 0 && res != LIBUSB_ERROR_NOT_FOUND && res != LIBUSB_ERROR_NO_DEVICE && res != LIBUSB_ERROR_OTHER) {
-                free(strmh->transfers[i]->buffer);
-                libusb_free_transfer(strmh->transfers[i]);
-                strmh->transfers[i] = NULL;
+                _uvc_retire_slot(strmh, i);
             }
         }
     }
 
     /* Wait for transfers to complete/cancel */
     do {
+        int pending = 0;
         for(i = 0; i < strmh->actual_transfer_buff_num; i++) {
-            if(strmh->transfers[i] != NULL)
-                break;
+            if(strmh->transfers[i] == NULL)
+                continue;
+            if(strmh->retry_parked[i]) {
+                /* Parked by a callback after the cancel pass above: nothing will complete
+                 * for it, so release it instead of waiting forever. */
+                _uvc_retire_slot(strmh, i);
+                continue;
+            }
+            pending = 1;
         }
-        if(i == strmh->actual_transfer_buff_num)
+        if(!pending)
             break;
         pthread_cond_wait(&strmh->cb_cond, &strmh->cb_mutex);
     } while(1);
+    _uvc_log_retry_summary(strmh, "stopped", 1);
     // Kick the user thread awake
     pthread_cond_broadcast(&strmh->cb_cond);
     pthread_mutex_unlock(&strmh->cb_mutex);
@@ -1523,7 +1843,6 @@ void uvc_stream_close(uvc_stream_handle_t *strmh) {
 
     if (strmh->frame.payload_header)
         free(strmh->frame.payload_header);
-
     free(strmh->outbuf);
     free(strmh->holdbuf);
 
@@ -1535,6 +1854,7 @@ void uvc_stream_close(uvc_stream_handle_t *strmh) {
 
     pthread_cond_destroy(&strmh->cb_cond);
     pthread_mutex_destroy(&strmh->cb_mutex);
+    pthread_mutex_destroy(&strmh->diagnostic_mutex);
 
     DL_DELETE(strmh->devh->streams, strmh);
     free(strmh);

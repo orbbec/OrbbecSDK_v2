@@ -2099,23 +2099,36 @@ static int submit_iso_transfer(struct usbi_transfer *itransfer) {
     /* submit URBs */
     for(i = 0; i < num_urbs; i++) {
         int r = ioctl(hpriv->fd, IOCTL_USBFS_SUBMITURB, urbs[i]);
+        int saved_errno;
 
         if(r == 0)
             continue;
 
-        if(errno == ENODEV) {
+        /* Logging below may overwrite errno. */
+        saved_errno = errno;
+
+        if(saved_errno == ENODEV) {
             r = LIBUSB_ERROR_NO_DEVICE;
         }
-        else if(errno == EINVAL) {
+        else if(saved_errno == EINVAL) {
             usbi_warn(TRANSFER_CTX(transfer), "submiturb failed, transfer too large");
             r = LIBUSB_ERROR_INVALID_PARAM;
         }
-        else if(errno == EMSGSIZE) {
+        else if(saved_errno == EMSGSIZE) {
             usbi_warn(TRANSFER_CTX(transfer), "submiturb failed, iso packet length too large");
             r = LIBUSB_ERROR_INVALID_PARAM;
         }
+        else if(saved_errno == ENOMEM) {
+            /* Synchronous ENOMEM is summarized by the caller. Preserve errors for
+             * partial submissions, which complete asynchronously instead. */
+            if(i == 0)
+                usbi_dbg(TRANSFER_CTX(transfer), "submiturb failed, errno=%d", saved_errno);
+            else
+                usbi_err(TRANSFER_CTX(transfer), "submiturb failed, errno=%d", saved_errno);
+            r = LIBUSB_ERROR_NO_MEM;
+        }
         else {
-            usbi_err(TRANSFER_CTX(transfer), "submiturb failed, errno=%d", errno);
+            usbi_err(TRANSFER_CTX(transfer), "submiturb failed, errno=%d", saved_errno);
             r = LIBUSB_ERROR_IO;
         }
 

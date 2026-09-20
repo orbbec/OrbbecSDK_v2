@@ -192,6 +192,16 @@ typedef struct uvc_device_info {
  */
 #define LIBUVC_NUM_TRANSFER_BUFS 100
 
+/* Retry schedule for a transfer whose submission failed transiently: exponential
+ * backoff first, then a slow cadence while the shortage lasts. */
+#define LIBUVC_RETRY_BACKOFF_MAX_MS 32
+#define LIBUVC_RETRY_FAST_WINDOW_MS 1000
+#define LIBUVC_RETRY_SLOW_INTERVAL_MS 250
+#define LIBUVC_RETRY_MAX_PER_CALLBACK 2
+/* Retry summary cadence. Slower than the diagnostic snapshot so it can be logged in
+ * any build without spamming, yet frequent enough to follow a recovery. */
+#define LIBUVC_RETRY_SUMMARY_INTERVAL_MS 10000
+
 #define LIBUVC_XFER_BUF_SIZE (16 * 1024 * 1024)
 #define LIBUVC_XFER_META_BUF_SIZE (4 * 1024)
 #define LIBUVC_XFER_PAYLOAD_HEADER_BUF_SIZE (256)
@@ -203,6 +213,29 @@ struct uvc_stream_handle {
 
     /** if true, stream is running (streaming video to host) */
     uint8_t running;
+    /* Diagnostics use a separate lock so a stalled frame callback cannot block a snapshot. */
+    pthread_mutex_t                  diagnostic_mutex;
+    uvc_stream_diagnostic_callback_t diagnostic_cb;
+    void                            *diagnostic_user;
+    uint64_t                         diagnostic_submits, diagnostic_submit_failures, diagnostic_callbacks;
+    uint64_t                         diagnostic_status[7];
+    uint64_t                         diagnostic_last_submit_ms, diagnostic_last_callback_ms, diagnostic_last_report_ms;
+    unsigned int                     diagnostic_active, diagnostic_inflight;
+    /* Transient submit-failure recovery: a parked slot keeps its transfer but holds no
+     * kernel request, so retries ride on the completions of slots still in flight.
+     * Guarded by cb_mutex. */
+    uint8_t  retry_parked[LIBUVC_NUM_TRANSFER_BUFS];
+    uint64_t retry_due_ms[LIBUVC_NUM_TRANSFER_BUFS];
+    uint64_t retry_first_failure_ms[LIBUVC_NUM_TRANSFER_BUFS];
+    uint32_t retry_attempts[LIBUVC_NUM_TRANSFER_BUFS];
+    /* Counters are guarded by diagnostic_mutex. Writers also hold cb_mutex;
+     * lock order is cb_mutex -> diagnostic_mutex. Snapshots only try diagnostic_mutex. */
+    unsigned int retry_parked_count;
+    uint64_t     retry_submits, retry_successes, retry_max_recovery_ms;
+    uint64_t     retry_last_stall_report_ms;
+    /* Per-stream log budget and summary baselines, guarded by diagnostic_mutex. */
+    uint64_t retry_log_last_ms, retry_log_failures, retry_log_submits, retry_log_successes;
+    uint8_t  retry_log_started;
     /** Current control block */
     struct uvc_stream_ctrl cur_ctrl;
 

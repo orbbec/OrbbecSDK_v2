@@ -129,6 +129,37 @@ void ObLibuvcDevicePort::startStream(std::shared_ptr<const StreamProfile> profil
         THROW_IO_EXCEPTION("uvc_stream_open_ctrl failed!");
     }
 
+    // Important summaries and exhausted queues are always logged; detailed diagnostics are optional.
+    uvc_stream_set_diagnostic_callback(
+        uvcStreamHandle,
+        [](uvc_diag_level_t level, const char *message, void *user) {
+            // Never propagate a C++ exception through the libusb C callback stack.
+            try {
+                auto port = static_cast<ObLibuvcDevicePort *>(user);
+                switch(level) {
+#ifdef OB_LIBUVC_TRANSFER_DIAGNOSTIC
+                case UVC_DIAG_DEBUG:
+                    LOG_DEBUG("{} usb_path={}", message, port->portInfo_->infUrl);
+                    break;
+                case UVC_DIAG_WARN:
+                    LOG_WARN("{} usb_path={}", message, port->portInfo_->infUrl);
+                    break;
+#endif
+                case UVC_DIAG_IMPORTANT:
+                    LOG_WARN("{} usb_path={}", message, port->portInfo_->infUrl);
+                    break;
+                case UVC_DIAG_CRITICAL:
+                    LOG_ERROR("{} usb_path={}", message, port->portInfo_->infUrl);
+                    break;
+                default:
+                    break;
+                }
+            }
+            catch(...) {
+            }
+        },
+        this);
+
     {
         std::unique_lock<std::mutex> lock(streamMutex_);
         int32_t                      bufNum = LIBUVC_NUM_TRANSFER_BUFS;
@@ -143,24 +174,16 @@ void ObLibuvcDevicePort::startStream(std::shared_ptr<const StreamProfile> profil
         ret                                       = uvc_stream_start(uvcStreamHandle, ObLibuvcDevicePort::onFrameCallback, obStreamHandle.get(), 0);
     }
 
-    if(ret == UVC_ERROR_NO_MEM) {
-        for(uint32_t i = 0; i < uvcStreamHandle->actual_transfer_buff_num; i++) {
-            if(uvcStreamHandle->transfers[i] != nullptr) {
-                free(uvcStreamHandle->transfers[i]->buffer);
-                libusb_free_transfer(uvcStreamHandle->transfers[i]);
-                uvcStreamHandle->transfers[i] = nullptr;
-            }
-        }
-        std::unique_lock<std::mutex> lock(streamMutex_);
-        streamHandles_.erase(streamHandles_.end() - 1);
-        uvc_stream_close(uvcStreamHandle);
-        THROW_MEMORY_EXCEPTION("uvc_stream_start failed with err_code=UVC_ERROR_NO_MEM, try to increase the usbfs buffer size!");
-    }
-
     if(ret != UVC_SUCCESS) {
         std::unique_lock<std::mutex> lock(streamMutex_);
         streamHandles_.erase(streamHandles_.end() - 1);
+        // uvc_stream_start does not close the stream handle on failure.
+        // Unregister the diagnostic callback (which captures `this`) before closing the handle.
+        uvc_stream_set_diagnostic_callback(uvcStreamHandle, nullptr, nullptr);
         uvc_stream_close(uvcStreamHandle);
+        if(ret == UVC_ERROR_NO_MEM) {
+            THROW_MEMORY_EXCEPTION("uvc_stream_start failed with err_code=UVC_ERROR_NO_MEM, try to increase the usbfs buffer size!");
+        }
         THROW_IO_EXCEPTION("uvc_stream_start failed!");
     }
 
@@ -177,6 +200,7 @@ void ObLibuvcDevicePort::doStopStream(uvc_stream_handle_t *streamHandle, uvc_dev
     }
 #endif
 
+    uvc_stream_log_diagnostics(streamHandle, "before_stop");
     uvc_stream_stop(streamHandle);
 
 #ifndef OS_MACOS
@@ -187,6 +211,9 @@ void ObLibuvcDevicePort::doStopStream(uvc_stream_handle_t *streamHandle, uvc_dev
     }
 #endif
 
+    // Stop libuvc from invoking the diagnostic callback (which captures `this`) once the
+    // stream is being torn down, so a late report cannot outlive the port.
+    uvc_stream_set_diagnostic_callback(streamHandle, nullptr, nullptr);
     uvc_stream_close(streamHandle);
 }
 
