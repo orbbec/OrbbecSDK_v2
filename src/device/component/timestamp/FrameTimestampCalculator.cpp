@@ -34,14 +34,14 @@ void GlobalTimestampCalculator::calculate(std::shared_ptr<Frame> frame) {
     double frameDevTicks = static_cast<double>(rawTsUs) * deviceTimeFreq_ / 1000000.0;
     auto   mapped        = globalTimestampFitter_->mapDeviceTime(frameDevTicks);
     if(!mapped.valid) {
-        LOG_DEBUG_INTVL_MS(3000, "Global timestamp mapper is not valid yet, frame global timestamp set to 0");
+        LOG_DEBUG_INTVL_MS(3000, "Global timestamp mapping failed, frame global timestamp set to 0");
         frame->setGlobalTimeStampUsec(0);
         return;
     }
 
     const auto frameSteadyTs  = frame->getSteadyTimeStampUsec();
     int64_t    realtimeOffset = static_cast<int64_t>(frame->getSystemTimeStampUsec()) - static_cast<int64_t>(frameSteadyTs);
-    int64_t    globalTsp      = static_cast<int64_t>(mapped.timestampUs) + realtimeOffset;
+    int64_t    globalTsp      = mapped.timestampUs + realtimeOffset;
     frame->setGlobalTimeStampUsec(globalTsp > 0 ? static_cast<uint64_t>(globalTsp) : 0);
 }
 

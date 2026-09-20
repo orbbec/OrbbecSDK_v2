@@ -28,8 +28,10 @@ struct HostTimestamp {
     uint64_t steadyTimeUs;
 };
 
-// Capture the wall clock between two monotonic-clock reads. The monotonic
-// midpoint bounds scheduling-induced skew between the two clock domains.
+// Capture the wall clock between two monotonic-clock reads. If the bracket
+// exceeds 100 us, retry once using the first bracket's endpoint. A tighter
+// retry estimates the clock offset at the earlier system timestamp; otherwise
+// return the first monotonic midpoint. Three clock reads normally, at most five.
 HostTimestamp getHostTimestampUs();
 
 void sleepMs(uint64_t msec);

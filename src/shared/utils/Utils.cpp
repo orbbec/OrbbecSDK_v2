@@ -19,6 +19,7 @@
 
 #include <chrono>
 #include <logger/Logger.hpp>
+#include "logger/LoggerInterval.hpp"
 
 namespace libobsensor {
 namespace utils {
@@ -55,7 +56,44 @@ HostTimestamp getHostTimestampUs() {
     const auto steadyBefore = getSteadyTimeUs();
     const auto systemTime   = getNowTimesUs();
     const auto steadyAfter  = getSteadyTimeUs();
-    return { systemTime, steadyBefore + (steadyAfter - steadyBefore) / 2 };
+    const auto steadySpan   = steadyAfter - steadyBefore;
+
+    constexpr uint64_t retryThresholdUs = 100;
+    if(steadySpan <= retryThresholdUs) {
+        return { systemTime, steadyBefore + steadySpan / 2 };
+    }
+
+    // Reuse the first bracket's endpoint as the second bracket's start.
+    const auto    retrySystem = getNowTimesUs();
+    const auto    retryAfter  = getSteadyTimeUs();
+    const auto    retrySpan   = retryAfter - steadyAfter;
+    HostTimestamp timestamp{ systemTime, steadyBefore + steadySpan / 2 };
+    bool          projected = false;
+    // Use the tighter retry bracket to estimate the clock offset, then project it
+    // back to the earlier systemTime so both returned values represent that time.
+    if(retrySpan < steadySpan) {
+        const auto retrySteadyMid = steadyAfter + retrySpan / 2;
+        if(retrySystem >= systemTime) {
+            const auto systemTimeDiff = retrySystem - systemTime;
+            if(retrySteadyMid >= systemTimeDiff) {
+                const auto estimatedSteady = retrySteadyMid - systemTimeDiff;
+                // Under a stable wall clock, systemTime was read between
+                // steadyBefore and steadyAfter. Allow for microsecond rounding.
+                constexpr uint64_t roundingToleranceUs = 2;
+                const auto         lowerBound          = steadyBefore > roundingToleranceUs ? steadyBefore - roundingToleranceUs : 0;
+                const auto         upperBound          = steadyAfter + roundingToleranceUs;
+                if(estimatedSteady >= lowerBound && estimatedSteady <= upperBound) {
+                    timestamp.steadyTimeUs = estimatedSteady;
+                    projected              = true;
+                }
+            }
+        }
+    }
+    LOG_INTVL("getHostTimestampUs.retry", 10000, spdlog::level::debug,
+              "Host timestamp retry: steadySpan1={}us, steadySpan2={}us, systemTimeDiff={}us, selected={}, systemTime={}us, steadyTime={}us, offset={}us",
+              steadySpan, retrySpan, static_cast<int64_t>(retrySystem) - static_cast<int64_t>(systemTime), projected ? "projected" : "first_midpoint",
+              timestamp.systemTimeUs, timestamp.steadyTimeUs, static_cast<int64_t>(timestamp.systemTimeUs) - static_cast<int64_t>(timestamp.steadyTimeUs));
+    return timestamp;
 }
 
 void sleepMs(uint64_t msec) {

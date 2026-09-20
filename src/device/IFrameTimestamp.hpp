@@ -30,7 +30,7 @@ typedef struct {
 } LinearFuncParam;
 
 typedef struct {
-    uint64_t timestampUs;
+    int64_t  timestampUs;  // Host steady microseconds; extrapolation may precede the steady-clock epoch.
     uint64_t generation;
     double   remainingCorrectionUs;
     double   estimatedErrorUs;

@@ -200,14 +200,18 @@ GlobalTimestampMapResult DeviceTimestampMapper::map(double deviceTimestampTicks)
     }
 
     double mappedUs = evaluateLocked(deviceTimestampTicks);
-    if(mappedUs < 0.0 || mappedUs > static_cast<double>((std::numeric_limits<uint64_t>::max)())) {
+    // Round before checking the signed conversion range. INT64_MAX rounds up to
+    // 2^63 as a double, so the upper bound must be exclusive.
+    double       roundedUs   = std::round(mappedUs);
+    const double signedLimit = -static_cast<double>((std::numeric_limits<int64_t>::min)());
+    if(!std::isfinite(roundedUs) || roundedUs < -signedLimit || roundedUs >= signedLimit) {
         return result;
     }
 
     double targetUs              = evaluateModel(latestModel_, deviceTimestampTicks);
     double remainingUs           = mappedUs - targetUs;
     double estimatedUs           = std::fabs(remainingUs) + latestModel_.fitErrorUs;
-    result.timestampUs           = static_cast<uint64_t>(mappedUs + 0.5);
+    result.timestampUs           = static_cast<int64_t>(roundedUs);
     result.generation            = latestModel_.generation;
     result.remainingCorrectionUs = remainingUs;
     result.estimatedErrorUs      = estimatedUs;
