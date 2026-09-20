@@ -13,7 +13,13 @@ G2VideoFrameTimestampCalculator::G2VideoFrameTimestampCalculator(IDevice *owner,
 void G2VideoFrameTimestampCalculator::calculate(std::shared_ptr<Frame> frame) {
     auto srcTimestamp = frame->getTimeStampUsec();
 
-    auto metadata   = frame->getMetadata();
+    auto metadata     = frame->getMetadata();
+    auto metadataSize = frame->getMetadataSize();
+    if(metadataSize < sizeof(StandardUvcFramePayloadHeader)) {
+        frame->setTimeStampUsec(0);
+        return;
+    }
+
     auto uvcPayload = reinterpret_cast<const StandardUvcFramePayloadHeader *>(metadata);
     // merge byte1 and byte2 as int16_t as the timestamp offset
     auto timestampOffsetUs = (static_cast<int16_t>(uvcPayload->scrSourceClock[2] << 8) | uvcPayload->scrSourceClock[1]) * 100;
@@ -28,6 +34,12 @@ G2LVideoFrameTimestampCalculator::G2LVideoFrameTimestampCalculator(IDevice *owne
 
 void G2LVideoFrameTimestampCalculator::calculate(std::shared_ptr<Frame> frame) {
     auto metadata     = frame->getMetadata();
+    auto metadataSize = frame->getMetadataSize();
+    if(metadataSize < sizeof(StandardUvcFramePayloadHeader)) {
+        frame->setTimeStampUsec(0);
+        return;
+    }
+
     auto uvcPayload   = reinterpret_cast<const StandardUvcFramePayloadHeader *>(metadata);
     auto srcTimestamp = *reinterpret_cast<const uint32_t *>(uvcPayload->scrSourceClock);
     auto rstTimestamp = FrameTimestampCalculatorBaseDeviceTime::calculate(srcTimestamp);

@@ -103,6 +103,9 @@ size_t try_read_metadata(IMFSample *pSample, UvcMetadata *metadata) {
     CComPtr<IMFAttributes> spSample;
     HRESULT                hr = S_OK;
 
+    // Reset the standard UVC header; it is populated (and bHeaderLength set to 12) only once a valid UVC header is retrieved
+    memset(&metadata->header, 0, sizeof(metadata->header));
+
     CHECK_HR(hr = pSample->QueryInterface(IID_PPV_ARGS(&spSample)));
     LOG_HR(hr = spSample->GetUnknown(MFSampleExtension_CaptureMetadata, IID_PPV_ARGS(&spUnknown)));
 
@@ -114,21 +117,25 @@ size_t try_read_metadata(IMFSample *pSample, UvcMetadata *metadata) {
         DWORD                         dwCurrentLength = 0;
 
         CHECK_HR(hr = spUnknown->QueryInterface(IID_PPV_ARGS(&spMetadata)));
-        if(spMetadata == nullptr)
-            return false;
+        if(spMetadata == nullptr) {
+            return 0;
+        }
 
         hr = spMetadata->GetUnknown(MF_CAPTURE_METADATA_FRAME_RAWSTREAM, IID_PPV_ARGS(&spBuffer));
         LOG_HR(hr);
-        if(spBuffer == nullptr || FAILED(hr))
-            return false;
+        if(spBuffer == nullptr || FAILED(hr)) {
+            return 0;
+        }
 
         CHECK_HR(hr = spBuffer->Lock(reinterpret_cast<BYTE **>(&pMetadata), &dwMaxLength, &dwCurrentLength));
 
-        if(nullptr == pMetadata)  // Bail, no data.
+        if(nullptr == pMetadata) {  // Bail, no data.
             return 0;
+        }
 
-        if(pMetadata->MetadataId != MetadataId_UsbVideoHeader)  // Wrong metadata type, bail.
+        if(pMetadata->MetadataId != MetadataId_UsbVideoHeader) {  // Wrong metadata type, bail.
             return 0;
+        }
 
         // Microsoft converts the standard UVC (12-byte) header into MS proprietary 40-bytes struct(ms_metadata_header)
         // Therefore we revert it to the original structure for uniform handling
@@ -138,6 +145,8 @@ size_t try_read_metadata(IMFSample *pSample, UvcMetadata *metadata) {
 
         size_t extraDataSize = 0;
         if(ms_md_hdr->ms_header.Size > 0) {
+            metadata->header.bHeaderLength      = 12;
+            metadata->header.bmHeaderInfo       = 0;  // not used
             metadata->header.dwPresentationTime = ms_md_hdr->ms_blobs[0].timestamp;
             memcpy(metadata->header.scrSourceClock, ms_md_hdr->ms_blobs[0].source_clock, sizeof(metadata->header.scrSourceClock));
             extraDataSize = static_cast<uint8_t>(ms_md_hdr->ms_header.Size - ms_header_size);  // md_payload_size
@@ -162,8 +171,9 @@ size_t try_read_metadata(IMFSample *pSample, UvcMetadata *metadata) {
 
         return extraDataSize;
     }
-    else
+    else {
         return 0;
+    }
 }
 #endif  // METADATA_SUPPORT
 
@@ -1159,11 +1169,9 @@ STDMETHODIMP WmfUvcDevicePort::OnReadSample(HRESULT hrStatus, DWORD streamIndex,
 
 #ifdef METADATA_SUPPORT
                     TRY_EXECUTE({
-                        auto metadata                     = videoFrame->getMetadataMutable();
-                        auto uvcMetadata                  = reinterpret_cast<UvcMetadata *>(metadata);
-                        uvcMetadata->header.bHeaderLength = 12;
-                        uvcMetadata->header.bmHeaderInfo  = 0;  // not used
-                        auto metadataExtraSize            = try_read_metadata(sample, uvcMetadata);
+                        auto metadata          = videoFrame->getMetadataMutable();
+                        auto uvcMetadata       = reinterpret_cast<UvcMetadata *>(metadata);
+                        auto metadataExtraSize = try_read_metadata(sample, uvcMetadata);
                         /*LOG( INFO ) << "metadataSize=" << ( int )metadataSize;
                         for ( int i = 0; i < metadataSize; i++ ) {
                             printf( "0x%02x ", metadata[ i ] );
