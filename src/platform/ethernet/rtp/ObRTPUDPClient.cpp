@@ -66,16 +66,8 @@ void ObRTPUDPClient::socketConnect() {
         THROW_IO_EXCEPTION(utils::string::to_string() << "Failed to create udpSocket! err_code=" << GET_LAST_ERROR());
     }
 
-    // 2.set receive timeout
-#if (defined(WIN32) || defined(_WIN32) || defined(WINCE))
-    uint32_t commTimeout = COMM_TIMEOUT_MS;
-#else
-    TIMEVAL commTimeout;
-    commTimeout.tv_sec  = COMM_TIMEOUT_MS / 1000;
-    commTimeout.tv_usec = COMM_TIMEOUT_MS % 1000 * 1000;
-#endif
+    // 2.set receive buffer
     setReceiveBuffer();
-    setsockopt(recvSocket_, SOL_SOCKET, SO_RCVTIMEO, (char *)&commTimeout, sizeof(commTimeout));
 
     // 3.Set server address
     sockaddr_in serverAddr{};
@@ -146,24 +138,37 @@ void ObRTPUDPClient::frameReceive() {
     socklen_t            serverAddrSize = sizeof(serverAddr);
     std::vector<uint8_t> buffer(OB_UDP_BUFFER_SIZE);
     while(startReceive_.load()) {
-        int recvLen = recvfrom(recvSocket_, (char *)buffer.data(), (int)buffer.size(), 0, (sockaddr *)&serverAddr, &serverAddrSize);
-        if(recvLen < 0) {
+        // Wait with select() rather than arming recvfrom() with SO_RCVTIMEO. select()
+        // only observes readiness, so its timeout leaves any queued datagram intact.
+        struct timeval selectTimeout;
+        selectTimeout.tv_sec  = COMM_TIMEOUT_MS / 1000;
+        selectTimeout.tv_usec = COMM_TIMEOUT_MS % 1000 * 1000;
+        fd_set readfds;
+        FD_ZERO(&readfds);
+        FD_SET(recvSocket_, &readfds);
+        int ready = select(static_cast<int>(recvSocket_) + 1, &readfds, nullptr, nullptr, &selectTimeout);
+        if(ready == 0) {
+            LOG_WARN_INTVL("Receive rtp packet timed out!");
+            continue;
+        }
+        if(ready < 0) {
             int error = GET_LAST_ERROR();
 #if (defined(WIN32) || defined(_WIN32) || defined(WINCE))
-            if(error == WSAETIMEDOUT) {
-                LOG_WARN_INTVL("Receive rtp packet timed out!");
-            }
-            else {
-                LOG_ERROR_INTVL("Receive rtp packet error!");
+            if(error == WSAEINTR) {
+                continue;
             }
 #else
-            if(error == EAGAIN || error == EWOULDBLOCK) {
-                LOG_WARN_INTVL("Receive rtp packet timed out!");
-            }
-            else {
-                LOG_ERROR_INTVL("Receive rtp packet error!");
+            if(error == EINTR) {
+                continue;
             }
 #endif
+            LOG_ERROR_INTVL("Receive rtp packet select error!");
+            continue;
+        }
+
+        int recvLen = recvfrom(recvSocket_, (char *)buffer.data(), (int)buffer.size(), 0, (sockaddr *)&serverAddr, &serverAddrSize);
+        if(recvLen < 0) {
+            LOG_ERROR_INTVL("Receive rtp packet error!");
             continue;
         }
 

@@ -1,5 +1,7 @@
 #include "ObRTPPacketProcessor.hpp"
 #include "logger/Logger.hpp"
+#include "logger/LoggerInterval.hpp"
+#include "utils/PublicTypeHelper.hpp"
 #include "ethernet/socket/SocketTypes.hpp"
 #include <algorithm>
 #include <limits>
@@ -62,6 +64,8 @@ bool ObRTPPacketProcessor::process(RTPHeader *header, uint8_t *recvData, uint32_
     }
 
     if(!foundStartPacket()) {
+        LOG_WARN_INTVL("{} RTP frame lost: start packet (seq 0) not seen, discarding seq {}", utils::obStreamToStr(static_cast<OBStreamType>(type)),
+                       sequenceNumber);
         return false;
     }
 
