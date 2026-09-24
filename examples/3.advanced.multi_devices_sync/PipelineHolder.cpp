@@ -1,156 +1,111 @@
 #include "PipelineHolder.hpp"
+#include <iostream>
+#include <sstream>
+#include <unordered_map>
 
+OBFormat stringToOBFormat(const std::string &formatString) {
+    static const std::unordered_map<std::string, OBFormat> formatMap = {
+        { "OB_FORMAT_ANY", OB_FORMAT_ANY },     { "OB_FORMAT_UNKNOWN", OB_FORMAT_UNKNOWN },
+        { "OB_FORMAT_YUYV", OB_FORMAT_YUYV },   { "OB_FORMAT_YUY2", OB_FORMAT_YUY2 },
+        { "OB_FORMAT_UYVY", OB_FORMAT_UYVY },   { "OB_FORMAT_NV12", OB_FORMAT_NV12 },
+        { "OB_FORMAT_NV21", OB_FORMAT_NV21 },   { "OB_FORMAT_MJPG", OB_FORMAT_MJPG },
+        { "OB_FORMAT_H264", OB_FORMAT_H264 },   { "OB_FORMAT_H265", OB_FORMAT_H265 },
+        { "OB_FORMAT_Y16", OB_FORMAT_Y16 },     { "OB_FORMAT_Y8", OB_FORMAT_Y8 },
+        { "OB_FORMAT_Y10", OB_FORMAT_Y10 },     { "OB_FORMAT_Y11", OB_FORMAT_Y11 },
+        { "OB_FORMAT_Y12", OB_FORMAT_Y12 },     { "OB_FORMAT_GRAY", OB_FORMAT_GRAY },
+        { "OB_FORMAT_HEVC", OB_FORMAT_HEVC },   { "OB_FORMAT_I420", OB_FORMAT_I420 },
+        { "OB_FORMAT_POINT", OB_FORMAT_POINT }, { "OB_FORMAT_RGB_POINT", OB_FORMAT_RGB_POINT },
+        { "OB_FORMAT_RLE", OB_FORMAT_RLE },     { "OB_FORMAT_RGB", OB_FORMAT_RGB },
+        { "OB_FORMAT_BGR", OB_FORMAT_BGR },     { "OB_FORMAT_Y14", OB_FORMAT_Y14 },
+        { "OB_FORMAT_BGRA", OB_FORMAT_BGRA },   { "OB_FORMAT_Z16", OB_FORMAT_Z16 },
+        { "OB_FORMAT_YV12", OB_FORMAT_YV12 },   { "OB_FORMAT_BA81", OB_FORMAT_BA81 },
+        { "OB_FORMAT_RGBA", OB_FORMAT_RGBA },   { "OB_FORMAT_BYR2", OB_FORMAT_BYR2 },
+        { "OB_FORMAT_RW16", OB_FORMAT_RW16 },   { "OB_FORMAT_Y12C4", OB_FORMAT_Y12C4 },
+    };
+    auto it = formatMap.find(formatString);
+    if(it != formatMap.end()) {
+        return it->second;
+    }
+    throw std::invalid_argument("Unrecognized stream format: " + formatString);
+}
 
-PipelineHolder::PipelineHolder(std::shared_ptr<ob::Pipeline> pipeline, OBSensorType sensorType, std::string deviceSN, int deviceIndex)
-    : startStream_(false), pipeline_(pipeline), sensorType_(sensorType), deviceSN_(deviceSN), deviceIndex_(deviceIndex) {
+PipelineHolder::PipelineHolder(std::shared_ptr<ob::Device> device, int deviceIndex) : device_(device), deviceIndex_(deviceIndex) {
+    if(device_) {
+        pipeline_ = std::make_shared<ob::Pipeline>(device_);
+        deviceSN_ = device_->getDeviceInfo()->serialNumber();
+    }
 }
 
 PipelineHolder::~PipelineHolder() {
-    release();
+    stopStream();
+}
+
+void PipelineHolder::setFrameCallback(FrameCallback cb) {
+    userCallback_ = cb;
+}
+
+void PipelineHolder::setStreamConfig(const StreamProfileRequest &depth, const StreamProfileRequest &color) {
+    depthRequest_ = depth;
+    colorRequest_ = color;
 }
 
 void PipelineHolder::startStream() {
-    std::cout << "startStream: " << deviceSN_ << " sensorType:" << sensorType_ << std::endl;
+    if(streaming_.load() || !pipeline_) {
+        return;
+    }
+
     try {
-        if(pipeline_) {
-            auto profileList   = pipeline_->getStreamProfileList(sensorType_);
-            auto streamProfile = profileList->getProfile(OB_PROFILE_DEFAULT)->as<ob::VideoStreamProfile>();
-            frameType_         = mapFrameType(sensorType_);
+        std::shared_ptr<ob::Config> config      = std::make_shared<ob::Config>();
+        OBFormat                    depthFormat = depthRequest_.format.empty() ? OB_FORMAT_ANY : stringToOBFormat(depthRequest_.format);
+        config->enableVideoStream(OB_SENSOR_DEPTH, depthRequest_.width, depthRequest_.height, static_cast<uint32_t>(depthRequest_.fps), depthFormat);
+        OBFormat colorFormat = colorRequest_.format.empty() ? OB_FORMAT_ANY : stringToOBFormat(colorRequest_.format);
+        config->enableVideoStream(OB_SENSOR_COLOR, colorRequest_.width, colorRequest_.height, static_cast<uint32_t>(colorRequest_.fps), colorFormat);
 
-            auto fps   = streamProfile->getFps();
-            halfTspGap = static_cast<uint32_t>(500.0f / fps + 0.5);
+        pipeline_->start(config, [this](std::shared_ptr<ob::FrameSet> frameSet) { onFrameSet(frameSet); });
 
-            std::shared_ptr<ob::Config> config = std::make_shared<ob::Config>();
-            config->enableStream(streamProfile);
-
-            pipeline_->start(config, [this](std::shared_ptr<ob::FrameSet> frameSet) {
-                processFrame(frameSet);
-            });
-            startStream_ = true;
-        }
+        streaming_ = true;
+        std::cout << "startStream: " << deviceSN_ << " (device #" << deviceIndex_ << ")" << std::endl;
     }
     catch(ob::Error &e) {
         std::cerr << "starting stream failed: " << deviceSN_ << std::endl;
-        handleStreamError(e);
-    }
-}
-
-void PipelineHolder::processFrame(std::shared_ptr<ob::FrameSet> frameSet) {
-    if(!frameSet) {
-        std::cerr << "Invalid frameSet received." << std::endl;
-        return;
-    }
-
-    if(!startStream_) {
-        return;
-    }
-    
-    {
-        std::lock_guard<std::mutex> lock(queueMutex_);
-        auto obFrame = frameSet->getFrame(frameType_);
-        if(obFrame) {
-            if(obFrames.size() >= static_cast<size_t>(maxFrameSize_)) {
-                obFrames.pop();
-            }
-            obFrames.push(obFrame);
-        }
-    }
-
-    condVar_.notify_all();
-}
-
-bool PipelineHolder::isFrameReady() {
-    {
-        std::unique_lock<std::mutex> lock(queueMutex_);
-        condVar_.wait(lock, [this]() { return !obFrames.empty() || startStream_; });
-        if(startStream_ && obFrames.empty()) {
-            return false;
-        }
-    }
-    return true;
-}
-
-std::shared_ptr<ob::Frame> PipelineHolder::frontFrame() {
-    {
-        std::unique_lock<std::mutex> lock(queueMutex_);
-        condVar_.wait(lock, [this]() { return !obFrames.empty() || startStream_; });
-        if(startStream_ && obFrames.empty()) {
-            return nullptr;
-        }
-        auto frame = obFrames.front();
-        return frame;
-    }
-}
-
-void PipelineHolder::popFrame() {
-    {
-        std::unique_lock<std::mutex> lock(queueMutex_);
-        condVar_.wait(lock, [this]() { return !obFrames.empty() || startStream_; });
-        if(startStream_ && obFrames.empty()) {
-            return;
-        }
-        obFrames.pop();
-    }
-}
-
-std::shared_ptr<ob::Frame> PipelineHolder::getFrame() {
-    {
-        std::unique_lock<std::mutex> lock(queueMutex_);
-        condVar_.wait(lock, [this]() { return !obFrames.empty() || startStream_; });
-        if(startStream_ && obFrames.empty()) {
-            return nullptr;
-        }
-        auto frame = obFrames.front();
-        obFrames.pop();
-        return frame;
-    }
-}
-
-void PipelineHolder::stopStream() {
-    try {
-        if(pipeline_) {
-            std::cout << "stopStream: " << deviceSN_ << " sensorType:" << sensorType_ << std::endl;
-            startStream_ = false;
-            pipeline_->stop();
-        }
-    }
-    catch(ob::Error &e) {
-        std::cerr << "stopping stream failed: " << deviceSN_ << std::endl;
-        std::cerr << "function:" << e.getName() << "\nargs:" << e.getArgs() << "\nmessage:" << e.getMessage() << "\nstatus:" << e.getStatus()
+        std::cerr << "function:" << e.getName() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\nstatus:" << e.getStatus()
                   << "\ntype:" << e.getExceptionType() << std::endl;
     }
 }
 
-void PipelineHolder::release() {
+void PipelineHolder::onFrameSet(std::shared_ptr<ob::FrameSet> frameSet) {
+    if(!frameSet) {
+        return;
+    }
     {
-        std::lock_guard<std::mutex> lock(queueMutex_);
-        startStream_ = false;
+        std::lock_guard<std::mutex> lk(frameMutex_);
+        latestFrameSet_ = frameSet;
     }
-    condVar_.notify_all();
+    if(userCallback_) {
+        userCallback_(frameSet);
+    }
 }
 
-void PipelineHolder::handleStreamError(const ob::Error &e) {
-    std::cerr << "Function: " << e.getName() << "\nArgs: " << e.getArgs() << "\nMessage: " << e.getMessage() << "\nstatus:" << e.getStatus()
-              << "\nType: " << e.getExceptionType() << std::endl;
+std::shared_ptr<ob::FrameSet> PipelineHolder::getLatestFrameSet() {
+    std::lock_guard<std::mutex> lk(frameMutex_);
+    return latestFrameSet_;
 }
 
-OBFrameType PipelineHolder::mapFrameType(OBSensorType sensorType) {
-    switch(sensorType) {
-    case OB_SENSOR_COLOR:
-        return OB_FRAME_COLOR;
-    case OB_SENSOR_COLOR_LEFT:
-        return OB_FRAME_COLOR_LEFT;
-    case OB_SENSOR_COLOR_RIGHT:
-        return OB_FRAME_COLOR_RIGHT;
-    case OB_SENSOR_IR:
-        return OB_FRAME_IR;
-    case OB_SENSOR_IR_LEFT:
-        return OB_FRAME_IR_LEFT;
-    case OB_SENSOR_IR_RIGHT:
-        return OB_FRAME_IR_RIGHT;
-    case OB_SENSOR_DEPTH:
-        return OB_FRAME_DEPTH;
-    default:
-        return OBFrameType::OB_FRAME_UNKNOWN;
+void PipelineHolder::stopStream() {
+    if(!streaming_.exchange(false) || !pipeline_) {
+        return;
     }
+
+    try {
+        std::cout << "stopStream: " << deviceSN_ << " (device #" << deviceIndex_ << ")" << std::endl;
+        pipeline_->stop();
+    }
+    catch(ob::Error &e) {
+        std::cerr << "stopping stream failed: " << deviceSN_ << std::endl;
+        std::cerr << "function:" << e.getName() << "\nargs:" << e.getArgs() << "\nmessage:" << e.what() << "\nstatus:" << e.getStatus()
+                  << "\ntype:" << e.getExceptionType() << std::endl;
+    }
+
+    std::lock_guard<std::mutex> lk(frameMutex_);
+    latestFrameSet_.reset();
 }

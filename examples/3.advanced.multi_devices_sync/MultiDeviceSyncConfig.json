@@ -1,6 +1,5 @@
 {
-    "version": "1.0.0",
-    "configTime": "2023/01/01",
+    "heartbeatEnable": false,
     "devices": [
         {
             "sn": "CP2194200060",
@@ -12,6 +11,20 @@
                 "triggerOutEnable": true,
                 "triggerOutDelayUs": 0,
                 "framesPerTrigger": 1
+            },
+            "streamConfig": {
+                "depth": {
+                    "width": 640,
+                    "height": 480,
+                    "fps": 30,
+                    "format": "OB_FORMAT_Y16"
+                },
+                "color": {
+                    "width": 640,
+                    "height": 480,
+                    "fps": 30,
+                    "format": "OB_FORMAT_MJPG"
+                }
             }
         },
         {
@@ -24,6 +37,20 @@
                 "triggerOutEnable": true,
                 "triggerOutDelayUs": 0,
                 "framesPerTrigger": 1
+            },
+            "streamConfig": {
+                "depth": {
+                    "width": 640,
+                    "height": 480,
+                    "fps": 30,
+                    "format": "OB_FORMAT_Y16"
+                },
+                "color": {
+                    "width": 640,
+                    "height": 480,
+                    "fps": 30,
+                    "format": "OB_FORMAT_MJPG"
+                }
             }
         }
     ]

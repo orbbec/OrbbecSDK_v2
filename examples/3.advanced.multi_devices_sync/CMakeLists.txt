@@ -22,4 +22,5 @@ if(MSVC)
 endif()
 
 install(FILES ${CMAKE_CURRENT_LIST_DIR}/MultiDeviceSyncConfig.json DESTINATION bin)
+install(FILES ${CMAKE_CURRENT_LIST_DIR}/scripts/analyze_sync.py DESTINATION bin)
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION bin)
