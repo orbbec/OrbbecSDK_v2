@@ -31,7 +31,12 @@ struct ObLogIntvlRecord {
     void                                  flush() {
         cv.notify_all();
         if(invokeThread.joinable()) {
-            invokeThread.join();
+            if(invokeThread.get_id() == std::this_thread::get_id()) {
+                invokeThread.detach();
+            }
+            else {
+                invokeThread.join();
+            }
         }
     }
     ~ObLogIntvlRecord() {
@@ -155,6 +160,7 @@ void log_intvl(std::shared_ptr<ObLogIntvlRecord> record, uint64_t minIntvlMsec, 
             for(auto logIntvlRecordMapIter = logIntvlRecordMap.begin(); logIntvlRecordMapIter != logIntvlRecordMap.end();) {                                \
                 uint64_t duration = static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::milliseconds>(nowTime - logIntvlRecordMapIter->second->lastInvokeTime).count()); \
                 if(logIntvlRecordMapIter->second->count == 0 && duration > logIntvlRecordMapIter->second->interval) {                                       \
+                    logIntvlRecordMapIter->second->flush();                                                                                                 \
                     logIntvlRecordMapIter = logIntvlRecordMap.erase(logIntvlRecordMapIter);                                                                 \
                 }                                                                                                                                           \
                 else {                                                                                                                                      \

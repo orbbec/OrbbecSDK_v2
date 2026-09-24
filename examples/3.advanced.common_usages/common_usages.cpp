@@ -10,6 +10,7 @@
 #include <string>
 #include <iomanip>
 #include <atomic>
+#include <cstdlib>
 
 const std::map<std::string, int> openni_device_list = { { "Astra Mini S Pro", 0x065e }, { "Astra Mini Pro", 0x065b }, { "DaBai Max", 0x069a },
                                                         { "DaBai Max Pro", 0x069e },    { "Gemini UW", 0x06aa },      { "DaBai DW2", 0x069f },
@@ -126,9 +127,17 @@ int main(void) try {
     irRightMirrorSupport = device->isPropertySupported(OB_PROP_IR_RIGHT_MIRROR_BOOL, OB_PERMISSION_READ_WRITE);
     printUsage();
 
-    auto inputState       = std::make_shared<InputThreadState>();
-    auto inputWindow      = win;
-    auto inputWatchThread = std::thread([inputState, inputWindow] {
+    auto inputState = std::make_shared<InputThreadState>();
+    // Keep the window non-owning so the input thread cannot extend its lifetime during shutdown.
+    std::weak_ptr<ob_smpl::CVWindow> inputWindow      = win;
+    auto                             inputWatchThread = std::thread([inputState, inputWindow] {
+        auto closeInputWindow = [&inputWindow]() {
+            auto window = inputWindow.lock();
+            if(window) {
+                window->close();
+            }
+        };
+
         while(true) {
             std::string cmd;
             std::cout << "\nInput command:  ";
@@ -139,11 +148,11 @@ int main(void) try {
             }
             if(std::cin.eof()) {
                 std::cout << "Input stream closed (EOF), exiting." << std::endl;
-                inputWindow->close();
+                closeInputWindow();
                 break;
             }
             if(cmd == "quit" || cmd == "q") {
-                inputWindow->close();
+                closeInputWindow();
                 break;
             }
             else {
@@ -158,12 +167,16 @@ int main(void) try {
     while(win->run()) {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
-
+    win->close();
     // Prevent the input thread from dispatching commands while resources are being stopped.
     std::lock_guard<std::mutex> commandLock(inputState->commandMutex);
     inputState->stop.store(true);
     if(pipeline) {
         pipeline->stop();
+    }
+    // ESC only marks the window closed. Join its processing thread and release cached frames on the main cleanup path.
+    if(win) {
+        win->close();
     }
 
     ctx->unregisterDeviceChangedCallback(id);
@@ -177,6 +190,13 @@ int main(void) try {
     align.reset();
     ctx.reset();
     win.reset();
+
+    if(!inputState->finished.load()) {
+        std::cout.flush();
+        std::cerr.flush();
+        // stdin may still be blocked in getline(); all sample-owned SDK resources have already been released above.
+        std::_Exit(EXIT_SUCCESS);
+    }
 
     return 0;
 }
