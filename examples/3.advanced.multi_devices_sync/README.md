@@ -58,7 +58,14 @@ The sample reads `./MultiDeviceSyncConfig.json` from the current working directo
 #### 2.3 Start the multi-device time synchronization function
 
 ```cpp
-    context.enableDeviceClockSync(0);
+        for(const auto &device: streamDevList) {
+            try {
+                device->timerSyncWithHost();
+            }
+            catch(const ob::Error &e) {
+                std::cerr << "Sync device clock failed: " << e.what() << std::endl;
+            }
+        }
 ```
 
 #### 2.4 Software Triggering Mode

@@ -414,9 +414,14 @@ int testMultiDeviceSync(bool headless) {
         }
 
         std::cout << "Syncing device clocks..." << std::endl;
-        context.enableDeviceClockSync(0);
-
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        for(const auto &device: streamDevList) {
+            try {
+                device->timerSyncWithHost();
+            }
+            catch(const ob::Error &e) {
+                std::cerr << "Sync device clock failed: " << e.what() << std::endl;
+            }
+        }
 
         // Start secondary devices first so they wait for the primary trigger
         std::cout << "Secondary devices start..." << std::endl;
