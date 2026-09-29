@@ -8,10 +8,10 @@ The LingBot Enhanced Depth Filter (`EnhancedDepthFilter`) uses color and depth i
 
 ## Requirements
 
-- NVIDIA Jetson running Linux ARM64;
+- NVIDIA Jetson running JetPack 6.2 (Linux ARM64);
 - a supported Gemini 330 series camera with a valid LingBot-Depth License;
 - CUDA Runtime 12;
-- TensorRT 10 Runtime;
+- TensorRT 10.3 Runtime;
 - the EnhancedDepthFilter extension and matching `model.sm4` from the same OrbbecSDK release.
 
 The filter requires a frameset containing Color and Depth frames after D2C alignment. Both software D2C and hardware D2C are supported.
@@ -30,7 +30,7 @@ EnhancedDepthFilter requires a valid LingBot-Depth License. For LicenseTool down
 
 ## Model Deployment
 
-Download `model.sm4` from the [OrbbecSDK Releases](https://github.com/orbbec/OrbbecSDK_v2/releases). Use the model file published for the same version as OrbbecSDK or OrbbecViewer. GitHub-generated source code archives do not include the model file.
+Download [`model.sm4`](https://github.com/orbbec/OrbbecSDK_v2/releases/download/v2.9.3/model.sm4). Use the model file published for the same version as OrbbecSDK or OrbbecViewer. GitHub-generated source code archives do not include the model file.
 
 OrbbecViewer and OrbbecSDK use different default model locations.
 

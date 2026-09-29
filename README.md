@@ -5,6 +5,8 @@
 
 -  **LiDAR** devices are supported in **OrbbecSDK v2.6.2 and later** , For detailed instructions on using the LiDAR, please refer to the [LiDAR_README.md](LiDAR_README.md).
 
+- **LingBot Enhanced Depth Filter** uses color and depth information to reduce noise, fill depth holes, and refine object edges. This feature is supported on NVIDIA Jetson running **JetPack 6.2**. For requirements and usage instructions, see the [Enhanced Depth Filter guide](docs/tutorial/enhanced_depth_filter.md).
+
 Here is the device support list of OrbbecSDK v1 (v1.x) and Orbbec SDK v2 (v2.x):
 
 <table border="1" style="border-collapse: collapse; text-align: left; width: 100%;">
