@@ -1,8 +1,12 @@
 # Timestamp Tracker Tool
 
-This tool is used to collect frame timestamps from all connected Orbbec cameras. It captures system timestamp, global timestamp, and device timestamp for each frame, and calculates the time differences. The tool supports multiple devices simultaneously and works cross-platform on Windows, Linux, ARM64, and macOS.
+This tool is used to collect frame timestamps from all connected Orbbec cameras. It captures system timestamp, global timestamp, and frame timestamp for each frame, and calculates the time differences. The frame timestamp is the device-side capture time of the frame; on the few devices without device timestamp support, the SDK falls back to a sampled host system timestamp. The tool supports multiple devices simultaneously and works cross-platform on Windows, Linux, ARM64, and macOS.
 
 **Note:** Primarily tested with the **Gemini 330** series; other series may work but are not guaranteed.
+
+## Timestamp Reference
+
+See the [Timestamp Usage Guide](../../docs/tutorial/timestamp.md) for timestamp sources, device support and host fallback, clock selection, global timestamp mapping, and device clock synchronization. This README describes how to collect and interpret diagnostic data with the tracker.
 
 ## Usage
 
@@ -22,12 +26,6 @@ Options:
   -h, --help                    Show help message
 
 Examples:
-  ./ob_timestamp_tracker                           # 1 hour tracking, auto-select streams
-  ./ob_timestamp_tracker -t 30                     # 30 minutes tracking
-  ./ob_timestamp_tracker -t 60 -i 60               # 1 hour with 60s sync interval
-  ./ob_timestamp_tracker -g config.json            # generate default JSON config file
-  ./ob_timestamp_tracker -c config.json            # use JSON config file
-  ./ob_timestamp_tracker -c config.json -t 30      # JSON config, override duration
   ./ob_timestamp_tracker                           # 1 hour tracking, auto-select streams
   ./ob_timestamp_tracker -t 30                     # 30 minutes tracking
   ./ob_timestamp_tracker -t 60 -i 60               # 1 hour with 60s sync interval
@@ -136,13 +134,13 @@ Each CSV file contains only timestamp-related columns (resolution, FPS, and form
 |--------|-------------|
 | FrameIndex | SDK frame index |
 | FrameNumber | Metadata frame number (if available, otherwise "n/a") |
-| RecvTS(us) | App receive timestamp - system clock captured at pipeline callback entry (microseconds) |
+| RecvTS(us) | Host clock timestamp taken when the tool receives the frame from the SDK, at pipeline callback entry; uses the same host clock type as SysTS (microseconds) |
 | SysTS(us) | SDK system timestamp (microseconds) |
-| GlobalTS(us) | Global timestamp (microseconds) |
-| DevTS(us) | Device timestamp (microseconds) |
+| GlobalTS(us) | Frame timestamp mapped to the host clock domain, representing the same instant during exposure (microseconds) |
+| DevTS(us) | Frame timestamp returned by `getTimeStampUs()`: the device capture time (a sampled host system timestamp on the few devices without device timestamp support) |
 | SensorTS(us) | Video streams only: sensor timestamp metadata (microseconds; "n/a" when unsupported) |
-| Diff_SG(us) | SysTS - GlobalTS (empty if GlobalTS unavailable) |
-| Diff_SD(us) | SysTS - DevTS (empty if DevTS unavailable) |
+| Diff_SG(us) | SysTS - GlobalTS: frame end-to-end latency from the exposure instant represented by the frame timestamp to SDK host receipt (`n/a` if GlobalTS is zero) |
+| Diff_SD(us) | SysTS - DevTS (`n/a` only when DevTS is zero) |
 
 **Sample Video Output:**
 ```
@@ -153,22 +151,24 @@ FrameIndex,FrameNumber,RecvTS(us),SysTS(us),GlobalTS(us),DevTS(us),SensorTS(us),
 
 ### Depth and Color Latency
 
-The CSV files can be used to measure the latency of depth and color streams. The latency is represented by the difference between the system timestamp (`Diff_SD`) and the device timestamp.
+Use `Diff_SG` (`SysTS - GlobalTS`) to measure frame end-to-end latency when a valid global timestamp is available. Its starting point is the exposure instant represented by the frame timestamp, and its endpoint is SDK host receipt. Gemini 330 long-baseline devices default to end of exposure, short-baseline devices use the middle of exposure, and devices with Intra-Camera Sync Reference set to Start of Exposure use the start of exposure. See [Frame Timestamp and Intra-Camera Sync Reference](../../docs/tutorial/timestamp.md#frame-timestamp-and-intra-camera-sync-reference) before comparing results across devices or settings. This measurement includes processing and transport between these points and is affected by clock-mapping accuracy.
 
-**Note:** For accurate latency measurement, the tool automatically disables auto-exposure and sets a fixed exposure time of 3ms to avoid exposure adjustments affecting frame timing.
+When the device clock is synchronized to the selected host clock, `Diff_SD` can also be used to observe the difference between device capture time and host receive time. Account for synchronization error and subsequent device clock drift when interpreting it.
+
+On the few devices without device timestamp support, `DevTS` is the host fallback, so `Diff_SD` compares two host-derived values and must not be interpreted as device-to-host capture latency.
+
+**Default exposure:** The tracker disables auto-exposure and sets a fixed exposure time of **3 ms** for depth and color streams where the corresponding properties are supported. This stabilizes exposure during latency measurements; it does not change the Intra-Camera Sync Reference setting or guarantee measurement accuracy.
 
 ### Time Synchronization
 
+In one-time mode, every connected device must support device clock synchronization; if synchronization fails on any device, the tracker reports an error and exits. Periodic mode skips devices without clock synchronization support.
+
 The tool supports two time synchronization modes:
 
-1. **One-time sync** (default, `-i 0`):
-   - Synchronizes device clock with host once before starting tracking
-   - Suitable for short tracking sessions (< 10 minutes)
-
-2. **Periodic clock sync** (e.g., `-i 60`):
-   - Continuously synchronizes device clock with host every N seconds
-   - Recommended for long tracking sessions to prevent timestamp drift
-   - Uses `ctx.enableDeviceClockSync(intervalMs)` API
+| Mode | Behavior | Typical use | API |
+|------|----------|-------------|-----|
+| One-time sync (default, `-i 0`) | Synchronizes each device with the host once before starting its streams | Short tracking sessions (< 10 minutes) | `device->timerSyncWithHost()` |
+| Periodic clock sync (e.g., `-i 60`) | Synchronizes device clocks with the host every N seconds | Long tracking sessions to limit device clock drift | `ctx.enableDeviceClockSync(intervalMs)` |
 
 ### Multi-Device Support
 

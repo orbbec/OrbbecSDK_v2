@@ -1,7 +1,7 @@
 # Open Source Orbbec SDK
 
 > [!IMPORTANT]
-> Welcome to Orbbec's latest open-source Orbbec SDK! Before you begin using this version of the SDK, it's crucial to check the [device support list](#12-supported-devices) to verify that your device is supported to ensure compatibility.
+> Welcome to Orbbec's latest open-source Orbbec SDK! Before you begin using this version of the SDK, it's crucial to check the [device support list](#14-supported-devices) to verify that your device is supported to ensure compatibility.
 
 -  **LiDAR** devices are supported in **OrbbecSDK v2.6.2 and later** , For detailed instructions on using the LiDAR, please refer to the [LiDAR_README.md](LiDAR_README.md).
 
@@ -372,16 +372,19 @@ For common depth, IR, and color camera parameters and their value ranges, refer 
 
 For each device's Original depth and color distortions, as well as depth distortion after D2C, color distortion after C2C, and point cloud distortion, refer to [orbbec_camera_distortion.md](docs/tutorial/orbbec_camera_distortion.md).
 
+### 2.7 Timestamp
 
-### 2.7 Performance tuning
+For an explanation of device, system, and global timestamps, including clock selection, device clock synchronization, and C++ usage examples, see the [Timestamp Usage Guide](docs/tutorial/timestamp.md).
+
+### 2.8 Performance tuning
 
 For different use cases, the SDK can be tuned to achieve optimal performance. Please refer to the [performance tuning guide](docs/tutorial/performance_tuning.md) for more information.
 
-### 2.8 Building from Source
+### 2.9 Building from Source
 
 If you would like to modify the SDK itself, you can build the SDK from source. Please refer to the [build guide](docs/tutorial/building_orbbec_sdk.md) for more information.
 
-### 2.9 FAQ
+### 2.10 FAQ
 
 Most frequently asked questions can be found in the [FAQ](docs/FAQ.md) file.
 
