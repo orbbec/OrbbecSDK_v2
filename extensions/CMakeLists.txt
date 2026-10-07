@@ -5,40 +5,47 @@ cmake_minimum_required(VERSION 3.10)
 
 add_custom_target(extensions ALL)
 
-add_custom_command(
-    TARGET extensions
-    POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_LIST_DIR}/filters/${OB_CURRENT_OS}" "${OB_RESOURCES_OUTPUT_DIRECTORY}/extensions/filters")
+function(ob_package_extension extension_name)
+    set(extension_source "${CMAKE_CURRENT_LIST_DIR}/${extension_name}/${OB_CURRENT_OS}")
+    if(EXISTS "${extension_source}")
+        add_custom_command(
+            TARGET extensions
+            POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_directory
+                "${extension_source}"
+                "${OB_RESOURCES_OUTPUT_DIRECTORY}/extensions/${extension_name}")
 
-add_custom_command(
-    TARGET extensions
-    POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_LIST_DIR}/frameprocessor/${OB_CURRENT_OS}" "${OB_RESOURCES_OUTPUT_DIRECTORY}/extensions/frameprocessor")
+        if(OB_IS_MAIN_PROJECT)
+            install(DIRECTORY "${extension_source}/"
+                    DESTINATION "${OB_EXTENSIONS_INSTALL_RPEFIX}/extensions/${extension_name}")
+        endif()
+        message(STATUS "Extension '${extension_name}': enabled for ${OB_CURRENT_OS}")
+    else()
+        message(STATUS "Extension '${extension_name}': no binary for ${OB_CURRENT_OS}; skipped")
+    endif()
+endfunction()
 
-if(NOT APPLE)
-    add_custom_command(
-        TARGET extensions
-        POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_LIST_DIR}/depthengine/${OB_CURRENT_OS}" "${OB_RESOURCES_OUTPUT_DIRECTORY}/extensions/depthengine")
+if(OB_BUILD_WITH_EXTENSIONS)
+    ob_package_extension(filters)
+    ob_package_extension(frameprocessor)
+    ob_package_extension(firmwareupdater)
+    if(NOT APPLE)
+        ob_package_extension(depthengine)
+    endif()
+else()
+    message(STATUS "Proprietary SDK extensions are disabled")
 endif()
 
-add_custom_command(
-    TARGET extensions
-    POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_directory "${CMAKE_CURRENT_LIST_DIR}/firmwareupdater/${OB_CURRENT_OS}" "${OB_RESOURCES_OUTPUT_DIRECTORY}/extensions/firmwareupdater")
+if(OB_BUILD_LINUX_LOONGARCH64)
+    message(STATUS
+        "LoongArch64 open-source build: private filters, frame processor, firmware updater, "
+        "and Femto Bolt depth engine are unavailable")
+endif()
 
 set_target_properties(extensions PROPERTIES FOLDER "modules")
 
-if(OB_IS_MAIN_PROJECT)
+# The extension binaries are intentionally optional. In particular, Orbbec does
+# not currently publish LoongArch64 builds. Keep the packaging logic based on
+# directory existence so future official binaries can be picked up without a
+# new architecture-specific branch.
 
-    install(DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/filters/${OB_CURRENT_OS}/" DESTINATION "${OB_EXTENSIONS_INSTALL_RPEFIX}/extensions/filters")
-
-    install(DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/frameprocessor/${OB_CURRENT_OS}/" DESTINATION "${OB_EXTENSIONS_INSTALL_RPEFIX}/extensions/frameprocessor")
-
-if(NOT APPLE)
-    install(DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/depthengine/${OB_CURRENT_OS}/" DESTINATION "${OB_EXTENSIONS_INSTALL_RPEFIX}/extensions/depthengine")
-endif()
-
-    install(DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/firmwareupdater/${OB_CURRENT_OS}/" DESTINATION "${OB_EXTENSIONS_INSTALL_RPEFIX}/extensions/firmwareupdater")
-
-endif()

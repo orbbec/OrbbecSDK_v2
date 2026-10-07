@@ -30,6 +30,9 @@ if(CMAKE_CROSSCOMPILING)
     elseif(CMAKE_SYSTEM_PROCESSOR STREQUAL "arm" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "armv7l" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "armv6")
         set(OB_BUILD_LINUX_ARM32 ON)
         message(STATUS "OB_BUILD_LINUX_ARM32 ON. CMAKE_SYSTEM_PROCESSOR is ${CMAKE_SYSTEM_PROCESSOR}")
+    elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "^(loongarch64|loong64)$")
+        set(OB_BUILD_LINUX_LOONGARCH64 ON)
+        message(STATUS "OB_BUILD_LINUX_LOONGARCH64 ON")
     else()
         message(SEND_ERROR "OrbbecSDK: unknown system processor for cross compiling!!!")
     endif()
@@ -41,8 +44,9 @@ else()
 
     set(OB_CURRENT_OS "linux_x86_64")
 
-    execute_process(COMMAND uname -m OUTPUT_VARIABLE MACHINES)
-    execute_process(COMMAND getconf LONG_BIT OUTPUT_VARIABLE MACHINES_BIT)
+    execute_process(COMMAND uname -m OUTPUT_VARIABLE MACHINES OUTPUT_STRIP_TRAILING_WHITESPACE)
+    execute_process(COMMAND getconf LONG_BIT OUTPUT_VARIABLE MACHINES_BIT OUTPUT_STRIP_TRAILING_WHITESPACE)
+
     if((${MACHINES} MATCHES "x86_64") AND (${MACHINES_BIT} MATCHES "64"))
         set(OB_CURRENT_OS "linux_x86_64")
     elseif(${MACHINES} MATCHES "arm")
@@ -51,6 +55,8 @@ else()
         set(OB_BUILD_LINUX_ARM64 ON)
     elseif((${MACHINES} MATCHES "aarch64") AND (${MACHINES_BIT} MATCHES "32"))
         set(OB_BUILD_LINUX_ARM32 ON)
+    elseif((${MACHINES} MATCHES "^(loongarch64|loong64)$") AND (${MACHINES_BIT} MATCHES "64"))
+        set(OB_BUILD_LINUX_LOONGARCH64 ON)
     endif()
 endif()
 
@@ -126,7 +132,34 @@ if(OB_BUILD_LINUX_ARM32)
     endif()
 endif()
 
-if(NOT OB_BUILD_LINUX_ARM)
+if(OB_BUILD_LINUX_LOONGARCH64)
+    include(CMakePushCheckState)
+
+    cmake_push_check_state()
+    set(CMAKE_REQUIRED_FLAGS "-mlsx")
+    check_cxx_source_compiles("
+    #if defined(__loongarch__) && defined(__loongarch_sx)
+        #include <lsxintrin.h>
+        int main() {
+            __m128i v = __lsx_vldi(0);
+            return 0;
+        }
+    #else
+        #error \"Not LoongArch with LSX support\"
+    #endif
+    " HAS_LSX)
+    cmake_pop_check_state()
+
+    set(OB_CURRENT_OS "linux_loongarch64")
+
+    if (HAS_LSX)
+        message("Linux loongarch64 set lsx")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -mlsx")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mlsx")
+     endif()
+endif()
+
+if(NOT OB_BUILD_LINUX_ARM AND NOT OB_BUILD_LINUX_LOONGARCH64)
     # When the compiler (e.g., gcc or g++) is given the flag -mssse3,
     # it automatically defines the macro __SSSE3__=1.
     message("Linux set sse3")

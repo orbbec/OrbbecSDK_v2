@@ -3,7 +3,7 @@
 
 #pragma once
 
-#if defined(__ARM_NEON__) || defined(__NEON__) || defined(__SSSE3__)
+#if defined(__ARM_NEON__) || defined(__NEON__) || defined(__SSSE3__) || defined(__loongarch_sx)
 
 #include <string>
 #include <utility>
@@ -15,6 +15,8 @@
 
 #if (defined(__ARM_NEON__) || defined(__aarch64__) || defined(__arm__))
 #include "SSE2NEON.h"
+#elif defined(__loongarch_sx)
+#include "SSE2LSX.h"
 #else
 #include <xmmintrin.h>
 #include <smmintrin.h>
@@ -252,4 +254,4 @@ private:
 
 }  // namespace libobsensor
 
-#endif  // __ARM_NEON__ || __NEON__ || __SSSE3__
+#endif  // __ARM_NEON__ || __NEON__ || __SSSE3__ || __loongarch_sx
