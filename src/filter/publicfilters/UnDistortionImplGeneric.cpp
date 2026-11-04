@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 #include "UnDistortionImplGeneric.hpp"
+#include "exception/ObException.hpp"
 #include "logger/LoggerInterval.hpp"
 #include <cmath>
 #include <cstring>
@@ -347,6 +348,10 @@ void UnDistortionImplGeneric::remapYUYV(const uint8_t *src, uint8_t *dst, int w,
 // ---------------------------------------------------------------------------
 
 void UnDistortionImplGeneric::undistort(const uint8_t *src, uint8_t *dst, int w, int h, OBFormat format) {
+    if(format == OB_FORMAT_YUYV && ((w & 1) != 0 || (srcW_ & 1) != 0)) {
+        THROW_INVALID_PARAM_EXCEPTION("YUYV undistortion requires even source and output widths");
+    }
+
     switch(format) {
     case OB_FORMAT_RGB:
     case OB_FORMAT_BGR:
@@ -377,9 +382,22 @@ void UnDistortionImplGeneric::undistort(const uint8_t *src, uint8_t *dst, int w,
         break;
     }
 
-    // Zero-fill pixels that mapped outside the source image bounds.
-    // Matches OpenCV BORDER_CONSTANT (fill value = 0) rather than clamping to edge.
+    // Fill pixels that mapped outside the source image bounds with black.
     if(!oobIndices_.empty()) {
+        // YUYV stores two luma samples around shared chroma: [Y0, U, Y1, V].
+        // Neutralize the pair's chroma without erasing a valid neighbor's luma.
+        if(format == OB_FORMAT_YUYV) {
+            for(int idx: oobIndices_) {
+                const int row      = idx / w;
+                const int x        = idx % w;
+                const int pairBase = row * w * 2 + (x / 2) * 4;
+                dst[idx * 2]       = 0;
+                dst[pairBase + 1]  = 128;
+                dst[pairBase + 3]  = 128;
+            }
+            return;
+        }
+
         int bpp = 0;
         switch(format) {
         case OB_FORMAT_Y8:
@@ -387,9 +405,6 @@ void UnDistortionImplGeneric::undistort(const uint8_t *src, uint8_t *dst, int w,
             break;
         case OB_FORMAT_Y16:
         case OB_FORMAT_Z16:
-            bpp = 2;
-            break;
-        case OB_FORMAT_YUYV:
             bpp = 2;
             break;
         case OB_FORMAT_RGB:
