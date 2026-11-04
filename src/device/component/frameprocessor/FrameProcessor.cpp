@@ -13,6 +13,16 @@ FrameProcessorFactory::FrameProcessorFactory(IDevice *owner) : DeviceComponentBa
     try {
         dylib_ = DynamicLibraryManager::getInstance()->getLibrary("ob_frame_processor");
         if(!dylib_) {
+#if defined(__riscv) && __riscv_xlen == 64
+            // No proprietary frame processor is shipped for RISC-V. Keep the
+            // existing frame-copy path available without hiding plugin errors.
+            auto libraryPath = EnvConfig::getExtensionsDirectory() + "/frameprocessor/libob_frame_processor.so";
+            if(!utils::fileExists(libraryPath.c_str())) {
+                LOG_WARN("Frame processor extension is unavailable; using pass-through processing");
+                context_ = std::make_shared<FrameProcessorContext>();
+                return;
+            }
+#endif
             dylib_ = DynamicLibraryManager::getInstance()->loadLibrary(EnvConfig::getExtensionsDirectory() + "/frameprocessor/", "ob_frame_processor");
         }
 
@@ -68,7 +78,7 @@ FrameProcessorFactory::FrameProcessorFactory(IDevice *owner) : DeviceComponentBa
 FrameProcessorFactory::~FrameProcessorFactory() noexcept {}
 
 std::shared_ptr<FrameProcessor> FrameProcessorFactory::createFrameProcessor(OBSensorType sensorType) {
-    if(context_ && (!context_->context || context_->create_processor == nullptr)) {
+    if(!context_ || (dylib_ && (!context_->context || context_->create_processor == nullptr))) {
         return nullptr;
     }
 
@@ -184,6 +194,10 @@ const std::string &FrameProcessor::getConfigSchema() const {
 }
 
 void FrameProcessor::updateConfig(std::vector<std::string> &params) {
+    if(!context_->update_config || !privateProcessor_) {
+        return;
+    }
+
     ob_error                 *error = nullptr;
     std::vector<const char *> c_params;
     for(auto &p: params) {

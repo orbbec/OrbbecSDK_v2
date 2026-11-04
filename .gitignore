@@ -35,6 +35,7 @@ build_linux_x86_64/
 build_linux_arm64/
 build_linux_aarch64/
 build_linux_arm/
+build_riscv64/
 build_android_aarch64/
 build_android_arm/
 build_macos_arm64/
