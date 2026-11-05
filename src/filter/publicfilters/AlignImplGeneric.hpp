@@ -1,6 +1,8 @@
 // Copyright (c) Orbbec Inc. All Rights Reserved.
 // Licensed under the MIT License.
 
+#pragma once
+
 #if !(defined(__ARM_NEON__) || defined(__NEON__) || defined(__SSSE3__))
 
 #include <string>
@@ -89,6 +91,19 @@ public:
      */
     int C2D(const uint16_t *depth_buffer, int depth_width, int depth_height, const void *rgb_buffer, void *out_rgb, int color_width, int color_height,
             OBFormat format, bool withSSE) override;
+
+private:
+    OBFormat           depth_format_          = OB_FORMAT_Y16;
+    bool               initialized_           = false;
+    float              depth_unit_mm_         = 1.0f;
+    bool               add_target_distortion_ = false;
+    bool               gap_fill_copy_         = true;
+    uint16_t           max_invalid_value_     = 65535;
+    OBCameraIntrinsic  depth_intric_{};
+    OBCameraIntrinsic  rgb_intric_{};
+    OBCameraDistortion depth_disto_{};
+    OBCameraDistortion rgb_disto_{};
+    OBExtrinsic        transform_{};
 };
 
 }  // namespace libobsensor
