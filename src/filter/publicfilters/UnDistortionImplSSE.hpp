@@ -5,12 +5,15 @@
 
 // Activate SIMD path on: ARM NEON, x86 SSSE3+, or MSVC x86-64 (always has SSE4.1 available)
 #if defined(__ARM_NEON__) || defined(__NEON__) || defined(__SSSE3__) || \
-    (defined(_MSC_VER) && (defined(_M_AMD64) || defined(_M_X64)))
+    (defined(_MSC_VER) && (defined(_M_AMD64) || defined(_M_X64))) || \
+    defined(__loongarch_sx)
 
 #include "UnDistortionImplGeneric.hpp"
 
 #if defined(__ARM_NEON__) || defined(__aarch64__) || defined(__arm__)
 #include "SSE2NEON.h"
+#elif defined(__loongarch_sx)
+#include "SSE2LSX.h"
 #else
 #include <xmmintrin.h>
 #include <emmintrin.h>
@@ -41,4 +44,4 @@ protected:
 
 }  // namespace libobsensor
 
-#endif  // __ARM_NEON__ || __NEON__ || __SSSE3__ || MSVC x64
+#endif  // __ARM_NEON__ || __NEON__ || __SSSE3__ || MSVC x64 || __loongarch_sx

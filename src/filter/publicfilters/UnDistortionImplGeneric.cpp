@@ -8,7 +8,7 @@
 #include <algorithm>
 #include <future>
 
-#if defined(__ARM_NEON__) || defined(__NEON__) || defined(__SSSE3__) || (defined(_MSC_VER) && (defined(_M_AMD64) || defined(_M_X64)))
+#if defined(__ARM_NEON__) || defined(__NEON__) || defined(__SSSE3__) || (defined(_MSC_VER) && (defined(_M_AMD64) || defined(_M_X64))) || defined(__loongarch_sx)
 #include "UnDistortionImplSSE.hpp"
 #endif
 
@@ -417,7 +417,7 @@ void UnDistortionImplGeneric::undistort(const uint8_t *src, uint8_t *dst, int w,
 // SSE-accelerated bilinear remap (UnDistortionImplSSE).
 // Defined here so no cmake reconfigure is needed for the new .hpp/.cpp pair.
 // ---------------------------------------------------------------------------
-#if defined(__ARM_NEON__) || defined(__NEON__) || defined(__SSSE3__) || (defined(_MSC_VER) && (defined(_M_AMD64) || defined(_M_X64)))
+#if defined(__ARM_NEON__) || defined(__NEON__) || defined(__SSSE3__) || (defined(_MSC_VER) && (defined(_M_AMD64) || defined(_M_X64))) || defined(__loongarch_sx)
 
 namespace libobsensor {
 
@@ -718,4 +718,4 @@ void UnDistortionImplSSE::remapYUYV(const uint8_t *src, uint8_t *dst, int w, int
 
 }  // namespace libobsensor
 
-#endif  // __ARM_NEON__ || __NEON__ || __SSSE3__
+#endif  // __ARM_NEON__ || __NEON__ || __SSSE3__ || __loongarch_sx

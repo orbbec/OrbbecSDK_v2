@@ -3,7 +3,7 @@
 
 #include "UnDistortionFilter.hpp"
 #include "UnDistortionImplGeneric.hpp"
-#if defined(__ARM_NEON__) || defined(__NEON__) || defined(__SSSE3__) || (defined(_MSC_VER) && (defined(_M_AMD64) || defined(_M_X64)))
+#if defined(__ARM_NEON__) || defined(__NEON__) || defined(__SSSE3__) || (defined(_MSC_VER) && (defined(_M_AMD64) || defined(_M_X64))) || defined(__loongarch_sx)
 #include "UnDistortionImplSSE.hpp"
 #endif
 #include "exception/ObException.hpp"
@@ -67,7 +67,7 @@ static int autoInterpMode(OBStreamType st) {
 
 UnDistortionFilter::UnDistortionFilter()
     :
-#if defined(__ARM_NEON__) || defined(__NEON__) || defined(__SSSE3__) || (defined(_MSC_VER) && (defined(_M_AMD64) || defined(_M_X64)))
+#if defined(__ARM_NEON__) || defined(__NEON__) || defined(__SSSE3__) || (defined(_MSC_VER) && (defined(_M_AMD64) || defined(_M_X64))) || defined(__loongarch_sx)
       impl_(std::make_shared<UnDistortionImplSSE>()),
 #else
       impl_(std::make_shared<UnDistortionImplGeneric>()),
